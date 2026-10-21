@@ -68,6 +68,18 @@ export type CredentialFormDialogProps = {
 
 type AttachedDocument = { id: string; name: string; size: number };
 
+function attachedDocumentOf(
+  credential: CredentialFormDialogProps["credential"],
+): AttachedDocument | null {
+  return credential?.documentId
+    ? {
+        id: credential.documentId,
+        name: credential.document?.originalName ?? "Attached document",
+        size: credential.document?.fileSize ?? 0,
+      }
+    : null;
+}
+
 const COPY: Record<CredentialFormMode, { title: string; description: string; submit: string }> = {
   create: {
     title: "Add credential",
@@ -145,27 +157,22 @@ export function CredentialFormDialog({
   const { control, handleSubmit, reset, setValue, getFieldState } = form;
 
   const [attached, setAttached] = useState<AttachedDocument | null>(() =>
-    credential?.documentId
-      ? {
-          id: credential.documentId,
-          name: credential.document?.originalName ?? "Attached document",
-          size: credential.document?.fileSize ?? 0,
-        }
-      : null,
+    attachedDocumentOf(credential),
   );
+  const [seenSource, setSeenSource] = useState({ open, mode, credential, credentialTypeId });
+  if (
+    open !== seenSource.open ||
+    mode !== seenSource.mode ||
+    credential !== seenSource.credential ||
+    credentialTypeId !== seenSource.credentialTypeId
+  ) {
+    setSeenSource({ open, mode, credential, credentialTypeId });
+    if (open) setAttached(attachedDocumentOf(credential));
+  }
 
   useEffect(() => {
     if (!open) return;
     reset(buildDefaults(mode, credential, credentialTypeId, today));
-    setAttached(
-      credential?.documentId
-        ? {
-            id: credential.documentId,
-            name: credential.document?.originalName ?? "Attached document",
-            size: credential.document?.fileSize ?? 0,
-          }
-        : null,
-    );
   }, [open, mode, credential, credentialTypeId, today, reset]);
 
   const selectedTypeId = useWatch({ control, name: "credentialTypeId" });

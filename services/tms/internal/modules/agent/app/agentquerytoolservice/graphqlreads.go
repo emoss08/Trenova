@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -44,6 +45,8 @@ type graphQLField struct {
 	Selected    bool
 	Enum        []string
 	Description string
+	// Fields are a selected record's own fields, one level down.
+	Fields []graphQLField
 }
 
 const (
@@ -117,6 +120,174 @@ type graphQLParam struct {
 	Field  string
 	Kind   paramKind
 	Schema map[string]any
+	// Holder is the GraphQL type of a nested record a dotted Field belongs
+	// to (WorkerProfile for profile.cdlClass); empty for the record's own.
+	Holder string
+	// OnInput marks a parameter that is one of the input's own fields
+	// (WorkerPTOEntriesInput.workerId), sent as that field rather than as a
+	// field filter. Like any argument the screen sends, it is not judged by
+	// a record field's sensitivity.
+	OnInput bool
+}
+
+// tableInputFields are what a table-shaped input holds for the table itself;
+// its other fields are the screen's own filters.
+var tableInputFields = map[string]struct{}{
+	inputFirst: {}, inputAfter: {}, inputQuery: {}, inputFieldFilters: {}, inputSort: {},
+	inputFilterGroups: {},
+}
+
+const (
+	includePrefix     = "include"
+	inputFilterGroups = "filterGroups"
+	graphQLKindInput  = "input"
+)
+
+// tableShaped reports whether an input holds a table's fields, as
+// DataTableConnectionInput does, under its own name.
+func tableShaped(fields []graphQLField) bool {
+	have := 0
+	for _, field := range fields {
+		if _, core := tableInputFields[field.Name]; core && field.Name != inputFilterGroups {
+			have++
+		}
+	}
+
+	return have == len(tableInputFields)-1
+}
+
+// tableInput is the variable a list's operation takes its table input in,
+// and that input's type.
+func (r *graphQLRead) tableInput() (name, typ string, ok bool) {
+	for _, variable := range r.Variables {
+		if variable.Type == dataTableInput || tableShaped(graphQLInputs[variable.Type]) {
+			return variable.Name, variable.Type, true
+		}
+	}
+
+	return "", "", false
+}
+
+// withInputParams adds the input's own parameters to the record's. A range
+// end on the input takes the place of the record's of the same name, as the
+// resolver reads it with the screen's meaning (time off's startDateFrom with
+// overlapping); any other name the record already takes keeps the record's,
+// which can match several values.
+func withInputParams(record, onInput []graphQLParam) []graphQLParam {
+	ranges := make(map[string]struct{}, len(onInput))
+	for _, param := range onInput {
+		if param.Kind == paramDayFrom || param.Kind == paramDayTo {
+			ranges[param.Name] = struct{}{}
+		}
+	}
+	out := slices.DeleteFunc(slices.Clone(record), func(param graphQLParam) bool {
+		_, shadowed := ranges[param.Name]
+		return shadowed
+	})
+	taken := make(map[string]struct{}, len(out))
+	for _, param := range out {
+		taken[param.Name] = struct{}{}
+	}
+	for _, param := range onInput {
+		if _, dup := taken[param.Name]; !dup {
+			out = append(out, param)
+		}
+	}
+
+	return out
+}
+
+// inputParams are a table-shaped input's own fields as parameters, sent on
+// the input: the screen's filters (a PTO status, a worker) beside the
+// table's. An include* toggle the screen sets for its own rendering is left
+// out.
+func inputParams(typ string) []graphQLParam {
+	var out []graphQLParam
+	for idx := range graphQLInputs[typ] {
+		field := &graphQLInputs[typ][idx]
+		if _, core := tableInputFields[field.Name]; core ||
+			strings.HasPrefix(field.Name, includePrefix) || field.Kind == graphQLKindInput {
+			continue
+		}
+		for _, param := range inputFieldParams(field) {
+			param.OnInput = true
+			out = append(out, param)
+		}
+	}
+
+	return out
+}
+
+// inputFieldParams is one input field's parameter. A Timestamp named for a
+// range end (startDateFrom) is a day, read in the organization's zone, and a
+// described Boolean is a switch its own description explains (overlapping).
+func inputFieldParams(field *graphQLField) []graphQLParam {
+	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field.Name))
+	describe := func(fallback string) string {
+		if field.Description != "" {
+			return field.Description + " " + fallback
+		}
+		return fallback
+	}
+	if field.Type == graphQLTypeTimestamp {
+		words = stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+			strings.TrimSuffix(strings.TrimSuffix(field.Name, suffixFrom), suffixTo)))
+		switch {
+		case strings.HasSuffix(field.Name, suffixFrom):
+			return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramDayFrom,
+				Schema: agenttoolschema.Date(describe("Only records whose " + words +
+					" is this day or later, in the organization's timezone."))}}
+		case strings.HasSuffix(field.Name, suffixTo):
+			return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramDayTo,
+				Schema: agenttoolschema.Date(describe("Only records whose " + words +
+					" is this day or earlier, in the organization's timezone."))}}
+		}
+		return nil
+	}
+	if field.Type == graphQLTypeBoolean && field.Description != "" {
+		return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramEquals,
+			Schema: map[string]any{
+				toolschema.KeyType:        toolschema.TypeBoolean,
+				toolschema.KeyDescription: field.Description,
+			}}}
+	}
+	if field.Kind == graphQLKindEnum && !field.List {
+		return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramEquals,
+			Schema: agenttoolschema.Enum(describe("Only records whose "+words+" is this."),
+				agenttoolschema.Derived(graphQLEnumSource+field.Type, field.Enum))}}
+	}
+
+	return paramsFor(field)
+}
+
+// compileInputs is the input fields a call's on-input parameters set.
+func compileInputs(params []graphQLParam, args map[string]any, clk clock) (map[string]any, error) {
+	out := make(map[string]any)
+	for _, param := range params {
+		raw, present := args[param.Name]
+		if !param.OnInput || !present || raw == nil {
+			continue
+		}
+		switch param.Kind {
+		case paramDayFrom:
+			day, err := readDay(args, param.Name, clk)
+			if err != nil {
+				return nil, err
+			}
+			out[param.Field] = day
+		case paramDayTo:
+			day, err := readDay(args, param.Name, clk)
+			if err != nil {
+				return nil, err
+			}
+			out[param.Field] = endOfDay(clk, day)
+		case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
+			paramReference:
+			out[param.Field] = raw
+		}
+	}
+
+	return out, nil
 }
 
 // typedParams derives a list tool's parameters from its record type: every
@@ -137,9 +308,59 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 		}
 		params = append(params, paramsFor(field)...)
 	}
+	params = append(params, r.nestedParams(config.FilterableFields)...)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 
 	return params
+}
+
+// nestedParams are the parameters of the filters the configuration allows
+// one record down (profile.endorsement), typed by the nested record's field
+// and named for the path (profileEndorsement).
+func (r *graphQLRead) nestedParams(filterable map[string]bool) []graphQLParam {
+	var out []graphQLParam
+	for _, key := range slices.Sorted(maps.Keys(filterable)) {
+		parent, child, ok := r.nestedField(key)
+		if !ok || !filterable[key] {
+			continue
+		}
+		for _, param := range paramsFor(child) {
+			param.Name = parent.Name + stringutils.CapitalizeFirst(param.Name)
+			param.Field = parent.Name + "." + param.Field
+			param.Holder = parent.Type
+			out = append(out, param)
+		}
+	}
+
+	return out
+}
+
+// nestedField is the record field and its own field a dotted path names,
+// when the operation reads that record and it is a part of the list's own
+// record, named for it (a Worker's WorkerProfile): a linked record (a state,
+// an equipment type) is filtered by its id, not by its fields.
+func (r *graphQLRead) nestedField(path string) (parent, child *graphQLField, ok bool) {
+	head, tail, dotted := strings.Cut(path, ".")
+	if !dotted || strings.Contains(tail, ".") {
+		return nil, nil, false
+	}
+	idx := slices.IndexFunc(r.Fields, func(f graphQLField) bool { return f.Name == head })
+	if idx < 0 || len(r.Fields[idx].Fields) == 0 {
+		return nil, nil, false
+	}
+	parent = &r.Fields[idx]
+	if !strings.HasPrefix(parent.Type, r.Node) || parent.Type == r.Node {
+		return nil, nil, false
+	}
+	at := slices.IndexFunc(parent.Fields, func(f graphQLField) bool { return f.Name == tail })
+	if at < 0 || parent.Fields[at].List {
+		return nil, nil, false
+	}
+	if _, skip := unfilteredFields[tail]; skip {
+		return nil, nil, false
+	}
+
+	return parent, &parent.Fields[at], true
 }
 
 // sortable is every field of the record the server can order the list by.
@@ -152,6 +373,11 @@ func (r *graphQLRead) sortable() []string {
 		}
 		if config.SortableFields[field.Name] {
 			out = append(out, field.Name)
+		}
+	}
+	for _, key := range slices.Sorted(maps.Keys(config.SortableFields)) {
+		if _, _, ok := r.nestedField(key); ok && config.SortableFields[key] {
+			out = append(out, key)
 		}
 	}
 	slices.Sort(out)
@@ -343,7 +569,7 @@ func compileFilters(
 	out := make([]map[string]any, 0, len(params))
 	for _, param := range params {
 		raw, present := args[param.Name]
-		if !present || raw == nil {
+		if param.OnInput || !present || raw == nil {
 			continue
 		}
 		filter, sent, err := compileFilter(param, args, clk)

@@ -281,14 +281,46 @@ func TestCheckAmounts_AShareIsTheFractionItRenders(t *testing.T) {
 	assert.False(t, numberguard.CheckAmounts("52.3% is still open.", values(0.61)).OK)
 }
 
-func TestCheckAmounts_LeavesSmallAmountsAndRoundingAlone(t *testing.T) {
+func TestCheckAmounts_HoldsSmallMoneyAndPercentagesToWhatWasComputed(t *testing.T) {
 	t.Parallel()
 
 	check := numberguard.CheckAmounts(
 		"A $20 fee on 5% of loads; open balances average about $168K.",
 		values(167935.06),
 	)
+	assert.False(t, check.OK)
+	assert.ElementsMatch(t, []string{"20", "5"}, check.Unsupported)
 
+	check = numberguard.CheckAmounts(
+		"A $20 fee on 5% of loads; open balances average about $168K.",
+		values(167935.06, 20, 0.05),
+	)
+	assert.True(t, check.OK, check.Unsupported)
+}
+
+func TestCheckNumbers_HoldsASmallRateToWhatWasComputed(t *testing.T) {
+	t.Parallel()
+
+	for _, prose := range []string{
+		"The lane pays 2.15 per mile.",
+		"The lane pays 2.15/mi.",
+		"Detention runs 18 an hour after two hours.",
+		"Fuel came to $3.89 a gallon.",
+	} {
+		check := numberguard.CheckNumbers(prose, values(1.98))
+		assert.False(t, check.OK, prose)
+	}
+
+	assert.True(t, numberguard.CheckNumbers("The lane pays 2.15 per mile.", values(2.15)).OK)
+}
+
+func TestCheckNumbers_StillLetsSmallCountsPass(t *testing.T) {
+	t.Parallel()
+
+	check := numberguard.CheckNumbers(
+		"The top 3 customers sent 12 loads over 2 weeks; one of the 4 stops ran late.",
+		nil,
+	)
 	assert.True(t, check.OK, check.Unsupported)
 }
 

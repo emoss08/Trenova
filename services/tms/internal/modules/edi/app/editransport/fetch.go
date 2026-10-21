@@ -21,7 +21,7 @@ func (t *SFTPTransport) FetchInboundFiles(
 	ctx context.Context,
 	req *ediports.EDIInboundFetchRequest,
 ) ([]*ediports.EDIInboundRemoteFile, error) {
-	return fetchInboundOverSFTP(ctx, req)
+	return fetchInboundOverSFTP(ctx, t.network, req)
 }
 
 func (t *SFTPTransport) ArchiveInboundFile(
@@ -29,14 +29,14 @@ func (t *SFTPTransport) ArchiveInboundFile(
 	req *ediports.EDIInboundFetchRequest,
 	remotePath string,
 ) error {
-	return archiveInboundOverSFTP(ctx, req, remotePath)
+	return archiveInboundOverSFTP(ctx, t.network, req, remotePath)
 }
 
 func (t *VANTransport) FetchInboundFiles(
 	ctx context.Context,
 	req *ediports.EDIInboundFetchRequest,
 ) ([]*ediports.EDIInboundRemoteFile, error) {
-	return fetchInboundOverSFTP(ctx, req)
+	return fetchInboundOverSFTP(ctx, t.network, req)
 }
 
 func (t *VANTransport) ArchiveInboundFile(
@@ -44,14 +44,15 @@ func (t *VANTransport) ArchiveInboundFile(
 	req *ediports.EDIInboundFetchRequest,
 	remotePath string,
 ) error {
-	return archiveInboundOverSFTP(ctx, req, remotePath)
+	return archiveInboundOverSFTP(ctx, t.network, req, remotePath)
 }
 
 func fetchInboundOverSFTP(
 	ctx context.Context,
+	network sftpNetwork,
 	req *ediports.EDIInboundFetchRequest,
 ) ([]*ediports.EDIInboundRemoteFile, error) {
-	cfg, inboundDirectory, err := inboundEndpointConfig(req)
+	cfg, inboundDirectory, err := network.inboundEndpointConfig(req)
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +84,11 @@ func fetchInboundOverSFTP(
 
 func archiveInboundOverSFTP(
 	ctx context.Context,
+	network sftpNetwork,
 	req *ediports.EDIInboundFetchRequest,
 	remotePath string,
 ) error {
-	cfg, inboundDirectory, err := inboundEndpointConfig(req)
+	cfg, inboundDirectory, err := network.inboundEndpointConfig(req)
 	if err != nil {
 		return err
 	}
@@ -103,7 +105,7 @@ func archiveInboundOverSFTP(
 	return client.Archive(remotePath, archiveDirectory)
 }
 
-func inboundEndpointConfig(
+func (n sftpNetwork) inboundEndpointConfig(
 	req *ediports.EDIInboundFetchRequest,
 ) (*endpointConfig, string, error) {
 	if req == nil || req.Profile == nil {
@@ -115,7 +117,7 @@ func inboundEndpointConfig(
 			"inbound directory is required for EDI inbound polling",
 		)
 	}
-	cfg := endpointConfigFromProfile(req.Profile, req.Secrets)
+	cfg := n.endpointConfig(req.Profile, req.Secrets)
 	if err := cfg.Validate(); err != nil {
 		return nil, "", err
 	}

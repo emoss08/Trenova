@@ -192,10 +192,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const analysis = useMemo(() => analyzeExpression(expression ?? "", known), [expression, known]);
 
   const preview = useLivePreview();
-  const author = useMemo(
-    () => (user?.id ? { id: user.id, name: user.name } : null),
-    [user?.id, user?.name],
-  );
+  const author = useMemo(() => (user?.id ? { id: user.id, name: user.name } : null), [user]);
   const scenarios = useStudioScenarios({ templateId: template?.id ?? null, author });
 
   const { data: usage } = useQuery({
@@ -342,7 +339,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       roundingMode: current.roundingMode,
       roundingPrecision: current.roundingPrecision,
     };
-  }, [form, template?.id]);
+  }, [form, template]);
 
   const [focusInput, setFocusInput] = useState<string | null>(null);
   const clearFocusInput = useCallback(() => setFocusInput(null), []);

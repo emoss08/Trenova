@@ -12,6 +12,7 @@ import {
   Send01Icon,
   Snowflake01Icon,
 } from "@trenova/shared/components/icons";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useMemo } from "react";
 import { CoverageKanbanSkeleton } from "./console-skeletons";
 import {
@@ -32,16 +33,15 @@ const TENDER_CHIP_VARIANT: Record<TenderChipTone, "info" | "success" | "warning"
 
 function TenderChip({ move }: { move: DispatchBoardMove }) {
   const t = useT();
+  const nowSeconds = useNow("minute");
 
   const summary = move.liveTender;
   if (!summary) return null;
 
   const meta = tenderChipMeta(summary);
-  // The countdown is computed at render; the board's periodic refetch keeps it
-  // honest without every card running its own timer.
   const countdown =
     summary.status === "Active"
-      ? formatOfferCountdown(summary.currentOfferExpiresAt, Math.floor(Date.now() / 1000))
+      ? formatOfferCountdown(summary.currentOfferExpiresAt, nowSeconds)
       : "";
 
   return (

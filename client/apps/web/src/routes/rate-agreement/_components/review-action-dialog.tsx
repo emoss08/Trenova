@@ -21,7 +21,7 @@ import {
   Send01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 // One whole sentence per action: the action's wire value is not a word a reader's language
@@ -166,12 +166,14 @@ export function ReviewActionDialog({
   const config = ACTION_CONFIG[action];
   const Icon = config.icon;
 
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (!open) {
       setComment("");
       setShowCommentError(false);
     }
-  }, [open]);
+  }
 
   const mutation = useMutation({
     mutationFn: (trimmedComment: string) =>

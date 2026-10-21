@@ -82,16 +82,17 @@ export default function Workspace() {
     );
   }, [settlements, searchParams, setSearchParams, t]);
 
-  useEffect(() => {
-    if (settlements == null) return;
+  if (settlements != null) {
+    let settledId = selectedId;
     if (filtered.length === 0) {
-      setSelectedId(null);
-      return;
+      settledId = null;
+    } else if (!selectedId || !filtered.some((settlement) => settlement.id === selectedId)) {
+      settledId = filtered[0].id;
     }
-    if (!selectedId || !filtered.some((settlement) => settlement.id === selectedId)) {
-      setSelectedId(filtered[0].id);
+    if (settledId !== selectedId) {
+      setSelectedId(settledId);
     }
-  }, [filtered, selectedId, settlements]);
+  }
 
   const selected: CarrierSettlementRow | null = useMemo(
     () => (settlements ?? []).find((settlement) => settlement.id === selectedId) ?? null,

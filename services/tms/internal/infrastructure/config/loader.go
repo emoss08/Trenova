@@ -249,9 +249,24 @@ func (l *Loader) configureViper() {
 	l.bindPlatformEnvAliases()
 	l.bindAccountingEnv()
 	l.bindAIAuditEnv()
+	l.bindUnlistedEnv()
 
 	for _, section := range l.sections {
 		section.SetDefaults(l.viper, l.envPrefix)
+	}
+}
+
+var envOnlyKeys = []string{
+	"security.encryption.retiredKeys",
+	"contentScan.failOpen",
+	"contentScan.clamav.address",
+	"contentScan.clamav.timeout",
+	"contentScan.clamav.maxStreamBytes",
+}
+
+func (l *Loader) bindUnlistedEnv() {
+	for _, key := range envOnlyKeys {
+		_ = l.viper.BindEnv(key)
 	}
 }
 
@@ -702,6 +717,20 @@ func validateProductionKeyManager(config *Config) error {
 
 const minProductionLocalEncryptionKeyLength = 32
 
+func validateProductionRecoveryCodePepper(pepper string) error {
+	trimmed := strings.TrimSpace(pepper)
+	if len(trimmed) < minProductionLocalEncryptionKeyLength {
+		return ErrProductionRecoveryCodePepperRequired
+	}
+	lowered := strings.ToLower(trimmed)
+	for _, placeholder := range InsecureDefaultValues {
+		if strings.Contains(lowered, placeholder) {
+			return ErrProductionRecoveryCodePepperRequired
+		}
+	}
+	return nil
+}
+
 func validateProductionLocalKey(key string) error {
 	trimmed := strings.TrimSpace(key)
 	if len(trimmed) < minProductionLocalEncryptionKeyLength {
@@ -744,9 +773,17 @@ func validateProductionSecurity(config *Config) error {
 	if err := validateProductionKeyManager(config); err != nil {
 		return err
 	}
+	if err := validateProductionRecoveryCodePepper(
+		config.Security.MFA.RecoveryCodePepper,
+	); err != nil {
+		return err
+	}
 	if config.Storage.GetProvider() == StorageProviderR2 &&
 		(!config.Storage.UseSSL || !strings.HasPrefix(config.Storage.Endpoint, "https://")) {
 		return ErrProductionStorageTLSRequired
+	}
+	if config.ContentScan.FailOpen {
+		return ErrProductionContentScanFailOpen
 	}
 
 	return validateAIAuditChainSecrets(config)

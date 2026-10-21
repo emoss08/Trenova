@@ -914,7 +914,7 @@ func (s *Service) revokeQuietly(
 	}
 }
 
-func (s *Service) aad(
+func connectionAAD(
 	conn *accountingsync.AccountingConnection,
 	field string,
 ) encryptionservice.AAD {
@@ -933,7 +933,7 @@ func (s *Service) seal(
 ) (accountingsync.TokenGrant, error) {
 	access, err := s.encryption.EncryptStringWithAAD(
 		grant.AccessToken,
-		s.aad(conn, accessTokenField),
+		connectionAAD(conn, accessTokenField),
 	)
 	if err != nil {
 		return accountingsync.TokenGrant{}, err
@@ -950,7 +950,7 @@ func (s *Service) seal(
 
 	refresh, err := s.encryption.EncryptStringWithAAD(
 		grant.RefreshToken,
-		s.aad(conn, refreshTokenField),
+		connectionAAD(conn, refreshTokenField),
 	)
 	if err != nil {
 		return accountingsync.TokenGrant{}, err
@@ -971,7 +971,7 @@ func (s *Service) open(
 	conn *accountingsync.AccountingConnection,
 	field, ciphertext string,
 ) (string, error) {
-	return s.encryption.DecryptStringWithAAD(ciphertext, s.aad(conn, field))
+	return s.encryption.DecryptStringWithAAD(ciphertext, connectionAAD(conn, field))
 }
 
 func tokensOf(

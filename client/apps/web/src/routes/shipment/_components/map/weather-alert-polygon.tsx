@@ -1,6 +1,7 @@
 import { ALERT_CATEGORY_CONFIG, type WeatherAlertFeature } from "@/types/weather-alert";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
-import { useEffect, useRef } from "react";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import { useEffect } from "react";
 
 function coordsToLatLng(ring: number[][]): google.maps.LatLngLiteral[] {
   return ring.map(([lng, lat]) => ({ lat, lng }));
@@ -15,8 +16,7 @@ export function WeatherAlertPolygon({
 }) {
   const map = useMap();
   const mapsLib = useMapsLibrary("maps");
-  const onClickRef = useRef(onClick);
-  onClickRef.current = onClick;
+  const click = useLatestCallback(onClick);
 
   useEffect(() => {
     if (!map || !mapsLib || !feature.geometry) return;
@@ -48,7 +48,7 @@ export function WeatherAlertPolygon({
       });
 
       polygon.addListener("click", () => {
-        onClickRef.current(feature);
+        click(feature);
       });
 
       polygons.push(polygon);
@@ -70,7 +70,7 @@ export function WeatherAlertPolygon({
         polygon.setMap(null);
       }
     };
-  }, [map, mapsLib, feature]);
+  }, [map, mapsLib, feature, click]);
 
   return null;
 }

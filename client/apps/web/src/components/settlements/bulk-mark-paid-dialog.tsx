@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Input } from "@trenova/shared/components/ui/input";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 export type BulkMarkPaidMethod = {
   value: string;
@@ -53,11 +53,13 @@ export function BulkMarkPaidDialog({
 
   // If the offered methods change (or no longer include the current pick),
   // fall back to the first offered method rather than submitting a stale one.
-  useEffect(() => {
-    if (!methods.some((method) => method.value === paymentMethod)) {
-      setPaymentMethod(methods[0]?.value ?? "");
-    }
-  }, [methods, paymentMethod]);
+  const fallbackMethod = methods[0]?.value ?? "";
+  if (
+    paymentMethod !== fallbackMethod &&
+    !methods.some((method) => method.value === paymentMethod)
+  ) {
+    setPaymentMethod(fallbackMethod);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

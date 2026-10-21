@@ -10,12 +10,14 @@ import (
 	"math/big"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/stretchr/testify/require"
 )
 
@@ -125,7 +127,7 @@ func TestAS2TransportDeliverSyncMDN(t *testing.T) {
 	defer server.Close()
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
-	transport := NewAS2Transport()
+	transport := newLoopbackAS2Transport()
 	result, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
@@ -152,7 +154,7 @@ func TestAS2TransportDeliverAsyncMDNIsPending(t *testing.T) {
 	defer server.Close()
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeAsync)
-	transport := NewAS2Transport()
+	transport := newLoopbackAS2Transport()
 	result, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
@@ -184,7 +186,7 @@ func TestAS2TransportDeliverFailsOnRejectedMDN(t *testing.T) {
 	defer server.Close()
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
-	transport := NewAS2Transport()
+	transport := newLoopbackAS2Transport()
 	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
@@ -207,7 +209,7 @@ func TestAS2TransportDeliverFailsOnHTTPRejection(t *testing.T) {
 	defer server.Close()
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
-	transport := NewAS2Transport()
+	transport := newLoopbackAS2Transport()
 	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
@@ -216,6 +218,71 @@ func TestAS2TransportDeliverFailsOnHTTPRejection(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "status 403")
+}
+
+func newLoopbackAS2Transport() *AS2Transport {
+	return NewAS2TransportWithPolicy(httpsafe.Policy{AllowPrivateNetworks: true})
+}
+
+func TestAS2TransportRefusesPrivateEndpointsByDefault(t *testing.T) {
+	t.Parallel()
+
+	local := newAS2TestIdentity(t, "trenova.example")
+	partner := newAS2TestIdentity(t, "partner.example")
+
+	var hits atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits.Add(1)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	transport := NewAS2Transport(nil)
+	for _, endpoint := range []string{
+		server.URL,
+		"http://169.254.169.254/latest/meta-data/",
+		"http://[::ffff:127.0.0.1]/as2",
+		"file:///etc/passwd",
+	} {
+		profile, secrets := as2TestProfile(local, partner, endpoint, MDNModeSync)
+		_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
+			Profile:  profile,
+			Secrets:  secrets,
+			FileName: "shipment.edi",
+			Contents: as2TestPayload,
+		})
+		require.Error(t, err, endpoint)
+		require.Contains(t, err.Error(), "not permitted", endpoint)
+
+		checks := transport.TestConnection(t.Context(), &ediports.EDITransportRequest{
+			Profile: profile,
+			Secrets: secrets,
+		})
+		endpointCheck := checks[len(checks)-1]
+		require.Equal(t, "endpoint", endpointCheck.Name, endpoint)
+		require.Equal(t, ediports.EDIConnectionCheckFailed, endpointCheck.Status, endpoint)
+	}
+	require.Zero(t, hits.Load())
+}
+
+func TestAS2TransportRefusesMetadataEvenWhenPrivateNetworksAreAllowed(t *testing.T) {
+	t.Parallel()
+
+	local := newAS2TestIdentity(t, "trenova.example")
+	partner := newAS2TestIdentity(t, "partner.example")
+	profile, secrets := as2TestProfile(
+		local,
+		partner,
+		"http://169.254.169.254/latest/meta-data/",
+		MDNModeSync,
+	)
+	_, err := newLoopbackAS2Transport().Deliver(t.Context(), &ediports.EDITransportRequest{
+		Profile:  profile,
+		Secrets:  secrets,
+		FileName: "shipment.edi",
+		Contents: as2TestPayload,
+	})
+	require.ErrorIs(t, err, httpsafe.ErrBlockedAddress)
 }
 
 func TestAS2ConfigFromProfileValidation(t *testing.T) {

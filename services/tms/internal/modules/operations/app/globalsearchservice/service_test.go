@@ -51,6 +51,7 @@ func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
 		config:      &config.SearchConfig{},
 		searchRepo:  repo,
 		permissions: permissionportsmock.NewMockPermissionEngine(t),
+		visibility:  everyRecordVisible{},
 	}
 
 	result, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{})
@@ -60,6 +61,7 @@ func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
 }
 
 func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
+	workerID := pulid.MustNew("wrk_")
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
@@ -71,7 +73,7 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 		RunAndReturn(func(_ context.Context, req customerports.SearchRequest) (*customerports.SearchPage, error) {
 			requests = append(requests, req)
 			return page(map[string]any{
-				"id":               "wrk_123",
+				"id":               workerID.String(),
 				"first_name":       "Sam",
 				"last_name":        "Carter",
 				"status":           "Active",
@@ -96,6 +98,7 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 		},
 		searchRepo:  repo,
 		permissions: allowAllPermissionsMock(t),
+		visibility:  everyRecordVisible{},
 	}
 
 	result, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{
@@ -111,7 +114,7 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 	require.Equal(t, "workers", requests[0].Index)
 	require.Equal(
 		t,
-		`organization_id = "`+orgID.String()+`" AND business_unit_id = "`+buID.String()+`"`,
+		`(organization_id = "`+orgID.String()+`") AND (business_unit_id = "`+buID.String()+`")`,
 		requests[0].Filter,
 	)
 	require.Len(t, result.Groups, 1)
@@ -120,7 +123,7 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 	require.Equal(t, "Sam Carter", result.Groups[0].Hits[0].Title)
 	require.Equal(
 		t,
-		"/hr/workers?panelEntityId=wrk_123&panelType=edit",
+		"/hr/workers?panelEntityId="+workerID.String()+"&panelType=edit",
 		result.Groups[0].Hits[0].Href,
 	)
 }
@@ -152,6 +155,7 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 		},
 		searchRepo:  repo,
 		permissions: allowAllPermissionsMock(t),
+		visibility:  everyRecordVisible{},
 	}
 
 	_, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{
@@ -169,6 +173,7 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 }
 
 func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
+	workerID := pulid.MustNew("wrk_")
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
@@ -186,7 +191,7 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 		})).
 		Return(page(
 			map[string]any{
-				"id":               "wrk_123",
+				"id":               workerID.String(),
 				"first_name":       "Sam",
 				"last_name":        "Carter",
 				"status":           "Active",
@@ -209,6 +214,7 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 		},
 		searchRepo:  repo,
 		permissions: allowAllPermissionsMock(t),
+		visibility:  everyRecordVisible{},
 	}
 
 	result, err := svc.Search(context.Background(), &kernelports.GlobalSearchRequest{

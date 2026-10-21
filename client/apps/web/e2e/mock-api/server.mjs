@@ -98,7 +98,7 @@ async function handle(req, res) {
   if (url.pathname === "/__mock/scenario") {
     if (req.method === "POST") {
       state.dispose();
-      state = createState({ ...state.scenario, ...(body ?? {}) });
+      state = createState({ ...state.scenario, ...body });
       publish("reset", {});
     }
     return send(res, 200, { ...state.scenario, anchor: state.anchor, triageAnchor: state.triageAnchor });

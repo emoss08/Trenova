@@ -159,11 +159,11 @@ export function DeskExtractBody({ artifact, onOpenArtifact }: BodyProps) {
 
   const file = { fileName: fileName || t("this document"), documentId };
   const onCheck = () => {
-    noteDocumentAsk(documentId, { threadId, intent: "check", at: Date.now() });
+    noteDocumentAsk(documentId, { threadId, intent: "check" });
     askAgent(threadId, checkQuestion(file, names, t));
   };
   const onCreate = () => {
-    noteDocumentAsk(documentId, { threadId, intent: "create", at: Date.now() });
+    noteDocumentAsk(documentId, { threadId, intent: "create" });
     askAgent(threadId, createQuestion(file, t));
   };
 

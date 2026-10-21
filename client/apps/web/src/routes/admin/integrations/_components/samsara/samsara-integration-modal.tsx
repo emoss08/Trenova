@@ -16,7 +16,7 @@ import {
   SidebarProvider,
 } from "@trenova/shared/components/ui/sidebar";
 import { type IconComponent, Settings01Icon, Users01Icon } from "@trenova/shared/components/icons";
-import React, { Activity, useEffect, useState } from "react";
+import React, { Activity, useState } from "react";
 import { SamsaraConfigurationContent } from "./configuration-content";
 import { SamsaraWorkerSyncCard } from "./sync/samsara-worker-sync-card";
 
@@ -52,11 +52,13 @@ export function SamsaraIntegrationModal({
 
   const [activeView, setActiveView] = useState<SamsaraView>("configuration");
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (!open) {
       setActiveView("configuration");
     }
-  }, [open]);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -114,3 +114,31 @@ func (r *keyRepository) ClearExpiredPrevious(
 		return int(affected), nil
 	})
 }
+
+func (r *keyRepository) RebindSealedKey(
+	ctx context.Context,
+	req *agentports.RebindAIProviderKeyRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		cols := aiprovidercol.ProviderColumns
+		column := cols.APIKey
+		if req.Previous {
+			column = cols.PreviousAPIKey
+		}
+
+		if _, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*aiprovider.Provider)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID).
+					Where(column.Eq(), req.Expected)
+			}).
+			Set(column.Set(), req.Replacement).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("rebind ai provider key: %w", err)
+		}
+
+		return nil
+	})
+}

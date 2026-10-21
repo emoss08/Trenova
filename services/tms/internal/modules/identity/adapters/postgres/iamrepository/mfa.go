@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
+	"github.com/uptrace/bun"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -231,8 +232,20 @@ func (r *mfaRepository) ConsumeRecoveryCode(
 			Model((*iam.MFARecoveryCode)(nil)).
 			Set(recoveryCols.UsedAt.Set(), req.UsedAt).
 			Where(recoveryCols.UserID.Eq(), req.UserID).
-			Where(recoveryCols.CodeHash.Eq(), req.CodeHash).
 			Where(recoveryCols.UsedAt.IsNull()).
+			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+				return q.
+					WhereGroup(" OR ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+						return q.
+							Where(recoveryCols.HashVersion.Eq(), iam.RecoveryCodeHashHMAC).
+							Where(recoveryCols.CodeHash.Eq(), req.CodeHash)
+					}).
+					WhereGroup(" OR ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+						return q.
+							Where(recoveryCols.HashVersion.Eq(), iam.RecoveryCodeHashSHA256).
+							Where(recoveryCols.CodeHash.Eq(), req.LegacyCodeHash)
+					})
+			}).
 			Exec(ctx)
 		if err != nil {
 			return false, fmt.Errorf("consume recovery code: %w", err)
@@ -259,6 +272,25 @@ func (r *mfaRepository) CountUnusedRecoveryCodes(
 			Count(ctx)
 		if err != nil {
 			return 0, fmt.Errorf("count recovery codes: %w", err)
+		}
+
+		return int(count), nil
+	})
+}
+
+func (r *mfaRepository) CountLegacyRecoveryCodes(
+	ctx context.Context,
+	userID pulid.ID,
+) (int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
+		count, err := r.db.DBForContext(ctx).NewSelect().
+			Model((*iam.MFARecoveryCode)(nil)).
+			Where(recoveryCols.UserID.Eq(), userID).
+			Where(recoveryCols.UsedAt.IsNull()).
+			Where(recoveryCols.HashVersion.Eq(), iam.RecoveryCodeHashSHA256).
+			Count(ctx)
+		if err != nil {
+			return 0, fmt.Errorf("count legacy recovery codes: %w", err)
 		}
 
 		return int(count), nil

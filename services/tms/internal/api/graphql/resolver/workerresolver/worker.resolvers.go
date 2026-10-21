@@ -257,6 +257,7 @@ func (r *QueryResolver) WorkerPTOEntries(ctx context.Context, input gqlmodel.Wor
 		Type:          base.PtoTypeString(input.Type),
 		StartDateFrom: base.Int64Value(input.StartDateFrom),
 		StartDateTo:   base.Int64Value(input.StartDateTo),
+		Overlapping:   base.BoolValue(input.Overlapping),
 		WorkerID:      workerIDValue,
 		IncludeWorker: base.BoolValue(input.IncludeWorker),
 	})

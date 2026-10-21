@@ -3,6 +3,7 @@ import { getDestinationStop, getOriginStop, getRouteProgress } from "@/lib/shipm
 import { Truck01Icon } from "@trenova/shared/components/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useIsTruncated } from "@trenova/shared/hooks/use-is-truncated";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -67,7 +68,8 @@ export function RouteTrack({ shipment }: { shipment: Shipment }) {
   const t = useT();
   const origin = getOriginStop(shipment);
   const destination = getDestinationStop(shipment);
-  const progress = getRouteProgress(shipment, Date.now() / 1000);
+  const now = useNow();
+  const progress = getRouteProgress(shipment, now);
   const stage = shipment.stage ?? "NeedsCoverage";
   const meta = STAGE_META[stage];
   const moving = stage === "Moving" || stage === "Late";

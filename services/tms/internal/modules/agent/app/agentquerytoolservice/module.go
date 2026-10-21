@@ -83,7 +83,6 @@ func coreToolProviders() []any {
 		newComposeTableViewTool,
 		newExplainRateTool,
 		newListDashboardsTool,
-		newListWorkersTool,
 		newListInvoicesTool,
 		newListCarrierCapacityPostingsTool,
 		newGetCustomerTool,
@@ -102,7 +101,6 @@ func coreToolProviders() []any {
 		newGetAgentRunTool,
 		newGetServiceFailureTool,
 		provideGetWorkerCredentialTool,
-		provideListTimeOffTool,
 		provideListReportsTool,
 		provideRunReportTool,
 		provideGetReportRunTool,
@@ -219,10 +217,6 @@ func provideDescribeReportDatasetTool(
 
 func providePreviewReportTool(reports *reporting.Service) agentports.AgentQueryTool {
 	return newPreviewReportTool(reports)
-}
-
-func provideListTimeOffTool(pto workerports.WorkerPTOService) agentports.AgentQueryTool {
-	return newListTimeOffTool(pto)
 }
 
 // The monitoring tools read the board, the telematics feed, service failures,

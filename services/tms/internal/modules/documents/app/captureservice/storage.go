@@ -30,7 +30,7 @@ func thumbnailKey(pageStoragePath string) string {
 	return pageStoragePath + ".thumb.jpg"
 }
 
-func (s *Service) aad(tenantInfo pagination.TenantInfo, key string) encryptionservice.AAD {
+func captureObjectAAD(tenantInfo pagination.TenantInfo, key string) encryptionservice.AAD {
 	return encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeCapturePage,
 		OrganizationID: tenantInfo.OrgID,
@@ -49,7 +49,7 @@ func (s *Service) putObject(
 	contentType string,
 	plaintext []byte,
 ) error {
-	sealed, err := s.cipher.EncryptBytesWithAAD(plaintext, s.aad(tenantInfo, key))
+	sealed, err := s.cipher.EncryptBytesWithAAD(plaintext, captureObjectAAD(tenantInfo, key))
 	if err != nil {
 		return fmt.Errorf("seal capture object: %w", err)
 	}
@@ -85,7 +85,10 @@ func (s *Service) getObject(
 		return nil, fmt.Errorf("read capture object: %w", err)
 	}
 
-	plaintext, err := s.cipher.DecryptBytesWithAAD(string(sealed), s.aad(tenantInfo, key))
+	plaintext, err := s.cipher.DecryptBytesWithAAD(
+		string(sealed),
+		captureObjectAAD(tenantInfo, key),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("open capture object: %w", err)
 	}

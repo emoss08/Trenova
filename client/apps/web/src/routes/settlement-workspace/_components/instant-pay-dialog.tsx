@@ -64,13 +64,13 @@ export function InstantPayDialog({
   const [paymentMethod, setPaymentMethod] = useState("ACH");
   const [paymentReference, setPaymentReference] = useState("");
 
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevWorkerId, setPrevWorkerId] = useState(worker?.workerId);
+  const [prevEvents, setPrevEvents] = useState<UnsettledPayEvent[] | undefined>(undefined);
+
   useEffect(() => {
     if (open) {
       reset({ workerId: worker?.workerId ?? "" });
-      setCheckedIds(new Set());
-      setApplyRecurring(false);
-      setPaymentMethod("ACH");
-      setPaymentReference("");
     }
   }, [open, worker?.workerId, reset]);
 
@@ -80,11 +80,23 @@ export function InstantPayDialog({
     enabled: open && workerId.length > 0,
   });
 
-  useEffect(() => {
+  if (open !== prevOpen || worker?.workerId !== prevWorkerId) {
+    setPrevOpen(open);
+    setPrevWorkerId(worker?.workerId);
+    if (open) {
+      setCheckedIds(new Set());
+      setApplyRecurring(false);
+      setPaymentMethod("ACH");
+      setPaymentReference("");
+    }
+  }
+
+  if (events.data !== prevEvents) {
+    setPrevEvents(events.data);
     if (events.data) {
       setCheckedIds(new Set(events.data.map((event) => event.id)));
     }
-  }, [events.data]);
+  }
 
   const selectedEvents = useMemo(
     () => (events.data ?? []).filter((event) => checkedIds.has(event.id)),

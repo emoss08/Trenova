@@ -117,6 +117,7 @@ func (s *Service) VerifyForPublish(
 	// would verify content the author has already replaced.
 	compiled := s.compile(def, &content, compileOptions{Strict: true})
 	diags := compiled.diags
+	diags = append(diags, printedSourceDiagnostics(&content)...)
 
 	// The union across channels, not per channel: a subject line cannot restate
 	// a charge table, and a charge table has no business in a subject.

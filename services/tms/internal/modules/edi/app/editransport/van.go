@@ -4,15 +4,18 @@ import (
 	"context"
 	"path"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/maputils"
 )
 
-type VANTransport struct{}
+type VANTransport struct {
+	network sftpNetwork
+}
 
-func NewVANTransport() *VANTransport {
-	return &VANTransport{}
+func NewVANTransport(cfg *config.Config) *VANTransport {
+	return &VANTransport{network: sftpNetworkFromConfig(cfg)}
 }
 
 func (t *VANTransport) Method() edi.ConnectionMethod {
@@ -32,5 +35,5 @@ func (t *VANTransport) Deliver(
 		return nil, ErrVanMailboxIDRequired
 	}
 
-	return deliverOverSFTP(ctx, req, path.Join("/", mailboxID, "outbound"))
+	return deliverOverSFTP(ctx, t.network, req, path.Join("/", mailboxID, "outbound"))
 }

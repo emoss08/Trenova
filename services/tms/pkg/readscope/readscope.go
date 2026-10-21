@@ -15,6 +15,7 @@ import (
 const (
 	ScopeOwn  = "own"
 	ScopeTeam = "team"
+	ScopeNone = "none"
 
 	GinContextKey = "trenova.readscope"
 )
@@ -38,6 +39,7 @@ type Resolver func(ctx context.Context) (Grants, error)
 type Holder struct {
 	once    sync.Once
 	resolve Resolver
+	grants  Grants
 	encoded string
 	err     error
 }
@@ -66,30 +68,63 @@ func Without(ctx context.Context) context.Context {
 }
 
 func Encode(ctx context.Context) (string, error) {
-	if holder, ok := ctx.Value(ctxKey{}).(*Holder); ok && holder == nil {
+	holder := active(ctx)
+	if holder == nil {
 		return "", nil
+	}
+	holder.load(ctx)
+
+	return holder.encoded, holder.err
+}
+
+// Narrows reports whether the request reads fewer records of kind than its
+// tenant holds. Anything that answers for the database without asking it,
+// a cache in particular, must not answer a request it narrows.
+func Narrows(ctx context.Context, kind string) (bool, error) {
+	holder := active(ctx)
+	if holder == nil {
+		return false, nil
+	}
+	holder.load(ctx)
+	if holder.err != nil {
+		return true, holder.err
+	}
+
+	grant, ok := holder.grants[kind]
+	return ok && narrow(grant.Scope), nil
+}
+
+func active(ctx context.Context) *Holder {
+	if holder, ok := ctx.Value(ctxKey{}).(*Holder); ok && holder == nil {
+		return nil
 	}
 	holder := Current(ctx)
 	if holder == nil || holder.resolve == nil {
-		return "", nil
+		return nil
 	}
+	return holder
+}
 
-	holder.once.Do(func() {
-		grants, err := holder.resolve(Without(ctx))
+func (h *Holder) load(ctx context.Context) {
+	h.once.Do(func() {
+		grants, err := h.resolve(Without(ctx))
 		if err != nil {
-			holder.err = fmt.Errorf("resolve the records this request may read: %w", err)
+			h.err = fmt.Errorf("resolve the records this request may read: %w", err)
 			return
 		}
-		holder.encoded, holder.err = grants.Encode()
+		h.grants = grants
+		h.encoded, h.err = grants.Encode()
 	})
+}
 
-	return holder.encoded, holder.err
+func narrow(scope string) bool {
+	return scope == ScopeOwn || scope == ScopeTeam || scope == ScopeNone
 }
 
 func (g Grants) Encode() (string, error) {
 	kinds := make([]string, 0, len(g))
 	for kind, grant := range g {
-		if grant.Scope == ScopeOwn || grant.Scope == ScopeTeam {
+		if narrow(grant.Scope) {
 			kinds = append(kinds, kind)
 		}
 	}

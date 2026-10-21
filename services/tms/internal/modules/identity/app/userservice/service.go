@@ -1,6 +1,7 @@
 package userservice
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"mime/multipart"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -49,6 +51,7 @@ type Params struct {
 	PermissionEngine  permissionports.PermissionEngine
 	AuthEventHistory  iamports.AuthEventHistoryRepository `optional:"true"`
 	AuthEvents        iamports.AuthEventRecorder          `optional:"true"`
+	ContentGate       contentscanports.Gate
 }
 
 type Service struct {
@@ -68,6 +71,7 @@ type Service struct {
 	permissions  permissionports.PermissionEngine
 	signIns      iamports.AuthEventHistoryRepository
 	authEvents   iamports.AuthEventRecorder
+	contentGate  contentscanports.Gate
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -88,6 +92,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		permissions:  p.PermissionEngine,
 		signIns:      p.AuthEventHistory,
 		authEvents:   p.AuthEvents,
+		contentGate:  p.ContentGate,
 	}
 }
 
@@ -365,12 +370,19 @@ func (s *Service) UploadProfilePicture(
 		return nil, err
 	}
 
-	file, err := fileHeader.Open()
+	content, err := fileutils.ReadMultipart(fileHeader)
 	if err != nil {
 		return nil, errortypes.NewDatabaseError("Failed to process uploaded profile picture").
 			WithInternal(err)
 	}
-	defer file.Close()
+	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+		TenantInfo: tenantInfo,
+		Source:     contentscanports.SourceUpload,
+		FileName:   fileHeader.Filename,
+		Content:    content,
+	}); err != nil {
+		return nil, contentscanports.RefusalError("file", err)
+	}
 
 	contentType := fileHeader.Header.Get("Content-Type")
 	key := fileutils.GenerateStoragePath(
@@ -382,8 +394,8 @@ func (s *Service) UploadProfilePicture(
 	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         key,
 		ContentType: contentType,
-		Size:        fileHeader.Size,
-		Body:        file,
+		Size:        int64(len(content)),
+		Body:        bytes.NewReader(content),
 		Metadata: map[string]string{
 			"original_name": fileHeader.Filename,
 			"resource_type": "user-profile-picture",
@@ -640,6 +652,14 @@ func (s *Service) ChangeMyPassword(
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
+		return nil, err
+	}
+
+	if err = tenant.CheckNewPassword(
+		"newPassword",
+		req.NewPassword,
+		user.EmailAddress,
+	); err != nil {
 		return nil, err
 	}
 

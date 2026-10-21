@@ -7,7 +7,7 @@ import {
 } from "@/lib/data-table";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import type { FilterItem } from "@trenova/shared/types/data-table";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 type FilterSearchParamsUpdate = UrlFilterState & { pageIndex: number };
 
@@ -33,13 +33,16 @@ export function useDataTableFilterSync({
 
   const lastSyncedUrlRef = useRef(urlSerialized);
   const urlSerializedRef = useRef(urlSerialized);
-  urlSerializedRef.current = urlSerialized;
   const filterItemsRef = useRef(filterItems);
-  filterItemsRef.current = filterItems;
   const fieldsRef = useRef(fields);
-  fieldsRef.current = fields;
   const setSearchParamsRef = useRef(setSearchParams);
-  setSearchParamsRef.current = setSearchParams;
+
+  useLayoutEffect(() => {
+    urlSerializedRef.current = urlSerialized;
+    filterItemsRef.current = filterItems;
+    fieldsRef.current = fields;
+    setSearchParamsRef.current = setSearchParams;
+  });
 
   const debouncedFilterItems = useDebounce(filterItems, 300);
 
@@ -65,9 +68,7 @@ export function useDataTableFilterSync({
       filterItemsToUrlFilterState(filterItemsRef.current),
     );
     if (draftSerialized === urlSerialized) return;
-    setFilterItems(
-      buildFilterItemsFromUrlState({ fieldFilters, filterGroups }, fieldsRef.current),
-    );
+    setFilterItems(buildFilterItemsFromUrlState({ fieldFilters, filterGroups }, fieldsRef.current));
   }, [urlSerialized, fieldFilters, filterGroups]);
 
   const applyFilterState = useCallback((state: UrlFilterState) => {

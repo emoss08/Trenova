@@ -95,7 +95,15 @@ func TestListModels_UsesTheStoredKeyOnlyForItsOwnEndpoint(t *testing.T) {
 		return tester.models.Endpoint.SealedAPIKey
 	}
 
-	assert.Equal(t, repo.provider.APIKey, ask("https://api.example.com/v1"))
+	stored, err := svc.decryptAPIKey(t.Context(), repo.provider)
+	require.NoError(t, err)
+	sealed := ask("https://api.example.com/v1")
+	require.NotEmpty(t, sealed)
+	unsealed, err := svc.unseal(draftTenant(repo.provider), &agentports.SealedAIProviderEndpoint{
+		SealedAPIKey: sealed,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, stored, unsealed)
 	assert.Empty(t, ask("https://attacker.example.net/v1"),
 		"a stored key is never sent to an address it was not entered for")
 }
@@ -192,6 +200,7 @@ type recordingKeys struct {
 	agentports.AIProviderKeyRepository
 
 	fingerprints []agentports.RecordAIProviderKeyFingerprintRequest
+	rebinds      []agentports.RebindAIProviderKeyRequest
 	cleared      int
 }
 
@@ -200,6 +209,14 @@ func (f *recordingKeys) RecordFingerprint(
 	req agentports.RecordAIProviderKeyFingerprintRequest,
 ) error {
 	f.fingerprints = append(f.fingerprints, req)
+	return nil
+}
+
+func (f *recordingKeys) RebindSealedKey(
+	_ context.Context,
+	req *agentports.RebindAIProviderKeyRequest,
+) error {
+	f.rebinds = append(f.rebinds, *req)
 	return nil
 }
 
@@ -268,4 +285,59 @@ func TestPatchEdits_SetsAndClearsCachePrices(t *testing.T) {
 		edit(provider)
 	}
 	assert.Nil(t, provider.CacheWriteCostPerMillion)
+}
+
+func TestRunTest_BindsALegacyKeyToItsProvider(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeProviderRepo{}
+	prober := &fakeProber{result: &agentports.TestAIProviderResult{Success: true}}
+	svc := newTestService(repo, prober)
+	keys := &recordingKeys{}
+	svc.keys = keys
+	repo.provider = testProvider(t, svc)
+	legacy, err := svc.encryption.EncryptString("gsk_AbCdEfGhIjKlMnOpQrStUvWxYz012345")
+	require.NoError(t, err)
+	repo.provider.APIKey = legacy
+
+	_, err = svc.RunTest(t.Context(), agentports.GetAIProviderByIDRequest{
+		ID:         repo.provider.ID,
+		TenantInfo: draftTenant(repo.provider),
+	})
+	require.NoError(t, err)
+
+	require.Len(t, keys.rebinds, 1)
+	rebind := keys.rebinds[0]
+	assert.Equal(t, repo.provider.ID, rebind.ID)
+	assert.False(t, rebind.Previous)
+	assert.Equal(t, legacy, rebind.Expected)
+	bound, err := svc.encryption.DecryptStringWithAAD(rebind.Replacement, credentialAAD(repo.provider))
+	require.NoError(t, err)
+	assert.Equal(t, "gsk_AbCdEfGhIjKlMnOpQrStUvWxYz012345", bound)
+}
+
+func TestRunTest_RefusesAKeyBoundToAnotherProvider(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeProviderRepo{}
+	svc := newTestService(repo, &fakeProber{result: &agentports.TestAIProviderResult{Success: true}})
+	keys := &recordingKeys{}
+	svc.keys = keys
+	repo.provider = testProvider(t, svc)
+
+	other := *repo.provider
+	other.ID = pulid.MustNew("aiprv_")
+	foreign, err := svc.encryption.EncryptStringWithAAD(
+		"gsk_AbCdEfGhIjKlMnOpQrStUvWxYz012345",
+		credentialAAD(&other),
+	)
+	require.NoError(t, err)
+	repo.provider.APIKey = foreign
+
+	_, err = svc.RunTest(t.Context(), agentports.GetAIProviderByIDRequest{
+		ID:         repo.provider.ID,
+		TenantInfo: draftTenant(repo.provider),
+	})
+	require.Error(t, err)
+	assert.Empty(t, keys.rebinds)
 }

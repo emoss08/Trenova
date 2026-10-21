@@ -15,6 +15,7 @@ const (
 	resetErrorRateLimited        = "rate_limited"
 	resetErrorInvalidToken       = "invalid_token"
 	resetErrorInternal           = "internal_error"
+	resetErrorWeakPassword       = "weak_password"
 )
 
 type resetEvent struct {

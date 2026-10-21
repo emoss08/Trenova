@@ -1,6 +1,7 @@
 {
   "Account setup": "账户设置",
   "Activate {0, plural, one {# role} other {# roles}}": "启用 {0, plural, other {# 个角色}}",
+  "At least 8 characters": "至少 8 个字符",
   "Authorized roles": "已授权的角色",
   "Back to sign in": "返回登录",
   "By continuing you agree to our": "继续即表示您同意我们的",

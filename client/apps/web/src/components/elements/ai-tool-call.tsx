@@ -69,11 +69,21 @@ function AiToolCall({
     [isControlled, onOpenChange],
   );
 
-  React.useEffect(() => {
-    if (state === "completed" || state === "error") {
-      handleOpenChange(true);
+  const [prevState, setPrevState] = React.useState<ToolCallState | null>(null);
+  const settled = state === "completed" || state === "error";
+
+  if (state !== prevState) {
+    setPrevState(state);
+    if (settled && !isControlled) {
+      setUncontrolledOpen(true);
     }
-  }, [state, handleOpenChange]);
+  }
+
+  React.useEffect(() => {
+    if (settled) {
+      onOpenChange?.(true);
+    }
+  }, [settled, state, onOpenChange]);
 
   const contextValue = React.useMemo(() => ({ name, state, isOpen }), [name, state, isOpen]);
 

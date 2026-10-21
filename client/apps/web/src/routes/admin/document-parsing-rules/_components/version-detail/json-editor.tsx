@@ -21,7 +21,7 @@ import {
   RefreshCw02Icon,
   Upload01Icon,
 } from "@trenova/shared/components/icons";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 
 function parseJsonErrorPosition(message: string): number | null {
@@ -50,11 +50,6 @@ export function JsonEditor() {
   );
   const [parseError, setParseError] = useState<string | null>(null);
   const [applied, setApplied] = useState(false);
-
-  useEffect(() => {
-    setLocalValue(JSON.stringify(getValues("ruleDocument"), null, 2));
-    setParseError(null);
-  }, [getValues]);
 
   const handleApply = useCallback(() => {
     try {

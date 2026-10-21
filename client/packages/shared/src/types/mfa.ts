@@ -29,6 +29,7 @@ export const mfaStatusSchema = z.object({
   enabledAt: z.number().optional(),
   lastUsedAt: z.number().optional(),
   recoveryCodesRemaining: z.number(),
+  recoveryCodesNeedReplacing: z.boolean().optional().default(false),
   sessionVerified: z.boolean(),
 });
 

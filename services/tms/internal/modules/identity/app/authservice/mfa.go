@@ -20,9 +20,11 @@ const (
 	maxMFAChallengeFailures = 5
 	mfaAssuranceLevel       = 2
 
-	mfaStateChallenged = "challenged"
-	riskDecisionAllow  = "allow"
-	mfaStateRejected   = "rejected"
+	mfaStateChallenged         = "challenged"
+	riskDecisionAllow          = "allow"
+	mfaStateRejected           = "rejected"
+	mfaStateFederated          = "federated"
+	mfaStateFederationNotTrust = "federated_not_trusted"
 
 	authErrorMFAChallenge   = "mfa_challenge_invalid"
 	authErrorMFAInvalidCode = "mfa_invalid_code"
@@ -43,6 +45,7 @@ func (s *Service) issueMFAChallenge(
 	usr *tenant.User,
 	targetOrg *tenant.Organization,
 	attempt *authAttempt,
+	federation *iamports.MFAChallengeFederation,
 ) (*tenantports.LoginResponse, error) {
 	if s.mfa == nil || s.challenges == nil {
 		return nil, nil //nolint:nilnil // no second factor is configured for this process
@@ -67,6 +70,7 @@ func (s *Service) issueMFAChallenge(
 		EmailAddress: usr.EmailAddress,
 		IssuedAt:     now,
 		ExpiresAt:    now + int64(mfaChallengeTTL.Seconds()),
+		Federation:   federation,
 	}
 	if targetOrg != nil {
 		challenge.OrganizationID = targetOrg.ID
@@ -127,8 +131,9 @@ func (s *Service) VerifyMFAChallenge(
 		return nil, err
 	}
 
-	throttleKey := loginThrottleKey(ctx, usr.EmailAddress)
-	if err = s.checkLoginThrottle(ctx, throttleKey, attempt); err != nil {
+	throttleKey := sessionports.NewLoginThrottleKey(ctx, usr.EmailAddress)
+	decision, err := s.beginLoginAttempt(ctx, throttleKey, attempt)
+	if err != nil {
 		return nil, err
 	}
 
@@ -140,7 +145,7 @@ func (s *Service) VerifyMFAChallenge(
 	})
 	if err != nil {
 		attempt.mfaState = mfaStateRejected
-		return nil, s.rejectMFAAttempt(ctx, tokenHash, throttleKey, attempt, err)
+		return nil, s.rejectMFAAttempt(ctx, tokenHash, decision, attempt, err)
 	}
 	attempt.mfaState = method
 
@@ -158,24 +163,31 @@ func (s *Service) VerifyMFAChallenge(
 	}
 
 	now := timeutils.NowUnix()
-	return s.finishLogin(scoped, usr, targetOrg, loginSessionContext{
+	authn := loginSessionContext{
 		AuthProvider:          iamports.AuthEventProviderPassword,
 		AuthenticatorAAL:      mfaAssuranceLevel,
 		FederationFAL:         1,
 		MFAAuthenticatedAt:    now,
 		LastReauthenticatedAt: now,
 		RiskDecision:          riskDecisionAllow,
-	})
+	}
+	if federation := challenge.Federation; federation != nil {
+		authn.AuthProvider = federation.AuthProvider
+		authn.ExternalSubject = federation.ExternalSubject
+		authn.FederationFAL = federation.FederationFAL
+		attempt.fal = federation.FederationFAL
+	}
+	return s.finishLogin(scoped, usr, targetOrg, authn)
 }
 
 func (s *Service) rejectMFAAttempt(
 	ctx context.Context,
 	tokenHash string,
-	throttleKey sessionports.LoginThrottleKey,
+	decision *sessionports.LoginThrottleDecision,
 	attempt *authAttempt,
 	cause error,
 ) error {
-	s.recordLoginFailure(ctx, throttleKey)
+	s.recordLoginFailure(ctx, decision)
 
 	failures, err := s.challenges.RecordFailure(ctx, tokenHash, mfaChallengeTTL)
 	if err != nil {

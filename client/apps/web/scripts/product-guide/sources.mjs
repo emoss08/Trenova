@@ -416,7 +416,7 @@ export function readPageHeader(file, exportName = null) {
   for (const candidate of routeFiles(directory).sort()) {
     // Another page in the same directory is a different page with its own
     // header; only the components this page is built from speak for it.
-    if (candidate === file || /page\.tsx$/.test(candidate)) {
+    if (candidate === file || candidate.endsWith("page.tsx")) {
       continue;
     }
     const header = headerIn(candidate);

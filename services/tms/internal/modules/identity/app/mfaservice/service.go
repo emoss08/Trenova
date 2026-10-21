@@ -2,7 +2,11 @@ package mfaservice
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -64,39 +68,58 @@ type Params struct {
 	Auditor    permissionports.SecurityAuditor
 	Config     *config.Config
 	Logger     *zap.Logger
+	Throttle   sessionports.LoginThrottleStore `optional:"true"`
+	AuthEvents iamports.AuthEventRecorder      `optional:"true"`
 }
 
 type Service struct {
-	repo     iamports.MFARepository
-	users    tenantports.UserRepository
-	sessions sessionports.SessionRepository
-	enc      *encryptionservice.Service
-	auditor  permissionports.SecurityAuditor
-	issuer   string
-	l        *zap.Logger
-	now      func() time.Time
+	repo        iamports.MFARepository
+	users       tenantports.UserRepository
+	sessions    sessionports.SessionRepository
+	enc         *encryptionservice.Service
+	auditor     permissionports.SecurityAuditor
+	throttle    sessionports.LoginThrottleStore
+	authEvents  iamports.AuthEventRecorder
+	recoveryKey []byte
+	issuer      string
+	l           *zap.Logger
+	now         func() time.Time
 }
 
-func New(p Params) sessionports.MFAService { //nolint:gocritic // fx params are passed by value
+func New(
+	p Params, //nolint:gocritic // fx params are passed by value
+) (sessionports.MFAService, error) {
 	return newService(&p)
 }
 
-func newService(p *Params) *Service {
+func newService(p *Params) (*Service, error) {
 	issuer := defaultIssuer
-	if p.Config != nil && strings.TrimSpace(p.Config.App.Name) != "" {
-		issuer = strings.TrimSpace(p.Config.App.Name)
+	var security *config.SecurityConfig
+	if p.Config != nil {
+		security = &p.Config.Security
+		if strings.TrimSpace(p.Config.App.Name) != "" {
+			issuer = strings.TrimSpace(p.Config.App.Name)
+		}
+	}
+
+	recoveryKey, err := security.RecoveryCodePepperKey()
+	if err != nil {
+		return nil, fmt.Errorf("derive the recovery code key: %w", err)
 	}
 
 	return &Service{
-		repo:     p.Repository,
-		users:    p.Users,
-		sessions: p.Sessions,
-		enc:      p.Encryption,
-		auditor:  p.Auditor,
-		issuer:   issuer,
-		l:        p.Logger.Named("service.mfa"),
-		now:      time.Now,
-	}
+		repo:        p.Repository,
+		users:       p.Users,
+		sessions:    p.Sessions,
+		enc:         p.Encryption,
+		auditor:     p.Auditor,
+		throttle:    p.Throttle,
+		authEvents:  p.AuthEvents,
+		recoveryKey: recoveryKey,
+		issuer:      issuer,
+		l:           p.Logger.Named("service.mfa"),
+		now:         time.Now,
+	}, nil
 }
 
 func (s *Service) Status(
@@ -128,6 +151,12 @@ func (s *Service) Status(
 		return nil, err
 	}
 	status.RecoveryCodesRemaining = remaining
+
+	legacy, err := s.repo.CountLegacyRecoveryCodes(ctx, tenantInfo.UserID)
+	if err != nil {
+		return nil, err
+	}
+	status.RecoveryCodesNeedReplacing = legacy > 0
 
 	return status, nil
 }
@@ -250,15 +279,19 @@ func (s *Service) ConfirmTOTPEnrollment(
 }
 
 func (s *Service) DisableTOTP(ctx context.Context, req *sessionports.DisableTOTPRequest) error {
-	if _, err := s.verifyPassword(ctx, req.TenantInfo.UserID, req.Password); err != nil {
+	attempt, err := s.beginStepUp(ctx, req.TenantInfo.UserID, req.TenantInfo)
+	if err != nil {
 		return err
 	}
 
-	if _, err := s.VerifySecondFactor(ctx, &sessionports.VerifySecondFactorRequest{
+	err = s.verifyPasswordAndSecondFactor(ctx, &sessionports.ReauthenticateRequest{
 		UserID:       req.TenantInfo.UserID,
+		Password:     req.Password,
 		Code:         req.Code,
 		RecoveryCode: req.RecoveryCode,
-	}); err != nil {
+	})
+	s.finishStepUp(ctx, attempt, err)
+	if err != nil {
 		return err
 	}
 
@@ -286,7 +319,14 @@ func (s *Service) RegenerateRecoveryCodes(
 	ctx context.Context,
 	req *sessionports.RegenerateRecoveryCodesRequest,
 ) (*sessionports.RecoveryCodesResponse, error) {
-	if err := s.verifyTOTP(ctx, req.TenantInfo.UserID, req.Code); err != nil {
+	attempt, err := s.beginStepUp(ctx, req.TenantInfo.UserID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.verifyTOTP(ctx, req.TenantInfo.UserID, req.Code)
+	s.finishStepUp(ctx, attempt, err)
+	if err != nil {
 		return nil, err
 	}
 
@@ -377,10 +417,6 @@ func (s *Service) Reauthenticate(
 	ctx context.Context,
 	req *sessionports.ReauthenticateRequest,
 ) (string, error) {
-	if _, err := s.verifyPassword(ctx, req.UserID, req.Password); err != nil {
-		return "", err
-	}
-
 	active, err := s.HasActiveFactor(ctx, req.UserID)
 	if err != nil {
 		return "", err
@@ -389,11 +425,39 @@ func (s *Service) Reauthenticate(
 		return "", errNoActiveFactor
 	}
 
-	return s.VerifySecondFactor(ctx, &sessionports.VerifySecondFactorRequest{
+	attempt, err := s.beginStepUp(ctx, req.UserID, pagination.TenantInfo{})
+	if err != nil {
+		return "", err
+	}
+
+	if _, err = s.verifyPassword(ctx, req.UserID, req.Password); err != nil {
+		s.finishStepUp(ctx, attempt, err)
+		return "", err
+	}
+
+	method, err := s.VerifySecondFactor(ctx, &sessionports.VerifySecondFactorRequest{
 		UserID:       req.UserID,
 		Code:         req.Code,
 		RecoveryCode: req.RecoveryCode,
 	})
+	s.finishStepUp(ctx, attempt, err)
+	return method, err
+}
+
+func (s *Service) verifyPasswordAndSecondFactor(
+	ctx context.Context,
+	req *sessionports.ReauthenticateRequest,
+) error {
+	if _, err := s.verifyPassword(ctx, req.UserID, req.Password); err != nil {
+		return err
+	}
+
+	_, err := s.VerifySecondFactor(ctx, &sessionports.VerifySecondFactorRequest{
+		UserID:       req.UserID,
+		Code:         req.Code,
+		RecoveryCode: req.RecoveryCode,
+	})
+	return err
 }
 
 func (s *Service) verifyPassword(
@@ -477,9 +541,10 @@ func (s *Service) consumeRecoveryCode(ctx context.Context, userID pulid.ID, code
 	}
 
 	consumed, err := s.repo.ConsumeRecoveryCode(ctx, iamports.ConsumeRecoveryCodeRequest{
-		UserID:   userID,
-		CodeHash: tokenutils.Hash(normalized),
-		UsedAt:   s.now().Unix(),
+		UserID:         userID,
+		CodeHash:       s.hashRecoveryCode(normalized),
+		LegacyCodeHash: tokenutils.Hash(normalized),
+		UsedAt:         s.now().Unix(),
 	})
 	if err != nil {
 		return err
@@ -504,11 +569,18 @@ func (s *Service) newRecoveryCodes(
 		hashed = append(hashed, &iam.MFARecoveryCode{
 			UserID:         tenantInfo.UserID,
 			OrganizationID: tenantInfo.OrgID,
-			CodeHash:       tokenutils.Hash(totputils.NormalizeRecoveryCode(code)),
+			CodeHash:       s.hashRecoveryCode(totputils.NormalizeRecoveryCode(code)),
+			HashVersion:    iam.RecoveryCodeHashHMAC,
 		})
 	}
 
 	return codes, hashed, nil
+}
+
+func (s *Service) hashRecoveryCode(normalized string) string {
+	mac := hmac.New(sha256.New, s.recoveryKey)
+	mac.Write([]byte(normalized))
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func (s *Service) decryptSecret(authenticator *iam.MFAAuthenticator) (string, error) {

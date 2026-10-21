@@ -29,9 +29,10 @@ type ReplaceRecoveryCodesRequest struct {
 }
 
 type ConsumeRecoveryCodeRequest struct {
-	UserID   pulid.ID
-	CodeHash string
-	UsedAt   int64
+	UserID         pulid.ID
+	CodeHash       string
+	LegacyCodeHash string
+	UsedAt         int64
 }
 
 type MFARepository interface {
@@ -43,16 +44,24 @@ type MFARepository interface {
 	ReplaceRecoveryCodes(ctx context.Context, req *ReplaceRecoveryCodesRequest) error
 	ConsumeRecoveryCode(ctx context.Context, req ConsumeRecoveryCodeRequest) (bool, error)
 	CountUnusedRecoveryCodes(ctx context.Context, userID pulid.ID) (int, error)
+	CountLegacyRecoveryCodes(ctx context.Context, userID pulid.ID) (int, error)
 }
 
 type MFAChallenge struct {
-	UserID         pulid.ID `json:"userId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	SwitchOrg      bool     `json:"switchOrg"`
-	EmailAddress   string   `json:"emailAddress"`
-	IssuedAt       int64    `json:"issuedAt"`
-	ExpiresAt      int64    `json:"expiresAt"`
+	UserID         pulid.ID                `json:"userId"`
+	OrganizationID pulid.ID                `json:"organizationId"`
+	BusinessUnitID pulid.ID                `json:"businessUnitId"`
+	SwitchOrg      bool                    `json:"switchOrg"`
+	EmailAddress   string                  `json:"emailAddress"`
+	IssuedAt       int64                   `json:"issuedAt"`
+	ExpiresAt      int64                   `json:"expiresAt"`
+	Federation     *MFAChallengeFederation `json:"federation,omitempty"`
+}
+
+type MFAChallengeFederation struct {
+	AuthProvider    string `json:"authProvider"`
+	ExternalSubject string `json:"externalSubject"`
+	FederationFAL   int    `json:"federationFal"`
 }
 
 type MFAChallengeRepository interface {

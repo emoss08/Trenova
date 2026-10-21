@@ -47,12 +47,12 @@ func (_m *MockLoginThrottleStore) EXPECT() *MockLoginThrottleStore_Expecter {
 	return &MockLoginThrottleStore_Expecter{mock: &_m.Mock}
 }
 
-// Check provides a mock function for the type MockLoginThrottleStore
-func (_mock *MockLoginThrottleStore) Check(ctx context.Context, key sessionports.LoginThrottleKey) (*sessionports.LoginThrottleDecision, error) {
+// Begin provides a mock function for the type MockLoginThrottleStore
+func (_mock *MockLoginThrottleStore) Begin(ctx context.Context, key sessionports.LoginThrottleKey) (*sessionports.LoginThrottleDecision, error) {
 	ret := _mock.Called(ctx, key)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Check")
+		panic("no return value specified for Begin")
 	}
 
 	var r0 *sessionports.LoginThrottleDecision
@@ -75,19 +75,19 @@ func (_mock *MockLoginThrottleStore) Check(ctx context.Context, key sessionports
 	return r0, r1
 }
 
-// MockLoginThrottleStore_Check_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Check'
-type MockLoginThrottleStore_Check_Call struct {
+// MockLoginThrottleStore_Begin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Begin'
+type MockLoginThrottleStore_Begin_Call struct {
 	*mock.Call
 }
 
-// Check is a helper method to define mock.On call
+// Begin is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key repositories.LoginThrottleKey
-func (_e *MockLoginThrottleStore_Expecter) Check(ctx any, key any) *MockLoginThrottleStore_Check_Call {
-	return &MockLoginThrottleStore_Check_Call{Call: _e.mock.On("Check", ctx, key)}
+func (_e *MockLoginThrottleStore_Expecter) Begin(ctx any, key any) *MockLoginThrottleStore_Begin_Call {
+	return &MockLoginThrottleStore_Begin_Call{Call: _e.mock.On("Begin", ctx, key)}
 }
 
-func (_c *MockLoginThrottleStore_Check_Call) Run(run func(ctx context.Context, key sessionports.LoginThrottleKey)) *MockLoginThrottleStore_Check_Call {
+func (_c *MockLoginThrottleStore_Begin_Call) Run(run func(ctx context.Context, key sessionports.LoginThrottleKey)) *MockLoginThrottleStore_Begin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -105,122 +105,54 @@ func (_c *MockLoginThrottleStore_Check_Call) Run(run func(ctx context.Context, k
 	return _c
 }
 
-func (_c *MockLoginThrottleStore_Check_Call) Return(loginThrottleDecision *sessionports.LoginThrottleDecision, err error) *MockLoginThrottleStore_Check_Call {
+func (_c *MockLoginThrottleStore_Begin_Call) Return(loginThrottleDecision *sessionports.LoginThrottleDecision, err error) *MockLoginThrottleStore_Begin_Call {
 	_c.Call.Return(loginThrottleDecision, err)
 	return _c
 }
 
-func (_c *MockLoginThrottleStore_Check_Call) RunAndReturn(run func(ctx context.Context, key sessionports.LoginThrottleKey) (*sessionports.LoginThrottleDecision, error)) *MockLoginThrottleStore_Check_Call {
+func (_c *MockLoginThrottleStore_Begin_Call) RunAndReturn(run func(ctx context.Context, key sessionports.LoginThrottleKey) (*sessionports.LoginThrottleDecision, error)) *MockLoginThrottleStore_Begin_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// RecordFailure provides a mock function for the type MockLoginThrottleStore
-func (_mock *MockLoginThrottleStore) RecordFailure(ctx context.Context, key sessionports.LoginThrottleKey) (*sessionports.LoginThrottleDecision, error) {
+// Succeed provides a mock function for the type MockLoginThrottleStore
+func (_mock *MockLoginThrottleStore) Succeed(ctx context.Context, key sessionports.LoginThrottleKey) error {
 	ret := _mock.Called(ctx, key)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RecordFailure")
-	}
-
-	var r0 *sessionports.LoginThrottleDecision
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sessionports.LoginThrottleKey) (*sessionports.LoginThrottleDecision, error)); ok {
-		return returnFunc(ctx, key)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sessionports.LoginThrottleKey) *sessionports.LoginThrottleDecision); ok {
-		r0 = returnFunc(ctx, key)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*sessionports.LoginThrottleDecision)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sessionports.LoginThrottleKey) error); ok {
-		r1 = returnFunc(ctx, key)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockLoginThrottleStore_RecordFailure_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordFailure'
-type MockLoginThrottleStore_RecordFailure_Call struct {
-	*mock.Call
-}
-
-// RecordFailure is a helper method to define mock.On call
-//   - ctx context.Context
-//   - key repositories.LoginThrottleKey
-func (_e *MockLoginThrottleStore_Expecter) RecordFailure(ctx any, key any) *MockLoginThrottleStore_RecordFailure_Call {
-	return &MockLoginThrottleStore_RecordFailure_Call{Call: _e.mock.On("RecordFailure", ctx, key)}
-}
-
-func (_c *MockLoginThrottleStore_RecordFailure_Call) Run(run func(ctx context.Context, key sessionports.LoginThrottleKey)) *MockLoginThrottleStore_RecordFailure_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sessionports.LoginThrottleKey
-		if args[1] != nil {
-			arg1 = args[1].(sessionports.LoginThrottleKey)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockLoginThrottleStore_RecordFailure_Call) Return(loginThrottleDecision *sessionports.LoginThrottleDecision, err error) *MockLoginThrottleStore_RecordFailure_Call {
-	_c.Call.Return(loginThrottleDecision, err)
-	return _c
-}
-
-func (_c *MockLoginThrottleStore_RecordFailure_Call) RunAndReturn(run func(ctx context.Context, key sessionports.LoginThrottleKey) (*sessionports.LoginThrottleDecision, error)) *MockLoginThrottleStore_RecordFailure_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Reset provides a mock function for the type MockLoginThrottleStore
-func (_mock *MockLoginThrottleStore) Reset(ctx context.Context, account string) error {
-	ret := _mock.Called(ctx, account)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Reset")
+		panic("no return value specified for Succeed")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, account)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sessionports.LoginThrottleKey) error); ok {
+		r0 = returnFunc(ctx, key)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// MockLoginThrottleStore_Reset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Reset'
-type MockLoginThrottleStore_Reset_Call struct {
+// MockLoginThrottleStore_Succeed_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Succeed'
+type MockLoginThrottleStore_Succeed_Call struct {
 	*mock.Call
 }
 
-// Reset is a helper method to define mock.On call
+// Succeed is a helper method to define mock.On call
 //   - ctx context.Context
-//   - account string
-func (_e *MockLoginThrottleStore_Expecter) Reset(ctx any, account any) *MockLoginThrottleStore_Reset_Call {
-	return &MockLoginThrottleStore_Reset_Call{Call: _e.mock.On("Reset", ctx, account)}
+//   - key sessionports.LoginThrottleKey
+func (_e *MockLoginThrottleStore_Expecter) Succeed(ctx any, key any) *MockLoginThrottleStore_Succeed_Call {
+	return &MockLoginThrottleStore_Succeed_Call{Call: _e.mock.On("Succeed", ctx, key)}
 }
 
-func (_c *MockLoginThrottleStore_Reset_Call) Run(run func(ctx context.Context, account string)) *MockLoginThrottleStore_Reset_Call {
+func (_c *MockLoginThrottleStore_Succeed_Call) Run(run func(ctx context.Context, key sessionports.LoginThrottleKey)) *MockLoginThrottleStore_Succeed_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 sessionports.LoginThrottleKey
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(sessionports.LoginThrottleKey)
 		}
 		run(
 			arg0,
@@ -230,12 +162,12 @@ func (_c *MockLoginThrottleStore_Reset_Call) Run(run func(ctx context.Context, a
 	return _c
 }
 
-func (_c *MockLoginThrottleStore_Reset_Call) Return(err error) *MockLoginThrottleStore_Reset_Call {
+func (_c *MockLoginThrottleStore_Succeed_Call) Return(err error) *MockLoginThrottleStore_Succeed_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockLoginThrottleStore_Reset_Call) RunAndReturn(run func(ctx context.Context, account string) error) *MockLoginThrottleStore_Reset_Call {
+func (_c *MockLoginThrottleStore_Succeed_Call) RunAndReturn(run func(ctx context.Context, key sessionports.LoginThrottleKey) error) *MockLoginThrottleStore_Succeed_Call {
 	_c.Call.Return(run)
 	return _c
 }

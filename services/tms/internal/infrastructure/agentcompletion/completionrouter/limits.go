@@ -274,7 +274,10 @@ func (s *Service) withKeyFallback(
 		return err
 	}
 
-	previous, decryptErr := s.encryption.DecryptString(provider.PreviousAPIKey)
+	previous, _, decryptErr := s.encryption.DecryptStringWithLegacy(
+		provider.PreviousAPIKey,
+		credentialAAD(provider),
+	)
 	if decryptErr != nil {
 		return err
 	}

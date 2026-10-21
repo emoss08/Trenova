@@ -118,7 +118,7 @@ function ReversalDetailPanel({
         queryKey: journalReversal.get(reversal.id).queryKey,
       });
     }
-  }, [queryClient, reversal?.id]);
+  }, [queryClient, reversal]);
 
   const { mutateAsync: approve, isPending: isApproving } = useApiMutation({
     mutationFn: () => apiService.journalReversalService.approve(reversal!.id!),

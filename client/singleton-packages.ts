@@ -26,4 +26,6 @@ export const singletonPackages = [
   "react-hook-form",
   "react-error-boundary",
   "zustand",
+  "motion",
+  "zod",
 ] as const;

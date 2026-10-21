@@ -50,8 +50,11 @@ x-tms-environment: &tms-environment
   TRENOVA_STORAGE_BUCKET: ${TRENOVA_STORAGE_BUCKET:-trenova}
   TRENOVA_SECURITY_SESSION_SECRET: ${TRENOVA_SECURITY_SESSION_SECRET:?set TRENOVA_SECURITY_SESSION_SECRET in .env}
   TRENOVA_SECURITY_ENCRYPTION_KEY: ${TRENOVA_SECURITY_ENCRYPTION_KEY:?set TRENOVA_SECURITY_ENCRYPTION_KEY in .env}
+  TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS: ${TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS:-}
+  TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER: ${TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER:?set TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER in .env (openssl rand -hex 32)}
   TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD:?set TRENOVA_SYSTEM_SYSTEMUSERPASSWORD in .env}
   TRENOVA_DOCUMENTCONVERSION_APIKEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}
+  TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS: ${TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS:-}
   TRENOVA_AI_AUDIT_CHAIN_KEYS: ${TRENOVA_AI_AUDIT_CHAIN_KEYS:-}
   TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID: ${TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID:-}
   TRENOVA_PUSH_VAPIDPUBLICKEY: ${TRENOVA_PUSH_VAPIDPUBLICKEY:-}
@@ -389,6 +392,37 @@ services:
   # permissions; never an account). Both are idempotent and run on every
   # start, so an upgrade applies new migrations and any seed a release adds;
   # a seed already applied is skipped.
+  # Malware scanning (optional): clamd checks every uploaded file, inbound
+  # email attachment, capture page and inbound EDI file before anything
+  # opens it. Start it with `docker compose --profile clamav up -d` and set
+  # TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS=clamav:3310 in .env. Once the address
+  # is set a file is refused while clamd is unreachable, so wait for the
+  # first signature download (several minutes) before setting it. freshclam
+  # runs inside the container and needs the egress network for signature
+  # updates; clamd itself is reached only on the data network. See "Malware
+  # scanning" in docs/self-hosting/README.md.
+  clamav:
+    profiles: [clamav]
+    image: clamav/clamav:1.4
+    volumes:
+      - clamav_data:/var/lib/clamav
+    security_opt:
+      - "no-new-privileges:true"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 256
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 600s
+    restart: unless-stopped
+    logging: *logging
+    networks: [data, egress]
+
   tms-migrate:
     <<: *tms-service
     entrypoint: ["/bin/sh", "-c"]
@@ -569,6 +603,9 @@ services:
         condition: service_healthy
       imaging:
         condition: service_healthy
+      clamav:
+        condition: service_healthy
+        required: false
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "-T", "5", "http://127.0.0.1:8080/api/v1/system/version"]
       interval: 10s
@@ -601,6 +638,9 @@ services:
       # Not required: without an API key the sidecar refuses to start, and
       # the worker still runs and reports document extraction as not set up.
       docling:
+        condition: service_healthy
+        required: false
+      clamav:
         condition: service_healthy
         required: false
     restart: unless-stopped
@@ -686,6 +726,7 @@ volumes:
   imaging-server-tls:
   imaging-client-tls:
   imaging-ca:
+  clamav_data:
 
 networks:
   data:

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -50,6 +51,7 @@ type Params struct {
 	InvoiceMatcher      carrierports.CarrierInvoiceAutoMatcher `optional:"true"`
 	EDIService          *ediservice.Service
 	Transport           ediports.EDITransportDispatcher
+	ContentGate         contentscanports.Gate
 	WorkflowStarter     kernelports.WorkflowStarter
 	Metrics             *metrics.Registry `optional:"true"`
 	// Watchtower puts a held-back file on the feed a person reads.
@@ -78,6 +80,7 @@ type Service struct {
 	metrics             *metrics.EDI
 	watchtower          watchtowerports.WatchtowerProjector
 	publisher           agentports.AgentEventPublisher
+	contentGate         contentscanports.Gate
 }
 
 func New(p Params) *Service {
@@ -86,6 +89,7 @@ func New(p Params) *Service {
 		ediMetrics = p.Metrics.EDI
 	}
 	return &Service{
+		contentGate:         p.ContentGate,
 		l:                   p.Logger.Named("service.edi-inbound"),
 		metrics:             ediMetrics,
 		watchtower:          p.Watchtower,
@@ -342,6 +346,19 @@ func (s *Service) processInboundFile(
 		}
 	} else if file.Status != edi.InboundFileStatusReceived {
 		return file, nil
+	}
+
+	if _, scanErr := contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     contentscanports.SourceEDIInboundFile,
+		FileName:   file.FileName,
+		Content:    []byte(file.RawContent),
+	}); scanErr != nil {
+		var infected *contentscanports.InfectedError
+		if errors.As(scanErr, &infected) {
+			return s.quarantineFile(ctx, file, "the malware scanner found "+infected.Signature)
+		}
+		return nil, scanErr
 	}
 
 	interchange, parseErr := parseInterchange(file.RawContent)

@@ -102,6 +102,7 @@ func TestGrants_NamesTheNarrowKindsTheDatabaseEnforces(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, readscope.Grants{
 		"shipment": {Scope: "own"},
+		"order":    {Scope: "none"},
 		"worker":   {Scope: "team", Team: team},
 	}, grants)
 	assert.Equal(t, 1, teams.calls)
@@ -118,7 +119,32 @@ func TestGrants_IgnoresAScopeTheKindDoesNotDeclare(t *testing.T) {
 	grants, err := svc.Grants(t.Context(), principal())
 
 	require.NoError(t, err)
-	assert.Equal(t, readscope.Grants{"order": {Scope: "own"}}, grants)
+	assert.Equal(t, readscope.Grants{
+		"order":   {Scope: "own"},
+		"invoice": {Scope: "none"},
+		"worker":  {Scope: "none"},
+	}, grants)
+}
+
+func TestGrants_DeniesEveryKindThePrincipalCannotRead(t *testing.T) {
+	t.Parallel()
+
+	svc := newService(t, enforcing(), &fakeTeams{}, map[string]permission.DataScope{
+		"shipment": permission.DataScopeOrganization,
+	})
+
+	grants, err := svc.Grants(t.Context(), principal())
+
+	require.NoError(t, err)
+	assert.Equal(t, readscope.Grants{
+		"invoice": {Scope: readscope.ScopeNone},
+		"order":   {Scope: readscope.ScopeNone},
+		"worker":  {Scope: readscope.ScopeNone},
+	}, grants)
+
+	encoded, err := grants.Encode()
+	require.NoError(t, err)
+	assert.Equal(t, "invoice:none;order:none;worker:none", encoded)
 }
 
 func TestGrants_NarrowsNothingWhileTheDatabaseDoesNotEnforceScopes(t *testing.T) {

@@ -13230,15 +13230,6 @@
       "routes/edi"
     ]
   },
-  "Accept MFA claims from the provider when risk policy allows it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Accept a field": {
     "sites": 1,
     "scope": [
@@ -32614,12 +32605,11 @@
     ]
   },
   "At least 8 characters": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/routes",
       "routes/auth"
     ]
   },
@@ -33034,6 +33024,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "At least {0} characters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/routes"
     ]
   },
   "At least {0} seconds": {
@@ -64361,6 +64360,15 @@
       "routes/shipment"
     ]
   },
+  "Count the provider's sign-in as two-factor when its token names a multi-factor method (amr) or one of the ACR values below. Otherwise people who use an authenticator app are asked for its code after signing in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Count this unit's miles and fuel on the quarterly return.": {
     "sites": 1,
     "scope": [
@@ -87179,6 +87187,15 @@
       "routes/agent-control"
     ]
   },
+  "Each trusted ACR value must be between 1 and 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.": {
     "sites": 1,
     "scope": [
@@ -90894,6 +90911,15 @@
     ]
   },
   "Endpoint must be a valid URL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Endpoint must be an https address of a supported push service": {
     "sites": 1,
     "scope": [
       "go"
@@ -96807,6 +96833,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Exact authentication context (acr) values this provider sends only for a multi-factor sign-in. Leave blank to trust the amr claim alone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Exact key": {
@@ -127609,6 +127644,15 @@
       "go/other"
     ]
   },
+  "Issuer URL must be an https address on a public network, without credentials, a query or a fragment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Issuer is required": {
     "sites": 1,
     "scope": [
@@ -135782,6 +135826,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Line {0} of this file has a cell longer than {1} bytes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Line {0} of this file has more than {1} columns.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Line-level credit and rebill values that created the exception.": {
@@ -159191,6 +159253,15 @@
     ]
   },
   "No more than 100 sites can be excluded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "No more than 20 trusted ACR values can be listed": {
     "sites": 1,
     "scope": [
       "go"
@@ -183832,6 +183903,15 @@
       "routes/settings"
     ]
   },
+  "Password cannot be only spaces": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Password changed": {
     "sites": 1,
     "scope": [
@@ -183851,6 +183931,15 @@
     ]
   },
   "Password confirmation must match the new password": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Password does not meet the password policy": {
     "sites": 1,
     "scope": [
       "go"
@@ -183898,8 +183987,20 @@
       "routes/admin"
     ]
   },
-  "Password must be at least 8 characters": {
-    "sites": 2,
+  "Password must be 72 bytes or fewer": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/routes",
+      "go/other",
+      "routes/auth"
+    ]
+  },
+  "Password must be at least 12 characters": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -183908,12 +184009,21 @@
     ]
   },
   "Password must be at least {0} characters": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Password must not contain the account's email address": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Password or private key": {
@@ -265576,6 +265686,15 @@
       "apps/web/components"
     ]
   },
+  "The request nests records too deeply to be accepted": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The request the agent composed. Required: this is the substance of the message.": {
     "sites": 1,
     "scope": [
@@ -270776,6 +270895,15 @@
       "routes/settings"
     ]
   },
+  "This browser is already registered for notifications by another account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This can't be undone now": {
     "sites": 1,
     "scope": [
@@ -272308,6 +272436,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "This file could not be checked for malware right now, so it was not accepted. Try again in a few minutes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This file could not be read.": {
     "sites": 1,
     "scope": [
@@ -272333,6 +272470,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This file has more than {0} rows. Split it into smaller files and import each one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This file holds more than {0} bytes of text. Split it into smaller files and import each one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This file is already a shipment": {
@@ -272444,6 +272599,15 @@
     ]
   },
   "This file was not uploaded for this remittance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This file was refused: the malware scanner found {0} in it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -273941,6 +274105,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "This password is too common. Choose something harder to guess": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This pay is on hold — check with your fleet manager.": {
@@ -278370,6 +278543,15 @@
       "routes/settings"
     ]
   },
+  "Too many attempts. Wait a moment before trying again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Too many cells": {
     "sites": 1,
     "scope": [
@@ -282703,6 +282885,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Trusted ACR values": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Trusted to": {
@@ -307723,6 +307914,15 @@
       "routes/auth"
     ]
   },
+  "Your password must be at least {0} characters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/dash/routes"
+    ]
+  },
   "Your password must be changed before you can continue.": {
     "sites": 1,
     "scope": [
@@ -307838,6 +308038,16 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your recovery codes were saved with an older, weaker protection. Create new ones and store them safely.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/settings"
     ]
   },
   "Your reference": {

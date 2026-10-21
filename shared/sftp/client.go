@@ -12,11 +12,32 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/httpsafe"
 	pkgsftp "github.com/pkg/sftp"
 	"golang.org/x/crypto/ssh"
 )
 
 const dialTimeout = 30 * time.Second
+
+var ErrFileTooLarge = errors.New("SFTP file exceeds the maximum allowed size")
+
+type FileTooLargeError struct {
+	Path  string
+	Size  int64
+	Limit int64
+}
+
+func (e *FileTooLargeError) Error() string {
+	return fmt.Sprintf(
+		"SFTP file %s is larger than the %d byte limit",
+		e.Path,
+		e.Limit,
+	)
+}
+
+func (e *FileTooLargeError) Unwrap() error {
+	return ErrFileTooLarge
+}
 
 type RemoteFile struct {
 	Path     string
@@ -26,8 +47,9 @@ type RemoteFile struct {
 }
 
 type Client struct {
-	fs  *pkgsftp.Client
-	ssh *ssh.Client
+	fs           *pkgsftp.Client
+	ssh          *ssh.Client
+	maxFileBytes int64
 }
 
 func Dial(ctx context.Context, cfg Config) (*Client, error) {
@@ -41,8 +63,15 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 		return nil, err
 	}
 
+	if err = httpsafe.ValidateHost(cfg.Host, cfg.EgressPolicy); err != nil {
+		return nil, fmt.Errorf("SFTP host is not permitted: %w", err)
+	}
+
 	address := cfg.Address()
-	dialer := net.Dialer{Timeout: dialTimeout}
+	dialer := net.Dialer{
+		Timeout: dialTimeout,
+		Control: httpsafe.DialControl(cfg.EgressPolicy),
+	}
 
 	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
@@ -68,7 +97,7 @@ func Dial(ctx context.Context, cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("open SFTP session: %w", err)
 	}
 
-	return &Client{fs: fsClient, ssh: sshClient}, nil
+	return &Client{fs: fsClient, ssh: sshClient, maxFileBytes: cfg.maxFileBytes()}, nil
 }
 
 func (c *Client) Close() error {
@@ -110,9 +139,20 @@ func (c *Client) ReadFile(remotePath string) (string, error) {
 	}
 	defer file.Close()
 
-	data, err := io.ReadAll(file)
+	limit := c.maxFileBytes
+	if limit <= 0 {
+		limit = DefaultMaxFileBytes
+	}
+	if info, statErr := file.Stat(); statErr == nil && info.Size() > limit {
+		return "", &FileTooLargeError{Path: remotePath, Size: info.Size(), Limit: limit}
+	}
+
+	data, err := io.ReadAll(io.LimitReader(file, limit+1))
 	if err != nil {
 		return "", err
+	}
+	if int64(len(data)) > limit {
+		return "", &FileTooLargeError{Path: remotePath, Size: int64(len(data)), Limit: limit}
 	}
 
 	return string(data), nil

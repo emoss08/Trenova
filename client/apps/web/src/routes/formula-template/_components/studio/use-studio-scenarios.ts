@@ -192,19 +192,40 @@ export function useStudioScenarios({
   const { mutate: run } = runMutation;
 
   const scenariosRef = useRef(scenarios);
-  scenariosRef.current = scenarios;
-
   useEffect(() => {
+    scenariosRef.current = scenarios;
+  }, [scenarios]);
+
+  const runInputs = [
+    scenarios,
+    expression,
+    schemaId,
+    variableDefinitions,
+    breakdownDefinitions,
+    minCharge,
+    maxCharge,
+    roundingMode,
+    roundingPrecision,
+  ] as const;
+  const [seenRunInputs, setSeenRunInputs] = useState<typeof runInputs | null>(null);
+  if (
+    seenRunInputs === null ||
+    runInputs.some((value, index) => !Object.is(value, seenRunInputs[index]))
+  ) {
+    setSeenRunInputs(runInputs);
     if (scenarios.length === 0) {
       setRuns(new Map());
       setIsStale(false);
+    } else if (expression?.trim()) {
+      setIsStale(true);
+    }
+  }
+
+  useEffect(() => {
+    if (scenarios.length === 0 || !expression?.trim()) {
       return;
     }
-    if (!expression?.trim()) {
-      return;
-    }
-    setIsStale(true);
-    const timer = window.setTimeout(() => run(scenariosRef.current), SCENARIO_DEBOUNCE_MS);
+    const timer = window.setTimeout(() => run(scenarios), SCENARIO_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [
     scenarios,

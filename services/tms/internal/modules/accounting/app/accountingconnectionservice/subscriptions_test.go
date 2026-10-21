@@ -534,7 +534,7 @@ func TestANotificationOnAnotherAppsPathIsRefused(t *testing.T) {
 		Environment:     accountingsync.AppEnvironmentProduction,
 		ClientID:        "other-client",
 	}
-	sealed, err := h.encryption.EncryptStringWithAAD("other-secret", h.svc.appAAD(other, clientSecretField))
+	sealed, err := h.encryption.EncryptStringWithAAD("other-secret", appAAD(other, clientSecretField))
 	require.NoError(t, err)
 	other.ClientSecretCiphertext = sealed
 	h.apps.rows[integrationKey(pagination.TenantInfo{OrgID: other.OrganizationID, BuID: other.BusinessUnitID}, other.IntegrationType)] = other

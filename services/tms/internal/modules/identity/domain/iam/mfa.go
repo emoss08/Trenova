@@ -9,6 +9,11 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*MFARecoveryCode)(nil)
 
+const (
+	RecoveryCodeHashSHA256 int16 = 1
+	RecoveryCodeHashHMAC   int16 = 2
+)
+
 type MFARecoveryCode struct {
 	bun.BaseModel `bun:"table:mfa_recovery_codes,alias:mrc" json:"-"`
 
@@ -16,6 +21,7 @@ type MFARecoveryCode struct {
 	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
 	CodeHash       string   `json:"-"              bun:"code_hash,type:VARCHAR(64),notnull"`
+	HashVersion    int16    `json:"-"              bun:"hash_version,type:SMALLINT,notnull"`
 	UsedAt         int64    `json:"usedAt"         bun:"used_at,nullzero"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

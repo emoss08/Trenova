@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -68,6 +69,7 @@ type Params struct {
 	Redis              *goredis.Client `optional:"true"`
 	Encryption         *encryptionservice.Service
 	Triage             inboundmessageports.TriageEventSink `optional:"true"`
+	ContentGate        contentscanports.Gate
 }
 
 type Service struct {
@@ -85,6 +87,7 @@ type Service struct {
 	redis              *goredis.Client
 	encryption         *encryptionservice.Service
 	triage             inboundmessageports.TriageEventSink
+	contentGate        contentscanports.Gate
 }
 
 //nolint:gocritic // dependency injection param
@@ -104,6 +107,7 @@ func New(p Params) *Service {
 		redis:              p.Redis,
 		encryption:         p.Encryption,
 		triage:             p.Triage,
+		contentGate:        p.ContentGate,
 	}
 }
 
@@ -356,6 +360,10 @@ func (s *Service) UploadPart(
 		)
 	}
 
+	if err = s.scanPart(ctx, session, req, plaintext); err != nil {
+		return nil, err
+	}
+
 	if s.encryption == nil {
 		return nil, errortypes.NewBusinessError("Document encryption is not configured")
 	}
@@ -396,6 +404,38 @@ func (s *Service) UploadPart(
 	}}
 	session.LastActivityAt = timeutils.NowUnix()
 	return s.sessionRepo.Update(ctx, session)
+}
+
+func (s *Service) scanPart(
+	ctx context.Context,
+	session *documentupload.DocumentUploadSession,
+	req *documentuploadports.UploadPartRequest,
+	plaintext []byte,
+) error {
+	source := contentscanports.SourceUpload
+	if session.ProcessingProfile == document.ProcessingProfileInboundAttachment {
+		source = contentscanports.SourceInboundAttachment
+	}
+	_, err := contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     source,
+		FileName:   session.OriginalName,
+		Content:    plaintext,
+	})
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, contentscanports.ErrInfected) {
+		session.Status = documentupload.StatusQuarantined
+		session.FailureCode = documentupload.FailureMalwareDetected.String()
+		session.FailureMessage = err.Error()
+		session.LastActivityAt = timeutils.NowUnix()
+		if _, updateErr := s.sessionRepo.Update(ctx, session); updateErr != nil {
+			s.l.Error("could not fail the session of an infected upload",
+				zap.String("sessionId", session.ID.String()), zap.Error(updateErr))
+		}
+	}
+	return contentscanports.RefusalError("file", err)
 }
 
 func (s *Service) Complete(

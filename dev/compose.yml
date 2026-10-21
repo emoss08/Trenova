@@ -376,6 +376,23 @@ services:
                 condition: service_healthy
         restart: unless-stopped
 
+    clamav:
+        image: clamav/clamav:1.4
+        container_name: clamav
+        profiles:
+            - clamav
+        ports:
+            - "3310:3310"
+        volumes:
+            - clamav_data:/var/lib/clamav
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "clamdcheck.sh"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 600s
+
     samsara-sim:
         build:
             context: ..
@@ -402,3 +419,4 @@ volumes:
     minio_data: {}
     meilisearch_data: {}
     samsara_sim_data: {}
+    clamav_data: {}

@@ -462,3 +462,31 @@ describe("LoginForm", () => {
     expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
   });
 });
+
+describe("LoginForm after an SSO sign-in that needs this account's second factor", () => {
+  afterEach(() => {
+    cleanup();
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("opens on the code step with the challenge from the fragment and clears it", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/login/acme#mfa_challenge=sso-challenge-token&mfa_expires=1782403304",
+    );
+    mocks.verifyMFA.mockResolvedValue(loginResponse());
+    renderLoginForm(
+      <LoginForm
+        organizationSlug="acme"
+        stepLabel="01 / 02"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+
+    expect(await screen.findByText("Enter your code")).toBeInTheDocument();
+    expect(window.location.hash).toBe("");
+    expect(mocks.login).not.toHaveBeenCalled();
+  });
+});

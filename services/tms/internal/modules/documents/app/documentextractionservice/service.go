@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/searchfilter"
 	"go.temporal.io/api/serviceerror"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -314,19 +315,19 @@ func (s *Service) searchDocumentsViaSearchIndex(
 		return nil, nil
 	}
 
-	filter := fmt.Sprintf(
-		`organization_id = "%s" AND business_unit_id = "%s" AND resource_type = "%s" AND resource_id = "%s"`,
-		tenantInfo.OrgID,
-		tenantInfo.BuID,
-		resourceType,
-		resourceID,
+	filter := searchfilter.And(
+		searchfilter.Eq("organization_id", tenantInfo.OrgID.String()),
+		searchfilter.Eq("business_unit_id", tenantInfo.BuID.String()),
+		searchfilter.Eq("resource_type", resourceType),
+		searchfilter.Eq("resource_id", resourceID),
 	)
 
 	hits, err := s.searchRepo.Search(ctx, customerports.SearchRequest{
-		Index:  documentIndex,
-		Query:  query,
-		Limit:  250,
-		Filter: filter,
+		Index:      documentIndex,
+		Query:      query,
+		Limit:      250,
+		Filter:     filter,
+		Attributes: []string{"id"},
 	})
 	if err != nil {
 		s.logger.Warn("document intelligence meilisearch query failed", zap.Error(err))

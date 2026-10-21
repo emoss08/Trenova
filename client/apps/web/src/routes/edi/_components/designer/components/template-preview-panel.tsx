@@ -11,7 +11,7 @@ import {
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
 import { RefreshCw02Icon } from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { usePreviewEDIDocumentMutation } from "../hooks/use-edi-document-mutations";
 import { PreviewPane, parsePayload } from "./designer-shared";
@@ -30,9 +30,11 @@ export default function TemplatePreviewPanel() {
   const direction = (selectedProfile?.meta?.direction as string) || undefined;
   const canPreview = !!profileId && hasEDIDocumentSourceValue(sourceValues, transactionSet);
 
-  useEffect(() => {
+  const [prunedTransactionSet, setPrunedTransactionSet] = useState(transactionSet);
+  if (prunedTransactionSet !== transactionSet) {
+    setPrunedTransactionSet(transactionSet);
     setSourceValues((current) => pruneEDIDocumentSourceValues(current, transactionSet));
-  }, [transactionSet]);
+  }
 
   const setSourceValue = (field: EDIDocumentSourceField, value: string) => {
     setSourceValues((current) => ({ ...current, [field]: value }));

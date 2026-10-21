@@ -112,6 +112,29 @@ func TestVerifySvix_AcceptsOneOfSeveralRotatedSignatures(t *testing.T) {
 	require.NoError(t, webhooksig.VerifySvix(p))
 }
 
+func TestVerifySvix_AcceptsOnlyVersionOneSignatures(t *testing.T) {
+	t.Parallel()
+
+	p := signedDelivery(t, []byte(`{"ok":true}`), time.Unix(1784131200, 0))
+	sig := p.Signature[len("v1,"):]
+
+	for _, signature := range []string{
+		"v2," + sig,
+		"x," + sig,
+		"V1," + sig,
+		"v1a," + sig,
+		"," + sig,
+		sig,
+		"v2," + sig + " x," + sig,
+	} {
+		p.Signature = signature
+		require.ErrorIs(t, webhooksig.VerifySvix(p), webhooksig.ErrNoMatch, signature)
+	}
+
+	p.Signature = "v2," + sig + " v1," + sig
+	require.NoError(t, webhooksig.VerifySvix(p))
+}
+
 func TestVerifySvix_RefusesMissingHeaders(t *testing.T) {
 	t.Parallel()
 

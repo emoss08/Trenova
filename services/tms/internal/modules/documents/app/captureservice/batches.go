@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingkit"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -292,6 +293,9 @@ func (s *Service) PutPage(
 	if err != nil {
 		return nil, err
 	}
+	if err = s.scanReceived(ctx, batch, data); err != nil {
+		return nil, err
+	}
 	if err = s.checkPDF(ctx, data, 1); err != nil {
 		return nil, err
 	}
@@ -359,6 +363,22 @@ func validRotation(degrees int) bool {
 
 // storePage writes a page's bytes and its row, counting it on the batch when
 // it is new.
+func (s *Service) scanReceived(
+	ctx context.Context,
+	batch *capture.CaptureBatch,
+	data []byte,
+) error {
+	if _, err := contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID},
+		Source:     contentscanports.SourceCapturePage,
+		FileName:   batch.ID.String(),
+		Content:    data,
+	}); err != nil {
+		return contentscanports.RefusalError("body", err)
+	}
+	return nil
+}
+
 func (s *Service) storePage(
 	ctx context.Context,
 	batch *capture.CaptureBatch,
@@ -527,6 +547,9 @@ func (s *Service) PutPrintJob(
 
 	data, err := readBounded(in.Body, maxPrintJobBytes)
 	if err != nil {
+		return nil, err
+	}
+	if err = s.scanReceived(ctx, batch, data); err != nil {
 		return nil, err
 	}
 	if err = s.checkPDF(ctx, data, 0); err != nil {

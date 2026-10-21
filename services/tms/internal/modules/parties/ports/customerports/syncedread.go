@@ -49,8 +49,9 @@ type SearchPage struct {
 }
 
 type SearchRequest struct {
-	Index  string
-	Query  string
-	Limit  int
-	Filter string
+	Index      string
+	Query      string
+	Limit      int
+	Filter     string
+	Attributes []string
 }

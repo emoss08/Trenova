@@ -120,7 +120,11 @@ func (s *Service) Grants(
 	teamResolved := false
 	for i, result := range results.Results {
 		kind := s.kinds[i]
-		if !result.Allowed || !s.registry.EnforcedByDatabase(kind, result.DataScope) {
+		if !result.Allowed {
+			grants[kind] = readscope.Grant{Scope: readscope.ScopeNone}
+			continue
+		}
+		if !s.registry.EnforcedByDatabase(kind, result.DataScope) {
 			continue
 		}
 

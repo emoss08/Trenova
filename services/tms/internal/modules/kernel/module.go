@@ -1,6 +1,8 @@
 package kernel
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/usstaterepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
@@ -12,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
+	"github.com/emoss08/trenova/pkg/rateimport"
 	"go.uber.org/fx"
 )
 
@@ -25,6 +28,7 @@ func SharedOptions() fx.Option {
 			encryptionservice.NewSecretCipher,
 			usstaterepository.New,
 			settingversionrepository.New,
+			recordvisibilityrepository.New,
 			fx.Annotate(
 				entitlementservice.NewLocalEntitlementProvider,
 				fx.As(new(platformcatalogports.EntitlementProvider)),
@@ -38,10 +42,23 @@ func SharedOptions() fx.Option {
 				fx.As(new(platformcatalogports.UsageProvider)),
 			),
 			usstateservice.New,
+			spreadsheetLimits,
 		),
 	)
 }
 
 func APIOptions() fx.Option {
 	return fx.Options()
+}
+
+func spreadsheetLimits(cfg *config.Config) rateimport.Limits {
+	limits := cfg.GetSpreadsheetImportConfig()
+	return rateimport.Limits{
+		MaxRows:          limits.MaxRows,
+		MaxColumns:       limits.MaxColumns,
+		MaxCellBytes:     limits.MaxCellBytes,
+		MaxSheetBytes:    limits.MaxSheetBytes,
+		MaxUnzippedBytes: limits.MaxUnzippedBytes,
+		MaxPartBytes:     limits.MaxPartBytes,
+	}
 }

@@ -341,6 +341,20 @@ func (s *Service) compile(
 	return result
 }
 
+// printedSourceDiagnostics checks the parts of a printed document that are not
+// a channel of their own: the stylesheet, which WrapDocument inserts into a
+// <style> element, and the running header and footer. It runs on save, on
+// publish and before every render, so none of them reaches the renderer
+// unchecked.
+func printedSourceDiagnostics(
+	content *documenttemplateports.TemplateContent,
+) templateengine.Diagnostics {
+	opts := templateengine.DocumentSanitizeOptions()
+	diags := templateengine.SanitizeCSS("cssContent", content.CSSContent)
+	diags = append(diags, templateengine.SanitizeHTML("headerHtml", content.HeaderHTML, opts)...)
+	return append(diags, templateengine.SanitizeHTML("footerHtml", content.FooterHTML, opts)...)
+}
+
 // diagnosticsToMultiError turns engine findings into the field errors a form can
 // show, so a bad template reads as a validation failure rather than a 500.
 func diagnosticsToMultiError(diags templateengine.Diagnostics) *errortypes.MultiError {

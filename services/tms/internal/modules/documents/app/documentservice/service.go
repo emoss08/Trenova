@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
@@ -73,6 +74,7 @@ type Params struct {
 	Storage              kernelports.Client
 	Validator            *Validator
 	AuditService         auditports.AuditService
+	ContentGate          contentscanports.Gate
 	DocumentIntelligence documentports.DocumentContentService
 	SearchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	WorkflowStarter      kernelports.WorkflowStarter
@@ -100,6 +102,7 @@ type Service struct {
 	storage              kernelports.Client
 	validator            *Validator
 	auditService         auditports.AuditService
+	contentGate          contentscanports.Gate
 	documentIntelligence documentports.DocumentContentService
 	searchProjection     documentsearchprojectionports.DocumentSearchProjectionService
 	workflowStarter      kernelports.WorkflowStarter
@@ -143,6 +146,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		storage:              p.Storage,
 		validator:            p.Validator,
 		auditService:         p.AuditService,
+		contentGate:          p.ContentGate,
 		documentIntelligence: documentIntelligence,
 		searchProjection:     searchProjection,
 		workflowStarter:      workflowStarter,
@@ -254,6 +258,7 @@ func (s *Service) Upload(
 		fileName:          req.File.Filename,
 		size:              req.File.Size,
 		contentType:       req.File.Header.Get("Content-Type"),
+		scanSource:        contentscanports.SourceUpload,
 		read:              func() ([]byte, error) { return io.ReadAll(file) },
 	})
 }
@@ -295,6 +300,7 @@ func (s *Service) Store(
 		fileName:          req.FileName,
 		size:              size,
 		contentType:       req.ContentType,
+		scanSource:        contentscanports.SourceGeneratedDocument,
 		read:              func() ([]byte, error) { return req.Content, nil },
 	})
 	if err != nil {
@@ -310,6 +316,7 @@ type uploadInput struct {
 	fileName          string
 	size              int64
 	contentType       string
+	scanSource        contentscanports.Source
 	read              func() ([]byte, error)
 }
 
@@ -359,6 +366,15 @@ func (s *Service) storeUpload(
 	if err != nil {
 		log.Error("failed to read uploaded file", zap.Error(err))
 		return nil, errortypes.NewDatabaseError("Failed to process uploaded file").WithInternal(err)
+	}
+
+	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     in.scanSource,
+		FileName:   in.fileName,
+		Content:    plaintext,
+	}); err != nil {
+		return nil, contentscanports.RefusalError("file", err)
 	}
 
 	uploadBody, cryptoMode, cryptoVersion, err := s.documentUploadBody(

@@ -152,7 +152,6 @@ func workforceQueryToolProviders() []any {
 		provideGetDOTRandomDrawTool,
 		provideListWorkerLeaveCasesTool,
 		provideListWorkerTrainingTool,
-		provideListTrainingCoursesTool,
 		provideListWorkerChecklistsTool,
 		provideListPerformanceReviewsTool,
 		provideListEmploymentVerificationsTool,

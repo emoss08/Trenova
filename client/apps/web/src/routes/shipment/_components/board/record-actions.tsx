@@ -14,15 +14,7 @@ import type { Shipment } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { recordPath } from "@/config/record-links";
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, use, useCallback, useMemo, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { buildShipmentRowActions } from "./row-actions";
 import { ShipmentCancelDialog } from "../shipment-cancel-dialog";
@@ -216,11 +208,14 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
     }
   }, [isUploading]);
 
-  useEffect(() => {
-    if (isUploadOpen || isUploading) return;
-    setUploadShipment(null);
-    setUploadDocumentType(null);
-  }, [isUploadOpen, isUploading]);
+  const [uploadActivity, setUploadActivity] = useState({ isUploadOpen, isUploading });
+  if (uploadActivity.isUploadOpen !== isUploadOpen || uploadActivity.isUploading !== isUploading) {
+    setUploadActivity({ isUploadOpen, isUploading });
+    if (!isUploadOpen && !isUploading) {
+      setUploadShipment(null);
+      setUploadDocumentType(null);
+    }
+  }
 
   const handleDuplicate = useCallback(
     (row: Row<Shipment>) => setDuplicateShipmentId(row.original.id || ""),

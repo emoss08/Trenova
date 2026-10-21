@@ -26,7 +26,7 @@ import { SegmentedControl } from "@trenova/shared/components/ui/segmented-contro
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Coins01Icon } from "@trenova/shared/components/icons";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 export type VetCarrierDialogProps = {
@@ -55,12 +55,16 @@ export function VetCarrierDialog({
   const [force, setForce] = useState(false);
   const providerName = carrierIntelProviderLabel(provider.provider);
 
-  useEffect(() => {
+  const [seenOpen, setSeenOpen] = useState(open);
+  const [seenPreferredDepth, setSeenPreferredDepth] = useState(preferredDepth);
+  if (open !== seenOpen || preferredDepth !== seenPreferredDepth) {
+    setSeenOpen(open);
+    setSeenPreferredDepth(preferredDepth);
     if (open) {
       setDepth(preferredDepth);
       setForce(false);
     }
-  }, [open, preferredDepth]);
+  }
 
   const cost = depth ? carrierIntelVetCost(provider.provider, depth) : null;
 

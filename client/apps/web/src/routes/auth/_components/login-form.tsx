@@ -3,6 +3,7 @@ import { OktaLogo } from "@/components/logos/okta";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { emailSchema } from "@/lib/auth-validation";
 import { edition } from "@/lib/edition";
+import { ssoChallengeFromHash } from "@/lib/sso-challenge";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { SignOutNoticeAlert } from "@trenova/shared/components/session/sign-out-notice-alert";
@@ -77,7 +78,17 @@ export function LoginForm({
   const { control, handleSubmit, formState } = form;
   const rootError = formState.errors.root?.message;
 
-  const [challenge, setChallenge] = useState<MFAChallenge | null>(null);
+  const [challenge, setChallenge] = useState<MFAChallenge | null>(() =>
+    typeof window === "undefined" ? null : ssoChallengeFromHash(window.location.hash),
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !ssoChallengeFromHash(window.location.hash)) {
+      return;
+    }
+    const { pathname, search } = window.location;
+    window.history.replaceState(window.history.state, "", pathname + search);
+  }, []);
 
   // Back on the sign-in form means no one is signed in, whichever step led here.
   useEffect(() => {

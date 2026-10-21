@@ -219,7 +219,7 @@ func (s *Service) Stage(
 		batch.Mapping = mapping.Strings()
 	}
 
-	sheet, err := readSheet(format, content)
+	sheet, err := readSheet(format, content, s.sheetLimits)
 	if err != nil {
 		return s.failStage(ctx, batch, sheetProblem(err), req.UserID)
 	}
@@ -843,11 +843,15 @@ func formatOf(fileName string) (fuelpurchase.SourceFormat, error) {
 	}
 }
 
-func readSheet(format fuelpurchase.SourceFormat, content []byte) (*rateimport.Sheet, error) {
+func readSheet(
+	format fuelpurchase.SourceFormat,
+	content []byte,
+	limits rateimport.Limits,
+) (*rateimport.Sheet, error) {
 	if format == fuelpurchase.SourceFormatXLSX {
-		return rateimport.ReadXLSX(content)
+		return rateimport.ReadXLSX(content, limits)
 	}
-	return rateimport.ReadCSV(content)
+	return rateimport.ReadCSV(content, limits)
 }
 
 func (s *Service) ListImports(

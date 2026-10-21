@@ -6,7 +6,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   Fragment,
-  useEffect,
   useId,
   useMemo,
   useRef,
@@ -118,7 +117,14 @@ export function DeskModelPicker({
   openSignal?: number;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(openSignal > 0);
+  const [seenOpenSignal, setSeenOpenSignal] = useState(openSignal);
+  if (openSignal !== seenOpenSignal) {
+    setSeenOpenSignal(openSignal);
+    if (openSignal > 0) {
+      setOpen(true);
+    }
+  }
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const onOpenChange = (next: boolean) => {
@@ -128,11 +134,6 @@ export function DeskModelPicker({
     }
     setOpen(next);
   };
-  useEffect(() => {
-    if (openSignal > 0) {
-      setOpen(true);
-    }
-  }, [openSignal]);
   const [spin, setSpin] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();

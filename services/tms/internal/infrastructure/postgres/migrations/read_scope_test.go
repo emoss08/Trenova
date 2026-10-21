@@ -11,7 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const readScopesUp = "20261231009720_enforced_read_scopes.tx.up.sql"
+const (
+	readScopesUp       = "20261231009720_enforced_read_scopes.tx.up.sql"
+	unreadableScopesUp = "20261231010140_read_scope_unreadable_kinds.tx.up.sql"
+)
 
 var (
 	policyKind     = regexp.MustCompile(`trenova_rls\.read_scope\('([a-z_]+)'\)`)
@@ -20,25 +23,44 @@ var (
 	)
 )
 
-func TestReadScopeMigration_PoliciesCoverEveryDatabaseScopedKind(t *testing.T) {
-	t.Parallel()
-
-	up := readMigration(t, readScopesUp)
-
+func policyKinds(sql string) []string {
 	kinds := make([]string, 0, 4)
-	for _, match := range policyKind.FindAllStringSubmatch(up, -1) {
+	for _, match := range policyKind.FindAllStringSubmatch(sql, -1) {
 		if !slices.Contains(kinds, match[1]) {
 			kinds = append(kinds, match[1])
 		}
 	}
 	slices.Sort(kinds)
+	return kinds
+}
 
-	assert.Equal(
-		t,
-		permission.NewRegistry().DatabaseScopedResources(),
-		kinds,
-		"each kind the registry says the database scopes needs a read_scope policy, and no other",
-	)
+func TestReadScopeMigration_PoliciesCoverEveryDatabaseScopedKind(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{readScopesUp, unreadableScopesUp} {
+		assert.Equal(
+			t,
+			permission.NewRegistry().DatabaseScopedResources(),
+			policyKinds(readMigration(t, name)),
+			"%s: each kind the registry says the database scopes needs a read_scope policy, and no other",
+			name,
+		)
+	}
+}
+
+func TestReadScopeMigration_EveryPolicyDeniesAKindThePrincipalCannotRead(t *testing.T) {
+	t.Parallel()
+
+	up := readMigration(t, unreadableScopesUp)
+	policies := strings.Split(up, "CREATE POLICY read_scope ON ")
+	require.Len(t, policies, len(permission.NewRegistry().DatabaseScopedResources())+1)
+
+	for _, policy := range policies[1:] {
+		kinds := policyKinds(policy)
+		require.Len(t, kinds, 1, policy)
+		assert.Contains(t, policy, "NOT IN (", kinds[0])
+		assert.Contains(t, policy, "'none'", kinds[0])
+	}
 }
 
 func TestReadScopeMigration_KeepsExactlyTheScopesTheRegistryDeclares(t *testing.T) {

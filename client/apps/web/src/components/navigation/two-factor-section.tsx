@@ -136,7 +136,16 @@ function TwoFactorSummary({ status }: { status: MFAStatus }) {
           status.recoveryCodesRemaining,
         )}
       </p>
-      {status.recoveryCodesRemaining <= 2 ? (
+      {status.recoveryCodesNeedReplacing ? (
+        <Alert variant="warning" size="sm">
+          <AlertTriangleIcon />
+          <AlertDescription>
+            {t(
+              "Your recovery codes were saved with an older, weaker protection. Create new ones and store them safely.",
+            )}
+          </AlertDescription>
+        </Alert>
+      ) : status.recoveryCodesRemaining <= 2 ? (
         <Alert variant="warning" size="sm">
           <AlertTriangleIcon />
           <AlertDescription>

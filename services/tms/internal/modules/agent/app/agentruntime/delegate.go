@@ -784,7 +784,7 @@ func encodedReport(report *agentports.AssistantDelegateFinishedEvent) string {
 		if err != nil {
 			return fmt.Sprintf(`{"agent":%q,"status":%q}`, report.AgentName, report.Status)
 		}
-		if len(encoded) <= maxToolResultChars || len(report.Findings) == 0 {
+		if len(encoded) <= maxToolResultBytes || len(report.Findings) == 0 {
 			return encoded
 		}
 		report.Findings = report.Findings[:len(report.Findings)-1]

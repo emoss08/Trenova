@@ -16,29 +16,23 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/tractorrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/trailerrepository"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
-	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
-	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
-	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierrepository"
@@ -75,6 +69,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerptorepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -82,6 +86,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -98,11 +103,14 @@ const (
 // to write a row for a tenant (marked rows are the ones its filter selects),
 // and that filter as the GraphQL tool and the repository tool each take it.
 type referenceCase struct {
-	tool      string
-	write     func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error)
-	marked    map[string]any
-	oldMarked map[string]any
-	old       agentports.AgentQueryTool
+	// readsActiveByDefault marks a list whose call with no arguments leaves
+	// out the marked rows (training courses read the active ones).
+	readsActiveByDefault bool
+	tool                 string
+	write                func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error)
+	marked               map[string]any
+	oldMarked            map[string]any
+	old                  agentports.AgentQueryTool
 }
 
 func statusOf(marked bool) domaintypes.Status {
@@ -148,6 +156,8 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 	locations := locationrepository.New(locationrepository.Params{DB: conn, Logger: logger})
 	carriers := carrierrepository.New(carrierrepository.Params{DB: conn, Logger: logger})
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
+	training := workertrainingrepository.New(workertrainingrepository.Params{DB: conn, Logger: logger})
+	timeOff := workerptorepository.New(workerptorepository.Params{DB: conn, Logger: logger})
 	manufacturers := equipmentmanufacturerrepository.New(
 		equipmentmanufacturerrepository.Params{DB: conn, Logger: logger})
 	tractors := tractorrepository.New(tractorrepository.Params{DB: conn, Logger: logger})
@@ -186,6 +196,15 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		CarrierService:    carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
 		TractorService: tractorservice.New(tractorservice.Params{
 			Logger: logger, Repo: tractors, CustomFieldsValuesService: customFields,
+		}),
+		WorkerTrainingService: workertrainingservice.New(workertrainingservice.Params{
+			Logger: logger, Repo: training, WorkerRepo: workers,
+		}),
+		WorkerService: workerservice.New(workerservice.Params{
+			Logger: logger, Repo: workers, CustomFieldsValuesService: customFields,
+		}),
+		WorkerPTOService: workerptoservice.New(workerptoservice.Params{
+			Logger: logger, Repo: timeOff, WorkerRepo: workers,
 		}),
 		TrailerService: trailerservice.New(trailerservice.Params{
 			Logger: logger, Repo: trailers, CustomFieldsValuesService: customFields,
@@ -374,6 +393,14 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 			},
 		},
 		{
+			tool: "worker_list", marked: inactive, oldMarked: oldInactive,
+			old: agentquerytoolservice.NewListWorkersTool(workers, &mocks.DenyResourcesPermissionEngine{}),
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				row, err := workers.Create(ctx, testWorker(tenant, "W"+label, marked, pulid.Nil))
+				return created(row, err)
+			},
+		},
+		{
 			tool: "equipment_list_tractors", marked: outOfService, oldMarked: oldOutOfService,
 			old: agentquerytoolservice.NewListTractorsTool(tractors, &mocks.DenyResourcesPermissionEngine{}),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
@@ -406,12 +433,58 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 				return created(row, err)
 			},
 		},
+		{
+			tool: "worker_list_training_courses", marked: inactive, readsActiveByDefault: true,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := training.CreateCourse(ctx, &worker.TrainingCourse{
+					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked),
+					Code: label, Name: "Course " + label, Category: worker.TrainingCategorySafety,
+					Delivery: worker.TrainingDeliveryOnline, DurationMinutes: 30,
+				})
+				return created(row, err)
+			},
+		},
+		{
+			tool: "worker_list_time_off", marked: approved,
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+				driver, err := workers.Create(ctx, testWorker(tenant, "T"+label, false, pulid.Nil))
+				if err != nil {
+					return pulid.Nil, err
+				}
+				return writeLeaveUnderWay(ctx, timeOff, driver, marked)
+			},
+		},
 	}
 
 	return cases, services
 }
 
+// writeLeaveUnderWay writes leave that began three days ago and is still
+// running, which the default window reads only because it overlaps.
+func writeLeaveUnderWay(
+	ctx context.Context,
+	repo workerports.WorkerPTORepository,
+	driver *worker.Worker,
+	marked bool,
+) (pulid.ID, error) {
+	now := timeutils.NowUnix()
+	status := worker.PTOStatusRequested
+	if marked {
+		status = worker.PTOStatusApproved
+	}
+	row, err := repo.Create(ctx, &worker.WorkerPTO{
+		BusinessUnitID: driver.BusinessUnitID, OrganizationID: driver.OrganizationID,
+		WorkerID: driver.ID, Status: status, Type: worker.PTOTypeVacation,
+		StartDate: now - 3*timeutils.SecondsPerDay, EndDate: now + 2*timeutils.SecondsPerDay,
+		Days: decimal.NewFromInt(5), Reason: "Family trip",
+	})
+
+	return created(row, err)
+}
+
 var (
+	approved        = map[string]any{"status": []any{"Approved"}}
 	outOfService    = map[string]any{"status": []any{"OutOfService"}}
 	oldOutOfService = map[string]any{"filters": []any{map[string]any{
 		"field": "status", "operator": "in", "values": []any{"OutOfService"},
@@ -455,20 +528,7 @@ func (p *equipmentParts) write(
 	if err != nil {
 		return pulid.Nil, pulid.Nil, pulid.Nil, err
 	}
-	now := timeutils.NowUnix()
-	driver, err := p.workers.Create(ctx, &worker.Worker{
-		BusinessUnitID: bu, OrganizationID: org, StateID: tenant.StateID,
-		Status: domaintypes.StatusActive, Type: worker.WorkerTypeEmployee,
-		DriverType: worker.DriverTypeOTR, FirstName: "Driver", LastName: label,
-		AddressLine1: "1 Main", City: "Dallas", PostalCode: "75001",
-		Gender: worker.GenderMale,
-		Profile: &worker.WorkerProfile{
-			DOB:           now - 86400*365*30,
-			LicenseNumber: "DL" + label + tenant.Actor.OrganizationID.String()[4:10],
-			LicenseExpiry: now + 86400*365,
-			HireDate:      now - 86400*365,
-		},
-	})
+	driver, err := p.workers.Create(ctx, testWorker(tenant, label, false, pulid.Nil))
 	if err != nil {
 		return pulid.Nil, pulid.Nil, pulid.Nil, err
 	}
@@ -593,27 +653,40 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 			other := writeReferenceRows(t, c, theirs, "B")
 			actor := mine.Actor
 
+			byDefault := ours.rows
+			if c.readsActiveByDefault {
+				byDefault = slices.DeleteFunc(slices.Clone(ours.rows), func(id string) bool {
+					return slices.Contains(ours.marked, id)
+				})
+			}
+
 			t.Run("every page once, and nothing of another tenant", func(t *testing.T) {
 				ids, pages := walk(t, ours.ctx, converted, actor, nil)
 				assert.Greater(t, pages, 1, "the walk must cross a page")
-				assert.ElementsMatch(t, ours.rows, ids)
+				assert.ElementsMatch(t, byDefault, ids)
 				for _, id := range other.rows {
 					assert.NotContains(t, ids, id)
 				}
 			})
 
-			t.Run("the same rows the repository tool paged through", func(t *testing.T) {
-				converted, _ := walk(t, ours.ctx, converted, actor, nil)
-				before, _ := walk(t, ours.ctx, c.old, actor, nil)
-				assert.ElementsMatch(t, before, converted)
+			t.Run("a typed filter narrows to what it names", func(t *testing.T) {
+				converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+				assert.ElementsMatch(t, ours.marked, converted)
 			})
 
-			t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
-				converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
-				before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
-				assert.ElementsMatch(t, ours.marked, converted)
-				assert.ElementsMatch(t, before, converted)
-			})
+			if c.old != nil {
+				t.Run("the same rows the repository tool paged through", func(t *testing.T) {
+					converted, _ := walk(t, ours.ctx, converted, actor, nil)
+					before, _ := walk(t, ours.ctx, c.old, actor, nil)
+					assert.ElementsMatch(t, before, converted)
+				})
+
+				t.Run("a typed filter narrows as the repository tool's filter did", func(t *testing.T) {
+					converted, _ := walk(t, ours.ctx, converted, actor, c.marked)
+					before, _ := walk(t, ours.ctx, c.old, actor, c.oldMarked)
+					assert.ElementsMatch(t, before, converted)
+				})
+			}
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
 				hidden, err := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
@@ -622,7 +695,7 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 				withheld, _ := page["withheldByAccess"].([]any)
 				require.NotEmpty(t, withheld)
 				items, _ := page["items"].([]any)
-				require.Len(t, items, referenceRowsPerTenant)
+				require.Len(t, items, len(byDefault))
 				for _, item := range items {
 					row, _ := item.(map[string]any)
 					assert.Contains(t, row, "id")
@@ -674,4 +747,84 @@ func TestConvertedLists_ATractorsDriversFollowWorkerRead(t *testing.T) {
 		assert.Equal(t, []string{"id"}, slices.Collect(maps.Keys(driver)))
 	}
 	assert.Contains(t, page["withheldByAccess"], "primaryWorker.wholeName")
+}
+
+// testWorker is a driver of the tenant's, inactive when marked, managed by
+// manager when one is named.
+func testWorker(
+	tenant *agentreadtest.Tenant,
+	label string,
+	marked bool,
+	manager pulid.ID,
+) *worker.Worker {
+	now := timeutils.NowUnix()
+
+	return &worker.Worker{
+		BusinessUnitID: tenant.Actor.BusinessUnitID,
+		OrganizationID: tenant.Actor.OrganizationID,
+		StateID:        tenant.StateID,
+		ManagerID:      manager,
+		Status:         statusOf(marked),
+		Type:           worker.WorkerTypeEmployee,
+		DriverType:     worker.DriverTypeOTR,
+		FirstName:      "Driver",
+		LastName:       label,
+		AddressLine1:   "1 Main",
+		City:           "Dallas",
+		PostalCode:     "75001",
+		Gender:         worker.GenderMale,
+		Profile: &worker.WorkerProfile{
+			DOB:           now - 86400*365*30,
+			LicenseNumber: "DL" + label + tenant.Actor.OrganizationID.String()[4:10],
+			LicenseExpiry: now + 86400*365,
+			HireDate:      now - 86400*365,
+		},
+	}
+}
+
+// A person whose worker grant reaches only their team reads, through the
+// GraphQL list, exactly the workers the repository list showed them: the
+// read_scope policy narrows the screen's statement as it narrowed the tool's.
+func TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths(t *testing.T) {
+	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	t.Cleanup(cleanup)
+
+	conn := dbtest.NewRLSConnection(t, admin, dsn)
+	_, services := convertedListCases(conn)
+	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: zap.NewNop()})
+	tenant := agentreadtest.SeedTenant(t, admin, "A")
+	tenantCtx := dbscope.WithTenant(t.Context(), tenant.Scope())
+
+	team := make([]string, 0, 2)
+	for idx := range 5 {
+		manager := pulid.Nil
+		if idx < 2 {
+			manager = tenant.Actor.UserID
+		}
+		saved, err := workers.Create(readscope.With(tenantCtx, nil),
+			testWorker(tenant, fmt.Sprintf("T%d", idx), false, manager))
+		require.NoError(t, err)
+		if idx < 2 {
+			team = append(team, saved.ID.String())
+		}
+	}
+
+	scoped := readscope.With(tenantCtx, func(context.Context) (readscope.Grants, error) {
+		return readscope.Grants{"worker": {
+			Scope: readscope.ScopeTeam, Team: []pulid.ID{tenant.Actor.UserID},
+		}}, nil
+	})
+	engine := &mocks.DenyResourcesPermissionEngine{}
+	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
+	converted, err := agentquerytoolservice.ConvertedListTool("worker_list", reader, engine)
+	require.NoError(t, err)
+	old := agentquerytoolservice.NewListWorkersTool(workers, engine)
+
+	before, _ := walk(t, scoped, old, tenant.Actor, nil)
+	after, _ := walk(t, scoped, converted, tenant.Actor, nil)
+	assert.ElementsMatch(t, team, before, "the repository list reads only the team")
+	assert.ElementsMatch(t, before, after, "the GraphQL list reads what the repository list read")
+
+	everyone, _ := walk(t, readscope.With(tenantCtx, nil), converted, tenant.Actor, nil)
+	assert.Len(t, everyone, 5, "without a narrow grant every worker is read")
 }

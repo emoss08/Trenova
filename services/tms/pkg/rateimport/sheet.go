@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
@@ -36,8 +37,10 @@ var (
 // have one.
 const headerScanLimit = 10
 
-// ReadCSV reads a comma separated rate sheet.
-func ReadCSV(data []byte) (*Sheet, error) {
+// ReadCSV reads a comma separated rate sheet, one record at a time, and
+// refuses a file past any of limits.
+func ReadCSV(data []byte, limits Limits) (*Sheet, error) {
+	limits = limits.withDefaults()
 	// Excel writes a byte order mark, and a header read as "\ufeffOrigin State"
 	// matches nothing.
 	data = bytes.TrimPrefix(data, []byte("\ufeff"))
@@ -48,33 +51,63 @@ func ReadCSV(data []byte) (*Sheet, error) {
 	reader.FieldsPerRecord = -1
 	reader.TrimLeadingSpace = true
 
-	records, err := reader.ReadAll()
-	if err != nil {
-		return nil, fmt.Errorf("this file could not be read as a CSV: %w", err)
+	collector := newRecordCollector(limits)
+	for {
+		record, err := reader.Read()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("this file could not be read as a CSV: %w", err)
+		}
+		if err = collector.add(record); err != nil {
+			return nil, err
+		}
 	}
 
-	return sheetFrom(records)
+	return sheetFrom(collector.records)
 }
 
-// ReadXLSX reads the first sheet of a workbook.
-func ReadXLSX(data []byte) (*Sheet, error) {
-	file, err := excelize.OpenReader(bytes.NewReader(data))
+// ReadXLSX reads the first sheet of a workbook row by row. The archive is
+// opened with the same unzip limits the office document reader uses, so a
+// small upload cannot expand into gigabytes of XML.
+func ReadXLSX(data []byte, limits Limits) (sheet *Sheet, err error) {
+	limits = limits.withDefaults()
+	file, err := excelize.OpenReader(bytes.NewReader(data), excelize.Options{
+		UnzipSizeLimit:    limits.MaxUnzippedBytes,
+		UnzipXMLSizeLimit: limits.MaxPartBytes,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("this file could not be read as a spreadsheet: %w", err)
 	}
-	defer func() { _ = file.Close() }()
+	defer func() { err = errors.Join(err, file.Close()) }()
 
 	names := file.GetSheetList()
 	if len(names) == 0 {
 		return nil, ErrNoTable
 	}
 
-	records, err := file.GetRows(names[0])
+	rows, err := file.Rows(names[0])
 	if err != nil {
 		return nil, fmt.Errorf("the first sheet could not be read: %w", err)
 	}
+	defer func() { err = errors.Join(err, rows.Close()) }()
 
-	return sheetFrom(records)
+	collector := newRecordCollector(limits)
+	for rows.Next() {
+		record, columnsErr := rows.Columns()
+		if columnsErr != nil {
+			return nil, fmt.Errorf("the first sheet could not be read: %w", columnsErr)
+		}
+		if err = collector.add(record); err != nil {
+			return nil, err
+		}
+	}
+	if err = rows.Error(); err != nil {
+		return nil, fmt.Errorf("the first sheet could not be read: %w", err)
+	}
+
+	return sheetFrom(collector.records)
 }
 
 // sheetFrom finds the header row and everything under it.

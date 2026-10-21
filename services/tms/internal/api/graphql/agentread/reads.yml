@@ -20,3 +20,8 @@ reads:
   - tool: masterdata_list_hold_reasons
   - tool: masterdata_list_service_types
   - tool: masterdata_list_shipment_types
+  - tool: worker_list
+  - tool: worker_list_training_courses
+  - tool: worker_list_time_off
+    operation: WorkerPtoTable
+    reason: Time off is the WorkerPTO record, read by workerPTOEntries.

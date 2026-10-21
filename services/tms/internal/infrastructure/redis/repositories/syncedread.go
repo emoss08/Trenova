@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/bunmarshal"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -31,6 +33,7 @@ const (
 type syncedCacheBase struct {
 	client *redis.Client
 	logger *zap.Logger
+	kind   permission.Resource
 }
 
 type WorkerCacheRepositoryParams struct {
@@ -83,7 +86,12 @@ type documentCacheRepository struct {
 
 func NewWorkerCacheRepository(p WorkerCacheRepositoryParams) customerports.WorkerCacheRepository {
 	return &workerCacheRepository{
-		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "worker-cache-repository"),
+		syncedCacheBase: newSyncedCacheBase(
+			p.Client,
+			p.Logger,
+			"worker-cache-repository",
+			permission.ResourceWorker,
+		),
 		usStateRepo:     p.UsStateRepo,
 	}
 }
@@ -92,7 +100,12 @@ func NewCustomerCacheRepository(
 	p CustomerCacheRepositoryParams,
 ) customerports.CustomerCacheRepository {
 	return &customerCacheRepository{
-		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "customer-cache-repository"),
+		syncedCacheBase: newSyncedCacheBase(
+			p.Client,
+			p.Logger,
+			"customer-cache-repository",
+			permission.ResourceCustomer,
+		),
 		usStateRepo:     p.UsStateRepo,
 	}
 }
@@ -101,7 +114,12 @@ func NewShipmentCacheRepository(
 	p ShipmentCacheRepositoryParams,
 ) customerports.ShipmentCacheRepository {
 	return &shipmentCacheRepository{
-		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "shipment-cache-repository"),
+		syncedCacheBase: newSyncedCacheBase(
+			p.Client,
+			p.Logger,
+			"shipment-cache-repository",
+			permission.ResourceShipment,
+		),
 	}
 }
 
@@ -109,7 +127,12 @@ func NewDocumentCacheRepository(
 	p DocumentCacheRepositoryParams,
 ) customerports.DocumentCacheRepository {
 	return &documentCacheRepository{
-		syncedCacheBase: newSyncedCacheBase(p.Client, p.Logger, "document-cache-repository"),
+		syncedCacheBase: newSyncedCacheBase(
+			p.Client,
+			p.Logger,
+			"document-cache-repository",
+			permission.ResourceDocument,
+		),
 	}
 }
 
@@ -117,17 +140,31 @@ func newSyncedCacheBase(
 	client *redis.Client,
 	logger *zap.Logger,
 	component string,
+	kind permission.Resource,
 ) *syncedCacheBase {
 	return &syncedCacheBase{
 		client: client,
 		logger: logger.Named("redis." + component),
+		kind:   kind,
 	}
+}
+
+// servable reports whether the cache may answer for the database. The
+// cached row is the tenant's, so a request whose read scope narrows the
+// kind (an own or team grant) reads through the database's read_scope
+// policy instead.
+func (b *syncedCacheBase) servable(ctx context.Context) bool {
+	narrowed, err := readscope.Narrows(ctx, b.kind.String())
+	return err == nil && !narrowed
 }
 
 func (r *workerCacheRepository) GetByID(
 	ctx context.Context,
 	req workerports.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
+	if !r.servable(ctx) {
+		return nil, customerports.ErrCacheMiss
+	}
 	if req.IncludeProfile || req.IncludeFleetCode || req.IncludeManager {
 		return nil, customerports.ErrCacheMiss
 	}
@@ -168,6 +205,9 @@ func (r *customerCacheRepository) GetByID(
 	ctx context.Context,
 	req customerports.GetCustomerByIDRequest,
 ) (*customer.Customer, error) {
+	if !r.servable(ctx) {
+		return nil, customerports.ErrCacheMiss
+	}
 	if req.IncludeBillingProfile || req.IncludeEmailProfile {
 		return nil, customerports.ErrCacheMiss
 	}
@@ -206,6 +246,9 @@ func (r *shipmentCacheRepository) GetByID(
 	ctx context.Context,
 	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
+	if !r.servable(ctx) {
+		return nil, customerports.ErrCacheMiss
+	}
 	if req.ExpandShipmentDetails {
 		return nil, customerports.ErrCacheMiss
 	}
@@ -235,6 +278,9 @@ func (r *documentCacheRepository) GetByID(
 	ctx context.Context,
 	req documentports.GetDocumentByIDRequest,
 ) (*document.Document, error) {
+	if !r.servable(ctx) {
+		return nil, customerports.ErrCacheMiss
+	}
 	entity, err := getCachedEntity[document.Document](
 		ctx,
 		r.syncedCacheBase,

@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ContractRate, Shipment } from "@trenova/shared/types/shipment";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useShipmentAutoRate } from "../use-shipment-auto-rate";
@@ -72,7 +72,9 @@ let formHandle: ReturnType<typeof useForm<Shipment>> | null = null;
 
 function Harness({ defaultValues, children }: { defaultValues: Shipment; children: ReactNode }) {
   const form = useForm<Shipment>({ defaultValues });
-  formHandle = form;
+  useEffect(() => {
+    formHandle = form;
+  });
   return <FormProvider {...form}>{children}</FormProvider>;
 }
 

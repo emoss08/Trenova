@@ -46,7 +46,7 @@ import {
   RefreshCw02Icon,
   ShieldTickIcon,
 } from "@trenova/shared/components/icons";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnix } from "../../edi-display-utils";
 import { ControlledSelectField } from "../components/designer-fields";
@@ -225,17 +225,21 @@ export function DocumentPreviewArchiveTab() {
   const invalidateDocumentProfiles = useInvalidateEDIDocumentProfiles();
   const invalidateMessageArchive = useInvalidateEDIMessageArchive();
 
-  useEffect(() => {
+  const [syncedProfile, setSyncedProfile] = useState<EDIPartnerDocumentProfile | null>(null);
+  if (syncedProfile !== selectedDocumentProfile) {
+    setSyncedProfile(selectedDocumentProfile);
     if (selectedDocumentProfile) {
       setPartnerId(selectedDocumentProfile.ediPartnerId);
       setProfileDraft(profileToDraft(selectedDocumentProfile));
       setRawPartnerSettings(JSON.stringify(selectedDocumentProfile.partnerSettings ?? {}, null, 2));
     }
-  }, [selectedDocumentProfile]);
+  }
 
-  useEffect(() => {
+  const [prunedTransactionSet, setPrunedTransactionSet] = useState(sourceTransactionSet);
+  if (prunedTransactionSet !== sourceTransactionSet) {
+    setPrunedTransactionSet(sourceTransactionSet);
     setSourceValues((current) => pruneEDIDocumentSourceValues(current, sourceTransactionSet));
-  }, [sourceTransactionSet]);
+  }
 
   const saveProfileMutation = useSaveEDIDocumentProfileMutation({
     onSuccess: async (profile) => {

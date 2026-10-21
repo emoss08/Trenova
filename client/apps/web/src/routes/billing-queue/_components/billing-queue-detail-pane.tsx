@@ -18,7 +18,8 @@ import {
   ClockStopwatchIcon,
   RefreshCw02Icon,
 } from "@trenova/shared/components/icons";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { lazy, Suspense, useCallback, useState } from "react";
 import { Link } from "react-router";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
@@ -333,15 +334,7 @@ function AdjustmentOriginBanner({
 }
 
 function ReviewTimer({ startedAt }: { startedAt: number }) {
-  const [elapsed, setElapsed] = useState(() => Math.floor(Date.now() / 1000) - startedAt);
-
-  useEffect(() => {
-    setElapsed(Math.floor(Date.now() / 1000) - startedAt);
-    const interval = setInterval(() => {
-      setElapsed(Math.floor(Date.now() / 1000) - startedAt);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [startedAt]);
+  const elapsed = useNow("second") - startedAt;
 
   const hours = Math.floor(elapsed / 3600);
   const minutes = Math.floor((elapsed % 3600) / 60);

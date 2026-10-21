@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -14,6 +15,8 @@ const (
 	AuthModePassword = "password"
 
 	DefaultPort = "22"
+
+	DefaultMaxFileBytes int64 = 32 << 20
 )
 
 type Config struct {
@@ -24,6 +27,15 @@ type Config struct {
 	KnownHostKey string
 	Password     string
 	PrivateKey   string
+	EgressPolicy httpsafe.Policy
+	MaxFileBytes int64
+}
+
+func (c Config) maxFileBytes() int64 {
+	if c.MaxFileBytes <= 0 {
+		return DefaultMaxFileBytes
+	}
+	return c.MaxFileBytes
 }
 
 func (c Config) Validate() error {

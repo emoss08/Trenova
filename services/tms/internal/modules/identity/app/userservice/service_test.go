@@ -3,13 +3,15 @@ package userservice
 import (
 	"context"
 	"errors"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
@@ -17,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -664,4 +667,45 @@ func TestNewTestValidator(t *testing.T) {
 
 	v := NewTestValidator()
 	require.NotNil(t, v)
+}
+
+func TestChangeMyPassword_RefusesAPasswordThePolicyRejects(t *testing.T) {
+	t.Parallel()
+
+	user := newTestUserWithPassword(t, "current-password")
+	localPart, _, _ := strings.Cut(user.EmailAddress, "@")
+	for name, newPassword := range map[string]string{
+		"too short":          "short-pw9",
+		"common":             "password1234",
+		"contains the email": "x-" + localPart + "-2026!",
+		"over 72 bytes":      strings.Repeat("ab1-", 19),
+		"only spaces":        strings.Repeat(" ", 14),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			deps := setupTest(t)
+			tenantInfo := pagination.TenantInfo{
+				OrgID:  user.CurrentOrganizationID,
+				BuID:   user.BusinessUnitID,
+				UserID: user.ID,
+			}
+			deps.repo.On("GetByID", mock.Anything, tenantports.GetUserByIDRequest{
+				TenantInfo: tenantInfo,
+			}).Return(user, nil).Once()
+
+			result, err := deps.svc.ChangeMyPassword(t.Context(), tenantInfo, ChangeMyPasswordRequest{
+				CurrentPassword: "current-password",
+				NewPassword:     newPassword,
+				ConfirmPassword: newPassword,
+			})
+
+			require.Nil(t, result)
+			var multiErr *errortypes.MultiError
+			require.ErrorAs(t, err, &multiErr)
+			require.Len(t, multiErr.Errors, 1)
+			assert.Equal(t, "newPassword", multiErr.Errors[0].Field)
+			deps.repo.AssertNotCalled(t, "UpdatePassword", mock.Anything, mock.Anything)
+		})
+	}
 }

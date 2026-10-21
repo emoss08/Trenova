@@ -73,7 +73,7 @@ func TestLoginRefusedWhileAccountIsThrottled(t *testing.T) {
 	store := withThrottle(t, deps)
 	ctx := metaContext(t)
 
-	store.EXPECT().Check(mock.Anything, throttleKeyFor("test@example.com")).Return(
+	store.EXPECT().Begin(mock.Anything, throttleKeyFor("test@example.com")).Return(
 		&sessionports.LoginThrottleDecision{
 			Blocked:    true,
 			Scope:      sessionports.LoginThrottleScopeAccount,
@@ -104,7 +104,7 @@ func TestLoginRefusedWhileIPIsThrottled(t *testing.T) {
 	deps := setupTest(t)
 	store := withThrottle(t, deps)
 
-	store.EXPECT().Check(mock.Anything, mock.Anything).Return(
+	store.EXPECT().Begin(mock.Anything, mock.Anything).Return(
 		&sessionports.LoginThrottleDecision{
 			Blocked:    true,
 			Scope:      sessionports.LoginThrottleScopeIP,
@@ -127,14 +127,13 @@ func TestLoginFailureIsCountedAndTripsTheThrottle(t *testing.T) {
 	usr := newTestUser(t)
 	key := throttleKeyFor(usr.EmailAddress)
 
-	store.EXPECT().Check(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{}, nil)
-	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	store.EXPECT().RecordFailure(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{
-		Blocked:         true,
-		Scope:           sessionports.LoginThrottleScopeAccount,
+	store.EXPECT().Begin(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{
+		Tripped:         true,
+		TrippedScope:    sessionports.LoginThrottleScopeAccount,
 		RetryAfter:      30 * time.Second,
 		AccountFailures: 5,
 	}, nil)
+	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
 
 	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
 		EmailAddress: usr.EmailAddress,
@@ -155,11 +154,10 @@ func TestLoginUnknownAccountIsCounted(t *testing.T) {
 	store := withThrottle(t, deps)
 	key := throttleKeyFor("ghost@example.com")
 
-	store.EXPECT().Check(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{}, nil)
+	store.EXPECT().Begin(mock.Anything, key).
+		Return(&sessionports.LoginThrottleDecision{AccountFailures: 1}, nil)
 	deps.userRepo.On("FindByEmail", mock.Anything, "ghost@example.com").
 		Return(nil, errors.New("not found"))
-	store.EXPECT().RecordFailure(mock.Anything, key).
-		Return(&sessionports.LoginThrottleDecision{AccountFailures: 1}, nil)
 
 	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
 		EmailAddress: "ghost@example.com",
@@ -176,9 +174,9 @@ func TestLoginSuccessClearsTheAccountCounter(t *testing.T) {
 	usr := newTestUser(t)
 	key := throttleKeyFor(usr.EmailAddress)
 
-	store.EXPECT().Check(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{}, nil)
+	store.EXPECT().Begin(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{}, nil)
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	store.EXPECT().Reset(mock.Anything, usr.EmailAddress).Return(nil)
+	store.EXPECT().Succeed(mock.Anything, key).Return(nil)
 	expectSuccessfulSession(deps, usr)
 
 	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
@@ -194,9 +192,9 @@ func TestLoginThrottleFailsOpenWhenRedisIsDown(t *testing.T) {
 	store := withThrottle(t, deps)
 	usr := newTestUser(t)
 
-	store.EXPECT().Check(mock.Anything, mock.Anything).Return(nil, errors.New("redis down"))
+	store.EXPECT().Begin(mock.Anything, mock.Anything).Return(nil, errors.New("redis down"))
 	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
-	store.EXPECT().Reset(mock.Anything, mock.Anything).Return(errors.New("redis down"))
+	store.EXPECT().Succeed(mock.Anything, mock.Anything).Return(errors.New("redis down"))
 	expectSuccessfulSession(deps, usr)
 
 	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
@@ -344,4 +342,82 @@ func TestCreateSessionForUserRefusesInactiveUsers(t *testing.T) {
 
 	_, err = deps.svc.CreateSessionForUser(t.Context(), nil)
 	require.True(t, errortypes.IsAuthenticationError(err))
+}
+
+func TestLoginUnknownAccountSpendsABcryptComparison(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.userRepo.On("FindByEmail", mock.Anything, "ghost@example.com").
+		Return(nil, errors.New("not found"))
+	tenant.DiscardPasswordCheck("warm-up")
+
+	started := time.Now()
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
+		EmailAddress: "ghost@example.com",
+		Password:     "password123",
+	})
+	elapsed := time.Since(started)
+
+	require.ErrorIs(t, err, errInvalidCredentials)
+	assert.GreaterOrEqual(t, elapsed, 10*time.Millisecond)
+}
+
+func TestLoginHidesAccountStateFromAWrongPassword(t *testing.T) {
+	t.Parallel()
+
+	for name, mutate := range map[string]func(*tenant.User){
+		"locked":   func(u *tenant.User) { u.IsLocked = true },
+		"inactive": func(u *tenant.User) { u.Status = domaintypes.StatusInactive },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			deps := setupTest(t)
+			store := withThrottle(t, deps)
+			usr := newTestUser(t)
+			mutate(usr)
+			key := throttleKeyFor(usr.EmailAddress)
+
+			store.EXPECT().Begin(mock.Anything, key).
+				Return(&sessionports.LoginThrottleDecision{AccountFailures: 1}, nil)
+			deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
+
+			_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
+				EmailAddress: usr.EmailAddress,
+				Password:     "wrong-password",
+			})
+
+			require.ErrorIs(t, err, errInvalidCredentials)
+			assert.Equal(t, authErrorRejectedLogin, deps.authEvents.only(t).ErrorCode)
+			store.AssertNotCalled(t, "Succeed", mock.Anything, mock.Anything)
+		})
+	}
+}
+
+func TestLoginRefusesAnUnavailableAccountOnlyAfterTheRightPasswordAndCountsIt(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	store := withThrottle(t, deps)
+	usr := newTestUser(t)
+	usr.IsLocked = true
+	key := throttleKeyFor(usr.EmailAddress)
+
+	store.EXPECT().Begin(mock.Anything, key).Return(&sessionports.LoginThrottleDecision{
+		Tripped:         true,
+		TrippedScope:    sessionports.LoginThrottleScopeAccount,
+		AccountFailures: 5,
+	}, nil)
+	deps.userRepo.On("FindByEmail", mock.Anything, usr.EmailAddress).Return(usr, nil)
+
+	_, err := deps.svc.Login(metaContext(t), tenantports.LoginRequest{
+		EmailAddress: usr.EmailAddress,
+		Password:     "password123",
+	})
+
+	require.True(t, errortypes.IsAuthorizationError(err))
+	store.AssertNotCalled(t, "Succeed", mock.Anything, mock.Anything)
+	deps.authEvents.mu.Lock()
+	defer deps.authEvents.mu.Unlock()
+	require.Len(t, deps.authEvents.records, 2)
+	assert.Equal(t, iamports.AuthEventProviderLoginThrottled, deps.authEvents.records[0].Provider)
+	assert.Equal(t, authErrorAccountUnavailable, deps.authEvents.records[1].ErrorCode)
 }

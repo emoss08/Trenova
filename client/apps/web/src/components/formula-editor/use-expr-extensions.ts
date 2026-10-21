@@ -1,7 +1,8 @@
 import { lintGutter } from "@codemirror/lint";
 import { Compartment, Prec, type Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
-import { useEffect, useMemo, useRef, type RefObject } from "react";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import { useEffect, useMemo, useState, type RefObject } from "react";
 import { formatEditorDocument, type FormatResult } from "./expr-format";
 import { createExprHover, type HoverVariable } from "./expr-hover";
 import { exprLanguageSupport } from "./expr-language";
@@ -39,20 +40,21 @@ export function useExprExtensions(
 ): Extension[] {
   const resolved: ExprExtensionOptions =
     typeof options === "function" ? { hoverValues: options } : options;
-  const compartment = useRef(new Compartment()).current;
-  const initialKnown = useRef(known);
-  const knownRef = useRef(known);
-  knownRef.current = known;
-  const optionsRef = useRef(resolved);
-  optionsRef.current = resolved;
+  const [compartment] = useState(() => new Compartment());
+  const [initialKnown] = useState(known);
+  const getKnown = useLatestCallback(() => known);
+  const getHoverValues = useLatestCallback(
+    (): ReadonlyMap<string, HoverVariable> => resolved.hoverValues?.() ?? new Map(),
+  );
+  const reportFormat = useLatestCallback((result: FormatResult) => resolved.onFormat?.(result));
+  const getDeclareInput = useLatestCallback(() => resolved.declareInput);
   const gutter = resolved.gutter ?? false;
 
   const extensions = useMemo(() => {
-    const getKnown = () => knownRef.current;
     const list: Extension[] = [
-      compartment.of(exprLanguageSupport(initialKnown.current)),
+      compartment.of(exprLanguageSupport(initialKnown)),
       EditorView.lineWrapping,
-      createExprHover(() => optionsRef.current.hoverValues?.() ?? new Map(), getKnown),
+      createExprHover(getHoverValues, getKnown),
       createSignatureHelp(getKnown),
       Prec.high(
         keymap.of([
@@ -62,7 +64,7 @@ export function useExprExtensions(
               const result = formatEditorDocument(view, {
                 operators: getKnown().operatorNames,
               });
-              optionsRef.current.onFormat?.(result);
+              reportFormat(result);
               return true;
             },
           },
@@ -70,18 +72,27 @@ export function useExprExtensions(
       ),
     ];
     if (lint) {
-      list.push(createExprLinter(getKnown, () => optionsRef.current.declareInput));
+      list.push(createExprLinter(getKnown, getDeclareInput));
       if (gutter) list.push(lintGutter());
     }
     return list;
-  }, [compartment, lint, gutter]);
+  }, [
+    compartment,
+    initialKnown,
+    getHoverValues,
+    getKnown,
+    reportFormat,
+    getDeclareInput,
+    lint,
+    gutter,
+  ]);
 
   useEffect(() => {
-    if (known === initialKnown.current) return;
+    if (known === initialKnown) return;
     const view = viewRef.current;
     if (!view) return;
     view.dispatch({ effects: compartment.reconfigure(exprLanguageSupport(known)) });
-  }, [known, compartment, viewRef]);
+  }, [known, initialKnown, compartment, viewRef]);
 
   return extensions;
 }

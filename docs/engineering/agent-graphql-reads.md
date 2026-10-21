@@ -297,6 +297,13 @@ becomes a parameter. Its type comes from the field's GraphQL type:
 - **Names follow the conventions.** A parameter takes the name
   [agent-tool-conventions.md](agent-tool-conventions.md) gives free text (`notes` becomes `note`),
   and its filter still names the field.
+- **A record's own parts are filtered through.** Where the filter configuration allows a path one
+  record down (`profile.endorsement`) and the operation selects that part, the part's field
+  becomes a parameter named for the path (`profileEndorsement`), typed by the part's own GraphQL
+  field and filtered on the path. A part is a type named for the record (`WorkerProfile` of
+  `Worker`); a linked record (a state, an equipment type) is filtered by its id instead. A
+  filter on a part's field is judged by the part's own kind where it has one, as the field
+  guard judges it.
 - **Not every field is something a person says.** The tenant, the row's version, its id and the
   Google Places id an address was geocoded to (`placeId`) are never parameters.
 - **Free text and sorting.** `query` maps to the input's `query`. `sortBy` is an enum of
@@ -314,7 +321,31 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   `refuseWithheldFields` gives. A view `report_compose_table_view` composes and previews through the list
   is held to the same check, since its filters reach the same resolver.
 
-**Operations on a bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
+**Operations on a table-shaped input** (`WorkerPTOEntriesInput`, `TrainingCoursesInput`, and any
+input that holds `first`, `after`, `query`, `fieldFilters` and `sort`). The table's fields are
+built as for `DataTableConnectionInput`, and the generator's supplied-variable check accepts the
+input under its own name. The input's other fields are the screen's own filters and become
+parameters sent on the input (`OnInput`), not as field filters: a single enum takes one value, a
+`Timestamp` named for a range end (`startDateFrom`, `startDateTo`) is a day in the organization's
+zone, an `ID` follows the reference rule, and a `Boolean` the schema describes is a switch whose
+description is the schema's own (`overlapping`). A range end on the input takes the place of the
+record's range parameter of the same name, because the resolver reads it with the screen's meaning:
+time off's `startDateFrom` with `overlapping` matches leave already under way, which a field filter
+on `startDate` cannot. Any other name a record parameter already takes keeps the record's, which can
+match several values (`status`). An `include*` toggle the screen sets for its own rendering is left
+out. Being arguments the screen sends, they are not judged by a record field's sensitivity. The
+near-miss probes drop one field filter at a time and then one input field at a time (never a
+switch), so an empty page names the status or the window that kept every row out.
+
+**Defaults.** A spec's `defaults` are the values a call that omits a parameter reads with, named
+in that parameter's note: `worker_list_training_courses` reads the active courses unless the call
+names a status, as its repository tool always did. `defaultsAt` are defaults that depend on the
+day, applied together only when the call gives none of them: `worker_list_time_off` reads the leave
+on at any point from today through 14 days out, counted by the calendar in the organization's zone
+so a change of clocks moves neither end, and naming either date replaces that window whole.
+`inputs` are input fields every call sends as the screen sets them (each request's worker).
+
+**Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
 own name:
 
@@ -340,10 +371,20 @@ A note for a parameter the tool does not take fails construction. Notes stay wit
 than in the schema because they are written for a model choosing a call ("only an active reason
 can be used on a new hold"), and a schema description edit is a schema change for every client.
 
-The tool's description is its summary followed by every typed parameter by name
-("Filters: active, code, createdAtFrom/To, …"), as the repository lists' were, so a model choosing
-among tools, and the ranking that embeds descriptions, sees what each list narrows by.
-`TestConvertedLists_DescribeEveryParameter` holds each converted tool to it.
+The tool's description is its summary followed by every typed parameter an agent at the
+default data access (Internal) can use, by name ("Filters: active, code, createdAtFrom/To, …"),
+as the repository lists' were, so a model choosing among tools, and the ranking that embeds
+descriptions, sees what each list narrows by. A part's parameters are named once under it
+("profile fields, each named profile and the field (profileCdlClass): cdlClass, …"). A parameter
+above Internal stays in the schema, with its own description, for a reader whose access reaches
+it. `TestConvertedLists_DescribeEveryParameter` holds each converted tool to it.
+
+Two hooks carry what a repository row did that the screen's resolver does not, and each is
+named in the spec rather than hidden in a fetch: `rank` orders a page that matched a free-text
+query when the call chose no order (`worker_list` puts the closest name first), and `shape`
+applies a domain rule to each row given what was withheld (`worker_list` folds a NonCompliant
+credential into `canBeAssigned`, as `worker.Standing` does, and keeps the credential dates
+present and null when nothing is on file).
 
 The parameters are derived when the tool is built, not when the code is generated, because the
 filter configuration is computed from the entity at runtime (`querybuilder.GetFieldConfiguration`).
@@ -476,6 +517,9 @@ Each module's PR:
 | Parties | `carrier_list` | none | every field the table selects is Internal |
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows only its id to a reader who cannot read workers, as the repository tool left `assignedTo` out |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
+| Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
+| Workforce | `worker_list_time_off` | `reason`, `rejectionReason`, `cancellationReason`, `balanceAfterDays` | `worker_pto` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; its dates, status, type, days and people are now declared Internal, and a leave's reasons and balance stay Restricted, where the repository row returned the reason and decision ungated. Each request's `worker` shows only its id to a reader who cannot read workers |
+| Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
 Internal each now withholds every field but `id`, where it used to return them all. No description
@@ -608,7 +652,8 @@ tenants written by `agentreadtest.SeedTenant`. For every converted tool it:
 
 For kinds that declare an "own" or "team" scope (shipments, orders, invoices, workers), the
 module's test also reads as a person narrowed by `readscope` and asserts the GraphQL path returns
-the rows the repository path returned for that person.
+the rows the repository path returned for that person
+(`TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths` for workers).
 
 Every list converted by a spec is listed once, in `graphQLListSpecs`, which registers them and
 which the tests range over: `TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity`
@@ -703,6 +748,9 @@ reasoning for each is above.
    checks a nested kind's read permission and shows only the id where it is refused.
 6. **The `Desk*` operation is preferred.** A list with none reads its table's operation, unless
    its module's PR adds a `Desk<Plural>` operation, backed by the result-size figures it records.
+   `worker_list` reads `DeskWorkers` rather than `WorkerTable`, which selects about thirty fields
+   an agent at Internal is never shown. `withheldByAccess` is one list per response, by path
+   without row indices, however many rows a page holds.
 7. **Bindings the rule cannot find are named in `reads.yml` and proven** by shape and by the
    resource their resolver checks, never trusted. No resource-only rule was possible: most
    resources are checked by several root fields (`edi` by thirteen).

@@ -1,11 +1,14 @@
 package editransport
 
 import (
+	"net"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/stretchr/testify/require"
@@ -25,7 +28,7 @@ func TestEndpointConfigFromProfile(t *testing.T) {
 			"fileNamingPattern": "{messageId}.edi",
 		},
 	}
-	cfg := endpointConfigFromProfile(profile, map[string]string{
+	cfg := sftpNetwork{}.endpointConfig(profile, map[string]string{
 		"password":   "secret ",
 		"privateKey": "",
 	})
@@ -144,10 +147,58 @@ func TestOutboundFileName(t *testing.T) {
 	})
 }
 
+func TestSFTPNetworkCarriesTheEgressPolicyAndFileLimit(t *testing.T) {
+	t.Parallel()
+
+	profile := &edi.EDICommunicationProfile{Config: map[string]any{"host": "10.0.0.5"}}
+
+	strict := sftpNetworkFromConfig(nil).endpointConfig(profile, nil)
+	require.False(t, strict.EgressPolicy.AllowPrivateNetworks)
+	require.Equal(t, config.DefaultEDIMaxInboundFileBytes, strict.MaxFileBytes)
+
+	relaxed := sftpNetworkFromConfig(&config.Config{
+		EDI: config.EDIConfig{AllowPrivateNetworks: true, MaxInboundFileBytes: 4096},
+	}).endpointConfig(profile, nil)
+	require.True(t, relaxed.EgressPolicy.AllowPrivateNetworks)
+	require.Equal(t, int64(4096), relaxed.MaxFileBytes)
+}
+
+func TestSFTPTransportRefusesPrivateHostsByDefault(t *testing.T) {
+	t.Parallel()
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = listener.Close() })
+	_, port, err := net.SplitHostPort(listener.Addr().String())
+	require.NoError(t, err)
+
+	profile := &edi.EDICommunicationProfile{Config: map[string]any{
+		"host":         "127.0.0.1",
+		"port":         port,
+		"username":     "trenova",
+		"authMode":     "password",
+		"knownHostKey": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl",
+	}}
+	_, err = NewSFTPTransport(nil).Deliver(t.Context(), &ediports.EDITransportRequest{
+		Profile:  profile,
+		Secrets:  map[string]string{"password": "secret"},
+		FileName: "file.x12",
+		Contents: "ISA*~",
+	})
+	require.ErrorIs(t, err, httpsafe.ErrBlockedAddress)
+
+	checks := NewSFTPTransport(nil).TestConnection(t.Context(), &ediports.EDITransportRequest{
+		Profile: profile,
+		Secrets: map[string]string{"password": "secret"},
+	})
+	require.Equal(t, ediports.EDIConnectionCheckFailed, checks[len(checks)-1].Status)
+	require.Contains(t, checks[len(checks)-1].Message, "not permitted")
+}
+
 func TestVANTransportRequiresMailboxID(t *testing.T) {
 	t.Parallel()
 
-	transport := NewVANTransport()
+	transport := NewVANTransport(nil)
 	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
 		Profile:  &edi.EDICommunicationProfile{Config: map[string]any{}},
 		FileName: "file.x12",
@@ -159,7 +210,7 @@ func TestDispatcherRejectsUnsupportedMethod(t *testing.T) {
 	t.Parallel()
 
 	dispatcher := NewDispatcher(DispatcherParams{
-		Transports: []ediports.EDITransport{NewSFTPTransport(), NewVANTransport()},
+		Transports: []ediports.EDITransport{NewSFTPTransport(nil), NewVANTransport(nil)},
 	})
 	_, err := dispatcher.Deliver(
 		t.Context(),

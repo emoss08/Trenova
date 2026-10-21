@@ -31,7 +31,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { TenderBounceDialog } from "./tender-bounce-dialog";
 import { formatCounterMargin, formatOfferCountdown, formatOfferRate } from "./tender-vocabulary";
 import type { RecordOfferResponseParams } from "./use-dispatch-actions";
@@ -147,8 +147,8 @@ function RecordResponseDialog({
       counterNote: "",
     },
   });
-  const { control, handleSubmit, setValue, watch } = form;
-  const action = watch("action");
+  const { control, handleSubmit, setValue } = form;
+  const action = useWatch({ control, name: "action" });
 
   return (
     <Dialog open onOpenChange={(nextOpen) => !nextOpen && onOpenChange(false)}>

@@ -9112,6 +9112,8 @@ export type WorkerPtoEntriesInput = {
   filterGroups?: Array<FilterGroupInput> | null | undefined;
   first?: number | null | undefined;
   includeWorker?: boolean | null | undefined;
+  /** true matches leave on at any point between startDateFrom and startDateTo, including leave that began before startDateFrom and is still running; false matches only leave that starts in that window. */
+  overlapping?: boolean | null | undefined;
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
   startDateFrom?: number | null | undefined;
@@ -18154,6 +18156,13 @@ export type DeskWorkerCredentialsQueryVariables = Exact<{
 
 export type DeskWorkerCredentialsQuery = { workerCredentialSummary: { items: Array<{ health: WorkerCredentialHealth, daysUntilExpiry: number | null, required: boolean, credentialType: { id: string, name: string, profileField: string | null }, credential: { id: string, expiresAt: number | null } | null }> } };
 
+export type DeskWorkersQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskWorkersQuery = { workers: { edges: Array<{ node: { id: string, status: EntityStatus, type: WorkerType, driverType: DriverType, firstName: string, lastName: string, wholeName: string, city: string, externalId: string, assignmentBlocked: string, canBeAssigned: boolean, availableForDispatch: boolean, createdAt: number, fleetCodeId: string | null, fleetCode: { id: string, code: string } | null, profile: { cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, complianceStatus: ComplianceStatus, isQualified: boolean, eldExempt: boolean, shortHaulExempt: boolean, licenseExpiry: number, hazmatExpiry: number | null, medicalCardExpiry: number | null, twicExpiry: number | null, physicalDueDate: number | null, mvrDueDate: number | null, lastMvrCheck: number, lastComplianceCheck: number } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
 export type DriverQualificationFileQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -19052,7 +19061,7 @@ export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/us
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
-export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument } from "./documents/worker-desk/desk";
+export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument, DeskWorkersDocument } from "./documents/worker-desk/desk";
 export { DriverQualificationFileDocument, OutstandingEmploymentVerificationsDocument, DqfRetentionCandidatesDocument, RecordEmploymentVerificationDocument, UpdateEmploymentVerificationDocument, MarkEmploymentVerificationRequestedDocument, RecordEmploymentVerificationFollowUpDocument, DeleteEmploymentVerificationDocument } from "./documents/worker-dqf/operations";
 export { WorkerDotTestFieldsFragmentDoc, WorkerDotViolationFieldsFragmentDoc, ClearinghouseQueryFieldsFragmentDoc, DotRandomPoolFieldsFragmentDoc, DotRandomDrawEntryFieldsFragmentDoc, DotRandomDrawFieldsFragmentDoc, WorkerDrugAlcoholFileDocument, DotRandomPoolsDocument, DotRandomDrawsDocument, DotRandomDrawDocument, RecordDotTestDocument, RecordDotTestResultDocument, CancelDotTestDocument, RecordDotViolationDocument, UpdateDotViolationDocument, RecordClearinghouseQueryDocument, CompleteClearinghouseQueryDocument, CreateDotRandomPoolDocument, UpdateDotRandomPoolDocument, RunDotRandomDrawDocument, FinalizeDotRandomDrawDocument, CancelDotRandomDrawDocument, UpdateDotRandomDrawEntryDocument } from "./documents/worker-drug-alcohol/operations";
 export { WorkerEmploymentEventFieldsFragmentDoc, WorkerEmploymentEventsDocument, RecordWorkerEmploymentEventDocument, AmendWorkerEmploymentEventDocument } from "./documents/worker-employment/operations";

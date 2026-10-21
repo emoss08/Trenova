@@ -81,8 +81,25 @@ export function DocumentGridCard({
 }: DocumentGridCardProps) {
   const t = useT();
 
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fetchedPreview, setFetchedPreview] = useState<{
+    documentId: string;
+    url: string | null;
+  } | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [prevPreviewKey, setPrevPreviewKey] = useState({
+    id: document.id,
+    previewStatus: document.previewStatus,
+  });
+  if (
+    prevPreviewKey.id !== document.id ||
+    prevPreviewKey.previewStatus !== document.previewStatus
+  ) {
+    setPrevPreviewKey({ id: document.id, previewStatus: document.previewStatus });
+    setImageError(false);
+  }
+  const isPreviewReady = document.previewStatus === "Ready";
+  const previewUrl =
+    isPreviewReady && fetchedPreview?.documentId === document.id ? fetchedPreview.url : null;
   const isImage = document.fileType.toLowerCase().startsWith("image/");
   const canPreview = isImage || document.fileType === "application/pdf";
   const canHaveThumbnail = supportsThumbnail(document.fileType);
@@ -102,15 +119,15 @@ export function DocumentGridCard({
   );
 
   useEffect(() => {
-    setImageError(false);
-
-    if (document.previewStatus !== "Ready") {
-      setPreviewUrl(null);
+    if (!isPreviewReady) {
       return;
     }
 
-    void apiService.documentService.getPreviewUrl(document.id).then(setPreviewUrl);
-  }, [document.id, document.previewStatus]);
+    const documentId = document.id;
+    void apiService.documentService
+      .getPreviewUrl(documentId)
+      .then((url) => setFetchedPreview({ documentId, url }));
+  }, [document.id, isPreviewReady]);
 
   const handleCheckboxChange = () => {
     if (onSelect) {

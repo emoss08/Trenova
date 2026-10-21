@@ -17,10 +17,12 @@ import {
 } from "@/lib/user-settings";
 import { apiService } from "@/services/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
+  AlertTriangleIcon,
   CheckIcon,
   Key01Icon,
   Laptop01Icon,
@@ -252,6 +254,16 @@ function TwoFactorRow() {
                 </Button>
               )}
             </div>
+            {enabled && status.recoveryCodesNeedReplacing ? (
+              <Alert variant="warning" size="sm">
+                <AlertTriangleIcon />
+                <AlertDescription>
+                  {t(
+                    "Your recovery codes were saved with an older, weaker protection. Create new ones and store them safely.",
+                  )}
+                </AlertDescription>
+              </Alert>
+            ) : null}
             {enabled && showCodes ? (
               <div className="animate-in fade-in-0 slide-in-from-top-1 flex flex-col gap-2 duration-300">
                 <p className="text-2xs text-foreground/70">

@@ -319,7 +319,7 @@ func (s *RemittanceService) prepare(
 	if err != nil {
 		return nil, err
 	}
-	sheet, err := factoringremit.ReadSheet(data, staging.Format)
+	sheet, err := factoringremit.ReadSheet(data, staging.Format, s.sheetLimits)
 	if err != nil {
 		return &preparedStage{problem: sheetProblemOf(err)}, nil
 	}

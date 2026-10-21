@@ -16,7 +16,7 @@ import { toTitleCase } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Key01Icon, PlusIcon } from "@trenova/shared/components/icons";
-import { memo, useEffect, useState } from "react";
+import { memo, useState } from "react";
 import { EmptyState, RowSkeleton, SecuritySection } from "../security-access/shared";
 import { useSecurityAccess } from "../security-access/use-security-access";
 
@@ -37,10 +37,12 @@ export const SCIMTokenPanel = memo(function SCIMTokenPanel({
   const [tokenName, setTokenName] = useState("");
   const [createdToken, setCreatedToken] = useState("");
 
-  useEffect(() => {
+  const [prevScope, setPrevScope] = useState({ directoryId, organizationId });
+  if (prevScope.directoryId !== directoryId || prevScope.organizationId !== organizationId) {
+    setPrevScope({ directoryId, organizationId });
     setTokenName("");
     setCreatedToken("");
-  }, [directoryId, organizationId]);
+  }
 
   const tokensQuery = useQuery({
     queryKey: ["scim-tokens", organizationId, directoryId],

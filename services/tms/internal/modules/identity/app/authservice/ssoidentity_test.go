@@ -238,15 +238,52 @@ func TestIdentityFromOIDCClaims(t *testing.T) {
 		assert.True(t, identity.EmailTrusted)
 	})
 
-	t.Run("microsoft uses the tenant-checked username", func(t *testing.T) {
+	t.Run("microsoft never links on the username or upn", func(t *testing.T) {
 		t.Parallel()
 
 		identity := identityFromOIDCClaims(testIssuer, &oidcClaims{
 			Subject:           "aad|1",
 			PreferredUsername: "Person@Carrier.example",
+			UPN:               "person@carrier.example",
 		}, tenant.SSOProviderAzureAD)
-		assert.Equal(t, "person@carrier.example", identity.Email)
-		assert.True(t, identity.EmailTrusted)
+		assert.Empty(t, identity.Email)
+		assert.False(t, identity.EmailTrusted)
+	})
+
+	t.Run("microsoft trusts an email only when it is verified", func(t *testing.T) {
+		t.Parallel()
+
+		unverified := identityFromOIDCClaims(testIssuer, &oidcClaims{
+			Subject: "aad|1",
+			Email:   "Person@Carrier.example",
+		}, tenant.SSOProviderAzureAD)
+		assert.Equal(t, "person@carrier.example", unverified.Email)
+		assert.False(t, unverified.EmailTrusted)
+
+		domainOwner := identityFromOIDCClaims(testIssuer, &oidcClaims{
+			Subject:                  "aad|1",
+			Email:                    "Person@Carrier.example",
+			EmailDomainOwnerVerified: oidcBool{set: true, value: true},
+		}, tenant.SSOProviderAzureAD)
+		assert.True(t, domainOwner.EmailTrusted)
+
+		verified := identityFromOIDCClaims(testIssuer, &oidcClaims{
+			Subject:       "aad|1",
+			Email:         "Person@Carrier.example",
+			EmailVerified: oidcBool{set: true, value: true},
+		}, tenant.SSOProviderAzureAD)
+		assert.True(t, verified.EmailTrusted)
+	})
+
+	t.Run("only microsoft's domain owner claim counts for microsoft", func(t *testing.T) {
+		t.Parallel()
+
+		identity := identityFromOIDCClaims(testIssuer, &oidcClaims{
+			Subject:                  "okta|1",
+			Email:                    "person@carrier.example",
+			EmailDomainOwnerVerified: oidcBool{set: true, value: true},
+		}, tenant.SSOProviderOkta)
+		assert.False(t, identity.EmailTrusted)
 	})
 }
 

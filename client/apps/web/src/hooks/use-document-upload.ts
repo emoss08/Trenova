@@ -534,15 +534,7 @@ export function useDocumentUpload({
       } finally {
         activeUploadsRef.current -= 1;
         abortControllersRef.current.delete(uploadState.id);
-        while (
-          activeUploadsRef.current < MAX_FILE_CONCURRENCY &&
-          pendingQueueRef.current.length > 0
-        ) {
-          const next = pendingQueueRef.current.shift();
-          if (next) {
-            void startUpload(next);
-          }
-        }
+        processQueueRef.current();
       }
     },
     [
@@ -570,7 +562,9 @@ export function useDocumentUpload({
     }
   }, [startUpload]);
 
-  processQueueRef.current = processQueue;
+  useEffect(() => {
+    processQueueRef.current = processQueue;
+  }, [processQueue]);
 
   const uploadFiles = useCallback(
     (files: File[]) => {

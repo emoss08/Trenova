@@ -4,6 +4,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { usePermission } from "@/hooks/use-permission";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { formatCurrency, formatFileSize } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Notification } from "@trenova/shared/types/notification";
@@ -22,6 +23,7 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
   const t = useT();
 
   const { allowed: canExport } = usePermission(Resource.Report, Operation.Export);
+  const now = useNow();
 
   const runId = notificationDataString(notification, "runId");
   if (!runId) return null;
@@ -32,7 +34,7 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
   const rowCount = notificationDataNumber(notification, "rowCount");
   const truncated = notificationDataBoolean(notification, "truncated");
   const expiresAt = notificationDataNumber(notification, "artifactExpiresAt");
-  const expired = expiresAt !== null && expiresAt * 1000 <= Date.now();
+  const expired = expiresAt !== null && expiresAt <= now;
 
   const meta: string[] = [];
   if (format) meta.push(format.toUpperCase());
@@ -42,7 +44,7 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
     meta.push(
       expired
         ? t("Expired — run the report again")
-        : t("Expires {0}", formatRelativeTime(expiresAt - Math.floor(Date.now() / 1000))),
+        : t("Expires {0}", formatRelativeTime(expiresAt - now)),
     );
   }
 

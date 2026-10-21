@@ -6,7 +6,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -54,11 +53,9 @@ func reader(
 ) (documentports.ConversationFileReader, *stubStorage) {
 	t.Helper()
 
-	encryption := encryptionservice.New(encryptionservice.Params{Config: &config.Config{
-		Security: config.SecurityConfig{Encryption: config.EncryptionConfig{
-			Key: "unit-test-encryption-key-with-at-least-32-bytes",
-		}},
-	}})
+	encryption := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
 	stored, err := encryption.EncryptBytesWithAAD(plaintext, storedobject.AAD(tenant, doc.StoragePath))
 	require.NoError(t, err)
 	storage := &stubStorage{objects: map[string][]byte{doc.StoragePath: []byte(stored)}}

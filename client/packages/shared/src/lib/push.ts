@@ -1,4 +1,4 @@
-import { api } from "@trenova/shared/lib/api";
+import { api, ApiRequestError } from "@trenova/shared/lib/api";
 
 const SERVICE_WORKER_URL = `${import.meta.env.BASE_URL}dash-sw.js`;
 
@@ -69,14 +69,24 @@ export async function enablePush(): Promise<void> {
   const registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL);
   await navigator.serviceWorker.ready;
 
-  const subscription =
-    (await registration.pushManager.getSubscription()) ??
-    (await registration.pushManager.subscribe({
+  const subscribe = () =>
+    registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(config.publicKey).buffer as ArrayBuffer,
-    }));
+    });
 
-  await api.post("/push/subscriptions/", subscriptionKeys(subscription));
+  const subscription = (await registration.pushManager.getSubscription()) ?? (await subscribe());
+
+  try {
+    await api.post("/push/subscriptions/", subscriptionKeys(subscription));
+  } catch (error) {
+    if (!(error instanceof ApiRequestError) || error.status !== 409) {
+      throw error;
+    }
+    await subscription.unsubscribe();
+    const fresh = await subscribe();
+    await api.post("/push/subscriptions/", subscriptionKeys(fresh));
+  }
 }
 
 export async function disablePush(): Promise<void> {

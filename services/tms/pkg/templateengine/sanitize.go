@@ -3,7 +3,9 @@ package templateengine
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/net/html"
 )
@@ -110,6 +112,9 @@ var (
 	cssExpressionPattern = regexp.MustCompile(`(?i)expression\s*\(`)
 	cssBehaviorPattern   = regexp.MustCompile(`(?i)\bbehaviou?r\s*:`)
 	cssBindingPattern    = regexp.MustCompile(`(?i)-moz-binding\s*:`)
+	cssStyleEndPattern   = regexp.MustCompile(`(?i)</\s*style`)
+	cssImageSetPattern   = regexp.MustCompile(`(?i)image-set\s*\(([^)]*)\)`)
+	cssQuotedPattern     = regexp.MustCompile(`['"]([^'"]*)['"]`)
 )
 
 // SanitizeHTML walks markup and reports every construct we refuse to render.
@@ -412,24 +417,35 @@ func SanitizeCSS(field, source string) Diagnostics {
 
 	var diags Diagnostics
 
-	if cssImportPattern.MatchString(source) {
+	// The HTML tokenizer ends a <style> element at the first </style it meets,
+	// whatever the CSS around it, so this is checked on the source as written.
+	if cssStyleEndPattern.MatchString(source) {
+		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
+			"</style is not allowed in a stylesheet: it would end the style element"))
+	}
+
+	// Everything else is checked as the CSS parser reads it: comments removed
+	// and escapes decoded, so "@\69mport" and "expr/**/ession(" are caught.
+	normalized := normalizeCSS(source)
+
+	if cssImportPattern.MatchString(normalized) {
 		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
 			"@import is not allowed: it would fetch a remote stylesheet"))
 	}
-	if cssExpressionPattern.MatchString(source) {
+	if cssExpressionPattern.MatchString(normalized) {
 		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
 			"expression() is not allowed: it executes script"))
 	}
-	if cssBehaviorPattern.MatchString(source) {
+	if cssBehaviorPattern.MatchString(normalized) {
 		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
 			"behavior is not allowed: it executes script"))
 	}
-	if cssBindingPattern.MatchString(source) {
+	if cssBindingPattern.MatchString(normalized) {
 		diags = append(diags, errorDiag(CodeForbiddenCSS, field,
 			"-moz-binding is not allowed: it executes script"))
 	}
 
-	for _, match := range cssURLPattern.FindAllStringSubmatch(source, -1) {
+	for _, match := range cssURLPattern.FindAllStringSubmatch(normalized, -1) {
 		target := normalizeURLForSchemeCheck(match[1])
 		if target == "" || strings.HasPrefix(target, "data:") {
 			continue
@@ -443,7 +459,90 @@ func SanitizeCSS(field, source string) Diagnostics {
 		)))
 	}
 
+	for _, match := range cssImageSetPattern.FindAllStringSubmatch(normalized, -1) {
+		for _, quoted := range cssQuotedPattern.FindAllStringSubmatch(match[1], -1) {
+			target := normalizeURLForSchemeCheck(quoted[1])
+			if target == "" || strings.HasPrefix(target, "data:") {
+				continue
+			}
+			diags = append(diags, errorDiag(CodeForbiddenCSS, field, fmt.Sprintf(
+				"image-set(%s) is not allowed: only data: URIs can be loaded",
+				strings.TrimSpace(quoted[1]),
+			)))
+		}
+	}
+
 	return diags
+}
+
+// normalizeCSS returns the stylesheet the way a CSS parser sees it: comments
+// dropped and every backslash escape decoded, so a forbidden keyword cannot
+// hide behind either.
+func normalizeCSS(source string) string {
+	var b strings.Builder
+	b.Grow(len(source))
+
+	for i := 0; i < len(source); {
+		if strings.HasPrefix(source[i:], "/*") {
+			end := strings.Index(source[i+2:], "*/")
+			if end < 0 {
+				break
+			}
+			i += end + 4
+			continue
+		}
+
+		c := source[i]
+		if c == 0 {
+			i++
+			continue
+		}
+		if c != '\\' {
+			b.WriteByte(c)
+			i++
+			continue
+		}
+
+		i++
+		if i >= len(source) {
+			break
+		}
+		if source[i] == '\n' {
+			i++
+			continue
+		}
+
+		hexEnd := i
+		for hexEnd < len(source) && hexEnd-i < 6 && isHexDigit(source[hexEnd]) {
+			hexEnd++
+		}
+		if hexEnd == i {
+			b.WriteByte(source[i])
+			i++
+			continue
+		}
+
+		decoded := utf8.RuneError
+		if code, err := strconv.ParseInt(source[i:hexEnd], 16, 32); err == nil &&
+			code > 0 && code <= utf8.MaxRune {
+			decoded = rune(code)
+		}
+		b.WriteRune(decoded)
+		i = hexEnd
+		if i < len(source) && isCSSWhitespace(source[i]) {
+			i++
+		}
+	}
+
+	return b.String()
+}
+
+func isHexDigit(c byte) bool {
+	return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'
+}
+
+func isCSSWhitespace(c byte) bool {
+	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'
 }
 
 // SanitizeOptions tunes the rules per output channel.

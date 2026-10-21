@@ -327,16 +327,15 @@ func (s *Service) AcceptInvitation(
 	ctx context.Context,
 	req *AcceptInvitationRequest,
 ) (*AcceptInvitationResult, error) {
-	if len(req.Password) < 8 {
-		return nil, errortypes.NewValidationError(
-			"password",
-			errortypes.ErrInvalid,
-			"Password must be at least 8 characters",
-		)
+	if err := tenant.CheckNewPassword("password", req.Password, ""); err != nil {
+		return nil, err
 	}
 
 	invitation, err := s.lookupAcceptableInvitation(ctx, req.Token)
 	if err != nil {
+		return nil, err
+	}
+	if err = tenant.CheckNewPassword("password", req.Password, invitation.Email); err != nil {
 		return nil, err
 	}
 	if invitation.Worker == nil {

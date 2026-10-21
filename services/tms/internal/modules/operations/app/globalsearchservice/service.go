@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/searchfilter"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/types/search"
 	"github.com/sourcegraph/conc/pool"
@@ -31,7 +32,8 @@ type Params struct {
 	SearchRepo   customerports.SearchRepository
 	ShipmentRead shipmentports.ShipmentSearchCardReader
 	Permissions  permissionports.PermissionEngine
-	States       usstateports.UsStateRepository        `optional:"true"`
+	States       usstateports.UsStateRepository `optional:"true"`
+	Visibility   kernelports.RecordVisibility
 	Balances     kernelports.CustomerOpenBalanceReader `optional:"true"`
 	RecordLabels captureports.CaptureRecordFinder      `optional:"true"`
 }
@@ -42,6 +44,7 @@ type Service struct {
 	searchRepo   customerports.SearchRepository
 	shipmentRead shipmentports.ShipmentSearchCardReader
 	permissions  permissionports.PermissionEngine
+	visibility   kernelports.RecordVisibility
 	states       usstateports.UsStateRepository
 	balances     kernelports.CustomerOpenBalanceReader
 	recordLabels captureports.CaptureRecordFinder
@@ -54,9 +57,13 @@ type entitySearchDefinition struct {
 	label      string
 	index      string
 	resource   permission.Resource
+	attributes []string
 }
 
-const maxSearchLimit = 25
+const (
+	maxSearchLimit = 25
+	fieldStatus    = "status"
+)
 
 func New(p Params) kernelports.GlobalSearchService {
 	return &Service{
@@ -65,6 +72,7 @@ func New(p Params) kernelports.GlobalSearchService {
 		searchRepo:   p.SearchRepo,
 		shipmentRead: p.ShipmentRead,
 		permissions:  p.Permissions,
+		visibility:   p.Visibility,
 		states:       p.States,
 		balances:     p.Balances,
 		recordLabels: p.RecordLabels,
@@ -103,6 +111,7 @@ func (s *Service) Search(
 
 	limit := limitForRequest(req.Limit, s.config.GetDefaultLimit())
 	results := s.searchIndexes(ctx, req, access.definitions, query, limit)
+	s.restrictToVisible(ctx, req, access, results)
 
 	enricher := &hitEnricher{
 		service: s,
@@ -151,10 +160,11 @@ func (s *Service) searchIndexes(
 
 		searchPool.Go(func(c context.Context) error {
 			page, searchErr := s.searchRepo.SearchPage(c, customerports.SearchRequest{
-				Index:  definition.index,
-				Query:  query,
-				Limit:  limit,
-				Filter: filter,
+				Index:      definition.index,
+				Query:      query,
+				Limit:      limit,
+				Filter:     filter,
+				Attributes: definition.attributes,
 			})
 			if searchErr != nil {
 				s.logger.Warn(
@@ -183,6 +193,7 @@ func (s *Service) searchIndexes(
 type searchAccess struct {
 	definitions []entitySearchDefinition
 	readable    map[permission.Resource]bool
+	narrowed    map[permission.Resource]bool
 }
 
 func (a *searchAccess) canRead(resource permission.Resource) bool {
@@ -216,6 +227,8 @@ func (s *Service) resolveAccess(
 		permission.ResourceTractor,
 		permission.ResourceTrailer,
 		permission.ResourceCarrier,
+		permission.ResourceOrder,
+		permission.ResourceInvoice,
 	}
 
 	checks := make([]permissionports.ResourceOperationCheck, 0, len(resources))
@@ -240,8 +253,13 @@ func (s *Service) resolveAccess(
 	}
 
 	readable := make(map[permission.Resource]bool, len(resources))
+	narrowed := make(map[permission.Resource]bool, len(resources))
 	for idx, resource := range resources {
-		readable[resource] = idx < len(result.Results) && result.Results[idx].Allowed
+		if idx >= len(result.Results) {
+			continue
+		}
+		readable[resource] = result.Results[idx].Allowed
+		narrowed[resource] = result.Results[idx].DataScope.IsNarrow()
 	}
 
 	allowed := make([]entitySearchDefinition, 0, len(definitions))
@@ -251,7 +269,7 @@ func (s *Service) resolveAccess(
 		}
 	}
 
-	return &searchAccess{definitions: allowed, readable: readable}, nil
+	return &searchAccess{definitions: allowed, readable: readable, narrowed: narrowed}, nil
 }
 
 func (s *Service) definitions() []entitySearchDefinition {
@@ -261,24 +279,48 @@ func (s *Service) definitions() []entitySearchDefinition {
 			label:      "Shipments",
 			index:      s.config.Meilisearch.Indexes.Shipments,
 			resource:   permission.ResourceShipment,
+			attributes: []string{"id", "pro_number", "bol", fieldStatus},
 		},
 		{
 			entityType: search.EntityTypeCustomer,
 			label:      "Customers",
 			index:      s.config.Meilisearch.Indexes.Customers,
 			resource:   permission.ResourceCustomer,
+			attributes: []string{"id", "name", "code", "city", "state_id", fieldStatus},
 		},
 		{
 			entityType: search.EntityTypeWorker,
 			label:      "Workers",
 			index:      s.config.Meilisearch.Indexes.Workers,
 			resource:   permission.ResourceWorker,
+			attributes: []string{
+				"id",
+				"first_name",
+				"last_name",
+				"type",
+				"driver_type",
+				fieldStatus,
+				"external_id",
+				"city",
+				"state_id",
+				"available_for_dispatch",
+			},
 		},
 		{
 			entityType: search.EntityTypeDocument,
 			label:      "Documents",
 			index:      s.config.Meilisearch.Indexes.Documents,
 			resource:   permission.ResourceDocument,
+			attributes: []string{
+				"id",
+				"original_name",
+				"file_name",
+				"resource_type",
+				"resource_id",
+				fieldStatus,
+				"detected_kind",
+				"created_at",
+			},
 		},
 	}
 }
@@ -325,7 +367,7 @@ func shipmentHit(id string, document map[string]any) *kernelports.GlobalSearchHi
 		id,
 	)
 	metadata := map[string]string{
-		"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
+		fieldStatus: stringutils.FirstNonEmpty(stringValue(document, fieldStatus), "Unknown"),
 	}
 	putIfPresent(metadata, "proNumber", stringValue(document, "pro_number"))
 	putIfPresent(metadata, "bol", stringValue(document, "bol"))
@@ -350,7 +392,7 @@ func customerHit(id string, document map[string]any) *kernelports.GlobalSearchHi
 		stringValue(document, "city"),
 	)
 	metadata := map[string]string{
-		"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
+		fieldStatus: stringutils.FirstNonEmpty(stringValue(document, fieldStatus), "Unknown"),
 	}
 	putIfPresent(metadata, "code", stringValue(document, "code"))
 	putIfPresent(metadata, "city", stringValue(document, "city"))
@@ -372,10 +414,10 @@ func workerHit(id string, document map[string]any) *kernelports.GlobalSearchHit 
 	title = stringutils.FirstNonEmpty(title, id)
 	subtitle := stringutils.FirstNonEmpty(
 		stringValue(document, "type"),
-		stringValue(document, "status"),
+		stringValue(document, fieldStatus),
 	)
 	metadata := map[string]string{
-		"status": stringutils.FirstNonEmpty(stringValue(document, "status"), "Unknown"),
+		fieldStatus: stringutils.FirstNonEmpty(stringValue(document, fieldStatus), "Unknown"),
 	}
 	putIfPresent(metadata, "externalId", stringValue(document, "external_id"))
 	putIfPresent(metadata, "workerType", stringValue(document, "type"))
@@ -401,7 +443,7 @@ func documentHit(id string, document map[string]any) *kernelports.GlobalSearchHi
 	)
 	subtitle := stringutils.FirstNonEmpty(
 		stringValue(document, "resource_type"),
-		stringValue(document, "status"),
+		stringValue(document, fieldStatus),
 	)
 	href := documentHref(document)
 	if href == "" {
@@ -411,7 +453,7 @@ func documentHit(id string, document map[string]any) *kernelports.GlobalSearchHi
 		"resourceType": stringValue(document, "resource_type"),
 	}
 	putIfPresent(metadata, "resourceId", stringValue(document, "resource_id"))
-	putIfPresent(metadata, "status", stringValue(document, "status"))
+	putIfPresent(metadata, fieldStatus, stringValue(document, fieldStatus))
 	putIfPresent(metadata, "detectedKind", stringValue(document, "detected_kind"))
 	putIfPresent(metadata, "receivedAt", stringValue(document, "created_at"))
 
@@ -446,10 +488,9 @@ func recordHref(entity, id string) string {
 }
 
 func tenantFilter(req *kernelports.GlobalSearchRequest) string {
-	return fmt.Sprintf(
-		"organization_id = %q AND business_unit_id = %q",
-		req.TenantInfo.OrgID.String(),
-		req.TenantInfo.BuID.String(),
+	return searchfilter.And(
+		searchfilter.Eq("organization_id", req.TenantInfo.OrgID.String()),
+		searchfilter.Eq("business_unit_id", req.TenantInfo.BuID.String()),
 	)
 }
 

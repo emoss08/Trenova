@@ -305,13 +305,15 @@ export function DashboardView({ dashboard, canEdit }: DashboardViewProps) {
 
   // A filter added or repointed during editing should not keep a value that
   // belonged to the old field.
-  useEffect(() => {
+  const [prevConfiguredFilters, setPrevConfiguredFilters] = useState(configuredFilters);
+  if (prevConfiguredFilters !== configuredFilters) {
+    setPrevConfiguredFilters(configuredFilters);
     setFilterValues((prev) => {
       const live = new Set(configuredFilters.map((filter) => filter.id));
       const next = Object.fromEntries(Object.entries(prev).filter(([id]) => live.has(id)));
       return Object.keys(next).length === Object.keys(prev).length ? prev : next;
     });
-  }, [configuredFilters]);
+  }
 
   const [exporting, setExporting] = useState(false);
   const [tileFilterFields, setTileFilterFields] = useState<Record<string, ReportDashboardFilter[]>>(

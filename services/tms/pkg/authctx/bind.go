@@ -1,6 +1,7 @@
 package authctx
 
 import (
+	"errors"
 	"reflect"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -9,12 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const maxTenantDepth = 4
+const maxTenantDepth = 32
 
 var (
 	pulidType            = reflect.TypeFor[pulid.ID]()
 	organizationIDFields = []string{"OrganizationID", "OrgID", "CurrentOrganizationID"}
 	businessUnitIDFields = []string{"BusinessUnitID", "BuID"}
+
+	errTenantTooDeep = errors.New("request body nests records too deeply to check their tenant")
+	errStopWalk      = errors.New("stop walking the request body")
 )
 
 func BindJSON(c *gin.Context, authCtx *AuthContext, req any) error {
@@ -29,7 +33,13 @@ func BindJSON(c *gin.Context, authCtx *AuthContext, req any) error {
 		return err
 	}
 
-	if violation, mismatch := tenantMismatch(elem, authCtx, 0); mismatch {
+	violation, mismatch, err := tenantMismatch(elem, authCtx)
+	if errors.Is(err, errTenantTooDeep) {
+		return errortypes.NewBusinessError(
+			"The request nests records too deeply to be accepted",
+		).WithInternal(err)
+	}
+	if mismatch {
 		tenantboundary.Report(c, violation)
 		return errortypes.NewAuthorizationError(
 			"The request belongs to a different organization than your session",
@@ -40,7 +50,11 @@ func BindJSON(c *gin.Context, authCtx *AuthContext, req any) error {
 		setPulidField(elem, "ID", presetID)
 	}
 
-	stampTenant(elem, authCtx, 0)
+	if err = stampTenant(elem, authCtx); err != nil {
+		return errortypes.NewBusinessError(
+			"The request nests records too deeply to be accepted",
+		).WithInternal(err)
+	}
 	setPulidField(elem, "UserID", authCtx.UserID)
 
 	return nil
@@ -63,81 +77,195 @@ func structElem(req any) (reflect.Value, bool) {
 func tenantMismatch(
 	elem reflect.Value,
 	authCtx *AuthContext,
-	depth int,
-) (tenantboundary.Violation, bool) {
-	if field, got, ok := fieldMismatch(elem, organizationIDFields, authCtx.OrganizationID); ok {
-		return tenantboundary.Violation{
-			Source:         tenantboundary.SourceRequestBody,
-			Field:          field,
-			OrganizationID: got,
-		}, true
-	}
-	if field, got, ok := fieldMismatch(elem, businessUnitIDFields, authCtx.BusinessUnitID); ok {
-		return tenantboundary.Violation{
-			Source:         tenantboundary.SourceRequestBody,
-			Field:          field,
-			BusinessUnitID: got,
-		}, true
+) (tenantboundary.Violation, bool, error) {
+	var violation tenantboundary.Violation
+	found := false
+	err := eachStruct(elem, func(record reflect.Value) error {
+		field, got, ok := fieldMismatch(record, organizationIDFields, authCtx.OrganizationID)
+		if ok {
+			violation = tenantboundary.Violation{
+				Source:         tenantboundary.SourceRequestBody,
+				Field:          field,
+				OrganizationID: got,
+			}
+			found = true
+			return errStopWalk
+		}
+		field, got, ok = fieldMismatch(record, businessUnitIDFields, authCtx.BusinessUnitID)
+		if ok {
+			violation = tenantboundary.Violation{
+				Source:         tenantboundary.SourceRequestBody,
+				Field:          field,
+				BusinessUnitID: got,
+			}
+			found = true
+			return errStopWalk
+		}
+		return nil
+	})
+	if errors.Is(err, errStopWalk) {
+		err = nil
 	}
 
-	if depth >= maxTenantDepth {
-		return tenantboundary.Violation{}, false
+	return violation, found, err
+}
+
+func stampTenant(elem reflect.Value, authCtx *AuthContext) error {
+	return eachStruct(elem, func(record reflect.Value) error {
+		for _, name := range organizationIDFields {
+			setPulidField(record, name, authCtx.OrganizationID)
+		}
+		for _, name := range businessUnitIDFields {
+			setPulidField(record, name, authCtx.BusinessUnitID)
+		}
+		if tenant := record.FieldByName("TenantInfo"); tenant.IsValid() &&
+			tenant.Kind() == reflect.Struct {
+			setPulidField(tenant, "UserID", authCtx.UserID)
+		}
+		return nil
+	})
+}
+
+// eachStruct calls visit on every struct the request body reaches: nested
+// structs, pointers, slices, arrays, map values and interfaces, however a
+// record is wrapped. A map value or interface holding a struct is visited
+// on a copy that is written back, so a stamp reaches it too. Only those
+// containers can nest without bound, so they are what is counted, and a
+// body nested through more than maxTenantDepth of them is refused rather
+// than left partly unchecked.
+func eachStruct(root reflect.Value, visit func(reflect.Value) error) error {
+	walker := &structWalker{visit: visit, seen: make(map[uintptr]struct{})}
+	return walker.walk(root, 0)
+}
+
+type structWalker struct {
+	visit func(reflect.Value) error
+	seen  map[uintptr]struct{}
+}
+
+func (w *structWalker) walk(value reflect.Value, depth int) error {
+	if depth > maxTenantDepth {
+		return errTenantTooDeep
 	}
 
-	for _, nested := range nestedStructs(elem) {
-		if violation, ok := tenantMismatch(nested, authCtx, depth+1); ok {
-			return violation, true
+	kind := value.Kind()
+	if kind == reflect.Struct {
+		return w.walkStruct(value, depth)
+	}
+	if kind == reflect.Pointer {
+		return w.walkPointer(value, depth)
+	}
+	if kind == reflect.Interface {
+		return w.walkInterface(value, depth)
+	}
+	if kind == reflect.Map {
+		return w.walkMap(value, depth)
+	}
+	if kind == reflect.Slice || kind == reflect.Array {
+		return w.walkSequence(value, depth)
+	}
+	return nil
+}
+
+func (w *structWalker) walkPointer(value reflect.Value, depth int) error {
+	if value.IsNil() {
+		return nil
+	}
+	address := value.Pointer()
+	if _, ok := w.seen[address]; ok {
+		return nil
+	}
+	w.seen[address] = struct{}{}
+	return w.walk(value.Elem(), depth+1)
+}
+
+func (w *structWalker) walkSequence(value reflect.Value, depth int) error {
+	if value.Kind() == reflect.Slice && value.IsNil() || !holdsStruct(value.Type().Elem()) {
+		return nil
+	}
+	for i := range value.Len() {
+		if err := w.walk(value.Index(i), depth+1); err != nil {
+			return err
 		}
 	}
-
-	return tenantboundary.Violation{}, false
+	return nil
 }
 
-func stampTenant(elem reflect.Value, authCtx *AuthContext, depth int) {
-	for _, name := range organizationIDFields {
-		setPulidField(elem, name, authCtx.OrganizationID)
+func (w *structWalker) walkStruct(value reflect.Value, depth int) error {
+	if value.Type() == pulidType {
+		return nil
 	}
-	for _, name := range businessUnitIDFields {
-		setPulidField(elem, name, authCtx.BusinessUnitID)
-	}
-
-	if depth >= maxTenantDepth {
-		return
+	if err := w.visit(value); err != nil {
+		return err
 	}
 
-	for _, nested := range nestedStructs(elem) {
-		stampTenant(nested, authCtx, depth+1)
-	}
-
-	if tenant := elem.FieldByName(
-		"TenantInfo",
-	); tenant.IsValid() &&
-		tenant.Kind() == reflect.Struct {
-		setPulidField(tenant, "UserID", authCtx.UserID)
-	}
-}
-
-func nestedStructs(elem reflect.Value) []reflect.Value {
-	nested := make([]reflect.Value, 0)
-	typ := elem.Type()
-
-	for i := range elem.NumField() {
+	typ := value.Type()
+	for i := range value.NumField() {
 		if !typ.Field(i).IsExported() {
 			continue
 		}
-
-		field := elem.Field(i)
-		if field.Kind() == reflect.Struct && field.Type() != pulidType {
-			nested = append(nested, field)
-			continue
-		}
-		if field.Kind() == reflect.Pointer && !field.IsNil() &&
-			field.Elem().Kind() == reflect.Struct {
-			nested = append(nested, field.Elem())
+		if err := w.walk(value.Field(i), depth); err != nil {
+			return err
 		}
 	}
+	return nil
+}
 
-	return nested
+func (w *structWalker) walkInterface(value reflect.Value, depth int) error {
+	if value.IsNil() {
+		return nil
+	}
+	held := value.Elem()
+	if held.Kind() != reflect.Struct {
+		return w.walk(held, depth+1)
+	}
+
+	copied := reflect.New(held.Type()).Elem()
+	copied.Set(held)
+	if err := w.walk(copied, depth+1); err != nil {
+		return err
+	}
+	if value.CanSet() {
+		value.Set(copied)
+	}
+	return nil
+}
+
+func (w *structWalker) walkMap(value reflect.Value, depth int) error {
+	if value.IsNil() {
+		return nil
+	}
+	if !holdsStruct(value.Type().Elem()) {
+		return nil
+	}
+	iter := value.MapRange()
+	for iter.Next() {
+		entry := iter.Value()
+		copied := reflect.New(entry.Type()).Elem()
+		copied.Set(entry)
+		if err := w.walk(copied, depth+1); err != nil {
+			return err
+		}
+		value.SetMapIndex(iter.Key(), copied)
+	}
+	return nil
+}
+
+func holdsStruct(typ reflect.Type) bool {
+	for {
+		kind := typ.Kind()
+		if kind == reflect.Struct {
+			return typ != pulidType
+		}
+		if kind == reflect.Interface {
+			return true
+		}
+		if kind != reflect.Pointer && kind != reflect.Slice && kind != reflect.Array &&
+			kind != reflect.Map {
+			return false
+		}
+		typ = typ.Elem()
+	}
 }
 
 func fieldMismatch(elem reflect.Value, names []string, want pulid.ID) (string, pulid.ID, bool) {

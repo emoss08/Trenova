@@ -58,7 +58,7 @@ func errNoRedirect(provider string) error {
 	)
 }
 
-func (s *Service) appAAD(
+func appAAD(
 	cred *accountingsync.AccountingAppCredential,
 	field string,
 ) encryptionservice.AAD {
@@ -94,7 +94,7 @@ func (s *Service) openCredential(
 ) (*accountingsyncports.AccountingApp, error) {
 	secret, err := s.encryption.DecryptStringWithAAD(
 		cred.ClientSecretCiphertext,
-		s.appAAD(cred, clientSecretField),
+		appAAD(cred, clientSecretField),
 	)
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (s *Service) openCredential(
 	if cred.HasWebhookVerifier() {
 		verifier, openErr := s.encryption.DecryptStringWithAAD(
 			cred.WebhookVerifierCiphertext,
-			s.appAAD(cred, webhookVerifierField),
+			appAAD(cred, webhookVerifierField),
 		)
 		if openErr != nil {
 			return nil, openErr
@@ -330,7 +330,7 @@ func (s *Service) sealCredential(
 	case secret != "":
 		sealed, err := s.encryption.EncryptStringWithAAD(
 			secret,
-			s.appAAD(cred, clientSecretField),
+			appAAD(cred, clientSecretField),
 		)
 		if err != nil {
 			return nil, err
@@ -348,7 +348,7 @@ func (s *Service) sealCredential(
 	case verifier != "":
 		sealed, err := s.encryption.EncryptStringWithAAD(
 			verifier,
-			s.appAAD(cred, webhookVerifierField),
+			appAAD(cred, webhookVerifierField),
 		)
 		if err != nil {
 			return nil, err

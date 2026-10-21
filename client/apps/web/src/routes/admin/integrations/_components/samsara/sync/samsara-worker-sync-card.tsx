@@ -53,11 +53,6 @@ type NormalizedWorkflowStatus =
   | "unspecified"
   | "unknown";
 
-type SyncProgressSnapshot = {
-  syncedActiveWorkers: number;
-  unsyncedActiveWorkers: number;
-};
-
 const workflowStatusPrefix = "WORKFLOW_EXECUTION_STATUS_";
 const workerSyncSummaryStorageKey = "integration:samsara-worker-sync:last-success";
 const conflictUsageStatsSchema = z
@@ -226,9 +221,6 @@ export function SamsaraWorkerSyncCard({
   const [trackedRunId, setTrackedRunId] = useState<string | null>(null);
   const [, setLogLines] = useSamsaraSyncStore.use("logLines");
   const [, setLastSuccessfulSync] = useSamsaraSyncStore.use("lastSuccessfulSync");
-  const [syncProgressBaseline, setSyncProgressBaseline] = useState<SyncProgressSnapshot | null>(
-    null,
-  );
   const [retryingWorkerID, setRetryingWorkerID] = useState<string | null>(null);
 
   const notFoundErrorHandledAtRef = useRef(0);
@@ -255,14 +247,20 @@ export function SamsaraWorkerSyncCard({
     [setLogLines],
   );
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (!open) {
       setTrackedWorkflowId(null);
       setTrackedRunId(null);
-      setLogLines([]);
       setShowAllFailures(false);
-      setSyncProgressBaseline(null);
       setRetryingWorkerID(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!open) {
+      setLogLines([]);
       previousStatusKeyRef.current = "";
       terminalToastKeyRef.current = "";
       completionHandledKeyRef.current = "";
@@ -324,14 +322,6 @@ export function SamsaraWorkerSyncCard({
       setTrackedWorkflowId(response.workflowId);
       setTrackedRunId(response.runId);
       setShowAllFailures(false);
-      setSyncProgressBaseline(
-        readinessQuery.data
-          ? {
-              syncedActiveWorkers: readinessQuery.data.syncedActiveWorkers,
-              unsyncedActiveWorkers: readinessQuery.data.unsyncedActiveWorkers,
-            }
-          : null,
-      );
       appendLog(
         "success",
         "sync",
@@ -345,14 +335,6 @@ export function SamsaraWorkerSyncCard({
         if (parsedUsageStats.success && parsedUsageStats.data.workflowId) {
           setTrackedWorkflowId(parsedUsageStats.data.workflowId);
           setTrackedRunId(parsedUsageStats.data.runId ?? null);
-          setSyncProgressBaseline(
-            readinessQuery.data
-              ? {
-                  syncedActiveWorkers: readinessQuery.data.syncedActiveWorkers,
-                  unsyncedActiveWorkers: readinessQuery.data.unsyncedActiveWorkers,
-                }
-              : null,
-          );
           appendLog(
             "warn",
             "sync",
@@ -667,22 +649,7 @@ export function SamsaraWorkerSyncCard({
         window.localStorage.setItem(workerSyncSummaryStorageKey, JSON.stringify(summary));
       }
     }
-
-    if (isWorkflowTerminal(terminalStatus)) {
-      setSyncProgressBaseline(null);
-    }
   }, [queryClient, statusResponse, trackedWorkflowId, setLastSuccessfulSync, appendLog, t]);
-
-  useEffect(() => {
-    if (!isTrackingWorkflow || !readiness || syncProgressBaseline) {
-      return;
-    }
-
-    setSyncProgressBaseline({
-      syncedActiveWorkers: readiness.syncedActiveWorkers,
-      unsyncedActiveWorkers: readiness.unsyncedActiveWorkers,
-    });
-  }, [isTrackingWorkflow, readiness, syncProgressBaseline]);
 
   const handleStartSync = () => {
     startSyncMutation.mutate();
@@ -692,7 +659,6 @@ export function SamsaraWorkerSyncCard({
     setTrackedWorkflowId(null);
     setTrackedRunId(null);
     setShowAllFailures(false);
-    setSyncProgressBaseline(null);
     appendLog("info", "workflow", t("Cleared tracked run from UI"));
   };
 

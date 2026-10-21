@@ -820,6 +820,7 @@ var IdentityProviderColumns = struct {
 	EnforceSSO          buncolgen.Column // "enforce_sso" → qualified: "idp.enforce_sso"
 	AutoProvision       buncolgen.Column // "auto_provision" → qualified: "idp.auto_provision"
 	AllowFederatedMFA   buncolgen.Column // "allow_federated_mfa" → qualified: "idp.allow_federated_mfa"
+	FederatedMFAACRs    buncolgen.Column // "federated_mfa_acr_values" → qualified: "idp.federated_mfa_acr_values"
 	AllowedDomains      buncolgen.Column // "allowed_domains" → qualified: "idp.allowed_domains"
 	AttributeMap        buncolgen.Column // "attribute_map" → qualified: "idp.attribute_map"
 	OIDCIssuerURL       buncolgen.Column // "oidc_issuer_url" → qualified: "idp.oidc_issuer_url"
@@ -845,6 +846,7 @@ var IdentityProviderColumns = struct {
 	EnforceSSO:          buncolgen.NewColumn("enforce_sso", "idp"),
 	AutoProvision:       buncolgen.NewColumn("auto_provision", "idp"),
 	AllowFederatedMFA:   buncolgen.NewColumn("allow_federated_mfa", "idp"),
+	FederatedMFAACRs:    buncolgen.NewColumn("federated_mfa_acr_values", "idp"),
 	AllowedDomains:      buncolgen.NewColumn("allowed_domains", "idp"),
 	AttributeMap:        buncolgen.NewColumn("attribute_map", "idp"),
 	OIDCIssuerURL:       buncolgen.NewColumn("oidc_issuer_url", "idp"),
@@ -866,27 +868,28 @@ var IdentityProviderColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by IdentityProvider.GetStaticFieldMap().
 var IdentityProviderFieldMap = map[string]string{
-	"id":                "id",
-	"organizationId":    "organization_id",
-	"businessUnitId":    "business_unit_id",
-	"name":              "name",
-	"slug":              "slug",
-	"protocol":          "protocol",
-	"enabled":           "enabled",
-	"enforceSso":        "enforce_sso",
-	"autoProvision":     "auto_provision",
-	"allowFederatedMfa": "allow_federated_mfa",
-	"allowedDomains":    "allowed_domains",
-	"attributeMap":      "attribute_map",
-	"oidcIssuerUrl":     "oidc_issuer_url",
-	"oidcClientId":      "oidc_client_id",
-	"oidcRedirectUrl":   "oidc_redirect_url",
-	"oidcScopes":        "oidc_scopes",
-	"samlEntityId":      "saml_entity_id",
-	"samlSsoUrl":        "saml_sso_url",
-	"version":           "version",
-	"createdAt":         "created_at",
-	"updatedAt":         "updated_at",
+	"id":                    "id",
+	"organizationId":        "organization_id",
+	"businessUnitId":        "business_unit_id",
+	"name":                  "name",
+	"slug":                  "slug",
+	"protocol":              "protocol",
+	"enabled":               "enabled",
+	"enforceSso":            "enforce_sso",
+	"autoProvision":         "auto_provision",
+	"allowFederatedMfa":     "allow_federated_mfa",
+	"federatedMfaAcrValues": "federated_mfa_acr_values",
+	"allowedDomains":        "allowed_domains",
+	"attributeMap":          "attribute_map",
+	"oidcIssuerUrl":         "oidc_issuer_url",
+	"oidcClientId":          "oidc_client_id",
+	"oidcRedirectUrl":       "oidc_redirect_url",
+	"oidcScopes":            "oidc_scopes",
+	"samlEntityId":          "saml_entity_id",
+	"samlSsoUrl":            "saml_sso_url",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
 }
 
 // IdentityProviderInsertableColumns lists column names suitable for INSERT statements on the "identity_providers" table.
@@ -902,6 +905,7 @@ var IdentityProviderInsertableColumns = []string{
 	"enforce_sso",
 	"auto_provision",
 	"allow_federated_mfa",
+	"federated_mfa_acr_values",
 	"allowed_domains",
 	"attribute_map",
 	"oidc_issuer_url",
@@ -978,6 +982,7 @@ var IdentityProviderFilter = struct {
 	EnforceSSO        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceSso" → DB: "enforce_sso"
 	AutoProvision     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoProvision" → DB: "auto_provision"
 	AllowFederatedMFA func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowFederatedMfa" → DB: "allow_federated_mfa"
+	FederatedMFAACRs  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "federatedMfaAcrValues" → DB: "federated_mfa_acr_values"
 	AllowedDomains    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowedDomains" → DB: "allowed_domains"
 	AttributeMap      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attributeMap" → DB: "attribute_map"
 	OIDCIssuerURL     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "oidcIssuerUrl" → DB: "oidc_issuer_url"
@@ -1019,6 +1024,9 @@ var IdentityProviderFilter = struct {
 	},
 	AllowFederatedMFA: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("allowFederatedMfa", op, value)
+	},
+	FederatedMFAACRs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("federatedMfaAcrValues", op, value)
 	},
 	AllowedDomains: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("allowedDomains", op, value)
@@ -1231,6 +1239,7 @@ var MFARecoveryCodeColumns = struct {
 	UserID         buncolgen.Column // "user_id" → qualified: "mrc.user_id"
 	OrganizationID buncolgen.Column // "organization_id" → qualified: "mrc.organization_id"
 	CodeHash       buncolgen.Column // "code_hash" → qualified: "mrc.code_hash"
+	HashVersion    buncolgen.Column // "hash_version" → qualified: "mrc.hash_version"
 	UsedAt         buncolgen.Column // "used_at" → qualified: "mrc.used_at"
 	CreatedAt      buncolgen.Column // "created_at" → qualified: "mrc.created_at"
 }{
@@ -1238,6 +1247,7 @@ var MFARecoveryCodeColumns = struct {
 	UserID:         buncolgen.NewColumn("user_id", "mrc"),
 	OrganizationID: buncolgen.NewColumn("organization_id", "mrc"),
 	CodeHash:       buncolgen.NewColumn("code_hash", "mrc"),
+	HashVersion:    buncolgen.NewColumn("hash_version", "mrc"),
 	UsedAt:         buncolgen.NewColumn("used_at", "mrc"),
 	CreatedAt:      buncolgen.NewColumn("created_at", "mrc"),
 }
@@ -1261,6 +1271,7 @@ var MFARecoveryCodeInsertableColumns = []string{
 	"user_id",
 	"organization_id",
 	"code_hash",
+	"hash_version",
 	"used_at",
 	"created_at",
 }
