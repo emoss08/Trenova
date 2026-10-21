@@ -11,6 +11,8 @@ import (
 	"go.uber.org/fx"
 )
 
+const maxConversationFileBytes = 64 << 20
+
 type Params struct {
 	fx.In
 
@@ -51,6 +53,7 @@ func (s *Service) ReadConversationFile(
 		s.encryption,
 		doc.StoragePath,
 		storedobject.AAD(req.TenantInfo, doc.StoragePath),
+		maxConversationFileBytes,
 	)
 	if err != nil {
 		return nil, err

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -47,7 +46,7 @@ func RegisterExtractionWorkflows() []temporaltype.WorkflowDefinition {
 			Name:        documentextractioncontract.ProcessWorkflowName,
 			Fn:          ProcessDocumentExtractionWorkflow,
 			TaskQueue:   temporaltype.DocumentExtractionTaskQueue,
-			Description: "Read a document with its organization's extraction engine, then classify and extract it",
+			Description: "Convert a document with Docling, then classify and extract it",
 		},
 		{
 			Name:        documentextractioncontract.ReconcileWorkflowName,
@@ -78,19 +77,6 @@ func ProcessDocumentExtractionWorkflow(
 	}
 
 	switch plan.Route {
-	case ExtractionRouteLegacy:
-		var result *ProcessDocumentIntelligenceResult
-		if err := workflow.ExecuteActivity(
-			stepCtx,
-			a.ProcessDocumentIntelligenceActivity,
-			&documentintelligencecontract.ProcessDocumentIntelligencePayload{
-				BasePayload: payload.BasePayload,
-				DocumentID:  payload.DocumentID,
-			},
-		).Get(ctx, &result); err != nil {
-			return nil, err
-		}
-		return result, nil
 	case ExtractionRouteDocling:
 	case ExtractionRouteSkip, ExtractionRouteStopped:
 		return plan.Result, nil

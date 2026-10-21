@@ -101,6 +101,15 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		orgID = parsed
 	}
 
+	logger, sink, err := config.ProvideLogger(cfg)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = logger.Sync()
+		_ = sink.Close()
+	}()
+
 	encryption, err := encryptionservice.New(encryptionservice.Params{Config: cfg})
 	if err != nil {
 		return fmt.Errorf("load the encryption keys: %w", err)
@@ -128,6 +137,7 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 		),
 		Rewrapper: encryptionservice.NewEnvelopeRewrapper(encryption),
 		Storage:   storage,
+		Logger:    logger.Named("encryption.rewrap"),
 	})
 
 	report, err := service.Run(ctx, envelopeSources(!rewrapSkipObjects), enveloperewrapservice.Options{
@@ -140,6 +150,10 @@ func runRewrap(cmd *cobra.Command, _ []string) error {
 	}
 
 	printReport(report)
+	if notBlobs := report.NotBlobs(); notBlobs > 0 {
+		logger.Warn("stored objects are not streaming blobs and cannot be read",
+			zap.Int("count", notBlobs))
+	}
 	if report.Failed() > 0 {
 		return errRewrapIncomplete
 	}
@@ -154,19 +168,27 @@ func printReport(report *enveloperewrapservice.Report) {
 	}
 	for _, source := range report.Sources {
 		fmt.Printf(
-			"%-40s scanned %6d  %s %6d  current %6d  skipped %6d  conflicts %6d  failed %6d\n",
+			"%-40s scanned %6d  %s %6d  current %6d  skipped %6d  not blobs %6d  conflicts %6d  failed %6d\n",
 			source.Name,
 			source.Scanned,
 			moved,
 			source.Rewrapped,
 			source.Current,
 			source.Skipped,
+			source.NotBlobs,
 			source.Conflicts,
 			source.Failed,
 		)
 		for _, message := range source.Errors {
 			color.Red("  %s", message)
 		}
+	}
+	if notBlobs := report.NotBlobs(); notBlobs > 0 {
+		color.Red(
+			"%d stored objects are not streaming blobs (the retired envelope format) and cannot be read; "+
+				"their keys are in the log. Delete them or upload the files again.",
+			notBlobs,
+		)
 	}
 	if report.Remaining() == 0 {
 		color.Green("Every sealed value is on the active key.")

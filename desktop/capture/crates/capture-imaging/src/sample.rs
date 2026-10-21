@@ -8,7 +8,7 @@
 
 use capture_protocol::api::PixelType;
 
-use crate::raster::{OwnedRaster, PixelFormat};
+use trenova_imaging_core::{OwnedRaster, PixelFormat};
 
 /// US letter, in inches × 10.
 const LETTER_WIDTH_TENTHS: u32 = 85;

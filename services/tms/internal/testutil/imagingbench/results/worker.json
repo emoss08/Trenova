@@ -1,0 +1,396 @@
+{
+  "label": "TMS through the imaging worker",
+  "recordedAt": "2026-10-21T04:08:54Z",
+  "machine": {
+    "goVersion": "go1.27.1",
+    "os": "linux",
+    "arch": "amd64",
+    "cpus": 2,
+    "cpuModel": "12th Gen Intel(R) Core(TM) i7-1270P"
+  },
+  "latency": [
+    {
+      "op": "thumbnail",
+      "input": "native-1p.pdf",
+      "iterations": 15,
+      "p50Ms": 7.113,
+      "p95Ms": 7.679,
+      "meanMs": 6.975
+    },
+    {
+      "op": "thumbnail",
+      "input": "rate-confirmation.pdf",
+      "iterations": 15,
+      "p50Ms": 7.752,
+      "p95Ms": 8.772,
+      "meanMs": 7.872
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "iterations": 15,
+      "p50Ms": 13.134,
+      "p95Ms": 13.923,
+      "meanMs": 13.2
+    },
+    {
+      "op": "thumbnail",
+      "input": "large-5mb.pdf",
+      "iterations": 15,
+      "p50Ms": 36.117,
+      "p95Ms": 41.008,
+      "meanMs": 37.434
+    },
+    {
+      "op": "thumbnail",
+      "input": "photo-bol.jpg",
+      "iterations": 15,
+      "p50Ms": 19.367,
+      "p95Ms": 20.014,
+      "meanMs": 19.76
+    },
+    {
+      "op": "thumbnail",
+      "input": "photo-bol.png",
+      "iterations": 15,
+      "p50Ms": 18.782,
+      "p95Ms": 20.007,
+      "meanMs": 18.252
+    },
+    {
+      "op": "page_view",
+      "input": "native-1p.pdf",
+      "iterations": 15,
+      "p50Ms": 123.338,
+      "p95Ms": 131.935,
+      "meanMs": 124.524
+    },
+    {
+      "op": "page_view",
+      "input": "rate-confirmation.pdf",
+      "iterations": 15,
+      "p50Ms": 131.32,
+      "p95Ms": 141.483,
+      "meanMs": 131.653
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "iterations": 15,
+      "p50Ms": 138.072,
+      "p95Ms": 144.388,
+      "meanMs": 139.186
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-20p-g4.pdf",
+      "iterations": 15,
+      "p50Ms": 131.933,
+      "p95Ms": 140.451,
+      "meanMs": 133.1
+    },
+    {
+      "op": "page_view",
+      "input": "native-200p.pdf",
+      "iterations": 15,
+      "p50Ms": 108.88,
+      "p95Ms": 114.44,
+      "meanMs": 109.606
+    },
+    {
+      "op": "page_view",
+      "input": "large-20mb.pdf",
+      "iterations": 15,
+      "p50Ms": 266.612,
+      "p95Ms": 285.262,
+      "meanMs": 269.043
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-cover-2qr.pdf",
+      "iterations": 15,
+      "p50Ms": 148.621,
+      "p95Ms": 154.816,
+      "meanMs": 146.484
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-blank.pdf",
+      "iterations": 15,
+      "p50Ms": 55.172,
+      "p95Ms": 60.946,
+      "meanMs": 55.665
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "iterations": 15,
+      "p50Ms": 67.623,
+      "p95Ms": 69.824,
+      "meanMs": 67.153
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-1.pdf",
+      "iterations": 15,
+      "p50Ms": 66.897,
+      "p95Ms": 69.882,
+      "meanMs": 67.724
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-2.pdf",
+      "iterations": 15,
+      "p50Ms": 68.735,
+      "p95Ms": 70.185,
+      "meanMs": 68.861
+    },
+    {
+      "op": "capture_inspection",
+      "input": "5 pages in one batch",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 5,
+      "p50Ms": 258.488,
+      "p95Ms": 276.913,
+      "meanMs": 261.242
+    },
+    {
+      "op": "text_profile",
+      "input": "native-10p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 10,
+      "p50Ms": 7.721,
+      "p95Ms": 8.227,
+      "meanMs": 7.771
+    },
+    {
+      "op": "text_profile",
+      "input": "native-200p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 200,
+      "p50Ms": 115.991,
+      "p95Ms": 119.73,
+      "meanMs": 116.234
+    },
+    {
+      "op": "text_profile",
+      "input": "scan-bol-5p-gray.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 5,
+      "p50Ms": 2.565,
+      "p95Ms": 3.061,
+      "meanMs": 2.49
+    },
+    {
+      "op": "text_profile",
+      "input": "rate-confirmation.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 2,
+      "p50Ms": 2.259,
+      "p95Ms": 2.756,
+      "meanMs": 2.373
+    },
+    {
+      "op": "merge",
+      "input": "50 one-page PDFs",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 50,
+      "p50Ms": 3.774,
+      "p95Ms": 4.855,
+      "meanMs": 4.051
+    },
+    {
+      "op": "merge",
+      "input": "native-10p+scan-bol-5p+rate-confirmation",
+      "iterations": 15,
+      "p50Ms": 5.585,
+      "p95Ms": 7.791,
+      "meanMs": 5.87
+    },
+    {
+      "op": "rotate",
+      "input": "scan-bol-1p-gray.pdf",
+      "iterations": 15,
+      "p50Ms": 1.782,
+      "p95Ms": 2.843,
+      "meanMs": 1.928
+    },
+    {
+      "op": "split",
+      "input": "native-50p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 50,
+      "p50Ms": 16.156,
+      "p95Ms": 18.082,
+      "meanMs": 16.643
+    },
+    {
+      "op": "split",
+      "input": "scan-bol-20p-g4.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 20,
+      "p50Ms": 5.995,
+      "p95Ms": 7.392,
+      "meanMs": 6.213
+    },
+    {
+      "op": "split",
+      "input": "native-200p.pdf",
+      "iterations": 15,
+      "units": "pages",
+      "unitsPerOp": 200,
+      "p50Ms": 57.73,
+      "p95Ms": 59.994,
+      "meanMs": 58.075
+    },
+    {
+      "op": "image_to_pdf",
+      "input": "photo-bol.jpg",
+      "iterations": 15,
+      "p50Ms": 2.595,
+      "p95Ms": 3.642,
+      "meanMs": 3.648
+    }
+  ],
+  "throughput": [
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 1,
+      "completed": 61,
+      "seconds": 10.000818755,
+      "perSecond": 6.099500600338597,
+      "perSecondPerCore": 1.5248751500846494
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 1,
+      "completed": 673,
+      "seconds": 10.000277184,
+      "perSecond": 67.2981346033858,
+      "perSecondPerCore": 16.82453365084645
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "concurrency": 1,
+      "completed": 128,
+      "seconds": 10.00083679,
+      "perSecond": 12.798928998420342,
+      "perSecondPerCore": 3.1997322496050855
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 4,
+      "completed": 144,
+      "seconds": 10.000725088,
+      "perSecond": 14.398955948982888,
+      "perSecondPerCore": 3.599738987245722
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 4,
+      "completed": 1607,
+      "seconds": 10.000407935,
+      "perSecond": 160.69344475196152,
+      "perSecondPerCore": 40.17336118799038
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "concurrency": 4,
+      "completed": 354,
+      "seconds": 10.0014534,
+      "perSecond": 35.394855711670864,
+      "perSecondPerCore": 8.848713927917716
+    },
+    {
+      "op": "page_view",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 8,
+      "completed": 118,
+      "seconds": 10.00061122,
+      "perSecond": 11.799278804480913,
+      "perSecondPerCore": 2.9498197011202283
+    },
+    {
+      "op": "thumbnail",
+      "input": "scan-bol-1p-gray.pdf",
+      "concurrency": 8,
+      "completed": 1397,
+      "seconds": 10.000464071,
+      "perSecond": 139.69351722897662,
+      "perSecondPerCore": 34.923379307244154
+    },
+    {
+      "op": "capture_inspection",
+      "input": "capture-text-0.pdf",
+      "concurrency": 8,
+      "completed": 308,
+      "seconds": 10.000485763,
+      "perSecond": 30.798503922633902,
+      "perSecondPerCore": 7.6996259806584755
+    }
+  ],
+  "peakRss": [
+    {
+      "input": "large-5mb.pdf",
+      "inputBytes": 4602134,
+      "pipeline": "upload -\u003e encrypt -\u003e store -\u003e download -\u003e decrypt -\u003e thumbnail",
+      "peakRssMb": 86.8203125,
+      "baselineRssMb": 37.39453125,
+      "seconds": 0.153272406
+    },
+    {
+      "input": "large-20mb.pdf",
+      "inputBytes": 21469064,
+      "pipeline": "upload -\u003e encrypt -\u003e store -\u003e download -\u003e decrypt -\u003e thumbnail",
+      "peakRssMb": 215.17578125,
+      "baselineRssMb": 37.30859375,
+      "seconds": 0.409497183
+    },
+    {
+      "input": "large-50mb.pdf",
+      "inputBytes": 52141924,
+      "pipeline": "upload -\u003e encrypt -\u003e store -\u003e download -\u003e decrypt -\u003e thumbnail",
+      "peakRssMb": 440.48828125,
+      "baselineRssMb": 37.03125,
+      "seconds": 0.909198999
+    },
+    {
+      "input": "large-5mb.pdf",
+      "inputBytes": 4602134,
+      "pipeline": "upload -\u003e seal (streaming) -\u003e store -\u003e open (streaming) -\u003e thumbnail",
+      "peakRssMb": 41.04296875,
+      "baselineRssMb": 37.2421875,
+      "seconds": 0.055409273
+    },
+    {
+      "input": "large-20mb.pdf",
+      "inputBytes": 21469064,
+      "pipeline": "upload -\u003e seal (streaming) -\u003e store -\u003e open (streaming) -\u003e thumbnail",
+      "peakRssMb": 41.66015625,
+      "baselineRssMb": 36.91015625,
+      "seconds": 0.083385549
+    },
+    {
+      "input": "large-50mb.pdf",
+      "inputBytes": 52141924,
+      "pipeline": "upload -\u003e seal (streaming) -\u003e store -\u003e open (streaming) -\u003e thumbnail",
+      "peakRssMb": 43.484375,
+      "baselineRssMb": 37.328125,
+      "seconds": 0.167817126
+    }
+  ]
+}

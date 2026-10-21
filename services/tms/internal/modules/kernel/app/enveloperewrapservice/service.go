@@ -1,17 +1,20 @@
 package enveloperewrapservice
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
 )
 
 const (
@@ -25,16 +28,27 @@ type Deps struct {
 	Repository kernelports.EnvelopeRepository
 	Rewrapper  kernelports.EnvelopeRewrapper
 	Storage    kernelports.Client
+	Logger     *zap.Logger
 }
 
 type Service struct {
 	repo      kernelports.EnvelopeRepository
 	rewrapper kernelports.EnvelopeRewrapper
 	storage   kernelports.Client
+	logger    *zap.Logger
 }
 
 func New(deps Deps) *Service {
-	return &Service{repo: deps.Repository, rewrapper: deps.Rewrapper, storage: deps.Storage}
+	logger := deps.Logger
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+	return &Service{
+		repo:      deps.Repository,
+		rewrapper: deps.Rewrapper,
+		storage:   deps.Storage,
+		logger:    logger,
+	}
 }
 
 type Options struct {
@@ -49,6 +63,7 @@ type SourceReport struct {
 	Rewrapped int
 	Current   int
 	Skipped   int
+	NotBlobs  int
 	Conflicts int
 	Failed    int
 	Errors    []string
@@ -65,6 +80,14 @@ func (r *Report) Failed() int {
 		failed += source.Failed
 	}
 	return failed
+}
+
+func (r *Report) NotBlobs() int {
+	notBlobs := 0
+	for _, source := range r.Sources {
+		notBlobs += source.NotBlobs
+	}
+	return notBlobs
 }
 
 func (r *Report) Remaining() int {
@@ -91,6 +114,7 @@ const (
 	outcomeCurrent outcome = iota
 	outcomeRewrapped
 	outcomeSkipped
+	outcomeNotBlob
 	outcomeConflict
 )
 
@@ -100,6 +124,8 @@ func (s *SourceReport) record(result outcome) {
 		s.Rewrapped++
 	case outcomeSkipped:
 		s.Skipped++
+	case outcomeNotBlob:
+		s.NotBlobs++
 	case outcomeConflict:
 		s.Conflicts++
 	case outcomeCurrent:
@@ -320,32 +346,44 @@ func (s *Service) rewrapObject(
 	if err != nil {
 		return outcomeCurrent, fmt.Errorf("download %s: %w", row.Sealed, err)
 	}
-	body, err := io.ReadAll(downloaded.Body)
+	body := bufio.NewReaderSize(downloaded.Body, 64<<10)
+	prefix, peekErr := body.Peek(s.rewrapper.BlobPrefixSize())
+	if peekErr != nil && !errors.Is(peekErr, io.EOF) {
+		_ = downloaded.Body.Close()
+		return outcomeCurrent, fmt.Errorf("read %s: %w", row.Sealed, peekErr)
+	}
+	if peekErr != nil || !s.rewrapper.IsBlob(prefix) {
+		_ = downloaded.Body.Close()
+		s.logger.Warn("a stored object is not a streaming blob and cannot be read",
+			zap.String("source", object.Column.Name),
+			zap.String("key", row.Sealed),
+			zap.String("organizationId", row.Tenant.OrgID.String()),
+			zap.String("rowId", row.ID))
+		return outcomeNotBlob, nil
+	}
+
+	rewrapped, err := s.rewrapper.RewrapBlob(ctx, body, object.Column.Scopes(row, row.Sealed))
+	if err != nil {
+		_ = downloaded.Body.Close()
+		return outcomeCurrent, err
+	}
+	if !rewrapped.Changed {
+		_ = downloaded.Body.Close()
+		return outcomeCurrent, nil
+	}
+	if dryRun {
+		_ = downloaded.Body.Close()
+		return outcomeRewrapped, nil
+	}
+
+	chunks, size, err := spool(body)
 	closeErr := downloaded.Body.Close()
 	if err != nil {
 		return outcomeCurrent, fmt.Errorf("read %s: %w", row.Sealed, err)
 	}
+	defer chunks.Close()
 	if closeErr != nil {
 		return outcomeCurrent, fmt.Errorf("read %s: %w", row.Sealed, closeErr)
-	}
-
-	sealed := string(body)
-	if !s.rewrapper.IsEnvelope(sealed) {
-		return outcomeSkipped, nil
-	}
-	replacement, changed, err := s.rewrapper.Rewrap(ctx, &kernelports.EnvelopeRewrapRequest{
-		Sealed: sealed,
-		Scopes: object.Column.Scopes(row, row.Sealed),
-		Rebind: false,
-	})
-	if err != nil {
-		return outcomeCurrent, err
-	}
-	if !changed {
-		return outcomeCurrent, nil
-	}
-	if dryRun {
-		return outcomeRewrapped, nil
 	}
 
 	present, err := s.repo.Present(ctx, &object.Column, row)
@@ -356,12 +394,11 @@ func (s *Service) rewrapObject(
 		return outcomeConflict, nil
 	}
 
-	payload := []byte(replacement)
 	info, err := s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         row.Sealed,
 		ContentType: downloaded.ContentType,
-		Size:        int64(len(payload)),
-		Body:        bytes.NewReader(payload),
+		Size:        int64(len(rewrapped.Header)) + size,
+		Body:        io.MultiReader(bytes.NewReader(rewrapped.Header), chunks),
 		Metadata:    downloaded.Metadata,
 	})
 	if err != nil {
@@ -379,4 +416,35 @@ func (s *Service) rewrapObject(
 		}
 	}
 	return outcomeRewrapped, nil
+}
+
+type spooled struct {
+	*os.File
+}
+
+func (f spooled) Close() error {
+	name := f.Name()
+	closeErr := f.File.Close()
+	if err := os.Remove(name); err != nil && closeErr == nil {
+		return err
+	}
+	return closeErr
+}
+
+func spool(src io.Reader) (io.ReadCloser, int64, error) {
+	file, err := os.CreateTemp("", "trenova-rewrap-*")
+	if err != nil {
+		return nil, 0, err
+	}
+	out := spooled{File: file}
+	size, err := io.Copy(file, src)
+	if err != nil {
+		_ = out.Close()
+		return nil, 0, err
+	}
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
+		_ = out.Close()
+		return nil, 0, err
+	}
+	return out, size, nil
 }

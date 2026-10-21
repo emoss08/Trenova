@@ -2,6 +2,7 @@ package encryptionservice
 
 import (
 	"context"
+	"io"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -84,6 +85,34 @@ func (c *SecretCipher) Rewrap(
 		return rewrapped, true, nil
 	}
 	return "", false, ErrInvalidEnvelope
+}
+
+func (c *SecretCipher) IsBlob(prefix []byte) bool {
+	return IsBlob(prefix)
+}
+
+func (c *SecretCipher) BlobPrefixSize() int {
+	return BlobPrefixSize()
+}
+
+func (c *SecretCipher) RewrapBlob(
+	ctx context.Context,
+	sealed io.Reader,
+	scopes []kernelports.SecretScope,
+) (*kernelports.BlobRewrap, error) {
+	aads := make([]AAD, 0, len(scopes))
+	for i := range scopes {
+		aads = append(aads, aadFor(&scopes[i]))
+	}
+	rewrapped, changed, err := c.service.RewrapBlob(ctx, sealed, aads)
+	if err != nil {
+		return nil, err
+	}
+	return &kernelports.BlobRewrap{
+		Header:   rewrapped.Header,
+		Consumed: rewrapped.Consumed,
+		Changed:  changed,
+	}, nil
 }
 
 func (a AAD) SecretScope() kernelports.SecretScope {

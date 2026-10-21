@@ -68,10 +68,6 @@ query ExtractionRolloutReport {
     truncated
     minGuardScoredFields
     minGuardExtractions
-    exclusions {
-      reason
-      count
-    }
   }
 }
 

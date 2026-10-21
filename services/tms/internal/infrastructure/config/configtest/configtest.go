@@ -72,5 +72,13 @@ storage:
   bucket: "test"
 system:
   systemUserPassword: "test-system-password"
+imaging:
+  endpoint: "dns:///imaging:50051"
+  serverName: "imaging"
+  tls:
+    enabled: true
+    caFile: "/certs/imaging/ca.pem"
+    certFile: "/certs/imaging/client.pem"
+    keyFile: "/certs/imaging/client-key.pem"
 `
 }

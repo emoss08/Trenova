@@ -29,7 +29,6 @@ import { formatShare } from "../quality-model";
 import { RolloutStateBadge } from "./extraction-badges";
 import { EXTRACTION_STALE_MS } from "./extraction-model";
 import { COMPARISON_FIGURES } from "./extraction-skeleton";
-import { RolloutExclusions } from "./rollout-exclusions";
 import { RolloutFigures } from "./rollout-figures";
 import { rolloutDraftOf, rolloutInput, rolloutState } from "./rollout-model";
 import { RolloutSettingsDialog } from "./rollout-settings-dialog";
@@ -259,7 +258,6 @@ export function RolloutView() {
         report.data.rollout.startedAt ? (
           <>
             <RolloutFigures report={report.data} />
-            <RolloutExclusions report={report.data} />
             <GuardProgress report={report.data} />
             {report.data.truncated ? (
               <Alert variant="info" size="sm">

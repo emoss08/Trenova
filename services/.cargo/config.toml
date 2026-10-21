@@ -1,0 +1,10 @@
+# Only what every build of the services workspace needs. Per-machine settings (a linker, a
+# target directory, job limits) belong in the environment or ~/.cargo/config.toml.
+
+[env]
+# trenova-proto compiles services/proto in build.rs with protox, so no protoc is installed
+# anywhere; this names the root it reads from.
+TRENOVA_PROTO_ROOT = { value = "proto", relative = true }
+
+[alias]
+lint = "clippy --workspace --all-targets -- -D warnings"

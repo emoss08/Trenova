@@ -1,0 +1,50 @@
+[package]
+name = "trenova-imaging"
+description = "The document and imaging worker: PDF probing, rendering, text and layout, capture inspection, OCR, assembly and image normalization, run in hardened child processes behind a gRPC API."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "trenova-imaging"
+path = "src/main.rs"
+
+[dependencies]
+bytes.workspace = true
+clap.workspace = true
+fast_image_resize.workspace = true
+futures-util.workspace = true
+http.workspace = true
+image.workspace = true
+jpeg-decoder.workspace = true
+jpeg-encoder.workspace = true
+libc.workspace = true
+libloading.workspace = true
+libwebp-sys.workspace = true
+pdfium-render.workspace = true
+prometheus-client.workspace = true
+rcgen.workspace = true
+prost.workspace = true
+rxing.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tonic.workspace = true
+tonic-health.workspace = true
+tonic-types.workspace = true
+tracing.workspace = true
+trenova-imaging-core.workspace = true
+trenova-proto.workspace = true
+trenova-sandbox.workspace = true
+trenova-service-kit.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+proptest.workspace = true
+tempfile.workspace = true
+
+[lints]
+workspace = true

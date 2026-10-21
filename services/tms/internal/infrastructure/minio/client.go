@@ -257,6 +257,9 @@ func (c *Client) Download(ctx context.Context, key string) (*kernelports.Downloa
 	stat, err := obj.Stat()
 	if err != nil {
 		_ = obj.Close()
+		if minio.ToErrorResponse(err).StatusCode == http.StatusNotFound {
+			return nil, fmt.Errorf("download %s: %w", key, kernelports.ErrObjectNotFound)
+		}
 		log.Error("failed to stat object", zap.Error(err))
 		return nil, fmt.Errorf("failed to get file info: %w", err)
 	}

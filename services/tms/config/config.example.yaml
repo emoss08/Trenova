@@ -200,17 +200,10 @@ ai:
   modelPriceReference: true # Estimate a model's price from OpenRouter's public catalog when its provider lists none; set false to make no outside call
   modelPriceReferenceTtl: 24h # How long that catalog is kept before it is read again
 
-  # Reading uploaded documents with a model, and the OCR pipeline that feeds it.
+  # Reading uploaded documents with a model. Docling converts them and does all OCR (see documentConversion).
   documentExtraction: true # Let a model classify and extract uploaded documents. Off, no document is read by a model whatever providers an organization has, and Docling reads nothing at all
   maxInputChars: 24000 # Max extracted text sent to a model
   extractionMaxTokens: 5000 # Output ceiling for one extraction
-  ocrCommand: tesseract # OCR binary path
-  ocrLanguage: eng # OCR language pack
-  ocrTimeout: 45s # Hard timeout per OCR process
-  enableOcrPreprocessing: true # Preprocess scanned images before OCR
-  ocrPreprocessingMode: standard # standard preprocessing pipeline
-  ocrMaxImageDimension: 2400 # Max width/height for preprocessed OCR images
-  maxOcrPages: 25 # Max scanned pages OCR will attempt per document
   maxExtractedChars: 200000 # Max stored extracted text
   reconcileBatchSize: 100 # Batch size for stale-job reconciliation
   maxConcurrentActivities: 2 # Dedicated document worker concurrency
@@ -380,11 +373,35 @@ documentConversion:
 # layout document intelligence extracts. PDFium runs in-process as WebAssembly,
 # so no native library is needed; every instance is sandboxed with its own
 # memory ceiling, and a render that outlives its caller's deadline is stopped.
-pdfReader:
-    maxInstances: 4 # Documents read at once per process; excess callers queue
-    memoryLimitMb: 1024 # Memory ceiling of one instance
-    acquireTimeout: 1m # Longest a caller waits for a free instance
-    maxRenderPixels: 25000000 # Pages larger than this render at a lower DPI
+# The imaging worker (services/imaging): thumbnails, page views, capture page inspection,
+# PDF assembly and image normalization. See docs/engineering/imaging-worker.md.
+imaging:
+    endpoint: dns:///imaging:50051 # dns:/// (every address the name resolves to), passthrough:/// or unix://
+    serverName: imaging # The name the worker's certificate carries
+    tls:
+        enabled: true # Required outside development: the link carries tenant documents
+        caFile: /certs/imaging/ca.pem
+        certFile: /certs/imaging/client.pem
+        keyFile: /certs/imaging/client-key.pem
+    chunkBytes: 1048576 # Upload chunk size
+    maxMessageBytes: 4194304 # Largest gRPC message either way
+    maxAttempts: 4 # Calls refused for capacity are retried on another worker within the deadline
+    initialBackoff: 100ms
+    maxBackoff: 5s
+    keepaliveTime: 30s
+    keepaliveTimeout: 10s
+    resolveInterval: 10s # How often the endpoint's DNS name is re-resolved
+    breaker:
+        consecutiveFailures: 5 # Failures in a row that take a worker out of rotation
+        openFor: 5s # First time out; doubles while it keeps failing
+        maxOpenFor: 2m
+    deadlines:
+        probe: 30s
+        render: 60s
+        inspectCapture: 10m
+        assemble: 5m
+        normalizeImage: 60s
+    prerenderPages: 20 # Page views rendered ahead after an upload; later pages render on first view
 
 # Rating formulas. Each evaluation runs on its own goroutine under a deadline, and one that
 # outlives it keeps running until it finishes, so the bound counts those too: a burst of

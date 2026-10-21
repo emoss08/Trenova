@@ -230,8 +230,8 @@ type Document struct {
 	StorageRetentionMode  string              `json:"storageRetentionMode"  bun:"storage_retention_mode,type:VARCHAR(50),nullzero"`
 	StorageRetentionUntil *int64              `json:"storageRetentionUntil" bun:"storage_retention_until,type:BIGINT,nullzero"`
 	StorageLegalHold      bool                `json:"storageLegalHold"      bun:"storage_legal_hold,type:BOOLEAN,notnull"`
-	CryptoMode            string              `json:"cryptoMode"            bun:"crypto_mode,type:VARCHAR(32),notnull,default:'envelope_v1'"`
-	CryptoVersion         int16               `json:"cryptoVersion"         bun:"crypto_version,type:SMALLINT,notnull,default:1"`
+	CryptoMode            string              `json:"cryptoMode"            bun:"crypto_mode,type:VARCHAR(32),notnull,default:'blob_v1'"`
+	CryptoVersion         int16               `json:"cryptoVersion"         bun:"crypto_version,type:SMALLINT,notnull,default:2"`
 	Status                Status              `json:"status"                bun:"status,type:document_status_enum,notnull,default:'Active'"`
 	Description           string              `json:"description"           bun:"description,type:TEXT,nullzero"`
 	ResourceID            string              `json:"resourceId"            bun:"resource_id,type:VARCHAR(100),notnull"`
@@ -304,10 +304,10 @@ func (d *Document) BeforeAppendModel(_ context.Context, query bun.Query) error {
 			d.ProcessingProfile = ProcessingProfileNone
 		}
 		if d.CryptoMode == "" {
-			d.CryptoMode = "envelope_v1"
+			d.CryptoMode = "blob_v1"
 		}
 		if d.CryptoVersion == 0 {
-			d.CryptoVersion = 1
+			d.CryptoVersion = 2
 		}
 		d.CreatedAt = now
 		d.UpdatedAt = now

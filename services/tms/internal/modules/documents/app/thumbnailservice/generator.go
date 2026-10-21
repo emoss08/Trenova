@@ -1,68 +1,40 @@
 package thumbnailservice
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"image"
 	"io"
 	"strings"
-	"time"
 
-	"github.com/disintegration/imaging"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/gen2brain/webp"
 )
 
 var (
 	ErrPDFHasNoPages        = errors.New("PDF has no pages")
-	ErrPDFReaderUnavailable = errors.New("PDF reader is not configured")
 	ErrPageOutOfRange       = errors.New("the document has no such page")
+	ErrUnreadable           = errors.New("the document could not be read")
+	ErrImagingNotConfigured = errors.New("the imaging service is not configured")
 )
 
 const (
-	DefaultMaxWidth    = 300
-	DefaultMaxHeight   = 400
-	DefaultWebPQuality = 80
+	ThumbnailWidth   = 240
+	ThumbnailHeight  = 320
+	thumbnailQuality = 80
 
-	PageMaxWidth    = 1400
-	PageMaxHeight   = 1800
-	pageWebPQuality = 82
-	pageRenderDPI   = 150
+	PageMaxWidth  = 1400
+	PageMaxHeight = 1800
+	pageQuality   = 82
 
-	renderDPI     = 96
-	renderTimeout = 90 * time.Second
+	maxRenderBytes = 32 << 20
 )
 
-type frame struct {
-	maxWidth  int
-	maxHeight int
-	quality   int
-	dpi       int
-}
-
-var pageFrame = frame{
-	maxWidth:  PageMaxWidth,
-	maxHeight: PageMaxHeight,
-	quality:   pageWebPQuality,
-	dpi:       pageRenderDPI,
-}
-
 type Generator struct {
-	maxWidth    int
-	maxHeight   int
-	webpQuality int
-	pdfReader   kernelports.PDFReader
+	imaging kernelports.Imaging
 }
 
-func NewGenerator(pdfReader kernelports.PDFReader) *Generator {
-	return &Generator{
-		maxWidth:    DefaultMaxWidth,
-		maxHeight:   DefaultMaxHeight,
-		webpQuality: DefaultWebPQuality,
-		pdfReader:   pdfReader,
-	}
+func NewGenerator(imaging kernelports.Imaging) *Generator {
+	return &Generator{imaging: imaging}
 }
 
 func (g *Generator) SupportsThumbnail(contentType string) bool {
@@ -72,108 +44,185 @@ func (g *Generator) SupportsThumbnail(contentType string) bool {
 
 func (g *Generator) Generate(
 	ctx context.Context,
-	reader io.Reader,
-	contentType string,
+	source kernelports.ImagingSource,
+	priority kernelports.ImagingPriority,
 ) ([]byte, error) {
-	return g.render(ctx, reader, contentType, 0, frame{
-		maxWidth:  g.maxWidth,
-		maxHeight: g.maxHeight,
-		quality:   g.webpQuality,
-		dpi:       renderDPI,
-	})
+	var out []byte
+	err := g.render(
+		ctx,
+		source,
+		[]int{0},
+		ThumbnailWidth,
+		ThumbnailHeight,
+		thumbnailQuality,
+		priority,
+		func(_ int, data []byte) error {
+			out = data
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, ErrPDFHasNoPages
+	}
+	return out, nil
 }
 
 func (g *Generator) RenderPage(
 	ctx context.Context,
-	reader io.Reader,
-	contentType string,
+	source kernelports.ImagingSource,
 	page int,
+	priority kernelports.ImagingPriority,
 ) ([]byte, error) {
 	if page < 1 {
 		return nil, ErrPageOutOfRange
 	}
 
-	return g.render(ctx, reader, contentType, page-1, pageFrame)
+	var out []byte
+	err := g.render(
+		ctx,
+		source,
+		[]int{page - 1},
+		PageMaxWidth,
+		PageMaxHeight,
+		pageQuality,
+		priority,
+		func(_ int, data []byte) error {
+			out = data
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, ErrPageOutOfRange
+	}
+	return out, nil
+}
+
+func (g *Generator) RenderPages(
+	ctx context.Context,
+	source kernelports.ImagingSource,
+	maxPages int,
+	priority kernelports.ImagingPriority,
+	yield func(page int, data []byte) error,
+) (int, error) {
+	return g.RenderPagesFrom(ctx, source, 1, maxPages, priority, yield)
+}
+
+func (g *Generator) RenderPagesFrom(
+	ctx context.Context,
+	source kernelports.ImagingSource,
+	first, maxPages int,
+	priority kernelports.ImagingPriority,
+	yield func(page int, data []byte) error,
+) (int, error) {
+	if g.imaging == nil {
+		return 0, ErrImagingNotConfigured
+	}
+	req := &kernelports.ImagingRenderRequest{
+		Source:    source,
+		FitWidth:  PageMaxWidth,
+		FitHeight: PageMaxHeight,
+		Format:    kernelports.ImagingWebP,
+		Quality:   pageQuality,
+		MaxPages:  maxPages,
+		Priority:  priority,
+	}
+	if first > 1 {
+		if first > maxPages {
+			return 0, nil
+		}
+		req.Pages = make([]int, 0, maxPages-first+1)
+		for page := first; page <= maxPages; page++ {
+			req.Pages = append(req.Pages, page-1)
+		}
+		req.MaxPages = 0
+	}
+	summary, err := g.imaging.Render(ctx, req, func(artifact *kernelports.ImagingArtifact) error {
+		if artifact.Body == nil {
+			return nil
+		}
+		data, readErr := readArtifact(artifact)
+		if readErr != nil {
+			return readErr
+		}
+		return yield(artifact.Index+1, data)
+	})
+	if err != nil {
+		return 0, classify(err)
+	}
+	return summary.PageCount, nil
 }
 
 func (g *Generator) render(
 	ctx context.Context,
-	reader io.Reader,
-	contentType string,
-	pageIndex int,
-	f frame,
-) ([]byte, error) {
-	ct := strings.ToLower(contentType)
-
-	if ct == "application/pdf" {
-		return g.renderPDF(ctx, reader, pageIndex, f)
+	source kernelports.ImagingSource,
+	pages []int,
+	width, height, quality int,
+	priority kernelports.ImagingPriority,
+	yield func(page int, data []byte) error,
+) error {
+	if g.imaging == nil {
+		return ErrImagingNotConfigured
 	}
-
-	if strings.HasPrefix(ct, "image/") {
-		if pageIndex != 0 {
-			return nil, ErrPageOutOfRange
+	var pageErr error
+	summary, err := g.imaging.Render(ctx, &kernelports.ImagingRenderRequest{
+		Source:    source,
+		Pages:     pages,
+		FitWidth:  width,
+		FitHeight: height,
+		Format:    kernelports.ImagingWebP,
+		Quality:   quality,
+		Priority:  priority,
+	}, func(artifact *kernelports.ImagingArtifact) error {
+		if artifact.Body == nil {
+			pageErr = artifact.Err
+			return nil
 		}
-		return g.renderImage(reader, f)
+		data, readErr := readArtifact(artifact)
+		if readErr != nil {
+			return readErr
+		}
+		return yield(artifact.Index+1, data)
+	})
+	if err != nil {
+		return classify(err)
 	}
-
-	return nil, fmt.Errorf("unsupported content type: %s", contentType)
+	if summary.PageCount == 0 {
+		return ErrPDFHasNoPages
+	}
+	if pageErr != nil {
+		return classify(pageErr)
+	}
+	return nil
 }
 
-func (g *Generator) renderImage(reader io.Reader, f frame) ([]byte, error) {
-	img, _, err := image.Decode(reader)
+func readArtifact(artifact *kernelports.ImagingArtifact) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(artifact.Body, maxRenderBytes+1))
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode image: %w", err)
+		return nil, fmt.Errorf("read the rendered page: %w", err)
 	}
-
-	return encode(img, f)
+	if len(data) > maxRenderBytes {
+		return nil, fmt.Errorf("the rendered page is larger than %d bytes", maxRenderBytes)
+	}
+	return data, nil
 }
 
-func (g *Generator) renderPDF(
-	ctx context.Context,
-	reader io.Reader,
-	pageIndex int,
-	f frame,
-) ([]byte, error) {
-	if g.pdfReader == nil {
-		return nil, ErrPDFReaderUnavailable
+func classify(err error) error {
+	switch {
+	case errors.Is(err, kernelports.ErrImagingPageOutOfRange):
+		return fmt.Errorf("%w: %w", ErrPageOutOfRange, err)
+	case errors.Is(err, kernelports.ErrImagingInvalidDocument),
+		errors.Is(err, kernelports.ErrImagingEncrypted),
+		errors.Is(err, kernelports.ErrImagingUnsupported),
+		errors.Is(err, kernelports.ErrImagingPixelBudget),
+		errors.Is(err, kernelports.ErrImagingTooLarge):
+		return fmt.Errorf("%w: %w", ErrUnreadable, err)
+	default:
+		return err
 	}
-
-	data, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read PDF data: %w", err)
-	}
-
-	renderCtx, cancel := context.WithTimeout(ctx, renderTimeout)
-	defer cancel()
-
-	doc, err := g.pdfReader.Open(renderCtx, data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open PDF: %w", err)
-	}
-	defer doc.Close()
-
-	if doc.PageCount() == 0 {
-		return nil, ErrPDFHasNoPages
-	}
-	if pageIndex >= doc.PageCount() {
-		return nil, ErrPageOutOfRange
-	}
-
-	img, err := doc.RenderPage(renderCtx, pageIndex, f.dpi)
-	if err != nil {
-		return nil, fmt.Errorf("failed to render PDF page: %w", err)
-	}
-
-	return encode(img, f)
-}
-
-func encode(img image.Image, f frame) ([]byte, error) {
-	fitted := imaging.Fit(img, f.maxWidth, f.maxHeight, imaging.Lanczos)
-
-	var buf bytes.Buffer
-	if err := webp.Encode(&buf, fitted, webp.Options{Quality: f.quality}); err != nil {
-		return nil, fmt.Errorf("failed to encode image: %w", err)
-	}
-
-	return buf.Bytes(), nil
 }

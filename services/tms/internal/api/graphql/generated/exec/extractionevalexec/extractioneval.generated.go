@@ -1535,16 +1535,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
-				Name:     "textSource",
-				NonNull:  true,
-				ChildErr: errNoChild12,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*extractioneval.ExtractionRun)
-					return obj.TextSource, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNExtractionTextSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐTextSource),
-			},
-			{
 				Name:     "casesTotal",
 				NonNull:  true,
 				ChildErr: errNoChild3,
@@ -2647,7 +2637,6 @@ var (
 	errNoChild9  = errors.New("field of type ExtractionEvalResultStatus does not have child fields")
 	errNoChild10 = errors.New("field of type Decimal does not have child fields")
 	errNoChild11 = errors.New("field of type ExtractionEvalRunStatus does not have child fields")
-	errNoChild12 = errors.New("field of type ExtractionTextSource does not have child fields")
 )
 
 func field_Mutation_promoteAICorrection_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2946,7 +2935,7 @@ func unmarshalInputStartExtractionEvalRunInput(ctx context.Context, ec *gqlexec.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"providerId", "caseLimit", "textSource"}
+	fieldsInOrder := [...]string{"providerId", "caseLimit"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2967,13 +2956,6 @@ func unmarshalInputStartExtractionEvalRunInput(ctx context.Context, ec *gqlexec.
 				return it, err
 			}
 			it.CaseLimit = data
-		case "textSource":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("textSource"))
-			data, err := unmarshalOExtractionTextSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐTextSource(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.TextSource = data
 		}
 	}
 	return it, nil
@@ -3083,15 +3065,6 @@ func unmarshalOExtractionEvalCaseStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	}
 	tmp, err := graphql.UnmarshalString(v)
 	res := extractioneval.CaseStatus(tmp)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOExtractionTextSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐTextSource(ctx context.Context, ec *gqlexec.Exec, v any) (*extractioneval.TextSource, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := extractioneval.TextSource(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -3432,14 +3405,6 @@ func marshalNExtractionStop2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
-}
-
-func marshalNExtractionTextSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionevalᚐTextSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractioneval.TextSource) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
 }
 
 func marshalNExtractionWeekAccuracy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐWeekAccuracy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicorrection.WeekAccuracy) graphql.Marshaler {

@@ -1,0 +1,20 @@
+[package]
+name = "trenova-imaging-core"
+description = "Platform-neutral page imaging: rasters, luma and thresholds, ink coverage, previews, JPEG and CCITT G4 encoding, and image PDFs of one page or many."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+fax.workspace = true
+jpeg-encoder.workspace = true
+pdf-writer.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

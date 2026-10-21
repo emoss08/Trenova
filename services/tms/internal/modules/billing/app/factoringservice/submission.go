@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -54,8 +53,7 @@ type SubmissionParams struct {
 	InvoiceDocuments documentports.InvoiceDocumentService
 	Documents        documentports.DocumentRepository
 	Store            documentports.DocumentStore
-	Assembler        captureports.CapturePDFAssembler
-	Images           captureports.ImagePDFConverter
+	Imaging          kernelports.Imaging
 	Factors          factoringcompanyports.FactoringCompanyRepository
 	Customers        customerports.CustomerRepository
 	Organizations    tenantports.OrganizationRepository
@@ -82,8 +80,7 @@ type SubmissionService struct {
 	invoiceDocuments documentports.InvoiceDocumentService
 	documents        documentports.DocumentRepository
 	store            documentports.DocumentStore
-	assembler        captureports.CapturePDFAssembler
-	images           captureports.ImagePDFConverter
+	imaging          kernelports.Imaging
 	factors          factoringcompanyports.FactoringCompanyRepository
 	customers        customerports.CustomerRepository
 	organizations    tenantports.OrganizationRepository
@@ -115,8 +112,7 @@ func NewSubmissionService(p SubmissionParams) factoringports.SubmissionService {
 		invoiceDocuments: p.InvoiceDocuments,
 		documents:        p.Documents,
 		store:            p.Store,
-		assembler:        p.Assembler,
-		images:           p.Images,
+		imaging:          p.Imaging,
 		factors:          p.Factors,
 		customers:        p.Customers,
 		organizations:    p.Organizations,

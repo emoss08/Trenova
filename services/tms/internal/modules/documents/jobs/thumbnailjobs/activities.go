@@ -5,8 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/thumbnailjobs/thumbnailcontract"
@@ -20,29 +22,91 @@ import (
 	"go.uber.org/fx"
 )
 
+const logKeyDocumentID = "documentId"
+
 type ActivitiesParams struct {
 	fx.In
 
 	DocumentRepository documentports.DocumentRepository
 	Storage            kernelports.Client
 	ThumbnailGenerator *thumbnailservice.Generator
+	PageRenders        *pagerender.Store
 	Encryption         *encryptionservice.Service
+	Config             *config.Config
 }
 
 type Activities struct {
 	docRepo            documentports.DocumentRepository
 	storage            kernelports.Client
 	thumbnailGenerator *thumbnailservice.Generator
+	pageRenders        *pagerender.Store
 	encryption         *encryptionservice.Service
+	prerenderPages     int
+	heartbeat          func(ctx context.Context, details ...any)
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
+	imagingConfig := &config.ImagingConfig{}
+	if p.Config != nil {
+		imagingConfig = &p.Config.Imaging
+	}
 	return &Activities{
 		docRepo:            p.DocumentRepository,
 		storage:            p.Storage,
 		thumbnailGenerator: p.ThumbnailGenerator,
+		pageRenders:        p.PageRenders,
 		encryption:         p.Encryption,
+		prerenderPages:     imagingConfig.GetPrerenderPages(),
+		heartbeat:          activity.RecordHeartbeat,
 	}
+}
+
+func (a *Activities) PrerenderPagesActivity(
+	ctx context.Context,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
+) (int, error) {
+	doc, _, err := a.getDocument(ctx, payload)
+	if err != nil {
+		return 0, err
+	}
+	if !document.SupportsPreview(doc.FileType) {
+		return 0, nil
+	}
+	if a.encryption == nil {
+		return 0, a.retryable("Failed to read the document", storedobject.ErrNotAvailable)
+	}
+
+	var previous pagerender.Progress
+	if activity.HasHeartbeatDetails(ctx) {
+		if detailsErr := activity.GetHeartbeatDetails(ctx, &previous); detailsErr != nil {
+			previous = pagerender.Progress{}
+		}
+	}
+	a.heartbeat(ctx, previous)
+	stored, err := a.pageRenders.Prerender(ctx, &pagerender.PrerenderRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: payload.OrganizationID,
+			BuID:  payload.BusinessUnitID,
+		},
+		Document:  doc,
+		Source:    a.documentSource(doc, doc.FileType),
+		MaxPages:  a.prerenderPages,
+		PageCount: previous.PageCount,
+		Progress: func(progress pagerender.Progress) {
+			a.heartbeat(ctx, progress)
+		},
+	})
+	if errors.Is(err, thumbnailservice.ErrUnreadable) ||
+		errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
+		return stored, temporaltype.NewDataIntegrityError(
+			"The document's pages could not be rendered",
+			map[string]any{logKeyDocumentID: payload.DocumentID.String(), "error": err.Error()},
+		).ToTemporalError()
+	}
+	if err != nil {
+		return stored, a.retryable("Failed to render page views", err)
+	}
+	return stored, nil
 }
 
 func (a *Activities) GenerateThumbnailActivity(
@@ -60,12 +124,16 @@ func (a *Activities) GenerateThumbnailActivity(
 		return result, err
 	}
 
-	fileData, result, err := a.downloadFileData(ctx, payload, doc)
-	if err != nil {
-		return result, err
+	if a.encryption == nil {
+		return a.failure(payload, "failed to read file data: %v", storedobject.ErrNotAvailable),
+			a.retryable("Failed to read the document", storedobject.ErrNotAvailable)
 	}
 
-	thumbData, result, err := a.generateThumbnail(ctx, payload, fileData)
+	thumbData, result, err := a.generateThumbnail(
+		ctx,
+		payload,
+		a.documentSource(doc, payload.ContentType),
+	)
 	if err != nil {
 		return result, err
 	}
@@ -96,7 +164,7 @@ func (a *Activities) getDocument(
 	payload *thumbnailcontract.GenerateThumbnailPayload,
 ) (*document.Document, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "loading document record")
+	a.heartbeat(ctx, "loading document record")
 
 	doc, err := a.docRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
 		ID: payload.DocumentID,
@@ -136,98 +204,29 @@ func (a *Activities) retryable(message string, err error) error {
 	return temporaltype.NewRetryableError(message, err).ToTemporalError()
 }
 
-func (a *Activities) downloadFileData(
-	ctx context.Context,
-	payload *thumbnailcontract.GenerateThumbnailPayload,
+func (a *Activities) documentSource(
 	doc *document.Document,
-) ([]byte, *GenerateThumbnailResult, error) {
-	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "downloading original file")
-
-	downloadResult, err := a.storage.Download(ctx, doc.StoragePath)
-	if err != nil {
-		logger.Error("Failed to download original file", "error", err)
-		return nil, a.failure(
-				payload,
-				"failed to download file: %v",
-				err,
-			), a.retryable(
-				"Failed to download file",
-				err,
-			)
-	}
-	defer downloadResult.Body.Close()
-
-	fileData, err := io.ReadAll(downloadResult.Body)
-	if err != nil {
-		logger.Error("Failed to read file data", "error", err)
-		return nil, a.failure(
-				payload,
-				"failed to read file data: %v",
-				err,
-			), a.retryable(
-				"Failed to read file data",
-				err,
-			)
-	}
-
-	if a.encryption == nil {
-		err = errors.New("document encryption is not configured")
-		logger.Error("Failed to decrypt file data", "error", err)
-		return nil, a.failure(
-				payload,
-				"failed to decrypt file data: %v",
-				err,
-			), a.retryable(
-				"Failed to decrypt file data",
-				err,
-			)
-	}
-	if !encryptionservice.IsEnvelope(string(fileData)) {
-		err = encryptionservice.ErrInvalidEnvelope
-		logger.Error("Failed to decrypt file data", "error", err)
-		return nil, a.failure(
-				payload,
-				"failed to decrypt file data: %v",
-				err,
-			), a.retryable(
-				"Failed to decrypt file data",
-				err,
-			)
-	}
-
-	fileData, err = a.encryption.DecryptBytesWithAAD(
-		string(fileData),
+	contentType string,
+) kernelports.ImagingSource {
+	return storedobject.Source(
+		a.storage,
+		a.encryption,
+		doc.StoragePath,
 		documentStorageAAD(doc, doc.StoragePath),
+		contentType,
+		doc.FileSize,
 	)
-	if err != nil {
-		logger.Error("Failed to decrypt file data", "error", err)
-		return nil, a.failure(
-				payload,
-				"failed to decrypt file data: %v",
-				err,
-			), a.retryable(
-				"Failed to decrypt file data",
-				err,
-			)
-	}
-
-	return fileData, nil, nil
 }
 
 func (a *Activities) generateThumbnail(
 	ctx context.Context,
 	payload *thumbnailcontract.GenerateThumbnailPayload,
-	fileData []byte,
+	source kernelports.ImagingSource,
 ) ([]byte, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "generating thumbnail")
+	a.heartbeat(ctx, "generating thumbnail")
 
-	thumbData, err := a.thumbnailGenerator.Generate(
-		ctx,
-		bytes.NewReader(fileData),
-		payload.ContentType,
-	)
+	thumbData, err := a.thumbnailGenerator.Generate(ctx, source, kernelports.ImagingBatch)
 	if err != nil {
 		logger.Warn("Thumbnail generation failed", "error", err)
 
@@ -243,7 +242,7 @@ func (a *Activities) generateThumbnail(
 					ToTemporalError()
 		}
 
-		if errors.Is(err, kernelports.ErrPDFUnreadable) {
+		if errors.Is(err, thumbnailservice.ErrUnreadable) {
 			return nil, a.failure(
 					payload,
 					"thumbnail generation failed: %v",
@@ -274,7 +273,7 @@ func (a *Activities) uploadThumbnail(
 	thumbData []byte,
 ) (string, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "uploading thumbnail")
+	a.heartbeat(ctx, "uploading thumbnail")
 
 	previewPath := fmt.Sprintf("%s/thumbnails/%s/%s_thumb.webp",
 		payload.OrganizationID.String(),
@@ -282,52 +281,20 @@ func (a *Activities) uploadThumbnail(
 		uuid.New().String(),
 	)
 
-	if a.encryption == nil {
-		err := errors.New("document encryption is not configured")
-		return "", a.failure(
-				payload,
-				"failed to encrypt thumbnail: %v",
-				err,
-			), a.retryable(
-				"Failed to encrypt thumbnail",
-				err,
-			)
-	}
-
-	encryptedThumb, err := a.encryption.EncryptBytesWithAAD(
-		thumbData,
-		documentStorageAAD(doc, previewPath),
-	)
-	if err != nil {
-		logger.Error("Failed to encrypt thumbnail", "error", err)
-		return "", a.failure(
-				payload,
-				"failed to encrypt thumbnail: %v",
-				err,
-			), a.retryable(
-				"Failed to encrypt thumbnail",
-				err,
-			)
-	}
-	uploadBody := []byte(encryptedThumb)
-
-	_, err = a.storage.Upload(ctx, &kernelports.UploadParams{
+	if _, err := storedobject.Write(ctx, a.storage, a.encryption, &storedobject.WriteRequest{
 		Key:         previewPath,
 		ContentType: "image/webp",
-		Size:        int64(len(uploadBody)),
-		Body:        bytes.NewReader(uploadBody),
-		Metadata: map[string]string{
-			"crypto_mode": encryptionservice.CryptoModeForCiphertext(encryptedThumb),
-		},
-	})
-	if err != nil {
-		logger.Error("Failed to upload thumbnail", "error", err)
+		AAD:         documentStorageAAD(doc, previewPath),
+		Body:        bytes.NewReader(thumbData),
+		Size:        int64(len(thumbData)),
+	}); err != nil {
+		logger.Error("Failed to store thumbnail", "error", err)
 		return "", a.failure(
 				payload,
-				"failed to upload thumbnail: %v",
+				"failed to store thumbnail: %v",
 				err,
 			), a.retryable(
-				"Failed to upload thumbnail",
+				"Failed to store thumbnail",
 				err,
 			)
 	}
@@ -349,7 +316,7 @@ func (a *Activities) updateDocumentPreview(
 	previewPath string,
 ) (*GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
-	activity.RecordHeartbeat(ctx, "updating document record")
+	a.heartbeat(ctx, "updating document record")
 
 	doc.PreviewStoragePath = previewPath
 	doc.PreviewStatus = document.PreviewStatusReady

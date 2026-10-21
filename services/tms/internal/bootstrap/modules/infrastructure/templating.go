@@ -35,12 +35,14 @@ type assetInlinerParams struct {
 	fx.In
 
 	Storage kernelports.Client
+	Imaging kernelports.Imaging
 	Logger  *zap.Logger
 }
 
 func newAssetInliner(p assetInlinerParams) documenttemplateports.AssetInliner {
 	return assetinliner.New(assetinliner.Params{
 		Storage: p.Storage,
+		Imaging: p.Imaging,
 		Logger:  p.Logger,
 	})
 }
