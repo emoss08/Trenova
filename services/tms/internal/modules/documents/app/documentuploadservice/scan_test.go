@@ -5,6 +5,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
@@ -79,6 +81,7 @@ func TestUploadPart_QuarantinesAnInfectedFileBeforeItIsStored(t *testing.T) {
 	require.NotNil(t, saved)
 	assert.Equal(t, documentupload.StatusQuarantined, saved.Status)
 	assert.Equal(t, documentupload.FailureMalwareDetected.String(), saved.FailureCode)
+	assert.Equal(t, "Win.Test.EICAR_HDB-1", saved.ThreatName)
 	require.Len(t, gate.Requests(), 1)
 	assert.Equal(t, contentscanports.SourceInboundAttachment, gate.Requests()[0].Source)
 	assert.Equal(t, content, gate.Requests()[0].Content)
@@ -166,5 +169,66 @@ func TestUploadPart_FailsTheSessionOfAFileTooLargeToScan(t *testing.T) {
 	require.NotNil(t, saved)
 	assert.Equal(t, documentupload.StatusFailed, saved.Status)
 	assert.Equal(t, documentupload.FailureTooLargeToScan.String(), saved.FailureCode)
+	assert.Empty(t, saved.ThreatName)
 	assert.Empty(t, storage.Keys())
+}
+
+func TestCreateSession_RecordsWhetherTheUploadWillBeScanned(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		gate contentscanports.Gate
+		want bool
+	}{
+		{name: "scanner configured", gate: contentscanportsmock.NewCleanGate(), want: true},
+		{name: "scanner off", gate: contentscanportsmock.NewDisabledGate(), want: false},
+		{name: "no gate", gate: nil, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tenant := pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			}
+			sessions := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+			sessions.EXPECT().
+				Create(mock.Anything, mock.Anything).
+				RunAndReturn(func(
+					_ context.Context,
+					created *documentupload.DocumentUploadSession,
+				) (*documentupload.DocumentUploadSession, error) {
+					return created, nil
+				}).
+				Once()
+			svc := &Service{
+				l:           zap.NewNop(),
+				sessionRepo: sessions,
+				validator: documentservice.NewValidator(documentservice.ValidatorParams{
+					Config: &config.Config{
+						Storage: config.StorageConfig{
+							AllowedMIMETypes: []string{"application/pdf"},
+							MaxFileSize:      1024 * 1024,
+						},
+					},
+				}),
+				contentGate: tt.gate,
+			}
+
+			session, err := svc.CreateSession(t.Context(), &documentuploadports.CreateSessionRequest{
+				TenantInfo:   tenant,
+				ResourceID:   pulid.MustNew("shp_").String(),
+				ResourceType: "shipment",
+				FileName:     "bol.pdf",
+				FileSize:     2048,
+				ContentType:  "application/pdf",
+			})
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, session.MalwareScan)
+		})
+	}
 }

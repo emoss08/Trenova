@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import { DocumentUploadZone, type RejectedFile } from "@/components/documents/document-upload-zone";
@@ -6,6 +7,7 @@ import {
   useDocumentExtractionAvailable,
 } from "@/components/documents/extraction-needs-provider-alert";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
+import type { UploadStatus } from "@/types/upload";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -68,29 +70,37 @@ function stepNumber(step: ImportStep) {
   }
 }
 
-function uploadStatusLabel(status?: string) {
+function uploadStatusLabel(status?: UploadStatus) {
   switch (status) {
     case "pending":
-      return "Preparing upload";
+      return translate("Preparing upload");
     case "uploading":
-      return "Uploading file";
+      return translate("Uploading file");
+    case "checking":
+      return translate("Checking for viruses");
     case "uploaded":
-      return "Upload complete";
+      return translate("Upload complete");
     case "verifying":
-      return "Verifying upload";
+      return translate("Verifying upload");
     case "completing":
-      return "Finalizing upload";
+      return translate("Finalizing upload");
     case "retrying":
-      return "Retrying upload";
+      return translate("Retrying upload");
     case "paused":
-      return "Upload paused";
+      return translate("Upload paused");
+    case "quarantined":
+      return translate("Upload blocked");
     case "error":
-      return "Upload failed";
+      return translate("Upload failed");
     case "success":
-      return "Upload complete";
+      return translate("Upload complete");
     default:
-      return "Waiting for file";
+      return translate("Waiting for file");
   }
+}
+
+function isRefusedUpload(status: UploadStatus): boolean {
+  return status === "error" || status === "quarantined";
 }
 
 function ImportRecoveryActions({
@@ -437,7 +447,7 @@ export function ShipmentRateConfirmationImportPanel({
                 <DocumentUploadZone
                   onFilesSelected={handleFilesSelected}
                   onFilesRejected={handleRejectedFiles}
-                  disabled={!!currentUpload && currentUpload.status !== "error"}
+                  disabled={!!currentUpload && !isRefusedUpload(currentUpload.status)}
                   accept=".pdf,.jpg,.jpeg,.png,.webp"
                 />
                 {currentUpload ? (
@@ -449,14 +459,15 @@ export function ShipmentRateConfirmationImportPanel({
                           {uploadStatusLabel(currentUpload.status)}
                         </div>
                       </div>
-                      {currentUpload.status === "uploading" ? (
+                      {currentUpload.status === "uploading" ||
+                      currentUpload.status === "checking" ? (
                         <SpinnerIcon className="text-primary size-4 animate-spin" />
                       ) : null}
                     </div>
                     <div className="mt-4 grid gap-3">
                       <Progress
                         value={currentUpload.progress}
-                        variant={currentUpload.status === "error" ? "error" : "default"}
+                        variant={isRefusedUpload(currentUpload.status) ? "error" : "default"}
                         showLabel
                       />
                       {currentUpload.error ? (
@@ -471,12 +482,13 @@ export function ShipmentRateConfirmationImportPanel({
                             {t("Retry upload")}
                           </Button>
                         ) : null}
-                        {currentUpload.status !== "success" ? (
+                        {currentUpload.status !== "success" &&
+                        !isRefusedUpload(currentUpload.status) ? (
                           <Button variant="outline" onClick={() => cancelUpload(currentUpload.id)}>
                             {t("Cancel upload")}
                           </Button>
                         ) : null}
-                        {currentUpload.status === "error" ? (
+                        {isRefusedUpload(currentUpload.status) ? (
                           <Button variant="ghost" onClick={() => removeUpload(currentUpload.id)}>
                             {t("Remove file")}
                           </Button>

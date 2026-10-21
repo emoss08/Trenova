@@ -96,6 +96,7 @@ type Stream interface {
 }
 
 type Gate interface {
+	Enabled() bool
 	Check(ctx context.Context, req *ScanRequest) (*ScanResult, error)
 	Stream(ctx context.Context, req *StreamRequest) (Stream, error)
 }
