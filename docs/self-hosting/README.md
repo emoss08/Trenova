@@ -46,13 +46,15 @@ itself are yours.
 | `temporal` | `temporalio/auto-setup` | Durable workflows; state in its own two PostgreSQL databases |
 | `gotenberg` | `gotenberg/gotenberg` | HTML-to-PDF rendering, locked down and unreachable from outside |
 | `docling` | `ghcr.io/docling-project/docling-serve-cpu` | Reads uploaded files for document extraction (PDFs, scans, photos, Office files, email), locked down and unreachable from outside |
+| `imaging` | `ghcr.io/emoss08/trenova/imaging` | Document thumbnails, page views, capture page inspection, PDF assembly and image normalization; every file is parsed in a hardened child process |
+| `imaging-certs` | `ghcr.io/emoss08/trenova/imaging` | One-shot: issues the private CA and the certificates the TMS and the imaging worker authenticate each other with, once |
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
 | `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; see [Malware scanning](#malware-scanning) |
 
 The `tms-api`, `tms-worker`, `tms-migrate` and `tms-bootstrap` services are one image with
 different commands.
 Only Caddy publishes ports (80 and 443, TCP and UDP). The databases, queues, search, Temporal,
-Gotenberg, docling-serve and GTC sit on an internal Docker network with no route off the host; the API and
+Gotenberg, docling-serve, the imaging worker and GTC sit on an internal Docker network with no route off the host; the API and
 worker get a separate network for outbound calls (AI providers, email, accounting
 integrations, release checks).
 
@@ -64,8 +66,13 @@ integrations, release checks).
 - The `docling` service adds about **8 GB of disk** for its image (its models are inside it)
   and **2.5 GB of memory** while it reads (about 1.5 GB idle; compose caps it at 4 GB). On
   4 vCPU it takes roughly 8 to 15 seconds a page for PDFs and scans and well under a second
-  for Office files and email. It is only needed when an organization uses the Docling
-  extraction engine with an AI provider; see [Document extraction](#document-extraction).
+  for Office files and email. Document extraction needs it; see
+  [Document extraction](#document-extraction).
+- The `imaging` service takes **2 vCPU and up to 3 GB of memory** by default
+  (`TRENOVA_IMAGING_CPUS` and `TRENOVA_IMAGING_MEMORY` in `.env`); it runs one child process
+  per CPU, each needing about 1 GB under load, and idles at a few megabytes. Every document
+  preview, page view and capture page goes through it, so the API and worker wait for it to be
+  healthy.
 - Docker Engine 24 or newer with the Compose plugin v2.24 or newer (`docker compose version`).
 - `git` and `openssl` on the host.
 - For a public install: a hostname for Trenova and one for its file storage (for example
@@ -260,7 +267,9 @@ Settings you are likely to change:
 [`postgresql.conf`](../../deploy/selfhost/postgresql.conf) is sized for an 8 GB host. On a
 larger one, raise `shared_buffers` to about a quarter of RAM and `effective_cache_size` to
 about half, then `docker compose restart postgres`. Redis is capped at 1 GB
-(`REDIS_MAXMEMORY` in `.env`).
+(`REDIS_MAXMEMORY` in `.env`). If page views or capture intake queue up, give the imaging worker
+more CPUs (`TRENOVA_IMAGING_CPUS`, with about 1 GB of `TRENOVA_IMAGING_MEMORY` per CPU) and
+`docker compose up -d imaging`.
 
 ## Upgrades
 
@@ -459,10 +468,14 @@ named in `.env`. Rotating replaces the outer key without decrypting anything els
    database or bucket backups taken before the rewrap: they can only be read with the old
    key.
 
-Documents and capture pages are rewritten in place in the bucket. With bucket versioning
+Documents and capture pages are rewritten in place in the bucket: only an object's header
+holds its wrapped key, so the rewrap replaces the header and copies the rest unchanged,
+spooling it through a temporary file. With bucket versioning
 or object lock, the earlier versions keep the old wrapping until they expire, so keep the
-retired key until they have. `--skip-objects` moves the database values alone and
-`--org org_…` limits a run to one organization.
+retired key until they have. An object stored in the retired envelope format cannot be
+read at all; the run reports how many it found under "not blobs" and logs each one's key, so
+it can be deleted or its file uploaded again. `--skip-objects` moves the database values alone
+and `--org org_…` limits a run to one organization.
 
 To move from the local key manager to Cloud KMS, set `keyManager: gcp-autokey` with its
 crypto key, keep the local key in `TRENOVA_SECURITY_ENCRYPTION_KEY` or
@@ -472,22 +485,25 @@ rewrap the same way.
 ## Document extraction
 
 Uploaded rate confirmations, bills of lading and delivery receipts are read so the AI can
-classify them and draft shipments from them. Each organization chooses how files are read in
-**Admin → Document extraction → Extraction engine**:
+classify them and draft shipments from them. Docling reads them: the worker sends each file to
+the `docling` service, which reads PDFs, scans and phone photos (it does all OCR, with RapidOCR
+by default), DOCX, XLSX, PPTX and email into page text, real tables and boxes for highlighting.
+The older binary Office formats (DOC, XLS, PPT) and RTF are refused; save them as PDF or DOCX
+first. Whether scans are read at all is the **Enable OCR** switch in **Admin → Document
+extraction**.
 
-- **Legacy** (the default) reads PDFs in the worker and uses the Tesseract command line for
-  scans, which the TMS image does not include.
-- **Docling** sends each file to the `docling` service, which reads PDFs, scans and phone
-  photos (RapidOCR), DOCX, XLSX, PPTX and email into page text, real tables and boxes for
-  highlighting. Legacy Office formats (DOC, XLS, PPT, RTF) are refused; save them as PDF or
-  DOCX first.
+Extraction needs three things:
 
-Docling extraction needs two things besides the service. The first is `ai.documentExtraction:
-true` in `config/config.yaml`, which ships `false`. The second is an AI provider assigned to the
-**Document extraction** task (**Admin → AI providers**); a provider assigned only to chat does
-not count. An organization on the Docling engine missing either gets no extraction at all: its
-documents are stored and searchable by name, description and tags, but not read, and the upload
-screens and the document's failure message name which of the two is missing.
+- **The `docling` service**, which the worker reaches at `documentConversion.doclingUrl` with
+  the key in `documentConversion.apiKey`.
+- **`ai.documentExtraction: true`** in `config/config.yaml`, which ships `false`.
+- **An extraction provider**: an AI provider assigned to the **Document extraction** task
+  (**Admin → AI providers**). A provider assigned only to chat does not count.
+
+Without the setting or a provider nothing is read. Without the service, nothing but plain text
+is read. Either way documents are still stored and searchable by name, description and tags,
+and the upload screens, **Admin → Document extraction** and the document's failure message name
+what is missing.
 
 `config/config.yaml` sets `documentConversion.doclingUrl` to the bundled service, and
 `.env` holds the key both sides use (`TRENOVA_DOCUMENTCONVERSION_APIKEY`, generated by
@@ -562,7 +578,9 @@ variables):
 
 The stack is secure by default for a single-operator host: TLS everywhere, secrets generated
 per install, no account with a default or published password, every backing service on an
-internal network, Gotenberg and docling-serve sandboxed, and nothing published except Caddy. Beyond that:
+internal network, Gotenberg and docling-serve sandboxed, the imaging worker parsing every file
+in a child process under seccomp, landlock and resource limits and reached only over mutual
+TLS, and nothing published except Caddy. Beyond that:
 
 - **Firewall.** Allow inbound 22 (or your SSH port), 80 and 443 only. Docker publishes ports
   around `ufw`/`firewalld` rules, which is why nothing but Caddy publishes one; keep it that
@@ -627,13 +645,21 @@ worker runs every AI job; an AI provider must also be configured under **AI cont
 **PDFs fail to render.** `docker compose ps gotenberg` must be healthy. Templates cannot load
 remote images by design; images are inlined before rendering.
 
-**Documents are not extracted.** For an organization on the Docling engine,
-`docker compose ps docling` must be healthy, and `docker compose logs tms-worker` must not
+**Documents are not extracted.** `docker compose ps docling` must be healthy, and `docker compose logs tms-worker` must not
 report `document converter is not reachable` or a refused API key (the key in `.env` must
 reach both `docling` and `tms-worker`; recreate both after changing it). A document marked
 **Unavailable** with no draft means no AI provider can serve document extraction for that
 organization; add one, then extract the document again. A file refused as too large or too
 long is over `documentConversion.maxFileBytes` or `maxPages`.
+
+**Previews, page views or capture pages fail.** `docker compose ps imaging` must be healthy,
+and `imaging-certs` must have exited 0. `docker compose logs imaging` says why a call was
+refused: a file the worker could not read is reported as such and stays downloadable; `a child
+was lost during a job` means a file faulted a native library, and only that file fails. If the
+TMS logs certificate errors after the volumes were recreated, reissue the certificates with
+`docker compose run --rm imaging-certs certs --force --server-dir=/certs/server
+--client-dir=/certs/client --ca-dir=/certs/ca --server-name=imaging` and
+`docker compose up -d --force-recreate imaging tms-api tms-worker`.
 
 **A service is restarting in a loop.** `docker compose ps` and then `docker compose logs
 <service>`. `docker stats` shows whether the host is out of memory.

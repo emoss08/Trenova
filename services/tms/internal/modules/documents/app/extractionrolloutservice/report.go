@@ -26,7 +26,6 @@ func (s *Service) Report(
 	}
 	report := &extractionrolloutports.ExtractionRolloutReport{
 		Rollout:              rollout,
-		Exclusions:           exclusionCounts(nil),
 		MinGuardScoredFields: extractionrollout.MinGuardScoredFields,
 		MinGuardExtractions:  extractionrollout.MinGuardExtractions,
 	}
@@ -47,19 +46,6 @@ func (s *Service) Report(
 	report.Candidate = t.candidate
 	report.Control = t.control
 
-	exclusions, err := s.exclusions.Totals(
-		ctx,
-		extractionrolloutports.TotalRolloutAssignmentsRequest{
-			TenantInfo:          tenant,
-			CandidateProviderID: candidate,
-			Since:               *rollout.StartedAt,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	report.Exclusions = exclusionCounts(exclusions)
-
 	split, err := s.accuracy(ctx, tenant, rollout)
 	if err != nil {
 		return nil, err
@@ -73,27 +59,6 @@ func (s *Service) Report(
 	report.ProviderName = s.providerName(ctx, tenant, candidate)
 
 	return report, nil
-}
-
-func exclusionCounts(
-	totals []extractionrolloutports.RolloutExclusionTotal,
-) []extractionrolloutports.ExtractionRolloutExclusionCount {
-	reasons := extractionrollout.AllExclusionReasons()
-	counts := make([]extractionrolloutports.ExtractionRolloutExclusionCount, 0, len(reasons))
-	for _, reason := range reasons {
-		count := 0
-		for _, total := range totals {
-			if total.Reason == reason {
-				count += total.Count
-			}
-		}
-		counts = append(counts, extractionrolloutports.ExtractionRolloutExclusionCount{
-			Reason: reason,
-			Count:  count,
-		})
-	}
-
-	return counts
 }
 
 func accuracyOf(

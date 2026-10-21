@@ -7,13 +7,13 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -334,22 +334,34 @@ func (fakeDocuments) GetByResourceIDs(
 	return nil, nil
 }
 
-type fakeAssembler struct {
-	captureports.CapturePDFAssembler
-}
-
-func (fakeAssembler) Assemble(_ context.Context, pages []captureports.CaptureAssemblyPage) ([]byte, error) {
-	out := make([]byte, 0, 64)
-	for _, page := range pages {
-		out = append(out, page.PDF...)
+func fakeImaging() *imagingfake.Fake {
+	fake := imagingfake.New()
+	fake.AssembleFunc = func(
+		ctx context.Context,
+		req *kernelports.ImagingAssembleRequest,
+		yield func(*kernelports.ImagingArtifact) error,
+	) ([]int, error) {
+		out := make([]byte, 0, 64)
+		for _, source := range req.Sources {
+			data, err := imagingfake.Read(ctx, source)
+			if err != nil {
+				return nil, err
+			}
+			if source.ContentType != "application/pdf" {
+				data = []byte("%PDF-image")
+			}
+			out = append(out, data...)
+		}
+		if err := yield(&kernelports.ImagingArtifact{
+			ContentType: "application/pdf",
+			Size:        int64(len(out)),
+			Body:        bytes.NewReader(out),
+		}); err != nil {
+			return nil, err
+		}
+		return []int{len(req.Sources)}, nil
 	}
-	return out, nil
-}
-
-type fakeImages struct{}
-
-func (fakeImages) ImageToPDF(context.Context, []byte) ([]byte, error) {
-	return []byte("%PDF-image"), nil
+	return fake
 }
 
 type fakeCipher struct{}

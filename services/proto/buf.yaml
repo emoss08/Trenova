@@ -1,0 +1,12 @@
+# The contracts between Trenova's services. Packages are trenova.<domain>.v1; a change that
+# breaks a released contract needs a new version package, and `task rust:proto-breaking`
+# (and CI) compares against origin/master.
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

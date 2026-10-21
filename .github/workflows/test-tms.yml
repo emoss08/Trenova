@@ -19,6 +19,8 @@ on:
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
+      - "deploy/Dockerfile.imaging"
+      - "deploy/Dockerfile.imaging.dockerignore"
       - "docs/engineering/ai-tool-safety.md"
       - "docs/engineering/agent-write-coverage.md"
   pull_request:
@@ -38,6 +40,8 @@ on:
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
+      - "deploy/Dockerfile.imaging"
+      - "deploy/Dockerfile.imaging.dockerignore"
       - "docs/engineering/ai-tool-safety.md"
       - "docs/engineering/agent-write-coverage.md"
   schedule:
@@ -52,6 +56,8 @@ permissions:
   contents: read
 
 env:
+  # The image the "Build the imaging worker image" steps load.
+  TRENOVA_IMAGING_TEST_IMAGE: trenova-imaging:ci
   # Must match GO_TAGS in services/tms/Taskfile.yml. 769 of 832 packages depend
   # on gin, so a job that builds under a different tag set shares no build cache
   # with the others. Steps passing -tags on the command line override this
@@ -155,6 +161,19 @@ jobs:
           docker logs trenova-test-postgres
           echo "::error::Postgres did not become ready"
           exit 1
+
+      - name: Build the imaging worker image
+        # The imaging integration tests start it with testcontainers
+        # (internal/testutil/imagingtest). It reads the cache rust.yml writes.
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services
+          file: ./deploy/Dockerfile.imaging
+          target: runtime
+          push: false
+          load: true
+          tags: trenova-imaging:ci
+          cache-from: type=gha,scope=imaging-runtime
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -450,6 +469,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the imaging worker image
+        # The imaging integration tests start it with testcontainers
+        # (internal/testutil/imagingtest). It reads the cache rust.yml writes.
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services
+          file: ./deploy/Dockerfile.imaging
+          target: runtime
+          push: false
+          load: true
+          tags: trenova-imaging:ci
+          cache-from: type=gha,scope=imaging-runtime
 
       - name: Set up Go
         uses: ./.github/actions/setup-go

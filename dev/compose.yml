@@ -195,6 +195,48 @@ services:
             timeout: 5s
             retries: 5
 
+    # The document and imaging worker (services/imaging): PDF probing and rendering,
+    # capture inspection, assembly and image normalization, each document parsed in a
+    # hardened child process. Development runs it without TLS; the image defaults to
+    # production, which refuses to start without mutual TLS. It needs no network beyond
+    # the TMS reaching it, holds no credentials, and keeps nothing on disk.
+    imaging:
+        build:
+            context: ../services
+            dockerfile: ../deploy/Dockerfile.imaging
+            args:
+                CARGO_BUILD_JOBS: ${CARGO_BUILD_JOBS:-4}
+        image: trenova-imaging:local
+        container_name: imaging
+        environment:
+            TRENOVA_IMAGING__ENVIRONMENT: development
+            TRENOVA_IMAGING__POOL__SIZE: ${IMAGING_POOL_SIZE:-2}
+            TRENOVA_IMAGING__TELEMETRY__LOG_FORMAT: text
+        # Loopback only: the TMS runs on the host in development, and the link has no TLS.
+        ports:
+            - "127.0.0.1:50051:50051"
+            - "127.0.0.1:19464:9464"
+        read_only: true
+        tmpfs:
+            - /tmp
+        cap_drop:
+            - ALL
+        security_opt:
+            - "no-new-privileges:true"
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    memory: 3G
+                    cpus: "2"
+                    pids: 512
+        healthcheck:
+            test: ["CMD", "/usr/local/bin/trenova-imaging", "health"]
+            interval: 10s
+            timeout: 5s
+            retries: 6
+            start_period: 15s
+
     # Document extraction reads uploaded files here: PDFs, scans, phone photos,
     # Office files and email become one DoclingDocument, which the worker turns
     # into Markdown, plain text and highlight boxes. Locked down like Gotenberg,

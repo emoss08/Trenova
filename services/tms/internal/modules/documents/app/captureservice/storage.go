@@ -4,19 +4,17 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
 	thumbnailContentType = "image/jpeg"
-	// maxStoredObjectBytes bounds what is read back from storage. An envelope
-	// is larger than its plaintext by its base64 and header, so this sits well
-	// above the largest page the upload allows.
+	// maxStoredObjectBytes bounds what is read back from storage, above the
+	// largest page the upload allows.
 	maxStoredObjectBytes = 64 << 20
 )
 
@@ -40,7 +38,7 @@ func captureObjectAAD(tenantInfo pagination.TenantInfo, key string) encryptionse
 }
 
 // putObject seals bytes and stores them. Pages are tenant paperwork and are
-// encrypted at rest exactly like documents, bound to their own key so a copied
+// sealed at rest exactly like documents, bound to their own key so a copied
 // object cannot be opened under another name.
 func (s *Service) putObject(
 	ctx context.Context,
@@ -49,22 +47,15 @@ func (s *Service) putObject(
 	contentType string,
 	plaintext []byte,
 ) error {
-	sealed, err := s.cipher.EncryptBytesWithAAD(plaintext, captureObjectAAD(tenantInfo, key))
-	if err != nil {
-		return fmt.Errorf("seal capture object: %w", err)
-	}
-
-	body := []byte(sealed)
-	_, err = s.storage.Upload(ctx, &kernelports.UploadParams{
+	if _, err := storedobject.Write(ctx, s.storage, s.cipher, &storedobject.WriteRequest{
 		Key:         key,
 		ContentType: contentType,
-		Size:        int64(len(body)),
-		Body:        bytes.NewReader(body),
-	})
-	if err != nil {
+		AAD:         captureObjectAAD(tenantInfo, key),
+		Body:        bytes.NewReader(plaintext),
+		Size:        int64(len(plaintext)),
+	}); err != nil {
 		return fmt.Errorf("store capture object: %w", err)
 	}
-
 	return nil
 }
 
@@ -74,26 +65,18 @@ func (s *Service) getObject(
 	tenantInfo pagination.TenantInfo,
 	key string,
 ) ([]byte, error) {
-	download, err := s.storage.Download(ctx, key)
-	if err != nil {
-		return nil, fmt.Errorf("read capture object: %w", err)
-	}
-	defer download.Body.Close()
-
-	sealed, err := io.ReadAll(io.LimitReader(download.Body, maxStoredObjectBytes))
-	if err != nil {
-		return nil, fmt.Errorf("read capture object: %w", err)
-	}
-
-	plaintext, err := s.cipher.DecryptBytesWithAAD(
-		string(sealed),
+	data, err := storedobject.Read(
+		ctx,
+		s.storage,
+		s.cipher,
+		key,
 		captureObjectAAD(tenantInfo, key),
+		maxStoredObjectBytes,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("open capture object: %w", err)
 	}
-
-	return plaintext, nil
+	return data, nil
 }
 
 // deleteObject removes an object, tolerating one already gone: a purge that

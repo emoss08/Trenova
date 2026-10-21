@@ -1,0 +1,222 @@
+name: Rust services
+
+# The services Cargo workspace (services/Cargo.toml): every backend Rust crate, the
+# contracts in services/proto, and the imaging worker's image. desktop/capture has its own
+# workflow (native-capture.yml).
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+      - "claude/**"
+      - "rust/**"
+    paths:
+      - "services/**"
+      - "!services/tms/**"
+      - "services/tms/internal/infrastructure/imaging/imagingpb/**"
+      - "desktop/capture/rust-toolchain.toml"
+      - "deploy/Dockerfile.imaging"
+      - "deploy/Dockerfile.imaging.dockerignore"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+    paths:
+      - "services/**"
+      - "!services/tms/**"
+      - "services/tms/internal/infrastructure/imaging/imagingpb/**"
+      - "desktop/capture/rust-toolchain.toml"
+      - "deploy/Dockerfile.imaging"
+      - "deploy/Dockerfile.imaging.dockerignore"
+      - ".github/workflows/rust.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_BUILD_JOBS: 4
+  # The PDFium build pdfium-render 0.9.4 binds; keep in step with deploy/Dockerfile.imaging.
+  PDFIUM_BUILD: "7881"
+  PDFIUM_SHA256: 1470e21b8b4a3b4ad7f85684e2da11d94f3b69a86d81dee11b9b6709d927ac1d
+  BUF_VERSION: "1.74.0"
+
+defaults:
+  run:
+    working-directory: services
+
+jobs:
+  toolchain:
+    name: Toolchain pins agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: services and desktop/capture pin the same channel
+        run: |
+          set -euo pipefail
+          channel() { sed -nE 's/^channel *= *"([^"]+)".*/\1/p' "$1"; }
+          services="$(channel rust-toolchain.toml)"
+          desktop="$(channel ../desktop/capture/rust-toolchain.toml)"
+          echo "services: $services, desktop/capture: $desktop"
+          if [ -z "$services" ] || [ "$services" != "$desktop" ]; then
+            echo "::error::services/rust-toolchain.toml ($services) and desktop/capture/rust-toolchain.toml ($desktop) must pin the same channel"
+            exit 1
+          fi
+
+  check:
+    name: Format, lint, test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.94"
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services
+      - name: Native libraries for the worker's tests
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libheif1 libheif-plugin-libde265
+          curl -fsSL -o /tmp/pdfium.tgz \
+            "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F${PDFIUM_BUILD}/pdfium-linux-x64.tgz"
+          echo "${PDFIUM_SHA256}  /tmp/pdfium.tgz" | sha256sum -c -
+          mkdir -p /tmp/pdfium && tar -xzf /tmp/pdfium.tgz -C /tmp/pdfium
+          echo "TRENOVA_PDFIUM_LIBRARY=/tmp/pdfium/lib/libpdfium.so" >> "$GITHUB_ENV"
+          echo "TRENOVA_HEIF_LIBRARY=libheif.so.1" >> "$GITHUB_ENV"
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+
+  deny:
+    name: cargo-deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: services/Cargo.toml
+          command: check
+          arguments: --all-features
+
+  contracts:
+    name: Contracts (buf lint, breaking, generated Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-go
+      - name: buf lint
+        working-directory: services/proto
+        run: go run "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}" lint
+      - name: buf breaking against master
+        working-directory: .
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin master
+          if git cat-file -e origin/master:services/proto/buf.yaml 2>/dev/null; then
+            go run "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}" breaking services/proto \
+              --against ".git#ref=origin/master,subdir=services/proto"
+          else
+            echo "origin/master has no contracts yet"
+          fi
+      - name: Generated Go is up to date
+        working-directory: services/proto
+        run: |
+          set -euo pipefail
+          go run "github.com/bufbuild/buf/cmd/buf@v${BUF_VERSION}" generate
+          git diff --exit-code -- ../tms/internal/infrastructure/imaging/imagingpb || {
+            echo "::error::Run 'task rust:proto' and commit services/tms/internal/infrastructure/imaging/imagingpb."
+            exit 1
+          }
+
+  fuzz:
+    name: Fuzz (bounded)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            services/crates/sandbox/fuzz
+            services/imaging/fuzz
+      - run: cargo install cargo-fuzz --locked --version 0.13.2
+      - name: Sandbox frame protocol
+        working-directory: services/crates/sandbox/fuzz
+        run: |
+          cargo +nightly fuzz run frame_stream -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run init_body -- -max_total_time=30 -rss_limit_mb=1024
+      - name: Imaging decoders
+        working-directory: services/imaging/fuzz
+        run: |
+          cargo +nightly fuzz run image_decode -- -max_total_time=90 -rss_limit_mb=2048
+          cargo +nightly fuzz run exif_orientation -- -max_total_time=30 -rss_limit_mb=1024
+          cargo +nightly fuzz run worker_job -- -max_total_time=30 -rss_limit_mb=1024
+
+  image:
+    name: Imaging image
+    runs-on: ubuntu-latest
+    needs: [check]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Tests against the image's native libraries
+        uses: docker/build-push-action@v6
+        with:
+          context: services
+          file: deploy/Dockerfile.imaging
+          target: test
+          push: false
+          cache-from: type=gha,scope=imaging
+          cache-to: type=gha,scope=imaging,mode=max
+      - name: Runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: services
+          file: deploy/Dockerfile.imaging
+          target: runtime
+          push: false
+          load: true
+          tags: trenova-imaging:ci
+          cache-from: |
+            type=gha,scope=imaging
+            type=gha,scope=imaging-runtime
+          cache-to: type=gha,scope=imaging-runtime,mode=max
+      - name: The worker refuses to start in production without mutual TLS
+        working-directory: .
+        run: |
+          set -euo pipefail
+          if docker run --rm trenova-imaging:ci serve 2> /tmp/err.txt; then
+            echo "::error::the worker started without TLS in production"
+            exit 1
+          fi
+          grep -q "grpc.tls" /tmp/err.txt
+      - name: The worker starts, hardens its children and reports ready
+        working-directory: .
+        run: |
+          set -euo pipefail
+          docker run -d --name imaging --read-only --tmpfs /tmp \
+            -e TRENOVA_IMAGING__ENVIRONMENT=development trenova-imaging:ci serve
+          for _ in $(seq 1 30); do
+            if docker exec imaging /usr/local/bin/trenova-imaging health; then
+              docker logs imaging 2>&1 | tail -5
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs imaging
+          exit 1

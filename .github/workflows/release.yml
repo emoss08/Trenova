@@ -9,6 +9,7 @@ env:
   IMAGE_NAMESPACE: emoss08/trenova
   TMS_IMAGE_NAME: emoss08/trenova/tms
   CLIENT_IMAGE_NAME: emoss08/trenova/client
+  IMAGING_IMAGE_NAME: emoss08/trenova/imaging
 
 jobs:
   detect-postgres-changes:
@@ -146,6 +147,59 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             VITE_API_URL=/api/v1
+
+  build-and-push-imaging:
+    name: Build and Push Imaging Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGING_IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      # The build context is services/ (the Rust workspace and its contracts). The image
+      # carries an SBOM and provenance attestation.
+      - name: Build and push imaging image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./services
+          file: ./deploy/Dockerfile.imaging
+          target: runtime
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=imaging-release
+          cache-to: type=gha,scope=imaging-release,mode=max
+          platforms: linux/amd64,linux/arm64
+          sbom: true
+          provenance: mode=max
+          build-args: |
+            CARGO_BUILD_JOBS=4
 
   build-and-push-postgres:
     name: Build and Push Postgres Image

@@ -1,0 +1,36 @@
+[package]
+name = "trenova-sandbox"
+description = "A supervised pool of hardened child processes for running untrusted-input parsers: framed IPC with sealed memfd input, seccomp-bpf, landlock, rlimits and no_new_privs, recycling, deadline kills and crash containment."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+libc.workspace = true
+prometheus-client.workspace = true
+rustix.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+landlock.workspace = true
+seccompiler.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }
+proptest.workspace = true
+
+[[bin]]
+name = "trenova-sandbox-test-child"
+path = "src/bin/test_child.rs"
+test = false
+bench = false
+doc = false
+
+[lints]
+workspace = true

@@ -23,11 +23,11 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use capture_imaging::Resolution;
 use capture_imaging::sample::{SampleKind, SamplePage, draw};
 use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
 use capture_protocol::api::{PixelType, SourceInfo, SourceProtocol};
 use capture_protocol::helper::ScanCondition;
+use trenova_imaging_core::Resolution;
 
 /// Every test scanner's name starts with this.
 pub const NAME: &str = "Trenova Test Scanner";

@@ -54,12 +54,7 @@ func (c *CaseConverter) ConvertCaseDocument(
 	case formatPlainText, formatPDF, formatImage, formatOffice, formatEmail:
 	}
 
-	data, failure := a.readDocumentBytes(ctx, doc)
-	if failure != nil {
-		return nil, fmt.Errorf("%w: %s", kernelports.ErrDocumentNotConvertible, failure.message)
-	}
-
-	converted, failure, err := a.convertDocumentBytes(ctx, doc, data, control.EnableOCR)
+	converted, failure, err := a.convertDocument(ctx, doc, tenantInfo, control.EnableOCR)
 	if err != nil {
 		return nil, err
 	}

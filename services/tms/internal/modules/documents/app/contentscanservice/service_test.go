@@ -1,8 +1,12 @@
 package contentscanservice
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
@@ -25,9 +29,17 @@ type fakeScanner struct {
 	calls  int
 }
 
-func (f *fakeScanner) Scan(context.Context, []byte) (*contentscanports.ScanResult, error) {
+func (f *fakeScanner) Scan(
+	_ context.Context,
+	content io.Reader,
+	_ int64,
+) (*contentscanports.ScanResult, error) {
 	f.calls++
-	return f.result, f.err
+	if f.err != nil {
+		return nil, f.err
+	}
+	_, err := io.Copy(io.Discard, content)
+	return f.result, err
 }
 
 func (f *fakeScanner) Ping(context.Context) error { return f.err }
@@ -129,6 +141,94 @@ func TestCheck_PassesACleanFileAndLetsEverythingThroughWithoutAScanner(t *testin
 	result, err = contentscanports.Check(t.Context(), nil, scanRequest())
 	require.NoError(t, err)
 	assert.Equal(t, contentscanports.VerdictUnscanned, result.Verdict)
+}
+
+type stoppingScanner struct{}
+
+func (stoppingScanner) Scan(
+	_ context.Context,
+	content io.Reader,
+	_ int64,
+) (*contentscanports.ScanResult, error) {
+	var first [4]byte
+	_, _ = io.ReadFull(content, first[:])
+	return &contentscanports.ScanResult{Verdict: contentscanports.VerdictClean}, nil
+}
+
+func (stoppingScanner) Ping(context.Context) error { return nil }
+
+func streamRequest(size int64) *contentscanports.StreamRequest {
+	return &contentscanports.StreamRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		Source:     contentscanports.SourceUpload,
+		FileName:   "scan.pdf",
+		Size:       size,
+	}
+}
+
+func TestStream_TheVerdictArrivesOnlyWhenTheFileHasEndedAndNamesItsDigest(t *testing.T) {
+	t.Parallel()
+
+	auditService := auditportsmock.NewMockAuditService(t)
+	var recorded *auditports.LogActionParams
+	auditService.EXPECT().
+		LogAction(mock.Anything, mock.Anything).
+		RunAndReturn(func(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+			recorded = params
+			return nil
+		}).
+		Once()
+	gate := NewWithScanner(&fakeScanner{result: &contentscanports.ScanResult{
+		Verdict:   contentscanports.VerdictInfected,
+		Signature: "Win.Test.EICAR_HDB-1",
+	}}, false, auditService, zap.NewNop())
+
+	body := bytes.Repeat([]byte("page "), 40_000)
+	stream, err := gate.Stream(t.Context(), streamRequest(int64(len(body))))
+	require.NoError(t, err)
+	gated := contentscanports.NewGated(bytes.NewReader(body), stream)
+
+	read, err := io.ReadAll(gated)
+	require.ErrorIs(t, err, contentscanports.ErrInfected, "the end of the file is held back by the verdict")
+	assert.Len(t, read, len(body))
+	require.NotNil(t, recorded)
+	sum := sha256.Sum256(body)
+	assert.Equal(t, hex.EncodeToString(sum[:]), recorded.CurrentState["sha256"])
+	assert.Equal(t, int64(len(body)), recorded.CurrentState["sizeBytes"])
+}
+
+func TestStream_AScannerThatStopsReadingFailsClosedUnlessFailOpen(t *testing.T) {
+	t.Parallel()
+
+	body := bytes.Repeat([]byte("x"), 1<<20)
+	closed, err := NewWithScanner(stoppingScanner{}, false, nil, zap.NewNop()).
+		Stream(t.Context(), streamRequest(int64(len(body))))
+	require.NoError(t, err)
+	_, err = io.ReadAll(contentscanports.NewGated(bytes.NewReader(body), closed))
+	require.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
+
+	open, err := NewWithScanner(stoppingScanner{}, true, nil, zap.NewNop()).
+		Stream(t.Context(), streamRequest(int64(len(body))))
+	require.NoError(t, err)
+	gated := contentscanports.NewGated(bytes.NewReader(body), open)
+	read, err := io.ReadAll(gated)
+	require.NoError(t, err)
+	assert.Len(t, read, len(body))
+	assert.Equal(t, contentscanports.VerdictUnscanned, gated.Result().Verdict)
+}
+
+func TestStream_AnAbortedStreamReleasesTheScanner(t *testing.T) {
+	t.Parallel()
+
+	stream, err := NewWithScanner(&fakeScanner{
+		result: &contentscanports.ScanResult{Verdict: contentscanports.VerdictClean},
+	}, false, nil, zap.NewNop()).Stream(t.Context(), streamRequest(10))
+	require.NoError(t, err)
+	_, err = stream.Write([]byte("half"))
+	require.NoError(t, err)
+	stream.Abort()
+	_, err = stream.Finish()
+	require.ErrorIs(t, err, context.Canceled)
 }
 
 func TestCheck_RefusesAFileTooLargeToScanEvenWhenFailingOpen(t *testing.T) {

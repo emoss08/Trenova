@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -327,7 +327,8 @@ func TestPageUploadIsIdempotentAndRefusesAnotherPage(t *testing.T) {
 	assert.True(t, errortypes.IsConflictError(err))
 
 	stored := w.objects[first.StoragePath]
-	assert.True(t, bytes.HasPrefix(stored, []byte("sealed|capture_page|")), "pages are sealed at rest")
+	assert.True(t, encryptionservice.IsBlob(stored), "pages are sealed at rest")
+	assert.NotContains(t, string(stored), string(page[:32]), "nothing of the page is stored in the clear")
 }
 
 func TestPageUploadKeepsTheTurnMadeOnTheDevice(t *testing.T) {
@@ -364,10 +365,7 @@ func TestPageUploadRejectsWhatIsNotAOnePagePDF(t *testing.T) {
 	batch, err := s.OpenBatch(t.Context(), principal, &OpenBatchInput{ClientKey: "k", Source: capture.SourceScan})
 	require.NoError(t, err)
 
-	two, err := s.assembler.Assemble(t.Context(), []captureports.CaptureAssemblyPage{
-		{PDF: pdfPage(t, 10)}, {PDF: pdfPage(t, 20)},
-	})
-	require.NoError(t, err)
+	two := mergePDFs(t, pdfPage(t, 10), pdfPage(t, 20))
 
 	for name, body := range map[string][]byte{
 		"not a pdf": []byte("GIF89a..."),
@@ -437,10 +435,10 @@ func TestProcessSplitsOnPatchCodesAndCoverSheets(t *testing.T) {
 	assert.Positive(t, issued[0].QRCode.Size)
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3), pdfPage(t, 4), pdfPage(t, 5), pdfPage(t, 6)}
-	w.inspections[string(pages[3])] = &captureports.CapturePageInspection{
+	w.inspections[string(pages[3])] = &pageReading{
 		InkCoverage: 0.1, Thumbnail: []byte("jpeg"), Codes: []string{issued[0].Payload},
 	}
-	w.inspections[string(pages[5])] = &captureports.CapturePageInspection{InkCoverage: 0.0001, Thumbnail: []byte("j")}
+	w.inspections[string(pages[5])] = &pageReading{InkCoverage: 0.0001, Thumbnail: []byte("j")}
 
 	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "stack", Source: capture.SourceScan},
 		pages, map[int]string{2: "T"})
@@ -488,7 +486,7 @@ func TestCoverSheetsDoNotAutoFileWhenTheOrganizationSaysNot(t *testing.T) {
 	require.NoError(t, err)
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2)}
-	w.inspections[string(pages[0])] = &captureports.CapturePageInspection{
+	w.inspections[string(pages[0])] = &pageReading{
 		InkCoverage: 0.1, Codes: []string{issued[0].Payload},
 	}
 	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "c", Source: capture.SourceScan}, pages, nil)
@@ -517,7 +515,7 @@ func TestAnotherTenantsCoverSheetRoutesNothing(t *testing.T) {
 	w.coverSheets[foreign.ID] = foreign
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3)}
-	w.inspections[string(pages[1])] = &captureports.CapturePageInspection{
+	w.inspections[string(pages[1])] = &pageReading{
 		InkCoverage: 0.1, Codes: []string{capture.CoverSheetPayload("stolen")},
 	}
 	batch := scan(t, s, principal, &OpenBatchInput{ClientKey: "f", Source: capture.SourceScan}, pages, nil)
@@ -586,7 +584,7 @@ func TestScanFromARecordFilesItself(t *testing.T) {
 	session := w.sessions[*filed.UploadSessionID]
 	assert.Equal(t, "shipment", session.ResourceType)
 	assert.Equal(t, shipmentID.String(), session.ResourceID)
-	count, err := s.assembler.PageCount(t.Context(), w.uploaded[session.ID])
+	count, err := countPages(w.uploaded[session.ID])
 	require.NoError(t, err)
 	assert.Equal(t, 2, count, "both pages go into the one document")
 }
@@ -739,10 +737,7 @@ func TestPrintJobLandsOnTheArmedDestination(t *testing.T) {
 	assert.Equal(t, rearmed.ID, *batch.RequestID)
 	assert.Equal(t, second, *batch.TargetID)
 
-	job, err := s.assembler.Assemble(t.Context(), []captureports.CaptureAssemblyPage{
-		{PDF: pdfPage(t, 1)}, {PDF: pdfPage(t, 2)}, {PDF: pdfPage(t, 3)},
-	})
-	require.NoError(t, err)
+	job := mergePDFs(t, pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3))
 
 	sealed, err := s.PutPrintJob(t.Context(), principal, &PutPrintJobInput{BatchID: batch.ID, Body: bytes.NewReader(job)})
 	require.NoError(t, err)

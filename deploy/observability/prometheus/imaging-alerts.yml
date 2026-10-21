@@ -1,0 +1,88 @@
+# Prometheus alert rules for the imaging worker (services/imaging).
+# Metric sources: services/imaging/src/server/metrics.rs (imaging_*),
+# services/crates/service-kit/src/admission.rs (admission_*) and
+# services/crates/sandbox/src/pool.rs (sandbox_*). Load via rule_files in prometheus.yml.
+# See docs/engineering/imaging-worker.md, "Metrics and alerts".
+
+groups:
+  - name: trenova-imaging
+    rules:
+      - alert: ImagingWorkerDown
+        expr: up{job=~".*imaging.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: imaging
+        annotations:
+          summary: "An imaging worker is not answering scrapes"
+          description: >-
+            Document previews, page views, capture intake and PDF assembly go through the
+            imaging workers. Check the container's health and logs.
+
+      - alert: ImagingErrorRatioHigh
+        expr: |
+          sum by (operation) (increase(imaging_calls_total{code=~"internal|deadline_exceeded|unavailable"}[15m]))
+            / clamp_min(sum by (operation) (increase(imaging_calls_total[15m])), 1) > 0.05
+          and sum by (operation) (increase(imaging_calls_total[15m])) >= 20
+        for: 10m
+        labels:
+          severity: warning
+          service: imaging
+        annotations:
+          summary: "More than 5% of {{ $labels.operation }} calls fail on the worker's side"
+          description: >-
+            Internal errors, timeouts and unavailability, not caller mistakes. Check the
+            sandbox kill reasons (crashes point at a document that faults a native library)
+            and whether the pool is short of children.
+
+      - alert: ImagingAdmissionRejecting
+        expr: sum(increase(admission_decisions_total{outcome="Rejected"}[10m])) > 50
+        for: 10m
+        labels:
+          severity: warning
+          service: imaging
+        annotations:
+          summary: "Imaging workers are refusing work for capacity"
+          description: >-
+            More than 50 calls were refused with RESOURCE_EXHAUSTED in 10 minutes. Callers
+            retry, but sustained refusals mean the fleet needs more replicas: scale on this
+            metric or on admission_cost_units_in_use.
+
+      - alert: ImagingInteractiveRejected
+        expr: sum(increase(admission_decisions_total{priority="Interactive",outcome="Rejected"}[5m])) > 0
+        for: 5m
+        labels:
+          severity: critical
+          service: imaging
+        annotations:
+          summary: "Interactive imaging calls are being refused"
+          description: >-
+            Page views and other calls a person waits on are refused even with the reserve
+            batch work cannot use. Add replicas or raise admission.interactive_reserve.
+
+      - alert: ImagingChildrenCrashing
+        expr: sum(increase(sandbox_killed_total{reason="Crash"}[15m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: imaging
+        annotations:
+          summary: "Imaging children are crashing"
+          description: >-
+            More than 10 sandboxed children died in 15 minutes. Each takes only its own job
+            with it, but a steady stream is a hostile or malformed input pattern, or a
+            native library fault worth reporting upstream.
+
+      - alert: ImagingPoolShort
+        expr: |
+          max_over_time(sandbox_live[5m]) < sandbox_size
+          or sum by (instance) (increase(sandbox_spawn_failures_total[10m])) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: imaging
+        annotations:
+          summary: "An imaging worker cannot keep its children running"
+          description: >-
+            Children fail to start, or the pool has stayed below its configured size for five minutes. Readiness is off
+            while the pool is short. Check the worker's logs for hardening or library errors.

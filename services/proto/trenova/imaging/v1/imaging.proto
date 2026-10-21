@@ -1,0 +1,390 @@
+// The imaging worker's contract: stateless, tenant-agnostic document and image
+// computation for the TMS. Plaintext bytes go in, derived artifacts come out;
+// the worker holds no database, storage, key or network access. It reads no
+// text and runs no OCR: docling does both.
+//
+// Every call streams its input in. The first message is a header naming the
+// operation's parameters and each document's content type and declared size;
+// the documents follow as chunks (1 MiB by default), each document opened by a
+// start message when a call takes several. Results stream back per page or per
+// artifact, so neither side holds a whole result set: an artifact is a header
+// followed by chunks, the last flagged.
+//
+// Request metadata:
+//   x-trenova-priority: interactive | batch (anything else is batch)
+//   grpc-timeout: the caller's deadline, which the worker enforces
+//   traceparent / tracestate: W3C trace context
+//
+// Errors are google.rpc.Status with an ErrorInfo whose domain is
+// "imaging.trenova.app" and whose reason is an ErrorReason value's name without
+// its ERROR_REASON_ prefix ("ENCRYPTED"), plus a
+// RetryInfo when the caller should come back later:
+//   INVALID_ARGUMENT   + INVALID_DOCUMENT, UNSUPPORTED_FORMAT, INVALID_REQUEST
+//   FAILED_PRECONDITION + ENCRYPTED
+//   OUT_OF_RANGE        + TOO_LARGE, PIXEL_BUDGET, PAGE_OUT_OF_RANGE
+//   DEADLINE_EXCEEDED   + TIMEOUT
+//   RESOURCE_EXHAUSTED  + RESOURCE_EXHAUSTED (with RetryInfo)
+//   UNAVAILABLE         + DRAINING (with RetryInfo)
+//   INTERNAL            + INTERNAL, WORKER_CRASHED
+// A call over several pages or documents reports a page's own failure in band
+// (PageError) and carries on with the rest.
+syntax = "proto3";
+
+package trenova.imaging.v1;
+
+option go_package = "github.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb;imagingpb";
+
+service ImagingService {
+  // Validates a document and describes it: page count, sizes and rotation,
+  // which pages carry native text, encryption, version and producer; or, for
+  // an image, its format, size and orientation.
+  rpc Probe(stream ProbeRequest) returns (ProbeResponse);
+
+  // Renders pages (of a PDF, or the one page of an image) to WebP, JPEG or
+  // PNG, at a DPI or fitted into a box, flattened onto white.
+  rpc Render(stream RenderRequest) returns (stream RenderResponse);
+
+  // Inspects captured pages in one pass each: thumbnail, ink coverage and
+  // every QR and 1D barcode. A batch of up to 1,000 pages streams in and the
+  // results stream back per page.
+  rpc InspectCapture(stream InspectCaptureRequest) returns (stream InspectCaptureResponse);
+
+  // Builds PDFs from pages of the sources: merge, split into ranges, rotate,
+  // extract; an image source becomes a page of its own.
+  rpc Assemble(stream AssembleRequest) returns (stream AssembleResponse);
+
+  // Decodes an image (JPEG, PNG, WebP, TIFF, GIF, HEIC/HEIF), applies its
+  // EXIF orientation, optionally downscales it, strips its metadata and
+  // writes it as PNG or JPEG.
+  rpc NormalizeImage(stream NormalizeImageRequest) returns (stream NormalizeImageResponse);
+}
+
+// Why something failed. Also the ErrorInfo reason of a failed call.
+enum ErrorReason {
+  ERROR_REASON_UNSPECIFIED = 0;
+  // The bytes are not a readable document of the declared type.
+  ERROR_REASON_INVALID_DOCUMENT = 1;
+  // The PDF is encrypted and needs a password.
+  ERROR_REASON_ENCRYPTED = 2;
+  // The input is larger than the call's or the worker's limit.
+  ERROR_REASON_TOO_LARGE = 3;
+  // Rendering would pass the pixel budget.
+  ERROR_REASON_PIXEL_BUDGET = 4;
+  // The work did not finish before its deadline.
+  ERROR_REASON_TIMEOUT = 5;
+  // The worker is at capacity; retry after the RetryInfo delay.
+  ERROR_REASON_RESOURCE_EXHAUSTED = 6;
+  // Something went wrong in the worker.
+  ERROR_REASON_INTERNAL = 7;
+  // The content type is not one the operation takes.
+  ERROR_REASON_UNSUPPORTED_FORMAT = 8;
+  // A page index is past the end of the document.
+  ERROR_REASON_PAGE_OUT_OF_RANGE = 9;
+  // The request itself is malformed.
+  ERROR_REASON_INVALID_REQUEST = 10;
+  // The process working on the document died; the document likely triggers
+  // a fault in a native library.
+  ERROR_REASON_WORKER_CRASHED = 11;
+  // The worker is shutting down; retry on another.
+  ERROR_REASON_DRAINING = 12;
+}
+
+// A document as the caller declares it, before its bytes.
+message DocumentHeader {
+  // application/pdf, image/jpeg, image/png, image/webp, image/tiff,
+  // image/gif, image/heic, image/heif.
+  string content_type = 1;
+  // The exact byte count that follows. The worker refuses a stream that
+  // sends more or less.
+  uint64 declared_size = 2;
+}
+
+// A failure confined to one page or one document of a call.
+message PageError {
+  uint32 page_index = 1;
+  ErrorReason reason = 2;
+  // A short description safe to log; it never quotes document content.
+  string message = 3;
+}
+
+// The start of a produced file: a rendered page, a thumbnail, an assembled PDF.
+message ArtifactHeader {
+  // Which output of the call this is (the page index for a render, the
+  // output index for an assembly).
+  uint32 index = 1;
+  string content_type = 2;
+  uint32 width_px = 3;
+  uint32 height_px = 4;
+  // The artifact's total size in bytes, as the chunks will add up to.
+  uint64 size = 5;
+}
+
+// A piece of the artifact the last ArtifactHeader started.
+message ArtifactChunk {
+  bytes data = 1;
+  // This chunk completes the artifact.
+  bool last = 2;
+}
+
+enum ImageFormat {
+  IMAGE_FORMAT_UNSPECIFIED = 0;
+  IMAGE_FORMAT_WEBP = 1;
+  IMAGE_FORMAT_JPEG = 2;
+  IMAGE_FORMAT_PNG = 3;
+}
+
+// How large a page is drawn.
+message RenderSize {
+  oneof size {
+    // Draw at this resolution.
+    uint32 dpi = 1;
+    // Draw to fit inside the box, never enlarging past the page at 300 DPI.
+    FitBox fit = 2;
+  }
+}
+
+message FitBox {
+  uint32 max_width = 1;
+  uint32 max_height = 2;
+}
+
+// ---- Probe ----
+
+message ProbeRequest {
+  oneof part {
+    ProbeHeader header = 1;
+    bytes chunk = 2;
+  }
+}
+
+message ProbeHeader {
+  DocumentHeader document = 1;
+  // Whether to read each page's text to report has_text. Off, Probe opens
+  // the document and reads only its structure.
+  bool text_profile = 2;
+}
+
+enum DocumentKind {
+  DOCUMENT_KIND_UNSPECIFIED = 0;
+  DOCUMENT_KIND_PDF = 1;
+  DOCUMENT_KIND_IMAGE = 2;
+}
+
+message ProbeResponse {
+  DocumentKind kind = 1;
+  uint32 page_count = 2;
+  repeated PageInfo pages = 3;
+  bool encrypted = 4;
+  // "1.7" for a PDF; empty for an image.
+  string pdf_version = 5;
+  string producer = 6;
+  // The decoded image format ("jpeg", "heic"); empty for a PDF.
+  string image_format = 7;
+  // The EXIF orientation, 1 to 8, of an image; 0 when it has none.
+  uint32 orientation = 8;
+}
+
+message PageInfo {
+  uint32 index = 1;
+  float width_points = 2;
+  float height_points = 3;
+  // Clockwise degrees the page is shown turned: 0, 90, 180 or 270.
+  uint32 rotation = 4;
+  // Set only when text_profile was asked for.
+  bool has_text = 5;
+  uint32 char_count = 6;
+}
+
+// ---- Render ----
+
+message RenderRequest {
+  oneof part {
+    RenderHeader header = 1;
+    bytes chunk = 2;
+  }
+}
+
+message RenderHeader {
+  DocumentHeader document = 1;
+  // Zero-based page indexes, in the order to render them. Empty renders every
+  // page up to max_pages.
+  repeated uint32 pages = 2;
+  RenderSize size = 3;
+  ImageFormat format = 4;
+  // 1 to 100 for lossy WebP and JPEG; ignored for PNG.
+  uint32 quality = 5;
+  // Lossless WebP.
+  bool lossless = 6;
+  // Refuse a page whose render would pass this many pixels (0: the worker's
+  // limit).
+  uint64 max_pixels = 7;
+  // The most pages an empty `pages` renders (0: the worker's limit).
+  uint32 max_pages = 8;
+}
+
+message RenderResponse {
+  oneof part {
+    ArtifactHeader page = 1;
+    ArtifactChunk chunk = 2;
+    PageError page_error = 3;
+    RenderSummary summary = 4;
+  }
+}
+
+message RenderSummary {
+  uint32 page_count = 1;
+  uint32 rendered = 2;
+}
+
+// ---- InspectCapture ----
+
+message InspectCaptureRequest {
+  oneof part {
+    InspectCaptureHeader header = 1;
+    CapturePageStart page = 2;
+    bytes chunk = 3;
+  }
+}
+
+message InspectCaptureHeader {
+  // How many pages follow, 1 to 1,000.
+  uint32 page_count = 1;
+  // The resolution each page is read at (default 150).
+  uint32 render_dpi = 2;
+  // Luma below which a sample is ink (default 160).
+  uint32 ink_threshold = 3;
+  // Share of each side left out of the ink measure (default 0.06).
+  float ink_margin = 4;
+  // Sample every n-th pixel and row (default 2).
+  uint32 ink_stride = 5;
+  // Thumbnail width (default 240), format (default JPEG) and quality
+  // (default 72).
+  uint32 thumbnail_width = 6;
+  ImageFormat thumbnail_format = 7;
+  uint32 thumbnail_quality = 8;
+  // Skip barcode decoding.
+  bool skip_barcodes = 9;
+}
+
+// Opens one captured page: a one-page PDF or an image.
+message CapturePageStart {
+  uint32 index = 1;
+  DocumentHeader document = 2;
+}
+
+message InspectCaptureResponse {
+  oneof part {
+    CapturePageResult page = 1;
+    CaptureSummary summary = 2;
+  }
+}
+
+message CapturePageResult {
+  uint32 index = 1;
+  uint32 width_px = 2;
+  uint32 height_px = 3;
+  bytes thumbnail = 4;
+  string thumbnail_content_type = 5;
+  double ink_coverage = 6;
+  repeated Barcode codes = 7;
+  // Set when this page could not be read; the other fields are empty.
+  PageError error = 8;
+}
+
+message Barcode {
+  // "qr_code", "code_128", "pdf_417", "data_matrix", …
+  string format = 1;
+  string text = 2;
+}
+
+message CaptureSummary {
+  uint32 inspected = 1;
+  uint32 failed = 2;
+}
+
+// ---- Assemble ----
+
+message AssembleRequest {
+  oneof part {
+    AssembleHeader header = 1;
+    AssembleSourceStart source = 2;
+    bytes chunk = 3;
+  }
+}
+
+message AssembleHeader {
+  // How many sources follow.
+  uint32 source_count = 1;
+  // The PDFs to build, each from pages of the sources.
+  repeated AssembleOutput outputs = 2;
+  // The sum of every source's declared size, so the call is admitted on its
+  // real cost before any bytes are sent.
+  uint64 total_size = 3;
+}
+
+message AssembleOutput {
+  repeated PageRange pages = 1;
+}
+
+// Pages first to last (zero-based, inclusive) of a source, turned clockwise by
+// rotation on top of their own rotation. An image source has one page. A last of
+// 4294967295 (the largest uint32) means the source's last page, so a whole
+// document can be named without probing it first.
+message PageRange {
+  uint32 source = 1;
+  uint32 first = 2;
+  uint32 last = 3;
+  uint32 rotation = 4;
+}
+
+message AssembleSourceStart {
+  uint32 index = 1;
+  DocumentHeader document = 2;
+}
+
+message AssembleResponse {
+  oneof part {
+    ArtifactHeader output = 1;
+    ArtifactChunk chunk = 2;
+    AssembleSummary summary = 3;
+  }
+}
+
+message AssembleSummary {
+  repeated uint32 output_page_counts = 1;
+}
+
+// ---- NormalizeImage ----
+
+message NormalizeImageRequest {
+  oneof part {
+    NormalizeImageHeader header = 1;
+    bytes chunk = 2;
+  }
+}
+
+message NormalizeImageHeader {
+  DocumentHeader document = 1;
+  // PNG or JPEG.
+  ImageFormat format = 2;
+  uint32 quality = 3;
+  // Downscale to fit inside this box (0: keep the size).
+  uint32 max_width = 4;
+  uint32 max_height = 5;
+}
+
+message NormalizeImageResponse {
+  oneof part {
+    ArtifactHeader image = 1;
+    ArtifactChunk chunk = 2;
+    NormalizeSummary summary = 3;
+  }
+}
+
+message NormalizeSummary {
+  // The source's decoded format and size, and the orientation undone.
+  string source_format = 1;
+  uint32 source_width = 2;
+  uint32 source_height = 3;
+  uint32 orientation_applied = 4;
+}

@@ -538,11 +538,11 @@ func splitLayoutCells(text string) []string {
 	lines := splitNormalizedLines(text)
 	cells := make([]string, 0, len(lines))
 	for _, line := range lines {
-		if !strings.Contains(line, kernelports.PDFColumnGap) {
+		if !strings.Contains(line, kernelports.TextColumnGap) {
 			cells = append(cells, line)
 			continue
 		}
-		for cell := range strings.SplitSeq(line, kernelports.PDFColumnGap) {
+		for cell := range strings.SplitSeq(line, kernelports.TextColumnGap) {
 			if trimmed := strings.TrimSpace(cell); trimmed != "" {
 				cells = append(cells, trimmed)
 			}

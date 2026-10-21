@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/imageutils"
@@ -372,12 +373,28 @@ func TestInlineNilRequest(t *testing.T) {
 	assert.Empty(t, result.HTML)
 }
 
-func TestWebPTranscoderProducesPNG(t *testing.T) {
-	// A minimal RIFF/WEBP header is enough to reach the decoder; a malformed body
-	// must surface as an error rather than a panic.
+func TestWebPIsTranscodedByTheImagingService(t *testing.T) {
+	fake := imagingfake.New()
+	inliner := New(Params{Logger: zap.NewNop(), Imaging: fake, Limits: Limits{}})
 	body := append([]byte("RIFF"), []byte{0, 0, 0, 0}...)
 	body = append(body, []byte("WEBPVP8 ")...)
 
-	_, err := NewWebPTranscoder()(body)
-	assert.Error(t, err)
+	png, err := inliner.transcoder(t.Context())(body)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("\x89PNG fake"), png)
+	assert.Equal(t, 1, fake.CallCount("normalize_image"))
+
+	fake.NormalizeImageFunc = func(
+		context.Context,
+		*kernelports.ImagingNormalizeRequest,
+		func(*kernelports.ImagingArtifact) error,
+	) (*kernelports.ImagingNormalizeSummary, error) {
+		return nil, kernelports.ErrImagingInvalidDocument
+	}
+	_, err = inliner.transcoder(t.Context())(body)
+	assert.ErrorIs(t, err, kernelports.ErrImagingInvalidDocument)
+}
+
+func TestWebPIsRefusedWithoutTheImagingService(t *testing.T) {
+	assert.Nil(t, newInliner(t, nil, Limits{}).transcoder(t.Context()))
 }

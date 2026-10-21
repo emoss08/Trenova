@@ -118,9 +118,11 @@ func convertLive(
 	id, err := client.Submit(ctx, &kernelports.ConvertRequest{
 		FileName:    name,
 		ContentType: contentType,
-		Body:        bytes.NewReader(data),
-		Size:        int64(len(data)),
-		OCR:         ocr,
+		Open: func(context.Context) (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(data)), nil
+		},
+		Size: int64(len(data)),
+		OCR:  ocr,
 	})
 	if err != nil {
 		return nil, err
@@ -238,10 +240,12 @@ func TestLiveOCREngineAndLanguageReachTheEngine(t *testing.T) {
 	id, err := client.Submit(t.Context(), &kernelports.ConvertRequest{
 		FileName:    "photo-pod.jpg",
 		ContentType: "image/jpeg",
-		Body:        bytes.NewReader(data),
-		Size:        int64(len(data)),
-		OCR:         true,
-		Languages:   []string{"ko"},
+		Open: func(context.Context) (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(data)), nil
+		},
+		Size:      int64(len(data)),
+		OCR:       true,
+		Languages: []string{"ko"},
 	})
 	require.NoError(t, err)
 
@@ -293,9 +297,11 @@ func TestLiveCorruptFileIsNotConvertible(t *testing.T) {
 	id, err := client.Submit(t.Context(), &kernelports.ConvertRequest{
 		FileName:    "broken.pdf",
 		ContentType: "application/pdf",
-		Body:        strings.NewReader("this is not a pdf"),
-		Size:        17,
-		OCR:         true,
+		Open: func(context.Context) (io.ReadCloser, error) {
+			return io.NopCloser(strings.NewReader("this is not a pdf")), nil
+		},
+		Size: 17,
+		OCR:  true,
 	})
 	require.NoError(t, err)
 

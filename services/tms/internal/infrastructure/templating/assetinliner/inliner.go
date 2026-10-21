@@ -66,6 +66,7 @@ type ObjectReader interface {
 // Params are the inliner's dependencies.
 type Params struct {
 	Storage ObjectReader
+	Imaging kernelports.Imaging
 	Logger  *zap.Logger
 	Limits  Limits
 }
@@ -74,7 +75,7 @@ type Params struct {
 type Inliner struct {
 	storage    ObjectReader
 	httpClient *http.Client
-	transcode  imageutils.WebPTranscoder
+	imaging    kernelports.Imaging
 	limits     Limits
 	l          *zap.Logger
 }
@@ -86,7 +87,7 @@ func New(p Params) *Inliner {
 		// re-checks every resolved IP at dial time, which is what makes a
 		// DNS-rebinding attempt on an organization-supplied logo URL fail.
 		httpClient: httpsafe.NewClient(remoteFetchTimeout),
-		transcode:  NewWebPTranscoder(),
+		imaging:    p.Imaging,
 		limits:     p.Limits.withDefaults(),
 		l:          p.Logger.Named("templating.assetinliner"),
 	}
@@ -230,7 +231,7 @@ func (i *Inliner) resolve(ctx context.Context, src string) (*imageutils.Image, e
 	case imageutils.IsDataURI(trimmed):
 		// Already inline, but still checked: a data: URI claiming image/png while
 		// carrying markup is how an inert image slot becomes a delivery channel.
-		return imageutils.DecodeDataURIWith(trimmed, i.limits.MaxAssetBytes, i.transcode)
+		return imageutils.DecodeDataURIWith(trimmed, i.limits.MaxAssetBytes, i.transcoder(ctx))
 
 	case isHTTPURL(trimmed):
 		return i.fetchRemote(ctx, trimmed)
@@ -262,7 +263,7 @@ func (i *Inliner) fetchStorage(ctx context.Context, key string) (*imageutils.Ima
 		return nil, err
 	}
 
-	return imageutils.NormalizeWith(body, i.transcode)
+	return imageutils.NormalizeWith(body, i.transcoder(ctx))
 }
 
 func (i *Inliner) fetchRemote(ctx context.Context, rawURL string) (*imageutils.Image, error) {
@@ -297,7 +298,7 @@ func (i *Inliner) fetchRemote(ctx context.Context, rawURL string) (*imageutils.I
 		return nil, err
 	}
 
-	return imageutils.NormalizeWith(body, i.transcode)
+	return imageutils.NormalizeWith(body, i.transcoder(ctx))
 }
 
 // readCapped reads at most MaxAssetBytes, refusing anything larger rather than

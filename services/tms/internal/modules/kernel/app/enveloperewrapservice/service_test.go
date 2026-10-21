@@ -3,9 +3,11 @@ package enveloperewrapservice
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"strconv"
 	"testing"
+	"testing/iotest"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -15,6 +17,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 const (
@@ -123,16 +127,21 @@ func (f *fakeRepository) SwapVersion(
 type fakeStorage struct {
 	kernelports.Client
 
-	objects  map[string][]byte
-	uploads  int
-	versions int
+	objects    map[string][]byte
+	unreadable map[string]error
+	uploads    int
+	versions   int
 }
 
 func (f *fakeStorage) Download(_ context.Context, key string) (*kernelports.DownloadResult, error) {
+	var body io.Reader = bytes.NewReader(f.objects[key])
+	if readErr, ok := f.unreadable[key]; ok {
+		body = iotest.ErrReader(readErr)
+	}
 	return &kernelports.DownloadResult{
-		Body:        io.NopCloser(bytes.NewReader(f.objects[key])),
+		Body:        io.NopCloser(body),
 		ContentType: "application/pdf",
-		Metadata:    map[string]string{"crypto_mode": encryptionservice.CryptoModeEnvelopeV1},
+		Metadata:    map[string]string{"crypto_mode": encryptionservice.CryptoModeBlobV1},
 	}, nil
 }
 
@@ -438,12 +447,11 @@ func TestRun_RewritesDocumentObjectsAndRecordsTheirNewVersion(t *testing.T) {
 		BusinessUnitID: tenant.BuID,
 		ResourceID:     key,
 	}
-	sealed, err := keyring(t, oldKey).EncryptBytesWithAAD([]byte("%PDF-1.7"), aad)
-	require.NoError(t, err)
+	sealed := sealBlob(t, keyring(t, oldKey), []byte("%PDF-1.7"), aad)
 
 	repo := newFakeRepository(tenant)
 	repo.add("documents", tenant, "doc_1", key)
-	storage := &fakeStorage{objects: map[string][]byte{key: []byte(sealed)}}
+	storage := &fakeStorage{objects: map[string][]byte{key: sealed}}
 	service := New(Deps{
 		Repository: repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
@@ -459,7 +467,11 @@ func TestRun_RewritesDocumentObjectsAndRecordsTheirNewVersion(t *testing.T) {
 	assert.Equal(t, 1, report.Sources[0].Rewrapped)
 	assert.Equal(t, "v1", repo.versions["doc_1"])
 
-	plaintext, err := keyring(t, newKey).DecryptBytesWithAAD(string(storage.objects[key]), aad)
+	stored := storage.objects[key]
+	assert.Equal(t, sealed[len(sealed)-24:], stored[len(stored)-24:], "the chunks are not re-encrypted")
+	opened, err := keyring(t, newKey).OpenBlob(t.Context(), bytes.NewReader(stored), int64(len(stored)), aad)
+	require.NoError(t, err)
+	plaintext, err := io.ReadAll(opened)
 	require.NoError(t, err)
 	assert.Equal(t, []byte("%PDF-1.7"), plaintext)
 
@@ -478,18 +490,17 @@ func TestRun_NeverRewritesTheObjectOfADeletedDocument(t *testing.T) {
 
 	tenant := testTenant()
 	key := tenant.OrgID.String() + "/documents/deleted.pdf"
-	sealed, err := keyring(t, oldKey).EncryptBytesWithAAD([]byte("%PDF-1.7"), encryptionservice.AAD{
+	sealed := sealBlob(t, keyring(t, oldKey), []byte("%PDF-1.7"), encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeDocument,
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 		ResourceID:     key,
 	})
-	require.NoError(t, err)
 
 	repo := newFakeRepository(tenant)
 	repo.add("documents", tenant, "doc_1", key)
 	repo.present = false
-	storage := &fakeStorage{objects: map[string][]byte{key: []byte(sealed)}}
+	storage := &fakeStorage{objects: map[string][]byte{key: sealed}}
 	service := New(Deps{
 		Repository: repo,
 		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey, oldKey)),
@@ -504,7 +515,7 @@ func TestRun_NeverRewritesTheObjectOfADeletedDocument(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, report.Sources[0].Conflicts)
 	assert.Zero(t, storage.uploads)
-	assert.Equal(t, sealed, string(storage.objects[key]))
+	assert.Equal(t, sealed, storage.objects[key])
 }
 
 func TestRun_RefusesObjectsWithoutStorage(t *testing.T) {
@@ -517,4 +528,101 @@ func TestRun_RefusesObjectsWithoutStorage(t *testing.T) {
 		Options{},
 	)
 	require.ErrorIs(t, err, ErrStorageRequired)
+}
+
+func sealBlob(
+	t *testing.T,
+	service *encryptionservice.Service,
+	plaintext []byte,
+	aad encryptionservice.AAD,
+) []byte {
+	t.Helper()
+	sealed, err := service.SealBlob(t.Context(), bytes.NewReader(plaintext), int64(len(plaintext)), aad)
+	require.NoError(t, err)
+	out, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	return out
+}
+
+func TestRun_CountsAndLogsObjectsThatAreNotStreamingBlobs(t *testing.T) {
+	t.Parallel()
+
+	tenant := testTenant()
+	blobKey := tenant.OrgID.String() + "/documents/current.pdf"
+	sealed := sealBlob(t, keyring(t, newKey), []byte("%PDF-1.7"), encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ResourceID:     blobKey,
+	})
+	envelopeKey := tenant.OrgID.String() + "/documents/old.pdf"
+	envelope, err := keyring(t, newKey).EncryptBytesWithAAD([]byte("%PDF-1.4"), encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ResourceID:     envelopeKey,
+	})
+	require.NoError(t, err)
+	shortKey := tenant.OrgID.String() + "/documents/short.pdf"
+
+	repo := newFakeRepository(tenant)
+	repo.add("documents", tenant, "doc_1", blobKey)
+	repo.add("documents", tenant, "doc_2", envelopeKey)
+	repo.add("documents", tenant, "doc_3", shortKey)
+	storage := &fakeStorage{objects: map[string][]byte{
+		blobKey:     sealed,
+		envelopeKey: []byte(envelope),
+		shortKey:    []byte("TRN"),
+	}}
+	core, logs := observer.New(zap.WarnLevel)
+	service := New(Deps{
+		Repository: repo,
+		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey)),
+		Storage:    storage,
+		Logger:     zap.New(core),
+	})
+
+	report, err := service.Run(
+		t.Context(),
+		&kernelports.EnvelopeSources{Objects: []kernelports.EnvelopeObject{documentObject()}},
+		Options{},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, SourceReport{Name: "documents", Scanned: 3, Current: 1, NotBlobs: 2},
+		*report.Sources[0])
+	assert.Equal(t, 2, report.NotBlobs())
+	assert.Zero(t, storage.uploads, "an object in the retired format is never rewritten")
+
+	warned := logs.FilterMessage("a stored object is not a streaming blob and cannot be read").All()
+	require.Len(t, warned, 2)
+	keys := []string{warned[0].ContextMap()["key"].(string), warned[1].ContextMap()["key"].(string)}
+	assert.ElementsMatch(t, []string{envelopeKey, shortKey}, keys)
+}
+
+func TestRun_AnObjectStorageCouldNotReadIsAFailureNotASkip(t *testing.T) {
+	t.Parallel()
+
+	tenant := testTenant()
+	key := tenant.OrgID.String() + "/documents/flaky.pdf"
+	repo := newFakeRepository(tenant)
+	repo.add("documents", tenant, "doc_1", key)
+	storage := &fakeStorage{
+		objects:    map[string][]byte{},
+		unreadable: map[string]error{key: errors.New("connection reset by peer")},
+	}
+	service := New(Deps{
+		Repository: repo,
+		Rewrapper:  encryptionservice.NewEnvelopeRewrapper(keyring(t, newKey)),
+		Storage:    storage,
+	})
+
+	report, err := service.Run(
+		t.Context(),
+		&kernelports.EnvelopeSources{Objects: []kernelports.EnvelopeObject{documentObject()}},
+		Options{},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, 1, report.Sources[0].Failed)
+	assert.Zero(t, report.Sources[0].NotBlobs)
+	assert.Equal(t, 1, report.Failed())
 }

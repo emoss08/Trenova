@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentaiextractionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
@@ -28,18 +27,15 @@ func TestExtractionStatus(t *testing.T) {
 
 	cases := []struct {
 		name               string
-		engine             tenant.ExtractionEngine
 		availability       documentaiextractionports.ExtractionAvailability
 		converterAvailable bool
 		want               documentports.ExtractionStatus
 	}{
 		{
-			name:               "docling without a provider cannot extract",
-			engine:             tenant.ExtractionEngineDocling,
+			name:               "without a provider nothing is extracted",
 			availability:       documentaiextractionports.ExtractionNoProviderAssigned,
 			converterAvailable: true,
 			want: documentports.ExtractionStatus{
-				Engine:                 "docling",
 				ModelProviderAvailable: false,
 				ModelProviderReason:    "no_model_provider",
 				ConverterAvailable:     true,
@@ -47,12 +43,10 @@ func TestExtractionStatus(t *testing.T) {
 			},
 		},
 		{
-			name:               "docling with a provider and a converter extracts",
-			engine:             tenant.ExtractionEngineDocling,
+			name:               "with a provider and a converter documents are extracted",
 			availability:       documentaiextractionports.ExtractionAvailable,
 			converterAvailable: true,
 			want: documentports.ExtractionStatus{
-				Engine:                 "docling",
 				ModelProviderAvailable: true,
 				ModelProviderReason:    "available",
 				ConverterAvailable:     true,
@@ -60,12 +54,10 @@ func TestExtractionStatus(t *testing.T) {
 			},
 		},
 		{
-			name:               "docling without a converter cannot extract, provider or not",
-			engine:             tenant.ExtractionEngineDocling,
+			name:               "without a converter nothing is extracted, provider or not",
 			availability:       documentaiextractionports.ExtractionAvailable,
 			converterAvailable: false,
 			want: documentports.ExtractionStatus{
-				Engine:                 "docling",
 				ModelProviderAvailable: true,
 				ModelProviderReason:    "available",
 				ConverterAvailable:     false,
@@ -73,25 +65,10 @@ func TestExtractionStatus(t *testing.T) {
 			},
 		},
 		{
-			name:               "legacy reads documents without a provider",
-			engine:             tenant.ExtractionEngineLegacy,
-			availability:       documentaiextractionports.ExtractionNoProviderAssigned,
-			converterAvailable: false,
-			want: documentports.ExtractionStatus{
-				Engine:                 "legacy",
-				ModelProviderAvailable: false,
-				ModelProviderReason:    "no_model_provider",
-				ConverterAvailable:     false,
-				ExtractionAvailable:    true,
-			},
-		},
-		{
-			name:               "docling on a server with document extraction off names the switch",
-			engine:             tenant.ExtractionEngineDocling,
+			name:               "a server with document extraction off names the switch",
 			availability:       documentaiextractionports.ExtractionOffOnServer,
 			converterAvailable: true,
 			want: documentports.ExtractionStatus{
-				Engine:                 "docling",
 				ModelProviderAvailable: false,
 				ModelProviderReason:    "off_on_server",
 				ConverterAvailable:     true,
@@ -115,11 +92,6 @@ func TestExtractionStatus(t *testing.T) {
 				UserID: pulid.MustNew("usr_"),
 			}
 
-			control := tenant.NewDefaultDocumentControl(orgID, buID)
-			control.ExtractionEngine = tc.engine
-			controlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
-			controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
-
 			aiDocuments := documentaiextractionportsmock.NewMockAIDocumentService(t)
 			aiDocuments.EXPECT().
 				ExtractionAvailability(mock.Anything, tenantInfo).
@@ -136,7 +108,7 @@ func TestExtractionStatus(t *testing.T) {
 				Logger:              zap.NewNop(),
 				Config:              cfg,
 				Metrics:             metricRegistry,
-				DocumentControlRepo: controlRepo,
+				DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
 				DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
 				ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
 				DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(

@@ -165,6 +165,15 @@ documentConversion:
   maxConcurrent: 2
   ocrLanguages: [en]
 
+imaging:
+  endpoint: dns:///imaging:50051
+  serverName: imaging
+  tls:
+    enabled: true
+    caFile: /certs/imaging/ca.pem
+    certFile: /certs/imaging/client.pem
+    keyFile: /certs/imaging/client-key.pem
+
 # EDI transports (AS2 and SFTP). A partner endpoint that resolves to a loopback, private or
 # reserved address is refused, so a communication profile cannot reach into this network.
 # Turn this on only for partners reached over a private link; link-local and cloud metadata

@@ -10,6 +10,14 @@ const mocks = vi.hoisted(() => ({
   status: null as DocumentExtractionStatus | null,
 }));
 
+vi.mock("@/hooks/use-permission", () => ({
+  usePermission: () => ({ allowed: false, isLoading: false }),
+}));
+
+vi.mock("@/hooks/use-plan-restrictions", () => ({
+  usePlanRestrictions: () => [],
+}));
+
 const CONTROL: DocumentControl = {
   id: "dc_1",
   version: 1,
@@ -28,7 +36,6 @@ const CONTROL: DocumentControl = {
   captureRetentionDays: 30,
   captureMinAgentVersion: "",
   captureAllowAutoUpdate: true,
-  extractionEngine: "legacy",
 } as DocumentControl;
 
 vi.mock("@/lib/queries/document-control", () => ({
@@ -70,41 +77,48 @@ function renderForm() {
   );
 }
 
-function doclingOption() {
-  return screen.getByRole("radio", { name: "Docling" });
-}
-
-describe("DocumentIntelligenceForm extraction engine", () => {
-  it("disables Docling and says why when the server has no document converter", async () => {
+describe("DocumentIntelligenceForm availability", () => {
+  it("names the missing document converter", async () => {
     mocks.status = {
-      engine: "legacy",
       modelProviderAvailable: true,
+      modelProviderReason: "available",
       converterAvailable: false,
-      extractionAvailable: true,
+      extractionAvailable: false,
     };
 
     renderForm();
 
+    expect(await screen.findByText("Extraction is not set up on this server")).toBeInTheDocument();
     expect(
-      await screen.findByText(
-        "Docling is unavailable: the document converter is not configured on this server. An administrator sets documentConversion.doclingUrl and documentConversion.apiKey to turn it on.",
-      ),
+      screen.getByText("Ask an administrator to configure the document converter."),
     ).toBeInTheDocument();
-    expect(doclingOption()).toBeDisabled();
-    expect(screen.getByRole("radio", { name: "Legacy" })).toBeEnabled();
   });
 
-  it("offers Docling when the converter is configured", async () => {
+  it("names the missing model provider when the converter is configured", async () => {
     mocks.status = {
-      engine: "legacy",
+      modelProviderAvailable: false,
+      modelProviderReason: "no_model_provider",
+      converterAvailable: true,
+      extractionAvailable: false,
+    };
+
+    renderForm();
+
+    expect(await screen.findByText("Extraction needs a model provider")).toBeInTheDocument();
+  });
+
+  it("shows no alert while documents can be read", async () => {
+    mocks.status = {
       modelProviderAvailable: true,
+      modelProviderReason: "available",
       converterAvailable: true,
       extractionAvailable: true,
     };
 
     renderForm();
 
-    expect(await screen.findByText("Extraction engine")).toBeInTheDocument();
-    await vi.waitFor(() => expect(doclingOption()).toBeEnabled());
+    expect(await screen.findByText("Platform availability")).toBeInTheDocument();
+    expect(screen.queryByText("Extraction is not set up on this server")).not.toBeInTheDocument();
+    expect(screen.queryByText("Extraction needs a model provider")).not.toBeInTheDocument();
   });
 });

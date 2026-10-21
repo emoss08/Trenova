@@ -38,7 +38,7 @@ func (r *casePagesRepository) Upsert(
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
-			On(`CONFLICT ("organization_id", "business_unit_id", "case_id", "text_source") DO UPDATE`).
+			On(`CONFLICT ("organization_id", "business_unit_id", "case_id") DO UPDATE`).
 			Set(cols.Pages.SetExcluded()).
 			Set(cols.PageCount.SetExcluded()).
 			Set(cols.InputHash.SetExcluded()).
@@ -69,8 +69,7 @@ func (r *casePagesRepository) Get(
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return extractionevalcol.CasePagesScopeTenant(sq, req.TenantInfo).
-					Where(cols.CaseID.Eq(), req.CaseID).
-					Where(cols.TextSource.Eq(), req.TextSource)
+					Where(cols.CaseID.Eq(), req.CaseID)
 			}).
 			Scan(ctx)
 		if err != nil {
