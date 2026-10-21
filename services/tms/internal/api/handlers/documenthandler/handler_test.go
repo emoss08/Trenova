@@ -286,8 +286,10 @@ func encryptedDocumentBody(t *testing.T, body string, storagePath string) string
 	svc := encryptionservice.NewWithKeyManager(
 		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 	)
-	encrypted, err := svc.EncryptBytesWithAAD(
-		[]byte(body),
+	sealed, err := svc.SealBlob(
+		t.Context(),
+		strings.NewReader(body),
+		int64(len(body)),
 		encryptionservice.AAD{
 			Purpose:        encryptionservice.PurposeDocument,
 			OrganizationID: testutil.TestOrgID,
@@ -296,7 +298,9 @@ func encryptedDocumentBody(t *testing.T, body string, storagePath string) string
 		},
 	)
 	require.NoError(t, err)
-	return encrypted
+	encrypted, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	return string(encrypted)
 }
 
 func encryptedPreviewBody(t *testing.T, body string, storagePath string) string {
@@ -305,8 +309,10 @@ func encryptedPreviewBody(t *testing.T, body string, storagePath string) string 
 	svc := encryptionservice.NewWithKeyManager(
 		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 	)
-	encrypted, err := svc.EncryptBytesWithAAD(
-		[]byte(body),
+	sealed, err := svc.SealBlob(
+		t.Context(),
+		strings.NewReader(body),
+		int64(len(body)),
 		encryptionservice.AAD{
 			Purpose:        encryptionservice.PurposeDocument,
 			OrganizationID: testutil.TestOrgID,
@@ -315,7 +321,9 @@ func encryptedPreviewBody(t *testing.T, body string, storagePath string) string 
 		},
 	)
 	require.NoError(t, err)
-	return encrypted
+	encrypted, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	return string(encrypted)
 }
 
 func TestDocumentHandler_List_Success(t *testing.T) {
@@ -891,6 +899,7 @@ func pageImageRepo(
 				OriginalName:   "ratecon.png",
 				FileType:       fileType,
 				StoragePath:    "org/shipment/ratecon.png",
+				FileSize:       int64(len(pagePNG(t))),
 				ChecksumSHA256: "abc123",
 				Status:         document.StatusActive,
 			}, nil
@@ -1010,7 +1019,7 @@ func TestDocumentHandler_PageImage_ASecondViewIsServedFromTheStoredRender(t *tes
 	assert.Len(t, objects.stored, 1, "the render is stored once, encrypted")
 	for key, data := range objects.stored {
 		assert.Contains(t, key, "/renders/")
-		assert.True(t, encryptionservice.IsEnvelope(string(data)))
+		assert.True(t, encryptionservice.IsBlob(data))
 	}
 }
 

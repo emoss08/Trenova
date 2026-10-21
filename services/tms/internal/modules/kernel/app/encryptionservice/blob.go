@@ -45,7 +45,7 @@ type blobHeader struct {
 }
 
 func IsBlob(prefix []byte) bool {
-	return len(prefix) >= len(blobMagic)+1 &&
+	return len(prefix) > len(blobMagic) &&
 		string(prefix[:len(blobMagic)]) == blobMagic &&
 		prefix[len(blobMagic)] == blobVersion
 }
@@ -110,13 +110,15 @@ func encodeBlobHeader(fixed []byte, wrapped *WrappedKey) ([]byte, error) {
 		if len(field) > blobKeyFieldMax {
 			return nil, fmt.Errorf("%w: a wrapped key field is %d bytes", ErrBlobFormat, len(field))
 		}
-		section = binary.BigEndian.AppendUint16(section, uint16(len(field))) //nolint:gosec // bounded above
+		fieldSize := uint16(len(field)) //nolint:gosec // bounded above
+		section = binary.BigEndian.AppendUint16(section, fieldSize)
 		section = append(section, field...)
 	}
 
 	header := make([]byte, 0, len(fixed)+2+len(section))
 	header = append(header, fixed...)
-	header = binary.BigEndian.AppendUint16(header, uint16(len(section))) //nolint:gosec // bounded by the fields
+	sectionSize := uint16(len(section)) //nolint:gosec // bounded by the fields
+	header = binary.BigEndian.AppendUint16(header, sectionSize)
 	return append(header, section...), nil
 }
 

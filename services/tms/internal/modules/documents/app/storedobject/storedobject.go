@@ -159,10 +159,10 @@ func ReadOptional(
 	key string,
 	aad encryptionservice.AAD,
 	limit int64,
-) ([]byte, bool, error) {
-	object, found, err := OpenOptional(ctx, storage, encryption, key, aad)
-	if err != nil || !found {
-		return nil, found, err
+) (data []byte, found bool, err error) {
+	object, opened, openErr := OpenOptional(ctx, storage, encryption, key, aad)
+	if openErr != nil || !opened {
+		return nil, opened, openErr
 	}
 	defer object.Body.Close()
 
@@ -170,7 +170,7 @@ func ReadOptional(
 		return nil, false, errortypes.NewBusinessError("Stored document is too large to read").
 			WithInternal(fmt.Errorf("%w: %d bytes over %d", ErrTooLarge, object.Size, limit))
 	}
-	data, err := io.ReadAll(io.LimitReader(object.Body, limit+1))
+	data, err = io.ReadAll(io.LimitReader(object.Body, limit+1))
 	if err != nil {
 		return nil, false, errortypes.NewBusinessError("Failed to decrypt document").
 			WithInternal(err)

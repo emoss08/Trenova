@@ -269,17 +269,18 @@ func TestSubmitRefusesOversizedFilesBeforeUpload(t *testing.T) {
 
 	_, err := client.Submit(t.Context(), convertRequest("12345"))
 	require.ErrorIs(t, err, kernelports.ErrDocumentNotConvertible)
+	assert.Zero(t, calls.Load(), "a declared size over the limit is refused before any request")
 
 	req := convertRequest("12345")
-	req.Size = 0
+	req.Size = 2
 	_, err = client.Submit(t.Context(), req)
 	require.ErrorIs(
 		t,
 		err,
 		kernelports.ErrDocumentNotConvertible,
-		"an understated size is caught on read",
+		"an understated size is caught as the file streams, and not retried",
 	)
-	assert.Zero(t, calls.Load())
+	assert.LessOrEqual(t, calls.Load(), int32(1))
 }
 
 func TestStatusMapsTaskStates(t *testing.T) {

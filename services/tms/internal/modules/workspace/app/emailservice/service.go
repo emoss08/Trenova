@@ -756,12 +756,17 @@ func (s *Service) unsealDocument(
 	if sealedSize <= 0 {
 		sealedSize = -1
 	}
-	opened, err := s.encryptionService.OpenBlob(ctx, download.Body, sealedSize, encryptionservice.AAD{
-		Purpose:        encryptionservice.PurposeDocument,
-		OrganizationID: attachment.OrganizationID,
-		BusinessUnitID: attachment.BusinessUnitID,
-		ResourceID:     attachment.ObjectKey,
-	})
+	opened, err := s.encryptionService.OpenBlob(
+		ctx,
+		download.Body,
+		sealedSize,
+		encryptionservice.AAD{
+			Purpose:        encryptionservice.PurposeDocument,
+			OrganizationID: attachment.OrganizationID,
+			BusinessUnitID: attachment.BusinessUnitID,
+			ResourceID:     attachment.ObjectKey,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"%w: attachment %s could not be unsealed: %w",

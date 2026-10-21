@@ -541,6 +541,8 @@ func (a *Activities) documentSource(
 	)
 }
 
+const decryptFailedMessage = "Failed to decrypt document bytes"
+
 func unreadable(err error) bool {
 	return errors.Is(err, encryptionservice.ErrBlobTampered) ||
 		errors.Is(err, encryptionservice.ErrBlobAAD) ||
@@ -557,7 +559,7 @@ func (a *Activities) readPlainText(
 		if unreadable(err) {
 			return nil, &conversionFailure{
 				code:    documentupload.FailureReadFailed,
-				message: "Failed to decrypt document bytes",
+				message: decryptFailedMessage,
 			}, nil
 		}
 		return nil, nil, err
@@ -569,7 +571,7 @@ func (a *Activities) readPlainText(
 		if unreadable(err) {
 			return nil, &conversionFailure{
 				code:    documentupload.FailureReadFailed,
-				message: "Failed to decrypt document bytes",
+				message: decryptFailedMessage,
 			}, nil
 		}
 		return nil, nil, err
@@ -640,7 +642,7 @@ func (a *Activities) convertDocument(
 	case unreadable(err):
 		return nil, &conversionFailure{
 			code:    documentupload.FailureReadFailed,
-			message: "Failed to decrypt document bytes",
+			message: decryptFailedMessage,
 		}, nil
 	case errors.Is(err, kernelports.ErrDocumentNotConvertible):
 		return nil, &conversionFailure{
