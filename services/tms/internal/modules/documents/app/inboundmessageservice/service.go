@@ -56,8 +56,11 @@ var (
 // Taking the interface rather than the concrete service keeps both paths
 // testable without standing up a key manager.
 type secretKeeper interface {
-	EncryptString(value string) (string, error)
-	DecryptString(value string) (string, error)
+	EncryptStringWithAAD(value string, aad encryptionservice.AAD) (string, error)
+	DecryptStringWithLegacy(
+		value string,
+		aad encryptionservice.AAD,
+	) (plaintext string, legacy bool, err error)
 }
 
 type Params struct {
@@ -344,7 +347,11 @@ func (s *Service) verify(
 		return fmt.Errorf("%w: the mailbox has no signing secret", ErrUnverified)
 	}
 
-	secret, err := s.encryption.DecryptString(mailbox.SigningSecret)
+	secret, err := s.openMailboxSecret(
+		mailbox,
+		inboundmessage.SigningSecretField,
+		mailbox.SigningSecret,
+	)
 	if err != nil {
 		s.l.Error("failed to decrypt a mailbox signing secret",
 			zap.String("mailboxId", mailbox.ID.String()), zap.Error(err))

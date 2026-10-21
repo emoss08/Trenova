@@ -7,10 +7,12 @@ import (
 	"path"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/fuelimport"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/sftp"
 )
@@ -37,15 +39,17 @@ type Transport interface {
 // built for decides which header dictionary the rows are matched against.
 type Connector struct {
 	integrationType integration.Type
+	contentGate     contentscanports.Gate
 	dial            func(ctx context.Context, cfg sftp.Config) (Transport, error)
 }
 
-func New(integrationType integration.Type) *Connector {
-	return NewWithTransport(integrationType, nil)
+func New(integrationType integration.Type, contentGate contentscanports.Gate) *Connector {
+	return NewWithTransport(integrationType, contentGate, nil)
 }
 
 func NewWithTransport(
 	integrationType integration.Type,
+	contentGate contentscanports.Gate,
 	dial func(ctx context.Context, cfg sftp.Config) (Transport, error),
 ) *Connector {
 	if dial == nil {
@@ -54,7 +58,7 @@ func NewWithTransport(
 		}
 	}
 
-	return &Connector{integrationType: integrationType, dial: dial}
+	return &Connector{integrationType: integrationType, contentGate: contentGate, dial: dial}
 }
 
 func (c *Connector) IntegrationType() integration.Type { return c.integrationType }
@@ -110,7 +114,12 @@ func (c *Connector) FetchTransactions(
 		return settings.emptyResult(), nil
 	}
 
-	sheet, references, err := c.readSheets(transport, selected, settings)
+	sheet, references, err := c.readSheets(ctx, &readSheetsInput{
+		transport: transport,
+		files:     selected,
+		settings:  settings,
+		tenant:    req.TenantInfo,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -144,25 +153,40 @@ func (c *Connector) FetchTransactions(
 // readSheets folds every selected file into one sheet. The files come from one
 // account with one layout, so treating them as a single statement keeps the
 // in-file duplicate detection working across a batch of daily exports.
+type readSheetsInput struct {
+	transport Transport
+	files     []sftp.RemoteFile
+	settings  *settings
+	tenant    pagination.TenantInfo
+}
+
 func (c *Connector) readSheets(
-	transport Transport,
-	files []sftp.RemoteFile,
-	settings *settings,
+	ctx context.Context,
+	in *readSheetsInput,
 ) (*rateimport.Sheet, []string, error) {
 	var combined *rateimport.Sheet
-	references := make([]string, 0, len(files))
+	references := make([]string, 0, len(in.files))
 
-	for _, file := range files {
+	for _, file := range in.files {
 		if file.Size > maxFileBytes {
 			return nil, nil, fmt.Errorf("%s is larger than the 32 MiB import limit", file.Name)
 		}
 
-		contents, err := transport.ReadFile(file.Path)
+		contents, err := in.transport.ReadFile(file.Path)
 		if err != nil {
 			return nil, nil, fmt.Errorf("read %s: %w", file.Name, err)
 		}
+		content := []byte(contents)
+		if _, err = contentscanports.Check(ctx, c.contentGate, &contentscanports.ScanRequest{
+			TenantInfo: in.tenant,
+			Source:     contentscanports.SourceFuelCardFile,
+			FileName:   file.Path,
+			Content:    content,
+		}); err != nil {
+			return nil, nil, fmt.Errorf("%s was not read: %w", file.Name, err)
+		}
 
-		sheet, err := settings.readSheet([]byte(contents))
+		sheet, err := in.settings.readSheet(content)
 		if err != nil {
 			// A file with a header and nothing under it is a normal quiet day,
 			// not a failure worth stopping the run for.

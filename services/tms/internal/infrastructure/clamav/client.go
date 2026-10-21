@@ -21,6 +21,7 @@ const (
 	unixPrefix       = "unix:"
 	foundSuffix      = " FOUND"
 	streamPrefix     = "stream: "
+	sizeLimitReply   = "INSTREAM size limit exceeded"
 )
 
 var errUnexpectedReply = errors.New("clamd sent a reply it does not send")
@@ -73,10 +74,7 @@ func (c *Client) Scan(
 	size int64,
 ) (*contentscanports.ScanResult, error) {
 	if size > c.maxStreamBytes {
-		return nil, fmt.Errorf(
-			"%w: the file is %d bytes and the scanner takes at most %d",
-			contentscanports.ErrScannerUnavailable, size, c.maxStreamBytes,
-		)
+		return nil, &contentscanports.TooLargeError{Size: size, Limit: c.maxStreamBytes}
 	}
 
 	reply, err := c.exchange(ctx, func(w io.Writer) error {
@@ -84,6 +82,9 @@ func (c *Client) Scan(
 	})
 	if err != nil {
 		return nil, err
+	}
+	if strings.HasPrefix(reply, sizeLimitReply) {
+		return nil, &contentscanports.TooLargeError{Size: size}
 	}
 	return parseReply(reply)
 }
@@ -106,6 +107,10 @@ func (c *Client) exchange(ctx context.Context, send func(io.Writer) error) (stri
 
 	writer := bufio.NewWriterSize(conn, chunkSize+4)
 	if err = send(writer); err != nil {
+		var tooLarge *contentscanports.TooLargeError
+		if errors.As(err, &tooLarge) {
+			return "", err
+		}
 		return "", fmt.Errorf("%w: %w", contentscanports.ErrScannerUnavailable, err)
 	}
 	if err = writer.Flush(); err != nil {
@@ -131,7 +136,7 @@ func writeStream(w io.Writer, content io.Reader, limit int64) error {
 		if n > 0 {
 			sent += int64(n)
 			if sent > limit {
-				return fmt.Errorf("the file is over the scanner's %d byte limit", limit)
+				return &contentscanports.TooLargeError{Size: sent, Limit: limit}
 			}
 			binary.BigEndian.PutUint32(size[:], uint32(n)) //nolint:gosec // n <= chunkSize
 			if _, err := w.Write(size[:]); err != nil {

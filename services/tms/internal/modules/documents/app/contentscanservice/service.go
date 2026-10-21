@@ -160,7 +160,7 @@ func (w *scanStream) Write(p []byte) (int, error) {
 	}
 	if _, err := w.writer.Write(p); err != nil {
 		<-w.done
-		if !w.service.failOpen {
+		if !w.service.failOpen || errors.Is(w.err, contentscanports.ErrTooLarge) {
 			return 0, w.unavailable()
 		}
 		w.broken = true
@@ -196,7 +196,7 @@ func (w *scanStream) decide() (*contentscanports.ScanResult, error) {
 	s := w.service
 	if w.err != nil || w.broken || w.result == nil {
 		err := w.unavailable()
-		if !s.failOpen {
+		if !s.failOpen || errors.Is(err, contentscanports.ErrTooLarge) {
 			return nil, err
 		}
 		s.l.Warn("let a file through unscanned because the scanner could not check it",

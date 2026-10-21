@@ -253,7 +253,7 @@ func (s *Service) UpdateConfig(
 		return nil, err
 	}
 
-	scope := newSecretScope(tenantInfo, typ, spec)
+	scope := newSecretScope(tenantInfo, typ)
 	var existingConfig map[string]any
 	if existing != nil {
 		existingConfig = existing.Configuration
@@ -499,7 +499,7 @@ func (s *Service) GetClientRuntimeConfig(
 			value, err := s.secrets.ReadField(
 				record.Configuration,
 				fieldsByKey[key],
-				newSecretScope(tenantInfo, typ, spec),
+				newSecretScope(tenantInfo, typ),
 			)
 			if err != nil {
 				return nil, errortypes.NewBusinessError(
@@ -557,7 +557,7 @@ func (s *Service) getRuntimeConfig(
 	}
 
 	cfg := make(map[string]string, len(spec.Fields))
-	scope := newSecretScope(tenantInfo, typ, spec)
+	scope := newSecretScope(tenantInfo, typ)
 	for _, field := range spec.Fields {
 		val, readErr := s.secrets.ReadField(record.Configuration, &field, scope)
 		if readErr != nil {

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
@@ -34,7 +33,6 @@ type Params struct {
 	Repo                telematicsports.TelematicsRepository
 	ProviderFactory     telematicsports.TelematicsProviderFactory
 	IntegrationService  *integrationservice.Service
-	EncryptionService   *encryptionservice.Service
 	RealtimeService     agentports.RealtimeService
 	Notifications       *notificationservice.Service
 	DriverNotify        *drivernotificationservice.Service `optional:"true"`
@@ -54,7 +52,6 @@ type Service struct {
 	repo                telematicsports.TelematicsRepository
 	providerFactory     telematicsports.TelematicsProviderFactory
 	integrationService  *integrationservice.Service
-	encryptionService   *encryptionservice.Service
 	realtimeService     agentports.RealtimeService
 	notifications       *notificationservice.Service
 	driverNotify        *drivernotificationservice.Service
@@ -75,7 +72,6 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		repo:                p.Repo,
 		providerFactory:     p.ProviderFactory,
 		integrationService:  p.IntegrationService,
-		encryptionService:   p.EncryptionService,
 		realtimeService:     p.RealtimeService,
 		notifications:       p.Notifications,
 		driverNotify:        p.DriverNotify,

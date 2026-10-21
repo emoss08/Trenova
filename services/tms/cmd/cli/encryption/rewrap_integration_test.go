@@ -174,9 +174,17 @@ func TestRewrapMovesStoredSecretsToTheActiveKey(t *testing.T) {
 	for _, row := range loaded {
 		byType[row.Type] = row
 	}
-	maps, err := newOnly.DecryptString(byType[integration.TypeGoogleMaps].Configuration["apiKey"].(string))
-	require.NoError(t, err)
+	mapsSealed := byType[integration.TypeGoogleMaps].Configuration["apiKey"].(string)
+	maps, err := newOnly.DecryptStringWithAAD(mapsSealed, encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeIntegrationSecret,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		ResourceID:     "integration:" + integration.TypeGoogleMaps.String() + ":apiKey",
+	})
+	require.NoError(t, err, "the rewrap binds a secret sealed before binding")
 	assert.Equal(t, "maps-key", maps)
+	_, err = newOnly.DecryptString(mapsSealed)
+	require.Error(t, err, "the rebound secret no longer opens without its binding")
 	assert.Equal(t, "us", byType[integration.TypeGoogleMaps].Configuration["region"])
 	carrier, err := newOnly.DecryptStringWithAAD(
 		byType[integration.TypeCarrierOK].Configuration["apiKey"].(string),

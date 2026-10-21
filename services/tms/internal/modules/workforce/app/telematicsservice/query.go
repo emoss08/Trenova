@@ -175,7 +175,7 @@ func (s *Service) GetStatus(
 	case err == nil:
 		status.Enabled = runtimeCfg.Enabled
 		status.Configured = runtimeCfg.Configured && runtimeCfg.Ready
-		status.WebhookConfigured = runtimeCfg.Config["webhookSecret"] != "" &&
+		status.WebhookConfigured = runtimeCfg.Config[integration.WebhookSecretField] != "" &&
 			runtimeCfg.Config["webhookToken"] != ""
 	case errortypes.IsBusinessError(err):
 	default:

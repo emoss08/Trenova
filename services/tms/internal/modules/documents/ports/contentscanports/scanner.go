@@ -9,11 +9,13 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/fileutils"
 )
 
 var (
 	ErrScannerUnavailable = errors.New("the content scanner could not check the file")
 	ErrInfected           = errors.New("the file contains malware")
+	ErrTooLarge           = errors.New("the file is larger than the content scanner can check")
 )
 
 type Verdict string
@@ -32,6 +34,7 @@ const (
 	SourceCapturePage       = Source("capture_page")
 	SourceEDIInboundFile    = Source("edi_inbound_file")
 	SourceGeneratedDocument = Source("generated_document")
+	SourceFuelCardFile      = Source("fuel_card_file")
 )
 
 type ScanRequest struct {
@@ -63,6 +66,22 @@ func (e *InfectedError) Error() string {
 
 func (e *InfectedError) Unwrap() error {
 	return ErrInfected
+}
+
+type TooLargeError struct {
+	Size  int64
+	Limit int64
+}
+
+func (e *TooLargeError) Error() string {
+	if e.Limit <= 0 {
+		return fmt.Sprintf("%s: %d bytes", ErrTooLarge, e.Size)
+	}
+	return fmt.Sprintf("%s: %d bytes, at most %d", ErrTooLarge, e.Size, e.Limit)
+}
+
+func (e *TooLargeError) Unwrap() error {
+	return ErrTooLarge
 }
 
 type Scanner interface {
@@ -184,6 +203,22 @@ func RefusalError(field string, err error) error {
 			errortypes.ErrInvalid,
 			"This file was refused: the malware scanner found {0} in it.",
 			infected.Signature,
+		)
+	}
+	var tooLarge *TooLargeError
+	if errors.As(err, &tooLarge) {
+		if tooLarge.Limit <= 0 {
+			return errortypes.NewValidationError(
+				field,
+				errortypes.ErrInvalid,
+				"This file is too large to be checked for malware, so it was not accepted.",
+			)
+		}
+		return errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"This file is too large to be checked for malware. Files up to {0} can be accepted.",
+			fileutils.HumanizeBytes(tooLarge.Limit),
 		)
 	}
 	if errors.Is(err, ErrScannerUnavailable) {

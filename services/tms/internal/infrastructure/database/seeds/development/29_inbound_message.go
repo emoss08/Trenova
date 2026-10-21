@@ -65,11 +65,19 @@ var seedInboundShipmentPros = append(
 var seedInboundDocumentTypeCodes = []string{"INVOICE", documenttype.CodePOD, "RATECONF", "BOL"}
 
 type stringSealer interface {
-	EncryptString(value string) (string, error)
+	EncryptStringWithAAD(value string, aad encryptionservice.AAD) (string, error)
 }
 
-func mailboxSigningSecret(sealer stringSealer) (string, error) {
-	sealed, err := sealer.EncryptString(SeedInboundMailboxSigningSecret)
+func mailboxSigningSecret(sealer stringSealer, mailbox *inboundmessage.Mailbox) (string, error) {
+	sealed, err := sealer.EncryptStringWithAAD(
+		SeedInboundMailboxSigningSecret,
+		encryptionservice.InboundMailboxSecretAAD(
+			mailbox.OrganizationID,
+			mailbox.BusinessUnitID,
+			mailbox.ID,
+			inboundmessage.SigningSecretField,
+		),
+	)
 	if errors.Is(err, encryptionservice.ErrKeyManagerDisabled) {
 		return "", nil
 	}
@@ -149,11 +157,10 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 			} else if err != nil {
 				return err
 			}
-			secret, err := mailboxSigningSecret(sealer)
-			if err != nil {
-				return err
-			}
-			if secret == "" {
+			if _, probeErr := sealer.EncryptString(SeedInboundMailboxSigningSecret); errors.Is(
+				probeErr,
+				encryptionservice.ErrKeyManagerDisabled,
+			) {
 				sc.Logger().Warn(
 					"no encryption key is configured, so the seeded mailboxes have no signing secret and will refuse deliveries",
 				)
@@ -168,7 +175,7 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 			if seeded {
-				return backfillSigningSecret(ctx, tx, org, secret)
+				return backfillSigningSecret(ctx, tx, org, sealer)
 			}
 
 			refs, err := s.loadRefs(ctx, tx, sc, org)
@@ -185,7 +192,7 @@ func (s *InboundMessageSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			boxes, err := s.insertMailboxes(ctx, tx, refs, secret)
+			boxes, err := s.insertMailboxes(ctx, tx, refs, sealer)
 			if err != nil {
 				return err
 			}
@@ -210,16 +217,13 @@ func backfillSigningSecret(
 	ctx context.Context,
 	tx bun.Tx,
 	org *tenant.Organization,
-	secret string,
+	sealer stringSealer,
 ) error {
-	if secret == "" {
-		return nil
-	}
-
 	cols := inboundmessagecol.MailboxColumns
-	if _, err := tx.NewUpdate().
-		Model((*inboundmessage.Mailbox)(nil)).
-		Set(cols.SigningSecret.Set(), secret).
+	mailboxes := make([]*inboundmessage.Mailbox, 0, 3)
+	if err := tx.NewSelect().
+		Model(&mailboxes).
+		Column(cols.ID.String(), cols.OrganizationID.String(), cols.BusinessUnitID.String()).
 		Where(cols.OrganizationID.Eq(), org.ID).
 		Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
 		Where(cols.TokenHash.In(), bun.List([]string{
@@ -228,8 +232,27 @@ func backfillSigningSecret(
 			hashutils.SHA256Hex(seedClaimsMailboxToken),
 		})).
 		Where(cols.SigningSecret.IsNull()).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("backfill the mailbox signing secrets: %w", err)
+		Scan(ctx); err != nil {
+		return fmt.Errorf("find the mailboxes without a signing secret: %w", err)
+	}
+
+	for _, mailbox := range mailboxes {
+		secret, err := mailboxSigningSecret(sealer, mailbox)
+		if err != nil {
+			return err
+		}
+		if secret == "" {
+			return nil
+		}
+		if _, err = tx.NewUpdate().
+			Model((*inboundmessage.Mailbox)(nil)).
+			Set(cols.SigningSecret.Set(), secret).
+			Where(cols.ID.Eq(), mailbox.ID).
+			Where(cols.OrganizationID.Eq(), mailbox.OrganizationID).
+			Where(cols.BusinessUnitID.Eq(), mailbox.BusinessUnitID).
+			Exec(ctx); err != nil {
+			return fmt.Errorf("backfill the signing secret of mailbox %s: %w", mailbox.ID, err)
+		}
 	}
 
 	return nil
@@ -393,11 +416,16 @@ func (s *InboundMessageSeed) insertMailboxes(
 	ctx context.Context,
 	tx bun.Tx,
 	refs *inboundSeedRefs,
-	secret string,
+	sealer stringSealer,
 ) (*seedMailboxes, error) {
-	boxes := seedMailboxesFor(refs, secret)
+	boxes := seedMailboxesFor(refs)
 	for _, mailbox := range []*inboundmessage.Mailbox{boxes.intake, boxes.billing, boxes.claims} {
-		if _, err := tx.NewInsert().Model(mailbox).Exec(ctx); err != nil {
+		secret, err := mailboxSigningSecret(sealer, mailbox)
+		if err != nil {
+			return nil, err
+		}
+		mailbox.SigningSecret = secret
+		if _, err = tx.NewInsert().Model(mailbox).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("insert mailbox %s: %w", mailbox.Name, err)
 		}
 	}
@@ -405,7 +433,7 @@ func (s *InboundMessageSeed) insertMailboxes(
 	return boxes, nil
 }
 
-func seedMailboxesFor(refs *inboundSeedRefs, secret string) *seedMailboxes {
+func seedMailboxesFor(refs *inboundSeedRefs) *seedMailboxes {
 	mailbox := func(name, address, token, purpose string) *inboundmessage.Mailbox {
 		return &inboundmessage.Mailbox{
 			ID:             pulid.MustNew("imbx_"),
@@ -419,7 +447,6 @@ func seedMailboxesFor(refs *inboundSeedRefs, secret string) *seedMailboxes {
 			ReviewPolicy:   inboundmessage.ReviewBelowConfidence,
 			MinConfidence:  0.75,
 			Status:         inboundmessage.MailboxActive,
-			SigningSecret:  secret,
 		}
 	}
 

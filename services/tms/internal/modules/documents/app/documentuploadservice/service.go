@@ -391,17 +391,42 @@ func (s *Service) refuseUpload(
 	session *documentupload.DocumentUploadSession,
 	err error,
 ) error {
-	if errors.Is(err, contentscanports.ErrInfected) {
-		session.Status = documentupload.StatusQuarantined
-		session.FailureCode = documentupload.FailureMalwareDetected.String()
-		session.FailureMessage = err.Error()
-		session.LastActivityAt = timeutils.NowUnix()
-		if _, updateErr := s.sessionRepo.Update(ctx, session); updateErr != nil {
-			s.l.Error("could not fail the session of an infected upload",
-				zap.String("sessionId", session.ID.String()), zap.Error(updateErr))
-		}
+	switch {
+	case errors.Is(err, contentscanports.ErrInfected):
+		s.failScannedSession(
+			ctx,
+			session,
+			documentupload.StatusQuarantined,
+			documentupload.FailureMalwareDetected,
+			err,
+		)
+	case errors.Is(err, contentscanports.ErrTooLarge):
+		s.failScannedSession(
+			ctx,
+			session,
+			documentupload.StatusFailed,
+			documentupload.FailureTooLargeToScan,
+			err,
+		)
 	}
 	return contentscanports.RefusalError("file", err)
+}
+
+func (s *Service) failScannedSession(
+	ctx context.Context,
+	session *documentupload.DocumentUploadSession,
+	status documentupload.Status,
+	code documentupload.FailureCode,
+	cause error,
+) {
+	session.Status = status
+	session.FailureCode = code.String()
+	session.FailureMessage = cause.Error()
+	session.LastActivityAt = timeutils.NowUnix()
+	if _, err := s.sessionRepo.Update(ctx, session); err != nil {
+		s.l.Error("could not fail the session of a refused upload",
+			zap.String("sessionId", session.ID.String()), zap.Error(err))
+	}
 }
 
 func (s *Service) Complete(

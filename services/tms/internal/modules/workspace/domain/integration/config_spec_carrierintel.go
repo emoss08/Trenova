@@ -34,7 +34,6 @@ func carrierOKSpec() IntegrationSpec {
 			},
 		},
 		SupportsTestConnect: true,
-		BindSecretsToTenant: true,
 	}
 }
 
@@ -66,6 +65,5 @@ func fmcsaQCMobileSpec() IntegrationSpec {
 			},
 		},
 		SupportsTestConnect: true,
-		BindSecretsToTenant: true,
 	}
 }

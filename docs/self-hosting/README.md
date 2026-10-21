@@ -364,6 +364,12 @@ docker compose run --rm tms-api encryption rewrap --dry-run
 docker compose run --rm tms-api encryption rewrap
 ```
 
+The same command binds older integration secrets (every integration's API keys and
+webhook secrets) and inbound mailbox signing secrets and API keys to the record they
+belong to, so a sealed value copied onto another organization, integration or mailbox no
+longer opens. Until it has run, values sealed before the upgrade are still read, and an
+integration's secrets are also bound the next time it is saved.
+
 The API, worker and every `trenova` command now refuse to start when the key manager
 cannot be built, instead of starting with encryption silently switched off: an empty
 `TRENOVA_SECURITY_ENCRYPTION_KEY` with `keyManager: local`, or with `keyManager:
@@ -516,8 +522,8 @@ docling-serve call another service, and both stay on the internal network.
 
 Trenova can check every file it receives for malware before anything opens it: documents
 uploaded in the web app and the driver portal, profile pictures and organization logos, rate
-sheets, inbound email attachments, pages from the capture companion, and inbound EDI files
-received over AS2 or SFTP. The check runs on the bytes as they arrive, before the file is
+sheets, inbound email attachments, pages from the capture companion, inbound EDI files
+received over AS2 or SFTP, and fuel card exports read from a customer's SFTP server. The check runs on the bytes as they arrive, before the file is
 stored, and before PDFium, pdfcpu, the spreadsheet readers, the zip and XML parsers or the
 EDI parser read it. Scanning uses ClamAV's `clamd` over its `INSTREAM` command, so nothing is
 written to disk on either side.
@@ -548,7 +554,8 @@ To use a `clamd` you already run, point the address at it instead (`host:3310`, 
 - *Infected*: it is refused and never stored. The person uploading it is told the signature
   the scanner found; an inbound email attachment is marked on its message as not filed, with
   the reason; an inbound EDI file is moved to **Quarantined** with the signature as its
-  failure reason, which raises the usual quarantined-file alert. Every refusal writes a
+  failure reason, which raises the usual quarantined-file alert; a fuel card export fails
+  that run with the file's name and is left on the server, unarchived. Every refusal writes a
   critical audit entry against the document resource (operation *reject*) naming the
   organization, the file, where it came from and the signature.
 - *Scanner unreachable*: the file is refused (a person is asked to try again in a few
@@ -562,7 +569,7 @@ variables):
 |---|---|---|
 | `clamav.address` | empty (off) | `host:port` or `unix:/path` of `clamd` |
 | `clamav.timeout` | `60s` | Longest one scan may take, connection included |
-| `clamav.maxStreamBytes` | `104857600` (100 MiB) | Largest file sent to the scanner; a larger file is refused as not checkable. Keep it at or below `clamd`'s `StreamMaxLength` |
+| `clamav.maxStreamBytes` | `104857600` (100 MiB) | Largest file sent to the scanner. A larger file, or one `clamd` refuses for its own `StreamMaxLength`, is refused as too large to check (an inbound EDI file is quarantined, not retried), even with `failOpen`. Keep it at or below `clamd`'s `StreamMaxLength` |
 | `failOpen` | `false` | Let files through unscanned while a configured scanner is unreachable. Refused in production and staging |
 
 ## Hardening

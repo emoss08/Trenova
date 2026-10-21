@@ -10120,6 +10120,8 @@
   "This file holds more than {0} bytes of text. Split it into smaller files and import each one.": "Este archivo contiene más de {0} bytes de texto. Divídalo en archivos más pequeños e importe cada uno.",
   "This file is already filed. Undo that first to file it somewhere else.": "Este archivo ya está archivado. Deshaga eso primero para archivarlo en otro lugar.",
   "This file is not filed": "Este archivo no está archivado",
+  "This file is too large to be checked for malware, so it was not accepted.": "Este archivo es demasiado grande para comprobar si contiene malware, por lo que no se aceptó.",
+  "This file is too large to be checked for malware. Files up to {0} can be accepted.": "Este archivo es demasiado grande para comprobar si contiene malware. Se aceptan archivos de hasta {0}.",
   "This file is too large to import": "Este archivo es demasiado grande para importarlo",
   "This file is too large to import; the limit is 32 MiB": "Este archivo es demasiado grande para importarlo; el límite es 32 MiB",
   "This file is too large to read; the limit is 32 MiB": "Este archivo es demasiado grande para leerlo; el límite es de 32 MiB",

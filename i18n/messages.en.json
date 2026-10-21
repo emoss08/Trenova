@@ -272499,6 +272499,24 @@
       "go/other"
     ]
   },
+  "This file is too large to be checked for malware, so it was not accepted.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This file is too large to be checked for malware. Files up to {0} can be accepted.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This file is too large to import": {
     "sites": 1,
     "scope": [
