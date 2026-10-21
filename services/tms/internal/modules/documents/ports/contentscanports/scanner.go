@@ -32,6 +32,7 @@ const (
 	SourceCapturePage       = Source("capture_page")
 	SourceEDIInboundFile    = Source("edi_inbound_file")
 	SourceGeneratedDocument = Source("generated_document")
+	SourceFuelCardFile      = Source("fuel_card_file")
 )
 
 type ScanRequest struct {

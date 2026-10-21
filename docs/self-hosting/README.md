@@ -508,8 +508,8 @@ docling-serve call another service, and both stay on the internal network.
 
 Trenova can check every file it receives for malware before anything opens it: documents
 uploaded in the web app and the driver portal, profile pictures and organization logos, rate
-sheets, inbound email attachments, pages from the capture companion, and inbound EDI files
-received over AS2 or SFTP. The check runs on the bytes as they arrive, before the file is
+sheets, inbound email attachments, pages from the capture companion, inbound EDI files
+received over AS2 or SFTP, and fuel card exports read from a customer's SFTP server. The check runs on the bytes as they arrive, before the file is
 stored, and before PDFium, pdfcpu, the spreadsheet readers, the zip and XML parsers or the
 EDI parser read it. Scanning uses ClamAV's `clamd` over its `INSTREAM` command, so nothing is
 written to disk on either side.
@@ -540,7 +540,8 @@ To use a `clamd` you already run, point the address at it instead (`host:3310`, 
 - *Infected*: it is refused and never stored. The person uploading it is told the signature
   the scanner found; an inbound email attachment is marked on its message as not filed, with
   the reason; an inbound EDI file is moved to **Quarantined** with the signature as its
-  failure reason, which raises the usual quarantined-file alert. Every refusal writes a
+  failure reason, which raises the usual quarantined-file alert; a fuel card export fails
+  that run with the file's name and is left on the server, unarchived. Every refusal writes a
   critical audit entry against the document resource (operation *reject*) naming the
   organization, the file, where it came from and the signature.
 - *Scanner unreachable*: the file is refused (a person is asked to try again in a few
