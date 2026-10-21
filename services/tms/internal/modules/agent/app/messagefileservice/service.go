@@ -2,6 +2,8 @@ package messagefileservice
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -78,7 +80,10 @@ func (s *Service) ReadMessageFile(
 		ContentType: file.Document.FileType,
 	}
 	if aiprovider.MediaType(file.Document.FileType) == "application/pdf" {
-		content.PageCount, content.Unreadable = s.pages(ctx, file.Data)
+		content.PageCount, content.Unreadable, err = s.pages(ctx, file.Data)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if len(content.Data) <= cachedFileBytes {
 		s.cache.Add(key, content)
@@ -88,23 +93,31 @@ func (s *Service) ReadMessageFile(
 }
 
 // pages counts a PDF's pages, and reports one that will not open: encrypted
-// or damaged, which a model refuses as well.
-func (s *Service) pages(ctx context.Context, data []byte) (count int, unreadable bool) {
+// or damaged, which a model refuses as well. A worker that could not answer
+// is an error, so the file is neither marked unreadable nor cached.
+func (s *Service) pages(
+	ctx context.Context,
+	data []byte,
+) (count int, unreadable bool, err error) {
 	if s.imaging == nil {
-		return 0, false
+		return 0, false, nil
 	}
 
 	probe, err := s.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
 		Source:   kernelports.ImagingBytes("application/pdf", data),
 		Priority: kernelports.ImagingInteractive,
 	})
-	if err != nil {
+	if errors.Is(err, kernelports.ErrImagingInvalidDocument) ||
+		errors.Is(err, kernelports.ErrImagingEncrypted) {
 		s.logger.Debug("an attached PDF could not be opened", zap.Error(err))
-		return 0, true
+		return 0, true, nil
+	}
+	if err != nil {
+		return 0, false, fmt.Errorf("count the pages of an attached PDF: %w", err)
 	}
 	if probe.Encrypted {
-		return 0, true
+		return 0, true, nil
 	}
 
-	return probe.PageCount, false
+	return probe.PageCount, false, nil
 }
