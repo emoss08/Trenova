@@ -1,3 +1,4 @@
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { createLimitOffsetResponse } from "./server";
 
@@ -50,7 +51,7 @@ export const emailProfileAssignmentSchema = z.object({
   id: z.string().optional(),
   purpose: emailPurposeSchema,
   profileId: z.string(),
-  profile: emailProfileSchema.optional(),
+  profile: linkedRecordSchema("email_profile", emailProfileSchema).optional(),
 });
 
 export const emailMessageSchema = z.object({
@@ -74,7 +75,7 @@ export const emailMessageSchema = z.object({
   failedAt: z.number().optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  profile: emailProfileSchema.optional(),
+  profile: linkedRecordSchema("email_profile", emailProfileSchema).optional(),
 });
 
 export const emailSuppressionSchema = z.object({

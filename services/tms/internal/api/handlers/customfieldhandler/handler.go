@@ -166,7 +166,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a custom field definition
@@ -197,7 +197,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a custom field definition
@@ -235,7 +235,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Patch a custom field definition
@@ -284,7 +284,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Delete a custom field definition
@@ -332,7 +332,7 @@ func (h *Handler) delete(c *gin.Context) {
 // @Router /custom-fields/resource-types/ [get]
 func (h *Handler) getResourceTypes(c *gin.Context) {
 	resourceTypes := h.service.GetSupportedResourceTypes()
-	c.JSON(http.StatusOK, gin.H{"resourceTypes": resourceTypes})
+	helpers.JSON(c, http.StatusOK, gin.H{"resourceTypes": resourceTypes})
 }
 
 // @Summary List active custom field definitions by resource type
@@ -352,7 +352,7 @@ func (h *Handler) getByResourceType(c *gin.Context) {
 	resourceType := c.Param("resourceType")
 
 	if !customfield.IsResourceTypeSupported(resourceType) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
+		helpers.JSON(c, http.StatusBadRequest, gin.H{"error": "Unsupported resource type"})
 		return
 	}
 
@@ -368,5 +368,5 @@ func (h *Handler) getByResourceType(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, definitions)
+	helpers.JSON(c, http.StatusOK, definitions)
 }

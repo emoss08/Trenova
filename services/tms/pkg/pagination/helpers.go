@@ -192,7 +192,7 @@ func writeCursorResponse[T any](
 		count = *result.TotalCount
 	}
 
-	c.JSON(http.StatusOK, CursorResponse[[]T]{
+	helpers.JSON(c, http.StatusOK, CursorResponse[[]T]{
 		Count:       count,
 		TotalCount:  result.TotalCount,
 		Results:     items,
@@ -220,7 +220,7 @@ func SelectOptions[T any](
 		return
 	}
 
-	c.JSON(http.StatusOK, Response[[]T]{
+	helpers.JSON(c, http.StatusOK, Response[[]T]{
 		Count:   result.Total,
 		Results: result.Items,
 		Next: GetNextPageURL(

@@ -78,7 +78,7 @@ function placeOf(stop: Stop | undefined): string {
 }
 
 /** The lane as the design draws it: from and to, then delivered · driver · miles. */
-function laneOf(shipment: Shipment | undefined, t: TranslateFn) {
+function laneOf(shipment: BillingQueueItem["shipment"], t: TranslateFn) {
   const moves = shipment?.moves ?? [];
   const stops = moves.flatMap((move) => move.stops);
   if (stops.length === 0) return null;

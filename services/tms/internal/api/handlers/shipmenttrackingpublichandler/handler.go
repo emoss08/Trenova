@@ -52,7 +52,7 @@ func (h *Handler) preview(c *gin.Context) {
 	}
 	c.Header("Cache-Control", "no-store")
 	c.Header("Referrer-Policy", "no-referrer")
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 func (h *Handler) downloadPod(c *gin.Context) {

@@ -1,6 +1,7 @@
 package formulavisibility
 
 import (
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/gin-gonic/gin"
@@ -41,5 +42,5 @@ func Apply[T any](c *gin.Context, gate Gate, value T, redact func(T) T) T {
 }
 
 func Respond[T any](c *gin.Context, gate Gate, status int, value T, redact func(T) T) {
-	c.JSON(status, Apply(c, gate, value, redact))
+	helpers.JSON(c, status, Apply(c, gate, value, redact))
 }

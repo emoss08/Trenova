@@ -9,7 +9,6 @@ import {
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { getDestinationStop, getOrderedStops, getOriginStop } from "@/lib/shipment-utils";
 import { CountdownCell } from "@/components/data-table/cells/countdown-cell";
-import type { Customer } from "@trenova/shared/types/customer";
 import type { ColumnDef, DataTableFilterField } from "@trenova/shared/types/data-table";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { Link } from "react-router";
@@ -61,11 +60,7 @@ export type ShipmentColumnsParams = {
  * first pickup and the last delivery, the two ends the lane draws.
  */
 export function getShipmentFilterFields(t: TranslateFn): DataTableFilterField[] {
-  const record = (
-    apiField: string,
-    label: string,
-    filterRecord: string,
-  ): DataTableFilterField => ({
+  const record = (apiField: string, label: string, filterRecord: string): DataTableFilterField => ({
     apiField,
     label,
     filterType: "record",
@@ -250,7 +245,7 @@ export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): Colu
         }
         return (
           <div className="flex min-w-0 flex-col gap-0.5">
-            <EntityRefCell<Customer, Shipment>
+            <EntityRefCell<NonNullable<Shipment["customer"]>, Shipment>
               entity={customer}
               config={{
                 basePath: "/billing/configuration-files/customers",

@@ -84,7 +84,7 @@ func (h *Handler) sendReminder(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"reminders": sent})
+	helpers.JSON(c, http.StatusOK, gin.H{"reminders": sent})
 }
 
 func tenantOf(c *gin.Context) pagination.TenantInfo {
@@ -109,7 +109,7 @@ func (h *Handler) worklist(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, page)
+	helpers.JSON(c, http.StatusOK, page)
 }
 
 func (h *Handler) account(c *gin.Context) {
@@ -142,7 +142,7 @@ func (h *Handler) account(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 func (h *Handler) logActivity(c *gin.Context) {
@@ -168,7 +168,7 @@ func (h *Handler) logActivity(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, view)
+	helpers.JSON(c, http.StatusCreated, view)
 }
 
 func (h *Handler) assignCollector(c *gin.Context) {
@@ -194,7 +194,7 @@ func (h *Handler) assignCollector(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 func (h *Handler) scheduleFollowUp(c *gin.Context) {
@@ -220,5 +220,5 @@ func (h *Handler) scheduleFollowUp(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }

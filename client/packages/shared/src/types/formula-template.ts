@@ -1,4 +1,5 @@
 import { translate } from "@trenova/shared/i18n/runtime";
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { decimalStringSchema } from "./helpers";
 import { userSchema } from "./user";
@@ -277,7 +278,7 @@ export const formulaTemplateVersionSchema = z.object({
   createdById: z.string(),
   createdAt: z.number(),
 
-  createdBy: userSchema.nullish(),
+  createdBy: linkedRecordSchema("user", userSchema).nullish(),
 });
 export type FormulaTemplateVersion = z.infer<typeof formulaTemplateVersionSchema>;
 
@@ -775,9 +776,9 @@ export const formulaTemplateReviewSchema = z.object({
     .transform((v) => v ?? ""),
   baseVersionNumber: z.number().int().default(0),
   createdAt: z.number(),
-  actor: userSchema.nullish(),
+  actor: linkedRecordSchema("user", userSchema).nullish(),
   requestedReviewerId: z.string().nullish(),
-  requestedReviewer: userSchema.nullish(),
+  requestedReviewer: linkedRecordSchema("user", userSchema).nullish(),
   reviewerNote: z
     .string()
     .nullish()

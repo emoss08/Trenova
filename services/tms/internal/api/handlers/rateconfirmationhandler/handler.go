@@ -116,7 +116,7 @@ func (h *Handler) listByMove(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, entities)
+	helpers.JSON(c, http.StatusOK, entities)
 }
 
 // @Summary Generate a rate confirmation for a move's carrier assignment
@@ -157,7 +157,7 @@ func (h *Handler) generate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 // @Summary Get a rate confirmation
@@ -194,7 +194,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Send a rate confirmation to the carrier
@@ -233,7 +233,7 @@ func (h *Handler) send(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 type confirmRequest struct {
@@ -285,7 +285,7 @@ func (h *Handler) confirm(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 type voidRequest struct {
@@ -337,5 +337,5 @@ func (h *Handler) void(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

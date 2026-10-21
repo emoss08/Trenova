@@ -112,7 +112,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) createDraft(c *gin.Context) {
@@ -138,7 +138,7 @@ func (h *Handler) createDraft(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 func (h *Handler) updateDraft(c *gin.Context) {
@@ -170,7 +170,7 @@ func (h *Handler) updateDraft(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) submit(c *gin.Context) {
@@ -250,7 +250,7 @@ func (h *Handler) reject(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) cancel(c *gin.Context) {
@@ -282,7 +282,7 @@ func (h *Handler) cancel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) transitionNoBody(
@@ -302,5 +302,5 @@ func (h *Handler) transitionNoBody(
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

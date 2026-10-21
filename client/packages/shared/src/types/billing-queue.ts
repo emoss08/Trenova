@@ -1,3 +1,4 @@
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { billTypeSchema } from "./bill-type";
 import { billingQueueStatusSchema } from "./billing-queue-status";
@@ -284,10 +285,10 @@ export const billingQueueItemSchema = z.object({
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  shipment: shipmentSchema.optional(),
+  shipment: linkedRecordSchema("shipment", shipmentSchema).optional(),
   billToCustomer: customerReferenceSchema.optional().nullable(),
-  assignedBiller: userSchema.optional().nullable(),
-  canceledBy: userSchema.optional().nullable(),
+  assignedBiller: linkedRecordSchema("user", userSchema).optional().nullable(),
+  canceledBy: linkedRecordSchema("user", userSchema).optional().nullable(),
   payerShare: payerShareSchema.nullish(),
   detentionHolds: z
     .array(detentionHoldSchema)

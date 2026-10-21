@@ -130,7 +130,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a jurisdiction rule
@@ -164,7 +164,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a jurisdiction rule
@@ -208,7 +208,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 type verifyBody struct {
@@ -262,7 +262,7 @@ func (h *Handler) verify(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, verified)
+	helpers.JSON(c, http.StatusOK, verified)
 }
 
 func (h *Handler) registerOverrideRoutes(rg *gin.RouterGroup) {
@@ -306,7 +306,7 @@ func (h *Handler) getOverride(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a carrier override
@@ -340,7 +340,7 @@ func (h *Handler) createOverride(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a carrier override
@@ -379,7 +379,7 @@ func (h *Handler) updateOverride(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Remove a carrier override

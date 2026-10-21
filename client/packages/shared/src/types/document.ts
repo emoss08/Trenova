@@ -1,3 +1,4 @@
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { documentTypeSchema } from "./document-type";
 
@@ -95,7 +96,7 @@ export const documentSchema = z.object({
   hasExtractedText: z.boolean(),
   shipmentDraftStatus: documentShipmentDraftStatusSchema,
   documentTypeId: z.string().nullable().optional(),
-  documentType: documentTypeSchema.nullable().optional(),
+  documentType: linkedRecordSchema("document_type", documentTypeSchema).nullable().optional(),
   signatureStatus: documentSignatureStatusSchema.nullish().transform((value) => value ?? "Unknown"),
   signedAt: z.number().nullable().optional(),
   signatureSource: z

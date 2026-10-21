@@ -94,7 +94,7 @@ func (h *Handler) getPartnerSettingSchema(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, schema)
+	helpers.JSON(c, http.StatusOK, schema)
 }
 
 func (h *Handler) listPartnerSettingSchemaFields(c *gin.Context) {
@@ -190,5 +190,5 @@ func (h *Handler) validatePartnerSettings(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"diagnostics": diagnostics})
+	helpers.JSON(c, http.StatusOK, gin.H{"diagnostics": diagnostics})
 }

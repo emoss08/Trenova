@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -42,6 +43,8 @@ type ProviderParams struct {
 	Logger         *zap.Logger
 	DispatchRepo   dispatchcontrolports.DispatchControlRepository
 	CostingService *costingservice.Service
+	Views          permissionports.ReferenceViews
+	FieldAccess    permissionports.FieldAccess
 }
 
 type Provider struct {
@@ -49,6 +52,8 @@ type Provider struct {
 	db             *postgres.Connection
 	dispatchRepo   dispatchcontrolports.DispatchControlRepository
 	costingService *costingservice.Service
+	views          permissionports.ReferenceViews
+	fieldAccess    permissionports.FieldAccess
 }
 
 type laneStateRow struct {
@@ -106,6 +111,8 @@ func NewProvider(p ProviderParams) *Provider {
 		db:             p.DB,
 		dispatchRepo:   p.DispatchRepo,
 		costingService: p.CostingService,
+		views:          p.Views,
+		fieldAccess:    p.FieldAccess,
 	}
 }
 
@@ -113,7 +120,24 @@ func (p *Provider) GetPage() kernelports.AnalyticsPage {
 	return kernelports.ShipmentAnalyticsPage
 }
 
+// GetAnalyticsData answers the page for one reader. The page is checked for
+// shipment read; every card value about a customer, a location or a driver is
+// then decided for this reader through the reference view rule, and the
+// average margin through the margins field group.
 func (p *Provider) GetAnalyticsData(
+	ctx context.Context,
+	opts *kernelports.AnalyticsRequestOptions,
+) (kernelports.AnalyticsData, error) {
+	data, err := p.analyticsData(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	p.accessFor(ctx, opts).gate(ctx, data)
+
+	return data, nil
+}
+
+func (p *Provider) analyticsData(
 	ctx context.Context,
 	opts *kernelports.AnalyticsRequestOptions,
 ) (kernelports.AnalyticsData, error) {
@@ -273,7 +297,8 @@ func (p *Provider) getProfitability(
 	card.AvgCPM, _ = summary.AvgCPM.Float64()
 	if summary.AvgMarginPercent.Valid {
 		card.HasMargin = true
-		card.AvgMarginPct, _ = summary.AvgMarginPercent.Decimal.Float64()
+		margin, _ := summary.AvgMarginPercent.Decimal.Float64()
+		card.AvgMarginPct = &margin
 	}
 
 	return card, nil
@@ -1158,10 +1183,10 @@ func buildTomorrowsPickupsCard(
 			ShipmentID:        row.ShipmentID,
 			ProNumber:         row.ProNumber,
 			PickupWindowStart: row.PickupWindowStart,
-			Customer:          row.Customer,
-			Origin:            row.Origin,
-			Destination:       row.Destination,
-			Driver:            row.Driver,
+			Customer:          new(row.Customer),
+			Origin:            new(row.Origin),
+			Destination:       new(row.Destination),
+			Driver:            new(row.Driver),
 			Status:            tomorrowPickupStatus(row),
 		})
 	}

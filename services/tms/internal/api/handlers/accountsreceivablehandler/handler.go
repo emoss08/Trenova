@@ -81,7 +81,7 @@ func (h *Handler) aging(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, summary)
+	helpers.JSON(c, http.StatusOK, summary)
 }
 
 func (h *Handler) ledger(c *gin.Context) {
@@ -104,7 +104,7 @@ func (h *Handler) ledger(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entries)
+	helpers.JSON(c, http.StatusOK, entries)
 }
 
 func (h *Handler) openItems(c *gin.Context) {
@@ -143,7 +143,7 @@ func (h *Handler) openItems(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) statement(c *gin.Context) {
@@ -189,5 +189,5 @@ func (h *Handler) statement(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, statement)
+	helpers.JSON(c, http.StatusOK, statement)
 }

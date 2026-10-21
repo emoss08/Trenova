@@ -97,7 +97,7 @@ func (h *Handler) send(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) history(c *gin.Context) {
@@ -114,7 +114,7 @@ func (h *Handler) history(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"statements": sent})
+	helpers.JSON(c, http.StatusOK, gin.H{"statements": sent})
 }
 
 // scope fills in who is asking and about which customer from the request

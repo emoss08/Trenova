@@ -25,7 +25,9 @@ type stubDetector struct {
 
 func (d stubDetector) Key() string                     { return d.key }
 func (d stubDetector) Category() insight.Category      { return d.category }
-func (d stubDetector) Resource() permission.Resource   { return permission.ResourceShipment }
+func (d stubDetector) Resources() []permission.Resource {
+	return []permission.Resource{permission.ResourceShipment}
+}
 func (d stubDetector) Operation() permission.Operation { return permission.OpRead }
 func (d stubDetector) Surfaces() []insight.Surface     { return d.surfaces }
 
@@ -42,6 +44,7 @@ func validFinding() detector.Finding {
 		Subject:   "Acme Foods",
 		Headline:  "On-time delivery for Acme Foods fell 11 points",
 		Severity:  insight.SeverityWarning,
+		Names:     []permission.Resource{permission.ResourceShipment},
 		Metrics: []insight.Metric{
 			detector.Percent(
 				"onTimePercent",

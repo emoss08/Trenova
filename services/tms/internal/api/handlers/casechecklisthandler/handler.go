@@ -77,7 +77,7 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) save(c *gin.Context) {
@@ -105,7 +105,7 @@ func (h *Handler) save(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, saved)
+	helpers.JSON(c, http.StatusOK, saved)
 }
 
 func (h *Handler) delete(c *gin.Context) {

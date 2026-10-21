@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -97,5 +98,5 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, opened)
+	helpers.JSON(c, http.StatusOK, opened)
 }

@@ -57,6 +57,7 @@ server:
     exposeHeaders:
       - X-Request-Id
       - Idempotent-Replayed
+      - Withheld-By-Access
     credentials: true
     maxAge: 86400
 

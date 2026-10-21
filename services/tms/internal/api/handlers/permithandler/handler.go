@@ -106,7 +106,7 @@ func (h *Handler) listPermits(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, permits)
+	helpers.JSON(c, http.StatusOK, permits)
 }
 
 // @Summary Record a permit for a shipment
@@ -156,7 +156,7 @@ func (h *Handler) createPermit(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a recorded permit
@@ -210,7 +210,7 @@ func (h *Handler) updatePermit(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary List derived permit requirements for a shipment
@@ -242,7 +242,7 @@ func (h *Handler) listRequirements(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, requirements)
+	helpers.JSON(c, http.StatusOK, requirements)
 }
 
 type waiveRequirementBody struct {
@@ -298,5 +298,5 @@ func (h *Handler) waiveRequirement(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, waived)
+	helpers.JSON(c, http.StatusOK, waived)
 }

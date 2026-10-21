@@ -81,7 +81,7 @@ func (h *Handler) getDiagnostics(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) reextract(c *gin.Context) {
@@ -122,5 +122,5 @@ func (h *Handler) runAction(
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"status": "accepted"})
+	helpers.JSON(c, http.StatusAccepted, gin.H{"status": "accepted"})
 }

@@ -44,9 +44,9 @@ func NewUnbilledDetention(metrics insightports.InsightMetricsRepository) *Unbill
 	return &UnbilledDetention{metrics: metrics}
 }
 
-func (d *UnbilledDetention) Key() string                   { return UnbilledDetentionKey }
-func (d *UnbilledDetention) Category() insight.Category    { return insight.CategoryCostLeakage }
-func (d *UnbilledDetention) Resource() permission.Resource { return permission.ResourceShipment }
+func (d *UnbilledDetention) Key() string                      { return UnbilledDetentionKey }
+func (d *UnbilledDetention) Category() insight.Category       { return insight.CategoryCostLeakage }
+func (d *UnbilledDetention) Resources() []permission.Resource { return shipmentAndLocation() }
 func (d *UnbilledDetention) Operation() permission.Operation {
 	return permission.OpRead
 }
@@ -110,6 +110,7 @@ func (d *UnbilledDetention) findingFor(
 	return detector.Finding{
 		DedupeKey: detector.DedupeKey(UnbilledDetentionKey, row.LocationID.String()),
 		Subject:   row.LocationName,
+		Names:     shipmentAndLocation(),
 		Headline: fmt.Sprintf(
 			"%s in detention accrued at %s over %d stops and was never billed",
 			amount.StringFixed(2),
@@ -173,10 +174,10 @@ func NewEmptyMiles(metrics insightports.InsightMetricsRepository) *EmptyMiles {
 	return &EmptyMiles{metrics: metrics}
 }
 
-func (d *EmptyMiles) Key() string                     { return EmptyMilesKey }
-func (d *EmptyMiles) Category() insight.Category      { return insight.CategoryCostLeakage }
-func (d *EmptyMiles) Resource() permission.Resource   { return permission.ResourceShipment }
-func (d *EmptyMiles) Operation() permission.Operation { return permission.OpRead }
+func (d *EmptyMiles) Key() string                      { return EmptyMilesKey }
+func (d *EmptyMiles) Category() insight.Category       { return insight.CategoryCostLeakage }
+func (d *EmptyMiles) Resources() []permission.Resource { return shipmentAndCustomer() }
+func (d *EmptyMiles) Operation() permission.Operation  { return permission.OpRead }
 
 // Surfaces puts empty-mile concentration on the dispatch console, where the
 // next load is chosen.
@@ -252,6 +253,7 @@ func (d *EmptyMiles) findingFor(
 	return detector.Finding{
 		DedupeKey: detector.DedupeKey(EmptyMilesKey, row.CustomerID.String()),
 		Subject:   row.CustomerName,
+		Names:     shipmentAndCustomer(),
 		Headline: fmt.Sprintf(
 			"%s runs %s%% empty against a fleet average of %s%%",
 			row.CustomerName,

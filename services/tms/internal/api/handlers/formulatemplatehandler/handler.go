@@ -3,6 +3,7 @@ package formulatemplatehandler
 import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -122,7 +123,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.updateVersionEffectiveDate,
 	)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", requireRead, h.selectOptions)
 	selectOptions.GET("/:templateID", requireRead, h.getOption)
 }

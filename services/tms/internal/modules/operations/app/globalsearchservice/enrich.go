@@ -2,10 +2,12 @@ package globalsearchservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,6 +54,11 @@ func (e *hitEnricher) result(entityType search.EntityType) *indexResult {
 }
 
 func (e *hitEnricher) run(ctx context.Context) {
+	e.enrich(ctx)
+	e.withholdUnshown(ctx)
+}
+
+func (e *hitEnricher) enrich(ctx context.Context) {
 	shipments := e.result(search.EntityTypeShipment)
 	customers := e.result(search.EntityTypeCustomer)
 	workers := e.result(search.EntityTypeWorker)
@@ -139,10 +146,13 @@ func (e *hitEnricher) loadShipments(
 		return links, nil
 	}
 
-	cards, err := e.service.shipmentRead.ListSearchCards(ctx, &shipmentports.ListShipmentSearchCardsRequest{
-		TenantInfo:  e.req.TenantInfo,
-		ShipmentIDs: uniqueIDs(ids),
-	})
+	cards, err := e.service.shipmentRead.ListSearchCards(
+		ctx,
+		&shipmentports.ListShipmentSearchCardsRequest{
+			TenantInfo:  e.req.TenantInfo,
+			ShipmentIDs: uniqueIDs(ids),
+		},
+	)
 	if err != nil {
 		e.service.logger.Warn("failed to read shipment search cards", zap.Error(err))
 		return links, nil
@@ -245,11 +255,14 @@ func (e *hitEnricher) loadLabels(
 
 	labels := make(map[string]map[pulid.ID]*captureports.CaptureRecordLabel, len(idsByKind))
 	for kind, ids := range idsByKind {
-		found, err := e.service.recordLabels.Labels(ctx, &captureports.ListCaptureRecordLabelsRequest{
-			TenantInfo:   e.req.TenantInfo,
-			ResourceType: kind,
-			IDs:          uniqueIDs(ids),
-		})
+		found, err := e.service.recordLabels.Labels(
+			ctx,
+			&captureports.ListCaptureRecordLabelsRequest{
+				TenantInfo:   e.req.TenantInfo,
+				ResourceType: kind,
+				IDs:          uniqueIDs(ids),
+			},
+		)
 		if err != nil {
 			e.service.logger.Warn(
 				"failed to label document records for search",
@@ -346,6 +359,130 @@ func (e *hitEnricher) applyShipments(
 	}
 }
 
+// hitSource is where one metadata value on a hit comes from. A value of the
+// hit's own record follows the index's read; a value about a record the hit
+// links to (a shipment's customer, a worker's current load) is decided field
+// by field through the reference view rule; a figure about a linked record
+// that no view carries needs that kind's read.
+type hitSource struct {
+	kind     permission.Resource
+	fields   []string
+	figure   bool
+	attached bool
+}
+
+func own() hitSource { return hitSource{} }
+
+func linkedField(kind permission.Resource, fields ...string) hitSource {
+	return hitSource{kind: kind, fields: fields}
+}
+
+func figureOf(kind permission.Resource) hitSource {
+	return hitSource{kind: kind, figure: true}
+}
+
+func attachedRecord() hitSource { return hitSource{attached: true} }
+
+// hitMetadata classifies every metadata key a hit of each type may carry. A
+// key missing here is dropped from every response, and a test fails until it
+// is classified.
+var hitMetadata = map[search.EntityType]map[string]hitSource{
+	search.EntityTypeShipment: {
+		fieldStatus:       own(),
+		"proNumber":       own(),
+		"bol":             own(),
+		"customerName":    linkedField(permission.ResourceCustomer, "name"),
+		"customerCode":    linkedField(permission.ResourceCustomer, "code"),
+		"customerId":      linkedField(permission.ResourceCustomer, "id"),
+		"serviceTypeCode": linkedField(permission.ResourceServiceType, "code"),
+		"origin":          linkedField(permission.ResourceLocation, fieldCity, "state"),
+		"destination":     linkedField(permission.ResourceLocation, fieldCity, "state"),
+		"driverName":      linkedField(permission.ResourceWorker, "firstName", "lastName"),
+		"driverId":        linkedField(permission.ResourceWorker, "id"),
+	},
+	search.EntityTypeCustomer: {
+		fieldStatus:      own(),
+		"code":           own(),
+		fieldCity:        own(),
+		"openBalance":    figureOf(permission.ResourceAccountsReceivable),
+		"overdueBalance": figureOf(permission.ResourceAccountsReceivable),
+		"currencyCode":   figureOf(permission.ResourceAccountsReceivable),
+	},
+	search.EntityTypeWorker: {
+		fieldStatus:            own(),
+		"externalId":           own(),
+		"workerType":           own(),
+		"driverType":           own(),
+		fieldCity:              own(),
+		"availableForDispatch": own(),
+		"currentLoadId":        linkedField(permission.ResourceShipment, "id"),
+		"currentLoad":          linkedField(permission.ResourceShipment, "proNumber"),
+		"currentLoadStatus":    linkedField(permission.ResourceShipment, "status"),
+	},
+	search.EntityTypeDocument: {
+		fieldStatus:     own(),
+		"resourceType":  own(),
+		"resourceId":    own(),
+		"detectedKind":  own(),
+		"receivedAt":    own(),
+		"attachedLabel": attachedRecord(),
+	},
+}
+
+// classifiedKinds is every kind a hit's metadata is classified under.
+func classifiedKinds() []permission.Resource {
+	kinds := make([]permission.Resource, 0, 8)
+	for _, sources := range hitMetadata {
+		for _, source := range sources {
+			if source.kind != "" && !slices.Contains(kinds, source.kind) {
+				kinds = append(kinds, source.kind)
+			}
+		}
+	}
+	return kinds
+}
+
+// withholdUnshown removes every metadata value the person may not be shown:
+// a value with no classification, a linked record's field the reference view
+// rule withholds, and a figure about a kind they cannot read.
+func (e *hitEnricher) withholdUnshown(ctx context.Context) {
+	for _, result := range e.results {
+		if result == nil {
+			continue
+		}
+		sources := hitMetadata[result.definition.entityType]
+		for _, hit := range result.hits {
+			for key := range hit.Metadata {
+				source, ok := sources[key]
+				if !ok || !e.mayShow(ctx, hit, source) {
+					delete(hit.Metadata, key)
+				}
+			}
+		}
+	}
+}
+
+func (e *hitEnricher) mayShow(
+	ctx context.Context,
+	hit *kernelports.GlobalSearchHit,
+	source hitSource,
+) bool {
+	switch {
+	case source.attached:
+		return e.canLabel(hit.Metadata["resourceType"])
+	case source.kind == "":
+		return true
+	case source.figure:
+		return e.access.linked.Reads(ctx, source.kind)
+	}
+	for _, field := range source.fields {
+		if e.access.linked.Decide(ctx, source.kind, field) != permissionports.LinkedFieldVisible {
+			return false
+		}
+	}
+	return true
+}
+
 func applyShipmentCard(hit *kernelports.GlobalSearchHit, card *shipmentports.ShipmentSearchCard) {
 	if card.ProNumber != "" {
 		hit.Title = card.ProNumber
@@ -440,12 +577,12 @@ func applyPlace(
 	document map[string]any,
 	states map[pulid.ID]string,
 ) {
-	city := stringValue(document, "city")
+	city := stringValue(document, fieldCity)
 	state := ""
 	if parsed, err := pulid.Parse(stringValue(document, "state_id")); err == nil {
 		state = states[parsed]
 	}
-	putIfPresent(hit.Metadata, "city", place(city, state))
+	putIfPresent(hit.Metadata, fieldCity, place(city, state))
 }
 
 func place(city, state string) string {

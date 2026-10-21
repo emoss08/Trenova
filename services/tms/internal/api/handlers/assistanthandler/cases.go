@@ -3,6 +3,7 @@ package assistanthandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
@@ -56,7 +57,7 @@ func (h *Handler) tickCaseItem(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 // caseBinding is what a write to a case answers with: what the
@@ -124,7 +125,7 @@ func (h *Handler) getCase(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 func (h *Handler) bindCase(c *gin.Context) {
@@ -212,7 +213,7 @@ func (h *Handler) awaitCaseReply(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, wait)
+	helpers.JSON(c, http.StatusCreated, wait)
 }
 
 func (h *Handler) respondCase(c *gin.Context, thread *conversation.Thread, err error) {
@@ -221,5 +222,5 @@ func (h *Handler) respondCase(c *gin.Context, thread *conversation.Thread, err e
 		return
 	}
 
-	c.JSON(http.StatusOK, bindingOf(thread))
+	helpers.JSON(c, http.StatusOK, bindingOf(thread))
 }

@@ -130,7 +130,7 @@ func (h *Handler) updateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Bulk update shipment move statuses
@@ -167,7 +167,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	helpers.JSON(c, http.StatusOK, entities)
 }
 
 // @Summary Record a stop actual arrival or departure on a shipment move
@@ -225,7 +225,7 @@ func (h *Handler) recordStopActual(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result.Move)
+	helpers.JSON(c, http.StatusOK, result.Move)
 }
 
 // @Summary Split a shipment move
@@ -270,5 +270,5 @@ func (h *Handler) splitMove(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

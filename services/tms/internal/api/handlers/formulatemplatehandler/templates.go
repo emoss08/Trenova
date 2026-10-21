@@ -85,7 +85,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Get a formula template option
@@ -120,7 +120,7 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List formula template options
@@ -186,7 +186,7 @@ func (h *Handler) getUsage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, usage)
+	helpers.JSON(c, http.StatusOK, usage)
 }
 
 type createTemplateRequest struct {
@@ -229,7 +229,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, createdEntity)
+	helpers.JSON(c, http.StatusCreated, createdEntity)
 }
 
 // @Summary Update a formula template
@@ -270,7 +270,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Duplicate formula templates
@@ -306,7 +306,7 @@ func (h *Handler) duplicate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Bulk update formula template statuses
@@ -356,7 +356,7 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	helpers.JSON(c, http.StatusOK, results)
 }
 
 // @Summary Patch a formula template
@@ -408,7 +408,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Describe the variables and functions available to formula expressions
@@ -435,7 +435,7 @@ func (h *Handler) getSchema(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, description)
+	helpers.JSON(c, http.StatusOK, description)
 }
 
 // @Summary Import formula templates from an exported JSON payload
@@ -472,5 +472,5 @@ func (h *Handler) importTemplates(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

@@ -77,7 +77,7 @@ func (h *Handler) getInboundFile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, file)
+	helpers.JSON(c, http.StatusOK, file)
 }
 
 func (h *Handler) inspectInboundFile(c *gin.Context) {
@@ -98,7 +98,7 @@ func (h *Handler) inspectInboundFile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, inspection)
+	helpers.JSON(c, http.StatusOK, inspection)
 }
 
 func (h *Handler) reprocessInboundFile(c *gin.Context) {
@@ -120,7 +120,7 @@ func (h *Handler) reprocessInboundFile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, file)
+	helpers.JSON(c, http.StatusOK, file)
 }
 
 func (h *Handler) bulkReprocessInboundFiles(c *gin.Context) {
@@ -140,5 +140,5 @@ func (h *Handler) bulkReprocessInboundFiles(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

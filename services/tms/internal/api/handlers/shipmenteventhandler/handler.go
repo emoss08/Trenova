@@ -104,7 +104,7 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, events)
+	helpers.JSON(c, http.StatusOK, events)
 }
 
 func parseLimit(raw string) int {

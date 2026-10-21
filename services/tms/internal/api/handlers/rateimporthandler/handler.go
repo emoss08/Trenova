@@ -128,7 +128,7 @@ type TemplateResponse struct {
 func (h *Handler) template(c *gin.Context) {
 	fileName, content := h.service.Template()
 
-	c.JSON(http.StatusOK, TemplateResponse{FileName: fileName, Content: content})
+	helpers.JSON(c, http.StatusOK, TemplateResponse{FileName: fileName, Content: content})
 }
 
 // @Summary Get a rate import
@@ -165,7 +165,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary List a rate import's rows
@@ -260,7 +260,7 @@ func (h *Handler) upload(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // effectiveFrom is the day the imported rules start pricing.
@@ -355,7 +355,7 @@ func (h *Handler) transition(
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) importID(c *gin.Context) (pulid.ID, error) {

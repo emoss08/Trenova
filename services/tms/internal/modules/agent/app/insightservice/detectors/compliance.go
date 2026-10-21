@@ -45,9 +45,9 @@ func NewCredentialExpiry(metrics insightports.InsightMetricsRepository) *Credent
 	return &CredentialExpiry{metrics: metrics}
 }
 
-func (d *CredentialExpiry) Key() string                   { return CredentialExpiryKey }
-func (d *CredentialExpiry) Category() insight.Category    { return insight.CategoryCompliance }
-func (d *CredentialExpiry) Resource() permission.Resource { return permission.ResourceWorker }
+func (d *CredentialExpiry) Key() string                      { return CredentialExpiryKey }
+func (d *CredentialExpiry) Category() insight.Category       { return insight.CategoryCompliance }
+func (d *CredentialExpiry) Resources() []permission.Resource { return workerOnly() }
 func (d *CredentialExpiry) Operation() permission.Operation {
 	return permission.OpRead
 }
@@ -114,6 +114,7 @@ func (d *CredentialExpiry) findingFor(
 	return detector.Finding{
 		DedupeKey: detector.DedupeKey(CredentialExpiryKey, row.CredentialTypeID.String()),
 		Subject:   row.CredentialTypeName,
+		Names:     workerOnly(),
 		Headline:  d.headlineFor(row, daysToFirst),
 		Severity:  severity,
 		Metrics:   d.metricsFor(row, daysToFirst),
