@@ -27,7 +27,7 @@ func FenceUntrusted(header, payload string) string {
 	builder.WriteString("\n")
 	builder.WriteString(untrustedOpenTag)
 	builder.WriteString("\n")
-	builder.WriteString(stringutils.NeutralizeCloseTag(payload, untrustedCloseTag))
+	builder.WriteString(stringutils.FenceText(payload, untrustedCloseTag))
 	builder.WriteString("\n")
 	builder.WriteString(untrustedCloseTag)
 

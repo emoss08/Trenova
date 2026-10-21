@@ -37,7 +37,7 @@ func describePageDraft(draft *pagedraft.Draft) string {
 }
 
 func draftText(value string) string {
-	return stringutils.NeutralizeCloseTag(value, pageDraftCloseTag)
+	return stringutils.FenceText(value, pageDraftCloseTag)
 }
 
 func writeImportDraft(builder *strings.Builder, draft *pagedraft.ShipmentImport) {

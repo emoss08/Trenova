@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -43,7 +44,7 @@ func BuildContextText(deliminated agentports.DelimitedContext) string {
 }
 
 func neutralizeUntrusted(content string) string {
-	return strings.ReplaceAll(content, untrustedCloseTag, "<\\/untrusted_data>")
+	return stringutils.FenceText(content, untrustedCloseTag)
 }
 
 // WithSchemaInstruction appends the schema to a system prompt for providers that

@@ -451,7 +451,7 @@ func buildDelegateSection(delegates []RuntimeDelegate) string {
 	builder.WriteString(delegatesOpenTag)
 	for _, delegate := range delegates {
 		builder.WriteString("\n- ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(
+		builder.WriteString(stringutils.FenceText(
 			strings.TrimSpace(delegate.Name), delegatesCloseTag,
 		))
 		builder.WriteString(" (agentId ")
@@ -460,7 +460,7 @@ func buildDelegateSection(delegates []RuntimeDelegate) string {
 		description := strings.TrimSpace(stringutils.FirstSentence(delegate.Description))
 		if description != "" {
 			builder.WriteString(" — ")
-			builder.WriteString(stringutils.NeutralizeCloseTag(description, delegatesCloseTag))
+			builder.WriteString(stringutils.FenceText(description, delegatesCloseTag))
 		}
 		if !strings.HasSuffix(description, ".") {
 			builder.WriteString(".")
@@ -773,10 +773,10 @@ func buildMemorySection(memories []*agent.Memory) string {
 	builder.WriteString(memoryOpenTag)
 	for _, group := range groupMemories(memories) {
 		builder.WriteString("\n### ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(group.heading, memoryCloseTag))
+		builder.WriteString(stringutils.FenceText(group.heading, memoryCloseTag))
 		for _, memory := range group.memories {
 			builder.WriteString("\n")
-			builder.WriteString(stringutils.NeutralizeCloseTag(memoryLine(memory), memoryCloseTag))
+			builder.WriteString(stringutils.FenceText(memoryLine(memory), memoryCloseTag))
 		}
 	}
 	builder.WriteString("\n")
@@ -813,7 +813,7 @@ func buildOutsideMemorySection(memories []*agent.Memory) string {
 	for _, memory := range memories {
 		builder.WriteString("\n")
 		builder.WriteString(
-			stringutils.NeutralizeCloseTag(outsideMemoryLine(memory), outsideMemoryCloseTag),
+			stringutils.FenceText(outsideMemoryLine(memory), outsideMemoryCloseTag),
 		)
 	}
 	builder.WriteString("\n")
@@ -841,7 +841,7 @@ func describeSubject(subject *RuntimeSubject) string {
 	builder.WriteString(subject.ID)
 	if label := strings.TrimSpace(subject.Label); label != "" {
 		builder.WriteString("\nlabel: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(label, subjectContextCloseTag))
+		builder.WriteString(stringutils.FenceText(label, subjectContextCloseTag))
 	}
 	if subject.OutsideAuthored.IsValid() {
 		builder.WriteString("\nwritten outside the organization: ")
@@ -850,7 +850,7 @@ func describeSubject(subject *RuntimeSubject) string {
 	}
 	if notes := strings.TrimSpace(subject.Notes); notes != "" {
 		builder.WriteString("\n")
-		builder.WriteString(stringutils.NeutralizeCloseTag(notes, subjectContextCloseTag))
+		builder.WriteString(stringutils.FenceText(notes, subjectContextCloseTag))
 	}
 	builder.WriteString("\n")
 	builder.WriteString(subjectContextCloseTag)
@@ -905,31 +905,31 @@ func describePage(page *PageContext, guide *RuntimePage, surface agent.Surface) 
 	}
 	builder.WriteString(pageContextOpenTag)
 	builder.WriteString("\npath: ")
-	builder.WriteString(stringutils.NeutralizeCloseTag(page.Path, pageContextCloseTag))
+	builder.WriteString(stringutils.FenceText(page.Path, pageContextCloseTag))
 	if guide != nil {
 		builder.WriteString("\npage: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(guide.Name, pageContextCloseTag))
+		builder.WriteString(stringutils.FenceText(guide.Name, pageContextCloseTag))
 		if guide.Location != "" && guide.Location != guide.Name {
 			builder.WriteString(" (")
-			builder.WriteString(stringutils.NeutralizeCloseTag(guide.Location, pageContextCloseTag))
+			builder.WriteString(stringutils.FenceText(guide.Location, pageContextCloseTag))
 			builder.WriteString(")")
 		}
 		if guide.Summary != "" {
 			builder.WriteString("\nabout: ")
-			builder.WriteString(stringutils.NeutralizeCloseTag(guide.Summary, pageContextCloseTag))
+			builder.WriteString(stringutils.FenceText(guide.Summary, pageContextCloseTag))
 		}
 	}
 	if page.EntityType != "" {
 		builder.WriteString("\nrecord: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(page.EntityType, pageContextCloseTag))
+		builder.WriteString(stringutils.FenceText(page.EntityType, pageContextCloseTag))
 		if page.EntityID != "" {
 			builder.WriteString(" ")
-			builder.WriteString(stringutils.NeutralizeCloseTag(page.EntityID, pageContextCloseTag))
+			builder.WriteString(stringutils.FenceText(page.EntityID, pageContextCloseTag))
 		}
 	}
 	if title := strings.TrimSpace(page.Title); title != "" {
 		builder.WriteString("\ntitle: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(title, pageContextCloseTag))
+		builder.WriteString(stringutils.FenceText(title, pageContextCloseTag))
 	}
 	builder.WriteString("\n")
 	builder.WriteString(pageContextCloseTag)
@@ -959,10 +959,10 @@ func describePageView(view *agent.PageView, surface agent.Surface) string {
 	}
 	builder.WriteString(pageViewOpenTag)
 	builder.WriteString("\nresource: ")
-	builder.WriteString(stringutils.NeutralizeCloseTag(view.Resource, pageViewCloseTag))
+	builder.WriteString(stringutils.FenceText(view.Resource, pageViewCloseTag))
 	if view.Query != "" {
 		builder.WriteString("\nsearch: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(view.Query, pageViewCloseTag))
+		builder.WriteString(stringutils.FenceText(view.Query, pageViewCloseTag))
 	}
 	for _, filter := range view.FieldFilters {
 		builder.WriteString("\nfilter: ")
@@ -978,7 +978,7 @@ func describePageView(view *agent.PageView, surface agent.Surface) string {
 	}
 	for _, sort := range view.Sort {
 		builder.WriteString("\nsort: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(sort.Field, pageViewCloseTag))
+		builder.WriteString(stringutils.FenceText(sort.Field, pageViewCloseTag))
 		builder.WriteString(" ")
 		builder.WriteString(string(sort.Direction))
 	}
@@ -1000,12 +1000,12 @@ func describePageView(view *agent.PageView, surface agent.Surface) string {
 	}
 	for _, kpi := range view.KPIs {
 		builder.WriteString("\nfigure: ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(kpi.Label, pageViewCloseTag))
+		builder.WriteString(stringutils.FenceText(kpi.Label, pageViewCloseTag))
 		builder.WriteString(" = ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(kpi.Value, pageViewCloseTag))
+		builder.WriteString(stringutils.FenceText(kpi.Value, pageViewCloseTag))
 		if kpi.Sub != "" {
 			builder.WriteString(" (")
-			builder.WriteString(stringutils.NeutralizeCloseTag(kpi.Sub, pageViewCloseTag))
+			builder.WriteString(stringutils.FenceText(kpi.Sub, pageViewCloseTag))
 			builder.WriteString(")")
 		}
 	}
@@ -1020,14 +1020,14 @@ func describePageView(view *agent.PageView, surface agent.Surface) string {
 }
 
 func describeFilter(filter domaintypes.FieldFilter) string {
-	line := stringutils.NeutralizeCloseTag(
+	line := stringutils.FenceText(
 		filter.Field,
 		pageViewCloseTag,
 	) + " " + string(
 		filter.Operator,
 	)
 	if value := agent.FormatFilterValue(filter.Value); value != "" {
-		line += " " + stringutils.NeutralizeCloseTag(value, pageViewCloseTag)
+		line += " " + stringutils.FenceText(value, pageViewCloseTag)
 	}
 
 	return line
@@ -1048,7 +1048,7 @@ func buildOrganizationProfileSection(profile string) string {
 		"Use it to understand the business you work for and to read requests the way its people mean them. " +
 		"It is background, not a source: never state a figure, customer, lane or setting from it as a current fact; look it up.\n" +
 		orgProfileOpenTag + "\n" +
-		stringutils.NeutralizeCloseTag(profile, orgProfileCloseTag) + "\n" +
+		stringutils.FenceText(profile, orgProfileCloseTag) + "\n" +
 		orgProfileCloseTag
 }
 
@@ -1066,7 +1066,7 @@ func buildUserProfileSection(profile string) string {
 		"What they work on, worked out from their own records and what they told you. " +
 		"Use it to read their requests; look up anything you state.\n" +
 		userProfileOpenTag + "\n" +
-		stringutils.NeutralizeCloseTag(profile, userProfileCloseTag) + "\n" +
+		stringutils.FenceText(profile, userProfileCloseTag) + "\n" +
 		userProfileCloseTag
 }
 
@@ -1084,7 +1084,7 @@ func describeFacts(facts []string) string {
 			continue
 		}
 		builder.WriteString("\n- ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(fact, factsCloseTag))
+		builder.WriteString(stringutils.FenceText(fact, factsCloseTag))
 	}
 	builder.WriteString("\n")
 	builder.WriteString(factsCloseTag)
@@ -1102,12 +1102,12 @@ func describeMentions(mentions []RuntimeMention) string {
 	builder.WriteString(mentionsOpenTag)
 	for _, mention := range mentions {
 		builder.WriteString("\n- ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(mention.Type, mentionsCloseTag))
+		builder.WriteString(stringutils.FenceText(mention.Type, mentionsCloseTag))
 		builder.WriteString(" ")
-		builder.WriteString(stringutils.NeutralizeCloseTag(mention.ID, mentionsCloseTag))
+		builder.WriteString(stringutils.FenceText(mention.ID, mentionsCloseTag))
 		if label := strings.TrimSpace(mention.Label); label != "" {
 			builder.WriteString(": ")
-			builder.WriteString(stringutils.NeutralizeCloseTag(label, mentionsCloseTag))
+			builder.WriteString(stringutils.FenceText(label, mentionsCloseTag))
 		}
 	}
 	builder.WriteString("\n")

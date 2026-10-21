@@ -120,15 +120,18 @@ func (s *Service) mailboxAPIKey(mailbox *inboundmessage.Mailbox) (string, error)
 
 // applyContent writes the body and headers onto the message. A message that
 // came with HTML only is read into text, because the text is what the
-// classifier and the inbox's preview both read.
+// classifier and the inbox's preview both read. One that came with both keeps
+// its plain part unless that part says substantially more than the HTML shows,
+// in which case it is read from the HTML a person would have seen.
 func (s *Service) applyContent(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	content *inboundmessageports.InboundContent,
 ) (*inboundmessage.InboundMessage, error) {
-	text := content.Text
-	if strings.TrimSpace(text) == "" {
-		text = htmlutils.ToText(content.HTML)
+	text, divergent := htmlutils.PreferredText(content.Text, content.HTML)
+	if divergent {
+		s.l.Warn("an inbound message's plain part differs from its HTML; reading the HTML",
+			zap.String("messageId", message.ID.String()))
 	}
 
 	message.TextBody = boundedText(text)

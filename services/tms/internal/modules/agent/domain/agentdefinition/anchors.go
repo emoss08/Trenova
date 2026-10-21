@@ -65,14 +65,14 @@ func writeAnchor(b *strings.Builder, anchor *RuntimeAnchor, now int64) {
 	b.WriteString(stringutils.CapitalizeFirst(permission.RecordKind(anchor.Kind).Noun()))
 	if label := stringutils.OneLine(anchor.Label, maxAnchorValueLen); label != "" {
 		b.WriteString(" ")
-		b.WriteString(label)
+		b.WriteString(stringutils.FenceText(label, anchorsCloseTag))
 	}
 	b.WriteString(" (")
 	b.WriteString(anchor.ID)
 	b.WriteString(")")
 	if anchor.Note != "" {
 		b.WriteString(": ")
-		b.WriteString(anchor.Note)
+		b.WriteString(stringutils.FenceText(anchor.Note, anchorsCloseTag))
 	}
 	b.WriteString("\n")
 	for _, fact := range anchor.Facts {
@@ -83,7 +83,7 @@ func writeAnchor(b *strings.Builder, anchor *RuntimeAnchor, now int64) {
 		b.WriteString("  - ")
 		b.WriteString(fact.Name)
 		b.WriteString(": ")
-		b.WriteString(value)
+		b.WriteString(stringutils.FenceText(value, anchorsCloseTag))
 		if ago := timeutils.DescribeAgo(fact.SeenAt, now); ago != "" {
 			b.WriteString(" (reported ")
 			b.WriteString(ago)
