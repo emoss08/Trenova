@@ -76,7 +76,7 @@ func (h *Handler) getManifest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, manifest)
+	helpers.JSON(c, http.StatusOK, manifest)
 }
 
 // @Summary Get permission manifest version
@@ -102,7 +102,7 @@ func (h *Handler) getVersion(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"checksum":  manifest.Checksum,
 		"expiresAt": manifest.ExpiresAt,
 	})
@@ -136,11 +136,11 @@ func (h *Handler) getResourcePermissions(c *gin.Context) {
 	}
 
 	if detail == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
+		helpers.JSON(c, http.StatusNotFound, gin.H{"error": "Resource not found"})
 		return
 	}
 
-	c.JSON(http.StatusOK, detail)
+	helpers.JSON(c, http.StatusOK, detail)
 }
 
 type batchCheckRequest struct {
@@ -197,7 +197,7 @@ func (h *Handler) checkBatch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 type resourceCategoryResponse struct {
@@ -243,7 +243,7 @@ func (h *Handler) getAvailableResources(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, response)
+	helpers.JSON(c, http.StatusOK, response)
 }
 
 // @Summary List available permission operations
@@ -257,7 +257,7 @@ func (h *Handler) getAvailableResources(c *gin.Context) {
 // @Security BearerAuth
 // @Router /permissions/operations [get]
 func (h *Handler) getAvailableOperations(c *gin.Context) {
-	c.JSON(http.StatusOK, permission.GetAllOperations())
+	helpers.JSON(c, http.StatusOK, permission.GetAllOperations())
 }
 
 type bundleGrantResponse struct {
@@ -342,7 +342,7 @@ func (h *Handler) getBundles(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 func (h *Handler) bundleGrant(

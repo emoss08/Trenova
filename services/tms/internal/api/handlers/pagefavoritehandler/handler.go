@@ -66,7 +66,7 @@ func (h *Handler) list(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, favorites)
+	helpers.JSON(c, http.StatusOK, favorites)
 }
 
 type toggleRequest struct {
@@ -107,7 +107,7 @@ func (h *Handler) toggle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Check whether a page is favorited
@@ -127,7 +127,11 @@ func (h *Handler) check(c *gin.Context) {
 	pageURL := helpers.QueryString(c, "pageUrl")
 
 	if pageURL == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "pageUrl query parameter is required"})
+		helpers.JSON(
+			c,
+			http.StatusBadRequest,
+			gin.H{"error": "pageUrl query parameter is required"},
+		)
 		return
 	}
 
@@ -146,5 +150,5 @@ func (h *Handler) check(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"favorited": favorited})
+	helpers.JSON(c, http.StatusOK, gin.H{"favorited": favorited})
 }

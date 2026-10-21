@@ -208,10 +208,11 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceBillingQueue.String(),
-		DisplayName: "Billing Queue",
-		Description: "Billing queue review and approval",
-		Category:    "Billing",
+		Resource:      ResourceBillingQueue.String(),
+		DisplayName:   "Billing Queue",
+		Description:   "Billing queue review and approval",
+		Category:      "Billing",
+		ReferenceView: []string{"number", "status"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View billing queue items"},
 			{

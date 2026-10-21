@@ -1000,6 +1000,12 @@ func (r *QueryResolver) ShipmentAnalytics(ctx context.Context, input gqlmodel.Sh
 		OrgID:      authCtx.OrganizationID,
 		BuID:       authCtx.BusinessUnitID,
 		UserID:     authCtx.UserID,
+		Principal: kernelports.PrincipalInfo{
+			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
+			ID:       authCtx.PrincipalID,
+			UserID:   authCtx.UserID,
+			APIKeyID: authCtx.APIKeyID,
+		},
 		Page:       kernelports.ShipmentAnalyticsPage,
 		Timezone:   base.StringValue(input.Timezone),
 		Limit:      base.IntValue(input.Limit),

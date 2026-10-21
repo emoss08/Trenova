@@ -7,6 +7,7 @@ import {
   type AttentionRowConfig,
 } from "@/config/attention-rows";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router";
@@ -166,7 +167,9 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
                   item.tone === "danger" ? "bg-destructive" : "bg-warning",
                 )}
               />
-              <span className="min-w-0 flex-1 truncate text-xs">{item.customer}</span>
+              <span className="min-w-0 flex-1 truncate text-xs">
+                {item.customer ?? <WithheldValue kind="customer" />}
+              </span>
               <span className="font-table text-muted-foreground shrink-0 text-2xs tabular-nums">
                 {item.dwellLabel}
               </span>
@@ -215,9 +218,17 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
               </div>
               <div className="text-muted-foreground flex items-baseline justify-between gap-2 text-2xs">
                 <span className="truncate">
-                  {item.customer} · {item.origin} → {item.destination}
+                  {item.customer ?? <WithheldValue kind="customer" className="text-2xs" />} ·{" "}
+                  {item.origin ?? <WithheldValue kind="location" className="text-2xs" />} →{" "}
+                  {item.destination ?? <WithheldValue kind="location" className="text-2xs" />}
                 </span>
-                <span className="shrink-0 truncate">{item.driver || t("Unassigned")}</span>
+                <span className="shrink-0 truncate">
+                  {item.driver === null ? (
+                    <WithheldValue kind="worker" className="text-2xs" />
+                  ) : (
+                    item.driver || t("Unassigned")
+                  )}
+                </span>
               </div>
             </Link>
           ))}

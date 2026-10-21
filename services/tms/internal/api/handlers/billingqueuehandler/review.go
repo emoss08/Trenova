@@ -69,7 +69,7 @@ func (h *Handler) redetectPODSignatures(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) itemID(c *gin.Context) (pulid.ID, bool) {
@@ -117,7 +117,7 @@ func (h *Handler) summaries(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": out})
+	helpers.JSON(c, http.StatusOK, gin.H{"results": out})
 }
 
 // @Summary Get an item's neighbours in the queue
@@ -148,7 +148,7 @@ func (h *Handler) neighbors(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, out)
+	helpers.JSON(c, http.StatusOK, out)
 }
 
 // @Summary List an item's activity, newest first
@@ -188,7 +188,7 @@ func (h *Handler) activity(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, page)
+	helpers.JSON(c, http.StatusOK, page)
 }
 
 type resolveIssueRequest struct {
@@ -373,7 +373,7 @@ func (h *Handler) startBulkApprove(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, run)
+	helpers.JSON(c, http.StatusAccepted, run)
 }
 
 func (h *Handler) runRequest(
@@ -410,7 +410,7 @@ func (h *Handler) getBulkApprove(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }
 
 // @Summary Undo a bulk approval inside its window
@@ -430,5 +430,5 @@ func (h *Handler) cancelBulkApprove(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }

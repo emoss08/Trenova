@@ -82,7 +82,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, doc)
+	helpers.JSON(c, http.StatusOK, doc)
 }
 
 // @Summary Update sequence configuration settings
@@ -123,5 +123,5 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedDoc)
+	helpers.JSON(c, http.StatusOK, updatedDoc)
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -29,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -63,6 +65,7 @@ type ActivitiesParams struct {
 	Templates           documenttemplateports.DocumentTemplateResolver
 	RealtimeService     agentports.RealtimeService    `optional:"true"`
 	ResultCache         reportports.ReportResultCache `optional:"true"`
+	ReadScopes          permissionports.ReadScopes
 	AuditService        auditports.AuditService
 	Metrics             *metrics.Registry `optional:"true"`
 	Config              *config.Config
@@ -86,6 +89,7 @@ type Activities struct {
 	templates    documenttemplateports.DocumentTemplateResolver
 	realtime     agentports.RealtimeService
 	resultCache  reportports.ReportResultCache
+	readScopes   permissionports.ReadScopes
 	audit        auditports.AuditService
 	metrics      *metrics.Report
 	canned       *canned.Registry
@@ -112,6 +116,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		email:        p.EmailService,
 		realtime:     p.RealtimeService,
 		resultCache:  p.ResultCache,
+		readScopes:   p.ReadScopes,
 		audit:        p.AuditService,
 		metrics:      reportMetrics(p.Metrics),
 		canned:       canned.Default(),
@@ -362,6 +367,10 @@ func (a *Activities) ExecuteAndRenderActivity(
 		return nil, err
 	}
 
+	ctx, err = a.withReadScope(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
 	ctx = withRunLocale(ctx, prepared)
 
 	compiled, err := a.compiler.Compile(ctx, &reportports.ReportCompileRequest{
@@ -452,6 +461,25 @@ func (a *Activities) ExecuteAndRenderActivity(
 	}
 
 	return result, nil
+}
+
+// withReadScope narrows the run's queries to the records the person who asked
+// for it may read, as ReadScopeMiddleware does for a request: the read_scope
+// policies narrow only work that carries a holder, and a run without one would
+// read its whole tenant.
+func (a *Activities) withReadScope(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (context.Context, error) {
+	if a.readScopes == nil {
+		return nil, temporal.NewNonRetryableApplicationError(
+			"report runs cannot be narrowed to what their requester may read",
+			ErrTypeReportAuthorization, nil,
+		)
+	}
+	principal := permissionports.UserActor(tenant).PermissionCheck("", "")
+
+	return readscope.With(ctx, a.readScopes.Resolver(principal)), nil
 }
 
 // cachedResult returns a previously cached artifact for an identical compiled

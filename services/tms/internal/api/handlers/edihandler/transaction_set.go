@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -15,7 +16,7 @@ import (
 )
 
 func (h *Handler) registerTransactionSetRoutes(transactionSets *gin.RouterGroup) {
-	selectOptions := transactionSets.Group("/select-options")
+	selectOptions := transactionSets.Group("/select-options", responseguard.References())
 	selectOptions.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -81,5 +82,5 @@ func (h *Handler) getTransactionSetOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result.Items[0])
+	helpers.JSON(c, http.StatusOK, result.Items[0])
 }

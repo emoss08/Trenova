@@ -112,7 +112,7 @@ func (h *Handler) createTestCase(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) getTestCase(c *gin.Context) {
@@ -133,7 +133,7 @@ func (h *Handler) getTestCase(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, testCase)
+	helpers.JSON(c, http.StatusOK, testCase)
 }
 
 func (h *Handler) updateTestCase(c *gin.Context) {
@@ -160,7 +160,7 @@ func (h *Handler) updateTestCase(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) deleteTestCase(c *gin.Context) {
@@ -203,5 +203,5 @@ func (h *Handler) previewTestCase(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, preview)
+	helpers.JSON(c, http.StatusOK, preview)
 }

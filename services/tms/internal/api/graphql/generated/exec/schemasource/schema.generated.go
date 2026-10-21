@@ -26743,15 +26743,21 @@ type ShipmentAnalytics {
   unassigned: ShipmentUnassignedAnalytics
   readyToDispatch: ShipmentReadyToDispatch
   detentionWatchlist: ShipmentDetentionWatchlist
+  """
+  Null for a reader who cannot read customers: the figures about each customer
+  need customer read, and the order of the names alone would rank them.
+  """
   customerMix: ShipmentCustomerMix
   tomorrowsPickups: ShipmentTomorrowsPickups
+  "Null for a reader whose ceiling withholds the state of a location."
   laneHeatmap: ShipmentLaneHeatmap
   profitability: ShipmentProfitabilityAnalytics
 }
 
 type ShipmentProfitabilityAnalytics {
   avgCpm: Float!
-  avgMarginPct: Float!
+  "Null when the reader does not hold the margins field group."
+  avgMarginPct: Float
   hasMargin: Boolean!
   unprofitableCount: Int!
   shipmentCount: Int!
@@ -26827,7 +26833,8 @@ type ShipmentDetentionWatchlist {
 
 type ShipmentDetentionWatchlistItem {
   shipmentId: String!
-  customer: String!
+  "The customer's name, from its reference view; null when the reader's ceiling withholds it."
+  customer: String
   dwellLabel: String!
   tone: String!
 }
@@ -26855,10 +26862,11 @@ type ShipmentTomorrowPickup {
   shipmentId: String!
   proNumber: String!
   pickupWindowStart: Timestamp!
-  customer: String!
-  origin: String!
-  destination: String!
-  driver: String!
+  "The customer's, locations' and driver's reference view fields; null when the reader's ceiling withholds them."
+  customer: String
+  origin: String
+  destination: String
+  driver: String
   status: String!
 }
 

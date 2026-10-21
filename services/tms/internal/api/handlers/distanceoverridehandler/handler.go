@@ -138,7 +138,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a distance override
@@ -169,7 +169,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a distance override
@@ -207,7 +207,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Patch a distance override
@@ -256,7 +256,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Delete a distance override

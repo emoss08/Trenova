@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -56,7 +57,7 @@ func (h *Handler) handleApprovalAction(
 		return
 	}
 
-	c.JSON(http.StatusOK, template)
+	helpers.JSON(c, http.StatusOK, template)
 }
 
 type submitRequest struct {
@@ -121,7 +122,7 @@ func (h *Handler) submit(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, template)
+	helpers.JSON(c, http.StatusOK, template)
 }
 
 // @Summary Approve a formula template
@@ -169,7 +170,7 @@ func (h *Handler) approve(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, template)
+	helpers.JSON(c, http.StatusOK, template)
 }
 
 // @Summary Reject a formula template
@@ -240,7 +241,7 @@ func (h *Handler) listReviews(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, reviews)
+	helpers.JSON(c, http.StatusOK, reviews)
 }
 
 type updateEffectiveDateRequest struct {
@@ -297,5 +298,5 @@ func (h *Handler) updateVersionEffectiveDate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, version)
+	helpers.JSON(c, http.StatusOK, version)
 }

@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	goredis "github.com/redis/go-redis/v9"
 	enumspb "go.temporal.io/api/enums/v1"
@@ -45,9 +46,10 @@ import (
 )
 
 const (
-	multipartThreshold = 8 * 1024 * 1024
-	defaultPartSize    = 5 * 1024 * 1024
-	sessionTTL         = 24 * time.Hour
+	multipartThreshold  = 8 * 1024 * 1024
+	defaultPartSize     = 5 * 1024 * 1024
+	sessionTTL          = 24 * time.Hour
+	maxThreatNameLength = 255
 )
 
 type Params struct {
@@ -214,6 +216,7 @@ func (s *Service) CreateSession(
 	session.Strategy = documentupload.StrategySingle
 	session.PartSize = req.FileSize
 	session.Status = documentupload.StatusInitiated
+	session.MalwareScan = s.contentGate != nil && s.contentGate.Enabled()
 
 	return s.sessionRepo.Create(ctx, session)
 }
@@ -393,6 +396,10 @@ func (s *Service) refuseUpload(
 ) error {
 	switch {
 	case errors.Is(err, contentscanports.ErrInfected):
+		var infected *contentscanports.InfectedError
+		if errors.As(err, &infected) {
+			session.ThreatName = stringutils.TruncateRunes(infected.Signature, maxThreatNameLength)
+		}
 		s.failScannedSession(
 			ctx,
 			session,

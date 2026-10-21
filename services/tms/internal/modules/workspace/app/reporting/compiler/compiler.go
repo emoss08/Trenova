@@ -22,12 +22,16 @@ type Params struct {
 	Config           *config.Config
 	Logger           *zap.Logger
 	PermissionEngine permissionports.PermissionEngine
+	ReferenceViews   permissionports.ReferenceViews
+	FieldAccess      permissionports.FieldAccess
 }
 
 type Compiler struct {
 	catalog            *reportcatalog.Catalog
 	permissionEngine   permissionports.PermissionEngine
 	permissionRegistry *permission.Registry
+	referenceViews     permissionports.ReferenceViews
+	fieldAccess        permissionports.FieldAccess
 	limits             limits
 	l                  *zap.Logger
 }
@@ -39,6 +43,8 @@ func New(p Params) *Compiler {
 		catalog:            &reportcatalog.Default,
 		permissionEngine:   p.PermissionEngine,
 		permissionRegistry: permission.NewRegistry(),
+		referenceViews:     p.ReferenceViews,
+		fieldAccess:        p.FieldAccess,
 		limits: limits{
 			maxToOneJoins:       reporting.GetMaxToOneJoins(),
 			maxToManySubqueries: reporting.GetMaxToManySubqueries(),
@@ -72,6 +78,18 @@ func NewWithCatalog(
 		},
 		l: logger.Named("service.reporting-compiler"),
 	}
+}
+
+// WithAccess sets how the compiler decides the fields of records a report
+// reaches through others and the protected field groups. Without them a
+// linked record needs its kind's read and every protected field is refused.
+func (c *Compiler) WithAccess(
+	views permissionports.ReferenceViews,
+	fields permissionports.FieldAccess,
+) *Compiler {
+	c.referenceViews = views
+	c.fieldAccess = fields
+	return c
 }
 
 func (c *Compiler) ValidateAndAuthorize(

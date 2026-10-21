@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
@@ -84,7 +85,7 @@ func (h *Handler) resetControlNumber(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, sequence)
+	helpers.JSON(c, http.StatusOK, sequence)
 }
 
 func (h *Handler) bulkApproveTransfers(c *gin.Context) {
@@ -108,7 +109,7 @@ func (h *Handler) bulkApproveTransfers(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) bulkRejectTransfers(c *gin.Context) {
@@ -132,7 +133,7 @@ func (h *Handler) bulkRejectTransfers(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) submitLoadTender(c *gin.Context) {
@@ -159,7 +160,7 @@ func (h *Handler) submitLoadTender(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, transfer)
+	helpers.JSON(c, http.StatusCreated, transfer)
 }
 
 func (h *Handler) listInboundTransfers(c *gin.Context) {
@@ -218,7 +219,7 @@ func (h *Handler) listOutboundTransfers(c *gin.Context) {
 
 func (h *Handler) getTransfer(c *gin.Context) {
 	h.withTransfer(c, "", func(gCtx *gin.Context, transfer *edi.EDITransfer) {
-		gCtx.JSON(http.StatusOK, transfer)
+		helpers.JSON(gCtx, http.StatusOK, transfer)
 	})
 }
 
@@ -242,7 +243,7 @@ func (h *Handler) mappingPreview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, preview)
+	helpers.JSON(c, http.StatusOK, preview)
 }
 
 func (h *Handler) approveTransfer(c *gin.Context) {
@@ -276,7 +277,7 @@ func (h *Handler) approveTransfer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, transfer)
+	helpers.JSON(c, http.StatusAccepted, transfer)
 }
 
 func (h *Handler) rejectTransfer(c *gin.Context) {
@@ -309,7 +310,7 @@ func (h *Handler) rejectTransfer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transfer)
+	helpers.JSON(c, http.StatusOK, transfer)
 }
 
 func (h *Handler) cancelTransfer(c *gin.Context) {
@@ -333,7 +334,7 @@ func (h *Handler) cancelTransfer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transfer)
+	helpers.JSON(c, http.StatusOK, transfer)
 }
 
 func (h *Handler) expireTransfer(c *gin.Context) {
@@ -357,5 +358,5 @@ func (h *Handler) expireTransfer(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, transfer)
+	helpers.JSON(c, http.StatusOK, transfer)
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
@@ -36,7 +37,7 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/us-states")
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 	selectOptions.GET("/:usStateID", h.getOption)
 }
@@ -93,5 +94,5 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

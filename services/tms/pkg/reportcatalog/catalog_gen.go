@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:e71cb5f5e6756b3655c2a4406e18cd85cd2bddd33933f2660cb1e39684421bd7"
+const Version = "sha256:376767581af22f1897dc1756870fd9784ed99a577adbfdec7a8f81578ab8414e"
 
 var Default = indexed(defaultCatalog)
 
@@ -35,6 +35,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -44,6 +45,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -53,6 +55,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "code",
@@ -62,6 +65,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -71,6 +75,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -84,6 +89,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "method",
@@ -98,6 +104,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:      "rateUnit",
@@ -114,6 +121,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "amount",
@@ -123,6 +131,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -133,6 +142,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -142,6 +152,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -151,6 +162,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -172,6 +184,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -181,6 +194,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -190,6 +204,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -203,6 +218,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -212,6 +228,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -221,6 +238,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -231,6 +249,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "category",
@@ -248,6 +267,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "color",
@@ -258,6 +278,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isSystem",
@@ -268,6 +289,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -278,6 +300,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -287,6 +310,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -296,18 +320,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
 		{
-			Key:         "accounting_drift_finding",
-			Resource:    permission.Resource("accounting_sync"),
-			Table:       buncolgen.TableInfo{Name: "accounting_drift_findings", Alias: "acctdf", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Drift Finding",
-			PluralLabel: "Drift Findings",
-			Description: "Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "accounting_drift_finding",
+			Resource:     permission.Resource("accounting_sync"),
+			Table:        buncolgen.TableInfo{Name: "accounting_drift_findings", Alias: "acctdf", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Drift Finding",
+			PluralLabel:  "Drift Findings",
+			Description:  "Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -317,6 +343,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -326,6 +353,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -335,6 +363,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "connectionId",
@@ -344,6 +373,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "objectType",
@@ -370,6 +400,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "objectId",
@@ -379,6 +410,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "objectNumber",
@@ -389,6 +421,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "partyId",
@@ -399,6 +432,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "partyName",
@@ -409,6 +443,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalId",
@@ -419,6 +454,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalUrl",
@@ -429,6 +465,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -446,6 +483,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -455,6 +493,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "trenovaMinor",
@@ -465,6 +504,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "providerMinor",
@@ -475,6 +515,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "differenceMinor",
@@ -485,6 +526,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "trenovaState",
@@ -495,6 +537,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "providerState",
@@ -505,6 +548,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "providerModifiedAt",
@@ -515,6 +559,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "providerModifiedBy",
@@ -525,6 +570,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -539,6 +585,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "resolution",
@@ -555,6 +602,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "resolutionNote",
@@ -565,6 +613,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "fixObjectType",
@@ -582,6 +631,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fixObjectId",
@@ -592,6 +642,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "resolvedById",
@@ -602,6 +653,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "resolvedAt",
@@ -612,6 +664,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "detectedAt",
@@ -621,6 +674,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastSeenAt",
@@ -630,6 +684,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -640,6 +695,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -649,6 +705,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -658,18 +715,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "accounting_inbound_change",
-			Resource:    permission.Resource("accounting_sync"),
-			Table:       buncolgen.TableInfo{Name: "accounting_inbound_changes", Alias: "acctic", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Payment From the Books",
-			PluralLabel: "Payments From the Books",
-			Description: "Payments recorded in the accounting system against documents Trenova sent, and whether each was applied in Trenova",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "accounting_inbound_change",
+			Resource:     permission.Resource("accounting_sync"),
+			Table:        buncolgen.TableInfo{Name: "accounting_inbound_changes", Alias: "acctic", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Payment From the Books",
+			PluralLabel:  "Payments From the Books",
+			Description:  "Payments recorded in the accounting system against documents Trenova sent, and whether each was applied in Trenova",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -679,6 +738,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -688,6 +748,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -697,6 +758,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "connectionId",
@@ -706,6 +768,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -719,6 +782,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalId",
@@ -728,6 +792,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalNumber",
@@ -738,6 +803,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalUrl",
@@ -748,6 +814,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "providerModifiedAt",
@@ -758,6 +825,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "providerModifiedBy",
@@ -768,6 +836,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "txnDate",
@@ -777,6 +846,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -786,6 +856,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -795,6 +866,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "partyName",
@@ -805,6 +877,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "partyObjectId",
@@ -815,6 +888,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -831,6 +905,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "reason",
@@ -855,6 +930,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "resolution",
@@ -865,6 +941,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "decidedById",
@@ -875,6 +952,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "decidedAt",
@@ -885,6 +963,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "note",
@@ -895,6 +974,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "detectedAt",
@@ -904,6 +984,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -914,6 +995,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -923,6 +1005,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -932,6 +1015,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
@@ -953,6 +1037,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -962,6 +1047,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -971,6 +1057,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "connectionId",
@@ -980,6 +1067,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "objectType",
@@ -1006,6 +1094,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "objectId",
@@ -1015,6 +1104,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "objectNumber",
@@ -1025,6 +1115,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "operation",
@@ -1040,6 +1131,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "sourceEvent",
@@ -1075,6 +1167,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "revision",
@@ -1084,6 +1177,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "documentDate",
@@ -1094,6 +1188,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -1114,6 +1209,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "attemptCount",
@@ -1124,6 +1220,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "nextAttemptAt",
@@ -1134,6 +1231,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalId",
@@ -1144,6 +1242,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalDocNumber",
@@ -1154,6 +1253,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalUrl",
@@ -1164,6 +1264,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "errorCategory",
@@ -1187,6 +1288,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "errorCode",
@@ -1197,6 +1299,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "errorMessage",
@@ -1207,6 +1310,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "resolution",
@@ -1217,6 +1321,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "queuedAt",
@@ -1226,6 +1331,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "startedAt",
@@ -1236,6 +1342,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "syncedAt",
@@ -1246,6 +1353,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "releasedById",
@@ -1256,6 +1364,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "skippedById",
@@ -1266,6 +1375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "skippedReason",
@@ -1276,6 +1386,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "redatedTo",
@@ -1286,6 +1397,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "redatedById",
@@ -1296,6 +1408,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -1306,6 +1419,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -1315,6 +1429,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -1324,18 +1439,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
 		{
-			Key:         "assignment",
-			Resource:    permission.Resource("shipment_move"),
-			Table:       buncolgen.TableInfo{Name: "assignments", Alias: "a", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Assignment",
-			PluralLabel: "Assignments",
-			Description: "Equipment and driver assignments for a move",
-			Category:    "Operations",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "assignment",
+			Resource:     permission.Resource("shipment_move"),
+			Table:        buncolgen.TableInfo{Name: "assignments", Alias: "a", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Assignment",
+			PluralLabel:  "Assignments",
+			Description:  "Equipment and driver assignments for a move",
+			Category:     "Operations",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -1345,6 +1462,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -1354,6 +1472,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -1363,6 +1482,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentMoveId",
@@ -1372,6 +1492,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "primaryWorkerId",
@@ -1382,6 +1503,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "tractorId",
@@ -1392,6 +1514,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "trailerId",
@@ -1402,6 +1525,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "secondaryWorkerId",
@@ -1412,6 +1536,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -1427,6 +1552,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "ackStatus",
@@ -1441,6 +1567,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ackAt",
@@ -1451,6 +1578,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ackReason",
@@ -1461,6 +1589,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "archivedAt",
@@ -1471,6 +1600,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -1481,6 +1611,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -1490,6 +1621,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -1499,6 +1631,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -1512,6 +1645,7 @@ var defaultCatalog = Catalog{
 						{Local: "primary_worker_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "secondaryWorker",
@@ -1523,6 +1657,7 @@ var defaultCatalog = Catalog{
 						{Local: "secondary_worker_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "tractor",
@@ -1534,6 +1669,7 @@ var defaultCatalog = Catalog{
 						{Local: "tractor_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "trailer",
@@ -1545,6 +1681,7 @@ var defaultCatalog = Catalog{
 						{Local: "trailer_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -1566,6 +1703,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -1575,6 +1713,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -1584,6 +1723,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "receiptDate",
@@ -1593,6 +1733,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -1602,6 +1743,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "referenceNumber",
@@ -1612,6 +1754,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "memo",
@@ -1622,6 +1765,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -1636,6 +1780,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "importBatchId",
@@ -1646,6 +1791,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "matchedCustomerPaymentId",
@@ -1656,6 +1802,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "matchedAt",
@@ -1666,6 +1813,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "matchedById",
@@ -1676,6 +1824,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exceptionReason",
@@ -1686,6 +1835,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -1695,6 +1845,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedById",
@@ -1705,6 +1856,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -1714,6 +1866,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -1723,6 +1876,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -1732,6 +1886,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -1747,6 +1902,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -1768,6 +1924,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -1777,6 +1934,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -1786,6 +1944,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "stateId",
@@ -1796,6 +1955,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remitStateId",
@@ -1806,6 +1966,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -1820,6 +1981,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "code",
@@ -1829,6 +1991,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -1838,6 +2001,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "dbaName",
@@ -1848,6 +2012,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "carrierType",
@@ -1863,6 +2028,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "dotNumber",
@@ -1873,6 +2039,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "mcNumber",
@@ -1883,6 +2050,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "scac",
@@ -1893,6 +2061,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "complianceStatus",
@@ -1908,6 +2077,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "safetyRating",
@@ -1923,6 +2093,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "qualifiedAt",
@@ -1933,6 +2104,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "disqualifiedReason",
@@ -1943,6 +2115,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxId",
@@ -1953,6 +2126,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "taxIdType",
@@ -1967,6 +2141,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "w9OnFile",
@@ -1976,6 +2151,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "is1099Eligible",
@@ -1985,6 +2161,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "paymentMethod",
@@ -1998,6 +2175,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paymentTermDays",
@@ -2007,6 +2185,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remitToName",
@@ -2017,6 +2196,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remitAddressLine1",
@@ -2027,6 +2207,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remitAddressLine2",
@@ -2037,6 +2218,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remitCity",
@@ -2047,6 +2229,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remitPostalCode",
@@ -2057,6 +2240,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "addressLine1",
@@ -2067,6 +2251,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "addressLine2",
@@ -2077,6 +2262,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "city",
@@ -2087,6 +2273,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postalCode",
@@ -2097,6 +2284,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "phone",
@@ -2107,6 +2295,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "email",
@@ -2117,6 +2306,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalId",
@@ -2127,6 +2317,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -2137,6 +2328,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "intelRiskLevel",
@@ -2147,6 +2339,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "intelReviewRequired",
@@ -2156,6 +2349,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "intelBlockingCount",
@@ -2165,6 +2359,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -2175,6 +2370,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -2184,6 +2380,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -2193,18 +2390,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
 		{
-			Key:         "carrier_cost_event",
-			Resource:    permission.Resource("carrier_settlement"),
-			Table:       buncolgen.TableInfo{Name: "carrier_cost_events", Alias: "cacc", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Carrier Cost Event",
-			PluralLabel: "Carrier Cost Events",
-			Description: "Purchased transportation cost accruals from carrier assignments",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "carrier_cost_event",
+			Resource:     permission.Resource("carrier_settlement"),
+			Table:        buncolgen.TableInfo{Name: "carrier_cost_events", Alias: "cacc", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Carrier Cost Event",
+			PluralLabel:  "Carrier Cost Events",
+			Description:  "Purchased transportation cost accruals from carrier assignments",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -2214,6 +2413,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -2223,6 +2423,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -2232,6 +2433,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "carrierId",
@@ -2241,6 +2443,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "carrierAssignmentId",
@@ -2251,6 +2454,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentId",
@@ -2261,6 +2465,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "moveId",
@@ -2271,6 +2476,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementId",
@@ -2281,6 +2487,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "eventType",
@@ -2296,6 +2503,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -2311,6 +2519,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "idempotencyKey",
@@ -2320,6 +2529,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "eventDate",
@@ -2329,6 +2539,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -2338,6 +2549,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -2347,6 +2559,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -2357,6 +2570,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "proNumber",
@@ -2367,6 +2581,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "assignmentVersion",
@@ -2376,6 +2591,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedAt",
@@ -2386,6 +2602,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidReason",
@@ -2396,6 +2613,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -2405,6 +2623,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -2414,6 +2633,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -2423,6 +2643,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
@@ -2444,6 +2665,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -2453,6 +2675,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -2462,6 +2685,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "carrierId",
@@ -2471,6 +2695,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "batchId",
@@ -2481,6 +2706,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementNumber",
@@ -2490,6 +2716,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -2507,6 +2734,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "periodStart",
@@ -2516,6 +2744,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodEnd",
@@ -2525,6 +2754,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payDate",
@@ -2534,6 +2764,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "grossCostMinor",
@@ -2543,6 +2774,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "adjustmentsMinor",
@@ -2552,6 +2784,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netPayableMinor",
@@ -2561,6 +2794,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentCount",
@@ -2570,6 +2804,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -2579,6 +2814,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRate",
@@ -2588,6 +2824,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRateDate",
@@ -2598,6 +2835,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -2608,6 +2846,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedById",
@@ -2618,6 +2857,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedAt",
@@ -2628,6 +2868,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedById",
@@ -2638,6 +2879,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedAt",
@@ -2648,6 +2890,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedById",
@@ -2658,6 +2901,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedAt",
@@ -2668,6 +2912,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedJournalBatchId",
@@ -2678,6 +2923,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedExpenseAccountId",
@@ -2688,6 +2934,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedApAccountId",
@@ -2698,6 +2945,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidAt",
@@ -2708,6 +2956,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidById",
@@ -2718,6 +2967,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paymentMethod",
@@ -2728,6 +2978,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paymentReference",
@@ -2738,6 +2989,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidJournalBatchId",
@@ -2748,6 +3000,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidExchangeRate",
@@ -2757,6 +3010,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidExchangeRateDate",
@@ -2767,6 +3021,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedById",
@@ -2777,6 +3032,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedAt",
@@ -2787,6 +3043,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidReason",
@@ -2797,6 +3054,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidJournalBatchId",
@@ -2807,6 +3065,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -2816,6 +3075,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -2825,6 +3085,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -2834,6 +3095,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -2855,6 +3117,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -2864,6 +3127,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -2873,6 +3137,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "hazardousMaterialId",
@@ -2883,6 +3148,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -2896,6 +3162,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -2905,6 +3172,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -2914,6 +3182,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "minTemperature",
@@ -2924,6 +3193,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "maxTemperature",
@@ -2934,6 +3204,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "weightPerUnit",
@@ -2943,6 +3214,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "linearFeetPerUnit",
@@ -2952,6 +3224,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "lengthPerUnit",
@@ -2961,6 +3234,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "widthPerUnit",
@@ -2970,6 +3244,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "heightPerUnit",
@@ -2979,6 +3254,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "maxQuantityPerShipment",
@@ -2988,6 +3264,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassReference,
 				},
 				{
 					Key:      "freightClass",
@@ -3018,6 +3295,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "loadingInstructions",
@@ -3028,6 +3306,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "stackable",
@@ -3038,6 +3317,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "fragile",
@@ -3048,6 +3328,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "version",
@@ -3058,6 +3339,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -3067,6 +3349,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -3076,6 +3359,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -3089,6 +3373,7 @@ var defaultCatalog = Catalog{
 						{Local: "hazardous_material_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -3110,6 +3395,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -3119,6 +3405,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -3128,6 +3415,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "stateId",
@@ -3137,6 +3425,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -3150,6 +3439,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "code",
@@ -3159,6 +3449,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -3169,6 +3460,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "addressLine1",
@@ -3179,6 +3471,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "addressLine2",
@@ -3189,6 +3482,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "city",
@@ -3199,6 +3493,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "postalCode",
@@ -3208,6 +3503,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "isGeocoded",
@@ -3218,6 +3514,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "longitude",
@@ -3228,6 +3525,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "latitude",
@@ -3238,6 +3536,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "placeId",
@@ -3248,6 +3547,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "externalId",
@@ -3258,6 +3558,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "dotNumber",
@@ -3268,6 +3569,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "mcNumber",
@@ -3278,6 +3580,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "statusUpdatePreference",
@@ -3293,6 +3596,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "statusUpdateRecipients",
@@ -3303,6 +3607,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "brokerVettingEnabled",
@@ -3312,6 +3617,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "checkCallIntervalHours",
@@ -3322,6 +3628,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "etaRiskThresholdMinutes",
@@ -3332,6 +3639,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "allowConsolidation",
@@ -3342,6 +3650,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "exclusiveConsolidation",
@@ -3352,6 +3661,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "consolidationPriority",
@@ -3362,6 +3672,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "version",
@@ -3372,6 +3683,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -3381,6 +3693,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -3390,18 +3703,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
 		{
-			Key:         "customer_ledger_entry",
-			Resource:    permission.Resource("accounts_receivable"),
-			Table:       buncolgen.TableInfo{Name: "customer_ledger_entries", Alias: "cle", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
-			Label:       "Customer Ledger Entry",
-			PluralLabel: "Customer Ledger Entries",
-			Description: "The AR subledger — every document that moved a customer's balance",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "customer_ledger_entry",
+			Resource:     permission.Resource("accounts_receivable"),
+			Table:        buncolgen.TableInfo{Name: "customer_ledger_entries", Alias: "cle", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
+			Label:        "Customer Ledger Entry",
+			PluralLabel:  "Customer Ledger Entries",
+			Description:  "The AR subledger — every document that moved a customer's balance",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -3411,6 +3726,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -3420,6 +3736,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -3429,6 +3746,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -3438,6 +3756,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceObjectType",
@@ -3447,6 +3766,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceObjectId",
@@ -3456,6 +3776,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceEventType",
@@ -3465,6 +3786,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "relatedInvoiceId",
@@ -3475,6 +3797,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "documentNumber",
@@ -3485,6 +3808,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "transactionDate",
@@ -3494,6 +3818,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lineNumber",
@@ -3503,6 +3828,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -3512,6 +3838,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -3521,6 +3848,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -3530,6 +3858,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -3545,6 +3874,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "relatedInvoice",
@@ -3558,6 +3888,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -3579,6 +3910,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -3588,6 +3920,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -3597,6 +3930,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "customerId",
@@ -3606,6 +3940,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paymentDate",
@@ -3615,6 +3950,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "accountingDate",
@@ -3624,6 +3960,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -3633,6 +3970,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "appliedAmountMinor",
@@ -3642,6 +3980,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "unappliedAmountMinor",
@@ -3651,6 +3990,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -3664,6 +4004,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "paymentMethod",
@@ -3681,6 +4022,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "referenceNumber",
@@ -3691,6 +4033,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "memo",
@@ -3701,6 +4044,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -3710,6 +4054,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRate",
@@ -3719,6 +4064,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRateDate",
@@ -3729,6 +4075,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedBatchId",
@@ -3739,6 +4086,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversalBatchId",
@@ -3749,6 +4097,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversedById",
@@ -3759,6 +4108,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversedAt",
@@ -3769,6 +4119,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversalReason",
@@ -3779,6 +4130,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -3788,6 +4140,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedById",
@@ -3798,6 +4151,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -3807,6 +4161,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -3816,6 +4171,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -3825,6 +4181,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -3838,6 +4195,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "customer_payment_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "customer",
@@ -3851,18 +4209,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "customer_payment_application",
-			Resource:    permission.Resource("customer_payment"),
-			Table:       buncolgen.TableInfo{Name: "customer_payment_applications", Alias: "cpa", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
-			Label:       "Payment Application",
-			PluralLabel: "Payment Applications",
-			Description: "Which invoice each dollar of a payment was applied to",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "customer_payment_application",
+			Resource:     permission.Resource("customer_payment"),
+			Table:        buncolgen.TableInfo{Name: "customer_payment_applications", Alias: "cpa", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
+			Label:        "Payment Application",
+			PluralLabel:  "Payment Applications",
+			Description:  "Which invoice each dollar of a payment was applied to",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -3872,6 +4232,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -3881,6 +4242,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -3890,6 +4252,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerPaymentId",
@@ -3899,6 +4262,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceId",
@@ -3908,6 +4272,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "appliedAmountMinor",
@@ -3917,6 +4282,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shortPayAmountMinor",
@@ -3926,6 +4292,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lineNumber",
@@ -3935,6 +4302,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -3944,6 +4312,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -3953,6 +4322,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -3968,6 +4338,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "payment",
@@ -3981,18 +4352,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "driver_pay_event",
-			Resource:    permission.Resource("driver_settlement"),
-			Table:       buncolgen.TableInfo{Name: "driver_pay_events", Alias: "dpe", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Driver Pay Event",
-			PluralLabel: "Driver Pay Events",
-			Description: "Pay accrued against a shipment, before and after it settles",
-			Category:    "Payroll",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "driver_pay_event",
+			Resource:     permission.Resource("driver_settlement"),
+			Table:        buncolgen.TableInfo{Name: "driver_pay_events", Alias: "dpe", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Driver Pay Event",
+			PluralLabel:  "Driver Pay Events",
+			Description:  "Pay accrued against a shipment, before and after it settles",
+			Category:     "Payroll",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -4002,6 +4375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -4011,6 +4385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -4020,6 +4395,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "workerId",
@@ -4029,6 +4405,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentId",
@@ -4038,6 +4415,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "moveId",
@@ -4048,6 +4426,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "assignmentId",
@@ -4058,6 +4437,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payProfileId",
@@ -4068,6 +4448,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementId",
@@ -4078,6 +4459,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementLineId",
@@ -4088,6 +4470,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -4102,6 +4485,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "eventDate",
@@ -4111,6 +4495,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "grossAmountMinor",
@@ -4120,6 +4505,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalMiles",
@@ -4129,6 +4515,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatDistance,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -4138,6 +4525,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "proNumber",
@@ -4148,6 +4536,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "onHold",
@@ -4157,6 +4546,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "holdReason",
@@ -4167,6 +4557,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedAt",
@@ -4177,6 +4568,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidReason",
@@ -4187,6 +4579,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -4196,6 +4589,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -4205,6 +4599,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -4214,6 +4609,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -4229,6 +4625,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "shipment",
@@ -4242,6 +4639,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "worker",
@@ -4255,6 +4653,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -4276,6 +4675,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -4285,6 +4685,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -4294,6 +4695,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -4303,6 +4705,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "batchId",
@@ -4313,6 +4716,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payProfileId",
@@ -4323,6 +4727,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementNumber",
@@ -4332,6 +4737,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -4349,6 +4755,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "classification",
@@ -4362,6 +4769,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payProfileName",
@@ -4372,6 +4780,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodStart",
@@ -4381,6 +4790,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "periodEnd",
@@ -4390,6 +4800,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "payDate",
@@ -4399,6 +4810,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "grossEarningsMinor",
@@ -4408,6 +4820,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reimbursementsMinor",
@@ -4417,6 +4830,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "deductionsMinor",
@@ -4426,6 +4840,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "carryForwardInMinor",
@@ -4435,6 +4850,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "carryForwardOutMinor",
@@ -4444,6 +4860,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netPayMinor",
@@ -4453,6 +4870,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalMiles",
@@ -4462,6 +4880,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatDistance,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentCount",
@@ -4472,6 +4891,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -4481,6 +4901,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRate",
@@ -4490,6 +4911,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRateDate",
@@ -4500,6 +4922,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "hasExceptions",
@@ -4509,6 +4932,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -4519,6 +4943,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedById",
@@ -4529,6 +4954,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedAt",
@@ -4539,6 +4965,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedById",
@@ -4549,6 +4976,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedAt",
@@ -4559,6 +4987,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedById",
@@ -4569,6 +4998,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedAt",
@@ -4579,6 +5009,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedJournalBatchId",
@@ -4589,6 +5020,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedPayableAccountId",
@@ -4599,6 +5031,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidAt",
@@ -4609,6 +5042,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidById",
@@ -4619,6 +5053,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paymentMethod",
@@ -4629,6 +5064,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paymentReference",
@@ -4639,6 +5075,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidJournalBatchId",
@@ -4649,6 +5086,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidExchangeRate",
@@ -4658,6 +5096,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidExchangeRateDate",
@@ -4668,6 +5107,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedById",
@@ -4678,6 +5118,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedAt",
@@ -4688,6 +5129,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidReason",
@@ -4698,6 +5140,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidJournalBatchId",
@@ -4708,6 +5151,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -4717,6 +5161,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -4726,6 +5171,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -4735,6 +5181,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -4750,6 +5197,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "lines",
@@ -4763,6 +5211,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "worker",
@@ -4776,18 +5225,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "driver_settlement_batch",
-			Resource:    permission.Resource("driver_settlement"),
-			Table:       buncolgen.TableInfo{Name: "driver_settlement_batches", Alias: "dstlb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Settlement Batch",
-			PluralLabel: "Settlement Batches",
-			Description: "A pay run and its totals",
-			Category:    "Payroll",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "driver_settlement_batch",
+			Resource:     permission.Resource("driver_settlement"),
+			Table:        buncolgen.TableInfo{Name: "driver_settlement_batches", Alias: "dstlb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Settlement Batch",
+			PluralLabel:  "Settlement Batches",
+			Description:  "A pay run and its totals",
+			Category:     "Payroll",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -4797,6 +5248,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -4806,6 +5258,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -4815,6 +5268,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -4829,6 +5283,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -4838,6 +5293,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodStart",
@@ -4847,6 +5303,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodEnd",
@@ -4856,6 +5313,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payDate",
@@ -4865,6 +5323,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementCount",
@@ -4875,6 +5334,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exceptionCount",
@@ -4885,6 +5345,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalGrossMinor",
@@ -4894,6 +5355,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalNetMinor",
@@ -4903,6 +5365,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -4912,6 +5375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -4922,6 +5386,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "generatedById",
@@ -4932,6 +5397,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "generatedAt",
@@ -4942,6 +5408,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "completedAt",
@@ -4952,6 +5419,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "canceledById",
@@ -4962,6 +5430,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "canceledAt",
@@ -4972,6 +5441,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -4981,6 +5451,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -4990,6 +5461,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -4999,6 +5471,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -5014,18 +5487,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "driver_settlement_line",
-			Resource:    permission.Resource("driver_settlement"),
-			Table:       buncolgen.TableInfo{Name: "driver_settlement_lines", Alias: "dstll", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Settlement Line",
-			PluralLabel: "Settlement Lines",
-			Description: "Each earning, deduction and reimbursement on a settlement",
-			Category:    "Payroll",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "driver_settlement_line",
+			Resource:     permission.Resource("driver_settlement"),
+			Table:        buncolgen.TableInfo{Name: "driver_settlement_lines", Alias: "dstll", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Settlement Line",
+			PluralLabel:  "Settlement Lines",
+			Description:  "Each earning, deduction and reimbursement on a settlement",
+			Category:     "Payroll",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -5035,6 +5510,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -5044,6 +5520,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -5053,6 +5530,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementId",
@@ -5062,6 +5540,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lineNumber",
@@ -5071,6 +5550,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "category",
@@ -5090,6 +5570,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "componentKind",
@@ -5112,6 +5593,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "method",
@@ -5133,6 +5615,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -5142,6 +5625,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "quantity",
@@ -5150,6 +5634,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rate",
@@ -5158,6 +5643,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -5167,6 +5653,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentId",
@@ -5177,6 +5664,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "moveId",
@@ -5187,6 +5675,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payEventId",
@@ -5197,6 +5686,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "recurringDeductionId",
@@ -5207,6 +5697,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "recurringEarningId",
@@ -5217,6 +5708,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payCodeId",
@@ -5227,6 +5719,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "advanceId",
@@ -5237,6 +5730,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "escrowAccountId",
@@ -5247,6 +5741,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "proNumber",
@@ -5257,6 +5752,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "addedByAgent",
@@ -5266,6 +5762,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -5275,6 +5772,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -5284,6 +5782,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -5299,6 +5798,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "settlement",
@@ -5312,6 +5812,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "shipment",
@@ -5325,6 +5826,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -5346,6 +5848,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -5355,6 +5858,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -5364,6 +5868,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -5377,6 +5882,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -5386,6 +5892,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -5396,6 +5903,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -5406,6 +5914,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -5415,6 +5924,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -5424,6 +5934,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -5445,6 +5956,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -5454,6 +5966,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -5463,6 +5976,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -5476,6 +5990,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -5485,6 +6000,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -5495,6 +6011,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "class",
@@ -5510,6 +6027,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "color",
@@ -5520,6 +6038,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "interiorLength",
@@ -5529,6 +6048,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "deckType",
@@ -5547,6 +6067,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "deckHeightInches",
@@ -5556,6 +6077,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "wellLengthFeet",
@@ -5565,6 +6087,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "axleCount",
@@ -5575,6 +6098,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -5585,6 +6109,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -5594,6 +6119,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -5603,6 +6129,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -5624,6 +6151,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -5633,6 +6161,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -5642,6 +6171,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -5651,6 +6181,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -5664,6 +6195,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "targetAmountMinor",
@@ -5673,6 +6205,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "balanceMinor",
@@ -5682,6 +6215,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "annualInterestRate",
@@ -5690,6 +6224,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastInterestAccrualDate",
@@ -5700,6 +6235,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "openedDate",
@@ -5709,6 +6245,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "closedDate",
@@ -5719,6 +6256,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -5728,6 +6266,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -5737,6 +6276,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -5746,6 +6286,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -5755,6 +6296,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -5770,6 +6312,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "worker",
@@ -5783,6 +6326,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "latestTransaction",
@@ -5798,18 +6342,20 @@ var defaultCatalog = Catalog{
 						},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "escrow_transaction",
-			Resource:    permission.Resource("escrow_account"),
-			Table:       buncolgen.TableInfo{Name: "escrow_transactions", Alias: "esctx", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Escrow Transaction",
-			PluralLabel: "Escrow Transactions",
-			Description: "Contributions, interest, refunds and deductions against escrow",
-			Category:    "Payroll",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "escrow_transaction",
+			Resource:     permission.Resource("escrow_account"),
+			Table:        buncolgen.TableInfo{Name: "escrow_transactions", Alias: "esctx", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Escrow Transaction",
+			PluralLabel:  "Escrow Transactions",
+			Description:  "Contributions, interest, refunds and deductions against escrow",
+			Category:     "Payroll",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -5819,6 +6365,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -5828,6 +6375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -5837,6 +6385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "escrowAccountId",
@@ -5846,6 +6395,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "type",
@@ -5862,6 +6412,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -5871,6 +6422,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "balanceAfterMinor",
@@ -5880,6 +6432,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "occurredDate",
@@ -5889,6 +6442,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -5899,6 +6453,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settlementId",
@@ -5909,6 +6464,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -5919,6 +6475,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -5928,6 +6485,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -5943,6 +6501,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -5964,6 +6523,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -5973,6 +6533,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -5982,6 +6543,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "factoringCompanyId",
@@ -5991,6 +6553,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -6005,6 +6568,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveFrom",
@@ -6014,6 +6578,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveTo",
@@ -6024,6 +6589,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "advanceRateBp",
@@ -6033,6 +6599,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reserveRateBp",
@@ -6042,6 +6609,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "minimumFeeMinor",
@@ -6051,6 +6619,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "chargebackWindowDays",
@@ -6060,6 +6629,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "recourse",
@@ -6073,6 +6643,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "accountingTreatment",
@@ -6086,6 +6657,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fundingDays",
@@ -6095,6 +6667,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submissionTime",
@@ -6104,6 +6677,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -6114,6 +6688,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "dueFromFactorAccountId",
@@ -6124,6 +6699,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "feeExpenseAccountId",
@@ -6134,6 +6710,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "liabilityAccountId",
@@ -6144,6 +6721,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cashAccountId",
@@ -6154,6 +6732,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "activatedAt",
@@ -6164,6 +6743,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "endedAt",
@@ -6174,6 +6754,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -6183,6 +6764,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -6192,6 +6774,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -6201,6 +6784,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -6216,6 +6800,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -6237,6 +6822,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -6246,6 +6832,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -6255,6 +6842,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -6268,6 +6856,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -6277,6 +6866,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -6286,6 +6876,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "addressLine1",
@@ -6295,6 +6886,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "addressLine2",
@@ -6305,6 +6897,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "city",
@@ -6314,6 +6907,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "stateId",
@@ -6323,6 +6917,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postalCode",
@@ -6332,6 +6927,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "email",
@@ -6342,6 +6938,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "phoneNumber",
@@ -6352,6 +6949,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "nonRecourse",
@@ -6361,6 +6959,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -6371,6 +6970,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -6380,6 +6980,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -6389,18 +6990,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
 		{
-			Key:         "factoring_invoice_state",
-			Resource:    permission.Resource("invoice"),
-			Table:       buncolgen.TableInfo{Name: "factoring_invoice_states", Alias: "facst", PrimaryKey: []string{"invoice_id", "organization_id", "business_unit_id"}},
-			Label:       "Invoice Factoring State",
-			PluralLabel: "Invoice Factoring States",
-			Description: "Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "factoring_invoice_state",
+			Resource:     permission.Resource("invoice"),
+			Table:        buncolgen.TableInfo{Name: "factoring_invoice_states", Alias: "facst", PrimaryKey: []string{"invoice_id", "organization_id", "business_unit_id"}},
+			Label:        "Invoice Factoring State",
+			PluralLabel:  "Invoice Factoring States",
+			Description:  "Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -6410,6 +7013,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -6419,6 +7023,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -6428,6 +7033,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "factoringCompanyId",
@@ -6438,6 +7044,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -6447,6 +7054,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "verdict",
@@ -6463,6 +7071,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "failedChecks",
@@ -6473,6 +7082,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "openBalanceMinor",
@@ -6482,6 +7092,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "readySince",
@@ -6492,6 +7103,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "readyAnnouncedAt",
@@ -6502,6 +7114,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "evaluatedAt",
@@ -6511,6 +7124,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -6520,6 +7134,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -6535,6 +7150,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "factoringCompany",
@@ -6548,6 +7164,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "invoice",
@@ -6561,6 +7178,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -6582,6 +7200,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -6591,6 +7210,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -6600,6 +7220,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "customerId",
@@ -6609,6 +7230,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "factoringCompanyId",
@@ -6618,6 +7240,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -6633,6 +7256,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sentAt",
@@ -6643,6 +7267,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sentTo",
@@ -6653,6 +7278,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "acknowledgedAt",
@@ -6663,6 +7289,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "signedDocumentId",
@@ -6673,6 +7300,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expiresAt",
@@ -6683,6 +7311,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expiryWarnedAt",
@@ -6693,6 +7322,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "releasedAt",
@@ -6703,6 +7333,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "releaseReason",
@@ -6713,6 +7344,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -6723,6 +7355,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -6732,6 +7365,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -6741,6 +7375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -6750,6 +7385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -6765,6 +7401,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "factoringCompany",
@@ -6778,6 +7415,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -6799,6 +7437,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -6808,6 +7447,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -6817,6 +7457,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "factoringCompanyId",
@@ -6826,6 +7467,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "documentId",
@@ -6836,6 +7478,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fileName",
@@ -6846,6 +7489,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "source",
@@ -6859,6 +7503,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "inboundMessageId",
@@ -6869,6 +7514,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "sourceFormat",
@@ -6884,6 +7530,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -6902,6 +7549,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "defaultKind",
@@ -6918,6 +7566,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remittedOn",
@@ -6928,6 +7577,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -6937,24 +7587,28 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "mapping",
 					Column: buncolgen.NewColumn("mapping", "facrem"),
 					Label:  "Mapping",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:    "headers",
 					Column: buncolgen.NewColumn("headers", "facrem"),
 					Label:  "Headers",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:    "unmappedHeaders",
 					Column: buncolgen.NewColumn("unmapped_headers", "facrem"),
 					Label:  "Unmapped Headers",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:          "lineCount",
@@ -6965,6 +7619,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "matchedCount",
@@ -6975,6 +7630,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exceptionCount",
@@ -6985,6 +7641,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "appliedCount",
@@ -6995,6 +7652,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalCashMinor",
@@ -7004,6 +7662,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "error",
@@ -7014,6 +7673,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "stagedAt",
@@ -7024,6 +7684,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "appliedAt",
@@ -7034,6 +7695,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "appliedById",
@@ -7044,6 +7706,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "discardedAt",
@@ -7054,6 +7717,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "discardReason",
@@ -7064,6 +7728,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -7074,6 +7739,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -7083,6 +7749,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -7092,6 +7759,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -7101,6 +7769,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -7116,18 +7785,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "factoring_remittance_line",
-			Resource:    permission.Resource("factoring_remittance"),
-			Table:       buncolgen.TableInfo{Name: "factoring_remittance_lines", Alias: "facrml", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
-			Label:       "Factoring Remittance Line",
-			PluralLabel: "Factoring Remittance Lines",
-			Description: "Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "factoring_remittance_line",
+			Resource:     permission.Resource("factoring_remittance"),
+			Table:        buncolgen.TableInfo{Name: "factoring_remittance_lines", Alias: "facrml", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
+			Label:        "Factoring Remittance Line",
+			PluralLabel:  "Factoring Remittance Lines",
+			Description:  "Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -7137,6 +7808,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -7146,6 +7818,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -7155,6 +7828,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remittanceId",
@@ -7164,6 +7838,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rowNumber",
@@ -7173,12 +7848,14 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "cells",
 					Column: buncolgen.NewColumn("cells", "facrml"),
 					Label:  "Cells",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -7195,6 +7872,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceNumber",
@@ -7205,6 +7883,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "factorReference",
@@ -7215,6 +7894,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "debtorName",
@@ -7225,6 +7905,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "faceMinor",
@@ -7235,6 +7916,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "advanceMinor",
@@ -7245,6 +7927,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "feeMinor",
@@ -7255,6 +7938,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reserveMinor",
@@ -7265,6 +7949,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cashMinor",
@@ -7275,6 +7960,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "occurredOn",
@@ -7285,6 +7971,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "matchStatus",
@@ -7302,6 +7989,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "matchedBy",
@@ -7316,6 +8004,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submissionItemId",
@@ -7326,6 +8015,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "score",
@@ -7335,6 +8025,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "reason",
@@ -7359,12 +8050,14 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "suggestions",
 					Column: buncolgen.NewColumn("suggestions", "facrml"),
 					Label:  "Suggestions",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:          "error",
@@ -7375,6 +8068,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ignoredReason",
@@ -7385,6 +8079,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reserveEntryId",
@@ -7395,6 +8090,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -7404,6 +8100,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -7413,6 +8110,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
@@ -7434,6 +8132,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -7443,6 +8142,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -7452,6 +8152,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "factoringCompanyId",
@@ -7461,6 +8162,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "agreementId",
@@ -7470,6 +8172,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submissionId",
@@ -7479,6 +8182,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submissionItemId",
@@ -7488,6 +8192,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceId",
@@ -7497,6 +8202,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -7506,6 +8212,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -7521,6 +8228,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "treatment",
@@ -7534,6 +8242,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -7543,6 +8252,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cashMinor",
@@ -7552,6 +8262,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "feeMinor",
@@ -7561,6 +8272,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reserveMinor",
@@ -7570,6 +8282,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "liabilityMinor",
@@ -7579,6 +8292,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "arMinor",
@@ -7588,6 +8302,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "journalEntryId",
@@ -7597,6 +8312,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "journalBatchId",
@@ -7606,6 +8322,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accountingDate",
@@ -7615,6 +8332,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "occurredOn",
@@ -7624,6 +8342,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversesEntryId",
@@ -7634,6 +8353,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remittanceLineId",
@@ -7644,6 +8364,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "memo",
@@ -7654,6 +8375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -7664,6 +8386,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -7673,6 +8396,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -7688,6 +8412,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "factoringCompany",
@@ -7701,6 +8426,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "invoice",
@@ -7714,6 +8440,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "submission",
@@ -7727,6 +8454,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -7748,6 +8476,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -7757,6 +8486,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -7766,6 +8496,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "number",
@@ -7775,6 +8506,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "factoringCompanyId",
@@ -7784,6 +8516,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "agreementId",
@@ -7793,6 +8526,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -7811,6 +8545,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -7820,6 +8555,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceCount",
@@ -7830,6 +8566,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "faceMinor",
@@ -7839,6 +8576,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expectedAdvanceMinor",
@@ -7848,6 +8586,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expectedFeeMinor",
@@ -7857,6 +8596,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expectedReserveMinor",
@@ -7866,6 +8606,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "schedulePdfDocumentId",
@@ -7876,6 +8617,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "scheduleCsvDocumentId",
@@ -7886,6 +8628,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "transportMethod",
@@ -7899,6 +8642,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "transportTarget",
@@ -7908,6 +8652,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "transportReference",
@@ -7918,6 +8663,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sendAttemptGroup",
@@ -7927,6 +8673,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "attempts",
@@ -7936,6 +8683,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastError",
@@ -7946,6 +8694,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sentAt",
@@ -7956,6 +8705,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "failedAt",
@@ -7966,6 +8716,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cancelledAt",
@@ -7976,6 +8727,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cancelReason",
@@ -7986,6 +8738,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fundedAt",
@@ -7996,6 +8749,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedById",
@@ -8006,6 +8760,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "agentRunId",
@@ -8016,6 +8771,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -8025,6 +8781,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -8034,6 +8791,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -8043,6 +8801,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -8058,6 +8817,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "factoringCompany",
@@ -8071,18 +8831,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "factoring_submission_item",
-			Resource:    permission.Resource("factoring_submission"),
-			Table:       buncolgen.TableInfo{Name: "factoring_submission_items", Alias: "facsit", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
-			Label:       "Factoring Schedule Invoice",
-			PluralLabel: "Factoring Schedule Invoices",
-			Description: "Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "factoring_submission_item",
+			Resource:     permission.Resource("factoring_submission"),
+			Table:        buncolgen.TableInfo{Name: "factoring_submission_items", Alias: "facsit", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
+			Label:        "Factoring Schedule Invoice",
+			PluralLabel:  "Factoring Schedule Invoices",
+			Description:  "Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -8092,6 +8854,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -8101,6 +8864,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -8110,6 +8874,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submissionId",
@@ -8119,6 +8884,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceId",
@@ -8128,6 +8894,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceNumber",
@@ -8137,6 +8904,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -8146,6 +8914,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "position",
@@ -8155,6 +8924,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "faceMinor",
@@ -8164,6 +8934,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expectedAdvanceMinor",
@@ -8173,6 +8944,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expectedFeeMinor",
@@ -8182,6 +8954,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expectedReserveMinor",
@@ -8191,6 +8964,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expectedDays",
@@ -8200,6 +8974,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "packetDocumentId",
@@ -8210,6 +8985,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -8227,6 +9003,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "releasedAt",
@@ -8237,6 +9014,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fundedOn",
@@ -8247,6 +9025,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "advanceMinor",
@@ -8257,6 +9036,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "feeMinor",
@@ -8267,6 +9047,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reserveMinor",
@@ -8277,6 +9058,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectionReason",
@@ -8287,6 +9069,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "settledOn",
@@ -8297,6 +9080,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "chargedBackOn",
@@ -8307,6 +9091,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "chargebackReason",
@@ -8317,6 +9102,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "chargebackWarnedAt",
@@ -8327,6 +9113,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -8336,6 +9123,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -8345,6 +9133,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -8360,6 +9149,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "invoice",
@@ -8373,6 +9163,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -8394,6 +9185,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -8403,6 +9195,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -8412,6 +9205,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "fiscalYearId",
@@ -8421,6 +9215,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "periodNumber",
@@ -8430,6 +9225,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "periodType",
@@ -8445,6 +9241,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -8461,6 +9258,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -8470,6 +9268,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "startDate",
@@ -8479,6 +9278,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "endDate",
@@ -8488,6 +9288,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "isAdjusting",
@@ -8498,6 +9299,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "allowAdjustingEntries",
@@ -8508,6 +9310,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "adjustmentDeadline",
@@ -8518,6 +9321,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lockedAt",
@@ -8528,6 +9332,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lockedById",
@@ -8538,6 +9343,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "closedAt",
@@ -8548,6 +9354,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "closedById",
@@ -8558,6 +9365,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenedAt",
@@ -8568,6 +9376,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenedById",
@@ -8578,6 +9387,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenReason",
@@ -8588,6 +9398,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -8598,6 +9409,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -8607,6 +9419,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -8616,6 +9429,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -8637,6 +9451,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -8646,6 +9461,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -8655,6 +9471,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -8670,6 +9487,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "year",
@@ -8679,6 +9497,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -8688,6 +9507,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -8698,6 +9518,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "startDate",
@@ -8707,6 +9528,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "endDate",
@@ -8716,6 +9538,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isCurrent",
@@ -8726,6 +9549,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isCalendarYear",
@@ -8736,6 +9560,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "allowAdjustingEntries",
@@ -8746,6 +9571,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "closedAt",
@@ -8756,6 +9582,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "closedById",
@@ -8766,6 +9593,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lockedAt",
@@ -8776,6 +9604,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lockedById",
@@ -8786,6 +9615,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenedAt",
@@ -8796,6 +9626,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenedById",
@@ -8806,6 +9637,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenReason",
@@ -8816,6 +9648,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -8826,6 +9659,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -8835,6 +9669,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -8844,6 +9679,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -8857,6 +9693,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "fiscal_year_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -8878,6 +9715,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -8887,6 +9725,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -8896,6 +9735,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "managerId",
@@ -8905,6 +9745,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -8918,6 +9759,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -8927,6 +9769,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -8937,6 +9780,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "revenueGoal",
@@ -8947,6 +9791,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "deadheadGoal",
@@ -8957,6 +9802,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "mileageGoal",
@@ -8967,6 +9813,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "color",
@@ -8977,6 +9824,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "version",
@@ -8987,6 +9835,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -8996,6 +9845,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -9005,6 +9855,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -9026,6 +9877,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -9035,6 +9887,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -9044,6 +9897,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "provider",
@@ -9060,6 +9914,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "lastFour",
@@ -9069,6 +9924,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "label",
@@ -9078,6 +9934,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "externalCardId",
@@ -9088,6 +9945,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "assignedWorkerId",
@@ -9098,6 +9956,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "assignedTractorId",
@@ -9108,6 +9967,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -9122,6 +9982,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "expiresAt",
@@ -9132,6 +9993,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cancelledAt",
@@ -9142,6 +10004,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cancelReason",
@@ -9152,6 +10015,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "discoveredAt",
@@ -9162,6 +10026,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -9172,6 +10037,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -9182,6 +10048,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -9191,6 +10058,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -9200,6 +10068,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -9215,6 +10084,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "assignedWorker",
@@ -9228,6 +10098,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -9249,6 +10120,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -9258,6 +10130,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -9267,6 +10140,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "tractorId",
@@ -9276,6 +10150,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -9286,6 +10161,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "jurisdictionId",
@@ -9295,6 +10171,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fuelCardId",
@@ -9305,6 +10182,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cardLastFour",
@@ -9315,6 +10193,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "purchasedAt",
@@ -9324,6 +10203,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "vendor",
@@ -9334,6 +10214,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "vendorCity",
@@ -9344,6 +10225,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "fuelType",
@@ -9372,6 +10254,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "quantity",
@@ -9380,6 +10263,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "quantityUnit",
@@ -9393,6 +10277,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "gallons",
@@ -9401,6 +10286,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "unitPrice",
@@ -9410,6 +10296,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalAmountMinor",
@@ -9419,6 +10306,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -9428,6 +10316,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "odometer",
@@ -9439,6 +10328,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "transactionReference",
@@ -9449,6 +10339,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "source",
@@ -9462,6 +10353,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "importBatchId",
@@ -9472,6 +10364,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxPaid",
@@ -9481,6 +10374,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -9491,6 +10385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -9501,6 +10396,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -9511,6 +10407,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -9520,6 +10417,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -9529,6 +10427,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -9544,6 +10443,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "tractor",
@@ -9557,6 +10457,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "worker",
@@ -9570,6 +10471,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -9591,6 +10493,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -9600,6 +10503,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -9609,6 +10513,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -9622,6 +10527,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accountTypeId",
@@ -9631,6 +10537,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "parentId",
@@ -9641,6 +10548,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accountCode",
@@ -9650,6 +10558,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -9659,6 +10568,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -9669,6 +10579,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isSystem",
@@ -9679,6 +10590,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "allowManualJe",
@@ -9689,6 +10601,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "requireProject",
@@ -9699,6 +10612,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currentBalance",
@@ -9709,6 +10623,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "debitBalance",
@@ -9719,6 +10634,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditBalance",
@@ -9729,6 +10645,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -9739,6 +10656,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -9748,6 +10666,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -9757,6 +10676,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -9770,6 +10690,7 @@ var defaultCatalog = Catalog{
 						{Local: "account_type_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "children",
@@ -9781,6 +10702,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "parent_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "parent",
@@ -9792,18 +10714,20 @@ var defaultCatalog = Catalog{
 						{Local: "parent_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "gl_account_balance",
-			Resource:    permission.Resource("accounting_report"),
-			Table:       buncolgen.TableInfo{Name: "gl_account_balances_by_period", Alias: "gb", PrimaryKey: []string{"organization_id", "business_unit_id", "gl_account_id", "fiscal_year_id", "fiscal_period_id"}},
-			Label:       "Account Period Balance",
-			PluralLabel: "Account Period Balances",
-			Description: "Debits, credits and net change per GL account per fiscal period",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "gl_account_balance",
+			Resource:     permission.Resource("accounting_report"),
+			Table:        buncolgen.TableInfo{Name: "gl_account_balances_by_period", Alias: "gb", PrimaryKey: []string{"organization_id", "business_unit_id", "gl_account_id", "fiscal_year_id", "fiscal_period_id"}},
+			Label:        "Account Period Balance",
+			PluralLabel:  "Account Period Balances",
+			Description:  "Debits, credits and net change per GL account per fiscal period",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "organizationId",
@@ -9813,6 +10737,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -9822,6 +10747,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "glAccountId",
@@ -9831,6 +10757,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fiscalYearId",
@@ -9840,6 +10767,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fiscalPeriodId",
@@ -9849,6 +10777,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodDebitMinor",
@@ -9858,6 +10787,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodCreditMinor",
@@ -9867,6 +10797,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netChangeMinor",
@@ -9876,6 +10807,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastJournalEntryId",
@@ -9886,6 +10818,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -9895,6 +10828,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -9904,6 +10838,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -9919,6 +10854,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "fiscalYear",
@@ -9932,6 +10868,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "glAccount",
@@ -9945,6 +10882,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "lastJournalEntry",
@@ -9958,6 +10896,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -9979,6 +10918,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -9988,6 +10928,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -9997,6 +10938,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -10010,6 +10952,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -10019,6 +10962,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -10028,6 +10972,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -10037,6 +10982,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "class",
@@ -10069,6 +11015,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "unNumber",
@@ -10079,6 +11026,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "packingGroup",
@@ -10093,6 +11041,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "subsidiaryHazardClass",
@@ -10103,6 +11052,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ergGuideNumber",
@@ -10113,6 +11063,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "labelCodes",
@@ -10123,6 +11074,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "specialProvisions",
@@ -10133,6 +11085,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "properShippingName",
@@ -10143,6 +11096,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "handlingInstructions",
@@ -10153,6 +11107,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "emergencyContact",
@@ -10163,6 +11118,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "emergencyContactPhoneNumber",
@@ -10173,6 +11129,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "quantityThreshold",
@@ -10183,6 +11140,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "placardRequired",
@@ -10193,6 +11151,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isReportableQuantity",
@@ -10203,6 +11162,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "marinePollutant",
@@ -10213,6 +11173,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "inhalationHazard",
@@ -10223,6 +11184,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -10233,6 +11195,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -10242,6 +11205,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -10251,6 +11215,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -10272,6 +11237,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -10281,6 +11247,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -10290,6 +11257,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "tractorId",
@@ -10299,6 +11267,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "jurisdictionId",
@@ -10308,6 +11277,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "traveledAt",
@@ -10317,6 +11287,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "year",
@@ -10326,6 +11297,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "quarter",
@@ -10335,6 +11307,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "miles",
@@ -10344,6 +11317,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatDistance,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "loaded",
@@ -10353,6 +11327,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "source",
@@ -10367,6 +11342,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentMoveId",
@@ -10377,6 +11353,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -10387,6 +11364,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -10397,6 +11375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -10407,6 +11386,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -10416,6 +11396,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -10425,6 +11406,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -10440,6 +11422,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -10461,6 +11444,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -10470,6 +11454,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -10479,6 +11464,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "year",
@@ -10488,6 +11474,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "quarter",
@@ -10497,6 +11484,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amendmentNumber",
@@ -10506,6 +11494,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amendsReturnId",
@@ -10516,6 +11505,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -10530,6 +11520,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "timezone",
@@ -10539,6 +11530,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodStart",
@@ -10548,6 +11540,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodEnd",
@@ -10557,6 +11550,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalMiles",
@@ -10566,6 +11560,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatDistance,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalTaxableMiles",
@@ -10575,6 +11570,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatDistance,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalGallons",
@@ -10583,6 +11579,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalTaxPaidGallons",
@@ -10591,6 +11588,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netTaxableGallons",
@@ -10599,6 +11597,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxDueMinor",
@@ -10608,6 +11607,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "surchargeDueMinor",
@@ -10617,6 +11617,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netDueMinor",
@@ -10626,6 +11627,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -10635,6 +11637,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "fleetMpgByFuelType",
@@ -10642,6 +11645,7 @@ var defaultCatalog = Catalog{
 					Label:    "Fleet Mpg By Fuel Type",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "unattributedMiles",
@@ -10650,6 +11654,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "unattributedMoveCount",
@@ -10659,6 +11664,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "noTractorMiles",
@@ -10667,6 +11673,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "noTractorMoveCount",
@@ -10676,6 +11683,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "problems",
@@ -10683,6 +11691,7 @@ var defaultCatalog = Catalog{
 					Label:    "Problems",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "computedAt",
@@ -10693,6 +11702,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "finalizedAt",
@@ -10703,6 +11713,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "finalizedById",
@@ -10713,6 +11724,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "filedAt",
@@ -10723,6 +11735,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "filedById",
@@ -10733,6 +11746,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "filingReference",
@@ -10743,6 +11757,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenedAt",
@@ -10753,6 +11768,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenedById",
@@ -10763,6 +11779,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reopenReason",
@@ -10773,6 +11790,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -10783,6 +11801,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -10792,6 +11811,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -10801,6 +11821,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -10816,18 +11837,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "ifta_return_line",
-			Resource:    permission.Resource("ifta_return"),
-			Table:       buncolgen.TableInfo{Name: "ifta_return_lines", Alias: "ifrl", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "IFTA Return Line",
-			PluralLabel: "IFTA Return Lines",
-			Description: "One return line per jurisdiction and fuel type",
-			Category:    "Equipment",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "ifta_return_line",
+			Resource:     permission.Resource("ifta_return"),
+			Table:        buncolgen.TableInfo{Name: "ifta_return_lines", Alias: "ifrl", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "IFTA Return Line",
+			PluralLabel:  "IFTA Return Lines",
+			Description:  "One return line per jurisdiction and fuel type",
+			Category:     "Equipment",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -10837,6 +11860,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -10846,6 +11870,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -10855,6 +11880,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "returnId",
@@ -10864,6 +11890,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "jurisdictionId",
@@ -10873,6 +11900,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "fuelType",
@@ -10901,6 +11929,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isIftaMember",
@@ -10910,6 +11939,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalMiles",
@@ -10919,6 +11949,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatDistance,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxableMiles",
@@ -10928,6 +11959,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatDistance,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "routeMiles",
@@ -10936,6 +11968,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "manualMiles",
@@ -10944,6 +11977,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "loadedMiles",
@@ -10952,6 +11986,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "emptyMiles",
@@ -10960,6 +11995,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxPaidGallons",
@@ -10968,6 +12004,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxPaidGallonsRaw",
@@ -10976,6 +12013,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "purchaseCount",
@@ -10985,6 +12023,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxableGallons",
@@ -10993,6 +12032,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netTaxableGallons",
@@ -11001,6 +12041,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ratePerGallon",
@@ -11010,6 +12051,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "surchargeRatePerGallon",
@@ -11019,6 +12061,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateMissing",
@@ -11028,6 +12071,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxDueMinor",
@@ -11037,6 +12081,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "surchargeDueMinor",
@@ -11046,6 +12091,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lineTotalMinor",
@@ -11055,6 +12101,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sortOrder",
@@ -11064,6 +12111,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -11073,6 +12121,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -11082,6 +12131,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
@@ -11103,6 +12153,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -11112,6 +12163,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -11121,6 +12173,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "billingQueueItemId",
@@ -11130,6 +12183,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentId",
@@ -11140,6 +12194,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "orderId",
@@ -11150,6 +12205,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -11159,6 +12215,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "scope",
@@ -11175,6 +12232,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceRunId",
@@ -11185,6 +12243,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodStart",
@@ -11195,6 +12254,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "periodEnd",
@@ -11205,6 +12265,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentCount",
@@ -11214,6 +12275,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "detail",
@@ -11227,6 +12289,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "sectionBy",
@@ -11242,6 +12305,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "offCycleReason",
@@ -11252,6 +12316,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "number",
@@ -11261,6 +12326,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "billType",
@@ -11275,6 +12341,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -11289,6 +12356,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "paymentTerm",
@@ -11307,6 +12375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -11316,6 +12385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceDate",
@@ -11325,6 +12395,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "dueDate",
@@ -11335,6 +12406,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "postedAt",
@@ -11345,6 +12417,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRate",
@@ -11354,6 +12427,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRateDate",
@@ -11364,6 +12438,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentProNumber",
@@ -11374,6 +12449,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentBol",
@@ -11384,6 +12460,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "orderNumber",
@@ -11394,6 +12471,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "serviceDate",
@@ -11404,6 +12482,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToName",
@@ -11413,6 +12492,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "billToCode",
@@ -11423,6 +12503,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToAddressLine1",
@@ -11433,6 +12514,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToAddressLine2",
@@ -11443,6 +12525,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToCity",
@@ -11453,6 +12536,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToState",
@@ -11463,6 +12547,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToPostalCode",
@@ -11473,6 +12558,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToCountry",
@@ -11483,6 +12569,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "subtotalAmount",
@@ -11492,6 +12579,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "subtotalAmountMinor",
@@ -11501,6 +12589,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "otherAmount",
@@ -11510,6 +12599,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "otherAmountMinor",
@@ -11519,6 +12609,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalAmount",
@@ -11528,6 +12619,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalAmountMinor",
@@ -11537,6 +12629,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "appliedAmount",
@@ -11546,6 +12639,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "appliedAmountMinor",
@@ -11555,6 +12649,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "settlementStatus",
@@ -11569,6 +12664,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "disputeStatus",
@@ -11582,6 +12678,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "pdfDocumentId",
@@ -11592,6 +12689,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "sendStatus",
@@ -11608,6 +12706,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sentAt",
@@ -11618,6 +12717,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sentById",
@@ -11628,6 +12728,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastSendError",
@@ -11638,6 +12739,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastSendWarning",
@@ -11648,6 +12750,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "memo",
@@ -11658,6 +12761,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remittanceInstructions",
@@ -11668,6 +12772,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "emailSubjectSnapshot",
@@ -11678,6 +12783,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "emailBodySnapshot",
@@ -11688,6 +12794,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "emailToSnapshot",
@@ -11695,6 +12802,7 @@ var defaultCatalog = Catalog{
 					Label:    "Email To Snapshot",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "emailCcSnapshot",
@@ -11702,6 +12810,7 @@ var defaultCatalog = Catalog{
 					Label:    "Email Cc Snapshot",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "emailBccSnapshot",
@@ -11709,6 +12818,7 @@ var defaultCatalog = Catalog{
 					Label:    "Email Bcc Snapshot",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "correctionGroupId",
@@ -11719,6 +12829,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "supersedesInvoiceId",
@@ -11729,6 +12840,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "supersededByInvoiceId",
@@ -11739,6 +12851,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceInvoiceAdjustmentId",
@@ -11749,6 +12862,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isAdjustmentArtifact",
@@ -11758,6 +12872,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipperCustomerId",
@@ -11768,6 +12883,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "factoringCompanyId",
@@ -11778,6 +12894,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "factoringAgreementId",
@@ -11788,6 +12905,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "factoringOverride",
@@ -11801,6 +12919,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "factoringOverrideReason",
@@ -11811,6 +12930,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isSplitBill",
@@ -11820,6 +12940,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedAt",
@@ -11830,6 +12951,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedById",
@@ -11840,6 +12962,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidReason",
@@ -11850,6 +12973,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "voidDisposition",
@@ -11864,6 +12988,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "voidedByAdjustmentId",
@@ -11874,6 +12999,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "referenceInvoiceId",
@@ -11884,6 +13010,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "memoReason",
@@ -11894,6 +13021,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "memoKind",
@@ -11908,6 +13036,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "ediSendStatus",
@@ -11927,6 +13056,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastEdiMessageId",
@@ -11937,6 +13067,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ediSentAt",
@@ -11947,6 +13078,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastEdiError",
@@ -11957,6 +13089,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -11966,6 +13099,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -11975,6 +13109,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -11984,6 +13119,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -11999,6 +13135,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "lines",
@@ -12010,6 +13147,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "invoice_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "order",
@@ -12023,6 +13161,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "shipment",
@@ -12036,18 +13175,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "invoice_adjustment",
-			Resource:    permission.Resource("invoice"),
-			Table:       buncolgen.TableInfo{Name: "invoice_adjustments", Alias: "ia", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
-			Label:       "Invoice Adjustment",
-			PluralLabel: "Invoice Adjustments",
-			Description: "Credit memos and rebills against an issued invoice",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "invoice_adjustment",
+			Resource:     permission.Resource("invoice"),
+			Table:        buncolgen.TableInfo{Name: "invoice_adjustments", Alias: "ia", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
+			Label:        "Invoice Adjustment",
+			PluralLabel:  "Invoice Adjustments",
+			Description:  "Credit memos and rebills against an issued invoice",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -12057,6 +13198,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -12066,6 +13208,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -12075,6 +13218,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "correctionGroupId",
@@ -12084,6 +13228,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originalInvoiceId",
@@ -12093,6 +13238,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditMemoInvoiceId",
@@ -12103,6 +13249,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "replacementInvoiceId",
@@ -12113,6 +13260,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rebillQueueItemId",
@@ -12123,6 +13271,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "batchId",
@@ -12133,6 +13282,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -12148,6 +13298,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -12166,6 +13317,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "approvalStatus",
@@ -12181,6 +13333,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "replacementReviewStatus",
@@ -12195,6 +13348,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "rebillStrategy",
@@ -12210,6 +13364,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reason",
@@ -12220,6 +13375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "policyReason",
@@ -12230,6 +13386,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accountingDate",
@@ -12239,6 +13396,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditTotalAmount",
@@ -12248,6 +13406,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditTotalAmountMinor",
@@ -12257,6 +13416,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rebillTotalAmount",
@@ -12266,6 +13426,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rebillTotalAmountMinor",
@@ -12275,6 +13436,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netDeltaAmount",
@@ -12284,6 +13446,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netDeltaAmountMinor",
@@ -12293,6 +13456,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rerateVariancePercent",
@@ -12301,6 +13465,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "wouldCreateUnappliedCredit",
@@ -12310,6 +13475,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "requiresReconciliationException",
@@ -12319,6 +13485,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvalRequired",
@@ -12328,6 +13495,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedById",
@@ -12338,6 +13506,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedAt",
@@ -12348,6 +13517,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedById",
@@ -12358,6 +13528,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedAt",
@@ -12368,6 +13539,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectedById",
@@ -12378,6 +13550,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectedAt",
@@ -12388,6 +13561,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectionReason",
@@ -12398,6 +13572,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -12407,6 +13582,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -12416,6 +13592,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -12425,6 +13602,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -12438,18 +13616,20 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "adjustment_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "invoice_adjustment_line",
-			Resource:    permission.Resource("invoice"),
-			Table:       buncolgen.TableInfo{Name: "invoice_adjustment_lines", Alias: "ial", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
-			Label:       "Invoice Adjustment Line",
-			PluralLabel: "Invoice Adjustment Lines",
-			Description: "Per-charge credit and rebill detail behind an adjustment",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "invoice_adjustment_line",
+			Resource:     permission.Resource("invoice"),
+			Table:        buncolgen.TableInfo{Name: "invoice_adjustment_lines", Alias: "ial", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
+			Label:        "Invoice Adjustment Line",
+			PluralLabel:  "Invoice Adjustment Lines",
+			Description:  "Per-charge credit and rebill detail behind an adjustment",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -12459,6 +13639,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -12468,6 +13649,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -12477,6 +13659,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "adjustmentId",
@@ -12486,6 +13669,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originalInvoiceId",
@@ -12495,6 +13679,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originalLineId",
@@ -12504,6 +13689,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditMemoLineId",
@@ -12514,6 +13700,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "replacementLineId",
@@ -12524,6 +13711,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lineNumber",
@@ -12533,6 +13721,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -12542,6 +13731,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditQuantity",
@@ -12550,6 +13740,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditAmount",
@@ -12559,6 +13750,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditAmountMinor",
@@ -12568,6 +13760,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "remainingEligibleAmount",
@@ -12577,6 +13770,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rebillQuantity",
@@ -12585,6 +13779,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rebillAmount",
@@ -12594,6 +13789,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rebillAmountMinor",
@@ -12603,6 +13799,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -12612,6 +13809,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -12621,18 +13819,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "invoice_line",
-			Resource:    permission.Resource("invoice"),
-			Table:       buncolgen.TableInfo{Name: "invoice_lines", Alias: "invl", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
-			Label:       "Invoice Line",
-			PluralLabel: "Invoice Lines",
-			Description: "Line items on an invoice",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "invoice_line",
+			Resource:     permission.Resource("invoice"),
+			Table:        buncolgen.TableInfo{Name: "invoice_lines", Alias: "invl", PrimaryKey: []string{"id", "organization_id", "business_unit_id"}},
+			Label:        "Invoice Line",
+			PluralLabel:  "Invoice Lines",
+			Description:  "Line items on an invoice",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -12642,6 +13842,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -12651,6 +13852,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -12660,6 +13862,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "invoiceId",
@@ -12669,6 +13872,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentId",
@@ -12679,6 +13883,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentProNumber",
@@ -12689,6 +13894,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentBol",
@@ -12699,6 +13905,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lineNumber",
@@ -12708,6 +13915,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "type",
@@ -12722,6 +13930,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -12731,6 +13940,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "quantity",
@@ -12739,6 +13949,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "unitPrice",
@@ -12748,6 +13959,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amount",
@@ -12757,6 +13969,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -12766,6 +13979,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accessorialChargeId",
@@ -12776,6 +13990,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "chargeCode",
@@ -12786,6 +14001,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "chargeMethod",
@@ -12801,6 +14017,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "rateUnit",
@@ -12817,6 +14034,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rate",
@@ -12826,6 +14044,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateBasisAmount",
@@ -12835,6 +14054,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "formulaTemplateId",
@@ -12845,6 +14065,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "formulaTemplateName",
@@ -12855,6 +14076,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "allocationPercent",
@@ -12864,6 +14086,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "chargeAllocationId",
@@ -12874,6 +14097,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "additionalChargeId",
@@ -12884,6 +14108,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -12893,6 +14118,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -12902,6 +14128,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -12911,6 +14138,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
@@ -12932,6 +14160,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -12941,6 +14170,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -12950,6 +14180,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -12963,6 +14194,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -12972,6 +14204,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "title",
@@ -12981,6 +14214,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -12991,6 +14225,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "department",
@@ -13011,6 +14246,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "flsaExempt",
@@ -13020,6 +14256,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isDrivingPosition",
@@ -13029,6 +14266,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reportsToPositionId",
@@ -13039,6 +14277,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -13049,6 +14288,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -13058,6 +14298,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -13067,6 +14308,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -13082,18 +14324,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "journal_batch",
-			Resource:    permission.Resource("journal_entry"),
-			Table:       buncolgen.TableInfo{Name: "journal_batches", Alias: "jb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Journal Batch",
-			PluralLabel: "Journal Batches",
-			Description: "The unit journal entries are posted in",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "journal_batch",
+			Resource:     permission.Resource("journal_entry"),
+			Table:        buncolgen.TableInfo{Name: "journal_batches", Alias: "jb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Journal Batch",
+			PluralLabel:  "Journal Batches",
+			Description:  "The unit journal entries are posted in",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -13103,6 +14347,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -13112,6 +14357,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -13121,6 +14367,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "batchNumber",
@@ -13130,6 +14377,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "batchType",
@@ -13139,6 +14387,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "status",
@@ -13148,6 +14397,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -13157,6 +14407,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accountingDate",
@@ -13166,6 +14417,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fiscalYearId",
@@ -13175,6 +14427,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fiscalPeriodId",
@@ -13184,6 +14437,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "entryCount",
@@ -13194,6 +14448,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedAt",
@@ -13204,6 +14459,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedById",
@@ -13214,6 +14470,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -13223,6 +14480,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedById",
@@ -13233,6 +14491,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -13242,6 +14501,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -13251,6 +14511,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -13266,6 +14527,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "fiscalPeriod",
@@ -13279,6 +14541,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "fiscalYear",
@@ -13292,6 +14555,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -13313,6 +14577,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -13322,6 +14587,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -13331,6 +14597,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "fiscalYearId",
@@ -13340,6 +14607,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fiscalPeriodId",
@@ -13349,6 +14617,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "batchId",
@@ -13359,6 +14628,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "entryNumber",
@@ -13368,6 +14638,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "entryDate",
@@ -13377,6 +14648,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accountingDate",
@@ -13386,6 +14658,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "entryType",
@@ -13405,6 +14678,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -13423,6 +14697,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "referenceNumber",
@@ -13433,6 +14708,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "referenceType",
@@ -13443,6 +14719,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "referenceId",
@@ -13453,6 +14730,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -13462,6 +14740,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalDebit",
@@ -13471,6 +14750,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalCredit",
@@ -13480,6 +14760,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isPosted",
@@ -13489,6 +14770,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedAt",
@@ -13499,6 +14781,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postedById",
@@ -13509,6 +14792,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isAutoGenerated",
@@ -13518,6 +14802,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isReversal",
@@ -13527,6 +14812,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversalOfId",
@@ -13537,6 +14823,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversedById",
@@ -13547,6 +14834,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversalDate",
@@ -13557,6 +14845,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reversalReason",
@@ -13567,6 +14856,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "requiresApproval",
@@ -13576,6 +14866,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isApproved",
@@ -13585,6 +14876,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedAt",
@@ -13595,6 +14887,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedById",
@@ -13605,6 +14898,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvalNotes",
@@ -13615,6 +14909,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isRejected",
@@ -13624,6 +14919,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectedAt",
@@ -13634,6 +14930,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectedById",
@@ -13644,6 +14941,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectionReason",
@@ -13654,6 +14952,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -13663,6 +14962,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedById",
@@ -13673,6 +14973,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -13682,6 +14983,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -13691,6 +14993,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -13700,6 +15003,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -13715,6 +15019,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "fiscalPeriod",
@@ -13728,6 +15033,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "fiscalYear",
@@ -13741,6 +15047,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "lines",
@@ -13754,6 +15061,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "reversalOf",
@@ -13767,6 +15075,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "reversedBy",
@@ -13780,18 +15089,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "journal_entry_line",
-			Resource:    permission.Resource("journal_entry"),
-			Table:       buncolgen.TableInfo{Name: "journal_entry_lines", Alias: "jel", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Journal Line",
-			PluralLabel: "Journal Lines",
-			Description: "Debit and credit detail behind each journal entry",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "journal_entry_line",
+			Resource:     permission.Resource("journal_entry"),
+			Table:        buncolgen.TableInfo{Name: "journal_entry_lines", Alias: "jel", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Journal Line",
+			PluralLabel:  "Journal Lines",
+			Description:  "Debit and credit detail behind each journal entry",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -13801,6 +15112,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -13810,6 +15122,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -13819,6 +15132,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "journalEntryId",
@@ -13828,6 +15142,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "glAccountId",
@@ -13837,6 +15152,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lineNumber",
@@ -13846,6 +15162,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -13855,6 +15172,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "debitAmount",
@@ -13864,6 +15182,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "creditAmount",
@@ -13873,6 +15192,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "netAmount",
@@ -13882,6 +15202,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "departmentId",
@@ -13892,6 +15213,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "projectId",
@@ -13902,6 +15224,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "locationId",
@@ -13912,6 +15235,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -13922,6 +15246,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "vendorId",
@@ -13932,6 +15257,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxCode",
@@ -13942,6 +15268,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "taxAmount",
@@ -13951,6 +15278,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isTaxLine",
@@ -13960,6 +15288,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isReconciled",
@@ -13969,6 +15298,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reconciledAt",
@@ -13979,6 +15309,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reconciledById",
@@ -13989,6 +15320,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -13998,6 +15330,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -14007,6 +15340,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -14016,6 +15350,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -14031,6 +15366,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "glAccount",
@@ -14044,6 +15380,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "journalEntry",
@@ -14057,6 +15394,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "location",
@@ -14070,18 +15408,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "journal_source",
-			Resource:    permission.Resource("journal_entry"),
-			Table:       buncolgen.TableInfo{Name: "journal_sources", Alias: "js", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Journal Source",
-			PluralLabel: "Journal Sources",
-			Description: "What operational event produced each journal entry",
-			Category:    "Accounting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "journal_source",
+			Resource:     permission.Resource("journal_entry"),
+			Table:        buncolgen.TableInfo{Name: "journal_sources", Alias: "js", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Journal Source",
+			PluralLabel:  "Journal Sources",
+			Description:  "What operational event produced each journal entry",
+			Category:     "Accounting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -14091,6 +15431,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -14100,6 +15441,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -14109,6 +15451,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceObjectType",
@@ -14118,6 +15461,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceObjectId",
@@ -14127,6 +15471,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceEventType",
@@ -14136,6 +15481,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceDocumentNumber",
@@ -14146,6 +15492,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "status",
@@ -14155,6 +15502,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "journalBatchId",
@@ -14164,6 +15512,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "journalEntryId",
@@ -14173,6 +15522,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -14182,6 +15532,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -14197,6 +15548,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "journalEntry",
@@ -14210,6 +15562,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -14231,6 +15584,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -14240,6 +15594,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -14249,6 +15604,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "locationCategoryId",
@@ -14258,6 +15614,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "stateId",
@@ -14267,6 +15624,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -14280,6 +15638,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "code",
@@ -14289,6 +15648,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -14298,6 +15658,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -14308,6 +15669,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "addressLine1",
@@ -14317,6 +15679,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "addressLine2",
@@ -14327,6 +15690,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "city",
@@ -14336,6 +15700,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "postalCode",
@@ -14345,6 +15710,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "timezone",
@@ -14355,6 +15721,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "placeId",
@@ -14365,6 +15732,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isGeocoded",
@@ -14375,6 +15743,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "longitude",
@@ -14385,6 +15754,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "latitude",
@@ -14395,6 +15765,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "geofenceType",
@@ -14410,6 +15781,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "geofenceRadiusMeters",
@@ -14419,6 +15791,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -14429,6 +15802,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -14438,6 +15812,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -14447,6 +15822,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -14460,6 +15836,7 @@ var defaultCatalog = Catalog{
 						{Local: "location_category_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -14481,6 +15858,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -14490,6 +15868,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -14499,6 +15878,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -14508,6 +15888,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -14518,6 +15899,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "type",
@@ -14538,6 +15920,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:      "facilityType",
@@ -14555,6 +15938,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "color",
@@ -14565,6 +15949,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "hasSecureParking",
@@ -14575,6 +15960,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "requiresAppointment",
@@ -14585,6 +15971,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "allowsOvernight",
@@ -14595,6 +15982,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "hasRestroom",
@@ -14605,6 +15993,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -14615,6 +16004,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -14624,6 +16014,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -14633,6 +16024,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -14655,6 +16047,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -14664,6 +16057,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -14673,6 +16067,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "customerId",
@@ -14682,6 +16077,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ownerId",
@@ -14692,6 +16088,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "enteredById",
@@ -14702,6 +16099,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -14720,6 +16118,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "orderNumber",
@@ -14729,6 +16128,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "poNumber",
@@ -14739,6 +16139,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "bol",
@@ -14749,6 +16150,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -14758,6 +16160,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "quotedAmount",
@@ -14768,6 +16171,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "baseAmount",
@@ -14778,6 +16182,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalAmount",
@@ -14787,6 +16192,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -14797,6 +16203,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -14806,6 +16213,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -14815,6 +16223,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -14828,6 +16237,7 @@ var defaultCatalog = Catalog{
 						{Local: "customer_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "shipments",
@@ -14839,6 +16249,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "order_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -14860,6 +16271,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -14869,6 +16281,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -14878,6 +16291,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -14887,6 +16301,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -14902,6 +16317,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "source",
@@ -14918,6 +16334,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reference",
@@ -14928,6 +16345,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "issuedDate",
@@ -14937,6 +16355,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -14946,6 +16365,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "recoveredMinor",
@@ -14955,6 +16375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "writtenOffMinor",
@@ -14964,6 +16385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "writeOffReason",
@@ -14974,6 +16396,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -14984,6 +16407,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -14993,6 +16417,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -15003,6 +16428,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "writtenOffById",
@@ -15013,6 +16439,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "writtenOffAt",
@@ -15023,6 +16450,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -15032,6 +16460,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -15041,6 +16470,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -15050,6 +16480,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -15065,6 +16496,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -15086,6 +16518,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -15095,6 +16528,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -15104,6 +16538,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -15117,6 +16552,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "direction",
@@ -15130,6 +16566,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -15139,6 +16576,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -15148,6 +16586,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -15158,6 +16597,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "taxable",
@@ -15167,6 +16607,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "countsTowardGuarantee",
@@ -15176,6 +16617,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "glAccountId",
@@ -15186,6 +16628,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "defaultAmountMinor",
@@ -15196,6 +16639,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isSystem",
@@ -15205,6 +16649,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -15214,6 +16659,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -15223,6 +16669,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -15232,6 +16679,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -15247,6 +16695,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -15268,6 +16717,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -15277,6 +16727,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -15286,6 +16737,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "partyType",
@@ -15299,6 +16751,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -15309,6 +16762,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "carrierId",
@@ -15319,6 +16773,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -15328,6 +16783,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -15337,6 +16793,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -15347,6 +16804,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "agreementType",
@@ -15363,6 +16821,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -15380,6 +16839,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "contractRef",
@@ -15390,6 +16850,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "documentId",
@@ -15400,6 +16861,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "priority",
@@ -15409,6 +16871,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveFrom",
@@ -15418,6 +16881,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveTo",
@@ -15428,6 +16892,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "autoRenew",
@@ -15437,6 +16902,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "renewalNoticeDays",
@@ -15447,6 +16913,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currency",
@@ -15456,6 +16923,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "defaultMinCharge",
@@ -15466,6 +16934,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "defaultMaxCharge",
@@ -15476,6 +16945,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "roundingMode",
@@ -15492,6 +16962,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "roundingPrecision",
@@ -15501,6 +16972,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToCustomerId",
@@ -15511,6 +16983,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "marginFloorPercent",
@@ -15520,6 +16993,8 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupMargins,
 				},
 				{
 					Key:          "maxPayPercentOfSell",
@@ -15529,6 +17004,8 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupMargins,
 				},
 				{
 					Key:          "submittedById",
@@ -15539,6 +17016,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "submittedAt",
@@ -15549,6 +17027,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedById",
@@ -15559,6 +17038,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "approvedAt",
@@ -15569,6 +17049,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reviewComment",
@@ -15579,6 +17060,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currentVersionNumber",
@@ -15588,6 +17070,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -15598,6 +17081,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -15607,6 +17091,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -15616,6 +17101,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -15629,6 +17115,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "rate_agreement_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "carrier",
@@ -15640,6 +17127,7 @@ var defaultCatalog = Catalog{
 						{Local: "carrier_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "customer",
@@ -15651,6 +17139,7 @@ var defaultCatalog = Catalog{
 						{Local: "customer_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "rules",
@@ -15662,6 +17151,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "rate_agreement_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "versions",
@@ -15673,6 +17163,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "rate_agreement_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "currentVersion",
@@ -15687,18 +17178,20 @@ var defaultCatalog = Catalog{
 						},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "rate_agreement_accessorial",
-			Resource:    permission.Resource("rate_agreement"),
-			Table:       buncolgen.TableInfo{Name: "rate_agreement_accessorials", Alias: "raga", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Contract Accessorial",
-			PluralLabel: "Contract Accessorials",
-			Description: "The negotiated price of each accessorial under a contract",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "rate_agreement_accessorial",
+			Resource:     permission.Resource("rate_agreement"),
+			Table:        buncolgen.TableInfo{Name: "rate_agreement_accessorials", Alias: "raga", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Contract Accessorial",
+			PluralLabel:  "Contract Accessorials",
+			Description:  "The negotiated price of each accessorial under a contract",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -15708,6 +17201,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -15717,6 +17211,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -15726,6 +17221,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementId",
@@ -15735,6 +17231,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accessorialChargeId",
@@ -15744,6 +17241,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "method",
@@ -15758,6 +17256,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "rateUnit",
@@ -15774,6 +17273,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amount",
@@ -15783,6 +17283,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "waived",
@@ -15792,6 +17293,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "autoApply",
@@ -15801,6 +17303,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "applyCondition",
@@ -15811,6 +17314,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "conditionLanguageVersion",
@@ -15820,6 +17324,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "freeUnits",
@@ -15831,6 +17336,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "maxAmount",
@@ -15841,6 +17347,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "formulaTemplateId",
@@ -15851,6 +17358,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "serviceTypeIds",
@@ -15858,6 +17366,7 @@ var defaultCatalog = Catalog{
 					Label:    "Service Type Ids",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "shipmentTypeIds",
@@ -15865,6 +17374,7 @@ var defaultCatalog = Catalog{
 					Label:    "Shipment Type Ids",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "effectiveFrom",
@@ -15875,6 +17385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveTo",
@@ -15885,6 +17396,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -15895,6 +17407,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -15904,6 +17417,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -15913,6 +17427,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -15926,18 +17441,20 @@ var defaultCatalog = Catalog{
 						{Local: "accessorial_charge_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "rate_agreement_rule",
-			Resource:    permission.Resource("rate_agreement"),
-			Table:       buncolgen.TableInfo{Name: "rate_agreement_rules", Alias: "ragr", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Lane Rule",
-			PluralLabel: "Lane Rules",
-			Description: "The lane, applicability and price of one line of a contract",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "rate_agreement_rule",
+			Resource:     permission.Resource("rate_agreement"),
+			Table:        buncolgen.TableInfo{Name: "rate_agreement_rules", Alias: "ragr", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Lane Rule",
+			PluralLabel:  "Lane Rules",
+			Description:  "The lane, applicability and price of one line of a contract",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -15947,6 +17464,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -15956,6 +17474,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -15965,6 +17484,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementId",
@@ -15974,6 +17494,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "partyType",
@@ -15987,6 +17508,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "partyId",
@@ -15996,6 +17518,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "label",
@@ -16006,6 +17529,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -16019,6 +17543,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "originScopeType",
@@ -16039,6 +17564,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originScopeValue",
@@ -16049,6 +17575,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originCity",
@@ -16059,6 +17586,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "destinationScopeType",
@@ -16079,6 +17607,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "destinationScopeValue",
@@ -16089,6 +17618,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "destinationCity",
@@ -16099,6 +17629,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "laneKey",
@@ -16108,6 +17639,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "direction",
@@ -16121,6 +17653,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originRadiusMeters",
@@ -16130,6 +17663,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "destinationRadiusMeters",
@@ -16139,6 +17673,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originLatitude",
@@ -16148,6 +17683,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "originLongitude",
@@ -16157,6 +17693,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "destinationLatitude",
@@ -16166,6 +17703,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "destinationLongitude",
@@ -16175,6 +17713,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "serviceTypeIds",
@@ -16182,6 +17721,7 @@ var defaultCatalog = Catalog{
 					Label:    "Service Type Ids",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "shipmentTypeIds",
@@ -16189,6 +17729,7 @@ var defaultCatalog = Catalog{
 					Label:    "Shipment Type Ids",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "tractorTypeIds",
@@ -16196,6 +17737,7 @@ var defaultCatalog = Catalog{
 					Label:    "Tractor Type Ids",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "trailerTypeIds",
@@ -16203,6 +17745,7 @@ var defaultCatalog = Catalog{
 					Label:    "Trailer Type Ids",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "commodityIds",
@@ -16210,6 +17753,7 @@ var defaultCatalog = Catalog{
 					Label:    "Commodity Ids",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "freightClasses",
@@ -16217,6 +17761,7 @@ var defaultCatalog = Catalog{
 					Label:    "Freight Classes",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "serviceModels",
@@ -16224,6 +17769,7 @@ var defaultCatalog = Catalog{
 					Label:    "Service Models",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "equipmentClasses",
@@ -16231,6 +17777,7 @@ var defaultCatalog = Catalog{
 					Label:    "Equipment Classes",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "minWeight",
@@ -16240,6 +17787,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "maxWeight",
@@ -16249,6 +17797,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "minDistance",
@@ -16258,6 +17807,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "maxDistance",
@@ -16267,6 +17817,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "minStops",
@@ -16277,6 +17828,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "maxStops",
@@ -16287,6 +17839,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "daysOfWeek",
@@ -16296,6 +17849,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "hazmatOnly",
@@ -16305,6 +17859,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "tempControlOnly",
@@ -16314,6 +17869,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "formulaTemplateId",
@@ -16324,6 +17880,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateMatrixId",
@@ -16334,6 +17891,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rate",
@@ -16344,6 +17902,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currency",
@@ -16354,6 +17913,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "freightClassSource",
@@ -16368,6 +17928,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "fixedFreightClass",
@@ -16398,6 +17959,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "densityScaleId",
@@ -16408,6 +17970,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "discountPercent",
@@ -16417,6 +17980,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "absoluteMinCharge",
@@ -16426,6 +17990,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "allowDeficitRating",
@@ -16435,6 +18000,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "minCharge",
@@ -16445,6 +18011,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "maxCharge",
@@ -16455,6 +18022,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "minBillableDistance",
@@ -16464,6 +18032,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "roundingMode",
@@ -16481,6 +18050,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "priority",
@@ -16490,6 +18060,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "specificityScore",
@@ -16499,6 +18070,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveFrom",
@@ -16508,6 +18080,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveTo",
@@ -16518,6 +18091,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "supersedesRuleId",
@@ -16528,6 +18102,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sourceImportRowId",
@@ -16538,6 +18113,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -16548,6 +18124,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -16557,6 +18134,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -16566,6 +18144,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -16579,18 +18158,20 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "rate_agreement_rule_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "rate_agreement_rule_break",
-			Resource:    permission.Resource("rate_agreement"),
-			Table:       buncolgen.TableInfo{Name: "rate_agreement_rule_breaks", Alias: "ragb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Weight Break",
-			PluralLabel: "Weight Breaks",
-			Description: "The rate steps of a weight-broken lane rule",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "rate_agreement_rule_break",
+			Resource:     permission.Resource("rate_agreement"),
+			Table:        buncolgen.TableInfo{Name: "rate_agreement_rule_breaks", Alias: "ragb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Weight Break",
+			PluralLabel:  "Weight Breaks",
+			Description:  "The rate steps of a weight-broken lane rule",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -16600,6 +18181,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -16609,6 +18191,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -16618,6 +18201,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementRuleId",
@@ -16627,6 +18211,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fromWeight",
@@ -16635,6 +18220,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "toWeight",
@@ -16644,6 +18230,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rate",
@@ -16653,6 +18240,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "minCharge",
@@ -16663,6 +18251,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "label",
@@ -16673,6 +18262,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sortOrder",
@@ -16682,6 +18272,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -16691,6 +18282,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -16700,18 +18292,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "rate_agreement_version",
-			Resource:    permission.Resource("rate_agreement"),
-			Table:       buncolgen.TableInfo{Name: "rate_agreement_versions", Alias: "ragv", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Agreement Version",
-			PluralLabel: "Agreement Versions",
-			Description: "What a contract said at each revision, and why it changed",
-			Category:    "Billing",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "rate_agreement_version",
+			Resource:     permission.Resource("rate_agreement"),
+			Table:        buncolgen.TableInfo{Name: "rate_agreement_versions", Alias: "ragv", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Agreement Version",
+			PluralLabel:  "Agreement Versions",
+			Description:  "What a contract said at each revision, and why it changed",
+			Category:     "Billing",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -16721,6 +18315,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -16730,6 +18325,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -16739,6 +18335,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementId",
@@ -16748,6 +18345,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "versionNumber",
@@ -16757,6 +18355,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveFrom",
@@ -16766,6 +18365,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveTo",
@@ -16776,6 +18376,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "partyType",
@@ -16790,6 +18391,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -16800,6 +18402,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "carrierId",
@@ -16810,6 +18413,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -16819,6 +18423,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "name",
@@ -16828,6 +18433,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -16838,6 +18444,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "agreementType",
@@ -16854,6 +18461,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -16871,6 +18479,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "contractRef",
@@ -16881,6 +18490,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "documentId",
@@ -16891,6 +18501,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "priority",
@@ -16900,6 +18511,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "agreementEffectiveFrom",
@@ -16909,6 +18521,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "agreementEffectiveTo",
@@ -16919,6 +18532,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "autoRenew",
@@ -16928,6 +18542,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "renewalNoticeDays",
@@ -16937,6 +18552,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToCustomerId",
@@ -16947,6 +18563,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currency",
@@ -16956,6 +18573,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "defaultMinCharge",
@@ -16965,6 +18583,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "defaultMaxCharge",
@@ -16974,6 +18593,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "roundingMode",
@@ -16990,6 +18610,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "roundingPrecision",
@@ -16999,24 +18620,29 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "marginFloorPercent",
 					Column:       buncolgen.NewColumn("margin_floor_percent", "ragv"),
-					Label:        "Margin Floor Percent",
+					Label:        "Margin Floor (%)",
 					Type:         FieldDecimal,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupMargins,
 				},
 				{
 					Key:          "maxPayPercentOfSell",
 					Column:       buncolgen.NewColumn("max_pay_percent_of_sell", "ragv"),
-					Label:        "Max Pay Percent Of Sell",
+					Label:        "Max Pay % of Sell",
 					Type:         FieldDecimal,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupMargins,
 				},
 				{
 					Key:      "accessorialTerms",
@@ -17024,6 +18650,7 @@ var defaultCatalog = Catalog{
 					Label:    "Accessorial Terms",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:      "fuelTerms",
@@ -17031,6 +18658,7 @@ var defaultCatalog = Catalog{
 					Label:    "Fuel Terms",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "changeMessage",
@@ -17041,6 +18669,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "changeSummary",
@@ -17048,6 +18677,7 @@ var defaultCatalog = Catalog{
 					Label:    "Change Summary",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -17057,6 +18687,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -17066,6 +18697,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
@@ -17087,6 +18719,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -17096,6 +18729,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -17105,6 +18739,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "shipmentId",
@@ -17115,6 +18750,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentMoveId",
@@ -17125,6 +18761,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "partyType",
@@ -17138,6 +18775,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "partyId",
@@ -17147,6 +18785,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "purpose",
@@ -17163,6 +18802,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "outcome",
@@ -17179,6 +18819,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -17193,6 +18834,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementId",
@@ -17203,6 +18845,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementRuleId",
@@ -17213,6 +18856,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "agreementVersionNumber",
@@ -17223,6 +18867,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "formulaTemplateId",
@@ -17233,6 +18878,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "formulaTemplateVersionNumber",
@@ -17243,6 +18889,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "specificityScore",
@@ -17252,6 +18899,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currency",
@@ -17261,6 +18909,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "linehaulAmount",
@@ -17270,6 +18919,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fuelAmount",
@@ -17279,6 +18929,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accessorialAmount",
@@ -17288,6 +18939,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalAmount",
@@ -17297,6 +18949,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "costAmount",
@@ -17307,6 +18960,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "marginAmount",
@@ -17317,6 +18971,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "marginPercent",
@@ -17326,6 +18981,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billingCurrency",
@@ -17335,6 +18991,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billingAmount",
@@ -17344,6 +19001,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fxRate",
@@ -17353,6 +19011,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "exchangeRateId",
@@ -17363,6 +19022,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "asOf",
@@ -17372,6 +19032,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ratedAt",
@@ -17381,6 +19042,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ratedById",
@@ -17391,6 +19053,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "engineVersion",
@@ -17400,6 +19063,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "overrideReason",
@@ -17410,6 +19074,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "foregoneAmount",
@@ -17420,6 +19085,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -17429,6 +19095,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -17442,6 +19109,7 @@ var defaultCatalog = Catalog{
 						{Local: "rate_agreement_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -17463,6 +19131,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -17472,6 +19141,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -17481,6 +19151,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -17490,6 +19161,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payCodeId",
@@ -17499,6 +19171,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "escrowAccountId",
@@ -17509,6 +19182,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -17523,6 +19197,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -17537,6 +19212,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "courtOrderNumber",
@@ -17547,6 +19223,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "caseNumber",
@@ -17557,6 +19234,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "issuingAgency",
@@ -17567,6 +19245,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "priority",
@@ -17576,6 +19255,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "frequency",
@@ -17589,6 +19269,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -17598,6 +19279,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -17607,6 +19289,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalCapMinor",
@@ -17617,6 +19300,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "deductedToDateMinor",
@@ -17626,6 +19310,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "startDate",
@@ -17635,6 +19320,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "endDate",
@@ -17645,6 +19331,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -17654,6 +19341,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -17664,6 +19352,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -17673,6 +19362,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -17682,6 +19372,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -17691,6 +19382,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -17706,6 +19398,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "payCode",
@@ -17719,6 +19412,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "worker",
@@ -17732,6 +19426,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -17753,6 +19448,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -17762,6 +19458,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -17771,6 +19468,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -17780,6 +19478,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "payCodeId",
@@ -17789,6 +19488,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -17803,6 +19503,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -17816,6 +19517,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "frequency",
@@ -17829,6 +19531,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -17838,6 +19541,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amountMinor",
@@ -17847,6 +19551,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalCapMinor",
@@ -17857,6 +19562,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "paidToDateMinor",
@@ -17866,6 +19572,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "startDate",
@@ -17875,6 +19582,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "endDate",
@@ -17885,6 +19593,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currencyCode",
@@ -17894,6 +19603,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdById",
@@ -17904,6 +19614,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -17913,6 +19624,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -17922,6 +19634,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -17931,6 +19644,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -17946,6 +19660,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "worker",
@@ -17959,6 +19674,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -17981,6 +19697,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -17990,6 +19707,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -17999,6 +19717,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -18008,6 +19727,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -18018,6 +19738,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "category",
@@ -18028,6 +19749,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -18041,6 +19763,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cannedKey",
@@ -18051,6 +19774,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ownerId",
@@ -18060,6 +19784,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "visibility",
@@ -18073,6 +19798,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -18088,6 +19814,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "defaultFormat",
@@ -18103,6 +19830,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "currentRevision",
@@ -18113,6 +19841,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastRunAt",
@@ -18123,6 +19852,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -18132,18 +19862,20 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
 		{
-			Key:         "report_run",
-			Resource:    permission.Resource("report"),
-			Table:       buncolgen.TableInfo{Name: "report_runs", Alias: "rrun", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "Report Run",
-			PluralLabel: "Report Runs",
-			Description: "Execution history for reports, schedules, and exports",
-			Category:    "Reporting",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "report_run",
+			Resource:     permission.Resource("report"),
+			Table:        buncolgen.TableInfo{Name: "report_runs", Alias: "rrun", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "Report Run",
+			PluralLabel:  "Report Runs",
+			Description:  "Execution history for reports, schedules, and exports",
+			Category:     "Reporting",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -18153,6 +19885,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -18162,6 +19895,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -18171,6 +19905,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "definitionId",
@@ -18181,6 +19916,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cannedKey",
@@ -18191,6 +19927,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "scheduleId",
@@ -18201,6 +19938,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "requestedById",
@@ -18210,6 +19948,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "trigger",
@@ -18224,6 +19963,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "format",
@@ -18239,6 +19979,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -18256,6 +19997,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rowCount",
@@ -18267,6 +20009,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "byteSize",
@@ -18278,6 +20021,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "durationMs",
@@ -18289,6 +20033,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "truncated",
@@ -18298,6 +20043,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rowsKey",
@@ -18308,6 +20054,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cacheHit",
@@ -18317,6 +20064,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "queuedAt",
@@ -18327,6 +20075,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "startedAt",
@@ -18337,6 +20086,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "completedAt",
@@ -18347,6 +20097,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -18356,6 +20107,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -18371,6 +20123,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -18392,6 +20145,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -18401,6 +20155,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -18410,6 +20165,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -18423,6 +20179,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -18432,6 +20189,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -18442,6 +20200,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "color",
@@ -18452,6 +20211,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -18462,6 +20222,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -18471,6 +20232,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -18480,6 +20242,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -18502,6 +20265,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -18511,6 +20275,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -18520,6 +20285,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "serviceTypeId",
@@ -18529,6 +20295,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentTypeId",
@@ -18539,6 +20306,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "customerId",
@@ -18548,6 +20316,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "tractorTypeId",
@@ -18558,6 +20327,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "trailerTypeId",
@@ -18568,6 +20338,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ownerId",
@@ -18578,6 +20349,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "enteredById",
@@ -18588,6 +20360,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "canceledById",
@@ -18598,6 +20371,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "formulaTemplateId",
@@ -18608,6 +20382,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "consolidationGroupId",
@@ -18618,6 +20393,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "orderId",
@@ -18628,6 +20404,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -18649,6 +20426,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:      "tenderStatus",
@@ -18666,6 +20444,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "entryMethod",
@@ -18679,6 +20458,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "proNumber",
@@ -18688,6 +20468,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "bol",
@@ -18698,6 +20479,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "externalReference",
@@ -18708,6 +20490,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cancelReason",
@@ -18718,6 +20501,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "otherChargeAmount",
@@ -18727,6 +20511,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "freightChargeAmount",
@@ -18736,6 +20521,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "baseRate",
@@ -18745,6 +20531,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "totalChargeAmount",
@@ -18754,6 +20541,7 @@ var defaultCatalog = Catalog{
 					Format:       FormatMoney,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "pieces",
@@ -18765,6 +20553,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "weight",
@@ -18776,6 +20565,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "envelopeLengthFeet",
@@ -18785,6 +20575,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "envelopeWidthFeet",
@@ -18794,6 +20585,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "envelopeHeightFeet",
@@ -18803,6 +20595,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "envelopeOverallHeightFeet",
@@ -18812,6 +20605,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "temperatureMin",
@@ -18822,6 +20616,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "temperatureMax",
@@ -18832,6 +20627,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "actualDeliveryDate",
@@ -18842,6 +20638,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "actualShipDate",
@@ -18852,6 +20649,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "canceledAt",
@@ -18862,6 +20660,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "billingTransferStatus",
@@ -18883,6 +20682,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "transferredToBillingAt",
@@ -18893,6 +20693,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "markedReadyToBillAt",
@@ -18903,6 +20704,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billedAt",
@@ -18913,6 +20715,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ratingUnit",
@@ -18922,6 +20725,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fuelSurchargeLocked",
@@ -18931,6 +20735,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "ratingDetail",
@@ -18938,6 +20743,7 @@ var defaultCatalog = Catalog{
 					Label:    "Rating Detail",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "rateQuoteId",
@@ -18948,6 +20754,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementId",
@@ -18958,6 +20765,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateAgreementRuleId",
@@ -18968,6 +20776,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateOverrideAmount",
@@ -18977,6 +20786,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateOverrideReason",
@@ -18987,6 +20797,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateOverrideById",
@@ -18997,6 +20808,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateOverrideAt",
@@ -19007,6 +20819,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rateLocked",
@@ -19016,6 +20829,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "autoRated",
@@ -19025,6 +20839,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "autoRatedAt",
@@ -19035,6 +20850,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "billToCustomerId",
@@ -19045,6 +20861,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "freightTerms",
@@ -19059,6 +20876,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -19069,6 +20887,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -19078,6 +20897,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -19087,6 +20907,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -19100,6 +20921,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "shipment_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "customer",
@@ -19111,6 +20933,7 @@ var defaultCatalog = Catalog{
 						{Local: "customer_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "moves",
@@ -19122,6 +20945,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "shipment_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "serviceType",
@@ -19133,6 +20957,7 @@ var defaultCatalog = Catalog{
 						{Local: "service_type_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "shipmentType",
@@ -19144,6 +20969,7 @@ var defaultCatalog = Catalog{
 						{Local: "shipment_type_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "tractorType",
@@ -19155,6 +20981,7 @@ var defaultCatalog = Catalog{
 						{Local: "tractor_type_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "trailerType",
@@ -19166,6 +20993,7 @@ var defaultCatalog = Catalog{
 						{Local: "trailer_type_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "destinationStop",
@@ -19181,6 +21009,7 @@ var defaultCatalog = Catalog{
 						},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "originStop",
@@ -19196,18 +21025,20 @@ var defaultCatalog = Catalog{
 						},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "shipment_commodity",
-			Resource:    permission.Resource("shipment"),
-			Table:       buncolgen.TableInfo{Name: "shipment_commodities", Alias: "sc", PrimaryKey: []string{"id", "business_unit_id", "organization_id", "shipment_id", "commodity_id"}},
-			Label:       "Shipment Commodity",
-			PluralLabel: "Shipment Commodities",
-			Description: "Commodity line items on a shipment",
-			Category:    "Operations",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "shipment_commodity",
+			Resource:     permission.Resource("shipment"),
+			Table:        buncolgen.TableInfo{Name: "shipment_commodities", Alias: "sc", PrimaryKey: []string{"id", "business_unit_id", "organization_id", "shipment_id", "commodity_id"}},
+			Label:        "Shipment Commodity",
+			PluralLabel:  "Shipment Commodities",
+			Description:  "Commodity line items on a shipment",
+			Category:     "Operations",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -19217,6 +21048,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -19226,6 +21058,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -19235,6 +21068,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shipmentId",
@@ -19244,6 +21078,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "commodityId",
@@ -19253,6 +21088,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "weight",
@@ -19263,6 +21099,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "pieces",
@@ -19273,6 +21110,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lengthFeet",
@@ -19282,6 +21120,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "widthFeet",
@@ -19291,6 +21130,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "heightFeet",
@@ -19300,6 +21140,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -19310,6 +21151,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -19319,6 +21161,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -19328,6 +21171,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -19341,6 +21185,7 @@ var defaultCatalog = Catalog{
 						{Local: "commodity_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "shipment",
@@ -19352,6 +21197,7 @@ var defaultCatalog = Catalog{
 						{Local: "shipment_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -19373,6 +21219,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -19382,6 +21229,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -19391,6 +21239,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "shipmentId",
@@ -19400,6 +21249,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -19416,6 +21266,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "coverageType",
@@ -19430,6 +21281,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "loaded",
@@ -19439,6 +21291,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sequence",
@@ -19448,6 +21301,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distance",
@@ -19458,6 +21312,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distanceSource",
@@ -19468,6 +21323,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distanceProvider",
@@ -19478,6 +21334,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distanceCalculatedAt",
@@ -19488,6 +21345,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distanceRouteSignature",
@@ -19498,6 +21356,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distanceDataVersion",
@@ -19508,6 +21367,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distanceRoutingType",
@@ -19518,6 +21378,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "distanceUnits",
@@ -19528,6 +21389,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "distanceMetadata",
@@ -19535,6 +21397,7 @@ var defaultCatalog = Catalog{
 					Label:    "Distance Metadata",
 					Type:     FieldJSON,
 					Nullable: true,
+					Class:    ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -19545,6 +21408,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -19554,6 +21418,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -19563,6 +21428,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -19576,6 +21442,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "shipment_move_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "shipment",
@@ -19587,6 +21454,7 @@ var defaultCatalog = Catalog{
 						{Local: "shipment_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "stops",
@@ -19598,6 +21466,7 @@ var defaultCatalog = Catalog{
 						{Local: "id", Remote: "shipment_move_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -19619,6 +21488,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -19628,6 +21498,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -19637,6 +21508,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -19650,6 +21522,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "code",
@@ -19659,6 +21532,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "description",
@@ -19669,6 +21543,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "color",
@@ -19679,6 +21554,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -19689,6 +21565,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -19698,6 +21575,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -19707,6 +21585,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -19728,6 +21607,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -19737,6 +21617,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -19746,6 +21627,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "shipmentMoveId",
@@ -19755,6 +21637,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "locationId",
@@ -19764,6 +21647,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -19779,6 +21663,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "type",
@@ -19794,6 +21679,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "scheduleType",
@@ -19807,6 +21693,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "sequence",
@@ -19816,6 +21703,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "pieces",
@@ -19827,6 +21715,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "weight",
@@ -19838,6 +21727,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "scheduledWindowStart",
@@ -19847,6 +21737,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "scheduledWindowEnd",
@@ -19857,6 +21748,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "actualArrival",
@@ -19867,6 +21759,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "actualDeparture",
@@ -19877,6 +21770,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "countLateOverride",
@@ -19887,6 +21781,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "countDetentionOverride",
@@ -19897,6 +21792,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "addressLine",
@@ -19907,6 +21803,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -19917,6 +21814,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -19926,6 +21824,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -19935,6 +21834,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -19948,6 +21848,7 @@ var defaultCatalog = Catalog{
 						{Local: "location_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -19969,6 +21870,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -19978,6 +21880,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -19987,6 +21890,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "primaryWorkerId",
@@ -19996,6 +21900,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "equipmentTypeId",
@@ -20005,6 +21910,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "equipmentManufacturerId",
@@ -20014,6 +21920,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "stateId",
@@ -20024,6 +21931,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fleetCodeId",
@@ -20034,6 +21942,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "secondaryWorkerId",
@@ -20044,6 +21953,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -20059,6 +21969,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "code",
@@ -20068,6 +21979,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "model",
@@ -20078,6 +21990,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "make",
@@ -20088,6 +22001,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "year",
@@ -20098,6 +22012,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "licensePlateNumber",
@@ -20108,6 +22023,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "registrationNumber",
@@ -20118,6 +22034,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "registrationExpiry",
@@ -20128,6 +22045,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "fuelType",
@@ -20156,6 +22074,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "iftaQualified",
@@ -20165,6 +22084,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "vin",
@@ -20175,6 +22095,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalId",
@@ -20185,6 +22106,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "ownershipType",
@@ -20199,6 +22121,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ownerWorkerId",
@@ -20209,6 +22132,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lessorName",
@@ -20219,6 +22143,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "leaseReference",
@@ -20229,6 +22154,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "leaseEndDate",
@@ -20239,6 +22165,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -20249,6 +22176,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -20258,6 +22186,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -20267,6 +22196,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -20280,6 +22210,7 @@ var defaultCatalog = Catalog{
 						{Local: "equipment_manufacturer_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "equipmentType",
@@ -20291,6 +22222,7 @@ var defaultCatalog = Catalog{
 						{Local: "equipment_type_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "fleetCode",
@@ -20302,6 +22234,7 @@ var defaultCatalog = Catalog{
 						{Local: "fleet_code_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "primaryWorker",
@@ -20313,6 +22246,7 @@ var defaultCatalog = Catalog{
 						{Local: "primary_worker_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "secondaryWorker",
@@ -20324,6 +22258,7 @@ var defaultCatalog = Catalog{
 						{Local: "secondary_worker_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -20345,6 +22280,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -20354,6 +22290,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -20363,6 +22300,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "equipmentTypeId",
@@ -20372,6 +22310,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "equipmentManufacturerId",
@@ -20381,6 +22320,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "registrationStateId",
@@ -20391,6 +22331,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fleetCodeId",
@@ -20401,6 +22342,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -20416,6 +22358,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "code",
@@ -20425,6 +22368,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "model",
@@ -20435,6 +22379,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "make",
@@ -20445,6 +22390,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "year",
@@ -20455,6 +22401,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "licensePlateNumber",
@@ -20465,6 +22412,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "vin",
@@ -20475,6 +22423,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalId",
@@ -20485,6 +22434,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "registrationNumber",
@@ -20495,6 +22445,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "maxLoadWeight",
@@ -20506,6 +22457,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "ownershipType",
@@ -20520,6 +22472,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "ownerWorkerId",
@@ -20530,6 +22483,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lessorName",
@@ -20540,6 +22494,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "leaseReference",
@@ -20550,6 +22505,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "leaseEndDate",
@@ -20560,6 +22516,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastInspectionDate",
@@ -20570,6 +22527,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "registrationExpiry",
@@ -20580,6 +22538,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -20590,6 +22549,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -20599,6 +22559,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -20608,6 +22569,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -20621,6 +22583,7 @@ var defaultCatalog = Catalog{
 						{Local: "equipment_manufacturer_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "equipmentType",
@@ -20632,6 +22595,7 @@ var defaultCatalog = Catalog{
 						{Local: "equipment_type_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "fleetCode",
@@ -20643,6 +22607,7 @@ var defaultCatalog = Catalog{
 						{Local: "fleet_code_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -20664,6 +22629,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -20673,6 +22639,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -20682,6 +22649,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "stateId",
@@ -20691,6 +22659,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "fleetCodeId",
@@ -20701,6 +22670,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "managerId",
@@ -20711,6 +22681,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "positionId",
@@ -20721,6 +22692,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "userId",
@@ -20731,6 +22703,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -20744,6 +22717,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "type",
@@ -20757,6 +22731,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "driverType",
@@ -20772,6 +22747,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:      "leaveType",
@@ -20790,6 +22766,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "profilePicUrl",
@@ -20800,6 +22777,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "firstName",
@@ -20809,6 +22787,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "lastName",
@@ -20818,6 +22797,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "addressLine1",
@@ -20827,6 +22807,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "addressLine2",
@@ -20837,6 +22818,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "city",
@@ -20846,6 +22828,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "postalCode",
@@ -20855,6 +22838,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "email",
@@ -20865,6 +22849,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "phoneNumber",
@@ -20875,6 +22860,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "emergencyContactName",
@@ -20885,6 +22871,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "emergencyContactPhone",
@@ -20895,6 +22882,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "externalId",
@@ -20905,6 +22893,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "assignmentBlocked",
@@ -20915,6 +22904,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "gender",
@@ -20928,6 +22918,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "canBeAssigned",
@@ -20937,6 +22928,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "availableForDispatch",
@@ -20946,6 +22938,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -20956,6 +22949,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -20965,6 +22959,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -20974,6 +22969,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -20987,6 +22983,7 @@ var defaultCatalog = Catalog{
 						{Local: "fleet_code_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassReference,
 				},
 				{
 					Name:        "position",
@@ -21000,6 +22997,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "profile",
@@ -21013,6 +23011,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "pto",
@@ -21026,6 +23025,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -21047,6 +23047,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -21056,6 +23057,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -21065,6 +23067,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -21074,6 +23077,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "credentialTypeId",
@@ -21083,6 +23087,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -21096,6 +23101,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "number",
@@ -21106,6 +23112,8 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupPersonal,
 				},
 				{
 					Key:          "issuingAuthority",
@@ -21116,6 +23124,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "issuedAt",
@@ -21126,6 +23135,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "expiresAt",
@@ -21136,6 +23146,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "documentId",
@@ -21146,6 +23157,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -21156,6 +23168,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "verifiedById",
@@ -21166,6 +23179,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "verifiedAt",
@@ -21176,6 +23190,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "archivedById",
@@ -21186,6 +23201,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "archivedAt",
@@ -21196,6 +23212,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "archiveReason",
@@ -21206,6 +23223,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -21216,6 +23234,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -21225,6 +23244,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -21234,6 +23254,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -21249,6 +23270,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 				{
 					Name:        "worker",
@@ -21262,6 +23284,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
@@ -21283,6 +23306,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -21292,6 +23316,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -21301,6 +23326,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "code",
@@ -21310,6 +23336,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "name",
@@ -21319,6 +23346,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "description",
@@ -21329,6 +23357,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "category",
@@ -21347,6 +23376,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "status",
@@ -21360,6 +23390,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isRequired",
@@ -21369,12 +23400,14 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:    "requiredForDriverTypes",
 					Column: buncolgen.NewColumn("required_for_driver_types", "wct"),
 					Label:  "Required For Driver Types",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:          "renewalWindowDays",
@@ -21385,6 +23418,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "validityMonths",
@@ -21396,6 +23430,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "requiresNumber",
@@ -21405,6 +23440,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "requiresDocument",
@@ -21414,6 +23450,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:      "profileField",
@@ -21433,6 +23470,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "isSystem",
@@ -21442,6 +23480,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "sortOrder",
@@ -21451,6 +23490,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "version",
@@ -21461,6 +23501,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -21470,6 +23511,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -21479,6 +23521,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 		},
@@ -21500,6 +23543,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "businessUnitId",
@@ -21509,6 +23553,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -21518,6 +23563,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -21527,6 +23573,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "kind",
@@ -21549,6 +23596,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "effectiveAt",
@@ -21558,6 +23606,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reason",
@@ -21568,6 +23617,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "notes",
@@ -21578,18 +23628,21 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "fromValues",
 					Column: buncolgen.NewColumn("from_values", "wee"),
 					Label:  "From Values",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:    "toValues",
 					Column: buncolgen.NewColumn("to_values", "wee"),
 					Label:  "To Values",
 					Type:   FieldJSON,
+					Class:  ClassKindRead,
 				},
 				{
 					Key:          "documentId",
@@ -21600,6 +23653,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "recordedById",
@@ -21610,6 +23664,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amendedById",
@@ -21620,6 +23675,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amendedAt",
@@ -21630,6 +23686,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "amendmentNote",
@@ -21640,6 +23697,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -21650,6 +23708,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -21659,6 +23718,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -21668,6 +23728,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -21683,18 +23744,20 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "worker_profile",
-			Resource:    permission.Resource("worker"),
-			Table:       buncolgen.TableInfo{Name: "worker_profiles", Alias: "wrkp", PrimaryKey: []string{"id", "worker_id", "business_unit_id", "organization_id"}},
-			Label:       "Worker Profile",
-			PluralLabel: "Worker Profiles",
-			Description: "Licensing, compliance, and qualification details for a worker",
-			Category:    "Parties",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "worker_profile",
+			Resource:     permission.Resource("worker"),
+			Table:        buncolgen.TableInfo{Name: "worker_profiles", Alias: "wrkp", PrimaryKey: []string{"id", "worker_id", "business_unit_id", "organization_id"}},
+			Label:        "Worker Profile",
+			PluralLabel:  "Worker Profiles",
+			Description:  "Licensing, compliance, and qualification details for a worker",
+			Category:     "Parties",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -21704,6 +23767,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "workerId",
@@ -21713,6 +23777,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -21722,6 +23787,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -21731,6 +23797,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "licenseStateId",
@@ -21741,6 +23808,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "dob",
@@ -21750,6 +23818,8 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupPersonal,
 				},
 				{
 					Key:          "licenseNumber",
@@ -21759,6 +23829,8 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupPersonal,
 				},
 				{
 					Key:    "cdlClass",
@@ -21773,6 +23845,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cdlRestrictions",
@@ -21783,6 +23856,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "endorsement",
@@ -21800,6 +23874,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "hazmatExpiry",
@@ -21810,6 +23885,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "licenseExpiry",
@@ -21819,6 +23895,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "medicalCardExpiry",
@@ -21829,6 +23906,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "medicalExaminerName",
@@ -21839,6 +23917,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "medicalExaminerNpi",
@@ -21849,6 +23928,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "twicCardNumber",
@@ -21859,6 +23939,8 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupPersonal,
 				},
 				{
 					Key:          "twicExpiry",
@@ -21869,6 +23951,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "hireDate",
@@ -21878,6 +23961,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "terminationDate",
@@ -21888,6 +23972,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "physicalDueDate",
@@ -21898,6 +23983,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "mvrDueDate",
@@ -21908,6 +23994,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "complianceStatus",
@@ -21922,6 +24009,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "trainingHealth",
@@ -21941,6 +24029,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "safetyRating",
@@ -21956,6 +24045,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "safetyScore",
@@ -21965,6 +24055,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "nextCredentialExpiry",
@@ -21975,6 +24066,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "nextTrainingDue",
@@ -21985,6 +24077,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "isQualified",
@@ -21994,6 +24087,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "disqualificationReason",
@@ -22004,6 +24098,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastComplianceCheck",
@@ -22013,6 +24108,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastMvrCheck",
@@ -22022,6 +24118,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastDrugTest",
@@ -22031,6 +24128,8 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
+					Protected:    permission.FieldGroupPersonal,
 				},
 				{
 					Key:    "drugAlcoholStatus",
@@ -22046,6 +24145,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "returnToDutyStatus",
@@ -22062,6 +24162,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastClearinghouseQueryAt",
@@ -22072,6 +24173,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "nextClearinghouseQueryDue",
@@ -22082,6 +24184,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "eldExempt",
@@ -22091,6 +24194,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "shortHaulExempt",
@@ -22100,6 +24204,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -22110,6 +24215,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -22119,6 +24225,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -22128,6 +24235,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 		},
@@ -22149,6 +24257,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "workerId",
@@ -22158,6 +24267,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -22167,6 +24277,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "organizationId",
@@ -22176,6 +24287,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "approverId",
@@ -22186,6 +24298,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectorId",
@@ -22196,6 +24309,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cancelledById",
@@ -22206,6 +24320,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "status",
@@ -22221,6 +24336,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "type",
@@ -22239,6 +24355,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "startDate",
@@ -22248,6 +24365,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "endDate",
@@ -22257,6 +24375,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "reason",
@@ -22266,6 +24385,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "rejectionReason",
@@ -22276,6 +24396,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "cancellationReason",
@@ -22286,6 +24407,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "days",
@@ -22294,6 +24416,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "balanceAfterDays",
@@ -22303,6 +24426,7 @@ var defaultCatalog = Catalog{
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "autoApproved",
@@ -22312,6 +24436,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -22322,6 +24447,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "createdAt",
@@ -22331,6 +24457,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 				{
 					Key:          "updatedAt",
@@ -22340,6 +24467,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassReference,
 				},
 			},
 			Edges: []Edge{
@@ -22353,18 +24481,20 @@ var defaultCatalog = Catalog{
 						{Local: "worker_id", Remote: "id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},
 		{
-			Key:         "worker_pto_balance",
-			Resource:    permission.Resource("worker_pto"),
-			Table:       buncolgen.TableInfo{Name: "worker_pto_balances", Alias: "wpb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
-			Label:       "PTO Balance",
-			PluralLabel: "PTO Balances",
-			Description: "What each worker has accrued, used and carried, per time-off type",
-			Category:    "Parties",
-			Tenant:      TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			Key:          "worker_pto_balance",
+			Resource:     permission.Resource("worker_pto"),
+			Table:        buncolgen.TableInfo{Name: "worker_pto_balances", Alias: "wpb", PrimaryKey: []string{"id", "business_unit_id", "organization_id"}},
+			Label:        "PTO Balance",
+			PluralLabel:  "PTO Balances",
+			Description:  "What each worker has accrued, used and carried, per time-off type",
+			Category:     "Parties",
+			Tenant:       TenantColumns{OrganizationID: "organization_id", BusinessUnitID: "business_unit_id"},
+			WithinRecord: true,
 			Fields: []Field{
 				{
 					Key:          "id",
@@ -22374,6 +24504,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "businessUnitId",
@@ -22383,6 +24514,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "organizationId",
@@ -22392,6 +24524,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "workerId",
@@ -22401,6 +24534,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:    "ptoType",
@@ -22419,6 +24553,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "balanceDays",
@@ -22427,6 +24562,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "accruedYtdDays",
@@ -22435,6 +24571,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "usedYtdDays",
@@ -22443,6 +24580,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "carriedDays",
@@ -22451,6 +24589,7 @@ var defaultCatalog = Catalog{
 					Type:         FieldDecimal,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "entryCount",
@@ -22460,6 +24599,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastAccrualPeriodKey",
@@ -22470,6 +24610,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "lastRolloverKey",
@@ -22480,6 +24621,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "yearStartedAt",
@@ -22490,6 +24632,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "version",
@@ -22500,6 +24643,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "createdAt",
@@ -22509,6 +24653,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 				{
 					Key:          "updatedAt",
@@ -22518,6 +24663,7 @@ var defaultCatalog = Catalog{
 					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggAvg, AggMin, AggMax},
 					Filterable:   true,
 					Groupable:    true,
+					Class:        ClassKindRead,
 				},
 			},
 			Edges: []Edge{
@@ -22533,6 +24679,7 @@ var defaultCatalog = Catalog{
 						{Local: "business_unit_id", Remote: "business_unit_id"},
 					},
 					Traversable: true,
+					Class:       ClassKindRead,
 				},
 			},
 		},

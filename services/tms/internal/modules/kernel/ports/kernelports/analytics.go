@@ -36,6 +36,7 @@ type AnalyticsRequestOptions struct {
 	OrgID      pulid.ID      `json:"organizationId"`
 	BuID       pulid.ID      `json:"businessUnitId"`
 	UserID     pulid.ID      `json:"userId"`
+	Principal  PrincipalInfo `json:"-"`
 	Page       AnalyticsPage `json:"page"`
 	DateRange  *DateRange    `json:"dateRange,omitempty"`
 	Timezone   string        `json:"timezone"`

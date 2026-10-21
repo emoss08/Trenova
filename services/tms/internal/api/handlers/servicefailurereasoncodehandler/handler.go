@@ -152,7 +152,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) create(c *gin.Context) {
@@ -175,7 +175,7 @@ func (h *Handler) create(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 func (h *Handler) update(c *gin.Context) {
@@ -200,7 +200,7 @@ func (h *Handler) update(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) patch(c *gin.Context) {
@@ -234,7 +234,7 @@ func (h *Handler) patch(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) archive(c *gin.Context) {
@@ -264,7 +264,7 @@ func (h *Handler) toggleActive(c *gin.Context, active bool) {
 			h.eh.HandleError(c, activateErr)
 			return
 		}
-		c.JSON(http.StatusOK, entity)
+		helpers.JSON(c, http.StatusOK, entity)
 		return
 	}
 	entity, archiveErr := h.service.Archive(
@@ -277,7 +277,7 @@ func (h *Handler) toggleActive(c *gin.Context, active bool) {
 		h.eh.HandleError(c, archiveErr)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) reorder(c *gin.Context) {
@@ -296,7 +296,7 @@ func (h *Handler) reorder(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entities)
+	helpers.JSON(c, http.StatusOK, entities)
 }
 
 func (h *Handler) selectOptions(c *gin.Context) {

@@ -137,7 +137,7 @@ func (h *Handler) getEntry(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) getSource(c *gin.Context) {
@@ -156,5 +156,5 @@ func (h *Handler) getSource(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -212,7 +213,7 @@ func (h *Handler) explainFormula(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Describe a formula's undescribed inputs
@@ -261,7 +262,7 @@ func (h *Handler) describeInputs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Suggest edge-case scenarios for a formula
@@ -314,7 +315,7 @@ func (h *Handler) suggestScenarios(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Explain why a test scenario no longer bills what it expects
@@ -381,7 +382,7 @@ func (h *Handler) explainScenario(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Draft the note for a formula template's reviewer
@@ -425,7 +426,7 @@ func (h *Handler) reviewNote(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary List who may review a formula template
@@ -462,7 +463,7 @@ func (h *Handler) listReviewers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, reviewers)
+	helpers.JSON(c, http.StatusOK, reviewers)
 }
 
 func (h *Handler) mayReadShipments(c *gin.Context, authCtx *authctx.AuthContext) bool {

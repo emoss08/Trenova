@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	_ "github.com/emoss08/trenova/internal/modules/identity/domain/tenant" // import for documentation generation
@@ -57,7 +58,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.DELETE("/constraints/:constraintID", require(permission.OpUpdate), h.deleteConstraint)
 	api.GET("/preflight", require(permission.OpRead), h.preflight)
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", require(permission.OpRead), h.selectOptions)
 	selectOptions.GET("/:roleID", require(permission.OpRead), h.getOption)
 
@@ -158,7 +159,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, role)
+	helpers.JSON(c, http.StatusOK, role)
 }
 
 // @Summary Get a role option
@@ -234,7 +235,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, role)
+	helpers.JSON(c, http.StatusCreated, role)
 }
 
 // @Summary Update a role
@@ -276,7 +277,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, role)
+	helpers.JSON(c, http.StatusOK, role)
 }
 
 // @Summary Delete a role
@@ -340,7 +341,7 @@ func (h *Handler) getImpact(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	helpers.JSON(c, http.StatusOK, users)
 }
 
 func (h *Handler) listHierarchy(c *gin.Context) {
@@ -350,7 +351,7 @@ func (h *Handler) listHierarchy(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, edges)
+	helpers.JSON(c, http.StatusOK, edges)
 }
 
 func (h *Handler) upsertHierarchy(c *gin.Context) {
@@ -417,7 +418,7 @@ func (h *Handler) listConstraints(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, constraints)
+	helpers.JSON(c, http.StatusOK, constraints)
 }
 
 func (h *Handler) saveConstraint(c *gin.Context) {
@@ -465,7 +466,7 @@ func (h *Handler) saveConstraint(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, constraint)
+	helpers.JSON(c, http.StatusOK, constraint)
 }
 
 func (h *Handler) deleteConstraint(c *gin.Context) {
@@ -500,7 +501,7 @@ func (h *Handler) preflight(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, report)
+	helpers.JSON(c, http.StatusOK, report)
 }
 
 // @Summary Add a role permission
@@ -549,7 +550,7 @@ func (h *Handler) addPermission(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, rp)
+	helpers.JSON(c, http.StatusCreated, rp)
 }
 
 // @Summary Update a role permission
@@ -606,7 +607,7 @@ func (h *Handler) updatePermission(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, rp)
+	helpers.JSON(c, http.StatusOK, rp)
 }
 
 // @Summary Delete a role permission
@@ -697,7 +698,7 @@ func (h *Handler) assignRole(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, assignment)
+	helpers.JSON(c, http.StatusCreated, assignment)
 }
 
 // @Summary Unassign a role

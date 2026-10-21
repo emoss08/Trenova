@@ -80,6 +80,10 @@ func (s *Service) announce(ctx context.Context) error {
 	return nil
 }
 
+func (s *Service) Enabled() bool {
+	return s.scanner != nil
+}
+
 func (s *Service) Check(
 	ctx context.Context,
 	req *contentscanports.ScanRequest,

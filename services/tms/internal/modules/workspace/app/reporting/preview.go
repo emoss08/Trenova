@@ -62,6 +62,10 @@ type PreviewRequest struct {
 	// the builder's in-flight query is dropped on the next keystroke. Surfaces
 	// that issue independent previews in parallel must leave it unset.
 	Supersede bool
+
+	// export marks a preview whose rows leave the product as a file, which
+	// needs the export operation like a report run.
+	export bool
 }
 
 type PreviewResult struct {
@@ -103,7 +107,11 @@ func (s *Service) runPreview(
 	ctx context.Context,
 	req *PreviewRequest,
 ) (*PreviewResult, error) {
-	compiled, err := s.compiler.CompileForPreview(ctx, &reportports.ReportCompileRequest{
+	compile := s.compiler.CompileForPreview
+	if req.export {
+		compile = s.compiler.Compile
+	}
+	compiled, err := compile(ctx, &reportports.ReportCompileRequest{
 		Definition:  req.Definition,
 		Tenant:      req.TenantInfo,
 		Params:      req.Params,

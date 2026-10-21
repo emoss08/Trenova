@@ -8184,19 +8184,22 @@ type ShipmentAdditionalChargeInput struct {
 }
 
 type ShipmentAnalytics struct {
-	Page               string                          `json:"page"`
-	ActiveShipments    *ShipmentActiveShipments        `json:"activeShipments,omitempty"`
-	OnTimePercent      *ShipmentOnTime                 `json:"onTimePercent,omitempty"`
-	RevenueToday       *ShipmentRevenueToday           `json:"revenueToday,omitempty"`
-	EmptyMilePercent   *ShipmentEmptyMile              `json:"emptyMilePercent,omitempty"`
-	AtRisk             *ShipmentAtRisk                 `json:"atRisk,omitempty"`
-	Unassigned         *ShipmentUnassignedAnalytics    `json:"unassigned,omitempty"`
-	ReadyToDispatch    *ShipmentReadyToDispatch        `json:"readyToDispatch,omitempty"`
-	DetentionWatchlist *ShipmentDetentionWatchlist     `json:"detentionWatchlist,omitempty"`
-	CustomerMix        *ShipmentCustomerMix            `json:"customerMix,omitempty"`
-	TomorrowsPickups   *ShipmentTomorrowsPickups       `json:"tomorrowsPickups,omitempty"`
-	LaneHeatmap        *ShipmentLaneHeatmap            `json:"laneHeatmap,omitempty"`
-	Profitability      *ShipmentProfitabilityAnalytics `json:"profitability,omitempty"`
+	Page               string                       `json:"page"`
+	ActiveShipments    *ShipmentActiveShipments     `json:"activeShipments,omitempty"`
+	OnTimePercent      *ShipmentOnTime              `json:"onTimePercent,omitempty"`
+	RevenueToday       *ShipmentRevenueToday        `json:"revenueToday,omitempty"`
+	EmptyMilePercent   *ShipmentEmptyMile           `json:"emptyMilePercent,omitempty"`
+	AtRisk             *ShipmentAtRisk              `json:"atRisk,omitempty"`
+	Unassigned         *ShipmentUnassignedAnalytics `json:"unassigned,omitempty"`
+	ReadyToDispatch    *ShipmentReadyToDispatch     `json:"readyToDispatch,omitempty"`
+	DetentionWatchlist *ShipmentDetentionWatchlist  `json:"detentionWatchlist,omitempty"`
+	// Null for a reader who cannot read customers: the figures about each customer
+	// need customer read, and the order of the names alone would rank them.
+	CustomerMix      *ShipmentCustomerMix      `json:"customerMix,omitempty"`
+	TomorrowsPickups *ShipmentTomorrowsPickups `json:"tomorrowsPickups,omitempty"`
+	// Null for a reader whose ceiling withholds the state of a location.
+	LaneHeatmap   *ShipmentLaneHeatmap            `json:"laneHeatmap,omitempty"`
+	Profitability *ShipmentProfitabilityAnalytics `json:"profitability,omitempty"`
 }
 
 type ShipmentAnalyticsInput struct {
@@ -8895,9 +8898,10 @@ type ShipmentDetentionWatchlist struct {
 
 type ShipmentDetentionWatchlistItem struct {
 	ShipmentID string `json:"shipmentId"`
-	Customer   string `json:"customer"`
-	DwellLabel string `json:"dwellLabel"`
-	Tone       string `json:"tone"`
+	// The customer's name, from its reference view; null when the reader's ceiling withholds it.
+	Customer   *string `json:"customer,omitempty"`
+	DwellLabel string  `json:"dwellLabel"`
+	Tone       string  `json:"tone"`
 }
 
 type ShipmentDistanceMoveResult struct {
@@ -9464,12 +9468,13 @@ type ShipmentProfitability struct {
 }
 
 type ShipmentProfitabilityAnalytics struct {
-	AvgCpm            float64 `json:"avgCpm"`
-	AvgMarginPct      float64 `json:"avgMarginPct"`
-	HasMargin         bool    `json:"hasMargin"`
-	UnprofitableCount int     `json:"unprofitableCount"`
-	ShipmentCount     int     `json:"shipmentCount"`
-	TotalMiles        float64 `json:"totalMiles"`
+	AvgCpm float64 `json:"avgCpm"`
+	// Null when the reader does not hold the margins field group.
+	AvgMarginPct      *float64 `json:"avgMarginPct,omitempty"`
+	HasMargin         bool     `json:"hasMargin"`
+	UnprofitableCount int      `json:"unprofitableCount"`
+	ShipmentCount     int      `json:"shipmentCount"`
+	TotalMiles        float64  `json:"totalMiles"`
 }
 
 type ShipmentProfitabilityEstimate struct {
@@ -9738,11 +9743,12 @@ type ShipmentTomorrowPickup struct {
 	ShipmentID        string `json:"shipmentId"`
 	ProNumber         string `json:"proNumber"`
 	PickupWindowStart int    `json:"pickupWindowStart"`
-	Customer          string `json:"customer"`
-	Origin            string `json:"origin"`
-	Destination       string `json:"destination"`
-	Driver            string `json:"driver"`
-	Status            string `json:"status"`
+	// The customer's, locations' and driver's reference view fields; null when the reader's ceiling withholds them.
+	Customer    *string `json:"customer,omitempty"`
+	Origin      *string `json:"origin,omitempty"`
+	Destination *string `json:"destination,omitempty"`
+	Driver      *string `json:"driver,omitempty"`
+	Status      string  `json:"status"`
 }
 
 type ShipmentTomorrowsPickups struct {

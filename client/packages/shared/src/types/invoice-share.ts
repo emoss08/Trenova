@@ -23,7 +23,7 @@ export const invoiceShareUserSchema = z.object({
   id: z.string(),
   name: z.string(),
   username: z.string().optional(),
-  emailAddress: z.string().optional().default(""),
+  emailAddress: z.string().nullish(),
   profilePicUrl: nullableStringSchema,
   thumbnailUrl: nullableStringSchema,
 });
@@ -83,11 +83,9 @@ export const shareInvoiceFormSchema = z.object({
     .max(MAX_INVOICE_SHARE_RECIPIENTS, {
       error: () => translate("An invoice can be shared with at most 25 teammates at a time"),
     }),
-  note: z
-    .string()
-    .max(MAX_INVOICE_SHARE_NOTE_LENGTH, {
-      error: () => translate("Note must be 1000 characters or fewer"),
-    }),
+  note: z.string().max(MAX_INVOICE_SHARE_NOTE_LENGTH, {
+    error: () => translate("Note must be 1000 characters or fewer"),
+  }),
 });
 export type ShareInvoiceFormValues = z.infer<typeof shareInvoiceFormSchema>;
 

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -14,7 +15,7 @@ import (
 )
 
 func (h *Handler) registerDocumentTypeRoutes(documentTypes *gin.RouterGroup) {
-	selectOptions := documentTypes.Group("/select-options")
+	selectOptions := documentTypes.Group("/select-options", responseguard.References())
 	selectOptions.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -46,7 +47,7 @@ func (h *Handler) listDocumentTypes(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entities)
+	helpers.JSON(c, http.StatusOK, entities)
 }
 
 func (h *Handler) selectDocumentTypeOptions(c *gin.Context) {
@@ -95,7 +96,7 @@ func (h *Handler) getDocumentTypeOption(c *gin.Context) {
 	}
 	for _, entity := range entities {
 		if entity.ID == documentTypeID {
-			c.JSON(http.StatusOK, entity)
+			helpers.JSON(c, http.StatusOK, entity)
 			return
 		}
 	}

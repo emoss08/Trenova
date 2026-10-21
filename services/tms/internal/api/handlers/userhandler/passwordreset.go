@@ -3,6 +3,7 @@ package userhandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,5 +45,5 @@ func (h *Handler) sendPasswordReset(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "A password reset link has been sent."})
+	helpers.JSON(c, http.StatusOK, gin.H{"message": "A password reset link has been sent."})
 }

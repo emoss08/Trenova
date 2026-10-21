@@ -158,7 +158,7 @@ func (h *Handler) get(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) createManual(c *gin.Context) {
@@ -196,7 +196,7 @@ func (h *Handler) evaluateShipment(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) evaluateStop(c *gin.Context) {
@@ -227,7 +227,7 @@ func (h *Handler) evaluateStop(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) bulkEvaluate(c *gin.Context) {
@@ -250,7 +250,7 @@ func (h *Handler) bulkEvaluate(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) update(c *gin.Context) {
@@ -289,7 +289,7 @@ func (h *Handler) update(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) review(c *gin.Context) {
@@ -357,7 +357,7 @@ func (h *Handler) lifecycle(c *gin.Context, fn lifecycleFn) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) buildEDI214Payload(c *gin.Context) {
@@ -378,7 +378,7 @@ func (h *Handler) buildEDI214Payload(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) edi214Readiness(c *gin.Context) {
@@ -422,7 +422,7 @@ func (h *Handler) edi214Readiness(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) edi214Status(c *gin.Context) {
@@ -443,7 +443,7 @@ func (h *Handler) edi214Status(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, status)
+	helpers.JSON(c, http.StatusOK, status)
 }
 
 func readinessTrigger(

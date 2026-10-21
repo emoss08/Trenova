@@ -107,7 +107,7 @@ func (h *Handler) start(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, run)
+	helpers.JSON(c, http.StatusAccepted, run)
 }
 
 func runRequest(c *gin.Context) (agentports.GetAgentRunByIDRequest, error) {
@@ -140,7 +140,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }
 
 func (h *Handler) downloadTranscript(c *gin.Context) {

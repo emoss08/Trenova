@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -64,7 +65,7 @@ func (h *Handler) listWebWatches(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, watches)
+	helpers.JSON(c, http.StatusOK, watches)
 }
 
 func (h *Handler) watchIDOf(c *gin.Context) (pulid.ID, bool) {
@@ -90,7 +91,7 @@ func (h *Handler) webWatchFindings(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, findings)
+	helpers.JSON(c, http.StatusOK, findings)
 }
 
 // stopWebWatch stops a watch for the person it was set for, or for anyone
@@ -132,7 +133,7 @@ func (h *Handler) stopWebWatch(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, watch)
+	helpers.JSON(c, http.StatusOK, watch)
 }
 
 func (h *Handler) receiveWatchDelivery(c *gin.Context) {

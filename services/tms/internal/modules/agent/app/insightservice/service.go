@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -184,6 +185,16 @@ func (s *Service) refreshDetector(ctx context.Context, p refreshParams) {
 			// A malformed finding is a programming error in the detector. It is
 			// dropped rather than stored, and logged loudly enough to be fixed.
 			log.Error("dropping malformed finding", zap.Error(vErr))
+
+			continue
+		}
+		if missing := detector.Undeclared(p.detector, &finding); len(missing) > 0 {
+			// Readers are checked against the kinds a detector declares, so a
+			// finding naming another would reach someone who cannot read it.
+			log.Error("dropping finding that names a kind its detector does not declare",
+				zap.String("dedupeKey", finding.DedupeKey),
+				zap.Any("kinds", missing),
+			)
 
 			continue
 		}
@@ -406,9 +417,10 @@ func (s *Service) allowedDetectorKeys(
 ) insightports.AllowedDetectorKeys {
 	detectors := s.detectors.All()
 	allowed := make(insightports.AllowedDetectorKeys, 0, len(detectors))
+	memo := make(map[readerCheck]bool, len(detectors))
 
 	for _, d := range detectors {
-		if s.readerMaySee(ctx, req, d) {
+		if s.readerMaySeeAll(ctx, &req, d, memo) {
 			allowed = append(allowed, d.Key())
 		}
 	}
@@ -416,8 +428,13 @@ func (s *Service) allowedDetectorKeys(
 	return allowed
 }
 
-// readerMaySee answers whether this reader holds the permission a detector's
-// subject matter requires.
+type readerCheck struct {
+	resource  permission.Resource
+	operation permission.Operation
+}
+
+// readerMaySee answers whether this reader holds the permission on every kind
+// a detector's findings name.
 //
 // Only registered detectors are ever asked about. A detector turned off in a
 // release leaves its findings in the table, and nothing is left to say what
@@ -429,14 +446,50 @@ func (s *Service) readerMaySee(
 	req insightports.ListInsightsRequest,
 	d detector.Detector,
 ) bool {
+	return s.readerMaySeeAll(ctx, &req, d, make(map[readerCheck]bool, len(d.Resources())))
+}
+
+// readerMaySeeAll is readerMaySee sharing one request's answers between
+// detectors that name the same kinds.
+func (s *Service) readerMaySeeAll(
+	ctx context.Context,
+	req *insightports.ListInsightsRequest,
+	d detector.Detector,
+	memo map[readerCheck]bool,
+) bool {
+	resources := d.Resources()
+	if len(resources) == 0 {
+		return false
+	}
+	for _, resource := range resources {
+		key := readerCheck{resource: resource, operation: d.Operation()}
+		allowed, seen := memo[key]
+		if !seen {
+			allowed = s.readerHolds(ctx, req, d.Key(), key)
+			memo[key] = allowed
+		}
+		if !allowed {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s *Service) readerHolds(
+	ctx context.Context,
+	req *insightports.ListInsightsRequest,
+	detectorKey string,
+	need readerCheck,
+) bool {
 	check := &permissionports.PermissionCheckRequest{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    req.UserID,
 		UserID:         req.UserID,
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
-		Resource:       d.Resource().String(),
-		Operation:      d.Operation(),
+		Resource:       need.resource.String(),
+		Operation:      need.operation,
 	}
 	// An agent reading on its own behalf is checked as the agent, against
 	// what agents are allowed, not as a person it is not.
@@ -451,7 +504,8 @@ func (s *Service) readerMaySee(
 	if err != nil {
 		// A permission service that cannot answer is not permission granted.
 		s.l.Error("failed to check insight permission",
-			zap.String("detector", d.Key()),
+			zap.String("detector", detectorKey),
+			zap.String("resource", need.resource.String()),
 			zap.Error(err),
 		)
 

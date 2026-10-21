@@ -166,7 +166,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) closeBlockers(c *gin.Context) {
@@ -189,7 +189,7 @@ func (h *Handler) closeBlockers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Preview the accounting a fiscal year close would post
@@ -225,7 +225,7 @@ func (h *Handler) closePreview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, plan)
+	helpers.JSON(c, http.StatusOK, plan)
 }
 
 type reopenFiscalYearPayload struct {
@@ -271,7 +271,7 @@ func (h *Handler) reopen(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Create a fiscal year
@@ -302,7 +302,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, created)
+	helpers.JSON(c, http.StatusCreated, created)
 }
 
 // @Summary Update a fiscal year
@@ -340,7 +340,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 // @Summary Patch a fiscal year
@@ -389,7 +389,7 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedEntity)
+	helpers.JSON(c, http.StatusOK, updatedEntity)
 }
 
 // @Summary Delete a fiscal year
@@ -453,7 +453,7 @@ func (h *Handler) close(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 // @Summary Activate a fiscal year
@@ -490,5 +490,5 @@ func (h *Handler) activate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }

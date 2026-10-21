@@ -1,4 +1,5 @@
 import { allocationRemainder, allocationsValid, chargeLineTotal } from "../lib/charge-split";
+import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { accessorialChargeMethodSchema, type AccessorialCharge } from "./accessorial-charge";
 import { defaultBillTypeSchema } from "./bill-type";
@@ -232,7 +233,7 @@ const stopBaseSchema = z.object({
   countLateOverride: z.boolean().nullable().optional(),
   countDetentionOverride: z.boolean().nullable().optional(),
   addressLine: optionalStringSchema,
-  location: locationSchema.nullish(),
+  location: linkedRecordSchema("location", locationSchema).nullish(),
 });
 
 const stopReadMetadataSchema = z.object({
@@ -867,10 +868,10 @@ export const shipmentSchema = z
     /** Every allocation as stored, across freight and accessorials. */
     chargeAllocations: z.array(chargeAllocationSchema).default([]),
     billingSplitSummary: z.array(billingSplitSummaryRowSchema).default([]),
-    customer: customerSchema.nullish(),
+    customer: linkedRecordSchema("customer", customerSchema).nullish(),
     billToCustomer: customerReferenceSchema.nullish(),
     owner: userReferenceSchema.nullish(),
-    formulaTemplate: formulaTemplateSchema.nullish(),
+    formulaTemplate: linkedRecordSchema("formula_template", formulaTemplateSchema).nullish(),
   })
   .superRefine(refineFreightAllocations);
 

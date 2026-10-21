@@ -384,7 +384,7 @@ func (h *Handler) getUIPolicy(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, policy)
+	helpers.JSON(c, http.StatusOK, policy)
 }
 
 // @Summary Get shipment billing readiness
@@ -423,7 +423,7 @@ func (h *Handler) getBillingReadiness(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, readiness)
+	helpers.JSON(c, http.StatusOK, readiness)
 }
 
 // @Summary Get shipment ETA
@@ -465,7 +465,7 @@ func (h *Handler) getEta(c *gin.Context) {
 	if eta == nil {
 		eta = shipmenttrackingports.UnknownShipmentEta(shipmentID)
 	}
-	c.JSON(http.StatusOK, eta)
+	helpers.JSON(c, http.StatusOK, eta)
 }
 
 // @Summary Preview a shipment's customer tracking page
@@ -504,7 +504,7 @@ func (h *Handler) previewCustomerTracking(c *gin.Context) {
 		return
 	}
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, view)
+	helpers.JSON(c, http.StatusOK, view)
 }
 
 // @Summary Get shipment permit assessment
@@ -551,7 +551,7 @@ func (h *Handler) getPermitAssessment(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, assessment)
+	helpers.JSON(c, http.StatusOK, assessment)
 }
 
 // @Summary Get a shipment
@@ -732,7 +732,7 @@ func (h *Handler) calculateTotals(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, totals)
+	helpers.JSON(c, http.StatusOK, totals)
 }
 
 // @Summary Calculate shipment distance
@@ -759,7 +759,7 @@ func (h *Handler) calculateDistance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Recalculate shipment distance
@@ -792,7 +792,7 @@ func (h *Handler) recalculateDistance(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	helpers.JSON(c, http.StatusOK, resp)
 }
 
 // @Summary Duplicate a shipment
@@ -829,7 +829,7 @@ func (h *Handler) duplicate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, result)
+	helpers.JSON(c, http.StatusAccepted, result)
 }
 
 func (h *Handler) checkForDuplicateBOLs(c *gin.Context) {
@@ -851,7 +851,7 @@ func (h *Handler) checkForDuplicateBOLs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"valid": true})
+	helpers.JSON(c, http.StatusOK, gin.H{"valid": true})
 }
 
 func (h *Handler) checkHazmatSegregation(c *gin.Context) {
@@ -873,7 +873,7 @@ func (h *Handler) checkHazmatSegregation(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"valid": true})
+	helpers.JSON(c, http.StatusOK, gin.H{"valid": true})
 }
 
 func (h *Handler) calculateLoadingOptimization(c *gin.Context) {
@@ -896,7 +896,7 @@ func (h *Handler) calculateLoadingOptimization(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) getPreviousRates(c *gin.Context) {
@@ -919,7 +919,7 @@ func (h *Handler) getPreviousRates(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entities)
+	helpers.JSON(c, http.StatusOK, entities)
 }
 
 // @Summary List delayed shipments
@@ -1118,7 +1118,7 @@ func (h *Handler) autoRate(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	helpers.JSON(c, http.StatusOK, gin.H{
 		"shipment":    entity,
 		"application": application,
 	})

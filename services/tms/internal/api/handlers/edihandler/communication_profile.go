@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -18,7 +19,7 @@ import (
 )
 
 func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) {
-	selectOptions := profiles.Group("/select-options")
+	selectOptions := profiles.Group("/select-options", responseguard.References())
 	selectOptions.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -129,7 +130,7 @@ func (h *Handler) createCommunicationProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, profile)
+	helpers.JSON(c, http.StatusCreated, profile)
 }
 
 func (h *Handler) getCommunicationProfileOption(c *gin.Context) {
@@ -156,7 +157,7 @@ func (h *Handler) getCommunicationProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profile)
+	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) updateCommunicationProfile(c *gin.Context) {
@@ -189,7 +190,7 @@ func (h *Handler) updateCommunicationProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profile)
+	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) pollCommunicationProfile(c *gin.Context) {
@@ -210,7 +211,7 @@ func (h *Handler) pollCommunicationProfile(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) testCommunicationProfileConnection(c *gin.Context) {
@@ -231,5 +232,5 @@ func (h *Handler) testCommunicationProfileConnection(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }

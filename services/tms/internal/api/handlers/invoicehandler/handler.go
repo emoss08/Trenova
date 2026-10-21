@@ -214,7 +214,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
 
 func (h *Handler) createFromShipments(c *gin.Context) {
@@ -239,7 +239,7 @@ func (h *Handler) createFromShipments(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 func (h *Handler) createFromOrder(c *gin.Context) {
@@ -264,7 +264,7 @@ func (h *Handler) createFromOrder(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }
 
 func (h *Handler) updateDraft(c *gin.Context) {
@@ -300,7 +300,7 @@ func (h *Handler) updateDraft(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) preview(c *gin.Context) {
@@ -342,7 +342,7 @@ func (h *Handler) generatePDF(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusAccepted, result)
+	helpers.JSON(c, http.StatusAccepted, result)
 }
 
 func (h *Handler) sendPlan(c *gin.Context) {
@@ -364,7 +364,7 @@ func (h *Handler) sendPlan(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, plan)
+	helpers.JSON(c, http.StatusOK, plan)
 }
 
 func (h *Handler) send(c *gin.Context) {
@@ -387,7 +387,7 @@ func (h *Handler) send(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) emailAttempts(c *gin.Context) {
@@ -466,7 +466,7 @@ func (h *Handler) post(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, updated)
+	helpers.JSON(c, http.StatusOK, updated)
 }
 
 func (h *Handler) postPreview(c *gin.Context) {
@@ -491,7 +491,7 @@ func (h *Handler) postPreview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, preview)
+	helpers.JSON(c, http.StatusOK, preview)
 }
 
 func tenantInfo(authCtx *authctx.AuthContext) pagination.TenantInfo {
@@ -549,7 +549,7 @@ func (h *Handler) void(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // createMemo raises a standalone credit or debit memo for a customer.
@@ -573,5 +573,5 @@ func (h *Handler) createMemo(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, entity)
+	helpers.JSON(c, http.StatusCreated, entity)
 }

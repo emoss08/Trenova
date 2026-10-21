@@ -52,7 +52,7 @@ func (h *Handler) convert(c *gin.Context) {
 	dateStr := c.DefaultQuery("date", time.Now().Format(defaultDateLayout))
 
 	if fromCurrency == "" || toCurrency == "" || amountStr == "" {
-		c.JSON(
+		helpers.JSON(c,
 			http.StatusBadRequest,
 			gin.H{"error": "from, to, and amount query parameters are required"},
 		)
@@ -61,13 +61,17 @@ func (h *Handler) convert(c *gin.Context) {
 
 	amount, err := decimal.NewFromString(amountStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid amount"})
+		helpers.JSON(c, http.StatusBadRequest, gin.H{"error": "invalid amount"})
 		return
 	}
 
 	date, err := time.Parse(defaultDateLayout, dateStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date format, use YYYY-MM-DD"})
+		helpers.JSON(
+			c,
+			http.StatusBadRequest,
+			gin.H{"error": "invalid date format, use YYYY-MM-DD"},
+		)
 		return
 	}
 
@@ -88,7 +92,7 @@ func (h *Handler) convert(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) latest(c *gin.Context) {
@@ -109,7 +113,7 @@ func (h *Handler) latest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) refresh(c *gin.Context) {
@@ -130,7 +134,7 @@ func (h *Handler) refresh(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	helpers.JSON(c, http.StatusOK, gin.H{"status": "ok"})
 }
 
 func (h *Handler) createSettlementQuote(c *gin.Context) {
@@ -156,5 +160,5 @@ func (h *Handler) createSettlementQuote(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, result)
+	helpers.JSON(c, http.StatusCreated, result)
 }

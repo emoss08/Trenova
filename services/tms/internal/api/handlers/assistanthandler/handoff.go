@@ -3,6 +3,7 @@ package assistanthandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -54,5 +55,5 @@ func (h *Handler) handoff(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, result)
+	helpers.JSON(c, http.StatusCreated, result)
 }

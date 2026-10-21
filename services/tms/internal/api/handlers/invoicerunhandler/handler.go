@@ -132,7 +132,7 @@ func (h *Handler) listStatements(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"results": statements, "count": len(statements)})
+	helpers.JSON(c, http.StatusOK, gin.H{"results": statements, "count": len(statements)})
 }
 
 // @Summary Get one customer's open statement
@@ -167,7 +167,7 @@ func (h *Handler) getStatement(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, statement)
+	helpers.JSON(c, http.StatusOK, statement)
 }
 
 // @Summary Bill an open statement before its cycle closes
@@ -226,7 +226,7 @@ func (h *Handler) billStatement(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func tenantInfoFrom(authCtx *authctx.AuthContext) pagination.TenantInfo {
@@ -320,7 +320,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }
 
 // @Summary Build an invoice run preview
@@ -366,7 +366,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }
 
 // @Summary Adjust invoice run membership
@@ -433,7 +433,7 @@ func (h *Handler) adjustMembership(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }
 
 // @Summary Commit an invoice run
@@ -469,7 +469,7 @@ func (h *Handler) commit(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 // @Summary Cancel an invoice run
@@ -511,5 +511,5 @@ func (h *Handler) cancel(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, run)
+	helpers.JSON(c, http.StatusOK, run)
 }

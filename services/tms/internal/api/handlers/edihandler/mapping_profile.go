@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -14,7 +15,7 @@ import (
 )
 
 func (h *Handler) registerMappingProfileRoutes(mappingProfiles *gin.RouterGroup) {
-	selectOptions := mappingProfiles.Group("/select-options")
+	selectOptions := mappingProfiles.Group("/select-options", responseguard.References())
 	selectOptions.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -67,7 +68,7 @@ func (h *Handler) getMappingProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profile)
+	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) updateMappingProfile(c *gin.Context) {
@@ -100,7 +101,7 @@ func (h *Handler) updateMappingProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) deleteMappingItem(c *gin.Context) {
@@ -188,7 +189,7 @@ func (h *Handler) getMappingProfileByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, profile)
+	helpers.JSON(c, http.StatusOK, profile)
 }
 
 func (h *Handler) updateMappingProfileItems(c *gin.Context) {
@@ -221,7 +222,7 @@ func (h *Handler) updateMappingProfileItems(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, items)
+	helpers.JSON(c, http.StatusOK, items)
 }
 
 func (h *Handler) deleteMappingProfileItem(c *gin.Context) {

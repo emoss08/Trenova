@@ -82,7 +82,7 @@ func (h *Handler) join(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, snapshot)
+	helpers.JSON(c, http.StatusOK, snapshot)
 }
 
 // @Summary Leave Triage presence

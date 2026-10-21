@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/reference/app/dothazmatreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
@@ -36,7 +37,7 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/dot-hazmat-references")
 
-	selectOptions := api.Group("/select-options")
+	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 	selectOptions.GET("/:dotHazmatReferenceID", h.getOption)
 }
@@ -96,5 +97,5 @@ func (h *Handler) getOption(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, entity)
+	helpers.JSON(c, http.StatusOK, entity)
 }
