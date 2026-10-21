@@ -72,6 +72,25 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    operation already carries the action, say so in its description rather than adding a
    verb no role holds.
 
+## Parent resources
+
+A resource with a `ParentResource` is part of its parent's family, and that does two
+things. The engine lets a grant on the parent satisfy a check on the child
+(`Registry.GetEffectiveResource`, `engine.resolveResourcePermission`), so worker read is
+also read on a worker's credentials and timesheets. And `Registry.PartOf` treats a record
+of the child carried by one of its family as part of it rather than a linked record, so the
+GraphQL field guard, the REST response guard and the report catalog's `withinRecord` show
+it whole to whoever may read the carrier.
+
+Give a resource a parent only when everyone who may read the parent may read all of it.
+Data most readers of the parent have no business seeing (medical, leave, disciplinary,
+compensation) is a resource with no parent, granted on its own through the bundles for the
+jobs that need it. `worker_leave` is one: worker read reaches no leave case, a leave case a
+worker carries is a linked record gated by `worker_leave` read, and only the `hr.leave`
+and `hr.team` bundles grant it. Taking a parent away moves no stored grant: administrators
+already hold every registry resource, and other roles lose what they reached only through
+the parent until a bundle or a person grants it.
+
 ## Saved table views
 
 Anyone may keep private views of a table they can read. Sharing a view with the
@@ -91,7 +110,15 @@ Billing clerk, Accountant, Driver manager, Read-only and others) is a list of bu
 a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant with the
 scope it will actually apply in this deployment (a scope the deployment does not enforce
 comes back as organization), and each template already composed (`Registry.TemplateGrants`:
-operations merged, the widest scope kept).
+operations merged, the widest scope kept). The Read-only template reads every readable
+kind except those its `ReadExcept` names (`worker_leave`), so it never reaches data that is
+granted on its own.
+
+Leave is held to Human resources: `hr.leave` grants `worker_leave` read, create, update and
+approve, and `hr.team` read and approve, so the Human resources and Driver manager
+templates are the only ones that reach it (`TestJobTemplates_OnlyHumanResourcesReachLeave`
+lists every template's leave operations). Configuring leave (`worker_leave:manage`) and
+exporting it stay with administrators.
 
 Bundles are a way of choosing grants, not a second kind of grant: choosing one writes its
 grants into the role's ordinary `resource_permissions`, so evaluation, delegation and the
@@ -270,8 +297,9 @@ record's **reference view** to everyone who can read the record that links to it
 linking screen needs to identify and use it (a customer's name, code and billing address, a
 driver's name). Every other field of the linked record needs that kind's own read; without it a
 nullable field is answered null and named in `extensions.withheldByAccess`, and a non-null one is
-refused. The record a root resolver returns, records that are part of it (`ParentResource`), and
-everything under a self-scoped resolver are not gated this way.
+refused. The record a root resolver returns, records that are part of it (its `ParentResource`
+family, see [Parent resources](#parent-resources)), and everything under a self-scoped resolver
+are not gated this way.
 
 Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
 one package, `refview`, which the GraphQL field guard asks for people and agents alike, and the
