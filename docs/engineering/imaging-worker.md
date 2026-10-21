@@ -133,7 +133,9 @@ The TMS client:
   breaker is closed. Five failures in a row that say something about the endpoint (unavailable,
   internal, a crash, a deadline) open its breaker for 5 s, doubling to 2 min while it keeps
   failing; a draining worker is taken out at once; a bad document says nothing about the
-  endpoint. gRPC's own outlier detection is not used because grpc-go offers it only through
+  endpoint. A call whose deadline runs out before the worker sent anything counts against it
+  (a worker that never answers leaves rotation), one that had started answering does not, and
+  neither does a caller that cancels. gRPC's own outlier detection is not used because grpc-go offers it only through
   the xDS balancer configuration;
 - retries `RESOURCE_EXHAUSTED` and `UNAVAILABLE` up to 4 attempts within the call's deadline,
   each on another endpoint where there is one, honouring `RetryInfo`, with jittered exponential

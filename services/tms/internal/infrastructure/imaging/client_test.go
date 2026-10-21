@@ -262,19 +262,19 @@ func TestTheBreakerTakesAFailingEndpointOutOfRotation(t *testing.T) {
 	now := time.Now()
 	unavailable := status.Error(codes.Unavailable, "gone")
 
-	e.record(t.Context(), unavailable, breaker, now)
+	e.record(t.Context(), unavailable, false, breaker, now)
 	assert.True(t, e.available(now), "one failure is not enough")
-	e.record(t.Context(), unavailable, breaker, now)
+	e.record(t.Context(), unavailable, false, breaker, now)
 	assert.False(t, e.available(now), "two in a row open the breaker")
 	assert.True(t, e.available(now.Add(2*time.Minute)), "it closes again after openFor")
 
-	e.record(t.Context(), nil, breaker, now)
-	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), breaker, now)
-	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), breaker, now)
+	e.record(t.Context(), nil, false, breaker, now)
+	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), false, breaker, now)
+	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), false, breaker, now)
 	assert.True(t, e.available(now), "a bad document says nothing about the endpoint")
 
 	draining := refusal(codes.Unavailable, "DRAINING", time.Second)
-	e.record(t.Context(), draining, breaker, now)
+	e.record(t.Context(), draining, false, breaker, now)
 	assert.False(t, e.available(now), "a draining worker is taken out at once")
 }
 
@@ -339,10 +339,70 @@ func TestOnlyTheTransportsFailuresCountAgainstAnEndpoint(t *testing.T) {
 		failWith(cancelled, status.Error(codes.Canceled, context.Canceled.Error()))
 		failWith(expired, status.Error(codes.DeadlineExceeded, context.DeadlineExceeded.Error()))
 	}
-	assert.True(t, e.available(time.Now()), "the caller's own cancellation or deadline is not the worker's")
+	assert.True(t, e.available(time.Now()), "a cancelled caller, or one already past its deadline, is not the worker's")
 
 	for range 5 {
 		failWith(t.Context(), status.Error(codes.Unavailable, "connection refused"))
 	}
 	assert.False(t, e.available(time.Now()), "five transport failures open the breaker")
+}
+
+func breakerClient(e *endpoint) *Client {
+	return &Client{
+		cfg: &config.ImagingConfig{
+			MaxAttempts: 1,
+			Breaker:     config.ImagingBreakerConfig{ConsecutiveFailures: 5, OpenFor: time.Minute},
+		},
+		endpoints: &endpointSet{static: true, endpoints: []*endpoint{e}},
+		logger:    zap.NewNop(),
+	}
+}
+
+func waitForTheEnd(progress bool) func(context.Context, imagingpb.ImagingServiceClient, *bool) error {
+	return func(ctx context.Context, _ imagingpb.ImagingServiceClient, progressed *bool) error {
+		if progress {
+			*progressed = true
+		}
+		<-ctx.Done()
+		return status.FromContextError(ctx.Err()).Err()
+	}
+}
+
+func TestAWorkerThatNeverAnswersIsTakenOutOfRotation(t *testing.T) {
+	t.Parallel()
+
+	e := &endpoint{address: "a"}
+	client := breakerClient(e)
+	for range 5 {
+		err := client.call(t.Context(), 5*time.Millisecond, kernelports.ImagingBatch, waitForTheEnd(false))
+		require.ErrorIs(t, err, kernelports.ErrImagingTimeout)
+	}
+	assert.False(t, e.available(time.Now()), "five silent deadlines open the breaker")
+}
+
+func TestADeadlineAfterTheWorkerAnsweredDoesNotCount(t *testing.T) {
+	t.Parallel()
+
+	e := &endpoint{address: "a"}
+	client := breakerClient(e)
+	for range 5 {
+		err := client.call(t.Context(), 5*time.Millisecond, kernelports.ImagingBatch, waitForTheEnd(true))
+		require.Error(t, err)
+	}
+	assert.True(t, e.available(time.Now()), "a worker that was answering is slow, not gone")
+}
+
+func TestACallerCancellingMidCallDoesNotCount(t *testing.T) {
+	t.Parallel()
+
+	e := &endpoint{address: "a"}
+	client := breakerClient(e)
+	for range 5 {
+		ctx, cancel := context.WithCancel(t.Context())
+		time.AfterFunc(5*time.Millisecond, cancel)
+		err := client.call(ctx, time.Minute, kernelports.ImagingBatch, waitForTheEnd(false))
+		require.Error(t, err)
+		cancel()
+	}
+	assert.True(t, e.available(time.Now()), "the caller went away, not the worker")
 }

@@ -145,6 +145,9 @@ func (c *Client) call(
 	tried := make(map[string]struct{}, c.cfg.GetMaxAttempts())
 	var last error
 	for try := 1; try <= c.cfg.GetMaxAttempts(); try++ {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return mapError(ctxErr)
+		}
 		target, err := c.endpoints.pick(ctx, tried)
 		if err != nil {
 			last = err
@@ -154,7 +157,7 @@ func (c *Client) call(
 		progressed := false
 		err = attempt(ctx, target.rpc, &progressed)
 		target.calls.Done()
-		target.record(ctx, err, &c.cfg.Breaker, time.Now())
+		target.record(ctx, err, progressed, &c.cfg.Breaker, time.Now())
 		if err == nil {
 			return nil
 		}

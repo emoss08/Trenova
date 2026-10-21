@@ -42,12 +42,13 @@ func (e *endpoint) available(now time.Time) bool {
 func (e *endpoint) record(
 	ctx context.Context,
 	err error,
+	progressed bool,
 	breaker *config.ImagingBreakerConfig,
 	now time.Time,
 ) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if !countsAgainstEndpoint(ctx, err) {
+	if !countsAgainstEndpoint(ctx, err, progressed) {
 		if err == nil {
 			e.failures = 0
 			e.openFor = 0
@@ -68,9 +69,12 @@ func (e *endpoint) record(
 	e.failures = 0
 }
 
-func countsAgainstEndpoint(ctx context.Context, err error) bool {
-	if err == nil || ctx.Err() != nil {
+func countsAgainstEndpoint(ctx context.Context, err error, progressed bool) bool {
+	if err == nil {
 		return false
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return errors.Is(ctxErr, context.DeadlineExceeded) && !progressed
 	}
 	st, ok := status.FromError(err)
 	if !ok {
