@@ -285,4 +285,148 @@ Each area documents its operations here: the input and output, with an example, 
 
 ## Hosts
 
-<!-- The Go host: pool, timeouts, metrics, compile cache. The browser loader: loading, synchronous access, preload, tests. -->
+Both hosts load the same committed bytes and speak the ABI above; neither knows anything about
+an operation beyond its name. Typed calls per area wrap the generic call in modules of their
+own beside it (Go: next to `pkg/rules`; browser: beside `runtime.ts`), each decoding into its
+own types.
+
+### The Go host (`services/tms/pkg/rules`)
+
+```go
+err := rules.Call(ctx, "allocation.split", input, &output)  // sonic in and out
+raw, err := rules.CallRaw(ctx, "formula.evaluate", encoded)  // pre-encoded input, raw `ok` out
+info, err := rules.Version(ctx)                              // rules.VersionInfo{Version, Operations}
+```
+
+The package functions use `rules.Default()`, the process-wide `*rules.Runtime`.
+`rules.New(rules.Options{PoolSize, RecycleMemoryBytes, MemoryLimitBytes})` builds another
+(tests do). The API is generic-free, so typed callers build on it without spreading generic
+code. `CallRaw` is for input that is already JSON, such as a cached rate table: the request is
+spliced, not re-encoded, and the output comes back as the raw JSON of `ok`.
+
+**Compiling.** The module is compiled once per process, lazily and safely under concurrency
+(`sync.OnceValues`): by the warm-up, or by the first call. A compile failure is kept for the
+life of the process, and every call then fails with `ErrUnavailable`. The runtime uses wazero's
+compiler where the platform has one and its interpreter otherwise, with
+`WithCloseOnContextDone(true)`.
+
+**The compile cache** is `os.TempDir()/trenova-rules/<sha256 of rules.wasm>`, or
+`$TRENOVA_RULES_CACHE_DIR/<sha256>`, so a restart or another test binary does not compile
+again, and a new module never reads an old one's entries. wazero runs the machine code it finds
+there, so the directory must be private to the process's user: created `0700`, not a symlink,
+not writable by group or others, owned by the user. Otherwise the host compiles in memory and
+logs a warning.
+
+**The instance pool.** At most `GOMAXPROCS` instances (`Options.PoolSize`), created as calls
+need them. An instance runs one call at a time. A caller waits for a free one under its own
+context. An instance is discarded and replaced after:
+
+- a trap;
+- its context closing it mid-call;
+- an unreadable response;
+- growing its linear memory past 64 MiB (`Options.RecycleMemoryBytes`), since linear memory
+  never shrinks.
+
+Each instance is also capped at 256 MiB (`Options.MemoryLimitBytes`): an allocation past it
+traps instead of growing. A request over 64 MiB (`rules.MaxRequestBytes`) is refused before
+it runs.
+
+**Timeouts.** The host adds none of its own: the caller's context bounds both the wait and the
+run. A context that has already ended fails before anything compiles or waits. A deadline that
+passes mid-call closes the instance (wazero checks the context while the code runs), so the
+work stops instead of being abandoned. The evaluator's budgets bound a formula inside that.
+
+**Errors** are sentinels, wrapped with the operation's name:
+
+| Error | Means | The caller |
+|---|---|---|
+| `ErrRequest`, as `*rules.RequestError{Op, Code, Detail}` | the module refused the request (`malformed`, `unknown_op`, `invalid_input`), or the host did (`too_large`) | has a bug: return an internal error, never show the detail |
+| `ErrTrap` | the module panicked or answered with something that is not an envelope; logged at error with the operation, never the payload; the instance is gone | returns an internal error and never retries |
+| `ErrContextDone` | the context ended while waiting for an instance or running; wraps `ctx.Err()` | treats it as any cancelled work |
+| `ErrUnavailable` | the module failed to compile or instantiate, or the runtime was closed | returns an internal error; start-up already logged why |
+
+Typed callers map these to `errortypes` at their own edge.
+
+**Metrics.** `pkg/rules` cannot import the metrics package, so it reports through a small
+`rules.Observer`, implemented by `metrics.Rules` (README in
+`internal/infrastructure/observability/metrics`):
+
+| Metric | Labels |
+|---|---|
+| `trenova_rules_calls_total` | `op`, `outcome` (`ok`, `request_error`, `trap`, `context_done`, `unavailable`) |
+| `trenova_rules_call_duration_seconds` | `op`; includes the wait for an instance |
+| `trenova_rules_instances_in_use` | |
+| `trenova_rules_instances_discarded_total` | `reason` (`trap`, `context_done`, `memory`) |
+
+`op` is the operation's name. A name the module does not know, or one not shaped like
+`area.name`, is counted as `unknown`, so a caller bug cannot grow the label set.
+
+**Warm-up.** `infrastructure.RulesModule` (`internal/bootstrap/infrastructure/rules.go`, in the
+core options both the API and the worker start with) gives the default runtime the logger and
+the metrics. At start it warms the runtime in the background: compile, instantiate and call
+`rules.version`, within two minutes. Start-up never waits for it. A failure is logged at error
+level and every call reports it as `ErrUnavailable`.
+
+### The browser loader (`client/packages/shared/src/rules`)
+
+```ts
+const rules = await loadRules();                  // load.ts: Promise<RulesRuntime>
+rules.call("formula.check", { source, schema });  // runtime.ts: synchronous, JSON in and out
+rules.callRaw("formula.evaluate", cachedJson);    // JSON text in, JSON text out
+rulesSync().version();                            // throws RulesNotLoadedError before the load
+const runtime = useRules();                       // hooks/use-rules.ts: suspends until loaded
+```
+
+**Loading.** `loadRules()` returns one memoised promise. A failed load is forgotten, so the
+next caller tries again. It fetches `new URL("./rules.wasm", import.meta.url)`, which Vite
+emits as `assets/rules.<hash>.wasm`, never inlined (it is far over `assetsInlineLimit`) and
+never in the startup bundle. When the server sends `application/wasm`, the module compiles
+while it downloads (`instantiateStreaming`). Otherwise it is compiled from the whole file, as
+it is when streaming refuses a response it has not read. A network or HTTP failure is a
+`RulesLoadError`; a corrupt file is a `WebAssembly.CompileError`. Passing bytes
+(`loadRules(bytes)`) skips the network; tests do this.
+
+**Synchronous access.** A loaded `RulesRuntime` calls the ABI directly, with `TextEncoder` and
+`TextDecoder`:
+
+- `call(op, input)` returns the parsed output as `unknown`, for a typed wrapper to narrow;
+- `callRaw(op, json)` takes and returns JSON text;
+- a request error throws `RulesRequestError {op, code, detail}`;
+- a trap throws `RulesTrapError`, after the runtime has already replaced the instance from the
+  compiled module.
+
+An instance whose memory grew past 64 MiB is replaced too. `rulesSync()` returns the loaded
+runtime or throws `RulesNotLoadedError`. `isRulesLoaded()`, and `subscribeRules` with
+`getRulesSnapshot` (for `useSyncExternalStore`), report readiness.
+
+**`useRules()`** (`@trenova/shared/hooks/use-rules`) returns the runtime. Until the module has
+loaded, it suspends the component with React's `use()` on the memoised promise, so render code
+under a `Suspense` boundary (with the screen's skeleton) can then call it synchronously. Once
+loaded it never suspends. A failed load reaches the error boundary, and the next render that
+asks loads again.
+
+**Preload.** `main.tsx` calls `preloadRulesWhenIdle()` (`rules/preload.ts`) after it renders.
+It waits for the load event and then for idle time (`requestIdleCallback`, with a ten-second
+timeout; two seconds after load without it), then imports the loader and loads the module. A
+screen that needs it later finds it ready. A failure is logged and left to the next caller.
+
+**Tests.** Both Vitest setups (`client/packages/shared/src/test-setup.ts`,
+`client/apps/web/src/test-setup.ts`) run `await loadRules(RULES_WASM_BYTES)` before any test,
+so tests call `rulesSync()` and render `useRules()` without waiting. The bytes come from
+`rules/test-module.ts`, which Vite reads from disk at transform time (`rules.wasm?inline`;
+both configs list `**/*.wasm` in `assetsInclude`). A test of loading itself takes a fresh
+loader with `vi.resetModules()`.
+
+**The service worker** answers `assets/rules.<hash>.wasm` from its asset cache after the first
+fetch, like any content-hashed build file. The cached response keeps `application/wasm`, so it
+compiles while it streams, and it is dropped when a release no longer ships it. It is not among
+the files the worker caches at install, since the page loads it on idle.
+
+**Hosting.** The page's Content-Security-Policy needs `'wasm-unsafe-eval'` in `script-src`. It
+does not depend on `'unsafe-eval'`, which can then be removed. `connect-src 'self'` covers the
+fetch. The file must be served as `application/wasm`:
+
+- Caddy does from Go's MIME table (`deploy/Caddyfile`, which has the CSP);
+- the Vite dev server does;
+- Cloud's Worker (`trenova-cloud-deploy`, `edition/cloudflare/web/worker.ts`) must add the same
+  `script-src` source.

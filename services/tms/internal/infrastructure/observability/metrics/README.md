@@ -175,6 +175,46 @@ An abandoned count that stays above zero names a formula that never finishes; wh
 in-flight sits at the bound and `queued` timeouts climb, rating is waiting on those
 goroutines rather than on the database.
 
+## Rules Engine Metrics
+
+The rules engine (`pkg/rules`, docs/engineering/rules-engine.md) runs one WebAssembly
+module in wazero on a pool of instances, one call per instance at a time. `pkg/rules` cannot
+import this package, so it reports through its `rules.Observer` interface, which `Rules`
+implements; `internal/bootstrap/infrastructure/rules.go` hands it to the default runtime at
+start.
+
+- `trenova_rules_calls_total{op,outcome}`: every call, by operation and how it ended
+- `trenova_rules_call_duration_seconds{op}`: how long a call took, including the wait for a
+  free instance
+- `trenova_rules_instances_in_use`: instances running a call right now
+- `trenova_rules_instances_discarded_total{reason}`: instances thrown away instead of reused
+
+Label meanings:
+
+- `op`: the operation (`formula.check`, `allocation.split`, ...). A name the module does not
+  know, or one not shaped like `area.name`, is `unknown`, so a caller bug cannot grow the label
+  set.
+- `outcome`: `ok`; `request_error` (the module refused the request: a caller bug);
+  `trap` (the module panicked: an internal bug, never retried); `context_done` (the caller's
+  context ended while it waited or ran); `unavailable` (the module failed to compile or
+  instantiate).
+- `reason`: `trap`; `context_done` (the deadline closed the instance mid-call); `memory` (its
+  linear memory grew past the recycle threshold, 64 MiB by default).
+
+Any `trap` is a bug to fix. `instances_in_use` pinned at the pool size (`GOMAXPROCS`) while
+call latency climbs means callers are queueing for instances; a steady `memory` discard rate
+means some operation's input is large enough that it should be split or streamed.
+
+```promql
+sum by (op, outcome) (rate(trenova_rules_calls_total{outcome!="ok"}[5m]))
+```
+
+```promql
+histogram_quantile(0.99,
+  sum by (op, le) (rate(trenova_rules_call_duration_seconds_bucket[5m]))
+)
+```
+
 ## Suggested Grafana Panels
 
 Use rate-based panels for operational visibility and raw increase panels for incident review.
