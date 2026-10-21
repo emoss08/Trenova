@@ -217,6 +217,10 @@ var ProviderColumns = struct {
 	ThinkingStyle            buncolgen.Column // "thinking_style" → qualified: "aiprv.thinking_style"
 	Platform                 buncolgen.Column // "platform" → qualified: "aiprv.platform"
 	PlatformSettings         buncolgen.Column // "platform_settings" → qualified: "aiprv.platform_settings"
+	AdvisorEnabled           buncolgen.Column // "advisor_enabled" → qualified: "aiprv.advisor_enabled"
+	AdvisorModel             buncolgen.Column // "advisor_model" → qualified: "aiprv.advisor_model"
+	Scripts                  buncolgen.Column // "code_mode_scripts" → qualified: "aiprv.code_mode_scripts"
+	ScriptWrites             buncolgen.Column // "code_mode_writes" → qualified: "aiprv.code_mode_writes"
 	ExtraBody                buncolgen.Column // "extra_body" → qualified: "aiprv.extra_body"
 	InputCostPerMillion      buncolgen.Column // "input_cost_per_million" → qualified: "aiprv.input_cost_per_million"
 	OutputCostPerMillion     buncolgen.Column // "output_cost_per_million" → qualified: "aiprv.output_cost_per_million"
@@ -261,6 +265,10 @@ var ProviderColumns = struct {
 	ThinkingStyle:            buncolgen.NewColumn("thinking_style", "aiprv"),
 	Platform:                 buncolgen.NewColumn("platform", "aiprv"),
 	PlatformSettings:         buncolgen.NewColumn("platform_settings", "aiprv"),
+	AdvisorEnabled:           buncolgen.NewColumn("advisor_enabled", "aiprv"),
+	AdvisorModel:             buncolgen.NewColumn("advisor_model", "aiprv"),
+	Scripts:                  buncolgen.NewColumn("code_mode_scripts", "aiprv"),
+	ScriptWrites:             buncolgen.NewColumn("code_mode_writes", "aiprv"),
 	ExtraBody:                buncolgen.NewColumn("extra_body", "aiprv"),
 	InputCostPerMillion:      buncolgen.NewColumn("input_cost_per_million", "aiprv"),
 	OutputCostPerMillion:     buncolgen.NewColumn("output_cost_per_million", "aiprv"),
@@ -310,6 +318,10 @@ var ProviderFieldMap = map[string]string{
 	"thinkingStyle":            "thinking_style",
 	"platform":                 "platform",
 	"platformSettings":         "platform_settings",
+	"advisorEnabled":           "advisor_enabled",
+	"advisorModel":             "advisor_model",
+	"scripts":                  "code_mode_scripts",
+	"scriptWrites":             "code_mode_writes",
 	"extraBody":                "extra_body",
 	"inputCostPerMillion":      "input_cost_per_million",
 	"outputCostPerMillion":     "output_cost_per_million",
@@ -357,6 +369,10 @@ var ProviderInsertableColumns = []string{
 	"thinking_style",
 	"platform",
 	"platform_settings",
+	"advisor_enabled",
+	"advisor_model",
+	"code_mode_scripts",
+	"code_mode_writes",
 	"extra_body",
 	"input_cost_per_million",
 	"output_cost_per_million",
@@ -464,6 +480,10 @@ var ProviderFilter = struct {
 	ThinkingStyle            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "thinkingStyle" → DB: "thinking_style"
 	Platform                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "platform" → DB: "platform"
 	PlatformSettings         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "platformSettings" → DB: "platform_settings"
+	AdvisorEnabled           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorEnabled" → DB: "advisor_enabled"
+	AdvisorModel             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorModel" → DB: "advisor_model"
+	Scripts                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scripts" → DB: "code_mode_scripts"
+	ScriptWrites             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scriptWrites" → DB: "code_mode_writes"
 	ExtraBody                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extraBody" → DB: "extra_body"
 	InputCostPerMillion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputCostPerMillion" → DB: "input_cost_per_million"
 	OutputCostPerMillion     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputCostPerMillion" → DB: "output_cost_per_million"
@@ -537,6 +557,18 @@ var ProviderFilter = struct {
 	},
 	PlatformSettings: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("platformSettings", op, value)
+	},
+	AdvisorEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorEnabled", op, value)
+	},
+	AdvisorModel: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorModel", op, value)
+	},
+	Scripts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("scripts", op, value)
+	},
+	ScriptWrites: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("scriptWrites", op, value)
 	},
 	ExtraBody: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("extraBody", op, value)

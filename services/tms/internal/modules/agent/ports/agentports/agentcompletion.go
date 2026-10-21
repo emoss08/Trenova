@@ -195,7 +195,7 @@ type ChatCompletionResult struct {
 }
 
 const (
-	DefaultAdvisorModel   = "claude-opus-5-5"
+	DefaultAdvisorModel   = aiprovider.DefaultAdvisorModel
 	DefaultAdvisorMaxUses = 2
 )
 

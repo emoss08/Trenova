@@ -105,6 +105,20 @@ type Provider struct {
 	Platform         Platform          `json:"platform"         bun:"platform,type:VARCHAR(50),notnull,nullzero,default:'Direct'"`
 	PlatformSettings *PlatformSettings `json:"platformSettings" bun:"platform_settings,type:JSONB,nullzero"`
 
+	// AdvisorEnabled has every chat call routed to this provider declare
+	// Anthropic's advisor tool, so the model consults AdvisorModel (empty is
+	// DefaultAdvisorModel) mid-reply. Off by default: each consultation is
+	// billed at the advisor's price.
+	AdvisorEnabled bool   `json:"advisorEnabled" bun:"advisor_enabled,type:BOOLEAN,notnull,default:false"`
+	AdvisorModel   string `json:"advisorModel"   bun:"advisor_model,type:VARCHAR(200),nullzero"`
+	// Scripts lets this provider's model answer with a read-only script
+	// (code mode), and ScriptWrites lets those scripts prepare writes, proposed
+	// as one batch for a person. Both are off by default, and both still need
+	// the organization's own opt-in: the plan capability, the E2B extension's
+	// "Read-only scripts" setting and the code_mode permission.
+	Scripts      bool `json:"scripts"      bun:"code_mode_scripts,type:BOOLEAN,notnull,default:false"`
+	ScriptWrites bool `json:"scriptWrites" bun:"code_mode_writes,type:BOOLEAN,notnull,default:false"`
+
 	// ExtraBody is merged into the request an OpenAI-compatible endpoint
 	// receives, for the fields that are the server's own rather than the
 	// protocol's.
@@ -758,6 +772,7 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 	p.validateEmbedding(multiErr)
 	p.validateEndpoint(multiErr)
 	p.validateExtraBody(multiErr)
+	p.validateAgentSettings(multiErr)
 }
 
 func (p *Provider) validateEmbedding(multiErr *errortypes.MultiError) {
@@ -891,6 +906,7 @@ func (p *Provider) applyDefaults() {
 	if p.ThinkingStyle == "" {
 		p.ThinkingStyle = ThinkingStyleAuto
 	}
+	p.AdvisorModel = strings.TrimSpace(p.AdvisorModel)
 	p.NormalizePlatformSettings()
 	if p.EmbeddingInputStyle == "" {
 		p.EmbeddingInputStyle = EmbeddingInputStyleNone

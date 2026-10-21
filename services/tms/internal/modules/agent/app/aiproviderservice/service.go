@@ -423,6 +423,10 @@ func (s *Service) apply(
 	if provider.ThinkingStyle == "" {
 		provider.ThinkingStyle = aiprovider.ThinkingStyleAuto
 	}
+	provider.AdvisorEnabled = req.AdvisorEnabled
+	provider.AdvisorModel = strings.TrimSpace(req.AdvisorModel)
+	provider.Scripts = req.Scripts
+	provider.ScriptWrites = req.ScriptWrites
 	provider.ExtraBody = req.ExtraBody
 	provider.EmbeddingDimensions = req.EmbeddingDimensions
 	provider.EmbeddingInputStyle = req.EmbeddingInputStyle

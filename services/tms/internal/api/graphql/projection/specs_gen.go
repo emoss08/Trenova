@@ -1595,6 +1595,22 @@ func init() {
 				FieldMapKey: "platform",
 			},
 			{
+				Name:        "advisorEnabled",
+				FieldMapKey: "advisorEnabled",
+			},
+			{
+				Name:        "advisorModel",
+				FieldMapKey: "advisorModel",
+			},
+			{
+				Name:        "scripts",
+				FieldMapKey: "scripts",
+			},
+			{
+				Name:        "scriptWrites",
+				FieldMapKey: "scriptWrites",
+			},
+			{
 				Name:        "platformSettings",
 				FieldMapKey: "platformSettings",
 			},
