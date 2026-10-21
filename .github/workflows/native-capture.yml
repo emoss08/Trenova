@@ -99,6 +99,30 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The Windows job checks out the whole repository, and Windows refuses a
+      # path with a reserved device name (NUL, CON, COM1, ... whatever the
+      # extension), a character it does not allow, or a trailing dot or space.
+      - name: Every tracked path checks out on Windows
+        working-directory: ${{ github.workspace }}
+        run: |
+          refused=$(git ls-files | awk -F/ '
+            {
+              for (i = 1; i <= NF; i++) {
+                part = $i
+                base = toupper(part)
+                sub(/\..*/, "", base)
+                if (base ~ /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/ || part ~ /[<>:"|?*\\]/ || part ~ /[. ]$/) {
+                  print
+                  next
+                }
+              }
+            }')
+          if [ -n "$refused" ]; then
+            echo "::error::These paths cannot be checked out on Windows; rename them:"
+            echo "$refused"
+            exit 1
+          fi
+
       - uses: dtolnay/rust-toolchain@master
         if: inputs.version != ''
         with:
