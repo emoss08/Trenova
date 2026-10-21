@@ -2,6 +2,7 @@ package contentscanservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/clamav"
@@ -85,7 +86,7 @@ func (s *Service) Check(
 
 	result, err := s.scanner.Scan(ctx, req.Content)
 	if err != nil {
-		if !s.failOpen {
+		if !s.failOpen || errors.Is(err, contentscanports.ErrTooLarge) {
 			return nil, err
 		}
 		s.l.Warn("let a file through unscanned because the scanner could not check it",

@@ -10131,6 +10131,8 @@
   "This file holds more than {0} bytes of text. Split it into smaller files and import each one.": "此文件包含超过 {0} 字节的文本。请将其拆分为较小的文件并分别导入。",
   "This file is already filed. Undo that first to file it somewhere else.": "此文件已归档。请先撤销，再将其归档到其他位置。",
   "This file is not filed": "此文件尚未归档",
+  "This file is too large to be checked for malware, so it was not accepted.": "此文件太大，无法检查是否含有恶意软件，因此未予接受。",
+  "This file is too large to be checked for malware. Files up to {0} can be accepted.": "此文件太大，无法检查是否含有恶意软件。可接受最大 {0} 的文件。",
   "This file is too large to import": "此文件过大而无法导入",
   "This file is too large to import; the limit is 32 MiB": "此文件过大而无法导入；上限为 32 MiB",
   "This file is too large to read; the limit is 32 MiB": "此文件过大，无法读取；上限为 32 MiB",

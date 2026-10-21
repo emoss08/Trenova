@@ -57,3 +57,22 @@ func TestProcessInboundFile_HoldsTheFileWhenTheScannerCannotCheckIt(t *testing.T
 	require.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
 	assert.Equal(t, edi.InboundFileStatusReceived, fixture.file.Status)
 }
+
+func TestProcessInboundFile_QuarantinesAFileTooLargeToScanInsteadOfRetryingIt(t *testing.T) {
+	t.Parallel()
+
+	fixture := newInboundFixture(t, "ISA*00*large")
+	fixture.service.contentGate = contentscanportsmock.NewRefusingGate(
+		&contentscanports.TooLargeError{Size: 12, Limit: 4},
+	)
+	fixture.expectFileLoadAndUpdates(t)
+
+	file, err := fixture.service.ProcessInboundFile(t.Context(), &ProcessInboundFileRequest{
+		FileID:     fixture.file.ID,
+		TenantInfo: fixture.tenantInfo(),
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, edi.InboundFileStatusQuarantined, file.Status)
+	assert.Contains(t, file.FailureReason, "larger than the content scanner can check")
+}

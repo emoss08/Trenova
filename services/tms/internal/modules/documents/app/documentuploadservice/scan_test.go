@@ -104,3 +104,47 @@ func TestUploadPart_LeavesTheSessionOpenWhenTheScannerCannotCheck(t *testing.T) 
 	require.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
 	assert.Equal(t, documentupload.StatusInitiated, session.Status)
 }
+
+func TestUploadPart_FailsTheSessionOfAFileTooLargeToScan(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	content := []byte("%PDF-1.7 large")
+	session := uploadSession(tenant, content)
+
+	sessions := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
+	sessions.EXPECT().GetByID(mock.Anything, mock.Anything).Return(session, nil).Once()
+	var saved *documentupload.DocumentUploadSession
+	sessions.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			updated *documentupload.DocumentUploadSession,
+		) (*documentupload.DocumentUploadSession, error) {
+			saved = updated
+			return updated, nil
+		}).
+		Once()
+	svc := &Service{
+		l:           zap.NewNop(),
+		sessionRepo: sessions,
+		storage:     kernelportsmock.NewMockClient(t),
+		contentGate: contentscanportsmock.NewRefusingGate(
+			&contentscanports.TooLargeError{Size: int64(len(content)), Limit: 4},
+		),
+	}
+
+	_, err := svc.UploadPart(t.Context(), &documentuploadports.UploadPartRequest{
+		TenantInfo: tenant,
+		SessionID:  session.ID,
+		PartNumber: 1,
+		Body:       bytes.NewReader(content),
+		Size:       int64(len(content)),
+	})
+
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, contentscanports.ErrScannerUnavailable)
+	require.NotNil(t, saved)
+	assert.Equal(t, documentupload.StatusFailed, saved.Status)
+	assert.Equal(t, documentupload.FailureTooLargeToScan.String(), saved.FailureCode)
+}

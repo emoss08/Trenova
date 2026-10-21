@@ -23,6 +23,7 @@ const (
 	FailureConverterUnavailable         = FailureCode("CONVERTER_UNAVAILABLE")
 	FailureConverterMisconfigured       = FailureCode("CONVERTER_MISCONFIGURED")
 	FailureMalwareDetected              = FailureCode("MALWARE_DETECTED")
+	FailureTooLargeToScan               = FailureCode("TOO_LARGE_TO_SCAN")
 )
 
 func (f FailureCode) String() string {

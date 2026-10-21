@@ -554,7 +554,7 @@ variables):
 |---|---|---|
 | `clamav.address` | empty (off) | `host:port` or `unix:/path` of `clamd` |
 | `clamav.timeout` | `60s` | Longest one scan may take, connection included |
-| `clamav.maxStreamBytes` | `104857600` (100 MiB) | Largest file sent to the scanner; a larger file is refused as not checkable. Keep it at or below `clamd`'s `StreamMaxLength` |
+| `clamav.maxStreamBytes` | `104857600` (100 MiB) | Largest file sent to the scanner. A larger file, or one `clamd` refuses for its own `StreamMaxLength`, is refused as too large to check (an inbound EDI file is quarantined, not retried), even with `failOpen`. Keep it at or below `clamd`'s `StreamMaxLength` |
 | `failOpen` | `false` | Let files through unscanned while a configured scanner is unreachable. Refused in production and staging |
 
 ## Hardening
