@@ -9,6 +9,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/stretchr/testify/assert"
@@ -205,6 +206,7 @@ func TestPrerenderPagesActivityStoresEveryPageViewEncrypted(t *testing.T) {
 			Storage:    storageClient,
 			Encryption: enc,
 			Generator:  generator,
+			Config:     &config.Config{},
 			Logger:     zap.NewNop(),
 		}),
 		Encryption: enc,

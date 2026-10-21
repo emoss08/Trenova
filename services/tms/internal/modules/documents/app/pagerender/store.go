@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -30,23 +32,26 @@ type Params struct {
 	Storage    kernelports.Client
 	Encryption *encryptionservice.Service
 	Generator  *thumbnailservice.Generator
+	Config     *config.Config
 	Logger     *zap.Logger
 }
 
 type Store struct {
-	storage    kernelports.Client
-	encryption *encryptionservice.Service
-	generator  *thumbnailservice.Generator
-	group      singleflight.Group
-	logger     *zap.Logger
+	storage       kernelports.Client
+	encryption    *encryptionservice.Service
+	generator     *thumbnailservice.Generator
+	group         singleflight.Group
+	renderTimeout time.Duration
+	logger        *zap.Logger
 }
 
 func New(p Params) *Store {
 	return &Store{
-		storage:    p.Storage,
-		encryption: p.Encryption,
-		generator:  p.Generator,
-		logger:     p.Logger.Named("documents.pagerender"),
+		storage:       p.Storage,
+		encryption:    p.Encryption,
+		generator:     p.Generator,
+		renderTimeout: p.Config.Imaging.Deadlines.GetRender(),
+		logger:        p.Logger.Named("documents.pagerender"),
 	}
 }
 
@@ -86,16 +91,23 @@ func (s *Store) Get(
 		return stored, nil
 	}
 
-	rendered, err, _ := s.group.Do(key, func() (any, error) {
-		src, srcErr := source(ctx)
+	pending := s.group.DoChan(key, func() (any, error) {
+		renderCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.renderTimeout)
+		defer cancel()
+		src, srcErr := source(renderCtx)
 		if srcErr != nil {
 			return nil, srcErr
 		}
-		data, renderErr := s.generator.RenderPage(ctx, src, page, kernelports.ImagingInteractive)
+		data, renderErr := s.generator.RenderPage(
+			renderCtx,
+			src,
+			page,
+			kernelports.ImagingInteractive,
+		)
 		if renderErr != nil {
 			return nil, renderErr
 		}
-		if storeErr := s.write(ctx, tenantInfo, key, data); storeErr != nil {
+		if storeErr := s.write(renderCtx, tenantInfo, key, data); storeErr != nil {
 			s.logger.Warn(
 				"a page render could not be stored",
 				zap.String(
@@ -108,10 +120,16 @@ func (s *Store) Get(
 		}
 		return data, nil
 	})
-	if err != nil {
-		return nil, err
+	var result singleflight.Result
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case result = <-pending:
 	}
-	data, ok := rendered.([]byte)
+	if result.Err != nil {
+		return nil, result.Err
+	}
+	data, ok := result.Val.([]byte)
 	if !ok {
 		return nil, errors.New("the page render has an unexpected type")
 	}

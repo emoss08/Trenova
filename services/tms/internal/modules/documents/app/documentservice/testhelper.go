@@ -67,6 +67,7 @@ func NewTestService(
 				encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 			),
 			Generator: thumbnailGenerator,
+			Config:    &config.Config{},
 			Logger:    logger,
 		}),
 		workflowStarter: workflowstarter.New(workflowstarter.Params{
