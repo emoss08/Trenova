@@ -88,6 +88,7 @@ entities:
   assignment:
     struct: shipment.Assignment
     resource: shipment_move
+    withinRecord: true
     label: Assignment
     pluralLabel: Assignments
     description: Equipment and driver assignments for a move
@@ -101,6 +102,7 @@ entities:
   shipment_commodity:
     struct: shipment.ShipmentCommodity
     resource: shipment
+    withinRecord: true
     label: Shipment Commodity
     pluralLabel: Shipment Commodities
     description: Commodity line items on a shipment
@@ -151,6 +153,7 @@ entities:
   carrier_cost_event:
     struct: carriersettlement.CostEvent
     resource: carrier_settlement
+    withinRecord: true
     label: Carrier Cost Event
     pluralLabel: Carrier Cost Events
     description: Purchased transportation cost accruals from carrier assignments
@@ -211,7 +214,7 @@ entities:
     category: Parties
     fields:
       status: { label: "Status" }
-      number: { label: "Number" }
+      number: { label: "Number", protected: Personal }
       issuingAuthority: { label: "Issuing Authority" }
       issuedAt: { label: "Issued", type: epoch }
       expiresAt: { label: "Expires", type: epoch }
@@ -253,6 +256,7 @@ entities:
   worker_pto_balance:
     struct: worker.WorkerPTOBalance
     resource: worker_pto
+    withinRecord: true
     label: PTO Balance
     pluralLabel: PTO Balances
     description: What each worker has accrued, used and carried, per time-off type
@@ -286,21 +290,23 @@ entities:
   worker_profile:
     struct: worker.WorkerProfile
     resource: worker
+    withinRecord: true
     label: Worker Profile
     pluralLabel: Worker Profiles
     description: Licensing, compliance, and qualification details for a worker
     category: Parties
     fields:
-      dob: { label: "Date of Birth", type: epoch }
+      dob: { label: "Date of Birth", type: epoch, protected: Personal }
       lastComplianceCheck: { label: "Last Compliance Check", type: epoch }
       lastMvrCheck: { label: "Last MVR Check", type: epoch }
-      lastDrugTest: { label: "Last Drug Test", type: epoch }
-      licenseNumber: { label: "License Number" }
+      lastDrugTest: { label: "Last Drug Test", type: epoch, protected: Personal }
+      licenseNumber: { label: "License Number", protected: Personal }
       cdlClass: { label: "CDL Class" }
       cdlRestrictions: { label: "CDL Restrictions" }
       hazmatExpiry: { label: "Hazmat Expiry" }
       licenseExpiry: { label: "License Expiry" }
       medicalCardExpiry: { label: "Medical Card Expiry" }
+      twicCardNumber: { label: "TWIC Card Number", protected: Personal }
       twicExpiry: { label: "TWIC Expiry" }
       mvrDueDate: { label: "MVR Due Date" }
       physicalDueDate: { label: "Physical Due Date" }
@@ -371,6 +377,7 @@ entities:
   invoice_line:
     struct: invoice.InvoiceLine
     resource: invoice
+    withinRecord: true
     label: Invoice Line
     pluralLabel: Invoice Lines
     description: Line items on an invoice
@@ -474,6 +481,7 @@ entities:
   report_run:
     struct: report.ReportRun
     resource: report
+    withinRecord: true
     label: Report Run
     pluralLabel: Report Runs
     description: Execution history for reports, schedules, and exports
@@ -627,6 +635,7 @@ entities:
   ifta_return_line:
     struct: ifta.ReturnLine
     resource: ifta_return
+    withinRecord: true
     label: IFTA Return Line
     pluralLabel: IFTA Return Lines
     description: One return line per jurisdiction and fuel type
@@ -750,6 +759,7 @@ entities:
   customer_payment_application:
     struct: customerpayment.Application
     resource: customer_payment
+    withinRecord: true
     label: Payment Application
     pluralLabel: Payment Applications
     description: Which invoice each dollar of a payment was applied to
@@ -785,6 +795,7 @@ entities:
   invoice_adjustment:
     struct: invoiceadjustment.InvoiceAdjustment
     resource: invoice
+    withinRecord: true
     label: Invoice Adjustment
     pluralLabel: Invoice Adjustments
     description: Credit memos and rebills against an issued invoice
@@ -817,6 +828,7 @@ entities:
   invoice_adjustment_line:
     struct: invoiceadjustment.InvoiceAdjustmentLine
     resource: invoice
+    withinRecord: true
     label: Invoice Adjustment Line
     pluralLabel: Invoice Adjustment Lines
     description: Per-charge credit and rebill detail behind an adjustment
@@ -877,6 +889,7 @@ entities:
   driver_settlement_line:
     struct: driversettlement.SettlementLine
     resource: driver_settlement
+    withinRecord: true
     label: Settlement Line
     pluralLabel: Settlement Lines
     description: Each earning, deduction and reimbursement on a settlement
@@ -895,6 +908,7 @@ entities:
   driver_settlement_batch:
     struct: driversettlement.SettlementBatch
     resource: driver_settlement
+    withinRecord: true
     label: Settlement Batch
     pluralLabel: Settlement Batches
     description: A pay run and its totals
@@ -914,6 +928,7 @@ entities:
   driver_pay_event:
     struct: driversettlement.PayEvent
     resource: driver_settlement
+    withinRecord: true
     label: Driver Pay Event
     pluralLabel: Driver Pay Events
     description: Pay accrued against a shipment, before and after it settles
@@ -964,6 +979,7 @@ entities:
   escrow_transaction:
     struct: driverpay.EscrowTransaction
     resource: escrow_account
+    withinRecord: true
     label: Escrow Transaction
     pluralLabel: Escrow Transactions
     description: Contributions, interest, refunds and deductions against escrow
@@ -1082,8 +1098,8 @@ entities:
       defaultMaxCharge: { label: "Default Maximum Charge", format: money }
       roundingMode: { label: "Rounding Mode" }
       roundingPrecision: { label: "Rounding Precision" }
-      marginFloorPercent: { label: "Margin Floor (%)" }
-      maxPayPercentOfSell: { label: "Max Pay % of Sell" }
+      marginFloorPercent: { label: "Margin Floor (%)", protected: Margins }
+      maxPayPercentOfSell: { label: "Max Pay % of Sell", protected: Margins }
       reviewComment: { label: "Review Comment" }
       currentVersionNumber: { label: "Current Version" }
     edges:
@@ -1107,6 +1123,7 @@ entities:
   rate_agreement_rule:
     struct: rateagreement.RateAgreementRule
     resource: rate_agreement
+    withinRecord: true
     label: Lane Rule
     pluralLabel: Lane Rules
     description: The lane, applicability and price of one line of a contract
@@ -1132,6 +1149,7 @@ entities:
   rate_agreement_rule_break:
     struct: rateagreement.RateAgreementRuleBreak
     resource: rate_agreement
+    withinRecord: true
     label: Weight Break
     pluralLabel: Weight Breaks
     description: The rate steps of a weight-broken lane rule
@@ -1144,6 +1162,7 @@ entities:
   rate_agreement_accessorial:
     struct: rateagreement.RateAgreementAccessorial
     resource: rate_agreement
+    withinRecord: true
     label: Contract Accessorial
     pluralLabel: Contract Accessorials
     description: The negotiated price of each accessorial under a contract
@@ -1163,6 +1182,7 @@ entities:
   rate_agreement_version:
     struct: rateagreement.RateAgreementVersion
     resource: rate_agreement
+    withinRecord: true
     label: Agreement Version
     pluralLabel: Agreement Versions
     description: What a contract said at each revision, and why it changed
@@ -1170,6 +1190,8 @@ entities:
     fields:
       versionNumber: { label: Version }
       changeMessage: { label: "Change Message" }
+      marginFloorPercent: { label: "Margin Floor (%)", protected: Margins }
+      maxPayPercentOfSell: { label: "Max Pay % of Sell", protected: Margins }
 
   # The rate leakage fact. contextHash fingerprints the inputs for dedupe and
   # trace is the engine's explanation tree; neither is a reportable value.
@@ -1226,6 +1248,7 @@ entities:
   journal_batch:
     struct: journalentry.JournalBatch
     resource: journal_entry
+    withinRecord: true
     label: Journal Batch
     pluralLabel: Journal Batches
     description: The unit journal entries are posted in
@@ -1282,6 +1305,7 @@ entities:
   journal_entry_line:
     struct: journalentry.JournalEntryLine
     resource: journal_entry
+    withinRecord: true
     label: Journal Line
     pluralLabel: Journal Lines
     description: Debit and credit detail behind each journal entry
@@ -1307,6 +1331,7 @@ entities:
   gl_account_balance:
     struct: glbalance.GLAccountPeriodBalance
     resource: accounting_report
+    withinRecord: true
     label: Account Period Balance
     pluralLabel: Account Period Balances
     description: Debits, credits and net change per GL account per fiscal period
@@ -1326,6 +1351,7 @@ entities:
   journal_source:
     struct: journalsource.Source
     resource: journal_entry
+    withinRecord: true
     label: Journal Source
     pluralLabel: Journal Sources
     description: What operational event produced each journal entry
@@ -1344,6 +1370,7 @@ entities:
   customer_ledger_entry:
     struct: customerledger.CustomerLedgerEntry
     resource: accounts_receivable
+    withinRecord: true
     label: Customer Ledger Entry
     pluralLabel: Customer Ledger Entries
     description: The AR subledger — every document that moved a customer's balance
@@ -1398,6 +1425,7 @@ entities:
   accounting_inbound_change:
     struct: accountingsync.AccountingInboundChange
     resource: accounting_sync
+    withinRecord: true
     label: Payment From the Books
     pluralLabel: Payments From the Books
     description: Payments recorded in the accounting system against documents Trenova sent, and whether each was applied in Trenova
@@ -1426,6 +1454,7 @@ entities:
   accounting_drift_finding:
     struct: accountingsync.AccountingDriftFinding
     resource: accounting_sync
+    withinRecord: true
     label: Drift Finding
     pluralLabel: Drift Findings
     description: Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled
@@ -1535,6 +1564,7 @@ entities:
   factoring_invoice_state:
     struct: factoring.InvoiceState
     resource: invoice
+    withinRecord: true
     label: Invoice Factoring State
     pluralLabel: Invoice Factoring States
     description: Whether each factored invoice is ready to submit to its factor, what is holding it back, and since when
@@ -1594,6 +1624,7 @@ entities:
   factoring_submission_item:
     struct: factoring.SubmissionItem
     resource: factoring_submission
+    withinRecord: true
     label: Factoring Schedule Invoice
     pluralLabel: Factoring Schedule Invoices
     description: Each invoice on a factoring schedule, with what the factor was expected to advance, charge and hold back on it
@@ -1694,6 +1725,7 @@ entities:
   factoring_remittance_line:
     struct: factoring.RemittanceLine
     resource: factoring_remittance
+    withinRecord: true
     label: Factoring Remittance Line
     pluralLabel: Factoring Remittance Lines
     description: Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to

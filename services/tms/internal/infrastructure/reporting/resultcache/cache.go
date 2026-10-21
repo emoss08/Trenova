@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/redis/go-redis/v9"
@@ -51,8 +52,10 @@ func New(p Params) reportports.ReportResultCache {
 
 // Key derives the cache key from the compiled SQL (which already embeds the
 // tenant predicates and the runner's row/field authorization), the bound
-// arguments, the output format, and the current data-version counters for
-// every table the query touches.
+// arguments, the output format, the read scope the query runs under, and the
+// current data-version counters for every table the query touches. The read
+// scope narrows rows in the database, not in the SQL, so two people whose
+// scopes differ never share a result.
 func (c *Cache) Key(
 	ctx context.Context,
 	compiled *reportports.CompiledReportQuery,
@@ -62,6 +65,11 @@ func (c *Cache) Key(
 	argsJSON, err := sonic.Marshal(compiled.Args)
 	if err != nil {
 		return "", fmt.Errorf("canonicalize report query args: %w", err)
+	}
+
+	readScope, err := readscope.Encode(ctx)
+	if err != nil {
+		return "", fmt.Errorf("resolve the read scope of a report query: %w", err)
 	}
 
 	versions, err := c.dataVersions(ctx, orgID, compiled.ReferencedTables)
@@ -77,6 +85,8 @@ func (c *Cache) Key(
 	h.Write([]byte(format))
 	h.Write([]byte{0})
 	h.Write([]byte(orgID))
+	h.Write([]byte{0})
+	h.Write([]byte(readScope))
 	h.Write([]byte{0})
 	h.Write([]byte(versions))
 

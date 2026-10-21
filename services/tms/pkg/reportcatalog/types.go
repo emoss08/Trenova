@@ -76,6 +76,21 @@ func (a Aggregation) IsValid() bool {
 	}
 }
 
+// FieldClass is what reading a field of a record reached through another
+// record takes: a field in its kind's reference view is shown to anyone who
+// may read the record that links to it, and every other field needs the
+// kind's own read (docs/engineering/reference-views.md).
+type FieldClass string
+
+const (
+	ClassReference FieldClass = "reference"
+	ClassKindRead  FieldClass = "kind_read"
+)
+
+func (c FieldClass) IsValid() bool {
+	return c == ClassReference || c == ClassKindRead
+}
+
 type EnumValue struct {
 	Value string
 	Label string
@@ -93,6 +108,10 @@ type Field struct {
 	Aggregations []Aggregation
 	Filterable   bool
 	Groupable    bool
+	Class        FieldClass
+	// Protected is the field group a reader also needs read on, as the
+	// GraphQL schema's @protected marks it; empty for an unprotected field.
+	Protected permission.FieldGroup
 }
 
 func (f *Field) SupportsAggregation(agg Aggregation) bool {
@@ -123,8 +142,13 @@ type Entity struct {
 	Category        string
 	Tenant          TenantColumns
 	OwnershipColumn string
-	Fields          []Field
-	Edges           []Edge
+	// WithinRecord marks an entity whose rows belong to its resource's
+	// record without being that record, such as a worker's profile or an
+	// invoice's lines: none of its fields is in the resource's reference
+	// view, so each needs the resource's read.
+	WithinRecord bool
+	Fields       []Field
+	Edges        []Edge
 
 	fieldsByKey map[string]int
 	edgesByName map[string]int

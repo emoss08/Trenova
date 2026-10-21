@@ -88,6 +88,7 @@ func (s *Service) ExportDashboard(
 			Request:    req.Request,
 			Definition: definition,
 			Params:     tile.Params,
+			export:     true,
 		})
 		if previewErr != nil {
 			s.l.Error("dashboard tile failed to export",
