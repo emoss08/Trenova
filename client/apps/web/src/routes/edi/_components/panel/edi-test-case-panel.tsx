@@ -148,14 +148,16 @@ function TestCaseEditPanel({
     }
   }, [form, open, testCase]);
 
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (!open) {
       setPreview(undefined);
       setInspectorOpen(false);
       setInspectorTab("overview");
       setSelectedSegmentIndex(1);
     }
-  }, [open]);
+  }
 
   const mutation = useApiMutation({
     mutationFn: (values: EDITestCaseFormValues) => {

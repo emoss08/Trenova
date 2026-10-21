@@ -29,7 +29,7 @@ import { getEndOfDay } from "@trenova/shared/lib/date";
 import { toMinorUnits } from "@trenova/shared/lib/charge-split";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { Invoice } from "@trenova/shared/types/invoice";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Allocation = { checked: boolean; amount: string };
 
@@ -62,9 +62,11 @@ export function ApplyCreditMemoDialog({
     [openItems.data, creditMemo.id],
   );
 
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (open) setAllocations({});
-  }, [open]);
+  }
 
   const remainingMinor = toMinorUnits(creditRemaining);
   const selected = items

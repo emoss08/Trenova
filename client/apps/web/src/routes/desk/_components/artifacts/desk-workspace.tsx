@@ -9,6 +9,7 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import {
   useCallback,
@@ -638,6 +639,7 @@ export function DeskWorkspace({
   // Opening one remembers it for the stack, with the one it replaces, for
   // as long as the tab is open.
   const activeId = active?.id ?? null;
+  const nowSeconds = useNow("minute");
   const open = useCallback(
     (id: string) => {
       setActiveArtifact(threadId, id);
@@ -714,7 +716,7 @@ export function DeskWorkspace({
     void navigator.clipboard?.writeText(window.location.origin + link);
     toast.success(t("Link copied"));
   };
-  const older = olderNote(artifact.createdAt, artifact.turn, new Date());
+  const older = olderNote(artifact.createdAt, artifact.turn, new Date(nowSeconds * 1000));
   const pinned = active.versions.some((version) => version.pinned);
 
   return (

@@ -409,7 +409,7 @@ export function classifyValues(
 
   const dated = datedKey(key);
   const present = values.filter((value) => !isEmptyValue(value, dated !== null));
-  if (present.length === 0 || present.every(isRecordId)) return null;
+  if (present.every(isRecordId)) return null;
 
   if (FLAG_KEYS.has(key.toLowerCase())) {
     return present.some((value) => value === true) ? "flag" : null;

@@ -12,7 +12,7 @@ import {
 import { linkEdiCarrierInvoiceToCarrier } from "@/lib/graphql/carrier-settlement";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -40,8 +40,8 @@ export function LinkCarrierDialog({
   const form = useForm<LinkCarrierFormValues>({
     defaultValues: { carrierId: suggestedCarrierId ?? "" },
   });
-  const { control, handleSubmit, watch, reset } = form;
-  const carrierId = watch("carrierId");
+  const { control, handleSubmit, reset } = form;
+  const carrierId = useWatch({ control, name: "carrierId" });
 
   // Default values only apply on mount, so re-seed the form whenever the dialog
   // opens or a suggestion arrives — otherwise a previous invoice's carrier (or a

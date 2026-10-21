@@ -17,8 +17,12 @@ export function DeskCountdown({
   tone?: "warn" | "ink";
 }) {
   const [left, setLeft] = useState(from);
-  useEffect(() => {
+  const [prevFrom, setPrevFrom] = useState(from);
+  if (from !== prevFrom) {
+    setPrevFrom(from);
     setLeft(from);
+  }
+  useEffect(() => {
     const timer = window.setInterval(() => setLeft((value) => Math.max(1, value - 1)), 1000);
     return () => window.clearInterval(timer);
   }, [from]);

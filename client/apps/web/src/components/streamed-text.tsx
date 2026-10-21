@@ -80,22 +80,28 @@ export function StreamedText({
 }) {
   const reduceMotion = useReducedMotion() ?? false;
   const layout = useMemo(() => {
+    const next: { segment: StreamedSegment; words: Word[] }[] = [];
     let offset = 0;
-    return segments.map((segment) => {
-      const words = splitWords(segment.text, offset);
+    for (const segment of segments) {
+      next.push({ segment, words: splitWords(segment.text, offset) });
       offset += segment.text.length;
-      return { segment, words };
-    });
+    }
+    return next;
   }, [segments]);
   const total = segments.reduce((sum, segment) => sum + segment.text.length, 0);
   const [revealed, setRevealed] = useState(reduceMotion ? total : 0);
+  const [stream, setStream] = useState({ streamKey, total, reduceMotion });
+  if (
+    stream.streamKey !== streamKey ||
+    stream.total !== total ||
+    stream.reduceMotion !== reduceMotion
+  ) {
+    setStream({ streamKey, total, reduceMotion });
+    setRevealed(reduceMotion ? total : 0);
+  }
 
   useEffect(() => {
-    if (reduceMotion) {
-      setRevealed(total);
-      return undefined;
-    }
-    setRevealed(0);
+    if (reduceMotion) return undefined;
     const timer = window.setInterval(() => {
       setRevealed((current) => {
         const step =

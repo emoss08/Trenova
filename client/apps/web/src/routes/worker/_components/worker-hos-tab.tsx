@@ -45,6 +45,7 @@ import {
   Truck01Icon,
   UserX01Icon,
 } from "@trenova/shared/components/icons";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 
@@ -756,7 +757,7 @@ function DailyLogsSection({ workerId }: { workerId: string }) {
     refetchInterval: selectedDay.isToday ? REFETCH_INTERVAL_MS : false,
   });
 
-  const nowSec = Math.floor(Date.now() / 1000);
+  const nowSec = useNow();
   const sortedEntries = [...(logsQuery.data ?? [])].sort((a, b) => a.logStartAt - b.logStartAt);
   const segments = buildEldSegments(sortedEntries, selectedDay.startAt, selectedDay.endAt, nowSec);
   const laneTotals = buildLaneTotalsMs(selectedDay.dailyLog, segments);

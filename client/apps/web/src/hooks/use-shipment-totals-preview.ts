@@ -66,6 +66,12 @@ export function useShipmentTotalsPreview() {
   });
 
   const debouncedHash = useDebounce(watchedFieldsHash, 500);
+  const [seenHash, setSeenHash] = useState<string | null>(null);
+  if (debouncedHash !== seenHash) {
+    setSeenHash(debouncedHash);
+    setIsCalculating(isRatable(getValues()));
+    setError(null);
+  }
 
   const applyTotals = useCallback(
     (result: ShipmentTotalsResponse) => {
@@ -190,8 +196,6 @@ export function useShipmentTotalsPreview() {
   useEffect(() => {
     if (!isRatable(getValues())) {
       lastHashRef.current = "";
-      setIsCalculating(false);
-      setError(null);
       return;
     }
 
@@ -201,9 +205,6 @@ export function useShipmentTotalsPreview() {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
-    setIsCalculating(true);
-    setError(null);
 
     const payload = toRatingPreviewPayload(getValues());
 

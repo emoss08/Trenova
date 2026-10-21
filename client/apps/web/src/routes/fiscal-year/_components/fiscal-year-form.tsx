@@ -11,7 +11,7 @@ import type { FiscalYear } from "@/types/fiscal-year";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getUTCYearBounds } from "@trenova/shared/lib/date";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { LazyLoadComponent } from "react-lazy-load-image-component";
 import { FiscalPeriodTable } from "./fiscal-periods-table";
@@ -24,6 +24,7 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
   const { control, setValue, getValues, getFieldState, reset, formState } =
     useFormContext<FiscalYear>();
   const isEdit = mode === "edit";
+  const [currentYear] = useState(() => new Date().getFullYear());
 
   const year = useWatch({ control, name: "year" });
   const isCalendarYear = useWatch({ control, name: "isCalendarYear" });
@@ -85,8 +86,8 @@ export function FiscalYearForm({ mode }: { mode: "create" | "edit" }) {
             label={t("Year")}
             placeholder="2025"
             description={t("Fiscal year identifier")}
-            min={new Date().getFullYear() - 1}
-            max={new Date().getFullYear() + 5}
+            min={currentYear - 1}
+            max={currentYear + 5}
             readOnly={isEdit}
           />
         </FormControl>

@@ -53,6 +53,7 @@ export function ActivityTimeline({ scrollElement }: { scrollElement: HTMLElement
   const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } = query;
   const pending = hasNextPage === true;
 
+  // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual is incompatible with the React Compiler; file is already "use no memo", which oxlint 1.89 ignores
   const virtualizer = useVirtualizer({
     count: events.length + (pending ? 1 : 0),
     getScrollElement: () => scrollElement,

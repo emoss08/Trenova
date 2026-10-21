@@ -64,7 +64,7 @@ type DialogState = {
 export function HolidayCalendar() {
   const t = useT();
 
-  const thisYear = new Date().getUTCFullYear();
+  const [thisYear] = useState(() => new Date().getUTCFullYear());
   const [year, setYear] = useState(thisYear);
   const [dialog, setDialog] = useState<DialogState>({ open: false, entry: null });
   const [pendingDelete, setPendingDelete] = useState<OrgHolidayRow | null>(null);
@@ -318,7 +318,7 @@ function MonthCard({
   const t = useT();
   const leading = new Date(Date.UTC(year, month, 1)).getUTCDay();
   const total = daysInMonth(year, month);
-  const today = new Date();
+  const [today] = useState(() => new Date());
   const todayKey = isCurrentYear
     ? isoDateKey(today.getFullYear(), today.getMonth(), today.getDate())
     : null;

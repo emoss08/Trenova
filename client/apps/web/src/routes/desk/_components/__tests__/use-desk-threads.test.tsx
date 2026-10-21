@@ -3,6 +3,7 @@ import { threadListQuery, threadsOf, updateCachedThread } from "@/lib/thread-lis
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider, useInfiniteQuery } from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDeskThreads } from "../use-desk-threads";
 
@@ -41,7 +42,9 @@ const rail: { loadMore: () => Promise<unknown> } = { loadMore: () => Promise.res
 
 /** Stands in for the Desk's frame: it reads only what the hook selects. */
 function Frame({ activeThreadId }: { activeThreadId: string | null }) {
-  renders.frame += 1;
+  useEffect(() => {
+    renders.frame += 1;
+  });
   const { threads, listedThread } = useDeskThreads(activeThreadId);
   return (
     <p data-testid="frame">
@@ -53,7 +56,9 @@ function Frame({ activeThreadId }: { activeThreadId: string | null }) {
 /** Stands in for the rail: it reads the whole list and asks for the next page. */
 function Rail() {
   const query = useInfiniteQuery(threadListQuery());
-  rail.loadMore = query.fetchNextPage;
+  useEffect(() => {
+    rail.loadMore = query.fetchNextPage;
+  });
   return <p data-testid="rail">{threadsOf(query.data).length} listed</p>;
 }
 

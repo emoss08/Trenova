@@ -212,10 +212,13 @@ function Highlight<T extends React.ElementType = "div">({ ref, ...props }: Highl
     setBoundsState((prev) => (prev === null ? prev : null));
   }, []);
 
-  React.useEffect(() => {
+  const [prevValues, setPrevValues] = React.useState({ value, defaultValue });
+
+  if (prevValues.value !== value || prevValues.defaultValue !== defaultValue) {
+    setPrevValues({ value, defaultValue });
     if (value !== undefined) setActiveValue(value);
     else if (defaultValue !== undefined) setActiveValue(defaultValue);
-  }, [value, defaultValue]);
+  }
 
   const id = React.useId();
 

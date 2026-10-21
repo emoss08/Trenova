@@ -11,7 +11,8 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { createCroppedWebPFile, loadImageFromFile } from "@/lib/images/crop-image";
 import { SpinnerIcon } from "@trenova/shared/components/icons";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useObjectUrl } from "@trenova/shared/hooks/use-object-url";
+import { useMemo, useRef, useState } from "react";
 import ReactCrop, { centerCrop, makeAspectCrop, type Crop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -75,31 +76,19 @@ export function ImageCropUploadDialog({
   const t = useT();
 
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const previewUrl = useObjectUrl(file);
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [prevFile, setPrevFile] = useState(file);
 
-  useEffect(() => {
-    if (!file) {
-      setPreviewUrl(null);
-      setCrop(undefined);
-      setCompletedCrop(undefined);
-      setErrorMessage(null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
+  if (prevFile !== file) {
+    setPrevFile(file);
     setCrop(undefined);
     setCompletedCrop(undefined);
     setErrorMessage(null);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [file]);
+  }
 
   const canSubmit = useMemo(
     () => Boolean(file && completedCrop?.width && completedCrop?.height && !isSubmitting),

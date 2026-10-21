@@ -37,7 +37,14 @@ export function DeskAgentPicker({
   openSignal?: number;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(openSignal > 0);
+  const [seenOpenSignal, setSeenOpenSignal] = useState(openSignal);
+  if (openSignal !== seenOpenSignal) {
+    setSeenOpenSignal(openSignal);
+    if (openSignal > 0) {
+      setOpen(true);
+    }
+  }
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const onOpenChange = (next: boolean) => {
@@ -47,11 +54,6 @@ export function DeskAgentPicker({
     }
     setOpen(next);
   };
-  useEffect(() => {
-    if (openSignal > 0) {
-      setOpen(true);
-    }
-  }, [openSignal]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listId = useId();

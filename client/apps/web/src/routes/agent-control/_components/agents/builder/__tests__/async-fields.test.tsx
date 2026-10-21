@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { aicFieldTrigger, aicMultiFieldTrigger } from "../../../edit/field-trigger";
@@ -53,8 +53,13 @@ vi.mock("@/components/fields/select-field", () => ({
 function renderInForm(children: ReactNode, values: Partial<AgentFormValues>) {
   let form!: UseFormReturn<AgentFormValues>;
   function Host() {
-    form = useForm<AgentFormValues>({ defaultValues: { ...agentFormDefaults, ...values } });
-    return <FormProvider {...form}>{children}</FormProvider>;
+    const hostForm = useForm<AgentFormValues>({
+      defaultValues: { ...agentFormDefaults, ...values },
+    });
+    useEffect(() => {
+      form = hostForm;
+    });
+    return <FormProvider {...hostForm}>{children}</FormProvider>;
   }
   render(<Host />);
   return () => form;

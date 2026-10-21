@@ -17,7 +17,7 @@ import {
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import type { IftaReturnStatus } from "@trenova/shared/types/fuel-ifta-enums";
 import { CalendarClockIcon } from "@trenova/shared/components/icons";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 type QuarterValue = "1" | "2" | "3" | "4";
 
@@ -49,10 +49,11 @@ export function QuarterPicker({
   detail,
 }: QuarterPickerProps) {
   const t = useT();
+  const [currentYear] = useState(() => new Date().getFullYear());
 
   const years = useMemo(
-    () => iftaYearOptions(new Date().getFullYear(), period.year),
-    [period.year],
+    () => iftaYearOptions(currentYear, period.year),
+    [currentYear, period.year],
   );
   const yearItems = useMemo(
     () => years.map((year) => ({ value: String(year), label: String(year) })),
