@@ -59,7 +59,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [agent-waits](agent-waits.md) | `agent_create_wait` and the wait kinds |
 | [agent-delegation](agent-delegation.md) | `delegate_task` and the per-agent allowlist |
 | [desk-cases](desk-cases.md) | Desk case state, snoozes, waiting on replies, the ready-to-bill checklist |
-| [desk-artifacts](desk-artifacts.md) | a Desk artifact kind or resource card |
+| [desk-artifacts](desk-artifacts.md) | a Desk artifact kind or resource card (build one with the `desk-artifact` skill) |
 | [desk-bench](desk-bench.md) ([gate](desk-bench-gate.md)) | `internal/deskbench`, scenarios; run only against a seeded development database |
 | [edi-spec-onboarding](edi-spec-onboarding.md) | `ediconnectiondraft`, `edi_draft_connection`, `edi_apply_connection_draft` |
 | [agent-accounting-tools](agent-accounting-tools.md), [agent-rates-tools](agent-rates-tools.md), [agent-workforce-tools](agent-workforce-tools.md), [agent-master-data-tools](agent-master-data-tools.md), [agent-triage-tools](agent-triage-tools.md) | the tools in each area and who holds them |
