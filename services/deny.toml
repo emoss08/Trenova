@@ -2,6 +2,14 @@
 # desktop/capture has its own workspace and is checked by its own workflow.
 
 [graph]
+# The services run on Linux; the library crates also build for WebAssembly. Windows-only
+# dependencies (desktop/capture's concern) are out of scope here.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "wasm32-wasip1",
+    "wasm32-unknown-unknown",
+]
 all-features = false
 no-default-features = false
 
@@ -12,6 +20,7 @@ ignore = []
 
 [licenses]
 version = 2
+unused-allowed-license = "allow"
 confidence-threshold = 0.93
 # Compatible with shipping under FSL-1.1-ALv2: permissive licences, and the weak-copyleft
 # MPL-2.0 (file-level; we ship unmodified sources). Anything else needs a decision here.
@@ -21,6 +30,8 @@ allow = [
     "BSD-2-Clause",
     "BSD-3-Clause",
     "BSL-1.0",
+    # jpeg-encoder ports libjpeg's tables: the IJG licence is permissive, with attribution.
+    "IJG",
     "CC0-1.0",
     "CDLA-Permissive-2.0",
     "ISC",
