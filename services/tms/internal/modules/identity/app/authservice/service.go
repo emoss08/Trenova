@@ -1166,31 +1166,27 @@ func (s *Service) enforcePasswordLoginPolicy(
 }
 
 type oidcClaims struct {
-	Email             string   `json:"email"`
-	EmailVerified     oidcBool `json:"email_verified"`
-	PreferredUsername string   `json:"preferred_username"`
-	UPN               string   `json:"upn"`
-	Nonce             string   `json:"nonce"`
-	TenantID          string   `json:"tid"`
-	Subject           string   `json:"sub"`
-	ACR               string   `json:"acr"`
-	AMR               []string `json:"amr"`
+	Email                    string   `json:"email"`
+	EmailVerified            oidcBool `json:"email_verified"`
+	EmailDomainOwnerVerified oidcBool `json:"xms_edov"`
+	PreferredUsername        string   `json:"preferred_username"`
+	UPN                      string   `json:"upn"`
+	Nonce                    string   `json:"nonce"`
+	TenantID                 string   `json:"tid"`
+	Subject                  string   `json:"sub"`
+	ACR                      string   `json:"acr"`
+	AMR                      []string `json:"amr"`
 }
 
-func (c oidcClaims) EmailAddress(provider tenant.SSOProvider) string {
-	if email := strings.TrimSpace(c.Email); email != "" {
-		return strings.ToLower(email)
-	}
+func (c oidcClaims) EmailAddress() string {
+	return strings.ToLower(strings.TrimSpace(c.Email))
+}
 
-	if provider != tenant.SSOProviderAzureAD {
-		return ""
+func (c oidcClaims) EmailIsVerified(provider tenant.SSOProvider) bool {
+	if c.EmailVerified.IsTrue() {
+		return true
 	}
-
-	if username := strings.TrimSpace(c.PreferredUsername); username != "" {
-		return strings.ToLower(username)
-	}
-
-	return strings.ToLower(strings.TrimSpace(c.UPN))
+	return provider == tenant.SSOProviderAzureAD && c.EmailDomainOwnerVerified.IsTrue()
 }
 
 var federatedMFAMethods = map[string]struct{}{

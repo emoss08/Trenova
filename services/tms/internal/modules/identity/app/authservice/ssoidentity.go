@@ -55,11 +55,10 @@ func identityFromOIDCClaims(
 	provider tenant.SSOProvider,
 ) ssoIdentity {
 	return ssoIdentity{
-		Issuer:  strings.TrimSpace(issuer),
-		Subject: strings.TrimSpace(claims.Subject),
-		Email:   claims.EmailAddress(provider),
-		EmailTrusted: provider == tenant.SSOProviderAzureAD ||
-			claims.EmailVerified.IsTrue(),
+		Issuer:       strings.TrimSpace(issuer),
+		Subject:      strings.TrimSpace(claims.Subject),
+		Email:        claims.EmailAddress(),
+		EmailTrusted: claims.EmailIsVerified(provider),
 	}
 }
 

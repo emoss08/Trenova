@@ -109,6 +109,13 @@ issued under it), with `hash_version` 2; codes issued before that are unsalted S
 (`hash_version` 1), keep working until their owner generates new ones, and make the two-factor
 settings ask for that (`recoveryCodesNeedReplacing`).
 
+An SSO identity is linked to a Trenova user once, on its first sign-in, and only through an
+`email` claim the provider vouches for: `email_verified` true, or for Microsoft Entra the
+`xms_edov` (domain owner verified) optional claim. `preferred_username` and `upn` are never
+used to find a user. Every later sign-in resolves the user by the link's issuer and subject,
+whatever the email has become. Entra tenants that link new people therefore need the `email`
+and `xms_edov` optional claims on the app registration.
+
 An SSO sign-in counts as two-factor only when its identity provider has "Trust federated
 MFA" on and the ID token names an exact multi-factor `amr` value (`mfa`, `otp`, `hwk`, `swk`,
 `fpt`, `face`, `iris`, `retina`, `sc`, `fido`, `ngcmfa`) or an `acr` value the administrator
