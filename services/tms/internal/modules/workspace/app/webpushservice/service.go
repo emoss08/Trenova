@@ -3,19 +3,28 @@ package webpushservice
 import (
 	"context"
 	"net/http"
+	"strings"
+	"time"
 
 	webpush "github.com/SherClockHolmes/webpush-go"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const pushTTLSeconds = 43200
+const (
+	pushTTLSeconds     = 43200
+	pushRequestTimeout = 30 * time.Second
+	maxUserAgentLength = 255
+)
 
 type Params struct {
 	fx.In
@@ -26,16 +35,20 @@ type Params struct {
 }
 
 type Service struct {
-	l    *zap.Logger
-	cfg  config.PushConfig
-	repo notificationports.PushSubscriptionRepository
+	l            *zap.Logger
+	cfg          config.PushConfig
+	repo         notificationports.PushSubscriptionRepository
+	allowedHosts []string
+	client       webpush.HTTPClient
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:    p.Logger.Named("service.webpush"),
-		cfg:  p.Config.Push,
-		repo: p.Repo,
+		l:            p.Logger.Named("service.webpush"),
+		cfg:          p.Config.Push,
+		repo:         p.Repo,
+		allowedHosts: p.Config.Push.GetAllowedEndpointHosts(),
+		client:       httpsafe.NewClient(pushRequestTimeout),
 	}
 }
 
@@ -47,6 +60,23 @@ func (s *Service) Subscribe(
 	ctx context.Context,
 	req *notificationports.SavePushSubscriptionRequest,
 ) (*notification.PushSubscription, error) {
+	req.Endpoint = strings.TrimSpace(req.Endpoint)
+	req.UserAgent = stringutils.TruncateRunes(req.UserAgent, maxUserAgentLength)
+	candidate := &notification.PushSubscription{
+		BusinessUnitID: req.TenantInfo.BuID,
+		OrganizationID: req.TenantInfo.OrgID,
+		UserID:         req.TenantInfo.UserID,
+		Endpoint:       req.Endpoint,
+		P256dh:         req.P256dh,
+		Auth:           req.Auth,
+		UserAgent:      req.UserAgent,
+	}
+	multiErr := errortypes.NewMultiError()
+	candidate.Validate(multiErr)
+	candidate.ValidateEndpointHost(multiErr, s.allowedHosts)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
 	return s.repo.Save(ctx, req)
 }
 
@@ -89,6 +119,7 @@ func (s *Service) SendToUser(ctx context.Context, userID pulid.ID, payload *Push
 	}
 
 	options := &webpush.Options{
+		HTTPClient:      s.client,
 		Subscriber:      s.cfg.Subject,
 		VAPIDPublicKey:  s.cfg.VAPIDPublicKey,
 		VAPIDPrivateKey: s.cfg.VAPIDPrivateKey,
@@ -107,6 +138,14 @@ func (s *Service) sendOne(
 	body []byte,
 	options *webpush.Options,
 ) {
+	if !notification.PushEndpointAllowed(subscription.Endpoint, s.allowedHosts) {
+		s.l.Warn("pruning push subscription whose endpoint is not a supported push service",
+			zap.String("subscriptionId", subscription.ID.String()))
+		if delErr := s.repo.DeleteByID(ctx, subscription.ID); delErr != nil {
+			s.l.Warn("failed to prune push subscription", zap.Error(delErr))
+		}
+		return
+	}
 	target := &webpush.Subscription{
 		Endpoint: subscription.Endpoint,
 		Keys: webpush.Keys{

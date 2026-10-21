@@ -3,6 +3,7 @@ package pushsubscriptionrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -49,20 +51,30 @@ func (r *pushSubscriptionRepository) Save(
 			Auth:           req.Auth,
 			UserAgent:      req.UserAgent,
 		}
-		_, err := r.db.DBForContext(ctx).
+		result, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
 			On("CONFLICT (md5(endpoint)) DO UPDATE").
-			Set(cols.UserID.SetExcluded()).
-			Set(cols.OrganizationID.SetExcluded()).
-			Set(cols.BusinessUnitID.SetExcluded()).
 			Set(cols.P256dh.SetExcluded()).
 			Set(cols.Auth.SetExcluded()).
 			Set(cols.UserAgent.SetExcluded()).
 			Set(cols.UpdatedAt.SetExcluded()).
+			Where(cols.UserID.Expr("{} = EXCLUDED." + cols.UserID.Bare())).
+			Where(cols.OrganizationID.Expr("{} = EXCLUDED." + cols.OrganizationID.Bare())).
+			Where(cols.BusinessUnitID.Expr("{} = EXCLUDED." + cols.BusinessUnitID.Bare())).
+			Returning(strings.Join([]string{cols.ID.Bare(), cols.CreatedAt.Bare()}, ", ")).
 			Exec(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("save push subscription: %w", err)
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return nil, fmt.Errorf("save push subscription: %w", err)
+		}
+		if affected == 0 {
+			return nil, errortypes.NewConflictError(
+				"This browser is already registered for notifications by another account",
+			)
 		}
 		return entity, nil
 	})

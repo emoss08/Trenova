@@ -43,3 +43,28 @@ func TestParseAbsoluteHTTP(t *testing.T) {
 		})
 	}
 }
+
+func TestHostMatches(t *testing.T) {
+	t.Parallel()
+
+	patterns := []string{"fcm.googleapis.com", "*.push.apple.com", " *.Notify.Windows.com "}
+	tests := []struct {
+		host string
+		want bool
+	}{
+		{host: "fcm.googleapis.com", want: true},
+		{host: "FCM.googleapis.com.", want: true},
+		{host: "api.push.apple.com", want: true},
+		{host: "a.b.push.apple.com", want: true},
+		{host: "wns2-by3p.notify.windows.com", want: true},
+		{host: "push.apple.com", want: false},
+		{host: "evilpush.apple.com", want: false},
+		{host: "fcm.googleapis.com.evil.example", want: false},
+		{host: "googleapis.com", want: false},
+		{host: "", want: false},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, urlutils.HostMatches(tt.host, patterns), tt.host)
+	}
+	assert.False(t, urlutils.HostMatches("anything.example", []string{"", "*."}))
+}

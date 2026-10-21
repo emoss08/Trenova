@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -2131,9 +2132,30 @@ func (c *EDIConfig) EgressPolicy() httpsafe.Policy {
 }
 
 type PushConfig struct {
-	VAPIDPublicKey  string `mapstructure:"vapidPublicKey"`
-	VAPIDPrivateKey string `mapstructure:"vapidPrivateKey"`
-	Subject         string `mapstructure:"subject"         validate:"omitempty"`
+	VAPIDPublicKey       string   `mapstructure:"vapidPublicKey"`
+	VAPIDPrivateKey      string   `mapstructure:"vapidPrivateKey"`
+	Subject              string   `mapstructure:"subject"              validate:"omitempty"`
+	AllowedEndpointHosts []string `mapstructure:"allowedEndpointHosts"`
+}
+
+var defaultPushEndpointHosts = []string{
+	"fcm.googleapis.com",
+	"updates.push.services.mozilla.com",
+	"*.push.services.mozilla.com",
+	"*.notify.windows.com",
+	"web.push.apple.com",
+	"*.push.apple.com",
+}
+
+func DefaultPushEndpointHosts() []string {
+	return slices.Clone(defaultPushEndpointHosts)
+}
+
+func (c *PushConfig) GetAllowedEndpointHosts() []string {
+	if c == nil || len(c.AllowedEndpointHosts) == 0 {
+		return DefaultPushEndpointHosts()
+	}
+	return slices.Clone(c.AllowedEndpointHosts)
 }
 
 func (c *PushConfig) Enabled() bool {

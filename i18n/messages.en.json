@@ -90967,6 +90967,15 @@
       "go/other"
     ]
   },
+  "Endpoint must be an https address of a supported push service": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Ends": {
     "sites": 10,
     "scope": [
@@ -270948,6 +270957,15 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "This browser is already registered for notifications by another account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This can't be undone now": {
