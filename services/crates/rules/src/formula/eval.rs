@@ -13,6 +13,7 @@
 pub mod budget;
 pub mod builtins;
 pub mod error;
+pub mod interp;
 pub mod number;
 pub mod operators;
 pub mod ops;

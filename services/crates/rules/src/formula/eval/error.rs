@@ -17,6 +17,8 @@ use crate::span::Span;
 /// What went wrong, as a stable name the caller may branch on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Code {
+    /// The formula does not parse, or is empty; the checker reports the details.
+    Syntax,
     /// A field the formula reads has no value on this record.
     MissingField,
     /// A name that is neither a field, an input, a `let` nor a function.
@@ -62,6 +64,7 @@ impl Code {
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
+            Self::Syntax => "syntax",
             Self::MissingField => "missingField",
             Self::UnknownName => "unknownName",
             Self::LookupMiss => "lookupMiss",
