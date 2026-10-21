@@ -1,2 +1,2 @@
 # Product and protocol names doc comments use as words, not code.
-doc-valid-idents = ["PDFium", "ErrorInfo", "RetryInfo", "OpenMetrics", "WebP", "TrueType", ".."]
+doc-valid-idents = ["PDFium", "CodeMirror", "TypeScript", "WebAssembly", "ErrorInfo", "RetryInfo", "OpenMetrics", "WebP", "TrueType", ".."]
