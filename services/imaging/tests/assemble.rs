@@ -178,6 +178,27 @@ async fn a_split_copies_each_range_straight_from_the_source() {
 }
 
 #[tokio::test]
+async fn an_open_ended_range_runs_to_the_last_page() {
+    let Some(mut worker) = start(&[]).await else {
+        return;
+    };
+    let ranges = vec![vec![PageRange {
+        source: 0,
+        first: 4,
+        last: u32::MAX,
+        rotation: 0,
+    }]];
+    let (_, counts) = assemble(
+        &mut worker,
+        &[("application/pdf", fixture("native-10p.pdf"))],
+        ranges,
+    )
+    .await
+    .expect("assembles");
+    assert_eq!(counts, vec![6]);
+}
+
+#[tokio::test]
 async fn a_range_past_the_end_is_refused() {
     let Some(mut worker) = start(&[]).await else {
         return;

@@ -25,6 +25,7 @@ libloading.workspace = true
 libwebp-sys.workspace = true
 pdfium-render.workspace = true
 prometheus-client.workspace = true
+rcgen.workspace = true
 prost.workspace = true
 rxing.workspace = true
 serde.workspace = true

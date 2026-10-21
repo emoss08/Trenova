@@ -64,8 +64,13 @@ pub fn assemble(
                 ))
             })?;
             let count = pdf::page_count(&source.document);
-            if range.first > range.last || range.last >= count {
-                return Err(EngineError::page(range.last.max(range.first), count));
+            let last = if range.last == u32::MAX {
+                count.saturating_sub(1)
+            } else {
+                range.last
+            };
+            if count == 0 || range.first > last || last >= count {
+                return Err(EngineError::page(last.max(range.first), count));
             }
             if range.rotation % 90 != 0 {
                 return Err(EngineError::request(format!(
@@ -73,7 +78,7 @@ pub fn assemble(
                     range.rotation
                 )));
             }
-            let pages = range.last - range.first + 1;
+            let pages = last - range.first + 1;
             if total + pages > limits.max_pages {
                 return Err(EngineError::request(format!(
                     "an output may hold at most {} pages",
@@ -81,7 +86,7 @@ pub fn assemble(
                 )));
             }
             let first = page_index(range.first)?;
-            let last = page_index(range.last)?;
+            let last = page_index(last)?;
             let at = page_index(total)?;
             document
                 .pages_mut()

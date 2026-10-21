@@ -7,6 +7,7 @@
 //! `trenova-sandbox` pool runs: PDFium, the image codecs and libheif, in a
 //! hardened process that handles one job at a time.
 
+pub mod certs;
 pub mod child;
 pub mod config;
 pub mod engine;

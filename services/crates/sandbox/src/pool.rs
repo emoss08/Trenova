@@ -156,6 +156,7 @@ struct Metrics {
     killed: Family<KillLabel, Counter>,
     retired: Family<RetireLabel, Counter>,
     live: Gauge,
+    size: Gauge,
     busy: Gauge,
     child_rss_bytes: Gauge,
 }
@@ -272,6 +273,11 @@ impl Pool {
         );
         sub.register("live", "Child processes running", metrics.live.clone());
         sub.register(
+            "size",
+            "Child processes the pool is configured to keep",
+            metrics.size.clone(),
+        );
+        sub.register(
             "busy",
             "Child processes running a job",
             metrics.busy.clone(),
@@ -283,6 +289,7 @@ impl Pool {
         );
 
         let size = config.size.max(1);
+        metrics.size.set(i64::try_from(size).unwrap_or(i64::MAX));
         let inner = Arc::new(Inner {
             config,
             spec,

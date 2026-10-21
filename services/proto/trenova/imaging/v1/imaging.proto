@@ -327,7 +327,9 @@ message AssembleOutput {
 }
 
 // Pages first to last (zero-based, inclusive) of a source, turned clockwise by
-// rotation on top of their own rotation. An image source has one page.
+// rotation on top of their own rotation. An image source has one page. A last of
+// 4294967295 (the largest uint32) means the source's last page, so a whole
+// document can be named without probing it first.
 message PageRange {
   uint32 source = 1;
   uint32 first = 2;

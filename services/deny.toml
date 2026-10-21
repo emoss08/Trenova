@@ -67,6 +67,7 @@ skip = [
     { crate = "hashbrown@0.15", reason = "petgraph 0.8 under prost-build, which runs only at build time" },
     { crate = "fax@0.2", reason = "tiff 0.11 (image's TIFF decoder) is on fax 0.2; imaging-core's G4 encoder, shared with the capture companion, is on 0.3" },
     { crate = "miniz_oxide@0.8", reason = "png 0.18 pins miniz_oxide 0.8 while its flate2 is on 0.9" },
+    { crate = "base64@0.22", reason = "tonic 0.14 is on base64 0.22; pem 4 (under rcgen, for the certs subcommand) is on 0.23" },
     { crate = "syn@2", reason = "the proc-macro ecosystem is part way from syn 2 to syn 3; both only run at build time" },
 ]
 skip-tree = []

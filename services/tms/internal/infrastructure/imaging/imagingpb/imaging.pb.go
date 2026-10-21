@@ -2078,7 +2078,9 @@ func (x *AssembleOutput) GetPages() []*PageRange {
 }
 
 // Pages first to last (zero-based, inclusive) of a source, turned clockwise by
-// rotation on top of their own rotation. An image source has one page.
+// rotation on top of their own rotation. An image source has one page. A last of
+// 4294967295 (the largest uint32) means the source's last page, so a whole
+// document can be named without probing it first.
 type PageRange struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Source        uint32                 `protobuf:"varint,1,opt,name=source,proto3" json:"source,omitempty"`

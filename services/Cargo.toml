@@ -42,6 +42,7 @@ pdf-writer = "0.15"
 pdfium-render = { version = "0.9.4", default-features = false, features = ["pdfium_7881"] }
 prometheus-client = "0.25.1"
 prost = { version = "0.14.4", default-features = false, features = ["std", "derive"] }
+rcgen = { version = "0.14", default-features = false, features = ["crypto", "pem", "ring"] }
 prost-types = { version = "0.14.4", default-features = false, features = ["std"] }
 protox = "0.10"
 rustix = { version = "1.1", default-features = false, features = ["std", "fs", "process", "net", "pipe", "thread", "mm", "param"] }
