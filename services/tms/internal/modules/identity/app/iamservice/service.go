@@ -217,6 +217,7 @@ func (s *service) identityProviderFromRequest(
 		EnforceSSO:        req.EnforceSSO,
 		AutoProvision:     req.AutoProvision,
 		AllowFederatedMFA: req.AllowFederatedMFA,
+		FederatedMFAACRs:  normalizedStrings(req.FederatedMFAACRs),
 		AllowedDomains:    normalizedStrings(req.AllowedDomains),
 		AttributeMap:      req.AttributeMap,
 		OIDCIssuerURL:     strings.TrimSpace(req.OIDCIssuerURL),

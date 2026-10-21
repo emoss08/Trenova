@@ -20,6 +20,7 @@ export const emptyProvider: IdentityProvider = {
   enforceSso: false,
   autoProvision: false,
   allowFederatedMfa: true,
+  federatedMfaAcrValues: [],
   allowedDomains: [],
   attributeMap: { email: "email" },
   oidcIssuerUrl: "",

@@ -212,7 +212,7 @@ func (s *Service) Login(
 		return nil, err
 	}
 
-	challenge, err := s.issueMFAChallenge(scoped, usr, targetOrg, attempt)
+	challenge, err := s.issueMFAChallenge(scoped, usr, targetOrg, attempt, nil)
 	if err != nil || challenge != nil {
 		return challenge, err
 	}
@@ -535,8 +535,34 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		usr.BusinessUnitID = ssoConfig.BusinessUnitID
 	}
 
-	aal, mfaAt := assuranceFromOIDCClaims(claims)
+	aal, mfaAt := assuranceFromOIDCClaims(ssoConfig, claims)
 	attempt.aal = aal
+	if aal >= mfaAssuranceLevel {
+		attempt.mfaState = mfaStateFederated
+	} else {
+		attempt.mfaState = mfaStateFederationNotTrust
+		challenge, challengeErr := s.issueMFAChallenge(
+			scoped,
+			usr,
+			nil,
+			attempt,
+			&iamports.MFAChallengeFederation{
+				AuthProvider:    string(loginState.Provider),
+				ExternalSubject: claims.Subject,
+				FederationFAL:   2,
+			},
+		)
+		if challengeErr != nil {
+			return nil, challengeErr
+		}
+		if challenge != nil {
+			return &tenantports.SSOCallbackResponse{
+				LoginResponse: challenge,
+				RedirectTo:    loginState.ReturnTo,
+			}, nil
+		}
+	}
+
 	loginResp, err := s.createLoginResponse(userScope(scoped, usr), usr, loginSessionContext{
 		AuthProvider:          string(loginState.Provider),
 		ExternalSubject:       claims.Subject,
@@ -1167,21 +1193,37 @@ func (c oidcClaims) EmailAddress(provider tenant.SSOProvider) string {
 	return strings.ToLower(strings.TrimSpace(c.UPN))
 }
 
-func assuranceFromOIDCClaims(claims oidcClaims) (int, int64) {
+var federatedMFAMethods = map[string]struct{}{
+	"mfa":    {},
+	"otp":    {},
+	"hwk":    {},
+	"swk":    {},
+	"fpt":    {},
+	"face":   {},
+	"iris":   {},
+	"retina": {},
+	"sc":     {},
+	"fido":   {},
+	"ngcmfa": {},
+}
+
+func assuranceFromOIDCClaims(cfg *tenant.SSOConfig, claims oidcClaims) (int, int64) {
+	if federatedMFASatisfied(cfg, claims) {
+		return mfaAssuranceLevel, timeutils.NowUnix()
+	}
+	return 1, 0
+}
+
+func federatedMFASatisfied(cfg *tenant.SSOConfig, claims oidcClaims) bool {
+	if cfg == nil || !cfg.AllowFederatedMFA {
+		return false
+	}
 	for _, method := range claims.AMR {
-		switch strings.ToLower(strings.TrimSpace(method)) {
-		case "mfa", "otp", "totp", "webauthn", "hwk", "swk", "fido", "face", "fingerprint":
-			return 2, timeutils.NowUnix()
+		if _, ok := federatedMFAMethods[method]; ok {
+			return true
 		}
 	}
-
-	acr := strings.ToLower(strings.TrimSpace(claims.ACR))
-	if strings.Contains(acr, "aal2") || strings.Contains(acr, "level2") ||
-		strings.Contains(acr, "urn:mace:incommon:iap:silver") {
-		return 2, timeutils.NowUnix()
-	}
-
-	return 1, 0
+	return claims.ACR != "" && slices.Contains(cfg.FederatedMFAACRs, claims.ACR)
 }
 
 func validateReturnToURL(returnTo string, allowedOrigins []string) error {

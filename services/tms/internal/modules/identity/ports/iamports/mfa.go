@@ -48,13 +48,20 @@ type MFARepository interface {
 }
 
 type MFAChallenge struct {
-	UserID         pulid.ID `json:"userId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	SwitchOrg      bool     `json:"switchOrg"`
-	EmailAddress   string   `json:"emailAddress"`
-	IssuedAt       int64    `json:"issuedAt"`
-	ExpiresAt      int64    `json:"expiresAt"`
+	UserID         pulid.ID                `json:"userId"`
+	OrganizationID pulid.ID                `json:"organizationId"`
+	BusinessUnitID pulid.ID                `json:"businessUnitId"`
+	SwitchOrg      bool                    `json:"switchOrg"`
+	EmailAddress   string                  `json:"emailAddress"`
+	IssuedAt       int64                   `json:"issuedAt"`
+	ExpiresAt      int64                   `json:"expiresAt"`
+	Federation     *MFAChallengeFederation `json:"federation,omitempty"`
+}
+
+type MFAChallengeFederation struct {
+	AuthProvider    string `json:"authProvider"`
+	ExternalSubject string `json:"externalSubject"`
+	FederationFAL   int    `json:"federationFal"`
 }
 
 type MFAChallengeRepository interface {

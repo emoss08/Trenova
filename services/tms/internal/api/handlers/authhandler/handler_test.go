@@ -1,19 +1,21 @@
 package authhandler
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -409,4 +411,43 @@ func TestLogout_RefusesACookieThatDoesNotAuthenticate(t *testing.T) {
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 	svc.AssertNotCalled(t, "Logout", mock.Anything, mock.Anything)
+}
+
+func TestSSOCallbackSendsAnUntrustedFederationToTheSecondFactorWithoutASession(t *testing.T) {
+	t.Parallel()
+
+	svc := tenantportsmock.NewMockAuthService(t)
+	h, r := newTestHandler(svc)
+	loginState := &tenantports.SSOLoginState{
+		Provider:         tenant.SSOProviderOkta,
+		OrganizationSlug: "acme",
+		ReturnTo:         "https://app.example.test/",
+	}
+	svc.EXPECT().GetSSOLoginState(mock.Anything, "state-1").Return(loginState, nil)
+	svc.EXPECT().HandleSSOCallback(mock.Anything, tenantports.SSOCallbackRequest{
+		State: "state-1",
+		Code:  "code-1",
+	}).Return(&tenantports.SSOCallbackResponse{
+		LoginResponse: &tenantports.LoginResponse{
+			MFARequired:       true,
+			MFAChallengeToken: "challenge/token+1",
+			ExpiresAt:         1_800_000_300,
+		},
+		RedirectTo: loginState.ReturnTo,
+	}, nil)
+
+	r.GET("/sso/okta/callback", h.ssoCallback(tenant.SSOProviderOkta))
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/sso/okta/callback?state=state-1&code=code-1", nil))
+
+	assert.Equal(t, http.StatusFound, w.Code)
+	location, err := url.Parse(w.Header().Get("Location"))
+	require.NoError(t, err)
+	assert.Equal(t, "https://app.example.test/login/acme", location.Scheme+"://"+location.Host+location.Path)
+	assert.Empty(t, location.RawQuery)
+	fragment, err := url.ParseQuery(location.EscapedFragment())
+	require.NoError(t, err)
+	assert.Equal(t, "challenge/token+1", fragment.Get("mfa_challenge"))
+	assert.Equal(t, "1800000300", fragment.Get("mfa_expires"))
+	assert.Empty(t, w.Header().Values("Set-Cookie"))
 }

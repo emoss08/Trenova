@@ -109,6 +109,16 @@ issued under it), with `hash_version` 2; codes issued before that are unsalted S
 (`hash_version` 1), keep working until their owner generates new ones, and make the two-factor
 settings ask for that (`recoveryCodesNeedReplacing`).
 
+An SSO sign-in counts as two-factor only when its identity provider has "Trust federated
+MFA" on and the ID token names an exact multi-factor `amr` value (`mfa`, `otp`, `hwk`, `swk`,
+`fpt`, `face`, `iris`, `retina`, `sc`, `fido`, `ngcmfa`) or an `acr` value the administrator
+listed on the provider (`federatedMfaAcrValues`); no substring of an `acr` counts. The SSO row
+records `mfa_state` `federated` or `federated_not_trusted`. When the provider's MFA is not
+trusted and the person has an authenticator app, the callback issues no session: it sends the
+browser back to the sign-in page with a challenge in the URL fragment, and the `mfa` step
+finishes the sign-in with the SSO provider, subject and federation level. Without an app the
+session stays at assurance level 1, so an access policy with `mfaRequired` refuses it.
+
 Turning the authenticator off, generating new recovery codes and re-authenticating with
 password and code are step-ups of a signed-in person, recorded as `mfa.step_up` rows
 (`step_up_rejected`, or `step_up_throttled` when refused or when the attempt reached the

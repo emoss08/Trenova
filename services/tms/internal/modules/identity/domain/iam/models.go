@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -37,30 +38,31 @@ var (
 type IdentityProvider struct {
 	bun.BaseModel `bun:"table:identity_providers,alias:idp" json:"-"`
 
-	ID                  pulid.ID                 `json:"id"                bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID      pulid.ID                 `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID                 `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Name                string                   `json:"name"              bun:"name,type:VARCHAR(120),notnull"`
-	Slug                string                   `json:"slug"              bun:"slug,type:VARCHAR(80),notnull"`
-	Protocol            IdentityProviderProtocol `json:"protocol"          bun:"protocol,type:iam_identity_provider_protocol_enum,notnull"`
-	Enabled             bool                     `json:"enabled"           bun:"enabled,notnull"`
-	EnforceSSO          bool                     `json:"enforceSso"        bun:"enforce_sso,notnull"`
-	AutoProvision       bool                     `json:"autoProvision"     bun:"auto_provision,notnull"`
-	AllowFederatedMFA   bool                     `json:"allowFederatedMfa" bun:"allow_federated_mfa,notnull"`
-	AllowedDomains      []string                 `json:"allowedDomains"    bun:"allowed_domains,array"`
-	AttributeMap        map[string]string        `json:"attributeMap"      bun:"attribute_map,type:JSONB,notnull"`
-	OIDCIssuerURL       string                   `json:"oidcIssuerUrl"     bun:"oidc_issuer_url,type:VARCHAR(500)"`
-	OIDCClientID        string                   `json:"oidcClientId"      bun:"oidc_client_id,type:VARCHAR(255)"`
-	OIDCClientSecret    string                   `json:"-"                 bun:"oidc_client_secret,type:TEXT"`
-	OIDCRedirectURL     string                   `json:"oidcRedirectUrl"   bun:"oidc_redirect_url,type:VARCHAR(500)"`
-	OIDCScopes          []string                 `json:"oidcScopes"        bun:"oidc_scopes,array"`
-	SAMLEntityID        string                   `json:"samlEntityId"      bun:"saml_entity_id,type:VARCHAR(500)"`
-	SAMLSSOURL          string                   `json:"samlSsoUrl"        bun:"saml_sso_url,type:VARCHAR(500)"`
-	SAMLX509Certificate string                   `json:"-"                 bun:"saml_x509_certificate,type:TEXT"`
-	SAMLMetadataXML     string                   `json:"-"                 bun:"saml_metadata_xml,type:TEXT"`
-	Version             int64                    `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt           int64                    `json:"createdAt"         bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64                    `json:"updatedAt"         bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID                 `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
+	OrganizationID      pulid.ID                 `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID      pulid.ID                 `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	Name                string                   `json:"name"                  bun:"name,type:VARCHAR(120),notnull"`
+	Slug                string                   `json:"slug"                  bun:"slug,type:VARCHAR(80),notnull"`
+	Protocol            IdentityProviderProtocol `json:"protocol"              bun:"protocol,type:iam_identity_provider_protocol_enum,notnull"`
+	Enabled             bool                     `json:"enabled"               bun:"enabled,notnull"`
+	EnforceSSO          bool                     `json:"enforceSso"            bun:"enforce_sso,notnull"`
+	AutoProvision       bool                     `json:"autoProvision"         bun:"auto_provision,notnull"`
+	AllowFederatedMFA   bool                     `json:"allowFederatedMfa"     bun:"allow_federated_mfa,notnull"`
+	FederatedMFAACRs    []string                 `json:"federatedMfaAcrValues" bun:"federated_mfa_acr_values,array,notnull"`
+	AllowedDomains      []string                 `json:"allowedDomains"        bun:"allowed_domains,array"`
+	AttributeMap        map[string]string        `json:"attributeMap"          bun:"attribute_map,type:JSONB,notnull"`
+	OIDCIssuerURL       string                   `json:"oidcIssuerUrl"         bun:"oidc_issuer_url,type:VARCHAR(500)"`
+	OIDCClientID        string                   `json:"oidcClientId"          bun:"oidc_client_id,type:VARCHAR(255)"`
+	OIDCClientSecret    string                   `json:"-"                     bun:"oidc_client_secret,type:TEXT"`
+	OIDCRedirectURL     string                   `json:"oidcRedirectUrl"       bun:"oidc_redirect_url,type:VARCHAR(500)"`
+	OIDCScopes          []string                 `json:"oidcScopes"            bun:"oidc_scopes,array"`
+	SAMLEntityID        string                   `json:"samlEntityId"          bun:"saml_entity_id,type:VARCHAR(500)"`
+	SAMLSSOURL          string                   `json:"samlSsoUrl"            bun:"saml_sso_url,type:VARCHAR(500)"`
+	SAMLX509Certificate string                   `json:"-"                     bun:"saml_x509_certificate,type:TEXT"`
+	SAMLMetadataXML     string                   `json:"-"                     bun:"saml_metadata_xml,type:TEXT"`
+	Version             int64                    `json:"version"               bun:"version,type:BIGINT,notnull"`
+	CreatedAt           int64                    `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt           int64                    `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (p *IdentityProvider) Validate(multiErr *errortypes.MultiError) {
@@ -79,7 +81,28 @@ func (p *IdentityProvider) Validate(multiErr *errortypes.MultiError) {
 	if !p.Protocol.IsValid() {
 		multiErr.Add("protocol", errortypes.ErrInvalid, "Protocol must be OIDC or SAML")
 	}
+	if len(p.FederatedMFAACRs) > maxFederatedMFAACRs {
+		multiErr.Add(
+			"federatedMfaAcrValues",
+			errortypes.ErrInvalid,
+			"No more than 20 trusted ACR values can be listed",
+		)
+	}
+	for i, value := range p.FederatedMFAACRs {
+		if value == "" || len(value) > maxFederatedMFAACRLength {
+			multiErr.Add(
+				fmt.Sprintf("federatedMfaAcrValues[%d]", i),
+				errortypes.ErrInvalid,
+				"Each trusted ACR value must be between 1 and 255 characters",
+			)
+		}
+	}
 }
+
+const (
+	maxFederatedMFAACRs      = 20
+	maxFederatedMFAACRLength = 255
+)
 
 func (p *IdentityProvider) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	now := timeutils.NowUnix()
@@ -100,6 +123,9 @@ func (p *IdentityProvider) BeforeAppendModel(_ context.Context, q bun.Query) err
 func (p *IdentityProvider) setCollectionDefaults() {
 	if p.AllowedDomains == nil {
 		p.AllowedDomains = []string{}
+	}
+	if p.FederatedMFAACRs == nil {
+		p.FederatedMFAACRs = []string{}
 	}
 	if p.AttributeMap == nil {
 		p.AttributeMap = map[string]string{}

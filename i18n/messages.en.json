@@ -13230,15 +13230,6 @@
       "routes/edi"
     ]
   },
-  "Accept MFA claims from the provider when risk policy allows it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
-    ]
-  },
   "Accept a field": {
     "sites": 1,
     "scope": [
@@ -64378,6 +64369,15 @@
       "routes/shipment"
     ]
   },
+  "Count the provider's sign-in as two-factor when its token names a multi-factor method (amr) or one of the ACR values below. Otherwise people who use an authenticator app are asked for its code after signing in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Count this unit's miles and fuel on the quarterly return.": {
     "sites": 1,
     "scope": [
@@ -87252,6 +87252,15 @@
       "routes/agent-control"
     ]
   },
+  "Each trusted ACR value must be between 1 and 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.": {
     "sites": 1,
     "scope": [
@@ -96889,6 +96898,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Exact authentication context (acr) values this provider sends only for a multi-factor sign-in. Leave blank to trust the amr claim alone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Exact key": {
@@ -159328,6 +159346,15 @@
     ]
   },
   "No more than 100 sites can be excluded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "No more than 20 trusted ACR values can be listed": {
     "sites": 1,
     "scope": [
       "go"
@@ -282969,6 +282996,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Trusted ACR values": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Trusted to": {

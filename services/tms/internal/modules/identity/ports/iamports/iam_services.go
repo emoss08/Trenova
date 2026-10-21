@@ -17,6 +17,7 @@ type IdentityProviderRequest struct {
 	EnforceSSO        bool                         `json:"enforceSso"`
 	AutoProvision     bool                         `json:"autoProvision"`
 	AllowFederatedMFA bool                         `json:"allowFederatedMfa"`
+	FederatedMFAACRs  []string                     `json:"federatedMfaAcrValues"`
 	AllowedDomains    []string                     `json:"allowedDomains"`
 	AttributeMap      map[string]string            `json:"attributeMap"`
 	OIDCIssuerURL     string                       `json:"oidcIssuerUrl"`

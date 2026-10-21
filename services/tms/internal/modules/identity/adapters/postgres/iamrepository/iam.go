@@ -111,6 +111,7 @@ func (r *repository) UpdateIdentityProvider(
 				"enforce_sso",
 				"auto_provision",
 				"allow_federated_mfa",
+				"federated_mfa_acr_values",
 				"allowed_domains",
 				"attribute_map",
 				"oidc_issuer_url",
