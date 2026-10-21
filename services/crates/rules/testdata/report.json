@@ -1,0 +1,447 @@
+{
+  "op": "report.format",
+  "cases": [
+    {
+      "name": "reportfmt: money tames raw quotients",
+      "input": {"columns": [{"resolve": {"type": "decimal", "hint": "money"}, "values": [1082.0672643987443142, -1082.0672643987443142, null]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "$1,082.07"}, {"text": "($1,082.07)"}, {"text": ""}]}]}
+    },
+    {
+      "name": "reportfmt: number options",
+      "input": {"columns": [
+        {"resolve": {"type": "decimal", "spec": {"style": "number", "grouping": false}}, "values": [1234567.891]},
+        {"resolve": {"type": "decimal", "spec": {"style": "number", "decimals": 0}}, "values": [1234.5]},
+        {"resolve": {"type": "decimal", "spec": {"style": "number", "decimals": 1, "notation": "compact"}}, "values": [1284000]},
+        {"resolve": {"type": "decimal", "spec": {"style": "number", "decimals": 1, "suffix": " mi"}}, "values": [1284.44]},
+        {"resolve": {"type": "decimal", "spec": {"style": "percent", "decimals": 1}}, "values": [0.1834]},
+        {"resolve": {"type": "decimal", "spec": {"style": "currency", "negative": "minus"}}, "values": [-12.5]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "1234567.89"}]},
+        {"values": [{"text": "1,235"}]},
+        {"values": [{"text": "1.3M"}]},
+        {"values": [{"text": "1,284.4 mi"}]},
+        {"values": [{"text": "18.3%"}]},
+        {"values": [{"text": "-$12.50"}]}
+      ]}
+    },
+    {
+      "name": "reportfmt: durations in every style",
+      "input": {"columns": [
+        {"resolve": {"type": "decimal", "spec": {"style": "duration", "durationUnit": "seconds", "durationStyle": "clock", "decimals": 1}}, "values": [94200]},
+        {"resolve": {"type": "decimal", "spec": {"style": "duration", "durationUnit": "seconds", "durationStyle": "compact", "decimals": 1}}, "values": [94200]},
+        {"resolve": {"type": "decimal", "spec": {"style": "duration", "durationUnit": "seconds", "durationStyle": "verbose", "decimals": 1}}, "values": [94200]},
+        {"resolve": {"type": "decimal", "spec": {"style": "duration", "durationUnit": "seconds", "durationStyle": "decimalHours", "decimals": 1}}, "values": [94200]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "26:10"}]},
+        {"values": [{"text": "1d 2h 10m"}]},
+        {"values": [{"text": "1 day 2 hours 10 minutes"}]},
+        {"values": [{"text": "26.2 h"}]}
+      ]}
+    },
+    {
+      "name": "reportfmt: a negative duration keeps its sign",
+      "input": {"columns": [{"resolve": {"type": "decimal", "spec": {"style": "duration", "durationStyle": "compact"}}, "values": [-9000]}]},
+      "output": {"columns": [{"values": [{"text": "-2h 30m"}]}]}
+    },
+    {
+      "name": "reportfmt: a number in a date column is a date for the host to write",
+      "input": {"columns": [
+        {"resolve": {"type": "epoch", "spec": {"dateStyle": "date"}}, "values": [1772587800]},
+        {"resolve": {"type": "decimal", "spec": {"style": "date", "dateStyle": "date"}}, "values": [1772587800.5, -0.5]},
+        {"resolve": {"type": "epoch"}, "valueType": "epoch", "values": ["1772587800"]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"date": "1772587800"}]},
+        {"values": [{"date": "1772587800"}, {"date": "0"}]},
+        {"values": [{"date": "1772587800"}]}
+      ]}
+    },
+    {
+      "name": "reportfmt: booleans and text",
+      "input": {"columns": [
+        {"resolve": {"type": "bool"}, "values": [true, false]},
+        {"resolve": {"type": "bool", "spec": {"boolStyle": "check"}}, "values": [true, false]},
+        {"resolve": {"type": "string", "spec": {"nullText": "—"}}, "values": [null, "", "ACME"]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "Yes"}, {"text": "No"}]},
+        {"values": [{"text": "✓"}, {"text": "✗"}]},
+        {"values": [{"text": "—"}, {"text": "—"}, {"text": "ACME"}]}
+      ]}
+    },
+    {
+      "name": "reportfmt: catalog hints",
+      "input": {"columns": [
+        {"resolve": {"type": "decimal", "hint": "distance"}, "values": [1284.44]},
+        {"resolve": {"type": "int", "hint": "weight"}, "values": [42000]},
+        {"resolve": {"type": "int", "hint": "count"}, "values": [1204]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "1,284.4 mi"}]},
+        {"values": [{"text": "42,000 lbs"}]},
+        {"values": [{"text": "1,204"}]}
+      ]}
+    },
+    {
+      "name": "reportfmt: a banded value renders as the range it stands for, clamped below the first boundary",
+      "input": {"columns": [{"resolve": {"type": "decimal", "hint": "money", "band": {"edges": [0, 1000, 5000]}}, "values": [0, 1000, 5000, -250]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [
+        {"text": "$0.00 – $1,000.00"},
+        {"text": "$1,000.00 – $5,000.00"},
+        {"text": "$5,000.00+"},
+        {"text": "$0.00 – $1,000.00"}
+      ]}]}
+    },
+    {
+      "name": "reportfmt: fixed-width bands are always bounded",
+      "input": {"columns": [{"resolve": {"type": "int", "hint": "count", "band": {"width": 5}}, "values": [0, 25, -10]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "0 – 5"}, {"text": "25 – 30"}, {"text": "-10 – -5"}]}]}
+    },
+    {
+      "name": "reportfmt: band labels follow the column display",
+      "input": {"columns": [{"resolve": {"type": "int", "hint": "duration", "band": {"edges": [0, 7200, 14400]}}, "values": [0, 14400]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "0:00 – 2:00"}, {"text": "4:00+"}]}]}
+    },
+    {
+      "name": "reportfmt: a trailing unit is written once, a leading symbol leads each end",
+      "input": {"columns": [
+        {"resolve": {"type": "int", "hint": "weight", "band": {"width": 5000}}, "values": [10000]},
+        {"resolve": {"type": "decimal", "hint": "money", "band": {"width": 1000}}, "values": [0]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "10,000 – 15,000 lbs"}]},
+        {"values": [{"text": "$0.00 – $1,000.00"}]}
+      ]}
+    },
+    {
+      "name": "reportfmt: the first matching tone rule wins",
+      "input": {"columns": [{"resolve": {"type": "decimal", "hint": "money", "spec": {"rules": [
+        {"op": "gt", "value": 100000, "tone": "negative"},
+        {"op": "gt", "value": 10000, "tone": "warning"}
+      ]}}, "values": [250000, 50000, 500]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [
+        {"text": "$250,000.00", "tone": "negative"},
+        {"text": "$50,000.00", "tone": "warning"},
+        {"text": "$500.00"}
+      ]}]}
+    },
+    {
+      "name": "reportfmt: tones ignore nulls, text and booleans",
+      "input": {"columns": [{"resolve": {"type": "decimal", "hint": "money", "spec": {"rules": [{"op": "gt", "value": 0, "tone": "negative"}]}}, "values": [null, "ACME", true]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": ""}, {"text": "ACME"}, {"text": "Yes"}]}]}
+    },
+    {
+      "name": "reportfmt: a percent column compares rules on the shown scale",
+      "input": {"columns": [{"resolve": {"type": "decimal", "hint": "percent", "spec": {"rules": [{"op": "gt", "value": 12, "tone": "negative"}]}}, "values": [0.15, 0.08]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "15.0%", "tone": "negative"}, {"text": "8.0%"}]}]}
+    },
+    {
+      "name": "reportfmt: between is inclusive",
+      "input": {"columns": [{"resolve": {"type": "decimal", "hint": "money", "spec": {"rules": [{"op": "between", "value": 10, "upper": 20, "tone": "warning"}]}}, "values": [10, 20, 21]}]},
+      "output": {"columns": [{"values": [{"tone": "warning"}, {"tone": "warning"}, {"tone": "$absent"}]}]}
+    },
+    {
+      "name": "TS: raw quotients, decimals serialized as strings, percents and compact notation",
+      "input": {"columns": [
+        {"display": {"style": "currency", "decimals": 2, "grouping": true, "currency": "USD", "negative": "parentheses", "notation": "standard"}, "values": [1082.0672643987443, -1082.0672643987443]},
+        {"display": {"style": "number", "decimals": 2, "grouping": true}, "valueType": "decimal", "values": ["1082.0672643987443"]},
+        {"display": {"style": "percent", "decimals": 1, "grouping": true}, "values": [0.1834]},
+        {"display": {"style": "number", "decimals": 1, "grouping": true, "notation": "compact"}, "values": [1284000, 940]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "$1,082.07"}, {"text": "($1,082.07)"}]},
+        {"values": [{"text": "1,082.07"}]},
+        {"values": [{"text": "18.3%"}]},
+        {"values": [{"text": "1.3M"}, {"text": "940.0"}]}
+      ]}
+    },
+    {
+      "name": "TS: booleans, empty values and raw displays",
+      "input": {"columns": [
+        {"display": {"style": "bool", "boolStyle": "yesNo"}, "values": [true]},
+        {"display": {"style": "bool", "boolStyle": "check"}, "values": [false]},
+        {"display": {"style": "number", "decimals": 2, "nullText": "—"}, "values": [null]},
+        {"display": {"style": "text", "nullText": "—"}, "values": [""]},
+        {"values": [1234.5]},
+        {"display": {"style": ""}, "values": [1234.5, true, "x", null]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "Yes"}]},
+        {"values": [{"text": "✗"}]},
+        {"values": [{"text": "—"}]},
+        {"values": [{"text": "—"}]},
+        {"values": [{"text": "1234.5"}]},
+        {"values": [{"text": "1234.5"}, {"text": "true"}, {"text": "x"}, {"text": ""}]}
+      ]}
+    },
+    {
+      "name": "TS: banded columns",
+      "input": {"columns": [
+        {"display": {"style": "currency", "decimals": 2, "grouping": true, "currency": "USD", "negative": "minus", "band": {"width": 0, "edges": [0, 1000, 5000]}}, "values": [0, 1000, 5000]},
+        {"display": {"style": "number", "decimals": 0, "grouping": true, "band": {"width": 5, "edges": []}}, "values": [0, 25, -10]},
+        {"display": {"style": "duration", "decimals": 0, "grouping": true, "durationUnit": "seconds", "durationStyle": "clock", "band": {"width": 0, "edges": [0, 7200, 14400]}}, "values": [0, 14400]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "$0.00 – $1,000.00"}, {"text": "$1,000.00 – $5,000.00"}, {"text": "$5,000.00+"}]},
+        {"values": [{"text": "0 – 5"}, {"text": "25 – 30"}, {"text": "-10 – -5"}]},
+        {"values": [{"text": "0:00 – 2:00"}, {"text": "4:00+"}]}
+      ]}
+    },
+    {
+      "name": "TS (where Go disagrees): a band that cannot describe a range is ignored",
+      "input": {"columns": [
+        {"display": {"style": "number", "decimals": 2, "grouping": true, "band": {"width": 0, "edges": []}}, "values": [1000]},
+        {"display": {"style": "number", "decimals": 2, "grouping": true, "band": {"width": 0, "edges": [500]}}, "values": [1000]},
+        {"display": {"style": "number", "decimals": 2, "grouping": true, "band": {"width": -5}}, "values": [1000]},
+        {"display": {"style": "number", "decimals": 2, "grouping": true, "band": {"width": 5, "edges": [0, 1]}}, "values": [1000]},
+        {"display": {"style": "number", "decimals": 2, "grouping": true, "band": {"edges": [5, 5]}}, "values": [1000]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "1,000.00"}]},
+        {"values": [{"text": "1,000.00"}]},
+        {"values": [{"text": "1,000.00"}]},
+        {"values": [{"text": "1,000.00"}]},
+        {"values": [{"text": "1,000.00"}]}
+      ]}
+    },
+    {
+      "name": "TS: the band is carried through resolution",
+      "input": {"columns": [{"resolve": {"type": "int", "hint": "weight", "band": {"width": 5000, "edges": []}}, "values": [10000]}]},
+      "output": {"columns": [{"values": [{"text": "10,000 – 15,000 lbs"}]}]}
+    },
+    {
+      "name": "rounding is StringFixed's half away from zero, on the digits as written",
+      "input": {"columns": [{"display": {"style": "number", "decimals": 2, "grouping": true}, "values": [1.005, 2.675, "1.005", -2.675, 0.125, 1234.565]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [
+        {"text": "1.01"}, {"text": "2.68"}, {"text": "1.005"}, {"text": "-2.68"}, {"text": "0.13"}, {"text": "1,234.57"}
+      ]}]}
+    },
+    {
+      "name": "a decimal string in a decimal column rounds exactly too",
+      "input": {"columns": [{"display": {"style": "number", "decimals": 2, "grouping": true}, "valueType": "decimal", "values": ["1.005", "2.675", " 3.115 "]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "1.01"}, {"text": "2.68"}, {"text": "3.12"}]}]}
+    },
+    {
+      "name": "a negative that rounds to zero keeps its sign, as in Go",
+      "input": {"columns": [
+        {"resolve": {"type": "decimal", "hint": "money"}, "values": [-0.001]},
+        {"display": {"style": "number", "decimals": 2}, "values": [-0.001, 0]}
+      ]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "($0.00)"}]}, {"values": [{"text": "-0.00"}, {"text": "0.00"}]}]}
+    },
+    {
+      "name": "compact notation is chosen on the unrounded magnitude",
+      "input": {"columns": [
+        {"display": {"style": "number", "decimals": 0, "grouping": true, "notation": "compact"}, "values": [999999, 999.5, 1000000000000000, -1284000]},
+        {"display": {"style": "number", "decimals": 0, "grouping": false, "notation": "compact"}, "values": [999999]},
+        {"display": {"style": "percent", "decimals": 1, "grouping": true, "notation": "compact"}, "values": [12345]},
+        {"display": {"style": "currency", "decimals": 1, "currency": "EUR", "notation": "compact"}, "values": [2500000000]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "1,000K"}, {"text": "1,000"}, {"text": "1,000T"}, {"text": "-1M"}]},
+        {"values": [{"text": "1000K"}]},
+        {"values": [{"text": "1.2M%"}]},
+        {"values": [{"text": "€2.5B"}]}
+      ]}
+    },
+    {
+      "name": "decimals are clamped to 0..10",
+      "input": {"columns": [
+        {"display": {"style": "number", "decimals": 12}, "values": [1.23456789012345]},
+        {"display": {"style": "number", "decimals": -3}, "values": [1.5]}
+      ]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "1.2345678901"}]}, {"values": [{"text": "2"}]}]}
+    },
+    {
+      "name": "currency symbols, prefixes and suffixes",
+      "input": {"columns": [
+        {"display": {"style": "currency", "decimals": 2, "currency": "CHF"}, "values": [5]},
+        {"display": {"style": "currency", "decimals": 2, "currency": ""}, "values": [5]},
+        {"display": {"style": "currency", "decimals": 0, "currency": "JPY", "grouping": true}, "values": [1500]},
+        {"display": {"style": "currency", "decimals": 2, "currency": "CAD", "negative": "parentheses", "prefix": "~", "suffix": " net"}, "values": [-5]},
+        {"display": {"style": "number", "decimals": 2, "prefix": "~"}, "values": [-5]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "CHF 5.00"}]},
+        {"values": [{"text": "$5.00"}]},
+        {"values": [{"text": "¥1,500"}]},
+        {"values": [{"text": "(~C$5.00 net)"}]},
+        {"values": [{"text": "-~5.00"}]}
+      ]}
+    },
+    {
+      "name": "Go formats a number in a text or bool column as a number, and a boolean in a numeric column as a boolean",
+      "input": {"columns": [
+        {"display": {"style": "text", "decimals": 2, "grouping": true}, "values": [1234.5]},
+        {"display": {"style": "bool", "decimals": 1}, "values": [0.25]},
+        {"display": {"style": "number", "decimals": 2, "boolStyle": "onOff"}, "values": [true]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "1,234.50"}]},
+        {"values": [{"text": "0.3"}]},
+        {"values": [{"text": "On"}]}
+      ]}
+    },
+    {
+      "name": "text values take the prefix and suffix; arrays and objects read as empty",
+      "input": {"columns": [
+        {"display": {"style": "number", "decimals": 2, "prefix": "<", "suffix": ">", "nullText": "n/a"}, "valueType": "decimal", "values": ["pending", "", [1], {"a": 1}]},
+        {"display": {"style": "text"}, "valueType": "decimal", "values": ["12345"]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "<pending>"}, {"text": "n/a"}, {"text": "n/a"}, {"text": "n/a"}]},
+        {"values": [{"text": "12345"}]}
+      ]}
+    },
+    {
+      "name": "null strings and lists in a display read as empty",
+      "input": {"columns": [{"display": {"style": "number", "decimals": 1, "prefix": null, "suffix": null, "rules": null, "band": {"width": null, "edges": null}, "nullText": null}, "values": [2.25, null]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "2.3"}, {"text": ""}]}]}
+    },
+    {
+      "name": "a bool column reads true and false strings as booleans",
+      "input": {"columns": [{"display": {"style": "bool", "boolStyle": "oneZero"}, "valueType": "bool", "values": ["true", "false", "maybe"]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "1"}, {"text": "0"}, {"text": "maybe"}]}]}
+    },
+    {
+      "name": "a number too large to read exactly is shown as written",
+      "input": {"columns": [{"display": {"style": "number", "decimals": 2}, "values": [1e400]}]},
+      "exact": true,
+      "output": {"columns": [{"values": [{"text": "1e400"}]}]}
+    },
+    {
+      "name": "band arithmetic is exact",
+      "input": {"columns": [
+        {"display": {"style": "number", "decimals": 1, "band": {"width": 0.1}}, "values": [0.2]},
+        {"display": {"style": "number", "decimals": 1, "rules": [{"op": "eq", "value": 0.3, "tone": "positive"}]}, "values": [0.3, "0.3"]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "0.2 – 0.3"}]},
+        {"values": [{"text": "0.3", "tone": "positive"}, {"text": "0.3"}]}
+      ]}
+    },
+    {
+      "name": "a banded date column shows its range as numbers, as Go does",
+      "input": {"columns": [{"resolve": {"type": "int", "band": {"width": 10}, "spec": {"style": "date"}}, "values": [5]}]},
+      "output": {"columns": [{"values": [{"text": "5 – 15"}]}]}
+    },
+    {
+      "name": "duration details",
+      "input": {"columns": [
+        {"display": {"style": "duration", "decimals": 0, "durationUnit": "minutes", "durationStyle": "decimalHours"}, "values": [90]},
+        {"display": {"style": "duration", "durationStyle": "clock"}, "values": [59.9, 360000000]},
+        {"display": {"style": "duration", "durationStyle": "verbose"}, "values": [3660, 0, 59]},
+        {"display": {"style": "duration", "durationStyle": "compact"}, "values": [0]},
+        {"display": {"style": "duration", "durationStyle": "decimalHours", "decimals": 1, "grouping": true}, "values": [36000000, "x"]},
+        {"display": {"style": "duration", "durationUnit": "days", "durationStyle": "compact", "prefix": "~", "negative": "parentheses"}, "values": [-1.5]},
+        {"display": {"style": "duration", "durationUnit": "hours", "durationStyle": "decimalHours", "decimals": 2}, "values": [1.005]}
+      ]},
+      "exact": true,
+      "output": {"columns": [
+        {"values": [{"text": "1.5 h"}]},
+        {"values": [{"text": "0:00"}, {"text": "100000:00"}]},
+        {"values": [{"text": "1 hour 1 minute"}, {"text": "0 minutes"}, {"text": "0 minutes"}]},
+        {"values": [{"text": "0m"}]},
+        {"values": [{"text": "10,000.0 h"}, {"text": "x"}]},
+        {"values": [{"text": "(~1d 12h)"}]},
+        {"values": [{"text": "1.01 h"}]}
+      ]}
+    },
+    {
+      "name": "resolve: defaults from type and format hint",
+      "op": "report.resolve",
+      "input": {"columns": [
+        {"type": "decimal", "hint": "money"},
+        {"type": "int", "hint": "count"},
+        {"type": "decimal", "hint": "distance"},
+        {"type": "epoch"},
+        {"type": "bool"},
+        {"type": "string"},
+        {"type": "decimal", "hint": "percent"},
+        {"type": "int", "hint": "duration"},
+        {"type": "int", "hint": "weight"},
+        {"type": "enum", "hint": "money"}
+      ]},
+      "output": {"displays": [
+        {"style": "currency", "decimals": 2, "grouping": true, "currency": "USD", "negative": "parentheses", "notation": "standard", "prefix": "", "suffix": "", "dateStyle": "dateTime", "boolStyle": "yesNo", "durationUnit": "seconds", "durationStyle": "clock", "nullText": "", "rules": "$absent", "band": "$absent"},
+        {"style": "number", "decimals": 0},
+        {"style": "number", "decimals": 1, "suffix": " mi"},
+        {"style": "date"},
+        {"style": "bool"},
+        {"style": "text"},
+        {"style": "percent", "decimals": 1},
+        {"style": "duration", "decimals": 0},
+        {"style": "number", "decimals": 0, "suffix": " lbs"},
+        {"style": "text", "decimals": 0}
+      ]}
+    },
+    {
+      "name": "resolve: the bucket date style and author overrides",
+      "op": "report.resolve",
+      "input": {"columns": [
+        {"type": "epoch", "dateStyle": "monthYear"},
+        {"type": "decimal", "dateStyle": "monthYear"},
+        {"type": "decimal", "hint": "money", "spec": {"style": "number", "decimals": 0, "suffix": " units"}},
+        {"type": "decimal", "hint": "money", "spec": {"style": "currency"}},
+        {"type": "decimal", "hint": "distance", "spec": {"style": "number"}},
+        {"type": "decimal", "spec": {"currency": "eur", "decimals": 99, "grouping": false, "negative": "parentheses", "notation": "compact", "prefix": "~", "boolStyle": "check", "durationUnit": "hours", "durationStyle": "verbose", "nullText": "—", "dateStyle": "iso"}},
+        {"type": "decimal", "spec": {"decimals": -3}}
+      ]},
+      "output": {"displays": [
+        {"style": "date", "dateStyle": "monthYear"},
+        {"style": "number", "dateStyle": "dateTime"},
+        {"style": "number", "decimals": 0, "suffix": " units", "negative": "parentheses"},
+        {"style": "currency", "decimals": 2},
+        {"style": "number", "decimals": 1, "suffix": " mi"},
+        {"currency": "EUR", "decimals": 10, "grouping": false, "negative": "parentheses", "notation": "compact", "prefix": "~", "boolStyle": "check", "durationUnit": "hours", "durationStyle": "verbose", "nullText": "—", "dateStyle": "iso"},
+        {"decimals": 0}
+      ]}
+    },
+    {
+      "name": "resolve: bands and rules are carried; an empty band is dropped, a malformed one kept for validation",
+      "op": "report.resolve",
+      "input": {"columns": [
+        {"type": "int", "hint": "weight", "band": {"width": 5000, "edges": []}},
+        {"type": "int", "band": {"width": 0, "edges": []}},
+        {"type": "int", "band": {"edges": [5]}},
+        {"type": "decimal", "spec": {"rules": [{"op": "between", "value": 1, "upper": "2.5", "tone": "warning"}]}}
+      ]},
+      "output": {"displays": [
+        {"band": {"width": "5000", "edges": "$absent"}},
+        {"band": "$absent"},
+        {"band": {"edges": ["5"]}},
+        {"rules": [{"op": "between", "value": "1", "upper": "2.5", "tone": "warning"}]}
+      ]}
+    }
+  ]
+}
