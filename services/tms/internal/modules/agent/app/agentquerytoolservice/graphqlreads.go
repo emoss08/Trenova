@@ -25,15 +25,36 @@ type graphQLRead struct {
 	Node      string
 	Resource  string
 	Entity    func() domaintypes.PostgresSearchable
+	// Unpaged marks a list whose root field returns every record at once,
+	// keyed by its own arguments (a worker's checklists by workerId).
+	Unpaged   bool
 	Variables []graphQLVariable
 	Fields    []graphQLField
+	// Alongside are the connection reads an unpaged list makes beside its
+	// own, for records of another kind its next call needs.
+	Alongside []graphQLAlongside
 }
 
+// graphQLVariable is one of the operation's variables, described by the
+// root field argument it is sent as.
 type graphQLVariable struct {
-	Name    string
-	Type    string
-	NonNull bool
-	List    bool
+	Name        string
+	Type        string
+	NonNull     bool
+	List        bool
+	Kind        string
+	Enum        []string
+	Description string
+}
+
+// graphQLAlongside is a connection read a list makes beside its own,
+// checked by its own resolver for its own resource.
+type graphQLAlongside struct {
+	Operation string
+	RootField string
+	Resource  string
+	// Input is the variable the operation takes its table input in.
+	Input string
 }
 
 type graphQLField struct {

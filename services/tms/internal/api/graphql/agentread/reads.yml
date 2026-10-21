@@ -25,3 +25,14 @@ reads:
   - tool: worker_list_time_off
     operation: WorkerPtoTable
     reason: Time off is the WorkerPTO record, read by workerPTOEntries.
+  - tool: worker_list_checklists
+    operation: DeskWorkerChecklists
+    reason: A worker's checklists are read whole by workerChecklists, keyed by the worker.
+    alongside: [DeskWorkerChecklistTemplates]
+  - tool: worker_list_performance_reviews
+    operation: DeskWorkerPerformanceReviews
+    reason: A worker's reviews are read whole by workerPerformanceReviews, keyed by the worker.
+    alongside: [DeskPerformanceReviewTemplates]
+  - tool: worker_list_training
+    operation: DeskWorkerTrainingRecords
+    reason: A worker's training assignments are read whole by workerTrainingRecords, keyed by the worker.

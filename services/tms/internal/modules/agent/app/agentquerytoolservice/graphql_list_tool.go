@@ -79,8 +79,11 @@ type graphQLListSpec struct {
 	defaultsAt func(clk clock) map[string]any
 	// inputs are input fields every call sends, as the screen sets them for
 	// its own rendering (each time-off request's worker).
-	inputs   map[string]any
-	resource permission.Resource
+	inputs map[string]any
+	// alongside are the reads an unpaged list makes beside its own, for
+	// records of another kind its next call needs.
+	alongside []alongsideSpec
+	resource  permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
@@ -212,7 +215,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(),
 	)
 }
 
@@ -226,7 +229,7 @@ func graphQLListProviders() []any {
 			reader agentports.GraphQLReader,
 			permissions permissionports.PermissionEngine,
 		) (agentports.AgentQueryTool, error) {
-			return newGraphQLListTool(spec, reader, permissions)
+			return newGraphQLReadTool(spec, reader, permissions)
 		})
 	}
 
@@ -278,12 +281,12 @@ func (t *graphQLListTool) Description() string {
 	return b.String()
 }
 
-// withDefaults is a call's arguments with the spec's defaults for those it
+// applyDefaults is a call's arguments with the spec's defaults for those it
 // omits, and its day-dependent defaults when it omits all of them.
-func (t *graphQLListTool) withDefaults(args map[string]any, clk clock) map[string]any {
+func applyDefaults(spec *graphQLListSpec, args map[string]any, clk clock) map[string]any {
 	var dated map[string]any
-	if t.spec.defaultsAt != nil {
-		dated = t.spec.defaultsAt(clk)
+	if spec.defaultsAt != nil {
+		dated = spec.defaultsAt(clk)
 		for name := range dated {
 			if raw, given := args[name]; given && raw != nil {
 				dated = nil
@@ -291,11 +294,11 @@ func (t *graphQLListTool) withDefaults(args map[string]any, clk clock) map[strin
 			}
 		}
 	}
-	if len(t.spec.defaults) == 0 && len(dated) == 0 {
+	if len(spec.defaults) == 0 && len(dated) == 0 {
 		return args
 	}
-	out := make(map[string]any, len(args)+len(t.spec.defaults)+len(dated))
-	for name, value := range t.spec.defaults {
+	out := make(map[string]any, len(args)+len(spec.defaults)+len(dated))
+	for name, value := range spec.defaults {
 		out[name] = value
 	}
 	for name, value := range dated {
@@ -411,7 +414,7 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 
-	args := t.withDefaults(params.Params, clk)
+	args := applyDefaults(&t.spec, params.Params, clk)
 	filters, err := compileFilters(t.params, args, clk)
 	if err != nil {
 		return nil, err
@@ -425,7 +428,7 @@ func (t *graphQLListTool) Query(
 		return nil, err
 	}
 	query := strings.TrimSpace(optionalString(params.Params, graphQLParamQuery))
-	criteria := t.criteria(args, query)
+	criteria := describeCriteria(t.spec.entityPlural, t.params, args, query)
 
 	page, err := t.page(ctx, params, &pageRequest{
 		query:   query,
@@ -447,7 +450,7 @@ func (t *graphQLListTool) Query(
 		Count:            len(page.items),
 		SearchedFor:      criteria.Describe(),
 		Items:            page.items,
-		Columns:          t.columns(page.items),
+		Columns:          selectedColumns(t.read.Fields, page.items),
 		HasMore:          page.hasMore,
 		WithheldByAccess: page.withheld,
 	}
@@ -573,17 +576,12 @@ func readFailure(result *agentports.GraphQLReadResult, resource permission.Resou
 // them: customers.edges.node.billingProfile.creditLimit is
 // billingProfile.creditLimit.
 func (t *graphQLListTool) relativeWithheld(paths []string) []string {
-	prefix := t.read.RootField + "." + connectionEdges + "." + connectionNode + "."
-	out := make([]string, 0, len(paths))
-	for _, path := range paths {
-		out = append(out, strings.TrimPrefix(path, prefix))
-	}
-
-	return out
+	return relativePaths(paths,
+		t.read.RootField+"."+connectionEdges+"."+connectionNode+".")
 }
 
 // compact drops what tells a model nothing: nulls, empty lists and type
-// names.
+// names, in the record and in each record it carries.
 func compact(node map[string]any) map[string]any {
 	out := make(map[string]any, len(node))
 	for key, value := range node {
@@ -595,6 +593,11 @@ func compact(node map[string]any) map[string]any {
 			if len(v) == 0 {
 				continue
 			}
+			for idx, element := range v {
+				if object, ok := element.(map[string]any); ok {
+					v[idx] = compact(object)
+				}
+			}
 		case map[string]any:
 			value = compact(v)
 		}
@@ -604,14 +607,14 @@ func compact(node map[string]any) map[string]any {
 	return out
 }
 
-// columns are the fields the operation selects on the record, in schema
-// order, that the page's rows carry.
-func (t *graphQLListTool) columns(items []map[string]any) []string {
+// selectedColumns are the fields the operation selects on the record, in
+// schema order, that the rows carry.
+func selectedColumns(fields []graphQLField, items []map[string]any) []string {
 	if len(items) == 0 {
 		return nil
 	}
-	out := make([]string, 0, len(t.read.Fields))
-	for _, field := range t.read.Fields {
+	out := make([]string, 0, len(fields))
+	for _, field := range fields {
 		if !field.Selected {
 			continue
 		}
@@ -637,20 +640,6 @@ func (t *graphQLListTool) sort(args map[string]any) []map[string]any {
 	}
 
 	return []map[string]any{{paramField: field, paramDirection: direction}}
-}
-
-func (t *graphQLListTool) criteria(args map[string]any, query string) *filtercatalog.Criteria {
-	criteria := filtercatalog.NewCriteria(t.spec.entityPlural)
-	criteria.Text(query)
-	for _, param := range t.params {
-		raw, present := args[param.Name]
-		if !present || raw == nil {
-			continue
-		}
-		criteria.Field(param.Name, fmt.Sprint(raw))
-	}
-
-	return criteria
 }
 
 // refuseWithheld refuses a filter or an order on a field the caller may not
@@ -829,7 +818,7 @@ func (t *graphQLListTool) runView(
 			Count:       len(items),
 			SearchedFor: criteria.Describe(),
 			Items:       items,
-			Columns:     t.columns(page.items),
+			Columns:     selectedColumns(t.read.Fields, page.items),
 		},
 		withheld: page.withheld,
 		more:     page.hasMore,

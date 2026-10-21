@@ -1468,6 +1468,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: equipment | `equipment_list_tractors`, `equipment_list_trailers` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: workers | `worker_list` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: time off | `worker_list_time_off` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: one worker's records | `worker_list_checklists`, `worker_list_training`, `worker_list_performance_reviews` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1577,6 +1578,18 @@ with a Postgres test that leave begun before the window is read only when it ove
 it also found that `worker_pto` declared no field sensitivities, so its Restricted default would
 have withheld every field at the default agent data access; the operational fields are now
 declared Internal and a leave's reasons stay Restricted. Held-out ranking is unchanged.
+
+The one worker's records row adds the third tool shape: a list whose root field returns every
+record at once, keyed by the worker, whose parameters are the operation's own variables
+(`workerId`, `includeClosed`) rather than a table's filters. Checklists, training assignments and
+performance reviews read new `Desk*` operations on the worker's own root fields, and the checklist
+and review lists read the active templates alongside, through operations the generator proves,
+only when the reader may read templates, as the repository tools did. A training assignment's
+course is a linked record and shows its reference view. A Postgres test reads each list under
+row-level security against the service read the repository tool made, with and without closed
+records, and finds nothing of another tenant's worker. Descriptions are unchanged, so the
+embedding fixture is current; held-out ranking is unchanged (keyword 0.99 and 0.95 over 145, hybrid
+0.93 and 0.82 over 165).
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

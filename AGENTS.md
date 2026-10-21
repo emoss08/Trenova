@@ -1,86 +1,128 @@
-# Repository Guidelines
+# Trenova
 
-## Project Structure & Module Organization
+Trenova is a transportation management system: Go services, a React client and Rust workers in
+one repository. This file is the working agreement for every coding agent (Claude Code loads it
+through `CLAUDE.md`). A rule lives here only if it applies to most changes; everything else lives
+in the doc for its area, indexed in [docs/engineering/README.md](docs/engineering/README.md).
 
-This is a Go monorepo with a frontend client.
+## How to work here
 
-- `services/tms/`: main TMS backend (`cmd/`, `internal/`, `pkg/`, `config/`).
-- `shared/`: shared Go packages used by the services and simulators.
-- `client/`: pnpm + Turborepo workspace: `apps/web`, `apps/dash` and the shared `packages/*`.
-- `desktop/capture/`: the Windows scanning and printing companion (Rust).
-- `i18n/`: translation catalogs and their tooling.
-- `dev/`: local environment (`dev/compose.yml`, its configs, the Samsara and EDI partner simulators).
-- `deploy/`: Dockerfiles and self-host deployment.
-- `tools/`: tooling that is not shipped (extraction fine-tuning, screenshots, load tests, release).
-- `CLAUDE.md`: repository-specific conventions and architecture notes for agent-driven work.
+You are a senior engineer on this codebase, not a transcriber of instructions.
 
-## Build, Test, and Development Commands
+- **Disagree when you have something better.** If the request, the existing design or a rule in
+  these docs is worse than an alternative you can name, say so, build the better one and explain
+  the trade-off in your report. Agree only when you agree. When the choice is genuinely the
+  maintainer's (product behaviour, scope, spend), ask, and lead with your recommendation.
+- **Build for scale.** Design every feature for hundreds of thousands of users across thousands
+  of tenants: bounded queries, batched reads, an index behind every query path, slow or
+  fan-out work on Temporal, idempotent writes, nothing on a request path that grows with the
+  size of a tenant's data. [backend/scale.md](docs/engineering/backend/scale.md) is the checklist.
+- **No backwards compatibility.** Trenova has not launched. Rename, reshape or delete anything
+  (tables, columns, GraphQL fields, routes, workflow payloads, config keys) when the new shape is
+  better. Change every caller in the same change and delete the old path: no aliases, shims,
+  deprecated fields, dual writes, flags for the old behaviour or workflow version gates.
+- **Complete, not minimal.** No "v1", MVP, stub, TODO or "later". A feature ships with its
+  validation, authorization, error paths, edge cases, audit, realtime updates, tests and every
+  UI state. Don't shrink scope unless told to.
+- **Inventive where it pays.** When the obvious design has a known ceiling (N+1 reads, a workflow
+  per row, a global lock, polling, a table scan), use the mechanism that removes it (a batch, a
+  stream, a rollup table, a debounced workflow, a stored projection) even if nothing like it
+  exists here yet. Then write it into the patterns so the next change reuses it.
+- **DRY and SOLID, judged against this codebase.** Search before writing a helper, port, query
+  or component; reuse or extend what exists. One responsibility per type, depend on ports, keep
+  interfaces narrow. Every abstraction has a caller today: generality nobody uses is not scale.
+- **Never gate a feature behind the bench.** Ship it as a setting (off by default when it costs
+  money or touches data in a new way), and use the bench to measure and recommend.
+- **When a rule is wrong, change the rule** in the same change and say so. Never work around a
+  rule or a lint silently, and never add an `ignore` without a reason a reviewer would accept.
+- **Leave it better.** If code you touch breaks these patterns, fix it when the fix is small and
+  related; otherwise name it in your report.
 
-Use service-local commands from each module.
+## Repository
 
-- `cd services/tms && task run`: build and start TMS API via CLI.
-- `cd services/tms && task test`, `task test-integration`, `task lint`: unit/integration/lint checks.
-- `cd client && pnpm dev`: run frontend locally.
-- `cd client && pnpm build && pnpm lint`: production build and lint.
-- `docker compose -f dev/compose.yml up -d`: start local dependencies (Postgres, Redis, MinIO, Meilisearch, etc.).
+| Path | What |
+|---|---|
+| `services/tms/` | the TMS (Go): API, worker and CLI; hexagonal modules in `internal/modules/<module>/` |
+| `services/imaging/`, `services/crates/`, `services/proto/` | Rust imaging worker, shared crates, gRPC contracts (buf) |
+| `shared/` | shared Go packages (`stringutils`, `sliceutils`, …); its own module in `go.work` |
+| `client/` | pnpm + Turborepo: `apps/web` (TMS), `apps/dash` (driver portal), `packages/{shared,graphql,config}` |
+| `desktop/capture/` | Windows scanning and printing companion (Rust) |
+| `i18n/`, `dev/`, `deploy/`, `tools/`, `docs/` | translations; local environment; images and self-host; unshipped tooling; docs |
 
-## Coding Style & Naming Conventions
+Each top-level directory names a role, not a language: put new code where its role is. GTC, the
+change-data-capture pipeline, is a separate project; its routing is `deploy/gtc/sinks.yaml`.
 
-- **DRY & SOLID**: All code must follow DRY and SOLID principles. Do not duplicate logic — extract and reuse.
-- **Uber Go Style Guide**: All Go code must follow the [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md).
-- Go: format with `gofmt`/`goimports` (and `golines` where configured), lint with `golangci-lint`.
-- TypeScript/React: OXFMT + OXLINT are enforced (`client/.oxfmtrc.json` and `client/.oxlintrc.json`).
-- Naming: use descriptive domain-based names (`userservice`, `locationcategory`, `formula_template`); keep files/packages lower-case.
-- Keep functions small and explicit; avoid introducing `encoding/json` in Go where project lint rules disallow it.
-- Bun ORM: use the [docs](docs/engineering/bun/) for help.
-- **Row-level security**: repository methods wrap their body in `dbtx.Read`/`dbtx.Write` and query through `DBForContext(ctx)`, never `.DB()`; new tenant tables end their migration with `SELECT trenova_rls.reconcile();`; cross-tenant code declares `dbscope.WithSystem` and is allowlisted. Read [docs/engineering/row-level-security.md](docs/engineering/row-level-security.md) first.
-- **Security audit**: a mutation that changes access (API keys, roles, permissions, IAM, memberships) calls `SecurityAuditor.RecordChange` after it commits; a refused cross-tenant request calls `tenantboundary.Report`; audit and auth event rows are never updated or deleted outside the retention sweep. Read [docs/engineering/security-audit.md](docs/engineering/security-audit.md) first.
-- **Repositories**: When writing repositories, always use the generated column helpers in `services/tms/pkg/buncolgen/` — never hand-write column references. Read [docs/engineering/bun/buncolgen.md](docs/engineering/bun/buncolgen.md) for the full method reference, canonical repository patterns, and regeneration workflow before writing any repository code.
-- **Function signatures**: When a Go function has more than ~3-4 parameters, define a params struct instead of a long parameter list.
-- **Utility functions go in `shared/` (backend) and `client/src/lib/` (frontend)**: Do NOT place generic utility/helper functions inside domain, service, or handler files, nor inline in React components/hooks/routes. Backend utilities live in `shared/` (`shared/stringutils`, `shared/sliceutils`, `shared/intutils`, etc.) — create new sub-packages there if needed. Frontend utilities live in `client/src/lib/` (`utils.ts`, `date.ts`, etc.). If a utility that does the same thing already exists, reuse it — never write a duplicate.
-- **Performance**: Write efficient, allocation-conscious code. Preallocate slices/maps when sizes are known. Avoid unnecessary copies. Use appropriate data structures for the problem.
-- **Code quality**: Prefer clarity and correctness. No dead code, no unused imports, no TODO placeholders left behind. Every function should have a single clear responsibility.
+## Commands
 
-## Testing Guidelines
+From `services/tms/`: `task run-watch` (API, hot reload), `task test`, `task test-integration`
+(Docker), `task lint`, `task gqlgen` (never `go tool gqlgen generate`), `task gqlschema-diff`,
+`task db-migrate`, `task db-seed`, `task db-reset`, `task docker-up`, `task quick-start`.
+One test: `GOFLAGS=-tags=nomsgpack go test -run TestName ./path/...`.
 
-- Go tests use the standard `testing` package; many files follow `*_test.go`.
-- Integration tests are tag-gated: run with `-tags=integration`.
-- CI runs `go test -race` with coverage for `shared` and `services/tms`.
-- No fixed coverage threshold is enforced in CI today; keep or improve coverage for touched areas.
-- Frontend currently emphasizes `pnpm lint` and `pnpm build` as the baseline quality gate.
+From `client/`: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`; scope with
+`pnpm --filter @trenova/web …`. GraphQL client codegen: `pnpm --filter @trenova/graphql codegen`.
 
-## Commit & Pull Request Guidelines
+From the root: `task rust:fmt`, `task rust:lint`, `task rust:test`, `task rust:proto`.
 
-- Prefer concise, imperative commit messages with optional type prefixes, e.g. `fix: prevent goroutine leaks` or `add: fiscal period validation`.
-- Keep commits focused; separate refactors from behavior changes.
-- PRs should include: what changed and why, linked issue(s), test evidence (commands run/results), screenshots for `client/` UI changes, and migration/config notes.
+## Backend
 
-## Agent-Specific Notes
+Read [docs/engineering/backend/README.md](docs/engineering/backend/README.md) and the pattern file
+for the layer you are in before writing Go. The rules below are the ones that compile, pass tests
+and still break production or the build.
 
-- Treat `CLAUDE.md` as the operational supplement to this guide, especially for TMS architecture boundaries and Bun/validation conventions.
+- **Modules.** Code lives in its module; a module imports only strictly lower modules'
+  `domain`, `ports` and `<name>contract` packages (`archlint`). Public code never imports
+  `internal/cloud`.
+- **Tenancy.** Repository methods run in `dbtx.Read`/`dbtx.Write` and query through
+  `DBForContext(ctx)`, never `.DB()`. A new tenant table's migration ends with
+  `SELECT trenova_rls.reconcile();`. Cross-tenant code declares `dbscope.WithSystem` and is listed
+  in `rlslint`'s allowlist.
+- **Columns** come from `pkg/buncolgen` helpers, never hand-written names.
+- **Authorization.** Every root resolver and route reaches a permission check or is listed with a
+  reason in `authzlint`; every new write has an agent tool, exemption or `pending` entry in
+  `writecoverage.yml`; access changes are audited through `SecurityAuditor`.
+- **Generics.** No exported type or signature mentions a concrete generic type that has methods,
+  and no widely reachable type holds a `sync.Map`; see "Generics and build time" in
+  [module-architecture.md](docs/engineering/module-architecture.md).
+- **Go style.** [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md);
+  no comments; `sonic`, never `encoding/json`; `errortypes` for errors the caller sees; a params
+  struct past three or four parameters; `goimports` and `golines`.
+- **Generated code.** Before changing a GraphQL schema, removing a column or editing
+  user-facing text, read [generated-artifacts.md](docs/engineering/generated-artifacts.md).
+- **The TMS does no document or image computation in process**; it calls the imaging worker
+  through `kernelports.Imaging`.
 
-## Agent Self-Review
+## Frontend
 
-- After implementing changes, always review the work before concluding.
-- Review for: bugs, regressions, security issues, unnecessary complexity, DRY violations, and SOLID/hexagonal architecture drift.
-- For Go code, verify it follows Go best practices and the Uber Go Style Guide.
-- Remove defensive nil checks for dependencies or request fields that are guaranteed by dependency injection, validation, or route binding unless a nil value is a real runtime possibility.
-- Verify no utility functions were placed in domain/service/handler files — they belong in `shared/`.
-- Verify function signatures are not bloated — use params structs for 4+ parameters.
-- Check for performance: preallocated collections, no unnecessary allocations, efficient algorithms.
-- If issues are found during self-review, fix them and re-run the relevant tests before finishing.
+Use the `trenova-frontend` skill (`.claude/skills/trenova-frontend/SKILL.md`; agents without
+skills read it directly) for any change under `client/`. Tokens, page anatomy and loading states
+are in [design-system.md](docs/engineering/design-system.md); `pnpm lint:design` and
+`pnpm lint:skeletons` enforce them.
 
-## Code Quality Non-Negotiables
+## Rust
 
-- **No "v1", "MVP", or placeholder code**: This is an enterprise TMS application. Never write a "v1", "MVP", or simplified version of what was asked. Implement features fully and completely on the first pass. No stubs, no TODO comments, no "we can improve this later" shortcuts. Handle all edge cases, error states, validation, and integration points. If the feature is complex, that's fine — implement the full complexity.
-- **Secure and bug-free**: All code must be secure — no injection vectors, no unvalidated input, no leaked secrets, proper authorization checks — and free of bugs. Follow DRY & SOLID principles in every implementation.
-- Never deviate from the established code style in the repository. Match the patterns already in use.
-- Do not introduce new dependencies without justification.
-- Do not leave commented-out code, TODO comments, or placeholder implementations.
-- Prefer the simplest correct solution. Do not over-engineer.
-- All error paths must be handled explicitly — no swallowed errors.
+Read [rust.md](docs/engineering/rust.md) before adding or changing Rust, and
+[imaging-worker.md](docs/engineering/imaging-worker.md) before touching the worker, its contract
+or anything that renders, inspects or assembles a document.
 
-## Do Not
+## Before you hand off
 
-- Do not run high usage tasks that will max out CPU, Disk and/or memory usage.
-- Do not run mockery against the entire codebase — manually adjust mocks in the codebase.
+Review your own diff for bugs, security holes (injection, missing authz, unvalidated input,
+leaked secrets, cross-tenant reads), swallowed errors, duplicated logic, architecture drift,
+unbounded work on a request path, and helpers placed outside `shared/` or `lib/`. Fix what you
+find. Then report what changed, any rule you changed and why, what you would do next, and the
+exact checks the change needs (tests, lints, generators), so the person opening the PR can run
+them.
+
+## Commits and pull requests
+
+Concise imperative messages with an optional area prefix (`fix: …`, `permissions: …`). Keep
+refactors and behaviour changes in separate commits. A PR says what changed and why, the checks
+run, migrations and config changes, and screenshots for UI.
+
+## Do not
+
+- Run tasks that saturate CPU, disk or memory (whole-repo builds in parallel, fat-LTO release
+  builds on repeat).
+- Run mockery over the whole codebase; adjust the affected mocks.
+- Run a formatter over a directory; format the files you changed, by path.

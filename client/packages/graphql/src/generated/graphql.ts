@@ -16048,6 +16048,20 @@ export type UpdateOrganizationSettingsMutationVariables = Exact<{
 
 export type UpdateOrganizationSettingsMutation = { updateOrganization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
 
+export type DeskWorkerPerformanceReviewsQueryVariables = Exact<{
+  workerId: string | number;
+}>;
+
+
+export type DeskWorkerPerformanceReviewsQuery = { workerPerformanceReviews: Array<{ id: string, templateId: string, title: string, status: PerformanceReviewStatus, periodStart: number, periodEnd: number, overallScore: string | null, summary: string | null, ratings: Array<{ key: string, label: string, weight: number, score: number | null, comment: string | null }>, goals: Array<{ id: string, title: string, dueAt: number | null, status: ReviewGoalStatus }> }> };
+
+export type DeskPerformanceReviewTemplatesQueryVariables = Exact<{
+  input: PerformanceReviewTemplatesInput;
+}>;
+
+
+export type DeskPerformanceReviewTemplatesQuery = { performanceReviewTemplates: { edges: Array<{ node: { id: string, code: string, name: string, isDefault: boolean, cadenceMonths: number | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type PerformanceReviewTemplateFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, status: EntityStatus, isDefault: boolean, cadenceMonths: number | null, openReviewCount: number, version: number, createdAt: number, updatedAt: number, items: Array<{ key: string, label: string, description: string | null, weight: number }> } & { ' $fragmentName'?: 'PerformanceReviewTemplateFieldsFragment' };
 
 export type PerformanceReviewFieldsFragment = { id: string, businessUnitId: string, organizationId: string, workerId: string, templateId: string, reviewerId: string | null, status: PerformanceReviewStatus, title: string, periodStart: number, periodEnd: number, overallScore: string | null, summary: string | null, strengths: string | null, improvements: string | null, submittedAt: number | null, acknowledgedAt: number | null, workerComment: string | null, closedAt: number | null, closedById: string | null, nextReviewAt: number | null, version: number, createdAt: number, updatedAt: number, template: { id: string, code: string, name: string, cadenceMonths: number | null, items: Array<{ key: string, label: string, description: string | null, weight: number }> } | null, reviewer: { id: string, name: string } | null, ratings: Array<{ key: string, label: string, weight: number, score: number | null, comment: string | null }>, goals: Array<{ id: string, title: string, dueAt: number | null, status: ReviewGoalStatus }> } & { ' $fragmentName'?: 'PerformanceReviewFieldsFragment' };
@@ -18054,6 +18068,21 @@ export type MarkWatchtowerItemSeenMutationVariables = Exact<{
 
 export type MarkWatchtowerItemSeenMutation = { markWatchtowerItemSeen: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
+export type DeskWorkerChecklistsQueryVariables = Exact<{
+  workerId: string | number;
+  includeClosed?: boolean | null | undefined;
+}>;
+
+
+export type DeskWorkerChecklistsQuery = { workerChecklists: Array<{ id: string, templateId: string | null, name: string, kind: WorkerChecklistKind, status: WorkerChecklistStatus, startedAt: number, dueAt: number | null, completedAt: number | null, cancelledAt: number | null, cancelReason: string | null, progress: { total: number, settled: number, requiredTotal: number, requiredDone: number, overdue: number, complete: boolean } | null, items: Array<{ id: string, label: string, kind: WorkerChecklistItemKind, required: boolean, owner: WorkerChecklistOwner, status: WorkerChecklistItemStatus, dueAt: number | null, overdue: boolean, completedAt: number | null, note: string | null }> }> };
+
+export type DeskWorkerChecklistTemplatesQueryVariables = Exact<{
+  input: WorkerChecklistTemplatesInput;
+}>;
+
+
+export type DeskWorkerChecklistTemplatesQuery = { workerChecklistTemplates: { edges: Array<{ node: { id: string, code: string, name: string, kind: WorkerChecklistKind, trigger: WorkerChecklistTrigger } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type WorkerChecklistTemplateItemFieldsFragment = { id: string, templateId: string, label: string, description: string | null, kind: WorkerChecklistItemKind, required: boolean, dueOffsetDays: number, owner: WorkerChecklistOwner, credentialTypeId: string | null, documentTypeId: string | null, documentTypeName: string | null, sortOrder: number, credentialType: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'WorkerChecklistTemplateItemFieldsFragment' };
 
 export type WorkerChecklistTemplateFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, kind: WorkerChecklistKind, trigger: WorkerChecklistTrigger, status: EntityStatus, isDefault: boolean, openChecklistCount: number, version: number, createdAt: number, updatedAt: number, items: Array<{ id: string, templateId: string, label: string, description: string | null, kind: WorkerChecklistItemKind, required: boolean, dueOffsetDays: number, owner: WorkerChecklistOwner, credentialTypeId: string | null, documentTypeId: string | null, documentTypeName: string | null, sortOrder: number, credentialType: { id: string, code: string, name: string } | null }> } & { ' $fragmentName'?: 'WorkerChecklistTemplateFieldsFragment' };
@@ -18778,6 +18807,14 @@ export type DeleteWorkerRecognitionMutationVariables = Exact<{
 
 export type DeleteWorkerRecognitionMutation = { deleteWorkerRecognition: boolean };
 
+export type DeskWorkerTrainingRecordsQueryVariables = Exact<{
+  workerId: string | number;
+  includeClosed?: boolean | null | undefined;
+}>;
+
+
+export type DeskWorkerTrainingRecordsQuery = { workerTrainingRecords: Array<{ id: string, courseId: string, status: WorkerTrainingStatus, assignedAt: number, dueAt: number | null, completedAt: number | null, expiresAt: number | null, score: string | null, passed: boolean | null, course: { ' $fragmentRefs'?: { 'TrainingCourseReferenceFragment': TrainingCourseReferenceFragment } } | null }> };
+
 export type TrainingCourseFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, category: TrainingCategory, status: EntityStatus, delivery: TrainingDelivery, contentUrl: string | null, durationMinutes: number, passingScore: string | null, validityMonths: number | null, renewalWindowDays: number, isRequired: boolean, requiredForDriverTypes: Array<DriverType>, dueDaysAfterAssignment: number, requiresAcknowledgement: boolean, sortOrder: number, openRecordCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TrainingCourseFieldsFragment' };
 
 export type WorkerTrainingRecordFieldsFragment = { id: string, businessUnitId: string, organizationId: string, workerId: string, courseId: string, status: WorkerTrainingStatus, assignedAt: number, dueAt: number | null, startedAt: number | null, completedAt: number | null, expiresAt: number | null, score: string | null, passed: boolean | null, acknowledgedAt: number | null, documentId: string | null, assignedById: string | null, recordedById: string | null, notes: string | null, waivedReason: string | null, health: WorkerTrainingHealth, daysUntilDue: number | null, daysUntilExpiry: number | null, version: number, createdAt: number, updatedAt: number, course: { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, category: TrainingCategory, status: EntityStatus, delivery: TrainingDelivery, contentUrl: string | null, durationMinutes: number, passingScore: string | null, validityMonths: number | null, renewalWindowDays: number, isRequired: boolean, requiredForDriverTypes: Array<DriverType>, dueDaysAfterAssignment: number, requiresAcknowledgement: boolean, sortOrder: number, version: number, createdAt: number, updatedAt: number } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, assignedBy: { id: string, name: string } | null, recordedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'WorkerTrainingRecordFieldsFragment' };
@@ -19144,6 +19181,7 @@ export { OrderTableRowFieldsFragmentDoc, OrderTableDocument } from "./documents/
 export { OrgHolidayFieldsFragmentDoc, OrgHolidaysDocument, CreateOrgHolidayDocument, UpdateOrgHolidayDocument, DeleteOrgHolidayDocument } from "./documents/org-holiday/operations";
 export { JobPositionsDocument, HeadcountDocument, JobPositionHoldersDocument, MyTeamDocument, ApprovalDelegationsDocument, AssignWorkerPositionDocument, AssignUserPositionDocument, CreateJobPositionDocument, UpdateJobPositionDocument, DelegateApprovalDocument, RevokeApprovalDelegationDocument } from "./documents/org-structure/operations";
 export { OrganizationSettingsStateFieldsFragmentDoc, OrganizationSettingsFieldsFragmentDoc, OrganizationSettingsDocument, UpdateOrganizationSettingsDocument } from "./documents/organization/page";
+export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
 export { DeskRateAgreementPricingDocument } from "./documents/rate/desk";
@@ -19192,6 +19230,7 @@ export { DeskTrailerCardDocument } from "./documents/trailer/desk";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
+export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } from "./documents/worker-checklist/desk";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
 export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument, DeskWorkersDocument } from "./documents/worker-desk/desk";
@@ -19202,5 +19241,6 @@ export { WorkerInjuriesDocument, OshaLogDocument, OshaSummariesDocument, RecordW
 export { WorkerLeaveFileDocument, LeaveControlDocument, OpenLeaveCaseDocument, UpdateLeaveCaseDocument, DecideLeaveCaseDocument, CloseLeaveCaseDocument, RequestLeaveCertificationDocument, RecordLeaveCertificationDocument, RecordLeaveDayDocument, DeleteLeaveDayDocument, UpdateLeaveControlDocument } from "./documents/worker-leave/operations";
 export { WorkerOverviewDocument, WorkerRosterAttentionDocument } from "./documents/worker-overview/operations";
 export { WorkerSafetyEventFieldsFragmentDoc, WorkerDisciplinaryActionFieldsFragmentDoc, WorkerRecognitionFieldsFragmentDoc, SafetyScorecardFieldsFragmentDoc, WorkerSafetyEventsDocument, WorkerSafetyScorecardDocument, WorkerDisciplinaryActionsDocument, WorkerDisciplinaryLadderDocument, WorkerRecognitionsDocument, DefaultSafetyPointsDocument, CreateWorkerSafetyEventDocument, UpdateWorkerSafetyEventDocument, CloseWorkerSafetyEventDocument, ReviewWorkerSafetyEventDocument, ReopenWorkerSafetyEventDocument, DeleteWorkerSafetyEventDocument, IssueDisciplinaryActionDocument, RescindDisciplinaryActionDocument, GiveWorkerRecognitionDocument, DeleteWorkerRecognitionDocument } from "./documents/worker-safety/operations";
+export { DeskWorkerTrainingRecordsDocument } from "./documents/worker-training/desk";
 export { TrainingCourseFieldsFragmentDoc, WorkerTrainingRecordFieldsFragmentDoc, TrainingCourseTableDocument, ActiveTrainingCoursesDocument, WorkerTrainingRecordsDocument, WorkerTrainingSummaryDocument, CreateTrainingCourseDocument, UpdateTrainingCourseDocument, ArchiveTrainingCourseDocument, RestoreTrainingCourseDocument, AssignWorkerTrainingDocument, BulkAssignTrainingDocument, AssignRequiredWorkerTrainingDocument, CompleteWorkerTrainingDocument, WaiveWorkerTrainingDocument, CancelWorkerTrainingDocument, AttachWorkerTrainingDocumentDocument } from "./documents/worker-training/operations";
 export { WorkerFleetCodeFieldsFragmentDoc, WorkerUsStateFieldsFragmentDoc, WorkerProfileTableFieldsFragmentDoc, WorkerTableRowFieldsFragmentDoc, WorkerPtoWorkerFieldsFragmentDoc, WorkerPtoActorFieldsFragmentDoc, WorkerPtoRowFieldsFragmentDoc, WorkerDataTablePageInfoFieldsFragmentDoc, WorkerTableDocument, WorkerPtoTableDocument, UpcomingWorkerPtoDocument, WorkerPtoChartDataDocument, PatchWorkerDocument, CreateWorkerPtoDocument, UpdateWorkerPtoDocument, ApproveWorkerPtoDocument, RejectWorkerPtoDocument, CancelWorkerPtoDocument, BulkWorkerPtoActionDocument } from "./documents/worker/page";

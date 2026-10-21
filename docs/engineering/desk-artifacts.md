@@ -571,6 +571,10 @@ registry entry like any other.
 
 ## Adding a card
 
+The `desk-artifact` skill (`.claude/skills/desk-artifact/`) walks through the whole
+change in order, from the mockup to a green PR, with copyable shapes in its `recipes.md`.
+The steps below are the rules it follows.
+
 1. Add the record kind to `record-links.ts` if it has none. It must be a kind the
    server's permission registry knows; see [record-kinds.md](record-kinds.md).
 2. Create `cards/<resource>/` with the card's two surfaces (taking

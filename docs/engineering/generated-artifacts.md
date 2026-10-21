@@ -38,9 +38,10 @@ column it reads. The generator walks **every field of every type** and aborts if
 resolves to none of: a `buncolgen` column, an inferred relation, or a declared override. A
 field that a resolver computes is not special-cased — it has to be declared.
 
-This bites hardest when a column is **removed**. Retiring a database column while keeping
-the GraphQL field (deprecated, resolver returning a constant) is the correct non-breaking
-path, and it breaks the generator, because the field no longer has a column behind it:
+This bites hardest when a column is **removed** but its GraphQL field is kept (deprecated,
+resolver returning a constant). Removing both together is usually the better change (see
+"Schema changes"); keeping the field breaks the generator, because it no longer has a column
+behind it:
 
 ```
 Error generating GraphQL projections: type "CustomerBillingProfile" field
@@ -222,7 +223,10 @@ tool, when:
 - a listed tool's record has no Query root field, or several;
 - no persisted query, or more than one in a tier, reads that root field alone;
 - an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
-- a shard the operations reach asks for a resolver the full root does not build.
+- a shard the operations reach asks for a resolver the full root does not build;
+- an operation a list reads `alongside` its own is not persisted, is not a connection read that
+  selects `pageInfo`, needs a variable other than its table input, or reads a field whose resolver
+  checks no read permission; or a paged list names one.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a
@@ -251,8 +255,10 @@ not breaking. A deliberate redesign ships with the regenerated client in the sam
 carries the `graphql-breaking-approved` label, which keeps the annotations but stops the
 failure.
 
-Prefer deprecating over deleting. A field marked `@deprecated` with a resolver returning a
-constant is not breaking — just remember the `virtuals` entry above.
+Trenova has not launched and every GraphQL client is first-party (persisted operations only), so
+when the better shape breaks the schema, break it: change the schema and the client together and
+take the label. Don't keep a `@deprecated` field alive for compatibility. If one does stay for a
+release, its resolver returns a constant and it needs the `virtuals` entry above.
 
 ## Authorization
 

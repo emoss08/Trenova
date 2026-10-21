@@ -34,11 +34,24 @@ type field struct {
 	Fields []field
 }
 
+// variable is one of an operation's variables. An unpaged list takes each
+// as a parameter, described by the root field argument it is sent as.
 type variable struct {
-	Name    string
-	Type    string
-	NonNull bool
-	List    bool
+	Name        string
+	Type        string
+	NonNull     bool
+	List        bool
+	Kind        string
+	Enum        []string
+	Description string
+}
+
+// besideRead is an operation a list reads alongside its own.
+type besideRead struct {
+	Operation string
+	RootField string
+	Resource  string
+	Input     string
 }
 
 type toolRead struct {
@@ -51,8 +64,10 @@ type toolRead struct {
 	Resource    string
 	EntityAlias string
 	EntityType  string
+	Unpaged     bool
 	Variables   []variable
 	Fields      []field
+	Alongside   []besideRead
 }
 
 type toolsData struct {
@@ -88,12 +103,27 @@ var graphQLReads = map[string]graphQLRead{
 		RootField: {{ quote .RootField }},
 		Node:      {{ quote .Node }},
 		Resource:  {{ quote .Resource }},
+{{- if .EntityType }}
 		Entity: func() domaintypes.PostgresSearchable { return new({{ .EntityAlias }}.{{ .EntityType }}) },
+{{- end }}
+{{- if .Unpaged }}
+		Unpaged:   true,
+{{- end }}
 		Variables: []graphQLVariable{
 {{- range .Variables }}
-			{Name: {{ quote .Name }}, Type: {{ quote .Type }}, NonNull: {{ .NonNull }}, List: {{ .List }}},
+			{Name: {{ quote .Name }}, Type: {{ quote .Type }}, NonNull: {{ .NonNull }}, List: {{ .List }}
+{{- if .Kind }}, Kind: {{ quote .Kind }}{{ end }}
+{{- if .Enum }}, Enum: []string{ {{- range $i, $v := .Enum }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Description }}, Description: {{ quote .Description }}{{ end }}},
 {{- end }}
 		},
+{{- if .Alongside }}
+		Alongside: []graphQLAlongside{
+{{- range .Alongside }}
+			{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}, Input: {{ quote .Input }}},
+{{- end }}
+		},
+{{- end }}
 		Fields: []graphQLField{
 {{- range .Fields }}
 			{{ template "field" . }}
@@ -136,8 +166,11 @@ func writeTools(
 	data := &toolsData{Inputs: make(map[string][]field)}
 	aliases := make(map[string]string)
 	for _, b := range bindings {
-		gt := types[b.Node]
-		alias := aliasFor(aliases, gt.Path)
+		gt, typed := types[b.Node]
+		alias := ""
+		if typed {
+			alias = aliasFor(aliases, gt.Path)
+		}
 		data.Reads = append(data.Reads, toolRead{
 			Tool:        b.Tool,
 			Verb:        b.Verb,
@@ -148,11 +181,18 @@ func writeTools(
 			Resource:    string(b.Resource),
 			EntityAlias: alias,
 			EntityType:  gt.Name,
-			Variables:   variables(b.Operation.Query),
+			Unpaged:     b.unpaged(),
+			Variables:   variables(schema, b),
 			Fields:      nodeFields(schema, b),
+			Alongside:   besideReads(b),
 		})
 		for _, v := range b.Operation.Query.Operations[0].VariableDefinitions {
 			collectInputs(schema, v.Type.Name(), data.Inputs)
+		}
+		for _, beside := range b.Alongside {
+			for _, v := range beside.Operation.Query.Operations[0].VariableDefinitions {
+				collectInputs(schema, v.Type.Name(), data.Inputs)
+			}
 		}
 	}
 	for p, alias := range aliases {
@@ -194,15 +234,55 @@ func aliasFor(aliases map[string]string, importPath string) string {
 	return alias
 }
 
-func variables(doc *ast.QueryDocument) []variable {
-	op := doc.Operations[0]
+func besideReads(b *binding) []besideRead {
+	out := make([]besideRead, 0, len(b.Alongside))
+	for _, beside := range b.Alongside {
+		out = append(out, besideRead{
+			Operation: beside.Operation.Name,
+			RootField: beside.RootField.Name,
+			Resource:  string(beside.Resource),
+			Input:     beside.Input,
+		})
+	}
+
+	return out
+}
+
+// variables are the operation's variables, each described by the root field
+// argument it is sent as, so an unpaged list's parameter (includeClosed)
+// carries the schema's own words.
+func variables(schema *ast.Schema, b *binding) []variable {
+	op := b.Operation.Query.Operations[0]
+	arguments := make(map[string]*ast.ArgumentDefinition)
+	for _, selection := range op.SelectionSet {
+		root, ok := selection.(*ast.Field)
+		if !ok || root.Name != b.RootField.Name {
+			continue
+		}
+		for _, argument := range root.Arguments {
+			if argument.Value == nil || argument.Value.Kind != ast.Variable {
+				continue
+			}
+			if def := b.RootField.Arguments.ForName(argument.Name); def != nil {
+				arguments[argument.Value.Raw] = def
+			}
+		}
+	}
+
 	out := make([]variable, 0, len(op.VariableDefinitions))
 	for _, v := range op.VariableDefinitions {
+		described := describeField(schema, v.Variable, v.Type, "")
+		if def, ok := arguments[v.Variable]; ok {
+			described.Description = strings.TrimSpace(def.Description)
+		}
 		out = append(out, variable{
-			Name:    v.Variable,
-			Type:    v.Type.Name(),
-			NonNull: v.Type.NonNull,
-			List:    v.Type.Elem != nil,
+			Name:        v.Variable,
+			Type:        v.Type.Name(),
+			NonNull:     v.Type.NonNull,
+			List:        v.Type.Elem != nil,
+			Kind:        described.Kind,
+			Enum:        described.Enum,
+			Description: described.Description,
 		})
 	}
 
@@ -273,9 +353,14 @@ func selectedFields(b *binding) map[string]map[string]struct{} {
 		return out
 	}
 	set := root.SelectionSet
-	if b.Verb == verbList {
+	switch {
+	case b.unpaged():
+	case b.Verb == verbList && b.RootField.Type.Name() != b.Node &&
+		strings.HasSuffix(b.RootField.Type.Name(), connection):
 		set = childSet(collect(set, fragments), edgesField)
 		set = childSet(collect(set, fragments), nodeField)
+	case b.Verb == verbList:
+		set = childSet(collect(set, fragments), itemsField)
 	}
 	for _, f := range collect(set, fragments) {
 		children := out[f.Name]

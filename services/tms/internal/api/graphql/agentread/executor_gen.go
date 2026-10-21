@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
@@ -25,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tractorexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerchecklistexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workertrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
@@ -43,11 +45,13 @@ import (
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
 	locationresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
+	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
 	tenantresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenantresolver"
 	tractorresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tractorresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
+	workerchecklistresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerchecklistresolver"
 	workerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerresolver"
 	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
@@ -75,6 +79,8 @@ import (
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
+	workerchecklistservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -110,11 +116,13 @@ type ResolverParams struct {
 	Logger                       *zap.Logger
 	OrgStructureService          *orgstructureservice.Service
 	OrganizationService          tenantports.OrganizationService
+	PerformanceReviewService     *performancereviewservice.Service
 	PermissionEngine             permissionports.PermissionEngine
 	ServiceTypeService           *servicetypeservice.Service
 	ShipmentTypeService          *shipmenttypeservice.Service
 	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
+	WorkerChecklistService       *workerchecklistservice.Service
 	WorkerPTOService             workerports.WorkerPTOService
 	WorkerService                *workerservice.Service
 	WorkerTrainingService        *workertrainingservice.Service
@@ -135,6 +143,7 @@ var shards = []*gqlexec.Shard{
 	holdreasonexec.Shard,
 	locationexec.Shard,
 	locationcategoryexec.Shard,
+	performancereviewexec.Shard,
 	preludeexec.Shard,
 	servicetypeexec.Shard,
 	sharedexec.Shard,
@@ -144,6 +153,7 @@ var shards = []*gqlexec.Shard{
 	trailerexec.Shard,
 	usstateexec.Shard,
 	workerexec.Shard,
+	workerchecklistexec.Shard,
 	workertrainingexec.Shard,
 }
 
@@ -236,9 +246,34 @@ var operations = []Operation{
 		Document: "query DeskWorkers($input: DataTableConnectionInput!) { workers(input: $input) { edges { node { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType externalId firstName fleetCode { code id } fleetCodeId id lastName profile { cdlClass cdlRestrictions complianceStatus eldExempt endorsement hazmatExpiry isQualified lastComplianceCheck lastMvrCheck licenseExpiry medicalCardExpiry mvrDueDate physicalDueDate shortHaulExempt twicExpiry } status type wholeName } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
+		Name:     "DeskWorkerChecklists",
+		Hash:     "sha256:5d2e3c46f8705e11e5f84fb1f5f7e6b1f7cadcf5abe1950e3fcc610faa99d02f",
+		Document: "query DeskWorkerChecklists($includeClosed: Boolean, $workerId: ID!) { workerChecklists(workerId: $workerId, includeClosed: $includeClosed) { cancelReason cancelledAt completedAt dueAt id items { completedAt dueAt id kind label note overdue owner required status } kind name progress { complete overdue requiredDone requiredTotal settled total } startedAt status templateId } }",
+	},
+	{
+		Name:     "DeskWorkerChecklistTemplates",
+		Hash:     "sha256:f13943c8db2089e543e5061c209160e521ca4e52c3d3027c021a186a47555caf",
+		Document: "query DeskWorkerChecklistTemplates($input: WorkerChecklistTemplatesInput!) { workerChecklistTemplates(input: $input) { edges { node { code id kind name trigger } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskWorkerPerformanceReviews",
+		Hash:     "sha256:d9cb36f160858e9feb96a54d8951d508465da59affca234177e5e800c7acbe87",
+		Document: "query DeskWorkerPerformanceReviews($workerId: ID!) { workerPerformanceReviews(workerId: $workerId) { goals { dueAt id status title } id overallScore periodEnd periodStart ratings { comment key label score weight } status summary templateId title } }",
+	},
+	{
+		Name:     "DeskPerformanceReviewTemplates",
+		Hash:     "sha256:0fac9cec7cf51aa1598ef056f6408f6f71605937009ccaa40ac47c79ef82d201",
+		Document: "query DeskPerformanceReviewTemplates($input: PerformanceReviewTemplatesInput!) { performanceReviewTemplates(input: $input) { edges { node { cadenceMonths code id isDefault name } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
 		Name:     "WorkerPtoTable",
 		Hash:     "sha256:abf71b65ef60aa73f2ba26a10bd87f0746377d78969a808aec7b3bb07ff60f2f",
 		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName profilePicUrl wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskWorkerTrainingRecords",
+		Hash:     "sha256:3417c37a15878e4f877d8a5404e92f68989f92810ac70e8b55f07c8c48d26dd2",
+		Document: "fragment TrainingCourseReference on TrainingCourse { category code contentUrl delivery description dueDaysAfterAssignment durationMinutes id isRequired name passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status validityMonths } query DeskWorkerTrainingRecords($includeClosed: Boolean, $workerId: ID!) { workerTrainingRecords(workerId: $workerId, includeClosed: $includeClosed) { assignedAt completedAt course { ...TrainingCourseReference } courseId dueAt expiresAt id passed score status } }",
 	},
 	{
 		Name:     "TrainingCourseTable",
@@ -314,6 +349,11 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                    core,
 		LocationCategoryService: p.LocationCategoryService,
 	}
+	performancereviewDeps := &performancereviewresolver.Deps{
+		Core:                     core,
+		PerformanceReviewService: p.PerformanceReviewService,
+		DriverPortalService:      p.DriverPortalService,
+	}
 	servicetypeDeps := &servicetyperesolver.Deps{
 		Core:               core,
 		ServiceTypeService: p.ServiceTypeService,
@@ -338,6 +378,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:          core,
 		WorkerService: p.WorkerService,
 	}
+	workerchecklistDeps := &workerchecklistresolver.Deps{
+		Core:                   core,
+		WorkerChecklistService: p.WorkerChecklistService,
+	}
 	workertrainingDeps := &workertrainingresolver.Deps{
 		Core:                  core,
 		WorkerTrainingService: p.WorkerTrainingService,
@@ -351,10 +395,12 @@ func NewSchema(p ResolverParams) Schema {
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
+		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
 		tractorMutation:               &tractorMutation{Deps: tractorDeps},
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
 		workerMutation:                &workerMutation{Deps: workerDeps},
+		workerchecklistMutation:       &workerchecklistMutation{Deps: workerchecklistDeps},
 		workertrainingMutation:        &workertrainingMutation{Deps: workertrainingDeps},
 	}
 	query := &queryResolver{
@@ -372,12 +418,14 @@ func NewSchema(p ResolverParams) Schema {
 		holdreasonQuery:            &holdreasonQuery{Deps: holdreasonDeps},
 		locationQuery:              &locationQuery{Deps: locationDeps},
 		locationcategoryQuery:      &locationcategoryQuery{Deps: locationcategoryDeps},
+		performancereviewQuery:     &performancereviewQuery{Deps: performancereviewDeps},
 		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
 		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
 		tenantQuery:                &tenantQuery{Deps: tenantDeps},
 		tractorQuery:               &tractorQuery{Deps: tractorDeps},
 		trailerQuery:               &trailerQuery{Deps: trailerDeps},
 		workerQuery:                &workerQuery{Deps: workerDeps},
+		workerchecklistQuery:       &workerchecklistQuery{Deps: workerchecklistDeps},
 		workertrainingQuery:        &workertrainingQuery{Deps: workertrainingDeps},
 	}
 
@@ -433,16 +481,28 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":            func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":             func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"PTOChartDataPoint":    func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PortalTraining":       func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
-		"Tractor":              func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
-		"Trailer":              func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
-		"TrainingCourse":       func() any { return &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps} },
-		"User":                 func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
-		"Worker":               func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
+		"Commodity":         func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":          func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"LocationCategory":  func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"PTOChartDataPoint": func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PerformanceReview": func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"PerformanceReviewTemplate": func() any {
+			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
+		},
+		"PortalTraining":          func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
+		"ReviewRating":            func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
+		"Tractor":                 func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
+		"Trailer":                 func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
+		"TrainingCourse":          func() any { return &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps} },
+		"User":                    func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
+		"Worker":                  func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
+		"WorkerChecklist":         func() any { return &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps} },
+		"WorkerChecklistItem":     func() any { return &workerchecklistresolver.WorkerChecklistItemResolver{Deps: workerchecklistDeps} },
+		"WorkerChecklistProgress": func() any { return &workerchecklistresolver.WorkerChecklistProgressResolver{Deps: workerchecklistDeps} },
+		"WorkerChecklistTemplate": func() any { return &workerchecklistresolver.WorkerChecklistTemplateResolver{Deps: workerchecklistDeps} },
+		"WorkerChecklistTemplateItem": func() any {
+			return &workerchecklistresolver.WorkerChecklistTemplateItemResolver{Deps: workerchecklistDeps}
+		},
 		"WorkerPTO":            func() any { return &workerresolver.WorkerPTOResolver{Deps: workerDeps} },
 		"WorkerProfile":        func() any { return &workerresolver.WorkerProfileResolver{Deps: workerDeps} },
 		"WorkerTrainingRecord": func() any { return &workertrainingresolver.WorkerTrainingRecordResolver{Deps: workertrainingDeps} },
@@ -462,10 +522,12 @@ type mutationResolver struct {
 	*dispatchconsoleMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
+	*performancereviewMutation
 	*tenantMutation
 	*tractorMutation
 	*trailerMutation
 	*workerMutation
+	*workerchecklistMutation
 	*workertrainingMutation
 }
 
@@ -484,12 +546,14 @@ type queryResolver struct {
 	*holdreasonQuery
 	*locationQuery
 	*locationcategoryQuery
+	*performancereviewQuery
 	*servicetypeQuery
 	*shipmenttypeQuery
 	*tenantQuery
 	*tractorQuery
 	*trailerQuery
 	*workerQuery
+	*workerchecklistQuery
 	*workertrainingQuery
 }
 
@@ -499,10 +563,12 @@ type (
 	dispatchconsoleMutation        = dispatchconsoleresolver.MutationResolver
 	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
+	performancereviewMutation      = performancereviewresolver.MutationResolver
 	tenantMutation                 = tenantresolver.MutationResolver
 	tractorMutation                = tractorresolver.MutationResolver
 	trailerMutation                = trailerresolver.MutationResolver
 	workerMutation                 = workerresolver.MutationResolver
+	workerchecklistMutation        = workerchecklistresolver.MutationResolver
 	workertrainingMutation         = workertrainingresolver.MutationResolver
 	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
 	carrierQuery                   = carrierresolver.QueryResolver
@@ -518,11 +584,13 @@ type (
 	holdreasonQuery                = holdreasonresolver.QueryResolver
 	locationQuery                  = locationresolver.QueryResolver
 	locationcategoryQuery          = locationcategoryresolver.QueryResolver
+	performancereviewQuery         = performancereviewresolver.QueryResolver
 	servicetypeQuery               = servicetyperesolver.QueryResolver
 	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver
 	tenantQuery                    = tenantresolver.QueryResolver
 	tractorQuery                   = tractorresolver.QueryResolver
 	trailerQuery                   = trailerresolver.QueryResolver
 	workerQuery                    = workerresolver.QueryResolver
+	workerchecklistQuery           = workerchecklistresolver.QueryResolver
 	workertrainingQuery            = workertrainingresolver.QueryResolver
 )

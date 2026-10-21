@@ -51,7 +51,7 @@ If you are submitting an approved pull request:
 
 - Keep the change focused and reviewable.
 - Link the related issue or maintainer discussion.
-- Follow the repository guidance in [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md).
+- Follow the repository guidance in [AGENTS.md](AGENTS.md) and the patterns in [docs/engineering/backend](docs/engineering/backend/README.md).
 - Match the existing architecture and naming conventions.
 - Include relevant tests or explain why tests are not applicable.
 - Update documentation, examples, migrations, or configuration when behavior changes.

@@ -35,7 +35,7 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
 | HTTP binding | `pkg/authctx` (`SetSessionAuthContext`, `SetAPIKeyContext`, `SetCaptureDeviceContext`) |
 | Temporal binding | `internal/infrastructure/temporaljobs/interceptors/tenantscope.go` |
-| Guards | `schemalint/rls_integration_test.go`, `systemscopelint`, `rlslint` (repository methods run in a scoped transaction), `postgres/rls_integration_test.go` |
+| Guards | `schemalint/rls_integration_test.go`, `rlslint` (`TestEverySystemScopeIsReviewed`; repository methods run in a scoped transaction), `postgres/rls_integration_test.go` |
 
 ## Roles
 
@@ -150,7 +150,7 @@ so `trenova_rls.user_id()` never widens a run to the system user's own rows.
 
 **Seeing every tenant** is `ctx = dbscope.WithSystem(ctx, reason)` in the one
 method that needs it, before the `dbtx` call, with a constant reason. The
-statement then runs on the system pool. `systemscopelint` fails on any call site
+statement then runs on the system pool. `rlslint`'s `TestEverySystemScopeIsReviewed` fails on any call site
 not listed, with a justification, in its `allowlist_test.go`. Prefer resolving
 the tenant first (a share token, a webhook's account) and continuing under
 `WithTenant`, so the system scope covers one lookup, not the request.

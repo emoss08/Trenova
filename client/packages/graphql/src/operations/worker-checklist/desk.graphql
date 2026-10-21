@@ -1,0 +1,52 @@
+query DeskWorkerChecklists($workerId: ID!, $includeClosed: Boolean) {
+  workerChecklists(workerId: $workerId, includeClosed: $includeClosed) {
+    id
+    templateId
+    name
+    kind
+    status
+    startedAt
+    dueAt
+    completedAt
+    cancelledAt
+    cancelReason
+    progress {
+      total
+      settled
+      requiredTotal
+      requiredDone
+      overdue
+      complete
+    }
+    items {
+      id
+      label
+      kind
+      required
+      owner
+      status
+      dueAt
+      overdue
+      completedAt
+      note
+    }
+  }
+}
+
+query DeskWorkerChecklistTemplates($input: WorkerChecklistTemplatesInput!) {
+  workerChecklistTemplates(input: $input) {
+    edges {
+      node {
+        id
+        code
+        name
+        kind
+        trigger
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
