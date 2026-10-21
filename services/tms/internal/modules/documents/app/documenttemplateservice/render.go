@@ -104,6 +104,10 @@ func (s *Service) renderDocumentHTML(
 	if multiErr := diagnosticsToMultiError(compiled.diags); multiErr != nil {
 		return nil, nil, multiErr
 	}
+	printed := printedSourceDiagnostics(&resolved.Content)
+	if multiErr := diagnosticsToMultiError(printed); multiErr != nil {
+		return nil, nil, multiErr
+	}
 
 	body, err := s.engine.Render(ctx, compiled.compiledFor(documenttemplate.ChannelPDF), data)
 	if err != nil {

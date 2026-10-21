@@ -296,7 +296,11 @@ func (v *Validator) ValidateVersion(
 		)
 	}
 
-	return mergeErrors(multiErr, channelErr)
+	printed := contentFromVersion(entity)
+	return mergeErrors(
+		mergeErrors(multiErr, channelErr),
+		diagnosticsToMultiError(printedSourceDiagnostics(&printed)),
+	)
 }
 
 // checkChannelsBelong refuses content in a slot the kind does not produce.
