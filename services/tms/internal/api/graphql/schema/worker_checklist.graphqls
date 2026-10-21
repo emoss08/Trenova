@@ -138,7 +138,7 @@ type WorkerChecklist {
   sourceEventId: ID
   startedById: ID
   startedBy: User
-  progress: WorkerChecklistProgress!
+  progress: WorkerChecklistProgress
   items: [WorkerChecklistItem!]!
   version: Int!
   createdAt: Timestamp!

@@ -1741,7 +1741,7 @@ type InvoiceResolver interface {
 	RelatedInvoices(ctx context.Context, obj *invoice.Invoice) ([]*invoice.Invoice, error)
 	SubtotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
 	OtherAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
-	TotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
+	TotalAmount(ctx context.Context, obj *invoice.Invoice) (*string, error)
 	AppliedAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
 	VoidDisposition(ctx context.Context, obj *invoice.Invoice) (*invoice.VoidDisposition, error)
 	ReferenceInvoice(ctx context.Context, obj *invoice.Invoice) (*invoice.Invoice, error)
@@ -1798,7 +1798,7 @@ type InvoiceChargeGroupResolver interface {
 }
 
 type InvoiceDisputeResolver interface {
-	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (string, error)
+	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (*string, error)
 	Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error)
 	OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
 	ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
@@ -3629,7 +3629,7 @@ type WorkerCredentialResolver interface {
 
 type WorkerCredentialTypeResolver interface {
 	ProfileField(ctx context.Context, obj *worker.WorkerCredentialType) (*string, error)
-	ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (int, error)
+	ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (*int, error)
 }
 
 type WorkerDOTTestResolver interface {

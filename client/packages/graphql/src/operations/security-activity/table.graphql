@@ -27,7 +27,7 @@ fragment AuthEventTableRowFields on AuthEvent {
   }
 }
 
-query AuthEventsTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+query AuthEventsTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) @requiresRead(kind: "user") {
   authEvents(input: $input) {
     edges {
       node {
@@ -53,7 +53,7 @@ fragment RiskDecisionTableRowFields on RiskDecision {
   }
 }
 
-query RiskDecisionsTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+query RiskDecisionsTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) @requiresRead(kind: "user") {
   riskDecisions(input: $input) {
     edges {
       node {
@@ -85,7 +85,7 @@ fragment ExternalIdentityTableRowFields on ExternalIdentity {
 query ExternalIdentitiesTable(
   $input: DataTableConnectionInput!
   $includeTotalCount: Boolean = true
-) {
+) @requiresRead(kind: "user") {
   externalIdentities(input: $input) {
     edges {
       node {
@@ -117,7 +117,7 @@ fragment MFAAuthenticatorTableRowFields on MFAAuthenticator {
 query MFAAuthenticatorsTable(
   $input: DataTableConnectionInput!
   $includeTotalCount: Boolean = true
-) {
+) @requiresRead(kind: "user") {
   mfaAuthenticators(input: $input) {
     edges {
       node {

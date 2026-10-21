@@ -19988,11 +19988,12 @@
     ]
   },
   "Advance {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/pay-advance"
     ]
   },
@@ -45048,6 +45049,15 @@
       "go/other"
     ]
   },
+  "Card assignment is hidden": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Card belongs to another tractor": {
     "sites": 1,
     "scope": [
@@ -50324,7 +50334,7 @@
     ]
   },
   "Checklist": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -67223,7 +67233,7 @@
     ]
   },
   "Credited": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -116187,11 +116197,12 @@
     ]
   },
   "Hidden": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/components",
       "routes/agent-control",
       "routes/desk",
       "routes/rate-agreement",
@@ -121184,7 +121195,7 @@
     ]
   },
   "In dispute": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -146567,7 +146578,7 @@
     ]
   },
   "Method": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -152180,7 +152191,7 @@
     ]
   },
   "Net": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -157410,6 +157421,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "No email": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No email attempts recorded.": {
@@ -176735,6 +176755,15 @@
       "go/other"
     ]
   },
+  "Open, part in dispute": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Open-ended": {
     "sites": 3,
     "scope": [
@@ -180418,6 +180447,15 @@
       "apps/web/components"
     ]
   },
+  "Overnight": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Overnight allowed": {
     "sites": 2,
     "scope": [
@@ -182380,7 +182418,7 @@
     ]
   },
   "Paid": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -186220,7 +186258,7 @@
     ]
   },
   "Pays {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -215842,7 +215880,7 @@
     ]
   },
   "Restroom": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -227910,7 +227948,7 @@
     ]
   },
   "Secure parking": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -286082,12 +286120,13 @@
     ]
   },
   "Unknown user": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accounting-sync",
+      "routes/admin",
       "routes/invoice"
     ]
   },
@@ -306469,6 +306508,16 @@
       "apps/web/components"
     ]
   },
+  "You don't have access to {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/components",
+      "routes/desk"
+    ]
+  },
   "You don't have an escrow account.": {
     "sites": 1,
     "scope": [
@@ -308974,6 +309023,15 @@
       "routes/agent-control"
     ]
   },
+  "agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "all active workers are already synced to Samsara": {
     "sites": 1,
     "scope": [
@@ -309630,6 +309688,15 @@
       "go/other"
     ]
   },
+  "carriers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "change how they're split": {
     "sites": 1,
     "scope": [
@@ -309819,6 +309886,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "credential types": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "credit left of {0}": {
     "sites": 1,
     "scope": [
@@ -309844,6 +309920,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "customers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "d avg": {
@@ -310106,6 +310191,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "driver settlements": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "due now": {
@@ -312429,6 +312523,15 @@
       "packages/shared/lib"
     ]
   },
+  "escrow accounts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "events": {
     "sites": 1,
     "scope": [
@@ -312713,6 +312816,24 @@
       "routes/reports"
     ]
   },
+  "fiscal periods": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
+  "fleet codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "fmcsa.dot.gov": {
     "sites": 1,
     "scope": [
@@ -312857,6 +312978,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "fuel cards": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "generate to start": {
@@ -313151,6 +313281,15 @@
       "go/other"
     ]
   },
+  "invoice disputes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "invoice write-off": {
     "sites": 1,
     "scope": [
@@ -313170,11 +313309,12 @@
     ]
   },
   "invoices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/lib",
       "routes/inbox"
     ]
   },
@@ -313487,6 +313627,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "location categories": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
+  "locations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "lowercase": {
@@ -314797,6 +314955,15 @@
       "routes/dispatch-console"
     ]
   },
+  "pay advances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "pays {0}": {
     "sites": 2,
     "scope": [
@@ -314849,6 +315016,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "performance reviews": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "pgvector is installed, but the tables that hold the index were never created. Run this on the server; running services notice within five minutes:": {
@@ -315314,6 +315490,15 @@
       "go/other"
     ]
   },
+  "service failure reason codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "service type": {
     "sites": 1,
     "scope": [
@@ -315357,6 +315542,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "shift templates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "shipment duplication is not configured": {
@@ -315411,6 +315605,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "shipping@customer.com, logistics@customer.com": {
@@ -316399,6 +316602,15 @@
       "routes/accounting-drift"
     ]
   },
+  "tractors": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "trailer continues": {
     "sites": 1,
     "scope": [
@@ -316406,6 +316618,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "trailers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "trailing 90 days": {
@@ -316588,6 +316809,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "users": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "v1 – v{0}": {
@@ -316964,6 +317194,15 @@
       "routes/agent-control"
     ]
   },
+  "worker checklists": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "worker is required": {
     "sites": 1,
     "scope": [
@@ -316998,6 +317237,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "workers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "workflow id is required": {
@@ -329584,6 +329832,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} of a linked {1} needs read access to {1}; the operation must declare @requiresRead for it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "{0} of answers": {

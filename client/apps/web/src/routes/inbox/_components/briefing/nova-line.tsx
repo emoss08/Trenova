@@ -64,7 +64,7 @@ export function NovaLineText({
         bold,
         line.carry,
         line.carry,
-        senderFirstName({ fromName: line.onCall.name, fromAddress: line.onCall.emailAddress }),
+        senderFirstName({ fromName: line.onCall.name, fromAddress: line.onCall.username }),
       );
     }
     words = (

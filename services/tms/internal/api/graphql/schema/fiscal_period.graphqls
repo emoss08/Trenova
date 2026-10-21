@@ -19,7 +19,7 @@ type FiscalPeriod {
   organizationId: ID!
   fiscalYearId: ID!
   periodNumber: Int!
-  periodType: PeriodType!
+  periodType: PeriodType
   status: FiscalPeriodStatus!
   name: String!
   startDate: Timestamp!

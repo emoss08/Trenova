@@ -257,7 +257,11 @@ export function reviewSteps(failure: DeskServiceFailure, t: TranslateFn): PathSt
   return steps;
 }
 
-/** Why the failure happened, as its reason code names it, or null when none was given. */
+/**
+ * Why the failure happened, as its reason code names it, or null when none was given. The
+ * code's description is outside its reference view; without reason code read it is left out
+ * and the cause stands on the code's name.
+ */
 export function failureCause(
   failure: Pick<DeskServiceFailure, "reasonCode">,
 ): { name: string; code: string; category: string; description: string } | null {
@@ -267,7 +271,7 @@ export function failureCause(
     name: reason.label.trim() || reason.code,
     code: reason.code,
     category: choiceLabel(serviceFailureReasonCategoryChoices, reason.category),
-    description: reason.description.trim(),
+    description: reason.description?.trim() ?? "",
   };
 }
 

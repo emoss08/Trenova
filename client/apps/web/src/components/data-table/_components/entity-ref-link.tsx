@@ -1,9 +1,20 @@
+import { isRecordEntityType, recordPath } from "@/config/record-links";
+import { LockedReference } from "@trenova/shared/components/withheld-value";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo } from "react";
 import { Link } from "react-router";
 
 export type EntityRefConfig<TEntity, TParent> = {
+  /**
+   * The referenced record's kind. Given, the cell links to the record only for someone with
+   * the kind's read and otherwise draws the name with a lock
+   * (docs/engineering/reference-views.md). A kind with a page in `RECORD_LINKS` opens there;
+   * any other opens at `basePath`.
+   */
+  kind?: ReferenceKind;
   basePath: string;
   getId: (entity: TEntity) => string | undefined;
   getDisplayText: (entity: TEntity) => string;
@@ -75,15 +86,33 @@ const EntityRefLink = memo(
     className,
     color,
     basePath,
+    kind,
   }: {
     id: string | undefined;
     displayText: string;
     className?: string;
     color?: string;
     basePath?: string;
+    kind?: ReferenceKind;
   }) => {
     const t = useT();
-    const to = `${basePath ?? ""}?panelEntityId=${id}&panelType=edit`;
+    const canRead = useCanReadKind(kind ?? null);
+
+    if (kind && !canRead) {
+      return (
+        <LockedReference kind={kind} className={cn("text-sm", className)}>
+          {displayText}
+        </LockedReference>
+      );
+    }
+    if (kind && !id) {
+      return <span className={cn("text-sm", className)}>{displayText}</span>;
+    }
+
+    const to =
+      kind && id && isRecordEntityType(kind)
+        ? recordPath(kind, id)
+        : `${basePath ?? ""}?panelEntityId=${id}&panelType=edit`;
 
     return (
       <EntityRefLinkInner
@@ -178,6 +207,7 @@ export function EntityRefCell<TEntity, TParent extends Record<string, any>>(
         className={config.className}
         color={color}
         basePath={basePath}
+        kind={config.kind}
       />
       {secondaryInfo && (
         <div className="text-2xs text-muted-foreground flex items-center gap-1">
@@ -233,6 +263,7 @@ export function NestedEntityRefCell<TEntity, TParent extends Record<string, any>
         className={config.className}
         color={color}
         basePath={basePath}
+        kind={config.kind}
       />
 
       {secondaryInfo && (

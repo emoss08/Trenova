@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { SettlementNet } from "./settlement-net";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { ControlledPayCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -122,10 +123,9 @@ function DisputeDetail({ disputeId, onClose }: { disputeId: string; onClose: () 
           <div className="mt-1 flex items-center justify-between text-sm">
             <span className="font-mono font-medium">{dispute.settlement.settlementNumber}</span>
             <span className="tabular-nums">
-              {t("Net")}{" "}
-              <AmountDisplay
-                value={dispute.settlement.netPayMinor}
-                currency={dispute.settlement.currencyCode}
+              <SettlementNet
+                netPayMinor={dispute.settlement.netPayMinor}
+                currencyCode={dispute.settlement.currencyCode}
               />
             </span>
           </div>

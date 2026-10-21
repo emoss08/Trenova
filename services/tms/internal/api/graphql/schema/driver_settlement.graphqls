@@ -409,10 +409,10 @@ type PayAdvance {
   source: PayAdvanceSource!
   reference: String!
   issuedDate: Timestamp!
-  amountMinor: Int!
+  amountMinor: Int
   recoveredMinor: Int!
   writtenOffMinor: Int!
-  outstandingMinor: Int!
+  outstandingMinor: Int
   writeOffReason: String!
   notes: String!
   currencyCode: String!
@@ -464,8 +464,8 @@ type EscrowAccount {
   businessUnitId: ID!
   workerId: ID!
   status: EscrowAccountStatus!
-  targetAmountMinor: Int!
-  balanceMinor: Int!
+  targetAmountMinor: Int
+  balanceMinor: Int
   annualInterestRate: Decimal!
   lastInterestAccrualDate: Timestamp
   openedDate: Timestamp!
@@ -556,10 +556,10 @@ type DriverSettlement {
   deductionsMinor: Int!
   carryForwardInMinor: Int!
   carryForwardOutMinor: Int!
-  netPayMinor: Int!
+  netPayMinor: Int
   totalMiles: Decimal!
   shipmentCount: Int!
-  currencyCode: String!
+  currencyCode: String
   """
   Units of the organization's functional currency per one unit of the
   settlement currency, fixed when the settlement posted. Null when both are the same.
@@ -1188,7 +1188,7 @@ extend type Query {
   driverSettlements(input: DataTableConnectionInput!): DriverSettlementConnection!
   driverSettlement(id: ID!): DriverSettlement
   settlementBatches(input: DataTableConnectionInput!): SettlementBatchConnection!
-  settlementBatch(id: ID!): SettlementBatch
+  settlementBatch(id: ID!): SettlementBatch @authorizes(resource: "driver_settlement")
   driverPayEvents(input: DataTableConnectionInput!): DriverPayEventConnection!
   """
   A worker's accrued, unheld, unsettled pay events — the pool an instant

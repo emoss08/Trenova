@@ -468,6 +468,7 @@ function InvoiceCard({
           aside={
             record.customer ? (
               <CardOpenLink
+                kind="customer"
                 to={recordPath("customer", record.customer.id)}
                 onOpen={
                   listedCustomer.open && (() => listedCustomer.open?.(record.customer?.id ?? ""))

@@ -1,7 +1,7 @@
 fragment TriageUserFields on User {
   id
   name
-  emailAddress
+  username
   thumbnailUrl
 }
 
@@ -130,7 +130,7 @@ fragment InboundMessageDetailFields on InboundMessage {
     ...TriageUserFields
   }
   mailbox {
-    ...InboundMailboxFields
+    ...InboundMailboxReference
   }
   attachments {
     ...InboundAttachmentDetailFields

@@ -5,8 +5,22 @@ import {
   type DeskDriverSettlementCardQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootField } from "@trenova/shared/lib/reference-access";
 
-export type DeskDriverSettlement = NonNullable<DeskDriverSettlementCardQuery["driverSettlement"]>;
+type DeskDriverSettlementFields = NonNullable<DeskDriverSettlementCardQuery["driverSettlement"]>;
+
+/**
+ * The settlement is the card's root record, so its own pay and currency are never withheld;
+ * the schema marks them nullable for where a settlement is linked from a dispute
+ * (docs/engineering/reference-views.md).
+ */
+export type DeskDriverSettlement = Omit<
+  DeskDriverSettlementFields,
+  "netPayMinor" | "currencyCode"
+> & {
+  netPayMinor: number;
+  currencyCode: string;
+};
 export type DeskDriverSettlementGroup = NonNullable<DeskDriverSettlement["lineSummary"]>[number];
 export type DeskDriverSettlementDispute = DeskDriverSettlement["disputes"][number];
 export type DeskSettlementLoadShare = NonNullable<DeskDriverSettlement["loadShares"]>[number];
@@ -32,10 +46,15 @@ export async function fetchDeskDriverSettlement(
     variables: { id },
     signal: options?.signal,
   });
-  if (!data.driverSettlement) {
+  const settlement = data.driverSettlement;
+  if (!settlement) {
     throw new Error("Settlement not found");
   }
-  return data.driverSettlement;
+  return {
+    ...settlement,
+    netPayMinor: rootField(settlement.netPayMinor, "DriverSettlement.netPayMinor"),
+    currencyCode: rootField(settlement.currencyCode, "DriverSettlement.currencyCode"),
+  };
 }
 
 /**

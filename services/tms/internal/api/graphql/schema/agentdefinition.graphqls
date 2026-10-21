@@ -97,7 +97,7 @@ type AgentDefinition {
   organizationId: ID!
   businessUnitId: ID!
   name: String!
-  description: String!
+  description: String
   "The starter this agent was created from, if any. It carries no restriction."
   template: AgentTemplate
   instructions: String!
@@ -111,7 +111,7 @@ type AgentDefinition {
   at the lower of this and that person's own access.
   """
   dataAccessCeiling: AgentDataAccessCeiling!
-  enabled: Boolean!
+  enabled: Boolean
   shadowMode: Boolean!
   decisionTimeoutSeconds: Int!
   triggerMode: AgentTriggerMode!
@@ -146,7 +146,7 @@ type AgentDefinition {
   accent: String!
   preferredProviderId: ID!
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
-  systemKey: String!
+  systemKey: String
   """
   The agents this one may hand a task to when a person is talking to it, in the
   order configured. Each works with its own tools, approvals and budget, as the
@@ -159,7 +159,7 @@ type AgentDefinition {
   """
   delegates: [AgentDefinition!]!
   "Who may use the agent. A system agent is always Everyone."
-  accessMode: AgentAccessMode!
+  accessMode: AgentAccessMode
   """
   The role the agent runs as when no person is present, on a schedule or an
   event: its unattended work is held to both the fixed agent ceiling and this
@@ -447,13 +447,13 @@ extend type Query {
   """
   myAgentMatch(input: MyAgentMatchInput!): MyAgentMatch!
   "Each role's coverage of an agent's tools, for choosing who may use it."
-  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
+  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion! @authorizes(resource: "role")
   """
   Each role's coverage of the tools a form has chosen, and the sensitive ones
   among them while it is open to everyone. Reads the form, not the saved agent,
   and changes nothing.
   """
-  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview! @authorizes(resource: "role")
 }
 
 "A prompt kept with an agent for trying it again after an edit."
@@ -477,7 +477,7 @@ extend type Mutation {
 
 extend type Mutation {
   "Sets who may use an agent. Needs permission to update agents and roles."
-  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition! @authorizes(resource: "role")
   """
   Sets the role an agent runs as when no person is present, or clears it with a
   null roleId. Needs permission to update agents and roles, and the person

@@ -187,14 +187,17 @@ function RoleAgentRow({
 }) {
   const t = useT();
   const open = agent.accessMode === "Everyone";
+  // Whether the agent is on is outside its reference view: null without agent read, and then
+  // the row claims neither state.
+  const agentOff = agent.enabled === false;
 
   return (
     <li className="border-border-subtle flex min-w-0 items-center gap-2.5 border-b px-3 py-2 last:border-b-0">
-      <AgentTile agent={agent} size="sm" className={cn(!agent.enabled && "opacity-60 grayscale")} />
+      <AgentTile agent={agent} size="sm" className={cn(agentOff && "opacity-60 grayscale")} />
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-sm",
-          agent.enabled ? "text-foreground" : "text-foreground-muted",
+          agentOff ? "text-foreground-muted" : "text-foreground",
         )}
       >
         {agent.name}
@@ -215,7 +218,7 @@ function RoleAgentRow({
           </TooltipContent>
         </Tooltip>
       )}
-      {!agent.enabled && (
+      {agentOff && (
         <Badge variant="neutral" appearance="outline" className="shrink-0">
           {t("Disabled")}
         </Badge>

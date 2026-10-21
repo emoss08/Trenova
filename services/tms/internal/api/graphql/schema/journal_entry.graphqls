@@ -159,7 +159,7 @@ extend type Query {
   journalReviewTable(input: DataTableConnectionInput!): JournalEntryConnection!
   journalReviewSummary: JournalReviewSummary!
   "A journal entry as the Desk card draws it, read in one pass."
-  journalEntryCard(id: ID!): JournalEntryCard!
+  journalEntryCard(id: ID!): JournalEntryCard! @authorizes(resource: "journal_entry") @authorizes(resource: "journal_reversal")
 }
 
 extend type Mutation {

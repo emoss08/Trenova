@@ -122,7 +122,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "disputedAmount",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild3,
@@ -130,7 +129,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.InvoiceDispute)
 					return gqlexec.Resolver[resolverInvoiceDispute](ec, "InvoiceDispute").DisputedAmount(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:     "disputedAmountMinor",
@@ -144,13 +143,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "notes",
-				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceDispute)
 					return obj.Notes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "openedById",
@@ -212,13 +210,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "resolutionNotes",
-				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.InvoiceDispute)
 					return obj.ResolutionNotes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
+				Marshal: gqlexec.Marshal(marshalOString2string),
 			},
 			{
 				Name:     "version",
@@ -372,7 +369,7 @@ type resolverInvoice interface {
 }
 
 type resolverInvoiceDispute interface {
-	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (string, error)
+	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (*string, error)
 	Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error)
 	OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
 	ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
@@ -643,14 +640,6 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -699,14 +688,6 @@ func marshalNInvoiceDisputeReasonCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
@@ -720,6 +701,14 @@ func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Customer", v)
+}
+
+func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
 }
 
 func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
@@ -746,6 +735,11 @@ func marshalOInvoiceDisputeResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 		return graphql.Null
 	}
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
 	return res
 }
 

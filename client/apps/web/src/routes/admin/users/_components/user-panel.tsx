@@ -9,6 +9,7 @@ import {
   userDetailToFormValues,
 } from "@/lib/graphql/users";
 import type { UserRow } from "@/lib/graphql/user-table";
+import { rootField } from "@trenova/shared/lib/reference-access";
 import { user as userQueries } from "@/lib/queries/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -140,7 +141,9 @@ function UserEditPanel({
             <AlertCircleIcon />
             <AlertTitle>{t("This user could not be loaded")}</AlertTitle>
             <AlertDescription>
-              {t("Close the panel and open it again. If it keeps failing, the user may have been removed.")}
+              {t(
+                "Close the panel and open it again. If it keeps failing, the user may have been removed.",
+              )}
             </AlertDescription>
           </Alert>
         ) : (
@@ -157,7 +160,7 @@ function UserEditPanel({
           <UserForm
             mode="edit"
             userId={data.id}
-            emailAddress={data.emailAddress}
+            emailAddress={rootField(data.emailAddress, "User.emailAddress")}
             isActive={data.status === "Active"}
             awaitingSetup={data.lastLoginAt == null && data.passwordChangedAt == null}
           />

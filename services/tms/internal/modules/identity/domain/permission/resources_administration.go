@@ -10,6 +10,7 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Organization",
 		Description:        "Organization settings and configuration",
 		Category:           "Organization settings",
+		ReferenceView:      []string{"name", "logoUrl"},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -19,15 +20,17 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName:        "Business Unit",
 		Description:        "Business unit management",
 		Category:           "Organization settings",
+		ReferenceView:      []string{"name", "code"},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceUser.String(),
-		DisplayName: "User",
-		Description: "User account management",
-		Category:    "Users & security",
+		Resource:      ResourceUser.String(),
+		DisplayName:   "User",
+		Description:   "User account management",
+		Category:      "Users & security",
+		ReferenceView: []string{"name", "username", "profilePicUrl", "thumbnailUrl"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View user accounts"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new users"},
@@ -47,10 +50,11 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceRole.String(),
-		DisplayName: "Role",
-		Description: "Role and permission management",
-		Category:    "Users & security",
+		Resource:      ResourceRole.String(),
+		DisplayName:   "Role",
+		Description:   "Role and permission management",
+		Category:      "Users & security",
+		ReferenceView: []string{"name", "isSystem"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View roles"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new roles"},
@@ -170,6 +174,14 @@ func (r *Registry) registerAdministrationResources() {
 		DisplayName: "EDI",
 		Description: "EDI partner setup, mapping profiles, and load tender transfers",
 		Category:    "EDI",
+		ReferenceView: []string{
+			"kind",
+			"status",
+			"code",
+			"name",
+			"enabledForInbound",
+			"enabledForOutbound",
+		},
 		Operations: relabel(
 			standardOpsWithDelete,
 			OpUpdate,

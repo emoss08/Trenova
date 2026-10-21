@@ -95,7 +95,6 @@ mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {
 fragment AgentAccessRoleFields on Role {
   id
   name
-  description
   isSystem
 }
 
@@ -139,18 +138,17 @@ fragment RoleAgentAccessFields on Role {
     template
     accessMode
     enabled
-    triggerMode
     systemKey
   }
 }
 
-query RoleAgentAccess($id: ID!) {
+query RoleAgentAccess($id: ID!) @requiresRead(kind: "agent_definition") {
   role(id: $id) {
     ...RoleAgentAccessFields
   }
 }
 
-mutation SetRoleAgentAccess($roleId: ID!, $agentIds: [ID!]!) {
+mutation SetRoleAgentAccess($roleId: ID!, $agentIds: [ID!]!) @requiresRead(kind: "agent_definition") {
   setRoleAgentAccess(roleId: $roleId, agentIds: $agentIds) {
     ...RoleAgentAccessFields
   }

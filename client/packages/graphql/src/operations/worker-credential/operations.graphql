@@ -96,7 +96,7 @@ query WorkerCredentials($workerId: ID!, $includeArchived: Boolean) {
   }
 }
 
-query WorkerCredentialSummary($workerId: ID!) {
+query WorkerCredentialSummary($workerId: ID!) @requiresRead(kind: "worker_credential_type") {
   workerCredentialSummary(workerId: $workerId) {
     workerId
     complianceStatus

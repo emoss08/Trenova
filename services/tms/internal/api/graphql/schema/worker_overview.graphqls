@@ -91,6 +91,6 @@ type WorkerRosterAttention {
 }
 
 extend type Query {
-  workerOverview(workerId: ID!): WorkerOverview!
+  workerOverview(workerId: ID!): WorkerOverview! @authorizes(resource: "worker")
   workerRosterAttention: WorkerRosterAttention!
 }

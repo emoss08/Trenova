@@ -918,6 +918,7 @@
   "No distance profiles yet": "尚无距离配置",
   "No document selected": "未选择任何文档",
   "No draft generated": "未生成草稿",
+  "No email": "无电子邮件",
   "No failed sign-ins in the last {0, plural, one {# day} other {# days}}": "过去 {0, plural, other {# 天}}内没有登录失败",
   "No feeds have run yet. They start once a provider is connected and carriers are enrolled.": "尚未运行任何数据源。待供应商连接且承运商加入监控后即会开始运行。",
   "No field assertions yet. Add rules for things like “referenceNumber is not empty” or “rate matches a currency pattern.”": "尚无字段断言。请添加类似“referenceNumber 不为空”或“rate 匹配货币格式”的规则。",

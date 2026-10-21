@@ -373,7 +373,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "progress",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				HasChild:   true,
@@ -382,7 +381,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklist)
 					return gqlexec.Resolver[resolverWorkerChecklist](ec, "WorkerChecklist").Progress(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistProgress),
+				Marshal: gqlexec.Marshal(marshalOWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistProgress),
 			},
 			{
 				Name:      "items",
@@ -2125,14 +2124,6 @@ func marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistProgress(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.ChecklistProgress) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "WorkerChecklistProgress", v)
-}
-
 func marshalNWorkerChecklistStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -2247,6 +2238,13 @@ func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋide
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "User", v)
+}
+
+func marshalOWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistProgress(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.ChecklistProgress) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WorkerChecklistProgress", v)
 }
 
 func marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredential) graphql.Marshaler {

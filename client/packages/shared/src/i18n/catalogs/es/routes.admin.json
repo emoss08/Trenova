@@ -918,6 +918,7 @@
   "No distance profiles yet": "Aún no hay perfiles de distancia",
   "No document selected": "No se ha seleccionado ningún documento",
   "No draft generated": "No se generó ningún borrador",
+  "No email": "Sin correo electrónico",
   "No failed sign-ins in the last {0, plural, one {# day} other {# days}}": "Sin inicios de sesión fallidos en {0, plural, one {el último día} other {los últimos # días}}",
   "No feeds have run yet. They start once a provider is connected and carriers are enrolled.": "Todavía no se ha ejecutado ninguna fuente. Comenzarán en cuanto se conecte un proveedor y se inscriban transportistas.",
   "No field assertions yet. Add rules for things like “referenceNumber is not empty” or “rate matches a currency pattern.”": "Todavía no hay aserciones de campo. Añada reglas como «referenceNumber no está vacío» o «rate coincide con un patrón de moneda».",

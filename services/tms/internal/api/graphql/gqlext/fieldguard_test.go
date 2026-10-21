@@ -399,7 +399,8 @@ func newCeilingGuard(t *testing.T) *FieldGuardExtension {
 	guard := newFieldGuard(t, &mocks.DenyResourcesPermissionEngine{})
 	schema, err := schemadiff.LoadDir("../schema")
 	require.NoError(t, err)
-	guard.resources = ResourceTypes(schema, guard.registry)
+	guard.resources, err = KindTypes(schema, guard.registry)
+	require.NoError(t, err)
 	return guard
 }
 
@@ -417,16 +418,27 @@ func agentRead(
 type fieldStep struct {
 	object, field string
 	nonNull       bool
+	authorizes    string
 }
 
 func nestedFieldContext(ctx context.Context, steps ...fieldStep) context.Context {
 	for _, step := range steps {
+		def := &ast.FieldDefinition{Type: &ast.Type{NamedType: "String", NonNull: step.nonNull}}
+		if step.authorizes != "" {
+			def.Directives = ast.DirectiveList{{
+				Name: authorizesDirective,
+				Arguments: ast.ArgumentList{{
+					Name:  kindResourceArgument,
+					Value: &ast.Value{Kind: ast.StringValue, Raw: step.authorizes},
+				}},
+			}}
+		}
 		ctx = gqlgen.WithFieldContext(ctx, &gqlgen.FieldContext{
 			Object: step.object,
 			Field: gqlgen.CollectedField{Field: &ast.Field{
 				Name:       step.field,
 				Alias:      step.field,
-				Definition: &ast.FieldDefinition{Type: &ast.Type{NamedType: "String", NonNull: step.nonNull}},
+				Definition: def,
 			}},
 		})
 	}
@@ -607,9 +619,8 @@ func TestFieldGuardNeverWithholdsARecordsID(t *testing.T) {
 }
 
 // A tractor's driver is a worker: a reader who may read tractors but not
-// workers sees the driver's id and nothing else, as the repository-backed
-// tractor list only named a driver to a reader who could read workers.
-func TestFieldGuardShowsOnlyTheIDOfARecordTheReaderCannotRead(t *testing.T) {
+// workers sees the driver's reference view (their name) and nothing else.
+func TestFieldGuardShowsOnlyTheReferenceViewOfARecordTheReaderCannotRead(t *testing.T) {
 	t.Parallel()
 
 	guard := newCeilingGuard(t)
@@ -623,6 +634,14 @@ func TestFieldGuardShowsOnlyTheIDOfARecordTheReaderCannotRead(t *testing.T) {
 		fieldStep{object: "Query", field: "tractors"},
 		fieldStep{object: "Tractor", field: "primaryWorker"},
 		fieldStep{object: "Worker", field: "wholeName"},
+	)
+	assert.Equal(t, "stored value", result, "a driver's name is in the worker reference view")
+	assert.True(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		fieldStep{object: "Query", field: "tractors"},
+		fieldStep{object: "Tractor", field: "primaryWorker"},
+		fieldStep{object: "Worker", field: "email"},
 	)
 	assert.Nil(t, result)
 	assert.False(t, resolved)
@@ -641,5 +660,5 @@ func TestFieldGuardShowsOnlyTheIDOfARecordTheReaderCannotRead(t *testing.T) {
 	)
 	assert.Equal(t, "stored value", result)
 	assert.True(t, resolved)
-	assert.Equal(t, []string{"tractors.primaryWorker.wholeName"}, ceiling.Withheld())
+	assert.Equal(t, []string{"tractors.primaryWorker.email"}, ceiling.Withheld())
 }

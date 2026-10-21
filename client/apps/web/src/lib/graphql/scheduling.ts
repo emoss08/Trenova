@@ -43,8 +43,19 @@ import {
   type WorkerShiftAssignmentsQueryVariables,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootFields, type RootFields } from "@trenova/shared/lib/reference-access";
 
-export type ShiftTemplateRow = ShiftTemplatesQuery["shiftTemplates"][number];
+/*
+ * The shift templates list reads each template as its root record, so its pattern is never
+ * withheld; the schema marks it nullable for where a template is linked from a worker's
+ * assignments (docs/engineering/reference-views.md).
+ */
+const SHIFT_TEMPLATE_ROOT_FIELDS = ["cycleWeeks", "daysOfWeek"] as const;
+
+export type ShiftTemplateRow = RootFields<
+  ShiftTemplatesQuery["shiftTemplates"][number],
+  (typeof SHIFT_TEMPLATE_ROOT_FIELDS)[number]
+>;
 export type RotaBoard = RotaQuery["rota"];
 export type RotaBoardRow = RotaBoard["rows"][number];
 export type RotaBoardDay = RotaBoardRow["days"][number];
@@ -72,7 +83,9 @@ export async function fetchShiftTemplates(
     },
     signal: options?.signal,
   });
-  return data.shiftTemplates;
+  return data.shiftTemplates.map((template) =>
+    rootFields(template, "ShiftTemplate", SHIFT_TEMPLATE_ROOT_FIELDS),
+  );
 }
 
 export async function fetchRota(

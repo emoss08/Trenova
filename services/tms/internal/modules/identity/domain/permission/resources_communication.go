@@ -68,10 +68,11 @@ func (r *Registry) registerCommunicationResources() {
 	// creating an address the outside world can post to, and seeing its token,
 	// is not.
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceInboundMailbox.String(),
-		DisplayName: "Inbound Mailbox",
-		Description: "Addresses the system listens on, and how much they are trusted to act alone",
-		Category:    "Triage",
+		Resource:      ResourceInboundMailbox.String(),
+		DisplayName:   "Inbound Mailbox",
+		Description:   "Addresses the system listens on, and how much they are trusted to act alone",
+		Category:      "Triage",
+		ReferenceView: []string{"name", "address", "provider", "status"},
 		Operations: relabel(
 			standardOpsWithDelete,
 			OpUpdate,

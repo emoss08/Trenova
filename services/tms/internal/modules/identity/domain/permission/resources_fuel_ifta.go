@@ -2,10 +2,11 @@ package permission
 
 func (r *Registry) registerFuelAndIFTAResources() {
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceFuelCard.String(),
-		DisplayName: "Fuel Card",
-		Description: "Fuel cards issued by a card provider and assigned to a driver or tractor",
-		Category:    "Fuel & tax",
+		Resource:      ResourceFuelCard.String(),
+		DisplayName:   "Fuel Card",
+		Description:   "Fuel cards issued by a card provider and assigned to a driver or tractor",
+		Category:      "Fuel & tax",
+		ReferenceView: []string{"label", "lastFour", "provider", "status"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View fuel cards"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Register a fuel card"},
@@ -32,6 +33,14 @@ func (r *Registry) registerFuelAndIFTAResources() {
 		DisplayName: "Fuel Purchase",
 		Description: "Fuel bought for a tractor, recorded by hand or imported from a card statement",
 		Category:    "Fuel & tax",
+		ReferenceView: []string{
+			"purchasedAt",
+			"vendor",
+			"vendorCity",
+			"fuelType",
+			"tractorId",
+			"workerId",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View fuel purchases"},
 			{Operation: OpCreate, DisplayName: "Record", Description: "Record a fuel purchase"},

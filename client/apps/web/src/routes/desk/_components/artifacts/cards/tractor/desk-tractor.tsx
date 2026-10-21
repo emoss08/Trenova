@@ -395,6 +395,7 @@ function Whereabouts({
       {lastKnown && position && (
         <div className="dk-rec-list dk-rec-left">
           <CardRecordRow
+            kind="location"
             to={recordPath("location", lastKnown.id)}
             onOpen={onOpenPlace && (() => onOpenPlace(lastKnown.id))}
           >

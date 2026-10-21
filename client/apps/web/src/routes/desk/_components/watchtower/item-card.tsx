@@ -275,7 +275,9 @@ function Suggestion({ agent }: { agent: WatchtowerAgent }) {
       <DeskAgentTile agent={agent} size="sm" />
       <span>
         <b>{t("{0} can take this", agent.name)}</b>
-        {agent.description !== "" && <em>{agent.description}</em>}
+        {/* The description is outside the agent's reference view: null for someone without
+            agent read, and the suggestion stands on the agent's name alone. */}
+        {agent.description ? <em>{agent.description}</em> : null}
       </span>
     </div>
   );

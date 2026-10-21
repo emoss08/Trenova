@@ -3,13 +3,35 @@ schema {
   mutation: Mutation
 }
 
+"""
+Declares that a root field's resolver checks read on a kind, so the records of
+that kind it returns inside a card, summary or overview are its own records,
+not linked ones. A test holds each declaration to the resolver's check.
+"""
+directive @authorizes(resource: String!) repeatable on FIELD_DEFINITION
+
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+"""
+The permission kind a projection type shows, such as the shipment page's
+customer. The field guard gates it as that kind: a record carried by another
+shows only its kind's reference view unless the reader may read the kind.
+"""
+directive @kind(resource: String!) on OBJECT
 
 """
 Withholds the field from a reader whose role does not grant its group. A
 protected field is always nullable, and null is what such a reader receives.
 """
 directive @protected(group: ProtectedFieldGroup!) on FIELD_DEFINITION
+
+"""
+Declares that an operation selects fields of a linked kind beyond that kind's
+reference view. Without the kind's read those fields are answered null and
+named in extensions.withheldByAccess. Client codegen requires it on every
+operation that selects such a field, and the field must be nullable.
+"""
+directive @requiresRead(kind: String!) repeatable on MUTATION | QUERY | SUBSCRIPTION
 
 """
 What one agent has done lately, for its row on the Agents tab: runs on each of
@@ -3956,7 +3978,7 @@ type AgentDefinition {
   """
   accent: String!
   """Who may use the agent. A system agent is always Everyone."""
-  accessMode: AgentAccessMode!
+  accessMode: AgentAccessMode
   """
   The roles granted the agent, whatever its access mode. They decide who may use
   it only while accessMode is Roles. Empty for a reader who may not read roles.
@@ -3987,8 +4009,8 @@ type AgentDefinition {
   listed, and refused when asked.
   """
   delegates: [AgentDefinition!]!
-  description: String!
-  enabled: Boolean!
+  description: String
+  enabled: Boolean
   endsAt: Timestamp
   eventKinds: [String!]!
   guardrails: [String!]!
@@ -4037,7 +4059,7 @@ type AgentDefinition {
   """
   Set on the agents the platform itself creates and fires; they cannot be deleted.
   """
-  systemKey: String!
+  systemKey: String
   """
   The starter this agent was created from, if any. It carries no restriction.
   """
@@ -8320,8 +8342,8 @@ type Carrier {
   openIntelEventCount: Int! @goField(forceResolver: true)
   organization: Organization
   organizationId: ID!
-  paymentMethod: CarrierPaymentMethod!
-  paymentTermDays: Int!
+  paymentMethod: CarrierPaymentMethod
+  paymentTermDays: Int
   phone: String
   postalCode: String
   qualifiedAt: Timestamp
@@ -13376,7 +13398,7 @@ type DriverSettlement {
   carryForwardOutMinor: Int!
   classification: PayeeClassification!
   createdAt: Timestamp!
-  currencyCode: String!
+  currencyCode: String
   deductionsMinor: Int!
   """
   The worker's disputes against this settlement, newest first; empty for someone who may not read settlement disputes.
@@ -13402,7 +13424,7 @@ type DriverSettlement {
   What each load came to on the statement, every line tied to it summed, in the order the loads first appear. Null when the lines were not read.
   """
   loadShares: [SettlementLoadShare!]
-  netPayMinor: Int!
+  netPayMinor: Int
   notes: String!
   organizationId: ID!
   paidAt: Timestamp
@@ -13866,7 +13888,7 @@ enum EdiMessageStatus {
   Generated
 }
 
-type EdiPartner {
+type EdiPartner @kind(resource: "edi") {
   businessUnitId: ID!
   code: String!
   connection: EdiConnection
@@ -13960,7 +13982,7 @@ type EdiPartnerConnection {
   totalCount: Int
 }
 
-type EdiPartnerCustomer {
+type EdiPartnerCustomer @kind(resource: "customer") {
   code: String!
   id: ID!
   name: String!
@@ -14568,7 +14590,7 @@ funding target. Interest accrues automatically at least quarterly per
 """
 type EscrowAccount {
   annualInterestRate: Decimal!
-  balanceMinor: Int!
+  balanceMinor: Int
   businessUnitId: ID!
   closedDate: Timestamp
   createdAt: Timestamp!
@@ -14578,7 +14600,7 @@ type EscrowAccount {
   openedDate: Timestamp!
   organizationId: ID!
   status: EscrowAccountStatus!
-  targetAmountMinor: Int!
+  targetAmountMinor: Int
   transactions: [EscrowTransaction!]
   updatedAt: Timestamp!
   version: Int!
@@ -16427,7 +16449,7 @@ type FiscalPeriod {
   name: String!
   organizationId: ID!
   periodNumber: Int!
-  periodType: PeriodType!
+  periodType: PeriodType
   startDate: Timestamp!
   status: FiscalPeriodStatus!
   updatedAt: Timestamp!
@@ -18964,7 +18986,7 @@ enum InboundSenderRole {
 A shipment as an inbox row names it: the numbers a sender quotes and the lane.
 Enough to recognise the load without opening it.
 """
-type InboundShipmentRef {
+type InboundShipmentRef @kind(resource: "shipment") {
   bol: String!
   destinationCity: String!
   destinationState: String!
@@ -19198,7 +19220,7 @@ type Invoice {
   shipperCustomerId: ID
   status: InvoiceStatus!
   subtotalAmount: Decimal!
-  totalAmount: Decimal!
+  totalAmount: Decimal
   updatedAt: Timestamp!
   version: Int!
   voidDisposition: InvoiceVoidDisposition
@@ -19458,12 +19480,12 @@ type InvoiceDispute {
   createdAt: Timestamp!
   customer: Customer
   customerId: ID!
-  disputedAmount: Decimal!
+  disputedAmount: Decimal
   disputedAmountMinor: Int!
   id: ID!
   invoice: Invoice
   invoiceId: ID!
-  notes: String!
+  notes: String
   openedAt: Timestamp!
   openedBy: User
   openedById: ID!
@@ -19471,7 +19493,7 @@ type InvoiceDispute {
   reasonCode: InvoiceDisputeReasonCode!
   resolution: InvoiceDisputeResolution
   resolutionAdjustmentId: ID
-  resolutionNotes: String!
+  resolutionNotes: String
   resolvedAt: Timestamp
   resolvedBy: User
   resolvedById: ID
@@ -20395,15 +20417,15 @@ type Location {
 }
 
 type LocationCategory {
-  allowsOvernight: Boolean!
+  allowsOvernight: Boolean
   businessUnit: BusinessUnit
   businessUnitId: ID!
   color: String!
   createdAt: Timestamp!
   description: String!
   facilityType: FacilityType
-  hasRestroom: Boolean!
-  hasSecureParking: Boolean!
+  hasRestroom: Boolean
+  hasSecureParking: Boolean
   id: ID!
   name: String!
   organization: Organization
@@ -20764,7 +20786,7 @@ type Mutation {
   position. A front-office title is refused: it is held by users.
   """
   assignWorkerPosition(positionId: ID, workerId: ID!): Boolean!
-  assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload!
+  assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload! @authorizes(resource: "pto_policy")
   assignWorkerShift(input: AssignShiftInput!): WorkerShiftAssignment!
   assignWorkerTraining(input: AssignWorkerTrainingInput!): WorkerTrainingRecord!
   attachOrderShipments(orderId: ID!, shipmentIds: [ID!]!): Order!
@@ -21593,7 +21615,7 @@ type Mutation {
   """
   Sets who may use an agent. Needs permission to update agents and roles.
   """
-  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition! @authorizes(resource: "role")
   setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   """
   Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused.
@@ -22651,7 +22673,7 @@ allows negative net, unrecovered balances carry forward. Unrecoverable advances
 can be written off with a reason.
 """
 type PayAdvance {
-  amountMinor: Int!
+  amountMinor: Int
   businessUnitId: ID!
   createdAt: Timestamp!
   currencyCode: String!
@@ -22659,7 +22681,7 @@ type PayAdvance {
   issuedDate: Timestamp!
   notes: String!
   organizationId: ID!
-  outstandingMinor: Int!
+  outstandingMinor: Int
   recoveredMinor: Int!
   reference: String!
   source: PayAdvanceSource!
@@ -23742,7 +23764,7 @@ type Query {
   among them while it is open to everyone. Reads the form, not the saved agent,
   and changes nothing.
   """
-  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview! @authorizes(resource: "role")
   """What agents did since the moment given, at most 31 days ago."""
   agentActivitySummary(since: Timestamp!): AgentActivitySummary!
   """How the organization's models and providers compare."""
@@ -23829,7 +23851,7 @@ type Query {
   What each agent can do without a person, by name. Null agentIds reads every
   agent in the organization; at most 100 may be named.
   """
-  agentSafety(agentIds: [ID!]): [AgentSafety!]!
+  agentSafety(agentIds: [ID!]): [AgentSafety!]! @authorizes(resource: "agent_definition")
   """
   The safety figures, counted on the server so no client reads every rule to count them.
   """
@@ -23965,7 +23987,7 @@ type Query {
   plan on each. It is what "who is on this plan" reads; a worker's own history
   is read through workerBenefitEnrollments.
   """
-  benefitEnrollments(limit: Int, openOnly: Boolean, planId: ID, statuses: [BenefitEnrollmentStatus!]): [WorkerBenefitEnrollment!]!
+  benefitEnrollments(limit: Int, openOnly: Boolean, planId: ID, statuses: [BenefitEnrollmentStatus!]): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
   benefitPlan(id: ID!): BenefitPlan!
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   billingTransferRun(id: ID!): BillingTransferRun!
@@ -24019,12 +24041,12 @@ type Query {
   carrierIntelSnapshotHistory(carrierId: ID!, limit: Int): [CarrierIntelSnapshot!]!
   carrierIntelSyncPlan(carrierId: ID!): CarrierIntelSyncPlan!
   carrierIntelUsage(month: Timestamp): CarrierIntelUsageSummary!
-  carrierInvoiceMatches(carrierId: ID, limit: Int, offset: Int, status: CarrierInvoiceMatchStatus): CarrierInvoiceMatchList!
+  carrierInvoiceMatches(carrierId: ID, limit: Int, offset: Int, status: CarrierInvoiceMatchStatus): CarrierInvoiceMatchList! @authorizes(resource: "carrier_invoice_match")
   """A carrier's AP subledger, newest first."""
   carrierLedgerEntries(carrierId: ID!, limit: Int): [CarrierLedgerEntry!]!
   carrierMonitoringEnrollments(filter: CarrierMonitoringEnrollmentFilterInput, input: DataTableConnectionInput!): CarrierMonitoringEnrollmentConnection!
   carrierSettlement(id: ID!): CarrierSettlement
-  carrierSettlementBatch(id: ID!): CarrierSettlementBatch
+  carrierSettlementBatch(id: ID!): CarrierSettlementBatch @authorizes(resource: "carrier_settlement")
   carrierSettlementBatches(input: DataTableConnectionInput!): CarrierSettlementBatchConnection!
   carrierSettlementControl: CarrierSettlementControl!
   """
@@ -24044,7 +24066,7 @@ type Query {
   Active credentials expired within the last week or expiring within `days`,
   soonest first.
   """
-  credentialExpiryForecast(days: Int = 30, limit: Int = 100): CredentialExpiryForecast!
+  credentialExpiryForecast(days: Int = 30, limit: Int = 100): CredentialExpiryForecast! @authorizes(resource: "worker_credential")
   currentCarrierSettlementPeriod: CarrierSettlementPeriodBounds!
   currentSettlementPeriod: SettlementPeriodBounds!
   customFieldDefinition(id: ID!): CustomFieldDefinition
@@ -24114,7 +24136,7 @@ type Query {
   documentTemplates(input: DataTableConnectionInput!): DocumentTemplateConnection!
   documentType(id: ID!): DocumentType
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
-  dotRandomDraw(id: ID!): DOTRandomDraw!
+  dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
   dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
   dotRandomPool(id: ID!): DOTRandomPool!
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
@@ -24135,7 +24157,7 @@ type Query {
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
   ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
-  ediPartnerCard(id: ID!): EdiPartnerCard!
+  ediPartnerCard(id: ID!): EdiPartnerCard! @authorizes(resource: "edi")
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!
@@ -24188,7 +24210,7 @@ type Query {
   factoringCompany(id: ID!): FactoringCompany
   """What recording this funding would book, without booking it."""
   factoringFundingPlan(input: RecordFactoringFundingInput!): FactoringFundingPlan!
-  factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection!
+  factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection! @authorizes(resource: "invoice")
   factoringNoa(id: ID!): FactoringNoa!
   factoringNoas(input: FactoringNoaListInput!): FactoringNoaConnection!
   """Evaluates the invoice now and returns its readiness."""
@@ -24223,16 +24245,16 @@ type Query {
   formulaTemplates(input: DataTableConnectionInput!): FormulaTemplateConnection!
   fuelCard(id: ID!): FuelCard!
   """A fuel card as the Desk card draws it, read in one pass."""
-  fuelCardDeskCard(id: ID!): FuelCardDeskCard!
+  fuelCardDeskCard(id: ID!): FuelCardDeskCard! @authorizes(resource: "fuel_card") @authorizes(resource: "fuel_purchase")
   fuelCards(input: FuelCardsInput!): FuelCardConnection!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelIndex(id: ID!): FuelIndex
   fuelIndexPriceHistory(from: String, indexId: ID!, limit: Int, to: String): [FuelIndexPrice!]!
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
-  fuelProgramCurrentRates: [FuelProgramCurrentRate!]!
+  fuelProgramCurrentRates: [FuelProgramCurrentRate!]! @authorizes(resource: "fuel_surcharge_program")
   fuelPurchase(id: ID!): FuelPurchase!
   """A fuel purchase as the Desk card draws it, read in one pass."""
-  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard!
+  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard! @authorizes(resource: "fuel_purchase")
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
   fuelPurchaseImports(input: FuelPurchaseImportsInput!): FuelPurchaseImportBatchConnection!
@@ -24303,7 +24325,7 @@ type Query {
   journalEntriesBySource(sourceId: String!, sourceType: String!): [JournalEntry!]!
   journalEntry(id: ID!): JournalEntry
   """A journal entry as the Desk card draws it, read in one pass."""
-  journalEntryCard(id: ID!): JournalEntryCard!
+  journalEntryCard(id: ID!): JournalEntryCard! @authorizes(resource: "journal_entry") @authorizes(resource: "journal_reversal")
   journalReversal(id: ID!): JournalReversal
   journalReversals(input: DataTableConnectionInput!): JournalReversalConnection!
   journalReviewSummary: JournalReviewSummary!
@@ -24330,7 +24352,7 @@ type Query {
   locations(input: DataTableConnectionInput!): LocationConnection!
   manualJournal(id: ID!): ManualJournal
   """A manual journal as the Desk card draws it, read in one pass."""
-  manualJournalCard(id: ID!): ManualJournalCard!
+  manualJournalCard(id: ID!): ManualJournalCard! @authorizes(resource: "manual_journal") @authorizes(resource: "journal_entry")
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
   mfaAuthenticators(input: DataTableConnectionInput!): MFAAuthenticatorConnection!
@@ -24481,7 +24503,7 @@ type Query {
   One year of the OSHA 300 log with its 300A totals. Leave the year empty for
   the current one.
   """
-  oshaLog(year: Int): OSHALog!
+  oshaLog(year: Int): OSHALog! @authorizes(resource: "worker_injury")
   oshaSummaries: [OSHAAnnualSummary!]!
   """
   Investigations across the organisation that are still owed a request or a
@@ -24529,7 +24551,7 @@ type Query {
   """
   What was decided since a moment, newest first: proposals that stood on their own.
   """
-  recentDecisions(first: Int = 25, since: Timestamp!): [RecentDecision!]!
+  recentDecisions(first: Int = 25, since: Timestamp!): [RecentDecision!]! @authorizes(resource: "agent_proposal")
   recurringDeduction(id: ID!): RecurringDeduction
   recurringDeductions(input: DataTableConnectionInput!): RecurringDeductionConnection!
   recurringEarning(id: ID!): RecurringEarning
@@ -24578,7 +24600,7 @@ type Query {
   ): ServiceFailureConnection!
   serviceType(id: ID!): ServiceType
   serviceTypes(input: DataTableConnectionInput!): ServiceTypeConnection!
-  settlementBatch(id: ID!): SettlementBatch
+  settlementBatch(id: ID!): SettlementBatch @authorizes(resource: "driver_settlement")
   settlementBatches(input: DataTableConnectionInput!): SettlementBatchConnection!
   settlementControl: SettlementControl!
   settlementDispute(id: ID!): SettlementDispute!
@@ -24640,7 +24662,7 @@ type Query {
   """
   suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
   """Each role's coverage of an agent's tools, for choosing who may use it."""
-  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
+  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion! @authorizes(resource: "role")
   tableConfiguration(id: ID!): TableConfiguration
   tableConfigurations(input: DataTableConnectionInput!, resource: String, visibility: ConfigurationVisibility): TableConfigurationConnection!
   tcaSubscription(id: ID!): TCASubscription
@@ -24730,19 +24752,19 @@ type Query {
   """
   worker(id: ID!): Worker
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
-  workerBenefitEnrollments(openOnly: Boolean, workerId: ID!): [WorkerBenefitEnrollment!]!
+  workerBenefitEnrollments(openOnly: Boolean, workerId: ID!): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
   workerChecklist(id: ID!): WorkerChecklist!
   workerChecklistTemplate(id: ID!): WorkerChecklistTemplate!
   workerChecklistTemplates(input: WorkerChecklistTemplatesInput!): WorkerChecklistTemplateConnection!
   workerChecklists(includeClosed: Boolean = true, workerId: ID!): [WorkerChecklist!]!
   workerClearinghouseQueries(workerId: ID!): [WorkerClearinghouseQuery!]!
   workerCredential(id: ID!): WorkerCredential!
-  workerCredentialSummary(workerId: ID!): WorkerCredentialSummary!
+  workerCredentialSummary(workerId: ID!): WorkerCredentialSummary! @authorizes(resource: "worker_credential")
   workerCredentialType(id: ID!): WorkerCredentialType!
   workerCredentialTypes(input: WorkerCredentialTypesInput!): WorkerCredentialTypeConnection!
   workerCredentials(includeArchived: Boolean = true, workerId: ID!): [WorkerCredential!]!
   workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
-  workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder!
+  workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
   workerDotTest(id: ID!): WorkerDOTTest!
   workerDotTests(workerId: ID!): [WorkerDOTTest!]!
   workerDotViolations(workerId: ID!): [WorkerDOTViolation!]!
@@ -24763,7 +24785,7 @@ type Query {
   workerLeaveCases(workerId: ID!): [WorkerLeaveCase!]!
   """A worker's FMLA balance. Leave asOf empty for today."""
   workerLeaveEntitlement(asOf: Timestamp, workerId: ID!): LeaveEntitlement!
-  workerOverview(workerId: ID!): WorkerOverview!
+  workerOverview(workerId: ID!): WorkerOverview! @authorizes(resource: "worker")
   workerPTOChartData(input: WorkerPTOChartInput!): [PTOChartDataPoint!]!
   workerPTOEntries(input: WorkerPTOEntriesInput!): WorkerPTOConnection!
   """Full assignment history for a worker, newest first."""
@@ -24778,7 +24800,7 @@ type Query {
   workerPtoAvailability(input: PTOAvailabilityInput!): PTOAvailability!
   workerPtoBalances(workerId: ID!): [WorkerPTOBalance!]!
   workerPtoLedger(input: WorkerPTOLedgerInput!): WorkerPTOLedgerConnection!
-  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]!
+  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]! @authorizes(resource: "pto_policy")
   """Selections the worker still owes a collection for."""
   workerRandomSelections(workerId: ID!): [DOTRandomDrawEntry!]!
   workerRecognitions(workerId: ID!): [WorkerRecognition!]!
@@ -26776,7 +26798,7 @@ type ServiceFailureReasonCode {
   defaultNote: String!
   defaultReasonCode: String!
   defaultStatusCode: String!
-  description: String!
+  description: String
   externalMap: JSON
   id: ID!
   label: String!
@@ -26805,7 +26827,7 @@ type ServiceFailureReasonCodeEdge {
   node: ServiceFailureReasonCode!
 }
 
-type ServiceFailureShipment {
+type ServiceFailureShipment @kind(resource: "shipment") {
   bol: String
   customer: Customer
   id: ID!
@@ -27197,13 +27219,13 @@ type ShiftTemplate {
   How many weeks the pattern rotates over. An A/B rotation is one template with
   a cycle of two and two assignments at different offsets.
   """
-  cycleWeeks: Int!
+  cycleWeeks: Int
   """
   Seven characters indexed from Sunday: 0111110 is Monday to Friday. A mask
   rather than an array so a pattern reads at a glance and compares without
   unpacking.
   """
-  daysOfWeek: String!
+  daysOfWeek: String
   description: String
   durationMinutes: Int!
   id: ID!
@@ -27322,7 +27344,7 @@ type Shipment {
   weight: Int
 }
 
-type ShipmentAccessorialCharge {
+type ShipmentAccessorialCharge @kind(resource: "accessorial_charge") {
   amount: Decimal!
   businessUnitId: ID!
   code: String!
@@ -28004,7 +28026,7 @@ type ShipmentCommodity {
   widthFeet: Float
 }
 
-type ShipmentCommodityDetail {
+type ShipmentCommodityDetail @kind(resource: "commodity") {
   businessUnitId: ID!
   createdAt: Timestamp!
   description: String!
@@ -28091,7 +28113,7 @@ type ShipmentCoverageSuggestions {
   drivers: [DriverCoverageSuggestion!]!
 }
 
-type ShipmentCustomer {
+type ShipmentCustomer @kind(resource: "customer") {
   addressLine1: String!
   addressLine2: String!
   allowConsolidation: Boolean!
@@ -28282,7 +28304,7 @@ enum ShipmentEventSeverity {
   success
 }
 
-type ShipmentEventShipmentReference {
+type ShipmentEventShipmentReference @kind(resource: "shipment") {
   id: ID
   proNumber: String
 }
@@ -31694,7 +31716,7 @@ type User {
   createdAt: Timestamp!
   currentOrganization: Organization
   currentOrganizationId: ID!
-  emailAddress: String!
+  emailAddress: String
   id: ID!
   isLocked: Boolean!
   jobTitle: String!
@@ -32292,7 +32314,7 @@ type WorkerChecklist {
   items: [WorkerChecklistItem!]!
   kind: WorkerChecklistKind!
   name: String!
-  progress: WorkerChecklistProgress!
+  progress: WorkerChecklistProgress
   sourceEventId: ID
   startedAt: Timestamp!
   startedBy: User
@@ -32617,7 +32639,7 @@ type WorkerCredentialSummaryItem {
 }
 
 type WorkerCredentialType {
-  activeCredentialCount: Int!
+  activeCredentialCount: Int
   businessUnitId: ID!
   category: WorkerCredentialCategory!
   code: String!
@@ -32635,11 +32657,11 @@ type WorkerCredentialType {
   Driver types this credential is required for. Empty means every worker when
   isRequired is set.
   """
-  requiredForDriverTypes: [DriverType!]!
+  requiredForDriverTypes: [DriverType!]
   requiresDocument: Boolean!
   requiresNumber: Boolean!
   sortOrder: Int!
-  status: EntityStatus!
+  status: EntityStatus
   updatedAt: Timestamp!
   validityMonths: Int
   version: Int!

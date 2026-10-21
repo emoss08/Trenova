@@ -22,10 +22,17 @@ func (r *Registry) registerComplianceResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceDocumentType.String(),
-		DisplayName:        "Document Type",
-		Description:        "Document type configuration and classification targets",
-		Category:           "Documents",
+		Resource:    ResourceDocumentType.String(),
+		DisplayName: "Document Type",
+		Description: "Document type configuration and classification targets",
+		Category:    "Documents",
+		ReferenceView: []string{
+			"code",
+			"name",
+			"color",
+			"documentCategory",
+			"documentClassification",
+		},
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -93,10 +100,11 @@ func (r *Registry) registerComplianceResources() {
 	// machine in the organization that can act for somebody is not. A person
 	// always manages their own devices without it.
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceCaptureDevice.String(),
-		DisplayName: "Capture Device",
-		Description: "Paired Trenova Capture installs across the organization",
-		Category:    "Intake",
+		Resource:      ResourceCaptureDevice.String(),
+		DisplayName:   "Capture Device",
+		Description:   "Paired Trenova Capture installs across the organization",
+		Category:      "Intake",
+		ReferenceView: []string{"name", "machineName"},
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,

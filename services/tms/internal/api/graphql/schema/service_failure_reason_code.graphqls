@@ -25,7 +25,7 @@ type ServiceFailureReasonCode {
   organizationId: ID!
   code: String!
   label: String!
-  description: String!
+  description: String
   category: ServiceFailureReasonCategory!
   appliesTo: ServiceFailureReasonCodeAppliesTo!
   defaultStatusCode: String!

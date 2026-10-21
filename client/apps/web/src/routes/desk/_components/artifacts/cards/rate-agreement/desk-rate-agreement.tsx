@@ -315,7 +315,7 @@ function AgreementCard({
       <CardSection title={agreement.partyType === "Carrier" ? t("Carrier") : t("Customer")}>
         <div className="dk-rec-list">
           {agreement.partyType === "Carrier" && agreement.carrierId ? (
-            <CardRecordRow to={recordPath("carrier", agreement.carrierId)}>
+            <CardRecordRow kind="carrier" to={recordPath("carrier", agreement.carrierId)}>
               <PartyName name={carriers.get(agreement.carrierId)} />
             </CardRecordRow>
           ) : agreement.customerId ? (
@@ -529,7 +529,11 @@ function PartyRow({
   onOpen: ((customerId: string) => void) | undefined;
 }) {
   return (
-    <CardRecordRow to={recordPath("customer", id)} onOpen={onOpen && (() => onOpen(id))}>
+    <CardRecordRow
+      kind="customer"
+      to={recordPath("customer", id)}
+      onOpen={onOpen && (() => onOpen(id))}
+    >
       <PartyName name={name} note={note} />
     </CardRecordRow>
   );

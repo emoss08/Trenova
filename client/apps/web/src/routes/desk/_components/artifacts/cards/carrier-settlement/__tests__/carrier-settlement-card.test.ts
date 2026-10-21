@@ -233,15 +233,47 @@ describe("carrier settlement card values", () => {
 
   it("says where the money goes, the carrier's preferred method until it is paid", () => {
     expect(remittance(pendingSettlement(), t)).toEqual({
+      withheld: false,
       lines: ["Blue Ridge Freight Remittance", "PO Box 4410", "Roanoke, VA 24015"],
       method: "ACH (manual) · the carrier's preferred",
       terms: "Net 30 · pays Nov 10",
     });
     expect(remittance(paidSettlement(), t).method).toBe("Check");
     expect(remittance(emptySettlement(), t)).toEqual({
+      withheld: false,
       lines: [],
       method: "Check · the carrier's preferred",
       terms: "Pays Nov 10",
     });
+  });
+
+  it("says the carrier's payment details are withheld, not missing, without carrier read", () => {
+    const base = pendingSettlement().carrier;
+    if (!base) throw new Error("the fixture settlement pays a carrier");
+    const carrier = {
+      ...base,
+      paymentMethod: null,
+      paymentTermDays: null,
+      remitToName: null,
+      remitAddressLine1: null,
+      remitAddressLine2: null,
+      remitCity: null,
+      remitPostalCode: null,
+      remitState: null,
+    };
+
+    expect(remittance(pendingSettlement({ carrier }), t)).toEqual({
+      withheld: true,
+      lines: [],
+      method: null,
+      terms: "Pays Nov 10",
+    });
+    expect(remittance(pendingSettlement({ carrier, paymentMethod: "Check" }), t).method).toBe(
+      "Check",
+    );
+    expect(settlementKicker(pendingSettlement({ carrier }), t)).toEqual([
+      "CS-2610-0088",
+      "Oct 5 – Oct 11",
+    ]);
   });
 });

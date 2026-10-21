@@ -161,7 +161,7 @@ query AIAuditEventTable($input: DataTableConnectionInput!, $includeTotalCount: B
   }
 }
 
-query AIAuditEventDetail($id: ID!) {
+query AIAuditEventDetail($id: ID!) @requiresRead(kind: "user") {
   aiAuditEvent(id: $id) {
     ...AIAuditEventDetailFields
   }

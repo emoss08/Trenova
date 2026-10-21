@@ -3052,7 +3052,7 @@ type AgentDefinition {
   organizationId: ID!
   businessUnitId: ID!
   name: String!
-  description: String!
+  description: String
   "The starter this agent was created from, if any. It carries no restriction."
   template: AgentTemplate
   instructions: String!
@@ -3066,7 +3066,7 @@ type AgentDefinition {
   at the lower of this and that person's own access.
   """
   dataAccessCeiling: AgentDataAccessCeiling!
-  enabled: Boolean!
+  enabled: Boolean
   shadowMode: Boolean!
   decisionTimeoutSeconds: Int!
   triggerMode: AgentTriggerMode!
@@ -3101,7 +3101,7 @@ type AgentDefinition {
   accent: String!
   preferredProviderId: ID!
   "Set on the agents the platform itself creates and fires; they cannot be deleted."
-  systemKey: String!
+  systemKey: String
   """
   The agents this one may hand a task to when a person is talking to it, in the
   order configured. Each works with its own tools, approvals and budget, as the
@@ -3114,7 +3114,7 @@ type AgentDefinition {
   """
   delegates: [AgentDefinition!]!
   "Who may use the agent. A system agent is always Everyone."
-  accessMode: AgentAccessMode!
+  accessMode: AgentAccessMode
   """
   The role the agent runs as when no person is present, on a schedule or an
   event: its unattended work is held to both the fixed agent ceiling and this
@@ -3402,13 +3402,13 @@ extend type Query {
   """
   myAgentMatch(input: MyAgentMatchInput!): MyAgentMatch!
   "Each role's coverage of an agent's tools, for choosing who may use it."
-  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
+  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion! @authorizes(resource: "role")
   """
   Each role's coverage of the tools a form has chosen, and the sensitive ones
   among them while it is open to everyone. Reads the form, not the saved agent,
   and changes nothing.
   """
-  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview! @authorizes(resource: "role")
 }
 
 "A prompt kept with an agent for trying it again after an edit."
@@ -3432,7 +3432,7 @@ extend type Mutation {
 
 extend type Mutation {
   "Sets who may use an agent. Needs permission to update agents and roles."
-  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition! @authorizes(resource: "role")
   """
   Sets the role an agent runs as when no person is present, or clears it with a
   null roleId. Needs permission to update agents and roles, and the person
@@ -4733,7 +4733,7 @@ extend type Query {
   What each agent can do without a person, by name. Null agentIds reads every
   agent in the organization; at most 100 may be named.
   """
-  agentSafety(agentIds: [ID!]): [AgentSafety!]!
+  agentSafety(agentIds: [ID!]): [AgentSafety!]! @authorizes(resource: "agent_definition")
 }
 
 extend type Mutation {
@@ -7114,7 +7114,7 @@ type TotalCompensation {
 extend type Query {
   benefitPlans(activeOnly: Boolean, planYear: Int): [BenefitPlan!]!
   benefitPlan(id: ID!): BenefitPlan!
-  workerBenefitEnrollments(workerId: ID!, openOnly: Boolean): [WorkerBenefitEnrollment!]!
+  workerBenefitEnrollments(workerId: ID!, openOnly: Boolean): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
   """
   Enrollments across the organisation, newest first, with the worker and the
   plan on each. It is what "who is on this plan" reads; a worker's own history
@@ -7125,7 +7125,7 @@ extend type Query {
     statuses: [BenefitEnrollmentStatus!]
     openOnly: Boolean
     limit: Int
-  ): [WorkerBenefitEnrollment!]!
+  ): [WorkerBenefitEnrollment!]! @authorizes(resource: "benefit_plan")
   benefitCosts(planYear: Int): [BenefitCostRow!]!
   """
   A worker's total compensation. The signed-in driver reads their own through
@@ -8239,8 +8239,8 @@ type Carrier {
   taxIdType: CarrierTaxIDType
   w9OnFile: Boolean!
   is1099Eligible: Boolean!
-  paymentMethod: CarrierPaymentMethod!
-  paymentTermDays: Int!
+  paymentMethod: CarrierPaymentMethod
+  paymentTermDays: Int
   remitToName: String
   remitAddressLine1: String
   remitAddressLine2: String
@@ -9895,7 +9895,7 @@ extend type Query {
   carrierSettlements(input: DataTableConnectionInput!): CarrierSettlementConnection!
   carrierSettlement(id: ID!): CarrierSettlement
   carrierSettlementBatches(input: DataTableConnectionInput!): CarrierSettlementBatchConnection!
-  carrierSettlementBatch(id: ID!): CarrierSettlementBatch
+  carrierSettlementBatch(id: ID!): CarrierSettlementBatch @authorizes(resource: "carrier_settlement")
   carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
   carrierSettlementControl: CarrierSettlementControl!
   currentCarrierSettlementPeriod: CarrierSettlementPeriodBounds!
@@ -9911,7 +9911,7 @@ extend type Query {
     carrierId: ID
     limit: Int
     offset: Int
-  ): CarrierInvoiceMatchList!
+  ): CarrierInvoiceMatchList! @authorizes(resource: "carrier_invoice_match")
   "Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched)."
   ediCarrierInvoices(
     reconciliationStatus: String
@@ -11231,7 +11231,7 @@ extend type Query {
   pendingDecisions(input: PendingDecisionsInput!): PendingDecisionConnection!
   pendingDecisionSummary: PendingDecisionSummary!
   "What was decided since a moment, newest first: proposals that stood on their own."
-  recentDecisions(since: Timestamp!, first: Int = 25): [RecentDecision!]!
+  recentDecisions(since: Timestamp!, first: Int = 25): [RecentDecision!]! @authorizes(resource: "agent_proposal")
 }
 
 extend type Mutation {
@@ -14315,10 +14315,10 @@ type PayAdvance {
   source: PayAdvanceSource!
   reference: String!
   issuedDate: Timestamp!
-  amountMinor: Int!
+  amountMinor: Int
   recoveredMinor: Int!
   writtenOffMinor: Int!
-  outstandingMinor: Int!
+  outstandingMinor: Int
   writeOffReason: String!
   notes: String!
   currencyCode: String!
@@ -14370,8 +14370,8 @@ type EscrowAccount {
   businessUnitId: ID!
   workerId: ID!
   status: EscrowAccountStatus!
-  targetAmountMinor: Int!
-  balanceMinor: Int!
+  targetAmountMinor: Int
+  balanceMinor: Int
   annualInterestRate: Decimal!
   lastInterestAccrualDate: Timestamp
   openedDate: Timestamp!
@@ -14462,10 +14462,10 @@ type DriverSettlement {
   deductionsMinor: Int!
   carryForwardInMinor: Int!
   carryForwardOutMinor: Int!
-  netPayMinor: Int!
+  netPayMinor: Int
   totalMiles: Decimal!
   shipmentCount: Int!
-  currencyCode: String!
+  currencyCode: String
   """
   Units of the organization's functional currency per one unit of the
   settlement currency, fixed when the settlement posted. Null when both are the same.
@@ -15094,7 +15094,7 @@ extend type Query {
   driverSettlements(input: DataTableConnectionInput!): DriverSettlementConnection!
   driverSettlement(id: ID!): DriverSettlement
   settlementBatches(input: DataTableConnectionInput!): SettlementBatchConnection!
-  settlementBatch(id: ID!): SettlementBatch
+  settlementBatch(id: ID!): SettlementBatch @authorizes(resource: "driver_settlement")
   driverPayEvents(input: DataTableConnectionInput!): DriverPayEventConnection!
   """
   A worker's accrued, unheld, unsettled pay events — the pool an instant
@@ -15286,7 +15286,7 @@ type EdiConnection {
   revokedAt: Timestamp
 }
 
-type EdiPartner {
+type EdiPartner @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -15700,7 +15700,7 @@ type EdiVolumePoint {
   receivedCount: Int!
 }
 
-type EdiPartnerCustomer {
+type EdiPartnerCustomer @kind(resource: "customer") {
   id: ID!
   name: String!
   code: String!
@@ -15866,7 +15866,7 @@ extend type Query {
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
-  ediPartnerCard(id: ID!): EdiPartnerCard!
+  ediPartnerCard(id: ID!): EdiPartnerCard! @authorizes(resource: "edi")
 }
 `, BuiltIn: false},
 	{Name: "../schema/email_profile.graphqls", Input: `enum EmailProvider {
@@ -17852,7 +17852,7 @@ extend type Query {
   factoringNoa(id: ID!): FactoringNoa!
   "Evaluates the invoice now and returns its readiness."
   factoringReadiness(invoiceId: ID!): FactoringInvoiceState!
-  factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection!
+  factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection! @authorizes(resource: "invoice")
   factoringSummary: FactoringSummary!
   factoringSubmissions(input: FactoringSubmissionListInput!): FactoringSubmissionConnection!
   factoringSubmission(id: ID!): FactoringSubmission!
@@ -18013,7 +18013,7 @@ type FiscalPeriod {
   organizationId: ID!
   fiscalYearId: ID!
   periodNumber: Int!
-  periodType: PeriodType!
+  periodType: PeriodType
   status: FiscalPeriodStatus!
   name: String!
   startDate: Timestamp!
@@ -19060,9 +19060,9 @@ extend type Query {
   fuelPurchaseImport(id: ID!): FuelPurchaseImportBatch!
   fuelPurchaseImportTemplate(provider: FuelCardProvider!): FuelImportTemplate!
   "A fuel purchase as the Desk card draws it, read in one pass."
-  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard!
+  fuelPurchaseDeskCard(id: ID!): FuelPurchaseDeskCard! @authorizes(resource: "fuel_purchase")
   "A fuel card as the Desk card draws it, read in one pass."
-  fuelCardDeskCard(id: ID!): FuelCardDeskCard!
+  fuelCardDeskCard(id: ID!): FuelCardDeskCard! @authorizes(resource: "fuel_card") @authorizes(resource: "fuel_purchase")
 }
 
 extend type Mutation {
@@ -19369,7 +19369,7 @@ extend type Query {
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
-  fuelProgramCurrentRates: [FuelProgramCurrentRate!]!
+  fuelProgramCurrentRates: [FuelProgramCurrentRate!]! @authorizes(resource: "fuel_surcharge_program")
   generateFuelSurchargeTable(input: GenerateFuelTableInput!): [GeneratedFuelTableRow!]!
   eiaSeriesOptions: [EIASeriesOption!]!
 }
@@ -20512,7 +20512,7 @@ type InboundMessage {
 A shipment as an inbox row names it: the numbers a sender quotes and the lane.
 Enough to recognise the load without opening it.
 """
-type InboundShipmentRef {
+type InboundShipmentRef @kind(resource: "shipment") {
   id: ID!
   proNumber: String!
   bol: String!
@@ -21381,7 +21381,7 @@ type Invoice {
   relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
   otherAmount: Decimal!
-  totalAmount: Decimal!
+  totalAmount: Decimal
   appliedAmount: Decimal!
   settlementStatus: InvoiceSettlementStatus!
   disputeStatus: InvoiceDisputeStatus!
@@ -21875,16 +21875,16 @@ type InvoiceDispute {
   customerId: ID!
   status: InvoiceDisputeCaseStatus!
   reasonCode: InvoiceDisputeReasonCode!
-  disputedAmount: Decimal!
+  disputedAmount: Decimal
   disputedAmountMinor: Int!
-  notes: String!
+  notes: String
   openedById: ID!
   openedAt: Timestamp!
   resolvedById: ID
   resolvedAt: Timestamp
   resolution: InvoiceDisputeResolution
   resolutionAdjustmentId: ID
-  resolutionNotes: String!
+  resolutionNotes: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -22094,7 +22094,7 @@ extend type Query {
   journalReviewTable(input: DataTableConnectionInput!): JournalEntryConnection!
   journalReviewSummary: JournalReviewSummary!
   "A journal entry as the Desk card draws it, read in one pass."
-  journalEntryCard(id: ID!): JournalEntryCard!
+  journalEntryCard(id: ID!): JournalEntryCard! @authorizes(resource: "journal_entry") @authorizes(resource: "journal_reversal")
 }
 
 extend type Mutation {
@@ -22478,10 +22478,10 @@ type LocationCategory {
   type: LocationCategoryType!
   facilityType: FacilityType
   color: String!
-  hasSecureParking: Boolean!
+  hasSecureParking: Boolean
   requiresAppointment: Boolean!
-  allowsOvernight: Boolean!
-  hasRestroom: Boolean!
+  allowsOvernight: Boolean
+  hasRestroom: Boolean
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -22575,7 +22575,7 @@ extend type Query {
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   manualJournal(id: ID!): ManualJournal
   "A manual journal as the Desk card draws it, read in one pass."
-  manualJournalCard(id: ID!): ManualJournalCard!
+  manualJournalCard(id: ID!): ManualJournalCard! @authorizes(resource: "manual_journal") @authorizes(resource: "journal_entry")
 }
 `, BuiltIn: false},
 	{Name: "../schema/notification.graphqls", Input: `enum NotificationPriority {
@@ -23611,7 +23611,7 @@ input PTOAvailabilityInput {
 extend type Query {
   ptoPolicies(input: PTOPoliciesInput!): PTOPolicyConnection!
   ptoPolicy(id: ID!): PTOPolicy!
-  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]!
+  workerPtoPolicyAssignments(workerId: ID!): [WorkerPTOPolicyAssignment!]! @authorizes(resource: "pto_policy")
   workerPtoBalances(workerId: ID!): [WorkerPTOBalance!]!
   workerPtoLedger(input: WorkerPTOLedgerInput!): WorkerPTOLedgerConnection!
   workerPtoAvailability(input: PTOAvailabilityInput!): PTOAvailability!
@@ -23625,7 +23625,7 @@ extend type Mutation {
   updatePtoPolicy(id: ID!, input: PTOPolicyInput!): PTOPolicy!
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
   restorePtoPolicy(id: ID!, version: Int): PTOPolicy!
-  assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload!
+  assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload! @authorizes(resource: "pto_policy")
   endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
@@ -24723,14 +24723,14 @@ type ShiftTemplate {
   rather than an array so a pattern reads at a glance and compares without
   unpacking.
   """
-  daysOfWeek: String!
+  daysOfWeek: String
   startMinute: Int!
   durationMinutes: Int!
   """
   How many weeks the pattern rotates over. An A/B rotation is one template with
   a cycle of two and two assignments at different offsets.
   """
-  cycleWeeks: Int!
+  cycleWeeks: Int
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -25377,7 +25377,7 @@ enum ServiceFailureStatus {
   Voided
 }
 
-type ServiceFailureShipment {
+type ServiceFailureShipment @kind(resource: "shipment") {
   id: ID!
   proNumber: String!
   bol: String
@@ -25489,7 +25489,7 @@ type ServiceFailureReasonCode {
   organizationId: ID!
   code: String!
   label: String!
-  description: String!
+  description: String
   category: ServiceFailureReasonCategory!
   appliesTo: ServiceFailureReasonCodeAppliesTo!
   defaultStatusCode: String!
@@ -25604,6 +25604,28 @@ Withholds the field from a reader whose role does not grant its group. A
 protected field is always nullable, and null is what such a reader receives.
 """
 directive @protected(group: ProtectedFieldGroup!) on FIELD_DEFINITION
+
+"""
+The permission kind a projection type shows, such as the shipment page's
+customer. The field guard gates it as that kind: a record carried by another
+shows only its kind's reference view unless the reader may read the kind.
+"""
+directive @kind(resource: String!) on OBJECT
+
+"""
+Declares that a root field's resolver checks read on a kind, so the records of
+that kind it returns inside a card, summary or overview are its own records,
+not linked ones. A test holds each declaration to the resolver's check.
+"""
+directive @authorizes(resource: String!) repeatable on FIELD_DEFINITION
+
+"""
+Declares that an operation selects fields of a linked kind beyond that kind's
+reference view. Without the kind's read those fields are answered null and
+named in extensions.withheldByAccess. Client codegen requires it on every
+operation that selects such a field, and the field must be nullable.
+"""
+directive @requiresRead(kind: String!) repeatable on QUERY | MUTATION | SUBSCRIPTION
 
 enum EntityStatus {
   Active
@@ -26012,7 +26034,7 @@ type ShipmentAutoRateResponse {
   contractRate: ShipmentContractRate!
 }
 
-type ShipmentCustomer {
+type ShipmentCustomer @kind(resource: "customer") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -26267,7 +26289,7 @@ type ShipmentAdditionalCharge {
   accessorialCharge: ShipmentAccessorialCharge
 }
 
-type ShipmentAccessorialCharge {
+type ShipmentAccessorialCharge @kind(resource: "accessorial_charge") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -26299,7 +26321,7 @@ type ShipmentCommodity {
   commodity: ShipmentCommodityDetail
 }
 
-type ShipmentCommodityDetail {
+type ShipmentCommodityDetail @kind(resource: "commodity") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -26856,7 +26878,7 @@ enum ShipmentEventActorType {
   edi
 }
 
-type ShipmentEventShipmentReference {
+type ShipmentEventShipmentReference @kind(resource: "shipment") {
   id: ID
   proNumber: String
 }
@@ -28803,7 +28825,7 @@ type User {
   name: String!
   username: String!
   timeFormat: TimeFormat!
-  emailAddress: String!
+  emailAddress: String
   profilePicUrl: String!
   thumbnailUrl: String!
   timezone: String!
@@ -30831,7 +30853,7 @@ type WorkerChecklist {
   sourceEventId: ID
   startedById: ID
   startedBy: User
-  progress: WorkerChecklistProgress!
+  progress: WorkerChecklistProgress
   items: [WorkerChecklistItem!]!
   version: Int!
   createdAt: Timestamp!
@@ -30947,13 +30969,13 @@ type WorkerCredentialType {
   name: String!
   description: String
   category: WorkerCredentialCategory!
-  status: EntityStatus!
+  status: EntityStatus
   isRequired: Boolean!
   """
   Driver types this credential is required for. Empty means every worker when
   isRequired is set.
   """
-  requiredForDriverTypes: [DriverType!]!
+  requiredForDriverTypes: [DriverType!]
   renewalWindowDays: Int!
   validityMonths: Int
   requiresNumber: Boolean!
@@ -30964,7 +30986,7 @@ type WorkerCredentialType {
   profileField: String
   isSystem: Boolean!
   sortOrder: Int!
-  activeCredentialCount: Int!
+  activeCredentialCount: Int
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -31126,12 +31148,12 @@ extend type Query {
   activeWorkerCredentialTypes: [WorkerCredentialType!]!
   workerCredentials(workerId: ID!, includeArchived: Boolean = true): [WorkerCredential!]!
   workerCredential(id: ID!): WorkerCredential!
-  workerCredentialSummary(workerId: ID!): WorkerCredentialSummary!
+  workerCredentialSummary(workerId: ID!): WorkerCredentialSummary! @authorizes(resource: "worker_credential")
   """
   Active credentials expired within the last week or expiring within ` + "`" + `days` + "`" + `,
   soonest first.
   """
-  credentialExpiryForecast(days: Int = 30, limit: Int = 100): CredentialExpiryForecast!
+  credentialExpiryForecast(days: Int = 30, limit: Int = 100): CredentialExpiryForecast! @authorizes(resource: "worker_credential")
 }
 
 extend type Mutation {
@@ -31800,7 +31822,7 @@ extend type Query {
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
   dotRandomPool(id: ID!): DOTRandomPool!
   dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
-  dotRandomDraw(id: ID!): DOTRandomDraw!
+  dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
   """
   Selections the worker still owes a collection for.
   """
@@ -32218,7 +32240,7 @@ extend type Query {
   One year of the OSHA 300 log with its 300A totals. Leave the year empty for
   the current one.
   """
-  oshaLog(year: Int): OSHALog!
+  oshaLog(year: Int): OSHALog! @authorizes(resource: "worker_injury")
   oshaSummaries: [OSHAAnnualSummary!]!
 }
 
@@ -32578,7 +32600,7 @@ type WorkerRosterAttention {
 }
 
 extend type Query {
-  workerOverview(workerId: ID!): WorkerOverview!
+  workerOverview(workerId: ID!): WorkerOverview! @authorizes(resource: "worker")
   workerRosterAttention: WorkerRosterAttention!
 }
 `, BuiltIn: false},
@@ -32856,7 +32878,7 @@ extend type Query {
   workerSafetyEvent(id: ID!): WorkerSafetyEvent!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
   workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
-  workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder!
+  workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
   workerRecognitions(workerId: ID!): [WorkerRecognition!]!
   """
   Suggested points for a kind, severity and outcome, so the form starts from

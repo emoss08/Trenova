@@ -36,7 +36,7 @@ fragment FiscalYearTableRowFields on FiscalYear {
   }
 }
 
-query FiscalYearTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+query FiscalYearTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) @requiresRead(kind: "fiscal_period") {
   fiscalYears(input: $input) {
     edges {
       node {

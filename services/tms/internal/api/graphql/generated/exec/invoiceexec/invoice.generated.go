@@ -483,7 +483,6 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:       "totalAmount",
-				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
 				ChildErr:   errNoChild10,
@@ -491,7 +490,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").TotalAmount(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
 				Name:       "appliedAmount",
@@ -1612,7 +1611,7 @@ type resolverInvoice interface {
 	RelatedInvoices(ctx context.Context, obj *invoice.Invoice) ([]*invoice.Invoice, error)
 	SubtotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
 	OtherAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
-	TotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
+	TotalAmount(ctx context.Context, obj *invoice.Invoice) (*string, error)
 	AppliedAmount(ctx context.Context, obj *invoice.Invoice) (string, error)
 	VoidDisposition(ctx context.Context, obj *invoice.Invoice) (*invoice.VoidDisposition, error)
 	ReferenceInvoice(ctx context.Context, obj *invoice.Invoice) (*invoice.Invoice, error)

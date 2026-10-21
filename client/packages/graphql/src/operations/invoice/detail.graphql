@@ -12,7 +12,7 @@ fragment InvoiceRelatedFields on Invoice {
   isSplitBill
 }
 
-query InvoiceArContext($id: ID!) {
+query InvoiceArContext($id: ID!) @requiresRead(kind: "invoice_dispute") {
   invoice(id: $id) {
     id
     customerId
@@ -40,18 +40,13 @@ query InvoiceArContext($id: ID!) {
 fragment InvoiceDisputeFields on InvoiceDispute {
   id
   invoiceId
-  customerId
   status
   reasonCode
   disputedAmount
-  disputedAmountMinor
   notes
-  openedById
   openedAt
-  resolvedById
   resolvedAt
   resolution
-  resolutionAdjustmentId
   resolutionNotes
   version
   createdAt
@@ -137,7 +132,6 @@ fragment InvoiceArFields on Invoice {
     payment {
       id
       paymentDate
-      amountMinor
       status
       paymentMethod
       referenceNumber

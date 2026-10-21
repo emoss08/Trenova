@@ -83,11 +83,9 @@ export function invoiceKicker(record: DeskInvoice, t: TranslateFn): string[] {
     record.scope === "Consolidated" && record.periodStart && record.periodEnd
       ? t("{0} – {1}", cardDay(record.periodStart), cardDay(record.periodEnd))
       : "";
-  return [
-    record.number,
-    record.shipmentBol ? t("BOL {0}", record.shipmentBol) : "",
-    period,
-  ].filter(Boolean);
+  return [record.number, record.shipmentBol ? t("BOL {0}", record.shipmentBol) : "", period].filter(
+    Boolean,
+  );
 }
 
 /** What the invoice covers, and the day it is dated. */
@@ -223,7 +221,11 @@ export function headFacts(record: DeskInvoice, now: number, t: TranslateFn): str
   }
   const dispute = openDispute(record);
   if (dispute && isOpen(record)) {
-    facts.push(t("{0} in dispute", money(dispute.disputedAmount, record.currencyCode)));
+    facts.push(
+      dispute.disputedAmount === null
+        ? t("In dispute")
+        : t("{0} in dispute", money(dispute.disputedAmount, record.currencyCode)),
+    );
   }
   if (record.isSplitBill) {
     facts.push(t("Split bill"));
@@ -281,6 +283,13 @@ export function owedSegments(record: DeskInvoice, t: TranslateFn): OwedSegment[]
   const { paid, credited } = settled(record);
   const open = Math.max(0, cents(record.openBalance));
   const dispute = openDispute(record);
+  if (dispute && dispute.disputedAmount === null) {
+    return [
+      segment("paid", t("Paid"), paid),
+      segment("credited", t("Credited"), credited),
+      segment("open", t("Open, part in dispute"), open),
+    ];
+  }
   const disputed = dispute ? Math.min(open, Math.max(0, cents(dispute.disputedAmount))) : 0;
   return [
     segment("paid", t("Paid"), paid),
@@ -637,15 +646,19 @@ export function creditUses(record: DeskInvoice, t: TranslateFn): RemitRow[] {
   }));
 }
 
+/**
+ * A dispute's amount and notes are outside its reference view: for someone who may read the
+ * invoice but not disputes, `amount` is null (drawn as withheld) and the notes are left out.
+ */
 export type OpenCase = {
   reason: string;
-  amount: string;
+  amount: string | null;
   notes: string;
   opened: string;
   age: string;
 };
 
-export type ClosedCase = { key: string; title: string; amount: string; line: string };
+export type ClosedCase = { key: string; title: string; amount: string | null; line: string };
 
 /** The open dispute apart from the ones already closed, each with its outcome. */
 export function disputeCases(
@@ -660,8 +673,8 @@ export function disputeCases(
   const open: OpenCase | null = current
     ? {
         reason: reason(current),
-        amount: money(current.disputedAmount, currency),
-        notes: current.notes.trim(),
+        amount: current.disputedAmount === null ? null : money(current.disputedAmount, currency),
+        notes: current.notes?.trim() ?? "",
         opened: current.openedBy
           ? t("Opened by {0} · {1}", current.openedBy.name, cardMoment(current.openedAt))
           : t("Opened {0}", cardMoment(current.openedAt)),
@@ -686,11 +699,11 @@ export function disputeCases(
         : dispute.status === "Withdrawn"
           ? t("Closed {0}", day)
           : t("Resolved {0}", day);
-      const notes = dispute.resolutionNotes.trim();
+      const notes = dispute.resolutionNotes?.trim() ?? "";
       return {
         key: dispute.id,
         title: t("{0} · {1}", reason(dispute), outcome),
-        amount: money(dispute.disputedAmount, currency),
+        amount: dispute.disputedAmount === null ? null : money(dispute.disputedAmount, currency),
         line: notes ? t("{0} · {1}", who, notes) : who,
       };
     });

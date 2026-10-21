@@ -2,7 +2,7 @@
 # it, each move's invoice against what the move costs here, the costs summed by
 # kind, where the money goes, and each load's share. The loads it pays are read
 # a page at a time through shipments.
-query DeskCarrierSettlementCard($id: ID!) {
+query DeskCarrierSettlementCard($id: ID!) @requiresRead(kind: "carrier") {
   carrierSettlement(id: $id) {
     id
     settlementNumber

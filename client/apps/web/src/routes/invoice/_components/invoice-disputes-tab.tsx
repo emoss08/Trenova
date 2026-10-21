@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -157,9 +158,13 @@ export function InvoiceDisputesTab({
                     ) : null}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">
-                    <span className="text-sm font-semibold tabular-nums">
-                      {formatCurrency(Number(dispute.disputedAmount ?? 0), invoice.currencyCode)}
-                    </span>
+                    {dispute.disputedAmount === null ? (
+                      <WithheldValue kind="invoice_dispute" />
+                    ) : (
+                      <span className="text-sm font-semibold tabular-nums">
+                        {formatCurrency(Number(dispute.disputedAmount), invoice.currencyCode)}
+                      </span>
+                    )}
                     {dispute.status === "Open" ? (
                       <div className="flex items-center gap-1.5">
                         {canResolve ? (

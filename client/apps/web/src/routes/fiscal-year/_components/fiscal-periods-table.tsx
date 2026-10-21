@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { usePermissionCheck } from "@/hooks/use-permission";
 import { fiscalPeriodStatusChoices, periodTypeChoices } from "@/lib/choices";
@@ -166,7 +167,9 @@ export function FiscalPeriodTable({
                   {typeChoice ? (
                     <DataTableColorColumn text={t(typeChoice.label)} color={typeChoice.color} />
                   ) : (
-                    period.periodType
+                    // A year's periods are linked records: their type is withheld (null)
+                    // without fiscal period read.
+                    (period.periodType ?? <WithheldValue kind="fiscal_period" />)
                   )}
                 </TableCell>
                 <TableCell>
