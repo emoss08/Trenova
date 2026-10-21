@@ -152,6 +152,13 @@ pub struct LimitSettings {
     /// The size of each output chunk.
     #[serde(default = "default_chunk", deserialize_with = "bytes::deserialize")]
     pub chunk_bytes: u64,
+    /// The most bytes one capture page may have. A capture call holds no
+    /// total: each sub-batch's input is bounded by `max_input_bytes`.
+    #[serde(
+        default = "default_max_capture_page",
+        deserialize_with = "bytes::deserialize"
+    )]
+    pub max_capture_page_bytes: u64,
     /// Capture pages per child job.
     #[serde(default = "default_capture_batch")]
     pub capture_batch: u32,
@@ -168,6 +175,7 @@ impl Default for LimitSettings {
             max_image_pixels: default_max_image_pixels(),
             max_pages: default_max_pages(),
             chunk_bytes: default_chunk(),
+            max_capture_page_bytes: default_max_capture_page(),
             capture_batch: default_capture_batch(),
             capture_parallelism: default_capture_parallelism(),
         }
@@ -188,6 +196,9 @@ fn default_max_pages() -> u32 {
 }
 fn default_chunk() -> u64 {
     256 << 10
+}
+fn default_max_capture_page() -> u64 {
+    20 << 20
 }
 fn default_capture_batch() -> u32 {
     8
@@ -355,6 +366,11 @@ impl Validate for Config {
             self.limits.chunk_bytes + (64 << 10) <= self.grpc.max_message_bytes,
             "limits.chunk_bytes",
             "must leave room for framing inside grpc.max_message_bytes",
+        );
+        v.range(
+            self.limits.max_capture_page_bytes,
+            64 << 10..=self.limits.max_input_bytes,
+            "limits.max_capture_page_bytes",
         );
         v.range(self.limits.capture_batch, 1..=64, "limits.capture_batch");
         v.range(

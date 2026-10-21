@@ -4,8 +4,9 @@ mod common;
 
 use common::{chunked, fixture, start};
 use trenova_proto::imaging::v1::{
-    CapturePageResult, CapturePageStart, CaptureSummary, DocumentHeader, InspectCaptureHeader,
-    InspectCaptureRequest, inspect_capture_request::Part, inspect_capture_response,
+    CapturePageResult, CapturePageStart, CaptureSummary, DocumentHeader, ErrorReason,
+    InspectCaptureHeader, InspectCaptureRequest, inspect_capture_request::Part,
+    inspect_capture_response,
 };
 
 async fn inspect(
@@ -130,4 +131,40 @@ async fn a_long_batch_runs_in_sub_batches_and_answers_every_page() {
             .iter()
             .all(|p| p.error.is_none() && p.ink_coverage > 0.01)
     );
+}
+
+#[tokio::test]
+async fn a_batch_larger_than_one_input_is_inspected_page_by_page() {
+    let Some(mut worker) = start(&[
+        ("LIMITS__MAX_INPUT_BYTES", "\"1MiB\""),
+        ("LIMITS__MAX_CAPTURE_PAGE_BYTES", "\"256KiB\""),
+        ("LIMITS__CAPTURE_PARALLELISM", "2"),
+    ])
+    .await
+    else {
+        return;
+    };
+    let text = fixture("capture-text-0.pdf");
+    let mut pages: Vec<(&str, Vec<u8>)> =
+        (0..14).map(|_| ("application/pdf", text.clone())).collect();
+    let total: usize = pages.iter().map(|(_, bytes)| bytes.len()).sum();
+    assert!(total > 2 << 20, "the batch is over twice one input");
+    let mut oversized = text.clone();
+    oversized.resize(300 << 10, b'\n');
+    pages.push(("application/pdf", oversized));
+
+    let (results, summary) = inspect(&mut worker, &pages).await;
+    assert_eq!(summary.inspected, 14);
+    assert_eq!(results.len(), 15);
+    assert!(
+        results[..14]
+            .iter()
+            .all(|p| p.error.is_none() && p.ink_coverage > 0.01),
+        "every page under the page limit is inspected"
+    );
+    let refused = results[14]
+        .error
+        .as_ref()
+        .expect("the oversized page fails in band");
+    assert_eq!(refused.reason, ErrorReason::TooLarge as i32);
 }

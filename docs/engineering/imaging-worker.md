@@ -168,7 +168,8 @@ CPU per child and about 1 GiB of memory per child.
 | `pool.max_jobs_per_child`, `.rss_high_water`, `.address_space`, `.cpu_seconds`, `.open_files` | 500, 768 MiB, 3 GiB, 3600, 64 | |
 | `pool.require_hardening` | true | false refused in production |
 | `admission.cost_units`, `.memory_bytes`, `.interactive_reserve`, `.max_wait`, `.max_waiters` | 2 × pool, 75% of the pool's address space, 0.25, 250 ms, 64 | |
-| `limits.max_input_bytes` | 256 MiB | per call |
+| `limits.max_input_bytes` | 256 MiB | per call; for a capture batch, per sub-batch |
+| `limits.max_capture_page_bytes` | 20 MiB | per capture page, matching `capture.MaxPageBytes` |
 | `limits.max_render_pixels`, `.max_image_pixels`, `.max_pages` | 25 M, 100 M, 2,000 | |
 | `limits.chunk_bytes`, `.capture_batch`, `.capture_parallelism` | 256 KiB, 8, 4 | |
 | `deadlines.probe`, `.render`, `.inspect_capture`, `.assemble`, `.normalize_image` | 30 s, 60 s, 10 min, 5 min, 60 s | caps on the caller's deadline |

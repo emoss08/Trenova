@@ -841,7 +841,8 @@ struct Batch {
 
 /// Runs a capture batch: pages are gathered into sub-batches as they arrive,
 /// each sub-batch runs on a child while the next is read, and results go back
-/// per page as they come. A sub-batch whose child dies is run again a page at
+/// per page as they come. A page is bounded by `max_capture_page_bytes` and a
+/// sub-batch's input by `max_input_bytes`; the call as a whole is not. A sub-batch whose child dies is run again a page at
 /// a time, so one hostile page fails alone.
 // One state machine over the request stream: pages, their chunks, and the
 // sub-batches they are gathered into.
@@ -859,7 +860,6 @@ async fn inspect_batch(
         limits.capture_parallelism,
     );
     let parallel = Arc::new(Semaphore::new(limits.capture_parallelism));
-    let mut remaining = limits.max_input_bytes;
     let mut running = tokio::task::JoinSet::new();
     let mut batch: Option<Batch> = None;
     let mut received: u32 = 0;
@@ -898,17 +898,24 @@ async fn inspect_batch(
                 }
                 received += 1;
                 skipping = 0;
-                let document = match check_document(page.document.as_ref(), remaining) {
-                    Ok(document) => document,
-                    Err(err) => {
-                        skipping = page.document.as_ref().map_or(0, |d| d.declared_size);
-                        skipped += 1;
-                        send_page_error(&forward, page.index, reason_of(&err), err.message())
-                            .await?;
-                        continue;
-                    }
-                };
-                remaining -= document.declared_size;
+                let document =
+                    match check_document(page.document.as_ref(), limits.max_capture_page_bytes) {
+                        Ok(document) => document,
+                        Err(err) => {
+                            skipping = page.document.as_ref().map_or(0, |d| d.declared_size);
+                            skipped += 1;
+                            send_page_error(&forward, page.index, reason_of(&err), err.message())
+                                .await?;
+                            continue;
+                        }
+                    };
+                if batch.as_ref().is_some_and(|open| {
+                    open.input.len() + document.declared_size > limits.max_input_bytes
+                }) {
+                    let full = batch.take().ok_or_else(|| invalid("no batch"))?;
+                    dispatch_capture(&call, &header, full, &parallel, &forward, &mut running)
+                        .await?;
+                }
                 let open = match &mut batch {
                     Some(open) => open,
                     None => batch.insert(Batch {
