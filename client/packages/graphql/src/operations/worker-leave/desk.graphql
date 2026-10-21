@@ -1,0 +1,37 @@
+query DeskWorkerLeaveCases(
+  $workerId: ID
+  $openOnly: Boolean
+  $certificationOutstandingOnly: Boolean
+  $limit: Int
+) {
+  workerLeaveCases(
+    workerId: $workerId
+    openOnly: $openOnly
+    certificationOutstandingOnly: $certificationOutstandingOnly
+    limit: $limit
+  ) {
+    id
+    workerId
+    leaveType
+    status
+    frequency
+    fmlaDesignated
+    reason
+    requestedAt
+    startsAt
+    endsAt
+    certificationStatus
+    certificationDueAt
+    certificationLate
+    worker {
+      ...WorkerReference
+    }
+    entries {
+      id
+      usedOn
+      hours
+      countsAgainstEntitlement
+      ptoId
+    }
+  }
+}

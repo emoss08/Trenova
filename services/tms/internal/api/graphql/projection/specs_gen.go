@@ -29997,6 +29997,13 @@ func init() {
 				FieldMapKey: "workerId",
 			},
 			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
 				Name:        "employerName",
 				FieldMapKey: "employerName",
 			},

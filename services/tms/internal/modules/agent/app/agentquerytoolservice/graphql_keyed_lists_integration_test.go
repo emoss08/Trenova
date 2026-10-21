@@ -9,18 +9,24 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/performancereviewrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerchecklistrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workercredentialrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerdqfrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerdrugalcoholrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerinjuryrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerleaverepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -54,8 +60,11 @@ type keyedCase struct {
 	// orgWide marks a list that reads every worker's records when it names
 	// no worker.
 	orgWide bool
-	write   func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error)
-	before  func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error)
+	// restricted are fields a record carries that an agent at the default
+	// data access (Internal) is never shown.
+	restricted []string
+	write      func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error)
+	before     func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error)
 	// templates writes a template the list reads alongside under key, and
 	// one it must leave out, and returns the first's id.
 	key       string
@@ -225,6 +234,57 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return idsOf(rows, err)
 			},
 		},
+		{
+			tool: "worker_list_leave_cases", orgWide: true, restricted: []string{"reason"},
+			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{},
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status, closedAt := worker.LeaveCaseApproved, (*int64)(nil)
+				if closed {
+					status, closedAt = worker.LeaveCaseClosed, &now
+				}
+				row, err := services.leave.CreateCase(ctx, &worker.WorkerLeaveCase{
+					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+					LeaveType: worker.LeaveTypeMedical, Status: status,
+					Frequency: worker.LeaveContinuous, Reason: "Knee surgery " + label,
+					RequestedAt: now, StartsAt: now, DecidedAt: &now, ClosedAt: closedAt,
+				})
+				return created(row, err)
+			},
+			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
+				rows, err := services.leaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
+					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+				})
+				return idsOf(rows, err)
+			},
+		},
+		{
+			tool: "worker_list_employment_verifications", orgWide: true,
+			restricted: []string{"findings", "hadDrugAlcoholViolations"},
+			openArgs:   map[string]any{"outstandingOnly": true}, allArgs: map[string]any{},
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status, received := worker.VerificationRequested, (*int64)(nil)
+				if closed {
+					status, received = worker.VerificationReceived, &now
+				}
+				row, err := services.dqf.CreateVerification(ctx, &worker.WorkerEmploymentVerification{
+					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+					EmployerName: "Prior Freight " + label, WasDOTRegulated: true, Status: status,
+					Method: worker.VerificationByEmail, Findings: "No accidents reported " + label,
+					RequestedAt: &now, ResponseReceivedAt: received,
+					ContactPhone: "555-0100",
+				})
+				return created(row, err)
+			},
+			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
+				rows, err := services.dqfService.ListVerifications(ctx,
+					&workerports.ListEmploymentVerificationsRequest{
+						TenantInfo: tenant, WorkerID: workerID, OutstandingOnly: !includeClosed,
+					})
+				return idsOf(rows, err)
+			},
+		},
 	}
 }
 
@@ -269,6 +329,10 @@ type agentreadServices struct {
 	reviewService    *performancereviewservice.Service
 	injuryService    *workerinjuryservice.Service
 	testService      *workerdrugalcoholservice.Service
+	leave            leaveRepo
+	dqf              dqfRepo
+	leaveService     *workerleaveservice.Service
+	dqfService       *workerdqfservice.Service
 }
 
 type (
@@ -285,6 +349,14 @@ type (
 	}
 	dotTestRepo = interface {
 		CreateTest(context.Context, *worker.WorkerDOTTest) (*worker.WorkerDOTTest, error)
+	}
+	leaveRepo = interface {
+		CreateCase(context.Context, *worker.WorkerLeaveCase) (*worker.WorkerLeaveCase, error)
+	}
+	dqfRepo = interface {
+		CreateVerification(
+			context.Context, *worker.WorkerEmploymentVerification,
+		) (*worker.WorkerEmploymentVerification, error)
 	}
 	reviewRepo = interface {
 		CreateReview(context.Context, *worker.PerformanceReview) (*worker.PerformanceReview, error)
@@ -374,6 +446,17 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	})
 	resolvers.WorkerChecklistService = services.checklistService
 	resolvers.PerformanceReviewService = services.reviewService
+	leave := workerleaverepository.New(workerleaverepository.Params{DB: conn, Logger: logger})
+	dqf := workerdqfrepository.New(workerdqfrepository.Params{DB: conn, Logger: logger})
+	services.leave, services.dqf = leave, dqf
+	services.leaveService = workerleaveservice.New(workerleaveservice.Params{
+		Logger: logger, Repo: leave, WorkerRepo: workers,
+	})
+	services.dqfService = workerdqfservice.New(workerdqfservice.Params{
+		Logger: logger, Repo: dqf, WorkerRepo: workers,
+	})
+	resolvers.WorkerLeaveService = services.leaveService
+	resolvers.WorkerDQFService = services.dqfService
 	resolvers.WorkerInjuryService = services.injuryService
 	resolvers.WorkerDrugAlcoholService = services.testService
 
@@ -446,6 +529,31 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 					assert.Contains(t, ids, ours.template.String())
 					assert.NotContains(t, ids, other.template.String())
 					assert.Len(t, ids, 1+keyedTemplatesFor(c.tool), "only the active ones")
+				})
+			}
+
+			if len(c.restricted) > 0 {
+				t.Run("what stays Restricted never reaches an agent at Internal", func(t *testing.T) {
+					data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
+						OrganizationID:    actor.OrganizationID,
+						BusinessUnitID:    actor.BusinessUnitID,
+						Actor:             actor,
+						Timezone:          "America/Chicago",
+						Params:            withWorker(ours.workerID, c.allArgs),
+						RunID:             pulid.MustNew("ar_"),
+						DataAccessCeiling: permission.SensitivityInternal,
+					})
+					require.NoError(t, queryErr)
+					page := asMap(t, data)
+					withheld, _ := page["withheldByAccess"].([]any)
+					items, _ := page["items"].([]any)
+					require.Len(t, items, len(ours.all))
+					for _, field := range c.restricted {
+						assert.Contains(t, withheld, field)
+						for _, item := range items {
+							assert.NotContains(t, item.(map[string]any), field)
+						}
+					}
 				})
 			}
 

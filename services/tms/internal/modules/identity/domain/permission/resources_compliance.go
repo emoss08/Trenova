@@ -2,12 +2,40 @@ package permission
 
 func (r *Registry) registerComplianceResources() {
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceQualification.String(),
-		DisplayName:        "Qualification",
-		Description:        "Driver qualification management",
-		Category:           "Human resources",
-		Operations:         standardOpsWithDelete,
+		Resource:    ResourceQualification.String(),
+		DisplayName: "Qualification",
+		Description: "Driver qualification management",
+		Category:    "Human resources",
+		Operations:  standardOpsWithDelete,
+		// Where a previous employer's safety performance history request
+		// stands (who, when, how often followed up, what kind of answer) is
+		// Internal. The employer's contact details, the driver's drug and
+		// alcohol history and what the employer said stay Restricted.
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":                            SensitivityInternal,
+			"businessUnitId":                SensitivityInternal,
+			"organizationId":                SensitivityInternal,
+			"workerId":                      SensitivityInternal,
+			"employerName":                  SensitivityInternal,
+			"employerDotNumber":             SensitivityInternal,
+			"employerMcNumber":              SensitivityInternal,
+			"employedFrom":                  SensitivityInternal,
+			"employedTo":                    SensitivityInternal,
+			"wasDotRegulated":               SensitivityInternal,
+			"status":                        SensitivityInternal,
+			"method":                        SensitivityInternal,
+			"requestedAt":                   SensitivityInternal,
+			"responseReceivedAt":            SensitivityInternal,
+			"lastFollowUpAt":                SensitivityInternal,
+			"followUpCount":                 SensitivityInternal,
+			"drugAlcoholResponseReceivedAt": SensitivityInternal,
+			"hadAccidents":                  SensitivityInternal,
+			"accidentCount":                 SensitivityInternal,
+			"version":                       SensitivityInternal,
+			"createdAt":                     SensitivityInternal,
+			"updatedAt":                     SensitivityInternal,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
