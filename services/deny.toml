@@ -47,7 +47,10 @@ multiple-versions = "deny"
 wildcards = "deny"
 highlight = "all"
 # Two majors of the same crate in one binary are a decision, recorded here with the reason.
-skip = []
+skip = [
+    { crate = "getrandom@0.2", reason = "ring 0.17, under rustls, is still on 0.2; everything else is on 0.3" },
+    { crate = "syn@2", reason = "the proc-macro ecosystem is part way from syn 2 to syn 3; both only run at build time" },
+]
 skip-tree = []
 
 [sources]
