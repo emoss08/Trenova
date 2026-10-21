@@ -153,7 +153,7 @@ func (c *Client) call(
 		tried[target.address] = struct{}{}
 		progressed := false
 		err = attempt(ctx, target.rpc, &progressed)
-		target.record(err, &c.cfg.Breaker, time.Now())
+		target.record(ctx, err, &c.cfg.Breaker, time.Now())
 		if err == nil {
 			return nil
 		}

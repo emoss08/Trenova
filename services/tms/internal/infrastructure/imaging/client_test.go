@@ -3,6 +3,7 @@ package imaging
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -261,19 +262,19 @@ func TestTheBreakerTakesAFailingEndpointOutOfRotation(t *testing.T) {
 	now := time.Now()
 	unavailable := status.Error(codes.Unavailable, "gone")
 
-	e.record(unavailable, breaker, now)
+	e.record(t.Context(), unavailable, breaker, now)
 	assert.True(t, e.available(now), "one failure is not enough")
-	e.record(unavailable, breaker, now)
+	e.record(t.Context(), unavailable, breaker, now)
 	assert.False(t, e.available(now), "two in a row open the breaker")
 	assert.True(t, e.available(now.Add(2*time.Minute)), "it closes again after openFor")
 
-	e.record(nil, breaker, now)
-	e.record(status.Error(codes.InvalidArgument, "bad document"), breaker, now)
-	e.record(status.Error(codes.InvalidArgument, "bad document"), breaker, now)
+	e.record(t.Context(), nil, breaker, now)
+	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), breaker, now)
+	e.record(t.Context(), status.Error(codes.InvalidArgument, "bad document"), breaker, now)
 	assert.True(t, e.available(now), "a bad document says nothing about the endpoint")
 
 	draining := refusal(codes.Unavailable, "DRAINING", time.Second)
-	e.record(draining, breaker, now)
+	e.record(t.Context(), draining, breaker, now)
 	assert.False(t, e.available(now), "a draining worker is taken out at once")
 }
 
@@ -300,4 +301,48 @@ func TestWithoutCapacityTheErrorSaysTheServiceIsUnavailable(t *testing.T) {
 		mapError(refusal(codes.FailedPrecondition, "ENCRYPTED", 0)),
 		kernelports.ErrImagingEncrypted,
 	)
+}
+
+func TestOnlyTheTransportsFailuresCountAgainstAnEndpoint(t *testing.T) {
+	t.Parallel()
+
+	e := &endpoint{address: "a"}
+	client := &Client{
+		cfg: &config.ImagingConfig{
+			MaxAttempts: 1,
+			Breaker:     config.ImagingBreakerConfig{ConsecutiveFailures: 5, OpenFor: time.Minute},
+		},
+		endpoints: &endpointSet{static: true, endpoints: []*endpoint{e}},
+		logger:    zap.NewNop(),
+	}
+	failWith := func(ctx context.Context, err error) {
+		_ = client.call(ctx, time.Minute, kernelports.ImagingBatch,
+			func(context.Context, imagingpb.ImagingServiceClient, *bool) error { return err })
+	}
+
+	for _, local := range []error{
+		errors.New("open capture object: the storage read failed"),
+		errStreamShape,
+		fmt.Errorf("decrypt: %w", errors.New("the blob was tampered with")),
+		fmt.Errorf("%w: the source is longer than declared", kernelports.ErrImagingTooLarge),
+		errors.New("the page callback refused the result"),
+	} {
+		failWith(t.Context(), local)
+	}
+	assert.True(t, e.available(time.Now()), "local errors say nothing about the worker")
+
+	cancelled, cancel := context.WithCancel(t.Context())
+	cancel()
+	expired, stop := context.WithDeadline(t.Context(), time.Now().Add(-time.Second))
+	defer stop()
+	for range 5 {
+		failWith(cancelled, status.Error(codes.Canceled, context.Canceled.Error()))
+		failWith(expired, status.Error(codes.DeadlineExceeded, context.DeadlineExceeded.Error()))
+	}
+	assert.True(t, e.available(time.Now()), "the caller's own cancellation or deadline is not the worker's")
+
+	for range 5 {
+		failWith(t.Context(), status.Error(codes.Unavailable, "connection refused"))
+	}
+	assert.False(t, e.available(time.Now()), "five transport failures open the breaker")
 }

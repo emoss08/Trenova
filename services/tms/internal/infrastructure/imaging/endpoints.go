@@ -38,10 +38,15 @@ func (e *endpoint) available(now time.Time) bool {
 	return !now.Before(e.openUntil)
 }
 
-func (e *endpoint) record(err error, breaker *config.ImagingBreakerConfig, now time.Time) {
+func (e *endpoint) record(
+	ctx context.Context,
+	err error,
+	breaker *config.ImagingBreakerConfig,
+	now time.Time,
+) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	if !countsAgainstEndpoint(err) {
+	if !countsAgainstEndpoint(ctx, err) {
 		if err == nil {
 			e.failures = 0
 			e.openFor = 0
@@ -62,12 +67,20 @@ func (e *endpoint) record(err error, breaker *config.ImagingBreakerConfig, now t
 	e.failures = 0
 }
 
-func countsAgainstEndpoint(err error) bool {
-	if err == nil {
+func countsAgainstEndpoint(ctx context.Context, err error) bool {
+	if err == nil || ctx.Err() != nil {
 		return false
 	}
-	code := status.Code(err)
-	return code == codes.Unavailable || code == codes.DeadlineExceeded || code == codes.Unknown
+	st, ok := status.FromError(err)
+	if !ok {
+		return false
+	}
+	switch st.Code() {
+	case codes.Unavailable, codes.DeadlineExceeded, codes.Unknown:
+		return true
+	default:
+		return false
+	}
 }
 
 func draining(err error) bool {
