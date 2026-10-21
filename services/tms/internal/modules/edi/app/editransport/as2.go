@@ -12,9 +12,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/maputils"
 )
 
@@ -139,10 +141,26 @@ func AS2ConfigFromProfile(
 
 type AS2Transport struct {
 	client *http.Client
+	policy httpsafe.Policy
 }
 
-func NewAS2Transport() *AS2Transport {
-	return &AS2Transport{client: &http.Client{Timeout: as2RequestTimeout}}
+func NewAS2Transport(cfg *config.Config) *AS2Transport {
+	return NewAS2TransportWithPolicy(cfg.GetEDIConfig().EgressPolicy())
+}
+
+func NewAS2TransportWithPolicy(policy httpsafe.Policy) *AS2Transport {
+	return &AS2Transport{
+		client: httpsafe.NewClientWithPolicy(as2RequestTimeout, policy),
+		policy: policy,
+	}
+}
+
+func (t *AS2Transport) endpoint(cfg *AS2Config) (string, error) {
+	target, err := httpsafe.ValidateURLWithPolicy(cfg.EndpointURL, t.policy)
+	if err != nil {
+		return "", fmt.Errorf("AS2 partner endpoint URL is not permitted: %w", err)
+	}
+	return target.String(), nil
 }
 
 func (t *AS2Transport) Method() edi.ConnectionMethod {
@@ -228,10 +246,14 @@ func (t *AS2Transport) post(
 	cfg *AS2Config,
 	built *as2.BuiltMessage,
 ) (*http.Response, error) {
+	endpoint, err := t.endpoint(cfg)
+	if err != nil {
+		return nil, err
+	}
 	request, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		cfg.EndpointURL,
+		endpoint,
 		bytes.NewReader(built.Body),
 	)
 	if err != nil {

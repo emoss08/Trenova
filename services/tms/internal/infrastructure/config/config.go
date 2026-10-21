@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -1903,6 +1904,7 @@ type Config struct {
 	CarrierIntelligence CarrierIntelligenceConfig `mapstructure:"carrierIntelligence"`
 	Accounting          AccountingConfig          `mapstructure:"accounting"`
 	Formula             FormulaConfig             `mapstructure:"formula"`
+	EDI                 EDIConfig                 `mapstructure:"edi"`
 
 	extensions map[string]any
 }
@@ -2101,6 +2103,21 @@ func (c *Config) PublicLinkBaseURL() string {
 		return base
 	}
 	return c.App.GetWebBaseURL()
+}
+
+type EDIConfig struct {
+	AllowPrivateNetworks bool `mapstructure:"allowPrivateNetworks"`
+}
+
+func (c *Config) GetEDIConfig() *EDIConfig {
+	if c == nil {
+		return nil
+	}
+	return &c.EDI
+}
+
+func (c *EDIConfig) EgressPolicy() httpsafe.Policy {
+	return httpsafe.Policy{AllowPrivateNetworks: c != nil && c.AllowPrivateNetworks}
 }
 
 type PushConfig struct {

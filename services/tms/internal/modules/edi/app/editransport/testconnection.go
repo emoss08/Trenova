@@ -152,7 +152,7 @@ func (t *AS2Transport) TestConnection(
 			cfg.PartnerEncryptionCertificate,
 		))
 	}
-	checks = append(checks, testAS2Reachability(ctx, t.client, cfg))
+	checks = append(checks, t.testReachability(ctx, cfg))
 	return checks
 }
 
@@ -207,20 +207,23 @@ func certificateExpiryCheck(name string, cert *x509.Certificate) ediports.EDICon
 	}
 }
 
-func testAS2Reachability(
+func (t *AS2Transport) testReachability(
 	ctx context.Context,
-	client *http.Client,
 	cfg *AS2Config,
 ) ediports.EDIConnectionCheck {
 	if cfg.EndpointURL == "" {
 		return failedCheck("endpoint", "Endpoint URL is not configured")
+	}
+	endpoint, err := t.endpoint(cfg)
+	if err != nil {
+		return failedCheck("endpoint", err.Error())
 	}
 	requestCtx, cancel := context.WithTimeout(ctx, as2ReachabilityTimeout)
 	defer cancel()
 	request, err := http.NewRequestWithContext(
 		requestCtx,
 		http.MethodHead,
-		cfg.EndpointURL,
+		endpoint,
 		nil,
 	)
 	if err != nil {
@@ -229,7 +232,7 @@ func testAS2Reachability(
 	if cfg.BasicAuthUsername != "" {
 		request.SetBasicAuth(cfg.BasicAuthUsername, cfg.BasicAuthPassword)
 	}
-	response, err := client.Do(request)
+	response, err := t.client.Do(request)
 	if err != nil {
 		return failedCheck("endpoint", "Endpoint is not reachable: "+err.Error())
 	}

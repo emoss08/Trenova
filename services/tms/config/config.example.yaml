@@ -382,6 +382,13 @@ pdfReader:
 formula:
     maxConcurrentEvaluations: 64 # Evaluations running at once per process; excess callers wait
 
+# EDI transports (AS2 and SFTP). A partner endpoint that resolves to a loopback, private or
+# reserved address is refused, so a communication profile cannot reach into this network.
+# Turn this on only for partners reached over a private link; link-local and cloud metadata
+# addresses stay refused either way.
+edi:
+    allowPrivateNetworks: true # The local partner simulator listens on localhost
+
 # Driver portal (Dash) settings
 portal:
     # Absolute base URL of the app that serves Dash; used to build portal invitation
