@@ -136,45 +136,67 @@ func (s *Store) Get(
 	return data, nil
 }
 
-func (s *Store) Prerender(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	doc *document.Document,
-	source kernelports.ImagingSource,
-	maxPages int,
-	progress func(stored int),
-) (int, error) {
-	stored := s.storedPrefix(ctx, doc, maxPages)
-	if stored >= maxPages {
+type Progress struct {
+	PagesStored int `json:"pagesStored"`
+	PageCount   int `json:"pageCount,omitempty"`
+}
+
+type PrerenderRequest struct {
+	TenantInfo pagination.TenantInfo
+	Document   *document.Document
+	Source     kernelports.ImagingSource
+	MaxPages   int
+	PageCount  int
+	Progress   func(Progress)
+}
+
+func (s *Store) Prerender(ctx context.Context, req *PrerenderRequest) (int, error) {
+	doc := req.Document
+	report := func(progress Progress) {
+		if req.Progress != nil {
+			req.Progress(progress)
+		}
+	}
+	limit := req.MaxPages
+	if req.PageCount > 0 {
+		limit = min(limit, req.PageCount)
+	}
+	if strings.HasPrefix(doc.FileType, "image/") {
+		limit = min(limit, 1)
+	}
+	stored := s.storedPrefix(ctx, doc, limit)
+	if stored >= limit {
 		return stored, nil
 	}
-	if stored > 0 && progress != nil {
-		progress(stored)
+	if stored > 0 {
+		report(Progress{PagesStored: stored, PageCount: req.PageCount})
 	}
 	resumed := stored
-	_, err := s.generator.RenderPagesFrom(
+	pageCount, err := s.generator.RenderPagesFrom(
 		ctx,
-		source,
+		req.Source,
 		stored+1,
-		maxPages,
+		limit,
 		kernelports.ImagingBatch,
 		func(page int, data []byte) error {
 			if page <= resumed {
 				return nil
 			}
-			if writeErr := s.write(ctx, tenantInfo, Key(doc, page), data); writeErr != nil {
+			if writeErr := s.write(ctx, req.TenantInfo, Key(doc, page), data); writeErr != nil {
 				return writeErr
 			}
 			stored++
-			if progress != nil {
-				progress(stored)
-			}
+			report(Progress{PagesStored: stored, PageCount: req.PageCount})
 			return nil
 		},
 	)
+	if resumed > 0 && errors.Is(err, thumbnailservice.ErrPageOutOfRange) {
+		return stored, nil
+	}
 	if err != nil {
 		return stored, err
 	}
+	report(Progress{PagesStored: stored, PageCount: pageCount})
 	return stored, nil
 }
 

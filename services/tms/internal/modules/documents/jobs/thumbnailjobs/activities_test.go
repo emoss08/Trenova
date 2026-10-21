@@ -36,6 +36,7 @@ type thumbnailStorage struct {
 	uploadKey   string
 	uploadBody  []byte
 	metadata    map[string]string
+	existing    map[string]bool
 }
 
 func (s *thumbnailStorage) Upload(
@@ -117,7 +118,9 @@ func (s *thumbnailStorage) ListMultipartUploadParts(
 ) ([]kernelports.UploadedPart, error) {
 	return nil, nil
 }
-func (s *thumbnailStorage) Exists(context.Context, string) (bool, error) { return false, nil }
+func (s *thumbnailStorage) Exists(_ context.Context, key string) (bool, error) {
+	return s.existing[key], nil
+}
 func (s *thumbnailStorage) GetFileInfo(context.Context, string) (*kernelports.FileInfo, error) {
 	return nil, nil
 }
@@ -355,7 +358,7 @@ func TestPrerenderPagesActivityHeartbeatsAfterEveryStoredPage(t *testing.T) {
 	)
 	activities.heartbeat = func(_ context.Context, details ...any) {
 		for _, detail := range details {
-			if progress, ok := detail.(PrerenderProgress); ok {
+			if progress, ok := detail.(pagerender.Progress); ok {
 				mu.Lock()
 				heartbeats = append(heartbeats, progress.PagesStored)
 				mu.Unlock()
@@ -373,5 +376,58 @@ func TestPrerenderPagesActivityHeartbeatsAfterEveryStoredPage(t *testing.T) {
 	assert.Equal(t, 3, stored)
 	mu.Lock()
 	defer mu.Unlock()
-	assert.Equal(t, []int{0, 1, 2, 3}, heartbeats, "one heartbeat to start, then one per stored page")
+	assert.Equal(t, []int{0, 1, 2, 3, 3}, heartbeats, "one to start, one per stored page, then the count")
+}
+
+func TestPrerenderPagesActivityRetryDoesNotResendAFinishedDocument(t *testing.T) {
+	t.Parallel()
+
+	enc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager(
+			"thumbnail-test-encryption-key-with-at-least-32-bytes",
+		),
+	)
+	doc := thumbnailDocument()
+	doc.FileType = "application/pdf"
+	storageClient := &thumbnailStorage{existing: map[string]bool{
+		pagerender.Key(doc, 1): true,
+		pagerender.Key(doc, 2): true,
+	}}
+	repo := documentportsmock.NewMockDocumentRepository(t)
+	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
+
+	fake := imagingfake.New()
+	fake.RenderFunc = func(
+		context.Context,
+		*kernelports.ImagingRenderRequest,
+		func(*kernelports.ImagingArtifact) error,
+	) (*kernelports.ImagingRenderSummary, error) {
+		t.Error("a document whose pages are all stored is not sent to the worker")
+		return &kernelports.ImagingRenderSummary{}, nil
+	}
+	generator := thumbnailservice.NewGenerator(fake)
+	activities := NewActivities(ActivitiesParams{
+		DocumentRepository: repo,
+		Storage:            storageClient,
+		ThumbnailGenerator: generator,
+		PageRenders: pagerender.New(pagerender.Params{
+			Storage:    storageClient,
+			Encryption: enc,
+			Generator:  generator,
+			Config:     &config.Config{},
+			Logger:     zap.NewNop(),
+		}),
+		Encryption: enc,
+	})
+
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestActivityEnvironment()
+	env.SetHeartbeatDetails(pagerender.Progress{PagesStored: 2, PageCount: 2})
+	env.RegisterActivity(activities.PrerenderPagesActivity)
+	result, err := env.ExecuteActivity(activities.PrerenderPagesActivity, thumbnailPayload(doc))
+	require.NoError(t, err)
+
+	var stored int
+	require.NoError(t, result.Get(&stored))
+	assert.Equal(t, 2, stored)
 }

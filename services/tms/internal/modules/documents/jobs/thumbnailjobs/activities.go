@@ -24,10 +24,6 @@ import (
 
 const logKeyDocumentID = "documentId"
 
-type PrerenderProgress struct {
-	PagesStored int `json:"pagesStored"`
-}
-
 type ActivitiesParams struct {
 	fx.In
 
@@ -80,17 +76,26 @@ func (a *Activities) PrerenderPagesActivity(
 		return 0, a.retryable("Failed to read the document", storedobject.ErrNotAvailable)
 	}
 
-	a.heartbeat(ctx, PrerenderProgress{})
-	stored, err := a.pageRenders.Prerender(
-		ctx,
-		pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID},
-		doc,
-		a.documentSource(doc, doc.FileType),
-		a.prerenderPages,
-		func(stored int) {
-			a.heartbeat(ctx, PrerenderProgress{PagesStored: stored})
+	var previous pagerender.Progress
+	if activity.HasHeartbeatDetails(ctx) {
+		if detailsErr := activity.GetHeartbeatDetails(ctx, &previous); detailsErr != nil {
+			previous = pagerender.Progress{}
+		}
+	}
+	a.heartbeat(ctx, previous)
+	stored, err := a.pageRenders.Prerender(ctx, &pagerender.PrerenderRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: payload.OrganizationID,
+			BuID:  payload.BusinessUnitID,
 		},
-	)
+		Document:  doc,
+		Source:    a.documentSource(doc, doc.FileType),
+		MaxPages:  a.prerenderPages,
+		PageCount: previous.PageCount,
+		Progress: func(progress pagerender.Progress) {
+			a.heartbeat(ctx, progress)
+		},
+	})
 	if errors.Is(err, thumbnailservice.ErrUnreadable) ||
 		errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
 		return stored, temporaltype.NewDataIntegrityError(

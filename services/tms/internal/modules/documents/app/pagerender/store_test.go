@@ -176,6 +176,7 @@ func newPrerenderHarness(t *testing.T, pageCount int) *prerenderHarness {
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		ChecksumSHA256: "abc123",
+		FileType:       "application/pdf",
 	}
 	return h
 }
@@ -183,15 +184,29 @@ func newPrerenderHarness(t *testing.T, pageCount int) *prerenderHarness {
 func (h *prerenderHarness) prerender(t *testing.T, maxPages int) (int, []int, error) {
 	t.Helper()
 
-	var progress []int
-	stored, err := h.store.Prerender(
-		t.Context(),
-		h.tenant,
-		h.doc,
-		kernelports.ImagingBytes("application/pdf", []byte("%PDF-1.7")),
-		maxPages,
-		func(stored int) { progress = append(progress, stored) },
-	)
+	stored, progress, err := h.prerenderKnowing(t, maxPages, 0)
+	counts := make([]int, 0, len(progress))
+	for _, p := range progress {
+		counts = append(counts, p.PagesStored)
+	}
+	return stored, counts, err
+}
+
+func (h *prerenderHarness) prerenderKnowing(
+	t *testing.T,
+	maxPages, pageCount int,
+) (int, []Progress, error) {
+	t.Helper()
+
+	var progress []Progress
+	stored, err := h.store.Prerender(t.Context(), &PrerenderRequest{
+		TenantInfo: h.tenant,
+		Document:   h.doc,
+		Source:     kernelports.ImagingBytes(h.doc.FileType, []byte("%PDF-1.7")),
+		MaxPages:   maxPages,
+		PageCount:  pageCount,
+		Progress:   func(p Progress) { progress = append(progress, p) },
+	})
 	return stored, progress, err
 }
 
@@ -204,7 +219,7 @@ func TestPrerender_ReportsProgressAfterEveryStoredPage(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, 4, stored)
-	assert.Equal(t, []int{1, 2, 3, 4}, progress)
+	assert.Equal(t, []int{1, 2, 3, 4, 4}, progress, "one per page, then the finished count")
 }
 
 func TestPrerender_ARetryRendersOnlyThePagesNotYetStored(t *testing.T) {
@@ -225,7 +240,7 @@ func TestPrerender_ARetryRendersOnlyThePagesNotYetStored(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 5, stored)
 	assert.Equal(t, [][]int{{2, 3, 4}}, h.requests, "only pages 3 to 5 are rendered")
-	assert.Equal(t, []int{2, 3, 4, 5}, progress)
+	assert.Equal(t, []int{2, 3, 4, 5, 5}, progress)
 	again, _ := h.storage.Object(Key(h.doc, 1))
 	assert.Equal(t, firstPage, again, "a stored page is not written again")
 	for page := 1; page <= 5; page++ {
@@ -238,4 +253,70 @@ func TestPrerender_ARetryRendersOnlyThePagesNotYetStored(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 5, stored)
 	assert.Empty(t, h.requests, "a finished document is not rendered again")
+}
+
+func TestPrerender_AFinishedRunReportsThePageCount(t *testing.T) {
+	t.Parallel()
+
+	h := newPrerenderHarness(t, 3)
+
+	_, progress, err := h.prerenderKnowing(t, 20, 0)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, progress)
+	assert.Equal(t, Progress{PagesStored: 3, PageCount: 3}, progress[len(progress)-1])
+}
+
+func TestPrerender_AFullyStoredPDFWithAKnownPageCountIsNotSentAgain(t *testing.T) {
+	t.Parallel()
+
+	h := newPrerenderHarness(t, 3)
+	_, _, err := h.prerenderKnowing(t, 20, 0)
+	require.NoError(t, err)
+	h.requests = nil
+
+	stored, _, err := h.prerenderKnowing(t, 20, 3)
+
+	require.NoError(t, err)
+	assert.Equal(t, 3, stored)
+	assert.Empty(t, h.requests, "the worker is not asked again")
+}
+
+func TestPrerender_AStoredImageIsDone(t *testing.T) {
+	t.Parallel()
+
+	h := newPrerenderHarness(t, 1)
+	h.doc.FileType = "image/png"
+	stored, _, err := h.prerenderKnowing(t, 20, 0)
+	require.NoError(t, err)
+	require.Equal(t, 1, stored)
+	h.requests = nil
+
+	stored, _, err = h.prerenderKnowing(t, 20, 0)
+
+	require.NoError(t, err)
+	assert.Equal(t, 1, stored)
+	assert.Empty(t, h.requests, "an image has one page, already stored")
+}
+
+func TestPrerender_AResumeTheWorkerRefusesAsOutOfRangeIsDone(t *testing.T) {
+	t.Parallel()
+
+	h := newPrerenderHarness(t, 2)
+	_, _, err := h.prerenderKnowing(t, 20, 0)
+	require.NoError(t, err)
+	imaging := imagingfake.New()
+	imaging.RenderFunc = func(
+		context.Context,
+		*kernelports.ImagingRenderRequest,
+		func(*kernelports.ImagingArtifact) error,
+	) (*kernelports.ImagingRenderSummary, error) {
+		return nil, fmt.Errorf("%w: page 3 is outside the document", kernelports.ErrImagingPageOutOfRange)
+	}
+	h.store.generator = thumbnailservice.NewGenerator(imaging)
+
+	stored, _, err := h.prerenderKnowing(t, 20, 0)
+
+	require.NoError(t, err, "nothing past the stored pages is not a failure")
+	assert.Equal(t, 2, stored)
 }

@@ -215,7 +215,9 @@ thumbnail, and stores them encrypted under keys built from the document's checks
 the size and the format, so a new version never serves an old render. The prerender activity
 heartbeats after every stored page with the count so far, and an attempt starts after the pages
 already stored (they run in order, so they are a prefix), so a retry resumes rather than
-rendering the whole document again. `GetPageImage` serves the
+rendering the whole document again. A finished run heartbeats the document's page count, and a
+retry that has it, or an image (one page), stops at that count without sending the document;
+a resume the worker refuses as out of range is finished, not failed. `GetPageImage` serves the
 stored render; on a miss it renders the page at interactive priority behind a singleflight
 (one render per key however many viewers ask) and stores it. ETag, immutable caching headers
 and the document-view audit are unchanged. Deleting a document deletes its renders.
