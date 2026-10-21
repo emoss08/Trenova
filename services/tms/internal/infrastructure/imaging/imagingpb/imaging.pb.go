@@ -38,12 +38,11 @@
 package imagingpb
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -252,10 +251,10 @@ type DocumentHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// application/pdf, image/jpeg, image/png, image/webp, image/tiff,
 	// image/gif, image/heic, image/heif.
-	ContentType string `                   protobuf:"bytes,1,opt,name=content_type,json=contentType,proto3"    json:"content_type,omitempty"`
+	ContentType string `protobuf:"bytes,1,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	// The exact byte count that follows. The worker refuses a stream that
 	// sends more or less.
-	DeclaredSize  uint64 `                   protobuf:"varint,2,opt,name=declared_size,json=declaredSize,proto3" json:"declared_size,omitempty"`
+	DeclaredSize  uint64 `protobuf:"varint,2,opt,name=declared_size,json=declaredSize,proto3" json:"declared_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -307,10 +306,10 @@ func (x *DocumentHeader) GetDeclaredSize() uint64 {
 // A failure confined to one page or one document of a call.
 type PageError struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
-	PageIndex uint32                 `                   protobuf:"varint,1,opt,name=page_index,json=pageIndex,proto3"                  json:"page_index,omitempty"`
-	Reason    ErrorReason            `                   protobuf:"varint,2,opt,name=reason,proto3,enum=trenova.imaging.v1.ErrorReason" json:"reason,omitempty"`
+	PageIndex uint32                 `protobuf:"varint,1,opt,name=page_index,json=pageIndex,proto3" json:"page_index,omitempty"`
+	Reason    ErrorReason            `protobuf:"varint,2,opt,name=reason,proto3,enum=trenova.imaging.v1.ErrorReason" json:"reason,omitempty"`
 	// A short description safe to log; it never quotes document content.
-	Message       string `                   protobuf:"bytes,3,opt,name=message,proto3"                                     json:"message,omitempty"`
+	Message       string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -371,12 +370,12 @@ type ArtifactHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Which output of the call this is (the page index for a render, the
 	// output index for an assembly).
-	Index       uint32 `                   protobuf:"varint,1,opt,name=index,proto3"                        json:"index,omitempty"`
-	ContentType string `                   protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	WidthPx     uint32 `                   protobuf:"varint,3,opt,name=width_px,json=widthPx,proto3"        json:"width_px,omitempty"`
-	HeightPx    uint32 `                   protobuf:"varint,4,opt,name=height_px,json=heightPx,proto3"      json:"height_px,omitempty"`
+	Index       uint32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	ContentType string `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	WidthPx     uint32 `protobuf:"varint,3,opt,name=width_px,json=widthPx,proto3" json:"width_px,omitempty"`
+	HeightPx    uint32 `protobuf:"varint,4,opt,name=height_px,json=heightPx,proto3" json:"height_px,omitempty"`
 	// The artifact's total size in bytes, as the chunks will add up to.
-	Size          uint64 `                   protobuf:"varint,5,opt,name=size,proto3"                         json:"size,omitempty"`
+	Size          uint64 `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -449,9 +448,9 @@ func (x *ArtifactHeader) GetSize() uint64 {
 // A piece of the artifact the last ArtifactHeader started.
 type ArtifactChunk struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	Data  []byte                 `                   protobuf:"bytes,1,opt,name=data,proto3"  json:"data,omitempty"`
+	Data  []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	// This chunk completes the artifact.
-	Last          bool `                   protobuf:"varint,2,opt,name=last,proto3" json:"last,omitempty"`
+	Last          bool `protobuf:"varint,2,opt,name=last,proto3" json:"last,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -507,7 +506,7 @@ type RenderSize struct {
 	//
 	//	*RenderSize_Dpi
 	//	*RenderSize_Fit
-	Size          isRenderSize_Size `                   protobuf_oneof:"size"`
+	Size          isRenderSize_Size `protobuf_oneof:"size"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -587,8 +586,8 @@ func (*RenderSize_Fit) isRenderSize_Size() {}
 
 type FitBox struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	MaxWidth      uint32                 `                   protobuf:"varint,1,opt,name=max_width,json=maxWidth,proto3"   json:"max_width,omitempty"`
-	MaxHeight     uint32                 `                   protobuf:"varint,2,opt,name=max_height,json=maxHeight,proto3" json:"max_height,omitempty"`
+	MaxWidth      uint32                 `protobuf:"varint,1,opt,name=max_width,json=maxWidth,proto3" json:"max_width,omitempty"`
+	MaxHeight     uint32                 `protobuf:"varint,2,opt,name=max_height,json=maxHeight,proto3" json:"max_height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -643,7 +642,7 @@ type ProbeRequest struct {
 	//
 	//	*ProbeRequest_Header
 	//	*ProbeRequest_Chunk
-	Part          isProbeRequest_Part `                   protobuf_oneof:"part"`
+	Part          isProbeRequest_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -721,10 +720,10 @@ func (*ProbeRequest_Chunk) isProbeRequest_Part() {}
 
 type ProbeHeader struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	Document *DocumentHeader        `                   protobuf:"bytes,1,opt,name=document,proto3"                       json:"document,omitempty"`
+	Document *DocumentHeader        `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
 	// Whether to read each page's text to report has_text. Off, Probe opens
 	// the document and reads only its structure.
-	TextProfile   bool `                   protobuf:"varint,2,opt,name=text_profile,json=textProfile,proto3" json:"text_profile,omitempty"`
+	TextProfile   bool `protobuf:"varint,2,opt,name=text_profile,json=textProfile,proto3" json:"text_profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -775,17 +774,17 @@ func (x *ProbeHeader) GetTextProfile() bool {
 
 type ProbeResponse struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
-	Kind      DocumentKind           `                   protobuf:"varint,1,opt,name=kind,proto3,enum=trenova.imaging.v1.DocumentKind" json:"kind,omitempty"`
-	PageCount uint32                 `                   protobuf:"varint,2,opt,name=page_count,json=pageCount,proto3"                 json:"page_count,omitempty"`
-	Pages     []*PageInfo            `                   protobuf:"bytes,3,rep,name=pages,proto3"                                      json:"pages,omitempty"`
-	Encrypted bool                   `                   protobuf:"varint,4,opt,name=encrypted,proto3"                                 json:"encrypted,omitempty"`
+	Kind      DocumentKind           `protobuf:"varint,1,opt,name=kind,proto3,enum=trenova.imaging.v1.DocumentKind" json:"kind,omitempty"`
+	PageCount uint32                 `protobuf:"varint,2,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
+	Pages     []*PageInfo            `protobuf:"bytes,3,rep,name=pages,proto3" json:"pages,omitempty"`
+	Encrypted bool                   `protobuf:"varint,4,opt,name=encrypted,proto3" json:"encrypted,omitempty"`
 	// "1.7" for a PDF; empty for an image.
-	PdfVersion string `                   protobuf:"bytes,5,opt,name=pdf_version,json=pdfVersion,proto3"                json:"pdf_version,omitempty"`
-	Producer   string `                   protobuf:"bytes,6,opt,name=producer,proto3"                                   json:"producer,omitempty"`
+	PdfVersion string `protobuf:"bytes,5,opt,name=pdf_version,json=pdfVersion,proto3" json:"pdf_version,omitempty"`
+	Producer   string `protobuf:"bytes,6,opt,name=producer,proto3" json:"producer,omitempty"`
 	// The decoded image format ("jpeg", "heic"); empty for a PDF.
-	ImageFormat string `                   protobuf:"bytes,7,opt,name=image_format,json=imageFormat,proto3"              json:"image_format,omitempty"`
+	ImageFormat string `protobuf:"bytes,7,opt,name=image_format,json=imageFormat,proto3" json:"image_format,omitempty"`
 	// The EXIF orientation, 1 to 8, of an image; 0 when it has none.
-	Orientation   uint32 `                   protobuf:"varint,8,opt,name=orientation,proto3"                               json:"orientation,omitempty"`
+	Orientation   uint32 `protobuf:"varint,8,opt,name=orientation,proto3" json:"orientation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -878,14 +877,14 @@ func (x *ProbeResponse) GetOrientation() uint32 {
 
 type PageInfo struct {
 	state        protoimpl.MessageState `protogen:"open.v1"`
-	Index        uint32                 `                   protobuf:"varint,1,opt,name=index,proto3"                            json:"index,omitempty"`
-	WidthPoints  float32                `                   protobuf:"fixed32,2,opt,name=width_points,json=widthPoints,proto3"   json:"width_points,omitempty"`
-	HeightPoints float32                `                   protobuf:"fixed32,3,opt,name=height_points,json=heightPoints,proto3" json:"height_points,omitempty"`
+	Index        uint32                 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	WidthPoints  float32                `protobuf:"fixed32,2,opt,name=width_points,json=widthPoints,proto3" json:"width_points,omitempty"`
+	HeightPoints float32                `protobuf:"fixed32,3,opt,name=height_points,json=heightPoints,proto3" json:"height_points,omitempty"`
 	// Clockwise degrees the page is shown turned: 0, 90, 180 or 270.
-	Rotation uint32 `                   protobuf:"varint,4,opt,name=rotation,proto3"                         json:"rotation,omitempty"`
+	Rotation uint32 `protobuf:"varint,4,opt,name=rotation,proto3" json:"rotation,omitempty"`
 	// Set only when text_profile was asked for.
-	HasText       bool   `                   protobuf:"varint,5,opt,name=has_text,json=hasText,proto3"            json:"has_text,omitempty"`
-	CharCount     uint32 `                   protobuf:"varint,6,opt,name=char_count,json=charCount,proto3"        json:"char_count,omitempty"`
+	HasText       bool   `protobuf:"varint,5,opt,name=has_text,json=hasText,proto3" json:"has_text,omitempty"`
+	CharCount     uint32 `protobuf:"varint,6,opt,name=char_count,json=charCount,proto3" json:"char_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -968,7 +967,7 @@ type RenderRequest struct {
 	//
 	//	*RenderRequest_Header
 	//	*RenderRequest_Chunk
-	Part          isRenderRequest_Part `                   protobuf_oneof:"part"`
+	Part          isRenderRequest_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1046,21 +1045,21 @@ func (*RenderRequest_Chunk) isRenderRequest_Part() {}
 
 type RenderHeader struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	Document *DocumentHeader        `                   protobuf:"bytes,1,opt,name=document,proto3"                                    json:"document,omitempty"`
+	Document *DocumentHeader        `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
 	// Zero-based page indexes, in the order to render them. Empty renders every
 	// page up to max_pages.
-	Pages  []uint32    `                   protobuf:"varint,2,rep,packed,name=pages,proto3"                               json:"pages,omitempty"`
-	Size   *RenderSize `                   protobuf:"bytes,3,opt,name=size,proto3"                                        json:"size,omitempty"`
-	Format ImageFormat `                   protobuf:"varint,4,opt,name=format,proto3,enum=trenova.imaging.v1.ImageFormat" json:"format,omitempty"`
+	Pages  []uint32    `protobuf:"varint,2,rep,packed,name=pages,proto3" json:"pages,omitempty"`
+	Size   *RenderSize `protobuf:"bytes,3,opt,name=size,proto3" json:"size,omitempty"`
+	Format ImageFormat `protobuf:"varint,4,opt,name=format,proto3,enum=trenova.imaging.v1.ImageFormat" json:"format,omitempty"`
 	// 1 to 100 for lossy WebP and JPEG; ignored for PNG.
-	Quality uint32 `                   protobuf:"varint,5,opt,name=quality,proto3"                                    json:"quality,omitempty"`
+	Quality uint32 `protobuf:"varint,5,opt,name=quality,proto3" json:"quality,omitempty"`
 	// Lossless WebP.
-	Lossless bool `                   protobuf:"varint,6,opt,name=lossless,proto3"                                   json:"lossless,omitempty"`
+	Lossless bool `protobuf:"varint,6,opt,name=lossless,proto3" json:"lossless,omitempty"`
 	// Refuse a page whose render would pass this many pixels (0: the worker's
 	// limit).
-	MaxPixels uint64 `                   protobuf:"varint,7,opt,name=max_pixels,json=maxPixels,proto3"                  json:"max_pixels,omitempty"`
+	MaxPixels uint64 `protobuf:"varint,7,opt,name=max_pixels,json=maxPixels,proto3" json:"max_pixels,omitempty"`
 	// The most pages an empty `pages` renders (0: the worker's limit).
-	MaxPages      uint32 `                   protobuf:"varint,8,opt,name=max_pages,json=maxPages,proto3"                    json:"max_pages,omitempty"`
+	MaxPages      uint32 `protobuf:"varint,8,opt,name=max_pages,json=maxPages,proto3" json:"max_pages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1159,7 +1158,7 @@ type RenderResponse struct {
 	//	*RenderResponse_Chunk
 	//	*RenderResponse_PageError
 	//	*RenderResponse_Summary
-	Part          isRenderResponse_Part `                   protobuf_oneof:"part"`
+	Part          isRenderResponse_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1267,8 +1266,8 @@ func (*RenderResponse_Summary) isRenderResponse_Part() {}
 
 type RenderSummary struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageCount     uint32                 `                   protobuf:"varint,1,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
-	Rendered      uint32                 `                   protobuf:"varint,2,opt,name=rendered,proto3"                  json:"rendered,omitempty"`
+	PageCount     uint32                 `protobuf:"varint,1,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
+	Rendered      uint32                 `protobuf:"varint,2,opt,name=rendered,proto3" json:"rendered,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1324,7 +1323,7 @@ type InspectCaptureRequest struct {
 	//	*InspectCaptureRequest_Header
 	//	*InspectCaptureRequest_Page
 	//	*InspectCaptureRequest_Chunk
-	Part          isInspectCaptureRequest_Part `                   protobuf_oneof:"part"`
+	Part          isInspectCaptureRequest_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1418,22 +1417,22 @@ func (*InspectCaptureRequest_Chunk) isInspectCaptureRequest_Part() {}
 type InspectCaptureHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How many pages follow, 1 to 1,000.
-	PageCount uint32 `                   protobuf:"varint,1,opt,name=page_count,json=pageCount,proto3"                                                 json:"page_count,omitempty"`
+	PageCount uint32 `protobuf:"varint,1,opt,name=page_count,json=pageCount,proto3" json:"page_count,omitempty"`
 	// The resolution each page is read at (default 150).
-	RenderDpi uint32 `                   protobuf:"varint,2,opt,name=render_dpi,json=renderDpi,proto3"                                                 json:"render_dpi,omitempty"`
+	RenderDpi uint32 `protobuf:"varint,2,opt,name=render_dpi,json=renderDpi,proto3" json:"render_dpi,omitempty"`
 	// Luma below which a sample is ink (default 160).
-	InkThreshold uint32 `                   protobuf:"varint,3,opt,name=ink_threshold,json=inkThreshold,proto3"                                           json:"ink_threshold,omitempty"`
+	InkThreshold uint32 `protobuf:"varint,3,opt,name=ink_threshold,json=inkThreshold,proto3" json:"ink_threshold,omitempty"`
 	// Share of each side left out of the ink measure (default 0.06).
-	InkMargin float32 `                   protobuf:"fixed32,4,opt,name=ink_margin,json=inkMargin,proto3"                                                json:"ink_margin,omitempty"`
+	InkMargin float32 `protobuf:"fixed32,4,opt,name=ink_margin,json=inkMargin,proto3" json:"ink_margin,omitempty"`
 	// Sample every n-th pixel and row (default 2).
-	InkStride uint32 `                   protobuf:"varint,5,opt,name=ink_stride,json=inkStride,proto3"                                                 json:"ink_stride,omitempty"`
+	InkStride uint32 `protobuf:"varint,5,opt,name=ink_stride,json=inkStride,proto3" json:"ink_stride,omitempty"`
 	// Thumbnail width (default 240), format (default JPEG) and quality
 	// (default 72).
-	ThumbnailWidth   uint32      `                   protobuf:"varint,6,opt,name=thumbnail_width,json=thumbnailWidth,proto3"                                       json:"thumbnail_width,omitempty"`
-	ThumbnailFormat  ImageFormat `                   protobuf:"varint,7,opt,name=thumbnail_format,json=thumbnailFormat,proto3,enum=trenova.imaging.v1.ImageFormat" json:"thumbnail_format,omitempty"`
-	ThumbnailQuality uint32      `                   protobuf:"varint,8,opt,name=thumbnail_quality,json=thumbnailQuality,proto3"                                   json:"thumbnail_quality,omitempty"`
+	ThumbnailWidth   uint32      `protobuf:"varint,6,opt,name=thumbnail_width,json=thumbnailWidth,proto3" json:"thumbnail_width,omitempty"`
+	ThumbnailFormat  ImageFormat `protobuf:"varint,7,opt,name=thumbnail_format,json=thumbnailFormat,proto3,enum=trenova.imaging.v1.ImageFormat" json:"thumbnail_format,omitempty"`
+	ThumbnailQuality uint32      `protobuf:"varint,8,opt,name=thumbnail_quality,json=thumbnailQuality,proto3" json:"thumbnail_quality,omitempty"`
 	// Skip barcode decoding.
-	SkipBarcodes  bool `                   protobuf:"varint,9,opt,name=skip_barcodes,json=skipBarcodes,proto3"                                           json:"skip_barcodes,omitempty"`
+	SkipBarcodes  bool `protobuf:"varint,9,opt,name=skip_barcodes,json=skipBarcodes,proto3" json:"skip_barcodes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1534,8 +1533,8 @@ func (x *InspectCaptureHeader) GetSkipBarcodes() bool {
 // Opens one captured page: a one-page PDF or an image.
 type CapturePageStart struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Index         uint32                 `                   protobuf:"varint,1,opt,name=index,proto3"   json:"index,omitempty"`
-	Document      *DocumentHeader        `                   protobuf:"bytes,2,opt,name=document,proto3" json:"document,omitempty"`
+	Index         uint32                 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	Document      *DocumentHeader        `protobuf:"bytes,2,opt,name=document,proto3" json:"document,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1590,7 +1589,7 @@ type InspectCaptureResponse struct {
 	//
 	//	*InspectCaptureResponse_Page
 	//	*InspectCaptureResponse_Summary
-	Part          isInspectCaptureResponse_Part `                   protobuf_oneof:"part"`
+	Part          isInspectCaptureResponse_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1668,15 +1667,15 @@ func (*InspectCaptureResponse_Summary) isInspectCaptureResponse_Part() {}
 
 type CapturePageResult struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
-	Index                uint32                 `                   protobuf:"varint,1,opt,name=index,proto3"                                           json:"index,omitempty"`
-	WidthPx              uint32                 `                   protobuf:"varint,2,opt,name=width_px,json=widthPx,proto3"                           json:"width_px,omitempty"`
-	HeightPx             uint32                 `                   protobuf:"varint,3,opt,name=height_px,json=heightPx,proto3"                         json:"height_px,omitempty"`
-	Thumbnail            []byte                 `                   protobuf:"bytes,4,opt,name=thumbnail,proto3"                                        json:"thumbnail,omitempty"`
-	ThumbnailContentType string                 `                   protobuf:"bytes,5,opt,name=thumbnail_content_type,json=thumbnailContentType,proto3" json:"thumbnail_content_type,omitempty"`
-	InkCoverage          float64                `                   protobuf:"fixed64,6,opt,name=ink_coverage,json=inkCoverage,proto3"                  json:"ink_coverage,omitempty"`
-	Codes                []*Barcode             `                   protobuf:"bytes,7,rep,name=codes,proto3"                                            json:"codes,omitempty"`
+	Index                uint32                 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	WidthPx              uint32                 `protobuf:"varint,2,opt,name=width_px,json=widthPx,proto3" json:"width_px,omitempty"`
+	HeightPx             uint32                 `protobuf:"varint,3,opt,name=height_px,json=heightPx,proto3" json:"height_px,omitempty"`
+	Thumbnail            []byte                 `protobuf:"bytes,4,opt,name=thumbnail,proto3" json:"thumbnail,omitempty"`
+	ThumbnailContentType string                 `protobuf:"bytes,5,opt,name=thumbnail_content_type,json=thumbnailContentType,proto3" json:"thumbnail_content_type,omitempty"`
+	InkCoverage          float64                `protobuf:"fixed64,6,opt,name=ink_coverage,json=inkCoverage,proto3" json:"ink_coverage,omitempty"`
+	Codes                []*Barcode             `protobuf:"bytes,7,rep,name=codes,proto3" json:"codes,omitempty"`
 	// Set when this page could not be read; the other fields are empty.
-	Error         *PageError `                   protobuf:"bytes,8,opt,name=error,proto3"                                            json:"error,omitempty"`
+	Error         *PageError `protobuf:"bytes,8,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1770,8 +1769,8 @@ func (x *CapturePageResult) GetError() *PageError {
 type Barcode struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// "qr_code", "code_128", "pdf_417", "data_matrix", …
-	Format        string `                   protobuf:"bytes,1,opt,name=format,proto3" json:"format,omitempty"`
-	Text          string `                   protobuf:"bytes,2,opt,name=text,proto3"   json:"text,omitempty"`
+	Format        string `protobuf:"bytes,1,opt,name=format,proto3" json:"format,omitempty"`
+	Text          string `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1822,8 +1821,8 @@ func (x *Barcode) GetText() string {
 
 type CaptureSummary struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Inspected     uint32                 `                   protobuf:"varint,1,opt,name=inspected,proto3" json:"inspected,omitempty"`
-	Failed        uint32                 `                   protobuf:"varint,2,opt,name=failed,proto3"    json:"failed,omitempty"`
+	Inspected     uint32                 `protobuf:"varint,1,opt,name=inspected,proto3" json:"inspected,omitempty"`
+	Failed        uint32                 `protobuf:"varint,2,opt,name=failed,proto3" json:"failed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1879,7 +1878,7 @@ type AssembleRequest struct {
 	//	*AssembleRequest_Header
 	//	*AssembleRequest_Source
 	//	*AssembleRequest_Chunk
-	Part          isAssembleRequest_Part `                   protobuf_oneof:"part"`
+	Part          isAssembleRequest_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1973,12 +1972,12 @@ func (*AssembleRequest_Chunk) isAssembleRequest_Part() {}
 type AssembleHeader struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// How many sources follow.
-	SourceCount uint32 `                   protobuf:"varint,1,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
+	SourceCount uint32 `protobuf:"varint,1,opt,name=source_count,json=sourceCount,proto3" json:"source_count,omitempty"`
 	// The PDFs to build, each from pages of the sources.
-	Outputs []*AssembleOutput `                   protobuf:"bytes,2,rep,name=outputs,proto3"                        json:"outputs,omitempty"`
+	Outputs []*AssembleOutput `protobuf:"bytes,2,rep,name=outputs,proto3" json:"outputs,omitempty"`
 	// The sum of every source's declared size, so the call is admitted on its
 	// real cost before any bytes are sent.
-	TotalSize     uint64 `                   protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3"     json:"total_size,omitempty"`
+	TotalSize     uint64 `protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2036,7 +2035,7 @@ func (x *AssembleHeader) GetTotalSize() uint64 {
 
 type AssembleOutput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pages         []*PageRange           `                   protobuf:"bytes,1,rep,name=pages,proto3" json:"pages,omitempty"`
+	Pages         []*PageRange           `protobuf:"bytes,1,rep,name=pages,proto3" json:"pages,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2084,10 +2083,10 @@ func (x *AssembleOutput) GetPages() []*PageRange {
 // document can be named without probing it first.
 type PageRange struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Source        uint32                 `                   protobuf:"varint,1,opt,name=source,proto3"   json:"source,omitempty"`
-	First         uint32                 `                   protobuf:"varint,2,opt,name=first,proto3"    json:"first,omitempty"`
-	Last          uint32                 `                   protobuf:"varint,3,opt,name=last,proto3"     json:"last,omitempty"`
-	Rotation      uint32                 `                   protobuf:"varint,4,opt,name=rotation,proto3" json:"rotation,omitempty"`
+	Source        uint32                 `protobuf:"varint,1,opt,name=source,proto3" json:"source,omitempty"`
+	First         uint32                 `protobuf:"varint,2,opt,name=first,proto3" json:"first,omitempty"`
+	Last          uint32                 `protobuf:"varint,3,opt,name=last,proto3" json:"last,omitempty"`
+	Rotation      uint32                 `protobuf:"varint,4,opt,name=rotation,proto3" json:"rotation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2152,8 +2151,8 @@ func (x *PageRange) GetRotation() uint32 {
 
 type AssembleSourceStart struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Index         uint32                 `                   protobuf:"varint,1,opt,name=index,proto3"   json:"index,omitempty"`
-	Document      *DocumentHeader        `                   protobuf:"bytes,2,opt,name=document,proto3" json:"document,omitempty"`
+	Index         uint32                 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	Document      *DocumentHeader        `protobuf:"bytes,2,opt,name=document,proto3" json:"document,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2209,7 +2208,7 @@ type AssembleResponse struct {
 	//	*AssembleResponse_Output
 	//	*AssembleResponse_Chunk
 	//	*AssembleResponse_Summary
-	Part          isAssembleResponse_Part `                   protobuf_oneof:"part"`
+	Part          isAssembleResponse_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2302,7 +2301,7 @@ func (*AssembleResponse_Summary) isAssembleResponse_Part() {}
 
 type AssembleSummary struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
-	OutputPageCounts []uint32               `                   protobuf:"varint,1,rep,packed,name=output_page_counts,json=outputPageCounts,proto3" json:"output_page_counts,omitempty"`
+	OutputPageCounts []uint32               `protobuf:"varint,1,rep,packed,name=output_page_counts,json=outputPageCounts,proto3" json:"output_page_counts,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -2350,7 +2349,7 @@ type NormalizeImageRequest struct {
 	//
 	//	*NormalizeImageRequest_Header
 	//	*NormalizeImageRequest_Chunk
-	Part          isNormalizeImageRequest_Part `                   protobuf_oneof:"part"`
+	Part          isNormalizeImageRequest_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2428,13 +2427,13 @@ func (*NormalizeImageRequest_Chunk) isNormalizeImageRequest_Part() {}
 
 type NormalizeImageHeader struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
-	Document *DocumentHeader        `                   protobuf:"bytes,1,opt,name=document,proto3"                                    json:"document,omitempty"`
+	Document *DocumentHeader        `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
 	// PNG or JPEG.
-	Format  ImageFormat `                   protobuf:"varint,2,opt,name=format,proto3,enum=trenova.imaging.v1.ImageFormat" json:"format,omitempty"`
-	Quality uint32      `                   protobuf:"varint,3,opt,name=quality,proto3"                                    json:"quality,omitempty"`
+	Format  ImageFormat `protobuf:"varint,2,opt,name=format,proto3,enum=trenova.imaging.v1.ImageFormat" json:"format,omitempty"`
+	Quality uint32      `protobuf:"varint,3,opt,name=quality,proto3" json:"quality,omitempty"`
 	// Downscale to fit inside this box (0: keep the size).
-	MaxWidth      uint32 `                   protobuf:"varint,4,opt,name=max_width,json=maxWidth,proto3"                    json:"max_width,omitempty"`
-	MaxHeight     uint32 `                   protobuf:"varint,5,opt,name=max_height,json=maxHeight,proto3"                  json:"max_height,omitempty"`
+	MaxWidth      uint32 `protobuf:"varint,4,opt,name=max_width,json=maxWidth,proto3" json:"max_width,omitempty"`
+	MaxHeight     uint32 `protobuf:"varint,5,opt,name=max_height,json=maxHeight,proto3" json:"max_height,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2511,7 +2510,7 @@ type NormalizeImageResponse struct {
 	//	*NormalizeImageResponse_Image
 	//	*NormalizeImageResponse_Chunk
 	//	*NormalizeImageResponse_Summary
-	Part          isNormalizeImageResponse_Part `                   protobuf_oneof:"part"`
+	Part          isNormalizeImageResponse_Part `protobuf_oneof:"part"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2605,10 +2604,10 @@ func (*NormalizeImageResponse_Summary) isNormalizeImageResponse_Part() {}
 type NormalizeSummary struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The source's decoded format and size, and the orientation undone.
-	SourceFormat       string `                   protobuf:"bytes,1,opt,name=source_format,json=sourceFormat,proto3"              json:"source_format,omitempty"`
-	SourceWidth        uint32 `                   protobuf:"varint,2,opt,name=source_width,json=sourceWidth,proto3"               json:"source_width,omitempty"`
-	SourceHeight       uint32 `                   protobuf:"varint,3,opt,name=source_height,json=sourceHeight,proto3"             json:"source_height,omitempty"`
-	OrientationApplied uint32 `                   protobuf:"varint,4,opt,name=orientation_applied,json=orientationApplied,proto3" json:"orientation_applied,omitempty"`
+	SourceFormat       string `protobuf:"bytes,1,opt,name=source_format,json=sourceFormat,proto3" json:"source_format,omitempty"`
+	SourceWidth        uint32 `protobuf:"varint,2,opt,name=source_width,json=sourceWidth,proto3" json:"source_width,omitempty"`
+	SourceHeight       uint32 `protobuf:"varint,3,opt,name=source_height,json=sourceHeight,proto3" json:"source_height,omitempty"`
+	OrientationApplied uint32 `protobuf:"varint,4,opt,name=orientation_applied,json=orientationApplied,proto3" json:"orientation_applied,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -2880,12 +2879,7 @@ var (
 
 func file_trenova_imaging_v1_imaging_proto_rawDescGZIP() []byte {
 	file_trenova_imaging_v1_imaging_proto_rawDescOnce.Do(func() {
-		file_trenova_imaging_v1_imaging_proto_rawDescData = protoimpl.X.CompressGZIP(
-			unsafe.Slice(
-				unsafe.StringData(file_trenova_imaging_v1_imaging_proto_rawDesc),
-				len(file_trenova_imaging_v1_imaging_proto_rawDesc),
-			),
-		)
+		file_trenova_imaging_v1_imaging_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_trenova_imaging_v1_imaging_proto_rawDesc), len(file_trenova_imaging_v1_imaging_proto_rawDesc)))
 	})
 	return file_trenova_imaging_v1_imaging_proto_rawDescData
 }
@@ -3038,10 +3032,7 @@ func file_trenova_imaging_v1_imaging_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(
-				unsafe.StringData(file_trenova_imaging_v1_imaging_proto_rawDesc),
-				len(file_trenova_imaging_v1_imaging_proto_rawDesc),
-			),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_trenova_imaging_v1_imaging_proto_rawDesc), len(file_trenova_imaging_v1_imaging_proto_rawDesc)),
 			NumEnums:      3,
 			NumMessages:   32,
 			NumExtensions: 0,

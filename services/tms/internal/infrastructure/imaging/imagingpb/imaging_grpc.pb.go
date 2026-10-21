@@ -39,7 +39,6 @@ package imagingpb
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -65,36 +64,21 @@ type ImagingServiceClient interface {
 	// Validates a document and describes it: page count, sizes and rotation,
 	// which pages carry native text, encryption, version and producer; or, for
 	// an image, its format, size and orientation.
-	Probe(
-		ctx context.Context,
-		opts ...grpc.CallOption,
-	) (grpc.ClientStreamingClient[ProbeRequest, ProbeResponse], error)
+	Probe(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ProbeRequest, ProbeResponse], error)
 	// Renders pages (of a PDF, or the one page of an image) to WebP, JPEG or
 	// PNG, at a DPI or fitted into a box, flattened onto white.
-	Render(
-		ctx context.Context,
-		opts ...grpc.CallOption,
-	) (grpc.BidiStreamingClient[RenderRequest, RenderResponse], error)
+	Render(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RenderRequest, RenderResponse], error)
 	// Inspects captured pages in one pass each: thumbnail, ink coverage and
 	// every QR and 1D barcode. A batch of up to 1,000 pages streams in and the
 	// results stream back per page.
-	InspectCapture(
-		ctx context.Context,
-		opts ...grpc.CallOption,
-	) (grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse], error)
+	InspectCapture(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse], error)
 	// Builds PDFs from pages of the sources: merge, split into ranges, rotate,
 	// extract; an image source becomes a page of its own.
-	Assemble(
-		ctx context.Context,
-		opts ...grpc.CallOption,
-	) (grpc.BidiStreamingClient[AssembleRequest, AssembleResponse], error)
+	Assemble(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AssembleRequest, AssembleResponse], error)
 	// Decodes an image (JPEG, PNG, WebP, TIFF, GIF, HEIC/HEIF), applies its
 	// EXIF orientation, optionally downscales it, strips its metadata and
 	// writes it as PNG or JPEG.
-	NormalizeImage(
-		ctx context.Context,
-		opts ...grpc.CallOption,
-	) (grpc.BidiStreamingClient[NormalizeImageRequest, NormalizeImageResponse], error)
+	NormalizeImage(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[NormalizeImageRequest, NormalizeImageResponse], error)
 }
 
 type imagingServiceClient struct {
@@ -105,16 +89,9 @@ func NewImagingServiceClient(cc grpc.ClientConnInterface) ImagingServiceClient {
 	return &imagingServiceClient{cc}
 }
 
-func (c *imagingServiceClient) Probe(
-	ctx context.Context,
-	opts ...grpc.CallOption,
-) (grpc.ClientStreamingClient[ProbeRequest, ProbeResponse], error) {
+func (c *imagingServiceClient) Probe(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ProbeRequest, ProbeResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(
-		ctx,
-		&ImagingService_ServiceDesc.Streams[0],
-		ImagingService_Probe_FullMethodName,
-		cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[0], ImagingService_Probe_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -125,16 +102,9 @@ func (c *imagingServiceClient) Probe(
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_ProbeClient = grpc.ClientStreamingClient[ProbeRequest, ProbeResponse]
 
-func (c *imagingServiceClient) Render(
-	ctx context.Context,
-	opts ...grpc.CallOption,
-) (grpc.BidiStreamingClient[RenderRequest, RenderResponse], error) {
+func (c *imagingServiceClient) Render(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[RenderRequest, RenderResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(
-		ctx,
-		&ImagingService_ServiceDesc.Streams[1],
-		ImagingService_Render_FullMethodName,
-		cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[1], ImagingService_Render_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -145,38 +115,22 @@ func (c *imagingServiceClient) Render(
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_RenderClient = grpc.BidiStreamingClient[RenderRequest, RenderResponse]
 
-func (c *imagingServiceClient) InspectCapture(
-	ctx context.Context,
-	opts ...grpc.CallOption,
-) (grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse], error) {
+func (c *imagingServiceClient) InspectCapture(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(
-		ctx,
-		&ImagingService_ServiceDesc.Streams[2],
-		ImagingService_InspectCapture_FullMethodName,
-		cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[2], ImagingService_InspectCapture_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[InspectCaptureRequest, InspectCaptureResponse]{
-		ClientStream: stream,
-	}
+	x := &grpc.GenericClientStream[InspectCaptureRequest, InspectCaptureResponse]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_InspectCaptureClient = grpc.BidiStreamingClient[InspectCaptureRequest, InspectCaptureResponse]
 
-func (c *imagingServiceClient) Assemble(
-	ctx context.Context,
-	opts ...grpc.CallOption,
-) (grpc.BidiStreamingClient[AssembleRequest, AssembleResponse], error) {
+func (c *imagingServiceClient) Assemble(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AssembleRequest, AssembleResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(
-		ctx,
-		&ImagingService_ServiceDesc.Streams[3],
-		ImagingService_Assemble_FullMethodName,
-		cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[3], ImagingService_Assemble_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -187,22 +141,13 @@ func (c *imagingServiceClient) Assemble(
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_AssembleClient = grpc.BidiStreamingClient[AssembleRequest, AssembleResponse]
 
-func (c *imagingServiceClient) NormalizeImage(
-	ctx context.Context,
-	opts ...grpc.CallOption,
-) (grpc.BidiStreamingClient[NormalizeImageRequest, NormalizeImageResponse], error) {
+func (c *imagingServiceClient) NormalizeImage(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[NormalizeImageRequest, NormalizeImageResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(
-		ctx,
-		&ImagingService_ServiceDesc.Streams[4],
-		ImagingService_NormalizeImage_FullMethodName,
-		cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImagingService_ServiceDesc.Streams[4], ImagingService_NormalizeImage_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[NormalizeImageRequest, NormalizeImageResponse]{
-		ClientStream: stream,
-	}
+	x := &grpc.GenericClientStream[NormalizeImageRequest, NormalizeImageResponse]{ClientStream: stream}
 	return x, nil
 }
 
@@ -240,33 +185,19 @@ type ImagingServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedImagingServiceServer struct{}
 
-func (UnimplementedImagingServiceServer) Probe(
-	grpc.ClientStreamingServer[ProbeRequest, ProbeResponse],
-) error {
+func (UnimplementedImagingServiceServer) Probe(grpc.ClientStreamingServer[ProbeRequest, ProbeResponse]) error {
 	return status.Error(codes.Unimplemented, "method Probe not implemented")
 }
-
-func (UnimplementedImagingServiceServer) Render(
-	grpc.BidiStreamingServer[RenderRequest, RenderResponse],
-) error {
+func (UnimplementedImagingServiceServer) Render(grpc.BidiStreamingServer[RenderRequest, RenderResponse]) error {
 	return status.Error(codes.Unimplemented, "method Render not implemented")
 }
-
-func (UnimplementedImagingServiceServer) InspectCapture(
-	grpc.BidiStreamingServer[InspectCaptureRequest, InspectCaptureResponse],
-) error {
+func (UnimplementedImagingServiceServer) InspectCapture(grpc.BidiStreamingServer[InspectCaptureRequest, InspectCaptureResponse]) error {
 	return status.Error(codes.Unimplemented, "method InspectCapture not implemented")
 }
-
-func (UnimplementedImagingServiceServer) Assemble(
-	grpc.BidiStreamingServer[AssembleRequest, AssembleResponse],
-) error {
+func (UnimplementedImagingServiceServer) Assemble(grpc.BidiStreamingServer[AssembleRequest, AssembleResponse]) error {
 	return status.Error(codes.Unimplemented, "method Assemble not implemented")
 }
-
-func (UnimplementedImagingServiceServer) NormalizeImage(
-	grpc.BidiStreamingServer[NormalizeImageRequest, NormalizeImageResponse],
-) error {
+func (UnimplementedImagingServiceServer) NormalizeImage(grpc.BidiStreamingServer[NormalizeImageRequest, NormalizeImageResponse]) error {
 	return status.Error(codes.Unimplemented, "method NormalizeImage not implemented")
 }
 func (UnimplementedImagingServiceServer) testEmbeddedByValue() {}
@@ -290,49 +221,35 @@ func RegisterImagingServiceServer(s grpc.ServiceRegistrar, srv ImagingServiceSer
 }
 
 func _ImagingService_Probe_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImagingServiceServer).Probe(
-		&grpc.GenericServerStream[ProbeRequest, ProbeResponse]{ServerStream: stream},
-	)
+	return srv.(ImagingServiceServer).Probe(&grpc.GenericServerStream[ProbeRequest, ProbeResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_ProbeServer = grpc.ClientStreamingServer[ProbeRequest, ProbeResponse]
 
 func _ImagingService_Render_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImagingServiceServer).Render(
-		&grpc.GenericServerStream[RenderRequest, RenderResponse]{ServerStream: stream},
-	)
+	return srv.(ImagingServiceServer).Render(&grpc.GenericServerStream[RenderRequest, RenderResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_RenderServer = grpc.BidiStreamingServer[RenderRequest, RenderResponse]
 
 func _ImagingService_InspectCapture_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImagingServiceServer).InspectCapture(
-		&grpc.GenericServerStream[InspectCaptureRequest, InspectCaptureResponse]{
-			ServerStream: stream,
-		},
-	)
+	return srv.(ImagingServiceServer).InspectCapture(&grpc.GenericServerStream[InspectCaptureRequest, InspectCaptureResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_InspectCaptureServer = grpc.BidiStreamingServer[InspectCaptureRequest, InspectCaptureResponse]
 
 func _ImagingService_Assemble_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImagingServiceServer).Assemble(
-		&grpc.GenericServerStream[AssembleRequest, AssembleResponse]{ServerStream: stream},
-	)
+	return srv.(ImagingServiceServer).Assemble(&grpc.GenericServerStream[AssembleRequest, AssembleResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ImagingService_AssembleServer = grpc.BidiStreamingServer[AssembleRequest, AssembleResponse]
 
 func _ImagingService_NormalizeImage_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ImagingServiceServer).NormalizeImage(
-		&grpc.GenericServerStream[NormalizeImageRequest, NormalizeImageResponse]{
-			ServerStream: stream,
-		},
-	)
+	return srv.(ImagingServiceServer).NormalizeImage(&grpc.GenericServerStream[NormalizeImageRequest, NormalizeImageResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
