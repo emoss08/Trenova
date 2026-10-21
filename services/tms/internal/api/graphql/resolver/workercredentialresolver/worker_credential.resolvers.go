@@ -327,9 +327,16 @@ func (r *WorkerCredentialTypeResolver) ProfileField(ctx context.Context, obj *wo
 	return stringutils.Ptr(obj.ProfileField.String()), nil
 }
 
-func (r *WorkerCredentialTypeResolver) ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (int, error) {
+func (r *WorkerCredentialTypeResolver) ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (*int, error) {
+	var count int
+	var err error
 	if loaders.Available(ctx) {
-		return loaders.WorkerCredentialTypeActiveCredentialCount(ctx, obj.ID.String())
+		count, err = loaders.WorkerCredentialTypeActiveCredentialCount(ctx, obj.ID.String())
+	} else {
+		count, err = r.WorkerCredentialService.CountActiveCredentials(ctx, obj)
 	}
-	return r.WorkerCredentialService.CountActiveCredentials(ctx, obj)
+	if err != nil {
+		return nil, err
+	}
+	return &count, nil
 }

@@ -308,7 +308,7 @@ function CarrierSettlementCard({
         aside={
           record.carrier && access.carrier ? (
             <CardOpenLink
-              to={recordPath("carrier", record.carrier.id)}
+              kind="carrier" to={recordPath("carrier", record.carrier.id)}
               onOpen={listedCarrier.open && (() => listedCarrier.open?.(record.carrier?.id ?? ""))}
             >
               {t("Open carrier")}
@@ -366,7 +366,12 @@ function CarrierSettlementCard({
 
       {!voided && (
         <CardSection title={t("Where the money goes")}>
-          <Remittance lines={remit.lines} method={remit.method} terms={remit.terms} />
+          <Remittance
+            withheld={remit.withheld}
+            lines={remit.lines}
+            method={remit.method}
+            terms={remit.terms}
+          />
         </CardSection>
       )}
 

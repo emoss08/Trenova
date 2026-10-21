@@ -28,6 +28,17 @@ func (r *Registry) registerOperationsResources() {
 		DisplayName: "Shipment",
 		Description: "Shipment management",
 		Category:    "Shipments",
+		ReferenceView: []string{
+			"proNumber",
+			"bol",
+			"status",
+			"customerId",
+			"poNumber",
+			"originCity",
+			"originState",
+			"destinationCity",
+			"destinationState",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View shipments"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create new shipments"},
@@ -294,10 +305,11 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceServiceFailureReasonCode.String(),
-		DisplayName: "Service Failure Reason Code",
-		Description: "Service failure reason code reference data",
-		Category:    "Shipments",
+		Resource:      ResourceServiceFailureReasonCode.String(),
+		DisplayName:   "Service Failure Reason Code",
+		Description:   "Service failure reason code reference data",
+		Category:      "Shipments",
+		ReferenceView: []string{"code", "label", "category"},
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,

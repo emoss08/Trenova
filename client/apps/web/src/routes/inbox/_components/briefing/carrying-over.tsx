@@ -87,7 +87,7 @@ export function CarryingOver({
             <CheckIcon aria-hidden className="size-3" strokeWidth={2.4} />
             {t(
               "Handed to {0} · {1, plural, one {they'll see it first thing} other {they'll see them first thing}}",
-              senderFirstName({ fromName: owner.name, fromAddress: owner.emailAddress }),
+              senderFirstName({ fromName: owner.name, fromAddress: owner.username }),
               rows.length,
             )}
           </span>
@@ -102,7 +102,7 @@ export function CarryingOver({
             <UserMark user={onCall} size="sm" />
             {t(
               "Hand off to {0}",
-              senderFirstName({ fromName: onCall.name, fromAddress: onCall.emailAddress }),
+              senderFirstName({ fromName: onCall.name, fromAddress: onCall.username }),
             )}
           </Button>
         ) : null}

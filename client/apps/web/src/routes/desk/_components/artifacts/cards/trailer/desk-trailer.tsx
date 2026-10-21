@@ -219,7 +219,7 @@ function TrailerCard({
         aside={
           lastKnown ? (
             <CardOpenLink
-              to={recordPath("location", lastKnown.id)}
+              kind="location" to={recordPath("location", lastKnown.id)}
               onOpen={listedPlace.open && (() => listedPlace.open?.(lastKnown.id))}
             >
               {t("Open location")}
@@ -271,7 +271,7 @@ function TrailerCard({
         <CardSection title={t("Owner")}>
           <div className="dk-rec-list">
             <CardRecordRow
-              to={recordPath("worker", owner.id)}
+              kind="worker" to={recordPath("worker", owner.id)}
               onOpen={listedOwner.open && (() => listedOwner.open?.(owner.id))}
             >
               <span className="dk-tl-owner">

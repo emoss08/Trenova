@@ -37,10 +37,11 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceInvoiceDispute.String(),
-		DisplayName: "Invoice Dispute",
-		Description: "Dispute cases raised against posted invoices",
-		Category:    "Billing",
+		Resource:      ResourceInvoiceDispute.String(),
+		DisplayName:   "Invoice Dispute",
+		Description:   "Dispute cases raised against posted invoices",
+		Category:      "Billing",
+		ReferenceView: []string{"invoiceId", "status", "reasonCode", "openedAt", "resolvedAt"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View invoice disputes"},
 			{Operation: OpCreate, DisplayName: "Open", Description: "Open a dispute on an invoice"},
@@ -55,6 +56,16 @@ func (r *Registry) registerBillingResources() {
 		DisplayName: "Invoice",
 		Description: "Invoice management",
 		Category:    "Billing",
+		ReferenceView: []string{
+			"number",
+			"status",
+			"invoiceDate",
+			"dueDate",
+			"billToName",
+			"settlementStatus",
+			"disputeStatus",
+			"customerId",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View invoices"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create invoices"},
@@ -252,6 +263,13 @@ func (r *Registry) registerBillingResources() {
 		DisplayName: "Agent Run",
 		Description: "Billing exception agent runs",
 		Category:    "AI & agents",
+		ReferenceView: []string{
+			"agentDefinitionId",
+			"subjectType",
+			"subjectId",
+			"trigger",
+			"definition",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View agent runs"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Start agent runs"},
@@ -260,10 +278,11 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceAgentProposal.String(),
-		DisplayName: "Decisions",
-		Description: "What the agents propose and ask a person to approve or decline",
-		Category:    "Desk",
+		Resource:      ResourceAgentProposal.String(),
+		DisplayName:   "Decisions",
+		Description:   "What the agents propose and ask a person to approve or decline",
+		Category:      "Desk",
+		ReferenceView: []string{"toolName", "status"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View agent proposals"},
 			{
@@ -401,10 +420,11 @@ func (r *Registry) registerBillingResources() {
 
 	// unattended, so it sits at the same sensitivity as provider configuration.
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceAgentDefinition.String(),
-		DisplayName: "Agent Definition",
-		Description: "Per-organization agent configurations and their tool access",
-		Category:    "AI & agents",
+		Resource:      ResourceAgentDefinition.String(),
+		DisplayName:   "Agent Definition",
+		Description:   "Per-organization agent configurations and their tool access",
+		Category:      "AI & agents",
+		ReferenceView: []string{"name", "icon", "accent", "template"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View configured agents"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add an agent"},
@@ -614,6 +634,7 @@ func (r *Registry) registerBillingResources() {
 		DisplayName:        "Accessorial Charge",
 		Description:        "Accessorial charge definitions",
 		Category:           "Billing",
+		ReferenceView:      []string{"code", "description", "status", "method", "rateUnit"},
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -671,6 +692,7 @@ func (r *Registry) registerBillingResources() {
 		DisplayName:        "Fuel Surcharge Program",
 		Description:        "Fuel surcharge programs, fuel price indices, and DOE weekly price data",
 		Category:           "Fuel & tax",
+		ReferenceView:      []string{"code", "name", "status"},
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -756,10 +778,11 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceFactoringSubmission.String(),
-		DisplayName: "Factoring Schedule",
-		Description: "Schedules of accounts sent to a factor, with each invoice's expected funding",
-		Category:    "Billing",
+		Resource:      ResourceFactoringSubmission.String(),
+		DisplayName:   "Factoring Schedule",
+		Description:   "Schedules of accounts sent to a factor, with each invoice's expected funding",
+		Category:      "Billing",
+		ReferenceView: []string{"number"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View factoring schedules"},
 			{

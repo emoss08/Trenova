@@ -36,6 +36,7 @@ func (r *Registry) registerRecurringEarningResource() {
 		DisplayName:        "Pay Code",
 		Description:        "Carrier-defined earning and deduction codes with GL account mappings",
 		Category:           "Payroll",
+		ReferenceView:      []string{"code", "name", "description"},
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{

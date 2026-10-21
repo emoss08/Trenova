@@ -212,6 +212,12 @@ linters:
         text: 'hugeParam|paramTypeCombine'
         linters:
           - gocritic
+      # The permission registry declares GraphQL field names as data: each
+      # kind's field sensitivities and reference view. A constant per field
+      # name would hide which field a view or a sensitivity names.
+      - path: internal/modules/identity/domain/permission/(resources_.*|referenceview)\.go
+        linters:
+          - goconst
     paths:
       - internal/infrastructure/database/*
       - cmd/*

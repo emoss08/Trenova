@@ -5,7 +5,6 @@ package agentquerytoolservice_test
 import (
 	"context"
 	"fmt"
-	"maps"
 	"slices"
 	"strconv"
 	"testing"
@@ -709,9 +708,11 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 }
 
 // A tractor's drivers are workers. A reader who may read tractors but not
-// workers is told no driver's name on either path: the repository tool left
-// assignedTo out, and the GraphQL tool keeps only each driver's id.
-func TestConvertedLists_ATractorsDriversFollowWorkerRead(t *testing.T) {
+// workers is told each driver's name, which the worker reference view shows
+// to every reader of a record that links to a worker; the repository tool
+// left assignedTo out, and the GraphQL tool now names the driver as the
+// screen does.
+func TestConvertedLists_ATractorsDriversShowTheirReferenceView(t *testing.T) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -730,23 +731,20 @@ func TestConvertedLists_ATractorsDriversFollowWorkerRead(t *testing.T) {
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
 	converted, err := agentquerytoolservice.ConvertedListTool("equipment_list_tractors", reader, engine)
 	require.NoError(t, err)
-	old := agentquerytoolservice.NewListTractorsTool(
-		tractorrepository.New(tractorrepository.Params{DB: conn, Logger: zap.NewNop()}), engine)
-
-	before := callTool(t, ours.ctx, old, tenant.Actor, map[string]any{"limit": 50})
-	for _, item := range before["items"].([]any) {
-		assert.NotContains(t, item.(map[string]any), "assignedTo")
-	}
 
 	page := callTool(t, ours.ctx, converted, tenant.Actor, map[string]any{"limit": 50})
 	items, _ := page["items"].([]any)
 	require.Len(t, items, referenceRowsPerTenant)
 	for _, item := range items {
 		driver, ok := item.(map[string]any)["primaryWorker"].(map[string]any)
-		require.True(t, ok, "the driver's id is still named")
-		assert.Equal(t, []string{"id"}, slices.Collect(maps.Keys(driver)))
+		require.True(t, ok, "the driver is named")
+		assert.Contains(t, driver, "id")
+		assert.Contains(t, driver, "wholeName", "a driver's name is in the worker reference view")
 	}
-	assert.Contains(t, page["withheldByAccess"], "primaryWorker.wholeName")
+	withheld, _ := page["withheldByAccess"].([]any)
+	for _, path := range withheld {
+		assert.NotContains(t, path, "primaryWorker.wholeName")
+	}
 }
 
 // testWorker is a driver of the tenant's, inactive when marked, managed by

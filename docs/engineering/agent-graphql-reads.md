@@ -435,15 +435,19 @@ three rules.
    field's level comes from the permission registry (`fieldsensitivity.Level(resource, field)`),
    where `resource` is the record kind of the field's parent type. The generator writes that
    type-to-resource table from the record-kind registry. Confidential is never shown. On HTTP
-   no ceiling is set, so the screen is unchanged. This is the one place an agent sees less than
+   no agent ceiling is set; a person's screen applies reference views
+   ([reference-views.md](reference-views.md)) and nothing more. This is the one place an agent sees less than
    the person's screen, by design.
 3. **Nested records.** A field's resource is the nearest enclosing type that is a registered
    resource: `WorkerProfile.dob` reads as the worker's `dob`, and a `Worker` nested in a
-   `Tractor` is gated by the worker's sensitivities, not the tractor's. That is what today's
-   `nestedRedactor` does. A nested `User`, `Organization` or `BusinessUnit` shows only `id` and
-   `name`, as the redactor reduces them today. Whether the nested row is visible at all is the
-   database's call: the loader reads it under the same RLS and `read_scope`, so a worker outside
-   a team scope comes back null, as on the screen.
+   `Tractor` is gated by the worker's sensitivities, not the tractor's. A record carried by
+   another shows its kind's reference view to every reader, and its other fields only to a
+   reader who may read the kind: the same rule people's screens follow, decided by the same
+   package (`refview`), described in [reference-views.md](reference-views.md). A nested `User`,
+   `Organization` or `BusinessUnit` is one more kind with a view (id, name, avatar), not a
+   special case. Whether the nested row is visible at all is still the database's call: the
+   loader reads it under the same RLS and `read_scope`, so a worker outside a team scope comes
+   back null, as on the screen.
 
 **One implementation.** The ceiling itself is computed in one place: `fieldAccess.ceiling` moves
 to `fieldsensitivity.AgentCeiling` (the definition's data access, lowered to the person's role
@@ -468,15 +472,14 @@ same function: `fieldsensitivity.Visible` against `fieldsensitivity.AgentCeiling
 resource. Every `@protected` field is classified confidential (`fieldguard_test.go` holds that),
 so the ceiling refuses it too.
 
-**A record the reader cannot read shows only its id.** A record of one kind carried by another
-(a tractor's drivers are workers) is gated by its own kind's read permission as well as its
-sensitivities: where the reader may not read that kind at all, every field but its `id` is
-withheld, and named in `withheldByAccess`. The screen shows a tractor's drivers to anyone who can
-read tractors; the repository-backed tractor list named them only to a reader who could read
-workers, and a converted tool withholds at least what its old path did. The check is the
-engine's, once per kind per read (`AgentCeilings.Reads`), as the person or as the agent, and a
-failed check reads as no. `TestConvertedLists_ATractorsDriversFollowWorkerRead` holds both paths
-to it.
+**A record the reader cannot read shows its reference view.** A record of one kind carried by
+another (a tractor's drivers are workers) shows the fields of its kind's reference view (a
+driver's name) to every reader of the record that carries it; every other field needs the kind's
+own read, and is withheld and named in `withheldByAccess` without it. The check is the engine's,
+once per kind per read (`AgentCeilings.Reads`), as the person or as the agent, and a failed check
+reads as no; the ceiling still applies inside the view. This replaced the id-only gating #852
+added, so an agent and a person are told the same thing about a linked record.
+`TestConvertedLists_ATractorsDriversShowTheirReferenceView` holds the tractor list to it.
 
 **A record's id is never withheld.** Row-level security has already decided the row may be read,
 and the id carries none of the row's content. A tool needs it to name the row in the next call.
@@ -515,10 +518,10 @@ Each module's PR:
 | Parties | `customer_list` | none | every field the table selects is Internal |
 | Parties | `location_list` | none | every field the table selects is Internal |
 | Parties | `carrier_list` | none | every field the table selects is Internal |
-| Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows only its id to a reader who cannot read workers, as the repository tool left `assignedTo` out |
+| Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows the worker reference view (the driver's name) to a reader who cannot read workers, and nothing else |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
 | Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
-| Workforce | `worker_list_time_off` | `reason`, `rejectionReason`, `cancellationReason`, `balanceAfterDays` | `worker_pto` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; its dates, status, type, days and people are now declared Internal, and a leave's reasons and balance stay Restricted, where the repository row returned the reason and decision ungated. Each request's `worker` shows only its id to a reader who cannot read workers |
+| Workforce | `worker_list_time_off` | `reason`, `rejectionReason`, `cancellationReason`, `balanceAfterDays` | `worker_pto` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; its dates, status, type, days and people are now declared Internal, and a leave's reasons and balance stay Restricted, where the repository row returned the reason and decision ungated. Each request's `worker` shows only the worker reference view to a reader who cannot read workers |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
@@ -741,11 +744,12 @@ reasoning for each is above.
 3. **An `agent` principal in `AuthContext`**, made only by the reader.
 4. **The ceiling is enforced in the executor**, by the guard that already enforces `@protected`.
    The tool-side gates are deleted as tools convert, and the ceiling is computed in one function.
-5. **Nested records are gated by their own kind's sensitivities and read permission**, and users,
-   organizations and business units reduce to `id` and `name`, as the tools do today. This
-   decision first added no read check the screen does not make; the tractor list showed that the
-   repository tools did make one (a driver's name needed worker read), so an agent read now
-   checks a nested kind's read permission and shows only the id where it is refused.
+5. **Nested records are gated by their own kind's reference view, read permission and
+   sensitivities.** A record carried by another shows its kind's reference view; its other
+   fields need the kind's read. This decision first added no read check the screen does not
+   make; the tractor list showed that the repository tools did make one (a driver's name needed
+   worker read), so an agent read briefly showed only the id of a record of a kind it could not
+   read. Reference views replaced that for agents and people alike: one rule, in `refview`.
 6. **The `Desk*` operation is preferred.** A list with none reads its table's operation, unless
    its module's PR adds a `Desk<Plural>` operation, backed by the result-size figures it records.
    `worker_list` reads `DeskWorkers` rather than `WorkerTable`, which selects about thirty fields

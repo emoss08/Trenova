@@ -110,8 +110,8 @@ func (r *InvoiceResolver) OtherAmount(ctx context.Context, obj *invoice.Invoice)
 	return obj.OtherAmount.String(), nil
 }
 
-func (r *InvoiceResolver) TotalAmount(ctx context.Context, obj *invoice.Invoice) (string, error) {
-	return obj.TotalAmount.String(), nil
+func (r *InvoiceResolver) TotalAmount(ctx context.Context, obj *invoice.Invoice) (*string, error) {
+	return stringutils.Ptr(obj.TotalAmount.String()), nil
 }
 
 func (r *InvoiceResolver) AppliedAmount(ctx context.Context, obj *invoice.Invoice) (string, error) {

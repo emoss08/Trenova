@@ -1,11 +1,10 @@
-query WorkerPortalStatus($workerId: ID!) {
+query WorkerPortalStatus($workerId: ID!) @requiresRead(kind: "user") {
   workerPortalStatus(workerId: $workerId) {
     linked
     portalUser {
       id
       name
       emailAddress
-      status
       lastLoginAt
     }
     pendingInvitation {
@@ -50,7 +49,7 @@ mutation RevokeWorkerPortalAccess($workerId: ID!) {
 query SettlementDisputeTable(
   $input: DataTableConnectionInput!
   $includeTotalCount: Boolean = true
-) {
+) @requiresRead(kind: "driver_settlement") {
   settlementDisputes(input: $input) {
     edges {
       node {
@@ -91,7 +90,7 @@ query SettlementDisputeTable(
   }
 }
 
-query SettlementDisputeDetail($id: ID!) {
+query SettlementDisputeDetail($id: ID!) @requiresRead(kind: "driver_settlement") {
   settlementDispute(id: $id) {
     id
     settlementId
@@ -120,8 +119,6 @@ query SettlementDisputeDetail($id: ID!) {
       periodStart
       periodEnd
       netPayMinor
-      grossEarningsMinor
-      deductionsMinor
       currencyCode
     }
     settlementLine {
@@ -597,8 +594,6 @@ query DriverExpenseDetail($id: ID!) {
       id
       firstName
       lastName
-      email
-      phoneNumber
     }
     payCode {
       id

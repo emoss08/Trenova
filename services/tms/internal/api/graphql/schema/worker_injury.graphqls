@@ -246,7 +246,7 @@ extend type Query {
   One year of the OSHA 300 log with its 300A totals. Leave the year empty for
   the current one.
   """
-  oshaLog(year: Int): OSHALog!
+  oshaLog(year: Int): OSHALog! @authorizes(resource: "worker_injury")
   oshaSummaries: [OSHAAnnualSummary!]!
 }
 

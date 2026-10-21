@@ -1,4 +1,4 @@
-query DeskManualJournalCard($id: ID!) {
+query DeskManualJournalCard($id: ID!) @requiresRead(kind: "fiscal_period") {
   manualJournalCard(id: $id) {
     journal {
       id

@@ -6,6 +6,16 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName: "Worker",
 		Description: "Driver and worker management",
 		Category:    "Human resources",
+		ReferenceView: []string{
+			"firstName",
+			"lastName",
+			"wholeName",
+			"profilePicUrl",
+			"status",
+			"type",
+			"fleetCodeId",
+			"fleetCode",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View workers"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Add new workers"},
@@ -135,6 +145,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Worker Credential",
 		Description:    "Licences, medical cards, endorsements and certificates held by workers",
 		Category:       "Human resources",
+		ReferenceView:  []string{"workerId", "credentialTypeId", "status", "expiresAt"},
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View worker credentials"},
@@ -198,6 +209,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Worker Checklist",
 		Description:    "Onboarding and offboarding checklists run for a worker",
 		Category:       "Human resources",
+		ReferenceView:  []string{"name", "kind", "status", "dueAt"},
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View a worker's checklists"},
@@ -268,6 +280,24 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName: "Training Course",
 		Description: "Catalog of training courses and which are required per driver type",
 		Category:    "Human resources",
+		ReferenceView: []string{
+			"code",
+			"name",
+			"category",
+			"delivery",
+			"isRequired",
+			"status",
+			"description",
+			"contentUrl",
+			"durationMinutes",
+			"passingScore",
+			"validityMonths",
+			"renewalWindowDays",
+			"dueDaysAfterAssignment",
+			"requiresAcknowledgement",
+			"requiredForDriverTypes",
+			"sortOrder",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View training courses"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create training courses"},
@@ -398,6 +428,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Benefits",
 		Description:    "Benefit plans and who is enrolled on them",
 		Category:       "Human resources",
+		ReferenceView:  []string{"code", "name", "planType"},
 		ParentResource: ResourceWorker.String(),
 		// An enrollment says what cover somebody has and what they pay for it.
 		// It is granted separately for the same reason the injury log is.
@@ -420,6 +451,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Shift",
 		Description:    "The repeating working patterns a roster is built from",
 		Category:       "Human resources",
+		ReferenceView:  []string{"code", "name", "color", "startMinute", "durationMinutes"},
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View shifts"},
@@ -521,6 +553,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Policy",
 		Description:    "Handbooks and policies people sign from the portal, and who has signed them",
 		Category:       "Human resources",
+		ReferenceView:  []string{"title", "versionLabel"},
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View policies and signatures"},
@@ -606,6 +639,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Injury & Illness",
 		Description:    "Injury and illness cases, the OSHA 300 log and the 300A annual summary",
 		Category:       "Human resources",
+		ReferenceView:  []string{"caseNumber", "caseYear", "status"},
 		ParentResource: ResourceWorker.String(),
 		// The log carries body parts, treatment and workers' compensation
 		// claims. It is granted separately from the rest of a worker's record
@@ -630,10 +664,11 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceDOTRandomPool.String(),
-		DisplayName: "Random Testing Pool",
-		Description: "Random selection pools and the rounds drawn from them",
-		Category:    "Human resources",
+		Resource:      ResourceDOTRandomPool.String(),
+		DisplayName:   "Random Testing Pool",
+		Description:   "Random selection pools and the rounds drawn from them",
+		Category:      "Human resources",
+		ReferenceView: []string{"code", "name", "period"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View pools and past draws"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create a pool"},
@@ -652,6 +687,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Worker Safety Event",
 		Description:    "Accidents, incidents, near misses, citations and inspections on a worker's record",
 		Category:       "Human resources",
+		ReferenceView:  []string{"kind", "occurredAt"},
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{
@@ -680,6 +716,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Disciplinary Action",
 		Description:    "Progressive-discipline actions issued to workers",
 		Category:       "Human resources",
+		ReferenceView:  []string{"status", "issuedAt"},
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View disciplinary actions"},
@@ -707,10 +744,11 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourcePerformanceReviewTemplate.String(),
-		DisplayName: "Review Template",
-		Description: "Rating items performance reviews are scored against",
-		Category:    "Human resources",
+		Resource:      ResourcePerformanceReviewTemplate.String(),
+		DisplayName:   "Review Template",
+		Description:   "Rating items performance reviews are scored against",
+		Category:      "Human resources",
+		ReferenceView: []string{"code", "name", "cadenceMonths", "items"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View review templates"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create review templates"},
@@ -733,6 +771,7 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName:    "Performance Review",
 		Description:    "Reviews drafted for workers, their ratings, goals and sign-off",
 		Category:       "Human resources",
+		ReferenceView:  []string{"title", "status", "periodEnd"},
 		ParentResource: ResourceWorker.String(),
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View performance reviews"},
@@ -754,6 +793,19 @@ func (r *Registry) registerWorkerResources() {
 		DisplayName: "Credential Type",
 		Description: "Catalog of credential types workers can hold and which are required",
 		Category:    "Human resources",
+		ReferenceView: []string{
+			"code",
+			"name",
+			"category",
+			"isRequired",
+			"profileField",
+			"validityMonths",
+			"sortOrder",
+			"requiresNumber",
+			"requiresDocument",
+			"renewalWindowDays",
+			"isSystem",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View credential types"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create credential types"},
@@ -777,10 +829,11 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourcePTOPolicy.String(),
-		DisplayName: "PTO Policy",
-		Description: "Paid time off accrual policies and the workers assigned to them",
-		Category:    "Human resources",
+		Resource:      ResourcePTOPolicy.String(),
+		DisplayName:   "PTO Policy",
+		Description:   "Paid time off accrual policies and the workers assigned to them",
+		Category:      "Human resources",
+		ReferenceView: []string{"code", "name", "status"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View PTO policies"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create PTO policies"},

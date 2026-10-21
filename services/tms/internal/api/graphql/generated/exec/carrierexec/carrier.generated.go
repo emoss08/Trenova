@@ -229,23 +229,21 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "paymentMethod",
-				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carrier.Carrier)
 					return obj.PaymentMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod),
+				Marshal: gqlexec.Marshal(marshalOCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod),
 			},
 			{
 				Name:     "paymentTermDays",
-				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carrier.Carrier)
 					return obj.PaymentTermDays, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2int),
 			},
 			{
 				Name:     "remitToName",
@@ -957,14 +955,6 @@ func marshalNCarrierInsurancePolicyType2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalNCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrier.PaymentMethod) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNCarrierSafetyRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐSafetyRating(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrier.SafetyRating) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -999,14 +989,6 @@ func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Selec
 
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
-func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -1073,6 +1055,11 @@ func marshalOCarrierInsurancePolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalOCarrierPaymentMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐPaymentMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v carrier.PaymentMethod) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
 func marshalOCarrierTaxIDType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐTaxIDType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.TaxIDType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -1086,6 +1073,11 @@ func marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx co
 		return graphql.Null
 	}
 	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	return res
 }
 

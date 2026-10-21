@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
+import { SettlementNet } from "./settlement-net";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { SettlementDisputeRow } from "@trenova/shared/lib/graphql/driver-portal";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
@@ -82,10 +82,9 @@ export function getColumns(t: TranslateFn): ColumnDef<SettlementDisputeRow>[] {
               {row.original.settlement.settlementNumber}
             </span>
             <span className="text-muted-foreground text-xs">
-              {t("Net")}{" "}
-              <AmountDisplay
-                value={row.original.settlement.netPayMinor}
-                currency={row.original.settlement.currencyCode}
+              <SettlementNet
+                netPayMinor={row.original.settlement.netPayMinor}
+                currencyCode={row.original.settlement.currencyCode}
               />
             </span>
           </div>

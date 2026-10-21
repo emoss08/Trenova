@@ -145,6 +145,7 @@ import {
   type WorkerPortalStatusQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { rootFields, type RootFields } from "@trenova/shared/lib/reference-access";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 
 export type WorkerPortalStatus = WorkerPortalStatusQuery["workerPortalStatus"];
@@ -161,11 +162,35 @@ export type PortalStop = PortalLoad["stops"][number];
 export type PortalPeriodSummary = MyPeriodSummaryQuery["myPeriodSummary"];
 export type PortalLoadComment = MyLoadCommentsQuery["myLoadComments"][number];
 export type PortalPayEvent = MyRecentPayEventsQuery["myRecentPayEvents"][number];
-export type PortalSettlementSummary = MySettlementsQuery["mySettlements"]["items"][number];
-export type PortalSettlementDetail = NonNullable<MySettlementQuery["mySettlement"]>;
+/*
+ * Everything under `my*` is the caller's own (self-scoped), so no field of it is withheld; the
+ * schema marks these nullable for where a settlement, escrow account or advance is linked from
+ * another record (docs/engineering/reference-views.md).
+ */
+const SETTLEMENT_OWN_FIELDS = ["netPayMinor", "currencyCode"] as const;
+const ESCROW_OWN_FIELDS = ["balanceMinor", "targetAmountMinor"] as const;
+const ADVANCE_OWN_FIELDS = ["amountMinor", "outstandingMinor"] as const;
+
+type MySettlements = MySettlementsQuery["mySettlements"];
+export type PortalSettlementSummary = RootFields<
+  MySettlements["items"][number],
+  (typeof SETTLEMENT_OWN_FIELDS)[number]
+>;
+export type PortalSettlementDetail = RootFields<
+  NonNullable<MySettlementQuery["mySettlement"]>,
+  (typeof SETTLEMENT_OWN_FIELDS)[number]
+>;
 export type PortalSettlementLine = NonNullable<PortalSettlementDetail["lines"]>[number];
-export type PortalEscrow = MyEscrowQuery["myEscrow"];
-export type PortalAdvance = MyAdvancesQuery["myAdvances"][number];
+type MyEscrow = MyEscrowQuery["myEscrow"];
+export type PortalEscrowAccount = RootFields<
+  NonNullable<MyEscrow["account"]>,
+  (typeof ESCROW_OWN_FIELDS)[number]
+>;
+export type PortalEscrow = Omit<MyEscrow, "account"> & { account: PortalEscrowAccount | null };
+export type PortalAdvance = RootFields<
+  MyAdvancesQuery["myAdvances"][number],
+  (typeof ADVANCE_OWN_FIELDS)[number]
+>;
 export type PortalDispute = MyDisputesQuery["myDisputes"][number];
 export type PortalComplianceProfile = MyComplianceProfileQuery["myComplianceProfile"];
 export type PortalPtoRow = MyPtoQuery["myPto"][number];
@@ -344,7 +369,13 @@ export async function fetchMySettlements(
     variables: { limit, offset },
     signal: options?.signal,
   });
-  return data.mySettlements;
+  return {
+    ...data.mySettlements,
+    items: data.mySettlements.items.map(
+      (item): PortalSettlementSummary =>
+        rootFields(item, "DriverSettlement", SETTLEMENT_OWN_FIELDS),
+    ),
+  };
 }
 
 export async function fetchMySettlement(id: string, options?: { signal?: AbortSignal }) {
@@ -354,7 +385,9 @@ export async function fetchMySettlement(id: string, options?: { signal?: AbortSi
     variables: { id },
     signal: options?.signal,
   });
-  return data.mySettlement;
+  return data.mySettlement
+    ? rootFields(data.mySettlement, "DriverSettlement", SETTLEMENT_OWN_FIELDS)
+    : null;
 }
 
 export async function fetchMyEscrow(options?: { signal?: AbortSignal }) {
@@ -363,7 +396,13 @@ export async function fetchMyEscrow(options?: { signal?: AbortSignal }) {
     operationName: "MyEscrow",
     signal: options?.signal,
   });
-  return data.myEscrow;
+  const escrow: PortalEscrow = {
+    ...data.myEscrow,
+    account: data.myEscrow.account
+      ? rootFields(data.myEscrow.account, "EscrowAccount", ESCROW_OWN_FIELDS)
+      : null,
+  };
+  return escrow;
 }
 
 export async function fetchMyAdvances(options?: { signal?: AbortSignal }) {
@@ -372,7 +411,9 @@ export async function fetchMyAdvances(options?: { signal?: AbortSignal }) {
     operationName: "MyAdvances",
     signal: options?.signal,
   });
-  return data.myAdvances;
+  return data.myAdvances.map(
+    (advance): PortalAdvance => rootFields(advance, "PayAdvance", ADVANCE_OWN_FIELDS),
+  );
 }
 
 export async function fetchMyDisputes(options?: { signal?: AbortSignal }) {

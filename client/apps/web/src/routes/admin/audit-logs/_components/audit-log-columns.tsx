@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
@@ -104,8 +105,7 @@ export function getColumns(t: TranslateFn): ColumnDef<AuditEntryRow>[] {
       header: t("User"),
       cell: ({ row }) => {
         const user = row.original.user;
-        const name = user?.name || "Unknown User";
-        const email = user?.emailAddress || "No email";
+        const name = user?.name || t("Unknown user");
 
         return (
           <div className="flex items-center gap-3">
@@ -121,7 +121,13 @@ export function getColumns(t: TranslateFn): ColumnDef<AuditEntryRow>[] {
             />
             <div className="flex flex-col">
               <span className="font-medium">{name}</span>
-              <span className="text-muted-foreground text-xs">{email}</span>
+              {user && user.emailAddress === null ? (
+                <WithheldValue kind="user" className="self-start" />
+              ) : (
+                <span className="text-muted-foreground text-xs">
+                  {user?.emailAddress || t("No email")}
+                </span>
+              )}
             </div>
           </div>
         );

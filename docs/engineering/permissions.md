@@ -263,6 +263,24 @@ two-factor device table stays under the tenant's scope: it lists the devices enr
 organization, which is what an administrator here can act on. None of the four exposes a secret
 (raw claims, the TOTP secret or a credential id).
 
+## Reference views
+
+A record that links to another (a shipment's customer, a tractor's drivers) shows the linked
+record's **reference view** to everyone who can read the record that links to it: the few fields a
+linking screen needs to identify and use it (a customer's name, code and billing address, a
+driver's name). Every other field of the linked record needs that kind's own read; without it a
+nullable field is answered null and named in `extensions.withheldByAccess`, and a non-null one is
+refused. The record a root resolver returns, records that are part of it (`ParentResource`), and
+everything under a self-scoped resolver are not gated this way.
+
+Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
+one package, `refview`, which the GraphQL field guard asks for people and agents alike. They are
+fixed in the code; an organization decides who sees whole linked records through bundles and job
+templates, and the role's sensitivity ceiling still applies inside a view. Built-in bundles grant
+a linked kind's read where the job needs the full record (billing receivables reads invoices and
+disputes, carrier settlements read carriers). How to build a screen that shows another record,
+and how to change a view, is in [reference-views.md](reference-views.md).
+
 ## Protected fields
 
 A few fields stay hidden from people who can read the record they sit on. Each belongs to a

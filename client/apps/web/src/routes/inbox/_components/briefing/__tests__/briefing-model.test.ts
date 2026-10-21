@@ -187,7 +187,7 @@ describe("Nova's line", () => {
   });
 
   it("wraps up at the end of the day with what carries over and who is on call", () => {
-    const onCall = { id: "u1", name: "Marcus Lee", emailAddress: "", thumbnailUrl: "" };
+    const onCall = { id: "u1", name: "Marcus Lee", username: "mlee", thumbnailUrl: "" };
     const carry = [item("a"), item("b")];
     expect(novaLine({ ...base, phase: "EndOfDay", carryOver: carry, onCall, waiting: 2 })).toEqual({
       kind: "endOfDay",

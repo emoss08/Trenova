@@ -135,7 +135,7 @@ export function FuelCardHolders({
       {worker && (
         <CardRecordRow
           className="dk-fu-seat"
-          to={recordPath("worker", worker.id)}
+          kind="worker" to={recordPath("worker", worker.id)}
           onOpen={onOpenWorker && (() => onOpenWorker(worker.id))}
         >
           <CardAvatar name={worker.wholeName} />
@@ -149,7 +149,7 @@ export function FuelCardHolders({
       {tractor && (
         <CardRecordRow
           className="dk-fu-seat"
-          to={recordPath("tractor", tractor.id)}
+          kind="tractor" to={recordPath("tractor", tractor.id)}
           onOpen={onOpenTractor && (() => onOpenTractor(tractor.id))}
         >
           <span className="dk-fu-unit" aria-hidden>

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
+	"github.com/bytedance/sonic"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -43,9 +44,9 @@ import (
 	"go.uber.org/zap"
 )
 
-const tractorDriversQuery = `query {
+const tractorDriversQuery = `query @requiresRead(kind: "worker") {
 	tractors(input: { first: 10 }, includeWorkerDetails: true) {
-		edges { node { id code primaryWorkerId primaryWorker { id firstName lastName } } }
+		edges { node { id code primaryWorkerId primaryWorker { id wholeName profile { id } } } }
 	}
 }`
 
@@ -58,19 +59,23 @@ type tractorDriversResponse struct {
 				PrimaryWorkerID string
 				PrimaryWorker   *struct {
 					ID        string
-					FirstName string
-					LastName  string
+					WholeName string
 				}
 			}
 		}
 	}
 }
 
-// A person whose role reads tractors but not workers opens the tractor
-// list. The driver is a worker, so the screen names no driver to them: the
-// driver comes back as its id alone, whether or not row-level security is
-// installed (self-hosted deployments run with it off).
-func TestScreenRead_ATractorsDriversFollowWorkerRead(t *testing.T) {
+const withheldDriverProfile = "tractors.edges.node.primaryWorker.profile"
+
+// A person whose role reads tractors but not workers opens the tractor list.
+// The driver is a worker the tractor links to, so the screen shows the
+// worker's reference view (the driver's name) and withholds the rest (the
+// driver's profile), naming it in extensions.withheldByAccess. With
+// row-level security enforced the read_scope policy hides a worker the
+// person cannot read from every read, so the driver comes back null: never
+// more than the reference view.
+func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -79,36 +84,86 @@ func TestScreenRead_ATractorsDriversFollowWorkerRead(t *testing.T) {
 	tenantCtx := dbscope.WithTenant(t.Context(), tenant.Scope())
 	driverID := writeTractorWithDriver(t, readscope.With(tenantCtx, nil), owner, tenant)
 
-	engine := &mocks.DenyResourcesPermissionEngine{
+	noWorkerRead := &mocks.DenyResourcesPermissionEngine{
 		Denied: []string{permission.ResourceWorker.String()},
 	}
-	noWorkerRead := func(context.Context) (readscope.Grants, error) {
+	workerScopeNone := func(context.Context) (readscope.Grants, error) {
 		return readscope.Grants{"worker": {Scope: readscope.ScopeNone}}, nil
 	}
 
-	cases := []struct {
-		name  string
-		conn  *postgres.Connection
-		grant readscope.Resolver
-	}{
-		{name: "row-level security off", conn: owner},
-		{name: "row-level security enforced", conn: dbtest.NewRLSConnection(t, admin, dsn), grant: noWorkerRead},
-	}
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			ctx := readscope.With(tenantCtx, c.grant)
-			var response tractorDriversResponse
-			screenClient(t, ctx, c.conn, engine, tenant).MustPost(tractorDriversQuery, &response)
+	t.Run("row-level security off shows the reference view", func(t *testing.T) {
+		var response tractorDriversResponse
+		raw := screenPost(t, screenClient(t, readscope.With(tenantCtx, nil), owner, noWorkerRead, tenant),
+			tractorDriversQuery, &response)
 
-			require.Len(t, response.Tractors.Edges, 1)
-			node := response.Tractors.Edges[0].Node
-			assert.Equal(t, driverID.String(), node.PrimaryWorkerID, "the tractor still names its driver's id")
-			if node.PrimaryWorker != nil {
-				assert.Empty(t, node.PrimaryWorker.FirstName, "a driver's name needs worker read")
-				assert.Empty(t, node.PrimaryWorker.LastName, "a driver's name needs worker read")
+		require.Len(t, response.Tractors.Edges, 1)
+		node := response.Tractors.Edges[0].Node
+		assert.Equal(t, driverID.String(), node.PrimaryWorkerID)
+		require.NotNil(t, node.PrimaryWorker)
+		assert.Equal(t, "Hidden Driver", node.PrimaryWorker.WholeName,
+			"a driver's name is in the worker reference view")
+		assert.Contains(t, withheldOf(raw), withheldDriverProfile,
+			"the driver's profile needs worker read")
+	})
+
+	t.Run("with worker read the whole driver shows", func(t *testing.T) {
+		var response tractorDriversResponse
+		raw := screenPost(t, screenClient(t, readscope.With(tenantCtx, nil), owner,
+			&mocks.DenyResourcesPermissionEngine{}, tenant), tractorDriversQuery, &response)
+
+		require.Len(t, response.Tractors.Edges, 1)
+		require.NotNil(t, response.Tractors.Edges[0].Node.PrimaryWorker)
+		assert.NotContains(t, withheldOf(raw), withheldDriverProfile)
+	})
+
+	t.Run("row-level security enforced hides the driver", func(t *testing.T) {
+		rls := dbtest.NewRLSConnection(t, admin, dsn)
+		var response tractorDriversResponse
+		screenPost(t, screenClient(t, readscope.With(tenantCtx, workerScopeNone), rls, noWorkerRead, tenant),
+			tractorDriversQuery, &response)
+
+		require.Len(t, response.Tractors.Edges, 1)
+		node := response.Tractors.Edges[0].Node
+		assert.Equal(t, driverID.String(), node.PrimaryWorkerID, "the tractor still names its driver's id")
+		assert.Nil(t, node.PrimaryWorker)
+	})
+
+	t.Run("a linked field outside the view that is non-null is refused", func(t *testing.T) {
+		var response map[string]any
+		err := screenClient(t, readscope.With(tenantCtx, nil), owner, noWorkerRead, tenant).Post(`query {
+			tractors(input: { first: 10 }, includeWorkerDetails: true) {
+				edges { node { id primaryWorker { id phoneNumber } } }
 			}
-		})
+		}`, &response)
+		require.Error(t, err, "a non-null field outside the view needs @requiresRead and worker read")
+		assert.Contains(t, err.Error(), "@requiresRead")
+	})
+}
+
+func screenPost(t *testing.T, gql *client.Client, query string, out any) *client.Response {
+	t.Helper()
+
+	raw, err := gql.RawPost(query)
+	require.NoError(t, err)
+	if len(raw.Errors) > 0 && string(raw.Errors) != "null" {
+		require.Failf(t, "the read failed", "%s", raw.Errors)
 	}
+	data, err := sonic.ConfigStd.Marshal(raw.Data)
+	require.NoError(t, err)
+	require.NoError(t, sonic.ConfigStd.Unmarshal(data, out))
+
+	return raw
+}
+
+func withheldOf(raw *client.Response) []string {
+	paths, _ := raw.Extensions["withheldByAccess"].([]any)
+	out := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if name, ok := path.(string); ok {
+			out = append(out, name)
+		}
+	}
+	return out
 }
 
 func screenClient(

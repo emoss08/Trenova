@@ -230,6 +230,19 @@ schema file or a resolver dependency that a bound operation reaches changes the 
 shards or `ResolverParams`, so regenerate after `task gqlgen` whenever either moves. See
 [agent-graphql-reads.md](agent-graphql-reads.md).
 
+## Reference views
+
+`go run ./internal/api/graphql/gqlext/refgen` (from `services/tms`) writes the reference fragments
+(`client/packages/graphql/src/operations/reference/reference.graphql`) and the client's copy of the
+views (`client/packages/shared/src/types/generated/reference-views.ts`) from each kind's
+`ReferenceView` in the permission registry. Run it after changing a view or adding a `@kind`
+type, then `pnpm --filter @trenova/graphql codegen`; `TestReferenceFragmentsAreGenerated` fails
+until both are current. Editing a client operation can fail `TestEveryLinkedFieldIsDeclared` (it
+selects a linked record's field outside its view without `@requiresRead`) or
+`TestEveryDeclaredLinkedFieldIsNullable` (the field it declares is non-null). These are Go tests
+over the client's `.graphql` files, so they surface under `task test`. See
+[reference-views.md](reference-views.md).
+
 ## Schema changes
 
 `task gqlschema-diff` (and the CI step) fails on breaking changes. Swapping a field between

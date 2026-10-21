@@ -58,13 +58,20 @@ export function facilityTerms(
   return [
     category.requiresAppointment ? t("Appointment required") : t("No appointment needed"),
     category.hasSecureParking ? t("Secure parking") : "",
-    category.allowsOvernight ? t("Overnight allowed") : t("No overnight"),
+    category.allowsOvernight === null
+      ? ""
+      : category.allowsOvernight
+        ? t("Overnight allowed")
+        : t("No overnight"),
     category.hasRestroom ? t("Restroom") : "",
   ].filter(Boolean);
 }
 
-/** One thing the facility offers or asks, and whether it does. */
-export type Amenity = { key: string; label: string; on: boolean };
+/**
+ * One thing the facility offers or asks, and whether it does. `on` is null when the category's
+ * answer is outside its reference view and the person may not read location categories.
+ */
+export type Amenity = { key: string; label: string; on: boolean | null };
 
 /**
  * What the facility offers a driver and what it asks of them, each said
@@ -81,17 +88,32 @@ export function amenities(category: DeskLocation["locationCategory"], t: Transla
     },
     {
       key: "parking",
-      label: category.hasSecureParking ? t("Secure parking") : t("No secure parking"),
+      label:
+        category.hasSecureParking === null
+          ? t("Secure parking")
+          : category.hasSecureParking
+            ? t("Secure parking")
+            : t("No secure parking"),
       on: category.hasSecureParking,
     },
     {
       key: "overnight",
-      label: category.allowsOvernight ? t("Overnight allowed") : t("No overnight"),
+      label:
+        category.allowsOvernight === null
+          ? t("Overnight")
+          : category.allowsOvernight
+            ? t("Overnight allowed")
+            : t("No overnight"),
       on: category.allowsOvernight,
     },
     {
       key: "restroom",
-      label: category.hasRestroom ? t("Restroom") : t("No restroom"),
+      label:
+        category.hasRestroom === null
+          ? t("Restroom")
+          : category.hasRestroom
+            ? t("Restroom")
+            : t("No restroom"),
       on: category.hasRestroom,
     },
   ];

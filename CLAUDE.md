@@ -554,6 +554,12 @@ Grants are stored as made and implied operations are applied when evaluated. An 
 "team" scope exists only where a kind declares it; shipments, orders, invoices and workers
 are narrowed by restrictive `read_scope` policies fed from a per-request `pkg/readscope`
 holder, so they are enforced only while RLS is installed.
+A record shown inside another (a shipment's customer, a tractor's driver) shows its kind's
+reference view to everyone who can read the record carrying it, and its other fields only with
+that kind's read; a screen selects `...<Type>Reference` and declares `@requiresRead(kind:)` when
+it needs more. **Read [docs/engineering/reference-views.md](docs/engineering/reference-views.md)
+before showing another kind's record on a screen, adding a GraphQL type that carries one, or
+changing a reference view.**
 **Read [docs/engineering/permissions.md](docs/engineering/permissions.md) before adding a
 resource or operation, a permission check, a data scope, a way of granting access, or
 anything that invalidates cached permissions.**

@@ -211,7 +211,7 @@ function OrderCard({
         aside={
           customer ? (
             <CardOpenLink
-              to={recordPath("customer", customer.id)}
+              kind="customer" to={recordPath("customer", customer.id)}
               onOpen={listedCustomer.open && (() => listedCustomer.open?.(customer.id))}
             >
               {t("Open customer")}

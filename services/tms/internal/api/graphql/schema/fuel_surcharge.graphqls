@@ -262,7 +262,7 @@ extend type Query {
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
-  fuelProgramCurrentRates: [FuelProgramCurrentRate!]!
+  fuelProgramCurrentRates: [FuelProgramCurrentRate!]! @authorizes(resource: "fuel_surcharge_program")
   generateFuelSurchargeTable(input: GenerateFuelTableInput!): [GeneratedFuelTableRow!]!
   eiaSeriesOptions: [EIASeriesOption!]!
 }

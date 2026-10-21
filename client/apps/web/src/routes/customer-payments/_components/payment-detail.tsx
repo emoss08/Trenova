@@ -1,3 +1,4 @@
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
@@ -303,7 +304,9 @@ function ApplicationsSection({
                     {formatAccountingDate(application.invoice?.dueDate)}
                   </TableCell>
                   <TableCell className="py-2 text-right">
-                    {application.invoice ? (
+                    {application.invoice?.totalAmount === null ? (
+                      <WithheldValue kind="invoice" />
+                    ) : application.invoice ? (
                       <span className="text-xs tabular-nums">
                         {formatCurrency(Number(application.invoice.totalAmount))}
                       </span>

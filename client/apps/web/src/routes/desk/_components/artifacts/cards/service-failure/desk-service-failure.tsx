@@ -258,7 +258,7 @@ function ServiceFailureCard({
         {load ? (
           <div className="dk-rec-list">
             <CardRecordRow
-              to={recordPath("shipment", load.id)}
+              kind="shipment" to={recordPath("shipment", load.id)}
               onOpen={listedLoad.open && (() => listedLoad.open?.(load.id))}
             >
               <span className="dk-rec-main">
@@ -270,7 +270,7 @@ function ServiceFailureCard({
             </CardRecordRow>
             {customer && (
               <CardRecordRow
-                to={recordPath("customer", customer.id)}
+                kind="customer" to={recordPath("customer", customer.id)}
                 onOpen={listedCustomer.open && (() => listedCustomer.open?.(customer.id))}
               >
                 <span className="dk-rec-main">

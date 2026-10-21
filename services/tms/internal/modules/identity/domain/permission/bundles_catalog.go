@@ -26,6 +26,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceWatchtower, Operations: []Operation{OpRead, OpUpdate}},
 			{Resource: ResourceDriverMessage, Operations: []Operation{OpRead, OpCreate}},
 			{Resource: ResourceWorkerDispatchHold, Operations: []Operation{OpRead, OpCreate}},
+			{Resource: ResourceLocationCategory, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -97,6 +98,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceServiceFailure, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceShipmentHold, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceHoldReason, Operations: []Operation{OpRead}},
+			{Resource: ResourceServiceFailureReasonCode, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -196,6 +198,8 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceBankReceipt, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{Resource: ResourceBankReceiptWorkItem, Operations: []Operation{OpRead, OpUpdate}},
 			{Resource: ResourceCustomer, Operations: []Operation{OpRead}},
+			{Resource: ResourceInvoice, Operations: []Operation{OpRead}},
+			{Resource: ResourceInvoiceDispute, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -273,6 +277,7 @@ var capabilityBundles = []Bundle{
 				Resource:   ResourceCarrierInvoiceMatch,
 				Operations: []Operation{OpRead, OpCreate, OpUpdate},
 			},
+			{Resource: ResourceCarrier, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -295,6 +300,9 @@ var capabilityBundles = []Bundle{
 				Resource:   ResourceCarrierInvoiceMatch,
 				Operations: []Operation{OpRead, OpApprove, OpReject},
 			},
+			{Resource: ResourceCarrier, Operations: []Operation{OpRead}},
+			{Resource: ResourcePayAdvance, Operations: []Operation{OpRead}},
+			{Resource: ResourceEscrowAccount, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -321,6 +329,7 @@ var capabilityBundles = []Bundle{
 				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove, OpReject},
 			},
 			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
+			{Resource: ResourceWorkerCredentialType, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -386,6 +395,7 @@ var capabilityBundles = []Bundle{
 			},
 			{Resource: ResourceWorkerPolicy, Operations: []Operation{OpRead}},
 			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
+			{Resource: ResourcePerformanceReview, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -413,6 +423,7 @@ var capabilityBundles = []Bundle{
 				Operations: []Operation{OpRead, OpAssign, OpUpdate},
 				Scope:      DataScopeTeam,
 			},
+			{Resource: ResourceShiftTemplate, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -535,6 +546,7 @@ var capabilityBundles = []Bundle{
 		Grants: []BundleGrant{
 			{Resource: ResourceRole, Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDelete}},
 			{Resource: ResourceUser, Operations: []Operation{OpRead}},
+			{Resource: ResourceAgentDefinition, Operations: []Operation{OpRead}},
 		},
 	},
 	{
@@ -577,6 +589,8 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceProvisioningAudit, Operations: []Operation{OpRead}},
 			{Resource: ResourceAuditLog, Operations: []Operation{OpRead}},
 			{Resource: ResourceAPIKey, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{Resource: ResourceUser, Operations: []Operation{OpRead}},
+			{Resource: ResourceRole, Operations: []Operation{OpRead}},
 		},
 	},
 }

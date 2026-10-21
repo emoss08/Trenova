@@ -199,6 +199,14 @@ func (r *Registry) registerAccountingResources() {
 		DisplayName: "Fiscal Period",
 		Description: "Fiscal period management",
 		Category:    "Accounting",
+		ReferenceView: []string{
+			"name",
+			"periodNumber",
+			"fiscalYearId",
+			"startDate",
+			"endDate",
+			"status",
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View fiscal periods"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create fiscal periods"},
@@ -248,10 +256,11 @@ func (r *Registry) registerAccountingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceManualJournal.String(),
-		DisplayName: "Manual Journal",
-		Description: "Manual journal request workflow and approvals",
-		Category:    "Accounting",
+		Resource:      ResourceManualJournal.String(),
+		DisplayName:   "Manual Journal",
+		Description:   "Manual journal request workflow and approvals",
+		Category:      "Accounting",
+		ReferenceView: []string{"requestNumber", "status", "accountingDate"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View manual journals"},
 			{
@@ -303,10 +312,11 @@ func (r *Registry) registerAccountingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceJournalReversal.String(),
-		DisplayName: "Journal Reversal",
-		Description: "Journal reversal workflow and posting",
-		Category:    "Accounting",
+		Resource:      ResourceJournalReversal.String(),
+		DisplayName:   "Journal Reversal",
+		Description:   "Journal reversal workflow and posting",
+		Category:      "Accounting",
+		ReferenceView: []string{"status", "requestedAccountingDate"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View journal reversals"},
 			{
@@ -355,6 +365,13 @@ func (r *Registry) registerAccountingResources() {
 		DisplayName: "Journal Entry",
 		Description: "Journal entry details and source drill-down",
 		Category:    "Accounting",
+		ReferenceView: []string{
+			"entryNumber",
+			"entryType",
+			"status",
+			"accountingDate",
+			"fiscalPeriodId",
+		},
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
@@ -443,10 +460,11 @@ func (r *Registry) registerAccountingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceCustomerPayment.String(),
-		DisplayName: "Customer Payment",
-		Description: "Customer payment posting and applications",
-		Category:    "Accounting",
+		Resource:      ResourceCustomerPayment.String(),
+		DisplayName:   "Customer Payment",
+		Description:   "Customer payment posting and applications",
+		Category:      "Accounting",
+		ReferenceView: []string{"referenceNumber", "paymentDate", "paymentMethod", "status"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View customer payments"},
 			{

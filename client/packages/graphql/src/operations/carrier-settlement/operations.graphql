@@ -38,7 +38,7 @@ query CarrierSettlementTable(
   }
 }
 
-query CarrierSettlementDetail($id: ID!) {
+query CarrierSettlementDetail($id: ID!) @requiresRead(kind: "carrier") {
   carrierSettlement(id: $id) {
     id
     carrierId

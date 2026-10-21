@@ -1,7 +1,7 @@
 # The Desk's location card: where the place is, its fence and what kind of
 # facility it is, without the organization and business unit the edit panel
 # loads.
-query DeskLocationCard($id: ID!) {
+query DeskLocationCard($id: ID!) @requiresRead(kind: "location_category") {
   location(id: $id) {
     id
     status

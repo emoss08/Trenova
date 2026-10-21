@@ -54,6 +54,12 @@ use_buffer_pooling: true
 directives:
   protected:
     skip_runtime: true
+  kind:
+    skip_runtime: true
+  requiresRead:
+    skip_runtime: true
+  authorizes:
+    skip_runtime: true
 
 models:
   ID:

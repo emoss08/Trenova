@@ -1,3 +1,4 @@
+import { rootField } from "@trenova/shared/lib/reference-access";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { WorkerAutocompleteField } from "@/components/autocomplete-fields";
@@ -132,7 +133,7 @@ export function InstantPayDialog({
         description: (
           <span>
             {t("Net")}{" "}
-            <AmountDisplay value={settlement.netPayMinor} currency={settlement.currencyCode} />
+            <AmountDisplay value={rootField(settlement.netPayMinor, "DriverSettlement.netPayMinor")} currency={rootField(settlement.currencyCode, "DriverSettlement.currencyCode")} />
             {t(
               "via {0} · posted to the GL and visible to the driver in Dash.",
               settlement.paymentMethod,

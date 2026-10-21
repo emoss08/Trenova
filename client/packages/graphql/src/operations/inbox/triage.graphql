@@ -358,7 +358,7 @@ query TriageBriefing {
     }
     comingBack
     unhealthySources {
-      ...InboundMailboxFields
+      ...InboundMailboxReference
     }
     suggestion {
       classification

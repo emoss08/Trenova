@@ -1,3 +1,4 @@
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { recordPath } from "@/config/record-links";
 import type { DeskFuelPurchaseCard } from "@/lib/graphql/fuel-desk-cards";
 import { fuelPurchase } from "@/lib/queries/fuel-purchase";
@@ -126,6 +127,7 @@ function FuelPurchaseCard({
   const { purchase } = card;
   const id = purchase.id;
   const title = purchaseTitle(purchase, t);
+  const canReadFuelCards = useCanReadKind("fuel_card");
   const listedCard = useListedRecords({
     entity: "fuel_card",
     order: purchase.fuelCard ? [purchase.fuelCard.id] : NO_ROWS,
@@ -135,7 +137,7 @@ function FuelPurchaseCard({
     return listedCard.opened;
   }
 
-  const checks = purchaseChecks(card, t);
+  const checks = purchaseChecks(card, t, canReadFuelCards);
   const standing = purchaseStanding(card, checks, t);
   const off = checks.filter((check) => needsLook(check.state)).length;
   const difference = totalDifference(purchase);

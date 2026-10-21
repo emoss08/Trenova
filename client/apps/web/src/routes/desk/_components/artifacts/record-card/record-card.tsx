@@ -1,7 +1,10 @@
 import { describeApiError } from "@/lib/api-error-message";
 import { Button } from "@trenova/shared/components/ui/button";
+import { LockedReference } from "@trenova/shared/components/withheld-value";
+import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
+import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
 import type { Neighbors } from "./record-card-values";
@@ -477,12 +480,22 @@ export function CardLink({ to, children }: { to: string; children: ReactNode }) 
 export function CardOpenLink({
   to,
   onOpen,
+  kind,
   children,
 }: {
   to: string;
   onOpen?: () => void;
+  /**
+   * The linked record's kind. Its page and card need the kind's read, so without it there
+   * is no way to the record and nothing is drawn (docs/engineering/reference-views.md).
+   */
+  kind?: ReferenceKind;
   children: ReactNode;
 }) {
+  const canRead = useCanReadKind(kind ?? null);
+  if (kind && !canRead) {
+    return null;
+  }
   return onOpen ? (
     <Button variant="bare" size="bare" className="dk-rec-lnk" onClick={onOpen}>
       {children}
@@ -501,6 +514,7 @@ export function CardOpenLink({
 export function CardRecordRow({
   to,
   onOpen,
+  kind,
   className,
   children,
 }: {
@@ -508,9 +522,23 @@ export function CardRecordRow({
   to: string;
   /** Opens the record in the card's place; absent, the row links to its page. */
   onOpen?: () => void;
+  /**
+   * The listed record's kind when it is linked from the card's own record. Without the kind's
+   * read the row is drawn as it is, unlinked, with a lock saying why
+   * (docs/engineering/reference-views.md).
+   */
+  kind?: ReferenceKind;
   className?: string;
   children: ReactNode;
 }) {
+  const canRead = useCanReadKind(kind ?? null);
+  if (kind && !canRead) {
+    return (
+      <LockedReference kind={kind} layout="row" className={cn("dk-rec-row", className)}>
+        {children}
+      </LockedReference>
+    );
+  }
   return onOpen ? (
     <Button variant="bare" size="bare" className={cn("dk-rec-row", className)} onClick={onOpen}>
       {children}

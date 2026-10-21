@@ -272,7 +272,7 @@ extend type Query {
   workerSafetyEvent(id: ID!): WorkerSafetyEvent!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
   workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
-  workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder!
+  workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
   workerRecognitions(workerId: ID!): [WorkerRecognition!]!
   """
   Suggested points for a kind, severity and outcome, so the form starts from

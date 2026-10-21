@@ -1,4 +1,5 @@
 import type { LocationDwell } from "@/lib/graphql/location-card";
+import { LockedReference } from "@trenova/shared/components/withheld-value";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatPercent } from "@trenova/shared/lib/utils";
@@ -14,12 +15,18 @@ export function AmenityChips({ items }: { items: readonly Amenity[] }) {
   if (items.length === 0) return null;
   return (
     <ul className="dk-lo-amen">
-      {items.map((item) => (
-        <li key={item.key} className={cn(!item.on && "dk-off")}>
-          <CardIcon name={item.on ? "check" : "x"} size={10} stroke={2.8} />
-          {item.label}
-        </li>
-      ))}
+      {items.map((item) =>
+        item.on === null ? (
+          <li key={item.key} className="dk-off">
+            <LockedReference kind="location_category">{item.label}</LockedReference>
+          </li>
+        ) : (
+          <li key={item.key} className={cn(!item.on && "dk-off")}>
+            <CardIcon name={item.on ? "check" : "x"} size={10} stroke={2.8} />
+            {item.label}
+          </li>
+        ),
+      )}
     </ul>
   );
 }

@@ -27,10 +27,10 @@ type LocationCategory {
   type: LocationCategoryType!
   facilityType: FacilityType
   color: String!
-  hasSecureParking: Boolean!
+  hasSecureParking: Boolean
   requiresAppointment: Boolean!
-  allowsOvernight: Boolean!
-  hasRestroom: Boolean!
+  allowsOvernight: Boolean
+  hasRestroom: Boolean
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

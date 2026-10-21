@@ -48,6 +48,28 @@ protected field is always nullable, and null is what such a reader receives.
 """
 directive @protected(group: ProtectedFieldGroup!) on FIELD_DEFINITION
 
+"""
+The permission kind a projection type shows, such as the shipment page's
+customer. The field guard gates it as that kind: a record carried by another
+shows only its kind's reference view unless the reader may read the kind.
+"""
+directive @kind(resource: String!) on OBJECT
+
+"""
+Declares that a root field's resolver checks read on a kind, so the records of
+that kind it returns inside a card, summary or overview are its own records,
+not linked ones. A test holds each declaration to the resolver's check.
+"""
+directive @authorizes(resource: String!) repeatable on FIELD_DEFINITION
+
+"""
+Declares that an operation selects fields of a linked kind beyond that kind's
+reference view. Without the kind's read those fields are answered null and
+named in extensions.withheldByAccess. Client codegen requires it on every
+operation that selects such a field, and the field must be nullable.
+"""
+directive @requiresRead(kind: String!) repeatable on QUERY | MUTATION | SUBSCRIPTION
+
 enum EntityStatus {
   Active
   Inactive
