@@ -13,7 +13,10 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-const toolsFile = "graphqlreads_gen.go"
+const (
+	toolsFile  = "graphqlreads_gen.go"
+	kindObject = "object"
+)
 
 // field is one GraphQL field or input field, described as the tool's
 // parameters are derived from it.
@@ -26,6 +29,9 @@ type field struct {
 	Selected    bool
 	Enum        []string
 	Description string
+	// Fields are a selected record's own fields, one level down, so a
+	// filter on profile.endorsement can be typed by WorkerProfile's field.
+	Fields []field
 }
 
 type variable struct {
@@ -112,7 +118,12 @@ var graphQLInputs = map[string][]graphQLField{
 {Name: {{ quote .Name }}, Type: {{ quote .Type }}, Kind: {{ quote .Kind }}, List: {{ .List }}, NonNull: {{ .NonNull }}
 {{- if .Selected }}, Selected: true{{ end }}
 {{- if .Enum }}, Enum: []string{ {{- range $i, $v := .Enum }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
-{{- if .Description }}, Description: {{ quote .Description }}{{ end }}},
+{{- if .Description }}, Description: {{ quote .Description }}{{ end }}
+{{- if .Fields }}, Fields: []graphQLField{
+{{- range .Fields }}
+	{{ template "field" . }}
+{{- end }}
+}{{ end }}},
 {{- end }}
 `))
 
@@ -211,6 +222,30 @@ func nodeFields(schema *ast.Schema, b *binding) []field {
 			continue
 		}
 		f := describeField(schema, definition.Name, definition.Type, definition.Description)
+		child, chosen := selected[definition.Name]
+		f.Selected = chosen
+		if chosen && f.Kind == kindObject && !f.List {
+			f.Fields = objectFields(schema, f.Type, child)
+		}
+		out = append(out, f)
+	}
+
+	return out
+}
+
+// objectFields are a nested record's fields, each marked with whether the
+// operation selects it, without going further down.
+func objectFields(schema *ast.Schema, typeName string, selected map[string]struct{}) []field {
+	def := schema.Types[typeName]
+	if def == nil {
+		return nil
+	}
+	out := make([]field, 0, len(def.Fields))
+	for _, definition := range def.Fields {
+		if strings.HasPrefix(definition.Name, "__") {
+			continue
+		}
+		f := describeField(schema, definition.Name, definition.Type, definition.Description)
 		_, f.Selected = selected[definition.Name]
 		out = append(out, f)
 	}
@@ -219,14 +254,15 @@ func nodeFields(schema *ast.Schema, b *binding) []field {
 }
 
 // selectedFields are the fields the operation selects on each record it
-// reads: the connection's node for a list, the result for a get.
-func selectedFields(b *binding) map[string]struct{} {
+// reads, the connection's node for a list and the result for a get, each
+// with the fields it selects one level down.
+func selectedFields(b *binding) map[string]map[string]struct{} {
 	doc := b.Operation.Query
 	fragments := make(map[string]*ast.FragmentDefinition, len(doc.Fragments))
 	for _, fragment := range doc.Fragments {
 		fragments[fragment.Name] = fragment
 	}
-	out := make(map[string]struct{})
+	out := make(map[string]map[string]struct{})
 	var root *ast.Field
 	for _, selection := range doc.Operations[0].SelectionSet {
 		if f, ok := selection.(*ast.Field); ok && f.Name == b.RootField.Name {
@@ -242,7 +278,14 @@ func selectedFields(b *binding) map[string]struct{} {
 		set = childSet(collect(set, fragments), nodeField)
 	}
 	for _, f := range collect(set, fragments) {
-		out[f.Name] = struct{}{}
+		children := out[f.Name]
+		if children == nil {
+			children = make(map[string]struct{})
+			out[f.Name] = children
+		}
+		for _, child := range collect(f.SelectionSet, fragments) {
+			children[child.Name] = struct{}{}
+		}
 	}
 
 	return out
@@ -300,7 +343,7 @@ func describeField(schema *ast.Schema, name string, typ *ast.Type, description s
 	case def.Kind == ast.Scalar:
 		f.Kind = "scalar"
 	default:
-		f.Kind = "object"
+		f.Kind = kindObject
 	}
 
 	return f

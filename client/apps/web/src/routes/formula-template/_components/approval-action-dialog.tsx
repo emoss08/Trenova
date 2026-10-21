@@ -24,7 +24,7 @@ import {
   Send01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { ApprovalImpactPanel } from "./approval-impact-panel";
 import { ReadinessPanel } from "./readiness-panel";
@@ -147,7 +147,9 @@ export function ApprovalActionDialog({
   const Icon = config.icon;
   const gated = action === "submit" || action === "approve";
 
-  useEffect(() => {
+  const [seenOpen, setSeenOpen] = useState(open);
+  if (open !== seenOpen) {
+    setSeenOpen(open);
     if (!open) {
       setComment("");
       setShowCommentError(false);
@@ -155,7 +157,7 @@ export function ApprovalActionDialog({
       setReady(null);
       setEffectiveFrom(undefined);
     }
-  }, [open]);
+  }
 
   const mutation = useMutation({
     mutationFn: (trimmedComment: string) => {

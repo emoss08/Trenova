@@ -26,11 +26,13 @@ export function LedgerTable({ entries }: { entries: ARLedgerEntry[] }) {
   const t = useT();
 
   const rows = useMemo(() => {
+    const result: (ARLedgerEntry & { runningBalance: number; key: string })[] = [];
     let runningBalance = 0;
-    return entries.map((entry, index) => {
+    for (const [index, entry] of entries.entries()) {
       runningBalance += entry.amountMinor;
-      return { ...entry, runningBalance, key: `${entry.sourceObjectId}-${index}` };
-    });
+      result.push({ ...entry, runningBalance, key: `${entry.sourceObjectId}-${index}` });
+    }
+    return result;
   }, [entries]);
 
   const totals = useMemo(

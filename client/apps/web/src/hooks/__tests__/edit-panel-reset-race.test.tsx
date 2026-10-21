@@ -66,8 +66,6 @@ function ParentPanel({
   const form = useForm<Agreement>({
     defaultValues: { name: "", rules: [] },
   });
-  formHandle = form;
-
   const { isSeated } = useEditRecordReset(form, {
     open,
     mode: "edit",
@@ -76,7 +74,10 @@ function ParentPanel({
     version: row?.version,
     fetch,
   });
-  readyHandle = isSeated;
+  useEffect(() => {
+    formHandle = form;
+    readyHandle = isSeated;
+  });
 
   return <ChildPanel open={open} row={row} form={form} />;
 }
@@ -216,15 +217,16 @@ describe("edit panel reset race", () => {
 
 function CreatePanel({ fetch }: { fetch: (id: string) => Promise<Agreement> }) {
   const form = useForm<Agreement>({ defaultValues: { name: "", rules: [] } });
-  formHandle = form;
-
   const { isSeated } = useEditRecordReset(form, {
     open: true,
     mode: "create",
     queryKey: "rate-agreement",
     fetch,
   });
-  readyHandle = isSeated;
+  useEffect(() => {
+    formHandle = form;
+    readyHandle = isSeated;
+  });
 
   return null;
 }

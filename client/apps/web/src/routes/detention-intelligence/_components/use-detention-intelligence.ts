@@ -2,7 +2,8 @@ import { detention } from "@/lib/queries/detention";
 import { DETENTION_STATS_LIMIT } from "@/lib/queries/detention";
 import type { FacilityDetentionStat } from "@trenova/shared/types/detention";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { useMemo, useState } from "react";
 
 export type DetentionWindowValue = "30" | "90" | "180";
 
@@ -85,10 +86,13 @@ function rollupFacilities(rows: FacilityDetentionStat[] | undefined): DetentionR
 }
 
 export function useDetentionIntelligence(days: number) {
-  const range = useMemo(() => {
-    const to = Math.floor(Date.now() / 1000);
-    return { from: to - days * SECONDS_PER_DAY, to };
-  }, [days]);
+  const now = useNow("minute");
+  const [anchor, setAnchor] = useState({ days, to: now });
+  if (anchor.days !== days) {
+    setAnchor({ days, to: now });
+  }
+  const to = anchor.days === days ? anchor.to : now;
+  const range = useMemo(() => ({ from: to - days * SECONDS_PER_DAY, to }), [days, to]);
 
   const facilities = useQuery(detention.facilities(range.from, range.to));
   const customers = useQuery(detention.customers(range.from, range.to));

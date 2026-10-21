@@ -269,7 +269,9 @@ function SortableColumnRow({
 
   const [formatOpen, setFormatOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const sortable = useSortable({ id: column.id });
+  const { setNodeRef, transform, transition, isDragging, attributes, listeners } = useSortable({
+    id: column.id,
+  });
   const field = column.ref ? resolveField(index, ir.entity, column.ref) : undefined;
   const crossesToMany = column.ref ? pathCrossesToMany(index, ir.entity, column.ref.path) : false;
   const aggregations = field ? aggregationsForField(field) : [];
@@ -283,14 +285,14 @@ function SortableColumnRow({
 
   return (
     <div
-      ref={sortable.setNodeRef}
+      ref={setNodeRef}
       style={{
-        transform: CSS.Transform.toString(sortable.transform),
-        transition: sortable.transition,
+        transform: CSS.Transform.toString(transform),
+        transition,
       }}
       className={cn(
         "border-border bg-background flex flex-col gap-2 rounded-md border p-2",
-        sortable.isDragging && "z-10 opacity-80",
+        isDragging && "z-10 opacity-80",
       )}
     >
       <div className="flex items-center gap-1.5">
@@ -298,8 +300,8 @@ function SortableColumnRow({
           type="button"
           className="text-muted-foreground hover:text-foreground cursor-grab"
           aria-label={t("Reorder column")}
-          {...sortable.attributes}
-          {...sortable.listeners}
+          {...attributes}
+          {...listeners}
         >
           <GripVerticalIcon className="size-4" />
         </button>

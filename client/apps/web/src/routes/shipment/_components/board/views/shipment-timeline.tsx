@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { getTodayDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
@@ -65,7 +66,8 @@ export default function ShipmentTimeline({ graphql, queryOptions }: ShipmentTime
   });
 
   const dayStart = getTodayDate(timezone);
-  const nowHour = (Date.now() / 1000 - dayStart) / 3600;
+  const now = useNow();
+  const nowHour = (now - dayStart) / 3600;
   const rows = useMemo(() => buildTimelineRows(data ?? [], dayStart), [data, dayStart]);
 
   if (isLoading) {

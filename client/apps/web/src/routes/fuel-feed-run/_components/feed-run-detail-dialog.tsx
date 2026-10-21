@@ -20,7 +20,7 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
 import { RefreshCw02Icon } from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type { ImportRowFilter } from "@/lib/fuel-purchase-import";
 import { ImportReviewTable } from "../../fuel-purchase/_components/import/import-review-table";
@@ -52,13 +52,18 @@ export function FeedRunDetailDialog({
   const queryClient = useQueryClient();
   // A run is opened to deal with what it could not place, so the held rows are
   // what it opens on. Everything else is still one click away.
-  const [filter, setFilter] = useState<ImportRowFilter>("errors");
+  const openingFilter: ImportRowFilter = batch && batch.errorCount > 0 ? "errors" : "all";
+  const [filter, setFilter] = useState<ImportRowFilter>(open ? openingFilter : "errors");
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevBatch, setPrevBatch] = useState(batch);
 
-  useEffect(() => {
+  if (open !== prevOpen || batch !== prevBatch) {
+    setPrevOpen(open);
+    setPrevBatch(batch);
     if (open) {
-      setFilter(batch && batch.errorCount > 0 ? "errors" : "all");
+      setFilter(openingFilter);
     }
-  }, [open, batch]);
+  }
 
   // The run being worked out is passed in rather than read from the closure:
   // it is what the mutation acts on, and the version it carries is what the

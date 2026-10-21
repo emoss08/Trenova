@@ -9,9 +9,13 @@ import (
 )
 
 const (
-	fieldGLAccountID   = "glAccountId"
-	fieldPostedBatchID = "postedBatchId"
-	fieldUpdatedByID   = "updatedById"
+	fieldGLAccountID     = "glAccountId"
+	fieldPostedBatchID   = "postedBatchId"
+	fieldUpdatedByID     = "updatedById"
+	fieldCancelledByID   = "cancelledById"
+	fieldStartDate       = "startDate"
+	fieldEndDate         = "endDate"
+	fieldRejectionReason = "rejectionReason"
 )
 
 type OperationDefinition struct {

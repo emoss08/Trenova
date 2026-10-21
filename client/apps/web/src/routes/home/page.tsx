@@ -18,7 +18,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { FlipBackwardIcon } from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { BriefingBar } from "./_components/briefing-bar";
 import { HomeCanvas } from "./_components/home-canvas";
@@ -76,12 +76,10 @@ export function Home() {
 
   // A preset the administrator locked while this tab was open must not leave
   // the user editing something they can no longer save.
-  useEffect(() => {
-    if (!layout.canCustomize && editing) {
-      setEditing(false);
-      setDraft(null);
-    }
-  }, [layout.canCustomize, editing]);
+  if (!layout.canCustomize && editing) {
+    setEditing(false);
+    setDraft(null);
+  }
 
   // The briefing bar reads the same payload the canvas does, so both show the
   // same instant's numbers rather than two requests a second apart.

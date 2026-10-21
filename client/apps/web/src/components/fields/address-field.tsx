@@ -7,7 +7,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { LocationDetails } from "@/types/google-maps";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, SearchLgIcon } from "@trenova/shared/components/icons";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   useFormContext,
   type Control,
@@ -76,8 +76,7 @@ export function AddressField<TForm extends FieldValues>({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
-  const sessionTokenRef = useRef(crypto.randomUUID());
-  const sessionToken = sessionTokenRef.current;
+  const [sessionToken, setSessionToken] = useState(() => crypto.randomUUID());
   const debouncedInput = useDebounce(searchValue, 400);
 
   const runtimeConfigQuery = useQuery({
@@ -176,7 +175,7 @@ export function AddressField<TForm extends FieldValues>({
       setSelectedLocation(locationId);
       setOpen(false);
 
-      sessionTokenRef.current = crypto.randomUUID();
+      setSessionToken(crypto.randomUUID());
     },
     [
       locations,
@@ -205,7 +204,7 @@ export function AddressField<TForm extends FieldValues>({
       if (nextOpen && !isSearchAvailable) return;
       setOpen(nextOpen);
       if (nextOpen) {
-        sessionTokenRef.current = crypto.randomUUID();
+        setSessionToken(crypto.randomUUID());
       }
     },
     [isSearchAvailable, isLocked],

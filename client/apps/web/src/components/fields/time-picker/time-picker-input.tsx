@@ -42,7 +42,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
   ) => {
     const [flag, setFlag] = React.useState<boolean>(false);
     const [prevIntKey, setPrevIntKey] = React.useState<string>("0");
-    const fallbackDate = React.useMemo(() => new Date(new Date().setHours(0, 0, 0, 0)), []);
+    const [fallbackDate] = React.useState(() => new Date(new Date().setHours(0, 0, 0, 0)));
     const resolvedDate = date ?? fallbackDate;
 
     /**

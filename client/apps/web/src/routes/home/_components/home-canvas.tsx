@@ -20,7 +20,7 @@ import { useMemo, useState } from "react";
 import { AddWidgetDialog } from "./add-widget-dialog";
 import { HomeEditDock } from "./edit-dock";
 import type { HomeData } from "./use-home-data";
-import { widgetComponentFor, type WidgetProps } from "./widget-registry";
+import { WIDGET_COMPONENTS, type WidgetProps } from "./widget-registry";
 import { WidgetConfigDialog } from "./widget-config-dialog";
 import { WidgetEditingProvider } from "./widget-shell";
 
@@ -253,7 +253,7 @@ export function HomeCanvas({
  * client and has no drawer is a version skew, not a user's problem.
  */
 function WidgetBody({ widget, data }: WidgetProps) {
-  const Component = widgetComponentFor(widget.key);
+  const Component = WIDGET_COMPONENTS[widget.key];
   if (!Component) return null;
   return <Component widget={widget} data={data} />;
 }

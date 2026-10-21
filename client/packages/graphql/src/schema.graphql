@@ -33270,6 +33270,10 @@ input WorkerPTOEntriesInput {
   filterGroups: [FilterGroupInput!]
   first: Int = 20
   includeWorker: Boolean = false
+  """
+  true matches leave on at any point between startDateFrom and startDateTo, including leave that began before startDateFrom and is still running; false matches only leave that starts in that window.
+  """
+  overlapping: Boolean = false
   query: String
   sort: [SortFieldInput!]
   startDateFrom: Timestamp

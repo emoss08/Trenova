@@ -60,6 +60,7 @@ export function CaseRecordPicker({
   const { records, hasNextPage, isFetchingNextPage, fetchNextPage } = found;
   const count = records.length + (hasNextPage ? 1 : 0);
 
+  // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual is incompatible with the React Compiler; file is already "use no memo", which oxlint 1.89 ignores
   const virtualizer = useVirtualizer({
     count,
     getScrollElement: () => scrollRef.current,

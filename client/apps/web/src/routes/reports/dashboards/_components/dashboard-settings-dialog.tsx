@@ -15,7 +15,7 @@ import type {
   ReportDashboardLayout,
   ReportParameterDef,
 } from "@/types/report";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { buildCatalogIndex } from "../../builder/_components/builder-state";
 import { ParametersPanel } from "../../builder/_components/parameters-panel";
 import { DashboardFiltersEditor } from "./dashboard-filters-editor";
@@ -59,12 +59,22 @@ export function DashboardSettingsDialog({
     [catalog.data],
   );
 
-  useEffect(() => {
+  const [prevInputs, setPrevInputs] = useState({
+    open,
+    filters: layout.filters,
+    parameters: layout.parameters,
+  });
+  if (
+    prevInputs.open !== open ||
+    prevInputs.filters !== layout.filters ||
+    prevInputs.parameters !== layout.parameters
+  ) {
+    setPrevInputs({ open, filters: layout.filters, parameters: layout.parameters });
     if (open) {
       setFilters(layout.filters ?? []);
       setParameters(layout.parameters ?? []);
     }
-  }, [open, layout.filters, layout.parameters]);
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

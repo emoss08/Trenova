@@ -9,7 +9,7 @@ import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { PlusIcon, Save01Icon, Trash01Icon } from "@trenova/shared/components/icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   getEDIScriptPresetsByCategory,
@@ -49,9 +49,7 @@ export function ScriptLibraryEditor() {
     onError: () => toast.error(t("Failed to save script libraries")),
   });
 
-  useEffect(() => {
-    if (!selectedId && libraries[0]) setSelectedId(libraries[0].id);
-  }, [libraries, selectedId]);
+  if (!selectedId && libraries[0]) setSelectedId(libraries[0].id);
 
   const updateSelected = (patch: Partial<EDITemplateScriptLibrary>) => {
     if (!selected) return;

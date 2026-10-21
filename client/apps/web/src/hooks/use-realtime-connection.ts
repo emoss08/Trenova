@@ -14,7 +14,7 @@ import { realtimeClient, type RealtimeConnectionState } from "@trenova/shared/se
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
@@ -72,7 +72,9 @@ export function useRealtimeConnection() {
   // realtime subscription.
   const navigate = useNavigate();
   const navigateRef = useRef(navigate);
-  navigateRef.current = navigate;
+  useLayoutEffect(() => {
+    navigateRef.current = navigate;
+  });
   const flushTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {

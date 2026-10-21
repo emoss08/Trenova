@@ -37,7 +37,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinor } from "@trenova/shared/lib/benefits";
 import { dateToUnixTimestamp } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import {
   fundingFormDefaults,
@@ -102,9 +102,10 @@ function FundingForm({
   const t = useT();
   const queryClient = useQueryClient();
   const items = useMemo(() => undecidedItems(submission), [submission]);
+  const [todayUnix] = useState(() => dateToUnixTimestamp(new Date()));
   const form = useForm<FundingFormValues>({
     resolver: zodResolver(fundingFormSchema) as Resolver<FundingFormValues>,
-    defaultValues: fundingFormDefaults(submission, dateToUnixTimestamp(new Date())),
+    defaultValues: fundingFormDefaults(submission, todayUnix),
   });
   const values = useWatch({ control: form.control }) as FundingFormValues;
   const inputKey = useMemo(() => {

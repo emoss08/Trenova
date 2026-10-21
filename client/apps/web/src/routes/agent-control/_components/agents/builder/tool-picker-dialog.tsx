@@ -78,6 +78,7 @@ export function ToolPickerDialog({
     [chosen, tools],
   );
 
+  // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual is incompatible with the React Compiler; file is already "use no memo", which oxlint 1.89 ignores
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => listRef.current,
@@ -126,7 +127,14 @@ export function ToolPickerDialog({
                     {t("Pick what this agent can read and change. Tiers are set on the agent.")}
                   </Dialog.Description>
                 </div>
-                <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" aria-label={t("Close")} onClick={onClose}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label={t("Close")}
+                  onClick={onClose}
+                >
                   <Ic n="x" s={14} />
                 </Button>
               </header>
@@ -205,25 +213,25 @@ export function ToolPickerDialog({
                   maskVariant="popover"
                 >
                   <nav className="tpk-n" aria-label={t("Records")}>
-                  <button
-                    type="button"
-                    className={group === "all" ? "on" : undefined}
-                    onClick={() => pickGroup("all")}
-                  >
-                    <span>{t("All tools")}</span>
-                    {picked > 0 && <em className="mono">{picked}</em>}
-                  </button>
-                  {rail.map((entry) => (
                     <button
-                      key={entry.resource}
                       type="button"
-                      className={group === entry.resource ? "on" : undefined}
-                      onClick={() => pickGroup(entry.resource)}
+                      className={group === "all" ? "on" : undefined}
+                      onClick={() => pickGroup("all")}
                     >
-                      <span>{entry.label}</span>
-                      {entry.chosen > 0 && <em className="mono">{entry.chosen}</em>}
+                      <span>{t("All tools")}</span>
+                      {picked > 0 && <em className="mono">{picked}</em>}
                     </button>
-                  ))}
+                    {rail.map((entry) => (
+                      <button
+                        key={entry.resource}
+                        type="button"
+                        className={group === entry.resource ? "on" : undefined}
+                        onClick={() => pickGroup(entry.resource)}
+                      >
+                        <span>{entry.label}</span>
+                        {entry.chosen > 0 && <em className="mono">{entry.chosen}</em>}
+                      </button>
+                    ))}
                   </nav>
                 </ScrollArea>
                 <div ref={listRef} className="tpk-l tpk-v">

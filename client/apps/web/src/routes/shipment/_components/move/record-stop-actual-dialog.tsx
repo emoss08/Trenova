@@ -11,7 +11,7 @@ import {
 import { Input } from "@trenova/shared/components/ui/input";
 import { Label } from "@trenova/shared/components/ui/label";
 import type { StopActualAction } from "@trenova/shared/types/shipment";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
 const actionCopy: Record<StopActualAction, { title: string; description: string }> = {
   Arrive: {
@@ -48,12 +48,14 @@ export function RecordStopActualDialog({
   const [error, setError] = useState<string | null>(null);
   const copy = actionCopy[action];
 
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(open);
+  if (wasOpen !== open) {
+    setWasOpen(open);
     if (open) {
       setEventTime("");
       setError(null);
     }
-  }, [open]);
+  }
 
   const handleConfirm = () => {
     if (!eventTime) {

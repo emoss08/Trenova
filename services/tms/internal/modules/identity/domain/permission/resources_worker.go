@@ -106,6 +106,28 @@ func (r *Registry) registerWorkerResources() {
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":                 SensitivityInternal,
+			"businessUnitId":     SensitivityInternal,
+			"organizationId":     SensitivityInternal,
+			"workerId":           SensitivityInternal,
+			"approverId":         SensitivityInternal,
+			"rejectorId":         SensitivityInternal,
+			fieldCancelledByID:   SensitivityInternal,
+			"status":             SensitivityInternal,
+			"type":               SensitivityInternal,
+			fieldStartDate:       SensitivityInternal,
+			fieldEndDate:         SensitivityInternal,
+			"days":               SensitivityInternal,
+			"autoApproved":       SensitivityInternal,
+			"version":            SensitivityInternal,
+			"createdAt":          SensitivityInternal,
+			"updatedAt":          SensitivityInternal,
+			"reason":             SensitivityRestricted,
+			fieldRejectionReason: SensitivityRestricted,
+			"cancellationReason": SensitivityRestricted,
+			"balanceAfterDays":   SensitivityRestricted,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

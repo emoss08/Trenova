@@ -106,10 +106,10 @@ function refusalText(refusal: ToolRefusal): string {
   return REFUSAL_TEXT[refusalTone(refusal)];
 }
 
-function iconFor(group: ActivityGroup): IconComponent {
-  const first = group.steps[0];
+function GroupIcon({ group, className }: { group: ActivityGroup; className: string }) {
+  const Icon = NAMED_ICONS[group.steps[0].name] ?? EFFECT_ICONS[group.effect];
 
-  return NAMED_ICONS[first.name] ?? EFFECT_ICONS[group.effect];
+  return <Icon className={className} />;
 }
 
 /** The whole group's time, when every step in it was timed. */
@@ -240,11 +240,9 @@ function WorkMarks({ groups }: { groups: readonly ActivityGroup[] }) {
 }
 
 function WorkMark({ group }: { group: ActivityGroup }) {
-  const Icon = iconFor(group);
-
   return (
     <span className="bg-sunken ring-card flex size-4 items-center justify-center rounded-full ring-1">
-      <Icon className="text-foreground-muted size-2.5" />
+      <GroupIcon group={group} className="text-foreground-muted size-2.5" />
     </span>
   );
 }
@@ -344,7 +342,6 @@ function ActivityMark({
   action: boolean;
   live: boolean;
 }) {
-  const Icon = iconFor(group);
   const Refused = line.refusal ? REFUSAL_ICONS[line.refusal] : null;
 
   return (
@@ -364,7 +361,8 @@ function ActivityMark({
       ) : live ? (
         <CheckIcon key={line.phrase} className="text-foreground-muted animate-confirm size-3" />
       ) : (
-        <Icon
+        <GroupIcon
+          group={group}
           className={cn("size-3", action ? "text-foreground-muted" : "text-foreground-subtle")}
         />
       )}

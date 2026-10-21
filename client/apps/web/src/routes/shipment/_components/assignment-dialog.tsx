@@ -146,21 +146,36 @@ export function AssignmentDialog({
     });
   }, [open, existingAssignment, prefill, reset]);
 
-  useEffect(() => {
-    if (!open) return;
-    setMode(hasCarrierCoverage || !canAssignDrivers ? "carrier" : "driver");
-  }, [open, hasCarrierCoverage, canAssignDrivers]);
+  const [modeSource, setModeSource] = useState({ open, hasCarrierCoverage, canAssignDrivers });
+  if (
+    modeSource.open !== open ||
+    modeSource.hasCarrierCoverage !== hasCarrierCoverage ||
+    modeSource.canAssignDrivers !== canAssignDrivers
+  ) {
+    setModeSource({ open, hasCarrierCoverage, canAssignDrivers });
+    if (open) setMode(hasCarrierCoverage || !canAssignDrivers ? "carrier" : "driver");
+  }
 
   const watchedTrailerId = useWatch({ control, name: "trailerId" });
-  useEffect(() => {
+  const [checkedTrailerId, setCheckedTrailerId] = useState(watchedTrailerId);
+  if (checkedTrailerId !== watchedTrailerId) {
+    setCheckedTrailerId(watchedTrailerId);
     setContinuityError(null);
-  }, [watchedTrailerId]);
+  }
 
   const watchedPrimaryWorker = useWatch({ control, name: "primaryWorkerId" });
   const watchedSecondaryWorker = useWatch({ control, name: "secondaryWorkerId" });
-  useEffect(() => {
+  const [checkedWorkers, setCheckedWorkers] = useState({
+    primary: watchedPrimaryWorker,
+    secondary: watchedSecondaryWorker,
+  });
+  if (
+    checkedWorkers.primary !== watchedPrimaryWorker ||
+    checkedWorkers.secondary !== watchedSecondaryWorker
+  ) {
+    setCheckedWorkers({ primary: watchedPrimaryWorker, secondary: watchedSecondaryWorker });
     setComplianceViolations([]);
-  }, [watchedPrimaryWorker, watchedSecondaryWorker]);
+  }
 
   const { mutateAsync } = useMutation({
     mutationFn: (payload: AssignmentPayload) =>

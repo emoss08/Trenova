@@ -302,62 +302,6 @@ func newListWorkerTrainingTool(
 	}
 }
 
-type trainingCourseRow struct {
-	ID             string `json:"id"`
-	Code           string `json:"code"`
-	Name           string `json:"name"`
-	Category       string `json:"category"`
-	Delivery       string `json:"delivery"`
-	PassingScore   string `json:"passingScore,omitempty"`
-	ValidityMonths *int32 `json:"validityMonths,omitempty"`
-	IsRequired     bool   `json:"isRequired"`
-	DueDays        int32  `json:"dueDaysAfterAssignment"`
-}
-
-func newListTrainingCoursesTool(
-	training wfTrainingReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &workforceRead{
-		name: "worker_list_training_courses",
-		description: "List the organization's active training courses with their category, " +
-			"delivery, passing score, how long a pass lasts and whether they are required. " +
-			"It yields the courseId the training tools take.",
-		resource:   permission.ResourceTrainingCourse,
-		properties: map[string]any{},
-		access:     newFieldAccess(permissions),
-		run: func(
-			ctx context.Context,
-			params *agentports.QueryToolParams,
-			gate *fieldGate,
-		) (any, error) {
-			courses, err := training.ListCourses(ctx, &workerports.ListTrainingCoursesRequest{
-				Filter: catalogFilter(params),
-				Cursor: pagination.CursorInfo{Limit: maxCatalogRows},
-				Status: activeStatus,
-			})
-			if err != nil {
-				return nil, err
-			}
-			rows := make([]trainingCourseRow, 0, len(courses.Items))
-			for _, course := range courses.Items {
-				rows = append(rows, trainingCourseRow{
-					ID:             course.ID.String(),
-					Code:           course.Code,
-					Name:           course.Name,
-					Category:       string(course.Category),
-					Delivery:       string(course.Delivery),
-					PassingScore:   decimalText(course.PassingScore),
-					ValidityMonths: course.ValidityMonths,
-					IsRequired:     course.IsRequired,
-					DueDays:        course.DueDaysAfterAssignment,
-				})
-			}
-			return newReceivableList(rows, gate), nil
-		},
-	}
-}
-
 type checklistItemRow struct {
 	ID          string       `json:"id"`
 	Label       string       `json:"label"`
@@ -804,13 +748,6 @@ func provideListWorkerTrainingTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListWorkerTrainingTool(s, permissions)
-}
-
-func provideListTrainingCoursesTool(
-	s *workertrainingservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListTrainingCoursesTool(s, permissions)
 }
 
 func provideListWorkerChecklistsTool(

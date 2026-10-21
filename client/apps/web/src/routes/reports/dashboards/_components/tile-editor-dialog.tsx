@@ -29,7 +29,7 @@ import {
   type ReportDashboardTileKind,
   type ReportParameterDef,
 } from "@/types/report";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTileReport } from "./use-tile-report";
 
 type TileEditorDialogProps = {
@@ -54,9 +54,11 @@ export function TileEditorDialog({
 
   const [draft, setDraft] = useState<ReportDashboardTile>(tile);
 
-  useEffect(() => {
+  const [prevInputs, setPrevInputs] = useState({ open, tile });
+  if (prevInputs.open !== open || prevInputs.tile !== tile) {
+    setPrevInputs({ open, tile });
     if (open) setDraft(tile);
-  }, [open, tile]);
+  }
 
   const report = useTileReport(tileNeedsReport(draft.kind) ? draft : null);
 

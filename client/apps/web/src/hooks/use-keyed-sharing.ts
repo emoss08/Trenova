@@ -1,6 +1,6 @@
 "use no memo";
 import { shareItemsByKey, shareMapValues } from "@/lib/keyed-sharing";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 
 /**
  * A derived list whose items stay the same objects across renders while they
@@ -21,11 +21,11 @@ export function useSharedItems<T>(next: T[], keyOf: (item: T) => string): T[] {
 
 /** A derived map whose values stay the same objects across renders while they are equal. */
 export function useSharedMap<K, V>(next: ReadonlyMap<K, V>): ReadonlyMap<K, V> {
-  const committed = useRef<ReadonlyMap<K, V> | undefined>(undefined);
-  const shared = useMemo(() => shareMapValues(committed.current, next), [next]);
-  useLayoutEffect(() => {
-    committed.current = shared;
-  }, [shared]);
+  const [committed, setCommitted] = useState(next);
+  const shared = shareMapValues(committed, next);
+  if (shared !== committed) {
+    setCommitted(shared);
+  }
 
   return shared;
 }

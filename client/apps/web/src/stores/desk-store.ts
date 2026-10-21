@@ -61,7 +61,7 @@ interface DeskState {
   setBrowsing: (browsing: boolean) => void;
   askAgent: (threadId: string, question: string) => void;
   takeAsk: (threadId: string) => string | null;
-  noteDocumentAsk: (documentId: string, ask: DocumentAsk) => void;
+  noteDocumentAsk: (documentId: string, ask: Omit<DocumentAsk, "at">) => void;
   setLiveHandoff: (threadId: string, live: TurnHandoff | null) => void;
 }
 
@@ -141,7 +141,9 @@ export const useDeskStore = create<DeskState>()(
       askAgent: (threadId, question) =>
         set((state) => ({ asks: { ...state.asks, [threadId]: question } })),
       noteDocumentAsk: (documentId, ask) =>
-        set((state) => ({ documentAsks: { ...state.documentAsks, [documentId]: ask } })),
+        set((state) => ({
+          documentAsks: { ...state.documentAsks, [documentId]: { ...ask, at: Date.now() } },
+        })),
       takeAsk: (threadId) => {
         const question = get().asks[threadId] ?? null;
         if (question !== null) {

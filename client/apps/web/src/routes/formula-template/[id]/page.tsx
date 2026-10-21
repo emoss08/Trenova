@@ -72,6 +72,7 @@ export function FormulaStudioEditPage() {
   useEffect(() => {
     if (template && template.version !== seatedVersion) {
       form.reset(template as FormulaTemplateFormValues);
+      // oxlint-disable-next-line react/set-state-in-effect -- form.reset must run before seatedVersion lets the studio mount, so both stay in the effect
       setSeatedVersion(template.version ?? 0);
     }
   }, [template, seatedVersion, form]);

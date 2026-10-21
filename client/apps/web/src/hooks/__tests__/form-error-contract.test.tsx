@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { FormProvider, useForm, useFormContext, type UseFormReturn } from "react-hook-form";
 import { Form } from "@trenova/shared/components/ui/form";
 import { GraphQLRequestError, type NormalizedGraphQLError } from "@trenova/shared/lib/graphql";
+import { useEffect } from "react";
 import { handleMutationError, type MutationFormTarget } from "@/hooks/use-api-mutation";
 
 const PROBLEM_BASE = "https://api.trenova.app/problems/";
@@ -59,7 +60,9 @@ function mountOwnUseForm(): UseFormReturn<any> {
 
   function OwnForm() {
     const form = useForm({ defaultValues: { reason: "", currencyCode: "USD" } });
-    captured = form;
+    useEffect(() => {
+      captured = form;
+    });
     return (
       <FormProvider {...form}>
         <Form onSubmit={() => undefined}>
@@ -91,7 +94,9 @@ function mountParentProvider(): UseFormReturn<any> {
 
   function Parent() {
     const form = useForm({ defaultValues: { reason: "", currencyCode: "USD" } });
-    captured = form;
+    useEffect(() => {
+      captured = form;
+    });
     return (
       <FormProvider {...form}>
         <Form onSubmit={() => undefined}>
@@ -121,7 +126,9 @@ function mountNestedArray(): UseFormReturn<any> {
         ],
       },
     });
-    captured = form;
+    useEffect(() => {
+      captured = form;
+    });
     return (
       <FormProvider {...form}>
         <Form onSubmit={() => undefined}>

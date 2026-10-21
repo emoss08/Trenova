@@ -2082,11 +2082,14 @@ func unmarshalInputWorkerPTOEntriesInput(ctx context.Context, ec *gqlexec.Exec, 
 	if _, present := asMap["first"]; !present {
 		asMap["first"] = 20
 	}
+	if _, present := asMap["overlapping"]; !present {
+		asMap["overlapping"] = false
+	}
 	if _, present := asMap["includeWorker"]; !present {
 		asMap["includeWorker"] = false
 	}
 
-	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "status", "type", "startDateFrom", "startDateTo", "workerId", "includeWorker"}
+	fieldsInOrder := [...]string{"first", "after", "query", "fieldFilters", "filterGroups", "sort", "status", "type", "startDateFrom", "startDateTo", "overlapping", "workerId", "includeWorker"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2163,6 +2166,13 @@ func unmarshalInputWorkerPTOEntriesInput(ctx context.Context, ec *gqlexec.Exec, 
 				return it, err
 			}
 			it.StartDateTo = data
+		case "overlapping":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("overlapping"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Overlapping = data
 		case "workerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workerId"))
 			data, err := unmarshalOID2ᚖstring(ctx, ec, v)

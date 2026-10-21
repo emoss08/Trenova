@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigation } from "react-router";
 
 const INITIAL_PROGRESS = 0.15;
@@ -25,48 +25,46 @@ export function NavigationProgress() {
 
   const [phase, setPhase] = useState<LoaderPhase>("idle");
   const [progress, setProgress] = useState(0);
-  const phaseRef = useRef<LoaderPhase>("idle");
-  const timersRef = useRef<{ trickle?: number; reset?: number }>({});
+  const [wasNavigating, setWasNavigating] = useState(false);
+
+  if (isNavigating !== wasNavigating) {
+    setWasNavigating(isNavigating);
+    if (isNavigating) {
+      setPhase("loading");
+      setProgress(INITIAL_PROGRESS);
+    } else if (phase === "loading") {
+      setPhase("done");
+      setProgress(1);
+    }
+  }
 
   useEffect(() => {
-    const timers = timersRef.current;
-
-    const changePhase = (next: LoaderPhase) => {
-      phaseRef.current = next;
-      setPhase(next);
-    };
-
-    if (isNavigating) {
-      window.clearTimeout(timers.reset);
-      changePhase("loading");
-      setProgress(INITIAL_PROGRESS);
-
+    if (phase === "loading") {
+      let trickleTimer: number;
       const trickle = () => {
         setProgress((current) => Math.min(current + trickleAmount(current), MAX_TRICKLE_PROGRESS));
-        timers.trickle = window.setTimeout(
+        trickleTimer = window.setTimeout(
           trickle,
           TRICKLE_MIN_INTERVAL_MS + Math.random() * TRICKLE_JITTER_MS,
         );
       };
 
-      timers.trickle = window.setTimeout(trickle, FIRST_TRICKLE_MS);
+      trickleTimer = window.setTimeout(trickle, FIRST_TRICKLE_MS);
 
-      return () => window.clearTimeout(timers.trickle);
+      return () => window.clearTimeout(trickleTimer);
     }
 
-    if (phaseRef.current !== "loading") {
+    if (phase !== "done") {
       return;
     }
 
-    changePhase("done");
-    setProgress(1);
-    timers.reset = window.setTimeout(() => {
-      changePhase("idle");
+    const resetTimer = window.setTimeout(() => {
+      setPhase("idle");
       setProgress(0);
     }, RESET_DELAY_MS);
 
-    return () => window.clearTimeout(timers.reset);
-  }, [isNavigating]);
+    return () => window.clearTimeout(resetTimer);
+  }, [phase]);
 
   if (phase === "idle") {
     return null;

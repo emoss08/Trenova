@@ -3,8 +3,17 @@ import { subscribeToCommentInserts } from "@/lib/shipment-comment-realtime";
 
 export function useNewCommentsPill(shipmentId: string, isAtEnd: boolean) {
   const [unseenCount, setUnseenCount] = useState(0);
+  const [prevIsAtEnd, setPrevIsAtEnd] = useState(isAtEnd);
   const isAtEndRef = useRef(isAtEnd);
-  isAtEndRef.current = isAtEnd;
+
+  if (isAtEnd !== prevIsAtEnd) {
+    setPrevIsAtEnd(isAtEnd);
+    if (isAtEnd) setUnseenCount(0);
+  }
+
+  useEffect(() => {
+    isAtEndRef.current = isAtEnd;
+  }, [isAtEnd]);
 
   useEffect(() => {
     if (!shipmentId) return;
@@ -14,10 +23,6 @@ export function useNewCommentsPill(shipmentId: string, isAtEnd: boolean) {
       }
     });
   }, [shipmentId]);
-
-  useEffect(() => {
-    if (isAtEnd) setUnseenCount(0);
-  }, [isAtEnd]);
 
   const clearUnseen = useCallback(() => setUnseenCount(0), []);
 

@@ -311,7 +311,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `worker_get_dot_random_draw` | op | dotRandomDraw | DotRandomDraw | n/a | id | Same GetDraw; entries are selected by DotRandomDraw. |
 | `worker_get_hos` | op | workerHosState | DeskWorkerHos (alt WorkerHosState) | n/a | workerId | Same TelematicsService.GetWorkerHOSState (telematics read). |
 | `worker_get_schedule` | op | workerShiftAssignments (+ workerAvailabilityPreferences, shiftSwapRequests) | WorkerShiftAssignments (+ WorkerAvailabilityPreferences, ShiftSwapRequests) | unpaged lists | workerId | Same SchedulingService ListAssignments/ListPreferences/ListSwaps; tool's team-scope guard is server-side. |
-| `worker_list` | op | workers | WorkerTable | cursor | DataTable fieldFilters only | repo.List vs WorkerService.List; name ranking the tool applies is not in GraphQL. |
 | `worker_list_checklists` | op | workerChecklists (+ workerChecklistTemplates) | WorkerChecklists (+ WorkerChecklistTemplateTable) | unpaged list | workerId, includeClosed | Same ListForWorker / ListTemplates. |
 | `worker_list_credentials` | partial | workerCredentials (+ credentialExpiryForecast) | WorkerCredentials (+ CredentialExpiryForecast) | unpaged / limit | workerId, includeArchived / days, limit | Tool uses WorkerCredentialService.ListExpiring with credentialTypeCode, requiredOnly, includeExpired grace, offset; neither root takes those. Per-worker list and org-wide forecast cover the records. |
 | `worker_list_dot_random_draws` | op | dotRandomDraws (+ dotRandomPools) | DotRandomDraws (+ DotRandomPools) | unpaged / cursor | poolId / DOTRandomPoolsInput | Same ListDraws/ListPools. |
@@ -322,16 +321,14 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `worker_list_performance_reviews` | op | workerPerformanceReviews (+ performanceReviewTemplates) | WorkerPerformanceReviews (+ PerformanceReviewTemplateTable) | unpaged list | workerId | Same ListReviews / ListTemplates. |
 | `worker_list_safety_events` | partial | workerSafetyEvents (+ workerSafetyViolations, workerRecognitions) | WorkerSafetyEvents (+ WorkerSafetyViolations, WorkerRecognitions) | unpaged list | workerId (required) | Per-worker read matches. Without workerId the tool lists open events fleet-wide (ListOpenEvents); fleetSafety only returns an openEvents count. |
 | `worker_list_shift_templates` | op | shiftTemplates | ShiftTemplates | limit only | activeOnly, limit | Same ListTemplates. |
-| `worker_list_time_off` | op | workerPTOEntries (alt upcomingWorkerPTO) | WorkerPtoTable (alt UpcomingWorkerPto) | cursor | bespoke WorkerPTOEntriesInput (DataTable + status, type, startDateFrom/To, workerId) | Same WorkerPTOService.List. withinDays/startingFrom/startingBefore -> startDateFrom/To. |
 | `worker_list_training` | op | workerTrainingRecords | WorkerTrainingRecords | unpaged list | workerId, includeClosed | Same ListForWorker. |
-| `worker_list_training_courses` | op | trainingCourses | TrainingCourseTable (alt ActiveTrainingCourses) | cursor | bespoke TrainingCoursesInput (DataTable + status, category) | Same ListCourses with status Active. |
 
 ## Counts per class
 
 | class | tools |
 |---|---|
-| op, not yet converted | 103 |
-| op, converted (rows removed) | 16 |
+| op, not yet converted | 100 |
+| op, converted (rows removed) | 19 |
 | field-no-op | 6 |
 | partial | 30 |
 | none | 21 |
