@@ -136,7 +136,15 @@ tenant scope as `SET LOCAL trenova.read_scope = '<kind>:<scope>[:<ids>]'`, and a
 restrictive `read_scope` policy on `shipments`, `orders`, `invoices` and `workers`
 applies it to every read: lists, lookups, loaders, search, insights and reports alike.
 The value only narrows what the signed tenant scope allows, so it is not signed; work
-with no holder (jobs, unattended agents) reads its whole tenant. Policies are
+with no holder (jobs, unattended agents) reads its whole tenant.
+
+A kind the principal cannot read at all is sent as `<kind>:none`, so a relation, loader,
+join or index check that reaches it finds nothing rather than the whole organization.
+Under `none` a person still sees what is their own: the worker linked to their user
+(`workers.user_id`) and the shipments a move assigns them to drive, which is what the
+driver portal and the `My…` self-service reads stand on; orders and invoices are hidden
+entirely. Because the policies are `FOR SELECT`, an update whose `WHERE` reads a row the
+person cannot see changes nothing, so a role that writes a kind needs read on it too. Policies are
 `FOR SELECT`, so an update or a `RETURNING` on a row outside the scope finds nothing.
 
 A cache cannot apply them either. The synced Redis caches (`cache:shipments`,
