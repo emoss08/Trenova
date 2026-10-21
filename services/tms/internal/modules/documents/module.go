@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/redis/triagecache"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/contentscanservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentmailservice"
@@ -65,6 +66,7 @@ func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Decorate(documentrepository.Observe),
 		fx.Provide(
+			contentscanservice.New,
 			thumbnailservice.NewGenerator,
 			capturereleaseservice.New,
 			documentparsingrulerepository.New,

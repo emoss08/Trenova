@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
@@ -44,6 +45,7 @@ type Params struct {
 	TemplateRepo  formulatemplateports.FormulaTemplateRepository
 	AuditService  auditports.AuditService
 	SheetLimits   pkgrateimport.Limits `optional:"true"`
+	ContentGate   contentscanports.Gate
 }
 
 type Service struct {
@@ -53,6 +55,7 @@ type Service struct {
 	templateRepo  formulatemplateports.FormulaTemplateRepository
 	audit         auditports.AuditService
 	sheetLimits   pkgrateimport.Limits
+	contentGate   contentscanports.Gate
 	now           func() int64
 }
 
@@ -64,6 +67,7 @@ func New(p Params) *Service {
 		templateRepo:  p.TemplateRepo,
 		audit:         p.AuditService,
 		sheetLimits:   p.SheetLimits,
+		contentGate:   p.ContentGate,
 		now:           timeutils.NowUnix,
 	}
 }
@@ -124,6 +128,15 @@ func (s *Service) Upload(
 	format, err := formatOf(req.FileName)
 	if err != nil {
 		return nil, err
+	}
+
+	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     contentscanports.SourceUpload,
+		FileName:   req.FileName,
+		Content:    req.Content,
+	}); err != nil {
+		return nil, contentscanports.RefusalError("file", err)
 	}
 
 	sheet, err := readSheet(format, req.Content, s.sheetLimits)

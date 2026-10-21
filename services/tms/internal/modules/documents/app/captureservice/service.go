@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -80,6 +81,7 @@ type Params struct {
 	Organizations   tenantports.OrganizationRepository
 	Permissions     permissionports.PermissionEngine
 	Storage         kernelports.Client
+	ContentGate     contentscanports.Gate
 	Encryption      *encryptionservice.Service
 	Uploads         documentuploadports.DocumentUploadService
 	Assembler       captureports.CapturePDFAssembler
@@ -156,6 +158,7 @@ type Service struct {
 	shipments     inboundmessageports.InboundShipmentFinder
 	received      *receivedAnnouncer
 	arrivals      *arrivalReaders
+	contentGate   contentscanports.Gate
 }
 
 //nolint:gocritic // dependency injection param
@@ -170,6 +173,7 @@ func New(p Params) *Service {
 	}
 
 	return &Service{
+		contentGate:   p.ContentGate,
 		l:             p.Logger.Named("service.capture"),
 		cfg:           p.Config,
 		db:            p.DB,

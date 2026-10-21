@@ -57,6 +57,9 @@ var (
 	ErrProductionStorageTLSRequired = errors.New(
 		"production and staging require TLS for non-local object storage endpoints",
 	)
+	ErrProductionContentScanFailOpen = errors.New(
+		"production and staging refuse contentScan.failOpen: a file is held until the scanner can check it",
+	)
 	ErrMaxIdleConnsExceedsMaxOpenConns = errors.New(
 		"max idle connections cannot exceed max open connections",
 	)

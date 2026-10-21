@@ -272610,6 +272610,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "This file could not be checked for malware right now, so it was not accepted. Try again in a few minutes.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This file could not be read.": {
     "sites": 1,
     "scope": [
@@ -272764,6 +272773,15 @@
     ]
   },
   "This file was not uploaded for this remittance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This file was refused: the malware scanner found {0} in it.": {
     "sites": 1,
     "scope": [
       "go"

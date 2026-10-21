@@ -23,6 +23,8 @@ itself are yours.
 - [Upgrades](#upgrades)
 - [Backups and restore](#backups-and-restore)
 - [Operating the stack](#operating-the-stack)
+- [Document extraction](#document-extraction)
+- [Malware scanning](#malware-scanning)
 - [Hardening](#hardening)
 - [Troubleshooting](#troubleshooting)
 - [Uninstall](#uninstall)
@@ -45,6 +47,7 @@ itself are yours.
 | `gotenberg` | `gotenberg/gotenberg` | HTML-to-PDF rendering, locked down and unreachable from outside |
 | `docling` | `ghcr.io/docling-project/docling-serve-cpu` | Reads uploaded files for document extraction (PDFs, scans, photos, Office files, email), locked down and unreachable from outside |
 | `gtc` | `ghcr.io/emoss08/gtc` | Change data capture: PostgreSQL to Meilisearch and Redis |
+| `clamav` (optional, `--profile clamav`) | `clamav/clamav` | Malware scanning of every file before it is opened; see [Malware scanning](#malware-scanning) |
 
 The `tms-api`, `tms-worker`, `tms-migrate` and `tms-bootstrap` services are one image with
 different commands.
@@ -495,6 +498,59 @@ vision model that reads each page image. Put the `granite-docling-258M` weights 
 `documentConversion.vlmEndpoint: http://docling-vlm:8000`. Only this profile lets
 docling-serve call another service, and both stay on the internal network.
 
+## Malware scanning
+
+Trenova can check every file it receives for malware before anything opens it: documents
+uploaded in the web app and the driver portal, profile pictures and organization logos, rate
+sheets, inbound email attachments, pages from the capture companion, and inbound EDI files
+received over AS2 or SFTP. The check runs on the bytes as they arrive, before the file is
+stored, and before PDFium, pdfcpu, the spreadsheet readers, the zip and XML parsers or the
+EDI parser read it. Scanning uses ClamAV's `clamd` over its `INSTREAM` command, so nothing is
+written to disk on either side.
+
+Scanning is off until an address is set. With it off, the API and worker log a warning at
+startup saying files are not scanned.
+
+**Turning it on.**
+
+1. Start the bundled scanner: `docker compose --profile clamav up -d clamav`. On first start
+   it downloads the signature databases (a few hundred megabytes) into the `clamav_data`
+   volume, which takes several minutes; `docker compose ps clamav` shows it healthy when it is
+   ready. It needs about 2 GB of memory (4 GB while it reloads signatures) and the outbound
+   network for its hourly signature updates; `clamd` itself is reachable only on the internal
+   network.
+2. Add `TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS=clamav:3310` to `.env`, and add `--profile clamav`
+   to every later `docker compose up`, or set `COMPOSE_PROFILES=clamav` in `.env`.
+3. `docker compose up -d` so the API and worker pick up the address. Their startup log says
+   scanning is on, or that the scanner did not answer.
+
+To use a `clamd` you already run, point the address at it instead (`host:3310`, or
+`unix:/path/to/clamd.sock` with the socket mounted into `tms-api` and `tms-worker`). Its
+`StreamMaxLength` must be at least the largest file you accept (`storage.maxFileSize`).
+
+**What happens to a file.**
+
+- *Clean*: it is stored and processed as before.
+- *Infected*: it is refused and never stored. The person uploading it is told the signature
+  the scanner found; an inbound email attachment is marked on its message as not filed, with
+  the reason; an inbound EDI file is moved to **Quarantined** with the signature as its
+  failure reason, which raises the usual quarantined-file alert. Every refusal writes a
+  critical audit entry against the document resource (operation *reject*) naming the
+  organization, the file, where it came from and the signature.
+- *Scanner unreachable*: the file is refused (a person is asked to try again in a few
+  minutes; an inbound EDI file stays **Received** and is picked up on the next attempt).
+  Scanning fails closed: a configured scanner that is down holds every file until it is back.
+
+**Settings** (`contentScan` in `config/config.yaml`, or the matching `TRENOVA_CONTENTSCAN_*`
+variables):
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `clamav.address` | empty (off) | `host:port` or `unix:/path` of `clamd` |
+| `clamav.timeout` | `60s` | Longest one scan may take, connection included |
+| `clamav.maxStreamBytes` | `104857600` (100 MiB) | Largest file sent to the scanner; a larger file is refused as not checkable. Keep it at or below `clamd`'s `StreamMaxLength` |
+| `failOpen` | `false` | Let files through unscanned while a configured scanner is unreachable. Refused in production and staging |
+
 ## Hardening
 
 The stack is secure by default for a single-operator host: TLS everywhere, secrets generated
@@ -514,6 +570,8 @@ internal network, Gotenberg and docling-serve sandboxed, and nothing published e
   `trenova db rls generate-key`, setting `database.migrator` to the current owner role,
   `trenova db rls provision-roles`, a period in `observe`, then `enforce` with
   `database.user` switched to the new application role. GTC keeps connecting as the owner.
+- **Malware scanning.** Turn on ClamAV (see [Malware scanning](#malware-scanning)) when files
+  arrive from outside your company: email attachments, EDI partners, customers' portals.
 - **Encryption key.** The local key manager keeps `TRENOVA_SECURITY_ENCRYPTION_KEY` in `.env`.
   Treat `.env` like the database itself, and rotate the key (see "Rotating the encryption
   key") whenever someone who could read `.env` should no longer be able to.

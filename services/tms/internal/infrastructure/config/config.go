@@ -1955,6 +1955,7 @@ type Config struct {
 	Formula             FormulaConfig             `mapstructure:"formula"`
 	EDI                 EDIConfig                 `mapstructure:"edi"`
 	Imports             ImportsConfig             `mapstructure:"imports"`
+	ContentScan         ContentScanConfig         `mapstructure:"contentScan"`
 
 	extensions map[string]any
 }
@@ -2297,4 +2298,45 @@ func (c *Config) GetSpreadsheetImportConfig() SpreadsheetImportConfig {
 		return SpreadsheetImportConfig{}
 	}
 	return c.Imports.Spreadsheet
+}
+
+const (
+	defaultClamAVTimeout        = 60 * time.Second
+	defaultClamAVMaxStreamBytes = 100 << 20
+)
+
+type ContentScanConfig struct {
+	ClamAV   ClamAVConfig `mapstructure:"clamav"`
+	FailOpen bool         `mapstructure:"failOpen"`
+}
+
+type ClamAVConfig struct {
+	Address        string        `mapstructure:"address"`
+	Timeout        time.Duration `mapstructure:"timeout"        validate:"omitempty,min=1s"`
+	MaxStreamBytes int64         `mapstructure:"maxStreamBytes" validate:"omitempty,min=1"`
+}
+
+func (c ContentScanConfig) Enabled() bool {
+	return strings.TrimSpace(c.ClamAV.Address) != ""
+}
+
+func (c ClamAVConfig) GetTimeout() time.Duration {
+	if c.Timeout <= 0 {
+		return defaultClamAVTimeout
+	}
+	return c.Timeout
+}
+
+func (c ClamAVConfig) GetMaxStreamBytes() int64 {
+	if c.MaxStreamBytes <= 0 {
+		return defaultClamAVMaxStreamBytes
+	}
+	return c.MaxStreamBytes
+}
+
+func (c *Config) GetContentScanConfig() ContentScanConfig {
+	if c == nil {
+		return ContentScanConfig{}
+	}
+	return c.ContentScan
 }

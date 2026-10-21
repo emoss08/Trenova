@@ -258,6 +258,10 @@ func (l *Loader) configureViper() {
 
 var envOnlyKeys = []string{
 	"security.encryption.retiredKeys",
+	"contentScan.failOpen",
+	"contentScan.clamav.address",
+	"contentScan.clamav.timeout",
+	"contentScan.clamav.maxStreamBytes",
 }
 
 func (l *Loader) bindUnlistedEnv() {
@@ -784,6 +788,9 @@ func validateProductionSecurity(config *Config) error {
 	if config.Storage.GetProvider() == StorageProviderR2 &&
 		(!config.Storage.UseSSL || !strings.HasPrefix(config.Storage.Endpoint, "https://")) {
 		return ErrProductionStorageTLSRequired
+	}
+	if config.ContentScan.FailOpen {
+		return ErrProductionContentScanFailOpen
 	}
 
 	return validateAIAuditChainSecrets(config)

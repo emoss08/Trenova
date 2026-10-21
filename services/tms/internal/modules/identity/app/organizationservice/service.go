@@ -2,12 +2,14 @@
 package organizationservice
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"mime/multipart"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -43,6 +45,7 @@ type Params struct {
 	Validator    *Validator
 	Encryption   *encryptionservice.Service
 	Plans        platformplanports.PlanService `optional:"true"`
+	ContentGate  contentscanports.Gate
 }
 
 type service struct {
@@ -57,6 +60,7 @@ type service struct {
 	enc          *encryptionservice.Service
 	plans        platformplanports.PlanService
 	issuers      httpsafe.Policy
+	contentGate  contentscanports.Gate
 }
 
 func New(p Params) tenantports.OrganizationService {
@@ -72,6 +76,7 @@ func New(p Params) tenantports.OrganizationService {
 		enc:          p.Encryption,
 		plans:        p.Plans,
 		issuers:      p.Config.SSOIssuerPolicy(),
+		contentGate:  p.ContentGate,
 	}
 }
 
@@ -185,11 +190,18 @@ func (s *service) UploadLogo(
 		return nil, multiErr
 	}
 
-	file, err := req.File.Open()
+	content, err := fileutils.ReadMultipart(req.File)
 	if err != nil {
 		return nil, errortypes.NewDatabaseError("Failed to process uploaded logo").WithInternal(err)
 	}
-	defer file.Close()
+	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     contentscanports.SourceUpload,
+		FileName:   req.File.Filename,
+		Content:    content,
+	}); err != nil {
+		return nil, contentscanports.RefusalError("file", err)
+	}
 
 	contentType := req.File.Header.Get("Content-Type")
 	key := fileutils.GenerateStoragePath(
@@ -201,8 +213,8 @@ func (s *service) UploadLogo(
 	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
 		Key:         key,
 		ContentType: contentType,
-		Size:        req.File.Size,
-		Body:        file,
+		Size:        int64(len(content)),
+		Body:        bytes.NewReader(content),
 		Metadata: map[string]string{
 			"original_name": req.File.Filename,
 			"resource_type": "organization-logo",

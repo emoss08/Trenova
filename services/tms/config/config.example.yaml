@@ -454,6 +454,17 @@ accounting:
   netSuite:
     redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/netsuite/callback
 
+# Malware scanning of every uploaded file, inbound email attachment, capture page and inbound
+# EDI file, before anything parses it, with ClamAV's clamd (INSTREAM). Off while address is
+# empty, with a warning at startup. Once an address is set a file is refused while the
+# scanner is unreachable, unless failOpen (refused in production and staging).
+contentScan:
+  clamav:
+    address: "" # host:port (clamav:3310) or unix:/run/clamav/clamd.sock
+    timeout: 60s # one scan, connection included
+    maxStreamBytes: 104857600 # 100 MiB; keep at or below clamd's StreamMaxLength
+  failOpen: false
+
 # Limits on one uploaded rate sheet, fuel card statement or factoring remittance (CSV or
 # XLSX). A file past any of them is refused with the limit it went past; 0 or unset takes
 # the default shown.
