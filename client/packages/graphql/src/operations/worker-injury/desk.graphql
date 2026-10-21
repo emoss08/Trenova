@@ -1,0 +1,37 @@
+query DeskWorkerInjuries(
+  $workerId: ID
+  $caseYear: Int
+  $recordableOnly: Boolean
+  $openOnly: Boolean
+  $limit: Int
+) {
+  workerInjuries(
+    workerId: $workerId
+    caseYear: $caseYear
+    recordableOnly: $recordableOnly
+    openOnly: $openOnly
+    limit: $limit
+  ) {
+    id
+    workerId
+    caseNumber
+    caseYear
+    classification
+    illnessType
+    treatment
+    status
+    recordable
+    occurredAt
+    returnedToWorkAt
+    description
+    bodyPart
+    daysAway
+    daysRestricted
+    privacyCase
+    logName
+    claimStatus
+    worker {
+      ...WorkerReference
+    }
+  }
+}

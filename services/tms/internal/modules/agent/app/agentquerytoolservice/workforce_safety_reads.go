@@ -49,10 +49,6 @@ type wfSafetyReader interface {
 }
 
 type wfDrugAlcoholReader interface {
-	ListTests(
-		ctx context.Context,
-		req *workerports.ListWorkerDOTTestsRequest,
-	) ([]*worker.WorkerDOTTest, error)
 	ListPools(
 		ctx context.Context,
 		req *workerports.ListDOTRandomPoolsRequest,
@@ -226,86 +222,6 @@ func newListWorkerSafetyEventsTool(
 			}
 			record.Withheld = gate.Withheld()
 			return record, nil
-		},
-	}
-}
-
-type dotTestRow struct {
-	ID             string       `json:"id"`
-	WorkerID       string       `json:"workerId"`
-	Worker         string       `json:"worker,omitempty"`
-	TestType       string       `json:"testType"`
-	Substance      string       `json:"substance"`
-	Status         string       `json:"status"`
-	Result         string       `json:"result"`
-	IsDOT          bool         `json:"isDot"`
-	ScheduledAt    optionalDate `json:"scheduledAt"`
-	CollectedAt    optionalDate `json:"collectedAt"`
-	CollectionSite string       `json:"collectionSite,omitempty"`
-	Reason         string       `json:"reason,omitempty"`
-	SafetyEventID  string       `json:"safetyEventId,omitempty"`
-	DrawEntryID    string       `json:"drawEntryId,omitempty"`
-}
-
-func newListDOTTestsTool(
-	tests wfDrugAlcoholReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &workforceRead{
-		name: "worker_list_dot_tests",
-		description: "List drug and alcohol tests, newest first: one worker's, or every " +
-			"collection still open across the organization. Each row has the test type, " +
-			"substance, status and result. It yields the testId worker_cancel_dot_test takes.",
-		resource: permission.ResourceWorkerDOTTest,
-		properties: map[string]any{
-			paramWorkerID: wfWorkerProperty("Narrow to one worker"),
-			wfParamOpenOnly: wfBoolProperty("Only collections not yet completed or " +
-				"cancelled."),
-			paramLimit: limitProperty(),
-		},
-		access: newFieldAccess(permissions),
-		run: func(
-			ctx context.Context,
-			params *agentports.QueryToolParams,
-			gate *fieldGate,
-		) (any, error) {
-			workerID, err := optionalWorker(params.Params)
-			if err != nil {
-				return nil, err
-			}
-			found, err := tests.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
-				TenantInfo:    tenantOf(params),
-				WorkerID:      workerID,
-				OpenOnly:      optionalBool(params.Params, wfParamOpenOnly),
-				IncludeWorker: true,
-				Limit:         receivableLimit(params.Params),
-			})
-			if err != nil {
-				return nil, err
-			}
-			rows := make([]dotTestRow, 0, len(found))
-			for _, test := range found {
-				rows = append(rows, dotTestRow{
-					ID:        test.ID.String(),
-					WorkerID:  test.WorkerID.String(),
-					Worker:    workerName(test.Worker),
-					TestType:  string(test.TestType),
-					Substance: string(test.Substance),
-					Status:    string(test.Status),
-					Result:    string(test.Result),
-					IsDOT:     test.IsDOT,
-					ScheduledAt: expectedDate(
-						typeutils.ValueOrZero(test.ScheduledAt),
-						absentNotScheduled,
-					),
-					CollectedAt:    pointerDate(test.CollectedAt),
-					CollectionSite: test.CollectionSite,
-					Reason:         gatedText(gate, wfFieldReason, test.Reason),
-					SafetyEventID:  pulidString(test.SafetyEventID),
-					DrawEntryID:    pulidString(test.DrawEntryID),
-				})
-			}
-			return newReceivableList(rows, gate), nil
 		},
 	}
 }
@@ -518,13 +434,6 @@ func provideListWorkerSafetyEventsTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newListWorkerSafetyEventsTool(safety, permissions)
-}
-
-func provideListDOTTestsTool(
-	tests *workerdrugalcoholservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListDOTTestsTool(tests, permissions)
 }
 
 func provideListDOTRandomDrawsTool(

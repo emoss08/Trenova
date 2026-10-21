@@ -512,7 +512,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerInjuries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerInjuries(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerInjuries(ctx, fc.Args["workerId"].(*string), fc.Args["caseYear"].(*int), fc.Args["recordableOnly"].(*bool), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjuryᚄ),
 			},
@@ -946,7 +946,7 @@ type resolverOSHAAnnualSummary interface {
 }
 
 type resolverQuery interface {
-	WorkerInjuries(ctx context.Context, workerID string) ([]*worker.WorkerInjury, error)
+	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*worker.WorkerInjury, error)
 	WorkerInjury(ctx context.Context, id string) (*worker.WorkerInjury, error)
 	OshaLog(ctx context.Context, year *int) (*workerinjuryservice.OSHALog, error)
 	OshaSummaries(ctx context.Context) ([]*worker.OSHAAnnualSummary, error)
@@ -1057,15 +1057,47 @@ func field_Mutation_uncertifyOshaSummary_args(ctx context.Context, ec *gqlexec.E
 }
 
 func field_Query_workerInjuries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 5)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "caseYear",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["caseYear"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "recordableOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["recordableOnly"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "openOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["openOnly"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg4
 	return args, nil
 }
 
