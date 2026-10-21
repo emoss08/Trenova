@@ -462,7 +462,9 @@ named in `.env`. Rotating replaces the outer key without decrypting anything els
    database or bucket backups taken before the rewrap: they can only be read with the old
    key.
 
-Documents and capture pages are rewritten in place in the bucket. With bucket versioning
+Documents and capture pages are rewritten in place in the bucket: only an object's header
+holds its wrapped key, so the rewrap replaces the header and copies the rest unchanged,
+spooling it through a temporary file. With bucket versioning
 or object lock, the earlier versions keep the old wrapping until they expire, so keep the
 retired key until they have. `--skip-objects` moves the database values alone and
 `--org org_…` limits a run to one organization.

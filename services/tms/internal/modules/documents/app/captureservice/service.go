@@ -53,13 +53,6 @@ const (
 	DisabledReason      = "capture_disabled"
 )
 
-// envelopeCipher is the slice of the encryption service capture uses: sealing
-// pages and thumbnails at rest and opening them again.
-type envelopeCipher interface {
-	EncryptBytesWithAAD(plaintext []byte, aad encryptionservice.AAD) (string, error)
-	DecryptBytesWithAAD(value string, aad encryptionservice.AAD) ([]byte, error)
-}
-
 type Params struct {
 	fx.In
 
@@ -144,7 +137,7 @@ type Service struct {
 	organizations organizationReader
 	permissions   permissionports.PermissionEngine
 	storage       kernelports.Client
-	cipher        envelopeCipher
+	cipher        *encryptionservice.Service
 	uploads       documentuploadports.DocumentUploadService
 	imaging       kernelports.Imaging
 	qrCodes       captureports.CaptureQREncoder
@@ -161,10 +154,6 @@ type Service struct {
 
 //nolint:gocritic // dependency injection param
 func New(p Params) *Service {
-	var cipher envelopeCipher
-	if p.Encryption != nil {
-		cipher = p.Encryption
-	}
 	var notifications notifier
 	if p.Notifications != nil {
 		notifications = p.Notifications
@@ -190,7 +179,7 @@ func New(p Params) *Service {
 		organizations: p.Organizations,
 		permissions:   p.Permissions,
 		storage:       p.Storage,
-		cipher:        cipher,
+		cipher:        p.Encryption,
 		uploads:       p.Uploads,
 		imaging:       p.Imaging,
 		qrCodes:       p.QRCodes,

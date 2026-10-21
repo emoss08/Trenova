@@ -722,20 +722,13 @@ func (s *Service) attachmentContent(
 	if err != nil {
 		return nil, err
 	}
-	content, err := io.ReadAll(download.Body)
-	closeErr := download.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	if closeErr != nil {
-		return nil, closeErr
-	}
+	defer func() { _ = download.Body.Close() }()
 
 	switch attachment.Seal {
 	case email.AttachmentSealNone:
-		return content, nil
+		return io.ReadAll(download.Body)
 	case email.AttachmentSealDocument:
-		return s.unsealDocument(attachment, content)
+		return s.unsealDocument(ctx, attachment, download)
 	default:
 		return nil, fmt.Errorf(
 			"%w: attachment %s has an unknown seal %q",
@@ -746,8 +739,12 @@ func (s *Service) attachmentContent(
 	}
 }
 
-func (s *Service) unsealDocument(attachment *email.Attachment, sealed []byte) ([]byte, error) {
-	if s.encryptionService == nil || !encryptionservice.IsEnvelope(string(sealed)) {
+func (s *Service) unsealDocument(
+	ctx context.Context,
+	attachment *email.Attachment,
+	download *kernelports.DownloadResult,
+) ([]byte, error) {
+	if s.encryptionService == nil {
 		return nil, fmt.Errorf(
 			"%w: attachment %s is not a sealed document",
 			ErrNonRetryableSend,
@@ -755,12 +752,25 @@ func (s *Service) unsealDocument(attachment *email.Attachment, sealed []byte) ([
 		)
 	}
 
-	content, err := s.encryptionService.DecryptBytesWithAAD(string(sealed), encryptionservice.AAD{
+	sealedSize := download.Size
+	if sealedSize <= 0 {
+		sealedSize = -1
+	}
+	opened, err := s.encryptionService.OpenBlob(ctx, download.Body, sealedSize, encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeDocument,
 		OrganizationID: attachment.OrganizationID,
 		BusinessUnitID: attachment.BusinessUnitID,
 		ResourceID:     attachment.ObjectKey,
 	})
+	if err != nil {
+		return nil, fmt.Errorf(
+			"%w: attachment %s could not be unsealed: %w",
+			ErrNonRetryableSend,
+			attachment.ID,
+			err,
+		)
+	}
+	content, err := io.ReadAll(opened)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"%w: attachment %s could not be unsealed: %w",

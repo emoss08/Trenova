@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/objectstoretest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -56,10 +57,16 @@ func TestUploadPart_QuarantinesAnInfectedFileBeforeItIsStored(t *testing.T) {
 			return updated, nil
 		}).
 		Once()
-	storage := kernelportsmock.NewMockClient(t)
+	storage := objectstoretest.New()
 	gate := contentscanportsmock.NewInfectedGate("Win.Test.EICAR_HDB-1")
 
-	svc := &Service{l: zap.NewNop(), sessionRepo: sessions, storage: storage, contentGate: gate}
+	svc := &Service{
+		l:           zap.NewNop(),
+		sessionRepo: sessions,
+		storage:     storage,
+		encryption:  scanTestEncryption(),
+		contentGate: gate,
+	}
 	_, err := svc.UploadPart(t.Context(), &documentuploadports.UploadPartRequest{
 		TenantInfo: tenant,
 		SessionID:  session.ID,
@@ -75,6 +82,7 @@ func TestUploadPart_QuarantinesAnInfectedFileBeforeItIsStored(t *testing.T) {
 	require.Len(t, gate.Requests(), 1)
 	assert.Equal(t, contentscanports.SourceInboundAttachment, gate.Requests()[0].Source)
 	assert.Equal(t, content, gate.Requests()[0].Content)
+	assert.Empty(t, storage.Keys(), "the infected file never became an object")
 }
 
 func TestUploadPart_LeavesTheSessionOpenWhenTheScannerCannotCheck(t *testing.T) {
@@ -86,10 +94,12 @@ func TestUploadPart_LeavesTheSessionOpenWhenTheScannerCannotCheck(t *testing.T) 
 
 	sessions := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
 	sessions.EXPECT().GetByID(mock.Anything, mock.Anything).Return(session, nil).Once()
+	storage := objectstoretest.New()
 	svc := &Service{
 		l:           zap.NewNop(),
 		sessionRepo: sessions,
-		storage:     kernelportsmock.NewMockClient(t),
+		storage:     storage,
+		encryption:  scanTestEncryption(),
 		contentGate: contentscanportsmock.NewRefusingGate(contentscanports.ErrScannerUnavailable),
 	}
 
@@ -103,4 +113,11 @@ func TestUploadPart_LeavesTheSessionOpenWhenTheScannerCannotCheck(t *testing.T) 
 
 	require.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
 	assert.Equal(t, documentupload.StatusInitiated, session.Status)
+	assert.Empty(t, storage.Keys())
+}
+
+func scanTestEncryption() *encryptionservice.Service {
+	return encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("upload-scan-test-key-material"),
+	)
 }

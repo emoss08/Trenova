@@ -273,33 +273,25 @@ func TestPeakRSSChild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open %s: %v", name, err)
 	}
-	plaintext, err := io.ReadAll(file)
+	info, err := file.Stat()
+	if err != nil {
+		t.Fatalf("stat %s: %v", name, err)
+	}
+	_, err = storedobject.Write(ctx, storage, encryption, &storedobject.WriteRequest{
+		Key:         key,
+		ContentType: "application/pdf",
+		AAD:         aad,
+		Body:        file,
+		Size:        info.Size(),
+	})
 	_ = file.Close()
 	if err != nil {
-		t.Fatalf("read upload: %v", err)
-	}
-	envelope, err := encryption.EncryptBytesWithAAD(plaintext, aad)
-	if err != nil {
-		t.Fatalf("encrypt: %v", err)
-	}
-	plaintext = nil
-	if _, err = storage.Upload(ctx, &kernelports.UploadParams{
-		Key:         key,
-		Body:        bytes.NewReader([]byte(envelope)),
-		Size:        int64(len(envelope)),
-		ContentType: "application/octet-stream",
-	}); err != nil {
 		t.Fatalf("store: %v", err)
 	}
-	envelope = ""
 
-	stored, err := storedobject.Read(ctx, storage, encryption, key, aad)
-	if err != nil {
-		t.Fatalf("read stored document: %v", err)
-	}
 	if _, err = generator.Generate(
 		ctx,
-		kernelports.ImagingBytes("application/pdf", stored),
+		storedobject.Source(storage, encryption, key, aad, "application/pdf", info.Size()),
 		kernelports.ImagingBatch,
 	); err != nil {
 		t.Fatalf("thumbnail: %v", err)
@@ -310,11 +302,10 @@ func TestPeakRSSChild(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read peak RSS: %v", err)
 	}
-	info, _ := os.Stat(corpus.Path(name))
 	out, _ := sonic.Marshal(imagingbench.PeakRSS{
 		Input:      name,
 		InputBytes: info.Size(),
-		Pipeline:   "upload -> encrypt -> store -> download -> decrypt -> thumbnail",
+		Pipeline:   "upload -> seal (streaming) -> store -> open (streaming) -> thumbnail",
 		PeakRSSMB:  peak,
 		BaselineMB: baseline,
 		Seconds:    elapsed.Seconds(),

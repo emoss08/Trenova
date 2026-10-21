@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"slices"
 	"strings"
 	"time"
 
@@ -68,16 +67,20 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) Scan(ctx context.Context, content []byte) (*contentscanports.ScanResult, error) {
-	if int64(len(content)) > c.maxStreamBytes {
+func (c *Client) Scan(
+	ctx context.Context,
+	content io.Reader,
+	size int64,
+) (*contentscanports.ScanResult, error) {
+	if size > c.maxStreamBytes {
 		return nil, fmt.Errorf(
 			"%w: the file is %d bytes and the scanner takes at most %d",
-			contentscanports.ErrScannerUnavailable, len(content), c.maxStreamBytes,
+			contentscanports.ErrScannerUnavailable, size, c.maxStreamBytes,
 		)
 	}
 
 	reply, err := c.exchange(ctx, func(w io.Writer) error {
-		return writeStream(w, content)
+		return writeStream(w, content, c.maxStreamBytes)
 	})
 	if err != nil {
 		return nil, err
@@ -116,18 +119,33 @@ func (c *Client) exchange(ctx context.Context, send func(io.Writer) error) (stri
 	return strings.TrimSpace(strings.TrimRight(reply, "\x00")), nil
 }
 
-func writeStream(w io.Writer, content []byte) error {
+func writeStream(w io.Writer, content io.Reader, limit int64) error {
 	if _, err := io.WriteString(w, "zINSTREAM\x00"); err != nil {
 		return err
 	}
 	var size [4]byte
-	for chunk := range slices.Chunk(content, chunkSize) {
-		binary.BigEndian.PutUint32(size[:], uint32(len(chunk))) //nolint:gosec // chunkSize fits
-		if _, err := w.Write(size[:]); err != nil {
-			return err
+	chunk := make([]byte, chunkSize)
+	sent := int64(0)
+	for {
+		n, readErr := io.ReadFull(content, chunk)
+		if n > 0 {
+			sent += int64(n)
+			if sent > limit {
+				return fmt.Errorf("the file is over the scanner's %d byte limit", limit)
+			}
+			binary.BigEndian.PutUint32(size[:], uint32(n)) //nolint:gosec // n <= chunkSize
+			if _, err := w.Write(size[:]); err != nil {
+				return err
+			}
+			if _, err := w.Write(chunk[:n]); err != nil {
+				return err
+			}
 		}
-		if _, err := w.Write(chunk); err != nil {
-			return err
+		if errors.Is(readErr, io.EOF) || errors.Is(readErr, io.ErrUnexpectedEOF) {
+			break
+		}
+		if readErr != nil {
+			return readErr
 		}
 	}
 	binary.BigEndian.PutUint32(size[:], 0)

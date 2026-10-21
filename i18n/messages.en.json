@@ -81053,7 +81053,7 @@
     ]
   },
   "Document encryption is not configured": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -101733,7 +101733,7 @@
     ]
   },
   "Failed to decrypt document": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -101904,7 +101904,7 @@
     ]
   },
   "Failed to download document": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -101958,15 +101958,6 @@
     ]
   },
   "Failed to encrypt document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to encrypt document upload": {
     "sites": 1,
     "scope": [
       "go"
@@ -102429,7 +102420,7 @@
     ]
   },
   "Failed to process uploaded file": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -102507,24 +102498,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "Failed to read document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to read uploaded file": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to read {0}": {
@@ -102999,6 +102972,15 @@
       "go/other"
     ]
   },
+  "Failed to store document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Failed to submit EDI load tender": {
     "sites": 1,
     "scope": [
@@ -103204,24 +103186,6 @@
     "areas": [
       "apps/web/components",
       "routes/worker"
-    ]
-  },
-  "Failed to upload document": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Failed to upload file": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to upload organization logo": {
@@ -247383,6 +247347,15 @@
   },
   "Stored document is not encrypted": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Stored document is too large to read": {
+    "sites": 2,
     "scope": [
       "go"
     ],

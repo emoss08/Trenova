@@ -257,7 +257,7 @@ reading the files itself:
   `resourceId`), skipping the records the person cannot read and returning nothing without
   `document:read`. It is what a picker of "files you could attach" reads.
 
-Documents are stored as envelope ciphertext bound to their tenant and storage path, so an
+Documents are stored as sealed streaming blobs bound to their tenant and storage path, so an
 object key alone would mail ciphertext. Each attachment the capability returns is
 `Seal: Document`; the email service keeps the seal on `email_message_attachments.seal` and,
 in the send activity, decrypts a sealed object with the document AAD of the message's own

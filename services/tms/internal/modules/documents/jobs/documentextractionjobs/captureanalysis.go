@@ -3,6 +3,7 @@ package documentextractionjobs
 import (
 	"bytes"
 	"context"
+	"io"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -52,9 +53,11 @@ func (c *CaptureAnalyzer) Analyze(
 	converted, err := a.convertWithConverter(ctx, &kernelports.ConvertRequest{
 		FileName:    req.FileName,
 		ContentType: captureContentType,
-		Body:        bytes.NewReader(req.PDF),
-		Size:        int64(len(req.PDF)),
-		OCR:         control.EnableOCR,
+		Open: func(context.Context) (io.ReadCloser, error) {
+			return io.NopCloser(bytes.NewReader(req.PDF)), nil
+		},
+		Size: int64(len(req.PDF)),
+		OCR:  control.EnableOCR,
 	}, false)
 	if err != nil {
 		return nil, err

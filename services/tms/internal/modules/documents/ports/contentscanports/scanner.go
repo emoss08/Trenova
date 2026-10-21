@@ -1,9 +1,11 @@
 package contentscanports
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,6 +41,13 @@ type ScanRequest struct {
 	Content    []byte
 }
 
+type StreamRequest struct {
+	TenantInfo pagination.TenantInfo
+	Source     Source
+	FileName   string
+	Size       int64
+}
+
 type ScanResult struct {
 	Verdict   Verdict
 	Signature string
@@ -57,12 +66,19 @@ func (e *InfectedError) Unwrap() error {
 }
 
 type Scanner interface {
-	Scan(ctx context.Context, content []byte) (*ScanResult, error)
+	Scan(ctx context.Context, content io.Reader, size int64) (*ScanResult, error)
 	Ping(ctx context.Context) error
+}
+
+type Stream interface {
+	io.Writer
+	Finish() (*ScanResult, error)
+	Abort()
 }
 
 type Gate interface {
 	Check(ctx context.Context, req *ScanRequest) (*ScanResult, error)
+	Stream(ctx context.Context, req *StreamRequest) (Stream, error)
 }
 
 func Check(ctx context.Context, gate Gate, req *ScanRequest) (*ScanResult, error) {
@@ -70,6 +86,94 @@ func Check(ctx context.Context, gate Gate, req *ScanRequest) (*ScanResult, error
 		return &ScanResult{Verdict: VerdictUnscanned}, nil
 	}
 	return gate.Check(ctx, req)
+}
+
+func Open(ctx context.Context, gate Gate, req *StreamRequest) (Stream, error) {
+	if gate == nil {
+		return unscanned{}, nil
+	}
+	return gate.Stream(ctx, req)
+}
+
+func CheckWith(ctx context.Context, gate Gate, req *ScanRequest) (*ScanResult, error) {
+	stream, err := gate.Stream(ctx, &StreamRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     req.Source,
+		FileName:   req.FileName,
+		Size:       int64(len(req.Content)),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _, err = io.Copy(stream, bytes.NewReader(req.Content)); err != nil {
+		stream.Abort()
+		return nil, err
+	}
+	return stream.Finish()
+}
+
+type unscanned struct{}
+
+func (unscanned) Write(p []byte) (int, error) { return len(p), nil }
+
+func (unscanned) Finish() (*ScanResult, error) { return &ScanResult{Verdict: VerdictUnscanned}, nil }
+
+func (unscanned) Abort() {}
+
+type Gated struct {
+	src    io.Reader
+	stream Stream
+	result *ScanResult
+	err    error
+}
+
+func NewGated(src io.Reader, stream Stream) *Gated {
+	return &Gated{src: src, stream: stream}
+}
+
+func (g *Gated) Read(p []byte) (int, error) {
+	if g.err != nil {
+		return 0, g.err
+	}
+	n, err := g.src.Read(p)
+	if n > 0 {
+		if _, writeErr := g.stream.Write(p[:n]); writeErr != nil {
+			g.err = writeErr
+			return 0, writeErr
+		}
+	}
+	if errors.Is(err, io.EOF) {
+		result, finishErr := g.stream.Finish()
+		if finishErr != nil {
+			g.err = finishErr
+			return n, finishErr
+		}
+		g.result = result
+		g.err = io.EOF
+		return n, io.EOF
+	}
+	if err != nil {
+		g.stream.Abort()
+		g.err = err
+	}
+	return n, err
+}
+
+func (g *Gated) Result() *ScanResult {
+	return g.result
+}
+
+func (g *Gated) Abort() {
+	if g.err == nil {
+		g.stream.Abort()
+	}
+}
+
+func (g *Gated) Err() error {
+	if errors.Is(g.err, io.EOF) {
+		return nil
+	}
+	return g.err
 }
 
 func RefusalError(field string, err error) error {

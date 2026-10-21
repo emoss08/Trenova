@@ -44,7 +44,7 @@ type DocumentConverter interface {
 type ConvertRequest struct {
 	FileName    string
 	ContentType string
-	Body        io.Reader
+	Open        func(ctx context.Context) (io.ReadCloser, error)
 	Size        int64
 	OCR         bool
 	Languages   []string

@@ -48,7 +48,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
-	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -259,7 +258,7 @@ func (s *Service) Upload(
 		size:              req.File.Size,
 		contentType:       req.File.Header.Get("Content-Type"),
 		scanSource:        contentscanports.SourceUpload,
-		read:              func() ([]byte, error) { return io.ReadAll(file) },
+		body:              file,
 	})
 }
 
@@ -301,7 +300,7 @@ func (s *Service) Store(
 		size:              size,
 		contentType:       req.ContentType,
 		scanSource:        contentscanports.SourceGeneratedDocument,
-		read:              func() ([]byte, error) { return req.Content, nil },
+		body:              bytes.NewReader(req.Content),
 	})
 	if err != nil {
 		return nil, err
@@ -317,7 +316,7 @@ type uploadInput struct {
 	size              int64
 	contentType       string
 	scanSource        contentscanports.Source
-	read              func() ([]byte, error)
+	body              io.Reader
 }
 
 func (s *Service) storeUpload(
@@ -362,46 +361,29 @@ func (s *Service) storeUpload(
 		return nil, err
 	}
 
-	plaintext, err := in.read()
-	if err != nil {
-		log.Error("failed to read uploaded file", zap.Error(err))
-		return nil, errortypes.NewDatabaseError("Failed to process uploaded file").WithInternal(err)
-	}
-
-	if _, err = contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
-		TenantInfo: req.TenantInfo,
-		Source:     in.scanSource,
-		FileName:   in.fileName,
-		Content:    plaintext,
-	}); err != nil {
-		return nil, contentscanports.RefusalError("file", err)
-	}
-
-	uploadBody, cryptoMode, cryptoVersion, err := s.documentUploadBody(
-		plaintext,
-		req.TenantInfo,
-		storagePath,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	fileInfo, err := s.storage.Upload(ctx, &kernelports.UploadParams{
+	written, err := storedobject.Write(ctx, s.storage, s.encryption, &storedobject.WriteRequest{
 		Key:         storagePath,
 		ContentType: contentType,
-		Size:        int64(len(uploadBody)),
-		Body:        bytes.NewReader(uploadBody),
 		Metadata: map[string]string{
 			"original_name": in.fileName,
 			"resource_id":   req.ResourceID,
 			"resource_type": req.ResourceType,
-			"crypto_mode":   cryptoMode,
+		},
+		AAD:  storedobject.AAD(req.TenantInfo, storagePath),
+		Body: in.body,
+		Size: in.size,
+		Gate: s.contentGate,
+		Scan: &contentscanports.StreamRequest{
+			TenantInfo: req.TenantInfo,
+			Source:     in.scanSource,
+			FileName:   in.fileName,
 		},
 	})
 	if err != nil {
-		log.Error("failed to upload file to storage", zap.Error(err))
-		return nil, errortypes.NewDatabaseError("Failed to upload file").WithInternal(err)
+		log.Error("failed to store uploaded file", zap.Error(err))
+		return nil, contentscanports.RefusalError("file", err)
 	}
+	fileInfo := written.Info
 
 	doc := &document.Document{
 		ID:                 docID,
@@ -415,10 +397,10 @@ func (s *Service) storeUpload(
 		FileSize:           in.size,
 		FileType:           contentType,
 		StoragePath:        storagePath,
-		ChecksumSHA256:     hashutils.SHA256BytesHex(plaintext),
+		ChecksumSHA256:     written.SHA256,
 		StorageVersionID:   fileInfo.VersionID,
-		CryptoMode:         cryptoMode,
-		CryptoVersion:      cryptoVersion,
+		CryptoMode:         encryptionservice.CryptoModeBlobV1,
+		CryptoVersion:      storedobject.CryptoVersion,
 		PreviewStoragePath: "",
 		Status:             document.StatusActive,
 		Description:        req.Description,
@@ -550,27 +532,6 @@ func (s *Service) prepareUploadLineage(
 	}
 
 	return lineageInfo.LineageID, lineageInfo, nil
-}
-
-func (s *Service) documentUploadBody(
-	plaintext []byte,
-	tenantInfo pagination.TenantInfo,
-	storagePath string,
-) (body []byte, cryptoMode string, cryptoVersion int16, err error) {
-	if s.encryption == nil {
-		return nil, "", 0, errortypes.NewBusinessError("Document encryption is not configured")
-	}
-
-	encrypted, err := s.encryption.EncryptBytesWithAAD(
-		plaintext,
-		storedobject.AAD(tenantInfo, storagePath),
-	)
-	if err != nil {
-		return nil, "", 0, errortypes.NewBusinessError("Failed to encrypt document").
-			WithInternal(err)
-	}
-
-	return []byte(encrypted), encryptionservice.CryptoModeForCiphertext(encrypted), 1, nil
 }
 
 func (s *Service) recordDocumentUploadUsage(
@@ -753,7 +714,7 @@ func (s *Service) GetDownloadContent(
 		return nil, err
 	}
 
-	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+	object, err := s.openDocumentObject(ctx, doc, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -761,9 +722,9 @@ func (s *Service) GetDownloadContent(
 	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessDownload, documentChannelContent)
 	return &DocumentContent{
 		Document:           doc,
-		Body:               io.NopCloser(bytes.NewReader(body)),
+		Body:               object.Body,
 		ContentType:        doc.FileType,
-		ContentLength:      int64(len(body)),
+		ContentLength:      object.Size,
 		ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
 	}, nil
 }
@@ -777,7 +738,7 @@ func (s *Service) GetViewContent(
 		return nil, err
 	}
 
-	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+	object, err := s.openDocumentObject(ctx, doc, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -785,9 +746,9 @@ func (s *Service) GetViewContent(
 	s.recordAccess(ctx, req.TenantInfo, doc, documentAccessView, documentChannelContent)
 	return &DocumentContent{
 		Document:           doc,
-		Body:               io.NopCloser(bytes.NewReader(body)),
+		Body:               object.Body,
 		ContentType:        doc.FileType,
-		ContentLength:      int64(len(body)),
+		ContentLength:      object.Size,
 		ContentDisposition: viewContentDisposition(doc),
 	}, nil
 }
@@ -805,8 +766,10 @@ func (s *Service) GetPreviewContent(
 		return nil, errortypes.NewNotFoundError("Preview not available for this document")
 	}
 
-	body, err := s.readStoredObject(
+	object, err := storedobject.Open(
 		ctx,
+		s.storage,
+		s.encryption,
 		doc.PreviewStoragePath,
 		storedobject.AAD(req.TenantInfo, doc.PreviewStoragePath),
 	)
@@ -816,9 +779,9 @@ func (s *Service) GetPreviewContent(
 
 	return &DocumentContent{
 		Document:           doc,
-		Body:               io.NopCloser(bytes.NewReader(body)),
+		Body:               object.Body,
 		ContentType:        "image/webp",
-		ContentLength:      int64(len(body)),
+		ContentLength:      object.Size,
 		ContentDisposition: "inline",
 	}, nil
 }
@@ -850,12 +813,15 @@ func (s *Service) GetPageImage(
 		req.TenantInfo,
 		doc,
 		req.PageNumber,
-		func(ctx context.Context) (kernelports.ImagingSource, error) {
-			body, readErr := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
-			if readErr != nil {
-				return kernelports.ImagingSource{}, readErr
-			}
-			return kernelports.ImagingBytes(doc.FileType, body), nil
+		func(context.Context) (kernelports.ImagingSource, error) {
+			return storedobject.Source(
+				s.storage,
+				s.encryption,
+				doc.StoragePath,
+				storedobject.AAD(req.TenantInfo, doc.StoragePath),
+				doc.FileType,
+				doc.FileSize,
+			), nil
 		},
 	)
 	if errors.Is(err, thumbnailservice.ErrPageOutOfRange) ||
@@ -894,21 +860,18 @@ func pageImageETag(doc *document.Document, page int) string {
 	)
 }
 
-func (s *Service) readDocumentObject(
+func (s *Service) openDocumentObject(
 	ctx context.Context,
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
-	storagePath string,
-) ([]byte, error) {
-	return s.readStoredObject(ctx, storagePath, storedobject.AAD(tenantInfo, doc.StoragePath))
-}
-
-func (s *Service) readStoredObject(
-	ctx context.Context,
-	storagePath string,
-	aad encryptionservice.AAD,
-) ([]byte, error) {
-	return storedobject.Read(ctx, s.storage, s.encryption, storagePath, aad)
+) (*storedobject.Object, error) {
+	return storedobject.Open(
+		ctx,
+		s.storage,
+		s.encryption,
+		doc.StoragePath,
+		storedobject.AAD(tenantInfo, doc.StoragePath),
+	)
 }
 
 func viewContentDisposition(doc *document.Document) string {

@@ -368,6 +368,14 @@ worker, `services/proto/trenova/imaging`, `infrastructure/imaging`, `pagerender`
 tests use `imaging/imagingfake`; integration tests start the worker image through
 `internal/testutil/imagingtest`.
 
+Stored objects (documents, upload sessions, capture pages, thumbnails, page renders, Docling
+conversions) are sealed as streaming blobs: `encryptionservice.SealBlob`/`OpenBlob`, reached only
+through `storedobject.Write`, `Open`, `Read` and `Source`, so nothing holds a whole document to
+encrypt or decrypt it, and an upload is scanned for malware as it streams, its last chunk held
+back until the verdict. The string envelope is for small secrets only. Read "Blob encryption" in
+imaging-worker.md before changing `blob.go`, `storedobject`, the scan gate's streaming, or how an
+object is stored or rewrapped.
+
 ## Web Build
 
 The React Compiler runs in Rust (`react({ compiler: true })`, `oxc-transform-react`), `pnpm build`

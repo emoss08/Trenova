@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
@@ -426,12 +427,7 @@ func (a *Activities) ConvertDocumentActivity(
 		return nil, err
 	}
 
-	data, failure := a.readDocumentBytes(ctx, doc)
-	if failure != nil {
-		return a.conversionFailed(ctx, doc, content, failure)
-	}
-
-	converted, failure, err := a.convertDocumentBytes(ctx, doc, data, input.OCR)
+	converted, failure, err := a.convertDocument(ctx, doc, tenantInfo, input.OCR)
 	if err != nil {
 		return nil, err
 	}
@@ -531,44 +527,54 @@ func (a *Activities) conversionFailed(
 	}, nil
 }
 
-func (a *Activities) readDocumentBytes(
-	ctx context.Context,
+func (a *Activities) documentSource(
 	doc *document.Document,
-) ([]byte, *conversionFailure) {
-	download, err := a.storage.Download(ctx, doc.StoragePath)
+	tenantInfo pagination.TenantInfo,
+) kernelports.ImagingSource {
+	return storedobject.Source(
+		a.storage,
+		a.encryption,
+		doc.StoragePath,
+		storedobject.AAD(tenantInfo, doc.StoragePath),
+		doc.FileType,
+		doc.FileSize,
+	)
+}
+
+func unreadable(err error) bool {
+	return errors.Is(err, encryptionservice.ErrBlobTampered) ||
+		errors.Is(err, encryptionservice.ErrBlobAAD) ||
+		errors.Is(err, encryptionservice.ErrBlobFormat) ||
+		errors.Is(err, storedobject.ErrNotSealed)
+}
+
+func (a *Activities) readPlainText(
+	ctx context.Context,
+	source kernelports.ImagingSource,
+) ([]byte, *conversionFailure, error) {
+	body, err := source.Open(ctx)
 	if err != nil {
-		return nil, &conversionFailure{
-			code:    documentupload.FailureDownloadFailed,
-			message: "Failed to download document",
-		}
-	}
-	defer download.Body.Close()
-
-	buf := new(bytes.Buffer)
-	if _, err = buf.ReadFrom(download.Body); err != nil {
-		return nil, &conversionFailure{
-			code:    documentupload.FailureReadFailed,
-			message: "Failed to read document bytes",
-		}
-	}
-
-	data := buf.Bytes()
-	if a.encryption != nil && encryptionservice.IsEnvelope(string(data)) {
-		data, err = a.encryption.DecryptBytesWithAAD(string(data), encryptionservice.AAD{
-			Purpose:        encryptionservice.PurposeDocument,
-			OrganizationID: doc.OrganizationID,
-			BusinessUnitID: doc.BusinessUnitID,
-			ResourceID:     doc.StoragePath,
-		})
-		if err != nil {
+		if unreadable(err) {
 			return nil, &conversionFailure{
 				code:    documentupload.FailureReadFailed,
 				message: "Failed to decrypt document bytes",
-			}
+			}, nil
 		}
+		return nil, nil, err
 	}
+	defer body.Close()
 
-	return data, nil
+	data, err := io.ReadAll(io.LimitReader(body, int64(a.cfg.GetMaxExtractedChars())))
+	if err != nil {
+		if unreadable(err) {
+			return nil, &conversionFailure{
+				code:    documentupload.FailureReadFailed,
+				message: "Failed to decrypt document bytes",
+			}, nil
+		}
+		return nil, nil, err
+	}
+	return data, nil, nil
 }
 
 type convertedFile struct {
@@ -578,18 +584,29 @@ type convertedFile struct {
 	raw              []byte
 }
 
-func (a *Activities) convertDocumentBytes(
+func (a *Activities) convertDocument(
 	ctx context.Context,
 	doc *document.Document,
-	data []byte,
+	tenantInfo pagination.TenantInfo,
 	ocr bool,
 ) (*convertedFile, *conversionFailure, error) {
+	if a.encryption == nil {
+		return nil, &conversionFailure{
+			code:    documentupload.FailureReadFailed,
+			message: "Document encryption is not configured",
+		}, nil
+	}
+	source := a.documentSource(doc, tenantInfo)
 	format := conversionFormatOf(doc.FileType, doc.OriginalName)
 	if format == formatPlainText {
+		data, failure, err := a.readPlainText(ctx, source)
+		if failure != nil || err != nil {
+			return nil, failure, err
+		}
 		return a.plainTextConversion(data), nil, nil
 	}
 
-	if limit := a.conversionCfg.GetMaxFileBytes(); int64(len(data)) > limit {
+	if limit := a.conversionCfg.GetMaxFileBytes(); doc.FileSize > limit {
 		return nil, &conversionFailure{
 			code:    documentupload.FailureFileTooLarge,
 			message: fmt.Sprintf("The file is larger than the %d MB extraction limit.", limit>>20),
@@ -598,7 +615,7 @@ func (a *Activities) convertDocumentBytes(
 
 	var nativePages map[int]bool
 	if format == formatPDF {
-		pageCount, native := a.pdfTextProfile(ctx, data)
+		pageCount, native := a.pdfTextProfile(ctx, source)
 		if limit := a.conversionCfg.GetMaxPages(); pageCount > limit {
 			return nil, &conversionFailure{
 				code: documentupload.FailureTooManyPages,
@@ -615,11 +632,16 @@ func (a *Activities) convertDocumentBytes(
 	converted, err := a.convertWithConverter(ctx, &kernelports.ConvertRequest{
 		FileName:    doc.OriginalName,
 		ContentType: doc.FileType,
-		Body:        bytes.NewReader(data),
-		Size:        int64(len(data)),
+		Open:        source.Open,
+		Size:        doc.FileSize,
 		OCR:         ocr,
 	}, true)
 	switch {
+	case unreadable(err):
+		return nil, &conversionFailure{
+			code:    documentupload.FailureReadFailed,
+			message: "Failed to decrypt document bytes",
+		}, nil
 	case errors.Is(err, kernelports.ErrDocumentNotConvertible):
 		return nil, &conversionFailure{
 			code:    documentupload.FailureExtractionFailed,
@@ -674,13 +696,14 @@ func (a *Activities) plainTextConversion(data []byte) *convertedFile {
 
 func (a *Activities) pdfTextProfile(
 	ctx context.Context,
-	data []byte,
+	source kernelports.ImagingSource,
 ) (pageCount int, native map[int]bool) {
 	if a.imaging == nil {
 		return 0, nil
 	}
+	source.ContentType = "application/pdf"
 	probe, err := a.imaging.Probe(ctx, &kernelports.ImagingProbeRequest{
-		Source:      kernelports.ImagingBytes("application/pdf", data),
+		Source:      source,
 		TextProfile: true,
 		Priority:    kernelports.ImagingBatch,
 	})
@@ -710,20 +733,14 @@ func (a *Activities) convertWithConverter(
 		return nil, kernelports.ErrDocumentConverterUnavailable
 	}
 
-	data, err := readAllBody(req)
-	if err != nil {
-		return nil, err
-	}
-
 	var taskID kernelports.ConversionTaskID
 	if resumable {
 		taskID = resumedConversionTask(ctx)
 	}
 	for resubmits := 0; ; {
 		if taskID == "" {
-			submit := *req
-			submit.Body = bytes.NewReader(data)
-			if taskID, err = a.converter.Submit(ctx, &submit); err != nil {
+			var err error
+			if taskID, err = a.converter.Submit(ctx, req); err != nil {
 				return nil, err
 			}
 		}
@@ -748,15 +765,6 @@ func (a *Activities) convertWithConverter(
 		)
 		taskID = ""
 	}
-}
-
-func readAllBody(req *kernelports.ConvertRequest) ([]byte, error) {
-	data, err := io.ReadAll(req.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read document for conversion: %w", err)
-	}
-
-	return data, nil
 }
 
 func (a *Activities) awaitConversion(
@@ -925,29 +933,15 @@ func (a *Activities) storeRawConversion(
 	}
 
 	key := documentcontent.RawObjectKey(doc.OrganizationID, doc.ID)
-	encrypted, err := a.encryption.EncryptBytesWithAADContext(
-		ctx,
-		compressed.Bytes(),
-		encryptionservice.AAD{
-			Purpose:        encryptionservice.PurposeDocument,
-			OrganizationID: doc.OrganizationID,
-			BusinessUnitID: doc.BusinessUnitID,
-			ResourceID:     key,
-		},
-	)
-	if err != nil {
-		return "", fmt.Errorf("encrypt converted document: %w", err)
-	}
-
-	body := []byte(encrypted)
-	if _, err = a.storage.Upload(ctx, &kernelports.UploadParams{
+	if _, err := storedobject.Write(ctx, a.storage, a.encryption, &storedobject.WriteRequest{
 		Key:         key,
 		ContentType: "application/gzip",
-		Size:        int64(len(body)),
-		Body:        bytes.NewReader(body),
-		Metadata: map[string]string{
-			"crypto_mode": encryptionservice.CryptoModeForCiphertext(encrypted),
-		},
+		AAD: storedobject.AAD(
+			pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
+			key,
+		),
+		Body: bytes.NewReader(compressed.Bytes()),
+		Size: int64(compressed.Len()),
 	}); err != nil {
 		return "", fmt.Errorf("store converted document: %w", err)
 	}

@@ -1,6 +1,7 @@
 package documentextractionjobs
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
@@ -20,11 +22,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/documentshipmentdraftports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/objectstoretest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -249,9 +253,11 @@ type doclingHarness struct {
 	contents   *memoryContentRepository
 	drafts     *memoryDraftRepository
 	converter  *kernelportsmock.MockDocumentConverter
-	storage    *kernelportsmock.MockClient
+	storage    *objectstoretest.Store
 	payload    *documentextractioncontract.ProcessDocumentExtractionPayload
 }
+
+const testDocumentText = "%PDF-1.7 rate confirmation"
 
 func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 	t.Helper()
@@ -266,6 +272,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 	controlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
 
+	original := []byte(testDocumentText)
 	docs := &memoryDocumentRepository{doc: &document.Document{
 		ID:                docID,
 		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
@@ -274,6 +281,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 		OriginalName:      "rate-confirmation.pdf",
 		FileType:          "application/pdf",
 		StoragePath:       "documents/rate-confirmation.pdf",
+		FileSize:          int64(len(original)),
 		ResourceType:      "shipment",
 		ResourceID:        pulid.MustNew("shp_").String(),
 		ContentStatus:     document.ContentStatusPending,
@@ -282,7 +290,21 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 	contents := &memoryContentRepository{}
 	drafts := &memoryDraftRepository{}
 	converter := kernelportsmock.NewMockDocumentConverter(t)
-	storage := kernelportsmock.NewMockClient(t)
+	storage := objectstoretest.New()
+	encryption := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("docling-harness-key-material"),
+	)
+	key := docs.doc.StoragePath
+	sealed, err := encryption.SealBlob(
+		t.Context(),
+		bytes.NewReader(original),
+		int64(len(original)),
+		storedobject.AAD(pagination.TenantInfo{OrgID: orgID, BuID: buID}, key),
+	)
+	require.NoError(t, err)
+	body, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	storage.Put(key, body)
 
 	activities := &Activities{
 		logger: zap.NewNop(),
@@ -297,6 +319,7 @@ func newDoclingHarness(t *testing.T, providerAvailable bool) *doclingHarness {
 		aiDocumentService:   extractionAvailability{available: providerAvailable},
 		searchProjection:    noopDocumentSearchProjectionService{},
 		storage:             storage,
+		encryption:          encryption,
 		workflowStarter:     noopWorkflowStarter{},
 		converter:           converter,
 		conversionCfg:       &config.DocumentConversionConfig{DoclingURL: "http://docling:5001"},
@@ -423,17 +446,17 @@ func TestProcessDocumentExtractionWorkflow_ConvertsWithDoclingAndBuildsADraft(t 
 	h := newDoclingHarness(t, true)
 	golden := doclingGoldenPages(t, "rate-confirmation.pdf.golden.json")
 
-	h.storage.EXPECT().
-		Download(mock.Anything, "documents/rate-confirmation.pdf").
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("%PDF-1.7 rate confirmation")),
-		}, nil).
-		Once()
 	h.converter.EXPECT().Enabled().Return(true)
 	h.converter.EXPECT().
 		Submit(mock.Anything, mock.MatchedBy(func(req *kernelports.ConvertRequest) bool {
-			body, err := io.ReadAll(req.Body)
+			file, err := req.Open(context.Background())
+			if err != nil {
+				return false
+			}
+			defer file.Close()
+			body, err := io.ReadAll(file)
 			return err == nil &&
+				req.Size == int64(len(body)) &&
 				string(body) == "%PDF-1.7 rate confirmation" &&
 				req.FileName == "rate-confirmation.pdf" &&
 				req.ContentType == "application/pdf" &&
@@ -525,12 +548,6 @@ func TestProcessDocumentExtractionWorkflow_ResubmitsWhenTheConverterLosesTheTask
 	h := newDoclingHarness(t, true)
 	golden := doclingGoldenPages(t, "rate-confirmation.pdf.golden.json")
 
-	h.storage.EXPECT().
-		Download(mock.Anything, mock.Anything).
-		Return(&kernelports.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("%PDF-1.7 rate confirmation")),
-		}, nil).
-		Once()
 	h.converter.EXPECT().Enabled().Return(true)
 	h.converter.EXPECT().
 		Submit(mock.Anything, mock.Anything).
@@ -542,8 +559,13 @@ func TestProcessDocumentExtractionWorkflow_ResubmitsWhenTheConverterLosesTheTask
 		Once()
 	h.converter.EXPECT().
 		Submit(mock.Anything, mock.MatchedBy(func(req *kernelports.ConvertRequest) bool {
-			body, err := io.ReadAll(req.Body)
-			return err == nil && string(body) == "%PDF-1.7 rate confirmation"
+			file, err := req.Open(context.Background())
+			if err != nil {
+				return false
+			}
+			defer file.Close()
+			body, err := io.ReadAll(file)
+			return err == nil && string(body) == testDocumentText
 		})).
 		Return(kernelports.ConversionTaskID("task-2"), nil).
 		Once()

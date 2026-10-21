@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
@@ -326,7 +327,8 @@ func TestPageUploadIsIdempotentAndRefusesAnotherPage(t *testing.T) {
 	assert.True(t, errortypes.IsConflictError(err))
 
 	stored := w.objects[first.StoragePath]
-	assert.True(t, bytes.HasPrefix(stored, []byte("sealed|capture_page|")), "pages are sealed at rest")
+	assert.True(t, encryptionservice.IsBlob(stored), "pages are sealed at rest")
+	assert.NotContains(t, string(stored), string(page[:32]), "nothing of the page is stored in the clear")
 }
 
 func TestPageUploadKeepsTheTurnMadeOnTheDevice(t *testing.T) {

@@ -56,9 +56,16 @@ func reader(
 	encryption := encryptionservice.NewWithKeyManager(
 		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
 	)
-	stored, err := encryption.EncryptBytesWithAAD(plaintext, storedobject.AAD(tenant, doc.StoragePath))
+	sealed, err := encryption.SealBlob(
+		t.Context(),
+		bytes.NewReader(plaintext),
+		int64(len(plaintext)),
+		storedobject.AAD(tenant, doc.StoragePath),
+	)
 	require.NoError(t, err)
-	storage := &stubStorage{objects: map[string][]byte{doc.StoragePath: []byte(stored)}}
+	stored, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	storage := &stubStorage{objects: map[string][]byte{doc.StoragePath: stored}}
 
 	return conversationfileservice.New(conversationfileservice.Params{
 		Repo:       &stubRepo{doc: doc},

@@ -273,7 +273,7 @@ func (a *Activities) finalizeValidateStoredObject(
 		)
 	}
 
-	if session.CryptoMode != encryptionservice.CryptoModeEnvelopeV1 {
+	if session.CryptoMode != encryptionservice.CryptoModeBlobV1 {
 		return a.failSession(
 			ctx,
 			session,

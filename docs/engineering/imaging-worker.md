@@ -229,7 +229,72 @@ pdfium-render with it.
 
 ## Blob encryption
 
-_Written with the streaming blob encryption step._
+Every stored object a document produces (the document itself, an upload session's object, a
+capture page and its thumbnail, a document's thumbnail, its stored page renders and its
+Docling conversion) is sealed as a **streaming blob** by `encryptionservice.SealBlob` and read
+by `OpenBlob`. Small secrets (provider keys, OIDC secrets, tokens) keep the string envelope
+(`trenova-envelope:v1:`); a stored object in that format is refused, and there is no reader for
+it. Callers do not use the encryption service for objects directly: `storedobject.Write`,
+`Open`, `Read` and `Source` (in `modules/documents/app/storedobject`) are the boundary, and the
+email service opens a sealed attachment with `OpenBlob` as it downloads it.
+
+**Format** (`encryptionservice/blob.go`), big-endian:
+
+| Part | Bytes | |
+|---|---|---|
+| magic | 7 | `TRNBLOB` |
+| version | 1 | `1` |
+| chunk size | 4 | 65,536; anything else is refused |
+| nonce prefix | 7 | random per blob |
+| AAD hash | 32 | SHA-256 of the associated data |
+| key section length | 2 | |
+| key section | ≤ 10 KiB | provider, key id, wrapping algorithm, wrapping nonce and wrapped data key, each a 2-byte length and its bytes |
+| chunks | 64 KiB + 16 each | AES-256-GCM, the last one shorter (or empty for an empty plaintext) |
+
+- Each blob has its own random 256-bit data key, wrapped by the key manager under the same
+  associated data: the local keyring (HKDF-derived key-encryption keys from
+  `security.encryption.key`, with `retiredKeys` still opening older wraps) or GCP KMS, which
+  fails closed at startup as it does for secrets.
+- Chunk *i* is sealed with nonce `prefix ‖ uint32(i) ‖ last`, where `last` is 1 only on the
+  final chunk, and with additional data `fixed header ‖ AAD` (the first 51 bytes, then the
+  associated data's canonical bytes). Truncating at or inside a chunk, dropping the last chunk,
+  appending one, reordering or swapping chunks within a blob, splicing chunks or a key section
+  from another blob, and opening under another tenant's or path's associated data all fail
+  authentication (`blob_test.go` covers each).
+- The key section is not in the chunks' additional data, so a rewrap replaces only the
+  header: `trenova encryption rewrap` reads the header, unwraps the data key under the retired
+  key, wraps it under the active one, and writes the new header followed by the old chunks
+  byte for byte. It spools the chunks to a temporary file rather than memory, because MinIO
+  holds an object's lock while it is being read.
+- The associated data is unchanged from the envelope: purpose, organization, business unit and
+  the object key (`storedobject.AAD`, `captureObjectAAD`), so a copied object does not open
+  under another name.
+- `documents.crypto_mode` and `document_upload_sessions.crypto_mode` are `blob_v1` with
+  `crypto_version` 2, and objects carry `crypto_mode: blob_v1` in their metadata.
+
+**Streaming end to end.** Nothing in the TMS holds a whole document to encrypt or decrypt it:
+
+- An upload (the session part, `documentservice.Upload` and generated documents stored with
+  `Store`) is read from the request, scanned, hashed and sealed as it streams to object
+  storage with its exact sealed size, so storage needs no buffering either. Memory is about one
+  chunk on each side of the cipher.
+- **Malware scanning still comes first.** The bytes go to clamd through `Gate.Stream` as they
+  pass, and the sealer withholds the blob's last chunk until the scanner's verdict: an infected
+  file or a scanner that cannot answer fails the read that would end the upload, so storage
+  aborts it and the object never exists (a large file's earlier parts are discarded with the
+  aborted multipart upload). Only after that does anything open the document, so no imaging
+  call precedes the scan on any path: uploads and inbound attachments are scanned in the upload,
+  and capture pages are scanned before `checkPDF`.
+- Reads stream the other way: a download or view is the decrypting reader handed to the HTTP
+  response, and `storedobject.Source` gives the imaging adapter a source that downloads and
+  decrypts as the gRPC stream sends it, opening the object again for each retry. Thumbnails,
+  page views, prerendering and Docling's text profile read through it.
+- The Docling submission no longer buffers the file twice: `ConvertRequest` carries an `Open`,
+  the client streams a multipart body between a prebuilt prefix and suffix with an exact
+  `Content-Length`, and each retry or resubmission opens the document again.
+- A tampered object is detected when the reader reaches the damaged chunk, after earlier
+  chunks may already have been sent; a download is then cut off rather than completed, and an
+  extraction fails as unreadable rather than retrying.
 
 ## Benchmarks
 
@@ -269,12 +334,12 @@ p50 / p95 in milliseconds over 15 runs after a warm-up.
 | thumbnail, scan-bol-1p-gray.pdf | 1 / 4 / 8 | 2.9 / 7.6 / 7.6 | 67 / 161 / 140 |
 | capture inspection, one page | 1 / 4 / 8 | 4.1 / 9.6 / 9.9 | 12.8 / 35.4 / 30.8 |
 
-| TMS peak RSS, upload → encrypt → store → download → decrypt → thumbnail | Before | After |
-|---|---|---|
-| idle, after a warm-up | 319–335 MB | 37 MB |
-| 5 MB PDF | 319 MB | 87 MB |
-| 20 MB PDF | 353 MB | 215 MB |
-| 52 MB PDF | 551 MB | 440 MB |
+| TMS peak RSS, upload → encrypt → store → download → decrypt → thumbnail | Before (Go) | Worker, whole-file envelope | Worker, streaming blobs |
+|---|---|---|---|
+| idle, after a warm-up | 319–335 MB | 37 MB | 37 MB |
+| 5 MB PDF | 319 MB | 87 MB | 41 MB |
+| 20 MB PDF | 353 MB | 215 MB | 42 MB |
+| 52 MB PDF | 551 MB | 440 MB | 43 MB |
 
 Reading the numbers:
 
@@ -285,8 +350,7 @@ Reading the numbers:
 - **Rotate and image to PDF are slower** (by 1–2 ms): they were sub-millisecond pdfcpu edits in
   process, and are now a gRPC call, an admission decision and a hand-off to a child. Nothing
   calls either in a loop; a capture batch's assembly is one call for the whole batch.
-- **Peak RSS of large documents** is still dominated by the stored-blob envelope: the whole
-  file, its encrypted copy and its base64 JSON envelope are held at once on both sides of
-  storage. The imaging path itself no longer holds a copy of the document or any WebAssembly
-  heap; the idle footprint fell from about 330 MB to 37 MB. The streaming blob format ends the
-  whole-file buffers.
+- **Peak RSS no longer grows with the document.** With the whole-file envelope the file, its
+  ciphertext and its base64 JSON were held at once on both sides of storage; with streaming
+  blobs a 52 MB document peaks 6 MB above idle, the chunk buffers and the gRPC stream's
+  window. The idle footprint fell from about 330 MB (the WebAssembly heaps) to 37 MB.

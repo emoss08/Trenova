@@ -2,6 +2,7 @@ package docling
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -52,9 +53,11 @@ func convertRequest(body string) *kernelports.ConvertRequest {
 	return &kernelports.ConvertRequest{
 		FileName:    "../../Rate Con #48213.pdf",
 		ContentType: "application/pdf",
-		Body:        strings.NewReader(body),
-		Size:        int64(len(body)),
-		OCR:         true,
+		Open: func(context.Context) (io.ReadCloser, error) {
+			return io.NopCloser(strings.NewReader(body)), nil
+		},
+		Size: int64(len(body)),
+		OCR:  true,
 	}
 }
 

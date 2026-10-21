@@ -1,6 +1,6 @@
 {
   "label": "TMS through the imaging worker",
-  "recordedAt": "2026-10-21T03:02:21Z",
+  "recordedAt": "2026-10-21T04:08:54Z",
   "machine": {
     "goVersion": "go1.27.1",
     "os": "linux",
@@ -367,6 +367,30 @@
       "peakRssMb": 440.48828125,
       "baselineRssMb": 37.03125,
       "seconds": 0.909198999
+    },
+    {
+      "input": "large-5mb.pdf",
+      "inputBytes": 4602134,
+      "pipeline": "upload -\u003e seal (streaming) -\u003e store -\u003e open (streaming) -\u003e thumbnail",
+      "peakRssMb": 41.04296875,
+      "baselineRssMb": 37.2421875,
+      "seconds": 0.055409273
+    },
+    {
+      "input": "large-20mb.pdf",
+      "inputBytes": 21469064,
+      "pipeline": "upload -\u003e seal (streaming) -\u003e store -\u003e open (streaming) -\u003e thumbnail",
+      "peakRssMb": 41.66015625,
+      "baselineRssMb": 36.91015625,
+      "seconds": 0.083385549
+    },
+    {
+      "input": "large-50mb.pdf",
+      "inputBytes": 52141924,
+      "pipeline": "upload -\u003e seal (streaming) -\u003e store -\u003e open (streaming) -\u003e thumbnail",
+      "peakRssMb": 43.484375,
+      "baselineRssMb": 37.328125,
+      "seconds": 0.167817126
     }
   ]
 }

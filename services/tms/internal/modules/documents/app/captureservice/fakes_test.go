@@ -110,7 +110,9 @@ func (w *world) service() *Service {
 		organizations: fakeOrganizations{w},
 		permissions:   &fakePermissions{w: w},
 		storage:       &fakeStorage{w: w},
-		cipher:        fakeCipher{},
+		cipher: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("capture-test-key-material"),
+		),
 		uploads:       &fakeUploads{w},
 		imaging:       &fakeImaging{w},
 		qrCodes:       captureqr.New(),
@@ -955,23 +957,6 @@ func (f *fakeStorage) Delete(_ context.Context, key string) error {
 	delete(f.w.objects, key)
 
 	return nil
-}
-
-// fakeCipher seals by binding the bytes to their AAD, so a test catches an
-// object opened under a different key than it was sealed with.
-type fakeCipher struct{}
-
-func (fakeCipher) EncryptBytesWithAAD(plaintext []byte, aad encryptionservice.AAD) (string, error) {
-	return "sealed|" + string(aad.Purpose) + "|" + aad.ResourceID + "|" + string(plaintext), nil
-}
-
-func (fakeCipher) DecryptBytesWithAAD(value string, aad encryptionservice.AAD) ([]byte, error) {
-	prefix := "sealed|" + string(aad.Purpose) + "|" + aad.ResourceID + "|"
-	if !strings.HasPrefix(value, prefix) {
-		return nil, fmt.Errorf("aad mismatch")
-	}
-
-	return []byte(strings.TrimPrefix(value, prefix)), nil
 }
 
 type fakeUploads struct{ w *world }

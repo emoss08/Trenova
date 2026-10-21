@@ -1,17 +1,16 @@
 package documentuploadservice
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
@@ -34,7 +33,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
-	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -350,54 +348,36 @@ func (s *Service) UploadPart(
 		)
 	}
 
-	plaintext, err := io.ReadAll(io.LimitReader(req.Body, session.FileSize+1))
-	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to read uploaded file").WithInternal(err)
+	source := contentscanports.SourceUpload
+	if session.ProcessingProfile == document.ProcessingProfileInboundAttachment {
+		source = contentscanports.SourceInboundAttachment
 	}
-	if int64(len(plaintext)) != session.FileSize {
-		return nil, errortypes.NewConflictError(
-			"Uploaded file size does not match the original file",
-		)
-	}
-
-	if err = s.scanPart(ctx, session, req, plaintext); err != nil {
-		return nil, err
-	}
-
-	if s.encryption == nil {
-		return nil, errortypes.NewBusinessError("Document encryption is not configured")
-	}
-	encrypted, encErr := s.encryption.EncryptBytesWithAAD(
-		plaintext,
-		uploadSessionStorageAAD(session),
-	)
-	if encErr != nil {
-		return nil, errortypes.NewBusinessError("Failed to encrypt document upload").
-			WithInternal(encErr)
-	}
-	uploadBody := []byte(encrypted)
-	cryptoMode := encryptionservice.CryptoModeForCiphertext(encrypted)
-	cryptoVersion := int16(1)
-
-	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
+	written, err := storedobject.Write(ctx, s.storage, s.encryption, &storedobject.WriteRequest{
 		Key:         session.StoragePath,
 		ContentType: session.ContentType,
-		Size:        int64(len(uploadBody)),
-		Body:        bytes.NewReader(uploadBody),
 		Metadata: map[string]string{
 			"original_name": session.OriginalName,
 			"resource_id":   session.ResourceID,
 			"resource_type": session.ResourceType,
-			"crypto_mode":   cryptoMode,
 		},
-	}); err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to upload document").WithInternal(err)
+		AAD:  uploadSessionStorageAAD(session),
+		Body: req.Body,
+		Size: session.FileSize,
+		Gate: s.contentGate,
+		Scan: &contentscanports.StreamRequest{
+			TenantInfo: req.TenantInfo,
+			Source:     source,
+			FileName:   session.OriginalName,
+		},
+	})
+	if err != nil {
+		return nil, s.refuseUpload(ctx, session, err)
 	}
 
 	session.Status = documentupload.StatusUploaded
-	session.ChecksumSHA256 = hashutils.SHA256BytesHex(plaintext)
-	session.CryptoMode = cryptoMode
-	session.CryptoVersion = cryptoVersion
+	session.ChecksumSHA256 = written.SHA256
+	session.CryptoMode = encryptionservice.CryptoModeBlobV1
+	session.CryptoVersion = storedobject.CryptoVersion
 	session.UploadedParts = []kernelports.UploadedPart{{
 		PartNumber: 1,
 		Size:       session.FileSize,
@@ -406,25 +386,11 @@ func (s *Service) UploadPart(
 	return s.sessionRepo.Update(ctx, session)
 }
 
-func (s *Service) scanPart(
+func (s *Service) refuseUpload(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
-	req *documentuploadports.UploadPartRequest,
-	plaintext []byte,
+	err error,
 ) error {
-	source := contentscanports.SourceUpload
-	if session.ProcessingProfile == document.ProcessingProfileInboundAttachment {
-		source = contentscanports.SourceInboundAttachment
-	}
-	_, err := contentscanports.Check(ctx, s.contentGate, &contentscanports.ScanRequest{
-		TenantInfo: req.TenantInfo,
-		Source:     source,
-		FileName:   session.OriginalName,
-		Content:    plaintext,
-	})
-	if err == nil {
-		return nil
-	}
 	if errors.Is(err, contentscanports.ErrInfected) {
 		session.Status = documentupload.StatusQuarantined
 		session.FailureCode = documentupload.FailureMalwareDetected.String()
@@ -795,7 +761,7 @@ func (s *Service) runSynchronousFinalization(
 		return nil, errortypes.NewDatabaseError("Failed to verify uploaded file").WithInternal(err)
 	}
 
-	if session.CryptoMode != encryptionservice.CryptoModeEnvelopeV1 {
+	if session.CryptoMode != encryptionservice.CryptoModeBlobV1 {
 		return nil, errortypes.NewConflictError("Uploaded file is not encrypted")
 	}
 	if len(session.UploadedParts) == 0 {

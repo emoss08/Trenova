@@ -128,13 +128,11 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 		),
 	)
 	doc := thumbnailDocument()
-	encrypted, err := enc.EncryptBytesWithAAD(
-		testPNG(t),
-		documentStorageAAD(doc, doc.StoragePath),
-	)
-	require.NoError(t, err)
-
-	storageClient := &thumbnailStorage{download: []byte(encrypted)}
+	original := testPNG(t)
+	doc.FileSize = int64(len(original))
+	storageClient := &thumbnailStorage{
+		download: sealBlob(t, enc, original, documentStorageAAD(doc, doc.StoragePath)),
+	}
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
 	repo.EXPECT().
@@ -165,13 +163,17 @@ func TestGenerateThumbnailActivityDecryptsOriginalAndStoresEncryptedPreview(t *t
 	require.NotEmpty(t, previewPath)
 	require.Equal(t, doc.StoragePath, storageClient.downloadKey)
 	require.Equal(t, previewPath, storageClient.uploadKey)
-	require.Equal(t, encryptionservice.CryptoModeEnvelopeV1, storageClient.metadata["crypto_mode"])
-	require.True(t, encryptionservice.IsEnvelope(string(storageClient.uploadBody)))
+	require.Equal(t, encryptionservice.CryptoModeBlobV1, storageClient.metadata["crypto_mode"])
+	require.True(t, encryptionservice.IsBlob(storageClient.uploadBody))
 
-	_, err = enc.DecryptBytesWithAAD(
-		string(storageClient.uploadBody),
+	opened, err := enc.OpenBlob(
+		t.Context(),
+		bytes.NewReader(storageClient.uploadBody),
+		int64(len(storageClient.uploadBody)),
 		documentStorageAAD(doc, previewPath),
 	)
+	require.NoError(t, err)
+	_, err = io.ReadAll(opened)
 	require.NoError(t, err)
 }
 
@@ -184,10 +186,11 @@ func TestPrerenderPagesActivityStoresEveryPageViewEncrypted(t *testing.T) {
 		),
 	)
 	doc := thumbnailDocument()
-	encrypted, err := enc.EncryptBytesWithAAD(testPNG(t), documentStorageAAD(doc, doc.StoragePath))
-	require.NoError(t, err)
-
-	storageClient := &thumbnailStorage{download: []byte(encrypted)}
+	original := testPNG(t)
+	doc.FileSize = int64(len(original))
+	storageClient := &thumbnailStorage{
+		download: sealBlob(t, enc, original, documentStorageAAD(doc, doc.StoragePath)),
+	}
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.EXPECT().GetByID(mock.Anything, mockGetDocumentRequest(doc)).Return(doc, nil)
 
@@ -217,7 +220,7 @@ func TestPrerenderPagesActivityStoresEveryPageViewEncrypted(t *testing.T) {
 	require.NoError(t, result.Get(&stored))
 	assert.Equal(t, 3, stored)
 	assert.Equal(t, pagerender.Key(doc, 3), storageClient.uploadKey, "the last page stored")
-	assert.True(t, encryptionservice.IsEnvelope(string(storageClient.uploadBody)))
+	assert.True(t, encryptionservice.IsBlob(storageClient.uploadBody))
 }
 
 func thumbnailDocument() *document.Document {
@@ -274,4 +277,18 @@ func testPNG(t *testing.T) []byte {
 	var buf bytes.Buffer
 	require.NoError(t, png.Encode(&buf, img))
 	return buf.Bytes()
+}
+
+func sealBlob(
+	t *testing.T,
+	enc *encryptionservice.Service,
+	plaintext []byte,
+	aad encryptionservice.AAD,
+) []byte {
+	t.Helper()
+	sealed, err := enc.SealBlob(t.Context(), bytes.NewReader(plaintext), int64(len(plaintext)), aad)
+	require.NoError(t, err)
+	out, err := io.ReadAll(sealed)
+	require.NoError(t, err)
+	return out
 }

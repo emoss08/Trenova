@@ -2,7 +2,13 @@ package contentscanservice
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"hash"
+	"io"
+	"sync"
 
 	"github.com/emoss08/trenova/internal/infrastructure/clamav"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -11,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/shared/hashutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -79,35 +84,142 @@ func (s *Service) Check(
 	ctx context.Context,
 	req *contentscanports.ScanRequest,
 ) (*contentscanports.ScanResult, error) {
-	if s.scanner == nil {
-		return &contentscanports.ScanResult{Verdict: contentscanports.VerdictUnscanned}, nil
-	}
+	return contentscanports.CheckWith(ctx, s, req)
+}
 
-	result, err := s.scanner.Scan(ctx, req.Content)
-	if err != nil {
+func (s *Service) Stream(
+	ctx context.Context,
+	req *contentscanports.StreamRequest,
+) (contentscanports.Stream, error) {
+	if s.scanner == nil {
+		return unscannedStream{}, nil
+	}
+	reader, writer := io.Pipe()
+	stream := &scanStream{
+		service: s,
+		req:     req,
+		writer:  writer,
+		digest:  sha256.New(),
+		done:    make(chan struct{}),
+	}
+	go func() {
+		defer close(stream.done)
+		stream.result, stream.err = s.scanner.Scan(ctx, reader, req.Size)
+		if stream.err == nil {
+			stream.err = drained(reader)
+		}
+		_ = reader.CloseWithError(errScanEnded)
+	}()
+	return stream, nil
+}
+
+var errScanEnded = errors.New("the malware scanner stopped reading")
+
+func drained(reader io.Reader) error {
+	var probe [1]byte
+	if n, _ := reader.Read(probe[:]); n > 0 {
+		return fmt.Errorf(
+			"%w: %w before the end of the file",
+			contentscanports.ErrScannerUnavailable,
+			errScanEnded,
+		)
+	}
+	return nil
+}
+
+type unscannedStream struct{}
+
+func (unscannedStream) Write(p []byte) (int, error) { return len(p), nil }
+
+func (unscannedStream) Finish() (*contentscanports.ScanResult, error) {
+	return &contentscanports.ScanResult{Verdict: contentscanports.VerdictUnscanned}, nil
+}
+
+func (unscannedStream) Abort() {}
+
+type scanStream struct {
+	service  *Service
+	req      *contentscanports.StreamRequest
+	writer   *io.PipeWriter
+	digest   hash.Hash
+	size     int64
+	broken   bool
+	done     chan struct{}
+	result   *contentscanports.ScanResult
+	err      error
+	finished sync.Once
+	verdict  *contentscanports.ScanResult
+	refusal  error
+}
+
+func (w *scanStream) Write(p []byte) (int, error) {
+	w.digest.Write(p)
+	w.size += int64(len(p))
+	if w.broken {
+		return len(p), nil
+	}
+	if _, err := w.writer.Write(p); err != nil {
+		<-w.done
+		if !w.service.failOpen {
+			return 0, w.unavailable()
+		}
+		w.broken = true
+	}
+	return len(p), nil
+}
+
+func (w *scanStream) unavailable() error {
+	if w.err != nil {
+		return w.err
+	}
+	return fmt.Errorf("%w: %w", contentscanports.ErrScannerUnavailable, errScanEnded)
+}
+
+func (w *scanStream) Finish() (*contentscanports.ScanResult, error) {
+	w.finished.Do(func() {
+		_ = w.writer.Close()
+		<-w.done
+		w.verdict, w.refusal = w.decide()
+	})
+	return w.verdict, w.refusal
+}
+
+func (w *scanStream) Abort() {
+	w.finished.Do(func() {
+		_ = w.writer.CloseWithError(context.Canceled)
+		<-w.done
+		w.refusal = context.Canceled
+	})
+}
+
+func (w *scanStream) decide() (*contentscanports.ScanResult, error) {
+	s := w.service
+	if w.err != nil || w.broken || w.result == nil {
+		err := w.unavailable()
 		if !s.failOpen {
 			return nil, err
 		}
 		s.l.Warn("let a file through unscanned because the scanner could not check it",
-			zap.String("source", string(req.Source)),
-			zap.String("fileName", req.FileName),
+			zap.String("source", string(w.req.Source)),
+			zap.String("fileName", w.req.FileName),
 			zap.Error(err))
 		return &contentscanports.ScanResult{Verdict: contentscanports.VerdictUnscanned}, nil
 	}
 
-	if result.Verdict != contentscanports.VerdictInfected {
-		return result, nil
+	if w.result.Verdict != contentscanports.VerdictInfected {
+		return w.result, nil
 	}
 
-	s.recordInfected(req, result)
-	return result, &contentscanports.InfectedError{Signature: result.Signature}
+	s.recordInfected(w.req, w.result, hex.EncodeToString(w.digest.Sum(nil)), w.size)
+	return w.result, &contentscanports.InfectedError{Signature: w.result.Signature}
 }
 
 func (s *Service) recordInfected(
-	req *contentscanports.ScanRequest,
+	req *contentscanports.StreamRequest,
 	result *contentscanports.ScanResult,
+	checksum string,
+	size int64,
 ) {
-	checksum := hashutils.SHA256BytesHex(req.Content)
 	s.l.Warn("refused a file the malware scanner flagged",
 		zap.String("source", string(req.Source)),
 		zap.String("fileName", req.FileName),
@@ -132,7 +244,7 @@ func (s *Service) recordInfected(
 			"source":    string(req.Source),
 			"signature": result.Signature,
 			"sha256":    checksum,
-			"sizeBytes": len(req.Content),
+			"sizeBytes": size,
 		},
 	}
 	comment := fmt.Sprintf("Refused %q from %s: the malware scanner found %s",

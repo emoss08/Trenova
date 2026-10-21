@@ -69,7 +69,7 @@ func TestProviderAttachmentsUnsealsADocumentObject(t *testing.T) {
 	messageID := pulid.MustNew("emlmsg_")
 	key := tenant.OrgID.String() + "/shipment/eld.pdf"
 	plaintext := []byte("%PDF-1.7 ELD record")
-	sealed, err := h.crypto.EncryptBytesWithAAD(plaintext, encryptionservice.AAD{
+	sealed, err := sealBlob(t, h.crypto, plaintext, encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeDocument,
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
@@ -90,7 +90,7 @@ func TestProviderAttachmentsUnsealsADocumentObject(t *testing.T) {
 		ObjectKey:      key,
 		Seal:           email.AttachmentSealDocument,
 	}}, nil).Once()
-	h.stored(t, key, []byte(sealed))
+	h.stored(t, key, sealed)
 
 	attachments, err := h.svc.providerAttachments(t.Context(), tenant, messageID)
 
@@ -108,7 +108,7 @@ func TestProviderAttachmentsRefusesADocumentSealedForAnotherTenant(t *testing.T)
 	other := testTenantInfo()
 	messageID := pulid.MustNew("emlmsg_")
 	key := other.OrgID.String() + "/shipment/eld.pdf"
-	sealed, err := h.crypto.EncryptBytesWithAAD([]byte("%PDF"), encryptionservice.AAD{
+	sealed, err := sealBlob(t, h.crypto, []byte("%PDF"), encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeDocument,
 		OrganizationID: other.OrgID,
 		BusinessUnitID: other.BuID,
@@ -125,7 +125,7 @@ func TestProviderAttachmentsRefusesADocumentSealedForAnotherTenant(t *testing.T)
 		ObjectKey:      key,
 		Seal:           email.AttachmentSealDocument,
 	}}, nil).Once()
-	h.stored(t, key, []byte(sealed))
+	h.stored(t, key, sealed)
 
 	_, err = h.svc.providerAttachments(t.Context(), tenant, messageID)
 
@@ -191,4 +191,18 @@ func TestPersistAttachmentKeepsTheSealAndRefusesSealedContent(t *testing.T) {
 		Seal:      email.AttachmentSeal("Vault"),
 	})
 	require.Error(t, err)
+}
+
+func sealBlob(
+	t *testing.T,
+	crypto *encryptionservice.Service,
+	plaintext []byte,
+	aad encryptionservice.AAD,
+) ([]byte, error) {
+	t.Helper()
+	sealed, err := crypto.SealBlob(t.Context(), bytes.NewReader(plaintext), int64(len(plaintext)), aad)
+	if err != nil {
+		return nil, err
+	}
+	return io.ReadAll(sealed)
 }

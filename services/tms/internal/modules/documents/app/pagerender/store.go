@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	ContentType = "image/webp"
-	variant     = "view-1400x1800-webp"
+	ContentType    = "image/webp"
+	variant        = "view-1400x1800-webp"
+	maxRenderBytes = 32 << 20
 )
 
 type Params struct {
@@ -75,7 +76,7 @@ func (s *Store) Get(
 ) ([]byte, error) {
 	key := Key(doc, page)
 	stored, found, err := storedobject.ReadOptional(
-		ctx, s.storage, s.encryption, key, storedobject.AAD(tenantInfo, key),
+		ctx, s.storage, s.encryption, key, storedobject.AAD(tenantInfo, key), maxRenderBytes,
 	)
 	if err != nil {
 		s.logger.Warn("a stored page render could not be read; rendering it again",
@@ -156,18 +157,12 @@ func (s *Store) write(
 	key string,
 	data []byte,
 ) error {
-	if s.encryption == nil {
-		return errors.New("document encryption is not configured")
-	}
-	envelope, err := s.encryption.EncryptBytesWithAAD(data, storedobject.AAD(tenantInfo, key))
-	if err != nil {
-		return fmt.Errorf("encrypt the page render: %w", err)
-	}
-	if _, err = s.storage.Upload(ctx, &kernelports.UploadParams{
+	if _, err := storedobject.Write(ctx, s.storage, s.encryption, &storedobject.WriteRequest{
 		Key:         key,
-		ContentType: "application/octet-stream",
-		Size:        int64(len(envelope)),
-		Body:        bytes.NewReader([]byte(envelope)),
+		ContentType: ContentType,
+		AAD:         storedobject.AAD(tenantInfo, key),
+		Body:        bytes.NewReader(data),
+		Size:        int64(len(data)),
 	}); err != nil {
 		return fmt.Errorf("store the page render: %w", err)
 	}
