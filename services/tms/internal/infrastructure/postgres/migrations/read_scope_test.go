@@ -14,6 +14,7 @@ import (
 const (
 	readScopesUp       = "20261231009720_enforced_read_scopes.tx.up.sql"
 	unreadableScopesUp = "20261231010140_read_scope_unreadable_kinds.tx.up.sql"
+	linkedRowsUp       = "20261231010180_read_scope_linked_rows.tx.up.sql"
 )
 
 var (
@@ -37,7 +38,7 @@ func policyKinds(sql string) []string {
 func TestReadScopeMigration_PoliciesCoverEveryDatabaseScopedKind(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range []string{readScopesUp, unreadableScopesUp} {
+	for _, name := range []string{readScopesUp, unreadableScopesUp, linkedRowsUp} {
 		assert.Equal(
 			t,
 			permission.NewRegistry().DatabaseScopedResources(),
@@ -48,19 +49,30 @@ func TestReadScopeMigration_PoliciesCoverEveryDatabaseScopedKind(t *testing.T) {
 	}
 }
 
-func TestReadScopeMigration_EveryPolicyDeniesAKindThePrincipalCannotRead(t *testing.T) {
+// The current policies narrow only by "own" and "team". A kind the principal
+// cannot read is left to the application, which shows a linked row as its
+// kind's reference view and refuses a root read, so no policy hides a kind
+// by itself.
+func TestReadScopeMigration_NoPolicyHidesAKindThePrincipalCannotRead(t *testing.T) {
 	t.Parallel()
 
-	up := readMigration(t, unreadableScopesUp)
+	up := readMigration(t, linkedRowsUp)
 	policies := strings.Split(up, "CREATE POLICY read_scope ON ")
 	require.Len(t, policies, len(permission.NewRegistry().DatabaseScopedResources())+1)
 
 	for _, policy := range policies[1:] {
 		kinds := policyKinds(policy)
 		require.Len(t, kinds, 1, policy)
-		assert.Contains(t, policy, "NOT IN (", kinds[0])
-		assert.Contains(t, policy, "'none'", kinds[0])
+		assert.NotContains(t, policy, "'none'", kinds[0])
+		assert.NotContains(t, policy, "NOT IN (", kinds[0])
 	}
+
+	previous := readMigration(t, unreadableScopesUp)
+	assert.Equal(t,
+		previous[strings.Index(previous, "DROP POLICY"):],
+		readMigration(t, strings.Replace(linkedRowsUp, ".up.", ".down.", 1)),
+		"the down migration restores the policies it replaced",
+	)
 }
 
 func TestReadScopeMigration_KeepsExactlyTheScopesTheRegistryDeclares(t *testing.T) {

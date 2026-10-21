@@ -123,6 +123,9 @@ func (r *MutationResolver) ApplyCreditMemo(ctx context.Context, input gqlmodel.A
 	if err != nil {
 		return nil, err
 	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead); err != nil {
+		return nil, err
+	}
 
 	req, err := applyCreditMemoRequestFromInput(&input, base.TenantInfo(authCtx))
 	if err != nil {
@@ -139,6 +142,9 @@ func (r *MutationResolver) UnapplyCreditMemoApplication(ctx context.Context, inp
 		permission.OpUpdate,
 	)
 	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceInvoice, permission.OpRead); err != nil {
 		return nil, err
 	}
 
