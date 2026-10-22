@@ -18695,6 +18695,10 @@ func init() {
 				FieldMapKey: "isSplitBill",
 			},
 			{
+				Name:        "ratingNotes",
+				FieldMapKey: "ratingNotes",
+			},
+			{
 				Name:    "relatedInvoices",
 				Special: "relatedInvoices",
 			},
@@ -19306,6 +19310,10 @@ func init() {
 			{
 				Name:        "rate",
 				FieldMapKey: "rate",
+			},
+			{
+				Name:        "rateUnit",
+				FieldMapKey: "rateUnit",
 			},
 			{
 				Name:        "allocationPercent",
@@ -21922,12 +21930,8 @@ func init() {
 				FieldMapKey: "currency",
 			},
 			{
-				Name:        "defaultMinCharge",
-				FieldMapKey: "defaultMinCharge",
-			},
-			{
-				Name:        "defaultMaxCharge",
-				FieldMapKey: "defaultMaxCharge",
+				Name:        "inputs",
+				FieldMapKey: "inputs",
 			},
 			{
 				Name:        "marginFloorPercent",
@@ -22013,16 +22017,8 @@ func init() {
 				FieldMapKey: "status",
 			},
 			{
-				Name:        "formulaTemplateId",
-				FieldMapKey: "formulaTemplateId",
-			},
-			{
-				Name:    "formulaTemplateName",
-				Special: "formulaTemplateName",
-			},
-			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:        "valueType",
+				FieldMapKey: "valueType",
 			},
 			{
 				Name:        "version",
@@ -24340,8 +24336,12 @@ func init() {
 				FieldMapKey: "freightChargeAmount",
 			},
 			{
-				Name:        "baseRate",
-				FieldMapKey: "baseRate",
+				Name:        "tariffInputs",
+				FieldMapKey: "tariffInputs",
+			},
+			{
+				Name:        "freightLines",
+				FieldMapKey: "freightLines",
 			},
 			{
 				Name:        "totalChargeAmount",
@@ -24390,10 +24390,6 @@ func init() {
 			{
 				Name:        "billedAt",
 				FieldMapKey: "billedAt",
-			},
-			{
-				Name:        "ratingUnit",
-				FieldMapKey: "ratingUnit",
 			},
 			{
 				Name:        "fuelSurchargeLocked",
@@ -24615,6 +24611,26 @@ func init() {
 			{
 				Name:        "isDetention",
 				FieldMapKey: "isDetention",
+			},
+			{
+				Name:        "isTariff",
+				FieldMapKey: "isTariff",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "quantity",
+				FieldMapKey: "quantity",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "rateUnit",
+				FieldMapKey: "rateUnit",
 			},
 			{
 				Name:        "version",

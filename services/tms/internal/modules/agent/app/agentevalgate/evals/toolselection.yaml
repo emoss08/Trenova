@@ -334,7 +334,7 @@ cases:
     expect: [rate_list_agreements]
   - request: which carrier contracts and tariffs do we have
     expect: [rate_list_agreements]
-  - request: show the lane rules and weight breaks in this rate agreement
+  - request: show the lane rules and the rates they set in this rate agreement
     expect: [rate_get_agreement]
   - request: what minimum charge does the contract set on the Dallas lane
     expect: [rate_get_agreement]
