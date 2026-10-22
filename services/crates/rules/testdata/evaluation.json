@@ -3,6 +3,7 @@
   "environments": {
     "conformance": {
       "totalWeight": 1200,
+      "weight": 1200,
       "totalStops": 2,
       "hasHazmat": false,
       "stops": [

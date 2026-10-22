@@ -508,13 +508,34 @@ fn malformed_requests_are_request_errors() {
 }
 
 #[test]
-fn the_schema_is_accepted_and_left_to_the_checker() {
+fn the_schema_is_left_to_the_checker_but_its_word_operators_are_grammar() {
     let out = results(&json!({
-        "programs": [{"id": "x", "source": "weight * 2", "expect": "amount"}],
-        "schema": {"fields": [{"name": "weight", "type": "Number"}]},
-        "env": {"weight": 3},
+        "programs": [
+            {"id": "x", "source": "weight * 2", "expect": "amount"},
+            {"id": "word", "source": "zip hasPrefix \"75\" ? 1 : 0", "expect": "amount"},
+        ],
+        "schema": {
+            "variables": [{"name": "weight", "type": "number"}, {"name": "zip", "type": "string"}],
+            "operators": ["hasPrefix"],
+        },
+        "env": {"weight": 3, "zip": "75201"},
     }));
     assert_eq!(out[0]["value"], "6");
+    assert_eq!(
+        out[1]["value"], "1",
+        "a published word operator runs its function infix"
+    );
+    let unknown = results(&json!({
+        "programs": [{"id": "word", "source": "zip near \"75\"", "expect": "predicate"}],
+        "schema": {"operators": ["near"]},
+        "env": {"zip": "75201"},
+    }));
+    assert_eq!(unknown[0]["error"]["code"], "unknownName");
+    let without = results(&json!({
+        "programs": [{"id": "word", "source": "zip hasPrefix \"75\"", "expect": "predicate"}],
+        "env": {"zip": "75201"},
+    }));
+    assert_eq!(without[0]["error"]["code"], "syntax");
 }
 
 #[test]

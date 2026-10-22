@@ -7,7 +7,9 @@
 //! ("formula.evaluate and the rate table format").
 //!
 //! A program that does not parse comes back with a `syntax` error and is not run; the host runs
-//! `formula.check` first, so that is a caller bug made visible rather than a price.
+//! `formula.check` first, so that is a caller bug made visible rather than a price. Of the
+//! `schema` (the same as `formula.check` takes), only the word operators matter here, since the
+//! grammar needs them; the checker has already used the rest.
 
 use super::budget::Limits;
 use super::error::Code;
@@ -23,6 +25,7 @@ use super::trace::trace_value;
 use super::tree::parse_value;
 use super::value::Value;
 use super::value::format_number;
+use crate::formula::check::Schema;
 use crate::formula::syntax;
 use crate::message::Arg;
 use crate::message::Message;
@@ -42,8 +45,8 @@ use std::collections::BTreeMap;
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Request<'a> {
     programs: Vec<ProgramInput>,
-    #[serde(default, borrow, rename = "schema")]
-    _schema: Option<&'a RawValue>,
+    #[serde(default)]
+    schema: Option<Schema>,
     #[serde(default, borrow)]
     env: Option<&'a RawValue>,
     #[serde(default)]
@@ -180,20 +183,22 @@ pub fn evaluate(input: &RawValue) -> OpResult {
         Some(tables) => Some(Tables::build(tables).map_err(RequestError::invalid_input)?),
         None => None,
     };
+    let operators: Vec<&str> = request
+        .schema
+        .iter()
+        .flat_map(|schema| schema.operators.iter().map(String::as_str))
+        .collect();
+    let context = Context {
+        env: &env,
+        tables: tables.as_ref(),
+        limits,
+        trace: &request.trace,
+        operators: &operators,
+    };
     let results = request
         .programs
         .iter()
-        .map(|program| {
-            run_program(
-                program,
-                &Context {
-                    env: &env,
-                    tables: tables.as_ref(),
-                    limits,
-                    trace: &request.trace,
-                },
-            )
-        })
+        .map(|program| run_program(program, &context))
         .collect();
     encode(&Response { results })
 }
@@ -203,6 +208,8 @@ struct Context<'a> {
     tables: Option<&'a Tables>,
     limits: Limits,
     trace: &'a TraceInput,
+    /// The schema's word operators, which the grammar needs to read the formula.
+    operators: &'a [&'a str],
 }
 
 fn limits(budget: &BudgetInput) -> Result<Limits, RequestError> {
@@ -223,7 +230,7 @@ fn limits(budget: &BudgetInput) -> Result<Limits, RequestError> {
 
 fn run_program(program: &ProgramInput, context: &Context<'_>) -> ProgramOutput {
     let index = Utf16Index::new(&program.source);
-    let parsed = syntax::parse(&program.source, &[]);
+    let parsed = syntax::parse(&program.source, context.operators);
     if let Some(diagnostic) = parsed.diagnostics.first() {
         let error = EvalError::new(Code::Syntax, diagnostic.message.clone()).at(diagnostic.span);
         return ProgramOutput {

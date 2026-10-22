@@ -284,7 +284,10 @@ Each area documents its operations here: the input and output, with an example, 
 Evaluates a batch of formulas against one environment in one boundary crossing: the server sends
 a template's main expression and every breakdown line for a shipment together. The environment
 is read once and the rate tables are indexed once; each program runs under its own budget. The
-host runs `formula.check` first; `schema` is accepted for that and ignored here.
+host runs `formula.check` first. `schema` is the same as `formula.check` takes, and only its
+`operators` matter here, since the grammar needs them: a published word operator runs the
+two-argument function of its name written infix (`zip hasPrefix "75"`), and one with no such
+function is `unknownName`.
 
 ```json
 {"op": "formula.evaluate", "input": {
