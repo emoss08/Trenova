@@ -102,7 +102,10 @@ contract. The standard library (`std`) ships with the module and is versioned wi
 - **Statements end at the end of a line.** There are no semicolons. An expression continues onto
   the next line when the line ends with an operator, a comma or an open bracket.
 - **Comments:** `//` runs to the end of the line. `///` is a doc comment; it attaches to the next
-  declaration and is shown in hover, completion and the inputs form.
+  declaration, enum variant or record field, and is shown in hover, completion, signature help
+  and the inputs form. The standard library's doc comments are catalog messages, translated
+  like the rest of the product; doc comments in an organisation's libraries and tariffs are shown
+  as their author wrote them.
 - **Identifiers:**
   - names are camelCase (`extraDropFee`);
   - types and enum variants are PascalCase (`Money`, `Delivery`);
@@ -736,6 +739,13 @@ The Studio edits one source file. Everything else is a view of it, computed by t
 - the inputs panel, from the `input` declarations, holding the preview's sample values;
 - the tests panel, from the `test` blocks, run in the browser on every change;
 - the bill preview: each charge with its code, quantity and rate, the notes and the adjustments.
+
+Every editor operation answers from one call on a file that may not parse, in UTF-16 positions.
+A `doc` on the wire is a string (the author's words) or a `Message` (a built-in's or the standard
+library's, translated by the host). Signature help gives a parameter the sentences of its
+function's doc that name it, and none when they would only repeat the function's doc. Rename
+refuses a name imported from a library (rename it in the library), keywords, schema roots and
+tests, and refuses a new name that would collide with one in scope.
 
 ## What stays the same
 
