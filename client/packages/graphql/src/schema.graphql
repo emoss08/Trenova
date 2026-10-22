@@ -24926,7 +24926,20 @@ type Query {
   workerRecognitions(workerId: ID!): [WorkerRecognition!]!
   workerRosterAttention: WorkerRosterAttention!
   workerSafetyEvent(id: ID!): WorkerSafetyEvent!
-  workerSafetyEvents(workerId: ID!): [WorkerSafetyEvent!]!
+  """
+  Safety events, newest first: one worker's record, or every worker's across
+  the organization when no worker is named.
+  """
+  workerSafetyEvents(
+    """
+    At most this many events, from 1 to 100. Every event of a named worker when left out; 20 across the organization.
+    """
+    limit: Int
+    """Only the events still open or under review."""
+    openOnly: Boolean
+    """The worker whose events are read. Leave it out for every worker's."""
+    workerId: ID
+  ): [WorkerSafetyEvent!]!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
   workerSafetyViolations(safetyEventId: ID, workerId: ID): [WorkerSafetyViolation!]!
   workerShiftAssignments(activeOnly: Boolean, workerId: ID!): [WorkerShiftAssignment!]!
@@ -33748,6 +33761,11 @@ type WorkerSafetyEvent {
   status: SafetyEventStatus!
   updatedAt: Timestamp!
   version: Int!
+  """
+  The roadside violations cited on the event, by BASIC and then the heaviest
+  first.
+  """
+  violations: [WorkerSafetyViolation!]!
   worker: Worker
   workerId: ID!
 }
@@ -33778,7 +33796,7 @@ One violation cited on a safety event. A roadside inspection routinely produces
 several, in different BASICs, so they are rows rather than a column on the
 event.
 """
-type WorkerSafetyViolation {
+type WorkerSafetyViolation @kind(resource: "worker_safety_event") {
   basic: CSABasic!
   businessUnitId: ID!
   code: String

@@ -115,3 +115,59 @@ func TestUnsupplied_AnUnpagedListSendsItsOwnArguments(t *testing.T) {
 		})
 	}
 }
+
+const alongsideSchema = `
+input CodeFilter { region: String }
+type Event { id: ID! }
+type Recognition { id: ID! }
+type Query {
+  workerEvents(workerId: ID, openOnly: Boolean): [Event!]!
+  workerRecognitions(workerId: ID!, filter: CodeFilter, region: String): [Recognition!]!
+}
+`
+
+func TestAlongsideKeys_AKeyedReadTakesOnlyWhatTheListsCallSends(t *testing.T) {
+	t.Parallel()
+
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: alongsideSchema})
+	list := &binding{
+		Tool: "worker_list_events",
+		Verb: verbList,
+		Operation: supplyOperation(t, schema, "DeskWorkerEvents",
+			`query DeskWorkerEvents($workerId: ID, $openOnly: Boolean) {
+				workerEvents(workerId: $workerId, openOnly: $openOnly) { id } }`),
+	}
+	cases := map[string]struct {
+		text string
+		keys []string
+	}{
+		"keyed by the worker the call names": {
+			text: `query DeskWorkerRecognitions($workerId: ID!) {
+				workerRecognitions(workerId: $workerId) { id } }`,
+			keys: []string{"workerId"},
+		},
+		"a variable the call does not send": {
+			text: `query DeskWorkerRecognitions($workerId: ID!, $region: String) {
+				workerRecognitions(workerId: $workerId, region: $region) { id } }`,
+		},
+		"an input object": {
+			text: `query DeskWorkerRecognitions($workerId: ID!, $filter: CodeFilter) {
+				workerRecognitions(workerId: $workerId, filter: $filter) { id } }`,
+		},
+		"keyed by nothing": {
+			text: `query DeskWorkerRecognitions {
+				workerRecognitions(workerId: "wrk_1") { id } }`,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			keys, problem := alongsideKeys(list,
+				supplyOperation(t, schema, "DeskWorkerRecognitions", tc.text),
+				"DeskWorkerRecognitions")
+			assert.Equal(t, tc.keys, keys)
+			assert.Equal(t, tc.keys == nil, problem != "", problem)
+		})
+	}
+}

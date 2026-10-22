@@ -146,7 +146,6 @@ func joinStrings[T ~string](values []T) string {
 
 func workforceQueryToolProviders() []any {
 	return []any{
-		provideListWorkerSafetyEventsTool,
 		provideListDOTRandomDrawsTool,
 		provideGetDOTRandomDrawTool,
 		provideListWorkerCredentialsTool,

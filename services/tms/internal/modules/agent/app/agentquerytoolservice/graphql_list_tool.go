@@ -79,6 +79,10 @@ type graphQLListSpec struct {
 	// defaultsAt are defaults that depend on the day (time off from today),
 	// applied together only when a call gives none of them.
 	defaultsAt func(clk clock) map[string]any
+	// unscoped are defaults a call that names none of its references reads
+	// with (the open safety events across the organization, where one
+	// worker's are read whole).
+	unscoped map[string]any
 	// inputs are input fields every call sends, as the screen sets them for
 	// its own rendering (each time-off request's worker).
 	inputs map[string]any
@@ -296,11 +300,18 @@ func applyDefaults(spec *graphQLListSpec, args map[string]any, clk clock) map[st
 			}
 		}
 	}
-	if len(spec.defaults) == 0 && len(dated) == 0 {
+	var unscoped map[string]any
+	if !namesReference(spec, args) {
+		unscoped = spec.unscoped
+	}
+	if len(spec.defaults) == 0 && len(dated) == 0 && len(unscoped) == 0 {
 		return args
 	}
-	out := make(map[string]any, len(args)+len(spec.defaults)+len(dated))
+	out := make(map[string]any, len(args)+len(spec.defaults)+len(dated)+len(unscoped))
 	for name, value := range spec.defaults {
+		out[name] = value
+	}
+	for name, value := range unscoped {
 		out[name] = value
 	}
 	for name, value := range dated {
@@ -311,6 +322,18 @@ func applyDefaults(spec *graphQLListSpec, args map[string]any, clk clock) map[st
 	}
 
 	return out
+}
+
+// namesReference reports whether a call names any record its spec's
+// references point to (the worker whose events are read).
+func namesReference(spec *graphQLListSpec, args map[string]any) bool {
+	for name := range spec.references {
+		if raw, given := args[name]; given && raw != nil && raw != "" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // describable reports whether a parameter's field can be filtered at the

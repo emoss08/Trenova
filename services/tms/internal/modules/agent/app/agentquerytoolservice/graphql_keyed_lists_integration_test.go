@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerinjuryrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerleaverepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workersafetyrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
@@ -27,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -58,17 +60,24 @@ type keyedCase struct {
 	allArgs     map[string]any
 	defaultOpen bool
 	// orgWide marks a list that reads every worker's records when it names
-	// no worker.
-	orgWide bool
+	// no worker, and openByDefaultUnscoped one that then reads only the open
+	// ones unless asked for every one.
+	orgWide               bool
+	openByDefaultUnscoped bool
 	// restricted are fields a record carries that an agent at the default
 	// data access (Internal) is never shown.
 	restricted []string
-	write      func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error)
-	before     func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error)
-	// templates writes a template the list reads alongside under key, and
-	// one it must leave out, and returns the first's id.
+	// nested is a list every record carries rows of (an event's violations).
+	nested string
+	write  func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error)
+	before func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error)
+	// templates writes a record the list reads alongside under key, and one
+	// it must leave out, and returns the first's id. keyed marks a read
+	// alongside keyed by the worker the call names, made only when it names
+	// one.
 	key       string
-	templates func(ctx context.Context, tenant *agentreadtest.Tenant, label string) (pulid.ID, error)
+	keyed     bool
+	templates func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string) (pulid.ID, error)
 }
 
 //nolint:funlen // one entry per keyed list
@@ -104,7 +113,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				rows, err := services.checklistService.ListForWorker(ctx, tenant, workerID, includeClosed)
 				return idsOf(rows, err)
 			},
-			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, label string) (pulid.ID, error) {
+			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				manual, err := services.checklists.CreateTemplate(ctx, &worker.WorkerChecklistTemplate{
 					BusinessUnitID: bu, OrganizationID: org, Code: "M" + label, Name: "Manual " + label,
@@ -173,7 +182,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				rows, err := services.reviewService.ListReviews(ctx, tenant, workerID, nil)
 				return idsOf(rows, err)
 			},
-			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, label string) (pulid.ID, error) {
+			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
 				active, err := services.reviews.CreateTemplate(ctx, reviewTemplate(tenant, "A"+label, domaintypes.StatusActive))
 				if err != nil {
 					return pulid.Nil, err
@@ -285,6 +294,49 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return idsOf(rows, err)
 			},
 		},
+		{
+			tool: "worker_list_safety_events", orgWide: true, openByDefaultUnscoped: true,
+			nested: "violations",
+			key: "recognitions", keyed: true,
+			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{"openOnly": false},
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				status, closedAt := worker.SafetyEventStatusOpen, (*int64)(nil)
+				if closed {
+					status, closedAt = worker.SafetyEventStatusClosed, &now
+				}
+				event, err := services.safety.CreateEvent(ctx, &worker.WorkerSafetyEvent{
+					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+					Kind: worker.SafetyEventInspection, Severity: worker.SafetySeverityMinor,
+					Status: status, OccurredAt: now, Points: 2, ClosedAt: closedAt,
+					Description: "Level 2 at the Gary scale " + label,
+				})
+				if err != nil {
+					return pulid.Nil, err
+				}
+				_, err = services.safety.CreateViolation(ctx, &worker.WorkerSafetyViolation{
+					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+					SafetyEventID: event.ID, Basic: worker.BasicVehicleMaintenance,
+					Code: "393.9", Description: "Inoperable lamp " + label, SeverityWeight: 2,
+				})
+				return created(event, err)
+			},
+			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
+				rows, err := services.safetyService.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
+					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+				})
+				return idsOf(rows, err)
+			},
+			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				row, err := services.safety.CreateRecognition(ctx, &worker.WorkerRecognition{
+					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+					Kind: worker.RecognitionKindTenure, Title: "Ten years " + label,
+					OccurredAt: now, VisibleToWorker: true,
+				})
+				return created(row, err)
+			},
+		},
 	}
 }
 
@@ -333,6 +385,8 @@ type agentreadServices struct {
 	dqf              dqfRepo
 	leaveService     *workerleaveservice.Service
 	dqfService       *workerdqfservice.Service
+	safety           workerports.WorkerSafetyRepository
+	safetyService    *workersafetyservice.Service
 }
 
 type (
@@ -404,7 +458,7 @@ func writeKeyedRows(
 		}
 	}
 	if c.templates != nil {
-		out.template, err = c.templates(out.ctx, tenant, label)
+		out.template, err = c.templates(out.ctx, tenant, driver.ID, label)
 		require.NoError(t, err, c.tool)
 	}
 
@@ -459,6 +513,11 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	resolvers.WorkerDQFService = services.dqfService
 	resolvers.WorkerInjuryService = services.injuryService
 	resolvers.WorkerDrugAlcoholService = services.testService
+	services.safety = workersafetyrepository.New(workersafetyrepository.Params{DB: conn, Logger: logger})
+	services.safetyService = workersafetyservice.New(workersafetyservice.Params{
+		Logger: logger, Repo: services.safety, WorkerRepo: workers,
+	})
+	resolvers.WorkerSafetyService = services.safetyService
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
@@ -515,11 +574,20 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 				t.Run("no worker reads every worker's, and nothing of another tenant", func(t *testing.T) {
 					page := call(withWorker(pulid.Nil, c.allArgs))
 					assert.ElementsMatch(t, ours.all, itemIDs(page))
+					if c.keyed {
+						assert.NotContains(t, page, c.key, "a read keyed by the worker needs one")
+					}
 				})
+				if c.openByDefaultUnscoped {
+					t.Run("no worker reads only the open records by default", func(t *testing.T) {
+						page := call(map[string]any{})
+						assert.ElementsMatch(t, ours.open, itemIDs(page))
+					})
+				}
 			}
 
 			if c.templates != nil {
-				t.Run("the active templates are read alongside, and only ours", func(t *testing.T) {
+				t.Run("what is read alongside is ours alone, and only what it should be", func(t *testing.T) {
 					page := call(map[string]any{"workerId": ours.workerID.String()})
 					listed := page[c.key].([]any)
 					ids := make([]string, 0, len(listed))
@@ -529,6 +597,17 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 					assert.Contains(t, ids, ours.template.String())
 					assert.NotContains(t, ids, other.template.String())
 					assert.Len(t, ids, 1+keyedTemplatesFor(c.tool), "only the active ones")
+				})
+			}
+
+			if c.nested != "" {
+				t.Run("each record carries its "+c.nested, func(t *testing.T) {
+					page := call(withWorker(ours.workerID, c.allArgs))
+					items, _ := page["items"].([]any)
+					require.Len(t, items, len(ours.all))
+					for _, item := range items {
+						assert.NotEmpty(t, item.(map[string]any)[c.nested])
+					}
 				})
 			}
 

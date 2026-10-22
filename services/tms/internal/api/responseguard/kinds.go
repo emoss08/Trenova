@@ -47,6 +47,7 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[documentparsingrule.RuleSet]():         permission.ResourceDocumentParsingRule,
 	reflect.TypeFor[worker.WorkerLeaveCase]():              permission.ResourceWorkerLeave,
 	reflect.TypeFor[worker.WorkerEmploymentVerification](): permission.ResourceQualification,
+	reflect.TypeFor[worker.WorkerSafetyViolation]():        permission.ResourceWorkerSafetyEvent,
 }
 
 // kindTable maps a Go type to the kind of record it holds.
