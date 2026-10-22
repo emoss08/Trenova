@@ -21,6 +21,8 @@ type ListLeaveCasesRequest struct {
 	IncludeDocument              bool `json:"includeDocument"`
 	IncludeEntries               bool `json:"includeEntries"`
 	Limit                        int  `json:"limit"`
+	// ManagerIDs narrows the list to the people a manager answers for.
+	ManagerIDs []pulid.ID `json:"managerIds"`
 }
 
 type GetLeaveCaseByIDRequest struct {

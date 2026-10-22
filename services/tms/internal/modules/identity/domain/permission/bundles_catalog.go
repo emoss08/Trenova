@@ -377,7 +377,7 @@ var capabilityBundles = []Bundle{
 		ID:          "hr.workers",
 		Module:      "Workforce",
 		Label:       "Worker records",
-		Description: "Keep worker records, employment events, positions, benefits and checklists.",
+		Description: "Keep worker records, employment events, positions and checklists, and invite drivers to the portal or revoke their access.",
 		Grants: []BundleGrant{
 			{
 				Resource:   ResourceWorker,
@@ -388,14 +388,44 @@ var capabilityBundles = []Bundle{
 				Operations: []Operation{OpRead, OpCreate, OpUpdate},
 			},
 			{Resource: ResourceJobPosition, Operations: []Operation{OpRead, OpAssign}},
-			{Resource: ResourceBenefitPlan, Operations: []Operation{OpRead, OpAssign}},
 			{
 				Resource:   ResourceWorkerChecklist,
 				Operations: []Operation{OpRead, OpCreate, OpUpdate},
 			},
 			{Resource: ResourceWorkerPolicy, Operations: []Operation{OpRead}},
 			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
-			{Resource: ResourcePerformanceReview, Operations: []Operation{OpRead}},
+			{
+				Resource:   ResourceDriverPortal,
+				Operations: []Operation{OpRead, OpCreate, OpCancel},
+			},
+		},
+	},
+	{
+		ID:          "hr.benefits",
+		Module:      "Workforce",
+		Label:       "Benefits",
+		Description: "Keep benefit plans and enroll workers on them.",
+		Grants: []BundleGrant{
+			{
+				Resource:   ResourceBenefitPlan,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpAssign},
+			},
+		},
+	},
+	{
+		ID:          "hr.performance",
+		Module:      "Workforce",
+		Label:       "Reviews and discipline",
+		Description: "Write performance reviews and issue disciplinary actions.",
+		Grants: []BundleGrant{
+			{
+				Resource:   ResourcePerformanceReview,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate},
+			},
+			{
+				Resource:   ResourceWorkerDisciplinaryAction,
+				Operations: []Operation{OpRead, OpCreate},
+			},
 		},
 	},
 	{
@@ -414,11 +444,15 @@ var capabilityBundles = []Bundle{
 		ID:          "hr.team",
 		Module:      "Workforce",
 		Label:       "Manage a team",
-		Description: "Approve time off, timesheets, swaps and profile changes, and schedule a team.",
+		Description: "Approve time off, timesheets, swaps and profile changes, schedule a team, and invite its drivers to the portal or revoke their access.",
 		Grants: []BundleGrant{
 			{Resource: ResourceWorker, Operations: []Operation{OpRead}, Scope: DataScopeTeam},
 			{Resource: ResourceWorkerPTO, Operations: []Operation{OpRead, OpApprove, OpReject}},
-			{Resource: ResourceWorkerLeave, Operations: []Operation{OpRead, OpApprove}},
+			{
+				Resource:   ResourceWorkerLeave,
+				Operations: []Operation{OpRead, OpApprove},
+				Scope:      DataScopeTeam,
+			},
 			{
 				Resource:   ResourceTimesheet,
 				Operations: []Operation{OpRead, OpApprove, OpReject},
@@ -436,6 +470,11 @@ var capabilityBundles = []Bundle{
 				Scope:      DataScopeTeam,
 			},
 			{Resource: ResourceShiftTemplate, Operations: []Operation{OpRead}},
+			{
+				Resource:   ResourceDriverPortal,
+				Operations: []Operation{OpRead, OpCreate, OpCancel},
+				Scope:      DataScopeTeam,
+			},
 		},
 	},
 	{
@@ -719,18 +758,37 @@ var jobTemplates = []JobTemplate{
 		MaxSensitivity: SensitivityRestricted,
 	},
 	{
-		ID:             "hr",
-		Label:          "Human resources",
-		Description:    "Keeps worker records and approves time off for everyone.",
-		Bundles:        []string{"hr.workers", "hr.leave", "hr.team", "platform.assistant"},
+		ID:          "hr",
+		Label:       "Human resources",
+		Description: "Keeps worker records and approves time off for everyone.",
+		Bundles: []string{
+			"hr.workers",
+			"hr.benefits",
+			"hr.performance",
+			"hr.leave",
+			"hr.team",
+			"platform.assistant",
+		},
 		MaxSensitivity: SensitivityConfidential,
 	},
 	{
 		ID:             "read_only",
 		Label:          "Read-only",
-		Description:    "Can read every record except leave cases, and change nothing.",
+		Description:    "Can read every record except HR, medical, drug testing and pay records, and change nothing.",
 		MaxSensitivity: SensitivityInternal,
 		ReadEverything: true,
-		ReadExcept:     []Resource{ResourceWorkerLeave},
+		ReadExcept:     ownGrantKinds,
 	},
+}
+
+var ownGrantKinds = []Resource{
+	ResourceWorkerLeave,
+	ResourceWorkerInjury,
+	ResourceWorkerDOTTest,
+	ResourceBenefitPlan,
+	ResourceWorkerEmploymentEvent,
+	ResourceWorkerDisciplinaryAction,
+	ResourcePerformanceReview,
+	ResourceTimesheet,
+	ResourceProfileChangeRequest,
 }

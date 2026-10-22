@@ -175,7 +175,12 @@ func (r *MutationResolver) VoidPayrollExport(ctx context.Context, input gqlmodel
 }
 
 func (r *QueryResolver) Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*worker.Timesheet, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpRead)
+	authCtx, managerIDs, err := r.RequireListTeamScope(
+		ctx,
+		permission.ResourceTimesheet,
+		permission.OpRead,
+		worker.ApprovalScopeAll,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -183,6 +188,7 @@ func (r *QueryResolver) Timesheets(ctx context.Context, filter *gqlmodel.Timeshe
 	req := &workerports.ListTimesheetsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		IncludeWorker: true,
+		ManagerIDs:    managerIDs,
 	}
 	if filter != nil {
 		if req.WorkerID, err = base.OptionalID(filter.WorkerID); err != nil {
@@ -193,7 +199,7 @@ func (r *QueryResolver) Timesheets(ctx context.Context, filter *gqlmodel.Timeshe
 		req.To = base.Int64Value(filter.To)
 		req.UnexportedOnly = base.BoolValue(filter.UnexportedOnly)
 		req.Limit = base.IntValue(filter.Limit)
-		if base.BoolValue(filter.TeamOnly) {
+		if base.BoolValue(filter.TeamOnly) && len(req.ManagerIDs) == 0 {
 			if req.ManagerIDs, err = r.RotaManagerIDs(
 				ctx,
 				authCtx.UserID,
@@ -218,12 +224,26 @@ func (r *QueryResolver) Timesheet(ctx context.Context, id string) (*worker.Times
 		return nil, base.InvalidIDError("id", "Timesheet is invalid")
 	}
 
-	return r.TimesheetService.GetTimesheet(ctx, &workerports.GetTimesheetByIDRequest{
+	sheet, err := r.TimesheetService.GetTimesheet(ctx, &workerports.GetTimesheetByIDRequest{
 		ID:             sheetID,
 		TenantInfo:     base.TenantInfo(authCtx),
 		IncludeEntries: true,
 		IncludeWorker:  true,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if _, _, err = r.RequireTeamScope(
+		ctx,
+		permission.ResourceTimesheet,
+		permission.OpRead,
+		worker.ApprovalScopeAll,
+		sheet.WorkerID,
+	); err != nil {
+		return nil, err
+	}
+
+	return sheet, nil
 }
 
 func (r *QueryResolver) TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*worker.TimeClockEntry, error) {
@@ -251,7 +271,12 @@ func (r *QueryResolver) OpenTimeClockEntry(ctx context.Context, workerID string)
 }
 
 func (r *QueryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*worker.TimeClockEntry, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceTimesheet, permission.OpRead)
+	authCtx, managerIDs, err := r.RequireListTeamScope(
+		ctx,
+		permission.ResourceTimesheet,
+		permission.OpRead,
+		worker.ApprovalScopeAll,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -261,8 +286,9 @@ func (r *QueryResolver) OpenTimeClockEntries(ctx context.Context, teamOnly *bool
 		OpenOnly:      true,
 		IncludeWorker: true,
 		Limit:         base.IntValue(limit),
+		ManagerIDs:    managerIDs,
 	}
-	if base.BoolValue(teamOnly) {
+	if base.BoolValue(teamOnly) && len(req.ManagerIDs) == 0 {
 		if req.ManagerIDs, err = r.RotaManagerIDs(ctx, authCtx.UserID, base.TenantInfo(authCtx)); err != nil {
 			return nil, err
 		}

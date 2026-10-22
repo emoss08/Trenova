@@ -33746,17 +33746,19 @@ type WorkerRosterAttention {
   """
   Leave cases waiting on a medical certification the employee owes. Past the
   deadline the employer may deny the leave (29 CFR 825.313), so this is a
-  queue rather than a statistic.
+  queue rather than a statistic. Null for a reader without worker_leave read;
+  a reader whose leave grant reaches only their team counts their team's cases.
   """
-  leaveCertificationsOutstanding: Int!
+  leaveCertificationsOutstanding: Int
   nonCompliant: Int!
   """Total accrued time off the organisation is carrying, in days."""
   ptoLiabilityDays: Decimal!
   """
   Reviews a manager has submitted and the worker has not yet signed. Drafts are
-  excluded: they are still being written and are nobody else's queue.
+  excluded: they are still being written and are nobody else's queue. Null for a
+  reader without performance_review read.
   """
-  reviewsAwaitingSignOff: Int!
+  reviewsAwaitingSignOff: Int
   trainingOverdue: Int!
 }
 

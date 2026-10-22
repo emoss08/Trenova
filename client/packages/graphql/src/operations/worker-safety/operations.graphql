@@ -61,11 +61,7 @@ fragment WorkerDisciplinaryActionFields on WorkerDisciplinaryAction {
   suspensionDays
   safetyEventId
   safetyEvent {
-    id
-    kind
-    severity
-    occurredAt
-    description
+    ...WorkerSafetyEventReference
   }
   documentId
   issuedById

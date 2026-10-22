@@ -46,6 +46,7 @@ var (
 		"RequireTeamScope":            {},
 		"RequirePTOTeamScope":         {},
 		"RequireTimesheetWorkerScope": {},
+		"RequireListTeamScope":        {},
 	}
 	authHelpers = map[string]struct{}{
 		"RequireAuth":        {},
