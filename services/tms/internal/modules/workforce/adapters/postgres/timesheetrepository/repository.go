@@ -80,7 +80,7 @@ func (r *repository) ListEntries(
 				if req.OpenOnly {
 					sq = sq.Where(cols.ClockedOutAt.IsNull())
 				}
-				return workerteam.Where(r.db.DBForContext(ctx), workerteam.Scope{
+				return workerteam.Where(r.db.DBForContext(ctx), &workerteam.Scope{
 					WorkerID:       cols.WorkerID,
 					OrganizationID: cols.OrganizationID,
 					BusinessUnitID: cols.BusinessUnitID,
@@ -263,7 +263,7 @@ func (r *repository) ListTimesheets(
 				if req.UnexportedOnly {
 					sq = sq.Where(cols.PayrollExportID.IsNull())
 				}
-				return workerteam.Where(r.db.DBForContext(ctx), workerteam.Scope{
+				return workerteam.Where(r.db.DBForContext(ctx), &workerteam.Scope{
 					WorkerID:       cols.WorkerID,
 					OrganizationID: cols.OrganizationID,
 					BusinessUnitID: cols.BusinessUnitID,

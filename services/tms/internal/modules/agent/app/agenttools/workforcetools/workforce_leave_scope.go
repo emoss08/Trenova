@@ -13,8 +13,16 @@ import (
 )
 
 type LeaveWorkers interface {
-	CaseWorker(ctx context.Context, tenantInfo pagination.TenantInfo, caseID pulid.ID) (pulid.ID, error)
-	EntryWorker(ctx context.Context, tenantInfo pagination.TenantInfo, entryID pulid.ID) (pulid.ID, error)
+	CaseWorker(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		caseID pulid.ID,
+	) (pulid.ID, error)
+	EntryWorker(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		entryID pulid.ID,
+	) (pulid.ID, error)
 }
 
 // LeaveScope is the check the leave resolvers make: a driver manager's

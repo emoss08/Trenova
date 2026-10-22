@@ -624,6 +624,40 @@ func leaveDayOptions() []toolpreview.Option {
 	}))
 }
 
+func recordLeaveDayRequest(
+	params *agentports.ToolExecuteParams,
+) (*workerleaveservice.RecordDayRequest, error) {
+	caseID, err := common.RequirePulid(params.Params, paramLeaveCaseID)
+	if err != nil {
+		return nil, err
+	}
+	usedOn, err := common.RequireScheduleDay(params.Params, paramUsedOn)
+	if err != nil {
+		return nil, err
+	}
+	hours, err := requireHours(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	ptoID, err := common.OptionalID(params.Params, paramPTOLink)
+	if err != nil {
+		return nil, err
+	}
+	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
+	if err != nil {
+		return nil, err
+	}
+	return &workerleaveservice.RecordDayRequest{
+		TenantInfo: common.TenantFrom(*params),
+		CaseID:     caseID,
+		UsedOn:     usedOn,
+		Hours:      hours,
+		PTOID:      ptoID,
+		Notes:      notes,
+		UserID:     params.Actor.UserID,
+	}, nil
+}
+
 func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_record_leave_day",
@@ -647,39 +681,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agentports.Agent
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*workerleaveservice.RecordDayRequest, *worker.WorkerLeaveEntry,
 	]{
-		Request: func(
-			params *agentports.ToolExecuteParams,
-		) (*workerleaveservice.RecordDayRequest, error) {
-			caseID, err := common.RequirePulid(params.Params, paramLeaveCaseID)
-			if err != nil {
-				return nil, err
-			}
-			usedOn, err := common.RequireScheduleDay(params.Params, paramUsedOn)
-			if err != nil {
-				return nil, err
-			}
-			hours, err := requireHours(params.Params)
-			if err != nil {
-				return nil, err
-			}
-			ptoID, err := common.OptionalID(params.Params, paramPTOLink)
-			if err != nil {
-				return nil, err
-			}
-			notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
-			if err != nil {
-				return nil, err
-			}
-			return &workerleaveservice.RecordDayRequest{
-				TenantInfo: common.TenantFrom(*params),
-				CaseID:     caseID,
-				UsedOn:     usedOn,
-				Hours:      hours,
-				PTOID:      ptoID,
-				Notes:      notes,
-				UserID:     params.Actor.UserID,
-			}, nil
-		},
+		Request: recordLeaveDayRequest,
 		Settle: func(
 			ctx context.Context,
 			req *workerleaveservice.RecordDayRequest,

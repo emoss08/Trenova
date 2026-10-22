@@ -134,7 +134,7 @@ func caseFilter(
 	req *workerports.ListLeaveCasesRequest,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	cols := workercol.WorkerLeaveCaseColumns
-	team := workerteam.Where(db, workerteam.Scope{
+	team := workerteam.Where(db, &workerteam.Scope{
 		WorkerID:       cols.WorkerID,
 		OrganizationID: cols.OrganizationID,
 		BusinessUnitID: cols.BusinessUnitID,

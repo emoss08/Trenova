@@ -60,8 +60,13 @@ func (r *Deps) AttentionAccess(
 	authCtx *authctx.AuthContext,
 ) (workeroverviewservice.AttentionAccess, error) {
 	access := workeroverviewservice.AttentionAccess{
-		Reviews: r.HasPermission(ctx, authCtx, permission.ResourcePerformanceReview, permission.OpRead),
-		Leave:   r.HasPermission(ctx, authCtx, permission.ResourceWorkerLeave, permission.OpRead),
+		Reviews: r.HasPermission(
+			ctx,
+			authCtx,
+			permission.ResourcePerformanceReview,
+			permission.OpRead,
+		),
+		Leave: r.HasPermission(ctx, authCtx, permission.ResourceWorkerLeave, permission.OpRead),
 	}
 	if !access.Leave {
 		return access, nil

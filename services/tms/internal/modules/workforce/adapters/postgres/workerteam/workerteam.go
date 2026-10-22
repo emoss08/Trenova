@@ -17,7 +17,7 @@ type Scope struct {
 	ManagerIDs     []pulid.ID
 }
 
-func Where(db bun.IDB, scope Scope) func(*bun.SelectQuery) *bun.SelectQuery {
+func Where(db bun.IDB, scope *Scope) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(sq *bun.SelectQuery) *bun.SelectQuery {
 		if len(scope.ManagerIDs) == 0 {
 			return sq
@@ -26,7 +26,7 @@ func Where(db bun.IDB, scope Scope) func(*bun.SelectQuery) *bun.SelectQuery {
 	}
 }
 
-func Members(db bun.IDB, scope Scope) *bun.SelectQuery {
+func Members(db bun.IDB, scope *Scope) *bun.SelectQuery {
 	wrk := workercol.WorkerColumns
 	fleet := fleetcodecol.FleetCodeColumns
 

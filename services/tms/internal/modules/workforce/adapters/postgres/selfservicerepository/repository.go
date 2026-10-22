@@ -323,7 +323,7 @@ func (r *repository) ListChangeRequests(
 					if len(req.Statuses) > 0 {
 						sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
 					}
-					return workerteam.Where(r.db.DBForContext(ctx), workerteam.Scope{
+					return workerteam.Where(r.db.DBForContext(ctx), &workerteam.Scope{
 						WorkerID:       cols.WorkerID,
 						OrganizationID: cols.OrganizationID,
 						BusinessUnitID: cols.BusinessUnitID,
