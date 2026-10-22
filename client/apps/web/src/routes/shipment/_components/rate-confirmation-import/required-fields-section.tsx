@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CustomerAutocompleteField,
-  FormulaTemplateAutocompleteField,
   ServiceTypeAutocompleteField,
   ShipmentTypeAutocompleteField,
   EquipmentTypeAutocompleteField,
@@ -56,15 +55,6 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
             rules={{ required: true }}
             label={t("Shipment type")}
             placeholder={t("Select shipment type")}
-          />
-        </FormControl>
-        <FormControl>
-          <FormulaTemplateAutocompleteField
-            control={control}
-            name="formulaTemplateId"
-            rules={{ required: true }}
-            label={t("Rating method")}
-            placeholder={t("Select rating method")}
           />
         </FormControl>
         <FormControl>

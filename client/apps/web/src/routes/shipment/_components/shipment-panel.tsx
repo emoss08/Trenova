@@ -3,8 +3,11 @@ import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { apiService } from "@/services/api";
 import { rulesResolver } from "@/lib/rules-resolver";
+import { refineShipmentInputs, shipmentTemplateIds } from "@/lib/shipment-tariff-inputs";
+import { tariffInputsResolver } from "@/lib/tariff-inputs-resolver";
+import { TARIFF_INPUTS_REFINEMENT } from "@trenova/shared/lib/tariff-inputs";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -83,7 +86,7 @@ const getDefaultValues = (customerId: string | null): ShipmentCreateInput => {
     consolidationGroupId: undefined,
     otherChargeAmount: 0,
     freightChargeAmount: 0,
-    baseRate: 0,
+    tariffInputs: {},
     totalChargeAmount: 0,
     pieces: undefined,
     weight: undefined,
@@ -92,7 +95,6 @@ const getDefaultValues = (customerId: string | null): ShipmentCreateInput => {
     actualDeliveryDate: undefined,
     actualShipDate: undefined,
     canceledAt: undefined,
-    ratingUnit: 1,
     fuelSurchargeLocked: false,
     freightTerms: "Prepaid",
     freightAllocations: [],
@@ -135,23 +137,40 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
   const [customerId] = useQueryState(NEW_SHIPMENT_CUSTOMER_PARAM);
   const defaultValues = getDefaultValues(mode === "create" ? customerId : null);
   const withIdempotencyKey = useIdempotencyKey();
+  const queryClient = useQueryClient();
+  // The shipment's input values are checked against its tariff's declarations as well as the
+  // schema, so a mistyped or missing input is flagged at its field before the save.
   const createForm = useForm({
-    resolver: rulesResolver(
-      (rules) =>
-        zodResolver(
-          withShipmentAllocations(shipmentCreateSchema, rules),
-        ) as Resolver<ShipmentCreateInput>,
+    resolver: rulesResolver((rules) =>
+      tariffInputsResolver<ShipmentCreateInput>(
+        queryClient,
+        shipmentTemplateIds,
+        (inputs) =>
+          zodResolver(
+            withShipmentAllocations(shipmentCreateSchema, rules).superRefine(
+              refineShipmentInputs(inputs),
+              TARIFF_INPUTS_REFINEMENT,
+            ),
+          ) as Resolver<ShipmentCreateInput>,
+      ),
     ),
     defaultValues,
     mode: "onChange",
   });
 
   const editForm = useForm({
-    resolver: rulesResolver(
-      (rules) =>
-        zodResolver(
-          withShipmentAllocations(shipmentUpdateSchema, rules),
-        ) as Resolver<ShipmentUpdateInput>,
+    resolver: rulesResolver((rules) =>
+      tariffInputsResolver<ShipmentUpdateInput>(
+        queryClient,
+        shipmentTemplateIds,
+        (inputs) =>
+          zodResolver(
+            withShipmentAllocations(shipmentUpdateSchema, rules).superRefine(
+              refineShipmentInputs(inputs),
+              TARIFF_INPUTS_REFINEMENT,
+            ),
+          ) as Resolver<ShipmentUpdateInput>,
+      ),
     ),
     defaultValues: row as ShipmentUpdateInput | undefined,
     mode: "onChange",

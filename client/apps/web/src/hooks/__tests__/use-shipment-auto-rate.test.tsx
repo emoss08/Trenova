@@ -20,6 +20,18 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 }));
 
 const CONTRACT_TEMPLATE = "fmt_01HTEST0000000000000000001";
+const CONTRACT_INPUTS = { rate: { $q: "2.15", u: "$/mi" }, minimumCharge: { $q: "450", u: "$" } };
+const TYPED_INPUTS = { rate: { $q: "1.95", u: "$/mi" } };
+const CONTRACT_FREIGHT = [
+  {
+    label: "Linehaul",
+    quantity: 1240,
+    quantityUnit: "mi",
+    rate: 2.15,
+    rateUnit: "$/mi",
+    amount: 2666,
+  },
+];
 
 function contractRate(overrides: Partial<ContractRate> = {}): ContractRate {
   return {
@@ -31,12 +43,14 @@ function contractRate(overrides: Partial<ContractRate> = {}): ContractRate {
     ruleLabel: "Dallas to chicago",
     formulaTemplateId: CONTRACT_TEMPLATE,
     formulaTemplateName: "Per mile",
-    baseRate: "2.15",
-    linehaulAmount: "2666",
-    otherChargeAmount: "0",
-    totalChargeAmount: "2666",
-    previousLinehaulAmount: "0",
-    accessorials: [],
+    inputs: CONTRACT_INPUTS,
+    refusal: "",
+    freightLines: CONTRACT_FREIGHT,
+    freightAmount: 2666,
+    otherChargeAmount: 0,
+    totalChargeAmount: 2666,
+    previousFreightAmount: 0,
+    charges: [],
     explanation: "Acme TL 2026 priced this lane",
     ...overrides,
   } as ContractRate;
@@ -49,8 +63,7 @@ function ratableShipment(overrides: Partial<Shipment> = {}): Shipment {
     serviceTypeId: "svt_01HTEST0000000000000000001",
     shipmentTypeId: "spt_01HTEST0000000000000000001",
     formulaTemplateId: "fmt_01HTEST0000000000000000009",
-    baseRate: 1,
-    ratingUnit: 1,
+    tariffInputs: {},
     fuelSurchargeLocked: false,
     additionalCharges: [],
     commodities: [],
@@ -134,13 +147,28 @@ describe("useShipmentAutoRate", () => {
   it("rates a new shipment that has no rating method yet", async () => {
     previewContractRateMock.mockResolvedValue(
       contractRate({
-        accessorials: [
+        charges: [
+          {
+            accessorialChargeId: "acc_01HTEST0000000000000000002",
+            code: "XDROP",
+            description: "Extra drop",
+            owner: "Tariff",
+            label: "Extra drops",
+            amount: 50,
+            quantity: 2,
+            rate: 25,
+            rateUnit: "$/stop",
+          },
           {
             accessorialChargeId: "acc_01HTEST0000000000000000001",
+            code: "TARP",
             description: "Tarp Fee",
-            method: "Flat",
-            amount: 75,
-            unit: 1,
+            owner: "RateAgreement",
+            label: "",
+            amount: 25,
+            quantity: null,
+            rate: null,
+            rateUnit: null,
           },
         ],
         otherChargeAmount: 75,
@@ -151,7 +179,7 @@ describe("useShipmentAutoRate", () => {
     renderAutoRate(
       ratableShipment({
         formulaTemplateId: "",
-        baseRate: 0,
+        tariffInputs: {},
         additionalCharges: [],
       } as unknown as Partial<Shipment>),
     );
@@ -161,17 +189,36 @@ describe("useShipmentAutoRate", () => {
     await waitFor(() => {
       expect(formHandle?.getValues("formulaTemplateId")).toBe(CONTRACT_TEMPLATE);
     });
-    expect(formHandle?.getValues("baseRate")).toBe(2.15);
+    expect(formHandle?.getValues("tariffInputs")).toEqual(CONTRACT_INPUTS);
+    expect(formHandle?.getValues("freightLines")).toEqual(CONTRACT_FREIGHT);
     expect(formHandle?.getValues("additionalCharges")).toEqual([
       {
-        accessorialChargeId: "acc_01HTEST0000000000000000001",
-        accessorialCharge: {
-          description: "Tarp Fee",
-        },
+        accessorialChargeId: "acc_01HTEST0000000000000000002",
+        accessorialCharge: { code: "XDROP", description: "Extra drop" },
         isSystemGenerated: true,
+        isTariff: true,
+        label: "Extra drops",
+        quantity: 2,
+        rate: 25,
+        rateUnit: "$/stop",
         method: "Flat",
-        amount: 75,
+        amount: 50,
         unit: 1,
+        allocations: [],
+      },
+      {
+        accessorialChargeId: "acc_01HTEST0000000000000000001",
+        accessorialCharge: { code: "TARP", description: "Tarp Fee" },
+        isSystemGenerated: true,
+        isTariff: false,
+        label: null,
+        quantity: null,
+        rate: null,
+        rateUnit: null,
+        method: "Flat",
+        amount: 25,
+        unit: 1,
+        allocations: [],
       },
     ]);
     expect(formHandle?.getValues("autoRated")).toBe(true);
@@ -187,24 +234,29 @@ describe("useShipmentAutoRate", () => {
     await waitFor(() => {
       expect(formHandle?.getValues("formulaTemplateId")).toBe(CONTRACT_TEMPLATE);
     });
-    expect(formHandle?.getValues("baseRate")).toBe(2.15);
+    expect(formHandle?.getValues("tariffInputs")).toEqual(CONTRACT_INPUTS);
     expect(formHandle?.getValues("autoRated")).toBe(true);
     expect(formHandle?.getValues("rateAgreementId")).toBe("ragr_01HTEST0000000000000000001");
   });
 
-  // A rule that binds no rate of its own prices through whatever the shipment
-  // already carries, so there is nothing to seat.
-  it("keeps the typed base rate when the contract binds none", async () => {
-    previewContractRateMock.mockResolvedValue(contractRate({ baseRate: null }));
+  // Adopting a contract writes every input value it resolved, rule over
+  // agreement over default, so a re-rate reapplies the whole contract and not
+  // whatever the shipment happened to carry before.
+  it("replaces the shipment's input values with the contract's resolved ones", async () => {
+    previewContractRateMock.mockResolvedValue(contractRate());
 
-    renderAutoRate(ratableShipment({ baseRate: 3.5 } as unknown as Partial<Shipment>));
+    renderAutoRate(
+      ratableShipment({
+        tariffInputs: { rate: { $q: "3.50", u: "$/mi" }, extraDropFee: { $q: "75", u: "$" } },
+      } as unknown as Partial<Shipment>),
+    );
 
     await waitFor(() => expect(previewContractRateMock).toHaveBeenCalledTimes(1));
     await waitFor(() => {
       expect(formHandle?.getValues("formulaTemplateId")).toBe(CONTRACT_TEMPLATE);
     });
 
-    expect(formHandle?.getValues("baseRate")).toBe(3.5);
+    expect(formHandle?.getValues("tariffInputs")).toEqual(CONTRACT_INPUTS);
   });
 
   // A contract prices a shipment once. Nothing about a shipment other than its
@@ -214,10 +266,10 @@ describe("useShipmentAutoRate", () => {
     renderAutoRate(ratableShipment());
 
     await waitFor(() => expect(previewContractRateMock).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(formHandle?.getValues("baseRate")).toBe(2.15));
+    await waitFor(() => expect(formHandle?.getValues("tariffInputs")).toEqual(CONTRACT_INPUTS));
 
     act(() => {
-      formHandle?.setValue("baseRate", 1.95, { shouldDirty: true });
+      formHandle?.setValue("tariffInputs", TYPED_INPUTS, { shouldDirty: true });
     });
 
     await act(async () => {
@@ -225,7 +277,7 @@ describe("useShipmentAutoRate", () => {
     });
 
     expect(previewContractRateMock).toHaveBeenCalledTimes(1);
-    expect(formHandle?.getValues("baseRate")).toBe(1.95);
+    expect(formHandle?.getValues("tariffInputs")).toEqual(TYPED_INPUTS);
   });
 
   // An existing shipment already carries a rate somebody may have negotiated.

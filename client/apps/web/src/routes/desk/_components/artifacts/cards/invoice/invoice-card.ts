@@ -1,3 +1,5 @@
+import { isTariffRateUnit, perUnitQuantity } from "@trenova/shared/lib/invoice-lines";
+import { chargeLineBasis } from "@trenova/shared/lib/tariff-lines";
 import type {
   DeskInvoice,
   DeskInvoiceChargeGroup,
@@ -17,7 +19,7 @@ import {
   accountingSyncStateLabel,
 } from "@/lib/accounting-sync";
 import type { AccountingSyncRecord } from "@/lib/graphql/accounting-sync-ledger";
-import type { AccountingSyncRecordStatus, RateUnit } from "@trenova/graphql/generated/graphql";
+import type { AccountingSyncRecordStatus } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { invoiceVoidBlocker } from "@trenova/shared/types/invoice";
 import type { CardStatusMark, CardTone } from "../../record-card/record-card";
@@ -437,21 +439,6 @@ function quantityOf(group: DeskInvoiceChargeGroup): number {
   return Number.isFinite(figure) ? figure : 0;
 }
 
-function unitsText(unit: RateUnit | null, quantity: number, t: TranslateFn): string {
-  switch (unit) {
-    case "Hour":
-      return t("{0, plural, one {# hour} other {# hours}}", quantity);
-    case "Mile":
-      return t("{0, plural, one {# mile} other {# miles}}", quantity);
-    case "Day":
-      return t("{0, plural, one {# day} other {# days}}", quantity);
-    case "Stop":
-      return t("{0, plural, one {# stop} other {# stops}}", quantity);
-    case null:
-      return t("{0, plural, one {# unit} other {# units}}", quantity);
-  }
-}
-
 function chargeBasis(group: DeskInvoiceChargeGroup, currency: string, t: TranslateFn): ChargeBasis {
   if (group.type === "Freight") {
     return group.formulaTemplateName
@@ -459,6 +446,18 @@ function chargeBasis(group: DeskInvoiceChargeGroup, currency: string, t: Transla
       : { kind: "text", text: t("No formula template") };
   }
   const quantity = quantityOf(group);
+  // A charge the tariff billed states its quantity and rate in the tariff's own units.
+  if (isTariffRateUnit(group.rateUnit)) {
+    return {
+      kind: "text",
+      text:
+        chargeLineBasis(
+          { quantity: group.quantity, rate: group.rate, rateUnit: group.rateUnit },
+          t,
+          { currency },
+        ) ?? t("Flat"),
+    };
+  }
   switch (group.chargeMethod) {
     case "Percentage":
       if (!group.rate) return { kind: "text", text: t("Percentage of linehaul") };
@@ -469,7 +468,7 @@ function chargeBasis(group: DeskInvoiceChargeGroup, currency: string, t: Transla
           : t("{0}% of linehaul", Number(group.rate)),
       };
     case "PerUnit": {
-      const units = unitsText(group.rateUnit, quantity, t);
+      const units = perUnitQuantity(t, group.rateUnit, quantity);
       return {
         kind: "text",
         text: group.rate ? t("{0} × {1}", units, money(group.rate, currency)) : units,
@@ -490,7 +489,8 @@ function chargeBasis(group: DeskInvoiceChargeGroup, currency: string, t: Transla
 
 /**
  * The charges as the bill reads them: one row for each way a charge was
- * billed, the template that rated the freight or how an accessorial was
+ * billed (a freight row per freight line description, with its quantity at its
+ * rate), the template that rated the freight or how an accessorial was
  * charged, and, on an invoice for several shipments, how many share it.
  */
 export function chargeRows(record: DeskInvoice, t: TranslateFn): ChargeRow[] {
@@ -501,11 +501,18 @@ export function chargeRows(record: DeskInvoice, t: TranslateFn): ChargeRow[] {
       several && group.shipmentCount > 0
         ? t("{0, plural, one {# shipment} other {# shipments}}", group.shipmentCount)
         : "",
-      group.type === "Freight" && group.rate ? t("{0} base rate", money(group.rate, currency)) : "",
+      group.type === "Freight" && group.rate && isTariffRateUnit(group.rateUnit)
+        ? (chargeLineBasis(
+            { quantity: group.quantity, rate: group.rate, rateUnit: group.rateUnit },
+            t,
+            { currency },
+          ) ?? "")
+        : "",
     ].filter(Boolean);
     return {
       key: `${group.type}-${group.chargeCode ?? ""}-${group.formulaTemplateId ?? group.formulaTemplateName ?? ""}-${index}`,
-      name: group.type === "Freight" ? t("Linehaul") : group.description,
+      // A freight group is one freight line of the tariffs' bills, named by its label as written.
+      name: group.type === "Freight" ? group.description || t("Linehaul") : group.description,
       code: group.chargeCode ?? "",
       detail: parts.length === 2 ? t("{0} · {1}", parts[0], parts[1]) : (parts[0] ?? ""),
       basis: chargeBasis(group, currency, t),

@@ -7,6 +7,10 @@ import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
 import { apiService } from "@/services/api";
 import type { RateAgreementReviewAction } from "@/services/rate";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { rateAgreementTemplateIds, refineRateAgreementInputs } from "@/lib/rate-agreement-inputs";
+import { tariffInputsResolver } from "@/lib/tariff-inputs-resolver";
+import { TARIFF_INPUTS_REFINEMENT } from "@trenova/shared/lib/tariff-inputs";
+import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -57,10 +61,7 @@ const DEFAULT_AGREEMENT: Partial<RateAgreement> = {
   autoRenew: false,
   renewalNoticeDays: 30,
   currency: "USD",
-  defaultMinCharge: null,
-  defaultMaxCharge: null,
-  roundingMode: "HalfUp",
-  roundingPrecision: 2,
+  inputs: {},
   billToCustomerId: null,
   marginFloorPercent: null,
   maxPayPercentOfSell: null,
@@ -190,8 +191,21 @@ export function RateAgreementPanel({
 
   const [reviewAction, setReviewAction] = useState<RateAgreementReviewAction | null>(null);
 
+  const queryClient = useQueryClient();
   const form = useForm<RateAgreement>({
-    resolver: zodResolver(rateAgreementSchema) as Resolver<RateAgreement>,
+    // Every lane's input values are checked against its tariff's declarations, and the
+    // agreement's own against the inputs its lanes share, before the save asks the server.
+    resolver: tariffInputsResolver<RateAgreement>(
+      queryClient,
+      (values) => rateAgreementTemplateIds(values.rules),
+      (inputs) =>
+        zodResolver(
+          rateAgreementSchema.superRefine(
+            refineRateAgreementInputs(inputs),
+            TARIFF_INPUTS_REFINEMENT,
+          ),
+        ) as Resolver<RateAgreement>,
+    ),
     defaultValues: DEFAULT_AGREEMENT as RateAgreement,
     mode: "onChange",
   });

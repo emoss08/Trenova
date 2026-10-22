@@ -273,7 +273,7 @@ describe("DeskInvoice", () => {
         .map((row) => row.textContent),
     ).toEqual([
       "ChargeRated byAmount",
-      `Linehaul$3.75 base rateƒ${LONG_TEMPLATE}$2,850.00`,
+      `Linehaul760 mi × $3.75/miƒ${LONG_TEMPLATE}$2,850.00`,
       "Fuel surchargeFSC14.25% of $2,850.00$406.12",
       "DetentionDET3 hours × $75.00$225.00",
       "LumperLUMPFlat$185.00",
@@ -288,6 +288,28 @@ describe("DeskInvoice", () => {
     expect(
       await screen.findByRole("heading", { name: "Acme Foods", level: 2 }),
     ).toBeInTheDocument();
+  });
+
+  it("lists the notes the tariff wrote on the bill beneath the charges, as written", async () => {
+    fetchers.invoice.mockResolvedValue(
+      postedInvoice({ ratingNotes: ["Team surcharge applies on lanes over 600 mi"] }),
+    );
+    draw();
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+
+    const notes = within(section("Charges")).getByRole("list", { name: "Notes from the tariff" });
+    expect(
+      within(notes).getByText("Team surcharge applies on lanes over 600 mi"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows no tariff notes when the bill carries none", async () => {
+    draw();
+    await screen.findByRole("heading", { name: "Acme Foods", level: 2 });
+
+    expect(
+      within(section("Charges")).queryByRole("list", { name: "Notes from the tariff" }),
+    ).toBeNull();
   });
 
   it("reads a template's name only, without a way in, for someone who may not read templates", async () => {

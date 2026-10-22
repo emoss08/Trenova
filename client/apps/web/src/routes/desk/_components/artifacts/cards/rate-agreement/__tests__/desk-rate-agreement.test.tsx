@@ -87,16 +87,12 @@ function lane(overrides: Partial<RateAgreementRule> = {}): RateAgreementRule {
     destinationCity: "",
     direction: "Directional",
     formulaTemplateId: "ft_mile",
-    rate: 2.1,
-    minCharge: 250,
-    freightClassSource: "Commodity",
-    allowDeficitRating: true,
+    inputs: { rate: { $q: "2.1", u: "$/mi" }, minimumCharge: { $q: "250", u: "$" } },
     daysOfWeek: 0,
     hazmatOnly: false,
     tempControlOnly: false,
     priority: 0,
     effectiveFrom: NOW - 30 * DAY,
-    breaks: [],
     ...overrides,
   } as RateAgreementRule;
 }
@@ -120,10 +116,7 @@ function agreement(overrides: Partial<RateAgreement> = {}): RateAgreement {
     autoRenew: false,
     renewalNoticeDays: 30,
     currency: "USD",
-    defaultMinCharge: 200,
-    defaultMaxCharge: null,
-    roundingMode: "HalfUp",
-    roundingPrecision: 2,
+    inputs: { minimumCharge: { $q: "200", u: "$" } },
     billToCustomerId: null,
     marginFloorPercent: 12,
     maxPayPercentOfSell: null,
@@ -144,7 +137,7 @@ function agreement(overrides: Partial<RateAgreement> = {}): RateAgreement {
         freeUnits: 2,
         waived: false,
         autoApply: true,
-        applyCondition: "",
+        condition: null,
       },
     ],
     fuelBinding: { fuelSurchargeProgramId: "fsp_1", waived: false, capAmount: 0.6 },
@@ -179,22 +172,14 @@ function summary(overrides: Partial<RateAgreementLaneSummary> = {}): RateAgreeme
       {
         formulaTemplateId: "ft_mile",
         formulaTemplateName: "Per mile",
-        rateMatrixId: null,
-        rateMatrixName: "",
         currency: "USD",
         lanes: 30,
-        minRate: "2.1",
-        maxRate: "3.45",
       },
       {
-        formulaTemplateId: null,
-        formulaTemplateName: "",
-        rateMatrixId: "rm_1",
-        rateMatrixName: "Southeast zones",
+        formulaTemplateId: "ft_ltl",
+        formulaTemplateName: "LTL classes",
         currency: "CAD",
         lanes: 10,
-        minRate: null,
-        maxRate: null,
       },
     ],
     ...overrides,
@@ -338,10 +323,8 @@ describe("DeskRateAgreement", () => {
     const structure = await section("Rate structure");
     const mile = await within(structure).findByRole("meter", { name: "Per mile" });
     expect(mile).toHaveAttribute("aria-valuenow", "75");
-    expect(mile.closest(".dk-rec-gauge")).toHaveTextContent("30 lanes2.1 – 3.45");
-    const table = within(structure).getByRole("meter", {
-      name: "Rate table Southeast zones · CAD",
-    });
+    expect(mile.closest(".dk-rec-gauge")).toHaveTextContent(/30 lanes$/u);
+    const table = within(structure).getByRole("meter", { name: "LTL classes · CAD" });
     expect(table).toHaveAttribute("aria-valuenow", "25");
     expect(table.closest(".dk-rec-gauge")).toHaveTextContent(/10 lanes$/u);
     expect(service.laneSummary).toHaveBeenCalledWith("ra_1", expect.anything());
@@ -475,8 +458,11 @@ describe("DeskRateAgreement", () => {
     await waitFor(() =>
       expect(lanes.querySelector(".dk-ra-places b")).toHaveTextContent("Atlanta, GA → TX"),
     );
-    expect(within(lanes).getByText("2.1")).toBeInTheDocument();
-    expect(within(lanes).getByText("Min $250.00")).toBeInTheDocument();
+    const terms = lanes.querySelector('dl[aria-label="Lane terms"]') as HTMLElement;
+    expect(within(terms).getByText("Rate")).toBeInTheDocument();
+    expect(within(terms).getByText("$2.10/mi")).toBeInTheDocument();
+    expect(within(terms).getByText("Minimum charge")).toBeInTheDocument();
+    expect(within(terms).getByText("$250.00")).toBeInTheDocument();
     expect(within(lanes).getByText("1 retired")).toBeInTheDocument();
     expect(lanes.querySelectorAll(".dk-ra-lane")).toHaveLength(1);
     expect(service.listLanes).toHaveBeenCalledWith(
@@ -539,7 +525,7 @@ describe("DeskRateAgreement", () => {
     expect(await screen.findByRole("list", { name: "Approval" })).toBeInTheDocument();
   });
 
-  it("states its charges, its fuel and its limits", async () => {
+  it("states its charges, its fuel and its contract terms", async () => {
     draw();
 
     const charges = await section("Charges");
@@ -550,9 +536,22 @@ describe("DeskRateAgreement", () => {
     expect(await within(charges).findByText("Fuel · DOE national")).toBeInTheDocument();
     expect(within(charges).getByText("Capped at $0.60")).toBeInTheDocument();
 
-    const limits = await section("Limits");
-    expect(within(limits).getByText("$200.00")).toBeInTheDocument();
-    expect(within(limits).getByText("12%")).toBeInTheDocument();
+    const terms = await section("Contract terms");
+    expect(within(terms).getByText("Minimum charge")).toBeInTheDocument();
+    expect(within(terms).getByText("$200.00")).toBeInTheDocument();
+    expect(within(terms).getByText("12%")).toBeInTheDocument();
+  });
+
+  it("says when the agreement sets no terms for all its lanes", async () => {
+    service.getWithoutLanes.mockResolvedValue(agreement({ inputs: {}, marginFloorPercent: null }));
+    draw();
+
+    const terms = await section("Contract terms");
+    expect(
+      within(terms).getByText(
+        "Each lane sets its own terms; the agreement sets none for all of them.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("keeps the margin floor off the card for a role that withholds margins", async () => {
@@ -560,9 +559,9 @@ describe("DeskRateAgreement", () => {
     seedPermissions(withoutMargins);
     draw();
 
-    const limits = await section("Limits");
-    expect(within(limits).getByText("$200.00")).toBeInTheDocument();
-    expect(within(limits).queryByText("12%")).not.toBeInTheDocument();
+    const terms = await section("Contract terms");
+    expect(within(terms).getByText("$200.00")).toBeInTheDocument();
+    expect(within(terms).queryByText("12%")).not.toBeInTheDocument();
   });
 
   it("lists its versions, oldest first, with who cut each", async () => {

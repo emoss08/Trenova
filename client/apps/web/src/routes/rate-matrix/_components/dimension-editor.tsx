@@ -13,7 +13,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { MAX_MATRIX_DIMENSIONS } from "@trenova/shared/lib/rate-matrix";
 import type { RateMatrix, RateMatrixDimension } from "@trenova/shared/types/rate";
 import { AlertTriangleIcon, PlusIcon } from "@trenova/shared/components/icons";
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { useFieldArray, useFormContext, useFormState, useWatch } from "react-hook-form";
 
 /**
  * The axes are the shape of the sheet, and changing them after rates exist
@@ -26,6 +26,9 @@ export function DimensionEditor() {
   const { control } = useFormContext<RateMatrix>();
   const { fields, append, replace } = useFieldArray({ control, name: "dimensions" });
   const dimensions = (useWatch({ control, name: "dimensions" }) ?? []) as RateMatrixDimension[];
+  // One to four axes is a rule on the whole list, so its message belongs to no one axis.
+  const { errors } = useFormState({ control, name: "dimensions" });
+  const listError = errors.dimensions?.message ?? errors.dimensions?.root?.message;
 
   const atCapacity = fields.length >= MAX_MATRIX_DIMENSIONS;
 
@@ -50,6 +53,8 @@ export function DimensionEditor() {
           )}
         </p>
       )}
+
+      {listError && <p className="text-destructive text-xs">{listError}</p>}
 
       {fields.length > 0 && (
         <Alert>
