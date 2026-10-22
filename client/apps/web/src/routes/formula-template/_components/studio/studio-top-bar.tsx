@@ -49,9 +49,8 @@ import { useStudio } from "./studio-context";
 
 const USAGE_LABELS: Readonly<Record<string, string>> = defineLabels({
   shipment: "Shipments",
-  rate_matrix: "Rate matrices",
   rate_agreement_rule: "Rate agreement rules",
-  rate_agreement_accessorial: "Rate agreement accessorials",
+  rate_agreement: "Rate agreements",
   billing_control_fallback: "Billing fallback",
 });
 
@@ -64,7 +63,7 @@ export function usageConsequence(
   switch (status) {
     case "Active":
       return t(
-        "Editing the formula returns it to Draft; shipments keep rating with v{0} until the new version is approved. Name and description edits are safe.",
+        "Editing the source returns it to Draft; shipments keep rating with v{0} until the new version is approved. Name and description edits are safe.",
         version,
       );
     case "InReview":

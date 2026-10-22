@@ -5,7 +5,7 @@ import { defaultBillTypeSchema } from "./bill-type";
 import { billingQueueStatusSchema } from "./billing-queue-status";
 import type { Commodity } from "./commodity";
 import { customerReferenceSchema, customerSchema } from "./customer";
-import { formulaReceiptSchema, formulaTemplateSchema } from "./formula-template";
+import { formulaTemplateSchema } from "./formula-template";
 import {
   decimalNumberSchema,
   decimalStringSchema,
@@ -682,7 +682,6 @@ export const ratingDetailSchema = z.object({
   ruleLabel: z.string().nullish(),
   source: z.string().nullish(),
   explanation: z.string().nullish(),
-  receipt: formulaReceiptSchema.nullish(),
 });
 export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 

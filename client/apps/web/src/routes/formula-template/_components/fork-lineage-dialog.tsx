@@ -118,7 +118,7 @@ export function ForkLineageDialog({
     isLoading,
     error,
   } = useQuery({
-    queryKey: formulaTemplate.lineage(templateId).queryKey,
+    queryKey: formulaTemplate.lineage(templateId ?? "").queryKey,
     queryFn: () =>
       templateId
         ? apiService.formulaTemplateService.getLineage(templateId)
