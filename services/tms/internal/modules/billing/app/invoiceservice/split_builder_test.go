@@ -43,7 +43,7 @@ func TestBuildInvoiceEntityStampsTheShipperAndSplitOnAShipmentInvoice(t *testing
 	amd := pulid.MustNew("cus_")
 	freightSplit(leg, leg.CustomerID, amd, 60)
 
-	resolution, err := shipment.ResolveShares(leg, leg.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(t.Context(), leg, leg.ChargeAllocations)
 	require.NoError(t, err)
 
 	params := builderParams(invoice.ScopeShipment, leg)
@@ -52,7 +52,7 @@ func TestBuildInvoiceEntityStampsTheShipperAndSplitOnAShipmentInvoice(t *testing
 	params.Shares = map[pulid.ID]*shipment.PayerShare{leg.ID: resolution.ShareFor(amd)}
 	params.IsSplitBill = resolution.IsSplit
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
 
 	require.NotNil(t, entity)
 	assert.Equal(t, amd, entity.CustomerID, "the payer is the invoice's customer")
@@ -77,7 +77,7 @@ func TestBuildInvoiceEntityLeavesTheShipperOffAConsolidatedInvoice(t *testing.T)
 
 	shares := make(map[pulid.ID]*shipment.PayerShare, 2)
 	for _, leg := range []*shipment.Shipment{legA, legB} {
-		resolution, err := shipment.ResolveShares(leg, leg.ChargeAllocations)
+		resolution, err := shipment.ResolveShares(t.Context(), leg, leg.ChargeAllocations)
 		require.NoError(t, err)
 		shares[leg.ID] = resolution.ShareFor(payer)
 	}
@@ -92,7 +92,7 @@ func TestBuildInvoiceEntityLeavesTheShipperOffAConsolidatedInvoice(t *testing.T)
 	params.PeriodStart = &start
 	params.PeriodEnd = &end
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
 
 	require.NotNil(t, entity)
 	assert.True(
@@ -119,7 +119,7 @@ func TestBuildInvoiceEntityIgnoresAShipperWhoIsThePayer(t *testing.T) {
 	params := builderParams(invoice.ScopeShipment, leg)
 	params.Shipper = params.Customer
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
 
 	require.NotNil(t, entity)
 	assert.True(t, entity.ShipperCustomerID.IsNil())
@@ -152,7 +152,7 @@ func TestBuildInvoiceEntityBillsTheOrderChargeShare(t *testing.T) {
 		{Description: "Ignored", Amount: decimal.NewFromInt(999)},
 	}
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
 
 	require.NotNil(t, entity)
 	require.Len(t, entity.Lines, 2)
@@ -193,12 +193,12 @@ func TestOrderChargeShareFor(t *testing.T) {
 	t.Run("nothing to bill yields no share", func(t *testing.T) {
 		t.Parallel()
 
-		share, split, err := orderChargeShareFor(nil, defaultPayer, defaultPayer)
+		share, split, err := orderChargeShareFor(t.Context(), nil, defaultPayer, defaultPayer)
 		require.NoError(t, err)
 		assert.Nil(t, share)
 		assert.False(t, split)
 
-		share, split, err = orderChargeShareFor(charges, defaultPayer, pulid.MustNew("cus_"))
+		share, split, err = orderChargeShareFor(t.Context(), charges, defaultPayer, pulid.MustNew("cus_"))
 		require.NoError(t, err)
 		assert.Nil(t, share, "a payer with no share of any charge gets none")
 		assert.True(t, split)
@@ -207,7 +207,7 @@ func TestOrderChargeShareFor(t *testing.T) {
 	t.Run("the default payer carries the unallocated charge only", func(t *testing.T) {
 		t.Parallel()
 
-		share, split, err := orderChargeShareFor(charges, defaultPayer, defaultPayer)
+		share, split, err := orderChargeShareFor(t.Context(), charges, defaultPayer, defaultPayer)
 		require.NoError(t, err)
 		require.NotNil(t, share)
 		assert.True(t, split)
@@ -219,7 +219,7 @@ func TestOrderChargeShareFor(t *testing.T) {
 	t.Run("the other payer carries their allocated charge", func(t *testing.T) {
 		t.Parallel()
 
-		share, split, err := orderChargeShareFor(charges, defaultPayer, other)
+		share, split, err := orderChargeShareFor(t.Context(), charges, defaultPayer, other)
 		require.NoError(t, err)
 		require.NotNil(t, share)
 		assert.True(t, split)
@@ -244,7 +244,7 @@ func TestOrderChargeShareFor(t *testing.T) {
 				Amount:           decimal.NewNullDecimal(decimal.NewFromInt(79)),
 			}},
 		}
-		_, _, err := orderChargeShareFor([]*order.OrderCharge{bad}, defaultPayer, other)
+		_, _, err := orderChargeShareFor(t.Context(), []*order.OrderCharge{bad}, defaultPayer, other)
 		require.Error(t, err)
 		var typed *errortypes.Error
 		require.True(t, errors.As(err, &typed))
@@ -267,7 +267,7 @@ func TestBucketLegsByPayer(t *testing.T) {
 	legTwo.CustomerID = ord.CustomerID
 	legTwo.BillToCustomerID = &payerA
 
-	buckets, err := bucketLegsByPayer(ord, []*shipment.Shipment{legOne, legTwo})
+	buckets, err := bucketLegsByPayer(t.Context(), ord, []*shipment.Shipment{legOne, legTwo})
 	require.NoError(t, err)
 
 	require.Len(t, buckets, 3)
@@ -298,7 +298,7 @@ func TestBucketLegsByPayerWithoutTheOrderCustomerLeadsWithTheFirstPayer(t *testi
 	leg.CustomerID = ord.CustomerID
 	leg.BillToCustomerID = &billTo
 
-	buckets, err := bucketLegsByPayer(ord, []*shipment.Shipment{leg})
+	buckets, err := bucketLegsByPayer(t.Context(), ord, []*shipment.Shipment{leg})
 	require.NoError(t, err)
 
 	require.Len(t, buckets, 1)
@@ -314,14 +314,14 @@ func TestPayerSharesForLegs(t *testing.T) {
 	freightSplit(legA, legA.CustomerID, payer, 70)
 	legB.BillToCustomerID = &payer
 
-	shares, isSplit, err := payerSharesForLegs([]*shipment.Shipment{legA, nil, legB}, payer)
+	shares, isSplit, err := payerSharesForLegs(t.Context(), []*shipment.Shipment{legA, nil, legB}, payer)
 	require.NoError(t, err)
 	assert.True(t, isSplit)
 	require.Len(t, shares, 2)
 	assert.True(t, shares[legA.ID].TotalAmount.Equal(decimal.NewFromInt(30)))
 	assert.True(t, shares[legB.ID].TotalAmount.Equal(decimal.NewFromInt(300)))
 
-	_, _, err = payerSharesForLegs([]*shipment.Shipment{legA, legB}, pulid.MustNew("cus_"))
+	_, _, err = payerSharesForLegs(t.Context(), []*shipment.Shipment{legA, legB}, pulid.MustNew("cus_"))
 	require.Error(t, err)
 	var typed *errortypes.Error
 	require.True(t, errors.As(err, &typed))

@@ -73,7 +73,7 @@ func Validate(
 	}
 
 	preview := PreviewForResolution(entity)
-	if _, err := shipment.ResolveShares(preview, preview.ChargeAllocations); err != nil {
+	if _, err := shipment.ResolveShares(ctx, preview, preview.ChargeAllocations); err != nil {
 		var typed *errortypes.Error
 		if errors.As(err, &typed) {
 			multiErr.Add(typed.Field, typed.Code, typed.Message, typed.Args...)

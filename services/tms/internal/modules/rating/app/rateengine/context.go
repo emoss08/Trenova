@@ -12,6 +12,7 @@
 package rateengine
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"strconv"
@@ -135,12 +136,14 @@ func (rc *RateContext) MatchFacts() *rateagreement.MatchFacts {
 }
 
 // LaneKeys is every lane a rule could have been written against to reach this
-// shipment.
-func (rc *RateContext) LaneKeys() []string {
-	return rategeo.LaneKeyCandidates(
-		rc.Origin.MatchKeys(),
-		rc.Destination.MatchKeys(),
-	)
+// shipment, from the rules module's lane.keys.
+func (rc *RateContext) LaneKeys(ctx context.Context) ([]string, error) {
+	lane, err := rategeo.MatchLane(ctx, &rc.Origin, &rc.Destination)
+	if err != nil {
+		return nil, err
+	}
+
+	return lane.Candidates, nil
 }
 
 // Inputs renders the context for the trace.
@@ -202,8 +205,8 @@ func (rc *RateContext) Hash() string {
 	write(string(rc.PartyType))
 	write(rc.PartyID.String())
 	write(strconv.FormatInt(rc.AsOf, 10))
-	write(strings.Join(rc.Origin.MatchKeys(), ","))
-	write(strings.Join(rc.Destination.MatchKeys(), ","))
+	writePlace(write, &rc.Origin)
+	writePlace(write, &rc.Destination)
 	write(rc.Distance.String())
 	write(rc.Weight.String())
 	write(strconv.FormatInt(rc.Pieces, 10))
@@ -225,6 +228,15 @@ func (rc *RateContext) Hash() string {
 	sum := sha256.Sum256([]byte(b.String()))
 
 	return hex.EncodeToString(sum[:])
+}
+
+func writePlace(write func(string), place *rategeo.Place) {
+	write(place.LocationID.String())
+	write(place.PostalCode)
+	write(place.City)
+	write(place.StateID.String())
+	write(place.CountryISO3)
+	write(strings.Join(idStrings(place.ZoneIDs), ","))
 }
 
 func idStrings(ids []pulid.ID) []string {

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -188,12 +187,8 @@ func TestComputed_ChargeAmounts(t *testing.T) {
 	entity := &shipment.Shipment{
 		BaseRate:            decimal.NewNullDecimal(decimal.RequireFromString("2.15")),
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1_000)),
+		OtherChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(250)),
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(1_250)),
-		AdditionalCharges: []*shipment.AdditionalCharge{
-			{Method: accessorialcharge.MethodFlat, Amount: decimal.NewFromInt(75), Unit: 2},
-			{Method: accessorialcharge.MethodPercentage, Amount: decimal.NewFromInt(10)},
-			nil,
-		},
 	}
 
 	assert.InDelta(t, 2.15, compute(t, r, entity, "computeBaseRate"), 0.0001)

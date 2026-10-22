@@ -175,7 +175,7 @@ func (s *service) planTransfers(
 			continue
 		}
 
-		resolution, shareErr := shipment.ResolveShares(entity, entity.ChargeAllocations)
+		resolution, shareErr := shipment.ResolveShares(ctx, entity, entity.ChargeAllocations)
 		if shareErr != nil {
 			refuse(&decisions[idx], shipmentports.BillingTransferFailureUnexpected, shareErr)
 			continue

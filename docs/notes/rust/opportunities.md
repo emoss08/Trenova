@@ -168,6 +168,9 @@ one side or by nothing.
 | Lane specificity | `rategeo.Weight`, rate agreement weights | `packages/shared/src/lib/rate.ts` ("must stay in step", lines 7-12) | None | Unknown |
 | Matrix quantity bands | `ratematrix.ContainsQuantity` | `packages/shared/src/lib/rate-matrix.ts` | None | Unknown |
 
+**Status.** The last four rows are done on the server: the Go code they name is deleted and every
+Go caller runs the `trenova-rules` module (`docs/engineering/rules-engine.md`, "Go callers").
+
 The formula evaluator also has a runtime defect. On timeout it abandons the goroutine running the
 expression, which keeps using CPU (`rating/app/formula/engine/engine.go:527-563`). Each evaluation also
 deep-clones its environment (`engine.go:517`), and results pass through `float64` before becoming

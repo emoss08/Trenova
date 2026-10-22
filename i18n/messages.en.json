@@ -1,4 +1,37 @@
 {
+  " Compare text with ==, or look its rate up with lookup().": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  " Write (test ? amount : 0) to charge when a test holds.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  " Write ({0} ? amount : 0) to charge when it is true.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "\"{0}\" ({1}) will be removed and the order total recalculated.": {
     "sites": 1,
     "scope": [
@@ -227,300 +260,336 @@
     ]
   },
   "'#' stands for the current item inside filter(), map() and the like": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'#acc' is the running total inside reduce() and nowhere else": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'#{0}' isn't a pointer; use #, #index or, inside reduce(), #acc": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'%' takes whole numbers, but this part can come to a fraction": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'%' takes whole numbers, but {0} can hold a fraction. Use int({1}) to take its whole part": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'(' opened here is never closed": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'()' is empty": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'+' adds two numbers or joins two texts; here one side is text and the other a number. Convert with string() or float().": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'.' needs a field name after it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'=' assigns; use '==' to compare": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'?' needs ':' and the value for the other case: test ? a : b": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'?' needs a value for when the test holds": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'[' opened here is never closed": {
+    "sites": 6,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "'if' needs an 'else' with the other value": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "'in' looks inside a list, a record or text, but {0}": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "'let {0}' needs '=' and a value": {
     "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "apps/web/rules",
-      "rules/formula"
-    ]
-  },
-  "'if' needs an 'else' with the other value": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/formula"
-    ]
-  },
-  "'in' looks inside a list, a record or text, but {0}": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/formula"
-    ]
-  },
-  "'let {0}' needs '=' and a value": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'let {0}' needs a value after '='": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'let' assigns with one '='": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'let' lines come before the formula's amount, each ending with ';'": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'let' needs a name, '=' and a value": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'let' needs a name: let fuel = …": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'let' needs a value after '='": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' compares numbers, but {1}. Use it as the test itself.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' compares values of the same kind, but {1} and {2}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' flips a true/false test, but {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' has no matching '{1}'": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' is a keyword and cannot be a name": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
+    ]
+  },
+  "'{0}' is an operator: write text {0} \"value\"": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "'{0}' is not an escape the formula language knows": {
@@ -535,111 +604,121 @@
     ]
   },
   "'{0}' is text": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' is true/false": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' joins two true/false tests, but {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' joins two true/false tests, but {1}. Compare it, such as {2} > 0": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' needs a value after it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' needs a value before it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' needs a value on its right": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' needs its value in braces after it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' opened here is never closed": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'{0}' works on numbers, but {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -666,24 +745,38 @@
       "rules/formula"
     ]
   },
-  "'{0}' works on text, but {1}": {
-    "sites": 2,
+  "'{0}' works on numbers, but {1}.{2}": {
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "'{0}' works on text, but {1}": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "'|' pipes into a function: value | round(2)": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -786,6 +879,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "({0} values)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "+ stop: {0}": {
@@ -3264,34 +3366,37 @@
     ]
   },
   "A 'let' here needs the value it is for after it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "A 'let' line ends with ';'": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "A 'let' line ends with ';', then the formula's amount follows on the next line": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -5251,12 +5356,13 @@
     ]
   },
   "A date moves by a duration, not a number: write {0} {1} duration(\"24h\")": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -6452,12 +6558,13 @@
     ]
   },
   "A function after '|' needs its parentheses: value | {0}()": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -7049,12 +7156,13 @@
     ]
   },
   "A map entry is written key: value": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -16580,23 +16688,25 @@
     ]
   },
   "Add ';'": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Add ()": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -24050,12 +24160,13 @@
     ]
   },
   "An 'if' that is part of a calculation needs parentheses around the whole 'if … else …'": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -26555,13 +26666,14 @@
     ]
   },
   "Another lane covers the same geography with a higher priority, so this one can never apply.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/lane"
     ]
   },
@@ -48668,34 +48780,37 @@
     ]
   },
   "Change to ({0} ? 1 : 0)": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Change to int({0})": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Change to {0}": {
-    "sites": 12,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -57504,6 +57619,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -72699,12 +72815,13 @@
     ]
   },
   "Declare {0} as a {1} input": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -80818,7 +80935,7 @@
     ]
   },
   "Divide the {0} freight charge between the customers who pay for it. Each payer receives an invoice for their share.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -80845,12 +80962,13 @@
     ]
   },
   "Dividing by 0 fails on every load": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -88510,6 +88628,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Edit values below to test your expression with different inputs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Edit what a case expects, activate, quarantine or retire it, and cancel runs": {
@@ -102075,6 +102202,15 @@
     ]
   },
   "Failed to close {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Failed to compute the reconciliation total": {
     "sites": 1,
     "scope": [
       "go"
@@ -211007,12 +211143,13 @@
     ]
   },
   "Remove the ',' or add a value after it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -215133,7 +215270,7 @@
     ]
   },
   "Reset": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -217346,12 +217483,13 @@
     ]
   },
   "Return {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -223342,11 +223480,12 @@
     ]
   },
   "Sample data": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/onboarding"
     ]
   },
@@ -229720,7 +229859,7 @@
     ]
   },
   "Select a value": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -244124,7 +244263,7 @@
     ]
   },
   "Split freight charge": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -261281,12 +261420,13 @@
     ]
   },
   "The formula ends on a 'let'; add the amount it charges on the last line": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -261312,23 +261452,25 @@
     ]
   },
   "The formula must come to an amount, but this comes to true/false. Write {0} ? amount : 0": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "The formula must come to an amount, but this comes to {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -269137,23 +269279,25 @@
     ]
   },
   "The test before '?' must be true/false, but {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "The test before '?' must be true/false, but {0}. Compare it: {1} > 0 ? …": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -272351,12 +272495,13 @@
     ]
   },
   "This comment is never closed": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -274440,13 +274585,14 @@
     ]
   },
   "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/lane"
     ]
   },
@@ -274487,12 +274633,13 @@
     ]
   },
   "This line's value is worked out and thrown away; only the last line is the charge. Bind it with 'let' to use it.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -274752,24 +274899,26 @@
     ]
   },
   "This matrix has no axes, so nothing can ever look a rate up in it.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/matrix"
     ]
   },
   "This matrix has no rates yet, so every lane pointing at it prices nothing.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -276846,12 +276995,13 @@
     ]
   },
   "This text is never closed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -284893,13 +285043,14 @@
     ]
   },
   "Two rates sit at {0}. The engine will take the one entered first and never mention the other.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -285593,6 +285744,15 @@
     ]
   },
   "Unable to allocate a unique location code. Retry the request.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Unable to check how the charge is split": {
     "sites": 1,
     "scope": [
       "go"
@@ -286433,45 +286593,49 @@
     ]
   },
   "Unexpected ';'": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Unexpected '{0}'": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Unexpected '{0}' here": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Unexpected character '{0}'": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -286495,23 +286659,25 @@
     ]
   },
   "Unexpected {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Unexpected {0} inside the call": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -289855,25 +290021,36 @@
     ]
   },
   "Use '='": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "Use '=='": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
+    ]
+  },
+  "Use ({0} ?? {1})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Use <down/> to reach the cards and <enter/> to add one.": {
@@ -290464,7 +290641,7 @@
     ]
   },
   "Use {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -290473,6 +290650,7 @@
       "apps/web/rules",
       "routes/agent-control",
       "routes/desk",
+      "routes/formula-template",
       "rules/formula"
     ]
   },
@@ -290486,12 +290664,13 @@
     ]
   },
   "Use {0}(map(…))": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -305911,12 +306090,13 @@
     ]
   },
   "Wrap the '??' part in parentheses before '{0}': (a ?? 0) {0} b": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -305964,6 +306144,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -305975,6 +306156,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -310647,6 +310829,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "at least {0, plural, one {# argument} other {# arguments}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "at most": {
@@ -318822,12 +319013,13 @@
     ]
   },
   "the date": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -318872,6 +319064,15 @@
     "areas": [
       "apps/web/rules",
       "rules/formula"
+    ]
+  },
+  "the end of the formula": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "the file": {
@@ -319251,12 +319452,13 @@
     ]
   },
   "this part is {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -320738,11 +320940,12 @@
     ]
   },
   "{0, plural, one {# argument} other {# arguments}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -327334,12 +327537,13 @@
     ]
   },
   "{0} adds up values and does not take a predicate; map the list first: {0}(map(list, .field))": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -327547,13 +327751,23 @@
       "routes/factoring-remittance"
     ]
   },
+  "{0} and {1}, so this is never {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} and {1}; the engine compares only values of the same kind": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -327879,13 +328093,14 @@
     ]
   },
   "{0} bands {1} and {2} overlap, so the same shipment matches both.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -329931,13 +330146,14 @@
     ]
   },
   "{0} has no band below {1}, so anything smaller finds no rate.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -329962,23 +330178,25 @@
     ]
   },
   "{0} has no field {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0} has no field {1}. Did you mean {2}?": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -330650,12 +330868,13 @@
     ]
   },
   "{0} is a value, not a function; it can't be called with ( )": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -330670,12 +330889,13 @@
     ]
   },
   "{0} is already a shipment field, and a 'let' can't redeclare it. Use another name": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -330690,12 +330910,13 @@
     ]
   },
   "{0} is already defined above; use another name": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -330854,14 +331075,24 @@
     ]
   },
   "{0} is defined further down; a 'let' must come before the lines that read it": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
+    ]
+  },
+  "{0} is empty on some shipments, and the formula would fail to rate them. Give it a fallback: ({0} ?? {1})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} is empty on some shipments, and the formula would fail to rate them. Give it a fallback: {1}": {
@@ -330975,12 +331206,13 @@
     ]
   },
   "{0} is never used": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -331366,12 +331598,13 @@
     ]
   },
   "{0} is one of this template's inputs, and a 'let' can't redeclare it. Use another name": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -331535,12 +331768,13 @@
     ]
   },
   "{0} is the name of a formula function, and a 'let' can't take it. Use another name": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -331645,12 +331879,13 @@
     ]
   },
   "{0} is {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -331719,78 +331954,85 @@
     ]
   },
   "{0} isn't a formula function. Did you mean {1}?": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0} isn't a formula function; pick one from the reference": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0} isn't a shipment field or one of this template's inputs. Declare it as an input, or pick a field from the reference.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0} isn't a shipment field or one of this template's inputs. Did you mean {1}?": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0} isn't available in formulas: formulas compare codes and do not build text": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0} isn't available in formulas: formulas read the shipment's fields directly and do not convert them to or from JSON": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -331841,13 +332083,14 @@
     ]
   },
   "{0} jumps from {1} to {2} with nothing in between.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -332714,12 +332957,13 @@
     ]
   },
   "{0} names its rate table in quotes: {0}(\"zone_rates\", …)": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -334427,12 +334671,13 @@
     ]
   },
   "{0} reads a field of the current item, so it only works inside filter(), map() and the like": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -335488,13 +335733,14 @@
     ]
   },
   "{0} stops at {1}. Anything at or above that finds no rate — give the top band no upper bound to catch it.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -335633,12 +335879,13 @@
     ]
   },
   "{0} takes numbers, but {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
@@ -335727,6 +335974,15 @@
     "areas": [
       "apps/web/rules",
       "rules/formula"
+    ]
+  },
+  "{0} takes {1}; {2, plural, one {# was} other {# were}} given": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} tax + {1} surcharge, in {2}": {
@@ -335881,6 +336137,15 @@
       "template/customer.statement.email",
       "template/customer.statement.pdf",
       "template/invoice.email"
+    ]
+  },
+  "{0} to {1} arguments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} to {1} by {2}": {
@@ -338562,23 +338827,25 @@
     ]
   },
   "{0}; it can't be indexed with [ ]": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]
   },
   "{0}; it has no field {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/rules",
       "rules/formula"
     ]

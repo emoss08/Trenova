@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-
-	"github.com/shopspring/decimal"
 )
 
 // MaxRules bounds a column's rule list. Conditional formatting is meant to make
@@ -86,67 +84,6 @@ func (r *Rule) Validate() error {
 		return errors.New("the upper bound must not be below the lower bound")
 	}
 	return nil
-}
-
-func (r *Rule) matches(value float64) bool {
-	switch r.Op {
-	case RuleGreaterThan:
-		return value > r.Value
-	case RuleGreaterEqual:
-		return value >= r.Value
-	case RuleLessThan:
-		return value < r.Value
-	case RuleLessEqual:
-		return value <= r.Value
-	case RuleEqual:
-		return value == r.Value
-	case RuleBetween:
-		return value >= r.Value && value <= r.Upper
-	default:
-		return false
-	}
-}
-
-// ToneFor returns the emphasis a value earns, or ToneNone when no rule matches.
-// Only numeric cells are banded — a rule compares against a threshold, and a
-// string or a boolean has no position on that scale.
-func (r *Resolved) ToneFor(value any) Tone {
-	if len(r.Rules) == 0 || value == nil {
-		return ToneNone
-	}
-
-	number, ok := ruleValue(value)
-	if !ok {
-		return ToneNone
-	}
-	// Percent columns are stored as a fraction and displayed times 100, so the
-	// threshold an author typed ("over 12%") has to be compared on that scale.
-	if r.Style == StylePercent {
-		number *= 100
-	}
-
-	for i := range r.Rules {
-		if r.Rules[i].matches(number) {
-			return r.Rules[i].Tone
-		}
-	}
-	return ToneNone
-}
-
-func ruleValue(value any) (float64, bool) {
-	switch v := value.(type) {
-	case decimal.Decimal:
-		result, _ := v.Float64()
-		return result, true
-	case int64:
-		return float64(v), true
-	case int:
-		return float64(v), true
-	case float64:
-		return v, true
-	default:
-		return 0, false
-	}
 }
 
 func validateRules(rules []Rule) error {

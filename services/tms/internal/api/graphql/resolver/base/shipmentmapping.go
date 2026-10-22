@@ -1,6 +1,8 @@
 package base
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -8,7 +10,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func ShipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
+func ShipmentToModel(
+	ctx context.Context,
+	entity *shipmentdomain.Shipment,
+) (*gqlmodel.Shipment, error) {
 	if entity == nil {
 		return nil, nil //nolint:nilnil // a missing shipment maps to a null field
 	}
@@ -81,7 +86,10 @@ func ShipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		Owner:                  entity.Owner,
 		FormulaTemplate:        shipmentFormulaTemplateToModel(entity.FormulaTemplate),
 		ChargeAllocations:      chargeAllocationsOrEmpty(entity.ChargeAllocations),
-		BillingSplitSummary:    billingSplitSummaryToModel(entity),
+	}
+	model.BillingSplitSummary, err = billingSplitSummaryToModel(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 	if model.FreightTerms == "" {
 		model.FreightTerms = shipmentdomain.FreightTermsPrepaid
