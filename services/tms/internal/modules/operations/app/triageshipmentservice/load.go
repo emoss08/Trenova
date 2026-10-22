@@ -132,7 +132,6 @@ func (s *Service) buildShipment(ctx context.Context, b *loadBuild) (*shipment.Sh
 		Status:           shipment.StatusNew,
 		EntryMethod:      shipment.EntryMethodManual,
 		FreightTerms:     shipment.FreightTermsPrepaid,
-		RatingUnit:       1,
 		IdempotencyKey:   b.req.IdempotencyKey,
 		SourceDocumentID: sourceDocument(b.req.SourceDocumentID),
 	}
@@ -518,7 +517,8 @@ func (b *loadBuild) applyRate(entity *shipment.Shipment) {
 
 		return
 	}
-	entity.BaseRate = rate
+	entity.FormulaTemplateID = pulid.Nil
+	entity.FreightChargeAmount = rate
 }
 
 var amountPattern = regexp.MustCompile(`\$?\s*[\d,]+(?:\.\d+)?`)

@@ -1105,15 +1105,19 @@ func evaluateRateValidation(
 		return nil
 	}
 
-	if entity == nil || entity.RatingDetail == nil {
+	if entity == nil || entity.RatingDetail == nil ||
+		(entity.RatingDetail.Bill == nil && !entity.RatingDetail.RatedByHand()) {
 		return &rateValidationResult{
 			Field:   "ratingDetail",
 			Code:    "rate_missing_basis",
 			Message: "A calculated rate basis is required before billing can proceed",
 		}
 	}
+	if entity.RatingDetail.Bill == nil {
+		return nil
+	}
 
-	expected := decimal.NewFromFloat(entity.RatingDetail.Result)
+	expected := entity.RatingDetail.Bill.FreightTotal
 	actual := entity.FreightChargeAmount.Decimal
 	variancePercent := calculateVariancePercent(expected, actual)
 	if variancePercent.IsZero() {

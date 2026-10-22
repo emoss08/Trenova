@@ -54,3 +54,9 @@ func FreightLinesFromBill(bill *tarifftypes.Bill, adjustmentLabel func(tarifftyp
 	}
 	return lines
 }
+
+const RatingSourceManual = "ManualOverride"
+
+func (d *RatingDetail) RatedByHand() bool {
+	return d != nil && d.Source == RatingSourceManual
+}

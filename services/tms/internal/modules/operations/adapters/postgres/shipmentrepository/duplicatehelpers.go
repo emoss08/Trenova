@@ -107,7 +107,6 @@ func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipme
 		Weight:              intutils.ClonePointer(source.Weight),
 		TemperatureMin:      intutils.ClonePointer(source.TemperatureMin),
 		TemperatureMax:      intutils.ClonePointer(source.TemperatureMax),
-		RatingUnit:          source.RatingUnit,
 		EnteredByID:         spec.RequestedBy,
 	}
 

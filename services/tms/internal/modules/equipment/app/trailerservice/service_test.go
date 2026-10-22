@@ -343,7 +343,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+		RateEngine:      ratingtest.NewEngine(t),
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
@@ -512,11 +512,6 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
 	systemUserID := pulid.MustNew("usr_")
 	deps.userRepo.EXPECT().
 		GetSystemUser(mock.Anything, mock.Anything).
@@ -582,7 +577,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 
@@ -634,7 +629,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	deps.svc.coordinator = shipmentstate.NewCoordinator()
 	deps.svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+		RateEngine:      ratingtest.NewEngine(t),
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 

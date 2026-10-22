@@ -541,7 +541,6 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Status:         shipment.StatusNew,
-		RatingUnit:     1,
 		Moves:          []*shipment.ShipmentMove{move},
 	}, nil
 }

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
@@ -570,10 +573,11 @@ func (d *SampleData) createShipments(
 			TractorTypeID:     refs.tractorTypeID,
 			TrailerTypeID:     refs.trailerTypeID,
 			BOL:               plan.bol,
-			BaseRate:          decimal.NewNullDecimal(decimal.NewFromInt(plan.rate)),
-			RatingUnit:        1,
-			Pieces:            &pieces,
-			Weight:            &weight,
+			TariffInputs: tarifftypes.Inputs{
+				formulatemplate.StandardInputRate: rules.MoneyValue(decimal.NewFromInt(plan.rate)),
+			},
+			Pieces: &pieces,
+			Weight: &weight,
 			Moves: []*shipment.ShipmentMove{{
 				OrganizationID: req.TenantInfo.OrgID,
 				BusinessUnitID: req.TenantInfo.BuID,

@@ -1259,7 +1259,6 @@ func (s *DetentionSeed) createDetentionShipment(
 		BaseRate:            decimal.NullDecimal{Decimal: revenue, Valid: true},
 		FreightChargeAmount: decimal.NullDecimal{Decimal: revenue, Valid: true},
 		TotalChargeAmount:   decimal.NullDecimal{Decimal: revenue, Valid: true},
-		RatingUnit:          1,
 	}
 	last := stops[len(stops)-1]
 	if last.ActualDeparture != nil {

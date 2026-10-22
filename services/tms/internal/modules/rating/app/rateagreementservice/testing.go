@@ -1,23 +1,14 @@
 package rateagreementservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-// NewTestValidator returns a validator with the database-backed checks left
-// out, so a test can exercise the business rules without a live connection.
-func NewTestValidator() *Validator {
-	return NewTestValidatorWithTemplateRepo(nil)
-}
-
-// NewTestValidatorWithTemplateRepo lets a test supply a stub formula template
-// repository so the rule-reference checks can be exercised without a database.
-func NewTestValidatorWithTemplateRepo(
-	formulaTemplateRepo formulatemplateports.FormulaTemplateRepository,
-) *Validator {
-	refs := templateRefs{templates: formulaTemplateRepo}
+func NewTestValidator(resolver tariffports.Resolver, checker tariffports.Checker) *Validator {
+	tariffs := &tariffInputs{resolver: resolver, checker: checker, now: timeutils.NowUnix}
 	return &Validator{
-		validator: newBuilder(nil, refs).Build(),
-		refs:      refs,
+		validator: newBuilder(nil, tariffs).Build(),
+		tariffs:   tariffs,
 	}
 }

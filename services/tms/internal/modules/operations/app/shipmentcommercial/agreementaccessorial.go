@@ -2,39 +2,22 @@ package shipmentcommercial
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
-// shipmentSchemaID names the formula environment an accessorial condition is
-// written against — the same one the rating formulas use, so a pricing analyst
-// writes conditions in the vocabulary they already know.
-const shipmentSchemaID = "shipment"
+const cents = 2
 
-// loadAgreement reads the contract the rate engine just resolved, with its
-// accessorial schedule and fuel binding attached.
-//
-// A contract that cannot be read is logged and treated as absent rather than
-// failing the save. The linehaul is already priced by this point, and a
-// shipment missing an automatic accessorial is a far smaller problem than a
-// shipment that cannot be saved at all.
-func (c *Calculator) loadAgreement(
-	ctx context.Context,
-	entity *shipment.Shipment,
-) *rateagreement.RateAgreement {
-	return c.loadAgreementByID(ctx, entity, entity.RateAgreementID)
-}
-
-// loadAgreementByID reads a named contract, for the callers that know which one
-// applies before the shipment has been stamped with it — a preview being the
-// whole reason that distinction exists.
 func (c *Calculator) loadAgreementByID(
 	ctx context.Context,
 	entity *shipment.Shipment,
@@ -51,6 +34,7 @@ func (c *Calculator) loadAgreementByID(
 			BuID:  entity.BusinessUnitID,
 		},
 		IncludeChildren: true,
+		OmitRules:       true,
 	})
 	if err != nil {
 		c.logger.Warn("failed to load rate agreement for shipment",
@@ -65,8 +49,6 @@ func (c *Calculator) loadAgreementByID(
 	return agreement
 }
 
-// fuelOverride translates the contract's fuel binding into the neutral form the
-// fuel service takes, so the fuel service never learns about rate agreements.
 func fuelOverride(agreement *rateagreement.RateAgreement) *fuelsurchargeports.FuelProgramOverride {
 	if agreement == nil || agreement.FuelBinding == nil {
 		return nil
@@ -84,171 +66,145 @@ func fuelOverride(agreement *rateagreement.RateAgreement) *fuelsurchargeports.Fu
 	}
 }
 
-// syncAgreementAccessorials rebuilds the charges a contract's accessorial
-// schedule applies automatically.
-//
-// This is what makes the rate confirmation and the invoice agree: both read the
-// accessorial's price from the same contract, rather than one reading the
-// organization default and the other whatever a clerk typed.
-//
-// It runs before the fuel surcharge, because a fuel program that takes a
-// percentage of linehaul plus accessorials has to see them first.
 func (c *Calculator) syncAgreementAccessorials(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	agreement *rateagreement.RateAgreement,
-) {
-	if agreement == nil {
+	contract *ratequoteports.RatedShipment,
+	pass *ratingPass,
+) error {
+	if contract.Agreement == nil {
 		removeAgreementCharges(entity)
-		return
+		return nil
 	}
 
-	reconcileAgreementCharges(
-		entity,
-		c.applicableAccessorials(ctx, agreement, entity, ratingDate(entity, c.now)),
-	)
+	applicable := applicableAccessorials(contract, entity, ratingDate(entity, c.now), pass)
+	charges, err := pricedAgreementCharges(ctx, entity, applicable, freightOf(entity))
+	if err != nil {
+		return err
+	}
+	reconcileAgreementCharges(entity, charges)
+	return nil
 }
 
-// applicableAccessorials picks the schedule rows that apply to this shipment.
-//
-// The contract answers everything it can on its own, and this adds the one test
-// it cannot: the expression, which needs a formula engine. Splitting it that way
-// is what lets the buy side reach the same answer without a second copy of the
-// selection rules.
-//
-// The contract's cheap tests run first, because the condition is the only one
-// here that costs anything to answer.
-func (c *Calculator) applicableAccessorials(
-	ctx context.Context,
-	agreement *rateagreement.RateAgreement,
+func applicableAccessorials(
+	contract *ratequoteports.RatedShipment,
 	entity *shipment.Shipment,
 	ratedAt int64,
+	pass *ratingPass,
 ) []*rateagreement.RateAgreementAccessorial {
-	scoped := agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
+	scoped := contract.Agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
 		At:             ratedAt,
 		ServiceTypeID:  entity.ServiceTypeID,
 		ShipmentTypeID: entity.ShipmentTypeID,
 	})
 
 	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
-	holds := c.conditionsHold(ctx, scoped, entity, c.hydrateForConditions(ctx, entity, scoped))
-
-	for index, accessorial := range scoped {
-		if holds[index] {
-			applicable = append(applicable, accessorial)
+	for _, accessorial := range scoped {
+		if strings.TrimSpace(accessorial.Condition) != "" && !contract.Conditions[accessorial.ID] {
+			continue
 		}
+		if pass.skips(accessorial.AccessorialChargeID, skipSourceAgreement) {
+			continue
+		}
+		applicable = append(applicable, accessorial)
 	}
-
 	return applicable
 }
 
-func (c *Calculator) hydrateForConditions(
-	ctx context.Context,
-	entity *shipment.Shipment,
-	scoped []*rateagreement.RateAgreementAccessorial,
-) bool {
-	conditional := false
-	for _, accessorial := range scoped {
-		if accessorial.ApplyCondition != "" {
-			conditional = true
-			break
-		}
-	}
-	if !conditional {
-		return true
-	}
-
-	if err := c.hydrate(ctx, entity); err != nil {
-		c.logger.Warn("shipment relations could not be loaded for accessorial conditions",
-			zap.String("shipmentId", entity.ID.String()),
-			zap.Error(err),
-		)
-		return false
-	}
-
-	return true
+type pricedAccessorial struct {
+	accessorial *rateagreement.RateAgreementAccessorial
+	charge      *shipment.AdditionalCharge
 }
 
-// conditionsHold evaluates every accessorial's applicability expression in
-// one call into the rules module, against one environment for the shipment.
-//
-// A condition that will not evaluate withholds the charge rather than applying
-// it. Billing a customer for something the contract may not entitle us to is
-// the more expensive mistake of the two, and the warning names the row so the
-// contract can be corrected.
-func (c *Calculator) conditionsHold(
-	ctx context.Context,
-	scoped []*rateagreement.RateAgreementAccessorial,
-	entity *shipment.Shipment,
-	readable bool,
-) []bool {
-	holds := make([]bool, len(scoped))
-	expressions := make([]string, 0, len(scoped))
-	positions := make([]int, 0, len(scoped))
-	for index, accessorial := range scoped {
-		if accessorial.ApplyCondition == "" {
-			holds[index] = true
-			continue
-		}
-		if readable && c.predicate != nil {
-			expressions = append(expressions, accessorial.ApplyCondition)
-			positions = append(positions, index)
-		}
+func measuresOf(entity *shipment.Shipment) *rateagreement.AccessorialMeasures {
+	return &rateagreement.AccessorialMeasures{
+		Miles:  entity.RatingMiles(),
+		Dwells: entity.DwellHours(),
+		Days:   entity.ServiceDays(),
+		Stops:  decimal.NewFromInt(int64(entity.RatedStopCount())),
 	}
-	if len(expressions) == 0 {
-		return holds
-	}
-
-	outcomes, err := c.predicate.EvaluatePredicates(
-		ctx,
-		&formulatemplateports.EvaluatePredicatesRequest{
-			Expressions: expressions,
-			SchemaID:    shipmentSchemaID,
-			Entity:      entity,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		},
-	)
-	if err != nil {
-		c.logger.Warn("rate agreement accessorial conditions could not be evaluated",
-			zap.String("shipmentId", entity.ID.String()),
-			zap.Int("conditions", len(expressions)),
-			zap.Error(err),
-		)
-		return holds
-	}
-
-	for position, outcome := range outcomes {
-		accessorial := scoped[positions[position]]
-		if outcome.Err != nil {
-			c.logger.Warn("rate agreement accessorial condition could not be evaluated",
-				zap.String("shipmentId", entity.ID.String()),
-				zap.String("accessorialId", accessorial.ID.String()),
-				zap.String("condition", accessorial.ApplyCondition),
-				zap.Error(outcome.Err),
-			)
-			continue
-		}
-		holds[positions[position]] = outcome.Holds
-	}
-
-	return holds
 }
 
-// reconcileAgreementCharges rewrites the shipment's contract accessorials so
-// exactly one charge survives per applicable schedule row.
-//
-// Existing rows are reused rather than replaced, for the same reason the
-// detention reconciliation does it: a charge that keeps its identity keeps its
-// audit trail, and anything pointing at it stays resolvable after the save.
-func reconcileAgreementCharges(
+func pricedAgreementCharges(
+	ctx context.Context,
 	entity *shipment.Shipment,
 	applicable []*rateagreement.RateAgreementAccessorial,
-) {
-	existing := make(map[pulid.ID]*shipment.AdditionalCharge, len(applicable))
-	filtered := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges))
+	freight decimal.Decimal,
+) ([]pricedAccessorial, error) {
+	measures := measuresOf(entity)
+	out := make([]pricedAccessorial, 0, len(applicable))
+	percentages := make([]int, 0, len(applicable))
+
+	for _, accessorial := range applicable {
+		charge := &shipment.AdditionalCharge{Unit: 1}
+		switch accessorial.Method {
+		case accessorialcharge.MethodPercentage:
+			charge.Method = accessorialcharge.MethodPercentage
+			charge.Amount = accessorial.PricedAmount()
+			charge.Rate = decimal.NewNullDecimal(accessorial.Amount)
+			percentages = append(percentages, len(out))
+		case accessorialcharge.MethodPerUnit:
+			quantity := accessorial.BillableQuantity(measures)
+			amount, _ := accessorial.Cap(accessorial.PricedAmount().Mul(quantity).Round(cents))
+			charge.Method = accessorialcharge.MethodFlat
+			charge.Amount = amount
+			charge.Quantity = decimal.NewNullDecimal(quantity)
+			charge.Rate = decimal.NewNullDecimal(accessorial.Amount)
+			charge.RateUnit = accessorial.TariffRateUnit()
+		default:
+			amount, _ := accessorial.Cap(accessorial.PricedAmount())
+			charge.Method = accessorialcharge.MethodFlat
+			charge.Amount = amount
+			charge.Quantity = decimal.NewNullDecimal(decimal.NewFromInt(1))
+		}
+		out = append(out, pricedAccessorial{accessorial: accessorial, charge: charge})
+	}
+
+	if err := capPercentages(ctx, out, percentages, freight); err != nil {
+		return nil, err
+	}
+
+	kept := out[:0]
+	for _, priced := range out {
+		if priced.charge.Amount.IsPositive() {
+			kept = append(kept, priced)
+		}
+	}
+	return kept, nil
+}
+
+func capPercentages(
+	ctx context.Context,
+	priced []pricedAccessorial,
+	percentages []int,
+	freight decimal.Decimal,
+) error {
+	if len(percentages) == 0 {
+		return nil
+	}
+	charges := make([]*shipment.AdditionalCharge, 0, len(percentages))
+	for _, index := range percentages {
+		charges = append(charges, priced[index].charge)
+	}
+	totals, err := shipment.AdditionalChargeTotals(ctx, charges, freight)
+	if err != nil {
+		return err
+	}
+	for position, index := range percentages {
+		entry := priced[index]
+		capped, applied := entry.accessorial.Cap(totals.Each[position])
+		if !applied {
+			continue
+		}
+		entry.charge.Method = accessorialcharge.MethodFlat
+		entry.charge.Amount = capped
+	}
+	return nil
+}
+
+func reconcileAgreementCharges(entity *shipment.Shipment, priced []pricedAccessorial) {
+	existing := make(map[pulid.ID]*shipment.AdditionalCharge, len(priced))
+	filtered := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges)+len(priced))
 
 	for _, charge := range entity.AdditionalCharges {
 		if charge == nil {
@@ -265,12 +221,8 @@ func reconcileAgreementCharges(
 		}
 	}
 
-	for _, accessorial := range applicable {
-		filtered = append(filtered, agreementCharge(
-			entity,
-			accessorial,
-			existing[accessorial.ID],
-		))
+	for _, entry := range priced {
+		filtered = append(filtered, agreementCharge(entity, entry, existing[entry.accessorial.ID]))
 	}
 
 	entity.AdditionalCharges = filtered
@@ -278,10 +230,10 @@ func reconcileAgreementCharges(
 
 func agreementCharge(
 	entity *shipment.Shipment,
-	accessorial *rateagreement.RateAgreementAccessorial,
+	entry pricedAccessorial,
 	existing *shipment.AdditionalCharge,
 ) *shipment.AdditionalCharge {
-	accessorialID := accessorial.ID
+	accessorialID := entry.accessorial.ID
 
 	charge := existing
 	if charge == nil {
@@ -292,18 +244,20 @@ func agreementCharge(
 	charge.BusinessUnitID = entity.BusinessUnitID
 	charge.ShipmentID = entity.ID
 	charge.IsSystemGenerated = true
-	charge.AccessorialChargeID = accessorial.AccessorialChargeID
-	charge.Method = accessorial.Method
-	charge.Amount = accessorial.PricedAmount()
+	charge.AccessorialChargeID = entry.accessorial.AccessorialChargeID
+	charge.Method = entry.charge.Method
+	charge.Amount = entry.charge.Amount
 	charge.Unit = 1
+	charge.Quantity = entry.charge.Quantity
+	charge.Rate = entry.charge.Rate
+	charge.RateUnit = entry.charge.RateUnit
+	charge.Label = ""
 	charge.RateAgreementAccessorialID = &accessorialID
 	charge.RateQuoteID = entity.RateQuoteID
 
-	// The owner columns are mutually exclusive, and the database enforces it.
-	// Clearing the others here means a charge can never be claimed by two
-	// engines even if it was previously produced by one of them.
 	charge.FuelSurchargeProgramID = nil
 	charge.IsDetention = false
+	charge.IsTariff = false
 
 	return charge
 }

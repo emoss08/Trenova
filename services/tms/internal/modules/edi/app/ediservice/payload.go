@@ -47,7 +47,6 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 		OtherChargeAmount:        source.OtherChargeAmount,
 		BaseRate:                 source.BaseRate,
 		TotalChargeAmount:        source.TotalChargeAmount,
-		RatingUnit:               source.RatingUnit,
 		Moves:                    make([]edi.LoadTenderMove, 0, len(source.Moves)),
 		Commodities:              make([]edi.LoadTenderCommodity, 0, len(source.Commodities)),
 		AdditionalCharges:        make([]edi.LoadTenderCharge, 0, len(source.AdditionalCharges)),

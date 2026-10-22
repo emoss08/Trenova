@@ -1284,7 +1284,6 @@ func (s *DriverPaySeed) createPaidShipments(
 				Valid:   true,
 			},
 			TotalChargeAmount: decimal.NullDecimal{Decimal: revenue, Valid: true},
-			RatingUnit:        1,
 		}
 		shp.RatingDetail = seededRatingDetail(shp, &refs.flatTemplate, timeutils.NowUnix())
 		if _, err = tx.NewInsert().Model(shp).Exec(ctx); err != nil {

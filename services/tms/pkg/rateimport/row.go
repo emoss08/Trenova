@@ -3,6 +3,7 @@ package rateimport
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
@@ -43,6 +44,20 @@ var basisSpellings = map[string]string{
 	"hour":          formulatemplate.StandardPerHour,
 	"hourly":        formulatemplate.StandardPerHour,
 	"percent":       formulatemplate.StandardPercentOfSellRate,
+}
+
+func RateTypeTemplateNames() []string {
+	names := make([]string, 0, len(basisSpellings))
+	seen := make(map[string]struct{}, len(basisSpellings))
+	for _, name := range basisSpellings {
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	return names
 }
 
 type Template struct {
@@ -180,7 +195,10 @@ func ruleInputs(
 	if !minimum.Valid {
 		return inputs, nil
 	}
-	minimumDecl := tarifftypes.FindInput(template.Inputs, formulatemplate.StandardInputMinimumCharge)
+	minimumDecl := tarifftypes.FindInput(
+		template.Inputs,
+		formulatemplate.StandardInputMinimumCharge,
+	)
 	if minimumDecl == nil {
 		return nil, errNoMinimumInput
 	}

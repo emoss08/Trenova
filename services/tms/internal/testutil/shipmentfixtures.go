@@ -89,7 +89,6 @@ func CreateShipmentGraph(
 		Status:            shipment.StatusNew,
 		ProNumber:         params.ProNumber,
 		BOL:               params.BOL,
-		RatingUnit:        1,
 	}
 	_, err := db.NewInsert().Model(shipmentEntity).Exec(ctx)
 	require.NoError(t, err)

@@ -27,7 +27,7 @@ func newTestCommercialCalculator(
 
 	return shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 		AccessorialRepo: accessorialRepo,
 	})
 }

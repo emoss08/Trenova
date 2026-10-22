@@ -526,7 +526,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(3200.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp2ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -550,7 +549,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(1900.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp3ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -574,7 +572,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(5062.50),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp4ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -595,7 +592,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(4100.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp5ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -620,7 +616,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(2950.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp6ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -644,7 +639,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(6975.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp7ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -668,7 +662,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(4150.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp8ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -689,7 +682,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(2400.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp9ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -714,7 +706,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(3700.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp10ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -740,7 +731,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(4925.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 	}
 

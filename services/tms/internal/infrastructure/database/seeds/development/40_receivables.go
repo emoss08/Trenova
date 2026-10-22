@@ -550,7 +550,6 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 		BaseRate:               charge,
 		FreightChargeAmount:    charge,
 		TotalChargeAmount:      charge,
-		RatingUnit:             1,
 		ActualShipDate:         &pickedUp,
 		ActualDeliveryDate:     &delivered,
 		BillingTransferStatus:  shipment.BillingTransferPosted,

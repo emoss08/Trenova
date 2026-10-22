@@ -117,15 +117,10 @@ func previewAssignmentServiceWith(
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
 		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
 	svc.controlRepo = controlRepo
 	svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 	})
 	svc.shipmentValidator = newTestShipmentValidator(t)

@@ -84,7 +84,9 @@ func TestRecalculate_KeepsTheContractProvenanceOnAnAutoRatedShipment(t *testing.
 		RateQuoteID:   "rq_01",
 	}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
@@ -112,7 +114,9 @@ func TestRecalculate_DropsTheContractProvenanceOnceEdited(t *testing.T) {
 	entity.AutoRated = false
 	entity.RatingDetail = &shipment.RatingDetail{AgreementName: "Acme TL 2026"}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
@@ -167,7 +171,9 @@ func TestAdoptContractRate_SeatsTheRatingMethodAndBaseRate(t *testing.T) {
 	templateID := pulid.MustNew("fmt_")
 	agreementID := pulid.MustNew("ragr_")
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
@@ -194,7 +200,9 @@ func TestAdoptContractRate_KeepsTheBaseRateWhenTheRuleBindsNone(t *testing.T) {
 	entity := validShipment()
 	entity.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(3.5))
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
@@ -215,7 +223,9 @@ func TestAdoptContractRate_ClearsAPreviousDeparture(t *testing.T) {
 	entity.RateOverrideReason = "Spot rate agreed with the customer"
 	entity.RateOverrideByID = &userID
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
@@ -235,7 +245,9 @@ func TestAdoptContractRate_IgnoresAnUnpricedOutcome(t *testing.T) {
 
 	entity := validShipment()
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 0)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 0)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{

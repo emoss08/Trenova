@@ -235,7 +235,7 @@ func buildShipment(
 	volume := entity.RatingCubicFeet()
 	out := &shipmentRoot{
 		ProNumber:  entity.ProNumber,
-		Status:     string(entity.Status),
+		Status:     orNew(string(entity.Status), string(shipment.StatusNew)),
 		Weight:     optionalQuantity(weight, unitWeight),
 		Pieces:     optionalInt(ratingPieces(entity)),
 		Distance:   rules.QuantityValue(entity.RatingDistance(), distanceUnit),
@@ -340,7 +340,7 @@ func buildStop(stop *shipment.Stop, sequence int64, fallback *time.Location) *st
 	record := &stopRecord{
 		Sequence:    rules.IntValue(sequence),
 		Kind:        string(stop.Type),
-		Status:      string(stop.Status),
+		Status:      orNew(string(stop.Status), string(shipment.StopStatusNew)),
 		Appointment: stop.ScheduleType == shipment.StopScheduleTypeAppointment,
 		Window: window{
 			Start: rules.NoneValue(),
@@ -518,4 +518,11 @@ func optionalTime(value *int64, zone *time.Location) rules.RawJSON {
 
 func timeValue(value int64, zone *time.Location) rules.RawJSON {
 	return rules.DateTimeValue(time.Unix(value, 0).In(zone))
+}
+
+func orNew(status, unsaved string) string {
+	if status == "" {
+		return unsaved
+	}
+	return status
 }

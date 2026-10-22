@@ -14,13 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
@@ -29,11 +23,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type RelationStore struct {
@@ -200,24 +192,8 @@ func (r storeHazmats) GetByIDs(
 	return fetchFrom(r.s, "hazmat", req.TenantInfo, req.HazardousMaterialIDs, r.s.Hazmats), nil
 }
 
-func NewEnvironmentBuilder(t *testing.T) *environment.Builder {
-	t.Helper()
-
-	registry, err := formula.NewSchemaRegistry()
-	require.NoError(t, err)
-
-	return environment.NewBuilder(environment.Params{
-		Registry: registry,
-		Resolver: resolver.NewResolver(),
-	})
-}
-
-func HydratorParams(
-	env *environment.Builder,
-	store *RelationStore,
-) ratinghydration.Params {
+func HydratorParams(store *RelationStore) ratinghydration.Params {
 	return ratinghydration.Params{
-		Environment:       env,
 		CustomerRepo:      storeCustomers{s: store},
 		ServiceTypeRepo:   storeServiceTypes{s: store},
 		ShipmentTypeRepo:  storeShipmentTypes{s: store},
@@ -232,89 +208,8 @@ func HydratorParams(
 func NewHydrator(t *testing.T, store *RelationStore) *ratinghydration.Hydrator {
 	t.Helper()
 
-	hydrator, err := ratinghydration.New(HydratorParams(NewEnvironmentBuilder(t), store))
+	hydrator, err := ratinghydration.New(HydratorParams(store))
 	require.NoError(t, err)
 
 	return hydrator
-}
-
-type templateStore struct {
-	formulatemplateports.FormulaTemplateRepository
-	templates map[pulid.ID]*formulatemplate.FormulaTemplate
-}
-
-func (r templateStore) GetByID(
-	_ context.Context,
-	req formulatemplateports.GetFormulaTemplateByIDRequest,
-) (*formulatemplate.FormulaTemplate, error) {
-	template, ok := r.templates[req.TemplateID]
-	if !ok {
-		return nil, errortypes.NewNotFoundError("Formula template not found")
-	}
-	copied := *template
-	return &copied, nil
-}
-
-type noScheduledVersions struct {
-	formulatemplateports.FormulaTemplateVersionRepository
-}
-
-func (noScheduledVersions) ListScheduled(
-	context.Context,
-	*formulatemplateports.ListScheduledVersionsRequest,
-) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-func (noScheduledVersions) ListApproved(
-	context.Context,
-	*formulatemplateports.ListScheduledVersionsRequest,
-) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-type noLookupTables struct {
-	ratematrixports.RateMatrixRepository
-}
-
-func (noLookupTables) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
-	return "", nil
-}
-
-func (noLookupTables) GetLookupData(
-	context.Context,
-	*ratematrixports.GetRateMatrixLookupDataRequest,
-) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return nil, nil
-}
-
-func NewFormulaService(
-	t *testing.T,
-	templates ...*formulatemplate.FormulaTemplate,
-) *formula.Service {
-	t.Helper()
-
-	registry, err := formula.NewSchemaRegistry()
-	require.NoError(t, err)
-
-	res := resolver.NewResolver()
-	env := environment.NewBuilder(environment.Params{
-		Registry: registry,
-		Resolver: res,
-	})
-
-	byID := make(map[pulid.ID]*formulatemplate.FormulaTemplate, len(templates))
-	for _, template := range templates {
-		byID[template.ID] = template
-	}
-
-	return formula.NewService(formula.ServiceParams{
-		Logger:         zap.NewNop(),
-		Registry:       registry,
-		Environment:    env,
-		Resolver:       res,
-		Repo:           templateStore{templates: byID},
-		VersionRepo:    noScheduledVersions{},
-		RateMatrixRepo: noLookupTables{},
-	})
 }

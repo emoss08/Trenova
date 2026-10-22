@@ -609,7 +609,6 @@ func applyTenderPayloadToShipment(
 	target.OtherChargeAmount = payload.OtherChargeAmount
 	target.BaseRate = payload.BaseRate
 	target.TotalChargeAmount = payload.TotalChargeAmount
-	target.RatingUnit = payload.RatingUnit
 	target.Moves = mappedTenderMoves(target, payload, transfer, mappings)
 	target.Commodities = mappedTenderCommodities(target, payload, transfer, mappings)
 	target.AdditionalCharges = mappedTenderCharges(target, payload, transfer, mappings)

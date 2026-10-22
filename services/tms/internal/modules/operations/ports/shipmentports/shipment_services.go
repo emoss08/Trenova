@@ -12,10 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -404,7 +404,7 @@ type MoveStatusObserver interface {
 // replacing whatever it currently charges.
 //
 // It is always somebody's deliberate act. A contract prices a shipment once,
-// when it is created; after that its rating method, base rate and accessorials
+// when it is created; after that its rating method, tariff inputs and accessorials
 // are ordinary fields, and this is the one thing that overwrites them.
 type AutoRateShipmentRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -419,8 +419,6 @@ type AutoRateShipmentRequest struct {
 // shape serves both because a preview and an application differ only in whether
 // the numbers were kept.
 type ContractRateApplication struct {
-	// Applied is false when no contract covered the lane, in which case nothing
-	// was changed and the outcome says why.
 	Applied bool              `json:"applied"`
 	Outcome ratequote.Outcome `json:"outcome"`
 
@@ -429,36 +427,34 @@ type ContractRateApplication struct {
 	RuleID        *pulid.ID `json:"ruleId,omitempty"`
 	RuleLabel     string    `json:"ruleLabel,omitempty"`
 
-	// FormulaTemplateID and BaseRate are what the contract seats on the
-	// shipment: its rating method, and the rate that method prices with.
-	FormulaTemplateID   *pulid.ID           `json:"formulaTemplateId,omitempty"`
-	FormulaTemplateName string              `json:"formulaTemplateName,omitempty"`
-	BaseRate            decimal.NullDecimal `json:"baseRate,omitempty"`
+	FormulaTemplateID   *pulid.ID          `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string             `json:"formulaTemplateName,omitempty"`
+	TemplateVersion     int64              `json:"templateVersion,omitempty"`
+	Inputs              tarifftypes.Inputs `json:"inputs,omitempty"`
+	Refusal             string             `json:"refusal,omitempty"`
 
-	LinehaulAmount    decimal.Decimal `json:"linehaulAmount"`
-	OtherChargeAmount decimal.Decimal `json:"otherChargeAmount"`
-	TotalChargeAmount decimal.Decimal `json:"totalChargeAmount"`
+	FreightLines      []shipment.FreightLine `json:"freightLines"`
+	FreightAmount     decimal.Decimal        `json:"freightAmount"`
+	OtherChargeAmount decimal.Decimal        `json:"otherChargeAmount"`
+	TotalChargeAmount decimal.Decimal        `json:"totalChargeAmount"`
 
-	// Accessorials are the charges the contract's own schedule applies. They
-	// are listed rather than counted because a rater accepting a re-rate is
-	// agreeing to each of them, and a total hides which ones appeared.
-	Accessorials []ContractRateAccessorial `json:"accessorials,omitempty"`
+	Charges []ContractRateCharge `json:"charges"`
 
-	// PreviousLinehaulAmount is what the shipment charged before, so the dialog
-	// can state the change rather than only the result.
-	PreviousLinehaulAmount decimal.Decimal `json:"previousLinehaulAmount"`
+	PreviousFreightAmount decimal.Decimal `json:"previousFreightAmount"`
 
 	Explanation string `json:"explanation,omitempty"`
 }
 
-// ContractRateAccessorial is one charge a contract's accessorial schedule
-// applies automatically.
-type ContractRateAccessorial struct {
-	AccessorialChargeID pulid.ID                 `json:"accessorialChargeId"`
-	Description         string                   `json:"description,omitempty"`
-	Method              accessorialcharge.Method `json:"method"`
-	Amount              decimal.Decimal          `json:"amount"`
-	Unit                int16                    `json:"unit"`
+type ContractRateCharge struct {
+	AccessorialChargeID pulid.ID             `json:"accessorialChargeId"`
+	Code                string               `json:"code"`
+	Description         string               `json:"description,omitempty"`
+	Owner               shipment.SystemOwner `json:"owner"`
+	Label               string               `json:"label,omitempty"`
+	Amount              decimal.Decimal      `json:"amount"`
+	Quantity            decimal.NullDecimal  `json:"quantity"`
+	Rate                decimal.NullDecimal  `json:"rate"`
+	RateUnit            string               `json:"rateUnit,omitempty"`
 }
 
 type ShipmentRatingOutcome struct {

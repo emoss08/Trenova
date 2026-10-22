@@ -26,7 +26,9 @@ func TestRecalculate_ContractRatingLeavesResolvedVariablesEmptyNotNil(t *testing
 
 	entity := validShipment()
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(

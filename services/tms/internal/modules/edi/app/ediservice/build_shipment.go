@@ -133,7 +133,6 @@ func (s *Service) buildTargetShipment(
 		OtherChargeAmount:   payload.OtherChargeAmount,
 		BaseRate:            payload.BaseRate,
 		TotalChargeAmount:   payload.TotalChargeAmount,
-		RatingUnit:          payload.RatingUnit,
 		Moves:               make([]*shipment.ShipmentMove, 0, len(payload.Moves)),
 		Commodities:         make([]*shipment.ShipmentCommodity, 0, len(payload.Commodities)),
 		AdditionalCharges:   make([]*shipment.AdditionalCharge, 0, len(payload.AdditionalCharges)),

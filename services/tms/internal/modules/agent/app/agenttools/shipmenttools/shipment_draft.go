@@ -168,7 +168,6 @@ func (d *ShipmentDraft) Build(
 		Weight:            d.Weight,
 		TemperatureMin:    d.TemperatureMin,
 		TemperatureMax:    d.TemperatureMax,
-		RatingUnit:        1,
 	}
 	if billTo := read.id("billToCustomerId", d.BillToCustomerID); billTo.IsNotNil() {
 		entity.BillToCustomerID = &billTo
