@@ -530,36 +530,6 @@ export const tariffLookupSchema = z.object({
 });
 export type TariffLookup = z.output<typeof tariffLookupSchema>;
 
-/** How a rating ended. `needs` means the host must send more rate table cells and ask again. */
-export const tariffRatingStatusSchema = z.enum(["rated", "refused", "error", "needs"]);
-export type TariffRatingStatus = z.output<typeof tariffRatingStatusSchema>;
-
-/** One program's result from `tariff.evaluate`. */
-export const tariffEvaluationResultSchema = z.object({
-  id: z.string(),
-  status: tariffRatingStatusSchema,
-  bill: tariffBillSchema.nullish().transform((value) => value ?? null),
-  value: z
-    .boolean()
-    .nullish()
-    .transform((value) => value ?? null),
-  refusal: tariffRefusalSchema.nullish().transform((value) => value ?? null),
-  error: tariffEvalErrorSchema.nullish().transform((value) => value ?? null),
-  needs: tariffNeedsSchema,
-  trace: z
-    .array(tariffTraceEventSchema)
-    .nullish()
-    .transform((value) => value ?? null),
-  lookups: z
-    .array(tariffLookupSchema)
-    .nullish()
-    .transform((value) => value ?? []),
-});
-export type TariffEvaluationResult = z.output<typeof tariffEvaluationResultSchema>;
-
-export const tariffEvaluationSchema = z.object({ results: z.array(tariffEvaluationResultSchema) });
-export type TariffEvaluation = z.output<typeof tariffEvaluationSchema>;
-
 /** An organisation library a file may import with `use org.<name>`, pinned to a version. */
 export const tariffLibrarySourceSchema = z.object({
   path: z.string(),
