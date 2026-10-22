@@ -213,7 +213,11 @@ describe("tariffTest", () => {
         range: { from: at("expect total"), to: at("expect total") + "expect total == $1".length },
         message: { message: "This expectation does not hold" },
         values: [
-          { range: { from: at("total == $1"), to: at("total == $1") + 5 }, display: "$450.00" },
+          {
+            range: { from: at("total == $1"), to: at("total == $1") + 5 },
+            value: { $q: "450", u: "$" },
+            display: "$450.00",
+          },
         ],
       },
     ]);
