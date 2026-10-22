@@ -3,14 +3,28 @@ library "std.ltl"
 /// Less-than-truckload pricing: weight breaks, deficit weight rating, billed weight and the
 /// NMFC density scale.
 
-/// One weight break of an LTL rate: from the weight `from` up, `rate` per hundredweight, and
-/// `minimum`, the least a shipment priced at the break pays (`none` for no minimum).
-type Break = { from: Weight, rate: Money/cwt, minimum: Money? }
+/// One weight break of an LTL rate.
+type Break = {
+  /// The lightest weight the break prices.
+  from: Weight,
+  /// What the break charges per hundredweight.
+  rate: Money/cwt,
+  /// The least a shipment priced at the break pays, if anything.
+  minimum: Money?,
+}
 
-/// A weight priced at a break: `weight` to bill at `rate` per hundredweight, the break's
-/// `minimum`, and `deficit`, whether the weight is the next break's minimum weight, billed
-/// because that costs less than the actual weight.
-type Rated = { weight: Weight, rate: Money/cwt, minimum: Money?, deficit: Bool }
+/// A weight priced at a break.
+type Rated = {
+  /// The weight to bill.
+  weight: Weight,
+  /// The rate it bills at, per hundredweight.
+  rate: Money/cwt,
+  /// The break's minimum charge, if it has one.
+  minimum: Money?,
+  /// Whether the weight is the next break's minimum weight, billed because that costs less
+  /// than the actual weight.
+  deficit: Bool,
+}
 
 /// Deficit weight rating. Prices `actual` at the rate of the heaviest break at or below it (a
 /// weight below every break prices at the lightest), and also the next break's minimum weight
