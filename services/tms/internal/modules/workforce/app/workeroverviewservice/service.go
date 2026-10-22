@@ -339,17 +339,29 @@ const attentionHorizonDays = 30
 // liability come from their own areas, because neither is a property of a
 // worker's profile.
 type RosterAttention struct {
-	ActiveWorkers          int
-	NonCompliant           int
-	TrainingOverdue        int
-	AtRisk                 int
-	ExpiringSoon           int
-	ReviewsAwaitingSignOff int
+	ActiveWorkers   int
+	NonCompliant    int
+	TrainingOverdue int
+	AtRisk          int
+	ExpiringSoon    int
+	// ReviewsAwaitingSignOff is nil for a reader who may not read reviews.
+	ReviewsAwaitingSignOff *int
 	PTOLiabilityDays       decimal.Decimal
 	// LeaveCertificationsOutstanding is how many leave cases are waiting on a
 	// medical certification the employee owes. Past the deadline the employer
 	// may deny the leave (29 CFR 825.313), so it is a queue, not a statistic.
-	LeaveCertificationsOutstanding int
+	// It is nil for a reader who may not read leave, and counts only their
+	// team's cases when their leave grant reaches only their team.
+	LeaveCertificationsOutstanding *int
+}
+
+// AttentionAccess is what the reader of the home tile may count: reviews and
+// leave are granted on their own, so a worker reader is not told how many
+// there are.
+type AttentionAccess struct {
+	Reviews         bool
+	Leave           bool
+	LeaveManagerIDs []pulid.ID
 }
 
 // RosterAttention gathers the home screen's workforce tile. The three reads
@@ -358,6 +370,7 @@ type RosterAttention struct {
 func (s *Service) RosterAttention(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
+	access AttentionAccess,
 ) (*RosterAttention, error) {
 	var (
 		counts     *workerports.RosterAttention
@@ -379,6 +392,9 @@ func (s *Service) RosterAttention(
 		return err
 	})
 	group.Go(func() error {
+		if !access.Reviews {
+			return nil
+		}
 		var err error
 		// Submitted is the state that waits on somebody else: the manager has
 		// written it and the worker has not signed. A draft is still being
@@ -398,13 +414,14 @@ func (s *Service) RosterAttention(
 		return err
 	})
 	group.Go(func() error {
-		if s.leave == nil {
+		if s.leave == nil || !access.Leave {
 			return nil
 		}
 		var err error
 		leaveCerts, err = s.leave.CountCases(groupCtx, &workerports.ListLeaveCasesRequest{
 			TenantInfo:                   tenantInfo,
 			CertificationOutstandingOnly: true,
+			ManagerIDs:                   access.LeaveManagerIDs,
 		})
 		return err
 	})
@@ -413,9 +430,12 @@ func (s *Service) RosterAttention(
 		return nil, err
 	}
 
-	attention := &RosterAttention{
-		ReviewsAwaitingSignOff:         reviews,
-		LeaveCertificationsOutstanding: leaveCerts,
+	attention := &RosterAttention{}
+	if access.Reviews {
+		attention.ReviewsAwaitingSignOff = &reviews
+	}
+	if access.Leave && s.leave != nil {
+		attention.LeaveCertificationsOutstanding = &leaveCerts
 	}
 	if counts != nil {
 		attention.ActiveWorkers = counts.ActiveWorkers

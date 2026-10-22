@@ -834,37 +834,7 @@ func (e *engine) GetResourcePermissions(
 		return nil, err
 	}
 
-	perms := load.perms
-	maxSensitivity := permission.FieldSensitivity(perms.MaxSensitivity)
-
-	effectiveResource := e.registry.GetEffectiveResource(resource)
-	resourcePerms, ok := perms.Resources[effectiveResource]
-	if !ok {
-		return &permissionports.ResourcePermissionDetail{
-			Resource:         resource,
-			Operations:       []permission.Operation{},
-			DataScope:        "",
-			MaxSensitivity:   maxSensitivity,
-			AccessibleFields: []string{},
-		}, nil
-	}
-
-	ops := make([]permission.Operation, len(resourcePerms.Operations))
-	for i, op := range resourcePerms.Operations {
-		ops[i] = permission.Operation(op)
-	}
-
-	// No field allowlist: the registry knows only the fields a resource
-	// classifies itself, and every reader treats a non-empty list as the
-	// complete set. Built from the classified fields alone, it withheld every
-	// unclassified one, such as a move's miles, though MaxSensitivity, which
-	// each reader checks first, already allows them.
-	return &permissionports.ResourcePermissionDetail{
-		Resource:       resource,
-		Operations:     ops,
-		DataScope:      permission.DataScope(resourcePerms.DataScope),
-		MaxSensitivity: maxSensitivity,
-	}, nil
+	return e.resourceDetail(load.perms, resource), nil
 }
 
 func (e *engine) InvalidateUser(ctx context.Context, userID, orgID pulid.ID) error {

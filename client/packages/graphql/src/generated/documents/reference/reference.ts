@@ -67,5 +67,5 @@ export const WorkerCredentialTypeReferenceFragmentDoc = {"__meta__":{"fragmentNa
 export const WorkerDisciplinaryActionReferenceFragmentDoc = {"__meta__":{"fragmentName":"WorkerDisciplinaryActionReference"}} as unknown as TypedDocumentString<WorkerDisciplinaryActionReferenceFragment, unknown>;
 export const WorkerInjuryReferenceFragmentDoc = {"__meta__":{"fragmentName":"WorkerInjuryReference"}} as unknown as TypedDocumentString<WorkerInjuryReferenceFragment, unknown>;
 export const WorkerPolicyReferenceFragmentDoc = {"__meta__":{"fragmentName":"WorkerPolicyReference"}} as unknown as TypedDocumentString<WorkerPolicyReferenceFragment, unknown>;
-export const WorkerSafetyEventReferenceFragmentDoc = {"__meta__":{"fragmentName":"WorkerSafetyEventReference"}} as unknown as TypedDocumentString<WorkerSafetyEventReferenceFragment, unknown>;
 export const WorkerSafetyViolationReferenceFragmentDoc = {"__meta__":{"fragmentName":"WorkerSafetyViolationReference"}} as unknown as TypedDocumentString<WorkerSafetyViolationReferenceFragment, unknown>;
+export const WorkerSafetyEventReferenceFragmentDoc = {"__meta__":{"fragmentName":"WorkerSafetyEventReference"}} as unknown as TypedDocumentString<WorkerSafetyEventReferenceFragment, unknown>;

@@ -1031,7 +1031,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createMyLoadComment` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation createSettlementDispute` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation dismissMyNotifications` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
-| `mutation inviteWorkerToPortal` | Exempt, security: Gives a driver a sign-in to the driver portal. |
+| `mutation inviteWorkerToPortal` | Exempt, security: Gives a driver a sign-in to the driver portal, under the portal's own Invite operation (driver_portal create); a person decides who may sign in. |
 | `mutation markAllMyNotificationsRead` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation markMyNotificationsRead` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation markMyNotificationsUnread` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
@@ -1043,7 +1043,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation respondToMyShiftSwap` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation restoreMyNotifications` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation reviewDriverExpense` | Tool: `settlement_review_driver_expense` |
-| `mutation revokeWorkerPortalAccess` | Exempt, security: Removes a driver's sign-in to the driver portal. |
+| `mutation revokeWorkerPortalAccess` | Exempt, security: Removes a driver's sign-in to the driver portal, under the portal's own Revoke operation (driver_portal cancel); a person decides who may sign in. |
 | `mutation setMyAvailability` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |
 | `mutation startSettlementDisputeReview` | Tool: `settlement_start_dispute_review` |
 | `mutation submitMyExpense` | Exempt, counterparty: The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver. |

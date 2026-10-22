@@ -562,3 +562,51 @@ func (denyAll) reads(context.Context, permission.Resource) bool { return false }
 func (denyAll) visible(context.Context, permission.Resource, string) bool { return false }
 
 func (denyAll) groups() permission.FieldGroupSet { return 0 }
+
+func TestADrugTestAWorkerCarriesNeedsDOTTestRead(t *testing.T) {
+	t.Parallel()
+
+	registry := refview.Default().Registry()
+	kinds := newKindTable(registry)
+	for typ, want := range map[reflect.Type]permission.Resource{
+		reflect.TypeFor[worker.WorkerDOTTest]():              permission.ResourceWorkerDOTTest,
+		reflect.TypeFor[worker.WorkerDOTViolation]():         permission.ResourceWorkerDOTTest,
+		reflect.TypeFor[worker.WorkerInjury]():               permission.ResourceWorkerInjury,
+		reflect.TypeFor[worker.TimeClockEntry]():             permission.ResourceTimesheet,
+		reflect.TypeFor[worker.WorkerProfileChangeRequest](): permission.ResourceProfileChangeRequest,
+	} {
+		kind, ok := kinds.kindOf(typ)
+		require.True(t, ok, typ.String())
+		assert.Equal(t, want, kind, typ.String())
+	}
+
+	type result struct {
+		Worker *worker.Worker          `json:"worker"`
+		Tests  []*worker.WorkerDOTTest `json:"tests"`
+	}
+	value := result{
+		Worker: driver(),
+		Tests: []*worker.WorkerDOTTest{{
+			ID:            pulid.MustNew("wdot_"),
+			Result:        worker.DOTResultNegative,
+			CollectorName: "Pat Collector",
+			MROName:       "Dr. Reviewer",
+		}},
+	}
+
+	body, header := serve(t, []permission.Resource{permission.ResourceWorkerDOTTest}, value, guarded)
+	assert.Equal(t, "dana@example.com", object(t, body, "worker")["email"],
+		"the worker reader still sees the worker")
+	test := object(t, body, "tests", 0)
+	assert.NotEmpty(t, test["id"])
+	for _, field := range []string{"result", "collectorName", "mroName"} {
+		value, present := test[field]
+		assert.Truef(t, present, "%s should be answered, as null", field)
+		assert.Nilf(t, value, "%s needs worker_dot_test read (49 CFR 40.321)", field)
+	}
+	assert.Equal(t, "tests", header)
+
+	body, _ = serve(t, []permission.Resource{permission.ResourceWorker}, value, guarded)
+	assert.Equal(t, "Negative", object(t, body, "tests", 0)["result"],
+		"worker_dot_test read shows the result")
+}

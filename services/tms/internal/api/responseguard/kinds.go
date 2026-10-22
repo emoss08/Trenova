@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -46,6 +47,14 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[glaccount.GLAccount]():                 permission.ResourceGeneralLedgerAccount,
 	reflect.TypeFor[documentparsingrule.RuleSet]():         permission.ResourceDocumentParsingRule,
 	reflect.TypeFor[worker.WorkerLeaveCase]():              permission.ResourceWorkerLeave,
+	reflect.TypeFor[worker.WorkerLeaveEntry]():             permission.ResourceWorkerLeave,
+	reflect.TypeFor[worker.WorkerDOTViolation]():           permission.ResourceWorkerDOTTest,
+	reflect.TypeFor[worker.WorkerClearinghouseQuery]():     permission.ResourceWorkerDOTTest,
+	reflect.TypeFor[worker.OSHAAnnualSummary]():            permission.ResourceWorkerInjury,
+	reflect.TypeFor[worker.TimeClockEntry]():               permission.ResourceTimesheet,
+	reflect.TypeFor[worker.PayrollExport]():                permission.ResourceTimesheet,
+	reflect.TypeFor[worker.WorkerProfileChangeRequest]():   permission.ResourceProfileChangeRequest,
+	reflect.TypeFor[driverpay.WorkerBenefitEnrollment]():   permission.ResourceBenefitPlan,
 	reflect.TypeFor[worker.WorkerEmploymentVerification](): permission.ResourceQualification,
 	reflect.TypeFor[worker.WorkerSafetyViolation]():        permission.ResourceWorkerSafetyEvent,
 }
