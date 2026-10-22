@@ -86,7 +86,11 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 
 func createDB(cfg *config.Config) (*bun.DB, error) {
 	db := bun.NewDB(
-		sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(cfg.GetMigrationDSN()))),
+		sql.OpenDB(pgdriver.NewConnector(
+			pgdriver.WithDSN(cfg.GetMigrationDSN()),
+			pgdriver.WithReadTimeout(0),
+			pgdriver.WithWriteTimeout(0),
+		)),
 		pgdialect.New(),
 	)
 
