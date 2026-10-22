@@ -524,6 +524,28 @@ func (f *WorkerLeaveEntriesByCaseIDLoaderFactory) Attach(
 	})
 }
 
+func WorkerSafetyViolationsByEventID(
+	ctx context.Context,
+	key string,
+) ([]*worker.WorkerSafetyViolation, error) {
+	return load(
+		ctx,
+		key,
+		func(s *set) *dataloadgen.Loader[string, []*worker.WorkerSafetyViolation] {
+			return s.workerSafetyViolationsByEventID
+		},
+	)
+}
+
+func (f *WorkerSafetyViolationsByEventIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.workerSafetyViolationsByEventID = newWorkerSafetyViolationsByEventIDLoader(f, tenantInfo)
+	})
+}
+
 func FiscalPeriodsByFiscalYearID(
 	ctx context.Context,
 	key string,

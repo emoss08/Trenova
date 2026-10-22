@@ -39,15 +39,17 @@ var errUnpagedSpec = errors.New("an unpaged list reads by its root field's argum
 
 // alongsideSpec is a read an unpaged list makes beside its own, for records
 // of another kind its next call needs (the templates a checklist can be
-// started from), carried in the result under key. It is made only when the
-// reader may read that kind, as the repository tool read it only then.
+// started from, a worker's recognitions), carried in the result under key.
+// It is made only when the reader may read that kind, as the repository tool
+// read it only then, and a read keyed by the call's own arguments only when
+// the call names them.
 type alongsideSpec struct {
 	key       string
 	operation string
 	// what names the records, for the note a cut-short read leaves.
 	what string
-	// inputs are the table input's fields every read sends (active
-	// templates, started by hand).
+	// inputs are the table input's fields every connection read sends
+	// (active templates, started by hand).
 	inputs map[string]any
 }
 
@@ -146,6 +148,11 @@ func matchAlongside(
 		if idx < 0 {
 			return nil, fmt.Errorf("%s reads %s alongside, which reads.yml does not list for it",
 				spec.name, beside.operation)
+		}
+		if len(bound[idx].Keys) > 0 && len(beside.inputs) > 0 {
+			return nil, fmt.Errorf("%s reads %s alongside by the call's own %s; it takes "+
+				"no table input", spec.name, beside.operation,
+				strings.Join(bound[idx].Keys, ", "))
 		}
 		out = append(out, bound[idx])
 	}
@@ -353,7 +360,7 @@ func (t *graphQLUnpagedListTool) Query(
 	if note := cutShort(args, len(items), t.spec.entityPlural); note != "" {
 		notes = append(notes, note)
 	}
-	beside, besideWithheld, besideNotes, err := t.readAlongside(ctx, params)
+	beside, besideWithheld, besideNotes, err := t.readAlongside(ctx, params, variables)
 	if err != nil {
 		return nil, err
 	}
@@ -396,11 +403,13 @@ func (t *graphQLUnpagedListTool) checkArguments(args map[string]any) error {
 }
 
 // readAlongside makes each read the list makes beside its own, where the
-// reader may read its kind, and returns the records by key, what it
-// withheld, and a note for a read cut short.
+// reader may read its kind and the call names what a keyed read is keyed by,
+// and returns the records by key, what it withheld, and a note for a read
+// cut short.
 func (t *graphQLUnpagedListTool) readAlongside(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
+	sent map[string]any,
 ) (records map[string][]map[string]any, withheld, notes []string, err error) {
 	if len(t.alongside) == 0 {
 		return nil, nil, nil, nil
@@ -409,23 +418,23 @@ func (t *graphQLUnpagedListTool) readAlongside(
 		t.permissions, params.Actor, params.DataAccessCeiling,
 	)
 	records = make(map[string][]map[string]any, len(t.alongside))
-	for idx, bound := range t.alongside {
-		spec := t.spec.alongside[idx]
+	for idx := range t.alongside {
+		bound := &t.alongside[idx]
+		spec := &t.spec.alongside[idx]
 		resource := permission.Resource(bound.Resource)
 		if !ceilings.Reads(ctx, resource) {
 			continue
 		}
-		input := make(map[string]any, len(spec.inputs)+1)
-		for name, value := range spec.inputs {
-			input[name] = value
+		variables, keyed := alongsideVariables(bound, spec, sent)
+		if !keyed {
+			continue
 		}
-		input[inputFirst] = alongsideMost
 
 		var result *agentports.GraphQLReadResult
 		result, err = t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 			Actor:             params.Actor,
 			Operation:         bound.Operation,
-			Variables:         map[string]any{bound.Input: input},
+			Variables:         variables,
 			DataAccessCeiling: params.DataAccessCeiling,
 			RequestID:         params.RunID.String(),
 		})
@@ -440,29 +449,83 @@ func (t *graphQLUnpagedListTool) readAlongside(
 			return nil, nil, nil, err
 		}
 
-		connection, _ := result.Data[bound.RootField].(map[string]any)
-		edges, _ := connection[connectionEdges].([]any)
-		rows := make([]map[string]any, 0, len(edges))
-		for _, edge := range edges {
-			object, _ := edge.(map[string]any)
-			if node, ok := object[connectionNode].(map[string]any); ok {
-				rows = append(rows, compact(node))
-			}
-		}
+		rows, prefix, note := alongsideRows(bound, spec, result.Data)
 		records[spec.key] = rows
-		prefix := bound.RootField + "." + connectionEdges + "." + connectionNode + "."
 		for _, path := range relativePaths(result.Withheld, prefix) {
 			withheld = append(withheld, spec.key+"."+path)
 		}
-		if info, ok := connection[connectionPageInfo].(map[string]any); ok {
-			if more, _ := info[pageHasNext].(bool); more {
-				notes = append(notes, fmt.Sprintf("Only the first %d %s are shown in %s.",
-					alongsideMost, spec.what, spec.key))
-			}
+		if note != "" {
+			notes = append(notes, note)
 		}
 	}
 
 	return records, withheld, notes, nil
+}
+
+// alongsideVariables are what a read alongside sends: a keyed read the
+// values the list's own call sent for its keys, and whether the call named
+// them all; a connection read its table input.
+func alongsideVariables(
+	bound *graphQLAlongside,
+	spec *alongsideSpec,
+	sent map[string]any,
+) (variables map[string]any, keyed bool) {
+	if len(bound.Keys) > 0 {
+		variables = make(map[string]any, len(bound.Keys))
+		for _, key := range bound.Keys {
+			value, present := sent[key]
+			if !present || value == nil {
+				return nil, false
+			}
+			variables[key] = value
+		}
+
+		return variables, true
+	}
+	input := make(map[string]any, len(spec.inputs)+1)
+	for name, value := range spec.inputs {
+		input[name] = value
+	}
+	input[inputFirst] = alongsideMost
+
+	return map[string]any{bound.Input: input}, true
+}
+
+// alongsideRows are the records a read alongside returned, the prefix its
+// withheld paths carry, and the note a connection read cut short leaves.
+func alongsideRows(
+	bound *graphQLAlongside,
+	spec *alongsideSpec,
+	data map[string]any,
+) (rows []map[string]any, prefix, note string) {
+	if len(bound.Keys) > 0 {
+		list, _ := data[bound.RootField].([]any)
+		rows = make([]map[string]any, 0, len(list))
+		for _, row := range list {
+			if node, ok := row.(map[string]any); ok {
+				rows = append(rows, compact(node))
+			}
+		}
+
+		return rows, bound.RootField + ".", ""
+	}
+	connection, _ := data[bound.RootField].(map[string]any)
+	edges, _ := connection[connectionEdges].([]any)
+	rows = make([]map[string]any, 0, len(edges))
+	for _, edge := range edges {
+		object, _ := edge.(map[string]any)
+		if node, ok := object[connectionNode].(map[string]any); ok {
+			rows = append(rows, compact(node))
+		}
+	}
+	if info, ok := connection[connectionPageInfo].(map[string]any); ok {
+		if more, _ := info[pageHasNext].(bool); more {
+			note = fmt.Sprintf("Only the first %d %s are shown in %s.",
+				alongsideMost, spec.what, spec.key)
+		}
+	}
+
+	return rows, bound.RootField + "." + connectionEdges + "." + connectionNode + ".", note
 }
 
 // relativePaths names withheld fields from the record, as a model reads

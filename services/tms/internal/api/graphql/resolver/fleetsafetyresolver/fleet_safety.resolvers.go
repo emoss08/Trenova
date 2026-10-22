@@ -145,12 +145,17 @@ func (r *QueryResolver) WorkerSafetyViolations(ctx context.Context, safetyEventI
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
 
+	var eventIDs []pulid.ID
+	if eventID.IsNotNil() {
+		eventIDs = []pulid.ID{eventID}
+	}
+
 	return r.WorkerSafetyService.ListViolations(
 		ctx,
 		&workerports.ListWorkerSafetyViolationsRequest{
-			TenantInfo:    base.TenantInfo(authCtx),
-			SafetyEventID: eventID,
-			WorkerID:      wrkID,
+			TenantInfo:     base.TenantInfo(authCtx),
+			SafetyEventIDs: eventIDs,
+			WorkerID:       wrkID,
 		},
 	)
 }

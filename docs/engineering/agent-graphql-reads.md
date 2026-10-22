@@ -378,6 +378,13 @@ templates, as before, and a refusal is never charged to the budget. It reads at 
 and says so in `note` when there are more. Only an unpaged list reads alongside; a paged list's
 next call pages its own records.
 
+A read alongside may instead be an unpaged list keyed by the list's own arguments (a worker's
+recognitions beside their safety events). The generator proves that each of its variables is one
+the list's operation declares, of the same type, and the tool sends it the value the call sent,
+and makes the read only when the call names every one of them: with no worker named, the safety
+events list reads every worker's events and no recognitions. It takes no table input and is never
+cut short.
+
 **Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
 own name:
@@ -563,6 +570,7 @@ Each module's PR:
 | Workforce | `worker_list_dot_tests` | `substance`, `result`, `collectionSite` | reads `DeskWorkerDotTests`. `worker_dot_test` declared no field sensitivities and defaulted to Internal, so results showed at Internal; by the owner's decision the test type, reason, status, dates and random-selection fields are Internal, and the result, substance, alcohol reading, collector, lab, MRO, specimen, notes and document are Restricted (49 CFR 40.321). This also changes what a person whose role reaches only Internal sees where sensitivity applies to them. The description says the substance and result can be withheld |
 | Workforce | `worker_list_leave_cases` | none | reads `DeskWorkerLeaveCases`. `WorkerLeaveCase` had no kind (it is not named for `worker_leave`), so the guard did not gate it; it now declares `@kind(resource: "worker_leave")`. `worker_leave` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; that a worker is on leave, of what kind, when, where the certification stands and the days taken are now Internal, and the reason, notes, certificate, military caregiver flag and eligibility hours stay Restricted, as the repository row gated the reason. The read is gated by `worker_leave` read through the root's own check and the `@kind`, not by the worker family, so it stays correct when `worker_leave` stops inheriting from worker read |
 | Workforce | `worker_list_employment_verifications` | `hadDrugAlcoholViolations` | reads `DeskWorkerEmploymentVerifications`. `WorkerEmploymentVerification` had no kind; it now declares `@kind(resource: "qualification")`, and `driverQualificationFile` declares `@authorizes(resource: "qualification")`, so the verifications its file carries are that root's own records. `qualification` declared no field sensitivities; the employer, the dates, status, method, follow-ups and accident history are now Internal, and the employer's contact details, the driver's drug and alcohol history, the findings and notes stay Restricted. The type gains `worker`, so an organization-wide list names each driver by the worker reference view, as the repository row did. `qualification` takes no `ParentResource`: the permission engine resolves a child through its parent's grant, so worker read would have granted every qualification record |
+| Workforce | `worker_list_safety_events` | none | reads `DeskWorkerSafetyEvents`, with each worker's recognitions read alongside (`DeskWorkerRecognitions`) when the call names a worker. `worker_safety_event` and `worker_recognition` declare no field sensitivities and default to Internal, as the repository row read them. Each event gains `violations` (a loader, one query per page of events), which the repository tool read beside the events; `WorkerSafetyViolation` now declares `@kind(resource: "worker_safety_event")`, so its fields follow the event's. With no worker the list reads every worker's events, newest first, where the repository tool read only the open ones; `openOnly` keeps those |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below

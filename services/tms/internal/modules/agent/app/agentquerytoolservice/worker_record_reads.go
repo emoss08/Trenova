@@ -51,6 +51,15 @@ const (
 		"files. Each shows where its safety performance history request stands: asked when, " +
 		"followed up how often, and what came back. It yields the verificationId the " +
 		"verification tools take."
+	toolListWorkerSafetyEvents = "worker_list_safety_events"
+
+	opDeskWorkerRecognitions = "DeskWorkerRecognitions"
+
+	workerSafetyEventsSummary = "List safety events, newest first: one worker's with their " +
+		"roadside violations and recognitions, or every worker's across the fleet, each with " +
+		"its driver. Events are accidents, inspections, citations, complaints and near misses " +
+		"with their points and status; openOnly keeps the ones still open or under review. " +
+		"It yields the safetyEventId, violationId and recognitionId the safety tools take."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"
 	fieldWorker      = "worker"
@@ -144,6 +153,20 @@ func workerRecordReadSpecs() []graphQLListSpec {
 			references:   theWorker,
 			notes:        map[string]string{paramWorkerID: noteEveryWorker},
 			defaults:     listDefaults,
+		},
+		{
+			name:         toolListWorkerSafetyEvents,
+			entityPlural: "safety events",
+			summary:      workerSafetyEventsSummary,
+			resource:     permission.ResourceWorkerSafetyEvent,
+			references:   theWorker,
+			notes:        map[string]string{paramWorkerID: noteEveryWorker},
+			defaults:     listDefaults,
+			alongside: []alongsideSpec{{
+				key:       "recognitions",
+				operation: opDeskWorkerRecognitions,
+				what:      "recognitions",
+			}},
 		},
 		{
 			name:         toolListEmploymentVerifications,

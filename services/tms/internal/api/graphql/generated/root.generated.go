@@ -3313,7 +3313,7 @@ type QueryResolver interface {
 	LeaveCertificationsOutstanding(ctx context.Context) ([]*worker.WorkerLeaveCase, error)
 	WorkerOverview(ctx context.Context, workerID string) (*workeroverviewservice.Overview, error)
 	WorkerRosterAttention(ctx context.Context) (*workeroverviewservice.RosterAttention, error)
-	WorkerSafetyEvents(ctx context.Context, workerID string) ([]*worker.WorkerSafetyEvent, error)
+	WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerSafetyEvent, error)
 	WorkerSafetyEvent(ctx context.Context, id string) (*worker.WorkerSafetyEvent, error)
 	WorkerSafetyScorecard(ctx context.Context, workerID string) (*worker.SafetyScorecard, error)
 	WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*worker.WorkerDisciplinaryAction, error)
@@ -3787,6 +3787,7 @@ type WorkerSafetyEventResolver interface {
 	DocumentID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
 	RecordedByID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
 	ClosedByID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
+	Violations(ctx context.Context, obj *worker.WorkerSafetyEvent) ([]*worker.WorkerSafetyViolation, error)
 }
 
 type WorkerTrainingRecordResolver interface {
