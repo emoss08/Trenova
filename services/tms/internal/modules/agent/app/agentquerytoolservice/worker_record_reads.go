@@ -52,6 +52,8 @@ const (
 		"followed up how often, and what came back. It yields the verificationId the " +
 		"verification tools take."
 	toolListWorkerSafetyEvents = "worker_list_safety_events"
+	toolWorkerListCredentials  = "worker_list_credentials"
+	credentialEntity           = "credentials"
 
 	opDeskWorkerRecognitions = "DeskWorkerRecognitions"
 
@@ -62,6 +64,19 @@ const (
 		"status. It yields the safetyEventId, violationId and recognitionId the safety tools take."
 	noteOpenAcrossTheFleet = "Defaults to true when no worker is named, and to false for one " +
 		"worker's; set it to false for the fleet's closed events too."
+	opDeskCredentialTypes = "DeskWorkerCredentialTypes"
+
+	workerCredentialsSummary = "List worker credentials: one worker's licences, medical " +
+		"cards and endorsements, or those falling due across the organization. With a worker " +
+		"and no expiry window it returns every credential the worker holds, with its dates " +
+		"and whether it is verified, and the credential types the organization tracks; a " +
+		"required type with nothing on file was never recorded, which is worse than expiring " +
+		"soon. Without a worker, or with expiringWithinDays or includeExpired, it lists " +
+		"active credentials expiring within that many days, soonest first: the tool for any " +
+		"question about who is expiring, lapsed or out of compliance by a date. Narrow to one " +
+		"kind with credentialTypeCode, such as MED_CARD for a medical card or CDL for a " +
+		"licence. It yields the credentialId and credentialTypeId the credential tools take."
+	noteFallingDue   = "Leave it out for the credentials falling due across the organization."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"
 	fieldWorker      = "worker"
@@ -172,6 +187,28 @@ func workerRecordReadSpecs() []graphQLListSpec {
 				key:       "recognitions",
 				operation: opDeskWorkerRecognitions,
 				what:      "recognitions",
+			}},
+		},
+		{
+			name:         toolWorkerListCredentials,
+			entityPlural: credentialEntity,
+			summary:      workerCredentialsSummary,
+			searchTerms: []string{
+				"expiring licenses", "credentials due", "about to lapse", "lapsed",
+			},
+			resource:   permission.ResourceWorkerCredential,
+			references: theWorker,
+			notes:      map[string]string{paramWorkerID: noteFallingDue},
+			defaults: map[string]any{
+				paramLimit:           graphQLListLimit,
+				paramIncludeArchived: false,
+			},
+			alongside: []alongsideSpec{{
+				key:       "credentialTypes",
+				operation: opDeskCredentialTypes,
+				what:      "credential types",
+				inputs:    map[string]any{inputStatus: activeStatus},
+				scoped:    true,
 			}},
 		},
 		{

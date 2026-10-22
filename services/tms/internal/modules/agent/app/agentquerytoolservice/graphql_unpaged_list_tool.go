@@ -51,6 +51,10 @@ type alongsideSpec struct {
 	// inputs are the table input's fields every connection read sends
 	// (active templates, started by hand).
 	inputs map[string]any
+	// scoped reads it only when the call names one of the list's references
+	// (the credential types beside one worker's credentials, not beside what
+	// falls due across the organization).
+	scoped bool
 }
 
 // graphQLUnpagedListTool is a list whose root field returns every record at
@@ -422,7 +426,7 @@ func (t *graphQLUnpagedListTool) readAlongside(
 		bound := &t.alongside[idx]
 		spec := &t.spec.alongside[idx]
 		resource := permission.Resource(bound.Resource)
-		if !ceilings.Reads(ctx, resource) {
+		if !ceilings.Reads(ctx, resource) || (spec.scoped && !namesReference(&t.spec, sent)) {
 			continue
 		}
 		variables, keyed := alongsideVariables(bound, spec, sent)

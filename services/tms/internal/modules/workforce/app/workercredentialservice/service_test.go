@@ -32,6 +32,7 @@ type fakeRepo struct {
 	types       map[pulid.ID]*worker.WorkerCredentialType
 	credentials map[pulid.ID]*worker.WorkerCredential
 	createReqs  []*workerports.CreateWorkerCredentialRequest
+	expiring    *workerports.ListExpiringWorkerCredentialsRequest
 	ensured     int
 }
 
@@ -222,9 +223,10 @@ func (f *fakeRepo) Update(
 }
 
 func (f *fakeRepo) ListExpiring(
-	context.Context,
-	*workerports.ListExpiringWorkerCredentialsRequest,
+	_ context.Context,
+	req *workerports.ListExpiringWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
+	f.expiring = req
 	return nil, nil
 }
 

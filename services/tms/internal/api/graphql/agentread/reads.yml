@@ -52,3 +52,7 @@ reads:
     operation: DeskWorkerSafetyEvents
     reason: Safety events are read by workerSafetyEvents, one worker's or every worker's.
     alongside: [DeskWorkerRecognitions]
+  - tool: worker_list_credentials
+    operation: DeskWorkerCredentialList
+    reason: Credentials are read by workerCredentials, one worker's or those falling due across the organization.
+    alongside: [DeskWorkerCredentialTypes]

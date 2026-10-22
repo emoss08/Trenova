@@ -18,25 +18,121 @@ import (
 )
 
 const (
+	// DefaultExpiryHorizonDays is how far ahead a list of what falls due
+	// looks when asked for no horizon, and MaxExpiryHorizonDays the most it
+	// looks.
+	DefaultExpiryHorizonDays = 30
+	MaxExpiryHorizonDays     = 365
+	// ExpiredGraceDays is how far back "already expired" reaches. A card
+	// that lapsed last quarter is still the fleet's problem, and someone
+	// asking who is out of date means them too.
+	ExpiredGraceDays = 90
+
 	supersededReason     = "Superseded by renewal"
 	clearedOnProfile     = "Cleared on worker profile"
 	workerResourceType   = "worker"
 	credentialResourceID = "worker_credential"
 )
 
-func (s *Service) ListForWorker(
+// ListRequest asks for one worker's credentials, or for those falling due:
+// active credentials expiring within ExpiringWithinDays, soonest first, for
+// the worker named or across the organization when none is.
+type ListRequest struct {
+	TenantInfo         pagination.TenantInfo
+	WorkerID           pulid.ID
+	IncludeArchived    bool
+	ExpiringWithinDays int
+	IncludeExpired     bool
+	CredentialTypeCode string
+	RequiredOnly       bool
+	Limit              int
+}
+
+// fallingDue reports whether a list reads what falls due rather than what a
+// worker holds: a list across the organization always does.
+func (r *ListRequest) fallingDue() bool {
+	return r.WorkerID.IsNil() || r.ExpiringWithinDays > 0 || r.IncludeExpired
+}
+
+// List reads one worker's credentials with their types and documents, or
+// those falling due. Credential type codes are stored upper-case, so a code
+// is matched whatever its case.
+func (s *Service) List(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	workerID pulid.ID,
-	includeArchived bool,
+	req *ListRequest,
 ) ([]*worker.WorkerCredential, error) {
-	return s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
-		TenantInfo:      tenantInfo,
-		WorkerID:        workerID,
-		IncludeArchived: includeArchived,
+	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"tenantInfo",
+			errortypes.ErrRequired,
+			"Credentials are listed within one organization",
+		)
+	}
+	code := strings.ToUpper(strings.TrimSpace(req.CredentialTypeCode))
+	if req.fallingDue() {
+		return s.listFallingDue(ctx, req, code)
+	}
+
+	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
+		TenantInfo:      req.TenantInfo,
+		WorkerID:        req.WorkerID,
+		IncludeArchived: req.IncludeArchived,
 		IncludeType:     true,
 		IncludeDocument: true,
 	})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*worker.WorkerCredential, 0, len(held))
+	for _, credential := range held {
+		if admitted(credential, code, req.RequiredOnly) {
+			out = append(out, credential)
+		}
+	}
+	if req.Limit > 0 && len(out) > req.Limit {
+		out = out[:req.Limit]
+	}
+
+	return out, nil
+}
+
+func (s *Service) listFallingDue(
+	ctx context.Context,
+	req *ListRequest,
+	code string,
+) ([]*worker.WorkerCredential, error) {
+	horizon := DefaultExpiryHorizonDays
+	if req.ExpiringWithinDays > 0 {
+		horizon = min(req.ExpiringWithinDays, MaxExpiryHorizonDays)
+	}
+	grace := 0
+	if req.IncludeExpired {
+		grace = ExpiredGraceDays
+	}
+	var codes []string
+	if code != "" {
+		codes = []string{code}
+	}
+
+	return s.repo.ListExpiring(ctx, &workerports.ListExpiringWorkerCredentialsRequest{
+		TenantInfo:          req.TenantInfo,
+		HorizonDays:         horizon,
+		GraceDays:           grace,
+		RequiredOnly:        req.RequiredOnly,
+		CredentialTypeCodes: codes,
+		WorkerID:            req.WorkerID,
+		SoonestFirst:        true,
+		Limit:               req.Limit,
+	})
+}
+
+func admitted(credential *worker.WorkerCredential, code string, requiredOnly bool) bool {
+	kind := credential.CredentialType
+	if requiredOnly && (kind == nil || !kind.IsRequired) {
+		return false
+	}
+
+	return code == "" || (kind != nil && strings.EqualFold(kind.Code, code))
 }
 
 func (s *Service) Get(

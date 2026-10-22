@@ -407,3 +407,83 @@ func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *test
 		})
 	}
 }
+
+func credentialAnswers() map[string]*agentports.GraphQLReadResult {
+	return map[string]*agentports.GraphQLReadResult{
+		"DeskWorkerCredentialList": {Data: map[string]any{"workerCredentials": []any{
+			map[string]any{"id": "wcr_1", "status": "Active", "daysUntilExpiry": float64(12)},
+		}}},
+		"DeskWorkerCredentialTypes": {Data: map[string]any{"workerCredentialTypes": map[string]any{
+			"edges": []any{map[string]any{"node": map[string]any{
+				"id": "wct_1", "code": "MED_CARD", "isRequired": true,
+			}}},
+			"pageInfo": map[string]any{"hasNextPage": false},
+		}}},
+	}
+}
+
+func TestUnpagedList_ReadsTheCredentialTypesBesideOneWorkersCredentialsOnly(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_").String()
+	cases := map[string]struct {
+		params map[string]any
+		types  bool
+		sent   map[string]any
+	}{
+		"one worker's credentials come with the types the organization tracks": {
+			params: map[string]any{paramWorkerID: workerID},
+			types:  true,
+			sent: map[string]any{
+				"workerId": workerID, "includeArchived": false, "limit": graphQLListLimit,
+			},
+		},
+		"what falls due across the organization does not": {
+			params: map[string]any{"expiringWithinDays": float64(14)},
+			sent: map[string]any{
+				"expiringWithinDays": float64(14), "includeArchived": false,
+				"limit": graphQLListLimit,
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reader := &keyedReader{answers: credentialAnswers()}
+			tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolWorkerListCredentials), reader,
+				&mocks.DenyResourcesPermissionEngine{})
+			require.NoError(t, err)
+
+			data, err := tool.Query(t.Context(), keyedCall(tc.params))
+			require.NoError(t, err)
+
+			sent := reader.sent("DeskWorkerCredentialList")
+			require.NotNil(t, sent)
+			assert.Equal(t, tc.sent, sent.Variables)
+			outcome, _ := data.(map[string]any)
+			if tc.types {
+				types, _ := outcome["credentialTypes"].([]map[string]any)
+				require.Len(t, types, 1)
+				assert.Equal(t, "MED_CARD", types[0]["code"])
+				return
+			}
+			assert.Nil(t, reader.sent("DeskWorkerCredentialTypes"))
+			assert.NotContains(t, outcome, "credentialTypes")
+		})
+	}
+}
+
+// A credential's number is the licence or card number itself. Who needs a
+// new medical card is answered without it, and the operation the tool reads
+// never asks for it.
+func TestCredentialList_NeverSelectsTheCredentialNumber(t *testing.T) {
+	t.Parallel()
+
+	read := graphQLReads[toolWorkerListCredentials]
+	for _, field := range read.Fields {
+		if field.Name == "number" {
+			assert.False(t, field.Selected)
+		}
+	}
+}

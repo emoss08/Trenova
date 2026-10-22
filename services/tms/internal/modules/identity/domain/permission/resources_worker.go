@@ -171,9 +171,32 @@ func (r *Registry) registerWorkerResources() {
 				Description: "Archive worker credentials",
 			},
 		},
+		// What a credential is, whose, when it was issued and expires, by whom,
+		// and whether it is verified and has a scan on file is what dispatch
+		// and compliance work from, so it is Internal. The notes and why it
+		// was archived stay Restricted, and the number Confidential.
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
-			"number": SensitivityConfidential,
+			"id":               SensitivityInternal,
+			"businessUnitId":   SensitivityInternal,
+			"organizationId":   SensitivityInternal,
+			"workerId":         SensitivityInternal,
+			"credentialTypeId": SensitivityInternal,
+			"status":           SensitivityInternal,
+			"issuingAuthority": SensitivityInternal,
+			"issuedAt":         SensitivityInternal,
+			"expiresAt":        SensitivityInternal,
+			"health":           SensitivityInternal,
+			"daysUntilExpiry":  SensitivityInternal,
+			"documentId":       SensitivityInternal,
+			"verifiedById":     SensitivityInternal,
+			"verifiedAt":       SensitivityInternal,
+			"archivedById":     SensitivityInternal,
+			"archivedAt":       SensitivityInternal,
+			"version":          SensitivityInternal,
+			"createdAt":        SensitivityInternal,
+			"updatedAt":        SensitivityInternal,
+			"number":           SensitivityConfidential,
 		},
 	})
 

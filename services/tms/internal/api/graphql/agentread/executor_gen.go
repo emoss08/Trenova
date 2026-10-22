@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerchecklistexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workercredentialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerdqfexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerdrugalcoholexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerexec"
@@ -59,6 +60,7 @@ import (
 	tractorresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tractorresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
 	workerchecklistresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerchecklistresolver"
+	workercredentialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workercredentialresolver"
 	workerdqfresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerdqfresolver"
 	workerdrugalcoholresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerdrugalcoholresolver"
 	workerinjuryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerinjuryresolver"
@@ -93,6 +95,7 @@ import (
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	workerchecklistservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
+	workercredentialservice "github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	workerdqfservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	workerdrugalcoholservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	workerinjuryservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
@@ -140,6 +143,7 @@ type ResolverParams struct {
 	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
 	WorkerChecklistService       *workerchecklistservice.Service
+	WorkerCredentialService      *workercredentialservice.Service
 	WorkerDQFService             *workerdqfservice.Service
 	WorkerDrugAlcoholService     *workerdrugalcoholservice.Service
 	WorkerInjuryService          *workerinjuryservice.Service
@@ -177,6 +181,7 @@ var shards = []*gqlexec.Shard{
 	usstateexec.Shard,
 	workerexec.Shard,
 	workerchecklistexec.Shard,
+	workercredentialexec.Shard,
 	workerdqfexec.Shard,
 	workerdrugalcoholexec.Shard,
 	workerinjuryexec.Shard,
@@ -282,6 +287,16 @@ var operations = []Operation{
 		Name:     "DeskWorkerChecklistTemplates",
 		Hash:     "sha256:f13943c8db2089e543e5061c209160e521ca4e52c3d3027c021a186a47555caf",
 		Document: "query DeskWorkerChecklistTemplates($input: WorkerChecklistTemplatesInput!) { workerChecklistTemplates(input: $input) { edges { node { code id kind name trigger } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskWorkerCredentialList",
+		Hash:     "sha256:dc01c37ed254aad9e101f4d1f3a067b64a5f04551d903b9ac088599053ab0fec",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredentialList($credentialTypeCode: String, $expiringWithinDays: Int, $includeArchived: Boolean, $includeExpired: Boolean, $limit: Int, $requiredOnly: Boolean, $workerId: ID) { workerCredentials( workerId: $workerId includeArchived: $includeArchived expiringWithinDays: $expiringWithinDays includeExpired: $includeExpired credentialTypeCode: $credentialTypeCode requiredOnly: $requiredOnly limit: $limit ) { credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority status verifiedAt worker { ...WorkerReference } workerId } }",
+	},
+	{
+		Name:     "DeskWorkerCredentialTypes",
+		Hash:     "sha256:936538a76b84f8c1517116ad68a8a7557102c7b7cdb3661acf72a4fcb80bdfcb",
+		Document: "query DeskWorkerCredentialTypes($input: WorkerCredentialTypesInput!) { workerCredentialTypes(input: $input) { edges { node { category code id isRequired name } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "DeskWorkerDotTests",
@@ -444,6 +459,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                   core,
 		WorkerChecklistService: p.WorkerChecklistService,
 	}
+	workercredentialDeps := &workercredentialresolver.Deps{
+		Core:                    core,
+		WorkerCredentialService: p.WorkerCredentialService,
+	}
 	workerdqfDeps := &workerdqfresolver.Deps{
 		Core:             core,
 		WorkerDQFService: p.WorkerDQFService,
@@ -485,6 +504,7 @@ func NewSchema(p ResolverParams) Schema {
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
 		workerMutation:                &workerMutation{Deps: workerDeps},
 		workerchecklistMutation:       &workerchecklistMutation{Deps: workerchecklistDeps},
+		workercredentialMutation:      &workercredentialMutation{Deps: workercredentialDeps},
 		workerdqfMutation:             &workerdqfMutation{Deps: workerdqfDeps},
 		workerdrugalcoholMutation:     &workerdrugalcoholMutation{Deps: workerdrugalcoholDeps},
 		workerinjuryMutation:          &workerinjuryMutation{Deps: workerinjuryDeps},
@@ -516,6 +536,7 @@ func NewSchema(p ResolverParams) Schema {
 		trailerQuery:               &trailerQuery{Deps: trailerDeps},
 		workerQuery:                &workerQuery{Deps: workerDeps},
 		workerchecklistQuery:       &workerchecklistQuery{Deps: workerchecklistDeps},
+		workercredentialQuery:      &workercredentialQuery{Deps: workercredentialDeps},
 		workerdqfQuery:             &workerdqfQuery{Deps: workerdqfDeps},
 		workerdrugalcoholQuery:     &workerdrugalcoholQuery{Deps: workerdrugalcoholDeps},
 		workerinjuryQuery:          &workerinjuryQuery{Deps: workerinjuryDeps},
@@ -614,6 +635,8 @@ func NewSchema(p ResolverParams) Schema {
 		"WorkerClearinghouseQuery": func() any {
 			return &workerdrugalcoholresolver.WorkerClearinghouseQueryResolver{Deps: workerdrugalcoholDeps}
 		},
+		"WorkerCredential":             func() any { return &workercredentialresolver.WorkerCredentialResolver{Deps: workercredentialDeps} },
+		"WorkerCredentialType":         func() any { return &workercredentialresolver.WorkerCredentialTypeResolver{Deps: workercredentialDeps} },
 		"WorkerDOTTest":                func() any { return &workerdrugalcoholresolver.WorkerDOTTestResolver{Deps: workerdrugalcoholDeps} },
 		"WorkerDOTViolation":           func() any { return &workerdrugalcoholresolver.WorkerDOTViolationResolver{Deps: workerdrugalcoholDeps} },
 		"WorkerDisciplinaryAction":     func() any { return &workersafetyresolver.WorkerDisciplinaryActionResolver{Deps: workersafetyDeps} },
@@ -649,6 +672,7 @@ type mutationResolver struct {
 	*trailerMutation
 	*workerMutation
 	*workerchecklistMutation
+	*workercredentialMutation
 	*workerdqfMutation
 	*workerdrugalcoholMutation
 	*workerinjuryMutation
@@ -681,6 +705,7 @@ type queryResolver struct {
 	*trailerQuery
 	*workerQuery
 	*workerchecklistQuery
+	*workercredentialQuery
 	*workerdqfQuery
 	*workerdrugalcoholQuery
 	*workerinjuryQuery
@@ -702,6 +727,7 @@ type (
 	trailerMutation                = trailerresolver.MutationResolver
 	workerMutation                 = workerresolver.MutationResolver
 	workerchecklistMutation        = workerchecklistresolver.MutationResolver
+	workercredentialMutation       = workercredentialresolver.MutationResolver
 	workerdqfMutation              = workerdqfresolver.MutationResolver
 	workerdrugalcoholMutation      = workerdrugalcoholresolver.MutationResolver
 	workerinjuryMutation           = workerinjuryresolver.MutationResolver
@@ -731,6 +757,7 @@ type (
 	trailerQuery                   = trailerresolver.QueryResolver
 	workerQuery                    = workerresolver.QueryResolver
 	workerchecklistQuery           = workerchecklistresolver.QueryResolver
+	workercredentialQuery          = workercredentialresolver.QueryResolver
 	workerdqfQuery                 = workerdqfresolver.QueryResolver
 	workerdrugalcoholQuery         = workerdrugalcoholresolver.QueryResolver
 	workerinjuryQuery              = workerinjuryresolver.QueryResolver

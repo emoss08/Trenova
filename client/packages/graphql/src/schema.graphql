@@ -24822,7 +24822,37 @@ type Query {
   workerCredentialSummary(workerId: ID!): WorkerCredentialSummary! @authorizes(resource: "worker_credential")
   workerCredentialType(id: ID!): WorkerCredentialType!
   workerCredentialTypes(input: WorkerCredentialTypesInput!): WorkerCredentialTypeConnection!
-  workerCredentials(includeArchived: Boolean = true, workerId: ID!): [WorkerCredential!]!
+  """
+  One worker's credentials, or those falling due: active credentials expiring
+  within a number of days, soonest first, for the worker named or across the
+  organization when none is.
+  """
+  workerCredentials(
+    """
+    Only credentials of this type, by its code, such as MED_CARD or CDL, in any case.
+    """
+    credentialTypeCode: String
+    """
+    Only active credentials expiring within this many days from now, from 1 to 365. 30 when no worker is named.
+    """
+    expiringWithinDays: Int
+    """
+    With a worker and no expiry window, also read their archived credentials.
+    """
+    includeArchived: Boolean = true
+    """With an expiry window, also those that lapsed in the last 90 days."""
+    includeExpired: Boolean
+    """
+    At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization.
+    """
+    limit: Int
+    """Only credential types the organization marks required."""
+    requiredOnly: Boolean
+    """
+    The worker whose credentials are read. Leave it out for those falling due across the organization.
+    """
+    workerId: ID
+  ): [WorkerCredential!]!
   workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!
   workerDisciplinaryLadder(workerId: ID!): DisciplinaryLadder! @authorizes(resource: "worker_disciplinary_action")
   workerDotTest(id: ID!): WorkerDOTTest!

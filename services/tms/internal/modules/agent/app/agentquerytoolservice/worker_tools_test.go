@@ -519,16 +519,6 @@ func TestGetWorker_AnAgentPrincipalReadsInternalOnly(t *testing.T) {
 	assert.Contains(t, row.Withheld, "email")
 }
 
-// A credential's number is the licence or card number itself. Who needs a
-// new medical card is answered without it.
-func TestExpiringCredentialRow_CarriesNoCredentialNumber(t *testing.T) {
-	t.Parallel()
-
-	encoded, err := sonic.Marshal(expiringCredentialRow{WorkerID: "wrk_1", CredentialCode: "MED"})
-	require.NoError(t, err)
-	assert.NotContains(t, string(encoded), "number")
-}
-
 type pagedWorkerRepo struct {
 	workerports.WorkerRepository
 
