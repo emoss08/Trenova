@@ -139,6 +139,83 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
    gates it as that kind. A field named for a kind that returns some other type fails CI until the
    type declares its kind or the field is listed, with its reason, in `notAKind`.
 
+## The page access manifest
+
+`services/tms/pkg/pageaccess/manifest_gen.json` records, for every screen (route) of the web app:
+
+- `requires`: the permissions its route's loaders demand;
+- `operations`: the GraphQL operations its code runs, and `endpoints`: the REST endpoints it calls,
+  each with the permissions its route checks before the handler (empty when the handler checks
+  for itself);
+- `reads`: the kinds its queries return from their root resolvers, which need the kind's read;
+- `references`: the kinds it shows only through their reference views;
+- `declared`: the kinds whose further fields it asks for with `@requiresRead`;
+
+and, per operation, every field it selects on a linked record of each kind (a field written
+`Move.status` is of a record that is part of the kind, which has no view of its own). The server
+embeds it, so a build always describes the app it was built with.
+
+It is derived, never written by hand, in two steps:
+
+1. `pnpm --filter @trenova/web access:generate` (`client/apps/web/scripts/page-access/`) reads the
+   route tree the product guide reads (`scripts/product-guide/sources.mjs`) and, for each route,
+   every module reachable from its page module through static and dynamic imports, short of the
+   app shell (what `main.tsx` loads statically). A module that imports documents is held to the
+   documents of the exports its importers name, so a page that imports one wrapper of
+   `lib/graphql/shipment.ts` runs that wrapper's operation, not all of them; a query key factory is
+   one module, so a page that imports it runs every operation the factory can. REST calls are
+   `api.<method>(path)` literals, and an `apiService.<service>.<method>` is resolved to that one
+   service method. It writes `pkg/pageaccess/screens_gen.json`.
+2. `go run ./internal/api/graphql/gqlext/refgen` reads that file, walks each operation with
+   `gqlext.Operations` (the same walk the field guard's checks are built on, so a root, a linked
+   record and a part of one are reached exactly as at run time) and joins each REST call to its
+   route through `routelint` and `permissionlint`. It writes `manifest_gen.json`.
+
+A mutation's payload is a root record its resolver checked with its own operation, so a mutation
+adds no kind to `reads`; its linked fields are listed like any other.
+
+## Page access panel and viewing a screen as a role
+
+Every page bar carries a **Page access** button (and `Ctrl+Alt+P`) for administrators, who hold
+role read, and on every screen of a development build. It opens a lazy sheet
+(`components/page-access/`) that is not in the first visit's download. It shows what the screen
+needs, which kinds the reader holds read on, and which linked fields come back as reference view
+only, from:
+
+- `pageAccess(location:)` for the reader's own access. It checks only authentication (listed in
+  `authOnlyAllowlist`): it describes the caller's own grants against the static manifest. Every
+  permission the screen needs is asked of the engine in one `CheckBatch`.
+- `pageAccessPreview(input:)` for a role, saved (`roleId`) or as the role editor holds it
+  (`draft`), with the roles it inherits. It needs role read, like the role editor. The grants are
+  united by `permission.GrantsOf` with their implied operations and the widest ceiling, wrapped in
+  `refview.RoleAccess`, and every field goes through `refview` (`Decide`, `DecidePart`) with the
+  role's ceiling (`fieldsensitivity.RoleCeiling`), so the preview cannot disagree with the guard.
+  It is worked out before organization access policies (ABAC), and an inherited role from another
+  organization is refused.
+
+Neither reads a record; both are `internal/modules/identity/app/pageaccessservice`. The role editor
+draws the same report in **Preview a screen**, with the screens from `pageAccessScreens`.
+
+## Role editor sentences
+
+Each resource row of the role editor's Advanced tab says what granting and withholding its read
+means, from `roleResourceGuides(input:)` (role read; a category's resources at a time, at most 64).
+The sentences are built by `pageaccessservice.Guide` from the registry, not written per kind:
+
+- with read, every field of the kind's records, on their own screens and wherever another record
+  shows one;
+- without it, the view's fields as words wherever a record the role can read links to one, naming
+  the linking kinds the most screens read first, and that the rest needs the kind's read;
+- the view's fields that rank above the role's ceiling and stay withheld;
+- **Screens this affects**: every screen of the manifest that requires, reads, declares or
+  references the kind.
+
+The words for each view and the kinds that link to each are generated by refgen into
+`pageaccessservice/viewwords_gen.go` (`pagemanifest.RenderWords`): bookkeeping fields left out, an
+address's parts as one address, a link's id beside the link as the link, and a carrier being the
+family of the type holding the field. The Go extractor reads that file's `Label:` values, so each
+word is a catalog entry, and lists are joined in the request's language by `i18n.List`.
+
 ## Adding a field to a reference view
 
 A view field is shown to everyone who can read any record that links to the kind, so adding one
@@ -148,7 +225,9 @@ The change needs a security review on the pull request, which names every screen
 
 1. add the field to the kind's `ReferenceView`;
 2. run `go run ./internal/api/graphql/gqlext/refgen` and `pnpm --filter @trenova/graphql codegen`;
-3. drop any `@requiresRead` the operation no longer needs.
+3. drop any `@requiresRead` the operation no longer needs;
+4. run `task i18n` and translate the field's new words, if the role editor names it in a way no
+   view did before.
 
 ## What CI checks
 
@@ -164,6 +243,9 @@ Each failure says what to add.
 | `TestEveryDeclaredLinkedFieldIsNullable` (gqlext) | a field selected under `@requiresRead` is non-null |
 | `TestEveryAuthorizesDeclarationIsCheckedByItsResolver` (gqlext) | a root field declares `@authorizes` for a kind its resolver does not check |
 | `TestReferenceFragmentsAreGenerated` (gqlext) | the generated fragments or views are out of date |
+| `access:check` (`test-client.yml`) | a route, an import or a REST call moved what a screen runs and `screens_gen.json` was not regenerated |
+| `TestPageAccessManifestIsGenerated` (pagemanifest) | `manifest_gen.json` differs from what refgen writes from the screens, the operations, the schema, the registry and the routes |
+| `TestViewWordsAreGenerated` (pagemanifest) | a view or a link between kinds changed and `viewwords_gen.go` was not regenerated |
 | `TestEveryFieldAndEdgeIsClassifiedByItsReferenceView` (reportcatalog) | a report catalog field or edge is unclassified, or its class disagrees with the registry's view |
 | `TestEveryProtectedFieldIsGatedInTheReportCatalog` (gqlext) | a schema `@protected` field is not marked `protected` in the report catalog, or the reverse |
 | `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a bun relation that is neither a kind nor listed in `carried` |
