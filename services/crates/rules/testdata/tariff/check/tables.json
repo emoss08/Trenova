@@ -1,0 +1,623 @@
+{
+ "cases": [
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "label": "origin",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zip3",
+        "label": "destination",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a two-axis exact table gives an optional value",
+   "source": [
+    "tariff \"t\"",
+    "let rate = tables.Zones[lane.origin.zip3, lane.destination.zip3] ?? fail \"No zone rate\"",
+    "charge \"x\" = rate * (shipment.weight ?? 0 lb)"
+   ],
+   "types": {
+    "tables.Zones[lane.origin.zip3, lane.destination.zip3]": "Money/cwt?"
+   }
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zone",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a list of keys on an exact axis tries each",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Zones[lane.origin.zones, lane.destination.zones] ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "[1 lb, 2 lb]",
+     "code": "type-mismatch",
+     "message": "`[1 lb, 2 lb]` is a list (`List<Weight>`), but `WeightBreak` of `tables.Breaks` takes a weight"
+    }
+   ],
+   "name": "a list of keys on a range axis is refused",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Breaks[[1 lb, 2 lb]] ?? $0/cwt) * 1 lb"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Distance",
+        "label": "miles",
+        "match": "Range",
+        "unit": "mi"
+       }
+      ],
+      "code": "Miles",
+      "valueType": "Money/mi"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "shipment.weight ?? 0 lb",
+     "code": "type-mismatch",
+     "message": "`shipment.weight ?? 0 lb` is a weight, but `miles` of `tables.Miles` takes a distance"
+    }
+   ],
+   "name": "a weight given to a distance axis",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Miles[shipment.weight ?? 0 lb] ?? $0/mi) * shipment.distance"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "label": "origin",
+        "match": "Exact"
+       },
+       {
+        "kind": "Zip3",
+        "label": "destination",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "tables.Zones[lane.origin.zip3]",
+     "code": "table-keys",
+     "message": "`Zones` takes 2 keys (origin, destination), but 1 is given"
+    }
+   ],
+   "name": "the wrong number of keys",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Zones[lane.origin.zip3] ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "Zonez",
+     "code": "unknown-table",
+     "fixes": [
+      {
+       "label": "Change to `Zones`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = tables.Zones[\"a\"] ?? $0"
+       ]
+      }
+     ],
+     "message": "No rate table has the code `Zonez`. Did you mean `Zones`?"
+    }
+   ],
+   "name": "an unknown table suggests the closest",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Zonez[\"a\"] ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "fuelTiers",
+      "valueType": "Percent"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "FUELTIERS",
+     "code": "unknown-table",
+     "fixes": [
+      {
+       "label": "Change to `fuelTiers`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $100 * (tables.fuelTiers[\"a\"] ?? 0%)"
+       ]
+      }
+     ],
+     "message": "No rate table has the code `FUELTIERS`; its code is written `fuelTiers`"
+    }
+   ],
+   "name": "a table code differing only by case gets the stored spelling",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 * (tables.FUELTIERS[\"a\"] ?? 0%)"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "ZONES",
+      "valueType": "Money"
+     },
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "fuelTiers",
+      "valueType": "Percent"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "any identifier may be a table code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.ZONES[\"a\"] ?? $0) * (1 + 0) + $100 * (tables.fuelTiers[\"a\"] ?? 0%)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Zones",
+     "code": "unknown-table",
+     "message": "No rate table has the code `Zones`; only active rate matrices can be read"
+    }
+   ],
+   "name": "an unknown table with no tables",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Zones[\"a\"] ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "FreightClass",
+        "match": "Exact"
+       }
+      ],
+      "code": "Class",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a freight class axis takes the enum",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Class[Class70] ?? $0/cwt) * 1 lb + (tables.Class[shipment.freightClass ?? Class50] ?? $0/cwt) * 1 lb"
+   ],
+   "types": {
+    "tables.Class[Class70]": "Money/cwt?"
+   }
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "FreightClass",
+        "match": "Exact"
+       }
+      ],
+      "code": "Class",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "\"70\"",
+     "code": "type-mismatch",
+     "message": "`\"70\"` is text, but `FreightClass` of `tables.Class` takes a value of type `FreightClass`"
+    }
+   ],
+   "name": "a freight class axis refuses text",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Class[\"70\"] ?? $0/cwt) * 1 lb"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "PieceCount",
+        "match": "Range"
+       }
+      ],
+      "code": "Pieces",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a piece count axis takes Int",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Pieces[shipment.pieces ?? 0] ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "cell gives the value, minimum and deficit flag",
+   "source": [
+    "tariff \"t\"",
+    "if let cell = tables.Zones.cell(lane.origin.zip3) {",
+    "  charge \"x\" = (cell.value * (shipment.weight ?? 0 lb)).max(cell.minimum ?? $0)",
+    "}"
+   ],
+   "types": {
+    "tables.Zones.cell(lane.origin.zip3)": "{ value: Money/cwt, minimum: Money?, deficit: Bool }?"
+   }
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "band gives the matching band",
+   "source": [
+    "tariff \"t\"",
+    "if let band = tables.Breaks.band(1_200 lb) {",
+    "  charge \"x\" = band.value * band.min",
+    "}"
+   ],
+   "types": {
+    "tables.Breaks.band(1_200 lb)": "{ min: Weight, max: Weight?, value: Money/cwt }?"
+   }
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Breaks",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "interpolate gives the value",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = (tables.Breaks.interpolate(1_200 lb) ?? $0/cwt) * 1_200 lb"
+   ],
+   "types": {
+    "tables.Breaks.interpolate(1_200 lb)": "Money/cwt?"
+   }
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "band",
+     "code": "table-shape",
+     "message": "`band` works only on a table with one axis of bands, and `Zones` isn't one"
+    }
+   ],
+   "name": "band needs a one-axis range table",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Zones.band(\"a\")?.value ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "cel",
+     "code": "unknown-field",
+     "fixes": [
+      {
+       "label": "Change to `cell`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = tables.Zones.cell(\"a\")?.value ?? $0"
+       ]
+      }
+     ],
+     "message": "A rate table has no method `cel`. Did you mean `cell`?"
+    }
+   ],
+   "name": "an unknown table method suggests the closest",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Zones.cel(\"a\")?.value ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "t",
+     "code": "unused",
+     "message": "`t` is never used",
+     "nth": 4
+    },
+    {
+     "at": "tables.Zones",
+     "code": "table",
+     "message": "Read a rate table with its keys, as in `tables.Zones[…]`"
+    }
+   ],
+   "name": "a table read without keys",
+   "source": [
+    "tariff \"t\"",
+    "let t = tables.Zones",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Odd",
+      "valueType": "Weight"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "Odd",
+     "code": "table-value",
+     "message": "The rate table `Odd` holds `Weight`, which isn't a value type a table can have"
+    }
+   ],
+   "name": "a table whose value type is not one a table holds",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (tables.Odd[\"a\"] ?? 0)"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "origin",
+     "code": "argument-order",
+     "message": "A table's keys are given in axis order, without names"
+    }
+   ],
+   "name": "table keys are positional",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Zones.cell(origin: \"a\")?.value ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "State",
+        "match": "Exact"
+       },
+       {
+        "kind": "State",
+        "match": "Exact"
+       },
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       },
+       {
+        "kind": "Distance",
+        "match": "Range",
+        "unit": "mi"
+       }
+      ],
+      "code": "Big",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a four-axis table",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Big[lane.origin.state, lane.destination.state, shipment.weight ?? 0 lb, shipment.distance] ?? $0"
+   ]
+  }
+ ]
+}

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -42,4 +43,21 @@ func TestTariffValuesDecodeQuantitiesAndNumbers(t *testing.T) {
 
 	_, err = rules.DecodeNumber(rules.RawJSON(`"3"`))
 	require.ErrorIs(t, err, rules.ErrNotTariffNumber)
+}
+
+func TestTariffRefusalReadsAuthorTextAndModuleMessages(t *testing.T) {
+	t.Parallel()
+
+	var authored rules.TariffRefusal
+	require.NoError(t, sonic.Unmarshal(
+		[]byte(`{"message":"No fuel price","range":{"from":1,"to":4}}`), &authored))
+	assert.Equal(t, "No fuel price", authored.Text)
+	assert.Nil(t, authored.Message)
+	assert.Equal(t, 4, authored.Range.To)
+
+	var generated rules.TariffRefusal
+	require.NoError(t, sonic.Unmarshal(
+		[]byte(`{"message":{"message":"No value for {0}","args":["rate"]},"range":null}`), &generated))
+	require.NotNil(t, generated.Message)
+	assert.Equal(t, "No value for rate", generated.Message.String())
 }
