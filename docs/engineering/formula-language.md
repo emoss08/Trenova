@@ -108,10 +108,10 @@ contract. The standard library (`std`) ships with the module and is versioned wi
   - charge codes are UPPERCASE (`FSC`), matching the accessorial charge catalog's 10-character
     codes.
 - **Keywords:** `tariff library condition use input let var const fn type enum private charge
-  note if else match for in where break continue return minimum maximum round to up down half
-  even require fail fails test given expect and or not true false none`. `cents`, `total`,
-  `lines` and the unit names are contextual (they mean something only where the grammar expects
-  them).
+  note if else match for in where break continue return minimum maximum round require fail fails
+  test given expect and or not true false none`. `as`, `to`, `up`, `down`, `half`, `even`,
+  `cents`, `total`, `lines` and the unit names are contextual: they mean something only where the
+  grammar expects them, and are ordinary names elsewhere (`fn billed(weight: Weight, to: Weight)`).
 - **Text:** `"double quoted"`, with `{expr}` interpolation, `{{` for a literal brace and the usual
   escapes. There are no raw strings and no single quotes.
 - **Numbers:**
@@ -833,4 +833,6 @@ string      = '"' { char | escape | "{" expr "}" | "{{" | "}}" } '"' ;
 ```
 
 A keyword is never an identifier. Unit names are contextual: `lb` is a unit only directly after
-a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name.
+a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name. `in` directly
+after a number is inches unless what follows starts a value: `48 in` is a length, and in
+`5 in [5, 6]` it is the membership keyword.
