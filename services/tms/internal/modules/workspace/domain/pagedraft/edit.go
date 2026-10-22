@@ -16,6 +16,7 @@ const (
 	ActionSetStopLocation    = Action("intake_set_stop_location")
 	ActionSetStopSchedule    = Action("intake_set_stop_schedule")
 	ActionProposeFormula     = Action("formula_propose")
+	ActionProposeLibrary     = Action("formula_library_propose")
 )
 
 func (a Action) IsValid() bool {
@@ -31,14 +32,20 @@ func AllActions() []Action {
 		ActionSetStopLocation,
 		ActionSetStopSchedule,
 		ActionProposeFormula,
+		ActionProposeLibrary,
 	}
 }
 
 func (a Action) Surface() Surface {
-	if a == ActionProposeFormula {
+	switch a {
+	case ActionProposeFormula:
 		return SurfaceFormula
+	case ActionProposeLibrary:
+		return SurfaceFormulaLibrary
+	case ActionAcceptField, ActionAcceptAllConfident, ActionSetFieldValue,
+		ActionSetRequiredField, ActionSetStopLocation, ActionSetStopSchedule:
+		return SurfaceShipmentImport
 	}
-
 	return SurfaceShipmentImport
 }
 
@@ -61,56 +68,33 @@ func IsEditTool(name string) bool {
 }
 
 type Edit struct {
-	Surface     Surface          `json:"surface"`
-	Action      Action           `json:"action"`
-	FieldKey    string           `json:"fieldKey,omitempty"`
-	Value       string           `json:"value,omitempty"`
-	Label       string           `json:"label,omitempty"`
-	StopIndex   *int             `json:"stopIndex,omitempty"`
-	WindowStart int64            `json:"windowStart,omitempty"`
-	WindowEnd   int64            `json:"windowEnd,omitempty"`
-	Formula     *FormulaProposal `json:"formula,omitempty"`
+	Surface     Surface         `json:"surface"`
+	Action      Action          `json:"action"`
+	FieldKey    string          `json:"fieldKey,omitempty"`
+	Value       string          `json:"value,omitempty"`
+	Label       string          `json:"label,omitempty"`
+	StopIndex   *int            `json:"stopIndex,omitempty"`
+	WindowStart int64           `json:"windowStart,omitempty"`
+	WindowEnd   int64           `json:"windowEnd,omitempty"`
+	Formula     *SourceProposal `json:"formula,omitempty"`
+	Library     *SourceProposal `json:"formulaLibrary,omitempty"`
 }
 
-type FormulaCheck struct {
-	Valid  bool   `json:"valid"`
-	Result string `json:"result,omitempty"`
-	Error  string `json:"error,omitempty"`
-	Code   string `json:"code,omitempty"`
+type ProposalTests struct {
+	Total  int `json:"total"`
+	Passed int `json:"passed"`
 }
 
-type PricedScenario struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description,omitempty"`
-	Variables   map[string]any `json:"variables"`
-	Amount      string         `json:"amount,omitempty"`
-	Valid       bool           `json:"valid"`
-	Error       string         `json:"error,omitempty"`
-	Code        string         `json:"code,omitempty"`
-}
-
-type BreakdownLine struct {
-	Name       string `json:"name"`
-	Label      string `json:"label"`
-	Expression string `json:"expression"`
-}
-
-type FormulaDetails struct {
-	Name         string          `json:"name,omitempty"`
-	Description  string          `json:"description,omitempty"`
-	TemplateType string          `json:"templateType,omitempty"`
-	Breakdown    []BreakdownLine `json:"breakdown,omitempty"`
-	Policy       *FormulaPolicy  `json:"policy,omitempty"`
-}
-
-type FormulaProposal struct {
-	SchemaID   string            `json:"schemaId"`
-	Expression string            `json:"expression"`
-	Variables  []FormulaVariable `json:"variables"`
-	FormulaDetails
-	Explanation string           `json:"explanation"`
-	Check       FormulaCheck     `json:"check"`
-	Scenarios   []PricedScenario `json:"scenarios"`
+type SourceProposal struct {
+	Name        string        `json:"name,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Source      string        `json:"source"`
+	Explanation string        `json:"explanation"`
+	Inputs      []string      `json:"inputs"`
+	Imports     []string      `json:"imports"`
+	Charges     []string      `json:"charges"`
+	Warnings    []string      `json:"warnings"`
+	Tests       ProposalTests `json:"tests"`
 }
 
 type EditResult struct {
@@ -142,6 +126,8 @@ func (e *Edit) Title() string {
 		return "Scheduled " + e.stopName()
 	case ActionProposeFormula:
 		return "Proposed formula"
+	case ActionProposeLibrary:
+		return "Proposed library"
 	default:
 		return "Draft change"
 	}
@@ -174,8 +160,6 @@ func requiredFieldName(field RequiredField) string {
 		return "the service type"
 	case RequiredShipmentType:
 		return "the shipment type"
-	case RequiredFormulaTemplate:
-		return "the rating method"
 	default:
 		return "a required field"
 	}

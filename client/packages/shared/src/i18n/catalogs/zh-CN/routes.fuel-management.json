@@ -55,6 +55,7 @@
   "FSC-DOE-STD": "FSC-DOE-STD",
   "Fill gap": "填补空隙",
   "Fill in the fields on the left to see the table.": "请填写左侧字段以显示表格。",
+  "Flat amount": "固定金额",
   "Fleet MPG divisor: rate = (price − peg) ÷ MPG.": "车队 MPG 除数：费率 = (价格 − 基准) ÷ MPG。",
   "Formula methods compute rates from parameters; table methods use explicit price bands.": "公式法按参数计算费率；表格法则使用明确的价格区间。",
   "Fuel indices": "燃油指数",

@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -209,7 +210,10 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 		CustomerID:          cus.ID,
 		Customer:            cus,
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("1945.65")),
-		RatingDetail:        &shipment.RatingDetail{Result: 1945.65},
+		RatingDetail: &shipment.RatingDetail{Bill: &tarifftypes.Bill{
+			FreightTotal: decimal.RequireFromString("1945.65"),
+			Total:        decimal.RequireFromString("1945.65"),
+		}},
 		AdditionalCharges: []*shipment.AdditionalCharge{{
 			ID:                  lumperID,
 			OrganizationID:      tenantInfo.OrgID,

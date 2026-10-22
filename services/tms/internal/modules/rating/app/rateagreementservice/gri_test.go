@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -13,12 +15,6 @@ import (
 func percentAdjustment(value string) RateAdjustment {
 	return RateAdjustment{
 		PercentChange: decimal.NewNullDecimal(decimal.RequireFromString(value)),
-	}
-}
-
-func flatAdjustment(value string) RateAdjustment {
-	return RateAdjustment{
-		FlatChange: decimal.NewNullDecimal(decimal.RequireFromString(value)),
 	}
 }
 
@@ -34,59 +30,70 @@ func griAgreement() *rateagreement.RateAgreement {
 
 func ratedRule(rate string) *rateagreement.RateAgreementRule {
 	return &rateagreement.RateAgreementRule{
-		ID:            pulid.MustNew("rarl_"),
-		Label:         "GA to FL",
-		LaneKey:       "ST:GA>ST:FL",
-		Rate:          decimal.NewNullDecimal(decimal.RequireFromString(rate)),
+		ID:      pulid.MustNew("rarl_"),
+		Label:   "GA to FL",
+		LaneKey: "ST:GA>ST:FL",
+		Inputs: tarifftypes.Inputs{
+			"rate": rules.QuantityValue(decimal.RequireFromString(rate), "$/mi"),
+		},
 		EffectiveFrom: 100,
 	}
 }
 
-// A five percent increase on a $2.00 rate is $2.10 — on the rule and on every
-// weight break it carries, because a break is just the same rate at a
-// different weight.
-func TestPlanAgreementIncrease_PercentScalesRateAndBreaks(t *testing.T) {
+func quantityOf(t *testing.T, inputs tarifftypes.Inputs, name string) rules.TariffQuantity {
+	t.Helper()
+
+	quantity, err := rules.DecodeQuantity(inputs[name])
+	require.NoError(t, err)
+	return quantity
+}
+
+func TestPlanAgreementIncrease_ScalesEveryMoneyInputAndNothingElse(t *testing.T) {
 	t.Parallel()
 
 	rule := ratedRule("2.00")
-	rule.Breaks = []*rateagreement.RateAgreementRuleBreak{
-		{Rate: decimal.RequireFromString("1.80")},
-		{Rate: decimal.RequireFromString("1.60")},
-	}
+	rule.Inputs["minimumCharge"] = rules.MoneyValue(decimal.NewFromInt(400))
+	rule.Inputs["fuelShare"] = rules.PercentValue(decimal.NewFromInt(20))
+	rule.Inputs["freeMiles"] = rules.QuantityValue(decimal.NewFromInt(50), "mi")
+	rule.Inputs["breaks"] = rules.RawJSON(
+		`[{"from":{"$q":"0","u":"lb"},"rate":{"$q":"18.50","u":"$/cwt"},"minimum":null}]`,
+	)
 
-	plan := planAgreementIncrease(
+	plan, err := planAgreementIncrease(
 		griAgreement(),
 		[]*rateagreement.RateAgreementRule{rule},
 		percentAdjustment("5"),
 		1_000,
 	)
+	require.NoError(t, err)
 
 	require.Len(t, plan.Lines, 1)
-	assert.Equal(t, "2.1", plan.Lines[0].After.String())
-	assert.Equal(t, "2", plan.Lines[0].Before.String())
+	line := plan.Lines[0]
+	assert.ElementsMatch(t, []string{"rate", "minimumCharge", "breaks"}, line.Changed)
 
-	require.Len(t, plan.Clones, 1)
-	successor := plan.Clones[0]
-	assert.Equal(t, "2.1", successor.Rate.Decimal.String())
-	require.Len(t, successor.Breaks, 2)
-	assert.Equal(t, "1.89", successor.Breaks[0].Rate.String())
-	assert.Equal(t, "1.68", successor.Breaks[1].Rate.String())
+	after := plan.Clones[0].Inputs
+	assert.Equal(t, "2.1", quantityOf(t, after, "rate").Value.String())
+	assert.Equal(t, "420", quantityOf(t, after, "minimumCharge").Value.String())
+	assert.True(t, tarifftypes.EqualValues(rule.Inputs["fuelShare"], after["fuelShare"]),
+		"a percent is not money")
+	assert.True(t, tarifftypes.EqualValues(rule.Inputs["freeMiles"], after["freeMiles"]),
+		"a distance is not money")
+	assert.Contains(t, string(after["breaks"]), `"19.425"`, "money inside a list of records scales")
+	assert.Contains(t, string(after["breaks"]), `"0"`)
 }
 
-// The successor is a new row that supersedes the old one from the effective
-// moment — the old rate stays in history, which is the whole reason a GRI is
-// an amendment rather than an edit.
 func TestPlanAgreementIncrease_SuccessorCarriesLineage(t *testing.T) {
 	t.Parallel()
 
 	rule := ratedRule("2.00")
 
-	plan := planAgreementIncrease(
+	plan, err := planAgreementIncrease(
 		griAgreement(),
 		[]*rateagreement.RateAgreementRule{rule},
-		flatAdjustment("0.25"),
+		percentAdjustment("12.5"),
 		1_000,
 	)
+	require.NoError(t, err)
 
 	require.Len(t, plan.Clones, 1)
 	successor := plan.Clones[0]
@@ -96,70 +103,43 @@ func TestPlanAgreementIncrease_SuccessorCarriesLineage(t *testing.T) {
 	assert.Equal(t, rule.ID, *successor.SupersedesRuleID)
 	assert.EqualValues(t, 1_000, successor.EffectiveFrom)
 	assert.Nil(t, successor.EffectiveTo)
-	assert.Equal(t, "2.25", successor.Rate.Decimal.String())
+	assert.Equal(t, "2.25", quantityOf(t, successor.Inputs, "rate").Value.String())
 
 	require.Len(t, plan.SupersededIDs, 1)
 	assert.Equal(t, rule.ID, plan.SupersededIDs[0])
 
-	// The original must not have been touched: the plan is a preview until
-	// somebody applies it.
-	assert.Equal(t, "2", rule.Rate.Decimal.String())
+	assert.Equal(t, "2", quantityOf(t, rule.Inputs, "rate").Value.String(),
+		"the plan is a preview until somebody applies it")
 }
 
-// A matrix-priced rule carries no rate of its own — its numbers live in the
-// matrix cells — so a GRI skips it and says so rather than pretending it was
-// raised.
-func TestPlanAgreementIncrease_MatrixRulesAreSkippedAndCounted(t *testing.T) {
+func TestPlanAgreementIncrease_RulesWithoutMoneyAreSkippedAndCounted(t *testing.T) {
 	t.Parallel()
 
-	matrixID := pulid.MustNew("rmx_")
-	matrixRule := &rateagreement.RateAgreementRule{
-		ID:           pulid.MustNew("rarl_"),
-		LaneKey:      "ST:GA>ST:TX",
-		RateMatrixID: &matrixID,
+	noMoney := &rateagreement.RateAgreementRule{
+		ID:      pulid.MustNew("rarl_"),
+		LaneKey: "ST:GA>ST:TX",
+		Inputs:  tarifftypes.Inputs{"share": rules.PercentValue(decimal.NewFromInt(80))},
 	}
 
-	plan := planAgreementIncrease(
+	plan, err := planAgreementIncrease(
 		griAgreement(),
-		[]*rateagreement.RateAgreementRule{ratedRule("2.00"), matrixRule},
+		[]*rateagreement.RateAgreementRule{ratedRule("2.00"), noMoney},
 		percentAdjustment("5"),
 		1_000,
 	)
+	require.NoError(t, err)
 
 	assert.Len(t, plan.Lines, 1)
 	assert.Len(t, plan.Clones, 1)
-	assert.Equal(t, 1, plan.SkippedNoRate)
+	assert.Equal(t, 1, plan.SkippedNoMoney)
 }
 
-// A decrease that would push a rate below zero is counted so the apply step
-// can refuse it: a negative rate is not a discount, it is a data error.
-func TestPlanAgreementIncrease_NegativeResultsAreCounted(t *testing.T) {
-	t.Parallel()
-
-	plan := planAgreementIncrease(
-		griAgreement(),
-		[]*rateagreement.RateAgreementRule{ratedRule("2.00")},
-		flatAdjustment("-3.00"),
-		1_000,
-	)
-
-	assert.Equal(t, 1, plan.NegativeCount)
-}
-
-// Exactly one kind of adjustment, and a percent below -100 inverts the sign of
-// every rate it touches.
 func TestRateAdjustment_Validate(t *testing.T) {
 	t.Parallel()
 
 	assert.NotNil(t, RateAdjustment{}.Validate(), "an empty adjustment adjusts nothing")
-
-	both := RateAdjustment{
-		PercentChange: decimal.NewNullDecimal(decimal.NewFromInt(5)),
-		FlatChange:    decimal.NewNullDecimal(decimal.NewFromInt(1)),
-	}
-	assert.NotNil(t, both.Validate(), "percent and flat together are ambiguous")
-
+	assert.NotNil(t, percentAdjustment("-100").Validate())
 	assert.NotNil(t, percentAdjustment("-150").Validate())
 	assert.Nil(t, percentAdjustment("-10").Validate(), "a decrease is a legitimate GRI")
-	assert.Nil(t, flatAdjustment("0.25").Validate())
+	assert.Nil(t, percentAdjustment("3.5").Validate())
 }

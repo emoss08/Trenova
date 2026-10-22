@@ -1,4 +1,4 @@
-//! Positions in formula text: byte offsets inside the crate, UTF-16 code units on the wire.
+//! Positions in source text: byte offsets inside the crate, UTF-16 code units on the wire.
 //!
 //! Rust slices strings by byte, so every span the lexer and parser produce is a byte range. The
 //! editor (CodeMirror) and the server's statement traces count UTF-16 code units, so every
@@ -45,7 +45,7 @@ pub struct Range {
 /// Converts between byte offsets and UTF-16 offsets for one source text.
 ///
 /// Built once per request; conversion is a binary search over the non-ASCII characters only, so
-/// an ASCII formula costs nothing beyond the scan.
+/// an ASCII source costs nothing beyond the scan.
 #[derive(Debug, Clone)]
 pub struct Utf16Index {
     /// For each non-ASCII character: its byte offset, and how many extra UTF-16 units precede the

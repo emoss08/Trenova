@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   AlertDialog,
@@ -46,13 +47,13 @@ type RollbackConfirmDialogProps = {
 function formatUsageType(type: string): string {
   switch (type) {
     case "shipment":
-      return "shipments";
-    case "rate_matrix":
-      return "rate matrices";
+      return translate("shipments");
     case "rate_agreement_rule":
-      return "rate agreement rules";
-    case "rate_agreement_accessorial":
-      return "rate agreement accessorials";
+      return translate("rate agreement rules");
+    case "rate_agreement":
+      return translate("rate agreements");
+    case "billing_control_fallback":
+      return translate("the billing fallback");
     default:
       return type;
   }
@@ -91,19 +92,22 @@ function ChangeSummary({ changes }: ChangeSummaryProps) {
   const changeEntries = Object.entries(changes);
 
   const categorizedChanges = {
-    expression: changeEntries.filter(([k]) => k === "expression"),
-    variables: changeEntries.filter(([k]) => k.startsWith("variableDefinitions")),
+    source: changeEntries.filter(([k]) => k === "source"),
+    imports: changeEntries.filter(([k]) => k.startsWith("imports")),
     status: changeEntries.filter(([k]) => k === "status"),
     other: changeEntries.filter(
-      ([k]) => k !== "expression" && k !== "status" && !k.startsWith("variableDefinitions"),
+      ([k]) => k !== "source" && k !== "status" && !k.startsWith("imports"),
     ),
   };
 
   const summaryParts: string[] = [];
-  if (categorizedChanges.expression.length > 0) summaryParts.push(t("Expression"));
-  if (categorizedChanges.variables.length > 0)
+  if (categorizedChanges.source.length > 0) summaryParts.push(t("Source"));
+  if (categorizedChanges.imports.length > 0)
     summaryParts.push(
-      t("{0, plural, one {# Variable} other {# Variables}}", categorizedChanges.variables.length),
+      t(
+        "{0, plural, one {# pinned library} other {# pinned libraries}}",
+        categorizedChanges.imports.length,
+      ),
     );
   if (categorizedChanges.status.length > 0) summaryParts.push(t("Status"));
   if (categorizedChanges.other.length > 0)

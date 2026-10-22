@@ -1,33 +1,27 @@
 package shipmentservice
 
 import (
-	"context"
-	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -36,20 +30,70 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestServiceCalculateTotals_UsesFormulaTemplateAndNestedAdditionalCharges(t *testing.T) {
-	t.Parallel()
+const perMileSource = `tariff "Per Mile"
 
-	entity := validShipmentForValidation()
-	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(2.5))
-	entity.Moves[0].Distance = new(float64(100))
-	entity.AdditionalCharges = []*shipment.AdditionalCharge{
-		{
-			AccessorialChargeID: pulid.MustNew("acc_"),
-			Method:              accessorialcharge.MethodFlat,
-			Amount:              decimal.NewFromInt(10),
-			Unit:                1,
-		},
+input rate: Money/mi
+
+charge "Linehaul" (quantity: shipment.distance, rate: rate)
+`
+
+const rollupSource = `tariff "Rollups"
+
+require let weight = shipment.weight else "This rate needs the shipment's weight"
+
+charge "Weight" (quantity: weight, rate: $1/lb)
+charge "Linear feet" (quantity: shipment.linearFeet, rate: $1/ft)
+charge "Hazmat" = if shipment.hazmat { $100 } else { $0 }
+`
+
+const linearFeetSource = `tariff "Linear feet"
+
+charge "Linear feet" (quantity: shipment.linearFeet, rate: $1/ft)
+charge "Hazmat" = if shipment.hazmat { $25 } else { $0 }
+`
+
+const refusingSource = `tariff "Refuses"
+
+require shipment.hazmat else "Only hazmat loads are rated here"
+
+charge "Linehaul" = $100
+`
+
+func totalsTemplate(source string) *tariffports.Template {
+	return &tariffports.Template{
+		TemplateID:    pulid.MustNew("ft_"),
+		VersionNumber: 1,
+		Name:          "Totals",
+		Source:        source,
+		Inputs: []tarifftypes.InputDecl{{
+			Name:       "rate",
+			Type:       "Money/mi",
+			Descriptor: rules.RawJSON(`{"kind":"quantity","unit":"$/mi"}`),
+		}},
 	}
+}
+
+func tariffCalculator(t *testing.T, template *tariffports.Template) *shipmentcommercial.Calculator {
+	t.Helper()
+
+	stack := ratingtest.NewStack(t, ratingtest.StackOptions{Any: template})
+	return shipmentcommercial.New(shipmentcommercial.Params{
+		Logger:          zap.NewNop(),
+		RateEngine:      stack.Engine,
+		AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+	})
+}
+
+func perMileRate(t *testing.T, rate string) tarifftypes.Inputs {
+	t.Helper()
+
+	inputs, err := tarifftypes.InputsFromLiterals(map[string]string{"rate": rate})
+	require.NoError(t, err)
+	return inputs
+}
+
+func expectShipmentControl(t *testing.T, entity *shipment.Shipment) *tenantportsmock.MockShipmentControlRepository {
+	t.Helper()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
@@ -61,82 +105,83 @@ func TestServiceCalculateTotals_UsesFormulaTemplateAndNestedAdditionalCharges(t 
 		}).
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{
-		getByIDFn: func(
-			_ context.Context,
-			req formulatemplateports.GetFormulaTemplateByIDRequest,
-		) (*formulatemplate.FormulaTemplate, error) {
-			assert.Equal(t, entity.FormulaTemplateID, req.TemplateID)
-			assert.Equal(t, entity.OrganizationID, req.TenantInfo.OrgID)
-			assert.Equal(t, entity.BusinessUnitID, req.TenantInfo.BuID)
-			return &formulatemplate.FormulaTemplate{
-				Status:     formulatemplate.StatusActive,
-				ID:         req.TemplateID,
-				SchemaID:   "shipment",
-				Expression: "freightChargeAmount * totalDistance",
-			}, nil
-		},
-	})
+	return controlRepo
+}
 
-	svc := &service{
+func totalsService(
+	t *testing.T,
+	entity *shipment.Shipment,
+	calculator *shipmentcommercial.Calculator,
+) *service {
+	t.Helper()
+
+	return &service{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		controlRepo:  controlRepo,
+		controlRepo:  expectShipmentControl(t, entity),
 		validator:    newTestValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
+		commercial:   calculator,
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
+}
+
+func TestServiceCalculateTotals_RatesThroughTheTariffAndAddsCharges(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.TariffInputs = perMileRate(t, "$2.50/mi")
+	entity.Moves[0].Distance = new(float64(100))
+	entity.AdditionalCharges = []*shipment.AdditionalCharge{
+		{
+			AccessorialChargeID: pulid.MustNew("acc_"),
+			Method:              accessorialcharge.MethodFlat,
+			Amount:              decimal.NewFromInt(10),
+			Unit:                1,
+		},
+	}
+
+	svc := totalsService(t, entity, tariffCalculator(t, totalsTemplate(perMileSource)))
 
 	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.NewFromInt(250).Equal(resp.FreightChargeAmount))
+	assert.True(t, decimal.NewFromInt(250).Equal(resp.FreightChargeAmount), "freight %s", resp.FreightChargeAmount)
 	assert.True(t, decimal.NewFromInt(10).Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.NewFromInt(260).Equal(resp.TotalChargeAmount))
 }
 
-func TestServiceCalculateTotals_RejectsMissingFormulaTemplateID(t *testing.T) {
+func TestServiceCalculateTotals_AShipmentWithNoTariffIsRatedByHand(t *testing.T) {
 	t.Parallel()
 
 	entity := validShipmentForValidation()
 	entity.FormulaTemplateID = pulid.Nil
+	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(500))
 
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{})
-	svc := &service{
-		l:            zap.NewNop(),
-		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		validator:    newTestValidator(t),
-		auditService: auditportsmock.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
-		eventService: noopShipmentEventService{},
-		coordinator:  newStateCoordinator(),
-	}
+	svc := totalsService(t, entity, newTestCommercialCalculator(
+		t,
+		decimal.NewFromInt(999),
+		accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+	))
 
 	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
-	require.Nil(t, resp)
-	require.Error(t, err)
-	var multiErr *errortypes.MultiError
-	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "formulaTemplateId")
+	require.NoError(t, err)
+	assert.True(t, decimal.NewFromInt(500).Equal(resp.FreightChargeAmount))
+	assert.True(t, decimal.NewFromInt(500).Equal(resp.TotalChargeAmount))
 }
 
 func TestServiceCalculateTotals_RejectsNilShipment(t *testing.T) {
 	t.Parallel()
 
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{})
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         shipmentportsmock.NewMockShipmentRepository(t),
 		validator:    newTestValidator(t),
 		auditService: auditportsmock.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
+		commercial:   tariffCalculator(t, totalsTemplate(perMileSource)),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -154,7 +199,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 	t.Parallel()
 
 	entity := validShipmentForValidation()
-	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromFloat(3))
+	entity.TariffInputs = perMileRate(t, "$3/mi")
 	entity.Moves[0].Distance = new(float64(10))
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{
 		{
@@ -171,41 +216,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 		},
 	}
 
-	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().
-		Get(mock.Anything, tenantports.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		}).
-		Return(&tenant.ShipmentControl{}, nil).
-		Once()
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{
-		getByIDFn: func(
-			_ context.Context,
-			req formulatemplateports.GetFormulaTemplateByIDRequest,
-		) (*formulatemplate.FormulaTemplate, error) {
-			return &formulatemplate.FormulaTemplate{
-				Status:     formulatemplate.StatusActive,
-				ID:         req.TemplateID,
-				SchemaID:   "shipment",
-				Expression: "freightChargeAmount * totalDistance",
-			}, nil
-		},
-	})
-
-	svc := &service{
-		l:            zap.NewNop(),
-		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
-		auditService: auditportsmock.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
-		eventService: noopShipmentEventService{},
-		coordinator:  newStateCoordinator(),
-	}
+	svc := totalsService(t, entity, tariffCalculator(t, totalsTemplate(perMileSource)))
 
 	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
@@ -216,121 +227,20 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 	assert.True(t, decimal.NewFromInt(43).Equal(resp.TotalChargeAmount))
 }
 
-func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChargeAmount(
-	t *testing.T,
-) {
-	t.Parallel()
-
-	entity := validShipmentForValidation()
-	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.RequireFromString("9102.44"))
-	entity.OtherChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(50))
-	entity.AdditionalCharges = []*shipment.AdditionalCharge{
-		{
-			AccessorialChargeID: pulid.MustNew("acc_"),
-			Method:              accessorialcharge.MethodFlat,
-			Amount:              decimal.NewFromInt(200),
-			Unit:                1,
-		},
-	}
-
-	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().
-		Get(mock.Anything, tenantports.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		}).
-		Return(&tenant.ShipmentControl{}, nil).
-		Once()
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{
-		getByIDFn: func(
-			_ context.Context,
-			req formulatemplateports.GetFormulaTemplateByIDRequest,
-		) (*formulatemplate.FormulaTemplate, error) {
-			return &formulatemplate.FormulaTemplate{
-				Status:     formulatemplate.StatusActive,
-				ID:         req.TemplateID,
-				SchemaID:   "shipment",
-				Expression: "freightChargeAmount + otherChargeAmount",
-			}, nil
-		},
-	})
-
-	svc := &service{
-		l:            zap.NewNop(),
-		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
-		auditService: auditportsmock.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
-		eventService: noopShipmentEventService{},
-		coordinator:  newStateCoordinator(),
-	}
-
-	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
-
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	// decimal.Equal ignores exponent, so the comparison cannot be assert.Equal.
-	// The message carries both sides, which "Should be true" does not.
-	assert.True(t, decimal.RequireFromString("9302.44").Equal(resp.FreightChargeAmount),
-		"freight: want 9302.44, got %s", resp.FreightChargeAmount)
-	assert.True(t, decimal.NewFromInt(200).Equal(resp.OtherChargeAmount),
-		"other: want 200, got %s", resp.OtherChargeAmount)
-	assert.True(t, decimal.RequireFromString("9502.44").Equal(resp.TotalChargeAmount),
-		"total: want 9502.44, got %s", resp.TotalChargeAmount)
-}
-
-func TestServiceCalculateTotals_PropagatesFormulaErrors(t *testing.T) {
+func TestServiceCalculateTotals_ReportsTheTariffsRefusal(t *testing.T) {
 	t.Parallel()
 
 	entity := validShipmentForValidation()
 
-	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().
-		Get(mock.Anything, tenantports.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		}).
-		Return(&tenant.ShipmentControl{}, nil).
-		Once()
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{
-		getByIDFn: func(
-			_ context.Context,
-			req formulatemplateports.GetFormulaTemplateByIDRequest,
-		) (*formulatemplate.FormulaTemplate, error) {
-			return &formulatemplate.FormulaTemplate{
-				Status:     formulatemplate.StatusActive,
-				ID:         req.TemplateID,
-				SchemaID:   "shipment",
-				Expression: "missingVariable +",
-			}, nil
-		},
-	})
-
-	svc := &service{
-		l:            zap.NewNop(),
-		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
-		auditService: auditportsmock.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
-		eventService: noopShipmentEventService{},
-		coordinator:  newStateCoordinator(),
-	}
+	svc := totalsService(t, entity, tariffCalculator(t, totalsTemplate(refusingSource)))
 
 	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.Nil(t, resp)
-	require.Error(t, err)
+	require.ErrorContains(t, err, "Only hazmat loads are rated here")
 }
 
-func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
+func TestServiceCalculateTotals_RatesCommodityRollupsThroughTheTariff(t *testing.T) {
 	t.Parallel()
 
 	entity := validShipmentForValidation()
@@ -358,41 +268,9 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 		},
 	}
 
-	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().
-		Get(mock.Anything, tenantports.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		}).
-		Return(&tenant.ShipmentControl{}, nil).
-		Once()
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{
-		getByIDFn: func(
-			_ context.Context,
-			req formulatemplateports.GetFormulaTemplateByIDRequest,
-		) (*formulatemplate.FormulaTemplate, error) {
-			return &formulatemplate.FormulaTemplate{
-				Status:     formulatemplate.StatusActive,
-				ID:         req.TemplateID,
-				SchemaID:   "shipment",
-				Expression: "totalWeight + totalLinearFeet + (hasHazmat ? 100 : 0)",
-			}, nil
-		},
-	})
+	calculator := tariffCalculator(t, totalsTemplate(rollupSource))
 
-	svc := &service{
-		l:            zap.NewNop(),
-		repo:         shipmentportsmock.NewMockShipmentRepository(t),
-		controlRepo:  controlRepo,
-		validator:    newTestValidator(t),
-		auditService: auditportsmock.NewMockAuditService(t),
-		commercial:   newTestCommercialCalculator(t, formula, accessorialRepo),
-		eventService: noopShipmentEventService{},
-		coordinator:  newStateCoordinator(),
-	}
+	svc := totalsService(t, entity, calculator)
 
 	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
@@ -403,7 +281,7 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 	assert.True(t, decimal.NewFromFloat(1814.5).Equal(resp.TotalChargeAmount))
 }
 
-func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing.T) {
+func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeRating(t *testing.T) {
 	t.Parallel()
 
 	entity := validShipmentForValidation()
@@ -423,17 +301,6 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 			Weight:      200,
 		},
 	}
-
-	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
-	controlRepo.EXPECT().
-		Get(mock.Anything, tenantports.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		}).
-		Return(&tenant.ShipmentControl{}, nil).
-		Once()
 
 	commodityRepo := commodityportsmock.NewMockCommodityRepository(t)
 	commodityRepo.EXPECT().
@@ -459,198 +326,14 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 			},
 		}, nil).
 		Once()
-	accessorialRepo := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
-	formula := newTestFormulaService(t, &stubFormulaTemplateRepository{
-		getByIDFn: func(
-			_ context.Context,
-			req formulatemplateports.GetFormulaTemplateByIDRequest,
-		) (*formulatemplate.FormulaTemplate, error) {
-			return &formulatemplate.FormulaTemplate{
-				Status:     formulatemplate.StatusActive,
-				ID:         req.TemplateID,
-				SchemaID:   "shipment",
-				Expression: "totalLinearFeet + (hasHazmat ? 25 : 0)",
-			}, nil
-		},
-	})
+	calculator := tariffCalculator(t, totalsTemplate(linearFeetSource))
 
-	svc := &service{
-		l:             zap.NewNop(),
-		repo:          shipmentportsmock.NewMockShipmentRepository(t),
-		controlRepo:   controlRepo,
-		commodityRepo: commodityRepo,
-		validator:     newTestValidator(t),
-		auditService:  auditportsmock.NewMockAuditService(t),
-		commercial:    newTestCommercialCalculator(t, formula, accessorialRepo),
-		eventService:  noopShipmentEventService{},
-		coordinator:   newStateCoordinator(),
-	}
+	svc := totalsService(t, entity, calculator)
+	svc.commodityRepo = commodityRepo
 
 	resp, err := svc.CalculateTotals(t.Context(), entity, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.True(t, decimal.NewFromFloat(34).Equal(resp.FreightChargeAmount))
-}
-
-func newTestFormulaService(
-	t *testing.T,
-	repo formulatemplateports.FormulaTemplateRepository,
-) *formula.Service {
-	t.Helper()
-
-	registry := schema.NewRegistry()
-	testutil.RegisterShipmentFormulaSchema(t, registry)
-	res := resolver.NewResolver()
-	resolver.RegisterDefaultComputed(res)
-
-
-
-	return formula.NewService(formula.ServiceParams{
-		Logger:         zap.NewNop(),
-		Registry:       registry,
-		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
-		Resolver:       res,
-		Repo:           repo,
-		VersionRepo:    stubTotalsVersionRepo{},
-		RateMatrixRepo: stubTotalsMatrixRepo{},
-	})
-}
-
-type stubTotalsVersionRepo struct {
-	formulatemplateports.FormulaTemplateVersionRepository
-}
-
-func (stubTotalsVersionRepo) GetEffectiveVersion(
-	_ context.Context,
-	_ *formulatemplateports.GetEffectiveVersionRequest,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-func (stubTotalsVersionRepo) ListApproved(
-	_ context.Context,
-	_ *formulatemplateports.ListScheduledVersionsRequest,
-) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-type stubTotalsMatrixRepo struct {
-	ratematrixports.RateMatrixRepository
-}
-
-func (stubTotalsMatrixRepo) GetLookupData(
-	_ context.Context,
-	_ *ratematrixports.GetRateMatrixLookupDataRequest,
-) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return nil, nil
-}
-
-type stubFormulaTemplateRepository struct {
-	getByIDFn func(context.Context, formulatemplateports.GetFormulaTemplateByIDRequest) (*formulatemplate.FormulaTemplate, error)
-}
-
-func (s *stubFormulaTemplateRepository) Create(
-	context.Context,
-	*formulatemplate.FormulaTemplate,
-) (*formulatemplate.FormulaTemplate, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) Update(
-	context.Context,
-	*formulatemplate.FormulaTemplate,
-) (*formulatemplate.FormulaTemplate, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) GetByID(
-	ctx context.Context,
-	req formulatemplateports.GetFormulaTemplateByIDRequest,
-) (*formulatemplate.FormulaTemplate, error) {
-	if s.getByIDFn != nil {
-		return s.getByIDFn(ctx, req)
-	}
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) GetByIDs(
-	context.Context,
-	formulatemplateports.GetFormulaTemplatesByIDsRequest,
-) ([]*formulatemplate.FormulaTemplate, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) FindByNames(
-	context.Context,
-	formulatemplateports.GetFormulaTemplatesByNamesRequest,
-) ([]*formulatemplate.FormulaTemplate, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) List(
-	context.Context,
-	*formulatemplateports.ListFormulaTemplatesRequest,
-) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) ListConnection(
-	context.Context,
-	*formulatemplateports.ListFormulaTemplateConnectionRequest,
-) (*pagination.CursorListResult[*formulatemplate.FormulaTemplate], error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) BulkUpdateStatus(
-	context.Context,
-	*formulatemplateports.BulkUpdateFormulaTemplateStatusRequest,
-) ([]*formulatemplate.FormulaTemplate, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) BulkDuplicate(
-	context.Context,
-	*formulatemplateports.BulkDuplicateFormulaTemplateRequest,
-) ([]*formulatemplate.FormulaTemplate, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) CountUsages(
-	context.Context,
-	*formulatemplateports.GetTemplateUsageRequest,
-) (*formulatemplateports.GetTemplateUsageResponse, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) CountStatsByIDs(
-	context.Context,
-	*formulatemplateports.GetFormulaTemplateStatsRequest,
-) (map[pulid.ID]formulatemplateports.TemplateStats, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (s *stubFormulaTemplateRepository) SelectOptions(
-	context.Context,
-	*formulatemplateports.FormulaTemplateSelectOptionsRequest,
-) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-	return nil, errors.New("not implemented")
-}
-
-//go:fix inline
-//go:fix inline
-func ptrFloat64(value float64) *float64 {
-	return new(value)
-}
-
-//go:fix inline
-//go:fix inline
-func ptrFloat(value float64) *float64 {
-	return new(value)
-}
-
-var _ formulatemplateports.FormulaTemplateRepository = (*stubFormulaTemplateRepository)(nil)
-
-func (stubTotalsMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
-	return "", nil
 }

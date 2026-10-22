@@ -134,6 +134,9 @@ const (
 	paramAtMost
 	paramPresent
 	paramReference
+	// paramReferences is a list of ids an unpaged list's argument takes (the
+	// tractors whose positions are read), sent as the list.
+	paramReferences
 )
 
 // graphQLParam is one typed parameter of a tool that reads through GraphQL,
@@ -306,7 +309,7 @@ func compileInputs(params []graphQLParam, args map[string]any, clk clock) (map[s
 			}
 			out[param.Field] = endOfDay(clk, day)
 		case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
-			paramReference:
+			paramReference, paramReferences:
 			out[param.Field] = raw
 		}
 	}
@@ -624,7 +627,7 @@ func compileFilter(
 	}
 
 	switch param.Kind {
-	case paramIn:
+	case paramIn, paramReferences:
 		values := optionalStrings(args, param.Name)
 		return compare(dbtype.OpIn, values), len(values) > 0, nil
 	case paramEquals, paramReference:

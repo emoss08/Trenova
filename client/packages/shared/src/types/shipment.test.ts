@@ -4,6 +4,9 @@ import {
   carrierEligibilitySchema,
   emptyCarrierAssignmentPayload,
   moveCoverageTypeSchema,
+  ratingDetailSchema,
+  shipmentFreightLineSchema,
+  shipmentUpdateSchema,
 } from "./shipment";
 
 function makePayload(overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -138,5 +141,164 @@ describe("moveCoverageTypeSchema", () => {
   it("rejects a coverage the server never writes", () => {
     expect(() => moveCoverageTypeSchema.parse("broker")).toThrow();
     expect(() => moveCoverageTypeSchema.parse("")).toThrow();
+  });
+});
+
+describe("shipment tariff rating", () => {
+  const base = {
+    serviceTypeId: "st_1",
+    shipmentTypeId: "sht_1",
+    customerId: "cus_1",
+  };
+
+  it("carries the tariff's input values in their wire form and no base rate", () => {
+    const tariffInputs = { rate: { $q: "2.35", u: "$/mi" }, extraDropFee: { $q: "75", u: "$" } };
+    const parsed = shipmentUpdateSchema.parse({ ...base, tariffInputs, baseRate: 1500 });
+
+    expect(parsed.tariffInputs).toEqual(tariffInputs);
+    expect(parsed).not.toHaveProperty("baseRate");
+    expect(parsed).not.toHaveProperty("ratingUnit");
+  });
+
+  it("defaults a shipment's tariff inputs to none", () => {
+    expect(shipmentUpdateSchema.parse(base).tariffInputs).toEqual({});
+  });
+
+  it("reads a freight line with its quantity and rate, and a manual line without them", () => {
+    expect(
+      shipmentFreightLineSchema.parse({
+        label: "Linehaul",
+        quantity: "812",
+        quantityUnit: "mi",
+        rate: "2.35",
+        rateUnit: "$/mi",
+        amount: "1908.20",
+      }),
+    ).toMatchObject({ label: "Linehaul", quantity: 812, rate: 2.35, amount: 1908.2 });
+    expect(
+      shipmentFreightLineSchema.parse({
+        label: "Freight",
+        quantity: null,
+        rate: null,
+        amount: "1500",
+      }),
+    ).toMatchObject({ label: "Freight", quantity: null, rate: null, amount: 1500 });
+    // A manual rate as the server writes it: quantity and rate are omitted, not null.
+    expect(shipmentFreightLineSchema.parse({ label: "Freight", amount: "1500" })).toEqual({
+      label: "Freight",
+      amount: 1500,
+    });
+  });
+
+  // The bill as the server stores it (tarifftypes.Bill): decimals with their unit text, line
+  // kinds capitalised, no label on an adjustment, an exchange to the billing currency.
+  const storedBill = {
+    currency: "CAD",
+    lines: [
+      {
+        kind: "Charge",
+        label: "Linehaul",
+        freight: true,
+        amount: "1908.2",
+        quantity: "812",
+        quantityUnit: "mi",
+        rate: "2.35",
+        rateUnit: "$/mi",
+      },
+      {
+        kind: "Charge",
+        label: "Extra drops",
+        code: "XDROP",
+        amount: "75",
+        quantity: "1",
+        rate: "75",
+        rateUnit: "$",
+      },
+      { kind: "Minimum", freight: true, amount: "16.8" },
+    ],
+    notes: [{ text: "Two drops" }],
+    freightTotal: "1925",
+    accessorialTotal: "75",
+    total: "2000",
+    exchange: { currency: "USD", rate: "0.73" },
+  };
+
+  it("reads the stored bill into the wire form the bill views draw", () => {
+    const parsed = ratingDetailSchema.parse({
+      formulaTemplateId: "ft_1",
+      formulaTemplateName: "Dry van TL",
+      ratedAt: 1_700_000_000,
+      bill: storedBill,
+      inputs: { rate: { $q: "2.35", u: "$/mi" } },
+      skipped: [{ code: "FSC", source: "FuelProgram" }],
+    });
+
+    expect(parsed.bill).toEqual({
+      currency: "CAD",
+      lines: [
+        {
+          kind: "charge",
+          label: "Linehaul",
+          code: null,
+          freight: true,
+          amount: { $q: "1908.2", u: "$" },
+          quantity: { $q: "812", u: "mi" },
+          rate: { $q: "2.35", u: "$/mi" },
+          range: null,
+        },
+        {
+          kind: "charge",
+          label: "Extra drops",
+          code: "XDROP",
+          freight: false,
+          amount: { $q: "75", u: "$" },
+          quantity: { $n: "1" },
+          rate: { $q: "75", u: "$" },
+          range: null,
+        },
+        {
+          kind: "minimum",
+          label: null,
+          code: null,
+          freight: true,
+          amount: { $q: "16.8", u: "$" },
+          quantity: null,
+          rate: null,
+          range: null,
+        },
+      ],
+      notes: [{ text: "Two drops", range: null }],
+      freightTotal: { $q: "1925", u: "$" },
+      accessorialTotal: { $q: "75", u: "$" },
+      total: { $q: "2000", u: "$" },
+      converted: null,
+      exchange: { currency: "USD", rate: "0.73" },
+    });
+    expect(parsed.inputs).toEqual({ rate: { $q: "2.35", u: "$/mi" } });
+    expect(parsed.skipped).toEqual([{ code: "FSC", source: "FuelProgram" }]);
+  });
+
+  it("reads an already-read bill again unchanged, as a form reset from a parsed record does", () => {
+    const once = ratingDetailSchema.parse({
+      formulaTemplateId: "ft_1",
+      formulaTemplateName: "Dry van TL",
+      ratedAt: 1_700_000_000,
+      bill: storedBill,
+    });
+    const twice = ratingDetailSchema.parse(once);
+
+    expect(twice.bill).toEqual(once.bill);
+  });
+
+  it("reads a refusal, which leaves the rating with no bill", () => {
+    const parsed = ratingDetailSchema.parse({
+      formulaTemplateId: "ft_1",
+      formulaTemplateName: "Dry van TL",
+      ratedAt: 1_700_000_000,
+      refusal: "This rate needs the shipment's weight",
+    });
+
+    expect(parsed.bill ?? null).toBeNull();
+    expect(parsed.refusal).toBe("This rate needs the shipment's weight");
   });
 });

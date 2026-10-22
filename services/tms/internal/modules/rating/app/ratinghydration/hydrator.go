@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
@@ -34,12 +33,27 @@ import (
 	"go.uber.org/fx"
 )
 
-const shipmentSchemaID = "shipment"
+const relationCustomer = "Customer"
+
+var ratingRelations = []string{
+	"Moves",
+	"Moves.Stops",
+	"Commodities",
+	"AdditionalCharges",
+	relationCustomer,
+	"ServiceType",
+	"ShipmentType",
+	"TractorType",
+	"TrailerType",
+	"Moves.Stops.Location",
+	"Moves.Stops.Location.State",
+	"Commodities.Commodity",
+	"Commodities.Commodity.HazardousMaterial",
+}
 
 type Params struct {
 	fx.In
 
-	Environment       *environment.Builder
 	CustomerRepo      customerports.CustomerRepository
 	ServiceTypeRepo   servicetypeports.ServiceTypeRepository
 	ShipmentTypeRepo  shipmenttypeports.ShipmentTypeRepository
@@ -73,14 +87,9 @@ type hydration struct {
 func New(p Params) (*Hydrator, error) {
 	loaders := relationLoaders(&p)
 
-	relations := p.Environment.RequiredPreloads(shipmentSchemaID)
-	if len(relations) == 0 {
-		return nil, fmt.Errorf("formula schema %q declares no relations", shipmentSchemaID)
-	}
-
 	missing := make([]string, 0)
-	steps := make([]relationStep, 0, len(relations))
-	for _, relation := range relations {
+	steps := make([]relationStep, 0, len(ratingRelations))
+	for _, relation := range ratingRelations {
 		load, ok := loaders[relation]
 		if !ok {
 			missing = append(missing, relation)
@@ -92,8 +101,7 @@ func New(p Params) (*Hydrator, error) {
 	}
 	if len(missing) > 0 {
 		return nil, fmt.Errorf(
-			"formula schema %q reads relations rating cannot load: %s",
-			shipmentSchemaID,
+			"rating reads relations it cannot load: %s",
 			strings.Join(missing, ", "),
 		)
 	}
@@ -195,7 +203,7 @@ func relationLoaders(p *Params) map[string]func(context.Context, *hydration) err
 		"Moves.Stops":                nil,
 		"Commodities":                nil,
 		"AdditionalCharges":          nil,
-		"Customer":                   loadCustomers(p.CustomerRepo),
+		relationCustomer:             loadCustomers(p.CustomerRepo),
 		"ServiceType":                loadServiceTypes(p.ServiceTypeRepo),
 		"ShipmentType":               loadShipmentTypes(p.ShipmentTypeRepo),
 		"TractorType":                loadTractorTypes(p.EquipmentTypeRepo),

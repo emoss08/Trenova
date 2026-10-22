@@ -240,6 +240,12 @@ const href = \`/shipments/\${id}?tab=stops\`;
 const cls = cn(\`text-\${tone}-foreground font-medium\`);
 console.warn(\`Failed to load \${id}\`);
 throw new Error(\`Unknown action \${action}\`);
+class NotFoundError extends Error {
+  constructor(id) {
+    super(\`library \${id} was not found\`);
+  }
+}
+dom.className = \`inlay inlay-\${kind}\`;
 const label = t("Edit {0}", \`\${a} \${b}\`);
 const same = kind === \`\${a} item\`;
 const query = gql\`query Shipment { shipment { id } }\`;
@@ -248,6 +254,21 @@ const segment = \`ST*204*\${control} sent\`;
 const El = () => <div className={\`flex gap-\${n} items-center\`} data-state={\`open \${s}\`} />;
 `);
     assert.deepEqual(found, []);
+  });
+
+  it("reports a sentence a class that is not an error passes up, or a title it assigns", async () => {
+    const found = await scan(`
+class Banner extends Notice {
+  constructor(n) {
+    super(\`\${n} loads waiting\`);
+  }
+}
+dom.title = \`Remove \${name}\`;
+`);
+    assert.deepEqual(found.map((f) => [f.kind, f.detail]).sort(), [
+      ["english-template", "Remove {…}"],
+      ["english-template", "{…} loads waiting"],
+    ]);
   });
 
   it("finds none in the app", async () => {

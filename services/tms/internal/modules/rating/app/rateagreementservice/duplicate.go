@@ -21,7 +21,7 @@ type DuplicateRateAgreementRequest struct {
 	Name string `json:"name"`
 }
 
-// Duplicate copies an agreement — lanes with their breaks, the accessorial
+// Duplicate copies an agreement — lanes with their inputs, the accessorial
 // schedule, the fuel binding — as a fresh Draft with none of the original's
 // identity, history, or approvals. The copy goes through Create, so it is
 // validated like anything typed in by hand and starts its own version chain
@@ -87,6 +87,7 @@ func copyAgreement(
 	duplicate.CreatedAt = 0
 	duplicate.UpdatedAt = 0
 
+	duplicate.Inputs = original.Inputs.Clone()
 	duplicate.Rules = copyRules(original.Rules)
 	duplicate.Accessorials = copyAccessorials(original.Accessorials)
 	duplicate.FuelBinding = copyFuelBinding(original.FuelBinding)
@@ -112,19 +113,7 @@ func copyRules(rules []*rateagreement.RateAgreementRule) []*rateagreement.RateAg
 		clone.CreatedAt = 0
 		clone.UpdatedAt = 0
 
-		clone.Breaks = make([]*rateagreement.RateAgreementRuleBreak, 0, len(rule.Breaks))
-		for _, ruleBreak := range rule.Breaks {
-			if ruleBreak == nil {
-				continue
-			}
-
-			clonedBreak := *ruleBreak
-			clonedBreak.ID = pulid.Nil
-			clonedBreak.RateAgreementRuleID = pulid.Nil
-			clonedBreak.CreatedAt = 0
-			clonedBreak.UpdatedAt = 0
-			clone.Breaks = append(clone.Breaks, &clonedBreak)
-		}
+		clone.Inputs = rule.Inputs.Clone()
 
 		copied = append(copied, &clone)
 	}

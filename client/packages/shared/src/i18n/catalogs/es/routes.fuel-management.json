@@ -55,6 +55,7 @@
   "FSC-DOE-STD": "FSC-DOE-STD",
   "Fill gap": "Rellenar el hueco",
   "Fill in the fields on the left to see the table.": "Complete los campos de la izquierda para ver la tabla.",
+  "Flat amount": "Importe fijo",
   "Fleet MPG divisor: rate = (price − peg) ÷ MPG.": "Divisor de MPG de la flota: tarifa = (precio − referencia) ÷ MPG.",
   "Formula methods compute rates from parameters; table methods use explicit price bands.": "Los métodos de fórmula calculan las tarifas a partir de parámetros; los métodos de tabla usan bandas de precio explícitas.",
   "Fuel indices": "Índices de combustible",

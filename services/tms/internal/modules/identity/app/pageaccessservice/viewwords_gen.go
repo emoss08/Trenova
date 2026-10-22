@@ -407,6 +407,7 @@ var linkedFrom = map[string][]string{
 	"factoring_company":           {"customer", "factoring_agreement", "factoring_noa", "factoring_reserve", "factoring_submission", "invoice"},
 	"fiscal_period":               {"fiscal_year"},
 	"fleet_code":                  {"tractor", "trailer", "worker"},
+	"formula_library":             {"formula_template"},
 	"fuel_card":                   {"fuel_purchase"},
 	"inbound_mailbox":             {"inbound_message"},
 	"invoice":                     {"customer_payment", "factoring_submission", "invoice_dispute"},

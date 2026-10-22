@@ -1,0 +1,93 @@
+enum FormulaReviewDecision {
+  Submitted
+  Approved
+  Rejected
+  ChangesRequested
+  Expired
+}
+
+"An organization library of Tariff functions, constants and types that formula templates import as org.<name>."
+type FormulaLibrary {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  "The module name: templates import the library as org.<name>."
+  name: String!
+  "The module path templates import: org.<name>."
+  path: String!
+  description: String!
+  "The library's Tariff source."
+  source: String!
+  "The other organization libraries this one imports."
+  imports: [FormulaLibraryImport!]!
+  "How many test blocks the source holds."
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  reviewComment: String!
+  version: Int!
+  sourceLibraryId: ID
+  sourceVersionNumber: Int
+  currentVersionNumber: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type FormulaLibraryEdge {
+  node: FormulaLibrary!
+  cursor: String!
+}
+
+type FormulaLibraryConnection {
+  edges: [FormulaLibraryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A snapshot of a library. An Active version is approved, and is what templates pin."
+type FormulaLibraryVersion {
+  id: ID!
+  libraryId: ID!
+  versionNumber: Int!
+  name: String!
+  path: String!
+  description: String!
+  source: String!
+  imports: [FormulaLibraryImport!]!
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  changeMessage: String!
+  "The fields that changed from the previous version, by field path."
+  changeSummary: JSON
+  createdById: ID!
+  createdBy: User
+  createdAt: Timestamp!
+}
+
+"One step of a library's review: who did what, in which round, against which approved version."
+type FormulaLibraryReview {
+  id: ID!
+  libraryId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  formulaLibraries(input: DataTableConnectionInput!): FormulaLibraryConnection!
+  formulaLibrary(id: ID!): FormulaLibrary
+  "A library's versions, newest first."
+  formulaLibraryVersions(libraryId: ID!, first: Int): [FormulaLibraryVersion!]!
+  "A library's review history, newest first."
+  formulaLibraryReviews(libraryId: ID!): [FormulaLibraryReview!]!
+}

@@ -469,11 +469,38 @@ const CODE_KEYS = new Set([
 ]);
 const CODE_CALLS = /^(cn|clsx|cva|twMerge|log|warn|error|info|debug|trace|assert|group|groupCollapsed|setAttribute|setProperty|querySelector|querySelectorAll|getElementById|matchMedia|fetch|get|post|put|patch|delete|request|open|replace|replaceState|pushState|navigate|redirect|encodeURIComponent|encodeURI|RegExp|Intl|Date|parseDate|parse|format|split|startsWith|endsWith|includes|indexOf|localeCompare|createElement|setItem|getItem|removeItem|writeText|postMessage|send|emit|subscribe|publish|invalidateQueries|setQueryData|getQueryData|removeQueries|refetchQueries|prefetchQuery|cancelQueries|useQuery|useSuspenseQuery|queryOptions|mutationOptions|Blob|File|URL|URLSearchParams|requestAnimationFrame|setTimeout|keyframes|animate|scrollTo|scrollIntoView|focus|dispatchEvent|addEventListener|removeEventListener|Symbol|require|import|describe|it|test|expect)$/;
 
+const CODE_CONSTRUCTORS = /(Error|RegExp|URL|URLSearchParams|Date|Blob|File|Intl\w*)$/;
+
+function calleeName(callee) {
+  if (callee.type === "Identifier") return callee.name;
+  if (callee.type === "MemberExpression" && !callee.computed) return callee.property.name;
+  return null;
+}
+
+/**
+ * errorSuperCalls returns the `super(...)` calls of every class that extends an error: the
+ * message such a constructor passes up is a thrown error's, read by engineers like the one
+ * written in `new Error(...)`.
+ */
+function errorSuperCalls(program) {
+  const calls = new WeakSet();
+  visit(program, (node) => {
+    if (node.type !== "ClassDeclaration" && node.type !== "ClassExpression") return;
+    const parent = node.superClass ? calleeName(node.superClass) : null;
+    if (parent === null || !/Error$/.test(parent)) return;
+    visit(node.body, (inner) => {
+      if (inner.type === "CallExpression" && inner.callee.type === "Super") calls.add(inner);
+    });
+  });
+  return calls;
+}
+
 /**
  * codeContext says whether a template sits where its text is for the browser, the network or
- * an engineer rather than a person.
+ * an engineer rather than a person. `errorSupers` holds the `super(...)` calls of error
+ * classes (errorSuperCalls).
  */
-function codeContext(chain) {
+function codeContext(chain, errorSupers) {
   for (const node of chain) {
     switch (node.type) {
       case "TaggedTemplateExpression":
@@ -485,21 +512,22 @@ function codeContext(chain) {
       case "ObjectProperty":
         if (CODE_KEYS.has(keyName(node.key))) return true;
         break;
+      case "AssignmentExpression":
+        if (node.left.type === "MemberExpression" && !node.left.computed && CODE_KEYS.has(node.left.property.name)) {
+          return true;
+        }
+        break;
       case "NewExpression":
-        if (node.callee.type === "Identifier" && /(Error|RegExp|URL|URLSearchParams|Date|Blob|File|Intl\w*)$/.test(node.callee.name)) {
+        if (node.callee.type === "Identifier" && CODE_CONSTRUCTORS.test(node.callee.name)) {
           return true;
         }
         break;
       case "ThrowStatement":
         return true;
       case "CallExpression": {
+        if (errorSupers.has(node)) return true;
         const callee = node.callee;
-        const name =
-          callee.type === "Identifier"
-            ? callee.name
-            : callee.type === "MemberExpression" && !callee.computed
-              ? callee.property.name
-              : null;
+        const name = calleeName(callee);
         if (TRANSLATORS.has(name) || name === MESSAGE_TRANSLATOR) return true;
         if (callee.type === "MemberExpression" && callee.object.type === "Identifier" && callee.object.name === "console") {
           return true;
@@ -587,11 +615,12 @@ export async function findFragments(repoRoot, roots = SOURCE_ROOTS) {
         if (where === null || ignored(node, lines)) return;
         findings.push({ file: rel, line: node.loc.start.line, kind: "untranslated-template", detail: `${where} \`${text}\`` });
       });
+      const errorSupers = errorSuperCalls(ast.program);
       visitWithParents(ast.program, [], (node, chain) => {
         if (node.type !== "TemplateLiteral") return;
         if (prose(node) !== null && readPosition(chain) !== null) return;
         const text = writtenWords(node);
-        if (text === null || codeContext(chain) || ignored(node, lines)) return;
+        if (text === null || codeContext(chain, errorSupers) || ignored(node, lines)) return;
         findings.push({ file: rel, line: node.loc.start.line, kind: "english-template", detail: text });
       });
       visit(ast.program, (node) => {

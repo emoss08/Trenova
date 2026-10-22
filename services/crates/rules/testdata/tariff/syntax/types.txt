@@ -1,0 +1,136 @@
+=== named types
+tariff "t"
+input a: Bool
+input b: Int = 1
+input c: Weight
+---
+tariff "t"
+input a: Bool
+input b: Int = 1
+input c: Weight
+
+=== generic list
+tariff "t"
+input breaks: List<Break>
+input nested: List<List<Int>>
+---
+tariff "t"
+input breaks: List<Break>
+input nested: List<List<Int>>
+
+=== rate types
+tariff "t"
+input a: Money/cwt
+input b: Money/Weight
+input c: Weight/Volume
+input d: lb/ft3
+---
+tariff "t"
+input a: Money/cwt
+input b: Money/Weight
+input c: Weight/Volume
+input d: lb/ft3
+
+=== optional types
+tariff "t"
+input a: Money?
+input b: Money/mi?
+input c: List<Stop>?
+---
+tariff "t"
+input a: Money?
+input b: Money/mi?
+input c: List<Stop>?
+
+=== record type in an input
+tariff "t"
+input a: { min: Weight, max: Weight? }
+---
+tariff "t"
+input a: {min: Weight, max: Weight?}
+
+=== record type with keyword field names
+tariff "t"
+input a: { in: Int, to: Int }
+---
+tariff "t"
+input a: {in: Int, to: Int}
+
+=== types in parameters and returns
+library "l"
+fn f(a: List<Break>, b: Money/cwt = $1/cwt) -> { weight: Weight, deficit: Bool } = { weight: 1 lb, deficit: false }
+---
+library "l"
+fn f(a: List<Break>, b: Money/cwt = $1/[cwt]) -> {weight: Weight, deficit: Bool} = (record weight:1[lb] deficit:false)
+
+=== type annotation on a let
+tariff "t"
+let a: Money/mi = $1/mi
+let b: List<Text> = []
+---
+tariff "t"
+let a: Money/mi = $1/[mi]
+let b: List<Text> = (list)
+
+=== temperature unit in a type
+tariff "t"
+input a: Money/°F
+---
+tariff "t"
+input a: Money/°F
+
+=== missing type
+tariff "t"
+input a:
+---
+tariff "t"
+input a: ?
+! syntax 19..19 Expected a type, like `Money`, `Weight` or `List<Stop>`
+
+=== missing type argument
+tariff "t"
+input a: List<>
+---
+tariff "t"
+input a: List
+! syntax 24..25 Expected a type inside `<…>`
+
+=== unclosed type argument
+tariff "t"
+input a: List<Int
+---
+tariff "t"
+input a: List<Int>
+! syntax 24..25 This `<` is missing its closing `>`
+
+=== double optional
+tariff "t"
+input a: Int??
+---
+tariff "t"
+input a: Int?
+! syntax 23..25 A type is optional once; one `?` is enough
+
+=== quotient without a denominator
+tariff "t"
+input a: Money/
+---
+tariff "t"
+input a: Money/
+! syntax 26..26 Expected a unit or a dimension after `/`, like `Money/cwt` or `Money/Weight`
+
+=== empty record type
+tariff "t"
+input a: {}
+---
+tariff "t"
+input a: {}
+! syntax 20..22 A record type needs at least one field
+
+=== input without a type
+tariff "t"
+input a = 5
+---
+tariff "t"
+input a: ? = 5
+! syntax 19..20 Expected `:` and the input's type after `a`

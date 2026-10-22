@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
 # Builds the trenova-rules WebAssembly module and installs it, or checks the committed copies.
 #
-#   build-wasm.sh install   build, optimise and write both committed copies and their .sha256
+#   build-wasm.sh install   build, optimise and write both committed copies and their .sha256,
+#                           and the browser's unit table generated from the crate
 #   build-wasm.sh check     build into a temporary directory and fail, naming the file, when a
-#                           committed copy or its .sha256 differs from the fresh build
+#                           committed copy or its .sha256 differs from the fresh build, or the
+#                           unit table differs from the crate's
 #
 # One wasm32-unknown-unknown module serves both hosts (docs/engineering/rules-engine.md):
 #
 #   services/tms/pkg/rules/rules.wasm                 embedded by the Go host (wazero)
 #   client/packages/shared/src/rules/rules.wasm       loaded by the browser
+#
+# The browser also reads the unit table before the module loads, so
+# client/packages/shared/src/rules/tariff-units.generated.ts is written from the crate's
+# (tests/client_units.rs, run with TRENOVA_WRITE_GENERATED=1).
 #
 # The build is reproducible: the same commit gives the same bytes on any machine and in any
 # checkout path. The services checkout, the cargo target directory and CARGO_HOME are remapped
@@ -164,6 +170,20 @@ build_module() {
     --strip-debug --strip-producers --strip-target-features -o "$out"
 }
 
+# Writes the browser's unit table from the crate's, or with "check" fails when it differs.
+unit_table() {
+  cd "$SERVICES_DIR"
+  if [ "$1" = "write" ]; then
+    CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}" TRENOVA_WRITE_GENERATED=1 \
+      cargo test --locked -p trenova-rules --test client_units >&2
+    echo "rust:wasm-rules: wrote client/packages/shared/src/rules/tariff-units.generated.ts"
+  else
+    CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-1}" \
+      cargo test --locked -p trenova-rules --test client_units >&2 ||
+      die "client/packages/shared/src/rules/tariff-units.generated.ts differs from the crate's unit table"
+  fi
+}
+
 write_sha256() {
   echo "$(sha256_of "$1")  rules.wasm" >"$2"
 }
@@ -184,6 +204,7 @@ install() {
     write_sha256 "$work/rules.wasm" "$REPO_ROOT/$dest/rules.wasm.sha256"
     echo "rust:wasm-rules: wrote $dest/rules.wasm ($(wc -c <"$work/rules.wasm" | tr -d ' ') bytes, sha256 $(sha256_of "$work/rules.wasm"))"
   done
+  unit_table write
 }
 
 check() {
@@ -203,6 +224,7 @@ check() {
   if [ "$failed" -ne 0 ]; then
     die "run 'task rust:wasm-rules' and commit both copies; never edit rules.wasm by hand"
   fi
+  unit_table check
   echo "rust:wasm-rules: both committed copies match a fresh build (sha256 $(sha256_of "$work/rules.wasm"))"
 }
 

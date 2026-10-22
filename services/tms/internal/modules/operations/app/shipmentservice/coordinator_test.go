@@ -1,26 +1,25 @@
 package shipmentservice
 
 import (
+	"context"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -421,11 +420,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*shipmentports.DuplicateBOLCheckRequest")).
 		Return([]*shipmentports.DuplicateBOLResult{}, nil).
 		Once()
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
+	freight := decimal.Zero
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
 	realtime := agentportsmock.NewMockRealtimeService(t)
@@ -439,7 +434,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		auditService: auditService,
 		commercial: newTestCommercialCalculator(
 			t,
-			formula,
+			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		invalidator:  newTestInvalidator(realtime),
@@ -556,11 +551,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		Return(&equipmentcontinuity.EquipmentContinuity{ID: pulid.MustNew("eqc_")}, nil).
 		Once()
 
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
+	freight := decimal.Zero
 
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
@@ -576,7 +567,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		auditService:   auditService,
 		commercial: newTestCommercialCalculator(
 			t,
-			formula,
+			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		invalidator:  newTestInvalidator(realtime),
@@ -650,11 +641,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		}, nil).
 		Once()
 
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
+	freight := decimal.Zero
 
 	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
@@ -680,7 +667,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		auditService:   auditportsmock.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
-			formula,
+			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
@@ -757,11 +744,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		}, nil).
 		Once()
 
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
+	freight := decimal.Zero
 
 	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
@@ -815,7 +798,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		auditService: auditportsmock.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
-			formula,
+			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
@@ -900,11 +883,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		}, nil).
 		Once()
 
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
+	freight := decimal.Zero
 
 	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	firstMove := original.Moves[0]
@@ -937,7 +916,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		auditService:   auditportsmock.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
-			formula,
+			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		invalidator:  newTestInvalidator(agentportsmock.NewMockRealtimeService(t)),
@@ -1020,11 +999,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*shipmentports.DuplicateBOLCheckRequest")).
 		Return([]*shipmentports.DuplicateBOLResult{}, nil).
 		Once()
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
+	freight := decimal.Zero
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
 	realtime := agentportsmock.NewMockRealtimeService(t)
@@ -1038,7 +1013,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		auditService: auditService,
 		commercial: newTestCommercialCalculator(
 			t,
-			formula,
+			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		invalidator:  newTestInvalidator(realtime),

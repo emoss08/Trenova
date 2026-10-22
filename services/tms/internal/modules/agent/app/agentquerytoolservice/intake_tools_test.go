@@ -4,19 +4,21 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -190,8 +192,9 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 	}
 	agreementID := pulid.MustNew("ragr_")
 	quoter := &fakeQuoter{miles: 240, rated: &ratequoteports.RatedShipment{
-		Amount: decimal.NewFromInt(1450), Currency: "USD", Outcome: ratequote.OutcomeRated,
-		AgreementID: &agreementID, BaseRate: decimal.NewNullDecimal(decimal.NewFromFloat(2.9)),
+		Amount: decimal.NewFromInt(1450), Total: decimal.NewFromInt(1450), Currency: "USD",
+		Outcome: ratequote.OutcomeRated, AgreementID: &agreementID,
+		TariffInputs: tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString("2.9"), "$/mi")},
 	}}
 	tool := newQuoteShipmentTool(quoter, &fakeLocations{byID: map[pulid.ID]*location.Location{
 		origin.ID: origin, destination.ID: destination,
@@ -219,6 +222,8 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 	view := result.(*quoteView)
 	assert.Equal(t, "Rated", view.Outcome)
 	assert.Equal(t, "1450", view.Amount.String())
+	assert.Equal(t, "1450", view.Total.String())
+	assert.Equal(t, map[string]string{"rate": "$2.9/mi"}, view.Inputs)
 	assert.Equal(t, agreementID.String(), view.AgreementID)
 	assert.Equal(t, []string{"Dallas, TX, 75201", "Houston, TX, 77001"}, view.Lane)
 	assert.InDelta(t, 240.0, view.TotalDistance, 0.001)

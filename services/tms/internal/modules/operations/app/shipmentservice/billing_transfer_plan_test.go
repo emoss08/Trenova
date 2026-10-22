@@ -1,9 +1,10 @@
 package shipmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"slices"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"

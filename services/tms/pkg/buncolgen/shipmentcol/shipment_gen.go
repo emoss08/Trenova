@@ -62,6 +62,11 @@ var AdditionalChargeColumns = struct {
 	FuelSurchargeProgramID     buncolgen.Column // "fuel_surcharge_program_id" → qualified: "ac.fuel_surcharge_program_id"
 	FuelSurchargeDetail        buncolgen.Column // "fuel_surcharge_detail" → qualified: "ac.fuel_surcharge_detail"
 	IsDetention                buncolgen.Column // "is_detention" → qualified: "ac.is_detention"
+	IsTariff                   buncolgen.Column // "is_tariff" → qualified: "ac.is_tariff"
+	Label                      buncolgen.Column // "label" → qualified: "ac.label"
+	Quantity                   buncolgen.Column // "quantity" → qualified: "ac.quantity"
+	Rate                       buncolgen.Column // "rate" → qualified: "ac.rate"
+	RateUnit                   buncolgen.Column // "rate_unit" → qualified: "ac.rate_unit"
 	RateAgreementAccessorialID buncolgen.Column // "rate_agreement_accessorial_id" → qualified: "ac.rate_agreement_accessorial_id"
 	RateQuoteID                buncolgen.Column // "rate_quote_id" → qualified: "ac.rate_quote_id"
 	Version                    buncolgen.Column // "version" → qualified: "ac.version"
@@ -80,6 +85,11 @@ var AdditionalChargeColumns = struct {
 	FuelSurchargeProgramID:     buncolgen.NewColumn("fuel_surcharge_program_id", "ac"),
 	FuelSurchargeDetail:        buncolgen.NewColumn("fuel_surcharge_detail", "ac"),
 	IsDetention:                buncolgen.NewColumn("is_detention", "ac"),
+	IsTariff:                   buncolgen.NewColumn("is_tariff", "ac"),
+	Label:                      buncolgen.NewColumn("label", "ac"),
+	Quantity:                   buncolgen.NewColumn("quantity", "ac"),
+	Rate:                       buncolgen.NewColumn("rate", "ac"),
+	RateUnit:                   buncolgen.NewColumn("rate_unit", "ac"),
 	RateAgreementAccessorialID: buncolgen.NewColumn("rate_agreement_accessorial_id", "ac"),
 	RateQuoteID:                buncolgen.NewColumn("rate_quote_id", "ac"),
 	Version:                    buncolgen.NewColumn("version", "ac"),
@@ -104,6 +114,11 @@ var AdditionalChargeFieldMap = map[string]string{
 	"fuelSurchargeProgramId":     "fuel_surcharge_program_id",
 	"fuelSurchargeDetail":        "fuel_surcharge_detail",
 	"isDetention":                "is_detention",
+	"isTariff":                   "is_tariff",
+	"label":                      "label",
+	"quantity":                   "quantity",
+	"rate":                       "rate",
+	"rateUnit":                   "rate_unit",
 	"rateAgreementAccessorialId": "rate_agreement_accessorial_id",
 	"rateQuoteId":                "rate_quote_id",
 	"version":                    "version",
@@ -126,6 +141,11 @@ var AdditionalChargeInsertableColumns = []string{
 	"fuel_surcharge_program_id",
 	"fuel_surcharge_detail",
 	"is_detention",
+	"is_tariff",
+	"label",
+	"quantity",
+	"rate",
+	"rate_unit",
 	"rate_agreement_accessorial_id",
 	"rate_quote_id",
 	"version",
@@ -212,6 +232,11 @@ var AdditionalChargeFilter = struct {
 	FuelSurchargeProgramID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeProgramId" → DB: "fuel_surcharge_program_id"
 	FuelSurchargeDetail        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeDetail" → DB: "fuel_surcharge_detail"
 	IsDetention                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isDetention" → DB: "is_detention"
+	IsTariff                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isTariff" → DB: "is_tariff"
+	Label                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "label" → DB: "label"
+	Quantity                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quantity" → DB: "quantity"
+	Rate                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
+	RateUnit                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateUnit" → DB: "rate_unit"
 	RateAgreementAccessorialID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementAccessorialId" → DB: "rate_agreement_accessorial_id"
 	RateQuoteID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateQuoteId" → DB: "rate_quote_id"
 	Version                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -253,6 +278,21 @@ var AdditionalChargeFilter = struct {
 	},
 	IsDetention: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("isDetention", op, value)
+	},
+	IsTariff: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("isTariff", op, value)
+	},
+	Label: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("label", op, value)
+	},
+	Quantity: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("quantity", op, value)
+	},
+	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("rate", op, value)
+	},
+	RateUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("rateUnit", op, value)
 	},
 	RateAgreementAccessorialID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("rateAgreementAccessorialId", op, value)
@@ -1314,7 +1354,8 @@ var ShipmentColumns = struct {
 	CancelReason              buncolgen.Column // "cancel_reason" → qualified: "sp.cancel_reason"
 	OtherChargeAmount         buncolgen.Column // "other_charge_amount" → qualified: "sp.other_charge_amount"
 	FreightChargeAmount       buncolgen.Column // "freight_charge_amount" → qualified: "sp.freight_charge_amount"
-	BaseRate                  buncolgen.Column // "base_rate" → qualified: "sp.base_rate"
+	TariffInputs              buncolgen.Column // "tariff_inputs" → qualified: "sp.tariff_inputs"
+	FreightLines              buncolgen.Column // "freight_lines" → qualified: "sp.freight_lines"
 	TotalChargeAmount         buncolgen.Column // "total_charge_amount" → qualified: "sp.total_charge_amount"
 	Pieces                    buncolgen.Column // "pieces" → qualified: "sp.pieces"
 	Weight                    buncolgen.Column // "weight" → qualified: "sp.weight"
@@ -1331,7 +1372,6 @@ var ShipmentColumns = struct {
 	TransferredToBillingAt    buncolgen.Column // "transferred_to_billing_at" → qualified: "sp.transferred_to_billing_at"
 	MarkedReadyToBillAt       buncolgen.Column // "marked_ready_to_bill_at" → qualified: "sp.marked_ready_to_bill_at"
 	BilledAt                  buncolgen.Column // "billed_at" → qualified: "sp.billed_at"
-	RatingUnit                buncolgen.Column // "rating_unit" → qualified: "sp.rating_unit"
 	FuelSurchargeLocked       buncolgen.Column // "fuel_surcharge_locked" → qualified: "sp.fuel_surcharge_locked"
 	RatingDetail              buncolgen.Column // "rating_detail" → qualified: "sp.rating_detail"
 	RateQuoteID               buncolgen.Column // "rate_quote_id" → qualified: "sp.rate_quote_id"
@@ -1377,7 +1417,8 @@ var ShipmentColumns = struct {
 	CancelReason:              buncolgen.NewColumn("cancel_reason", "sp"),
 	OtherChargeAmount:         buncolgen.NewColumn("other_charge_amount", "sp"),
 	FreightChargeAmount:       buncolgen.NewColumn("freight_charge_amount", "sp"),
-	BaseRate:                  buncolgen.NewColumn("base_rate", "sp"),
+	TariffInputs:              buncolgen.NewColumn("tariff_inputs", "sp"),
+	FreightLines:              buncolgen.NewColumn("freight_lines", "sp"),
 	TotalChargeAmount:         buncolgen.NewColumn("total_charge_amount", "sp"),
 	Pieces:                    buncolgen.NewColumn("pieces", "sp"),
 	Weight:                    buncolgen.NewColumn("weight", "sp"),
@@ -1394,7 +1435,6 @@ var ShipmentColumns = struct {
 	TransferredToBillingAt:    buncolgen.NewColumn("transferred_to_billing_at", "sp"),
 	MarkedReadyToBillAt:       buncolgen.NewColumn("marked_ready_to_bill_at", "sp"),
 	BilledAt:                  buncolgen.NewColumn("billed_at", "sp"),
-	RatingUnit:                buncolgen.NewColumn("rating_unit", "sp"),
 	FuelSurchargeLocked:       buncolgen.NewColumn("fuel_surcharge_locked", "sp"),
 	RatingDetail:              buncolgen.NewColumn("rating_detail", "sp"),
 	RateQuoteID:               buncolgen.NewColumn("rate_quote_id", "sp"),
@@ -1445,7 +1485,8 @@ var ShipmentFieldMap = map[string]string{
 	"cancelReason":              "cancel_reason",
 	"otherChargeAmount":         "other_charge_amount",
 	"freightChargeAmount":       "freight_charge_amount",
-	"baseRate":                  "base_rate",
+	"tariffInputs":              "tariff_inputs",
+	"freightLines":              "freight_lines",
 	"totalChargeAmount":         "total_charge_amount",
 	"pieces":                    "pieces",
 	"weight":                    "weight",
@@ -1462,7 +1503,6 @@ var ShipmentFieldMap = map[string]string{
 	"transferredToBillingAt":    "transferred_to_billing_at",
 	"markedReadyToBillAt":       "marked_ready_to_bill_at",
 	"billedAt":                  "billed_at",
-	"ratingUnit":                "rating_unit",
 	"fuelSurchargeLocked":       "fuel_surcharge_locked",
 	"ratingDetail":              "rating_detail",
 	"rateQuoteId":               "rate_quote_id",
@@ -1509,7 +1549,8 @@ var ShipmentInsertableColumns = []string{
 	"cancel_reason",
 	"other_charge_amount",
 	"freight_charge_amount",
-	"base_rate",
+	"tariff_inputs",
+	"freight_lines",
 	"total_charge_amount",
 	"pieces",
 	"weight",
@@ -1526,7 +1567,6 @@ var ShipmentInsertableColumns = []string{
 	"transferred_to_billing_at",
 	"marked_ready_to_bill_at",
 	"billed_at",
-	"rating_unit",
 	"fuel_surcharge_locked",
 	"rating_detail",
 	"rate_quote_id",
@@ -1662,7 +1702,8 @@ var ShipmentFilter = struct {
 	CancelReason              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
 	OtherChargeAmount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "otherChargeAmount" → DB: "other_charge_amount"
 	FreightChargeAmount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightChargeAmount" → DB: "freight_charge_amount"
-	BaseRate                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseRate" → DB: "base_rate"
+	TariffInputs              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tariffInputs" → DB: "tariff_inputs"
+	FreightLines              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightLines" → DB: "freight_lines"
 	TotalChargeAmount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalChargeAmount" → DB: "total_charge_amount"
 	Pieces                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pieces" → DB: "pieces"
 	Weight                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "weight" → DB: "weight"
@@ -1679,7 +1720,6 @@ var ShipmentFilter = struct {
 	TransferredToBillingAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transferredToBillingAt" → DB: "transferred_to_billing_at"
 	MarkedReadyToBillAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "markedReadyToBillAt" → DB: "marked_ready_to_bill_at"
 	BilledAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billedAt" → DB: "billed_at"
-	RatingUnit                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingUnit" → DB: "rating_unit"
 	FuelSurchargeLocked       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fuelSurchargeLocked" → DB: "fuel_surcharge_locked"
 	RatingDetail              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingDetail" → DB: "rating_detail"
 	RateQuoteID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateQuoteId" → DB: "rate_quote_id"
@@ -1767,8 +1807,11 @@ var ShipmentFilter = struct {
 	FreightChargeAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("freightChargeAmount", op, value)
 	},
-	BaseRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("baseRate", op, value)
+	TariffInputs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("tariffInputs", op, value)
+	},
+	FreightLines: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("freightLines", op, value)
 	},
 	TotalChargeAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("totalChargeAmount", op, value)
@@ -1817,9 +1860,6 @@ var ShipmentFilter = struct {
 	},
 	BilledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("billedAt", op, value)
-	},
-	RatingUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("ratingUnit", op, value)
 	},
 	FuelSurchargeLocked: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("fuelSurchargeLocked", op, value)

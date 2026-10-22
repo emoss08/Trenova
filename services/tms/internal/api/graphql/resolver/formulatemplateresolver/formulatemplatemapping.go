@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
@@ -11,9 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 )
 
 func formulaTemplateColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -52,45 +53,41 @@ func formulaTemplateConnectionToModel(
 	}, nil
 }
 
-func formulaTemplateVariableDefinitionsToModel(
-	definitions []*formulatypes.VariableDefinition,
-) []*gqlmodel.FormulaTemplateVariableDefinition {
-	items := make([]*gqlmodel.FormulaTemplateVariableDefinition, 0, len(definitions))
-	for _, definition := range definitions {
-		if definition == nil {
-			continue
+func formulaInputDeclarationsToModel(
+	inputs []tarifftypes.InputDecl,
+) ([]*gqlmodel.FormulaInputDeclaration, error) {
+	items := make([]*gqlmodel.FormulaInputDeclaration, 0, len(inputs))
+	for i := range inputs {
+		input := &inputs[i]
+		descriptor, err := decodeWire(input.Descriptor)
+		if err != nil {
+			return nil, err
 		}
-		items = append(items, &gqlmodel.FormulaTemplateVariableDefinition{
-			Name:         definition.Name,
-			Type:         string(definition.Type),
-			Description:  definition.Description,
-			Required:     definition.Required,
-			DefaultValue: definition.DefaultValue,
-			Source:       sliceutils.StringPtrValue(definition.Source),
+		defaultValue, err := decodeWire(input.Default)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, &gqlmodel.FormulaInputDeclaration{
+			Name:       input.Name,
+			Doc:        input.Doc,
+			Type:       input.Type,
+			Descriptor: descriptor,
+			Required:   input.Required,
+			Default:    defaultValue,
 		})
 	}
-	return items
+	return items, nil
 }
 
-func formulaTemplateBreakdownDefinitionsToModel(
-	definitions []*formulatypes.BreakdownDefinition,
-) []*gqlmodel.FormulaTemplateBreakdownDefinition {
-	items := make([]*gqlmodel.FormulaTemplateBreakdownDefinition, 0, len(definitions))
-	for _, definition := range definitions {
-		if definition == nil {
-			continue
-		}
-		items = append(items, &gqlmodel.FormulaTemplateBreakdownDefinition{
-			Name:       definition.Name,
-			Label:      definition.Label,
-			Expression: definition.Expression,
-		})
+func decodeWire(raw rules.RawJSON) (any, error) {
+	var decoded any
+	if len(raw) == 0 {
+		return decoded, nil
 	}
-	return items
+	err := sonic.Unmarshal(raw, &decoded)
+	return decoded, err
 }
 
-// formulaTemplateStats reads the per-row counts through the request's
-// dataloader, so a page of templates resolves them in one query.
 func formulaTemplateStats(
 	ctx context.Context,
 	obj *formulatemplate.FormulaTemplate,

@@ -408,7 +408,7 @@ func (r *InvoiceChargeGroupResolver) ChargeMethod(ctx context.Context, obj *invo
 	return &method, nil
 }
 
-func (r *InvoiceChargeGroupResolver) RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.RateUnit, error) {
+func (r *InvoiceChargeGroupResolver) RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*string, error) {
 	if obj.RateUnit == "" {
 		return nil, nil
 	}

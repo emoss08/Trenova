@@ -7,23 +7,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -297,7 +297,7 @@ func (s *DriverPaySeed) loadRefs(
 		refs.commodities[comms[i].Name] = comms[i].ID
 	}
 
-	if err := tx.NewSelect().Model(&refs.flatTemplate).Column("id", "name", "expression").
+	if err := tx.NewSelect().Model(&refs.flatTemplate).Column("id", "name").
 		Where("organization_id = ?", orgID).Where("business_unit_id = ?", buID).
 		Where("name = ?", "Flat Rate").Limit(1).
 		Scan(ctx); err != nil {
@@ -1278,14 +1278,17 @@ func (s *DriverPaySeed) createPaidShipments(
 			Weight:             new(def.weight),
 			ActualShipDate:     new(shippedAt),
 			ActualDeliveryDate: new(deliveredAt),
-			BaseRate:           decimal.NullDecimal{Decimal: revenue, Valid: true},
+			TariffInputs: seededTariffInputs(
+				formulatemplate.StandardFlatRate,
+				revenue,
+			),
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: revenue,
 				Valid:   true,
 			},
 			TotalChargeAmount: decimal.NullDecimal{Decimal: revenue, Valid: true},
-			RatingUnit:        1,
 		}
+		shp.FreightLines = seededFreightLines(shp)
 		shp.RatingDetail = seededRatingDetail(shp, &refs.flatTemplate, timeutils.NowUnix())
 		if _, err = tx.NewInsert().Model(shp).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("insert shipment %s: %w", def.pro, err)

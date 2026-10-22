@@ -1,0 +1,78 @@
+query FormulaLibrary($id: ID!) {
+  formulaLibrary(id: $id) {
+    id
+    businessUnitId
+    organizationId
+    name
+    path
+    description
+    source
+    imports {
+      path
+      libraryId
+      versionNumber
+    }
+    testCount
+    status
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    reviewComment
+    version
+    sourceLibraryId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+  formulaLibraryVersions(libraryId: $id) {
+    id
+    libraryId
+    versionNumber
+    name
+    path
+    description
+    source
+    imports {
+      path
+      libraryId
+      versionNumber
+    }
+    testCount
+    status
+    changeMessage
+    createdById
+    createdAt
+    createdBy {
+      id
+      name
+      username
+      profilePicUrl
+    }
+  }
+  formulaLibraryReviews(libraryId: $id) {
+    id
+    libraryId
+    round
+    decision
+    actorId
+    comment
+    baseVersionNumber
+    createdAt
+    actor {
+      id
+      name
+      username
+      profilePicUrl
+    }
+    requestedReviewerId
+    requestedReviewer {
+      id
+      name
+      username
+      profilePicUrl
+    }
+    reviewerNote
+  }
+}

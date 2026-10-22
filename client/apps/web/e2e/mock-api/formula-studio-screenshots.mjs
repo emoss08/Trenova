@@ -1,11 +1,11 @@
-// Screenshots of the Formula Studio (design_handoff_formula_studio) against the mock API.
+// Screenshots of the Formula Studio and the formula libraries on Tariff, against the mock API.
 //
 //   node e2e/mock-api/server.mjs
 //   pnpm --filter @trenova/web dev
 //   node e2e/mock-api/formula-studio-screenshots.mjs [outDir] [name,name,...]
 //
-// Every shot starts from a fresh scenario, so a save, a scenario or a submit
-// one makes never leaks into the next.
+// Every shot starts from a fresh scenario, so a save, a test or a submit one makes never leaks
+// into the next.
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
@@ -22,6 +22,11 @@ const DRAFT = `${BASE}/fmt_studio_draft/edit`;
 const REVIEW = `${BASE}/fmt_studio_review/edit`;
 const ACTIVE = `${BASE}/fmt_studio_active/edit`;
 const NEW = `${BASE}/new`;
+const LIBRARIES = "/billing/configuration-files/formula-libraries";
+const ACCESSORIALS = `${LIBRARIES}/fl_studio_accessorials/edit`;
+const FUEL = `${LIBRARIES}/fl_studio_fuel/edit`;
+const ZONES = `${LIBRARIES}/fl_studio_zones/edit`;
+const NEW_LIBRARY = `${LIBRARIES}/new`;
 
 // A pane's module is read the first time its tab opens, so the click waits for it.
 const tab = (name) => async (page) => {
@@ -30,15 +35,68 @@ const tab = (name) => async (page) => {
 };
 const pause = (page, ms = STEP_MS) => page.waitForTimeout(ms);
 
-async function typeInEditor(page, text) {
-  const editor = page.locator(".cm-content").first();
-  await editor.click();
-  await page.keyboard.press("Control+End");
-  await page.keyboard.type(text);
+/**
+ * Where the character `delta` past the first `text` is drawn in the editor. A line's text
+ * includes its inlay hints, so a needle is written as the line reads on screen.
+ */
+async function pointAt(page, text, delta = 0) {
+  const point = await page.evaluate(
+    ({ needle, shift }) => {
+      for (const line of document.querySelectorAll(".cm-content .cm-line")) {
+        const start = (line.textContent ?? "").indexOf(needle.split("\n")[0]);
+        if (start < 0) continue;
+        let remaining = start + shift;
+        const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          const length = node.textContent?.length ?? 0;
+          if (remaining <= length) {
+            const range = document.createRange();
+            range.setStart(node, remaining);
+            range.setEnd(node, Math.min(remaining + 1, length));
+            const rect = range.getBoundingClientRect();
+            return { x: rect.left + 1, y: rect.top + rect.height / 2 };
+          }
+          remaining -= length;
+        }
+      }
+      return null;
+    },
+    { needle: text, shift: delta },
+  );
+  if (!point) throw new Error(`no ${text} in the editor`);
+  return point;
 }
+
+/** Clicks the editor just before the character `delta` past the first `text` on a line. */
+async function cursorAt(page, text, delta = 0) {
+  const point = await pointAt(page, text, delta);
+  await page.mouse.click(point.x, point.y);
+}
+
+/** Picks the real shipment the preview rates. */
+async function pickShipment(page, pro = "S-240741") {
+  await page.getByRole("radio", { name: "Real shipment" }).click();
+  await pause(page, 600);
+  await page
+    .getByText(/^Search by Pro/)
+    .first()
+    .click();
+  await pause(page, 900);
+  await page.getByText(pro, { exact: true }).first().click();
+  await pause(page);
+}
+
+const ask = (question) => async (page) => {
+  await tab(/^Nova/)(page);
+  await pause(page, 900);
+  await page.getByRole("textbox", { name: /^Message/ }).fill(question);
+  await page.keyboard.press("Enter");
+  await pause(page, 7000);
+};
 
 function shotsFor(colorScheme) {
   return [
+    { name: "list", path: BASE },
     { name: "edit-draft", path: DRAFT },
     { name: "edit-review", path: REVIEW },
     { name: "edit-active", path: ACTIVE },
@@ -46,16 +104,10 @@ function shotsFor(colorScheme) {
       name: "active-material-edit",
       path: ACTIVE,
       act: async (page) => {
-        await typeInEditor(page, " + 10");
+        await cursorAt(page, "$350\n");
+        await page.keyboard.press("End");
+        await page.keyboard.type("0");
         await pause(page);
-      },
-    },
-    {
-      name: "active-in-use",
-      path: ACTIVE,
-      act: async (page) => {
-        await page.getByRole("button", { name: /in use$/ }).hover();
-        await pause(page, 900);
       },
     },
     { name: "create-empty", path: NEW },
@@ -87,41 +139,43 @@ function shotsFor(colorScheme) {
         await page.getByRole("button", { name: "Explain", exact: true }).click();
         await pause(page);
         await page
-          .getByText(/^let fuel/)
+          .getByText(/comes to/)
           .first()
-          .hover();
-        await pause(page, 500);
+          .scrollIntoViewIfNeeded();
+        await pause(page, 600);
       },
     },
     {
       name: "problems",
       path: DRAFT,
       act: async (page) => {
-        await typeInEditor(page, " + weekendFee");
+        await cursorAt(page, 'charge "Fuel surcharge"');
+        await page.keyboard.type("let weekendFee = waekendRate * 2\n");
         await pause(page);
+        await page
+          .getByText(/^Nothing is named/)
+          .first()
+          .scrollIntoViewIfNeeded();
+        await pause(page, 600);
       },
     },
     {
-      name: "problems-many",
+      name: "editor-complete",
       path: DRAFT,
       act: async (page) => {
-        await typeInEditor(
-          page,
-          "\n+ weekendFee * hasHazmat + rond(weight) + customer.nmae + pow(2) + liftgate + (totalStops ? 1 : 0)",
-        );
-        await pause(page, 1800);
+        await cursorAt(page, "let linehaul");
+        await page.keyboard.press("Enter");
+        await page.keyboard.press("ArrowUp");
+        await page.keyboard.type("let w = shipment.");
+        await pause(page, 900);
       },
     },
     {
       name: "editor-hover",
       path: DRAFT,
       act: async (page) => {
-        await page
-          .locator(".cm-content")
-          .first()
-          .getByText("baseRate", { exact: true })
-          .first()
-          .hover();
+        const point = await pointAt(page, "= extraStops", 4);
+        await page.mouse.move(point.x, point.y);
         await pause(page, 900);
       },
     },
@@ -129,64 +183,60 @@ function shotsFor(colorScheme) {
       name: "editor-signature",
       path: DRAFT,
       act: async (page) => {
-        await typeInEditor(page, "\n+ max(");
+        await cursorAt(page, "extraStops(", "extraStops(".length);
         await pause(page, 800);
+      },
+    },
+    {
+      name: "editor-rename",
+      path: DRAFT,
+      act: async (page) => {
+        await cursorAt(page, "let linehaul", 6);
+        await page.keyboard.press("F2");
+        await pause(page, 600);
+      },
+    },
+    {
+      name: "editor-definition",
+      path: DRAFT,
+      act: async (page) => {
+        await cursorAt(page, "= extraStops", 4);
+        await page.keyboard.press("F12");
+        await pause(page, 1200);
       },
     },
     {
       name: "inputs",
       path: DRAFT,
       act: async (page) => {
-        await page.getByRole("heading", { name: "Inputs" }).scrollIntoViewIfNeeded();
+        await page.getByRole("heading", { name: "Inputs" }).last().scrollIntoViewIfNeeded();
         await pause(page, 900);
-      },
-    },
-    {
-      name: "policy-breakdown",
-      path: DRAFT,
-      act: async (page) => {
-        await page.getByRole("heading", { name: "Charge policy" }).scrollIntoViewIfNeeded();
-        await page.getByRole("button", { name: "Charge policy" }).first().click();
-        await pause(page, 1200);
       },
     },
     {
       name: "preview-shipment",
       path: DRAFT,
+      act: (page) => pickShipment(page),
+    },
+    {
+      name: "save-as-test",
+      path: DRAFT,
       act: async (page) => {
-        await page.getByRole("radio", { name: "Real shipment" }).click();
+        await pickShipment(page);
+        await page.getByRole("button", { name: "Save as test" }).click();
         await pause(page, 600);
       },
     },
+    { name: "tests", path: DRAFT, act: tab(/^Tests/) },
     {
-      name: "preview-edited",
+      name: "tests-fixed",
       path: DRAFT,
       act: async (page) => {
-        const value = page.getByRole("textbox", { name: "totalDistance" });
-        await value.fill("120");
-        await pause(page);
-      },
-    },
-    { name: "scenarios", path: DRAFT, act: tab(/^Scenarios/) },
-    {
-      name: "scenario-why",
-      path: DRAFT,
-      act: async (page) => {
-        await tab(/^Scenarios/)(page);
-        await pause(page);
-        await page
-          .getByRole("button", { name: /^Why did/ })
-          .first()
-          .click();
-        await pause(page);
-      },
-    },
-    {
-      name: "scenario-suggestions",
-      path: DRAFT,
-      act: async (page) => {
-        await tab(/^Scenarios/)(page);
-        await page.getByRole("button", { name: "Suggest edge cases" }).click();
+        await cursorAt(page, "expect total == $2_410.76");
+        await page.keyboard.press("End");
+        for (let i = 0; i < "2_410.76".length; i += 1) await page.keyboard.press("Backspace");
+        await page.keyboard.type("2_495.35");
+        await tab(/^Tests/)(page);
         await pause(page);
       },
     },
@@ -204,9 +254,9 @@ function shotsFor(colorScheme) {
       name: "editor-formatted",
       path: NEW,
       act: async (page) => {
-        await typeInEditor(
-          page,
-          "let linehaul = mileRate*totalDistance; let weightCharge = max(0, totalWeight - weightFreeLbs) / 100 * weightRatePerCwt; let stopCharge = max(0, totalStops - stopsIncluded) * stopRate; let hazmatCharge = hasHazmat?hazmatFee:0; linehaul+weightCharge+stopCharge+hazmatCharge",
+        await page.locator(".cm-content").first().click();
+        await page.keyboard.type(
+          'tariff "Messy"\n\n\n\ninput rate:Money/mi=$2/mi\ncharge "Linehaul"(quantity:shipment.distance,rate:rate)\n',
         );
         await pause(page, 600);
         await page.keyboard.press("Shift+Alt+F");
@@ -214,100 +264,58 @@ function shotsFor(colorScheme) {
       },
     },
     {
-      name: "reference-functions",
+      name: "preview-trace",
       path: DRAFT,
       act: async (page) => {
-        await tab(/^Reference/)(page);
-        await pause(page, 600);
-        await page.getByRole("radio", { name: /^Functions/ }).click();
-        await pause(page, 600);
-      },
-    },
-    {
-      name: "preview-all-values",
-      path: DRAFT,
-      act: async (page) => {
-        await page.getByRole("button", { name: /^Show all/ }).click();
+        await pickShipment(page);
+        await page.getByRole("button", { name: /^Trace/ }).click();
         await pause(page, 900);
       },
     },
+    { name: "nova-empty", path: DRAFT, act: tab(/^Nova/) },
+    // The server offers a change only when it checks and every test passes, so the changes are
+    // asked of the active template; the draft, whose fuel test fails, shows the refusal.
+    { name: "nova-proposal", path: ACTIVE, act: ask("Add a weekend pickup fee of $125") },
+    { name: "nova-minimum", path: ACTIVE, act: ask("Set the minimum to $400") },
+    { name: "nova-refused", path: DRAFT, act: ask("Add a weekend pickup fee of $125") },
     {
-      name: "submit-after-signature",
+      name: "suggested-tests",
       path: DRAFT,
       act: async (page) => {
-        await typeInEditor(page, "\n+ max(");
-        await pause(page, 800);
-        await page.keyboard.press("Control+Z");
-        await page.keyboard.press("Control+Z");
-        await pause(page, 600);
+        await page.getByRole("heading", { name: "Tests" }).last().scrollIntoViewIfNeeded();
+        await page.getByRole("button", { name: "Suggest tests" }).click();
+        await pause(page, 3000);
+        await page.getByText("Suggested tests").scrollIntoViewIfNeeded();
+      },
+    },
+    {
+      name: "explain-test",
+      path: DRAFT,
+      act: async (page) => {
+        await tab(/^Tests/)(page);
+        await page.getByRole("button", { name: "Why does this fail?" }).first().click();
+        await pause(page, 2500);
+      },
+    },
+    {
+      name: "nova-tests",
+      path: ACTIVE,
+      act: ask("Suggest tests for the cases this tariff could get wrong"),
+    },
+    { name: "nova-explain", path: DRAFT, act: ask("Explain this tariff, statement by statement") },
+    {
+      name: "submit-refused",
+      path: DRAFT,
+      act: async (page) => {
         await page.getByRole("button", { name: "Submit for review" }).click();
         await pause(page, 2500);
       },
     },
-    { name: "nova-empty", path: DRAFT, act: tab(/^Nova/) },
     {
-      name: "nova-let",
-      path: DRAFT,
+      name: "approve-dialog",
+      path: REVIEW,
       act: async (page) => {
-        await tab(/^Nova/)(page);
-        await pause(page, 900);
-        await page.getByRole("textbox", { name: /^Message/ }).fill("Add a liftgate fee");
-        await page.keyboard.press("Enter");
-        await pause(page, 7000);
-      },
-    },
-    {
-      name: "nova-return",
-      path: DRAFT,
-      act: async (page) => {
-        await tab(/^Nova/)(page);
-        await pause(page, 900);
-        await page
-          .getByRole("textbox", { name: /^Message/ })
-          .fill("Explain this formula, term by term");
-        await page.keyboard.press("Enter");
-        await pause(page, 6000);
-        await tab(/^Preview/)(page);
-        await pause(page, 800);
-        await tab(/^Nova/)(page);
-        await pause(page, 800);
-      },
-    },
-    {
-      name: "nova-proposal",
-      path: DRAFT,
-      act: async (page) => {
-        await tab(/^Nova/)(page);
-        await pause(page, 900);
-        await page.getByRole("textbox", { name: /^Message/ }).fill("Add a weekend pickup fee");
-        await page.keyboard.press("Enter");
-        await pause(page, 7000);
-      },
-    },
-    {
-      name: "nova-policy",
-      path: DRAFT,
-      act: async (page) => {
-        await tab(/^Nova/)(page);
-        await pause(page, 900);
-        await page.getByRole("textbox", { name: /^Message/ }).fill("Set a $300 minimum charge");
-        await page.keyboard.press("Enter");
-        await pause(page, 7000);
-      },
-    },
-    {
-      name: "trace-folded",
-      path: DRAFT,
-      act: (page) => page.getByRole("button", { name: /Hide sidebar/ }).click(),
-    },
-    {
-      name: "submit-dialog",
-      path: `${BASE}/fmt_studio_active/edit`,
-      scenario: {},
-      act: async (page) => {
-        await page.goto(`${APP}${DRAFT}`);
-        await pause(page, SETTLE_MS);
-        await page.getByRole("button", { name: "Submit for review" }).click();
+        await page.getByRole("button", { name: "Approve" }).click();
         await pause(page, 2500);
       },
     },
@@ -324,7 +332,9 @@ function shotsFor(colorScheme) {
       name: "save-demote",
       path: ACTIVE,
       act: async (page) => {
-        await typeInEditor(page, " + 10");
+        await cursorAt(page, "$350\n");
+        await page.keyboard.press("End");
+        await page.keyboard.type("0");
         await pause(page, 900);
         await page.getByRole("button", { name: /Save changes/ }).click();
         await pause(page, 900);
@@ -332,6 +342,52 @@ function shotsFor(colorScheme) {
     },
     { name: "narrow-1100", path: DRAFT, viewport: { width: 1100, height: 860 } },
     { name: "stacked-860", path: DRAFT, viewport: { width: 860, height: 900 } },
+
+    { name: "libraries-list", path: LIBRARIES },
+    { name: "library-active", path: ACCESSORIALS },
+    { name: "library-review", path: FUEL },
+    { name: "library-failing-test", path: ZONES },
+    { name: "library-tests", path: ZONES, act: tab(/^Tests/) },
+    { name: "library-usage", path: ACCESSORIALS, act: tab(/^Imported by/) },
+    { name: "library-history", path: ACCESSORIALS, act: tab(/^History/) },
+    {
+      name: "library-compare",
+      path: ACCESSORIALS,
+      act: async (page) => {
+        await tab(/^History/)(page);
+        await page.getByRole("button", { name: "Compare v3" }).click();
+        await pause(page, 900);
+      },
+    },
+    {
+      name: "library-submit",
+      path: ZONES,
+      act: async (page) => {
+        await page.getByRole("button", { name: "Submit for review" }).click();
+        await pause(page, 2500);
+      },
+    },
+    {
+      name: "library-approve",
+      path: FUEL,
+      act: async (page) => {
+        await page.getByRole("button", { name: "Approve" }).click();
+        await pause(page, 2500);
+      },
+    },
+    { name: "library-new", path: NEW_LIBRARY },
+    {
+      name: "library-new-started",
+      path: NEW_LIBRARY,
+      act: async (page) => {
+        await page.getByRole("textbox", { name: "Library name" }).fill("fees");
+        await page.getByRole("button", { name: "Use the starter" }).click();
+        await pause(page);
+      },
+    },
+    { name: "library-nova", path: ACCESSORIALS, act: ask("Suggest tests for the edge cases") },
+    { name: "library-nova-refused", path: ZONES, act: ask("Suggest tests for the edge cases") },
+    { name: "library-reference", path: ACCESSORIALS, act: tab(/^Reference/) },
   ].map((shot) => ({ ...shot, name: `${shot.name}-${colorScheme}`, colorScheme }));
 }
 

@@ -1,0 +1,532 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "a condition ends with its Bool",
+   "source": [
+    "condition \"Residential delivery\"",
+    "/// The zip3s this contract treats as residential.",
+    "input residentialZip3s: List<Text> = []",
+    "lane.destination.zip3 in residentialZip3s and (shipment.weight ?? 0 lb) < 10_000 lb"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "type-mismatch",
+     "message": "`shipment.distance` is a distance, but a condition must be true or false"
+    }
+   ],
+   "name": "a condition whose last expression is not Bool",
+   "source": [
+    "condition \"c\"",
+    "shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "let a = shipment.hazmat",
+     "code": "condition-result",
+     "message": "A condition ends with the `Bool` expression that decides it, such as `shipment.hazmat and lane.interstate`"
+    },
+    {
+     "at": "a",
+     "code": "unused",
+     "message": "`a` is never used"
+    }
+   ],
+   "name": "a condition that ends with a statement",
+   "source": [
+    "condition \"c\"",
+    "let a = shipment.hazmat"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a condition with bindings before its result",
+   "source": [
+    "condition \"c\"",
+    "let heavy = (shipment.weight ?? 0 lb) > 10_000 lb",
+    "heavy and shipment.hazmat"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a condition with functions",
+   "source": [
+    "condition \"c\"",
+    "fn heavy(w: Weight) -> Bool = w > 10_000 lb",
+    "heavy(shipment.weight ?? 0 lb)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.hazmat",
+     "code": "unused-value",
+     "message": "`shipment.hazmat` is worked out and never used: bind it with `let`, bill it with `charge`, or remove it"
+    }
+   ],
+   "name": "an expression before a condition's result is unused",
+   "source": [
+    "condition \"c\"",
+    "shipment.hazmat",
+    "shipment.reefer"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "condition \"c\"",
+     "code": "condition-result",
+     "message": "A condition ends with the `Bool` expression that decides it"
+    }
+   ],
+   "name": "an empty condition",
+   "source": [
+    "condition \"c\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "BASE",
+     "code": "const-type",
+     "message": "A library's constant is part of its interface, so `BASE` needs a type: write `const BASE: Type = …`"
+    }
+   ],
+   "name": "a library constant needs a type",
+   "source": [
+    "library \"t\"",
+    "const BASE = $5"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a library constant with a type",
+   "source": [
+    "library \"t\"",
+    "const BASE: Money = $5",
+    "const TWICE: Money = BASE * 2"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a tariff constant may infer its type",
+   "source": [
+    "tariff \"t\"",
+    "const BASE = $5",
+    "charge \"x\" = BASE * 2"
+   ],
+   "types": {
+    "BASE * 2": "Money"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment",
+     "code": "not-constant",
+     "message": "`shipment` is the record being rated, which isn't known before rating: a constant or default must be computed from literals and other constants"
+    }
+   ],
+   "name": "a constant must be a compile-time value",
+   "source": [
+    "tariff \"t\"",
+    "const MILES = shipment.distance",
+    "charge \"x\" = $1/mi * MILES"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "f()",
+     "code": "not-constant",
+     "message": "This isn't known before rating: a constant or default is computed from literals and other constants",
+     "nth": 2
+    }
+   ],
+   "name": "a constant may not call a function",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Int = 1",
+    "const COUNT: Int = f()"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5",
+     "code": "type-mismatch",
+     "message": "`$5` is money, but `COUNT` is declared as a whole number"
+    }
+   ],
+   "name": "a constant of the wrong declared type",
+   "source": [
+    "library \"t\"",
+    "const COUNT: Int = $5"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "constants may refer to later constants",
+   "source": [
+    "library \"t\"",
+    "const FIRST: Money = SECOND * 2",
+    "const SECOND: Money = $5"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "FIRST",
+     "code": "recursion",
+     "message": "`FIRST` is defined in terms of itself"
+    },
+    {
+     "at": "SECOND",
+     "code": "recursion",
+     "message": "`SECOND` is defined in terms of itself",
+     "nth": 2
+    }
+   ],
+   "name": "constants that refer to each other",
+   "source": [
+    "library \"t\"",
+    "const FIRST: Money = SECOND",
+    "const SECOND: Money = FIRST"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "1 / 0",
+     "code": "divide-by-zero",
+     "message": "This divides by zero"
+    }
+   ],
+   "name": "constant arithmetic that divides by zero",
+   "source": [
+    "library \"t\"",
+    "const RATIO: Number = 1 / 0"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"{1}\"",
+     "code": "not-constant",
+     "message": "This isn't known before rating: a constant or default is computed from literals and other constants"
+    }
+   ],
+   "name": "constant text with interpolation is not constant",
+   "source": [
+    "library \"t\"",
+    "const LABEL: Text = \"{1}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "constant lists and records fold",
+   "source": [
+    "library \"t\"",
+    "type Break = { from: Weight, rate: Money/cwt }",
+    "const BREAKS: List<Break> = [{ from: 0 lb, rate: $20/cwt }, { from: 500 lb, rate: $18/cwt }]"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "{ from: 0 lb }",
+     "code": "missing-field",
+     "fixes": [
+      {
+       "label": "Add the missing fields",
+       "result": [
+        "library \"t\"",
+        "type Break = { from: Weight, rate: Money/cwt, minimum: Money? }",
+        "const BRK: Break = { from: 0 lb, rate: $0/cwt, minimum: none }"
+       ]
+      }
+     ],
+     "message": "`Break` needs the fields `rate`, `minimum`"
+    }
+   ],
+   "name": "a record literal must have every field",
+   "source": [
+    "library \"t\"",
+    "type Break = { from: Weight, rate: Money/cwt, minimum: Money? }",
+    "const BRK: Break = { from: 0 lb }"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "extra",
+     "code": "unknown-field",
+     "message": "`Break` has no field `extra`"
+    }
+   ],
+   "name": "a record literal with an unknown field",
+   "source": [
+    "library \"t\"",
+    "type Break = { from: Weight, rate: Money/cwt }",
+    "const BRK: Break = { from: 0 lb, rate: $1/cwt, extra: 5 }"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "from",
+     "code": "duplicate",
+     "message": "The field `from` is given twice",
+     "nth": 3
+    }
+   ],
+   "name": "a record literal with a field twice",
+   "source": [
+    "library \"t\"",
+    "type Break = { from: Weight }",
+    "const BRK: Break = { from: 0 lb, from: 1 lb }"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5",
+     "code": "type-mismatch",
+     "message": "`$5` is money, but the field `from` is a weight"
+    }
+   ],
+   "name": "a record field of the wrong type",
+   "source": [
+    "library \"t\"",
+    "type Break = { from: Weight }",
+    "const BRK: Break = { from: $5 }"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a record without a type is structural",
+   "source": [
+    "tariff \"t\"",
+    "let r = { a: 1, b: \"x\" }",
+    "charge \"x\" = $1 * r.a"
+   ],
+   "types": {
+    "{ a: 1, b: \"x\" }": "{ a: Int, b: Text }"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "list items join",
+   "source": [
+    "tariff \"t\"",
+    "let xs = [1, 2.5]",
+    "charge \"x\" = $1 * xs.len"
+   ],
+   "types": {
+    "[1, 2.5]": "List<Number>"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"a\"",
+     "code": "type-mismatch",
+     "message": "`\"a\"` is text, but the list holds a whole number"
+    }
+   ],
+   "name": "list items of different types",
+   "source": [
+    "tariff \"t\"",
+    "let xs = [1, \"a\"]",
+    "charge \"x\" = $1 * xs.len"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "2 mi",
+     "code": "type-mismatch",
+     "message": "`2 mi` is a distance, but the list holds a weight"
+    }
+   ],
+   "name": "a list checked against its annotation",
+   "source": [
+    "tariff \"t\"",
+    "let xs: List<Weight> = [1 lb, 2 mi]",
+    "charge \"x\" = $1 * xs.len"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "bare variants resolve by expected type",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.count(s => s.status == New)",
+    "charge \"x\" = $1 * n"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "New",
+     "code": "ambiguous-variant",
+     "fixes": [
+      {
+       "label": "Change to `ShipmentStatus.New`",
+       "result": [
+        "tariff \"t\"",
+        "let v = ShipmentStatus.New",
+        "charge \"x\" = $1",
+        "note \"{v}\""
+       ]
+      },
+      {
+       "label": "Change to `StopStatus.New`",
+       "result": [
+        "tariff \"t\"",
+        "let v = StopStatus.New",
+        "charge \"x\" = $1",
+        "note \"{v}\""
+       ]
+      }
+     ],
+     "message": "`New` is a variant of ShipmentStatus, StopStatus: say which, as in `ShipmentStatus.New`"
+    }
+   ],
+   "name": "an ambiguous bare variant offers each qualification",
+   "source": [
+    "tariff \"t\"",
+    "let v = New",
+    "charge \"x\" = $1",
+    "note \"{v}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a qualified variant",
+   "source": [
+    "tariff \"t\"",
+    "let v = StopStatus.New",
+    "charge \"x\" = $1",
+    "note \"{v}\""
+   ],
+   "types": {
+    "StopStatus.New": "StopStatus"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Delivry",
+     "code": "unknown-variant",
+     "fixes": [
+      {
+       "label": "Change to `Delivery`",
+       "result": [
+        "tariff \"t\"",
+        "let n = shipment.stops.count(s => s.kind == Delivery)",
+        "charge \"x\" = $1 * n"
+       ]
+      }
+     ],
+     "message": "`Delivry` isn't a variant of `StopKind`. Did you mean `Delivery`?"
+    }
+   ],
+   "name": "an unknown bare variant suggests the closest",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.count(s => s.kind == Delivry)",
+    "charge \"x\" = $1 * n"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Sell",
+     "code": "unknown-variant",
+     "message": "`Sell` isn't a variant of `StopKind`, which has Pickup, Delivery, SplitPickup, SplitDelivery"
+    }
+   ],
+   "name": "a variant of another enum where one is expected",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.count(s => s.kind == Sell)",
+    "charge \"x\" = $1 * n"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Stopkind",
+     "code": "unknown-type",
+     "fixes": [
+      {
+       "label": "Change to `StopKind`",
+       "result": [
+        "tariff \"t\"",
+        "let v = StopKind.Delivery",
+        "charge \"x\" = $1",
+        "note \"{v}\""
+       ]
+      }
+     ],
+     "message": "`Stopkind` isn't a type. Did you mean `StopKind`?"
+    }
+   ],
+   "name": "an unknown enum qualifier",
+   "source": [
+    "tariff \"t\"",
+    "let v = Stopkind.Delivery",
+    "charge \"x\" = $1",
+    "note \"{v}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "v",
+     "code": "unused",
+     "message": "`v` is never used"
+    },
+    {
+     "at": "Weight",
+     "code": "not-a-value",
+     "message": "`Weight` is a type, not a value"
+    }
+   ],
+   "name": "a type used as a value",
+   "source": [
+    "tariff \"t\"",
+    "let v = Weight",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a declared enum's variants resolve bare",
+   "source": [
+    "library \"t\"",
+    "enum Zone { A, B }",
+    "fn f(z: Zone) -> Bool = z == A"
+   ],
+   "types": {
+    "A": "Zone"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a bare variant takes the other side's enum",
+   "source": [
+    "library \"t\"",
+    "enum Level { New, Old }",
+    "const LEVEL: Level = New",
+    "fn f() -> Bool = New == Level.Old and LEVEL == Old"
+   ]
+  }
+ ]
+}

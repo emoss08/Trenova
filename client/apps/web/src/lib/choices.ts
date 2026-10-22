@@ -146,15 +146,13 @@ import type {
   EDIMessageDeliveryStatus,
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
+import type { RateMatrixValueType } from "@trenova/shared/types/rate";
 import type {
   GenericSelectOption,
   SelectOption,
   SelectOptionGroup,
 } from "@trenova/shared/types/fields";
-import type {
-  FormulaTemplateStatus,
-  FormulaTemplateType,
-} from "@trenova/shared/types/formula-template";
+import type { FormulaTemplateStatus } from "@trenova/shared/types/formula-template";
 import {
   FUEL_CARD_PROVIDER_LABELS,
   FUEL_CARD_STATUS_LABELS,
@@ -227,11 +225,6 @@ export const formulaTemplateStatusChoices = [
   { label: "Draft", value: "Draft", color: "var(--foreground-subtle)" },
   { label: "In review", value: "InReview", color: "var(--warning)" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateStatus>>;
-
-export const formulaTemplateTypeChoices = [
-  { label: "Freight charge", value: "FreightCharge" },
-  { label: "Accessorial charge", value: "AccessorialCharge" },
-] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateType>>;
 
 export const fuelIndexSourceChoices = [
   { label: "DOE / EIA", value: "EIA", color: "var(--info)" },
@@ -2375,26 +2368,12 @@ export const rateDirectionChoices = [
   { label: "Both ways", value: "Bidirectional" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
-export const rateRoundingModeChoices = [
-  { label: "Half up", value: "HalfUp" },
-  { label: "Half even", value: "HalfEven" },
-  { label: "Up", value: "Up" },
-  { label: "Down", value: "Down" },
-  { label: "None", value: "None" },
-] satisfies ReadonlyArray<GenericSelectOption<string>>;
-
 export const rateZoneKindChoices = [
   { label: "Custom", value: "Custom" },
   { label: "Market area (KMA)", value: "KMA" },
   { label: "Region", value: "Regional" },
   { label: "Metro", value: "Metro" },
   { label: "Country", value: "Country" },
-] satisfies ReadonlyArray<GenericSelectOption<string>>;
-
-export const freightClassSourceChoices = [
-  { label: "From the commodity", value: "Commodity" },
-  { label: "Fixed on the lane", value: "Fixed" },
-  { label: "Derived from density", value: "Density" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
 export const rateQuoteOutcomeChoices = [
@@ -2405,13 +2384,6 @@ export const rateQuoteOutcomeChoices = [
   { label: "Error", value: "Error", color: "var(--danger)" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
-/** The bounds the rate engine records as guardrails when one changes a price. */
-export const rateGuardrailKindChoices = [
-  { label: "Minimum charge", value: "MinimumCharge" },
-  { label: "Maximum charge", value: "MaximumCharge" },
-  { label: "Absolute minimum charge", value: "AbsoluteMinCharge" },
-] satisfies ReadonlyArray<GenericSelectOption<string>>;
-
 export const rateQuotePurposeChoices = [
   { label: "Rating", value: "Rating" },
   { label: "Quote", value: "Quote" },
@@ -2419,6 +2391,38 @@ export const rateQuotePurposeChoices = [
   { label: "Simulation", value: "Simulation" },
   { label: "What if", value: "WhatIf" },
 ] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+/**
+ * What a rate matrix's cells hold, as the Tariff type a tariff reads them as.
+ * The value is the type's own spelling (`Money/cwt`), which is what the server
+ * stores and what `tables.<code>[…]` gives a tariff.
+ */
+export const rateMatrixValueTypeChoices = [
+  { label: "Money", value: "Money" },
+  { label: "Money per pound", value: "Money/lb" },
+  { label: "Money per hundredweight", value: "Money/cwt" },
+  { label: "Money per kilogram", value: "Money/kg" },
+  { label: "Money per metric ton", value: "Money/t" },
+  { label: "Money per short ton", value: "Money/ton" },
+  { label: "Money per mile", value: "Money/mi" },
+  { label: "Money per kilometer", value: "Money/km" },
+  { label: "Money per inch", value: "Money/in" },
+  { label: "Money per foot", value: "Money/ft" },
+  { label: "Money per meter", value: "Money/m" },
+  { label: "Money per cubic foot", value: "Money/ft3" },
+  { label: "Money per cubic meter", value: "Money/m3" },
+  { label: "Money per gallon", value: "Money/gal" },
+  { label: "Money per liter", value: "Money/l" },
+  { label: "Money per minute", value: "Money/min" },
+  { label: "Money per hour", value: "Money/h" },
+  { label: "Money per day", value: "Money/d" },
+  { label: "Money per pallet", value: "Money/pallet" },
+  { label: "Money per piece", value: "Money/piece" },
+  { label: "Money per stop", value: "Money/stop" },
+  { label: "Percent", value: "Percent" },
+  { label: "Number", value: "Number" },
+  { label: "Whole number", value: "Int" },
+] satisfies ReadonlyArray<GenericSelectOption<RateMatrixValueType>>;
 
 export const rateMatrixDimensionKindChoices = [
   { label: "Zone", value: "Zone" },

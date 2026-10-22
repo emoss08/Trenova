@@ -96,7 +96,7 @@ describe("InvoiceChargesTab", () => {
       screen.queryByRole("button", { name: /expand all|collapse all/i }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("PRO-1")).not.toBeInTheDocument();
-    expect(screen.getByText("Line haul")).toBeInTheDocument();
+    expect(screen.getByText("Freight charge")).toBeInTheDocument();
     expect(screen.getByText("Detention")).toBeInTheDocument();
     expect(screen.getByText("2 charges")).toBeInTheDocument();
   });
@@ -162,31 +162,67 @@ describe("InvoiceChargesTab", () => {
     expect(screen.getByText("Subtotal").parentElement).toHaveTextContent("$545.00");
   });
 
-  it("shows the rating formula and base rate the line haul was priced from", () => {
+  it("lists each freight line of the bill under its own label with its quantity and rate", () => {
     renderTab(
       invoiceWith([
         line({
           id: "l1",
           lineNumber: 1,
           shipmentId: "shp_1",
-          amount: 2450,
-          unitPrice: 2450,
-          rate: 3.5,
-          formulaTemplateName: "Per mile",
+          description: "Linehaul",
+          quantity: 812,
+          unitPrice: 2.35,
+          amount: 1908.2,
+          rate: 2.35,
+          rateUnit: "$/mi",
+          formulaTemplateName: "Dry van TL",
+        }),
+        line({
+          id: "l2",
+          lineNumber: 2,
+          shipmentId: "shp_1",
+          description: "Deficit weight",
+          quantity: 1,
+          unitPrice: 46.5,
+          amount: 46.5,
+          formulaTemplateName: "Dry van TL",
         }),
       ]),
     );
 
-    expect(screen.getByText("Rating:").parentElement).toHaveTextContent("Per mile");
-    expect(within(chargeRow("Base rate")).getByText("$3.50")).toBeInTheDocument();
-    expect(within(chargeRow("Line haul")).getByText("$2,450.00")).toBeInTheDocument();
+    const freight = screen.getByRole("list", { name: "Freight" });
+    expect(within(freight).getAllByRole("listitem")).toHaveLength(2);
+    expect(screen.getByText("Rating:").parentElement).toHaveTextContent("Dry van TL");
+    expect(
+      within(chargeRow("Linehaul")).getByText("812 mi × $2.35/mi · Line 1"),
+    ).toBeInTheDocument();
+    expect(within(chargeRow("Linehaul")).getByText("$1,908.20")).toBeInTheDocument();
+    expect(within(chargeRow("Deficit weight")).getByText("Line 2")).toBeInTheDocument();
+    expect(screen.queryByText("Base rate")).not.toBeInTheDocument();
   });
 
-  it("leaves out the rating and base rate when the freight line recorded neither", () => {
+  it("shows the notes the tariff wrote on the bill, as written", () => {
+    renderTab(
+      invoiceWith([line({ id: "l1", lineNumber: 1, shipmentId: "shp_1" })], {
+        ratingNotes: ["Minimum applies under 1,500 mi", "Hazmat surcharge waived per contract"],
+      }),
+    );
+
+    const notes = screen.getByRole("region", { name: "Notes from the tariff" });
+    expect(within(notes).getByText("Minimum applies under 1,500 mi")).toBeInTheDocument();
+    expect(within(notes).getByText("Hazmat surcharge waived per contract")).toBeInTheDocument();
+  });
+
+  it("shows no notes section when the tariff wrote none", () => {
+    renderTab(invoiceWith([line({ id: "l1", lineNumber: 1, shipmentId: "shp_1" })]));
+
+    expect(screen.queryByRole("region", { name: "Notes from the tariff" })).toBeNull();
+  });
+
+  it("leaves out the rating when the freight line recorded none", () => {
     renderTab(invoiceWith([line({ id: "l1", lineNumber: 1, shipmentId: "shp_1" })]));
 
     expect(screen.queryByText("Rating:")).not.toBeInTheDocument();
-    expect(screen.queryByText("Base rate")).not.toBeInTheDocument();
   });
 
   it("says when a shipment carries no accessorial charges", () => {
@@ -199,7 +235,7 @@ describe("InvoiceChargesTab", () => {
   it("keeps the line number the customer's PDF prints beside each charge", () => {
     renderTab(invoiceWith([line({ id: "l1", lineNumber: 7, shipmentId: "shp_1" })]));
 
-    expect(within(chargeRow("Line haul")).getByText("Line 7")).toBeInTheDocument();
+    expect(within(chargeRow("Freight charge")).getByText("Line 7")).toBeInTheDocument();
   });
 
   it("puts each shipment's subtotal on its section heading", () => {

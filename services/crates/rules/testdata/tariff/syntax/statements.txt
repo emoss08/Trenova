@@ -1,0 +1,418 @@
+=== let with and without a type
+tariff "t"
+let a = 1
+let b: Money = $5
+---
+tariff "t"
+let a = 1
+let b: Money = $5
+
+=== var and assignments
+tariff "t"
+var total = $0
+total = $1
+total += $2
+total -= $3
+---
+tariff "t"
+var total = $0
+total = $1
+total += $2
+total -= $3
+
+=== charge with options only
+tariff "t"
+charge "Linehaul" (quantity: miles, rate: rate)
+---
+tariff "t"
+charge (text "Linehaul") (quantity:miles rate:rate)
+
+=== charge with a code and an amount
+tariff "t"
+charge "Fuel surcharge" as FSC = linehaul * fuelPercent
+---
+tariff "t"
+charge (text "Fuel surcharge") as FSC = (* linehaul fuelPercent)
+
+=== charge with a code, options and an amount
+tariff "t"
+charge "Detention" as DET (quantity: billable, rate: $65/h) = owed
+---
+tariff "t"
+charge (text "Detention") as DET (quantity:billable rate:$65/[h]) = owed
+
+=== charge with an interpolated label
+tariff "t"
+charge "Detention, stop {stop.sequence}" as DET = owed
+---
+tariff "t"
+charge (text "Detention, stop " (. stop sequence)) as DET = owed
+
+=== charge called as a function is an expression
+tariff "t"
+charge(XDROP)
+---
+tariff "t"
+expr (call charge XDROP)
+
+=== note
+tariff "t"
+note "Priced from the {lane.origin.city} tariff"
+---
+tariff "t"
+note (text "Priced from the " (. (. lane origin) city) " tariff")
+
+=== if statement
+tariff "t"
+if drops > 1 {
+  charge "Extra drops" = $75
+}
+---
+tariff "t"
+if (> drops 1)
+  charge (text "Extra drops") = $75
+
+=== if else if else
+tariff "t"
+if a {
+  note "a"
+} else if b {
+  note "b"
+} else {
+  note "c"
+}
+---
+tariff "t"
+if a
+  note (text "a")
+else if b
+  note (text "b")
+else
+  note (text "c")
+
+=== else on the next line
+tariff "t"
+if a {
+  note "a"
+}
+else {
+  note "b"
+}
+---
+tariff "t"
+if a
+  note (text "a")
+else
+  note (text "b")
+
+=== if let
+tariff "t"
+if let w = shipment.weight {
+  note "{w}"
+} else {
+  fail "No weight"
+}
+---
+tariff "t"
+if let w = (. shipment weight)
+  note (text w)
+else
+  fail (text "No weight")
+
+=== single line if
+tariff "t"
+if shipment.hazmat { charge "Hazmat" as HAZ = $50 }
+---
+tariff "t"
+if (. shipment hazmat)
+  charge (text "Hazmat") as HAZ = $50
+
+=== match statement with block arms
+tariff "t"
+match shipment.serviceType.code {
+  "EXP" => {
+    charge "Expedite" as EXP = $100
+  }
+  _ => {
+    note "Standard"
+  }
+}
+---
+tariff "t"
+match (. (. shipment serviceType) code)
+  arm (text "EXP") =>
+    charge (text "Expedite") as EXP = $100
+  arm _ =>
+    note (text "Standard")
+
+=== match statement with expression arms
+tariff "t"
+match stop.kind {
+  Pickup => note "pickup"
+  Delivery => note "delivery"
+  _ => detention(stop.dwell ?? 0 h, rate: $65/h)
+}
+---
+tariff "t"
+match (. stop kind)
+  arm Pickup =>
+    note (text "pickup")
+  arm Delivery =>
+    note (text "delivery")
+  arm _ => (call detention (?? (. stop dwell) 0[h]) rate:$65/[h])
+
+=== match arm with a guard
+tariff "t"
+match pieces {
+  n if n > 10 => {
+    charge "Bulk" = $10
+  }
+  _ => {}
+}
+---
+tariff "t"
+match pieces
+  arm (bind n) if (> n 10) =>
+    charge (text "Bulk") = $10
+  arm _ =>
+
+=== match statement arm with a guard that ends in a name
+tariff "t"
+match pieces {
+  n if bulk => {
+    charge "Bulk" = $10
+  }
+  _ => {}
+}
+---
+tariff "t"
+match pieces
+  arm (bind n) if bulk =>
+    charge (text "Bulk") = $10
+  arm _ =>
+
+=== for loop
+tariff "t"
+for stop in shipment.stops {
+  note "{stop.sequence}"
+}
+---
+tariff "t"
+for stop in (. shipment stops)
+  note (text (. stop sequence))
+
+=== for loop with a filter
+tariff "t"
+for stop in shipment.stops where stop.dwell != none {
+  continue
+}
+---
+tariff "t"
+for stop in (. shipment stops) where (!= (. stop dwell) none)
+  continue
+
+=== for over a range
+tariff "t"
+for i in 0..3 {
+  break
+}
+---
+tariff "t"
+for i in (.. 0 3)
+  break
+
+=== require
+tariff "t"
+require shipment.distance > 0 mi else "This rate needs a distance"
+---
+tariff "t"
+require (> (. shipment distance) 0[mi]) else (text "This rate needs a distance")
+
+=== require let
+tariff "t"
+require let w = shipment.weight else "This rate needs the shipment's weight"
+---
+tariff "t"
+require let w = (. shipment weight) else (text "This rate needs the shipment's weight")
+
+=== fail statement
+tariff "t"
+fail "No rate for {lane.origin.zip3}"
+---
+tariff "t"
+fail (text "No rate for " (. (. lane origin) zip3))
+
+=== return in a function
+library "l"
+fn f() -> Int {
+  return 1
+}
+---
+library "l"
+fn f() -> Int
+  return 1
+
+=== return at file level is parsed
+tariff "t"
+return 1
+---
+tariff "t"
+return 1
+
+=== total clauses
+tariff "t"
+minimum $450
+maximum $5_000
+round to cents
+---
+tariff "t"
+minimum $450
+maximum $5000
+round half-up to cents
+
+=== round modes
+tariff "t"
+round half even to cents
+round up to $5
+round down to $1
+---
+tariff "t"
+round half-even to cents
+round up to $5
+round down to $1
+
+=== round to a constant
+tariff "t"
+round to INCREMENT
+---
+tariff "t"
+round half-up to INCREMENT
+
+=== given and expect
+tariff "t"
+test "t" {
+  given shipment.weight = 1_240 lb
+  given input.rate = $2.10/mi
+  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z), delivery()]
+  expect charge("Linehaul") == $365.30
+  expect lines.len == 2
+}
+---
+tariff "t"
+test "t"
+  given shipment.weight = 1240[lb]
+  given input.rate = $2.10/[mi]
+  given shipment.stops = (list (call pickup arrival:@2026-01-05T08:00:00+0m) (call delivery))
+  expect (== (call charge (text "Linehaul")) $365.30)
+  expect (== (. lines len) 2)
+
+=== expect fails
+tariff "t"
+test "t" {
+  expect fails
+  expect fails "This rate needs the shipment's weight"
+}
+---
+tariff "t"
+test "t"
+  expect fails
+  expect fails (text "This rate needs the shipment's weight")
+
+=== expression statement
+tariff "t"
+deficit(breaks, actual: w)
+---
+tariff "t"
+expr (call deficit breaks actual:w)
+
+=== statements inside a function body
+library "l"
+fn total(xs: List<Money>) -> Money {
+  var sum = $0
+  for x in xs {
+    sum += x
+  }
+  return sum
+}
+---
+library "l"
+fn total(xs: List<Money>) -> Money
+  var sum = $0
+  for x in xs
+    sum += x
+  return sum
+
+=== continuation after an operator
+tariff "t"
+let a = 1 +
+  2
+---
+tariff "t"
+let a = (+ 1 2)
+
+=== continuation before an operator
+tariff "t"
+let a = linehaul
+  + fuel
+  - discount
+---
+tariff "t"
+let a = (- (+ linehaul fuel) discount)
+
+=== continuation before a method chain
+tariff "t"
+let a = shipment.stops
+  .where(s => s.kind == Delivery)
+  ?.first
+---
+tariff "t"
+let a = (?. (call (. (. shipment stops) where) (lambda (s) (== (. s kind) Delivery))) first)
+
+=== continuation before a coalesce and logic
+tariff "t"
+let a = x
+  ?? y
+let b = p
+  and q
+  or r
+---
+tariff "t"
+let a = (?? x y)
+let b = (or (and p q) r)
+
+=== a new line before a call does not continue
+tariff "t"
+let a = f
+(1)
+---
+tariff "t"
+let a = f
+expr (paren 1)
+
+=== a new line before an index does not continue
+tariff "t"
+let a = xs
+[1]
+---
+tariff "t"
+let a = xs
+expr (list 1)
+
+=== value on the line after equals
+tariff "t"
+let a =
+  5
+---
+tariff "t"
+let a = 5
+
+=== arrow continues to the next line
+tariff "t"
+let a = match x {
+  A =>
+    1
+  _ => 2
+}
+---
+tariff "t"
+let a = (match x [A => 1] [_ => 2])

@@ -143,6 +143,8 @@ type Invoice {
   shipperCustomer: Customer
   "Whether this invoice bills only part of what its shipments charged."
   isSplitBill: Boolean!
+  "Notes the tariffs that rated the invoice's shipments put on their bills."
+  ratingNotes: [String!]!
   "Other invoices that bill any shipment on this one, split-bill siblings first."
   relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
@@ -212,12 +214,11 @@ type InvoiceChargeGroup {
   chargeCode: String
   "How an accessorial was charged; null on freight and memo lines."
   chargeMethod: AccessorialMethod
-  "What a per-unit charge was counted in."
-  rateUnit: RateUnit
+  "The unit the rate is written in, such as $/mi."
+  rateUnit: String
   """
-  The rate every line in the group was billed at: a freight load's base rate,
-  an accessorial's amount per unit or its percentage. Null when the lines
-  differ.
+  The rate every line in the group was billed at: a freight line's rate, an
+  accessorial's amount per unit or its percentage. Null when the lines differ.
   """
   rate: Decimal
   "The amount a percentage was taken of, when the group is one line."
@@ -259,6 +260,8 @@ type InvoiceLine {
   chargeCode: String
   chargeMethod: String
   rate: Decimal
+  "The unit the rate is written in, such as $/mi."
+  rateUnit: String
   "The share of the charge this line bills, when it is less than all of it."
   allocationPercent: Decimal
   "The formula template that rated a freight line, when the line kept it."

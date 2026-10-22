@@ -4,57 +4,74 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 )
 
 const (
-	schemaIDDescription = "The formula schema, as the page draft names it; shipment when " +
-		"it names none."
-	pricedByEngineNote = "Every amount here was computed by Trenova's formula engine. Quote " +
+	formulaFieldDescription = "description"
+	formulaFieldRequired    = "required"
+	entityFormulaLibrary    = "formula library"
+	termFormula             = "formula"
+	termTariff              = "tariff"
+)
+
+const (
+	paramSource        = "source"
+	paramFormulaKind   = "kind"
+	paramExplanation   = "explanation"
+	pricedByEngineNote = "Every amount here was computed by Trenova's Tariff engine. Quote " +
 		"these amounts; never state an amount you did not get from a tool."
 	proposalAppliedNote = "The page applied this to the editor; the person can undo it. It " +
-		"shows in the page draft on your next turn. "
-	paramPolicy = "policy"
+		"shows in the page draft on your next turn."
+	sourceParamDescription = "The whole Tariff source file, exactly as it should read."
 )
 
 type formulaWorkbench interface {
-	Reference(
+	Language(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
-		schemaID string,
-	) (*formulaassistantservice.Reference, error)
-	Test(
+	) (*formulaassistantservice.Language, error)
+	Check(
 		ctx context.Context,
-		req *formulaassistantservice.TestRequest,
-	) (*formulaassistantservice.TestOutcome, error)
+		req *formulaassistantservice.CheckRequest,
+	) (*formulaassistantservice.Checked, error)
+	Preview(
+		ctx context.Context,
+		req *formulaassistantservice.PreviewRequest,
+	) (*formulaassistantservice.Preview, error)
 	Propose(
 		ctx context.Context,
 		req *formulaassistantservice.ProposeRequest,
-	) (*pagedraft.FormulaProposal, error)
+	) (*formulaassistantservice.Proposed, error)
 }
 
 func formulaToolProviders() []any {
 	return []any{
 		newListFormulaTemplatesTool,
 		newGetFormulaTemplateTool,
-		provideDescribeFormulaSchemaTool,
-		provideTestFormulaExpressionTool,
+		newListFormulaLibrariesTool,
+		newGetFormulaLibraryTool,
+		provideDescribeFormulaLanguageTool,
+		provideCheckFormulaTool,
+		provideRunFormulaTestsTool,
+		providePreviewFormulaTool,
 		provideProposeFormulaTool,
+		provideProposeLibraryTool,
 	}
 }
 
@@ -66,18 +83,20 @@ func formulaTenant(params *agentports.QueryToolParams) pagination.TenantInfo {
 	}
 }
 
-var (
-	formulaTemplateTypes    = []string{"FreightCharge", "AccessorialCharge"}
-	formulaTemplateStatuses = []string{"Active", "Inactive", "Draft", "InReview"}
-)
+var formulaStatuses = []string{
+	string(formulatemplate.StatusActive),
+	string(formulatemplate.StatusInactive),
+	string(formulatemplate.StatusDraft),
+	string(formulatemplate.StatusInReview),
+}
 
 type formulaTemplateRow struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Type        string `json:"type"`
-	Status      string `json:"status"`
-	SchemaID    string `json:"schemaId"`
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Description   string `json:"description,omitempty"`
+	Status        string `json:"status"`
+	VersionNumber int64  `json:"versionNumber"`
+	TestCount     int32  `json:"testCount"`
 }
 
 func newListFormulaTemplatesTool(
@@ -86,20 +105,18 @@ func newListFormulaTemplatesTool(
 	return newListTool(listSpec{
 		name:         "formula_list_templates",
 		entityPlural: "formula templates",
-		summary: "List formula templates — the rating methods a shipment is priced with. " +
-			"Use it to turn a rating method a person named into the id a shipment needs, or " +
-			"to find a formula to read. A row carries only a template's name, description, " +
-			"type and status: to show, explain or price one template, read it whole with " +
-			"formula_get_template using the row's id.",
+		summary: "List formula templates, the Tariff rating methods a shipment, rule or " +
+			"agreement is priced with. Use it to turn a rating method a person named into its " +
+			"id. A row carries only a template's name, description, status, version and test " +
+			"count: read one whole, with its source and inputs, with formula_get_template.",
 		resource: permission.ResourceFormulaTemplate,
 		config:   querybuilder.GetFieldConfiguration((*formulatemplate.FormulaTemplate)(nil)),
 		fields: []listField{
 			{Name: "name", Kind: filterText, Sortable: true},
-			{Name: "type", Kind: filterEnum, Values: formulaTemplateTypes},
 			{
 				Name:   "status",
 				Kind:   filterEnum,
-				Values: formulaTemplateStatuses,
+				Values: formulaStatuses,
 				Note:   "only Active ones price shipments",
 			},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
@@ -115,12 +132,12 @@ func newListFormulaTemplatesTool(
 
 			return offsetListPage(result.Items, func(item *formulatemplate.FormulaTemplate) any {
 				return formulaTemplateRow{
-					ID:          item.ID.String(),
-					Name:        item.Name,
-					Description: item.Description,
-					Type:        string(item.Type),
-					Status:      string(item.Status),
-					SchemaID:    item.SchemaID,
+					ID:            item.ID.String(),
+					Name:          item.Name,
+					Description:   item.Description,
+					Status:        string(item.Status),
+					VersionNumber: item.CurrentVersionNumber,
+					TestCount:     item.TestCount,
 				}
 			}), nil
 		},
@@ -135,14 +152,13 @@ func newGetFormulaTemplateTool(
 		name:   "formula_get_template",
 		entity: "formula template",
 		searchTerms: []string{
-			"formula template details", "read a formula", "formula variables",
-			"minimum charge", "rounding",
+			"formula template details", "read a formula", "tariff source", "formula inputs",
 		},
 		resource: permission.ResourceFormulaTemplate,
-		summary: "Retrieve one formula template by id, whole: its formula, variables and " +
-			"their defaults, breakdown lines, minimum, maximum, rounding, status and version. " +
-			"Read it before explaining or changing a formula. Use formula_list_templates first " +
-			"when you have a name rather than an id.",
+		summary: "Retrieve one formula template by id, whole: its Tariff source, the inputs " +
+			"it declares, the libraries it imports, its status and version. Read it before " +
+			"explaining or changing a formula. Use formula_list_templates first when you have " +
+			"a name rather than an id.",
 		paramName: "formulaTemplateId",
 		idSource:  "from formula_list_templates",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
@@ -154,54 +170,134 @@ func newGetFormulaTemplateTool(
 	}, permissions)
 }
 
-type describeFormulaSchemaTool struct {
+type formulaLibraryRow struct {
+	ID            string `json:"id"`
+	Path          string `json:"path"`
+	Description   string `json:"description,omitempty"`
+	Status        string `json:"status"`
+	VersionNumber int64  `json:"versionNumber"`
+	TestCount     int32  `json:"testCount"`
+}
+
+func newListFormulaLibrariesTool(
+	repo formulalibraryports.FormulaLibraryRepository,
+) agentports.AgentQueryTool {
+	return newListTool(listSpec{
+		name:         "formula_list_libraries",
+		entityPlural: "formula libraries",
+		searchTerms:  []string{"list libraries", "shared libraries", "formula libraries"},
+		summary: "List the organisation's formula libraries: Tariff modules of shared " +
+			"functions a template imports with use org.<name>. A row carries the library's " +
+			"path, description, status, version and test count: read one whole, with its " +
+			"source, with formula_get_library.",
+		resource:      permission.ResourceFormulaLibrary,
+		config:        querybuilder.GetFieldConfiguration((*formulalibrary.FormulaLibrary)(nil)),
+		pagesByCursor: true,
+		fields: []listField{
+			{Name: "name", Kind: filterText, Sortable: true},
+			{
+				Name:   "status",
+				Kind:   filterEnum,
+				Values: formulaStatuses,
+				Note:   "templates import the latest Active version",
+			},
+			{Name: "createdAt", Kind: filterDate, Sortable: true},
+		},
+		fetch: func(ctx context.Context, opts *pagination.QueryOptions, cursor pagination.CursorInfo) (listPage, error) {
+			result, err := repo.ListConnection(
+				ctx,
+				&formulalibraryports.ListLibraryConnectionRequest{
+					Filter: opts,
+					Cursor: cursor,
+				},
+			)
+			if err != nil {
+				return listPage{}, err
+			}
+
+			return cursorListPage(result, func(item *formulalibrary.FormulaLibrary) any {
+				return formulaLibraryRow{
+					ID:            item.ID.String(),
+					Path:          formulalibrary.Path(item.Name),
+					Description:   item.Description,
+					Status:        string(item.Status),
+					VersionNumber: item.CurrentVersionNumber,
+					TestCount:     item.TestCount,
+				}
+			})
+		},
+	})
+}
+
+func newGetFormulaLibraryTool(
+	repo formulalibraryports.FormulaLibraryRepository,
+	permissions permissionports.PermissionEngine,
+) agentports.AgentQueryTool {
+	return newGetTool(&getSpec{
+		name:   "formula_get_library",
+		entity: entityFormulaLibrary,
+		searchTerms: []string{
+			entityFormulaLibrary, "library source", "shared functions", "org module", "use org",
+		},
+		resource: permission.ResourceFormulaLibrary,
+		summary: "Retrieve one formula library by id, whole: its Tariff source, the libraries " +
+			"it imports, its status and version. Read it before explaining a function a " +
+			"template imports or changing the library.",
+		paramName: "formulaLibraryId",
+		idSource:  "from formula_list_libraries",
+		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
+			return repo.GetByID(ctx, &formulalibraryports.GetLibraryByIDRequest{
+				LibraryID:  id,
+				TenantInfo: tenant,
+			})
+		},
+	}, permissions)
+}
+
+type describeFormulaLanguageTool struct {
 	workbench formulaWorkbench
 }
 
-func provideDescribeFormulaSchemaTool(
+func provideDescribeFormulaLanguageTool(
 	workbench *formulaassistantservice.Service,
 ) agentports.AgentQueryTool {
-	return newDescribeFormulaSchemaTool(workbench)
+	return &describeFormulaLanguageTool{workbench: workbench}
 }
 
-func newDescribeFormulaSchemaTool(workbench formulaWorkbench) agentports.AgentQueryTool {
-	return &describeFormulaSchemaTool{workbench: workbench}
+func (t *describeFormulaLanguageTool) Name() string { return "formula_describe_language" }
+
+func (t *describeFormulaLanguageTool) Description() string {
+	return "Describe what a Tariff formula may use here: record fields, types and units, " +
+		"functions, rate tables, accessorial codes and libraries. It covers every record " +
+		"field (shipment, lane, customer, fuel, rating) with its type, the methods, the std " +
+		"modules' functions and this organisation's importable org libraries. Read it before " +
+		"writing or explaining a formula so every name you use exists. Give query (\"reefer\", \"stops\", \"ltl\", \"accessorials\") " +
+		"for the matching entries in full, and a library's source."
 }
 
-func (t *describeFormulaSchemaTool) Name() string { return "formula_describe_schema" }
-
-func (t *describeFormulaSchemaTool) Description() string {
-	return "Describe what a rating formula may use: every shipment variable (one line each), " +
-		"the functions by signature, and the rate tables it can look up. Read it before " +
-		"writing or explaining a formula, so every name you use is one the engine knows. " +
-		"Give query (\"reefer\", \"stops\", \"round\") for the matching variables and " +
-		"functions in full, with examples. A name not listed is not a shipment field: make " +
-		"it a template variable or ask, never guess."
-}
-
-func (t *describeFormulaSchemaTool) ParamSchema() map[string]any {
+func (t *describeFormulaLanguageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"schemaId": map[string]any{"type": "string", "description": schemaIDDescription},
-			paramQuery: stringParam("Words for what the formula needs, such as \"reefer\" or " +
-				"\"weight\": only the variables and functions that match, described in full."),
+			paramQuery: stringParam("Words for what the formula needs, such as \"reefer\", " +
+				"\"weight\" or a library's name: only the entries that match, in full."),
 		},
 		"additionalProperties": false,
 	}
 }
 
-func (t *describeFormulaSchemaTool) Policy() agentports.ToolPolicy {
+func (t *describeFormulaLanguageTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceFormulaTemplate})
 }
 
-func (t *describeFormulaSchemaTool) SearchTerms() []string {
+func (t *describeFormulaLanguageTool) SearchTerms() []string {
 	return []string{
-		"formula", "variables", "functions", "expression", "rate table", "lookup", "rating",
+		"formula language", "tariff language", "record fields", "functions", "units",
+		"rate table", "syntax",
 	}
 }
 
-func (t *describeFormulaSchemaTool) Query(
+func (t *describeFormulaLanguageTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 ) (any, error) {
@@ -209,225 +305,284 @@ func (t *describeFormulaSchemaTool) Query(
 		return nil, err
 	}
 
-	reference, err := t.workbench.Reference(ctx, formulaTenant(params),
-		optionalString(params.Params, "schemaId"))
+	language, err := t.workbench.Language(ctx, formulaTenant(params))
 	if err != nil {
 		return nil, err
 	}
 
-	return schemaView(reference, optionalString(params.Params, paramQuery)), nil
+	return languageView(language, optionalString(params.Params, paramQuery))
 }
 
-type scenarioParam struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Variables   map[string]any `json:"variables"`
+func rawSource(params map[string]any) (string, error) {
+	source, ok := params[paramSource].(string)
+	if !ok || source == "" {
+		return "", fmt.Errorf("parameter %q must be the whole Tariff source", paramSource)
+	}
+	return source, nil
 }
 
-func scenarioSchema() map[string]any {
+func formulaKind(params map[string]any) (formulaassistantservice.Kind, error) {
+	kind := formulaassistantservice.Kind(optionalString(params, paramFormulaKind))
+	if kind == "" {
+		return formulaassistantservice.KindTemplate, nil
+	}
+	if !kind.IsValid() {
+		return "", fmt.Errorf("parameter %q must be template or library", paramFormulaKind)
+	}
+	return kind, nil
+}
+
+func sourceParams() map[string]any {
 	return map[string]any{
-		"type":     "array",
-		"maxItems": formulaassistantservice.MaxScenarios,
-		"description": "Loads to price, each named and described in a sentence, with the " +
-			"variable values that make it that load.",
-		"items": map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"name":        map[string]any{"type": "string", "description": "A short name."},
-				"description": map[string]any{"type": "string", "description": "One sentence."},
-				"variables": map[string]any{
-					"type": "object",
-					"description": "Values for this load, by variable name or schema field " +
-						"path (serviceType.code), so a load can say which service or " +
-						"equipment it is.",
-				},
-			},
-			"required":             []string{"name", "variables"},
-			"additionalProperties": false,
-		},
+		paramSource: stringParam(sourceParamDescription),
+		paramFormulaKind: agenttoolschema.Enum(
+			"template for a formula template (tariff \"…\"), library for an org library "+
+				"(library \"org.…\"); template when left out.",
+			formulaKinds,
+		),
 	}
 }
 
-func decodeScenarios(params map[string]any) ([]formulaassistantservice.Scenario, error) {
-	if raw, ok := params["scenarios"]; !ok || raw == nil {
-		return nil, nil
-	}
-
-	var decoded []scenarioParam
-	if err := decodeParam(params, "scenarios", &decoded); err != nil {
-		return nil, err
-	}
-
-	scenarios := make([]formulaassistantservice.Scenario, 0, len(decoded))
-	for _, scenario := range decoded {
-		scenarios = append(scenarios, formulaassistantservice.Scenario{
-			Name:        scenario.Name,
-			Description: scenario.Description,
-			Variables:   scenario.Variables,
-		})
-	}
-
-	return scenarios, nil
+type checkFormulaTool struct {
+	workbench formulaWorkbench
 }
 
-type policyParam struct {
-	MinCharge         *float64 `json:"minCharge"`
-	MaxCharge         *float64 `json:"maxCharge"`
-	RoundingMode      string   `json:"roundingMode"`
-	RoundingPrecision *int     `json:"roundingPrecision"`
+func provideCheckFormulaTool(workbench *formulaassistantservice.Service) agentports.AgentQueryTool {
+	return &checkFormulaTool{workbench: workbench}
 }
 
-func policySchema(description string) map[string]any {
+func (t *checkFormulaTool) Name() string { return "formula_check" }
+
+func (t *checkFormulaTool) Description() string {
+	return "Check a Tariff source against this organisation's tables, codes and libraries. " +
+		"It returns every error and warning with its line and column and the fixes the " +
+		"checker offers, the inputs it declares, the libraries it imports and the charges " +
+		"it bills. Check before you show or explain source; fix every error."
+}
+
+func (t *checkFormulaTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type":        "object",
-		"description": description,
-		"properties": map[string]any{
-			"minCharge": map[string]any{
-				"type": []string{"number", "null"},
-				"description": "The least the template bills for a load, whatever the " +
-					"expression comes to; null removes the minimum.",
-			},
-			"maxCharge": map[string]any{
-				"type": []string{"number", "null"},
-				"description": "The most the template bills for a load, whatever the " +
-					"expression comes to; null removes the maximum.",
-			},
-			"roundingMode": agenttoolschema.Enum(
-				"How the charge is rounded after the bounds; HalfUp unless the person "+
-					"chose otherwise.",
-				formulaRoundingModes,
-			),
-			"roundingPrecision": map[string]any{
-				"type":    "integer",
-				"minimum": 0,
-				"maximum": int(formulatypes.MaxRoundingPrecision),
-				"description": "The decimal places the charge is rounded to, 0 to " +
-					strconv.Itoa(int(formulatypes.MaxRoundingPrecision)) + "; 2 is the cent.",
-			},
-		},
+		"type":                 "object",
+		"properties":           sourceParams(),
+		formulaFieldRequired:   []string{paramSource},
 		"additionalProperties": false,
 	}
 }
 
-func decodePolicy(params map[string]any) (*pagedraft.FormulaPolicy, error) {
-	if raw, ok := params[paramPolicy]; !ok || raw == nil {
-		return nil, nil
-	}
+func (t *checkFormulaTool) Policy() agentports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource:  permission.ResourceFormulaTemplate,
+		rationale: "Checks source the model holds; nothing is saved and nothing is sent.",
+	})
+}
 
-	var decoded policyParam
-	if err := decodeParam(params, paramPolicy, &decoded); err != nil {
+func (t *checkFormulaTool) SearchTerms() []string {
+	return []string{
+		"check", "validate", "compile", "errors", "diagnostics", termFormula, termTariff,
+	}
+}
+
+type checkedFormula struct {
+	OK       bool                            `json:"ok"`
+	Kind     string                          `json:"kind,omitempty"`
+	Name     string                          `json:"name,omitempty"`
+	Findings any                             `json:"findings"`
+	Inputs   []formulaassistantservice.Input `json:"inputs"`
+	Imports  []string                        `json:"imports"`
+	Charges  []string                        `json:"charges"`
+}
+
+func (t *checkFormulaTool) Query(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+) (any, error) {
+	checked, err := checkParams(ctx, t.workbench, params)
+	if err != nil {
 		return nil, err
 	}
 
-	return &pagedraft.FormulaPolicy{
-		MinCharge:         amountString(decoded.MinCharge),
-		MaxCharge:         amountString(decoded.MaxCharge),
-		RoundingMode:      decoded.RoundingMode,
-		RoundingPrecision: decoded.RoundingPrecision,
+	return checkedFormula{
+		OK:       checked.OK,
+		Kind:     checked.Kind,
+		Name:     checked.Name,
+		Findings: checked.Findings,
+		Inputs:   checked.Inputs,
+		Imports:  checked.Imports,
+		Charges:  checked.Charges,
 	}, nil
 }
 
-func amountString(value *float64) *string {
-	if value == nil {
-		return nil
+func checkParams(
+	ctx context.Context,
+	workbench formulaWorkbench,
+	params *agentports.QueryToolParams,
+) (*formulaassistantservice.Checked, error) {
+	if err := guardQuery(params); err != nil {
+		return nil, err
 	}
-	text := decimal.NewFromFloat(*value).String()
+	source, err := rawSource(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	kind, err := formulaKind(params.Params)
+	if err != nil {
+		return nil, err
+	}
 
-	return &text
+	return workbench.Check(ctx, &formulaassistantservice.CheckRequest{
+		TenantInfo: formulaTenant(params),
+		Kind:       kind,
+		Source:     source,
+	})
 }
 
-type testFormulaExpressionTool struct {
+type runFormulaTestsTool struct {
+	workbench formulaWorkbench
+}
+
+func provideRunFormulaTestsTool(
+	workbench *formulaassistantservice.Service,
+) agentports.AgentQueryTool {
+	return &runFormulaTestsTool{workbench: workbench}
+}
+
+func (t *runFormulaTestsTool) Name() string { return "formula_run_tests" }
+
+func (t *runFormulaTestsTool) Description() string {
+	return "Run the test blocks of a Tariff source with Trenova's engine: each test's name, " +
+		"line, whether it passed, and what each failed expectation actually came to. A " +
+		"source that does not check runs no tests; its errors come back instead. Run the " +
+		"tests before you propose source, and write a test for every case you claim it prices."
+}
+
+func (t *runFormulaTestsTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type":                 "object",
+		"properties":           sourceParams(),
+		formulaFieldRequired:   []string{paramSource},
+		"additionalProperties": false,
+	}
+}
+
+func (t *runFormulaTestsTool) Policy() agentports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource:  permission.ResourceFormulaTemplate,
+		rationale: "Runs the tests in source the model holds; nothing is saved and nothing is sent.",
+	})
+}
+
+func (t *runFormulaTestsTool) SearchTerms() []string {
+	return []string{"test", "run tests", "expect", "verify", termFormula, termTariff}
+}
+
+type testedFormula struct {
+	OK       bool   `json:"ok"`
+	Findings any    `json:"findings,omitempty"`
+	Tests    any    `json:"tests"`
+	Note     string `json:"note"`
+}
+
+func (t *runFormulaTestsTool) Query(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+) (any, error) {
+	checked, err := checkParams(ctx, t.workbench, params)
+	if err != nil {
+		return nil, err
+	}
+
+	result := testedFormula{OK: checked.OK, Tests: checked.Tests, Note: pricedByEngineNote}
+	switch {
+	case !checked.OK:
+		result.Findings = checked.Findings
+		result.Note = "The source does not check, so no test ran. Fix the findings first."
+	case checked.Tests.Total == 0:
+		result.Note = "The source has no test blocks. Write test \"…\" { given … expect … } " +
+			"for each case the person cares about."
+	}
+	return result, nil
+}
+
+type previewFormulaTool struct {
 	workbench formulaWorkbench
 	access    fieldAccess
 }
 
-func provideTestFormulaExpressionTool(
+func providePreviewFormulaTool(
 	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return newTestFormulaExpressionTool(workbench, permissions)
+	return &previewFormulaTool{workbench: workbench, access: newFieldAccess(permissions)}
 }
 
-func newTestFormulaExpressionTool(
-	workbench formulaWorkbench,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &testFormulaExpressionTool{workbench: workbench, access: newFieldAccess(permissions)}
+func (t *previewFormulaTool) Name() string { return "formula_preview" }
+
+func (t *previewFormulaTool) Description() string {
+	return "Rate a formula template's Tariff source for a saved shipment or the sample record. " +
+		"With the input values given, it returns the bill line by line, or the refusal or " +
+		"error and where in the source it came from. Use it to learn what a formula charges " +
+		"a real load; say an amount only when a tool gave it."
 }
 
-func (t *testFormulaExpressionTool) Name() string { return "formula_test_expression" }
-
-func (t *testFormulaExpressionTool) Description() string {
-	return "Price a formula expression with Trenova's formula engine, for sample loads or " +
-		"against a saved shipment. Use it to check a formula runs and to learn what it " +
-		"charges; say an amount only when this or formula_propose gave it."
-}
-
-func (t *testFormulaExpressionTool) ParamSchema() map[string]any {
+func (t *previewFormulaTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"expression": map[string]any{
-				"type":        "string",
-				"description": "The expression to price, such as the one in the page draft.",
-			},
-			"schemaId": map[string]any{"type": "string", "description": schemaIDDescription},
-			"variables": map[string]any{
+			paramSource: stringParam(sourceParamDescription),
+			"inputs": map[string]any{
 				"type": "object",
-				"description": "Values for the formula's own variables, by name, used by " +
-					"every load unless a load sets its own.",
+				formulaFieldDescription: "Values for the template's inputs, by name, as wire values: a " +
+					"number {\"$n\":\"2.5\"}, money {\"$q\":\"175\",\"u\":\"$\"}, a rate " +
+					"{\"$q\":\"2.85\",\"u\":\"$/mi\"}, a percent {\"$q\":\"18\",\"u\":\"%\"}, a " +
+					"date {\"$date\":\"2026-01-31\"}, text and true/false as themselves. " +
+					"Inputs with a default may be left out.",
+				"maxProperties": formulaassistantPreviewInputs,
 			},
-			"scenarios": scenarioSchema(),
-			paramPolicy: policySchema("The page draft's charge policy, so the amounts " +
-				"match what is billed."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"Optional: price a saved shipment instead of sample loads, "+
+				"Optional: rate this saved shipment instead of the sample record, "+
 					"from shipment_list."),
 		},
-		"required":             []string{"expression"},
+		formulaFieldRequired:   []string{paramSource},
 		"additionalProperties": false,
 	}
 }
 
-func (t *testFormulaExpressionTool) Policy() agentports.ToolPolicy {
+const formulaassistantPreviewInputs = 100
+
+func (t *previewFormulaTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceFormulaTemplate,
-		rationale: "Prices an expression with the formula engine, for sample values or a " +
-			"shipment the caller may read; nothing is saved and nothing is sent.",
+		rationale: "Rates source with the engine, for the sample record or a shipment the " +
+			"caller may read; nothing is saved and nothing is sent.",
 	})
 }
 
-func (t *testFormulaExpressionTool) SearchTerms() []string {
-	return []string{
-		"test", "price", "evaluate", "try", "formula", "expression", "scenario", "charge",
-	}
+func (t *previewFormulaTool) SearchTerms() []string {
+	return []string{"price", "rate", "preview", "bill", "charge", "shipment", termFormula}
 }
 
-type testedFormula struct {
-	*formulaassistantservice.TestOutcome
+type previewedFormula struct {
+	*formulaassistantservice.Preview
 	ShipmentID string `json:"shipmentId,omitempty"`
 	Note       string `json:"note"`
 }
 
-func (t *testFormulaExpressionTool) Query(
+func (t *previewFormulaTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
-
-	expression, err := requireString(params.Params, "expression")
+	source, err := rawSource(params.Params)
 	if err != nil {
 		return nil, err
 	}
-	scenarios, err := decodeScenarios(params.Params)
-	if err != nil {
-		return nil, err
-	}
-	policy, err := decodePolicy(params.Params)
-	if err != nil {
-		return nil, err
+	var inputs tarifftypes.Inputs
+	if raw, ok := params.Params["inputs"]; ok && raw != nil {
+		if err = decodeParam(params.Params, "inputs", &inputs); err != nil {
+			return nil, err
+		}
 	}
 
 	shipmentID := pulid.Nil
@@ -439,33 +594,45 @@ func (t *testFormulaExpressionTool) Query(
 		if !t.access.mayRead(ctx, params, permission.ResourceShipment) {
 			return nil, errors.New(
 				"the person you are working for may not read shipments, so no shipment " +
-					"was priced; price sample loads instead",
+					"was rated; preview the sample record instead",
 			)
 		}
 	}
 
-	outcome, err := t.workbench.Test(ctx, &formulaassistantservice.TestRequest{
+	preview, err := t.workbench.Preview(ctx, &formulaassistantservice.PreviewRequest{
 		TenantInfo: formulaTenant(params),
-		SchemaID:   optionalString(params.Params, "schemaId"),
-		Expression: expression,
-		Variables:  optionalObject(params.Params, "variables"),
+		Source:     source,
+		Inputs:     inputs,
 		ShipmentID: shipmentID,
-		Scenarios:  scenarios,
-		Policy:     policy,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	result := testedFormula{TestOutcome: outcome, Note: pricedByEngineNote}
+	result := previewedFormula{Preview: preview, Note: pricedByEngineNote}
+	if !preview.OK {
+		result.Note = "The source does not check, so nothing was rated. Fix the findings first."
+	}
 	if shipmentID.IsNotNil() {
 		result.ShipmentID = shipmentID.String()
 	}
-
 	return result, nil
 }
 
-type proposeFormulaTool struct {
+type proposeSourceSpec struct {
+	action      pagedraft.Action
+	surface     pagedraft.Surface
+	kind        formulaassistantservice.Kind
+	resource    permission.Resource
+	noun        string
+	nameLimit   int
+	nameExample string
+	description string
+	searchTerms []string
+}
+
+type proposeSourceTool struct {
+	spec      proposeSourceSpec
 	workbench formulaWorkbench
 	access    fieldAccess
 }
@@ -474,164 +641,115 @@ func provideProposeFormulaTool(
 	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return newProposeFormulaTool(workbench, permissions)
+	return newProposeSourceTool(&proposeFormulaSpec, workbench, permissions)
 }
 
-func newProposeFormulaTool(
-	workbench formulaWorkbench,
+func provideProposeLibraryTool(
+	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return &proposeFormulaTool{workbench: workbench, access: newFieldAccess(permissions)}
+	return newProposeSourceTool(&proposeLibrarySpec, workbench, permissions)
 }
 
-func (t *proposeFormulaTool) Name() string { return string(pagedraft.ActionProposeFormula) }
+var proposeFormulaSpec = proposeSourceSpec{
+	action:      pagedraft.ActionProposeFormula,
+	surface:     pagedraft.SurfaceFormula,
+	kind:        formulaassistantservice.KindTemplate,
+	resource:    permission.ResourceFormulaTemplate,
+	noun:        "formula template",
+	nameLimit:   pagedraft.MaxTemplateNameLength,
+	nameExample: "\"Linehaul per mile with fuel\"",
+	description: "Change the formula template in the person's editor: its whole Tariff " +
+		"source, and for a new template its name and description. The source is checked and " +
+		"its tests run first; the page applies it only when it checks clean and every test " +
+		"passes, and it needs at least one test. The person sees it in their editor, can undo " +
+		"it, and nothing is saved until they save. Call it for every change the person asks " +
+		"for, with the whole source as it should be after the change, keeping everything they " +
+		"did not ask to change exactly as the page draft shows it. Never describe a change " +
+		"without making it.",
+	searchTerms: []string{
+		"write formula", "suggest formula", "build formula", "draft", "rating method",
+		"charge", termTariff,
+	},
+}
 
-func (t *proposeFormulaTool) Recipe() []string {
-	return []string{
-		"formula_describe_schema",
-		"formula_test_expression",
-		string(pagedraft.ActionProposeFormula),
+var proposeLibrarySpec = proposeSourceSpec{
+	action:      pagedraft.ActionProposeLibrary,
+	surface:     pagedraft.SurfaceFormulaLibrary,
+	kind:        formulaassistantservice.KindLibrary,
+	resource:    permission.ResourceFormulaLibrary,
+	noun:        entityFormulaLibrary,
+	nameLimit:   pagedraft.MaxLibraryNameLength,
+	nameExample: "accessorials, which templates import as org.accessorials",
+	description: "Change the formula library in the person's editor: its whole Tariff " +
+		"source (library \"org.<name>\", its functions, types and tests), and for a new " +
+		"library its name and description. The source is checked and its tests run first; " +
+		"the page applies it only when it checks clean and every test passes, and it needs at " +
+		"least one test. The person can undo it, and nothing is saved until they save. A " +
+		"change reaches templates only after the library is approved again.",
+	searchTerms: []string{
+		"write library", "shared function", "add function", "org library", "draft library",
+		"tariff module",
+	},
+}
+
+func newProposeSourceTool(
+	spec *proposeSourceSpec,
+	workbench formulaWorkbench,
+	permissions permissionports.PermissionEngine,
+) *proposeSourceTool {
+	return &proposeSourceTool{
+		spec:      *spec,
+		workbench: workbench,
+		access:    newFieldAccess(permissions),
 	}
 }
 
-func (t *proposeFormulaTool) Description() string {
-	return "Change the formula in the person's editor: the expression, its variables, the " +
-		"charge policy, breakdown lines, and for a new template its name and description. " +
-		"The page applies the change the moment you call this; the person sees " +
-		"it in their editor, can undo it, and nothing is saved until they save. Call it for " +
-		"every change the person asks for — add, remove, fix, rename, set a default, change " +
-		"the minimum — with the whole formula as it should be after the change. Keep " +
-		"everything they did not ask to change exactly as the page draft shows it. Never " +
-		"describe a change without making it."
+func (t *proposeSourceTool) Name() string { return string(t.spec.action) }
+
+func (t *proposeSourceTool) Recipe() []string {
+	return []string{
+		"formula_describe_language",
+		"formula_check",
+		"formula_run_tests",
+		string(t.spec.action),
+	}
 }
 
-func (t *proposeFormulaTool) ParamSchema() map[string]any {
+func (t *proposeSourceTool) Description() string { return t.spec.description }
+
+func (t *proposeSourceTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"expression": map[string]any{
-				"type": "string",
-				"description": "The expression, built only from formula_describe_schema's names " +
-					"and this formula's variables. Write every rate, fee, minimum, percentage " +
-					"and weight or mileage break as a variable, never as a number in the " +
-					"expression: one template prices every customer, and a figure written into " +
-					"it can only be changed by editing the formula. baseRate * totalDistance, not " +
-					"2.85 * totalDistance; totalWeight < breakOne, not totalWeight < 500. Only a " +
-					"unit conversion such as / 100 for hundredweight stays a number. It returns " +
-					"the charge for the whole load, never a rate: a figure per mile, hour or stop " +
-					"is multiplied by totalDistance, the hours or the stops in the expression. " +
-					"Write it from the terms the person states, even when they say the terms are " +
-					"their contracts': open an agreement or program only when they ask you to take " +
-					"the terms from one. A quantity no shipment field holds, such as hours at a " +
-					"stop, is a variable with a default: declare it and propose rather than asking " +
-					"how it will arrive. So is a condition no field marks directly, such as team " +
-					"service: compare the nearest field to a variable (serviceType.code == " +
-					"teamServiceCode) or make it a yes/no variable, and say in the explanation " +
-					"what to set it to. Lay it out as the editor does: for more than two " +
-					"terms, one let per charge on its own line, named for what it is and " +
-					"ending with a semicolon (let fuelSurcharge = …;), then the sum of the " +
-					"names on the last line; never one long line or one chain of ternaries.",
-			},
-			"schemaId": map[string]any{"type": "string", "description": schemaIDDescription},
-			"variables": map[string]any{
-				"type": "array",
-				"description": "The formula's own variables: every rate, fee, minimum, " +
-					"percentage and break the expression uses, and any input no shipment " +
-					"variable holds, such as hours at a stop. Something billed per stop, per " +
-					"hour or per event is written for one occurrence from such an input, cap " +
-					"included; say so in the explanation rather than asking how the data " +
-					"arrives. Give the figure the person named as its default.",
-				"maxItems": pagedraft.MaxFormulaVariables,
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"name": map[string]any{"type": "string", "description": "An identifier."},
-						"type": agenttoolschema.Enum(
-							"What the variable holds.",
-							formulaVariableTypes,
-						),
-						"description": map[string]any{
-							"type":        "string",
-							"description": "What it is for, for a billing clerk.",
-						},
-						"defaultValue": map[string]any{
-							"type":        []string{"number", "string", "boolean", "null"},
-							"description": "The value it takes unless a load sets one.",
-						},
-					},
-					"required":             []string{"name", "type"},
-					"additionalProperties": false,
-				},
-			},
-			"explanation": map[string]any{
-				"type":        "string",
-				"description": "What the formula charges, in plain words, term by term.",
-			},
+			paramSource: stringParam(sourceParamDescription + " Declare every rate, fee, " +
+				"minimum and break as an input with a doc comment, never a figure written into " +
+				"a charge, so one " + t.spec.noun + " prices every customer; include a test " +
+				"block for each case you describe."),
+			paramExplanation: stringParam("What the source does, in plain words, and what " +
+				"changed."),
 			"name": map[string]any{
 				"type":      "string",
-				"maxLength": pagedraft.MaxTemplateNameLength,
-				"description": "Only when you draft a new template from scratch and the page " +
-					"draft has no name yet: a short name for the rating method, such as " +
-					"\"Linehaul per mile with fuel\". Leave it out when changing an existing " +
-					"formula.",
+				"maxLength": t.spec.nameLimit,
+				formulaFieldDescription: "Only when you draft a new " + t.spec.noun + " and the page " +
+					"draft has no name yet: a short name, such as " + t.spec.nameExample + ".",
 			},
-			"description": map[string]any{
+			formulaFieldDescription: map[string]any{
 				"type":      "string",
-				"maxLength": pagedraft.MaxVariableTextLength,
-				"description": "Only when you draft a new template from scratch and the page " +
-					"draft has no description yet: one or two sentences on what it prices and " +
-					"when it applies, for the reviewer who approves it.",
+				"maxLength": pagedraft.MaxDescriptionLength,
+				formulaFieldDescription: "Only when you draft a new " + t.spec.noun + " and the page " +
+					"draft has no description yet: one or two sentences for the reviewer who " +
+					"approves it.",
 			},
-			"templateType": agenttoolschema.Enum(
-				"Only when you draft a new template from scratch: FreightCharge for the "+
-					"linehaul price of a load, AccessorialCharge for an extra service or fee "+
-					"billed on top of it.",
-				formulaTemplateTypeSource,
-			),
-			"breakdown": map[string]any{
-				"type":     "array",
-				"maxItems": pagedraft.MaxBreakdownLines,
-				"description": "Only when the person asks for itemized lines on the invoice: " +
-					"each line prices one part of the charge with its own expression, and the " +
-					"lines add up to the formula's result. Leave it out otherwise.",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"name": map[string]any{
-							"type": "string",
-							"description": "A camelCase identifier, unique among the lines, " +
-								"such as fuelSurcharge.",
-						},
-						"label": map[string]any{
-							"type":        "string",
-							"maxLength":   pagedraft.MaxBreakdownLabel,
-							"description": "What the invoice line says, such as \"Fuel surcharge\".",
-						},
-						"expression": map[string]any{
-							"type": "string",
-							"description": "The line's amount, built from the same names as " +
-								"the formula.",
-						},
-					},
-					"required":             []string{"name", "label", "expression"},
-					"additionalProperties": false,
-				},
-			},
-			paramPolicy: policySchema("The charge policy the template applies after the " +
-				"expression. Always pass the page draft's policy here, changed only where the " +
-				"person asked (a minimum, a maximum, the rounding), so the amounts you quote " +
-				"match what the studio bills. Never write a minimum, a maximum or rounding " +
-				"into the expression."),
-			"scenarios": scenarioSchema(),
 		},
-		"required":             []string{"expression", "explanation"},
+		formulaFieldRequired:   []string{paramSource, paramExplanation},
 		"additionalProperties": false,
 	}
 }
 
-func (t *proposeFormulaTool) Policy() agentports.ToolPolicy {
+func (t *proposeSourceTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceFormulaTemplate,
+		resource: t.spec.resource,
 		scope:    agent.ToolScopeSelf,
 		effect:   agent.ToolEffectPresent,
 		rationale: "Changes the person's own editor, which they can undo; nothing is saved " +
@@ -639,14 +757,9 @@ func (t *proposeFormulaTool) Policy() agentports.ToolPolicy {
 	})
 }
 
-func (t *proposeFormulaTool) SearchTerms() []string {
-	return []string{
-		"write formula", "suggest formula", "build formula", "draft", "rating method",
-		"charge", "expression",
-	}
-}
+func (t *proposeSourceTool) SearchTerms() []string { return t.spec.searchTerms }
 
-func (t *proposeFormulaTool) mayAuthor(
+func (t *proposeSourceTool) mayAuthor(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 ) bool {
@@ -657,7 +770,7 @@ func (t *proposeFormulaTool) mayAuthor(
 
 	for _, operation := range []permission.Operation{permission.OpCreate, permission.OpUpdate} {
 		result, err := t.access.permissions.Check(ctx, actor.PermissionCheck(
-			permission.ResourceFormulaTemplate, operation,
+			t.spec.resource, operation,
 		))
 		if err == nil && result != nil && result.Allowed {
 			return true
@@ -667,7 +780,14 @@ func (t *proposeFormulaTool) mayAuthor(
 	return false
 }
 
-func (t *proposeFormulaTool) Query(
+type refusedProposal struct {
+	Applied  bool   `json:"applied"`
+	Findings any    `json:"findings,omitempty"`
+	Tests    any    `json:"tests,omitempty"`
+	Note     string `json:"note"`
+}
+
+func (t *proposeSourceTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 ) (any, error) {
@@ -675,70 +795,68 @@ func (t *proposeFormulaTool) Query(
 		return nil, err
 	}
 	if !t.mayAuthor(ctx, params) {
-		return nil, errors.New(
-			"the person you are working for may read formulas but not write them, so no " +
-				"formula was proposed; explain the formula instead, or tell them writing one " +
-				"needs permission to create or update formula templates",
+		return nil, fmt.Errorf(
+			"the person you are working for may read but not write a %s, so nothing was "+
+				"proposed; explain the source instead, or tell them writing one needs "+
+				"permission to create or update it", t.spec.noun,
 		)
 	}
 
-	expression, err := requireString(params.Params, "expression")
+	source, err := rawSource(params.Params)
 	if err != nil {
 		return nil, err
 	}
-	explanation, err := requireString(params.Params, "explanation")
+	explanation, err := requireString(params.Params, paramExplanation)
 	if err != nil {
-		return nil, err
-	}
-	var variables []pagedraft.FormulaVariable
-	if raw, ok := params.Params["variables"]; ok && raw != nil {
-		if err = decodeParam(params.Params, "variables", &variables); err != nil {
-			return nil, err
-		}
-	}
-	scenarios, err := decodeScenarios(params.Params)
-	if err != nil {
-		return nil, err
-	}
-	details := pagedraft.FormulaDetails{
-		Name:         optionalString(params.Params, "name"),
-		Description:  optionalString(params.Params, "description"),
-		TemplateType: optionalString(params.Params, "templateType"),
-	}
-	if raw, ok := params.Params["breakdown"]; ok && raw != nil {
-		if err = decodeParam(params.Params, "breakdown", &details.Breakdown); err != nil {
-			return nil, err
-		}
-	}
-	if details.Policy, err = decodePolicy(params.Params); err != nil {
 		return nil, err
 	}
 
-	proposal, err := t.workbench.Propose(ctx, &formulaassistantservice.ProposeRequest{
+	proposed, err := t.workbench.Propose(ctx, &formulaassistantservice.ProposeRequest{
 		TenantInfo:  formulaTenant(params),
-		SchemaID:    optionalString(params.Params, "schemaId"),
-		Expression:  expression,
-		Variables:   variables,
-		Details:     details,
+		Kind:        t.spec.kind,
+		Name:        optionalString(params.Params, "name"),
+		Description: optionalString(params.Params, "description"),
+		Source:      source,
 		Explanation: explanation,
-		Scenarios:   scenarios,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	note := proposalAppliedNote + pricedByEngineNote
-	if !proposal.Check.Valid {
-		note = "The engine could not run this formula: " + proposal.Check.Error +
-			". Tell the person, fix it and propose it again."
+	if proposed.Proposal == nil {
+		return refusalOf(proposed.Checked), nil
 	}
 
+	edit := pagedraft.Edit{Surface: t.spec.surface, Action: t.spec.action}
+	if t.spec.kind == formulaassistantservice.KindLibrary {
+		edit.Library = proposed.Proposal
+	} else {
+		edit.Formula = proposed.Proposal
+	}
 	return pagedraft.EditResult{
-		Draft: pagedraft.Edit{
-			Surface: pagedraft.SurfaceFormula,
-			Action:  pagedraft.ActionProposeFormula,
-			Formula: proposal,
-		},
-		Note: note,
+		Draft: edit,
+		Note:  proposalAppliedNote + " " + pricedByEngineNote,
 	}, nil
+}
+
+func refusalOf(checked *formulaassistantservice.Checked) refusedProposal {
+	switch {
+	case !checked.OK:
+		return refusedProposal{
+			Findings: checked.Findings,
+			Note: "Nothing was shown: the source does not check. Fix every error finding and " +
+				"propose it again.",
+		}
+	case checked.Tests.Total == 0:
+		return refusedProposal{
+			Note: "Nothing was shown: the source has no tests. Add a test block for each case " +
+				"you describe and propose it again.",
+		}
+	default:
+		return refusedProposal{
+			Tests: checked.Tests,
+			Note: "Nothing was shown: a test fails. Fix the source or, when the person asked " +
+				"for the change the test catches, the test, and propose it again.",
+		}
+	}
 }

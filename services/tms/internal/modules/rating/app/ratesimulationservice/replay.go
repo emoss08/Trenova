@@ -42,7 +42,7 @@ func replayResult(
 	}
 
 	result.Outcome = rated.Outcome
-	result.AfterAmount = rated.Amount
+	result.AfterAmount = rated.Total
 	result.AfterRuleID = rated.RuleID
 	result.LaneKey = winningLaneKey(rated)
 

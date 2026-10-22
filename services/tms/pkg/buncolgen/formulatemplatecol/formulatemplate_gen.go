@@ -55,17 +55,11 @@ var FormulaTemplateColumns = struct {
 	BusinessUnitID       buncolgen.Column // "business_unit_id" → qualified: "ft.business_unit_id"
 	Name                 buncolgen.Column // "name" → qualified: "ft.name"
 	Description          buncolgen.Column // "description" → qualified: "ft.description"
-	Type                 buncolgen.Column // "type" → qualified: "ft.type"
-	Expression           buncolgen.Column // "expression" → qualified: "ft.expression"
+	Source               buncolgen.Column // "source" → qualified: "ft.source"
+	Inputs               buncolgen.Column // "inputs" → qualified: "ft.inputs"
+	Imports              buncolgen.Column // "imports" → qualified: "ft.imports"
+	TestCount            buncolgen.Column // "test_count" → qualified: "ft.test_count"
 	Status               buncolgen.Column // "status" → qualified: "ft.status"
-	SchemaID             buncolgen.Column // "schema_id" → qualified: "ft.schema_id"
-	LanguageVersion      buncolgen.Column // "language_version" → qualified: "ft.language_version"
-	VariableDefinitions  buncolgen.Column // "variable_definitions" → qualified: "ft.variable_definitions"
-	BreakdownDefinitions buncolgen.Column // "breakdown_definitions" → qualified: "ft.breakdown_definitions"
-	MinCharge            buncolgen.Column // "min_charge" → qualified: "ft.min_charge"
-	MaxCharge            buncolgen.Column // "max_charge" → qualified: "ft.max_charge"
-	RoundingMode         buncolgen.Column // "rounding_mode" → qualified: "ft.rounding_mode"
-	RoundingPrecision    buncolgen.Column // "rounding_precision" → qualified: "ft.rounding_precision"
 	SubmittedByID        buncolgen.Column // "submitted_by_id" → qualified: "ft.submitted_by_id"
 	SubmittedAt          buncolgen.Column // "submitted_at" → qualified: "ft.submitted_at"
 	ApprovedByID         buncolgen.Column // "approved_by_id" → qualified: "ft.approved_by_id"
@@ -86,17 +80,11 @@ var FormulaTemplateColumns = struct {
 	BusinessUnitID:       buncolgen.NewColumn("business_unit_id", "ft"),
 	Name:                 buncolgen.NewColumn("name", "ft"),
 	Description:          buncolgen.NewColumn("description", "ft"),
-	Type:                 buncolgen.NewColumn("type", "ft"),
-	Expression:           buncolgen.NewColumn("expression", "ft"),
+	Source:               buncolgen.NewColumn("source", "ft"),
+	Inputs:               buncolgen.NewColumn("inputs", "ft"),
+	Imports:              buncolgen.NewColumn("imports", "ft"),
+	TestCount:            buncolgen.NewColumn("test_count", "ft"),
 	Status:               buncolgen.NewColumn("status", "ft"),
-	SchemaID:             buncolgen.NewColumn("schema_id", "ft"),
-	LanguageVersion:      buncolgen.NewColumn("language_version", "ft"),
-	VariableDefinitions:  buncolgen.NewColumn("variable_definitions", "ft"),
-	BreakdownDefinitions: buncolgen.NewColumn("breakdown_definitions", "ft"),
-	MinCharge:            buncolgen.NewColumn("min_charge", "ft"),
-	MaxCharge:            buncolgen.NewColumn("max_charge", "ft"),
-	RoundingMode:         buncolgen.NewColumn("rounding_mode", "ft"),
-	RoundingPrecision:    buncolgen.NewColumn("rounding_precision", "ft"),
 	SubmittedByID:        buncolgen.NewColumn("submitted_by_id", "ft"),
 	SubmittedAt:          buncolgen.NewColumn("submitted_at", "ft"),
 	ApprovedByID:         buncolgen.NewColumn("approved_by_id", "ft"),
@@ -123,17 +111,11 @@ var FormulaTemplateFieldMap = map[string]string{
 	"businessUnitId":       "business_unit_id",
 	"name":                 "name",
 	"description":          "description",
-	"type":                 "type",
-	"expression":           "expression",
+	"source":               "source",
+	"inputs":               "inputs",
+	"imports":              "imports",
+	"testCount":            "test_count",
 	"status":               "status",
-	"schemaId":             "schema_id",
-	"languageVersion":      "language_version",
-	"variableDefinitions":  "variable_definitions",
-	"breakdownDefinitions": "breakdown_definitions",
-	"minCharge":            "min_charge",
-	"maxCharge":            "max_charge",
-	"roundingMode":         "rounding_mode",
-	"roundingPrecision":    "rounding_precision",
 	"submittedById":        "submitted_by_id",
 	"submittedAt":          "submitted_at",
 	"approvedById":         "approved_by_id",
@@ -156,17 +138,11 @@ var FormulaTemplateInsertableColumns = []string{
 	"business_unit_id",
 	"name",
 	"description",
-	"type",
-	"expression",
+	"source",
+	"inputs",
+	"imports",
+	"test_count",
 	"status",
-	"schema_id",
-	"language_version",
-	"variable_definitions",
-	"breakdown_definitions",
-	"min_charge",
-	"max_charge",
-	"rounding_mode",
-	"rounding_precision",
 	"submitted_by_id",
 	"submitted_at",
 	"approved_by_id",
@@ -253,17 +229,11 @@ var FormulaTemplateFilter = struct {
 	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	Name                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
 	Description          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Type                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
-	Expression           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expression" → DB: "expression"
+	Source               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	Inputs               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputs" → DB: "inputs"
+	Imports              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "imports" → DB: "imports"
+	TestCount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "testCount" → DB: "test_count"
 	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	SchemaID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
-	LanguageVersion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "languageVersion" → DB: "language_version"
-	VariableDefinitions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variableDefinitions" → DB: "variable_definitions"
-	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
-	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
-	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
-	RoundingMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
-	RoundingPrecision    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
 	SubmittedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
 	SubmittedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
 	ApprovedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
@@ -292,38 +262,20 @@ var FormulaTemplateFilter = struct {
 	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("description", op, value)
 	},
-	Type: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("type", op, value)
+	Source: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("source", op, value)
 	},
-	Expression: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("expression", op, value)
+	Inputs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("inputs", op, value)
+	},
+	Imports: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("imports", op, value)
+	},
+	TestCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("testCount", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("status", op, value)
-	},
-	SchemaID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("schemaId", op, value)
-	},
-	LanguageVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("languageVersion", op, value)
-	},
-	VariableDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("variableDefinitions", op, value)
-	},
-	BreakdownDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("breakdownDefinitions", op, value)
-	},
-	MinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("minCharge", op, value)
-	},
-	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("maxCharge", op, value)
-	},
-	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingMode", op, value)
-	},
-	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingPrecision", op, value)
 	},
 	SubmittedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("submittedById", op, value)
@@ -389,57 +341,45 @@ var FormulaTemplateVersionTable = buncolgen.TableInfo{
 //	q.Where(FormulaTemplateVersionColumns.ID.Eq(), id)           // WHERE ftv.id = ?
 //	q.Order(FormulaTemplateVersionColumns.CreatedAt.OrderDesc())  // ORDER BY ftv.created_at DESC
 var FormulaTemplateVersionColumns = struct {
-	ID                   buncolgen.Column // "id" → qualified: "ftv.id"
-	TemplateID           buncolgen.Column // "template_id" → qualified: "ftv.template_id"
-	OrganizationID       buncolgen.Column // "organization_id" → qualified: "ftv.organization_id"
-	BusinessUnitID       buncolgen.Column // "business_unit_id" → qualified: "ftv.business_unit_id"
-	VersionNumber        buncolgen.Column // "version_number" → qualified: "ftv.version_number"
-	Name                 buncolgen.Column // "name" → qualified: "ftv.name"
-	Description          buncolgen.Column // "description" → qualified: "ftv.description"
-	Type                 buncolgen.Column // "type" → qualified: "ftv.type"
-	Expression           buncolgen.Column // "expression" → qualified: "ftv.expression"
-	Status               buncolgen.Column // "status" → qualified: "ftv.status"
-	SchemaID             buncolgen.Column // "schema_id" → qualified: "ftv.schema_id"
-	LanguageVersion      buncolgen.Column // "language_version" → qualified: "ftv.language_version"
-	VariableDefinitions  buncolgen.Column // "variable_definitions" → qualified: "ftv.variable_definitions"
-	BreakdownDefinitions buncolgen.Column // "breakdown_definitions" → qualified: "ftv.breakdown_definitions"
-	MinCharge            buncolgen.Column // "min_charge" → qualified: "ftv.min_charge"
-	MaxCharge            buncolgen.Column // "max_charge" → qualified: "ftv.max_charge"
-	RoundingMode         buncolgen.Column // "rounding_mode" → qualified: "ftv.rounding_mode"
-	RoundingPrecision    buncolgen.Column // "rounding_precision" → qualified: "ftv.rounding_precision"
-	EffectiveFrom        buncolgen.Column // "effective_from" → qualified: "ftv.effective_from"
-	Metadata             buncolgen.Column // "metadata" → qualified: "ftv.metadata"
-	ChangeMessage        buncolgen.Column // "change_message" → qualified: "ftv.change_message"
-	ChangeSummary        buncolgen.Column // "change_summary" → qualified: "ftv.change_summary"
-	Tags                 buncolgen.Column // "tags" → qualified: "ftv.tags"
-	CreatedByID          buncolgen.Column // "created_by_id" → qualified: "ftv.created_by_id"
-	CreatedAt            buncolgen.Column // "created_at" → qualified: "ftv.created_at"
+	ID             buncolgen.Column // "id" → qualified: "ftv.id"
+	TemplateID     buncolgen.Column // "template_id" → qualified: "ftv.template_id"
+	OrganizationID buncolgen.Column // "organization_id" → qualified: "ftv.organization_id"
+	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "ftv.business_unit_id"
+	VersionNumber  buncolgen.Column // "version_number" → qualified: "ftv.version_number"
+	Name           buncolgen.Column // "name" → qualified: "ftv.name"
+	Description    buncolgen.Column // "description" → qualified: "ftv.description"
+	Source         buncolgen.Column // "source" → qualified: "ftv.source"
+	Inputs         buncolgen.Column // "inputs" → qualified: "ftv.inputs"
+	Imports        buncolgen.Column // "imports" → qualified: "ftv.imports"
+	TestCount      buncolgen.Column // "test_count" → qualified: "ftv.test_count"
+	Status         buncolgen.Column // "status" → qualified: "ftv.status"
+	EffectiveFrom  buncolgen.Column // "effective_from" → qualified: "ftv.effective_from"
+	Metadata       buncolgen.Column // "metadata" → qualified: "ftv.metadata"
+	ChangeMessage  buncolgen.Column // "change_message" → qualified: "ftv.change_message"
+	ChangeSummary  buncolgen.Column // "change_summary" → qualified: "ftv.change_summary"
+	Tags           buncolgen.Column // "tags" → qualified: "ftv.tags"
+	CreatedByID    buncolgen.Column // "created_by_id" → qualified: "ftv.created_by_id"
+	CreatedAt      buncolgen.Column // "created_at" → qualified: "ftv.created_at"
 }{
-	ID:                   buncolgen.NewColumn("id", "ftv"),
-	TemplateID:           buncolgen.NewColumn("template_id", "ftv"),
-	OrganizationID:       buncolgen.NewColumn("organization_id", "ftv"),
-	BusinessUnitID:       buncolgen.NewColumn("business_unit_id", "ftv"),
-	VersionNumber:        buncolgen.NewColumn("version_number", "ftv"),
-	Name:                 buncolgen.NewColumn("name", "ftv"),
-	Description:          buncolgen.NewColumn("description", "ftv"),
-	Type:                 buncolgen.NewColumn("type", "ftv"),
-	Expression:           buncolgen.NewColumn("expression", "ftv"),
-	Status:               buncolgen.NewColumn("status", "ftv"),
-	SchemaID:             buncolgen.NewColumn("schema_id", "ftv"),
-	LanguageVersion:      buncolgen.NewColumn("language_version", "ftv"),
-	VariableDefinitions:  buncolgen.NewColumn("variable_definitions", "ftv"),
-	BreakdownDefinitions: buncolgen.NewColumn("breakdown_definitions", "ftv"),
-	MinCharge:            buncolgen.NewColumn("min_charge", "ftv"),
-	MaxCharge:            buncolgen.NewColumn("max_charge", "ftv"),
-	RoundingMode:         buncolgen.NewColumn("rounding_mode", "ftv"),
-	RoundingPrecision:    buncolgen.NewColumn("rounding_precision", "ftv"),
-	EffectiveFrom:        buncolgen.NewColumn("effective_from", "ftv"),
-	Metadata:             buncolgen.NewColumn("metadata", "ftv"),
-	ChangeMessage:        buncolgen.NewColumn("change_message", "ftv"),
-	ChangeSummary:        buncolgen.NewColumn("change_summary", "ftv"),
-	Tags:                 buncolgen.NewColumn("tags", "ftv"),
-	CreatedByID:          buncolgen.NewColumn("created_by_id", "ftv"),
-	CreatedAt:            buncolgen.NewColumn("created_at", "ftv"),
+	ID:             buncolgen.NewColumn("id", "ftv"),
+	TemplateID:     buncolgen.NewColumn("template_id", "ftv"),
+	OrganizationID: buncolgen.NewColumn("organization_id", "ftv"),
+	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "ftv"),
+	VersionNumber:  buncolgen.NewColumn("version_number", "ftv"),
+	Name:           buncolgen.NewColumn("name", "ftv"),
+	Description:    buncolgen.NewColumn("description", "ftv"),
+	Source:         buncolgen.NewColumn("source", "ftv"),
+	Inputs:         buncolgen.NewColumn("inputs", "ftv"),
+	Imports:        buncolgen.NewColumn("imports", "ftv"),
+	TestCount:      buncolgen.NewColumn("test_count", "ftv"),
+	Status:         buncolgen.NewColumn("status", "ftv"),
+	EffectiveFrom:  buncolgen.NewColumn("effective_from", "ftv"),
+	Metadata:       buncolgen.NewColumn("metadata", "ftv"),
+	ChangeMessage:  buncolgen.NewColumn("change_message", "ftv"),
+	ChangeSummary:  buncolgen.NewColumn("change_summary", "ftv"),
+	Tags:           buncolgen.NewColumn("tags", "ftv"),
+	CreatedByID:    buncolgen.NewColumn("created_by_id", "ftv"),
+	CreatedAt:      buncolgen.NewColumn("created_at", "ftv"),
 }
 
 // FormulaTemplateVersionFieldMap maps JSON API field names to database column names.
@@ -447,31 +387,25 @@ var FormulaTemplateVersionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by FormulaTemplateVersion.GetStaticFieldMap().
 var FormulaTemplateVersionFieldMap = map[string]string{
-	"id":                   "id",
-	"templateId":           "template_id",
-	"organizationId":       "organization_id",
-	"businessUnitId":       "business_unit_id",
-	"versionNumber":        "version_number",
-	"name":                 "name",
-	"description":          "description",
-	"type":                 "type",
-	"expression":           "expression",
-	"status":               "status",
-	"schemaId":             "schema_id",
-	"languageVersion":      "language_version",
-	"variableDefinitions":  "variable_definitions",
-	"breakdownDefinitions": "breakdown_definitions",
-	"minCharge":            "min_charge",
-	"maxCharge":            "max_charge",
-	"roundingMode":         "rounding_mode",
-	"roundingPrecision":    "rounding_precision",
-	"effectiveFrom":        "effective_from",
-	"metadata":             "metadata",
-	"changeMessage":        "change_message",
-	"changeSummary":        "change_summary",
-	"tags":                 "tags",
-	"createdById":          "created_by_id",
-	"createdAt":            "created_at",
+	"id":             "id",
+	"templateId":     "template_id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"versionNumber":  "version_number",
+	"name":           "name",
+	"description":    "description",
+	"source":         "source",
+	"inputs":         "inputs",
+	"imports":        "imports",
+	"testCount":      "test_count",
+	"status":         "status",
+	"effectiveFrom":  "effective_from",
+	"metadata":       "metadata",
+	"changeMessage":  "change_message",
+	"changeSummary":  "change_summary",
+	"tags":           "tags",
+	"createdById":    "created_by_id",
+	"createdAt":      "created_at",
 }
 
 // FormulaTemplateVersionInsertableColumns lists column names suitable for INSERT statements on the "formula_template_versions" table.
@@ -484,17 +418,11 @@ var FormulaTemplateVersionInsertableColumns = []string{
 	"version_number",
 	"name",
 	"description",
-	"type",
-	"expression",
+	"source",
+	"inputs",
+	"imports",
+	"test_count",
 	"status",
-	"schema_id",
-	"language_version",
-	"variable_definitions",
-	"breakdown_definitions",
-	"min_charge",
-	"max_charge",
-	"rounding_mode",
-	"rounding_precision",
 	"effective_from",
 	"metadata",
 	"change_message",
@@ -565,31 +493,25 @@ func FormulaTemplateVersionApplyTenant(ti pagination.TenantInfo) func(*bun.Selec
 //	FormulaTemplateVersionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var FormulaTemplateVersionFilter = struct {
-	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	TemplateID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
-	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	VersionNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
-	Name                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Type                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
-	Expression           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expression" → DB: "expression"
-	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	SchemaID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
-	LanguageVersion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "languageVersion" → DB: "language_version"
-	VariableDefinitions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variableDefinitions" → DB: "variable_definitions"
-	BreakdownDefinitions func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "breakdownDefinitions" → DB: "breakdown_definitions"
-	MinCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
-	MaxCharge            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
-	RoundingMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
-	RoundingPrecision    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
-	EffectiveFrom        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
-	Metadata             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
-	ChangeMessage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
-	ChangeSummary        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeSummary" → DB: "change_summary"
-	Tags                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
-	CreatedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
-	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TemplateID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	VersionNumber  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Source         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	Inputs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputs" → DB: "inputs"
+	Imports        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "imports" → DB: "imports"
+	TestCount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "testCount" → DB: "test_count"
+	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	EffectiveFrom  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
+	Metadata       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
+	ChangeMessage  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeMessage" → DB: "change_message"
+	ChangeSummary  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeSummary" → DB: "change_summary"
+	Tags           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
+	CreatedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -612,38 +534,20 @@ var FormulaTemplateVersionFilter = struct {
 	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("description", op, value)
 	},
-	Type: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("type", op, value)
+	Source: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("source", op, value)
 	},
-	Expression: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("expression", op, value)
+	Inputs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("inputs", op, value)
+	},
+	Imports: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("imports", op, value)
+	},
+	TestCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("testCount", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("status", op, value)
-	},
-	SchemaID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("schemaId", op, value)
-	},
-	LanguageVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("languageVersion", op, value)
-	},
-	VariableDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("variableDefinitions", op, value)
-	},
-	BreakdownDefinitions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("breakdownDefinitions", op, value)
-	},
-	MinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("minCharge", op, value)
-	},
-	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("maxCharge", op, value)
-	},
-	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingMode", op, value)
-	},
-	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingPrecision", op, value)
 	},
 	EffectiveFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("effectiveFrom", op, value)
@@ -872,196 +776,142 @@ var ReviewFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
-// TestCase — table "formula_template_test_cases", alias "ftc"
+// VersionImport — table "formula_template_version_imports", alias "ftvi"
 // ---------------------------------------------------------------------------
 
-// TestCaseTable holds the table name, alias, and primary key columns
-// for the "formula_template_test_cases" table. The alias "ftc" is used in all generated
-// SQL fragments (e.g. "ftc.id = ?").
-var TestCaseTable = buncolgen.TableInfo{
-	Name:       "formula_template_test_cases",
-	Alias:      "ftc",
-	PrimaryKey: []string{"id"},
+// VersionImportTable holds the table name, alias, and primary key columns
+// for the "formula_template_version_imports" table. The alias "ftvi" is used in all generated
+// SQL fragments (e.g. "ftvi.id = ?").
+var VersionImportTable = buncolgen.TableInfo{
+	Name:       "formula_template_version_imports",
+	Alias:      "ftvi",
+	PrimaryKey: []string{"template_version_id", "library_id"},
 }
 
-// TestCaseColumns provides type-safe column references for the "formula_template_test_cases" table.
+// VersionImportColumns provides type-safe column references for the "formula_template_version_imports" table.
 // Each field is a [Column] whose methods return pre-computed SQL fragments.
 //
 // Use String() when Bun manages the alias (model-aware queries):
 //
-//	q.Column(TestCaseColumns.ID.String())
-//	// SELECT ftc.id FROM formula_template_test_cases AS ftc
+//	q.Column(VersionImportColumns.ID.String())
+//	// SELECT ftvi.id FROM formula_template_version_imports AS ftvi
 //
 // Use expression helpers for raw WHERE/ORDER BY clauses:
 //
-//	q.Where(TestCaseColumns.ID.Eq(), id)           // WHERE ftc.id = ?
-//	q.Order(TestCaseColumns.CreatedAt.OrderDesc())  // ORDER BY ftc.created_at DESC
-var TestCaseColumns = struct {
-	ID                buncolgen.Column // "id" → qualified: "ftc.id"
-	TemplateID        buncolgen.Column // "template_id" → qualified: "ftc.template_id"
-	OrganizationID    buncolgen.Column // "organization_id" → qualified: "ftc.organization_id"
-	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "ftc.business_unit_id"
-	Name              buncolgen.Column // "name" → qualified: "ftc.name"
-	Description       buncolgen.Column // "description" → qualified: "ftc.description"
-	Variables         buncolgen.Column // "variables" → qualified: "ftc.variables"
-	ExpectedAmount    buncolgen.Column // "expected_amount" → qualified: "ftc.expected_amount"
-	Tolerance         buncolgen.Column // "tolerance" → qualified: "ftc.tolerance"
-	Version           buncolgen.Column // "version" → qualified: "ftc.version"
-	CreatedByID       buncolgen.Column // "created_by_id" → qualified: "ftc.created_by_id"
-	RecordedOnVersion buncolgen.Column // "recorded_on_version" → qualified: "ftc.recorded_on_version"
-	RecordedByID      buncolgen.Column // "recorded_by_id" → qualified: "ftc.recorded_by_id"
-	RecordedAt        buncolgen.Column // "recorded_at" → qualified: "ftc.recorded_at"
-	RecordedContent   buncolgen.Column // "recorded_content" → qualified: "ftc.recorded_content"
-	CreatedAt         buncolgen.Column // "created_at" → qualified: "ftc.created_at"
-	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "ftc.updated_at"
+//	q.Where(VersionImportColumns.ID.Eq(), id)           // WHERE ftvi.id = ?
+//	q.Order(VersionImportColumns.CreatedAt.OrderDesc())  // ORDER BY ftvi.created_at DESC
+var VersionImportColumns = struct {
+	TemplateVersionID    buncolgen.Column // "template_version_id" → qualified: "ftvi.template_version_id"
+	LibraryID            buncolgen.Column // "library_id" → qualified: "ftvi.library_id"
+	OrganizationID       buncolgen.Column // "organization_id" → qualified: "ftvi.organization_id"
+	BusinessUnitID       buncolgen.Column // "business_unit_id" → qualified: "ftvi.business_unit_id"
+	TemplateID           buncolgen.Column // "template_id" → qualified: "ftvi.template_id"
+	TemplateVersion      buncolgen.Column // "template_version" → qualified: "ftvi.template_version"
+	LibraryVersionNumber buncolgen.Column // "library_version_number" → qualified: "ftvi.library_version_number"
+	Path                 buncolgen.Column // "path" → qualified: "ftvi.path"
 }{
-	ID:                buncolgen.NewColumn("id", "ftc"),
-	TemplateID:        buncolgen.NewColumn("template_id", "ftc"),
-	OrganizationID:    buncolgen.NewColumn("organization_id", "ftc"),
-	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "ftc"),
-	Name:              buncolgen.NewColumn("name", "ftc"),
-	Description:       buncolgen.NewColumn("description", "ftc"),
-	Variables:         buncolgen.NewColumn("variables", "ftc"),
-	ExpectedAmount:    buncolgen.NewColumn("expected_amount", "ftc"),
-	Tolerance:         buncolgen.NewColumn("tolerance", "ftc"),
-	Version:           buncolgen.NewColumn("version", "ftc"),
-	CreatedByID:       buncolgen.NewColumn("created_by_id", "ftc"),
-	RecordedOnVersion: buncolgen.NewColumn("recorded_on_version", "ftc"),
-	RecordedByID:      buncolgen.NewColumn("recorded_by_id", "ftc"),
-	RecordedAt:        buncolgen.NewColumn("recorded_at", "ftc"),
-	RecordedContent:   buncolgen.NewColumn("recorded_content", "ftc"),
-	CreatedAt:         buncolgen.NewColumn("created_at", "ftc"),
-	UpdatedAt:         buncolgen.NewColumn("updated_at", "ftc"),
+	TemplateVersionID:    buncolgen.NewColumn("template_version_id", "ftvi"),
+	LibraryID:            buncolgen.NewColumn("library_id", "ftvi"),
+	OrganizationID:       buncolgen.NewColumn("organization_id", "ftvi"),
+	BusinessUnitID:       buncolgen.NewColumn("business_unit_id", "ftvi"),
+	TemplateID:           buncolgen.NewColumn("template_id", "ftvi"),
+	TemplateVersion:      buncolgen.NewColumn("template_version", "ftvi"),
+	LibraryVersionNumber: buncolgen.NewColumn("library_version_number", "ftvi"),
+	Path:                 buncolgen.NewColumn("path", "ftvi"),
 }
 
-// TestCaseFieldMap maps JSON API field names to database column names.
+// VersionImportFieldMap maps JSON API field names to database column names.
 // The QueryBuilder uses this to translate filter/sort requests from the frontend
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by TestCase.GetStaticFieldMap().
-var TestCaseFieldMap = map[string]string{
-	"id":                "id",
-	"templateId":        "template_id",
-	"organizationId":    "organization_id",
-	"businessUnitId":    "business_unit_id",
-	"name":              "name",
-	"description":       "description",
-	"variables":         "variables",
-	"expectedAmount":    "expected_amount",
-	"tolerance":         "tolerance",
-	"version":           "version",
-	"createdById":       "created_by_id",
-	"recordedOnVersion": "recorded_on_version",
-	"recordedById":      "recorded_by_id",
-	"recordedAt":        "recorded_at",
-	"createdAt":         "created_at",
-	"updatedAt":         "updated_at",
+// This is returned by VersionImport.GetStaticFieldMap().
+var VersionImportFieldMap = map[string]string{
+	"templateVersionId":    "template_version_id",
+	"libraryId":            "library_id",
+	"organizationId":       "organization_id",
+	"businessUnitId":       "business_unit_id",
+	"templateId":           "template_id",
+	"templateVersion":      "template_version",
+	"libraryVersionNumber": "library_version_number",
+	"path":                 "path",
 }
 
-// TestCaseInsertableColumns lists column names suitable for INSERT statements on the "formula_template_test_cases" table.
+// VersionImportInsertableColumns lists column names suitable for INSERT statements on the "formula_template_version_imports" table.
 // Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var TestCaseInsertableColumns = []string{
-	"id",
-	"template_id",
+var VersionImportInsertableColumns = []string{
+	"template_version_id",
+	"library_id",
 	"organization_id",
 	"business_unit_id",
-	"name",
-	"description",
-	"variables",
-	"expected_amount",
-	"tolerance",
-	"version",
-	"created_by_id",
-	"recorded_on_version",
-	"recorded_by_id",
-	"recorded_at",
-	"recorded_content",
-	"created_at",
-	"updated_at",
+	"template_id",
+	"template_version",
+	"library_version_number",
+	"path",
 }
 
-// TestCaseRelations provides type-safe names for Bun eager-loading.
-// Use these instead of string literals in .Relation() calls to get compile-time safety.
+// VersionImportScopeTenant restricts a query to a single tenant by adding:
 //
-//	q.Relation(TestCaseRelations.RecordedBy)
-//	// Bun eager-loads the RecordedBy association via a separate query
-var TestCaseRelations = struct {
-	RecordedBy string
-}{
-	RecordedBy: "RecordedBy",
-}
-
-// TestCaseScopeTenant restricts a query to a single tenant by adding:
-//
-//	WHERE ftc.organization_id = ? AND ftc.business_unit_id = ?
+//	WHERE ftvi.organization_id = ? AND ftvi.business_unit_id = ?
 //
 // Returns the same *bun.SelectQuery so it can be chained fluently:
 //
-//	formulatemplatecol.TestCaseScopeTenant(sq, ti).
-//		Where(formulatemplatecol.TestCaseColumns.ID.Eq(), id)
-func TestCaseScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return buncolgen.ScopeTenant(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+//	formulatemplatecol.VersionImportScopeTenant(sq, ti).
+//		Where(formulatemplatecol.VersionImportColumns.ID.Eq(), id)
+func VersionImportScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return buncolgen.ScopeTenant(q, VersionImportColumns.OrganizationID, VersionImportColumns.BusinessUnitID, ti)
 }
 
-// TestCaseScopeTenantUpdate restricts an update query to a single tenant.
+// VersionImportScopeTenantUpdate restricts an update query to a single tenant.
 // Use this inside UpdateQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return formulatemplatecol.TestCaseScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(formulatemplatecol.TestCaseColumns.ID.In(), bun.List(ids))
+//		return formulatemplatecol.VersionImportScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(formulatemplatecol.VersionImportColumns.ID.In(), bun.List(ids))
 //	})
-func TestCaseScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return buncolgen.ScopeTenantUpdate(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+func VersionImportScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return buncolgen.ScopeTenantUpdate(q, VersionImportColumns.OrganizationID, VersionImportColumns.BusinessUnitID, ti)
 }
 
-// TestCaseScopeTenantDelete restricts a delete query to a single tenant.
+// VersionImportScopeTenantDelete restricts a delete query to a single tenant.
 // Use this inside DeleteQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return formulatemplatecol.TestCaseScopeTenantDelete(dq, req.TenantInfo).
-//			Where(formulatemplatecol.TestCaseColumns.ID.Eq(), id)
+//		return formulatemplatecol.VersionImportScopeTenantDelete(dq, req.TenantInfo).
+//			Where(formulatemplatecol.VersionImportColumns.ID.Eq(), id)
 //	})
-func TestCaseScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return buncolgen.ScopeTenantDelete(q, TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+func VersionImportScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return buncolgen.ScopeTenantDelete(q, VersionImportColumns.OrganizationID, VersionImportColumns.BusinessUnitID, ti)
 }
 
-// TestCaseApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// VersionImportApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
 // Use this instead of wrapping ScopeTenant in an anonymous function:
 //
-//	q.Apply(formulatemplatecol.TestCaseApplyTenant(tenantInfo))
-func TestCaseApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return buncolgen.ApplyTenant(TestCaseColumns.OrganizationID, TestCaseColumns.BusinessUnitID, ti)
+//	q.Apply(formulatemplatecol.VersionImportApplyTenant(tenantInfo))
+func VersionImportApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return buncolgen.ApplyTenant(VersionImportColumns.OrganizationID, VersionImportColumns.BusinessUnitID, ti)
 }
 
-// TestCaseFilter builds [domaintypes.FieldFilter] values using the correct JSON
-// field names for the "formula_template_test_cases" table. Pass these to the QueryBuilder's ApplyFilters.
+// VersionImportFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "formula_template_version_imports" table. Pass these to the QueryBuilder's ApplyFilters.
 //
 // The JSON field name is baked in — you only provide the operator and value:
 //
-//	TestCaseFilter.ID(dbtype.OpEq, value)
-//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var TestCaseFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	TemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	Name              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Variables         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "variables" → DB: "variables"
-	ExpectedAmount    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAmount" → DB: "expected_amount"
-	Tolerance         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tolerance" → DB: "tolerance"
-	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
-	RecordedOnVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordedOnVersion" → DB: "recorded_on_version"
-	RecordedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordedById" → DB: "recorded_by_id"
-	RecordedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "recordedAt" → DB: "recorded_at"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+//	VersionImportFilter.TemplateVersionID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "templateVersionId", Operator: "eq", Value: value}
+var VersionImportFilter = struct {
+	TemplateVersionID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersionId" → DB: "template_version_id"
+	LibraryID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "libraryId" → DB: "library_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	TemplateID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	TemplateVersion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersion" → DB: "template_version"
+	LibraryVersionNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "libraryVersionNumber" → DB: "library_version_number"
+	Path                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "path" → DB: "path"
 }{
-	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("id", op, value)
+	TemplateVersionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("templateVersionId", op, value)
 	},
-	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("templateId", op, value)
+	LibraryID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("libraryId", op, value)
 	},
 	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("organizationId", op, value)
@@ -1069,40 +919,16 @@ var TestCaseFilter = struct {
 	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("businessUnitId", op, value)
 	},
-	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("name", op, value)
+	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("templateId", op, value)
 	},
-	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("description", op, value)
+	TemplateVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("templateVersion", op, value)
 	},
-	Variables: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("variables", op, value)
+	LibraryVersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("libraryVersionNumber", op, value)
 	},
-	ExpectedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("expectedAmount", op, value)
-	},
-	Tolerance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("tolerance", op, value)
-	},
-	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("version", op, value)
-	},
-	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("createdById", op, value)
-	},
-	RecordedOnVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("recordedOnVersion", op, value)
-	},
-	RecordedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("recordedById", op, value)
-	},
-	RecordedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("recordedAt", op, value)
-	},
-	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("createdAt", op, value)
-	},
-	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("updatedAt", op, value)
+	Path: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("path", op, value)
 	},
 }

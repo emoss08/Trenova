@@ -1,5 +1,5 @@
 {
-  "version": "sha256:81ab5f836e6b46fc914fec4839fefc029c671071769049d4b24688869d0883a7",
+  "version": "sha256:0790e3410b38626e96804aede72feed9563ed6f3f9984e0665415754d3a1e3d5",
   "screens": [
     {
       "path": "/",
@@ -7196,6 +7196,1514 @@
       "declared": []
     },
     {
+      "path": "/billing/configuration-files/formula-libraries",
+      "name": "Formula libraries",
+      "requires": [
+        {
+          "resource": "formula_library",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "BulkEditFields",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "ExportTableView",
+        "FormulaLibrary",
+        "FormulaLibraryTable",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PreviewBulkEdit",
+        "ResetMyTableLayout",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "StartBulkEdit",
+        "UndoMyBulkEdit"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/tables/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/",
+          "requires": []
+        }
+      ],
+      "reads": [
+        "formula_library"
+      ],
+      "references": [
+        "user"
+      ],
+      "declared": []
+    },
+    {
+      "path": "/billing/configuration-files/formula-libraries/:id/edit",
+      "name": "",
+      "requires": [
+        {
+          "resource": "formula_library",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "AvailableCaptureProfiles",
+        "CancelCaptureRequest",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DismissDeskMemory",
+        "FormulaLibrary",
+        "FormulaLibraryTable",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "RecordMyAgentSuggestion",
+        "ReviseDeskMemory",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "UndoMyDecision"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "delete"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/preview-prompt/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/",
+          "requires": []
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/document-types/select-options/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/",
+          "requires": []
+        }
+      ],
+      "reads": [
+        "capture_batch",
+        "capture_device",
+        "capture_profile",
+        "formula_library"
+      ],
+      "references": [
+        "user"
+      ],
+      "declared": []
+    },
+    {
+      "path": "/billing/configuration-files/formula-libraries/new",
+      "name": "",
+      "requires": [
+        {
+          "resource": "formula_library",
+          "operation": "create"
+        }
+      ],
+      "operations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "AvailableCaptureProfiles",
+        "CancelCaptureRequest",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DismissDeskMemory",
+        "FormulaLibrary",
+        "FormulaLibraryTable",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "RecordMyAgentSuggestion",
+        "ReviseDeskMemory",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "UndoMyDecision"
+      ],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "delete"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "update"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/preview-prompt/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/",
+          "requires": [
+            {
+              "resource": "agent_definition",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/",
+          "requires": [
+            {
+              "resource": "agent_extension",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/",
+          "requires": []
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/",
+          "requires": []
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/",
+          "requires": []
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/",
+          "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/",
+          "requires": [
+            {
+              "resource": "assistant",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/document-types/select-options/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "create"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/",
+          "requires": [
+            {
+              "resource": "document",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/",
+          "requires": []
+        }
+      ],
+      "reads": [
+        "capture_batch",
+        "capture_device",
+        "capture_profile",
+        "formula_library"
+      ],
+      "references": [
+        "user"
+      ],
+      "declared": []
+    },
+    {
       "path": "/billing/configuration-files/formula-templates",
       "name": "Formula templates",
       "requires": [
@@ -7221,206 +8729,6 @@
         "UndoMyBulkEdit"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/formula-templates/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/compare",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/fork",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/impact",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/lineage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/readiness",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/review-diff",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviewers",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviews",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/usage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions/scheduled",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/bulk-update-status",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/duplicate",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "duplicate"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/import",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/install-standards",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/schema",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/standards",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/test",
-          "requires": []
-        },
         {
           "method": "GET",
           "path": "/tables/",
@@ -8152,380 +9460,6 @@
         },
         {
           "method": "GET",
-          "path": "/formula-templates/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/formula-templates/:param/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/approve",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/backtest",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/compare",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/fork",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/impact",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/lineage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/readiness",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/reject",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "reject"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/request-changes",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "reject"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/review-diff",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/review-note",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviewers",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviews",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/rollback",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/submit",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "submit"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/formula-templates/:param/test-cases/:param",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/formula-templates/:param/test-cases/:param",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/test-cases/:param/explain",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/test-cases/run",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/usage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PATCH",
-          "path": "/formula-templates/:param/versions/:param/effective-date",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
-          "method": "PATCH",
-          "path": "/formula-templates/:param/versions/:param/tags",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions/scheduled",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/describe-inputs",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/explain",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/suggest-scenarios",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/import",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/schema",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/standards",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/test",
-          "requires": []
-        },
-        {
-          "method": "GET",
           "path": "/search/global/",
           "requires": []
         }
@@ -9251,380 +10185,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/approve",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/backtest",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/compare",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/fork",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/impact",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/lineage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/readiness",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/reject",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "reject"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/request-changes",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "reject"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/review-diff",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/review-note",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviewers",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviews",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/rollback",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/submit",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "submit"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "DELETE",
-          "path": "/formula-templates/:param/test-cases/:param",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "PUT",
-          "path": "/formula-templates/:param/test-cases/:param",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/test-cases/:param/explain",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/test-cases/run",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/usage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "PATCH",
-          "path": "/formula-templates/:param/versions/:param/effective-date",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "approve"
-            }
-          ]
-        },
-        {
-          "method": "PATCH",
-          "path": "/formula-templates/:param/versions/:param/tags",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "update"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions/scheduled",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/describe-inputs",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/explain",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/suggest-scenarios",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/ai/thread/",
-          "requires": [
-            {
-              "resource": "assistant",
-              "operation": "create"
-            },
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/import",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "create"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/schema",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/standards",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/test",
-          "requires": []
         },
         {
           "method": "GET",
@@ -13973,156 +14533,6 @@
         },
         {
           "method": "GET",
-          "path": "/formula-templates/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/compare",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/impact",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/lineage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/readiness",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/review-diff",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviewers",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviews",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/usage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions/scheduled",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/schema",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/standards",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/test",
-          "requires": []
-        },
-        {
-          "method": "GET",
           "path": "/locations/",
           "requires": [
             {
@@ -15729,156 +16139,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/compare",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/impact",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/lineage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/readiness",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/review-diff",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviewers",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviews",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/usage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions/scheduled",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/schema",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/standards",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/test",
-          "requires": []
         },
         {
           "method": "GET",
@@ -17626,156 +17886,6 @@
               "operation": "read"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/compare",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/:param/impact",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/lineage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/readiness",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/review-diff",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviewers",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/reviews",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/test-cases",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/usage",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/:param/versions/scheduled",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/schema",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "GET",
-          "path": "/formula-templates/standards",
-          "requires": [
-            {
-              "resource": "formula_template",
-              "operation": "read"
-            }
-          ]
-        },
-        {
-          "method": "POST",
-          "path": "/formula-templates/test",
-          "requires": []
         },
         {
           "method": "GET",
@@ -39250,6 +39360,33 @@
       "name": "FleetSafety",
       "type": "query",
       "reads": [],
+      "linked": [],
+      "declared": []
+    },
+    {
+      "name": "FormulaLibrary",
+      "type": "query",
+      "reads": [
+        "formula_library"
+      ],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "profilePicUrl",
+            "username"
+          ]
+        }
+      ],
+      "declared": []
+    },
+    {
+      "name": "FormulaLibraryTable",
+      "type": "query",
+      "reads": [
+        "formula_library"
+      ],
       "linked": [],
       "declared": []
     },

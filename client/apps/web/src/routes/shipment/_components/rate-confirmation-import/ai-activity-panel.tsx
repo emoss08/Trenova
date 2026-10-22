@@ -25,7 +25,7 @@ import {
 } from "./import-draft";
 import type { ReconciliationState } from "./types";
 
-const REQUIRED_COUNT = 4;
+const REQUIRED_COUNT = 3;
 
 type AIActivityPanelProps = {
   documentId: string;
@@ -69,7 +69,6 @@ export default function AIActivityPanel({
     requiredFieldValues.customerId,
     requiredFieldValues.serviceTypeId,
     requiredFieldValues.shipmentTypeId,
-    requiredFieldValues.formulaTemplateId,
   ].filter((value) => value.trim() !== "").length;
   const isReady = filledRequired === REQUIRED_COUNT;
 

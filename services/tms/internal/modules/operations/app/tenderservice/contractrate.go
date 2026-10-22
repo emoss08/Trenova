@@ -69,7 +69,7 @@ func (s *Service) priceGuideEntry(
 	// The contract produced one number, already through its own minimums and
 	// rounding. Offering it as a per-mile rate would invite the offer to be
 	// recomputed into something the contract never said.
-	return offerPrice{method: shipment.CarrierRateMethodFlat, rate: rated.Amount}
+	return offerPrice{method: shipment.CarrierRateMethodFlat, rate: rated.Total}
 }
 
 // shipmentForContractPricing loads the shipment a contract-priced entry needs.

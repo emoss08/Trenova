@@ -183,15 +183,19 @@ func rateCoverageAdvisory(entity *shipment.Shipment) *errortypes.AdvisoryError {
 // a validation call outside the mutation path — is judged on whether it could
 // be priced at all rather than on an outcome it does not have.
 func unratedVerdict(entity *shipment.Shipment) unrated {
-	if entity.RatingDetail == nil {
-		if entity.FormulaTemplateID.IsNil() && entity.RateAgreementID == nil {
+	if entity.FormulaTemplateID.IsNil() && entity.RateAgreementID == nil {
+		switch {
+		case entity.RateLocked || pricedByHand(entity):
+			return priced
+		case entity.RatingDetail == nil:
 			return unpriceable
+		default:
+			return noRateNoMethod
 		}
-
-		return priced
 	}
 
-	if ratequote.Outcome(entity.RatingDetail.Source) != ratequote.OutcomeNoRateFound {
+	if entity.RatingDetail == nil ||
+		ratequote.Outcome(entity.RatingDetail.Source) != ratequote.OutcomeNoRateFound {
 		return priced
 	}
 	if entity.FormulaTemplateID.IsNil() {
@@ -201,15 +205,21 @@ func unratedVerdict(entity *shipment.Shipment) unrated {
 	return noRateWithMethod
 }
 
+func pricedByHand(entity *shipment.Shipment) bool {
+	return entity.FreightChargeAmount.Valid && entity.FreightChargeAmount.Decimal.IsPositive()
+}
+
 func unratedCopyVerdict(source, copied *shipment.Shipment) unrated {
 	if source == nil || copied == nil {
 		return priced
 	}
 
 	return unratedVerdict(&shipment.Shipment{
-		FormulaTemplateID: copied.FormulaTemplateID,
-		RateAgreementID:   source.RateAgreementID,
-		RatingDetail:      source.RatingDetail,
+		FormulaTemplateID:   copied.FormulaTemplateID,
+		RateAgreementID:     source.RateAgreementID,
+		RatingDetail:        source.RatingDetail,
+		RateLocked:          source.RateLocked,
+		FreightChargeAmount: source.FreightChargeAmount,
 	})
 }
 

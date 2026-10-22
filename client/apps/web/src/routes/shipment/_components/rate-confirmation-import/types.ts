@@ -10,7 +10,6 @@ export type RequiredFieldsForm = {
   customerId: string;
   serviceTypeId: string;
   shipmentTypeId: string;
-  formulaTemplateId: string;
   tractorTypeId: string;
   trailerTypeId: string;
   stops: Array<{ locationId: string }>;

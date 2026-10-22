@@ -7,11 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -109,12 +107,7 @@ func (s *Service) validateSubmission(
 		}
 	}
 
-	gate, err := s.evaluateSubmissionGate(
-		contextvariablecache.With(ratetablecache.With(ctx)),
-		template,
-		req.TenantInfo,
-		&ReadinessResponse{},
-	)
+	gate, err := s.evaluateSubmissionGate(ctx, template)
 	if err != nil {
 		return err
 	}

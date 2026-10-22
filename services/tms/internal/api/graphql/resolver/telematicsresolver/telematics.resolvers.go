@@ -14,10 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsmapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -199,7 +199,7 @@ func (r *QueryResolver) ShipmentDriverFeasibility(ctx context.Context, shipmentI
 	return out, nil
 }
 
-func (r *QueryResolver) VehiclePositions(ctx context.Context, maxAgeSeconds *int) ([]*gqlmodel.VehiclePosition, error) {
+func (r *QueryResolver) VehiclePositions(ctx context.Context, maxAgeSeconds *int, tractorIds []string) ([]*gqlmodel.VehiclePosition, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceTractor, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -209,8 +209,16 @@ func (r *QueryResolver) VehiclePositions(ctx context.Context, maxAgeSeconds *int
 	if maxAgeSeconds != nil {
 		maxAge = int64(*maxAgeSeconds)
 	}
+	tractors, err := base.ParseIDs(tractorIds)
+	if err != nil {
+		return nil, err
+	}
 
-	positions, err := r.TelematicsService.ListVehiclePositions(ctx, base.TenantInfo(authCtx), maxAge)
+	positions, err := r.TelematicsService.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
+		TenantInfo:    base.TenantInfo(authCtx),
+		TractorIDs:    tractors,
+		MaxAgeSeconds: maxAge,
+	})
 	if err != nil {
 		return nil, err
 	}

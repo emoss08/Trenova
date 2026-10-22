@@ -26,8 +26,8 @@ type ListRateAgreementConnectionRequest struct {
 type GetRateAgreementByIDRequest struct {
 	RateAgreementID pulid.ID              `json:"rateAgreementId"`
 	TenantInfo      pagination.TenantInfo `json:"-"`
-	// IncludeChildren loads the rules with their weight breaks, the
-	// accessorial schedule, and the fuel binding.
+	// IncludeChildren loads the rules, the accessorial schedule, and the fuel
+	// binding.
 	IncludeChildren bool `json:"includeChildren"`
 	// OmitRules leaves the rules out of a load that includes children, so a
 	// reader that pages lanes through ListLanes still gets the accessorials and
@@ -140,8 +140,6 @@ type RateAgreementLaneSummary struct {
 type LanePricingGroup struct {
 	FormulaTemplateID   *pulid.ID           `json:"formulaTemplateId"   bun:"formula_template_id"`
 	FormulaTemplateName string              `json:"formulaTemplateName" bun:"formula_template_name"`
-	RateMatrixID        *pulid.ID           `json:"rateMatrixId"        bun:"rate_matrix_id"`
-	RateMatrixName      string              `json:"rateMatrixName"      bun:"rate_matrix_name"`
 	Currency            string              `json:"currency"            bun:"currency"`
 	Lanes               int                 `json:"lanes"               bun:"lanes"`
 	MinRate             decimal.NullDecimal `json:"minRate"             bun:"min_rate"`

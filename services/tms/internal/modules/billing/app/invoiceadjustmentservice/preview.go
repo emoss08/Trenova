@@ -15,8 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/effectiveversioncache"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
@@ -465,7 +464,6 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 	// Every leg of a multi-leg order re-rates against the same tenant's rate
 	// tables, so the invoice reads them once instead of once per leg.
 	ctx = ratetablecache.With(ctx)
-	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
 	lines := make([]*invoice.InvoiceLine, 0, len(entity.Lines))

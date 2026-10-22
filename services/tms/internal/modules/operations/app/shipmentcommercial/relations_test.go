@@ -7,11 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -92,7 +91,6 @@ func (f *relationFixture) shipmentFromInput(templateID pulid.ID) *shipment.Shipm
 		ServiceTypeID:     f.serviceTypeID,
 		CustomerID:        f.customerID,
 		TractorTypeID:     f.tractorTypeID,
-		RatingUnit:        1,
 		Moves: []*shipment.ShipmentMove{{
 			Status: shipment.MoveStatusNew,
 			Stops: []*shipment.Stop{
@@ -114,33 +112,33 @@ func (f *relationFixture) shipmentFromInput(templateID pulid.ID) *shipment.Shipm
 	}
 }
 
-func (f *relationFixture) template(expression string) *formulatemplate.FormulaTemplate {
-	return &formulatemplate.FormulaTemplate{
-		ID:             pulid.MustNew("ft_"),
-		OrganizationID: f.orgID,
-		BusinessUnitID: f.buID,
-		Name:           "relation surcharge",
-		SchemaID:       "shipment",
-		Expression:     expression,
-		Status:         formulatemplate.StatusActive,
+func relationTemplate(expression string) *tariffports.Template {
+	return &tariffports.Template{
+		TemplateID:    pulid.MustNew("ft_"),
+		VersionNumber: 1,
+		Name:          "Relation surcharge",
+		Source:        "tariff \"Relation surcharge\"\n\ncharge \"Freight\" = " + expression + "\n",
 	}
 }
 
 func (f *relationFixture) calculator(
 	t *testing.T,
-	template *formulatemplate.FormulaTemplate,
-) *Calculator {
+	template *tariffports.Template,
+) (*Calculator, *ratingtest.Stack) {
 	t.Helper()
 
-	formulaService := ratingtest.NewFormulaService(t, template)
 	hydrator := ratingtest.NewHydrator(t, f.store)
+	stack := ratingtest.NewStack(t, ratingtest.StackOptions{
+		Templates: []*tariffports.Template{template},
+		Hydrator:  hydrator,
+	})
 
-	return New(Params{
+	calculator := New(Params{
 		Logger:     zap.NewNop(),
-		RateEngine: ratingtest.NewHydratingFallbackEngine(t, formulaService, hydrator),
-		Predicate:  formulaService,
+		RateEngine: stack.Engine,
 		Hydrator:   hydrator,
 	})
+	return calculator, stack
 }
 
 func TestRating_ReadsRelatedRecordsTheSaveInputOnlyNamesByID(t *testing.T) {
@@ -150,14 +148,33 @@ func TestRating_ReadsRelatedRecordsTheSaveInputOnlyNamesByID(t *testing.T) {
 		name       string
 		expression string
 	}{
-		{name: "service type", expression: `serviceType.code == "EXP" ? 75 : 0`},
-		{name: "origin state", expression: `origin.state == "CA" ? 75 : 0`},
-		{name: "destination state", expression: `destination.state == "TX" ? 75 : 0`},
-		{name: "customer", expression: `customer.code == "ACME" ? 75 : 0`},
-		{name: "tractor type", expression: `tractorType.code == "DC" ? 75 : 0`},
 		{
-			name:       "friday evening pacific pickup is not a weekend",
-			expression: `isWeekendPickup ? 0 : (pickupHour == 18 ? 75 : 0)`,
+			name:       "service type",
+			expression: `if shipment.serviceType.code == "EXP" { $75 } else { $0 }`,
+		},
+		{
+			name:       "origin state",
+			expression: `if lane.origin.state == "CA" { $75 } else { $0 }`,
+		},
+		{
+			name:       "destination state",
+			expression: `if lane.destination.state == "TX" { $75 } else { $0 }`,
+		},
+		{
+			name:       "customer",
+			expression: `if customer.code == "ACME" { $75 } else { $0 }`,
+		},
+		{
+			name: "tractor type",
+			expression: `if let tractor = shipment.tractorType { ` +
+				`if tractor.code == "DC" { $75 } else { $0 } } else { $0 }`,
+		},
+		{
+			name: "friday evening pacific pickup is not a weekend",
+			expression: `if let pickup = shipment.pickup { ` +
+				`if let start = pickup.window.start { ` +
+				`if start.weekend { $0 } else if start.hour == 18 { $75 } else { $0 } ` +
+				`} else { $0 } } else { $0 }`,
 		},
 	}
 
@@ -166,20 +183,20 @@ func TestRating_ReadsRelatedRecordsTheSaveInputOnlyNamesByID(t *testing.T) {
 			t.Parallel()
 
 			fixture := newRelationFixture(t)
-			template := fixture.template(tt.expression)
-			calculator := fixture.calculator(t, template)
+			template := relationTemplate(tt.expression)
+			calculator, stack := fixture.calculator(t, template)
 			userID := pulid.MustNew("usr_")
 			control := &tenant.ShipmentControl{}
 			want := decimal.NewFromInt(75)
 
-			created := fixture.shipmentFromInput(template.ID)
+			created := fixture.shipmentFromInput(template.TemplateID)
 			_, err := calculator.RateAndAdoptContract(t.Context(), created, control, userID)
 			require.NoError(t, err)
 			require.True(t, created.FreightChargeAmount.Valid)
 			assert.True(t, want.Equal(created.FreightChargeAmount.Decimal),
 				"create priced %s", created.FreightChargeAmount.Decimal)
 
-			updated := fixture.shipmentFromInput(template.ID)
+			updated := fixture.shipmentFromInput(template.TemplateID)
 			updated.ID = created.ID
 			require.NoError(t, calculator.Recalculate(t.Context(), updated, control, userID))
 			assert.True(t, want.Equal(updated.FreightChargeAmount.Decimal),
@@ -191,13 +208,14 @@ func TestRating_ReadsRelatedRecordsTheSaveInputOnlyNamesByID(t *testing.T) {
 
 			totals, err := calculator.CalculateTotals(
 				t.Context(),
-				fixture.shipmentFromInput(template.ID),
+				fixture.shipmentFromInput(template.TemplateID),
 				control,
 				userID,
 			)
 			require.NoError(t, err)
 			assert.True(t, want.Equal(totals.FreightChargeAmount),
 				"totals priced %s", totals.FreightChargeAmount)
+			assert.Positive(t, stack.Evaluations())
 		})
 	}
 }
@@ -206,9 +224,9 @@ func TestRating_AnAlreadyLoadedShipmentIsNotLoadedAgain(t *testing.T) {
 	t.Parallel()
 
 	fixture := newRelationFixture(t)
-	template := fixture.template(`serviceType.code == "EXP" ? 75 : 0`)
-	calculator := fixture.calculator(t, template)
-	entity := fixture.shipmentFromInput(template.ID)
+	template := relationTemplate(`if shipment.serviceType.code == "EXP" { $75 } else { $0 }`)
+	calculator, _ := fixture.calculator(t, template)
+	entity := fixture.shipmentFromInput(template.TemplateID)
 
 	require.NoError(t, calculator.Recalculate(
 		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
@@ -220,40 +238,4 @@ func TestRating_AnAlreadyLoadedShipmentIsNotLoadedAgain(t *testing.T) {
 	assert.Len(t, fixture.store.Fetches("serviceType"), 1)
 	assert.Len(t, fixture.store.Fetches("location"), 1)
 	assert.Len(t, fixture.store.Fetches("state"), 1)
-}
-
-func TestRateAndAdoptContract_AccessorialConditionReadsTheServiceType(t *testing.T) {
-	t.Parallel()
-
-	fixture := newRelationFixture(t)
-	agreement := agreementWithAccessorial(t, decimal.NewFromInt(40))
-	agreement.Accessorials[0].ApplyCondition = `serviceType.code == "EXP"`
-
-	template := fixture.template(`100`)
-	formulaService := ratingtest.NewFormulaService(t, template)
-	calculator := New(Params{
-		Logger:        zap.NewNop(),
-		RateEngine:    shipmentcommercialtest.StubRateEngineForAgreement(t, 100, &agreement.ID),
-		Predicate:     formulaService,
-		AgreementRepo: agreementRepoFor(t, agreement),
-		Hydrator:      ratingtest.NewHydrator(t, fixture.store),
-	})
-	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
-
-	entity := fixture.shipmentFromInput(template.ID)
-	_, err := calculator.RateAndAdoptContract(
-		t.Context(),
-		entity,
-		&tenant.ShipmentControl{},
-		pulid.MustNew("usr_"),
-	)
-	require.NoError(t, err)
-
-	require.Len(t, entity.AdditionalCharges, 1)
-	assert.Equal(
-		t,
-		agreement.Accessorials[0].ID,
-		*entity.AdditionalCharges[0].RateAgreementAccessorialID,
-	)
-	assert.True(t, decimal.NewFromInt(40).Equal(entity.AdditionalCharges[0].Amount))
 }

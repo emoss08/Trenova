@@ -236,7 +236,17 @@ function buildShipment(raw, index, anchor) {
     totalChargeAmount: String(revenue),
     freightChargeAmount: String(Math.round(revenue * 0.8)),
     otherChargeAmount: String(Math.round(revenue * 0.2)),
-    baseRate: String(Math.round(revenue * 0.8)),
+    tariffInputs: { rate: { $q: ((revenue * 0.8) / miles).toFixed(2), u: "$/mi" } },
+    freightLines: [
+      {
+        label: "Linehaul",
+        quantity: String(miles),
+        quantityUnit: "mi",
+        rate: ((revenue * 0.8) / miles).toFixed(2),
+        rateUnit: "$/mi",
+        amount: String(Math.round(revenue * 0.8)),
+      },
+    ],
     weight,
     pieces: 22,
     temperatureMin: reefer ? 34 : null,

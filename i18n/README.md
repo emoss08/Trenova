@@ -202,6 +202,19 @@ with leading, trailing or repeated whitespace or a newline: the catalogs collaps
 in their keys, while the crate sends the template exactly as written, so such a key could
 never be looked up.
 
+**The standard library's doc comments are templates too.** The crate ships the Tariff
+standard library (`src/tariff/stdlib/*.tariff`) and sends its doc comments to the hosts as
+messages, so `tools/extract-tariff.mjs` reads every `///` block of a `library "std.…"` file
+and files it like a `message!` template (kind `rules-doc`). A block's template is its lines
+with the slashes removed, joined with single spaces and trimmed; a function's doc also gives
+each parameter the sentences (each ending at `. `) that name it in backticks, joined with a
+space. The crate computes the same templates (`tariff::stdlib::docs`), and its test
+`every_template_is_in_the_catalog_for_both_hosts` fails when the two disagree or the catalog
+is stale, so a changed std doc comment needs `task i18n`. A std doc never holds `{` or `}`:
+the extractor refuses it, and the crate's ICU test also rejects `''`, `#` and anything shaped
+like a rich-text tag. The doc comments of tariffs and organisation libraries are their
+authors' words and are never extracted.
+
 A template the string filter rejects (`{0}` alone has no letters) is listed by
-`task i18n-report -- --rejected`, like a Go message, and renders in English. The extractor's
-tests are `tools/extract-rust.test.mjs` (`task i18n-test`).
+`task i18n-report -- --rejected`, like a Go message, and renders in English. The extractors'
+tests are `tools/extract-rust.test.mjs` and `tools/extract-tariff.test.mjs` (`task i18n-test`).

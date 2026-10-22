@@ -1,0 +1,1039 @@
+{
+ "cases": [
+  {
+   "name": "a let's inferred type",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "range": {
+     "text": "miles"
+    },
+    "contents": {
+     "signature": "let miles: Distance",
+     "type": "Distance",
+     "unit": "mi"
+    }
+   }
+  },
+  {
+   "name": "a reference to a let",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" = $1/mi * mil|es"
+   ],
+   "expect": {
+    "range": {
+     "text": "miles"
+    },
+    "contents": {
+     "signature": "let miles: Distance"
+    }
+   }
+  },
+  {
+   "name": "an input with its doc",
+   "source": [
+    "tariff \"t\"",
+    "/// Paid per loaded mile.",
+    "input rate: Money/mi = $2.35/mi",
+    "charge \"x\" = ra|te * shipment.distance"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "input rate: Money/mi = $2.35/mi",
+     "type": "Money/mi",
+     "unit": "$/mi",
+     "doc": "Paid per loaded mile."
+    }
+   }
+  },
+  {
+   "name": "a function's signature and doc",
+   "source": [
+    "tariff \"t\"",
+    "/// Deadhead over 50 miles at the rate.",
+    "fn deadhead(empty: Distance, rate: Money/mi) -> Money = rate * empty",
+    "charge \"x\" = dead|head(80 mi, rate: $1/mi)"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "fn deadhead(empty: Distance, rate: Money/mi) -> Money",
+     "doc": "Deadhead over 50 miles at the rate.",
+     "type": "Money"
+    }
+   }
+  },
+  {
+   "name": "a function with an inferred return type",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(amount: Money = $95) = amount",
+    "charge \"x\" = f|ee()"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "fn fee(amount: Money = $95) -> Money"
+    }
+   }
+  },
+  {
+   "name": "a parameter's doc comes from its function's doc",
+   "source": [
+    "tariff \"t\"",
+    "/// Time past `free`, billed at `rate`.",
+    "fn wait(free: Duration, rate: Money/h) -> Money = rate * fr|ee",
+    "charge \"x\" = wait(1 h, rate: $1/h)"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "free: Duration",
+     "doc": "Time past `free`, billed at `rate`."
+    }
+   }
+  },
+  {
+   "name": "a named argument shows its parameter",
+   "source": [
+    "tariff \"t\"",
+    "/// Time past `free`, billed at `rate`.",
+    "fn wait(free: Duration, rate: Money/h) -> Money = rate * free",
+    "charge \"x\" = wait(1 h, ra|te: $1/h)"
+   ],
+   "expect": {
+    "range": {
+     "text": "rate"
+    },
+    "contents": {
+     "signature": "rate: Money/h",
+     "doc": "Time past `free`, billed at `rate`."
+    }
+   }
+  },
+  {
+   "name": "a schema field",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.wei|ght",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "range": {
+     "text": "weight"
+    },
+    "contents": {
+     "signature": "weight: Weight?",
+     "type": "Weight?",
+     "unit": "lb"
+    }
+   }
+  },
+  {
+   "name": "a schema root",
+   "source": [
+    "tariff \"t\"",
+    "let w = ship|ment.weight",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "doc": {
+      "message": "The shipment being rated."
+     }
+    }
+   }
+  },
+  {
+   "name": "a method of money",
+   "source": [
+    "tariff \"t\"",
+    "let a = $5",
+    "charge \"x\" = a.round|Up(to: $5)"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "roundUp(to: Money) -> Money",
+     "doc": {
+      "message": "Rounds up to the next multiple of `to`: `roundUp(to: $5)`."
+     }
+    }
+   }
+  },
+  {
+   "name": "a property",
+   "source": [
+    "tariff \"t\"",
+    "let n = customer.name.l|en",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "len: Int",
+     "type": "Int"
+    }
+   }
+  },
+  {
+   "name": "a list method's lambda is typed",
+   "source": [
+    "tariff \"t\"",
+    "let d = shipment.stops.wh|ere(s => s.appointment)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "where(f: Stop => Bool) -> List<Stop>"
+    }
+   }
+  },
+  {
+   "name": "a lambda parameter",
+   "source": [
+    "tariff \"t\"",
+    "let d = shipment.stops.where(s => |s.appointment)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "s: Stop",
+     "type": "Stop"
+    }
+   }
+  },
+  {
+   "name": "a loop variable",
+   "source": [
+    "tariff \"t\"",
+    "for st|op in shipment.stops {",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "stop: Stop"
+    }
+   }
+  },
+  {
+   "name": "an if let binding is narrowed",
+   "source": [
+    "tariff \"t\"",
+    "if let w| = shipment.weight {",
+    "  charge \"x\" = $1/lb * w",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "w: Weight"
+    }
+   }
+  },
+  {
+   "name": "a bare enum variant",
+   "source": [
+    "tariff \"t\"",
+    "let k = shipment.stops.count(s => s.kind == Deliv|ery)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "StopKind.Delivery",
+     "type": "StopKind"
+    }
+   }
+  },
+  {
+   "name": "a qualified variant",
+   "source": [
+    "tariff \"t\"",
+    "let k: StopStatus = StopStatus.N|ew",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "StopStatus.New"
+    }
+   }
+  },
+  {
+   "name": "the enum of a qualified variant",
+   "source": [
+    "tariff \"t\"",
+    "let k: StopStatus = Stop|Status.New",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "enum StopStatus { New, InTransit, Completed, Canceled }"
+    }
+   }
+  },
+  {
+   "name": "a pattern variant",
+   "source": [
+    "tariff \"t\"",
+    "for s in shipment.stops {",
+    "  match s.kind {",
+    "    Pick|up => {}",
+    "    _ => {}",
+    "  }",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "StopKind.Pickup"
+    }
+   }
+  },
+  {
+   "name": "a declared enum's variant with its doc",
+   "source": [
+    "tariff \"t\"",
+    "enum Zone {",
+    "  /// The home zone.",
+    "  North,",
+    "  South",
+    "}",
+    "let z: Zone = Nor|th",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "Zone.North",
+     "doc": "The home zone."
+    }
+   }
+  },
+  {
+   "name": "a declared type",
+   "source": [
+    "tariff \"t\"",
+    "/// A weight break.",
+    "type Break = { from: Weight, rate: Money/cwt }",
+    "input breaks: List<Bre|ak> = []",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "type Break = { from: Weight, rate: Money/cwt }",
+     "doc": "A weight break."
+    }
+   }
+  },
+  {
+   "name": "a built-in type",
+   "source": [
+    "tariff \"t\"",
+    "input r: Mon|ey = $1",
+    "charge \"x\" = r"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "Money",
+     "doc": {
+      "message": "Money in the rating currency, written `$450`."
+     }
+    }
+   }
+  },
+  {
+   "name": "a schema record type",
+   "source": [
+    "tariff \"t\"",
+    "input s: List<St|op> = []",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "type Stop = { sequence: Int, kind: StopKind, status: StopStatus, appointment: Bool, window: { start: DateTime?, end: DateTime? }, arrival: DateTime?, departure: DateTime?, dwell: Duration?, pieces: Int?, weight: Weight?, location: { city: Text, state: Text, zip: Text, zip3: Text, … } }"
+    }
+   }
+  },
+  {
+   "name": "a record field of a declared type",
+   "source": [
+    "tariff \"t\"",
+    "type Break = {",
+    "  /// Where the break starts.",
+    "  from: Weight",
+    "}",
+    "input b: Break = { from: 1 lb }",
+    "charge \"x\" = $1/lb * b.fr|om"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "from: Weight",
+     "doc": "Where the break starts."
+    }
+   }
+  },
+  {
+   "name": "a unit in a literal",
+   "source": [
+    "tariff \"t\"",
+    "let w = 1_200 l|b",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "lb",
+     "type": "Weight",
+     "doc": {
+      "message": "`{0}` is a {1}, a unit of {2}: 1 {0} = {3} {4}, exactly.",
+      "args": [
+       "lb",
+       {
+        "message": "pound"
+       },
+       {
+        "message": "weight"
+       },
+       "0.45359237",
+       "kg"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a unit in a rate type",
+   "source": [
+    "tariff \"t\"",
+    "input r: Money/c|wt = $1/cwt",
+    "charge \"x\" = r * 1 lb"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "cwt",
+     "type": "Weight"
+    }
+   }
+  },
+  {
+   "name": "a count unit",
+   "source": [
+    "tariff \"t\"",
+    "input r: Money/pal|let = $1/pallet",
+    "charge \"x\" = r * 2"
+   ],
+   "expect": {
+    "contents": {
+     "type": "Count"
+    }
+   }
+  },
+  {
+   "name": "a temperature unit",
+   "source": [
+    "tariff \"t\"",
+    "let t = 5 °|F",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "°F",
+     "type": "Temperature"
+    }
+   }
+  },
+  {
+   "name": "a quantity literal in SI",
+   "source": [
+    "tariff \"t\"",
+    "let w = 1_2|00 lb",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "range": {
+     "text": "1_200 lb"
+    },
+    "contents": {
+     "signature": "1_200 lb",
+     "type": "Weight",
+     "doc": {
+      "message": "`{0}` is `{1} {2}`",
+      "args": [
+       "1_200 lb",
+       "544.31",
+       "kg"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a distance literal in SI",
+   "source": [
+    "tariff \"t\"",
+    "let d = 2|.5 mi",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "doc": {
+      "args": [
+       "2.5 mi",
+       "4.02",
+       "km"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a money literal",
+   "source": [
+    "tariff \"t\"",
+    "let a = $2.3|5/mi",
+    "charge \"x\" = a * shipment.distance"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "$2.35/mi",
+     "type": "Money/mi"
+    }
+   }
+  },
+  {
+   "name": "a percent literal",
+   "source": [
+    "tariff \"t\"",
+    "let p = 1|8%",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "type": "Percent",
+     "doc": {
+      "message": "`{0}` multiplies as {1}",
+      "args": [
+       "18%",
+       "0.18"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a date literal's weekday",
+   "source": [
+    "tariff \"t\"",
+    "let d = @2026-10-|22",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "type": "Date",
+     "doc": {
+      "args": [
+       "@2026-10-22",
+       "Thu"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a keyword",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1",
+    "char|ge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "charge",
+     "doc": {
+      "message": "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r) = amount`; in a test, `charge(CODE)` reads a line's amount."
+     }
+    }
+   }
+  },
+  {
+   "name": "a contextual keyword",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" a|s FSC = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "as"
+    }
+   }
+  },
+  {
+   "name": "a total clause",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "mini|mum $5"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "minimum"
+    }
+   }
+  },
+  {
+   "name": "a charge code with its description",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as FS|C = $1"
+   ],
+   "expect": {
+    "range": {
+     "text": "FSC"
+    },
+    "contents": {
+     "signature": "FSC",
+     "doc": "Fuel surcharge"
+    }
+   }
+  },
+  {
+   "name": "an inactive charge code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Lift\" as LI|FT = $1"
+   ],
+   "expect": {
+    "contents": {
+     "doc": {
+      "message": "{0} (inactive: it can't be billed)",
+      "args": [
+       "Liftgate"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a rate table with its axes",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.Zo|nes[lane.origin.zip3, lane.destination.zip3]",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "tables.Zones[origin zip3: Zip3 (Exact), destination zip3: Zip3 (Exact)]",
+     "type": "Money/cwt?",
+     "doc": "Zone rates"
+    }
+   }
+  },
+  {
+   "name": "a table method",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.Breaks.ba|nd(1 lb)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "tables.Breaks.band(…)"
+    }
+   }
+  },
+  {
+   "name": "tables itself",
+   "source": [
+    "tariff \"t\"",
+    "let r = tab|les.Zones[\"1\", \"2\"]",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "tables",
+     "doc": {
+      "args": [
+       "Zones, Breaks, ClassRates"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library module in use",
+   "source": [
+    "tariff \"t\"",
+    "use std.fu|el.{ stepPercent }",
+    "charge \"x\" = $1 * stepPercent($1/gal, peg: $1/gal, step: $1/gal, perStep: 1%)"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "use std.fuel",
+     "doc": {
+      "message": "Fuel surcharges computed in the language, for contracts that price fuel themselves."
+     }
+    }
+   }
+  },
+  {
+   "name": "an imported library function",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ hazmat }",
+    "charge \"x\" = haz|mat(1 mi)"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "fn hazmat(miles: Distance) -> Money",
+     "doc": "Hazmat handling per loaded mile."
+    }
+   }
+  },
+  {
+   "name": "a name in an import list",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ def|icit }",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "fn deficit(breaks: List<Break>, actual: Weight, allow: Bool = true) -> Rated"
+    }
+   }
+  },
+  {
+   "name": "a module alias",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "charge \"x\" = $1 * fu|el.stepPercent($1/gal, peg: $1/gal, step: $1/gal, perStep: 1%)"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "use std.fuel"
+    }
+   }
+  },
+  {
+   "name": "a module function",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "charge \"x\" = $1 * fuel.step|Percent($1/gal, peg: $1/gal, step: $1/gal, perStep: 1%)"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "fn stepPercent(price: Money/gal, peg: Money/gal, step: Money/gal, perStep: Percent) -> Percent"
+    }
+   }
+  },
+  {
+   "name": "a given path's field",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.wei|ght = 1 lb",
+    "  expect total == $1",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "shipment.weight: Weight?"
+    }
+   }
+  },
+  {
+   "name": "a constant",
+   "source": [
+    "tariff \"t\"",
+    "/// The base.",
+    "const BASE: Money = $5",
+    "charge \"x\" = BA|SE"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "const BASE: Money = $5",
+     "doc": "The base."
+    }
+   }
+  },
+  {
+   "name": "a let's previewed value",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "contents": {
+     "value": {
+      "display": "412 mi",
+      "value": {
+       "$q": "412",
+       "u": "mi"
+      },
+      "times": 1
+     }
+    }
+   },
+   "input": {
+    "values": [
+     {
+      "kind": "bind",
+      "name": "miles",
+      "value": {
+       "$q": "412",
+       "u": "mi"
+      },
+      "display": "412 mi",
+      "range": {
+       "from": 11,
+       "to": 40
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a var's last value",
+   "source": [
+    "tariff \"t\"",
+    "var total = $0",
+    "for s in shipment.stops {",
+    "  total += $1",
+    "}",
+    "charge \"x\" = tot|al"
+   ],
+   "expect": {
+    "contents": {
+     "value": {
+      "display": "$2.00",
+      "times": 3
+     }
+    }
+   },
+   "input": {
+    "values": [
+     {
+      "kind": "bind",
+      "name": "total",
+      "value": {
+       "$q": "0",
+       "u": "$"
+      },
+      "display": "$0.00",
+      "range": {
+       "from": 11,
+       "to": 25
+      }
+     },
+     {
+      "kind": "assign",
+      "name": "total",
+      "value": {
+       "$q": "1",
+       "u": "$"
+      },
+      "display": "$1.00",
+      "range": {
+       "from": 53,
+       "to": 63
+      }
+     },
+     {
+      "kind": "assign",
+      "name": "total",
+      "value": {
+       "$q": "2",
+       "u": "$"
+      },
+      "display": "$2.00",
+      "range": {
+       "from": 53,
+       "to": 63
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "malformed values are ignored",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "let miles: Distance"
+    }
+   },
+   "input": {
+    "values": [
+     1,
+     {
+      "kind": "bind"
+     },
+     "x"
+    ]
+   }
+  },
+  {
+   "name": "nothing on whitespace",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1   |  ",
+    "charge \"x\" = $1"
+   ],
+   "expect": null
+  },
+  {
+   "name": "nothing in a comment",
+   "source": [
+    "tariff \"t\"",
+    "// let a = shipm|ent",
+    "charge \"x\" = $1"
+   ],
+   "expect": null
+  },
+  {
+   "name": "a hover in a broken file",
+   "source": [
+    "tariff \"t\"",
+    "let a = (1 +",
+    "let b = shipment.dist|ance",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "distance: Distance"
+    }
+   }
+  },
+  {
+   "name": "a hover after non-ASCII text",
+   "source": [
+    "tariff \"t\"",
+    "let cafe = \"🚚 crème\"",
+    "let mi|les = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "range": {
+     "text": "miles"
+    },
+    "contents": {
+     "type": "Distance"
+    }
+   }
+  },
+  {
+   "name": "a name after non-ASCII text on the line before",
+   "source": [
+    "tariff \"t\"",
+    "let label = \"café 🚚\"",
+    "let n|ame = label",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "range": {
+     "text": "name"
+    },
+    "contents": {
+     "type": "Text"
+    }
+   }
+  },
+  {
+   "name": "a test constructor's field",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(arri|val: @2026-01-05T08:00Z)]",
+    "}"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "arrival: DateTime?"
+    }
+   }
+  },
+  {
+   "name": "a schema field's doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "let p = shipment.pro|Number",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "proNumber: Text",
+     "doc": {
+      "message": "The shipment's PRO number."
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library function's doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ billed }",
+    "charge \"x\" = $1/cwt * bil|led(1_240 lb)"
+   ],
+   "expect": {
+    "contents": {
+     "doc": {
+      "message": "The weight to bill: `weight` rounded up to the next multiple of `to`, 100 lb unless given."
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library type's field doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ Break }",
+    "let b: Break = { from: 0 lb, rate: $10/cwt, minimum: none }",
+    "charge \"x\" = b.ra|te * 100 lb"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "rate: Money/cwt",
+     "doc": {
+      "message": "What the break charges per hundredweight."
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library parameter's doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "use std.accessorials.{ extraStops }",
+    "charge \"x\" = extraStops(shipment.stops, incl|uded: 2, fee: $75)"
+   ],
+   "expect": {
+    "contents": {
+     "doc": {
+      "message": "Extra stops: `fee` for every stop beyond the first `included`."
+     }
+    }
+   }
+  },
+  {
+   "name": "an organisation library's doc stays the author's words",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ liftgate }",
+    "charge \"x\" = lift|gate(2)"
+   ],
+   "expect": {
+    "contents": {
+     "doc": "A liftgate at `stops` stops, `fee` each."
+    }
+   }
+  }
+ ]
+}

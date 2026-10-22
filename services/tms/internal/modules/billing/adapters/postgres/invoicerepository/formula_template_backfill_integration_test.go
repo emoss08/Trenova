@@ -66,8 +66,8 @@ func TestFormulaTemplateBackfillNamesTheTemplateEachFreightLineWasRatedWith(t *t
 	assigned := backfillTemplate{ID: pulid.MustNew("ft_"), Name: "Per CWT – backfill assigned"}
 	for _, tmpl := range []backfillTemplate{rated, assigned} {
 		_, err = db.ExecContext(ctx,
-			`INSERT INTO "formula_templates" ("id", "organization_id", "business_unit_id", "name", "expression")
-			VALUES (?, ?, ?, ?, '1')`,
+			`INSERT INTO "formula_templates" ("id", "organization_id", "business_unit_id", "name", "source")
+			VALUES (?, ?, ?, ?, '')`,
 			tmpl.ID, org.ID, org.BusinessUnitID, tmpl.Name)
 		require.NoError(t, err)
 	}

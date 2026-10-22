@@ -21,7 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,8 +42,6 @@ const (
 	maxNameLength        = 150
 	maxDescriptionLength = 2000
 	maxContractRefLength = 100
-	maxRoundingPrecision = 6
-	hundredPercent       = 100
 )
 
 type RateAgreement struct {
@@ -72,11 +70,8 @@ type RateAgreement struct {
 	AutoRenew         bool   `json:"autoRenew"         bun:"auto_renew,type:BOOLEAN,notnull,default:false"`
 	RenewalNoticeDays int16  `json:"renewalNoticeDays" bun:"renewal_notice_days,type:SMALLINT,notnull,default:30"`
 
-	Currency          string                 `json:"currency"          bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
-	DefaultMinCharge  decimal.NullDecimal    `json:"defaultMinCharge"  bun:"default_min_charge,type:NUMERIC(19,4),nullzero"`
-	DefaultMaxCharge  decimal.NullDecimal    `json:"defaultMaxCharge"  bun:"default_max_charge,type:NUMERIC(19,4),nullzero"`
-	RoundingMode      ratetypes.RoundingMode `json:"roundingMode"      bun:"rounding_mode,type:rate_rounding_mode_enum,notnull,default:'HalfUp'"`
-	RoundingPrecision int16                  `json:"roundingPrecision" bun:"rounding_precision,type:SMALLINT,notnull,default:2"`
+	Currency string             `json:"currency" bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
+	Inputs   tarifftypes.Inputs `json:"inputs"   bun:"inputs,type:JSONB,notnull,default:'{}'"`
 
 	// BillToCustomerID redirects invoicing on a customer agreement. It is only
 	// meaningful on the sell side and a check constraint keeps it there.
@@ -160,9 +155,7 @@ func (ra *RateAgreement) applyDefaults() {
 	if ra.Currency == "" {
 		ra.Currency = money.DefaultCurrencyCode
 	}
-	if ra.RoundingMode == "" {
-		ra.RoundingMode = ratetypes.RoundingModeHalfUp
-	}
+	ra.Inputs = ra.Inputs.OrEmpty()
 	if ra.CurrentVersionNumber == 0 {
 		ra.CurrentVersionNumber = 1
 	}
@@ -205,15 +198,6 @@ func (ra *RateAgreement) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&ra.Currency,
 			validation.Required.Error("Currency is required"),
 			validation.Length(3, 3).Error("Currency must be a three letter code"),
-		),
-		validation.Field(&ra.RoundingMode,
-			validation.Required.Error("Rounding mode is required"),
-			domainvalidation.ValidEnum[ratetypes.RoundingMode]("Rounding mode is invalid"),
-		),
-		validation.Field(&ra.RoundingPrecision,
-			validation.Min(int16(0)).Error("Rounding precision cannot be negative"),
-			validation.Max(int16(maxRoundingPrecision)).
-				Error("Rounding precision cannot exceed 6"),
 		),
 		validation.Field(&ra.EffectiveFrom,
 			validation.Required.Error("Effective from is required"),
@@ -293,33 +277,6 @@ func (ra *RateAgreement) validateWindow(multiErr *errortypes.MultiError) {
 }
 
 func (ra *RateAgreement) validateGuardrails(multiErr *errortypes.MultiError) {
-	if ra.DefaultMinCharge.Valid && ra.DefaultMinCharge.Decimal.IsNegative() {
-		multiErr.Add(
-			"defaultMinCharge",
-			errortypes.ErrInvalid,
-			"Default minimum charge cannot be negative",
-		)
-	}
-
-	if ra.DefaultMaxCharge.Valid && ra.DefaultMaxCharge.Decimal.IsNegative() {
-		multiErr.Add(
-			"defaultMaxCharge",
-			errortypes.ErrInvalid,
-			"Default maximum charge cannot be negative",
-		)
-	}
-
-	// A ceiling below the floor clamps every charge twice and leaves a priced
-	// shipment nobody can explain.
-	if ra.DefaultMinCharge.Valid && ra.DefaultMaxCharge.Valid &&
-		ra.DefaultMaxCharge.Decimal.LessThan(ra.DefaultMinCharge.Decimal) {
-		multiErr.Add(
-			"defaultMaxCharge",
-			errortypes.ErrInvalid,
-			"Default maximum charge cannot be less than the default minimum charge",
-		)
-	}
-
 	validatePercent(multiErr, "marginFloorPercent", ra.MarginFloorPercent, "Margin floor")
 	validatePercent(multiErr, "maxPayPercentOfSell", ra.MaxPayPercentOfSell, "Maximum pay")
 }

@@ -2,7 +2,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { statusChoices } from "@/lib/choices";
+import { rateMatrixValueTypeChoices, statusChoices } from "@/lib/choices";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { RateMatrixRow } from "@/lib/graphql/rate-tables";
 
@@ -62,34 +62,28 @@ export function getColumns(t: TranslateFn): ColumnDef<RateMatrixRow>[] {
       },
     },
     {
-      // Without this the list is a set of grids of anonymous numbers. The same
-      // grid is a per-mile tariff or a flat table depending on which formula
-      // template prices it, and nothing else on the row says which.
-      accessorKey: "formulaTemplateName",
-      header: t("Rates are"),
-      cell: ({ row }) => <span className="text-sm">{row.original.formulaTemplateName || "—"}</span>,
-      size: 170,
-      minSize: 140,
-      maxSize: 210,
-      meta: {
-        label: t("Rates are"),
-        apiField: "formulaTemplateId",
-        filterable: false,
-        sortable: false,
+      // Without this the list is a set of grids of anonymous numbers: the same
+      // grid is a per-mile tariff or a flat table depending on its value type.
+      accessorKey: "valueType",
+      header: t("Values are"),
+      cell: ({ row }) => {
+        const choice = rateMatrixValueTypeChoices.find(
+          (option) => option.value === row.original.valueType,
+        );
+
+        return <span className="text-sm">{choice ? t(choice.label) : row.original.valueType}</span>;
       },
-    },
-    {
-      accessorKey: "currency",
-      header: t("Currency"),
-      cell: ({ row }) => <span className="font-mono">{row.original.currency}</span>,
-      size: 100,
-      minSize: 90,
-      maxSize: 120,
+      size: 190,
+      minSize: 150,
+      maxSize: 230,
       meta: {
-        label: t("Currency"),
-        apiField: "currency",
+        label: t("Values are"),
+        apiField: "valueType",
         filterable: true,
         sortable: true,
+        filterType: "select",
+        filterOptions: rateMatrixValueTypeChoices,
+        defaultFilterOperator: "eq",
       },
     },
     {

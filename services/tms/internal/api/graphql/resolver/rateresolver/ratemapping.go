@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func rateAgreementToModel(entity *rateagreement.RateAgreement) *gqlmodel.RateAgreement {
+func rateAgreementToModel(
+	entity *rateagreement.RateAgreement,
+	inputs map[string]any,
+) *gqlmodel.RateAgreement {
 	if entity == nil {
 		return nil
 	}
@@ -34,8 +37,7 @@ func rateAgreementToModel(entity *rateagreement.RateAgreement) *gqlmodel.RateAgr
 		AutoRenew:            entity.AutoRenew,
 		RenewalNoticeDays:    int(entity.RenewalNoticeDays),
 		Currency:             entity.Currency,
-		DefaultMinCharge:     base.NullDecimalToStringPtr(entity.DefaultMinCharge),
-		DefaultMaxCharge:     base.NullDecimalToStringPtr(entity.DefaultMaxCharge),
+		Inputs:               inputs,
 		MarginFloorPercent:   base.NullDecimalToStringPtr(entity.MarginFloorPercent),
 		MaxPayPercentOfSell:  base.NullDecimalToStringPtr(entity.MaxPayPercentOfSell),
 		SubmittedByID:        base.IDPtrFromPulidPtr(entity.SubmittedByID),
@@ -53,11 +55,22 @@ func rateAgreementToModel(entity *rateagreement.RateAgreement) *gqlmodel.RateAgr
 func rateAgreementConnectionToModel(
 	result *pagination.CursorListResult[*rateagreement.RateAgreement],
 ) (*gqlmodel.RateAgreementConnection, error) {
+	inputs := make(map[*rateagreement.RateAgreement]map[string]any, len(result.Items))
+	for _, item := range result.Items {
+		if item == nil {
+			continue
+		}
+		values, err := base.TariffInputsToModel(item.Inputs)
+		if err != nil {
+			return nil, err
+		}
+		inputs[item] = values
+	}
 	page, err := base.EntityCursorConnection(
 		result,
 		func(node *rateagreement.RateAgreement, cursor string) *gqlmodel.RateAgreementEdge {
 			return &gqlmodel.RateAgreementEdge{
-				Node:   rateAgreementToModel(node),
+				Node:   rateAgreementToModel(node, inputs[node]),
 				Cursor: cursor,
 			}
 		},
@@ -127,15 +140,10 @@ func rateMatrixToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 		Name:              entity.Name,
 		Description:       entity.Description,
 		Status:            string(entity.Status),
-		FormulaTemplateID: entity.FormulaTemplateID.String(),
-		Currency:          entity.Currency,
+		ValueType:         entity.ValueType,
 		Version:           int(entity.Version),
 		CreatedAt:         int(entity.CreatedAt),
 		UpdatedAt:         int(entity.UpdatedAt),
-	}
-
-	if entity.FormulaTemplate != nil {
-		model.FormulaTemplateName = entity.FormulaTemplate.Name
 	}
 
 	return model

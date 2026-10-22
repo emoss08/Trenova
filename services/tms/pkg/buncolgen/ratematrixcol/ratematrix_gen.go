@@ -25,396 +25,6 @@ var (
 )
 
 // ---------------------------------------------------------------------------
-// DensityScale — table "rate_density_scales", alias "rds"
-// ---------------------------------------------------------------------------
-
-// DensityScaleTable holds the table name, alias, and primary key columns
-// for the "rate_density_scales" table. The alias "rds" is used in all generated
-// SQL fragments (e.g. "rds.id = ?").
-var DensityScaleTable = buncolgen.TableInfo{
-	Name:       "rate_density_scales",
-	Alias:      "rds",
-	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
-}
-
-// DensityScaleColumns provides type-safe column references for the "rate_density_scales" table.
-// Each field is a [Column] whose methods return pre-computed SQL fragments.
-//
-// Use String() when Bun manages the alias (model-aware queries):
-//
-//	q.Column(DensityScaleColumns.ID.String())
-//	// SELECT rds.id FROM rate_density_scales AS rds
-//
-// Use expression helpers for raw WHERE/ORDER BY clauses:
-//
-//	q.Where(DensityScaleColumns.ID.Eq(), id)           // WHERE rds.id = ?
-//	q.Order(DensityScaleColumns.CreatedAt.OrderDesc())  // ORDER BY rds.created_at DESC
-var DensityScaleColumns = struct {
-	ID             buncolgen.Column // "id" → qualified: "rds.id"
-	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "rds.business_unit_id"
-	OrganizationID buncolgen.Column // "organization_id" → qualified: "rds.organization_id"
-	Code           buncolgen.Column // "code" → qualified: "rds.code"
-	Name           buncolgen.Column // "name" → qualified: "rds.name"
-	Description    buncolgen.Column // "description" → qualified: "rds.description"
-	Status         buncolgen.Column // "status" → qualified: "rds.status"
-	EffectiveFrom  buncolgen.Column // "effective_from" → qualified: "rds.effective_from"
-	IsOrgDefault   buncolgen.Column // "is_org_default" → qualified: "rds.is_org_default"
-	Version        buncolgen.Column // "version" → qualified: "rds.version"
-	CreatedAt      buncolgen.Column // "created_at" → qualified: "rds.created_at"
-	UpdatedAt      buncolgen.Column // "updated_at" → qualified: "rds.updated_at"
-}{
-	ID:             buncolgen.NewColumn("id", "rds"),
-	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "rds"),
-	OrganizationID: buncolgen.NewColumn("organization_id", "rds"),
-	Code:           buncolgen.NewColumn("code", "rds"),
-	Name:           buncolgen.NewColumn("name", "rds"),
-	Description:    buncolgen.NewColumn("description", "rds"),
-	Status:         buncolgen.NewColumn("status", "rds"),
-	EffectiveFrom:  buncolgen.NewColumn("effective_from", "rds"),
-	IsOrgDefault:   buncolgen.NewColumn("is_org_default", "rds"),
-	Version:        buncolgen.NewColumn("version", "rds"),
-	CreatedAt:      buncolgen.NewColumn("created_at", "rds"),
-	UpdatedAt:      buncolgen.NewColumn("updated_at", "rds"),
-}
-
-// DensityScaleFieldMap maps JSON API field names to database column names.
-// The QueryBuilder uses this to translate filter/sort requests from the frontend
-// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by DensityScale.GetStaticFieldMap().
-var DensityScaleFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"code":           "code",
-	"name":           "name",
-	"description":    "description",
-	"status":         "status",
-	"effectiveFrom":  "effective_from",
-	"isOrgDefault":   "is_org_default",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
-}
-
-// DensityScaleInsertableColumns lists column names suitable for INSERT statements on the "rate_density_scales" table.
-// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var DensityScaleInsertableColumns = []string{
-	"id",
-	"business_unit_id",
-	"organization_id",
-	"code",
-	"name",
-	"description",
-	"status",
-	"effective_from",
-	"is_org_default",
-	"version",
-	"created_at",
-	"updated_at",
-}
-
-// DensityScaleRelations provides type-safe names for Bun eager-loading.
-// Use these instead of string literals in .Relation() calls to get compile-time safety.
-//
-//	q.Relation(DensityScaleRelations.BusinessUnit)
-//	// Bun eager-loads the BusinessUnit association via a separate query
-var DensityScaleRelations = struct {
-	BusinessUnit string
-	Organization string
-	Tiers        string
-}{
-	BusinessUnit: "BusinessUnit",
-	Organization: "Organization",
-	Tiers:        "Tiers",
-}
-
-// DensityScaleScopeTenant restricts a query to a single tenant by adding:
-//
-//	WHERE rds.organization_id = ? AND rds.business_unit_id = ?
-//
-// Returns the same *bun.SelectQuery so it can be chained fluently:
-//
-//	ratematrixcol.DensityScaleScopeTenant(sq, ti).
-//		Where(ratematrixcol.DensityScaleColumns.ID.Eq(), id)
-func DensityScaleScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return buncolgen.ScopeTenant(q, DensityScaleColumns.OrganizationID, DensityScaleColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleScopeTenantUpdate restricts an update query to a single tenant.
-// Use this inside UpdateQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return ratematrixcol.DensityScaleScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(ratematrixcol.DensityScaleColumns.ID.In(), bun.List(ids))
-//	})
-func DensityScaleScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return buncolgen.ScopeTenantUpdate(q, DensityScaleColumns.OrganizationID, DensityScaleColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleScopeTenantDelete restricts a delete query to a single tenant.
-// Use this inside DeleteQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return ratematrixcol.DensityScaleScopeTenantDelete(dq, req.TenantInfo).
-//			Where(ratematrixcol.DensityScaleColumns.ID.Eq(), id)
-//	})
-func DensityScaleScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return buncolgen.ScopeTenantDelete(q, DensityScaleColumns.OrganizationID, DensityScaleColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
-// Use this instead of wrapping ScopeTenant in an anonymous function:
-//
-//	q.Apply(ratematrixcol.DensityScaleApplyTenant(tenantInfo))
-func DensityScaleApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return buncolgen.ApplyTenant(DensityScaleColumns.OrganizationID, DensityScaleColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleFilter builds [domaintypes.FieldFilter] values using the correct JSON
-// field names for the "rate_density_scales" table. Pass these to the QueryBuilder's ApplyFilters.
-//
-// The JSON field name is baked in — you only provide the operator and value:
-//
-//	DensityScaleFilter.ID(dbtype.OpEq, value)
-//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var DensityScaleFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Code           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	EffectiveFrom  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
-	IsOrgDefault   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isOrgDefault" → DB: "is_org_default"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
-}{
-	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("id", op, value)
-	},
-	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("businessUnitId", op, value)
-	},
-	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("organizationId", op, value)
-	},
-	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("code", op, value)
-	},
-	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("name", op, value)
-	},
-	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("description", op, value)
-	},
-	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("status", op, value)
-	},
-	EffectiveFrom: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("effectiveFrom", op, value)
-	},
-	IsOrgDefault: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("isOrgDefault", op, value)
-	},
-	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("version", op, value)
-	},
-	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("createdAt", op, value)
-	},
-	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("updatedAt", op, value)
-	},
-}
-
-// ---------------------------------------------------------------------------
-// DensityScaleTier — table "rate_density_scale_tiers", alias "rdt"
-// ---------------------------------------------------------------------------
-
-// DensityScaleTierTable holds the table name, alias, and primary key columns
-// for the "rate_density_scale_tiers" table. The alias "rdt" is used in all generated
-// SQL fragments (e.g. "rdt.id = ?").
-var DensityScaleTierTable = buncolgen.TableInfo{
-	Name:       "rate_density_scale_tiers",
-	Alias:      "rdt",
-	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
-}
-
-// DensityScaleTierColumns provides type-safe column references for the "rate_density_scale_tiers" table.
-// Each field is a [Column] whose methods return pre-computed SQL fragments.
-//
-// Use String() when Bun manages the alias (model-aware queries):
-//
-//	q.Column(DensityScaleTierColumns.ID.String())
-//	// SELECT rdt.id FROM rate_density_scale_tiers AS rdt
-//
-// Use expression helpers for raw WHERE/ORDER BY clauses:
-//
-//	q.Where(DensityScaleTierColumns.ID.Eq(), id)           // WHERE rdt.id = ?
-//	q.Order(DensityScaleTierColumns.CreatedAt.OrderDesc())  // ORDER BY rdt.created_at DESC
-var DensityScaleTierColumns = struct {
-	ID                 buncolgen.Column // "id" → qualified: "rdt.id"
-	BusinessUnitID     buncolgen.Column // "business_unit_id" → qualified: "rdt.business_unit_id"
-	OrganizationID     buncolgen.Column // "organization_id" → qualified: "rdt.organization_id"
-	RateDensityScaleID buncolgen.Column // "rate_density_scale_id" → qualified: "rdt.rate_density_scale_id"
-	FromPcf            buncolgen.Column // "from_pcf" → qualified: "rdt.from_pcf"
-	ToPcf              buncolgen.Column // "to_pcf" → qualified: "rdt.to_pcf"
-	FreightClass       buncolgen.Column // "freight_class" → qualified: "rdt.freight_class"
-	SortOrder          buncolgen.Column // "sort_order" → qualified: "rdt.sort_order"
-	CreatedAt          buncolgen.Column // "created_at" → qualified: "rdt.created_at"
-	UpdatedAt          buncolgen.Column // "updated_at" → qualified: "rdt.updated_at"
-}{
-	ID:                 buncolgen.NewColumn("id", "rdt"),
-	BusinessUnitID:     buncolgen.NewColumn("business_unit_id", "rdt"),
-	OrganizationID:     buncolgen.NewColumn("organization_id", "rdt"),
-	RateDensityScaleID: buncolgen.NewColumn("rate_density_scale_id", "rdt"),
-	FromPcf:            buncolgen.NewColumn("from_pcf", "rdt"),
-	ToPcf:              buncolgen.NewColumn("to_pcf", "rdt"),
-	FreightClass:       buncolgen.NewColumn("freight_class", "rdt"),
-	SortOrder:          buncolgen.NewColumn("sort_order", "rdt"),
-	CreatedAt:          buncolgen.NewColumn("created_at", "rdt"),
-	UpdatedAt:          buncolgen.NewColumn("updated_at", "rdt"),
-}
-
-// DensityScaleTierFieldMap maps JSON API field names to database column names.
-// The QueryBuilder uses this to translate filter/sort requests from the frontend
-// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by DensityScaleTier.GetStaticFieldMap().
-var DensityScaleTierFieldMap = map[string]string{
-	"id":                 "id",
-	"businessUnitId":     "business_unit_id",
-	"organizationId":     "organization_id",
-	"rateDensityScaleId": "rate_density_scale_id",
-	"fromPcf":            "from_pcf",
-	"toPcf":              "to_pcf",
-	"freightClass":       "freight_class",
-	"sortOrder":          "sort_order",
-	"createdAt":          "created_at",
-	"updatedAt":          "updated_at",
-}
-
-// DensityScaleTierInsertableColumns lists column names suitable for INSERT statements on the "rate_density_scale_tiers" table.
-// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var DensityScaleTierInsertableColumns = []string{
-	"id",
-	"business_unit_id",
-	"organization_id",
-	"rate_density_scale_id",
-	"from_pcf",
-	"to_pcf",
-	"freight_class",
-	"sort_order",
-	"created_at",
-	"updated_at",
-}
-
-// DensityScaleTierRelations provides type-safe names for Bun eager-loading.
-// Use these instead of string literals in .Relation() calls to get compile-time safety.
-//
-//	q.Relation(DensityScaleTierRelations.DensityScale)
-//	// Bun eager-loads the DensityScale association via a separate query
-var DensityScaleTierRelations = struct {
-	DensityScale string
-}{
-	DensityScale: "DensityScale",
-}
-
-// DensityScaleTierScopeTenant restricts a query to a single tenant by adding:
-//
-//	WHERE rdt.organization_id = ? AND rdt.business_unit_id = ?
-//
-// Returns the same *bun.SelectQuery so it can be chained fluently:
-//
-//	ratematrixcol.DensityScaleTierScopeTenant(sq, ti).
-//		Where(ratematrixcol.DensityScaleTierColumns.ID.Eq(), id)
-func DensityScaleTierScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return buncolgen.ScopeTenant(q, DensityScaleTierColumns.OrganizationID, DensityScaleTierColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleTierScopeTenantUpdate restricts an update query to a single tenant.
-// Use this inside UpdateQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return ratematrixcol.DensityScaleTierScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(ratematrixcol.DensityScaleTierColumns.ID.In(), bun.List(ids))
-//	})
-func DensityScaleTierScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return buncolgen.ScopeTenantUpdate(q, DensityScaleTierColumns.OrganizationID, DensityScaleTierColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleTierScopeTenantDelete restricts a delete query to a single tenant.
-// Use this inside DeleteQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return ratematrixcol.DensityScaleTierScopeTenantDelete(dq, req.TenantInfo).
-//			Where(ratematrixcol.DensityScaleTierColumns.ID.Eq(), id)
-//	})
-func DensityScaleTierScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return buncolgen.ScopeTenantDelete(q, DensityScaleTierColumns.OrganizationID, DensityScaleTierColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleTierApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
-// Use this instead of wrapping ScopeTenant in an anonymous function:
-//
-//	q.Apply(ratematrixcol.DensityScaleTierApplyTenant(tenantInfo))
-func DensityScaleTierApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return buncolgen.ApplyTenant(DensityScaleTierColumns.OrganizationID, DensityScaleTierColumns.BusinessUnitID, ti)
-}
-
-// DensityScaleTierFilter builds [domaintypes.FieldFilter] values using the correct JSON
-// field names for the "rate_density_scale_tiers" table. Pass these to the QueryBuilder's ApplyFilters.
-//
-// The JSON field name is baked in — you only provide the operator and value:
-//
-//	DensityScaleTierFilter.ID(dbtype.OpEq, value)
-//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var DensityScaleTierFilter = struct {
-	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RateDensityScaleID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateDensityScaleId" → DB: "rate_density_scale_id"
-	FromPcf            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromPcf" → DB: "from_pcf"
-	ToPcf              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toPcf" → DB: "to_pcf"
-	FreightClass       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightClass" → DB: "freight_class"
-	SortOrder          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sortOrder" → DB: "sort_order"
-	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
-}{
-	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("id", op, value)
-	},
-	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("businessUnitId", op, value)
-	},
-	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("organizationId", op, value)
-	},
-	RateDensityScaleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("rateDensityScaleId", op, value)
-	},
-	FromPcf: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("fromPcf", op, value)
-	},
-	ToPcf: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("toPcf", op, value)
-	},
-	FreightClass: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("freightClass", op, value)
-	},
-	SortOrder: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("sortOrder", op, value)
-	},
-	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("createdAt", op, value)
-	},
-	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("updatedAt", op, value)
-	},
-}
-
-// ---------------------------------------------------------------------------
 // RateMatrix — table "rate_matrices", alias "rmx"
 // ---------------------------------------------------------------------------
 
@@ -440,39 +50,33 @@ var RateMatrixTable = buncolgen.TableInfo{
 //	q.Where(RateMatrixColumns.ID.Eq(), id)           // WHERE rmx.id = ?
 //	q.Order(RateMatrixColumns.CreatedAt.OrderDesc())  // ORDER BY rmx.created_at DESC
 var RateMatrixColumns = struct {
-	ID                buncolgen.Column // "id" → qualified: "rmx.id"
-	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "rmx.business_unit_id"
-	OrganizationID    buncolgen.Column // "organization_id" → qualified: "rmx.organization_id"
-	Code              buncolgen.Column // "code" → qualified: "rmx.code"
-	Name              buncolgen.Column // "name" → qualified: "rmx.name"
-	Description       buncolgen.Column // "description" → qualified: "rmx.description"
-	Currency          buncolgen.Column // "currency" → qualified: "rmx.currency"
-	Status            buncolgen.Column // "status" → qualified: "rmx.status"
-	FormulaTemplateID buncolgen.Column // "formula_template_id" → qualified: "rmx.formula_template_id"
-	RoundingMode      buncolgen.Column // "rounding_mode" → qualified: "rmx.rounding_mode"
-	RoundingPrecision buncolgen.Column // "rounding_precision" → qualified: "rmx.rounding_precision"
-	Version           buncolgen.Column // "version" → qualified: "rmx.version"
-	CreatedAt         buncolgen.Column // "created_at" → qualified: "rmx.created_at"
-	UpdatedAt         buncolgen.Column // "updated_at" → qualified: "rmx.updated_at"
-	SearchVector      buncolgen.Column // "search_vector" → qualified: "rmx.search_vector"
-	Rank              buncolgen.Column // "rank" → qualified: "rmx.rank"
+	ID             buncolgen.Column // "id" → qualified: "rmx.id"
+	BusinessUnitID buncolgen.Column // "business_unit_id" → qualified: "rmx.business_unit_id"
+	OrganizationID buncolgen.Column // "organization_id" → qualified: "rmx.organization_id"
+	Code           buncolgen.Column // "code" → qualified: "rmx.code"
+	Name           buncolgen.Column // "name" → qualified: "rmx.name"
+	Description    buncolgen.Column // "description" → qualified: "rmx.description"
+	ValueType      buncolgen.Column // "value_type" → qualified: "rmx.value_type"
+	Status         buncolgen.Column // "status" → qualified: "rmx.status"
+	Version        buncolgen.Column // "version" → qualified: "rmx.version"
+	CreatedAt      buncolgen.Column // "created_at" → qualified: "rmx.created_at"
+	UpdatedAt      buncolgen.Column // "updated_at" → qualified: "rmx.updated_at"
+	SearchVector   buncolgen.Column // "search_vector" → qualified: "rmx.search_vector"
+	Rank           buncolgen.Column // "rank" → qualified: "rmx.rank"
 }{
-	ID:                buncolgen.NewColumn("id", "rmx"),
-	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "rmx"),
-	OrganizationID:    buncolgen.NewColumn("organization_id", "rmx"),
-	Code:              buncolgen.NewColumn("code", "rmx"),
-	Name:              buncolgen.NewColumn("name", "rmx"),
-	Description:       buncolgen.NewColumn("description", "rmx"),
-	Currency:          buncolgen.NewColumn("currency", "rmx"),
-	Status:            buncolgen.NewColumn("status", "rmx"),
-	FormulaTemplateID: buncolgen.NewColumn("formula_template_id", "rmx"),
-	RoundingMode:      buncolgen.NewColumn("rounding_mode", "rmx"),
-	RoundingPrecision: buncolgen.NewColumn("rounding_precision", "rmx"),
-	Version:           buncolgen.NewColumn("version", "rmx"),
-	CreatedAt:         buncolgen.NewColumn("created_at", "rmx"),
-	UpdatedAt:         buncolgen.NewColumn("updated_at", "rmx"),
-	SearchVector:      buncolgen.NewColumn("search_vector", "rmx"),
-	Rank:              buncolgen.NewColumn("rank", "rmx"),
+	ID:             buncolgen.NewColumn("id", "rmx"),
+	BusinessUnitID: buncolgen.NewColumn("business_unit_id", "rmx"),
+	OrganizationID: buncolgen.NewColumn("organization_id", "rmx"),
+	Code:           buncolgen.NewColumn("code", "rmx"),
+	Name:           buncolgen.NewColumn("name", "rmx"),
+	Description:    buncolgen.NewColumn("description", "rmx"),
+	ValueType:      buncolgen.NewColumn("value_type", "rmx"),
+	Status:         buncolgen.NewColumn("status", "rmx"),
+	Version:        buncolgen.NewColumn("version", "rmx"),
+	CreatedAt:      buncolgen.NewColumn("created_at", "rmx"),
+	UpdatedAt:      buncolgen.NewColumn("updated_at", "rmx"),
+	SearchVector:   buncolgen.NewColumn("search_vector", "rmx"),
+	Rank:           buncolgen.NewColumn("rank", "rmx"),
 }
 
 // RateMatrixFieldMap maps JSON API field names to database column names.
@@ -480,20 +84,17 @@ var RateMatrixColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by RateMatrix.GetStaticFieldMap().
 var RateMatrixFieldMap = map[string]string{
-	"id":                "id",
-	"businessUnitId":    "business_unit_id",
-	"organizationId":    "organization_id",
-	"code":              "code",
-	"name":              "name",
-	"description":       "description",
-	"currency":          "currency",
-	"status":            "status",
-	"formulaTemplateId": "formula_template_id",
-	"roundingMode":      "rounding_mode",
-	"roundingPrecision": "rounding_precision",
-	"version":           "version",
-	"createdAt":         "created_at",
-	"updatedAt":         "updated_at",
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"code":           "code",
+	"name":           "name",
+	"description":    "description",
+	"valueType":      "value_type",
+	"status":         "status",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
 }
 
 // RateMatrixInsertableColumns lists column names suitable for INSERT statements on the "rate_matrices" table.
@@ -505,11 +106,8 @@ var RateMatrixInsertableColumns = []string{
 	"code",
 	"name",
 	"description",
-	"currency",
+	"value_type",
 	"status",
-	"formula_template_id",
-	"rounding_mode",
-	"rounding_precision",
 	"version",
 	"created_at",
 	"updated_at",
@@ -521,15 +119,13 @@ var RateMatrixInsertableColumns = []string{
 //	q.Relation(RateMatrixRelations.BusinessUnit)
 //	// Bun eager-loads the BusinessUnit association via a separate query
 var RateMatrixRelations = struct {
-	BusinessUnit    string
-	Organization    string
-	FormulaTemplate string
-	Dimensions      string
+	BusinessUnit string
+	Organization string
+	Dimensions   string
 }{
-	BusinessUnit:    "BusinessUnit",
-	Organization:    "Organization",
-	FormulaTemplate: "FormulaTemplate",
-	Dimensions:      "Dimensions",
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+	Dimensions:   "Dimensions",
 }
 
 // RateMatrixScopeTenant restricts a query to a single tenant by adding:
@@ -582,20 +178,17 @@ func RateMatrixApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun
 //	RateMatrixFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RateMatrixFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Code              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Currency          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
-	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	FormulaTemplateID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
-	RoundingMode      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
-	RoundingPrecision func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
-	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Code           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	ValueType      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "valueType" → DB: "value_type"
+	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -615,20 +208,11 @@ var RateMatrixFilter = struct {
 	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("description", op, value)
 	},
-	Currency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("currency", op, value)
+	ValueType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("valueType", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("status", op, value)
-	},
-	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("formulaTemplateId", op, value)
-	},
-	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingMode", op, value)
-	},
-	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingPrecision", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)

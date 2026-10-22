@@ -48,6 +48,7 @@ func contractRated(amount string) *ratequoteports.RatedShipment {
 
 	return &ratequoteports.RatedShipment{
 		Amount:      decimal.RequireFromString(amount),
+		Total:       decimal.RequireFromString(amount),
 		Currency:    "USD",
 		Outcome:     ratequote.OutcomeRated,
 		AgreementID: &agreementID,
