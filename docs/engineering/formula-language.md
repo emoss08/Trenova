@@ -5,6 +5,8 @@ replaces the expr-flavoured formula language. Nothing has launched, so nothing h
 back by compatibility: every formula, seed, catalog template, corpus case, prompt and doc is
 rewritten.
 
+For the syntax at a glance, see the [cheat sheet](tariff-cheat-sheet.md).
+
 The engine stays as it is: the `trenova-rules` crate, one WebAssembly module, exact decimals,
 metered evaluation, no clock, no randomness, no I/O, and the browser and the server agreeing.
 The language is what changes.
