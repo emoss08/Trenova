@@ -29,7 +29,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { tariffScaffoldTest } from "@trenova/shared/rules/tariff";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
-import { EMPTY_TARIFF_CONTEXT } from "@trenova/shared/types/tariff";
+import { EMPTY_TARIFF_CONTEXT, type TariffInputValues } from "@trenova/shared/types/tariff";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { useStudio } from "../studio-context";
@@ -51,7 +51,7 @@ function SaveAsTest() {
   const save = useMutation({
     mutationFn: async (title: string) => {
       const source = getValues("source") ?? "";
-      const inputs = presentInputs(previewInputs.getValues("inputs"));
+      const inputs = presentInputs(previewInputs.getValues("inputs") as TariffInputValues);
       if (usingShipment) {
         const response = await apiService.formulaTemplateService.scaffoldTest({
           source,

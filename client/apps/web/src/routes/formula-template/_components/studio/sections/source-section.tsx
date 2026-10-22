@@ -22,11 +22,13 @@ import { formatAltShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import type { TariffFormatResult } from "@trenova/shared/rules/tariff";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
+import type { TariffInputValues } from "@trenova/shared/types/tariff";
 import type { EditorView } from "@codemirror/view";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { NovaButton } from "../ai/nova-button";
 import { useStudio } from "../studio-context";
+import { presentInputs } from "../use-live-preview";
 import { ExplainPanel, type ExplainState } from "./explain-panel";
 import { SectionHead } from "./section-head";
 import { StartCard } from "./start-card";
@@ -122,7 +124,7 @@ export function SourceSection() {
         draftContent(),
         preview.source === "shipment" && preview.shipmentId
           ? { shipmentId: preview.shipmentId }
-          : { inputs: previewInputs.getValues("inputs") },
+          : { inputs: presentInputs(previewInputs.getValues("inputs") as TariffInputValues) },
       ),
     onMutate: () => setExplain({ status: "loading" }),
     onSuccess: (data) => setExplain({ status: "ready", data }),

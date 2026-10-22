@@ -60,8 +60,12 @@ export const STUDIO_SECTIONS: readonly StudioSection[] = ["details", "source", "
 
 export const sectionDomId = (section: StudioSection) => `studio-section-${section}`;
 
-/** The sample input values the preview rates with, held apart from the template itself. */
-export type PreviewInputsForm = { inputs: TariffInputValues };
+/**
+ * The sample input values the preview rates with, held apart from the template itself. The
+ * values are wire values; the form types them loosely because react-hook-form's path types do
+ * not terminate on a recursive value type.
+ */
+export type PreviewInputsForm = { inputs: Record<string, unknown> };
 
 export type StudioProps = {
   mode: StudioMode;
@@ -203,7 +207,11 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
 
   const previewInputs = useForm<PreviewInputsForm>({ defaultValues: { inputs: {} } });
   const sampleInputs = useWatch({ control: previewInputs.control, name: "inputs" });
-  const preview = useLivePreview({ source: text, inputs: sampleInputs, errors });
+  const preview = useLivePreview({
+    source: text,
+    inputs: sampleInputs as TariffInputValues | undefined,
+    errors,
+  });
 
   const { data: usage } = useQuery({
     ...formulaTemplate.usage(template?.id ?? ""),

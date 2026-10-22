@@ -21,11 +21,13 @@ import type { TariffLanguageService } from "./tariff-service";
 export const refreshTariffInlays = StateEffect.define<null>();
 
 class InlayWidget extends WidgetType {
-  constructor(
-    readonly text: string,
-    readonly kind: "type" | "value",
-  ) {
+  readonly text: string;
+  readonly kind: "type" | "value";
+
+  constructor(text: string, kind: "type" | "value") {
     super();
+    this.text = text;
+    this.kind = kind;
   }
 
   eq(other: InlayWidget) {
