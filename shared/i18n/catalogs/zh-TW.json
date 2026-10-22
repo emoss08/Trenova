@@ -2061,6 +2061,7 @@
   "Case counts cannot be negative": "案例數量不得為負數",
   "Case is invalid": "案件無效",
   "Case is required": "案例為必填",
+  "Case year is invalid": "案件年度無效",
   "Cash": "現金",
   "Cash (Minor)": "現金（最小單位）",
   "Cash Account ID": "現金科目 ID",

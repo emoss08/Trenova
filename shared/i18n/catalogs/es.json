@@ -2061,6 +2061,7 @@
   "Case counts cannot be negative": "Los recuentos de casos no pueden ser negativos",
   "Case is invalid": "El caso no es válido",
   "Case is required": "El caso es obligatorio",
+  "Case year is invalid": "El año del caso no es válido",
   "Cash": "Efectivo",
   "Cash (Minor)": "Efectivo (unidades menores)",
   "Cash Account ID": "ID de la cuenta de caja",

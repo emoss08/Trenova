@@ -47035,6 +47035,15 @@
       "routes/worker"
     ]
   },
+  "Case year is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Case {0}": {
     "sites": 3,
     "scope": [
@@ -127946,6 +127955,15 @@
       "template/notification.dash.load_assigned"
     ]
   },
+  "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "It is decided in the conversation it was proposed in.": {
     "sites": 1,
     "scope": [
@@ -143208,12 +143226,14 @@
     ]
   },
   "Margins": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/reports"
     ]
   },
   "Margins are tight — review before assigning.": {
@@ -152083,6 +152103,15 @@
       "routes/osha"
     ]
   },
+  "Needs the {0} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Needs work": {
     "sites": 1,
     "scope": [
@@ -152126,6 +152155,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Needs {0} read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "NeedsReview": {
@@ -153690,7 +153728,7 @@
     ]
   },
   "New report": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -188112,7 +188150,7 @@
     ]
   },
   "Personal": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -188124,6 +188162,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/dispatch-console",
+      "routes/reports",
       "routes/shipment",
       "routes/worker"
     ]
@@ -207664,6 +207703,24 @@
       "go/other"
     ]
   },
+  "Reference only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Reference only — the rest needs {0} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Reference the clause this policy encodes, so a dispute can cite it.": {
     "sites": 1,
     "scope": [
@@ -210548,6 +210605,15 @@
     ]
   },
   "Remove tile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Remove unavailable fields": {
     "sites": 1,
     "scope": [
       "ts"
@@ -264319,6 +264385,15 @@
       "routes/invoice"
     ]
   },
+  "The preview and runs are refused until they are removed or your access changes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "The preview could not be drawn": {
     "sites": 1,
     "scope": [
@@ -284802,7 +284877,7 @@
     ]
   },
   "Unavailable": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -284811,7 +284886,17 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/desk",
-      "routes/factoring"
+      "routes/factoring",
+      "routes/reports"
+    ]
+  },
+  "Unavailable at your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Uncancel": {
@@ -303990,7 +304075,7 @@
     ]
   },
   "Worker is invalid": {
-    "sites": 30,
+    "sites": 28,
     "scope": [
       "go"
     ],
@@ -306371,6 +306456,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "You cannot open this report's data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "You cannot read this agent": {
@@ -318865,6 +318959,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# field in this report is unavailable to you} other {# fields in this report are unavailable to you}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0, plural, one {# field scored} other {# fields scored}}": {
     "sites": 3,
     "scope": [
@@ -327697,6 +327800,15 @@
       "go/other"
     ]
   },
+  "{0} is above your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0} is already a shipment field, and a 'let' can't redeclare it. Use another name": {
     "sites": 1,
     "scope": [
@@ -328001,6 +328113,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} is no longer in the catalog": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} is no longer ready to move up a tier on this agent": {
@@ -329734,6 +329855,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} needs the {1} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0} needs you": {
     "sites": 1,
     "scope": [
@@ -329741,6 +329871,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} needs {1} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} negative margin": {
@@ -330822,7 +330961,7 @@
     ]
   },
   "{0} on {1}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -330831,7 +330970,8 @@
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/desk",
-      "routes/holiday"
+      "routes/holiday",
+      "routes/reports"
     ]
   },
   "{0} on {1}, opens in a new tab": {

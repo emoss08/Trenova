@@ -22,6 +22,7 @@ import {
   type ReportParameterDef,
   type ReportTransformSpec,
 } from "@/types/report";
+import { isFieldAvailable } from "@/lib/report-catalog-access";
 
 export const MAX_PATH_DEPTH = 3;
 
@@ -112,7 +113,7 @@ export function preferReferenceField(
       candidate.key === foreignKey &&
       candidate.type === "ref" &&
       candidate.filterable &&
-      candidate.accessible,
+      isFieldAvailable(candidate),
   );
 
   return field ? { path: parentPath.length > 0 ? parentPath : undefined, field: foreignKey } : ref;
