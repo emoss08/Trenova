@@ -508,38 +508,3 @@ func (r *repository) TurnQuestions(
 		return out, nil
 	})
 }
-
-func (r *repository) ToolCallArguments(
-	ctx context.Context,
-	threadID pulid.ID,
-	tenant pagination.TenantInfo,
-	callID string,
-) (map[string]any, error) {
-	if callID == "" {
-		return nil, nil
-	}
-
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]any, error) {
-		var arguments []map[string]any
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*conversation.Message)(nil)).
-			ColumnExpr("call->'arguments'").
-			Join("CROSS JOIN LATERAL jsonb_array_elements(amsg.tool_calls) AS call").
-			Where("amsg.organization_id = ?", tenant.OrgID).
-			Where("amsg.business_unit_id = ?", tenant.BuID).
-			Where("amsg.thread_id = ?", threadID).
-			Where("jsonb_typeof(amsg.tool_calls) = 'array'").
-			Where("call->>'id' = ?", callID).
-			Limit(1).
-			Scan(ctx, &arguments)
-		if err != nil {
-			return nil, fmt.Errorf("read tool call arguments: %w", err)
-		}
-		if len(arguments) == 0 {
-			return nil, nil
-		}
-
-		return arguments[0], nil
-	})
-}

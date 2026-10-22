@@ -560,13 +560,21 @@ the agent read. `tableArtifact` keeps the agent's rows with where the list goes 
   page only when its answer needs one.
 - **The person's pages are read again with their own access.** `GET
   /assistant/threads/:id/artifacts/:artifactId/rows/` (`ArtifactRows`) runs the tool the table came
-  from with the arguments it was asked with, as `UserActor` under the conversation agent's data
+  from with the arguments it ran with, as `UserActor` under the conversation agent's data
   access ceiling, exactly as the CSV export does (`listOf` serves both): `after` or `offset`,
   `limit` (at most 100), `q` when the list takes a free-text search the agent's call did not
   already use, `sortBy` (a column key, mapped to the list's sort field) and `sortDirection`, and
   `total=true` to count. It answers the rows projected into the table's columns, where the list
   goes on, the total when asked, the columns the person may not see, and whether the list
   searches and which columns it sorts by. A person who may no longer read the list gets a 403.
+- **A table keeps the arguments its list ran with** (`readWith` on the payload, from
+  `ToolObservation.RanWith`), not the model's call as the thread records it. The runtime repairs a
+  call before the tool runs (aliases, coercion, relative dates resolved against the day), and a
+  list's cursor is bound to the arguments it ran with, so replaying the model's raw call is refused
+  as a stale cursor, and replaying it a day later reads another range. A step replayed from the
+  ledger keeps them too (`RunStepOutcome.RanWith`). A table or report preview without `readWith`
+  is not read again (`errNotReread`); a cursor the list no longer takes is a 400 on `after`
+  (`errStalePage`), and the client then reads the list from its start.
 - **The client reads a buffer, not pages.** `useTablePages` (`kinds/table/use-table-pages.ts`)
   starts with the agent's rows and reads on from their position with `useInfiniteQuery`, a page
   as soon as the table opens (so Next is instant, and the total arrives) and the next whenever the

@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -35,6 +36,10 @@ const (
 
 var errNotExportable = errortypes.NewValidationError(
 	"artifact", errortypes.ErrInvalid, "Only a table or a report preview can be downloaded as CSV",
+)
+
+var errNotReread = errortypes.NewBusinessError(
+	"This table does not say how it was read, so it cannot be read again. Ask Nova to read it again",
 )
 
 // exportSource is an artifact's table read again from where it came from.
@@ -64,23 +69,30 @@ func (s *Service) exportSourceOf(
 	if artifact.ThreadID != req.ID {
 		return nil, errortypes.NewNotFoundError("Artifact not found")
 	}
-	family := assistantartifact.FamilyOf(artifact.Kind, artifact.Payload)
-	if artifact.Kind != assistantartifact.KindReportPreview &&
-		(artifact.Kind != assistantartifact.KindTableView || family != assistantartifact.FamilyTable) {
+	if !rereadable(artifact) {
 		return nil, errNotExportable
 	}
-
-	arguments, err := s.artifacts.ToolCallArguments(
-		ctx, req.ID, req.TenantInfo, artifact.SourceToolCallID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if arguments == nil {
-		arguments = map[string]any{}
+	arguments, recorded := artifact.Payload[payloadReadWith].(map[string]any)
+	if !recorded {
+		return nil, errNotReread
 	}
 
 	return &exportSource{artifact: artifact, arguments: arguments}, nil
+}
+
+func rereadable(artifact *assistantartifact.Artifact) bool {
+	if artifact.Kind == assistantartifact.KindReportPreview {
+		return true
+	}
+
+	return artifact.Kind == assistantartifact.KindTableView &&
+		assistantartifact.FamilyOf(artifact.Kind, artifact.Payload) == assistantartifact.FamilyTable
+}
+
+func noteReadWith(artifact *assistantartifact.Artifact, arguments map[string]any) {
+	if arguments != nil && rereadable(artifact) {
+		artifact.Payload[payloadReadWith] = maputils.CloneDeep(arguments)
+	}
 }
 
 // ArtifactCSVName is the file a table downloads as, named for its title.

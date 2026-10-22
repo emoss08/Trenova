@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -29,6 +30,12 @@ const (
 
 var errNotPageable = errortypes.NewValidationError(
 	"artifact", errortypes.ErrInvalid, "Only a table read from a list can be paged",
+)
+
+var errStalePage = errortypes.NewValidationError(
+	argAfter,
+	errortypes.ErrInvalid,
+	"This page can no longer be read. Read the list from its start",
 )
 
 type listReader struct {
@@ -168,6 +175,9 @@ func (s *Service) ArtifactRows(
 	}
 
 	page, err := list.read(ctx, overrides, query.IncludeTotal)
+	if errors.Is(err, agentquerytoolservice.ErrStaleCursor) {
+		return nil, errStalePage
+	}
 	if err != nil {
 		return nil, err
 	}

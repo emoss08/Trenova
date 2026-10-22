@@ -275465,6 +275465,15 @@
       "routes/desk"
     ]
   },
+  "This page can no longer be read. Read the list from its start": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This page can't use the microphone.": {
     "sites": 1,
     "scope": [
@@ -277019,6 +277028,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "This table does not say how it was read, so it cannot be read again. Ask Nova to read it again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This table has no bulk edit": {

@@ -215,7 +215,8 @@ type ToolOutcome struct {
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
-	Data any `json:"-"`
+	Data    any            `json:"-"`
+	RanWith map[string]any `json:"-"`
 }
 
 func (o toolOutcome) exported() ToolOutcome {
@@ -235,6 +236,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		SavedMemory:    o.saved,
 		Shown:          o.shown,
 		Data:           o.data,
+		RanWith:        o.ranWith,
 	}
 }
 
@@ -255,6 +257,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		saved:          o.SavedMemory,
 		shown:          o.Shown,
 		data:           o.Data,
+		ranWith:        o.RanWith,
 	}
 }
 

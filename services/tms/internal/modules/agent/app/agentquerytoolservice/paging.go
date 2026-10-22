@@ -18,7 +18,7 @@ var errOffsetOnCursorList = errors.New(
 		"it again without offset, passing that nextCursor as after for the next page",
 )
 
-var errStaleCursor = errors.New(
+var ErrStaleCursor = errors.New(
 	"after is not a nextCursor this tool returned for these same arguments: the query, " +
 		"filters, status or sort changed since that page, or the cursor was altered. Call " +
 		"it again without after to start from the first page",
@@ -136,11 +136,11 @@ func readCursorWindow(
 	key := ""
 	if window.after != "" {
 		if key, err = pagination.DecodeKeyCursor(scope, window.after); err != nil {
-			return cursorWindow{}, errStaleCursor
+			return cursorWindow{}, ErrStaleCursor
 		}
 	}
 	if window.info, err = pagination.NewCursorInfo(window.limit, key); err != nil {
-		return cursorWindow{}, errStaleCursor
+		return cursorWindow{}, ErrStaleCursor
 	}
 	window.info.IncludeTotalCount = false
 
@@ -183,7 +183,7 @@ func (w *cursorWindow) next(cursor string) string {
 func refuseStaleCursor(err error) error {
 	var invalid *errortypes.Error
 	if errors.As(err, &invalid) && invalid.Field == paramAfter {
-		return errStaleCursor
+		return ErrStaleCursor
 	}
 
 	return err

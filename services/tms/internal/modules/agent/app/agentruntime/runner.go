@@ -844,6 +844,7 @@ func (s *Service) observe(
 
 	shown, err := observe(agentports.ToolObservation{
 		Call:    call,
+		RanWith: outcome.ranWith,
 		Data:    outcome.data,
 		Failed:  outcome.failed,
 		Action:  outcome.action,

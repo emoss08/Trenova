@@ -2,8 +2,10 @@ package assistantservice
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -24,6 +26,7 @@ type pagingListTool struct {
 
 	properties map[string]any
 	result     map[string]any
+	err        error
 	calls      []agentports.QueryToolParams
 }
 
@@ -42,6 +45,9 @@ func (t *pagingListTool) Query(
 	params *agentports.QueryToolParams,
 ) (any, error) {
 	t.calls = append(t.calls, *params)
+	if t.err != nil {
+		return nil, t.err
+	}
 
 	return t.result, nil
 }
@@ -85,6 +91,9 @@ func newRowsFixture(t *testing.T, engine permissionports.PermissionEngine) *rows
 				map[string]any{"key": "customer", "label": "Customer", "type": "text"},
 				map[string]any{"key": "freightCharge", "label": "Freight charge", "type": "money"},
 			},
+			payloadReadWith: map[string]any{
+				"status": []any{"InTransit"}, "limit": float64(10), "after": "c-old",
+			},
 		},
 	}
 	tool := &pagingListTool{
@@ -110,11 +119,6 @@ func newRowsFixture(t *testing.T, engine permissionports.PermissionEngine) *rows
 	}
 	repo := &stubArtifactRepo{
 		stored: map[pulid.ID]*assistantartifact.Artifact{artifact.ID: artifact},
-		arguments: map[string]map[string]any{
-			"call_1": {
-				"status": []any{"InTransit"}, "limit": float64(10), "after": "c-old",
-			},
-		},
 	}
 
 	return &rowsFixture{
@@ -191,7 +195,7 @@ func TestArtifactRows_ATableAlreadySearchedCannotBeSearchedAgain(t *testing.T) {
 	t.Parallel()
 
 	f := newRowsFixture(t, &mocks.AllowAllPermissionEngine{})
-	f.svc.artifacts.(*stubArtifactRepo).arguments["call_1"]["query"] = "acme"
+	f.artifact.Payload[payloadReadWith].(map[string]any)["query"] = "acme"
 
 	rows, err := f.svc.ArtifactRows(
 		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{Limit: 25},
@@ -321,4 +325,29 @@ func TestRowsArguments(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+func TestArtifactRows_AStaleCursorIsRefusedAsThePageNotAFault(t *testing.T) {
+	t.Parallel()
+
+	f := newRowsFixture(t, &mocks.AllowAllPermissionEngine{})
+	f.tool.err = fmt.Errorf("read shipments: %w", agentquerytoolservice.ErrStaleCursor)
+
+	_, err := f.svc.ArtifactRows(
+		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{After: "c-1"},
+	)
+	require.ErrorIs(t, err, errStalePage)
+}
+
+func TestArtifactRows_ATableThatDoesNotSayHowItWasReadIsNotReadAgain(t *testing.T) {
+	t.Parallel()
+
+	f := newRowsFixture(t, &mocks.AllowAllPermissionEngine{})
+	delete(f.artifact.Payload, payloadReadWith)
+
+	_, err := f.svc.ArtifactRows(
+		t.Context(), f.request(), f.artifact.ID, &agentports.ArtifactRowsQuery{Limit: 25},
+	)
+	require.ErrorIs(t, err, errNotReread)
+	assert.Empty(t, f.tool.calls)
 }
