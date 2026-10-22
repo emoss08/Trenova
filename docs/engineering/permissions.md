@@ -85,11 +85,49 @@ it whole to whoever may read the carrier.
 Give a resource a parent only when everyone who may read the parent may read all of it.
 Data most readers of the parent have no business seeing (medical, leave, disciplinary,
 compensation) is a resource with no parent, granted on its own through the bundles for the
-jobs that need it. `worker_leave` is one: worker read reaches no leave case, a leave case a
-worker carries is a linked record gated by `worker_leave` read, and only the `hr.leave`
-and `hr.team` bundles grant it. Taking a parent away moves no stored grant: administrators
-already hold every registry resource, and other roles lose what they reached only through
-the parent until a bundle or a person grants it.
+jobs that need it. Worker read reaches none of these, a record of one that a worker carries
+is a linked record gated by its own read, and the Read-only template excepts each
+(`ownGrantKinds` in `bundles_catalog.go`):
+
+| Kind | Granted by | Templates |
+|---|---|---|
+| `worker_leave` | `hr.leave`; `hr.team` at team scope | Human resources; Driver manager (team) |
+| `worker_injury` | `safety.drivers` | Safety and compliance |
+| `worker_dot_test` | `safety.drivers` | Safety and compliance only (below) |
+| `benefit_plan` | `hr.benefits` | Human resources |
+| `worker_employment_event` | `hr.workers` | Human resources |
+| `worker_disciplinary_action`, `performance_review` | `hr.performance` | Human resources |
+| `timesheet`, `profile_change_request` | `hr.team` at team scope | Driver manager, Human resources (team) |
+| `driver_portal` | `hr.workers` (view, invite); `hr.team` (view, team) | Human resources; Driver manager (team) |
+
+**Drug and alcohol tests (49 CFR 40.321).** An employer may release a DOT test result only
+to those whose job is DOT compliance (the designated employer representative and the
+compliance staff working for them). `worker_dot_test` is therefore granted by
+`safety.drivers` alone, and `TestJobTemplates_OnlyDOTComplianceReadsDrugAndAlcoholResults`
+fails if any other template or bundle reaches it. Dispatch, carrier sales, billing, driver
+managers and Human resources do not read it; an organization whose HR staff is its DER
+grants it to that role by hand. With no reference view, a test a worker carries shows only
+its id to anyone else.
+
+**Driver portal access.** Inviting a driver gives them a sign-in, so `driver_portal` has no
+parent and its own operations: View (read), Invite (create) and Revoke (cancel). Revoke is
+in no bundle; administrators hold it.
+
+`worker_safety_event` and `worker_credential` keep worker as their parent, and
+`rate_confirmation` keeps carrier: whoever reads the worker or the carrier needs them to plan
+and cover work.
+
+Taking a parent away moves no stored grant: administrators already hold every registry
+resource, and `trenova db migrate` (`ReconcileAdminRoles`) adds any that is missing, and
+other roles lose what they reached only through the parent until a bundle or a person
+grants it. `TestJobTemplates_KindsGrantedOnTheirOwn` holds every stock template's effective
+operations and scope on each of these kinds; a new template fails it until it has a row.
+
+`GetResourcePermissions`, which the report compiler, the report catalog, the agent dataset
+tools and `GET /me/permissions/:resource` read, reports a kind's own grant together with the
+operations its parent's grant implies, with the scope the engine applies to a read
+(`resourcedetail.go`). `TestGetResourcePermissions_AgreesWithCheckOnEveryKind` holds it to
+`Check` on every operation of every kind.
 
 ## Saved table views
 
@@ -111,12 +149,14 @@ a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant
 scope it will actually apply in this deployment (a scope the deployment does not enforce
 comes back as organization), and each template already composed (`Registry.TemplateGrants`:
 operations merged, the widest scope kept). The Read-only template reads every readable
-kind except those its `ReadExcept` names (`worker_leave`), so it never reaches data that is
-granted on its own.
+kind except those its `ReadExcept` names (the kinds granted on their own, above), so it
+never reaches data that is granted on its own.
 
+Because a template holds one grant per kind, merging keeps the widest scope: a bundle that
+grants a kind organization-wide widens any team-scoped grant of it in the same template.
 Leave is held to Human resources: `hr.leave` grants `worker_leave` read, create, update and
-approve, and `hr.team` read and approve, so the Human resources and Driver manager
-templates are the only ones that reach it (`TestJobTemplates_OnlyHumanResourcesReachLeave`
+approve organization-wide, and `hr.team` read and approve at team scope, so a driver manager
+reads and decides only their team's cases (`TestJobTemplates_OnlyHumanResourcesReachLeave`
 lists every template's leave operations). Configuring leave (`worker_leave:manage`) and
 exporting it stay with administrators.
 
@@ -152,7 +192,19 @@ definition's `Scopes`:
 | `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
 | `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
 | `capture_batch`, `report` | own | application (`captureservice`, the report compiler) |
-| `worker_schedule`, `timesheet`, `profile_change_request` | team | application (`RequireTeamScope`, `teamscope.Guard`) |
+| `worker_schedule`, `timesheet`, `profile_change_request`, `worker_leave`, `driver_portal` | team | application (`RequireTeamScope`, `RequireListTeamScope`, `teamscope.Guard`, `teamscope.ListGuard`) |
+
+**Application enforcement.** A team is the workers a person manages directly
+(`workers.manager_id`) or through a fleet code they run, plus those of anyone who has
+delegated their approvals to them (`OrgStructureService.ManagerIDs`), the same team the
+`workers` read scope applies. An action on one worker checks it with `RequireTeamScope`
+(resolvers) or `teamscope.Guard` (agent tools), taking the worker from the record acted on,
+never from the request. A list across workers asks `RequireListTeamScope` or
+`teamscope.ListGuard` for the managers a team-scoped grant narrows it to and passes them as
+the request's `ManagerIDs`; the repository filters with `workerteam.Where`
+(`workforce/adapters/postgres/workerteam`), so every list applies one definition of a team.
+A list never relies on the client asking for `teamOnly`. Leave counts delegations for time
+off (`worker.ApprovalScopeTimeOff`); the others count delegations of everything.
 
 **Database enforcement.** Each authenticated request (`ReadScopeMiddleware`) and each
 agent tool call (`agentflow.runTool`) carries a `pkg/readscope` holder. At its first
