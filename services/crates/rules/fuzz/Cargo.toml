@@ -2,6 +2,8 @@
 # (cargo-fuzz builds with nightly and its own flags); run with
 #   cargo +nightly fuzz run formula_check -- -max_total_time=60
 #   cargo +nightly fuzz run formula_format -- -max_total_time=60
+#   cargo +nightly fuzz run tariff_parse -- -max_total_time=60
+#   cargo +nightly fuzz run tariff_format -- -max_total_time=60
 [package]
 name = "trenova-rules-fuzz"
 version = "0.0.0"
@@ -29,6 +31,20 @@ bench = false
 [[bin]]
 name = "formula_format"
 path = "fuzz_targets/formula_format.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tariff_parse"
+path = "fuzz_targets/tariff_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tariff_format"
+path = "fuzz_targets/tariff_format.rs"
 test = false
 doc = false
 bench = false
