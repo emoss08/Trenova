@@ -21,3 +21,18 @@ const (
 	RateUnitDay  = RateUnit("Day")  // Layover, storage
 	RateUnitStop = RateUnit("Stop") // Stop-off charges
 )
+
+func (u RateUnit) TariffUnit() string {
+	switch u {
+	case RateUnitMile:
+		return "mi"
+	case RateUnitHour:
+		return "h"
+	case RateUnitDay:
+		return "d"
+	case RateUnitStop:
+		return "stop"
+	default:
+		return ""
+	}
+}

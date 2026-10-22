@@ -87,7 +87,7 @@ func (sp *Shipment) RatingDistance() decimal.Decimal {
 	}
 
 	for _, move := range sp.Moves {
-		if move != nil && move.Distance != nil {
+		if move != nil && !move.IsCanceled() && move.Distance != nil {
 			total = total.Add(decimal.NewFromFloat(*move.Distance))
 		}
 	}
@@ -282,4 +282,98 @@ func (sp *Shipment) RatingAsOf(now int64) int64 {
 		return sp.CreatedAt
 	}
 	return now
+}
+
+const (
+	secondsPerHour = 3600
+	secondsPerDay  = 86400
+)
+
+func (s *Stop) DwellSeconds() (int64, bool) {
+	if s == nil || s.ActualArrival == nil || s.ActualDeparture == nil {
+		return 0, false
+	}
+	if *s.ActualDeparture < *s.ActualArrival {
+		return 0, true
+	}
+	return *s.ActualDeparture - *s.ActualArrival, true
+}
+
+func (s *Stop) spanStart() (int64, bool) {
+	if s.ActualArrival != nil {
+		return *s.ActualArrival, true
+	}
+	if s.ScheduledWindowStart > 0 {
+		return s.ScheduledWindowStart, true
+	}
+	return 0, false
+}
+
+func (s *Stop) spanEnd() (int64, bool) {
+	switch {
+	case s.ActualDeparture != nil:
+		return *s.ActualDeparture, true
+	case s.ActualArrival != nil:
+		return *s.ActualArrival, true
+	case s.ScheduledWindowEnd != nil && *s.ScheduledWindowEnd > 0:
+		return *s.ScheduledWindowEnd, true
+	case s.ScheduledWindowStart > 0:
+		return s.ScheduledWindowStart, true
+	default:
+		return 0, false
+	}
+}
+
+func (sp *Shipment) RatingDurationHours() decimal.Decimal {
+	var start, end int64
+	found := false
+	for _, stop := range sp.RatedStops() {
+		first, ok := stop.spanStart()
+		if !ok {
+			continue
+		}
+		last, hasEnd := stop.spanEnd()
+		if !hasEnd {
+			last = first
+		}
+		if !found || first < start {
+			start = first
+		}
+		if !found || last > end {
+			end = last
+		}
+		found = true
+	}
+	if !found || end <= start {
+		return decimal.Zero
+	}
+	return decimal.NewFromInt(end - start).Div(decimal.NewFromInt(secondsPerHour))
+}
+
+func (sp *Shipment) DwellHours() []decimal.Decimal {
+	stops := sp.RatedStops()
+	dwells := make([]decimal.Decimal, 0, len(stops))
+	for _, stop := range stops {
+		if seconds, ok := stop.DwellSeconds(); ok {
+			dwells = append(dwells, decimal.NewFromInt(seconds).Div(decimal.NewFromInt(secondsPerHour)))
+		}
+	}
+	return dwells
+}
+
+func (sp *Shipment) ServiceDays() decimal.Decimal {
+	var start, end int64
+	var started, ended bool
+	for _, stop := range sp.RatedStops() {
+		if stop.IsOriginStop() && stop.ActualArrival != nil && (!started || *stop.ActualArrival < start) {
+			start, started = *stop.ActualArrival, true
+		}
+		if stop.IsDestinationStop() && stop.ActualDeparture != nil && (!ended || *stop.ActualDeparture > end) {
+			end, ended = *stop.ActualDeparture, true
+		}
+	}
+	if !started || !ended || end <= start {
+		return decimal.Zero
+	}
+	return decimal.NewFromInt((end - start + secondsPerDay - 1) / secondsPerDay)
 }

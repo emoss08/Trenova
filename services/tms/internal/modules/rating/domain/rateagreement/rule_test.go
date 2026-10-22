@@ -426,7 +426,10 @@ func TestRadiusLaneNeedsACentreAndADistance(t *testing.T) {
 	rule.OriginLatitude = &latitude
 	rule.OriginLongitude = &longitude
 
-	require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))
+	require.NoError(
+		t,
+		rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}),
+	)
 	multiErr = errortypes.NewMultiError()
 	rule.Validate(multiErr)
 
