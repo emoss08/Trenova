@@ -197,6 +197,7 @@ jobs:
           workspaces: |
             services/crates/sandbox/fuzz
             services/imaging/fuzz
+            services/crates/rules/fuzz
       - run: cargo install cargo-fuzz --locked --version 0.13.2
       - name: Sandbox frame protocol
         working-directory: services/crates/sandbox/fuzz
@@ -209,6 +210,11 @@ jobs:
           cargo +nightly fuzz run image_decode -- -max_total_time=90 -rss_limit_mb=2048
           cargo +nightly fuzz run exif_orientation -- -max_total_time=30 -rss_limit_mb=1024
           cargo +nightly fuzz run worker_job -- -max_total_time=30 -rss_limit_mb=1024
+      - name: Formula language
+        working-directory: services/crates/rules/fuzz
+        run: |
+          cargo +nightly fuzz run formula_check -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run formula_format -- -max_total_time=30 -rss_limit_mb=1024
 
   image:
     name: Imaging image
