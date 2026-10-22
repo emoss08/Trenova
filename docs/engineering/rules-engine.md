@@ -245,10 +245,16 @@ pins only the fields shown:
   `dimension` and `unit`, `list` with `item`, `optional` with `inner`, `record` with `name` and
   `fields` (each `{name, doc, type}`), `enum` with `name` and `variants`, and `int`, `number`,
   `percent`, `text`, `bool`, `date`, `dateTime`), `required` (no default), `default` (a wire
-  value, when the default folds) and the name's `range`.
+  value, when the default folds), `constraint` and the name's `range`.
+- `constraint` is the input's `where` clause, folded: `null` when it has none,
+  `{"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}}` (the minimum is
+  always inclusive; an open end is `null`), or `{"oneOf": [wire, …]}`. For a `List<T>` input it
+  bounds each item. A constraint that does not fold is a checker error, never sent.
 - `imports` is every library the program loads, directly or not, dependencies first, with its
   pinned `version`: the context's for an organisation library, the crate's own for `std.*`.
-- `outline.items` are `{kind, name, code?, depth, range, selection}`; `outline.folding` the
+- `outline.items` are `{kind, name, code?, depth, range, selection}`, where `kind` is also
+  `property` for a property, `choice` for a `best` or `worst` (its label as `name`) and `option`
+  for each of its options (one `depth` deeper); `outline.folding` the
   foldable `{range, kind}`s. `charges` lists every `charge` of the root, nested ones included,
   with its label as written, its code and its range.
 
@@ -265,7 +271,11 @@ neither sets is an `input-value` error finding with a `path` and no range (from 
 
 Other paths read `rule.rat` (with "did you mean `rate`"), `agreement.breaks[2].extra` (a field
 `Break` does not have) and `rule.rate` (`{0} has no default, so the rule or the agreement must
-set it`). An `input-value` finding makes `ok` false like any error.
+set it`). A value outside the input's constraint is an `input-value` finding naming the bounds,
+at path `rule.rate`: `{"message": "{0} must be from {1} to {2}; {3} is outside it", "args":
+["`rate`", "$0.50/mi", "$15/mi", "$235/mi"]}` (with `at least {1}` and `below {1}` and `one of
+{1}` forms for open ranges and lists). An `input-value` finding makes `ok` false like any
+error.
 
 **The codes.** The loader's and the parser's:
 
@@ -344,8 +354,22 @@ Response:
   "refusal": {"message": "No fuel price on …" | {"message": "…", "args": […]}, "range": …},
   "error": {"code": "divideByZero", "message": {"message": "…", "args": […]}, "range": …},
   "needs": [{"table": "Zones", "keys": ["752"]}],
+  "choices": [{"label": "Linehaul", "kind": "best", "range": …, "chosen": "Flat",
+               "options": [{"label": "Per mile", "range": …, "status": "lost",
+                            "subtotal": {"$q": "1175", "u": "$"}, "refusal": null},
+                           {"label": "Flat", "range": …, "status": "chosen",
+                            "subtotal": {"$q": "900", "u": "$"}, "refusal": null},
+                           {"label": "Volume", "range": …, "status": "refused",
+                            "subtotal": null, "refusal": {"message": "Volume rates start at 6,000 lb", "range": …}}]}],
   "trace": [… ] | null, "lookups": […]}]}
 ```
+
+- **Choices** are every `best` and `worst` the rating evaluated, in evaluation order (a choice
+  inside a loop appears once per iteration), at most 200. `kind` is `best` or `worst`;
+  `chosen` is the kept option's label, or `null` when every option refused. Each option's
+  `status` is `chosen`, `lost` or `refused`, with its exact `subtotal` (money) or its `refusal`
+  (shaped like a result's). A tariff with no choices sends `"choices": []`; a condition never has
+  any. The trace also records each choice as a `choice` event (`label`, `chosen`).
 
 - **The four statuses.** `rated`: a tariff's `bill`, or a condition's `value` (true or
   false). `refused`: a `refusal`, whose `message` is the author's interpolated text (`fail`,
@@ -443,11 +467,42 @@ Runs a file's own `test` blocks against the sample record (`src/tariff/eval/test
 applies to each test. Output:
 
 ```json
-{"tests": [{"name", "range", "status": "passed" | "failed" | "error" | "needs",
+{"tests": [{"name", "range", "kind": "test" | "property",
+  "status": "passed" | "failed" | "error" | "needs",
   "failures": [{"range", "message", "values": [{"range", "display", "value"?}]}],
-  "bill": … | null, "error": … | null}],
- "needs": [{"table": "Grid", "keys": ["A"]}]}
+  "bill": … | null, "error": … | null,
+  "cases": 24, "skipped": 0, "counterexample": … | null}],
+ "needs": [{"table": "Grid", "keys": ["A"]}],
+ "coverage": {"regions": [{"range", "kind", "hits"}], "reached": 18, "total": 21} | null}
 ```
+
+- **Properties** are in `tests` in source order with the tests, `kind: "property"`; a test has
+  `kind: "test"`, `cases` 1, `skipped` 0 and `counterexample` `null`. A property's `cases` is how
+  many cases rated, `skipped` how many an `assume` skipped. A failed property's `failures`,
+  `bill` and `error` are its counterexample's, and `counterexample` is:
+
+  ```json
+  {"values": [{"target": "shipment.weight", "display": "999 lb", "value": {"$q": "999", "u": "lb"}}],
+   "monotone": {"target": "shipment.weight", "expression": "total", "direction": "nondecreasing",
+                "before": {"at": {"display": "999 lb", "value": …}, "result": {"display": "$310.00", "value": …}},
+                "after": {"at": {"display": "1,000 lb", "value": …}, "result": {"display": "$250.00", "value": …}}} | null,
+   "refusal": {"message": …, "range": …} | null,
+   "test": "test \"heavier never bills less: 999 lb\" {\n  given shipment.weight = 999 lb\n  …\n}\n"}
+  ```
+
+  `values` holds each `vary` target with the value it had in the shrunk case (for a `monotone`
+  failure, the `before` case). `monotone` is set when a `nondecreasing` or `nonincreasing`
+  expectation failed; `refusal` when the case refused to rate. `test` is a `test` block that
+  reproduces the case (its `given`s, the varied values as `given`s, and the property's
+  `expect cond` lines; for a monotone failure two `given` sets cannot share a test, so it pins
+  the `before` case's `expression` with `expect`), formatted, for the Studio's "Save as test".
+- **Coverage** is the root file's regions with their `hits` across every test and property case
+  of the run, in source order. `kind` is `if` (a branch block of an `if` or `else if`), `else`,
+  `arm` (a `match` arm), `loop` (a `for` body), `option`, `charge`, `refusal` (a `fail`, the
+  refusing side of a `require` or of `?? fail`) or `function` (a function body); `range` is the
+  region's block or statement. `reached` counts regions with `hits > 0`. `coverage` is `null`
+  when the file does not check, when any test ended in `needs`, or when `names` ran only some
+  tests.
 
 - A test starts from the sample record and the inputs' defaults, applies its `given`s in order
   (a record path or `input.name`), runs the file, then runs its `expect`s with `charge(CODE)`,
@@ -509,8 +564,26 @@ and checks the file (it may be broken) and answers from what is known
 | `tariff.hover` | `{source, kind?, context?, offset, values?}` | `null`, or `{"range", "contents": {"signature", "type", "unit", "doc", "value"?: {"value", "display", "times"}}}` |
 | `tariff.signature` | `{source, kind?, context?, offset}` | `{"signatures": [{"label", "doc", "parameters": [{"label": [from, to], "doc"}]}], "active": 0 \| null, "activeParameter": n \| null}` |
 | `tariff.definition` | `{source, kind?, context?, offset}` | `{"targets": [{"module": null \| "std.ltl", "range", "selectionRange"}]}`; a target in a library has its ranges in that library's source |
+| `tariff.references` | `{source, kind?, context?, offset, includeDeclaration?}` | `{"references": [{"range", "kind": "declaration" \| "read" \| "write", "module": null \| "org.fees"}]}`: every use of the name at `offset` in the file, in source order, and its declaration (unless `includeDeclaration` is false), which for an imported name is in the library's source with its `module`; `[]` when `offset` is on no name. `write` is a `var` assignment or a `given`/`vary` of an input |
+| `tariff.actions` | `{source, kind?, context?, range: {from, to}}` | `{"actions": [{"id", "title": Message, "edits": [{"range", "insert"}], "select": {from, to} \| null}]}`: the refactorings available for the selection; `select` is the range, in the edited source, to select afterwards (the new name, to rename it) |
 | `tariff.rename` | `{source, kind?, context?, offset, newName?}` | with `newName`, `{"edits": [{"range", "insert"}]}` or `{"error": Message}`; without it (prepare), `{"range", "placeholder"}` or `{"error": Message}` |
 | `tariff.inlays` | `{source, kind?, context?, range: {from, to}, values?}` | `{"hints": [{"offset", "label", "kind": "type" \| "parameter" \| "value"}]}` |
+
+**Promote to input** (`tariff.actions`, ids `promote-input` and `promote-input-all`). Offered
+when the selection is, or lies inside, one literal a contract could set: a number with or
+without a unit, money, a rate, a percent, text, a date or date-time, `true`/`false`, or an enum
+variant. It is not offered inside a function, a test or property, a `match` pattern, an input's
+default or constraint, a `const`, a type, a condition's final expression's pattern or a library.
+The edits insert `input name: Type = literal` after the file's last `input` (after its `use`s, or
+after the header and its doc, when there is none), with the literal's type (`$2.35/mi` is
+`Money/mi`, `48 ft` is `Length`, `2` is `Int`), and replace the literal with `name`. The name
+comes from where the literal is: a charge's `rate:` or `quantity:` option gives the charge label
+in camelCase plus `Rate` or `Quantity`, a charge's amount the label plus `Amount` (`Flat rate`
+gives `flatRateAmount`), a `let x = …` gives `x` plus `Default`, a named argument its parameter
+name, anything else `value`; a name already in scope gets `2`, `3`, …. `promote-input-all` is
+offered when the file has other literals with the same text and type in places promotion is
+allowed, and replaces them all. Titles are `"Promote {0} to an input"` and `"Promote all {1}
+uses of {0} to an input"`.
 
 A completion item's `kind` is `keyword`, `name`, `input`, `function`, `method`, `property`,
 `field`, `type`, `enum`, `variant`, `unit`, `code`, `table`, `module`, `snippet` or `value`.
