@@ -13,6 +13,7 @@ use crate::message;
 use crate::message::{Arg, Message};
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::diagnostic::nearest;
+use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::{FieldType, Name, TypeExpr, TypeExprKind};
 use crate::tariff::types::{FieldDef, RecordType, Type};
 use crate::tariff::units::{Base, Dim, Unit, simple};
@@ -97,6 +98,8 @@ pub fn builtin(name: &str) -> Option<Type> {
 pub struct Lowerer<'a> {
     /// The names besides the built-ins.
     pub scope: &'a dyn TypeScope,
+    /// Whether the type is written in the standard library, whose field docs are translated.
+    pub std: bool,
     /// Where findings go.
     pub diagnostics: &'a mut Vec<Diagnostic>,
 }
@@ -143,7 +146,7 @@ impl Lowerer<'_> {
             out.push(FieldDef {
                 name: field.name.text.clone(),
                 ty: lowered,
-                doc: field.docs.as_ref().map(|doc| doc.text.clone()),
+                doc: Doc::of(self.std, field.docs.as_ref()),
             });
         }
         out

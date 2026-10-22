@@ -2230,7 +2230,6 @@
   "{0} over the rate con": "{0} por encima de la confirmación de tarifa",
   "{0} pending review": "{0} pendientes de revisión",
   "{0} per increment": "{0} por incremento",
-  "{0} per {1}": "{0} por {1}",
   "{0} proposed {1, plural, one {# change} other {# changes}}": "{0} propuso {1, plural, one {# cambio} other {# cambios}}",
   "{0} received and not yet applied to an invoice.": "{0} recibido y aún no aplicado a una factura.",
   "{0} rejected": "{0} rechazados",

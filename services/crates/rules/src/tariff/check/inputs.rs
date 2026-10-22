@@ -5,7 +5,9 @@
 //! Descriptors: `{"kind":"money"}`, `{"kind":"quantity","dimension":"Money/Distance","unit":
 //! "$/mi"}`, `{"kind":"list","item":…}`, `{"kind":"optional","inner":…}`, `{"kind":"record",
 //! "name":"Break","fields":[{"name","doc","type"}]}`, `{"kind":"enum","name","variants":[…]}`,
-//! and `int`, `number`, `percent`, `text`, `bool`, `date`, `dateTime`.
+//! and `int`, `number`, `percent`, `text`, `bool`, `date`, `dateTime`. A field's `doc` is a
+//! [`crate::tariff::docs::Doc`]: a `Message` for the schema's and the standard library's
+//! fields, the author's text otherwise.
 //!
 //! Values are checked with the evaluator's wire codec ([`crate::tariff::wire::decode`]), which
 //! reads the reference's "Wire values" exactly, so the checker and the evaluator agree on every
@@ -163,5 +165,35 @@ fn check_value(ty: &Type, value: &Json, path: &str, out: &mut Vec<ValueFinding>)
             path: error.path,
             message: error.message,
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::descriptor;
+    use crate::tariff::schema::{Schema, Settings};
+    use crate::tariff::types::Type;
+    use serde_json::Value as Json;
+
+    #[test]
+    fn a_schema_record_describes_its_fields_with_translated_docs() {
+        let schema = Schema::new(&Settings::default());
+        let stop = schema.record("Stop").map_or(Type::Error, Type::Record);
+        let described = descriptor(&stop);
+        let fields = described
+            .get("fields")
+            .and_then(Json::as_array)
+            .cloned()
+            .unwrap_or_default();
+        assert!(!fields.is_empty());
+        for field in &fields {
+            assert!(
+                field
+                    .pointer("/doc/message")
+                    .and_then(Json::as_str)
+                    .is_some(),
+                "{field}"
+            );
+        }
     }
 }

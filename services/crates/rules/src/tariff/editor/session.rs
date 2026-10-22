@@ -223,6 +223,7 @@ fn empty_module() -> Module {
         id: ModuleId::ROOT,
         path: None,
         version: None,
+        std: false,
         source: String::new(),
         utf16: Utf16Index::new(""),
         file: crate::tariff::syntax::parse(""),

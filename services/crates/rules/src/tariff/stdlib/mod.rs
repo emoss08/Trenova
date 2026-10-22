@@ -1,7 +1,9 @@
 //! The standard library: Tariff sources compiled into the module and versioned with it.
 //!
 //! `use std.<name>` reads these. Every module here must check without a finding and pass its own
-//! tests; the crate's tests enforce both.
+//! tests; the crate's tests enforce both. Their doc comments are translated ([`docs`]).
+
+pub mod docs;
 
 /// Every standard library module, by path.
 pub const MODULES: &[(&str, &str)] = &[

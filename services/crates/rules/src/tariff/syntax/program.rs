@@ -131,6 +131,10 @@ pub struct Module {
     pub path: Option<String>,
     /// The pinned version of an organisation library, from the context.
     pub version: Option<String>,
+    /// Whether it is a standard library module: loaded by a `std.` path, or a root whose source
+    /// is a standard library module's exactly. Its doc comments are translated
+    /// ([`crate::tariff::docs`]).
+    pub std: bool,
     /// The source.
     pub source: String,
     /// Byte to UTF-16 conversion for the source.
@@ -294,10 +298,20 @@ impl Loader<'_> {
         self.bytes += source.len();
         let file = parse(&source);
         let utf16 = Utf16Index::new(&source);
+        let std = match &path {
+            Some(path) => path.starts_with("std."),
+            None => file
+                .header
+                .as_ref()
+                .filter(|header| header.kind == FileKind::Library)
+                .and_then(|header| stdlib::source(&header.name.text))
+                .is_some_and(|shipped| shipped == source),
+        };
         let mut module = Module {
             id,
             path,
             version,
+            std,
             source,
             utf16,
             file,

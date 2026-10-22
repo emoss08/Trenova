@@ -10,6 +10,7 @@
 //! fields are different types) and structural when written inline in another type
 //! (`temperature: { min: Temperature?, max: Temperature? }`). Enums are nominal.
 
+use super::docs::Doc;
 use super::units::{Base, Dim, Unit};
 use std::fmt;
 use std::sync::Arc;
@@ -74,8 +75,8 @@ pub struct FieldDef {
     pub name: String,
     /// Its type.
     pub ty: Type,
-    /// Its doc comment.
-    pub doc: Option<String>,
+    /// Its doc.
+    pub doc: Option<Doc>,
 }
 
 /// An enum type.
@@ -84,10 +85,10 @@ pub struct EnumType {
     /// The declared name, qualified by its module for a library enum (`org.zones.Zone`); bare
     /// for a schema enum (`StopKind`).
     pub name: String,
-    /// The variants, in declaration order, each with its doc comment.
-    pub variants: Vec<(String, Option<String>)>,
-    /// The enum's doc comment.
-    pub doc: Option<String>,
+    /// The variants, in declaration order, each with its doc.
+    pub variants: Vec<(String, Option<Doc>)>,
+    /// The enum's doc.
+    pub doc: Option<Doc>,
 }
 
 impl EnumType {
