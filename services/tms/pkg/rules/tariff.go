@@ -67,8 +67,8 @@ type TariffLibrary struct {
 }
 
 type TariffAxis struct {
-	Match string `json:"match"`
-	Kind  string `json:"kind"`
+	Match         string `json:"match"`
+	Kind          string `json:"kind"`
 	Label         string `json:"label,omitempty"`
 	Unit          string `json:"unit,omitempty"`
 	Normalization string `json:"normalization,omitempty"`
