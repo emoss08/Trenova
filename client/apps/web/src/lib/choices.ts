@@ -151,10 +151,7 @@ import type {
   SelectOption,
   SelectOptionGroup,
 } from "@trenova/shared/types/fields";
-import type {
-  FormulaTemplateStatus,
-  FormulaTemplateType,
-} from "@trenova/shared/types/formula-template";
+import type { FormulaTemplateStatus } from "@trenova/shared/types/formula-template";
 import {
   FUEL_CARD_PROVIDER_LABELS,
   FUEL_CARD_STATUS_LABELS,
@@ -227,11 +224,6 @@ export const formulaTemplateStatusChoices = [
   { label: "Draft", value: "Draft", color: "var(--foreground-subtle)" },
   { label: "In review", value: "InReview", color: "var(--warning)" },
 ] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateStatus>>;
-
-export const formulaTemplateTypeChoices = [
-  { label: "Freight charge", value: "FreightCharge" },
-  { label: "Accessorial charge", value: "AccessorialCharge" },
-] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateType>>;
 
 export const fuelIndexSourceChoices = [
   { label: "DOE / EIA", value: "EIA", color: "var(--info)" },

@@ -2,7 +2,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
 import { apiService } from "@/services/api";
 import type { ImportTemplatePayload, ImportTemplatesRequest } from "@/services/formula-template";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -20,46 +19,63 @@ import { FileUploadIcon, Upload01Icon } from "@trenova/shared/components/icons";
 import { useRef, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { FORMULA_TEMPLATE_EXPORT_VERSION } from "@/lib/formula-template-export";
+import { z } from "zod";
 
-const SUPPORTED_EXPORT_VERSIONS = new Set(["1.0", "1.1", "1.2", "1.3"]);
+const exportedTemplateSchema = z.object({
+  name: z.string().trim().min(1),
+  description: z.string().optional(),
+  source: z.string().refine((value) => value.trim() !== ""),
+  sourceTemplateId: z.string().nullish(),
+  sourceVersionNumber: z.number().int().nullish(),
+});
 
 type ParsedImport = {
   templates: ImportTemplatePayload[];
-  exportVersion: string;
+  exportVersion: typeof FORMULA_TEMPLATE_EXPORT_VERSION;
   filename: string;
 };
 
-function parseImportFile(filename: string, raw: string): ParsedImport {
-  const parsed: unknown = JSON.parse(raw);
+/**
+ * Reads an export file: one template or many, each a name and a Tariff source (its tests are
+ * in it). The server checks each source again when it creates the template.
+ */
+export function parseImportFile(filename: string, raw: string): ParsedImport {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(translate("The file is not a formula template export"));
+  }
   if (typeof parsed !== "object" || parsed === null) {
-    throw new Error("The file is not a formula template export");
+    throw new Error(translate("The file is not a formula template export"));
   }
 
   const record = parsed as Record<string, unknown>;
-  const exportVersion = typeof record.exportVersion === "string" ? record.exportVersion : "";
-  if (!SUPPORTED_EXPORT_VERSIONS.has(exportVersion)) {
-    throw new Error("Unsupported export version. Expected a Trenova formula template export.");
+  if (record.exportVersion !== FORMULA_TEMPLATE_EXPORT_VERSION) {
+    throw new Error(
+      translate(
+        "This export is from another version of Trenova; export the template again and import that file.",
+      ),
+    );
   }
 
-  const templates: ImportTemplatePayload[] = [];
-  if (record.template && typeof record.template === "object") {
-    templates.push(record.template as ImportTemplatePayload);
-  }
-  if (Array.isArray(record.templates)) {
-    templates.push(...(record.templates as ImportTemplatePayload[]));
-  }
-
-  if (templates.length === 0) {
-    throw new Error("The export contains no templates");
+  const candidates: unknown[] = [];
+  if (record.template && typeof record.template === "object") candidates.push(record.template);
+  if (Array.isArray(record.templates)) candidates.push(...record.templates);
+  if (candidates.length === 0) {
+    throw new Error(translate("The export contains no templates"));
   }
 
-  for (const template of templates) {
-    if (!template.name || !template.expression) {
-      throw new Error("Every template needs a name and an expression");
+  const templates = candidates.map((candidate): ImportTemplatePayload => {
+    const result = exportedTemplateSchema.safeParse(candidate);
+    if (!result.success) {
+      throw new Error(translate("Every template needs a name and a source"));
     }
-  }
+    return result.data;
+  });
 
-  return { templates, exportVersion, filename };
+  return { templates, exportVersion: FORMULA_TEMPLATE_EXPORT_VERSION, filename };
 }
 
 type ImportTemplateDialogProps = {
@@ -192,17 +208,9 @@ export function ImportTemplateDialog({
                     className="flex items-center justify-between gap-2 border-b px-3 py-1.5 text-xs last:border-b-0"
                   >
                     <span className="truncate font-medium">{template.name}</span>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {(template.testCases?.length ?? 0) > 0 && (
-                        <Badge variant="neutral" appearance="outline" className="text-2xs">
-                          {template.testCases?.length}{" "}
-                          {template.testCases?.length === 1 ? "scenario" : "scenarios"}
-                        </Badge>
-                      )}
-                      <Badge variant="neutral" appearance="outline" className="text-2xs">
-                        {template.type}
-                      </Badge>
-                    </div>
+                    {template.description && (
+                      <span className="text-muted-foreground truncate">{template.description}</span>
+                    )}
                   </div>
                 ))}
               </div>

@@ -107,11 +107,8 @@ describe("nextDraftEdits", () => {
           surface: "formula",
           action: "formula_propose",
           formula: {
-            schemaId: "shipment",
-            expression: "1",
-            variables: null,
-            check: { valid: true },
-            scenarios: null,
+            source: 'tariff "t"\n\ncharge "Linehaul" = $1\n',
+            tests: { total: 1, passed: 1 },
           },
         },
       }),
@@ -139,25 +136,58 @@ describe("assistantArtifactEventSchema", () => {
     expect(parsed.draft).toBeNull();
   });
 
-  it("reads a formula proposal whose lists the server left null", () => {
+  it("reads a tariff proposal whose lists the server left null", () => {
     const parsed = event({
       draft: {
         surface: "formula",
         action: "formula_propose",
         formula: {
-          schemaId: "shipment",
-          expression: "totalDistance * 2",
-          variables: null,
+          source:
+            'tariff "Two a mile"\n\ncharge "Linehaul" (quantity: shipment.distance, rate: $2/mi)\n',
           explanation: "Two dollars a mile.",
-          check: { valid: true, result: "200" },
-          scenarios: null,
+          inputs: null,
+          imports: null,
+          charges: ["Linehaul"],
+          warnings: null,
+          tests: { total: 1, passed: 1 },
         },
       },
     });
 
-    expect(parsed.draft?.formula?.variables).toEqual([]);
-    expect(parsed.draft?.formula?.scenarios).toEqual([]);
-    expect(parsed.draft?.formula?.check.error).toBe("");
+    expect(parsed.draft?.formula).toEqual({
+      name: "",
+      description: "",
+      source:
+        'tariff "Two a mile"\n\ncharge "Linehaul" (quantity: shipment.distance, rate: $2/mi)\n',
+      explanation: "Two dollars a mile.",
+      inputs: [],
+      imports: [],
+      charges: ["Linehaul"],
+      warnings: [],
+      tests: { total: 1, passed: 1 },
+    });
+  });
+
+  it("reads a library proposal from its own field", () => {
+    const parsed = event({
+      draft: {
+        surface: "formula_library",
+        action: "formula_library_propose",
+        formulaLibrary: {
+          name: "fees",
+          source: 'library "org.fees"\n',
+          explanation: "A flat fee.",
+          inputs: [],
+          imports: [],
+          charges: [],
+          warnings: [],
+          tests: { total: 1, passed: 1 },
+        },
+      },
+    });
+
+    expect(parsed.draft?.formula ?? null).toBeNull();
+    expect(parsed.draft?.formulaLibrary?.source).toBe('library "org.fees"\n');
   });
 });
 
@@ -221,14 +251,11 @@ describe("pageContextSchema", () => {
       draft: {
         surface: "formula",
         formula: {
-          schemaId: "shipment",
-          templateType: "FreightCharge",
-          expression: "1",
-          variables: [],
+          source: 'tariff "t"\n',
         },
       },
     });
 
-    expect(parsed.draft?.formula?.expression).toBe("1");
+    expect(parsed.draft?.formula?.source).toBe('tariff "t"\n');
   });
 });

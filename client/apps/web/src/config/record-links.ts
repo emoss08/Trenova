@@ -116,6 +116,10 @@ export const RECORD_LINKS = {
     label: "Formula template",
     path: "/billing/configuration-files/formula-templates/{id}/edit",
   },
+  formula_library: {
+    label: "Formula library",
+    path: "/billing/configuration-files/formula-libraries/{id}/edit",
+  },
   rate_agreement: {
     label: "Rate agreement",
     path: "/billing/rate-agreements",

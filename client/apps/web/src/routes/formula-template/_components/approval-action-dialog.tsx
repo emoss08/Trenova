@@ -24,7 +24,7 @@ import {
   Send01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { ApprovalImpactPanel } from "./approval-impact-panel";
 import { ReadinessPanel } from "./readiness-panel";
@@ -184,7 +184,7 @@ export function ApprovalActionDialog({
     },
     onError: (error) => {
       // The server says exactly why a review step was refused: a self
-      // approval, a failing scenario, an invalid expression. That reason is
+      // approval, a failing test, a source that does not check. That reason is
       // the whole point of the dialog, so it stays on screen.
       const reason = describeApiError(error, copy.failureFallback);
       setServerError(reason);
@@ -208,11 +208,15 @@ export function ApprovalActionDialog({
     showCommentError && COMMENT_REQUIRED_ACTIONS.has(action) && !comment.trim();
 
   const compact = action === "reject" || action === "requestChanges";
+  // The comment is what a reviewer writes; the start date's picker would open its suggestions
+  // over the change the reviewer came to read if it took the first focus.
+  const commentRef = useRef<HTMLTextAreaElement>(null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         size={compact ? "sm" : "lg"}
+        initialFocus={commentRef}
         className="max-h-[85vh] grid-rows-[auto_minmax(0,1fr)_auto]"
       >
         <DialogHeader>
@@ -263,6 +267,7 @@ export function ApprovalActionDialog({
                 {copy.commentLabel}
               </label>
               <Textarea
+                ref={commentRef}
                 id="approval-comment"
                 value={comment}
                 onChange={(e) => {
