@@ -162,3 +162,40 @@ func TestPlanAdminGrants_GrantsEveryHRKindToAnAdministratorWhoHoldsOnlyWorkers(t
 	}
 	assert.Empty(t, plan.extend)
 }
+
+func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOperations(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	roleID := pulid.MustNew("rol_")
+	portal := permission.ResourceDriverPortal.String()
+	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	for _, rp := range fullGrants(registry, roleID) {
+		if rp.Resource != portal {
+			held = append(held, rp)
+		}
+	}
+
+	plan := planAdminGrants(registry, roleID, held, 100)
+	require.Len(t, plan.add, 1, "driver_portal is its own grant, so a worker grant does not cover it")
+	assert.Equal(t, portal, plan.add[0].Resource)
+	assert.ElementsMatch(t, []permission.Operation{
+		permission.OpRead,
+		permission.OpCreate,
+		permission.OpCancel,
+	}, plan.add[0].Operations, "inviting and revoking are the portal's own operations")
+
+	previous := &permission.ResourcePermission{
+		ID:       pulid.MustNew("rp_"),
+		RoleID:   roleID,
+		Resource: portal,
+		Operations: []permission.Operation{
+			permission.OpRead, permission.OpCreate, permission.OpUpdate,
+			permission.OpExport, permission.OpImport, permission.OpCancel,
+		},
+		DataScope: permission.DataScopeOrganization,
+	}
+	plan = planAdminGrants(registry, roleID, append(held, previous), 100)
+	assert.Empty(t, plan.add)
+	assert.Empty(t, plan.extend, "an administrator who held the old operations already invites and revokes")
+}

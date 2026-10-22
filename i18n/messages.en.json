@@ -125406,12 +125406,23 @@
     ]
   },
   "Invite": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/invoice"
+    ]
+  },
+  "Invite a driver to the portal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invite teammates": {
@@ -130582,7 +130593,7 @@
       "go/other"
     ]
   },
-  "Keep worker records, employment events, positions and checklists.": {
+  "Keep worker records, employment events, positions and checklists, and invite drivers to the portal.": {
     "sites": 1,
     "scope": [
       "go"
@@ -228340,6 +228351,15 @@
       "routes/inbox"
     ]
   },
+  "See whether a driver is on the portal and the invitations sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "See who is approving in whose place": {
     "sites": 1,
     "scope": [
@@ -272203,6 +272223,15 @@
       "routes/shipment"
     ]
   },
+  "This driver has not been invited to Dash.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "This driver will not accrue pay for delivered shipments until a profile is assigned. Assign a shared profile and add driver-specific rate overrides if their rates differ from the template.": {
     "sites": 1,
     "scope": [
@@ -291521,7 +291550,7 @@
     ]
   },
   "View": {
-    "sites": 128,
+    "sites": 129,
     "scope": [
       "go",
       "ts"

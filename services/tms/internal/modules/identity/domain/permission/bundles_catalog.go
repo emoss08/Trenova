@@ -377,7 +377,7 @@ var capabilityBundles = []Bundle{
 		ID:          "hr.workers",
 		Module:      "Workforce",
 		Label:       "Worker records",
-		Description: "Keep worker records, employment events, positions and checklists.",
+		Description: "Keep worker records, employment events, positions and checklists, and invite drivers to the portal.",
 		Grants: []BundleGrant{
 			{
 				Resource:   ResourceWorker,
@@ -394,6 +394,7 @@ var capabilityBundles = []Bundle{
 			},
 			{Resource: ResourceWorkerPolicy, Operations: []Operation{OpRead}},
 			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
+			{Resource: ResourceDriverPortal, Operations: []Operation{OpRead, OpCreate}},
 		},
 	},
 	{
@@ -462,6 +463,11 @@ var capabilityBundles = []Bundle{
 				Scope:      DataScopeTeam,
 			},
 			{Resource: ResourceShiftTemplate, Operations: []Operation{OpRead}},
+			{
+				Resource:   ResourceDriverPortal,
+				Operations: []Operation{OpRead},
+				Scope:      DataScopeTeam,
+			},
 		},
 	},
 	{

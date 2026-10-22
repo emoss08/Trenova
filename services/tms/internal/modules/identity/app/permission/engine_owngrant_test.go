@@ -18,6 +18,7 @@ var kindsGrantedOnTheirOwn = []permission.Resource{
 	permission.ResourcePerformanceReview,
 	permission.ResourceTimesheet,
 	permission.ResourceProfileChangeRequest,
+	permission.ResourceDriverPortal,
 }
 
 func TestCheck_AWorkerGrantReachesNoKindGrantedOnItsOwn(t *testing.T) {

@@ -37,6 +37,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 		ResourcePerformanceReview,
 		ResourceTimesheet,
 		ResourceProfileChangeRequest,
+		ResourceDriverPortal,
 	}
 	none := map[Resource]string{}
 	expected := map[string]map[Resource]string{
@@ -54,6 +55,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 		"driver_manager": {
 			ResourceTimesheet:            "approve,read,reject,update@team",
 			ResourceProfileChangeRequest: "approve,read,reject@team",
+			ResourceDriverPortal:         "read@team",
 		},
 		"hr": {
 			ResourceBenefitPlan:              "assign,create,read,update@organization",
@@ -62,8 +64,11 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 			ResourcePerformanceReview:        "create,read,update@organization",
 			ResourceTimesheet:                "approve,read,reject,update@team",
 			ResourceProfileChangeRequest:     "approve,read,reject@team",
+			ResourceDriverPortal:             "create,read@organization",
 		},
-		"read_only": none,
+		"read_only": {
+			ResourceDriverPortal: "read@organization",
+		},
 	}
 
 	reg := NewRegistry()
@@ -128,4 +133,22 @@ func TestTemplateGrants_ReadOnlyReadsNoKindGrantedOnItsOwn(t *testing.T) {
 	}
 	assert.NotEmpty(t, effectiveGrant(reg, grants, ResourceWorker))
 	assert.NotEmpty(t, effectiveGrant(reg, grants, ResourceWorkerCredential))
+}
+
+func TestBundles_OnlyHumanResourcesInviteDriversToThePortal(t *testing.T) {
+	t.Parallel()
+
+	expected := map[string][]Operation{
+		"hr.workers": {OpCreate, OpRead},
+		"hr.team":    {OpRead},
+	}
+	for _, bundle := range Bundles() {
+		var got []Operation
+		for _, grant := range bundle.Grants {
+			if grant.Resource == ResourceDriverPortal {
+				got = Normalize(append(got, grant.Operations...))
+			}
+		}
+		assert.Equal(t, expected[bundle.ID], got, "bundle %q", bundle.ID)
+	}
 }

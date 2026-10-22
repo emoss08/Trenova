@@ -1,5 +1,7 @@
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useCanReadKind } from "@trenova/shared/hooks/use-can-read-kind";
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -47,6 +49,9 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const rt = useRichT();
   // The portal user's email and last sign-in are outside the user's reference view.
   const canReadUsers = useCanReadKind("user");
+  const { allowed: canView } = usePermission(Resource.DriverPortal, Operation.Read);
+  const { allowed: canInvite } = usePermission(Resource.DriverPortal, Operation.Create);
+  const { allowed: canRevoke } = usePermission(Resource.DriverPortal, Operation.Cancel);
 
   const queryClient = useQueryClient();
   const [inviteEmail, setInviteEmail] = useState("");
@@ -57,7 +62,7 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
   const status = useQuery({
     queryKey: ["worker-portal-status", workerId],
     queryFn: ({ signal }) => fetchWorkerPortalStatus(workerId, { signal }),
-    enabled: workerId.length > 0,
+    enabled: canView && workerId.length > 0,
   });
 
   const invalidate = () =>
@@ -94,6 +99,15 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
+
+  if (!canView) {
+    return (
+      <div className="flex flex-col gap-4">
+        <ProfileChangeRequests workerId={workerId} />
+        <PolicyAcknowledgements workerId={workerId} />
+      </div>
+    );
+  }
 
   if (status.isPending) {
     return (
@@ -145,14 +159,16 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                 {t("Last sign-in: {0}", formatDate(data.portalUser.lastLoginAt))}
               </p>
             ) : null}
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive mt-2 w-fit"
-              onClick={() => setConfirmRevoke(true)}
-            >
-              {t("Revoke access")}
-            </Button>
+            {canRevoke ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive mt-2 w-fit"
+                onClick={() => setConfirmRevoke(true)}
+              >
+                {t("Revoke access")}
+              </Button>
+            ) : null}
           </div>
         ) : hasPending && data.pendingInvitation ? (
           <div className="mt-3 flex flex-col gap-1 text-sm">
@@ -164,17 +180,19 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
                 formatDate(data.pendingInvitation.expiresAt),
               )}
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-fit"
-              disabled={revoke.isPending}
-              onClick={() => revoke.mutate()}
-            >
-              {revoke.isPending ? t("Revoking...") : t("Cancel invitation")}
-            </Button>
+            {canRevoke ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 w-fit"
+                disabled={revoke.isPending}
+                onClick={() => revoke.mutate()}
+              >
+                {revoke.isPending ? t("Revoking...") : t("Cancel invitation")}
+              </Button>
+            ) : null}
           </div>
-        ) : (
+        ) : canInvite ? (
           <div className="mt-3 flex flex-col gap-2">
             <p className="text-muted-foreground text-xs">
               {t(
@@ -200,6 +218,10 @@ export default function WorkerPortalTab({ workerId }: { workerId: string }) {
               {invite.isPending ? t("Sending...") : t("Send invitation")}
             </Button>
           </div>
+        ) : (
+          <p className="text-muted-foreground mt-3 text-xs">
+            {t("This driver has not been invited to Dash.")}
+          </p>
         )}
 
         {inviteUrl ? (
