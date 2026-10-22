@@ -578,7 +578,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			}
 
 			if c.templates != nil {
-				t.Run("the active templates are read alongside, and only ours", func(t *testing.T) {
+				t.Run("what is read alongside is ours alone, and only what it should be", func(t *testing.T) {
 					page := call(map[string]any{"workerId": ours.workerID.String()})
 					listed := page[c.key].([]any)
 					ids := make([]string, 0, len(listed))

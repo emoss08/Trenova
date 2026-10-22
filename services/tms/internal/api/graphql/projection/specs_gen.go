@@ -31582,6 +31582,10 @@ func init() {
 					Target: &WorkerSpec,
 				},
 			},
+			{
+				Name:    "violations",
+				Special: "violations",
+			},
 		},
 	}
 
