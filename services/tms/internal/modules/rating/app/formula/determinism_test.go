@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestService_ValidateExpression_RefusesNonDeterministicBuiltins(t *testing.T) {
+func TestService_Check_RefusesNonDeterministicBuiltins(t *testing.T) {
 	t.Parallel()
 
 	svc := setupService(t)
@@ -33,27 +33,13 @@ func TestService_ValidateExpression_RefusesNonDeterministicBuiltins(t *testing.T
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := svc.ValidateExpression(t.Context(), tc.expression, "shipment")
-			require.Error(t, err)
-			assert.Contains(t, err.Error(), "not available in formulas")
-			assert.Contains(t, err.Error(), tc.names)
+			check := checkOne(t, svc, tc.expression)
+			refusal := check.FirstError()
+			require.NotNil(t, refusal, tc.expression)
+			assert.Equal(t, "disabled-function", refusal.Code)
+			assert.Contains(t, refusal.Message.String(), tc.names)
 		})
 	}
-}
-
-func TestService_DatesParseInUTC(t *testing.T) {
-	t.Parallel()
-
-	svc := setupService(t)
-
-	resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
-		Expression: `date("2025-03-01").Location().String() == "UTC" ? 1 : 0`,
-		Entity:     shippedOnMarchFirst(),
-		SchemaID:   "shipment",
-	})
-	require.NoError(t, err)
-	assert.True(t, decimal.NewFromInt(1).Equal(resp.Amount),
-		"date() must not depend on the server's local zone")
 }
 
 func shippedOnMarchFirst() *shipment.Shipment {
@@ -119,14 +105,12 @@ func TestService_NullableDateGuardSuggestsRatingTime(t *testing.T) {
 
 	svc := setupService(t)
 
-	warnings, err := svc.UnguardedNullableFields(
-		t.Context(),
-		`pickupDate.Hour() > 12 ? 10 : 0`,
-		"shipment",
-		nil,
+	check := checkOne(t, svc, `pickupDate.Hour() > 12 ? 10 : 0`)
+	assert.Equal(t, []string{"pickupDate"}, check.Unguarded())
+	require.NotEmpty(t, check.Diagnostics[0].Fixes)
+	assert.Equal(
+		t,
+		"coalesce(pickupDate, ratingTime)",
+		check.Diagnostics[0].Fixes[0].Changes[0].Insert,
 	)
-	require.NoError(t, err)
-	require.NotEmpty(t, warnings)
-	assert.Equal(t, "pickupDate", warnings[0].Field)
-	assert.Equal(t, "coalesce(pickupDate, ratingTime)", warnings[0].Suggestion)
 }

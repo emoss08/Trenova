@@ -58,7 +58,9 @@ func TestContextVariables_UsesTheFreshestIndexPrice(t *testing.T) {
 	variables, err := svc.ContextVariables(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
 
-	assert.InDelta(t, 3.61, variables["fuelPrice"], 0.0001,
+	price, ok := variables["fuelPrice"].(decimal.Decimal)
+	require.True(t, ok, "the price reaches the formula as the exact decimal")
+	assert.Equal(t, "3.61", price.String(),
 		"the freshest price wins; on a tie the lowest index code does, so the answer never flips")
 	assert.Equal(t, "2026-08-31", variables["fuelPriceDate"])
 	assert.Equal(t, "DOE_GULF", variables["fuelIndexCode"])

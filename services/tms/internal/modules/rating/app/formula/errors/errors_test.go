@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,34 +55,6 @@ func TestResolveError(t *testing.T) {
 		var resolveErr *formulaerrors.ResolveError
 		require.True(t, errors.As(err, &resolveErr))
 		assert.Equal(t, "path", resolveErr.Path)
-	})
-}
-
-func TestValidationError(t *testing.T) {
-	t.Parallel()
-
-	t.Run("constructor sets all fields", func(t *testing.T) {
-		t.Parallel()
-		err := &formulaerrors.ValidationError{
-			Field:   "amount",
-			Value:   -1,
-			Message: "must be positive",
-		}
-
-		assert.Equal(t, "amount", err.Field)
-		assert.Equal(t, -1, err.Value)
-		assert.Equal(t, "must be positive", err.Message)
-	})
-
-	t.Run("Error returns expected format", func(t *testing.T) {
-		t.Parallel()
-		err := &formulaerrors.ValidationError{
-			Field:   "rate",
-			Value:   0,
-			Message: "cannot be zero",
-		}
-
-		assert.Equal(t, "validation failed for field rate: cannot be zero", err.Error())
 	})
 }
 
@@ -182,54 +155,6 @@ func TestComputeError(t *testing.T) {
 	})
 }
 
-func TestVariableError(t *testing.T) {
-	t.Parallel()
-
-	t.Run("NewVariableError sets all fields", func(t *testing.T) {
-		t.Parallel()
-		cause := errors.New("cause")
-		err := formulaerrors.NewVariableError("totalWeight", "shipment", cause)
-
-		assert.Equal(t, "totalWeight", err.VariableName)
-		assert.Equal(t, "shipment", err.Context)
-		assert.Equal(t, cause, err.Cause)
-	})
-
-	t.Run("Error returns expected format", func(t *testing.T) {
-		t.Parallel()
-		cause := errors.New("cause")
-		err := formulaerrors.NewVariableError("mileage", "route", cause)
-
-		assert.Equal(t, "failed to resolve variable 'mileage' in context route: cause", err.Error())
-	})
-
-	t.Run("Unwrap returns cause", func(t *testing.T) {
-		t.Parallel()
-		cause := errors.New("cause")
-		err := formulaerrors.NewVariableError("var", "ctx", cause)
-
-		assert.Equal(t, cause, err.Unwrap())
-	})
-
-	t.Run("errors.Is works with unwrapped error", func(t *testing.T) {
-		t.Parallel()
-		cause := errors.New("cause")
-		err := formulaerrors.NewVariableError("var", "ctx", cause)
-
-		require.True(t, errors.Is(err, cause))
-	})
-
-	t.Run("errors.As works with unwrapped error", func(t *testing.T) {
-		t.Parallel()
-		cause := errors.New("cause")
-		err := formulaerrors.NewVariableError("distance", "leg", cause)
-
-		var varErr *formulaerrors.VariableError
-		require.True(t, errors.As(err, &varErr))
-		assert.Equal(t, "distance", varErr.VariableName)
-	})
-}
-
 func TestSchemaError(t *testing.T) {
 	t.Parallel()
 
@@ -276,4 +201,35 @@ func TestSchemaError(t *testing.T) {
 		require.True(t, errors.As(err, &schemaErr))
 		assert.Equal(t, "schema-xyz", schemaErr.SchemaID)
 	})
+}
+
+func TestEvaluationError_CarriesTheModulesErrorUnderItsScope(t *testing.T) {
+	t.Parallel()
+
+	from, to := 4, 10
+	moduleErr := &rules.FormulaError{
+		Code: "missingField",
+		Message: rules.Message{
+			Template: "no value for {0} on this record; write {1} so the formula still prices when it is missing",
+			Args:     []any{"weight", "coalesce(weight, 0)"},
+		},
+		From:   &from,
+		To:     &to,
+		Fields: []string{"weight"},
+		Guards: []string{"coalesce(weight, 0)"},
+	}
+	err := formulaerrors.NewEvaluationError("breakdowns[1].expression", moduleErr)
+
+	assert.Equal(t, moduleErr.Error(), err.Error())
+	require.ErrorIs(t, err, moduleErr)
+	message, args := err.LocalizedMessage()
+	assert.Equal(t, moduleErr.Message.Template, message)
+	assert.Equal(t, moduleErr.Message.Args, args)
+
+	encoded, encodeErr := err.MarshalJSON()
+	require.NoError(t, encodeErr)
+	assert.JSONEq(t, `{"scope":"breakdowns[1].expression","code":"missingField",`+
+		`"message":"no value for {0} on this record; write {1} so the formula still prices when it is missing",`+
+		`"args":["weight","coalesce(weight, 0)"],"from":4,"to":10,`+
+		`"fields":["weight"],"guards":["coalesce(weight, 0)"]}`, string(encoded))
 }

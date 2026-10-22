@@ -43,11 +43,11 @@ func fromShipment(zero any, read func(*shipment.Shipment) any) ComputedFunc {
 }
 
 var (
-	computeTotalDistance = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return s.RatingDistance().InexactFloat64()
+	computeTotalDistance = fromShipment(decimal.Zero, func(s *shipment.Shipment) any {
+		return s.RatingDistance()
 	})
-	computeTotalStops = fromShipment(0, func(s *shipment.Shipment) any {
-		return s.RatedStopCount()
+	computeTotalStops = fromShipment(int64(0), func(s *shipment.Shipment) any {
+		return int64(s.RatedStopCount())
 	})
 	computeHasHazmat = fromShipment(false, func(s *shipment.Shipment) any {
 		return s.HasHazardousMaterial()
@@ -55,46 +55,48 @@ var (
 	computeRequiresTemperatureControl = fromShipment(false, func(s *shipment.Shipment) any {
 		return s.TemperatureMin != nil || s.TemperatureMax != nil
 	})
-	computeTemperatureDifferential = fromShipment(0.0, func(s *shipment.Shipment) any {
+	computeTemperatureDifferential = fromShipment(int64(0), func(s *shipment.Shipment) any {
 		if s.TemperatureMin == nil || s.TemperatureMax == nil {
-			return 0.0
+			return int64(0)
 		}
-		return float64(*s.TemperatureMax) - float64(*s.TemperatureMin)
+		return int64(*s.TemperatureMax) - int64(*s.TemperatureMin)
 	})
-	computeTotalWeight = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return s.RatingWeight().InexactFloat64()
+	computeTotalWeight = fromShipment(decimal.Zero, func(s *shipment.Shipment) any {
+		return s.RatingWeight()
 	})
 	computeTotalPieces = fromShipment(int64(0), func(s *shipment.Shipment) any {
 		return s.RatingPieces()
 	})
-	computeTotalLinearFeet = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return s.RatingLinearFeet().InexactFloat64()
+	computeTotalLinearFeet = fromShipment(decimal.Zero, func(s *shipment.Shipment) any {
+		return s.RatingLinearFeet()
 	})
-	computeBaseRate = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return nullDecimalFloat(s.BaseRate)
+	computeBaseRate = fromShipment(decimal.Zero, func(s *shipment.Shipment) any {
+		return decimalOrZero(s.BaseRate)
 	})
-	computeFreightChargeAmount = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return nullDecimalFloat(s.FreightChargeAmount)
+	computeFreightChargeAmount = fromShipment(decimal.Zero, func(s *shipment.Shipment) any {
+		return decimalOrZero(s.FreightChargeAmount)
 	})
-	computeOtherChargeAmount = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return nullDecimalFloat(s.OtherChargeAmount)
+	computeOtherChargeAmount = fromShipment(decimal.Zero, func(s *shipment.Shipment) any {
+		return decimalOrZero(s.OtherChargeAmount)
 	})
-	computeCurrentTotalCharge = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return nullDecimalFloat(s.TotalChargeAmount)
+	computeCurrentTotalCharge = fromShipment(decimal.Zero, func(s *shipment.Shipment) any {
+		return decimalOrZero(s.TotalChargeAmount)
 	})
 )
 
-func nullDecimalFloat(value decimal.NullDecimal) float64 {
+var secondsPerHour = decimal.NewFromInt(3600)
+
+func decimalOrZero(value decimal.NullDecimal) decimal.Decimal {
 	if !value.Valid {
-		return 0
+		return decimal.Zero
 	}
-	return value.Decimal.InexactFloat64()
+	return value.Decimal
 }
 
 func computeTotalHours(entity any) (any, error) {
 	_, rated, err := stopsOf(entity)
 	if err != nil {
-		return 0.0, err
+		return decimal.Zero, err
 	}
 
 	var (
@@ -124,8 +126,8 @@ func computeTotalHours(entity any) (any, error) {
 	}
 
 	if !found || windowEnd <= windowStart {
-		return 0.0, nil
+		return decimal.Zero, nil
 	}
 
-	return float64(windowEnd-windowStart) / 3600.0, nil
+	return decimal.NewFromInt(windowEnd - windowStart).Div(secondsPerHour), nil
 }

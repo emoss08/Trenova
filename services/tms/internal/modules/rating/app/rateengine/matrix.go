@@ -255,7 +255,7 @@ func (s *Service) applyCellValue(
 ) (decimal.Decimal, error) {
 	cell := match.Cell
 
-	overrides := map[string]any{"baseRate": cell.Value.InexactFloat64()}
+	overrides := map[string]any{"baseRate": cell.Value}
 	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
 		TemplateID:        matrix.FormulaTemplateID,
 		Entity:            rateCtx.Entity,

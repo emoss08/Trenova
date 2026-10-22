@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,11 +34,11 @@ func TestDefaultClassifier_FormulaErrorsAreValidationProblems(t *testing.T) {
 			"abc",
 			errors.New("nope"),
 		),
-		"missing": formulaerrors.NewMissingFieldError(
-			"weight * 2",
-			[]string{"weight"},
-			[]string{"coalesce(weight, 0)"},
-		),
+		"evaluation": formulaerrors.NewEvaluationError("expression", &rules.FormulaError{
+			Code:    "missingField",
+			Message: rules.Message{Template: "no value for {0}", Args: []any{"weight"}},
+			Fields:  []string{"weight"},
+		}),
 		"unresolved": formulaerrors.NewUnresolvedFieldError(
 			[]string{"serviceType.code"},
 			map[string]error{"serviceType.code": errors.New("nil pointer")},

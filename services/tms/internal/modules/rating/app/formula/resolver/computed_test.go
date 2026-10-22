@@ -1,6 +1,7 @@
 package resolver_test
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -146,14 +147,14 @@ func TestComputed_TotalsReadTheShipmentsOwnAggregates(t *testing.T) {
 		},
 	}
 
-	assert.InDelta(t, 300.75, compute(t, r, entity, "computeTotalDistance"), 0.0001)
-	assert.Equal(t, 2, compute(t, r, entity, "computeTotalStops"))
+	assertExact(t, "300.75", compute(t, r, entity, "computeTotalDistance"))
+	assert.Equal(t, int64(2), compute(t, r, entity, "computeTotalStops"))
 	assert.Equal(t, true, compute(t, r, entity, "computeHasHazmat"))
-	assert.InDelta(t, 4_000.0, compute(t, r, entity, "computeTotalWeight"), 0.0001)
+	assertExact(t, "4000", compute(t, r, entity, "computeTotalWeight"))
 	assert.Equal(t, int64(15), compute(t, r, entity, "computeTotalPieces"))
-	assert.InDelta(t, 5.0, compute(t, r, entity, "computeTotalLinearFeet"), 0.0001)
-	assert.InDelta(t, 80.0, compute(t, r, entity, "computeTotalCubicFeet"), 0.0001)
-	assert.InDelta(t, 50.0, compute(t, r, entity, "computeDensity"), 0.0001)
+	assertExact(t, "5", compute(t, r, entity, "computeTotalLinearFeet"))
+	assertExact(t, "80", compute(t, r, entity, "computeTotalCubicFeet"))
+	assertExact(t, "50", compute(t, r, entity, "computeDensity"))
 	assert.Equal(t, "92.5", compute(t, r, entity, "computePrimaryFreightClass"))
 	assert.Equal(t, "92.5", compute(t, r, entity, "computeHighestFreightClass"))
 
@@ -161,7 +162,7 @@ func TestComputed_TotalsReadTheShipmentsOwnAggregates(t *testing.T) {
 	assert.Nil(t, compute(t, r, empty, "computeDensity"), "no cube means density is unknown")
 	assert.Empty(t, compute(t, r, empty, "computePrimaryFreightClass"))
 	assert.Equal(t, false, compute(t, r, empty, "computeHasHazmat"))
-	assert.Equal(t, 0, compute(t, r, empty, "computeTotalStops"))
+	assert.Equal(t, int64(0), compute(t, r, empty, "computeTotalStops"))
 }
 
 func TestComputed_TemperatureFields(t *testing.T) {
@@ -173,11 +174,11 @@ func TestComputed_TemperatureFields(t *testing.T) {
 	oneSided := &shipment.Shipment{TemperatureMax: int16Ptr(40)}
 
 	assert.Equal(t, true, compute(t, r, reefer, "computeRequiresTemperatureControl"))
-	assert.InDelta(t, 6.0, compute(t, r, reefer, "computeTemperatureDifferential"), 0.0001)
+	assertExact(t, "6", compute(t, r, reefer, "computeTemperatureDifferential"))
 	assert.Equal(t, false, compute(t, r, dry, "computeRequiresTemperatureControl"))
-	assert.InDelta(t, 0.0, compute(t, r, dry, "computeTemperatureDifferential"), 0.0001)
+	assertExact(t, "0", compute(t, r, dry, "computeTemperatureDifferential"))
 	assert.Equal(t, true, compute(t, r, oneSided, "computeRequiresTemperatureControl"))
-	assert.InDelta(t, 0.0, compute(t, r, oneSided, "computeTemperatureDifferential"), 0.0001)
+	assertExact(t, "0", compute(t, r, oneSided, "computeTemperatureDifferential"))
 }
 
 func TestComputed_ChargeAmounts(t *testing.T) {
@@ -191,14 +192,14 @@ func TestComputed_ChargeAmounts(t *testing.T) {
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.NewFromInt(1_250)),
 	}
 
-	assert.InDelta(t, 2.15, compute(t, r, entity, "computeBaseRate"), 0.0001)
-	assert.InDelta(t, 1_000.0, compute(t, r, entity, "computeFreightChargeAmount"), 0.0001)
-	assert.InDelta(t, 250.0, compute(t, r, entity, "computeOtherChargeAmount"), 0.0001)
-	assert.InDelta(t, 1_250.0, compute(t, r, entity, "computeCurrentTotalCharge"), 0.0001)
+	assertExact(t, "2.15", compute(t, r, entity, "computeBaseRate"))
+	assertExact(t, "1000", compute(t, r, entity, "computeFreightChargeAmount"))
+	assertExact(t, "250", compute(t, r, entity, "computeOtherChargeAmount"))
+	assertExact(t, "1250", compute(t, r, entity, "computeCurrentTotalCharge"))
 
 	empty := &shipment.Shipment{}
-	assert.InDelta(t, 0.0, compute(t, r, empty, "computeBaseRate"), 0.0001)
-	assert.InDelta(t, 0.0, compute(t, r, empty, "computeCurrentTotalCharge"), 0.0001)
+	assertExact(t, "0", compute(t, r, empty, "computeBaseRate"))
+	assertExact(t, "0", compute(t, r, empty, "computeCurrentTotalCharge"))
 }
 
 func TestComputed_LaneReadsTheOriginAndDestinationStops(t *testing.T) {
@@ -254,9 +255,9 @@ func TestComputed_PickupIsReadOnThePickupLocationsClock(t *testing.T) {
 		},
 	}}}}
 
-	assert.Equal(t, int(time.Friday), compute(t, r, entity, "computePickupDayOfWeek"))
-	assert.Equal(t, 18, compute(t, r, entity, "computePickupHour"))
-	assert.Equal(t, int(time.October), compute(t, r, entity, "computePickupMonth"))
+	assert.Equal(t, int64(time.Friday), compute(t, r, entity, "computePickupDayOfWeek"))
+	assert.Equal(t, int64(18), compute(t, r, entity, "computePickupHour"))
+	assert.Equal(t, int64(time.October), compute(t, r, entity, "computePickupMonth"))
 	assert.Equal(t, false, compute(t, r, entity, "computeIsWeekendPickup"))
 
 	unknownZone := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
@@ -271,7 +272,7 @@ func TestComputed_PickupIsReadOnThePickupLocationsClock(t *testing.T) {
 
 	arrived := fridayEvening.Add(-2 * time.Hour).Unix()
 	entity.Moves[0].Stops[0].ActualArrival = &arrived
-	assert.Equal(t, 16, compute(t, r, entity, "computePickupHour"),
+	assert.Equal(t, int64(16), compute(t, r, entity, "computePickupHour"),
 		"an actual arrival outranks the scheduled window")
 }
 
@@ -284,7 +285,7 @@ func TestComputed_PickupAndDeliveryDates(t *testing.T) {
 
 	assert.Nil(t, compute(t, r, &shipment.Shipment{}, "computePickupDate"))
 	assert.Nil(t, compute(t, r, &shipment.Shipment{}, "computeDeliveryDate"))
-	assert.Equal(t, 0, compute(t, r, &shipment.Shipment{}, "computePickupHour"))
+	assert.Equal(t, int64(0), compute(t, r, &shipment.Shipment{}, "computePickupHour"))
 
 	entity := &shipment.Shipment{Moves: []*shipment.ShipmentMove{{Stops: []*shipment.Stop{
 		{Sequence: 0, Type: shipment.StopTypePickup, ScheduledWindowStart: start},
@@ -341,8 +342,8 @@ func TestComputed_TotalHoursSpansTheRatedStops(t *testing.T) {
 		},
 	}}}}
 
-	assert.InDelta(t, 10.0, compute(t, r, entity, "computeTotalHours"), 0.0001)
-	assert.InDelta(t, 0.0, compute(t, r, &shipment.Shipment{}, "computeTotalHours"), 0.0001)
+	assertExact(t, "10", compute(t, r, entity, "computeTotalHours"))
+	assertExact(t, "0", compute(t, r, &shipment.Shipment{}, "computeTotalHours"))
 }
 
 func TestComputed_StopsListEveryStopInSequence(t *testing.T) {
@@ -379,9 +380,9 @@ func TestComputed_StopsListEveryStopInSequence(t *testing.T) {
 	assert.Equal(t, "Pickup", first["type"])
 	assert.Equal(t, "New", first["status"])
 	assert.Equal(t, "Open", first["scheduleType"])
-	assert.Equal(t, 0, first["sequence"])
-	assert.Equal(t, 12.0, first["pieces"])
-	assert.Equal(t, 4_000.0, first["weight"])
+	assert.Equal(t, int64(0), first["sequence"])
+	assert.Equal(t, int64(12), first["pieces"])
+	assert.Equal(t, int64(4_000), first["weight"])
 	assert.Equal(t, int64(1_800_000_000), first["windowStart"])
 	assert.Equal(t, windowEnd, first["windowEnd"])
 	assert.Nil(t, first["actualArrival"])
@@ -429,11 +430,11 @@ func TestComputed_CommoditiesCarryClassAndDimensions(t *testing.T) {
 	assert.Equal(t, "77.5", paint["freightClass"])
 	assert.Equal(t, true, paint["stackable"])
 	assert.Equal(t, true, paint["hazmat"])
-	assert.Equal(t, 800.0, paint["weight"])
-	assert.Equal(t, 2.0, paint["pieces"])
-	assert.Equal(t, 4.0, paint["lengthFeet"])
-	assert.InDelta(t, 160.0, paint["cubicFeet"], 0.0001)
-	assert.InDelta(t, 5.0, paint["density"], 0.0001)
+	assert.Equal(t, int64(800), paint["weight"])
+	assert.Equal(t, int64(2), paint["pieces"])
+	assertExact(t, "4", paint["lengthFeet"])
+	assertExact(t, "160", paint["cubicFeet"])
+	assertExact(t, "5", paint["density"])
 
 	bare, ok := lines[1].(map[string]any)
 	require.True(t, ok)
@@ -470,4 +471,17 @@ func TestMemoize_IsTransparent(t *testing.T) {
 
 	_, err := r.ResolveComputed(resolver.Memoize(42), "computeTotalStops")
 	require.ErrorIs(t, err, resolver.ErrUnsupportedEntity)
+}
+
+func assertExact(t *testing.T, want string, got any) {
+	t.Helper()
+
+	switch typed := got.(type) {
+	case decimal.Decimal:
+		assert.True(t, decimal.RequireFromString(want).Equal(typed), "want %s, got %s", want, typed)
+	case int64:
+		assert.Equal(t, want, strconv.FormatInt(typed, 10))
+	default:
+		assert.Failf(t, "not an exact number", "%T %v", got, got)
+	}
 }

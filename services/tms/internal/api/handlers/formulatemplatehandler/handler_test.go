@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
@@ -308,20 +308,10 @@ func newTestFormulaService(t *testing.T) *formula.Service {
 	registry := schema.NewRegistry()
 	internaltestutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-	require.NoError(t, err)
 	return formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Engine:         eng,
+		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:       res,
 		VersionRepo:    &stubFormulaVersionRepo{},
 		RateMatrixRepo: &stubRateMatrixRepo{},
@@ -1529,7 +1519,17 @@ func TestFormulaTemplateHandler_TestExpression_InvalidExpression(t *testing.T) {
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, false, resp["valid"])
-	assert.NotEmpty(t, resp["error"])
+	assert.Nil(t, resp["error"], "a formula that does not check is never run")
+	diagnostics, ok := resp["diagnostics"].([]any)
+	require.True(t, ok)
+	require.NotEmpty(t, diagnostics)
+	first := diagnostics[0].(map[string]any)
+	assert.Equal(t, "expression", first["scope"])
+	assert.Equal(t, "unknown-variable", first["code"], "findings come in source order")
+	assert.Equal(t, "error", first["severity"])
+	assert.Contains(t, first, "from")
+	assert.Contains(t, first, "to")
+	assert.Contains(t, first, "fixes")
 }
 
 func TestFormulaTemplateHandler_ListVersions_Success(t *testing.T) {

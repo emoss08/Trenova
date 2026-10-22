@@ -83,6 +83,7 @@ type ExplainFormulaScenarioResponse struct {
 	RecordedOnVersion *int64                                  `json:"recordedOnVersion"`
 	RecordedBy        *formulatemplateports.ScenarioRecorder  `json:"recordedBy"`
 	Error             string                                  `json:"error,omitempty"`
+	ErrorCode         string                                  `json:"errorCode,omitempty"`
 	Rows              []formulatemplateports.ScenarioTraceRow `json:"rows"`
 }
 
