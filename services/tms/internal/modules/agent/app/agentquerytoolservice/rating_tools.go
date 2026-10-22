@@ -321,7 +321,7 @@ func newGetRateAgreementTool(
 func (t *getRateAgreementTool) Name() string { return "rate_get_agreement" }
 
 func (t *getRateAgreementTool) SearchTerms() []string {
-	return []string{"contract terms", "lane rates", "minimums"}
+	return []string{"contract terms", "lane rules", "lane rates", "minimums", "rule inputs"}
 }
 
 func (t *getRateAgreementTool) Description() string {

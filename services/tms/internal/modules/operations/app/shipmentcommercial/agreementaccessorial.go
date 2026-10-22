@@ -175,6 +175,21 @@ func agreementCharge(
 	return charge
 }
 
+func (p *ratingPass) dropBilledAgreementCharges(entity *shipment.Shipment) {
+	if p == nil || len(p.billed) == 0 {
+		return
+	}
+	kept := entity.AdditionalCharges[:0]
+	for _, charge := range entity.AdditionalCharges {
+		if charge != nil && charge.Owner() == shipment.SystemOwnerAgreement &&
+			p.skips(charge.AccessorialChargeID, skipSourceAgreement) {
+			continue
+		}
+		kept = append(kept, charge)
+	}
+	entity.AdditionalCharges = kept
+}
+
 func removeAgreementCharges(entity *shipment.Shipment) {
 	filtered := entity.AdditionalCharges[:0]
 

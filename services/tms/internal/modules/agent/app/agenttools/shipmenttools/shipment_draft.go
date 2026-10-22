@@ -20,7 +20,7 @@ type ShipmentDraft struct {
 	ServiceTypeID       string            `json:"serviceTypeId"`
 	ShipmentTypeID      string            `json:"shipmentTypeId"`
 	FormulaTemplateID   string            `json:"formulaTemplateId"`
-	Inputs              map[string]string `json:"inputs"`
+	TariffInputs        map[string]string `json:"tariffInputs"`
 	FreightChargeAmount string            `json:"freightChargeAmount"`
 	FreightTerms        string            `json:"freightTerms"`
 	TractorTypeID       string            `json:"tractorTypeId"`
@@ -173,7 +173,7 @@ func (d *ShipmentDraft) Build(
 		FormulaTemplateID: read.id("formulaTemplateId", d.FormulaTemplateID),
 		TractorTypeID:     read.id("tractorTypeId", d.TractorTypeID),
 		TrailerTypeID:     read.id("trailerTypeId", d.TrailerTypeID),
-		TariffInputs:      read.inputs("inputs", d.Inputs),
+		TariffInputs:      read.inputs("tariffInputs", d.TariffInputs),
 		FreightChargeAmount: read.decimal(
 			"freightChargeAmount",
 			d.FreightChargeAmount,

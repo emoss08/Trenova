@@ -182,8 +182,6 @@ type rateComponentRow struct {
 	SourceName   string          `json:"sourceName,omitempty"`
 }
 
-// rateSkipRow is a charge another engine left out because the tariff billed
-// its code.
 type rateSkipRow struct {
 	Code   string `json:"code"`
 	Source string `json:"source"`

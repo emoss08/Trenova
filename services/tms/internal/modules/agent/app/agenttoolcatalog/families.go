@@ -92,7 +92,7 @@ var families = [...][]string{
 	{"edi_draft_connection", "edi_apply_connection_draft"},
 	{"rate_list_agreements", "rate_get_agreement", "rate_explain"},
 	{"formula_describe_language", "formula_check", "formula_run_tests", "formula_propose"},
-	{"formula_preview", "formula_get_template", "formula_run_tests"},
+	{"formula_list_templates", "formula_get_template", "formula_preview"},
 	{"formula_list_libraries", "formula_get_library", "formula_library_propose"},
 	{
 		"intake_accept_field",
@@ -101,7 +101,6 @@ var families = [...][]string{
 		"intake_set_required_field",
 	},
 	{"location_list", "intake_set_stop_location", "intake_set_stop_schedule", "location_create"},
-	{"formula_list_templates", "formula_get_template"},
 	{
 		"billing_list_queue_items",
 		"billing_get_queue_item",

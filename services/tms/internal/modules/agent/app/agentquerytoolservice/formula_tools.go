@@ -177,6 +177,7 @@ func newListFormulaLibrariesTool(
 	return newListTool(listSpec{
 		name:         "formula_list_libraries",
 		entityPlural: "formula libraries",
+		searchTerms:  []string{"list libraries", "shared libraries", "formula libraries"},
 		summary: "List the organisation's formula libraries: Tariff modules of shared " +
 			"functions a template imports with use org.<name>. A row carries the library's " +
 			"path, description, status, version and test count: read one whole, with its " +
@@ -225,10 +226,12 @@ func newGetFormulaLibraryTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
-		name:        "formula_get_library",
-		entity:      "formula library",
-		searchTerms: []string{"formula library", "shared functions", "org module", "use org"},
-		resource:    permission.ResourceFormulaLibrary,
+		name:   "formula_get_library",
+		entity: "formula library",
+		searchTerms: []string{
+			"formula library", "library source", "shared functions", "org module", "use org",
+		},
+		resource: permission.ResourceFormulaLibrary,
 		summary: "Retrieve one formula library by id, whole: its Tariff source, the libraries " +
 			"it imports, its status and version. Read it before explaining a function a " +
 			"template imports or changing the library.",
@@ -256,11 +259,11 @@ func provideDescribeFormulaLanguageTool(
 func (t *describeFormulaLanguageTool) Name() string { return "formula_describe_language" }
 
 func (t *describeFormulaLanguageTool) Description() string {
-	return "Describe what a Tariff formula may use here: every record field (shipment, lane, " +
-		"customer, fuel, rating) with its type, the types and units, the methods, the std " +
-		"modules' functions, this organisation's rate tables, accessorial codes and " +
-		"importable org libraries. Read it before writing or explaining a formula so every " +
-		"name you use exists. Give query (\"reefer\", \"stops\", \"ltl\", \"accessorials\") " +
+	return "Describe what a Tariff formula may use here: record fields, types and units, " +
+		"functions, rate tables, accessorial codes and libraries. It covers every record " +
+		"field (shipment, lane, customer, fuel, rating) with its type, the methods, the std " +
+		"modules' functions and this organisation's importable org libraries. Read it before " +
+		"writing or explaining a formula so every name you use exists. Give query (\"reefer\", \"stops\", \"ltl\", \"accessorials\") " +
 		"for the matching entries in full, and a library's source."
 }
 
@@ -281,8 +284,8 @@ func (t *describeFormulaLanguageTool) Policy() agentports.ToolPolicy {
 
 func (t *describeFormulaLanguageTool) SearchTerms() []string {
 	return []string{
-		"formula", "tariff", "language", "fields", "functions", "units", "rate table",
-		"library", "rating",
+		"formula language", "tariff language", "record fields", "functions", "units",
+		"rate table", "syntax",
 	}
 }
 
@@ -343,9 +346,9 @@ func provideCheckFormulaTool(workbench *formulaassistantservice.Service) agentpo
 func (t *checkFormulaTool) Name() string { return "formula_check" }
 
 func (t *checkFormulaTool) Description() string {
-	return "Check a Tariff source with Trenova's checker, against this organisation's tables, " +
-		"codes and libraries: every error and warning with its line and column and the fixes " +
-		"the checker offers, the inputs it declares, the libraries it imports and the charges " +
+	return "Check a Tariff source against this organisation's tables, codes and libraries. " +
+		"It returns every error and warning with its line and column and the fixes the " +
+		"checker offers, the inputs it declares, the libraries it imports and the charges " +
 		"it bills. Check before you show or explain source; fix every error."
 }
 
@@ -505,10 +508,10 @@ func providePreviewFormulaTool(
 func (t *previewFormulaTool) Name() string { return "formula_preview" }
 
 func (t *previewFormulaTool) Description() string {
-	return "Rate a formula template's Tariff source with Trenova's engine, for a saved " +
-		"shipment or the sample record, with the input values given: the bill line by line, " +
-		"or the refusal or error and where in the source it came from. Use it to learn what " +
-		"a formula charges a real load; say an amount only when a tool gave it."
+	return "Rate a formula template's Tariff source for a saved shipment or the sample record. " +
+		"With the input values given, it returns the bill line by line, or the refusal or " +
+		"error and where in the source it came from. Use it to learn what a formula charges " +
+		"a real load; say an amount only when a tool gave it."
 }
 
 func (t *previewFormulaTool) ParamSchema() map[string]any {
@@ -675,7 +678,8 @@ var proposeLibrarySpec = proposeSourceSpec{
 		"least one test. The person can undo it, and nothing is saved until they save. A " +
 		"change reaches templates only after the library is approved again.",
 	searchTerms: []string{
-		"write library", "shared function", "org library", "draft library", "tariff module",
+		"write library", "shared function", "add function", "org library", "draft library",
+		"tariff module",
 	},
 }
 

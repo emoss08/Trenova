@@ -207,13 +207,14 @@ func (c *Calculator) calculateCommercialTotals(
 	}
 
 	contract := sync.contract
-	if contract == nil && entity.AutoRated {
-		contract = own
-	}
-	if contract != nil && !entity.RateLocked {
+	switch {
+	case entity.RateLocked:
+	case contract != nil:
 		if err = c.syncAgreementAccessorials(ctx, entity, contract, pass); err != nil {
 			return nil, err
 		}
+	default:
+		pass.dropBilledAgreementCharges(entity)
 	}
 
 	if sync.detention {
@@ -225,7 +226,8 @@ func (c *Calculator) calculateCommercialTotals(
 	freight := freightOf(entity)
 
 	if sync.fuel {
-		if err = c.syncFuelSurcharge(ctx, entity, freight, fuelAgreement(contract), pass); err != nil {
+		agreement := c.fuelAgreement(ctx, entity, contract)
+		if err = c.syncFuelSurcharge(ctx, entity, freight, agreement, pass); err != nil {
 			return nil, err
 		}
 	}
@@ -250,11 +252,15 @@ func freightOf(entity *shipment.Shipment) decimal.Decimal {
 	return decimal.Zero
 }
 
-func fuelAgreement(contract *ratequoteports.RatedShipment) *rateagreement.RateAgreement {
-	if contract == nil {
-		return nil
+func (c *Calculator) fuelAgreement(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	contract *ratequoteports.RatedShipment,
+) *rateagreement.RateAgreement {
+	if contract != nil {
+		return contract.Agreement
 	}
-	return contract.Agreement
+	return c.loadAgreementByID(ctx, entity, entity.RateAgreementID)
 }
 
 func (c *Calculator) rateOwn(

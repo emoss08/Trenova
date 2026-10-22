@@ -174,7 +174,7 @@ func shipmentDraftSchema() map[string]any {
 					"it out when the customer's rate agreement covers the lane, and the "+
 					"contract's is used, or when freightChargeAmount gives the price.",
 			),
-			"inputs": agenttoolschema.StringMap("Values for the inputs the tariff declares, "+
+			"tariffInputs": agenttoolschema.StringMap("Values for the inputs the tariff declares, "+
 				"which formula_get_template lists, as the person gave them: $2,450 for a "+
 				"flat load, $2.10/mi for a rate a mile, 12% for a percent. Leave an input "+
 				"out to take the tariff's default.", 4000),
