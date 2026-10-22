@@ -8,7 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { chargeLineTotal } from "@trenova/shared/lib/charge-split";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { allocationRemainders, chargeTotals } from "@trenova/shared/rules/allocation";
+import { additionalChargeForAllocation } from "@trenova/shared/rules/allocation-form";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { AccessorialCharge } from "@trenova/shared/types/accessorial-charge";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
@@ -112,6 +114,19 @@ export default function AdditionalChargesSection() {
   const [isEditing, setIsEditing] = useState(false);
   const [claimFileId, setClaimFileId] = useState<string | null>(null);
   const charges = useWatch({ control, name: "additionalCharges" }) ?? [];
+  const rules = useRules();
+  // Every charge of the list is priced and measured in one call each: what a line comes to,
+  // and whether its rows give the whole of it to one payer.
+  const lineTotals = chargeTotals(rules, {
+    charges: charges.map((charge) => ({
+      method: charge?.method,
+      amount: charge?.amount,
+      unit: charge?.unit,
+    })),
+  }).totals;
+  const splits = allocationRemainders(rules, {
+    charges: charges.map((charge) => additionalChargeForAllocation(charge ?? {})),
+  });
 
   const hasDetentionCharges = charges.some(isDetentionCharge);
   const defaultPayer = useShipmentDefaultPayer();
@@ -218,13 +233,7 @@ export default function AdditionalChargesSection() {
                 // A percentage accessorial is priced against the freight on the
                 // server, so only a percent split can be checked against it here.
                 const percentOnly = charge?.method === "Percentage";
-                const lineTotal = percentOnly
-                  ? null
-                  : chargeLineTotal({
-                      method: charge?.method,
-                      amount: charge?.amount,
-                      unit: charge?.unit,
-                    });
+                const lineTotal = percentOnly ? null : (lineTotals[index] ?? null);
 
                 const chargeErrors = errors.additionalCharges?.[index];
                 const hasErrors = !!(chargeErrors && Object.keys(chargeErrors).length > 0);
@@ -248,6 +257,7 @@ export default function AdditionalChargesSection() {
                       <ChargePayerControl
                         name={`additionalCharges.${index}.allocations`}
                         chargeAmount={lineTotal}
+                        complete={splits[index]?.complete ?? false}
                         percentOnly={percentOnly}
                         defaultPayer={defaultPayer}
                         splitTitle={t("Split {0}", displayName)}
@@ -258,7 +268,7 @@ export default function AdditionalChargesSection() {
                               )
                             : t(
                                 "Divide the {0} charge between the customers who pay for it. Each payer receives an invoice for their share.",
-                                formatCurrency(lineTotal),
+                                formatCurrency(Number(lineTotal)),
                               )
                         }
                       />

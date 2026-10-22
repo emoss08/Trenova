@@ -220,6 +220,7 @@
   "Duplicate shipment": "复制运单",
   "Duplicating...": "复制中...",
   "EDI load tender submitted": "EDI 货载要约已提交",
+  "Each payer's share shows once every split adds up.": "所有拆分合计正确后，才会显示各付款方的金额。",
   "Earlier conversation, ended by a re-extraction": "较早的对话，因重新提取而结束",
   "Earlier conversation, finished": "较早的对话，已结束",
   "Earliest feasible pickup": "最早可行的提货时间",

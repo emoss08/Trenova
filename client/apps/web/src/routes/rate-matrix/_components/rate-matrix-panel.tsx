@@ -11,7 +11,9 @@ import { File06Icon, Grid01Icon, TableIcon } from "@trenova/shared/components/ic
 import { useMemo } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { DimensionEditor } from "./dimension-editor";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { MatrixGridEditor } from "./matrix-grid-editor";
+import { MatrixGridEditorSkeleton } from "./matrix-grid-editor-skeleton";
 import { RateMatrixForm } from "./rate-matrix-form";
 
 const DEFAULT_MATRIX: Partial<RateMatrix> = {
@@ -69,7 +71,12 @@ export function RateMatrixPanel({
         value: "rates",
         label: t("Rates"),
         icon: TableIcon,
-        content: <MatrixGridEditor rateMatrixId={row?.id} />,
+        // The sheet's coverage checks run in the rules module.
+        content: (
+          <LazyComponent fallback={<MatrixGridEditorSkeleton />}>
+            <MatrixGridEditor rateMatrixId={row?.id} />
+          </LazyComponent>
+        ),
       },
     ],
     [row?.id, t],

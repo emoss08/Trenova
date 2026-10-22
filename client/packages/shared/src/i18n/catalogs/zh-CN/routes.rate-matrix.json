@@ -27,6 +27,7 @@
   "Rates save on their own, separately from the rest of this form.": "费率会独立保存，与此表单的其余部分分开。",
   "Save rates": "保存费率",
   "Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.": "请先保存矩阵。费率需要有所归属，而上方的轴决定了表格的形状。",
+  "Seen in {0}": "出现在 {0}",
   "Select dimension": "选择维度",
   "Select key normalization": "选择键规范化方式",
   "Select match mode": "选择匹配模式",
