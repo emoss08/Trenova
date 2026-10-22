@@ -107,11 +107,9 @@ describe("nextDraftEdits", () => {
           surface: "formula",
           action: "formula_propose",
           formula: {
-            schemaId: "shipment",
-            expression: "1",
-            variables: null,
-            check: { valid: true },
-            scenarios: null,
+            source: 'tariff "t"\n\ncharge "Linehaul" = $1\n',
+            check: { ok: true, diagnostics: [] },
+            tests: null,
           },
         },
       }),
@@ -139,25 +137,23 @@ describe("assistantArtifactEventSchema", () => {
     expect(parsed.draft).toBeNull();
   });
 
-  it("reads a formula proposal whose lists the server left null", () => {
+  it("reads a tariff proposal whose lists the server left null", () => {
     const parsed = event({
       draft: {
         surface: "formula",
         action: "formula_propose",
         formula: {
-          schemaId: "shipment",
-          expression: "totalDistance * 2",
-          variables: null,
+          source: 'tariff "Two a mile"\n\ncharge "Linehaul" (quantity: shipment.distance, rate: $2/mi)\n',
           explanation: "Two dollars a mile.",
-          check: { valid: true, result: "200" },
-          scenarios: null,
+          check: { ok: true, diagnostics: null },
+          tests: null,
         },
       },
     });
 
-    expect(parsed.draft?.formula?.variables).toEqual([]);
-    expect(parsed.draft?.formula?.scenarios).toEqual([]);
-    expect(parsed.draft?.formula?.check.error).toBe("");
+    expect(parsed.draft?.formula?.tests).toEqual([]);
+    expect(parsed.draft?.formula?.check).toEqual({ ok: true, diagnostics: [] });
+    expect(parsed.draft?.formula?.name).toBe("");
   });
 });
 
@@ -221,14 +217,12 @@ describe("pageContextSchema", () => {
       draft: {
         surface: "formula",
         formula: {
-          schemaId: "shipment",
-          templateType: "FreightCharge",
-          expression: "1",
-          variables: [],
+          kind: "tariff",
+          source: 'tariff "t"\n',
         },
       },
     });
 
-    expect(parsed.draft?.formula?.expression).toBe("1");
+    expect(parsed.draft?.formula?.source).toBe('tariff "t"\n');
   });
 });

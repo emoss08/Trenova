@@ -1,0 +1,540 @@
+=== spacing around operators and after commas
+tariff "t"
+let a=1+2*3
+let b = f( 1 ,2 )
+let c = [ 1,2 ]
+---
+tariff "t"
+let a = 1 + 2 * 3
+let b = f(1, 2)
+let c = [1, 2]
+
+=== record braces get spaces
+tariff "t"
+let a = {code:"FSC",amount:$10}
+---
+tariff "t"
+let a = { code: "FSC", amount: $10 }
+
+=== indentation is two spaces
+tariff "t"
+if a {
+        note "x"
+    if b {
+note "y"
+    }
+}
+---
+tariff "t"
+if a {
+  note "x"
+  if b {
+    note "y"
+  }
+}
+
+=== at most one blank line
+tariff "t"
+let a = 1
+
+
+
+let b = 2
+---
+tariff "t"
+let a = 1
+
+let b = 2
+
+=== no blank lines at block starts and ends
+tariff "t"
+if a {
+
+  note "x"
+
+}
+---
+tariff "t"
+if a {
+  note "x"
+}
+
+=== blank line after the header is kept
+tariff "t"
+let a = 1
+---
+tariff "t"
+let a = 1
+
+=== numbers, units and text as written
+tariff "t"
+let a = 1_200+2.50
+let b = 500lb
+let c = "a\tb \u{1F600} {{x}}"
+let d = $1_000.00/mi
+---
+tariff "t"
+let a = 1_200 + 2.50
+let b = 500 lb
+let c = "a\tb \u{1F600} {{x}}"
+let d = $1_000.00/mi
+
+=== unit after a number gets one space
+tariff "t"
+let a = 30   lb/ft3
+---
+tariff "t"
+let a = 30 lb/ft3
+
+=== comments stay in place
+tariff "t"
+// before
+let a = 1 // trailing
+// between
+
+// after a blank
+let b = 2
+// at the end
+---
+tariff "t"
+// before
+let a = 1 // trailing
+// between
+
+// after a blank
+let b = 2
+// at the end
+
+=== comments inside blocks
+tariff "t"
+if a {
+  // first
+  note "x" // trailing
+  // last
+}
+---
+tariff "t"
+if a {
+  // first
+  note "x" // trailing
+  // last
+}
+
+=== comment in an empty block
+tariff "t"
+if a {
+  // nothing yet
+}
+---
+tariff "t"
+if a {
+  // nothing yet
+}
+
+=== comments inside a broken list
+tariff "t"
+let a = [
+  1, // one
+  // two comes next
+  2,
+]
+---
+tariff "t"
+let a = [
+  1, // one
+  // two comes next
+  2,
+]
+
+=== comment between operands of a chain
+tariff "t"
+let a = linehaul // freight
+  + fuel
+---
+tariff "t"
+let a = linehaul
+  // freight
+  + fuel
+
+=== comment inside an expression moves after the statement
+tariff "t"
+let a = x * // why
+  y
+let b = 2
+---
+tariff "t"
+let a = x * y
+// why
+let b = 2
+
+=== doc comments stay attached
+tariff "t"
+
+/// The file.
+
+/// Paid per mile.
+input rate: Money/mi = $2.35/mi
+
+/// A zone.
+enum Zone {
+  /// The first.
+  A,
+  B,
+}
+---
+tariff "t"
+
+/// The file.
+
+/// Paid per mile.
+input rate: Money/mi = $2.35/mi
+
+/// A zone.
+enum Zone {
+  /// The first.
+  A,
+  B,
+}
+
+=== long arguments break one per line
+tariff "t"
+let surcharge = stepPercent(fuel.price ?? fail "No fuel price", peg: fuelPeg, step: $0.05/gal, perStep: 0.5%)
+---
+tariff "t"
+let surcharge = stepPercent(
+  fuel.price ?? fail "No fuel price",
+  peg: fuelPeg,
+  step: $0.05/gal,
+  perStep: 0.5%,
+)
+
+=== long lists break with a trailing comma
+tariff "t"
+let zips = ["606", "607", "608", "609", "610", "611", "612", "613", "614", "615", "616", "617", "618"]
+---
+tariff "t"
+let zips = [
+  "606",
+  "607",
+  "608",
+  "609",
+  "610",
+  "611",
+  "612",
+  "613",
+  "614",
+  "615",
+  "616",
+  "617",
+  "618",
+]
+
+=== long records break
+tariff "t"
+let a = { code: "FSC", description: "Fuel surcharge for this lane", amount: $10.00, minimum: $25.00 }
+---
+tariff "t"
+let a = {
+  code: "FSC",
+  description: "Fuel surcharge for this lane",
+  amount: $10.00,
+  minimum: $25.00,
+}
+
+=== long chains break before the operator
+tariff "t"
+let total = linehaul + fuelSurcharge + extraDrops + hazmatCharge + detentionCharges + residentialFee + liftgate
+let ok = shipment.hazmat and shipment.reefer and lane.interstate and lane.crossBorder and customer.code == "X"
+let w = shipment.weight ?? shipment.commodities.sum(c => c.weight) ?? fallbackWeightForThisLane ?? 0 lb
+---
+tariff "t"
+let total = linehaul
+  + fuelSurcharge
+  + extraDrops
+  + hazmatCharge
+  + detentionCharges
+  + residentialFee
+  + liftgate
+let ok = shipment.hazmat
+  and shipment.reefer
+  and lane.interstate
+  and lane.crossBorder
+  and customer.code == "X"
+let w = shipment.weight
+  ?? shipment.commodities.sum(c => c.weight)
+  ?? fallbackWeightForThisLane
+  ?? 0 lb
+
+=== nested breaks keep inner groups flat
+tariff "t"
+let a = f(alpha, beta, gamma(1, 2), deltaDeltaDelta, epsilonEpsilonEpsilon, zetaZetaZetaZeta, etaEtaEta)
+---
+tariff "t"
+let a = f(
+  alpha,
+  beta,
+  gamma(1, 2),
+  deltaDeltaDelta,
+  epsilonEpsilonEpsilon,
+  zetaZetaZetaZeta,
+  etaEtaEta,
+)
+
+=== short lines stay flat
+tariff "t"
+let a = f(
+  1,
+  2,
+)
+let b = [
+  1,
+]
+---
+tariff "t"
+let a = f(1, 2)
+let b = [1]
+
+=== match arms are not aligned
+tariff "t"
+let perCwt = match shipment.weight {
+  ..500 lb          => $42.00/cwt
+  500 lb..2_000 lb  => $35.50/cwt
+  _                 => $22.75/cwt
+}
+---
+tariff "t"
+let perCwt = match shipment.weight {
+  ..500 lb => $42.00/cwt
+  500 lb..2_000 lb => $35.50/cwt
+  _ => $22.75/cwt
+}
+
+=== match statement
+tariff "t"
+match x {
+  A => {
+    note "a"
+  }
+  B=>note "b"
+
+  _ => {}
+}
+---
+tariff "t"
+match x {
+  A => {
+    note "a"
+  }
+  B => {
+    note "b"
+  }
+
+  _ => {}
+}
+
+=== a conversion's unit is written as a unit
+tariff "t"
+let a = shipment.density?.in(lb / ft3)
+let b = rate.in( $/cwt )
+let c = rate.in(cwt)
+---
+tariff "t"
+let a = shipment.density?.in(lb/ft3)
+let b = rate.in($/cwt)
+let c = rate.in(cwt)
+
+=== a guard that ends in a name keeps its arrow
+tariff "t"
+let a = match flag {
+  x if x => 1
+  _ => 0
+}
+---
+tariff "t"
+let a = match flag {
+  x if x => 1
+  _ => 0
+}
+
+=== if expression stays on one line
+tariff "t"
+let a = if x>1 {$10} else {$20}
+---
+tariff "t"
+let a = if x > 1 { $10 } else { $20 }
+
+=== long if expression breaks
+tariff "t"
+let a = if shipment.weight ?? 0 lb > 10_000 lb { heavyRateForTheLane * miles } else { lightRateForTheLane * miles }
+---
+tariff "t"
+let a = if shipment.weight ?? 0 lb > 10_000 lb {
+  heavyRateForTheLane * miles
+} else {
+  lightRateForTheLane * miles
+}
+
+=== functions and params
+library "l"
+fn deadhead(empty:Distance,rate:Money/mi)->Money{
+let paid=(empty-50 mi).max(0 mi)
+return rate*paid
+}
+fn residential(fee:Money=$95)=fee
+---
+library "l"
+fn deadhead(empty: Distance, rate: Money/mi) -> Money {
+  let paid = (empty - 50 mi).max(0 mi)
+  return rate * paid
+}
+fn residential(fee: Money = $95) = fee
+
+=== long parameter lists break
+library "l"
+fn businessDuration(start: DateTime, end: DateTime, open: Int = 8, close: Int = 17, zone: Text = "UTC") -> Duration = end - start
+---
+library "l"
+fn businessDuration(
+  start: DateTime,
+  end: DateTime,
+  open: Int = 8,
+  close: Int = 17,
+  zone: Text = "UTC",
+) -> Duration = end - start
+
+=== use, enum and type layouts
+library "l"
+use std.ltl.{deficit,Break} as ltl
+enum Zone{A,B,C}
+type Break={from:Weight,rate:Money/cwt,minimum:Money?}
+private const LIMIT:Int=3
+---
+library "l"
+use std.ltl.{ deficit, Break } as ltl
+enum Zone { A, B, C }
+type Break = { from: Weight, rate: Money/cwt, minimum: Money? }
+private const LIMIT: Int = 3
+
+=== charges
+tariff "t"
+charge "Linehaul"(quantity:miles,rate:rate)
+charge "Fuel" as FSC=linehaul*pct
+---
+tariff "t"
+charge "Linehaul" (quantity: miles, rate: rate)
+charge "Fuel" as FSC = linehaul * pct
+
+=== total clauses
+tariff "t"
+minimum   $450
+round  half   even to cents
+round up to $5
+---
+tariff "t"
+minimum $450
+round half even to cents
+round up to $5
+
+=== tests
+tariff "t"
+test "x"{
+given shipment.weight=1 lb
+expect fails "no"
+expect total==$1
+}
+---
+tariff "t"
+test "x" {
+  given shipment.weight = 1 lb
+  expect fails "no"
+  expect total == $1
+}
+
+=== lambdas with one and two parameters
+tariff "t"
+let a = xs.map((x) => x)
+let b = xs.sortBy( (a,b) => a )
+---
+tariff "t"
+let a = xs.map(x => x)
+let b = xs.sortBy((a, b) => a)
+
+=== parentheses are kept
+tariff "t"
+let a = ((1 + 2)) * 3
+---
+tariff "t"
+let a = ((1 + 2)) * 3
+
+=== optional chaining and ranges
+tariff "t"
+let a = x?.y ?? 0
+let b = 1 ..= 3
+let c = .. 5
+---
+tariff "t"
+let a = x?.y ?? 0
+let b = 1..=3
+let c = ..5
+
+=== a file with errors is not formatted
+tariff "t"
+let a = 1 +
+---
+! refused: syntax Expected a value after `+`
+
+=== a file with a stray doc is formatted
+tariff "t"
+let a = 1
+/// stray
+
+let b = 2
+---
+tariff "t"
+let a = 1
+/// stray
+
+let b = 2
+
+=== condition file
+condition "c"
+input zips:List<Text>=[]
+lane.destination.zip3 in zips and (shipment.weight??0 lb)<10_000 lb
+---
+condition "c"
+input zips: List<Text> = []
+lane.destination.zip3 in zips and (shipment.weight ?? 0 lb) < 10_000 lb
+
+=== trailing comment after the header
+tariff "t" // the name
+let a = 1
+---
+tariff "t" // the name
+let a = 1
+
+=== comment before the header
+// leading
+tariff "t"
+---
+// leading
+tariff "t"
+
+=== require and for
+tariff "t"
+require let w=shipment.weight else "needs weight"
+for s in shipment.stops where s.dwell!=none{
+continue
+}
+---
+tariff "t"
+require let w = shipment.weight else "needs weight"
+for s in shipment.stops where s.dwell != none {
+  continue
+}
+
+=== deep text interpolation stays as written
+tariff "t"
+note "{ a + b } and { f( 1 ) }"
+---
+tariff "t"
+note "{ a + b } and { f( 1 ) }"

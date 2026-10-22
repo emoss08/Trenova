@@ -1,4 +1,4 @@
-import { MAX_ROUNDING_PRECISION } from "@trenova/shared/types/formula-template";
+import { tariffDiagnosticsSchema, tariffTestResultSchema } from "@trenova/shared/types/tariff";
 import { z } from "zod";
 
 /**
@@ -7,7 +7,7 @@ import { z } from "zod";
  * page context, bounded, and the assistant hands back draft edits the page
  * applies itself. Nothing here is saved until the person saves the page.
  */
-export const pageDraftSurfaceSchema = z.enum(["shipment_import", "formula"]);
+export const pageDraftSurfaceSchema = z.enum(["shipment_import", "formula", "formula_library"]);
 
 export const importFieldStatusSchema = z.enum([
   "accepted",
@@ -58,41 +58,17 @@ export const shipmentImportDraftSchema = z.object({
   stops: z.array(importDraftStopSchema),
 });
 
-export const formulaDraftVariableTypeSchema = z.enum(["Number", "String", "Boolean"]);
-
-export const formulaDraftVariableSchema = z.object({
-  name: z.string(),
-  type: formulaDraftVariableTypeSchema,
-  description: z.string().optional().default(""),
-  defaultValue: z.union([z.string(), z.number(), z.boolean()]).nullish(),
-});
-
-export const formulaRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
-
-/** The charge policy applied after the expression; a null bound means none. */
-export const formulaPolicySchema = z.object({
-  minCharge: z.string().nullish(),
-  maxCharge: z.string().nullish(),
-  roundingMode: formulaRoundingModeSchema.optional(),
-  roundingPrecision: z.number().int().min(0).max(MAX_ROUNDING_PRECISION).optional(),
-});
-
-export const formulaDraftBreakdownSchema = z.object({
-  name: z.string(),
-  label: z.string(),
-  expression: z.string(),
-});
-
+/**
+ * The Tariff file the Studio holds, as Nova reads it: the template's or library's name, its
+ * description and its source, saved or not.
+ */
 export const formulaDraftSchema = z.object({
   templateId: z.string().optional(),
-  schemaId: z.string(),
-  templateType: z.string(),
+  libraryId: z.string().optional(),
+  kind: z.enum(["tariff", "library"]),
   name: z.string().optional(),
   description: z.string().optional(),
-  expression: z.string(),
-  variables: z.array(formulaDraftVariableSchema),
-  breakdown: z.array(formulaDraftBreakdownSchema).optional(),
-  policy: formulaPolicySchema.optional(),
+  source: z.string(),
 });
 
 export const pageDraftSchema = z.object({
@@ -109,45 +85,28 @@ export const pageDraftActionSchema = z.enum([
   "intake_set_stop_location",
   "intake_set_stop_schedule",
   "formula_propose",
+  "formula_library_propose",
 ]);
 
-export const formulaCheckSchema = z.object({
-  valid: z.boolean(),
-  result: z.string().optional().default(""),
-  error: z.string().optional().default(""),
+/** What `tariff.check` said about a proposal on the server before Nova showed it. */
+export const formulaProposalCheckSchema = z.object({
+  ok: z.boolean(),
+  diagnostics: tariffDiagnosticsSchema,
 });
 
-/** A sample load the formula engine priced; `amount` is the engine's, never the model's. */
-export const pricedScenarioSchema = z.object({
-  name: z.string(),
-  description: z.string().optional().default(""),
-  variables: z.preprocess((value) => value ?? {}, z.record(z.string(), z.unknown())),
-  amount: z.string().optional().default(""),
-  valid: z.boolean(),
-  error: z.string().optional().default(""),
-});
-
-export const formulaProposalBreakdownSchema = z.object({
-  name: z.string(),
-  label: z.string().optional().default(""),
-  expression: z.string(),
-});
-
+/**
+ * A source Nova proposes for the file in the Studio: the whole file as it should be, why, and
+ * what the server's check and test run said about it before it was shown. The Studio checks
+ * and tests it again in the browser against its own context before it can be applied.
+ */
 export const formulaProposalSchema = z.object({
-  schemaId: z.string(),
-  /** Offered when the formula is drafted from scratch; the editor keeps any it already has. */
+  /** Offered when the file is drafted from scratch; the editor keeps any name it already has. */
   name: z.string().optional().default(""),
   description: z.string().optional().default(""),
-  templateType: z.enum(["FreightCharge", "AccessorialCharge"]).nullish(),
-  /** Itemized lines, when the person asked for them. */
-  breakdown: z.preprocess((value) => value ?? [], z.array(formulaProposalBreakdownSchema)),
-  /** The charge policy as it should be after the change; absent keeps the editor's. */
-  policy: formulaPolicySchema.nullish(),
-  expression: z.string(),
-  variables: z.preprocess((value) => value ?? [], z.array(formulaDraftVariableSchema)),
+  source: z.string(),
   explanation: z.string().optional().default(""),
-  check: formulaCheckSchema,
-  scenarios: z.preprocess((value) => value ?? [], z.array(pricedScenarioSchema)),
+  check: formulaProposalCheckSchema,
+  tests: z.preprocess((value) => value ?? [], z.array(tariffTestResultSchema)),
 });
 
 export const pageDraftEditSchema = z.object({
@@ -168,12 +127,8 @@ export type ImportDraftField = z.infer<typeof importDraftFieldSchema>;
 export type ImportDraftStop = z.infer<typeof importDraftStopSchema>;
 export type ImportRequiredFieldKey = z.infer<typeof importRequiredFieldKeySchema>;
 export type ShipmentImportDraft = z.infer<typeof shipmentImportDraftSchema>;
-export type FormulaDraftVariable = z.infer<typeof formulaDraftVariableSchema>;
 export type FormulaDraft = z.infer<typeof formulaDraftSchema>;
-export type FormulaPolicy = z.infer<typeof formulaPolicySchema>;
-export type FormulaDraftBreakdown = z.infer<typeof formulaDraftBreakdownSchema>;
 export type PageDraft = z.infer<typeof pageDraftSchema>;
 export type PageDraftAction = z.infer<typeof pageDraftActionSchema>;
-export type PricedScenario = z.infer<typeof pricedScenarioSchema>;
 export type FormulaProposal = z.infer<typeof formulaProposalSchema>;
 export type PageDraftEdit = z.infer<typeof pageDraftEditSchema>;

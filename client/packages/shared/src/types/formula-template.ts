@@ -1,75 +1,27 @@
+// formula-template.ts types formula templates: one Tariff source file each
+// (docs/engineering/formula-language.md), with the inputs and pinned library imports the server
+// derives from it through `tariff.check`, and the versioning, review, scheduling and Studio
+// endpoints around it. The Tariff values, the bill and the diagnostics are in ./tariff.
+
 import { translate } from "@trenova/shared/i18n/runtime";
 import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
-import { decimalStringSchema } from "./helpers";
+import {
+  tariffBillSchema,
+  tariffDiagnosticsSchema,
+  tariffMessageSchema,
+  tariffInputDeclarationsSchema,
+  tariffLookupSchema,
+  tariffRangeSchema,
+  tariffRefusalSchema,
+  tariffTestResultSchema,
+  tariffTraceEventSchema,
+  type TariffInputValues,
+} from "./tariff";
 import { userSchema } from "./user";
-
-export const VariableValueType = z.enum([
-  "Number",
-  "String",
-  "Boolean",
-  "Date",
-  "Array",
-  "Object",
-  "Any",
-]);
-export type VariableValueType = z.infer<typeof VariableValueType>;
-
-export const variableDefinitionSchema = z.object({
-  name: z.string().min(1, { error: () => translate("Name is required") }),
-  type: VariableValueType,
-  description: z.string().default(""),
-  required: z.boolean().default(false),
-  defaultValue: z.any().optional(),
-  source: z.string().optional(),
-});
-export type VariableDefinition = z.output<typeof variableDefinitionSchema>;
-export type VariableDefinitionInput = z.input<typeof variableDefinitionSchema>;
-
-export const breakdownDefinitionSchema = z.object({
-  name: z
-    .string()
-    .min(1, { error: () => translate("Name is required") })
-    .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, {
-      error: () =>
-        translate("Must start with a letter and contain only letters, numbers, and underscores"),
-    }),
-  label: z.string().min(1, { error: () => translate("Label is required") }),
-  expression: z.string().min(1, { error: () => translate("Expression is required") }),
-});
-export type BreakdownDefinition = z.output<typeof breakdownDefinitionSchema>;
-export type BreakdownDefinitionInput = z.input<typeof breakdownDefinitionSchema>;
-
-export const MAX_BREAKDOWN_DEFINITIONS = 20;
-
-export const breakdownDefinitionsSchema = z
-  .array(breakdownDefinitionSchema)
-  .max(MAX_BREAKDOWN_DEFINITIONS, {
-    error: () =>
-      translate("A maximum of {0} breakdown items is allowed", MAX_BREAKDOWN_DEFINITIONS),
-  })
-  .default([]);
 
 export const formulaTemplateStatusSchema = z.enum(["Active", "Inactive", "Draft", "InReview"]);
 export type FormulaTemplateStatus = z.infer<typeof formulaTemplateStatusSchema>;
-
-export const formulaTemplateTypeSchema = z.enum(["FreightCharge", "AccessorialCharge"]);
-export type FormulaTemplateType = z.infer<typeof formulaTemplateTypeSchema>;
-
-export const formulaRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
-export type FormulaRoundingMode = z.infer<typeof formulaRoundingModeSchema>;
-
-export const DEFAULT_ROUNDING_MODE: FormulaRoundingMode = "HalfUp";
-export const DEFAULT_ROUNDING_PRECISION = 2;
-export const MAX_ROUNDING_PRECISION = 4;
-
-const roundingPrecisionSchema = z
-  .number()
-  .int({ error: () => translate("Rounding precision must be a whole number") })
-  .min(0, { error: () => translate("Rounding precision cannot be negative") })
-  .max(MAX_ROUNDING_PRECISION, {
-    error: () => translate("Rounding precision cannot exceed {0}", MAX_ROUNDING_PRECISION),
-  });
 
 /** An approved snapshot whose start has not come yet: approved content waiting to bill. */
 export const scheduledWindowSchema = z.object({
@@ -92,108 +44,69 @@ export const billingVersionSchema = z.object({
 });
 export type BillingVersion = z.output<typeof billingVersionSchema>;
 
-/** The formula language this client writes; the server refuses one it cannot read. */
-export const CURRENT_FORMULA_LANGUAGE_VERSION = 1;
+/**
+ * An organisation library a saved version imports, pinned to the library version it was checked
+ * against (approval pins each to the version approved at that moment).
+ */
+export const formulaImportSchema = z.object({
+  /** The module path the source imports: `org.<name>`. */
+  path: z.string(),
+  libraryId: z.string(),
+  versionNumber: z.number().int(),
+});
+export type FormulaImport = z.output<typeof formulaImportSchema>;
 
-export const formulaTemplateSchema = z
-  .object({
-    id: z.string().optional(),
-    organizationId: z.string().optional(),
-    businessUnitId: z.string().optional(),
-    name: z
-      .string()
-      .min(1, { error: () => translate("Name is required") })
-      .max(100),
-    description: z.string().default(""),
-    type: formulaTemplateTypeSchema,
-    expression: z.string().min(1, { error: () => translate("Expression is required") }),
-    status: formulaTemplateStatusSchema.default("Draft"),
-    schemaId: z.string().default("shipment"),
-    /** The formula language the expression is written in; every expression so far is version 1. */
-    languageVersion: z.number().int().default(CURRENT_FORMULA_LANGUAGE_VERSION),
-    variableDefinitions: z.array(variableDefinitionSchema).default([]),
-    breakdownDefinitions: breakdownDefinitionsSchema,
-    minCharge: decimalStringSchema,
-    maxCharge: decimalStringSchema,
-    roundingMode: formulaRoundingModeSchema.default(DEFAULT_ROUNDING_MODE),
-    roundingPrecision: roundingPrecisionSchema.default(DEFAULT_ROUNDING_PRECISION),
-    submittedById: z.string().nullish(),
-    submittedAt: z.number().nullish(),
-    approvedById: z.string().nullish(),
-    approvedAt: z.number().nullish(),
-    reviewComment: z.string().nullish(),
-    metadata: z.record(z.any(), z.any()).nullish(),
-    version: z.number().optional(),
-    sourceTemplateId: z.string().nullish(),
-    sourceVersionNumber: z.number().nullish(),
-    currentVersionNumber: z.number().optional(),
-    billing: billingVersionSchema.nullish(),
-    createdAt: z.number().optional(),
-    updatedAt: z.number().optional(),
-    usageCount: z.number().optional(),
-    scenarioCount: z.number().optional(),
-  })
-  .superRefine((value, ctx) => {
-    const seenVariables = new Map<string, number>();
-    value.variableDefinitions.forEach((definition, index) => {
-      const name = definition.name.trim();
-      if (!name) return;
-      const first = seenVariables.get(name);
-      if (first !== undefined) {
-        ctx.addIssue({
-          code: "custom",
-          message: translate("Duplicate variable name; first declared as variable {0}", first + 1),
-          path: ["variableDefinitions", index, "name"],
-        });
-      } else {
-        seenVariables.set(name, index);
-      }
-    });
+export const formulaImportsSchema = z
+  .array(formulaImportSchema)
+  .nullish()
+  .transform((value) => value ?? []);
+const importsSchema = formulaImportsSchema;
 
-    const seenBreakdowns = new Map<string, number>();
-    value.breakdownDefinitions.forEach((definition, index) => {
-      const name = definition.name.trim();
-      if (!name) return;
-      const first = seenBreakdowns.get(name);
-      if (first !== undefined) {
-        ctx.addIssue({
-          code: "custom",
-          message: translate("Duplicate breakdown name; first used by item {0}", first + 1),
-          path: ["breakdownDefinitions", index, "name"],
-        });
-      } else {
-        seenBreakdowns.set(name, index);
-      }
-    });
-
-    if (value.minCharge != null && value.minCharge < 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: translate("Minimum charge cannot be negative"),
-        path: ["minCharge"],
-      });
-    }
-
-    if (value.maxCharge != null && value.maxCharge < 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: translate("Maximum charge cannot be negative"),
-        path: ["maxCharge"],
-      });
-    }
-
-    if (value.minCharge != null && value.maxCharge != null && value.minCharge > value.maxCharge) {
-      ctx.addIssue({
-        code: "custom",
-        message: translate("Minimum charge cannot exceed maximum charge"),
-        path: ["minCharge"],
-      });
-    }
-  });
+/**
+ * A formula template as the API sends it and the Studio edits it. `source` is the whole tariff;
+ * `inputs`, `imports` and `testCount` are what the server's `tariff.check` derived from it when
+ * it was saved, so a contract form can read the declarations without the module.
+ */
+export const formulaTemplateSchema = z.object({
+  id: z.string().optional(),
+  organizationId: z.string().optional(),
+  businessUnitId: z.string().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100, { error: () => translate("Name must be 100 characters or fewer") }),
+  description: z.string().default(""),
+  source: z.string().refine((value) => value.trim().length > 0, {
+    error: () => translate("The tariff's source is required"),
+  }),
+  status: formulaTemplateStatusSchema.default("Draft"),
+  inputs: tariffInputDeclarationsSchema,
+  imports: importsSchema,
+  testCount: z.number().int().default(0),
+  submittedById: z.string().nullish(),
+  submittedAt: z.number().nullish(),
+  approvedById: z.string().nullish(),
+  approvedAt: z.number().nullish(),
+  reviewComment: z.string().nullish(),
+  version: z.number().optional(),
+  sourceTemplateId: z.string().nullish(),
+  sourceVersionNumber: z.number().nullish(),
+  currentVersionNumber: z.number().optional(),
+  billing: billingVersionSchema.nullish(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+  usageCount: z.number().optional(),
+});
 export type FormulaTemplate = z.output<typeof formulaTemplateSchema>;
 export type FormulaTemplateFormValues = z.input<typeof formulaTemplateSchema>;
 export const listFormulaTemplateResponseSchema = z.array(formulaTemplateSchema);
 export type ListFormulaTemplateResponse = z.infer<typeof listFormulaTemplateResponseSchema>;
+
+/** What a save writes: the person's content. Status, inputs and imports are the server's. */
+export type FormulaTemplateWrite = Pick<FormulaTemplate, "name" | "description" | "source"> & {
+  version?: number;
+};
 
 export const fieldChangeSchema = z.object({
   from: z.any(),
@@ -256,19 +169,12 @@ export const formulaTemplateVersionSchema = z.object({
   versionNumber: z.number(),
   name: z.string(),
   description: z.string().optional(),
-  type: formulaTemplateTypeSchema,
-  expression: z.string(),
+  source: z.string(),
   status: formulaTemplateStatusSchema,
-  schemaId: z.string(),
-  languageVersion: z.number().int().default(CURRENT_FORMULA_LANGUAGE_VERSION),
-  variableDefinitions: z.array(variableDefinitionSchema).default([]),
-  breakdownDefinitions: breakdownDefinitionsSchema,
-  minCharge: decimalStringSchema,
-  maxCharge: decimalStringSchema,
-  roundingMode: formulaRoundingModeSchema.default(DEFAULT_ROUNDING_MODE),
-  roundingPrecision: roundingPrecisionSchema.default(DEFAULT_ROUNDING_PRECISION),
+  inputs: tariffInputDeclarationsSchema,
+  imports: importsSchema,
+  testCount: z.number().int().default(0),
   effectiveFrom: z.number().nullish(),
-  metadata: z.record(z.any(), z.any()).nullish(),
   changeMessage: z.string().optional(),
   changeSummary: z.record(z.string(), fieldChangeSchema).nullish(),
   tags: z
@@ -307,287 +213,72 @@ export type ForkLineage = {
   forkedTemplates?: ForkLineage[];
 };
 
-export const testExpressionRequestSchema = z.object({
-  expression: z.string(),
-  schemaId: z.string(),
-  variables: z.record(z.any(), z.any()).default({}),
-  shipmentId: z.string().optional(),
-  breakdowns: z.array(breakdownDefinitionSchema).optional(),
-  minCharge: z.string().optional(),
-  maxCharge: z.string().optional(),
-  roundingMode: formulaRoundingModeSchema.optional(),
-  roundingPrecision: z.number().int().optional(),
-  /** Asks the engine to value every statement as well; the live preview leaves it off. */
-  traceStatements: z.boolean().optional(),
-});
-export type TestExpressionRequest = z.infer<typeof testExpressionRequestSchema>;
-
 /**
- * User-facing text from the rules module (docs/engineering/rules-engine.md): an
- * English ICU template, which is also the catalog key, and its positional
- * arguments. An argument is text, a count or a nested message, translated at
- * the display edge with `translateMessage` (`@trenova/shared/i18n/message`).
+ * What the Studio's preview asks `POST /formula-templates/test`: the source as it is, the
+ * sample input values, and a real shipment to rate instead of the sample record.
  */
-export type FormulaMessage = {
-  message: string;
-  args?: FormulaMessageArg[];
+export type FormulaPreviewRequest = {
+  source: string;
+  inputs?: TariffInputValues;
+  shipmentId?: string;
 };
-export type FormulaMessageArg = string | number | FormulaMessage;
 
-const formulaMessageArgSchema: z.ZodType<FormulaMessageArg> = z.lazy(() =>
-  z.union([z.string(), z.number(), formulaMessageSchema]),
-);
-
-export const formulaMessageSchema: z.ZodType<FormulaMessage> = z.object({
-  message: z.string(),
-  args: z.array(formulaMessageArgSchema).optional(),
-});
-
-/** A static type of the formula language; `Integer` is a whole `Number`. */
-export const formulaValueTypeSchema = z.enum([
-  "Number",
-  "Integer",
-  "String",
-  "Boolean",
-  "Date",
-  "Duration",
-  "Array",
-  "Object",
-  "Nil",
-  "Any",
-]);
-export type FormulaValueType = z.output<typeof formulaValueTypeSchema>;
-
-/** The type of input a declare fix asks the Studio to add. */
-export const formulaInputTypeSchema = z.enum(["Number", "String", "Boolean"]);
-export type FormulaInputType = z.output<typeof formulaInputTypeSchema>;
-
-export const formulaDiagnosticCodeSchema = z.enum([
-  "syntax",
-  "limit",
-  "empty",
-  "unknown-variable",
-  "unknown-field",
-  "unknown-function",
-  "disabled-function",
-  "arity",
-  "type",
-  "nullable",
-  "let-unused",
-  "let-duplicate",
-  "let-before-definition",
-  "let-shadows",
-  "let-last",
-  "result-type",
-  "discarded",
-  "divide-by-zero",
-  "rate-table",
-]);
-export type FormulaDiagnosticCode = z.output<typeof formulaDiagnosticCodeSchema>;
-
-export const formulaSeveritySchema = z.enum(["error", "warning"]);
-export type FormulaSeverity = z.output<typeof formulaSeveritySchema>;
-
-/** One text change of a replace fix, in UTF-16 code units. */
-export const formulaChangeSchema = z.object({
-  from: z.number().int(),
-  to: z.number().int(),
-  insert: z.string(),
-});
-export type FormulaChange = z.output<typeof formulaChangeSchema>;
-
-/** What resolves a finding: edits to the formula, or an input for the Studio to declare. */
-export const formulaFixSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("replace"),
-    label: formulaMessageSchema,
-    changes: z.array(formulaChangeSchema),
-  }),
-  z.object({
-    kind: z.literal("declare"),
-    label: formulaMessageSchema,
-    name: z.string(),
-    type: formulaInputTypeSchema,
-  }),
-]);
-export type FormulaFix = z.output<typeof formulaFixSchema>;
-
-/**
- * A finding of `formula.check`: its range in UTF-16 code units, a stable code,
- * the message (flattened into the diagnostic's own `message` and `args`), the
- * identifier it is about, and its fixes.
- */
-export const formulaDiagnosticSchema = z.object({
-  from: z.number().int(),
-  to: z.number().int(),
-  severity: formulaSeveritySchema,
-  code: formulaDiagnosticCodeSchema,
-  message: z.string(),
-  args: z.array(formulaMessageArgSchema).optional(),
-  name: z.string().optional(),
-  fixes: z.array(formulaFixSchema).default([]),
-});
-export type FormulaDiagnostic = z.output<typeof formulaDiagnosticSchema>;
-
-/** A finding on one of the expressions the preview checked, with the field path it is on. */
-export const scopedFormulaDiagnosticSchema = formulaDiagnosticSchema.extend({
-  scope: z.string(),
-});
-export type ScopedFormulaDiagnostic = z.output<typeof scopedFormulaDiagnosticSchema>;
-
-/**
- * Why a formula failed to evaluate: a stable code, the message, the range of
- * the node that failed when one did, and for a missing value the fields read
- * without one and the guard that keeps the formula pricing, one per field.
- */
-export const formulaEvaluationErrorSchema = z.object({
+const previewErrorSchema = z.object({
   code: z.string(),
-  message: z.string(),
-  args: z.array(formulaMessageArgSchema).optional(),
-  from: z.number().int().nullish(),
-  to: z.number().int().nullish(),
-  fields: z
-    .array(z.string())
-    .nullish()
-    .transform((value) => value ?? []),
-  guards: z
-    .array(z.string())
-    .nullish()
-    .transform((value) => value ?? []),
+  message: z.union([z.string(), tariffMessageSchema]),
+  range: tariffRangeSchema.nullish().transform((value) => value ?? null),
 });
-export type FormulaEvaluationError = z.output<typeof formulaEvaluationErrorSchema>;
-
-export const scopedFormulaEvaluationErrorSchema = formulaEvaluationErrorSchema.extend({
-  scope: z.string(),
-});
-export type ScopedFormulaEvaluationError = z.output<typeof scopedFormulaEvaluationErrorSchema>;
 
 /**
- * One statement of an expression as the engine evaluated it: each `let`, then
- * the final expression whose value is the raw amount. Offsets are UTF-16 code
- * units into the expression, the units CodeMirror counts in.
+ * What the preview answers: every finding, the bill (or why the tariff refused, or the error
+ * that stopped it), the trace and the table lookups, and the file's tests as the server ran them.
  */
-export const formulaStatementSchema = z.object({
-  index: z.number().int(),
-  kind: z.enum(["let", "result"]),
-  name: z.string().nullish(),
-  code: z.string(),
-  from: z.number().int(),
-  to: z.number().int(),
-  value: z.unknown().optional(),
-  error: formulaEvaluationErrorSchema.nullish(),
-});
-export type FormulaStatement = z.output<typeof formulaStatementSchema>;
-
-export const guardrailResultSchema = z.object({
-  applied: z.boolean(),
-  bound: z.enum(["min", "max"]).optional(),
-  rawAmount: z.coerce.number(),
-  minCharge: z.coerce.number().nullish(),
-  maxCharge: z.coerce.number().nullish(),
-});
-export type GuardrailResult = z.output<typeof guardrailResultSchema>;
-
-export const roundingResultSchema = z.object({
-  mode: z.string(),
-  precision: z.number(),
-  applied: z.boolean(),
-  unroundedAmount: z.coerce.number(),
-});
-export type RoundingResult = z.output<typeof roundingResultSchema>;
-
-export const testBreakdownItemSchema = z.object({
-  name: z.string(),
-  label: z.string().optional().default(""),
-  amount: z.coerce.number(),
-  error: z.string().optional(),
-});
-export type TestBreakdownItem = z.output<typeof testBreakdownItemSchema>;
-
-export const formulaValueSourceSchema = z.enum([
-  "field",
-  "computed",
-  "input",
-  "override",
-  "default",
-  "sample",
-  "provided",
-]);
-export type FormulaValueSource = z.infer<typeof formulaValueSourceSchema>;
-
-export const lookupMatchSchema = z.object({
-  matchedKey: z.string().optional(),
-  adjusted: z.boolean().optional(),
-  bandMin: z.coerce.number().nullish(),
-  bandMax: z.coerce.number().nullish(),
-});
-export type LookupMatch = z.output<typeof lookupMatchSchema>;
-
-export const lookupTraceSchema = z.object({
-  scope: z.string(),
-  table: z.string(),
-  keys: z.array(z.any()),
-  value: z.number(),
-  match: lookupMatchSchema.nullish(),
-  error: z.string().optional(),
-});
-export type LookupTrace = z.output<typeof lookupTraceSchema>;
-
-export const formulaReceiptSchema = z.object({
-  variables: z.array(
-    z.object({
-      name: z.string(),
-      value: z.any(),
-      source: formulaValueSourceSchema.catch("sample"),
-    }),
-  ),
-  lookups: z.array(lookupTraceSchema).nullish(),
-  rawAmount: z.coerce.number(),
-  versionNumber: z.number().optional(),
-  effectiveFrom: z.number().nullish(),
-  durationMicros: z.number().optional(),
-});
-export type FormulaReceipt = z.output<typeof formulaReceiptSchema>;
-
-/**
- * What `POST /formula-templates/test` answers (docs/engineering/rules-engine.md,
- * "The formula server API"): every `formula.check` finding on the expression and
- * each breakdown line with its scope, the first evaluation error with its scope,
- * and the trace. `valid` is true when no diagnostic is an error and nothing
- * failed to evaluate.
- */
-export const testExpressionResponseSchema = z.object({
-  valid: z.boolean(),
-  result: z.any().optional(),
-  diagnostics: z
-    .array(scopedFormulaDiagnosticSchema)
+export const formulaPreviewResponseSchema = z.object({
+  diagnostics: tariffDiagnosticsSchema,
+  bill: tariffBillSchema.nullish().transform((value) => value ?? null),
+  refusal: tariffRefusalSchema.nullish().transform((value) => value ?? null),
+  /** Why the rating stopped; the server sends its message as text, in the reader's language. */
+  error: previewErrorSchema.nullish().transform((value) => value ?? null),
+  trace: z
+    .array(tariffTraceEventSchema)
     .nullish()
     .transform((value) => value ?? []),
-  error: scopedFormulaEvaluationErrorSchema.nullish(),
-  resolvedVariables: z.record(z.string(), z.any()).nullish(),
-  breakdown: z.array(testBreakdownItemSchema).nullish(),
-  guardrail: guardrailResultSchema.nullish(),
-  rounding: roundingResultSchema.nullish(),
-  receipt: formulaReceiptSchema.nullish(),
-  statements: z.array(formulaStatementSchema).nullish(),
+  lookups: z
+    .array(tariffLookupSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  tests: z
+    .array(tariffTestResultSchema)
+    .nullish()
+    .transform((value) => value ?? []),
 });
-export type TestExpressionResponse = z.infer<typeof testExpressionResponseSchema>;
+export type FormulaPreviewResponse = z.output<typeof formulaPreviewResponseSchema>;
+
+/** "Save as test": a test block from a real shipment's facts and the bill it gets. */
+export type ScaffoldTestRequest = {
+  source: string;
+  shipmentId: string;
+  inputs?: TariffInputValues;
+  name: string;
+};
+export const scaffoldTestResponseSchema = z.object({ test: z.string() });
+export type ScaffoldTestResponse = z.output<typeof scaffoldTestResponseSchema>;
 
 export const backtestRequestSchema = z
   .object({
-    expression: z.string().optional(),
+    source: z.string().optional(),
     versionNumber: z.number().int().optional(),
     limit: z.number().int().min(1).max(500).optional(),
   })
   .superRefine((value, ctx) => {
-    const hasExpression = !!value.expression;
+    const hasSource = !!value.source;
     const hasVersion = value.versionNumber != null;
 
-    if (hasExpression === hasVersion) {
+    if (hasSource === hasVersion) {
       ctx.addIssue({
         code: "custom",
-        message: translate("Provide exactly one of expression or version number"),
-        path: ["expression"],
+        message: translate("Provide exactly one of a source or a version number"),
+        path: ["source"],
       });
     }
   });
@@ -607,7 +298,8 @@ export const backtestResultSchema = z.object({
   deltaPct: z.coerce.number(),
   currentError: z.string().optional(),
   candidateError: z.string().optional(),
-  guardrailApplied: z.boolean().default(false),
+  /** The candidate refused to rate this shipment, in the author's words. */
+  candidateRefusal: z.string().optional(),
 });
 export type BacktestResult = z.output<typeof backtestResultSchema>;
 
@@ -620,7 +312,7 @@ export const backtestSummarySchema = z.object({
   errorCount: z.number(),
   currentErrorCount: z.number().default(0),
   candidateErrorCount: z.number().default(0),
-  guardrailCount: z.number().default(0),
+  refusedCount: z.number().default(0),
   currentTotal: z.coerce.number(),
   candidateTotal: z.coerce.number(),
   totalDelta: z.coerce.number(),
@@ -693,187 +385,24 @@ export const templateUsageResponseSchema = z.object({
 });
 export type TemplateUsageResponse = z.infer<typeof templateUsageResponseSchema>;
 
-export const formulaSchemaVariableSchema = z.object({
-  name: z.string(),
-  type: z.string(),
-  description: z.string().default(""),
-  category: z.string().default(""),
-  nullable: z.boolean().default(false),
-  computed: z.boolean().default(false),
-  enum: z.array(z.string()).nullish(),
-});
-export type FormulaSchemaVariable = z.output<typeof formulaSchemaVariableSchema>;
-
-/**
- * What `GET /formula-templates/schema` answers: the record's fields, and each
- * list's item fields named `list[].field`. Functions are not sent; the browser
- * reads them from `formula.catalog` in its own copy of the rules module.
- */
-export const formulaSchemaResponseSchema = z.object({
-  schemaId: z.string(),
-  variables: z.array(formulaSchemaVariableSchema),
-});
-export type FormulaSchemaResponse = z.output<typeof formulaSchemaResponseSchema>;
-
-/** A function's `maxArgs` when it takes any number of arguments. */
-export const VARIADIC_ARGS = -1;
-
-export const formulaFunctionCategorySchema = z.enum([
-  "math",
-  "rounding",
-  "aggregate",
-  "conditional",
-  "rateTable",
-  "string",
-  "list",
-  "predicate",
-  "bits",
-  "date",
-]);
-export type FormulaFunctionCategory = z.output<typeof formulaFunctionCategorySchema>;
-
-/** One function, built-in or word operator as `formula.catalog` lists it. */
-export const formulaFunctionSchema = z.object({
-  name: z.string(),
-  signature: z.string(),
-  description: formulaMessageSchema,
-  example: formulaMessageSchema,
-  category: formulaFunctionCategorySchema,
-  /** Written infix (`text startsWith "x"`) or as a slice, not as a call. */
-  operator: z.boolean(),
-  minArgs: z.number().int(),
-  /** `VARIADIC_ARGS` when it takes any number of arguments. */
-  maxArgs: z.number().int(),
-  returns: formulaValueTypeSchema,
-  numericArgs: z.boolean(),
-  /** Its second argument is evaluated per item, where `#` and `.field` read the item. */
-  predicate: z.boolean(),
-});
-export type FormulaFunction = z.output<typeof formulaFunctionSchema>;
-
-export const formulaDisabledReasonSchema = z.enum([
-  "nondeterministic",
-  "serialization",
-  "textBuilding",
-]);
-export type FormulaDisabledReason = z.output<typeof formulaDisabledReasonSchema>;
-
-/** A name the language turns off, with what the checker says when a formula calls it. */
-export const formulaDisabledFunctionSchema = z.object({
-  name: z.string(),
-  reason: formulaDisabledReasonSchema,
-  replacement: z.string().optional(),
-  message: formulaMessageSchema,
-});
-export type FormulaDisabledFunction = z.output<typeof formulaDisabledFunctionSchema>;
-
-/** What `formula.catalog` answers: every function, built-in, disabled and reserved name. */
-export const formulaCatalogSchema = z.object({
-  /** The functions the reference lists, word operators and the slice among them. */
-  functions: z.array(formulaFunctionSchema),
-  /** The list, predicate, bit and date functions: callable, not listed in the reference. */
-  builtins: z.array(formulaFunctionSchema),
-  disabled: z.array(formulaDisabledFunctionSchema),
-  /** Every name an input may not take: the keywords and every function name, sorted. */
-  reserved: z.array(z.string()),
-});
-export type FormulaCatalog = z.output<typeof formulaCatalogSchema>;
-
 export const importTemplatesResponseSchema = z.object({
   created: listFormulaTemplateResponseSchema,
   renamed: z.record(z.string(), z.string()).nullish(),
 });
 export type ImportTemplatesResponse = z.output<typeof importTemplatesResponseSchema>;
 
-export const formulaTestCaseSchema = z.object({
-  id: z.string(),
-  templateId: z.string(),
-  organizationId: z.string(),
-  businessUnitId: z.string(),
-  name: z.string(),
-  description: z
-    .string()
-    .nullish()
-    .transform((v) => v ?? ""),
-  variables: z
-    .record(z.string(), z.any())
-    .nullish()
-    .transform((v) => v ?? {}),
-  expectedAmount: z.coerce.number(),
-  tolerance: z.coerce.number(),
-  version: z.number().optional(),
-  createdById: z.string(),
-  /** The template's version number when the expected amount was recorded; 0 before any approval. */
-  recordedOnVersion: z.number().int().nullish(),
-  recordedById: z.string().nullish(),
-  recordedBy: z
-    .object({ id: z.string(), name: z.string(), username: z.string().nullish() })
-    .nullish(),
-  recordedAt: z.number().nullish(),
-  createdAt: z.number(),
-  updatedAt: z.number(),
-});
-export type FormulaTestCase = z.output<typeof formulaTestCaseSchema>;
-
-export const formulaTestCaseInputSchema = z.object({
-  name: z
-    .string()
-    .min(1, { error: () => translate("Name is required") })
-    .max(100),
-  description: z.string().default(""),
-  variables: z.record(z.string(), z.any()).default({}),
-  expectedAmount: z.coerce
-    .number()
-    .min(0, { error: () => translate("Expected amount cannot be negative") }),
-  tolerance: z.coerce
-    .number()
-    .min(0, { error: () => translate("Tolerance cannot be negative") })
-    .default(0.01),
-  /** The editor content the expected amount was computed on, so a later break can be explained. */
-  candidate: z.custom<TestCaseCandidate>().optional(),
-});
-export type FormulaTestCaseInput = z.input<typeof formulaTestCaseInputSchema>;
-export type FormulaTestCaseValues = z.output<typeof formulaTestCaseInputSchema>;
-
-export const testCaseResultSchema = z.object({
-  testCaseId: z.string(),
-  name: z.string(),
-  passed: z.boolean(),
-  expectedAmount: z.coerce.number(),
-  actualAmount: z.coerce.number(),
-  difference: z.coerce.number(),
-  tolerance: z.coerce.number(),
-  error: z.string().optional(),
-});
-export type TestCaseResult = z.output<typeof testCaseResultSchema>;
-
-export const runTestCasesResponseSchema = z.object({
-  results: z
-    .array(testCaseResultSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-  total: z.number(),
-  passed: z.number(),
-  failed: z.number(),
-});
-export type RunTestCasesResponse = z.output<typeof runTestCasesResponseSchema>;
-
-export type TestCaseCandidate = {
-  expression: string;
-  variableDefinitions?: VariableDefinitionInput[];
-  breakdownDefinitions?: BreakdownDefinitionInput[];
-  minCharge?: number | string | null;
-  maxCharge?: number | string | null;
-  roundingMode?: FormulaRoundingMode;
-  roundingPrecision?: number;
-};
-
+/**
+ * What review compares: the source and the pinned imports of the approved version a submission
+ * would replace, against the submission's, with the field changes between them.
+ */
 export const reviewDiffResponseSchema = z.object({
   hasApprovedBase: z.boolean(),
   baseVersion: z.number(),
   currentVersion: z.number(),
-  baseExpression: z.string(),
-  currentExpression: z.string(),
+  baseSource: z.string(),
+  currentSource: z.string(),
+  baseImports: importsSchema,
+  currentImports: importsSchema,
   changes: z.record(z.string(), fieldChangeSchema),
   changeCount: z.number(),
   pendingSchedules: scheduledWindowsSchema,
@@ -888,19 +417,14 @@ export const readinessCheckSchema = z.object({
 });
 export type ReadinessCheck = z.output<typeof readinessCheckSchema>;
 
+/** A template the platform ships, as Tariff source with its own tests. */
 export const standardTemplateSchema = z.object({
   name: z.string(),
   description: z
     .string()
     .nullish()
     .transform((v) => v ?? ""),
-  type: formulaTemplateTypeSchema,
-  expression: z.string(),
-  schemaId: z.string(),
-  variableDefinitions: z
-    .array(variableDefinitionSchema)
-    .nullish()
-    .transform((v) => v ?? []),
+  source: z.string(),
 });
 export type StandardTemplate = z.output<typeof standardTemplateSchema>;
 export const listStandardsResponseSchema = z.array(standardTemplateSchema);
@@ -937,13 +461,20 @@ export const formulaTemplateReviewSchema = z.object({
 export type FormulaTemplateReview = z.output<typeof formulaTemplateReviewSchema>;
 export const listFormulaTemplateReviewsResponseSchema = z.array(formulaTemplateReviewSchema);
 
+/**
+ * The server's verdict on a submission: whether it can be submitted and approved, each check
+ * (a clean `tariff.check`, every test passing, the dependents gate), and the test totals.
+ */
 export const readinessResponseSchema = z.object({
   canSubmit: z.boolean(),
   canApprove: z.boolean(),
   checks: z.array(readinessCheckSchema),
-  scenarioTotal: z.number(),
-  scenarioPassed: z.number(),
-  scenarioFailing: z.array(z.string()).nullish(),
+  testTotal: z.number(),
+  testPassed: z.number(),
+  testFailing: z
+    .array(z.string())
+    .nullish()
+    .transform((v) => v ?? []),
   pendingSchedules: scheduledWindowsSchema,
 });
 export type ReadinessResponse = z.output<typeof readinessResponseSchema>;
@@ -957,7 +488,7 @@ export const installStandardsResponseSchema = z.object({
 });
 export type InstallStandardsResponse = z.output<typeof installStandardsResponseSchema>;
 
-/** Someone who may approve a template: holds formula template approve, and is not the author asking. */
+/** Someone who may approve: holds the resource's approve permission, and is not the author. */
 export const formulaReviewerSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -967,73 +498,37 @@ export const formulaReviewerSchema = z.object({
 export type FormulaReviewer = z.output<typeof formulaReviewerSchema>;
 export const listFormulaReviewersResponseSchema = z.array(formulaReviewerSchema);
 
-/** What the studio sends Nova: the editor as it is, saved or not. */
+/** What the Studio sends Nova: the file as it is in the editor, saved or not. */
 export type FormulaDraftContent = {
   templateId?: string;
-  name?: string;
-  description?: string;
-  type?: FormulaTemplateType;
-  schemaId: string;
-  expression: string;
-  variableDefinitions: VariableDefinitionInput[];
-  breakdownDefinitions?: BreakdownDefinitionInput[];
-  minCharge?: string | null;
-  maxCharge?: string | null;
-  roundingMode?: FormulaRoundingMode;
-  roundingPrecision?: number;
+  name: string;
+  description: string;
+  source: string;
 };
 
+/**
+ * Nova's reading of a rating: one sentence per statement it ran, each pinned to the source range
+ * the trace recorded, and the bill it is explaining.
+ */
 export const formulaExplainResponseSchema = z.object({
-  statements: z
-    .array(formulaStatementSchema)
-    .nullish()
-    .transform((v) => v ?? []),
   items: z
-    .array(z.object({ statementIndex: z.number().int(), says: z.string() }))
+    .array(z.object({ range: tariffRangeSchema, says: z.string() }))
     .nullish()
     .transform((v) => v ?? []),
-  rawAmount: z.string().nullish(),
-  billedAmount: z.string().nullish(),
-  guardrail: guardrailResultSchema.nullish(),
+  bill: tariffBillSchema.nullish().transform((value) => value ?? null),
+  generated: z.boolean().default(false),
 });
 export type FormulaExplainResponse = z.output<typeof formulaExplainResponseSchema>;
 
-export const describeInputsResponseSchema = z.object({
-  descriptions: z
-    .record(z.string(), z.string())
-    .nullish()
-    .transform((v) => v ?? {}),
-});
-export type DescribeInputsResponse = z.output<typeof describeInputsResponseSchema>;
-
-export const scenarioVerdictSchema = z.enum(["intended", "bug", "unclear"]);
-export type ScenarioVerdict = z.infer<typeof scenarioVerdictSchema>;
-
-export const scenarioTraceRowSchema = z.object({
-  kind: z.enum(["input", "term", "formula", "policy", "billed"]),
-  name: z.string(),
-  before: z.string().nullish(),
-  after: z.string().nullish(),
-});
-export type ScenarioTraceRow = z.output<typeof scenarioTraceRowSchema>;
-
-export const scenarioExplanationSchema = z.object({
-  verdict: scenarioVerdictSchema.catch("unclear"),
-  why: z.string(),
-  generated: z.boolean().default(false),
-  expected: z.coerce.number(),
-  actual: z.coerce.number().nullish(),
-  delta: z.coerce.number().nullish(),
-  baselineLabel: z.string(),
-  recordedOnVersion: z.number().int().nullish(),
-  recordedBy: z.object({ id: z.string(), name: z.string() }).nullish(),
-  error: z.string().nullish(),
-  rows: z
-    .array(scenarioTraceRowSchema)
+/** Tests Nova suggests, as `test` blocks to add to the source, each with why it matters. */
+export const suggestedTestsResponseSchema = z.object({
+  tests: z
+    .array(z.object({ name: z.string(), source: z.string(), why: z.string() }))
     .nullish()
     .transform((v) => v ?? []),
+  generated: z.boolean().default(false),
 });
-export type ScenarioExplanation = z.output<typeof scenarioExplanationSchema>;
+export type SuggestedTestsResponse = z.output<typeof suggestedTestsResponseSchema>;
 
 export const reviewNoteResponseSchema = z.object({
   note: z.string(),

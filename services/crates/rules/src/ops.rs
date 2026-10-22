@@ -85,6 +85,7 @@ const OPERATIONS: &[(&str, Handler)] = &[
     ("tariff.check", crate::tariff::check::ops::check),
     ("tariff.evaluate", crate::tariff::eval::ops::evaluate),
     ("tariff.test", crate::tariff::eval::ops::test),
+    ("tariff.scaffoldTest", crate::tariff::eval::ops::scaffold_test),
     ("tariff.format", crate::tariff::syntax::ops::format),
     ("tariff.tokens", crate::tariff::syntax::ops::tokens),
     ("tariff.complete", crate::tariff::editor::ops::complete),

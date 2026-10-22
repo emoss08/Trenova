@@ -1,0 +1,458 @@
+{
+ "cases": [
+  {
+   "name": "a let",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" = $1/mi * mil|es"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": null,
+      "range": {
+       "text": "let miles = shipment.distance"
+      },
+      "selectionRange": {
+       "text": "miles"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "an input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "charge \"x\" = ra|te"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": null,
+      "range": {
+       "text": "input rate: Money = $1"
+      },
+      "selectionRange": {
+       "text": "rate"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a function",
+   "source": [
+    "tariff \"t\"",
+    "fn fee() -> Money = $1",
+    "charge \"x\" = fe|e()"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "fn fee() -> Money = $1"
+      },
+      "selectionRange": {
+       "text": "fee"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a parameter",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(a: Money) -> Money = |a",
+    "charge \"x\" = fee($1)"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "a: Money"
+      },
+      "selectionRange": {
+       "text": "a"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a named argument goes to its parameter",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(a: Money, b: Money = $1) -> Money = a",
+    "charge \"x\" = fee($1, |b: $2)"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "b: Money = $1"
+      },
+      "selectionRange": {
+       "text": "b"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a loop variable",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  charge \"x\" = $1 * st|op.sequence",
+    "}"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "selectionRange": {
+       "text": "stop"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a lambda parameter",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.count(s => |s.appointment)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "selectionRange": {
+       "text": "s"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "into the standard library",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let r = defi|cit([], actual: 1 lb)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": "std.ltl",
+      "selectionRange": {
+       "text": "deficit"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "an import list name into its library",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ haz|mat }",
+    "charge \"x\" = hazmat(1 mi)"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": "org.accessorials",
+      "range": {
+       "text": "fn hazmat(miles: Distance) -> Money = $0.10/mi * miles"
+      },
+      "selectionRange": {
+       "text": "hazmat"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a module function",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "let p = fuel.per|Mile($1/gal, peg: $1/gal, mpg: 6)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": "std.fuel",
+      "selectionRange": {
+       "text": "perMile"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a use path goes to the module",
+   "source": [
+    "tariff \"t\"",
+    "use std.fu|el",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": "std.fuel",
+      "selectionRange": {
+       "text": "\"std.fuel\""
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a declared type",
+   "source": [
+    "tariff \"t\"",
+    "type B = { a: Int }",
+    "input b: | B = { a: 1 }",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": []
+   }
+  },
+  {
+   "name": "a declared type in an annotation",
+   "source": [
+    "tariff \"t\"",
+    "type B = { a: Int }",
+    "input b: |B = { a: 1 }",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "type B = { a: Int }"
+      },
+      "selectionRange": {
+       "text": "B"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "an imported type",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ Break }",
+    "input b: List<Bre|ak> = []",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": "std.ltl",
+      "selectionRange": {
+       "text": "Break"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a field of a declared type",
+   "source": [
+    "tariff \"t\"",
+    "type B = { a: Int }",
+    "input b: B = { a: 1 }",
+    "charge \"x\" = $1 * b.|a"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "range": {
+       "text": "a: Int"
+      },
+      "selectionRange": {
+       "text": "a"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a field of a library type",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let r = deficit([], actual: 1 lb)",
+    "charge \"x\" = $1/lb * r.wei|ght"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": "std.ltl",
+      "selectionRange": {
+       "text": "weight"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a variant of a declared enum",
+   "source": [
+    "tariff \"t\"",
+    "enum Zone { North, South }",
+    "let z: Zone = Sou|th",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "selectionRange": {
+       "text": "South"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a pattern variant",
+   "source": [
+    "tariff \"t\"",
+    "enum Zone { North, South }",
+    "input z: Zone = North",
+    "let r = match z {",
+    "  No|rth => 1",
+    "  South => 2",
+    "}",
+    "charge \"x\" = $1 * r"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "selectionRange": {
+       "text": "North"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "an imported enum's variant",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ Zone }",
+    "let z: Zone = Nor|th",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": "org.accessorials",
+      "selectionRange": {
+       "text": "North"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a schema root has no source",
+   "source": [
+    "tariff \"t\"",
+    "let w = ship|ment.weight",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": []
+   }
+  },
+  {
+   "name": "a schema field has no source",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.wei|ght",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": []
+   }
+  },
+  {
+   "name": "a module alias goes to its use",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "let p = fu|el.perMile($1/gal, peg: $1/gal, mpg: 6)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "module": null,
+      "range": {
+       "text": "use std.fuel"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a definition in a broken file",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "let bad = (",
+    "let x = mil|es",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "selectionRange": {
+       "text": "miles"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "non-ASCII before the name",
+   "source": [
+    "tariff \"t\"",
+    "let label = \"café 🚚\"",
+    "let n = lab|el",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": [
+     {
+      "selectionRange": {
+       "text": "label"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "nothing on a literal",
+   "source": [
+    "tariff \"t\"",
+    "let n = 1|2",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "targets": []
+   }
+  }
+ ]
+}

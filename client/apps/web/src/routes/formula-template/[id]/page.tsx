@@ -6,13 +6,10 @@ import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { invalidateFormulaTemplate } from "@/lib/queries/formula-template";
-import { api } from "@trenova/shared/lib/api";
+import { apiService } from "@/services/api";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
-  DEFAULT_ROUNDING_MODE,
-  DEFAULT_ROUNDING_PRECISION,
   formulaTemplateSchema,
-  type FormulaTemplate,
   type FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,10 +20,10 @@ import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { SaveDemoteDialog } from "../_components/studio/dialogs/save-demote-dialog";
 import { FormulaStudio } from "../_components/studio/formula-studio";
-import { StudioSkeleton } from "../_components/studio/studio-skeletons";
+import { StudioSkeleton } from "@/components/tariff-studio/studio-skeletons";
 
 export const prefetch: RoutePrefetch = ({ params }) => [
-  formulaTemplate.schema("shipment"),
+  formulaTemplate.context,
   ...(params.id ? [formulaTemplate.get(params.id)] : []),
 ];
 
@@ -53,20 +50,7 @@ export function FormulaStudioEditPage() {
 
   const form = useForm<FormulaTemplateFormValues>({
     resolver: zodResolver(formulaTemplateSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      type: "FreightCharge",
-      expression: "",
-      status: "Draft",
-      schemaId: "shipment",
-      variableDefinitions: [],
-      breakdownDefinitions: [],
-      minCharge: null,
-      maxCharge: null,
-      roundingMode: DEFAULT_ROUNDING_MODE,
-      roundingPrecision: DEFAULT_ROUNDING_PRECISION,
-    },
+    defaultValues: { name: "", description: "", source: "", status: "Draft" },
   });
 
   useEffect(() => {
@@ -79,7 +63,12 @@ export function FormulaStudioEditPage() {
 
   const { mutate } = useApiMutation({
     mutationFn: async (values: FormulaTemplateFormValues) => {
-      return api.put<FormulaTemplate>(`/formula-templates/${id}/`, values);
+      return apiService.formulaTemplateService.update(id ?? "", {
+        name: values.name,
+        description: values.description ?? "",
+        source: values.source,
+        version: template?.version,
+      });
     },
     onSuccess: async (updated) => {
       // Reseat the form on the saved record right away so the dirty flag —

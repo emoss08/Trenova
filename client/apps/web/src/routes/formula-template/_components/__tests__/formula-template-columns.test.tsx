@@ -17,23 +17,31 @@ function cellFor(accessorKey: string, original: Partial<FormulaTemplateRow>) {
 }
 
 describe("formula template list columns", () => {
-  it("shows how many things rate with a template and how many scenarios guard it", () => {
+  it("shows how many things rate with a template and how many tests its source holds", () => {
     expect(cellFor("usageCount", { usageCount: 12 } as Partial<FormulaTemplateRow>)).toContain(
       "12",
     );
     expect(cellFor("usageCount", { usageCount: 0 } as Partial<FormulaTemplateRow>)).toContain(
       "Not in use",
     );
-    expect(cellFor("scenarioCount", { scenarioCount: 3 } as Partial<FormulaTemplateRow>)).toContain(
-      "3",
-    );
-    expect(cellFor("scenarioCount", { scenarioCount: 0 } as Partial<FormulaTemplateRow>)).toContain(
-      "None",
-    );
+    expect(cellFor("testCount", { testCount: 3 } as Partial<FormulaTemplateRow>)).toBe("3");
+    expect(cellFor("testCount", { testCount: 0 } as Partial<FormulaTemplateRow>)).toBe("None");
   });
 
   it("shows when a template was last approved, or that it never was", () => {
     expect(cellFor("approvedAt", { approvedAt: null })).toContain("Never");
     expect(cellFor("approvedAt", { approvedAt: 1_700_000_000 })).not.toContain("Never");
+  });
+});
+
+describe("the libraries column", () => {
+  it("lists the libraries a template imports, or none", () => {
+    const column = getColumns(translate).find((c) => c.id === "imports");
+    if (!column || typeof column.cell !== "function") throw new Error("no imports column");
+    const cell = column.cell;
+    const render_ = (imports: FormulaTemplateRow["imports"]) =>
+      render(<>{cell({ row: { original: { imports } } } as never)}</>).container.textContent;
+    expect(render_([{ path: "org.accessorials", libraryId: "fl_1", versionNumber: 3 }])).toBe("org.accessorials");
+    expect(render_([])).toBe("None");
   });
 });

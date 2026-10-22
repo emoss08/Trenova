@@ -15,6 +15,7 @@
 //!   tables and the test runner.
 //! - [`editor`]: completion, hover, signature help, go to definition, rename and inlay hints.
 //! - [`stdlib`]: the standard library, written in Tariff and compiled into the module.
+//! - [`wire`]: values on the wire, decoded against their types and encoded canonically.
 //!
 //! Each area's `ops` module holds the `tariff.*` operations it answers.
 
@@ -28,3 +29,4 @@ pub mod stdlib;
 pub mod syntax;
 pub mod types;
 pub mod units;
+pub mod wire;

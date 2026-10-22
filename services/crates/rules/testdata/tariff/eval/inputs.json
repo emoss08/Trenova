@@ -1,0 +1,440 @@
+[
+  {
+    "name": "an input takes its default",
+    "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi\nnote \"{rate}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$2.35/mi"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "an input takes the value sent",
+    "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi\nnote \"{rate}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$2.10/mi"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "rate": {
+        "$q": "2.10",
+        "u": "$/mi"
+      }
+    }
+  },
+  {
+    "name": "an input value keeps the unit it was sent in",
+    "source": "tariff \"t\"\ninput rate: Money/cwt = $18/cwt\nnote \"{rate * 100 lb}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$18.50"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "rate": {
+        "$q": "0.185",
+        "u": "$/lb"
+      }
+    }
+  },
+  {
+    "name": "a required input with a value",
+    "source": "tariff \"t\"\ninput floor: Money\nnote \"{floor}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$90.00"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "floor": {
+        "$q": "90",
+        "u": "$"
+      }
+    }
+  },
+  {
+    "name": "a required input nobody set refuses naming it",
+    "source": "tariff \"t\"\ninput floor: Money\nnote \"{floor}\"",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": {
+          "message": "The input {0} has no value and no default",
+          "args": [
+            "floor"
+          ]
+        },
+        "range": {
+          "from": 17,
+          "to": 22
+        }
+      }
+    }
+  },
+  {
+    "name": "an unknown input is an error",
+    "source": "tariff \"t\"\ninput rate: Money = $1\nnote \"x\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "This tariff has no input named {0}",
+          "args": [
+            "rates"
+          ]
+        },
+        "range": null
+      }
+    },
+    "inputs": {
+      "rates": {
+        "$q": "1",
+        "u": "$"
+      }
+    }
+  },
+  {
+    "name": "an input that does not decode is an error at its declaration",
+    "source": "tariff \"t\"\ninput rate: Money = $1\nnote \"x\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "range": {
+          "from": 17,
+          "to": 21
+        }
+      }
+    },
+    "inputs": {
+      "rate": "one"
+    }
+  },
+  {
+    "name": "a default may use a constant",
+    "source": "tariff \"t\"\nconst BASE: Money = $3\ninput fee: Money = BASE * 2\nnote \"{fee}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$6.00"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a list input with records",
+    "source": "tariff \"t\"\nuse std.ltl.{ Break, deficit }\ninput breaks: List<Break> = []\nlet rated = deficit(breaks, actual: 800 lb)\nnote \"{rated.weight} at {rated.rate}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1000 lb at $28.10/cwt"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "breaks": [
+        {
+          "from": {
+            "$q": "0",
+            "u": "lb"
+          },
+          "rate": {
+            "$q": "42",
+            "u": "$/cwt"
+          },
+          "minimum": null
+        },
+        {
+          "from": {
+            "$q": "500",
+            "u": "lb"
+          },
+          "rate": {
+            "$q": "35.5",
+            "u": "$/cwt"
+          },
+          "minimum": null
+        },
+        {
+          "from": {
+            "$q": "1000",
+            "u": "lb"
+          },
+          "rate": {
+            "$q": "28.1",
+            "u": "$/cwt"
+          },
+          "minimum": null
+        }
+      ]
+    }
+  },
+  {
+    "name": "an empty list input refuses through the library",
+    "source": "tariff \"t\"\nuse std.ltl.{ Break, deficit }\ninput breaks: List<Break> = []\nlet rated = deficit(breaks, actual: 800 lb)",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "There are no weight breaks to rate 800 lb with"
+      }
+    }
+  },
+  {
+    "name": "an enum input",
+    "source": "tariff \"t\"\ninput mode: RatingMode = Sell\nnote \"{mode}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "Buy"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "mode": "Buy"
+    }
+  },
+  {
+    "name": "an optional input set to none",
+    "source": "tariff \"t\"\ninput cap: Money? = $5\nnote \"{cap ?? $0}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$0.00"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "cap": null
+    }
+  },
+  {
+    "name": "a user enum input",
+    "source": "tariff \"t\"\nenum Service { Standard, Guaranteed }\ninput service: Service = Standard\nnote \"{service}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "Guaranteed"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "service": "Guaranteed"
+    }
+  },
+  {
+    "name": "a user enum input refuses other variants",
+    "source": "tariff \"t\"\nenum Service { Standard, Guaranteed }\ninput service: Service = Standard\nnote \"{service}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input"
+      }
+    },
+    "inputs": {
+      "service": "Expedited"
+    }
+  },
+  {
+    "name": "a user record input",
+    "source": "tariff \"t\"\ntype Fee = { code: Text, amount: Money }\ninput fee: Fee = { code: \"A\", amount: $1 }\nnote \"{fee.code} {fee.amount}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "B $2.00"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "fee": {
+        "code": "B",
+        "amount": {
+          "$q": "2",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a condition's inputs",
+    "source": "condition \"c\"\ninput zips: List<Text> = []\nlane.destination.zip3 in zips",
+    "expect": {
+      "status": "rated",
+      "value": true
+    },
+    "inputs": {
+      "zips": [
+        ""
+      ]
+    }
+  },
+  {
+    "name": "each program in a batch is independent",
+    "op": "tariff.evaluate",
+    "input": {
+      "programs": [
+        {
+          "id": "a",
+          "source": "tariff \"a\"\ninput rate: Money = $1\ncharge \"x\" = rate",
+          "inputs": {
+            "rate": {
+              "$q": "5",
+              "u": "$"
+            }
+          }
+        },
+        {
+          "id": "b",
+          "source": "tariff \"b\"\ncharge \"x\" = $1 / 0"
+        },
+        {
+          "id": "c",
+          "source": "tariff \"a\"\ninput rate: Money = $1\ncharge \"x\" = rate"
+        },
+        {
+          "id": "d",
+          "source": "condition \"d\"\nshipment.hazmat",
+          "kind": "condition"
+        }
+      ]
+    },
+    "expect": {
+      "ok": {
+        "results": [
+          {
+            "id": "a",
+            "status": "rated",
+            "bill": {
+              "total": {
+                "$q": "5",
+                "u": "$"
+              }
+            }
+          },
+          {
+            "id": "b",
+            "status": "error",
+            "error": {
+              "code": "divideByZero"
+            }
+          },
+          {
+            "id": "c",
+            "status": "rated",
+            "bill": {
+              "total": {
+                "$q": "1",
+                "u": "$"
+              }
+            }
+          },
+          {
+            "id": "d",
+            "status": "rated",
+            "value": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a program's own record overrides the shared one",
+    "op": "tariff.evaluate",
+    "input": {
+      "programs": [
+        {
+          "id": "a",
+          "source": "tariff \"a\"\nnote \"{customer.code}\"",
+          "record": {
+            "shipment": {},
+            "lane": {},
+            "customer": {},
+            "fuel": {},
+            "rating": {}
+          }
+        }
+      ]
+    },
+    "expect": {
+      "ok": {
+        "results": [
+          {
+            "id": "a",
+            "status": "error",
+            "error": {
+              "code": "record"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a malformed request is a request error",
+    "op": "tariff.evaluate",
+    "input": {
+      "programs": [
+        {
+          "id": "a"
+        }
+      ]
+    },
+    "expect": {
+      "error": {
+        "code": "invalid_input"
+      }
+    }
+  },
+  {
+    "name": "an unknown request field is a request error",
+    "op": "tariff.evaluate",
+    "input": {
+      "programs": [],
+      "extra": 1
+    },
+    "expect": {
+      "error": {
+        "code": "invalid_input"
+      }
+    }
+  }
+]

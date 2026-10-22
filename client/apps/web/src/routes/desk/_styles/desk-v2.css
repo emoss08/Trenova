@@ -5747,99 +5747,11 @@ a.dk-rec-doc:focus-visible {
   font-size: 11.5px;
   line-height: 1.5;
 }
-.dk-ft-var {
-  color: var(--accent-violet);
-  font-weight: 500;
-  border-radius: 4px;
-  transition:
-    background 140ms,
-    box-shadow 140ms;
-}
-.dk-ft-var.dk-on {
-  background: var(--accent-violet-subtle);
-  box-shadow: 0 0 0 2px var(--accent-violet-subtle);
-}
-.dk-ft-field {
-  color: var(--accent-teal);
-}
-.dk-ft-fn {
-  color: var(--accent-indigo);
-}
-.dk-ft-num {
-  color: var(--accent-amber);
-}
-.dk-ft-str {
-  color: var(--accent-emerald);
-}
-.dk-ft-kw,
-.dk-ft-op {
-  color: var(--dsk-muted);
-}
-.dk-ft-comment {
-  color: var(--dsk-faint);
-  font-style: italic;
-}
-.dk-ft-ident {
-  color: var(--dsk-fg);
-  text-decoration: underline dotted var(--dsk-warn);
-  text-underline-offset: 3px;
-}
-.dk-ft-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  margin-top: 8px;
-  font-size: 11px;
-}
-.dk-ft-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 400;
-  color: var(--dsk-subtle);
-}
-.dk-ft-legend span::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 2px;
-}
-.dk-ft-legend .dk-ft-var::before {
-  background: var(--accent-violet);
-}
-.dk-ft-legend .dk-ft-field::before {
-  background: var(--accent-teal);
-}
-.dk-ft-legend .dk-ft-fn::before {
-  background: var(--accent-indigo);
-}
-.dk-ft-rules {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 12px 0 0;
-  border: 1px solid var(--dsk-b-sub);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.dk-ft-rules > div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 9px 12px;
-  border-left: 1px solid var(--dsk-b-sub);
-}
-.dk-ft-rules > div:first-child {
-  border-left: 0;
-}
-.dk-ft-rules dt {
+.dk-ft-when {
+  margin-left: 6px;
+  font-style: normal;
   font-size: 11px;
   color: var(--dsk-subtle);
-}
-.dk-ft-rules dd {
-  margin: 0;
-  font: 12.5px var(--dk-plex);
-  font-feature-settings: "tnum";
-  color: var(--dsk-fg);
 }
 .dk-ft-items,
 .dk-ft-vars {

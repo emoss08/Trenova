@@ -1,13 +1,12 @@
-import type { EditorRange } from "@/components/formula-editor/highlight-range";
 import { describeApiError } from "@/lib/api-error-message";
 import { Button } from "@trenova/shared/components/ui/button";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaExplainResponse } from "@trenova/shared/types/formula-template";
 import { ArrowRightIcon, XCloseIcon } from "@trenova/shared/components/icons";
-import { TickedText } from "../ai/ticked-text";
-import { formatMoney, numericAmount } from "../model/format";
+import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import type { TariffRange } from "@trenova/shared/types/tariff";
+import { TickedText } from "@/components/tariff-studio/ticked-text";
 
 const MAX_CODE = 70;
 
@@ -16,48 +15,32 @@ export type ExplainState =
   | { status: "ready"; data: FormulaExplainResponse }
   | { status: "error"; error: unknown };
 
-/** The lead line, priced on the preview load by the engine; never the model's arithmetic. */
+/** The lead line, from the bill the server rated; never the model's arithmetic. */
 function leadLine(data: FormulaExplainResponse, t: ReturnType<typeof useT>): string {
-  const raw = numericAmount(data.rawAmount);
-  const billed = numericAmount(data.billedAmount);
-  if (raw === null || billed === null) {
-    return t("Here's what each line of the formula does.");
-  }
-  const guardrail = data.guardrail;
-  if (guardrail?.applied) {
-    return guardrail.bound === "max"
-      ? t(
-          "On the preview load the formula comes to {0}, over the maximum, so it bills {1}. Here's how each line gets there.",
-          formatMoney(raw),
-          formatMoney(billed),
-        )
-      : t(
-          "On the preview load the formula comes to {0}, under the minimum, so it bills {1}. Here's how each line gets there.",
-          formatMoney(raw),
-          formatMoney(billed),
-        );
-  }
+  const total = data.bill?.total;
+  if (!total) return t("Here's what each statement of the tariff does.");
   return t(
-    "On the preview load the formula comes to {0} and bills {1}. Here's how each line gets there.",
-    formatMoney(raw),
-    formatMoney(billed),
+    "On the preview load the tariff bills {0}. Here's how each statement gets there.",
+    formatTariffValue(total, t),
   );
 }
 
 /**
- * What the formula charges, in Nova's words: one line priced on the preview
- * load, then one row per statement down to the final expression. Pointing at
- * a row lights its statement in the editor.
+ * What the tariff bills, in Nova's words: one line from the bill the preview
+ * load gets, then one row per statement the trace recorded. Pointing at a row
+ * lights its statement in the editor.
  */
 export function ExplainPanel({
+  source,
   state,
   onHover,
   onClose,
   onFollowUp,
   onRetry,
 }: {
+  source: string;
   state: ExplainState;
-  onHover: (range: EditorRange | null) => void;
+  onHover: (range: TariffRange | null) => void;
   onClose: () => void;
   onFollowUp: () => void;
   onRetry: () => void;
@@ -65,12 +48,7 @@ export function ExplainPanel({
   const t = useT();
   const loading = state.status === "loading";
   const data = state.status === "ready" ? state.data : null;
-  const rows = data
-    ? data.statements.map((statement) => ({
-        statement,
-        says: data.items.find((item) => item.statementIndex === statement.index)?.says ?? "",
-      }))
-    : [];
+  const rows = data?.items ?? [];
 
   return (
     <div className="bg-card overflow-hidden rounded-lg border" aria-busy={loading || undefined}>
@@ -97,13 +75,13 @@ export function ExplainPanel({
         </div>
         {loading && (
           <p className="ui-shimmer text-foreground-muted w-fit rounded-sm text-base">
-            {t("Reading the formula and its inputs…")}
+            {t("Reading the tariff and its trace…")}
           </p>
         )}
         {state.status === "error" && (
           <div className="flex items-center gap-2">
             <p className="text-danger text-sm">
-              {describeApiError(state.error, t("Nova could not explain the formula."))}
+              {describeApiError(state.error, t("Nova could not explain the tariff."))}
             </p>
             <Button type="button" variant="outline" size="xs" onClick={onRetry}>
               {t("Try again")}
@@ -114,31 +92,24 @@ export function ExplainPanel({
       </div>
       {rows.length > 0 && (
         <div className="bg-sunken mx-2 mb-2 flex flex-col rounded-md py-1">
-          {rows.map(({ statement, says }) => {
-            const final = statement.kind === "result";
+          {rows.map((item, index) => {
+            const code = source.slice(item.range.from, item.range.to).split("\n")[0] ?? "";
             return (
               <div
-                key={statement.index}
-                onMouseEnter={() => onHover({ from: statement.from, to: statement.to })}
+                key={`${item.range.from}:${item.range.to}`}
+                onMouseEnter={() => onHover(item.range)}
                 onMouseLeave={() => onHover(null)}
                 className="hover:bg-surface-hover flex gap-2.5 rounded-sm px-2.5 py-1.5"
               >
-                <span
-                  className={cn(
-                    "mt-px flex size-4.5 shrink-0 items-center justify-center rounded-full font-mono text-2xs",
-                    final ? "bg-ink text-ink-foreground" : "bg-card text-foreground-muted border",
-                  )}
-                >
-                  {final ? "=" : statement.index + 1}
+                <span className="bg-card text-foreground-muted mt-px flex size-4.5 shrink-0 items-center justify-center rounded-full border font-mono text-2xs">
+                  {index + 1}
                 </span>
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <code className="text-foreground-muted truncate font-mono text-xs">
-                    {statement.code.length > MAX_CODE
-                      ? `${statement.code.slice(0, MAX_CODE - 2)}…`
-                      : statement.code}
+                    {code.length > MAX_CODE ? `${code.slice(0, MAX_CODE - 2)}…` : code}
                   </code>
                   <span className="text-sm leading-relaxed">
-                    <TickedText text={says} />
+                    <TickedText text={item.says} />
                   </span>
                 </div>
               </div>

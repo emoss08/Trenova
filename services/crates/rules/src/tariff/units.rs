@@ -408,6 +408,34 @@ impl Unit {
         dim
     }
 
+    /// The unit `.in(target)` converts a value of dimension `dim` to: `target` itself when it
+    /// measures `dim` (`.in(cwt)` on a weight, `.in($/cwt)` on a rate per weight), or, on a rate
+    /// (money per a quantity), money per `target` when `target` measures the rate's
+    /// denominator, so `$0.185/lb .in(cwt)` is in `$/cwt`. `None` when it converts to neither,
+    /// and for a bare count, which has no unit to convert to.
+    #[must_use]
+    pub fn conversion_target(dim: Dim, target: &Self) -> Option<Self> {
+        let measures = target.dim();
+        if measures.is_none() {
+            return None;
+        }
+        if measures == dim {
+            return Some(target.clone());
+        }
+        let dollar = simple("$")?;
+        if dim == Dim::money() || Dim::money().per(measures) != Some(dim) {
+            return None;
+        }
+        let mut factors = vec![(dollar, 1)];
+        factors.extend(
+            target
+                .factors
+                .iter()
+                .map(|(unit, exponent)| (*unit, exponent.saturating_neg())),
+        );
+        Some(Self { factors })
+    }
+
     /// The exact factor that converts a value in this unit to SI (dimensionless labels folded
     /// in), as a numerator and a denominator so no division happens until the end.
     fn ratio(&self) -> Result<(Decimal, Decimal), UnitError> {
@@ -727,6 +755,20 @@ mod tests {
             .expect("a product");
         assert_eq!(charge.value, d("222"));
         assert_eq!(charge.unit.to_string(), "$");
+    }
+
+    #[test]
+    fn in_converts_a_rate_by_its_denominator_or_its_whole_unit() {
+        let unit = |text: &str| Unit::parse(text).expect("a unit");
+        let per_weight = unit("$/lb").dim();
+        let target = |dim, to: &str| Unit::conversion_target(dim, &unit(to)).map(|u| u.to_string());
+        assert_eq!(target(per_weight, "cwt").as_deref(), Some("$/cwt"));
+        assert_eq!(target(per_weight, "$/cwt").as_deref(), Some("$/cwt"));
+        assert_eq!(target(Dim::of(Base::Weight), "kg").as_deref(), Some("kg"));
+        assert_eq!(target(per_weight, "mi"), None);
+        assert_eq!(target(Dim::of(Base::Weight), "mi"), None);
+        assert_eq!(target(Dim::money(), "lb"), None);
+        assert_eq!(target(Dim::NONE, "pallet"), None);
     }
 
     #[test]

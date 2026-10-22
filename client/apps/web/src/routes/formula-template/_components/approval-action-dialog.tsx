@@ -184,7 +184,7 @@ export function ApprovalActionDialog({
     },
     onError: (error) => {
       // The server says exactly why a review step was refused: a self
-      // approval, a failing scenario, an invalid expression. That reason is
+      // approval, a failing test, a source that does not check. That reason is
       // the whole point of the dialog, so it stays on screen.
       const reason = describeApiError(error, copy.failureFallback);
       setServerError(reason);

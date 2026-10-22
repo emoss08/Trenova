@@ -1,0 +1,426 @@
+{
+ "cases": [
+  {
+   "name": "a user function's first parameter",
+   "source": [
+    "tariff \"t\"",
+    "/// Time past `free`, billed at `rate`.",
+    "fn wait(free: Duration, rate: Money/h) -> Money = rate * free",
+    "charge \"x\" = wait(|)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "wait(free: Duration, rate: Money/h) -> Money",
+      "doc": "Time past `free`, billed at `rate`.",
+      "parameters": [
+       {
+        "label": [
+         5,
+         19
+        ],
+        "doc": "Time past `free`, billed at `rate`."
+       },
+       {
+        "label": [
+         21,
+         34
+        ]
+       }
+      ]
+     }
+    ],
+    "active": 0,
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "the second positional parameter",
+   "source": [
+    "tariff \"t\"",
+    "fn wait(free: Duration, rate: Money/h) -> Money = rate * free",
+    "charge \"x\" = wait(1 h, |)"
+   ],
+   "expect": {
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "a named argument by its name",
+   "source": [
+    "tariff \"t\"",
+    "fn wait(free: Duration, rate: Money/h) -> Money = rate * free",
+    "charge \"x\" = wait(rate: |)"
+   ],
+   "expect": {
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "after a named argument, the first parameter not given",
+   "source": [
+    "tariff \"t\"",
+    "fn wait(free: Duration, rate: Money/h) -> Money = rate * free",
+    "charge \"x\" = wait(rate: $1/h, |)"
+   ],
+   "expect": {
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "past the last parameter",
+   "source": [
+    "tariff \"t\"",
+    "fn wait(free: Duration) -> Money = $1",
+    "charge \"x\" = wait(1 h, 2, |)"
+   ],
+   "expect": {
+    "activeParameter": null,
+    "active": 0
+   }
+  },
+  {
+   "name": "a library function with defaults",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let r = deficit(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "deficit(breaks: List<Break>, actual: Weight, allow: Bool = true) -> Rated"
+     }
+    ],
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "a module function",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "let p = fuel.perMile($1/gal, |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "perMile(price: Money/gal, peg: Money/gal, mpg: Number) -> Money/mi"
+     }
+    ],
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "a method",
+   "source": [
+    "tariff \"t\"",
+    "let a = $5",
+    "charge \"x\" = a.clamp($1, |)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "clamp(lo: Money, hi: Money) -> Money"
+     }
+    ],
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "a list method's lambda is typed",
+   "source": [
+    "tariff \"t\"",
+    "let d = shipment.stops.where(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "where(f: Stop => Bool) -> List<Stop>",
+      "doc": {
+       "message": "The items `f` holds for, in order: `stops.where(s => s.kind == Delivery)`."
+      }
+     }
+    ],
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "inside a lambda the call is still the method",
+   "source": [
+    "tariff \"t\"",
+    "let d = shipment.stops.sum(s => s.|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "sum(f: Stop => U = the item) -> U"
+     }
+    ]
+   }
+  },
+  {
+   "name": "a test constructor",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, |)]",
+    "}"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "pickup(sequence: Int, kind: StopKind, status: StopStatus, appointment: Bool, window: { start: DateTime?, end: DateTime? }, arrival: DateTime?, departure: DateTime?, dwell: Duration?, pieces: Int?, weight: Weight?, location: { city: Text, state: Text, zip: Text, zip3: Text, … }) -> Stop"
+     }
+    ],
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "a constructor's named field",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [delivery(departure: |)]",
+    "}"
+   ],
+   "expect": {
+    "activeParameter": 6
+   }
+  },
+  {
+   "name": "charge in a test",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" as FSC = $1",
+    "test \"t\" {",
+    "  expect charge(|) == $1",
+    "}"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "charge(line: CODE | Text) -> Money?"
+     }
+    ],
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "a charge's options",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" (quantity: miles, |)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "charge \"label\" (quantity: Quantity, rate: Money/unit)"
+     }
+    ],
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "a charge option by its name",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" (rate: |)"
+   ],
+   "expect": {
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "a conversion",
+   "source": [
+    "tariff \"t\"",
+    "let n = Number(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "Number(i: Int) -> Number"
+     }
+    ]
+   }
+  },
+  {
+   "name": "Int.parse",
+   "source": [
+    "tariff \"t\"",
+    "let n = Int.parse(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "Int.parse(text: Text) -> Int?"
+     }
+    ]
+   }
+  },
+  {
+   "name": "a table's cell",
+   "source": [
+    "tariff \"t\"",
+    "let c = tables.Zones.cell(lane.origin.zip3, |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "tables.Zones.cell(origin zip3: Text, destination zip3: Text) -> { value: Money/cwt, minimum: Money?, deficit: Bool }?"
+     }
+    ],
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "a table's band",
+   "source": [
+    "tariff \"t\"",
+    "let c = tables.Breaks.band(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "tables.Breaks.band(x: Weight) -> { min: Weight, max: Weight?, value: Money }?"
+     }
+    ]
+   }
+  },
+  {
+   "name": "inside a list argument the call is still found",
+   "source": [
+    "tariff \"t\"",
+    "fn f(xs: List<Int>, n: Int) -> Int = n",
+    "charge \"x\" = $1 * f([1, |], 2)"
+   ],
+   "expect": {
+    "activeParameter": 0,
+    "signatures": [
+     {
+      "label": "f(xs: List<Int>, n: Int) -> Int"
+     }
+    ]
+   }
+  },
+  {
+   "name": "the innermost call",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: Int, b: Int) -> Int = a",
+    "charge \"x\" = $1 * f(1, f(|))"
+   ],
+   "expect": {
+    "activeParameter": 0
+   }
+  },
+  {
+   "name": "an unclosed call",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: Int, b: Int) -> Int = a",
+    "let n = f(1, |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "nothing outside a call",
+   "source": [
+    "tariff \"t\"",
+    "let n = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": [],
+    "active": null,
+    "activeParameter": null
+   }
+  },
+  {
+   "name": "nothing after the closing parenthesis",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: Int) -> Int = a",
+    "let n = f(1)|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": []
+   }
+  },
+  {
+   "name": "nothing in a text",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: Text) -> Int = 1",
+    "let n = f(\"(|\")",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": []
+   }
+  },
+  {
+   "name": "an unknown function has no signature",
+   "source": [
+    "tariff \"t\"",
+    "let n = nope(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "signatures": []
+   }
+  },
+  {
+   "name": "non-ASCII before the call",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: Text, b: Int) -> Int = b",
+    "let n = f(\"é🚚\", |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "activeParameter": 1
+   }
+  },
+  {
+   "name": "an imported function's parameter docs",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ liftgate }",
+    "charge \"x\" = liftgate(|)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "liftgate(stops: Int, fee: Money = $75) -> Money",
+      "parameters": [
+       {
+        "doc": "A liftgate at `stops` stops, `fee` each."
+       },
+       {
+        "doc": "A liftgate at `stops` stops, `fee` each."
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}

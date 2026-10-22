@@ -1,6 +1,18 @@
 import { ActiveEditorProvider } from "@/components/formula-editor/active-editor";
-import { PreviewValuesProvider } from "@/components/formula-editor/preview-values";
-import { useStudioShortcuts } from "@/components/formula-editor/studio-shortcuts";
+import { DefinitionDialog } from "@/components/tariff-studio/definition-dialog";
+import { OutlinePanel } from "@/components/tariff-studio/outline-panel";
+import { REFERENCE_SEARCH_ID } from "@/components/tariff-studio/reference-search";
+import { useStudioShortcuts } from "@/components/tariff-studio/studio-shortcuts";
+import {
+  ListSectionSkeleton,
+  NovaPaneSkeleton,
+  PreviewPaneSkeleton,
+  ReferencePaneSkeleton,
+  SourceSectionSkeleton,
+  StudioSkeleton,
+  TestsPaneSkeleton,
+} from "@/components/tariff-studio/studio-skeletons";
+import { newTestBlock } from "@/components/tariff-studio/source-edits";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import {
   buildTemplateExport,
@@ -8,7 +20,6 @@ import {
   getExportFilename,
 } from "@/lib/formula-template-export";
 import { formulaTemplateRoutes, importLandingRoute } from "@/lib/formula-template-routes";
-import { apiService } from "@/services/api";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
@@ -22,12 +33,9 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type { ApprovalAction } from "../approval-action-dialog";
-import "./formula-studio.css";
-import { RateTrace } from "./rate-trace";
-import { REFERENCE_SEARCH_ID } from "./rail/reference-search";
+import "@/components/tariff-studio/tariff-studio.css";
 import { DetailsHero } from "./sections/details-hero";
 import { InputsSection } from "./sections/inputs-section";
-import { PolicySection } from "./sections/policy-section";
 import {
   STUDIO_SECTIONS,
   StudioProvider,
@@ -37,18 +45,7 @@ import {
   type StudioProps,
   type StudioTab,
 } from "./studio-context";
-import {
-  BreakdownSectionSkeleton,
-  ExpressionSectionSkeleton,
-  NovaPaneSkeleton,
-  PreviewPaneSkeleton,
-  ReferencePaneSkeleton,
-  ScenariosPaneSkeleton,
-  StudioSkeleton,
-} from "./studio-skeletons";
 import { StudioTopBar } from "./studio-top-bar";
-
-export type { StudioSaveExtras } from "./studio-context";
 
 /*
  * The heavy parts of the studio arrive on their own: the editor (CodeMirror
@@ -57,24 +54,26 @@ export type { StudioSaveExtras } from "./studio-context";
  * a skeleton of its own shape. A dialog's module is read the first time it
  * opens and kept mounted after, so it closes with its animation.
  */
-const ExpressionSection = lazy(() =>
-  import("./sections/expression-section").then((module) => ({
-    default: module.ExpressionSection,
+const SourceSection = lazy(() =>
+  import("./sections/source-section").then((module) => ({
+    default: module.SourceSection,
   })),
 );
-const BreakdownSection = lazy(() =>
-  import("./sections/breakdown-section").then((module) => ({
-    default: module.BreakdownSection,
-  })),
+const TestsSection = lazy(() =>
+  import("./sections/tests-section").then((module) => ({ default: module.TestsSection })),
 );
 const PreviewPane = lazy(() =>
   import("./rail/preview-pane").then((module) => ({ default: module.PreviewPane })),
 );
-const ScenariosPane = lazy(() =>
-  import("./rail/scenarios-pane").then((module) => ({ default: module.ScenariosPane })),
+const TestsPanel = lazy(() =>
+  import("@/components/tariff-studio/tests-panel").then((module) => ({
+    default: module.TestsPanel,
+  })),
 );
 const ReferencePane = lazy(() =>
-  import("./rail/reference-pane").then((module) => ({ default: module.ReferencePane })),
+  import("@/components/tariff-studio/reference-pane").then((module) => ({
+    default: module.ReferencePane,
+  })),
 );
 const NovaPane = lazy(() =>
   import("./rail/nova-pane").then((module) => ({ default: module.NovaPane })),
@@ -117,15 +116,15 @@ const WARM_AFTER_MS = 1500;
 
 /**
  * Reads the modules a tab or a button will need once the page has painted
- * and the browser is idle, so the first switch to Scenarios, Reference or
+ * and the browser is idle, so the first switch to Tests, Reference or
  * Nova and the first Submit land without a skeleton. A failed read is left
  * to the real open, which reports it.
  */
 function warmStudioModules(): () => void {
   const warm = () => {
     void Promise.allSettled([
-      import("./rail/scenarios-pane"),
-      import("./rail/reference-pane"),
+      import("@/components/tariff-studio/tests-panel"),
+      import("@/components/tariff-studio/reference-pane"),
       import("./rail/nova-pane"),
       import("./dialogs/submit-review-dialog"),
     ]);
@@ -139,9 +138,9 @@ function warmStudioModules(): () => void {
 }
 
 /**
- * The formula template's create and edit form: a top bar over the rate
- * trace, the form, and a floating panel of preview, scenarios, reference and
- * Nova that sits beside the form, or over it on a narrow screen.
+ * The formula template's create and edit form: a top bar over the outline,
+ * the form, and a floating panel of preview, tests, reference and Nova that
+ * sits beside the form, or over it on a narrow screen.
  */
 export function FormulaStudio(props: StudioProps) {
   // The provider suspends until the rules module has loaded (useRules), so
@@ -166,13 +165,14 @@ function useOnceOpened(open: boolean): boolean {
 
 function RailTabs() {
   const t = useT();
-  const { tab, setTab, setRailOpen, scenarios, novaBusy } = useStudio();
+  const { tab, setTab, setRailOpen, tests, novaBusy } = useStudio();
   const tabs: { value: StudioTab; label: string }[] = [
     { value: "preview", label: t("Preview") },
-    { value: "scenarios", label: t("Scenarios") },
+    { value: "tests", label: t("Tests") },
     { value: "reference", label: t("Reference") },
   ];
-  const allPass = scenarios.total > 0 && scenarios.passed === scenarios.total;
+  const total = tests.status === "ran" ? tests.passed + tests.failed : 0;
+  const allPass = tests.status === "ran" && total > 0 && tests.failed === 0;
 
   const tabClass = (active: boolean) =>
     cn(
@@ -199,16 +199,16 @@ function RailTabs() {
             className={tabClass(tab === item.value)}
           >
             {item.label}
-            {item.value === "scenarios" && scenarios.total > 0 && (
+            {item.value === "tests" && tests.status === "ran" && total > 0 && (
               <span
                 className={cn(
-                  "rounded-badge px-1.5 font-mono text-2xs tabular-nums",
+                  "rounded-badge text-2xs px-1.5 font-mono tabular-nums",
                   allPass
                     ? "bg-success-subtle text-success-subtle-foreground"
                     : "bg-danger-subtle text-danger-subtle-foreground",
                 )}
               >
-                {scenarios.passed}/{scenarios.total}
+                {tests.passed}/{total}
               </span>
             )}
           </button>
@@ -246,27 +246,40 @@ function RailTabs() {
  * The reference pane scrolls itself: its list is virtualized.
  */
 function RailBody() {
-  const { tab } = useStudio();
+  const t = useT();
+  const { tab, tests, check, context, reveal, appendToSource } = useStudio();
+  const { control } = useFormContext<FormulaTemplateFormValues>();
+  const source = useWatch({ control, name: "source" }) ?? "";
   const novaOpened = useOnceOpened(tab === "nova");
+  const addTest = () =>
+    appendToSource(
+      newTestBlock(
+        "tariff",
+        (check.outline?.items ?? [])
+          .filter((item) => item.kind === "test")
+          .map((item) => item.name),
+        t("a new test"),
+      ),
+    );
   return (
     <>
-      {(tab === "preview" || tab === "scenarios") && (
+      {(tab === "preview" || tab === "tests") && (
         <ScrollArea maskVariant="card" className="min-h-0 flex-1">
           {tab === "preview" && (
             <Suspense fallback={<PreviewPaneSkeleton />}>
               <PreviewPane />
             </Suspense>
           )}
-          {tab === "scenarios" && (
-            <Suspense fallback={<ScenariosPaneSkeleton />}>
-              <ScenariosPane />
+          {tab === "tests" && (
+            <Suspense fallback={<TestsPaneSkeleton />}>
+              <TestsPanel state={tests} source={source} onReveal={reveal} onAddTest={addTest} />
             </Suspense>
           )}
         </ScrollArea>
       )}
       {tab === "reference" && (
         <Suspense fallback={<ReferencePaneSkeleton />}>
-          <ReferencePane />
+          <ReferencePane context={context} />
         </Suspense>
       )}
       {novaOpened && (
@@ -284,13 +297,12 @@ function FormColumn() {
   return (
     <div className="mx-auto flex w-full max-w-200 flex-col gap-7 px-8 pt-5 pb-32 max-[900px]:px-4">
       <DetailsHero />
-      <Suspense fallback={<ExpressionSectionSkeleton />}>
-        <ExpressionSection />
+      <Suspense fallback={<SourceSectionSkeleton />}>
+        <SourceSection />
       </Suspense>
       <InputsSection />
-      <PolicySection />
-      <Suspense fallback={<BreakdownSectionSkeleton />}>
-        <BreakdownSection />
+      <Suspense fallback={<ListSectionSkeleton />}>
+        <TestsSection />
       </Suspense>
     </div>
   );
@@ -335,9 +347,15 @@ function StudioLayout() {
     onTemplateChanged,
     stacked,
     railOpen,
+    check,
+    testStatus,
+    reveal,
+    definition,
+    context,
+    closeDefinition,
   } = studio;
   const form = useFormContext<FormulaTemplateFormValues>();
-  const expression = useWatch({ control: form.control, name: "expression" }) ?? "";
+  const source = useWatch({ control: form.control, name: "source" }) ?? "";
 
   const [approvalAction, setApprovalAction] = useState<ApprovalAction | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -394,20 +412,17 @@ function StudioLayout() {
         window.setTimeout(() => document.getElementById(REFERENCE_SEARCH_ID)?.focus(), 30);
       },
       preview: () => setTab("preview"),
-      scenarios: () => setTab("scenarios"),
+      tests: () => setTab("tests"),
       nova: () => setTab(studio.tab === "nova" && railOpen ? "preview" : "nova"),
     }),
     [isSubmitting, mode, dirty, save, preview.runNow, setTab, studio.tab, railOpen],
   );
   useStudioShortcuts(shortcuts);
 
-  const handleExport = useCallback(async () => {
+  const handleExport = useCallback(() => {
     if (!template) return;
     try {
-      const testCases = await apiService.formulaTemplateService.listTestCases(template.id);
-      const exportData = buildTemplateExport(template, { testCases });
-      const filename = getExportFilename(template, false);
-      downloadJson(exportData, filename);
+      downloadJson(buildTemplateExport(template), getExportFilename(template, false));
     } catch {
       toast.error(t("Export failed"), {
         description: t("Could not export the template. Please try again."),
@@ -432,7 +447,7 @@ function StudioLayout() {
   );
 
   return (
-    <PreviewValuesProvider receipt={preview.result?.receipt}>
+    <>
       <div className="fs-studio bg-canvas flex h-full flex-col overflow-hidden">
         <UnsavedChangesGuard when={dirty} />
         <StudioTopBar
@@ -442,7 +457,7 @@ function StudioLayout() {
           onBacktest={() => setBacktestOpen(true)}
           onFork={() => setForkOpen(true)}
           onLineage={() => setLineageOpen(true)}
-          onExport={() => void handleExport()}
+          onExport={handleExport}
           onImport={() => setImportOpen(true)}
         />
 
@@ -466,7 +481,12 @@ function StudioLayout() {
                 : "grid-cols-[minmax(0,1fr)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)]",
             )}
           >
-            <RateTrace className="hidden min-h-0 border-r min-[1180px]:flex" />
+            <ScrollArea
+              maskVariant="background"
+              className="hidden min-h-0 border-r min-[1180px]:flex"
+            >
+              <OutlinePanel outline={check.outline} onReveal={reveal} testStatus={testStatus} />
+            </ScrollArea>
             <ScrollArea maskVariant="background" viewportRef={formViewport} className="min-h-0">
               <FormColumn />
             </ScrollArea>
@@ -499,7 +519,7 @@ function StudioLayout() {
               open={backtestOpen}
               onOpenChange={setBacktestOpen}
               template={template}
-              expression={expression}
+              source={source}
               onOpenDetails={() => setBacktestDetailsOpen(true)}
             />
           )}
@@ -559,6 +579,7 @@ function StudioLayout() {
           )}
         </Suspense>
       </div>
-    </PreviewValuesProvider>
+      <DefinitionDialog target={definition} context={context} onClose={closeDefinition} />
+    </>
   );
 }

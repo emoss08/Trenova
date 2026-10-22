@@ -770,6 +770,13 @@ nothing in the code can become markup. A language without a grammar is shown as 
 can mark a search's matches across tokens (`query`), draw something after a line (`lineEnd`) and
 report a clicked line (`onLineClick`).
 
+Tariff has no grammar here: its colours come from the rules module. Pass `spans` instead of a
+language, built with `tariffCodeSpans(tariffTokens(rules, source))`
+(`lib/highlight/tariff.ts`, whose `TARIFF_TOKEN_ROLES` maps each token class onto the roles
+below), or use `TariffCode` (`apps/web/src/components/tariff-code/`), which does that and
+suspends until the module has loaded. The editor spends the same roles through `cm-syntax-<role>`
+classes, so a source reads the same in the editor, a Desk card and a diff.
+
 Colour is by role, on the categorical hues, through seven tokens: `--syntax-keyword` (violet),
 `--syntax-string` (emerald), `--syntax-number` (amber), `--syntax-property` (sky),
 `--syntax-function` (indigo), `--syntax-type` (teal) and `--syntax-meta` (rose). Comments and
