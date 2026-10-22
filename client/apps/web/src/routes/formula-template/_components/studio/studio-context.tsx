@@ -186,12 +186,13 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   });
   const text = source ?? "";
 
-  const { context, isError: contextError } = useTariffCheckContext();
+  const { context, tablesStamp, isError: contextError } = useTariffCheckContext();
   const { check, errors, warnings, tests, testStatus } = useTariffWorkbench({
     rules,
     source: text,
     kind: "tariff",
     context,
+    tablesStamp,
   });
 
   const previewInputs = useForm<PreviewInputsForm>({ defaultValues: { inputs: {} } });

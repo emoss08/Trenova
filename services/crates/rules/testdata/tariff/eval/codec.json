@@ -1678,21 +1678,26 @@
     }
   },
   {
-    "name": "the record may leave out entered",
+    "name": "a record that carries entered is refused: the field is not in the schema",
     "source": "tariff \"t\"\nnote \"{shipment.proNumber}\"",
     "facts": {
       "shipment": {
-        "proNumber": "PRO-1"
+        "entered": {
+          "freight": {
+            "$q": "100",
+            "u": "$"
+          },
+          "other": {
+            "$q": "0",
+            "u": "$"
+          }
+        }
       }
     },
     "expect": {
-      "status": "rated",
-      "bill": {
-        "notes": [
-          {
-            "text": "PRO-1"
-          }
-        ]
+      "status": "error",
+      "error": {
+        "code": "record"
       }
     }
   },

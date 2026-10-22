@@ -56,6 +56,7 @@ const (
 	TariffTestPassed = TariffTestStatus("passed")
 	TariffTestFailed = TariffTestStatus("failed")
 	TariffTestError  = TariffTestStatus("error")
+	TariffTestNeeds  = TariffTestStatus("needs")
 )
 
 var errTariffResponse = errors.New("rules: the tariff module answered with an unexpected shape")
@@ -355,6 +356,7 @@ type TariffTestResult struct {
 
 type TariffTestRun struct {
 	Tests []TariffTestResult `json:"tests"`
+	Needs []TariffNeed       `json:"needs,omitempty"`
 	Error *TariffEvalError   `json:"error,omitempty"`
 }
 

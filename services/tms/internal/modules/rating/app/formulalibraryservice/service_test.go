@@ -77,6 +77,10 @@ func (emptyContext) Context(
 	return &rules.TariffContext{Libraries: req.Libraries}, nil
 }
 
+func (emptyContext) TableStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}
+
 func (emptyContext) LoadTables(
 	context.Context,
 	pagination.TenantInfo,

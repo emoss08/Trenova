@@ -2,29 +2,36 @@ package tariff
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 )
 
-const MaxTestNames = 200
-
 type TestRequest struct {
-	Source  string
-	Context *rules.TariffContext
-	Names   []string
+	TenantInfo pagination.TenantInfo
+	Source     string
+	Context    *rules.TariffContext
+	Names      []string
 }
 
 func (c *Checker) RunTests(ctx context.Context, req *TestRequest) (*rules.TariffTestRun, error) {
-	run, err := c.module.TestTariff(ctx, &rules.TariffTestRequest{
-		Source:  req.Source,
-		Context: req.Context,
-		Names:   req.Names,
+	loads := &cellLoad{contexts: c.context, tenant: req.TenantInfo, tariffCtx: req.Context}
+	var run *rules.TariffTestRun
+	err := loads.until(ctx, func() ([]rules.TariffNeed, error) {
+		var testErr error
+		run, testErr = c.module.TestTariff(ctx, &rules.TariffTestRequest{
+			Source:  req.Source,
+			Context: req.Context,
+			Names:   req.Names,
+		})
+		if testErr != nil {
+			return nil, fmt.Errorf("run tariff tests: %w", testErr)
+		}
+		return run.Needs, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("run tariff tests: %w", err)
+		return nil, fmt.Errorf("load table cells for tariff tests: %w", err)
 	}
 	if run.Tests == nil {
 		run.Tests = []rules.TariffTestResult{}
@@ -40,12 +47,12 @@ func (c *Checker) TestChecked(
 	if !checked.OK() {
 		return &rules.TariffTestRun{Tests: []rules.TariffTestResult{}}, nil
 	}
-	return c.RunTests(ctx, &TestRequest{Source: source, Context: checked.Context})
+	return c.RunTests(ctx, &TestRequest{
+		TenantInfo: checked.TenantInfo,
+		Source:     source,
+		Context:    checked.Context,
+	})
 }
-
-const MaxNeedPasses = 4
-
-var ErrNeedsUnmet = errors.New("the module still needed table cells after every pass")
 
 type ScaffoldRequest struct {
 	TenantInfo pagination.TenantInfo
@@ -60,25 +67,24 @@ func (c *Checker) ScaffoldTest(
 	ctx context.Context,
 	req *ScaffoldRequest,
 ) (*rules.TariffScaffold, error) {
-	for pass := 0; ; pass++ {
-		scaffold, err := c.module.ScaffoldTariffTest(ctx, &rules.TariffScaffoldRequest{
+	loads := &cellLoad{contexts: c.context, tenant: req.TenantInfo, tariffCtx: req.Context}
+	var scaffold *rules.TariffScaffold
+	err := loads.until(ctx, func() ([]rules.TariffNeed, error) {
+		var scaffoldErr error
+		scaffold, scaffoldErr = c.module.ScaffoldTariffTest(ctx, &rules.TariffScaffoldRequest{
 			Source:  req.Source,
 			Context: req.Context,
 			Record:  req.Record,
 			Inputs:  req.Inputs,
 			Name:    req.Name,
 		})
-		if err != nil {
-			return nil, fmt.Errorf("scaffold tariff test: %w", err)
+		if scaffoldErr != nil {
+			return nil, fmt.Errorf("scaffold tariff test: %w", scaffoldErr)
 		}
-		if len(scaffold.Needs) == 0 && scaffold.Status != rules.TariffNeeds {
-			return scaffold, nil
-		}
-		if pass >= MaxNeedPasses {
-			return nil, fmt.Errorf("scaffold tariff test: %w", ErrNeedsUnmet)
-		}
-		if err = c.context.LoadCells(ctx, req.TenantInfo, req.Context, scaffold.Needs); err != nil {
-			return nil, fmt.Errorf("load table cells for a scaffold: %w", err)
-		}
+		return scaffold.Needs, nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load table cells for a scaffold: %w", err)
 	}
+	return scaffold, nil
 }

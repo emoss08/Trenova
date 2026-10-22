@@ -13,6 +13,8 @@ export type TariffCheckContextState = {
   context: TariffContext | null;
   /** Each library the context holds, with its name, description and approved version. */
   libraries: readonly TariffStudioLibrary[];
+  /** The rate table stamp the context was read at, which the tests' loaded cells are kept by. */
+  tablesStamp: string;
   isError: boolean;
   refetch: () => void;
 };
@@ -26,6 +28,7 @@ export function useTariffCheckContext(): TariffCheckContextState {
   return {
     context: query.data?.context ?? null,
     libraries: query.data?.libraries ?? NO_LIBRARIES,
+    tablesStamp: query.data?.tablesStamp ?? "",
     isError: query.isError,
     refetch: () => void query.refetch(),
   };

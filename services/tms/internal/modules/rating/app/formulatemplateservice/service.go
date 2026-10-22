@@ -49,6 +49,8 @@ type sourceChecker interface {
 		tenantInfo pagination.TenantInfo,
 		libraries tariff.LibrarySet,
 	) (*rules.TariffContext, error)
+	TableStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
+	TableCells(ctx context.Context, req *tariff.TableCellsRequest) (*tariff.TableCells, error)
 }
 
 type billingResolver interface {

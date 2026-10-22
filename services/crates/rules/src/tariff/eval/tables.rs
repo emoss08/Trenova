@@ -52,6 +52,7 @@
 use super::budget::Meter;
 use super::error::{Code, EvalError};
 use super::value::{Value, format_decimal};
+use crate::matrix::band;
 use crate::message::{Arg, Message};
 use crate::tariff::schema::{Axis, TableShape};
 use crate::tariff::types::Type;
@@ -145,6 +146,9 @@ enum AxisRule {
     },
 }
 
+/// A cell's band on a range axis. Unlike a matrix band ([`crate::matrix::band`]), a table band
+/// always has a floor: a cell sent without one is a malformed table, since sorting by floor is
+/// what makes the lowest band win when bands overlap. Membership is the matrix's half-open rule.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Bounds {
     min: Decimal,
@@ -153,7 +157,7 @@ struct Bounds {
 
 impl Bounds {
     fn contains(self, key: Decimal) -> bool {
-        key >= self.min && self.max.is_none_or(|max| key < max)
+        band::contains(Some(self.min), self.max, key)
     }
 
     fn order(self, other: Self) -> Ordering {
@@ -398,7 +402,7 @@ impl Tables {
                 let [(low, low_value), (high, high_value)] = pair else {
                     continue;
                 };
-                if at >= *low && at < *high {
+                if band::contains(Some(*low), Some(*high), at) {
                     result = between(at, (*low, low_value), (*high, high_value))?;
                     break;
                 }

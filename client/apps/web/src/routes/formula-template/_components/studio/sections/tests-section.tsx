@@ -15,7 +15,12 @@ import { useStudio } from "../studio-context";
 import { SectionHead } from "./section-head";
 import { SuggestedTests, type SuggestedTestsState } from "./suggested-tests";
 
-const DOT = { passed: "bg-success", failed: "bg-danger", error: "bg-warning" } as const;
+const DOT = {
+  passed: "bg-success",
+  failed: "bg-danger",
+  error: "bg-warning",
+  needs: "bg-foreground-subtle",
+} as const;
 
 /**
  * The tariff's `test` blocks, as the outline lists them, with each one's verdict from the run

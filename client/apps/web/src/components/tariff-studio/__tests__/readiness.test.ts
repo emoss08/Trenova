@@ -34,10 +34,12 @@ describe("tariffReadiness tests row", () => {
   it("blocks on failing tests and passes when all pass, for either kind", () => {
     const ran = (passed: number, failed: number): TariffReadinessInput["tests"] => ({
       status: "ran",
-      run: { tests: [], error: null },
+      run: { tests: [], needs: [], error: null },
       passed,
       failed,
       stale: false,
+      cells: "ready",
+      retryCells: () => {},
     });
     for (const testsRequired of [false, true]) {
       expect(testsRow({ ...base, testsRequired, tests: ran(1, 1) })?.status).toBe("fail");

@@ -186,6 +186,17 @@ pub struct Simple {
 }
 
 impl Simple {
+    /// What the unit measures, as the catalog and the browser's unit table name it: its base's
+    /// name, `Percent` for `%`, and `Count` for a count label (`pallet`, `piece`, `stop`).
+    #[must_use]
+    pub fn dimension(&self) -> &'static str {
+        match self.base {
+            Some(base) => base.name(),
+            None if self.symbol == "%" => "Percent",
+            None => "Count",
+        }
+    }
+
     /// The exact factor to the base dimension's SI unit (or to 1 for a dimensionless label).
     #[must_use]
     pub fn factor(&self) -> Decimal {

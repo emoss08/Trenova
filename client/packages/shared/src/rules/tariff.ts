@@ -12,7 +12,6 @@ import {
   tariffCheckResultSchema,
   tariffDiagnosticsSchema,
   tariffEvalErrorSchema,
-  tariffEvaluationSchema,
   tariffMessageSchema,
   tariffRangeSchema,
   tariffTestRunSchema,
@@ -20,7 +19,6 @@ import {
   tariffWireValueSchema,
   type TariffCheckResult,
   type TariffContext,
-  type TariffEvaluation,
   type TariffFileKind,
   type TariffInputValues,
   type TariffTestRun,
@@ -87,40 +85,6 @@ export function tariffCheck(rules: RulesRuntime, request: TariffCheckRequest): T
       ...(request.kind ? { kind: request.kind } : {}),
       context: wireContext(request.context),
       ...(request.values ? { values: request.values } : {}),
-    }),
-  );
-}
-
-/** One program `tariff.evaluate` rates: a tariff or condition, its inputs and its record. */
-export type TariffProgram = {
-  id: string;
-  source: string;
-  kind?: "tariff" | "condition";
-  inputs?: TariffInputValues;
-  /** The record to rate; left out, the request's shared record. */
-  record?: Record<string, TariffWireValue>;
-  exchange?: { rate: string; currency: string };
-};
-
-export type TariffEvaluateRequest = {
-  context: TariffContext;
-  /** The shared record; null rates against the sample record. */
-  record?: Record<string, TariffWireValue> | null;
-  programs: readonly TariffProgram[];
-  trace?: boolean;
-};
-
-/** Rates a batch of programs in one call; each result is independent of the others. */
-export function tariffEvaluate(
-  rules: RulesRuntime,
-  request: TariffEvaluateRequest,
-): TariffEvaluation {
-  return tariffEvaluationSchema.parse(
-    rules.call(TARIFF_EVALUATE_OP, {
-      context: wireContext(request.context),
-      record: request.record ?? null,
-      programs: request.programs,
-      trace: request.trace ?? false,
     }),
   );
 }

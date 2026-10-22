@@ -73,7 +73,9 @@ export function tariffReadiness(input: TariffReadinessInput, t: TranslateFn): Re
             ? t("Running…")
             : tests.run.error
               ? t("The tests could not run")
-              : t("{0} of {1}", tests.passed, tests.passed + tests.failed),
+              : tests.cells === "failed" || tests.cells === "unresolved"
+                ? t("The rate table cells the tests read could not be loaded")
+                : t("{0} of {1}", tests.passed, tests.passed + tests.failed),
         }
       : tests.status === "empty"
         ? {

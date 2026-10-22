@@ -36,6 +36,11 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       apiService.formulaTemplateService.getContext({ signal }),
   },
+  /**
+   * The rate table cells the browser's tests have loaded (POST /formula-templates/context/cells),
+   * kept per rate table stamp; written by `useTariffTableCells`, never fetched.
+   */
+  contextCells: (stamp: string) => ({ queryKey: [stamp] }),
   versionDiff: (templateId: string, fromVersion: number, toVersion: number) => ({
     queryKey: [templateId, fromVersion, toVersion],
     queryFn: async () =>

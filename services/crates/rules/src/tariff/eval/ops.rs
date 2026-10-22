@@ -40,9 +40,12 @@
 //! the crate wrote it (an input with no value).
 //!
 //! `tariff.test` runs a file's tests: `{"source", "context", "names": […] (optional), "budget"
-//! (optional)}` → `{"tests": [{"name", "range", "status": "passed" | "failed" | "error",
-//! "failures": [{"range", "message", "values": [{"range", "display", "value"?}]}], "bill": … | null,
-//! "error": … | null}]}`, plus `"error"` at the top when the file does not check.
+//! (optional)}` → `{"tests": [{"name", "range", "status": "passed" | "failed" | "error" |
+//! "needs", "failures": [{"range", "message", "values": [{"range", "display", "value"?}]}],
+//! "bill": … | null, "error": … | null}], "needs": [{"table", "keys"}]}`, plus `"error"` at the
+//! top when the file does not check. `needs` is every test's needs, each once: tests read tables
+//! under the on-demand protocol `tariff.evaluate` uses, and a test that needed cells the request
+//! did not carry reports `needs`; the host loads them and runs the tests again.
 
 use super::bill::{Converted, Finished, Line};
 use super::budget::{BudgetWire, Limits};
@@ -50,7 +53,7 @@ use super::error::{Code, EvalError, Refusal, RefusalText};
 use super::record::{decode_record, sample};
 use super::run::{Outcome, Request, run_program};
 use super::tables::{Need, Tables};
-use super::tests::{TestRequest, TestResult, run_tests};
+use super::tests::{TestRequest, TestResult, needs_of, run_tests};
 use super::trace::range;
 use super::value::{Value, format_decimal};
 use crate::message::{Arg, Message};
@@ -384,7 +387,9 @@ pub fn refusal_json(refusal: &Refusal, index: &Utf16Index) -> Json {
     ])
 }
 
-fn needs_json(needs: &[Need]) -> Json {
+/// Table needs on the wire: `[{"table", "keys"}]`.
+#[must_use]
+pub fn needs_json(needs: &[Need]) -> Json {
     Json::Array(
         needs
             .iter()
@@ -497,6 +502,7 @@ pub fn test(input: &RawValue) -> OpResult {
         Ok(analysis) => analysis,
         Err(error) => {
             output.insert(String::from("tests"), Json::Array(Vec::new()));
+            output.insert(String::from("needs"), Json::Array(Vec::new()));
             output.insert(String::from("error"), error_json(&error, &index));
             return encode(&Json::Object(output));
         }
@@ -521,6 +527,7 @@ pub fn test(input: &RawValue) -> OpResult {
                 .collect(),
         ),
     );
+    output.insert(String::from("needs"), needs_json(&needs_of(&results)));
     encode(&Json::Object(output))
 }
 

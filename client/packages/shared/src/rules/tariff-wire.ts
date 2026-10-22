@@ -3,9 +3,9 @@
 // unit, a date); the module, the server and Postgres hold the tagged JSON. These helpers are the
 // one crossing between them, so a rate never loses its unit or its precision on the way.
 //
-// The unit table mirrors the crate's (`services/crates/rules/src/tariff/units.rs`): the same
-// symbols, dimensions and exact factors to the dimension's base unit. Decimals stay text; nothing
-// here does arithmetic on a float.
+// The unit table is generated from the crate's (`tariff-units.generated.ts`, written by the
+// module's build), so it is available before the module loads and cannot drift from it. Decimals
+// stay text; nothing here does arithmetic on a float.
 
 import {
   TARIFF_DECIMAL_PATTERN,
@@ -16,53 +16,7 @@ import {
   type TariffWireRecord,
   type TariffWireValue,
 } from "@trenova/shared/types/tariff";
-
-/** The base dimensions a unit measures; `Count` and `Percent` are dimensionless. */
-export type TariffDimension =
-  | "Money"
-  | "Weight"
-  | "Distance"
-  | "Length"
-  | "Volume"
-  | "Duration"
-  | "Temperature"
-  | "Count"
-  | "Percent";
-
-export type TariffSimpleUnit = {
-  symbol: string;
-  dimension: TariffDimension;
-  /** The exact factor to the dimension's base unit (kg, m, m3, s), as decimal text. */
-  factor: string;
-};
-
-/** Every simple unit the language knows, in the crate's order. */
-export const TARIFF_UNITS: readonly TariffSimpleUnit[] = [
-  { symbol: "$", dimension: "Money", factor: "1" },
-  { symbol: "lb", dimension: "Weight", factor: "0.45359237" },
-  { symbol: "cwt", dimension: "Weight", factor: "45.359237" },
-  { symbol: "kg", dimension: "Weight", factor: "1" },
-  { symbol: "t", dimension: "Weight", factor: "1000" },
-  { symbol: "ton", dimension: "Weight", factor: "907.18474" },
-  { symbol: "mi", dimension: "Distance", factor: "1609.344" },
-  { symbol: "km", dimension: "Distance", factor: "1000" },
-  { symbol: "in", dimension: "Length", factor: "0.0254" },
-  { symbol: "ft", dimension: "Length", factor: "0.3048" },
-  { symbol: "m", dimension: "Length", factor: "1" },
-  { symbol: "ft3", dimension: "Volume", factor: "0.028316846592" },
-  { symbol: "m3", dimension: "Volume", factor: "1" },
-  { symbol: "gal", dimension: "Volume", factor: "0.003785411784" },
-  { symbol: "l", dimension: "Volume", factor: "0.001" },
-  { symbol: "min", dimension: "Duration", factor: "60" },
-  { symbol: "h", dimension: "Duration", factor: "3600" },
-  { symbol: "d", dimension: "Duration", factor: "86400" },
-  { symbol: "°F", dimension: "Temperature", factor: "1" },
-  { symbol: "°C", dimension: "Temperature", factor: "1" },
-  { symbol: "%", dimension: "Percent", factor: "0.01" },
-  { symbol: "pallet", dimension: "Count", factor: "1" },
-  { symbol: "piece", dimension: "Count", factor: "1" },
-  { symbol: "stop", dimension: "Count", factor: "1" },
-];
+import { TARIFF_UNITS, type TariffSimpleUnit } from "./tariff-units.generated";
 
 const UNIT_BY_SYMBOL = new Map(TARIFF_UNITS.map((unit) => [unit.symbol, unit]));
 

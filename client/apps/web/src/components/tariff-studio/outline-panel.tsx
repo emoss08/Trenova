@@ -32,12 +32,14 @@ const TEST_LABELS: Record<TariffTestStatus, string> = defineLabels({
   passed: "Passed",
   failed: "Failed",
   error: "Could not run",
+  needs: "Waiting for rate table cells",
 });
 
 const TEST_DOT: Record<TariffTestStatus, string> = {
   passed: "bg-success",
   failed: "bg-danger",
   error: "bg-warning",
+  needs: "bg-foreground-subtle",
 };
 
 export type OutlinePanelProps = {

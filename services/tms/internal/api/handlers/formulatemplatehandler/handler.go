@@ -66,6 +66,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/", requireRead, h.list)
 	api.POST("/", requireCreate, h.create)
 	api.GET("/context", requireRead, h.getContext)
+	api.POST("/context/cells", requireRead, h.getContextCells)
 	api.POST("/bulk-update-status", requireUpdate, h.bulkUpdateStatus)
 	api.POST("/test", requireAuthoring, h.preview)
 	api.POST("/scaffold-test", requireAuthoring, h.scaffoldTest)

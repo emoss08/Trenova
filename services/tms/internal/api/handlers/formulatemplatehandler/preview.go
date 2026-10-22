@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -140,6 +141,50 @@ func (h *Handler) getContext(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	result, err := h.service.StudioContext(c.Request.Context(), pagination.FromAuthAsUser(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusOK, result)
+}
+
+type contextCellsRequest struct {
+	Needs []rules.TariffNeed `json:"needs"`
+	Whole bool               `json:"whole"`
+}
+
+// @Summary Rate table cells for the browser's tests
+// @Description Returns the cells of the rate table key combinations a formula's tests read in the browser (each need from tariff.test), or with whole the named tables entire, with the stamp of the organization's rate tables they were read at.
+// @ID getFormulaTemplateContextCells
+// @Tags Formula Templates
+// @Accept json
+// @Produce json
+// @Param request body contextCellsRequest true "The needs tariff.test answered, and whether to load their tables whole"
+// @Success 200 {object} tariff.TableCells
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /formula-templates/context/cells [post]
+func (h *Handler) getContextCells(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var req contextCellsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.StudioCells(
+		c.Request.Context(),
+		&formulatemplateservice.StudioCellsRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			Needs:      req.Needs,
+			Whole:      req.Whole,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

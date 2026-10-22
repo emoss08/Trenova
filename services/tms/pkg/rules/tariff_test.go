@@ -76,6 +76,55 @@ func TestTestTariffRunsTheFilesTests(t *testing.T) {
 	assert.True(t, run.Passed(), "%+v", run.Tests)
 }
 
+const gridTariff = "tariff \"Grid\"\n\n" +
+	"let rate = tables.Grid[\"A\", 1 lb] ?? fail \"No rate\"\n" +
+	"charge \"Linehaul\" (quantity: 100 lb, rate: rate)\n\n" +
+	"test \"bills the grid\" {\n  expect total == $20\n}\n"
+
+func gridTable(cells []rules.TariffCell, loaded [][]string) rules.TariffTable {
+	return rules.TariffTable{
+		Code:      "Grid",
+		ValueType: "Money/cwt",
+		Axes: []rules.TariffAxis{
+			{Match: "Exact", Kind: "Zone"},
+			{Match: "Range", Kind: "WeightBreak", Unit: "lb"},
+		},
+		Cells:  cells,
+		Loaded: loaded,
+	}
+}
+
+func TestTestTariffAnswersTheCellsItsTestsNeed(t *testing.T) {
+	t.Parallel()
+
+	run, err := rules.TestTariff(t.Context(), &rules.TariffTestRequest{
+		Source: gridTariff,
+		Context: &rules.TariffContext{
+			Tables: []rules.TariffTable{gridTable(nil, [][]string{})},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, run.Tests, 1)
+	assert.Equal(t, rules.TariffTestNeeds, run.Tests[0].Status)
+	assert.Equal(t, []rules.TariffNeed{{Table: "Grid", Keys: []string{"A"}}}, run.Needs)
+	assert.False(t, run.Passed())
+
+	floor := decimal.Zero
+	cells := []rules.TariffCell{{
+		At:    []rules.TariffCellPosition{{Key: "A"}, {Min: &floor}},
+		Value: decimal.NewFromInt(20),
+	}}
+	run, err = rules.TestTariff(t.Context(), &rules.TariffTestRequest{
+		Source: gridTariff,
+		Context: &rules.TariffContext{
+			Tables: []rules.TariffTable{gridTable(cells, [][]string{{"A"}})},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, run.Passed(), "%+v", run.Tests)
+	assert.Empty(t, run.Needs)
+}
+
 func TestFormatTariffCanonicalises(t *testing.T) {
 	t.Parallel()
 

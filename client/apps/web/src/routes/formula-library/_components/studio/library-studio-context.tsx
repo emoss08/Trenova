@@ -88,8 +88,14 @@ export function LibraryStudioProvider({
   });
   const text = source ?? "";
 
-  const { context, isError: contextError } = useTariffCheckContext();
-  const workbench = useTariffWorkbench({ rules, source: text, kind: "library", context });
+  const { context, tablesStamp, isError: contextError } = useTariffCheckContext();
+  const workbench = useTariffWorkbench({
+    rules,
+    source: text,
+    kind: "library",
+    context,
+    tablesStamp,
+  });
   const binding = useTariffEditorBinding({
     read: () => form.getValues("source") ?? "",
     write: (next) => form.setValue("source", next, { shouldDirty: true, shouldValidate: true }),

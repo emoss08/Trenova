@@ -15,7 +15,7 @@ import { formatShownValue } from "@trenova/shared/lib/tariff-value";
 import { cn } from "@trenova/shared/lib/utils";
 import type { TariffRange, TariffTestResult } from "@trenova/shared/types/tariff";
 import { useState, type ReactNode } from "react";
-import type { TariffTestsState } from "./use-tariff-tests";
+import type { TariffTestCells, TariffTestsState } from "./use-tariff-tests";
 
 /** The 1-based line a position falls on. */
 export function lineOf(source: string, offset: number): number {
@@ -72,16 +72,20 @@ function TestRow({
   onReveal,
   currency,
   failureAside,
+  cells,
 }: {
   test: TariffTestResult;
   source: string;
   onReveal: (range: TariffRange) => void;
   currency?: string | null;
   failureAside?: (test: TariffTestResult) => ReactNode;
+  cells: TariffTestCells;
 }) {
   const t = useT();
   const [open, setOpen] = useState(test.status !== "passed");
-  const expandable = test.failures.length > 0 || test.error !== null || test.bill !== null;
+  const waiting = test.status === "needs";
+  const expandable =
+    waiting || test.failures.length > 0 || test.error !== null || test.bill !== null;
 
   return (
     <li data-status={test.status} className="flex flex-col gap-1.5 px-3 py-2">
@@ -110,6 +114,13 @@ function TestRow({
       </div>
       {open && (
         <div className="flex flex-col gap-2 pl-9">
+          {waiting && (
+            <p className="text-foreground-muted text-xs">
+              {cells === "loading"
+                ? t("Loading the rate table cells this test reads…")
+                : t("The rate table cells this test reads could not be loaded")}
+            </p>
+          )}
           {test.error && (
             <p className="text-warning-foreground text-xs">
               {translateMessage(test.error.message, t)}
@@ -149,7 +160,7 @@ function TestRow({
               )}
             </div>
           ))}
-          {test.status !== "passed" && failureAside?.(test)}
+          {test.status !== "passed" && !waiting && failureAside?.(test)}
           {test.bill && <BillView bill={test.bill} currency={currency} onSelectRange={onReveal} />}
         </div>
       )}
@@ -219,7 +230,7 @@ export function TestsPanel({
     );
   }
 
-  const { run, passed, failed, stale } = state;
+  const { run, passed, failed, stale, cells, retryCells } = state;
   return (
     <div className={cn("flex flex-col", className)} aria-busy={stale || undefined}>
       <div className="flex items-center gap-2 border-b px-3 py-2 text-xs">
@@ -235,6 +246,20 @@ export function TestsPanel({
           </Button>
         )}
       </div>
+      {(cells === "failed" || cells === "unresolved") && (
+        <div className="flex items-center gap-2 border-b px-3 py-2 text-xs">
+          <p className="text-warning-foreground flex-1">
+            {cells === "failed"
+              ? t("The rate table cells these tests read could not be loaded.")
+              : t("These tests read more rate table cells than can be loaded at once.")}
+          </p>
+          {cells === "failed" && (
+            <Button type="button" variant="outline" size="xs" onClick={retryCells}>
+              {t("Retry")}
+            </Button>
+          )}
+        </div>
+      )}
       {run.error ? (
         <p className="text-warning-foreground px-3 py-3 text-xs">
           {t("The tests could not run: {0}", translateMessage(run.error.message, t))}
@@ -249,6 +274,7 @@ export function TestsPanel({
               onReveal={onReveal}
               currency={currency}
               failureAside={failureAside}
+              cells={cells}
             />
           ))}
         </ul>

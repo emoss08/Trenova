@@ -102,16 +102,4 @@ func TestEvaluationAndRefusal_CarryTheirRange(t *testing.T) {
 	var typed *tarifferrors.EvaluationError
 	require.ErrorAs(t, evaluation.Internal, &typed)
 	assert.Equal(t, "overflow", typed.Code)
-
-	refusal := tarifferrors.Refusal("formulaTemplateId", &rules.TariffRefusal{
-		Text:  "No rate for {braces} stay literal",
-		Range: &rules.TariffRange{From: 1, To: 2},
-	})
-	assert.Equal(t, "No rate for {braces} stay literal", refusal.Error())
-	assert.Equal(t, errortypes.SourceRange{From: 1, To: 2}, *refusal.Range)
-
-	generated := tarifferrors.Refusal("formulaTemplateId", &rules.TariffRefusal{
-		Message: &rules.Message{Template: "No value was set for the input {0}", Args: []any{"rate"}},
-	})
-	assert.Equal(t, "No value was set for the input rate", generated.Error())
 }

@@ -185,4 +185,36 @@ mod tests {
                 .all(|(_, _, kind)| kind != "newline" && kind != "eof")
         );
     }
+    #[test]
+    fn highlights_a_contextual_word_as_a_keyword_only_where_the_grammar_uses_it() {
+        let source = "tariff \"t\"\nfn reach(to: Int) -> Int = to\nround up to cents\n";
+        let request = serde_json::json!({"op": "tariff.tokens", "input": {"source": source}});
+        let response = run(&request.to_string());
+        let kinds: Vec<(String, String)> = response["ok"]["tokens"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default()
+            .iter()
+            .map(|token| {
+                let from = usize::try_from(token["from"].as_u64().unwrap_or(0)).unwrap_or(0);
+                let to = usize::try_from(token["to"].as_u64().unwrap_or(0)).unwrap_or(0);
+                (
+                    source.get(from..to).unwrap_or("").to_owned(),
+                    token["kind"].as_str().unwrap_or("").to_owned(),
+                )
+            })
+            .filter(|(text, _)| matches!(text.as_str(), "to" | "cents" | "up"))
+            .collect();
+        let expected: Vec<(String, String)> = [
+            ("to", "name"),
+            ("to", "name"),
+            ("up", "keyword"),
+            ("to", "keyword"),
+            ("cents", "keyword"),
+        ]
+        .iter()
+        .map(|(text, kind)| ((*text).to_owned(), (*kind).to_owned()))
+        .collect();
+        assert_eq!(kinds, expected);
+    }
 }

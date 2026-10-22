@@ -15,13 +15,11 @@ use super::time::{Date, DateTime};
 use super::value::{Record, Value};
 use crate::message::{Arg, Message};
 use crate::tariff::schema::{Schema, Settings};
-use crate::tariff::types::{RecordType, Type};
 use crate::tariff::units::{Base, Dim, Unit};
 use crate::tariff::wire::{WireError, decode};
 use rust_decimal::Decimal;
 use serde_json::Value as Json;
 use std::rc::Rc;
-use std::sync::Arc;
 
 /// The schema roots a record holds, in order.
 pub const ROOTS: [&str; 5] = ["shipment", "lane", "customer", "fuel", "rating"];
@@ -57,31 +55,9 @@ pub fn decode_record(json: &Json, schema: &Schema) -> Result<Value, WireError> {
                 message: Message::with(crate::message!("The record has no {0}"), [Arg::from(root)]),
             });
         };
-        let ty = if root == "shipment" {
-            without_entered(ty)
-        } else {
-            ty.clone()
-        };
-        fields.push((Rc::from(root), decode(value, &ty, root)?));
+        fields.push((Rc::from(root), decode(value, ty, root)?));
     }
     Ok(Value::Record(Rc::new(Record::new(fields))))
-}
-
-/// The shipment's type without `entered`: the amounts typed on a shipment are the rating's own
-/// output, so the record never carries them.
-fn without_entered(ty: &Type) -> Type {
-    match ty {
-        Type::Record(record) => Type::Record(Arc::new(RecordType {
-            name: record.name.clone(),
-            fields: record
-                .fields
-                .iter()
-                .filter(|field| field.name != "entered")
-                .cloned()
-                .collect(),
-        })),
-        other => other.clone(),
-    }
 }
 
 fn unit(text: &str) -> Unit {

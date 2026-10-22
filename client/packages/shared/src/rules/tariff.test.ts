@@ -10,7 +10,6 @@ import {
   tariffCheck,
   tariffComplete,
   tariffDefinition,
-  tariffEvaluate,
   tariffFormat,
   tariffHover,
   tariffInlays,
@@ -222,44 +221,6 @@ describe("tariffTest", () => {
       },
     ]);
     expect(failed?.bill?.total).toEqual({ $q: "450", u: "$" });
-  });
-});
-
-describe("tariffEvaluate", () => {
-  it("rates against the sample record when no record is given, with the trace", () => {
-    const evaluation = tariffEvaluate(rules, {
-      context,
-      record: null,
-      trace: true,
-      programs: [
-        { id: "preview", source: SOURCE, inputs: { minimumCharge: { $q: "500", u: "$" } } },
-      ],
-    });
-    const [result] = evaluation.results;
-
-    expect(result?.status).toBe("rated");
-    expect(result?.bill?.lines).toEqual([
-      {
-        kind: "minimum",
-        label: null,
-        code: null,
-        freight: true,
-        amount: { $q: "500", u: "$" },
-        quantity: null,
-        rate: null,
-        range: null,
-      },
-    ]);
-    expect(result?.trace?.[0]).toEqual({
-      kind: "bind",
-      name: "miles",
-      value: { $q: "0", u: "mi" },
-      display: "0 mi",
-      range: {
-        from: at("let miles"),
-        to: at("let miles") + "let miles = shipment.distance".length,
-      },
-    });
   });
 });
 

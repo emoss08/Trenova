@@ -98,10 +98,9 @@ func classifyTariff(err error) (ProblemType, bool) {
 	var (
 		diagnostic *tarifferrors.DiagnosticError
 		evaluation *tarifferrors.EvaluationError
-		refusal    *tarifferrors.RefusalError
 	)
 
-	if errors.As(err, &diagnostic) || errors.As(err, &evaluation) || errors.As(err, &refusal) {
+	if errors.As(err, &diagnostic) || errors.As(err, &evaluation) {
 		return ProblemTypeValidation, true
 	}
 

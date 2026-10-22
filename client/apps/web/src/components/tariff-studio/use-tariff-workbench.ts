@@ -31,18 +31,21 @@ export type TariffWorkbench = {
  * What a Studio knows about the file in its editor, for a tariff or a library alike: the
  * module's check against the organisation's context (no findings while the file is empty), the
  * counts every status line shows, and the file's tests, run in the browser once the source has
- * settled.
+ * settled, loading the rate table cells they read.
  */
 export function useTariffWorkbench({
   rules,
   source,
   kind,
   context,
+  tablesStamp,
 }: {
   rules: RulesRuntime;
   source: string;
   kind: Exclude<TariffFileKind, "condition">;
   context: TariffContext | null;
+  /** The rate table stamp the context was read at. */
+  tablesStamp: string;
 }): TariffWorkbench {
   // An empty file has nothing wrong with it yet: the Studio shows where to start instead of
   // the checker's "a file starts with its header".
@@ -53,7 +56,7 @@ export function useTariffWorkbench({
   const errors = check.diagnostics.filter((finding) => finding.severity === "error").length;
   const warnings = check.diagnostics.filter((finding) => finding.severity === "warning").length;
   const testCount = check.outline?.items.filter((item) => item.kind === "test").length ?? 0;
-  const tests = useTariffTests({ rules, source, context, errors, testCount });
+  const tests = useTariffTests({ rules, source, context, tablesStamp, errors, testCount });
   const testStatus = useMemo(
     () =>
       new Map(

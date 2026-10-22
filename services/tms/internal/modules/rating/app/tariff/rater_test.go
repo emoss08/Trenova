@@ -76,6 +76,10 @@ func (c *lanesContext) LoadCells(
 	return nil
 }
 
+func (*lanesContext) TableStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}
+
 func (c *lanesContext) LoadTables(
 	context.Context,
 	pagination.TenantInfo,

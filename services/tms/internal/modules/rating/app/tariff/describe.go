@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/i18n"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const maxDescribedFailures = 5
@@ -16,14 +17,8 @@ type SourcePosition struct {
 }
 
 func PositionOf(source string, offset int) SourcePosition {
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > len(source) {
-		offset = len(source)
-	}
 	position := SourcePosition{Line: 1, Column: 1}
-	for _, r := range source[:offset] {
+	for _, r := range source[:stringutils.ByteOffsetOfUTF16(source, offset)] {
 		if r == '\n' {
 			position.Line++
 			position.Column = 1
@@ -79,10 +74,15 @@ func Findings(locale i18n.Locale, source string, diagnostics []rules.TariffDiagn
 const maxExcerptBytes = 120
 
 func excerpt(source string, at *rules.TariffRange) string {
-	if at == nil || at.From < 0 || at.To > len(source) || at.From >= at.To {
+	if at == nil {
 		return ""
 	}
-	text := source[at.From:at.To]
+	from := stringutils.ByteOffsetOfUTF16(source, at.From)
+	to := stringutils.ByteOffsetOfUTF16(source, at.To)
+	if from >= to {
+		return ""
+	}
+	text := source[from:to]
 	if len(text) <= maxExcerptBytes {
 		return text
 	}

@@ -25,7 +25,10 @@
             "values": [
               {
                 "display": "$325.00",
-              "value": {"$q": "325", "u": "$"}
+                "value": {
+                  "$q": "325",
+                  "u": "$"
+                }
               }
             ]
           }
@@ -401,5 +404,289 @@
         "failures": []
       }
     ]
+  },
+  {
+    "name": "a test that reads cells the request did not carry needs them, deduplicated across tests",
+    "tests": "tariff \"Grid\"\n\nrequire let w = shipment.weight else \"No weight\"\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\ncharge \"Linehaul\" (quantity: w, rate: rate)\n\ntest \"to A\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"a\"\n  expect total == $200\n}\n\ntest \"to A again\" {\n  given shipment.weight = 500 lb\n  given lane.destination.zip3 = \"A\"\n  expect total == $100\n}\n\ntest \"to B\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"B\"\n  expect fails \"No rate\"\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "to A",
+          "status": "needs",
+          "failures": [],
+          "error": null,
+          "bill": null
+        },
+        {
+          "name": "to A again",
+          "status": "needs"
+        },
+        {
+          "name": "to B",
+          "status": "needs"
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "A"
+          ]
+        },
+        {
+          "table": "Grid",
+          "keys": [
+            "B"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "once the needed cells are loaded the tests rate, and a loaded combination with no cells is a real miss",
+    "tests": "tariff \"Grid\"\n\nrequire let w = shipment.weight else \"No weight\"\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\ncharge \"Linehaul\" (quantity: w, rate: rate)\n\ntest \"to A\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"a\"\n  expect total == $200\n}\n\ntest \"to A again\" {\n  given shipment.weight = 500 lb\n  given lane.destination.zip3 = \"A\"\n  expect total == $100\n}\n\ntest \"to B\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"B\"\n  expect fails \"No rate\"\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0"
+                }
+              ],
+              "value": "20"
+            }
+          ],
+          "loaded": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "to A",
+          "status": "passed"
+        },
+        {
+          "name": "to A again",
+          "status": "passed"
+        },
+        {
+          "name": "to B",
+          "status": "passed"
+        }
+      ],
+      "needs": []
+    }
+  },
+  {
+    "name": "only the tests that read uncarried cells need them",
+    "tests": "tariff \"Grid\"\n\nrequire let w = shipment.weight else \"No weight\"\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\ncharge \"Linehaul\" (quantity: w, rate: rate)\n\ntest \"to A\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"a\"\n  expect total == $200\n}\n\ntest \"to A again\" {\n  given shipment.weight = 500 lb\n  given lane.destination.zip3 = \"A\"\n  expect total == $100\n}\n\ntest \"to B\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"B\"\n  expect fails \"No rate\"\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0"
+                }
+              ],
+              "value": "20"
+            }
+          ],
+          "loaded": [
+            [
+              "A"
+            ]
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "to A",
+          "status": "passed"
+        },
+        {
+          "name": "to A again",
+          "status": "passed"
+        },
+        {
+          "name": "to B",
+          "status": "needs"
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "B"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a provisional miss hides a failure it may have caused",
+    "tests": "tariff \"Grid\"\n\nlet rate = tables.Grid[\"C\", 1 lb] ?? $0/cwt\ncharge \"Linehaul\" (quantity: 100 lb, rate: rate)\n\ntest \"bills\" {\n  expect total == $5\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "bills",
+          "status": "needs",
+          "failures": []
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "C"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an expectation that reads a table records its needs too",
+    "tests": "tariff \"Grid\"\n\ncharge \"Flat\" = $5\n\ntest \"matches the grid\" {\n  expect total == (tables.Grid[\"D\", 1 lb] ?? $0/cwt) * 1 cwt\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "matches the grid",
+          "status": "needs"
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "D"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a file that passes reads no tables and needs nothing",
+    "tests": "tariff \"Flat\"\n\ncharge \"Flat\" = $5\n\ntest \"bills\" {\n  expect total == $5\n}\n",
+    "expect": {
+      "tests": [
+        {
+          "name": "bills",
+          "status": "passed"
+        }
+      ],
+      "needs": []
+    }
   }
 ]

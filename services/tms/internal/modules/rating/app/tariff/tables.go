@@ -81,6 +81,14 @@ func (t *Tables) load(ctx context.Context, tenant pagination.TenantInfo) (*table
 	return &tableState{stamp: stamp, entry: entry}, nil
 }
 
+func (t *Tables) Stamp(ctx context.Context, tenant pagination.TenantInfo) (string, error) {
+	state, err := t.load(ctx, tenant)
+	if err != nil {
+		return "", err
+	}
+	return state.stamp, nil
+}
+
 func (t *Tables) Shapes(
 	ctx context.Context,
 	tenant pagination.TenantInfo,

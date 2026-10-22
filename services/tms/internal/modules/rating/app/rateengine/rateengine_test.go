@@ -1,6 +1,7 @@
 package rateengine
 
 import (
+	"github.com/emoss08/trenova/shared/i18n"
 	"context"
 	"sync"
 	"testing"
@@ -426,6 +427,21 @@ func TestARefusalIsRecordedAsAnErrorWithTheAuthorsText(t *testing.T) {
 	assert.Equal(t, ratequote.OutcomeError, result.Outcome)
 	assert.True(t, result.Amount.IsZero())
 	assert.NotEmpty(t, result.Quote.Trace.Error)
+}
+
+func TestARefusalTheModuleWroteIsInTheReadersLanguage(t *testing.T) {
+	t.Parallel()
+
+	d := setup(t)
+	rule := perMileRule("2.00", 100)
+	rule.Inputs = tarifftypes.Inputs{}
+	expectRules(d, rule)
+
+	ctx := i18n.WithLocale(t.Context(), i18n.ES)
+	result, err := d.svc.RateShipment(ctx, rateRequest(testShipment()))
+
+	require.NoError(t, err)
+	assert.Equal(t, "La entrada rate no tiene valor ni valor predeterminado", result.Quote.Trace.Error)
 }
 
 func TestTraceRecordsWinnerAndLosers(t *testing.T) {

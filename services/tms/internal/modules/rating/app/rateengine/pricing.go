@@ -138,7 +138,7 @@ func (s *Service) price(
 	trace.Statements = result.Trace
 	trace.Lookups = result.Lookups
 	if result.Refusal != nil {
-		out.refusal = result.Refusal.Localize(i18n.Default)
+		out.refusal = result.Refusal.Localize(i18n.FromContext(ctx))
 		trace.Refusal = out.refusal
 		return out, nil
 	}
