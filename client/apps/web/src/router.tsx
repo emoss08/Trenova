@@ -1172,6 +1172,46 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            path: "/billing/configuration-files/formula-libraries",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaLibrary),
+            ),
+            async lazy() {
+              const { FormulaLibrariesPage } = await import("@/routes/formula-library/page");
+              return { Component: FormulaLibrariesPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/formula-libraries/new",
+            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaLibrary, Operation.Create),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/formula-library/new/page"))),
+            ),
+            async lazy() {
+              const { FormulaLibraryCreatePage } =
+                await import("@/routes/formula-library/new/page");
+              return { Component: FormulaLibraryCreatePage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/formula-libraries/:id/edit",
+            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaLibrary),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/formula-library/[id]/page")),
+              ),
+            ),
+            async lazy() {
+              const { FormulaLibraryEditPage } = await import("@/routes/formula-library/[id]/page");
+              return { Component: FormulaLibraryEditPage };
+            },
+          },
+          {
             path: "/fuel/configuration-files/surcharge",
             loader: combineLoaders(
               protectedLoader,
