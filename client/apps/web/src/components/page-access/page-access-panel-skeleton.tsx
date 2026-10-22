@@ -24,21 +24,3 @@ export function PageAccessReportSkeleton() {
     </div>
   );
 }
-
-/** The panel while its code loads: its header, the role picker and the report. */
-export function PageAccessPanelSkeleton() {
-  const t = useT();
-
-  return (
-    <div aria-busy="true" aria-label={t("Loading page access")} className="flex flex-col gap-4 p-4">
-      <div aria-hidden className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-3 w-48" />
-        </div>
-        <Skeleton className="h-8 w-full rounded-md" />
-      </div>
-      <PageAccessReportSkeleton />
-    </div>
-  );
-}

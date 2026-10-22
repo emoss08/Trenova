@@ -4,76 +4,94 @@ import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { ShieldTickIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Sheet, SheetContent } from "@trenova/shared/components/ui/sheet";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { Suspense } from "react";
-import { useLocation } from "react-router";
-import { PageAccessPanelSkeleton } from "./page-access-panel-skeleton";
+import { Suspense, useState } from "react";
 
 /** The keybind that opens the panel, as `useHotkey` takes it. */
 export const PAGE_ACCESS_HOTKEY = "Mod+Alt+P";
 
-// The panel, its queries and the role picker are read when it first opens, or
-// when its button is pointed at, so no page's first visit carries them.
-const Panel = lazyComponent(
-  () => import("./page-access-panel"),
-  (module) => module.PageAccessPanel,
+// Everything the panel draws (the sheet, its queries, the role picker and the
+// report) is read when it first opens, or when its button is pointed at, so
+// the shell carries only the keybind and the button.
+const PageAccessSheet = lazyComponent(
+  () => import("./page-access-sheet"),
+  (module) => module.PageAccessSheet,
 );
 
-const preloadPanel = () => void Panel.preload().catch(() => undefined);
+/** Reads the panel's code ahead of its first opening. */
+export function preloadPageAccess(): void {
+  void PageAccessSheet.preload().catch(() => undefined);
+}
 
 /**
  * Whether the page access panel is offered: to administrators, who manage
  * roles, and on every screen of a development build.
  */
-export function usePageAccessPanel() {
+export function usePageAccessShown(): boolean {
   const { allowed } = usePermission(Resource.Role, Operation.Read);
-  return { shown: allowed || import.meta.env.DEV, canPreview: allowed };
+  return allowed || import.meta.env.DEV;
+}
+
+/** The sheet's place while its code loads, drawn where the sheet opens. */
+function PageAccessSheetSkeleton() {
+  const t = useT();
+
+  return (
+    <div
+      aria-busy="true"
+      aria-label={t("Loading page access")}
+      className="fixed inset-y-4 right-4 z-50 flex w-3/4 flex-col gap-4 rounded-lg border border-border bg-overlay p-4 sm:max-w-lg"
+    >
+      <Skeleton aria-hidden className="h-5 w-32" />
+      <Skeleton aria-hidden className="h-8 w-full rounded-md" />
+      <Skeleton aria-hidden className="h-40 w-full rounded-md" />
+    </div>
+  );
 }
 
 /**
- * The page access panel's sheet and keybind, mounted once in the shell so it
- * opens on every screen, rooms included. Its body is read on first open.
+ * The page access keybind, mounted once in the shell so it works on every
+ * screen, rooms included. The sheet is mounted on its first opening and stays
+ * mounted, so it closes with its own transition.
  */
 export function PageAccessMount() {
-  const { pathname } = useLocation();
-  const { shown, canPreview } = usePageAccessPanel();
+  const shown = usePageAccessShown();
   const open = useAppDialogOpen("page-access");
-  const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
   const toggleDialog = useAppDialogsStore((state) => state.toggleDialog);
+  const [mounted, setMounted] = useState(false);
 
   useHotkey(
     PAGE_ACCESS_HOTKEY,
     () => {
-      preloadPanel();
+      preloadPageAccess();
       toggleDialog("page-access");
     },
     { enabled: shown, ignoreInputs: true, preventDefault: true },
   );
 
-  if (!shown) {
+  // Set during render so the sheet mounts in the commit that opens it.
+  if (open && shown && !mounted) {
+    setMounted(true);
+  }
+
+  if (!shown || !mounted) {
     return null;
   }
 
   return (
-    <Sheet open={open} onOpenChange={(next) => setDialogOpen("page-access", next)}>
-      <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-lg">
-        {open ? (
-          <Suspense fallback={<PageAccessPanelSkeleton />}>
-            <Panel.Component location={pathname} canPreview={canPreview} />
-          </Suspense>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+    <Suspense fallback={open ? <PageAccessSheetSkeleton /> : null}>
+      <PageAccessSheet.Component />
+    </Suspense>
   );
 }
 
 /** The page bar's button that opens the page access panel for the screen on view. */
 export function PageAccessTrigger() {
   const t = useT();
-  const { shown } = usePageAccessPanel();
+  const shown = usePageAccessShown();
   const openDialog = useAppDialogsStore((state) => state.openDialog);
 
   if (!shown) {
@@ -89,9 +107,12 @@ export function PageAccessTrigger() {
             variant="ghost"
             size="icon-xs"
             aria-label={t("Page access")}
-            onPointerEnter={preloadPanel}
-            onFocus={preloadPanel}
-            onClick={() => openDialog("page-access")}
+            onPointerEnter={preloadPageAccess}
+            onFocus={preloadPageAccess}
+            onClick={() => {
+              preloadPageAccess();
+              openDialog("page-access");
+            }}
           />
         }
       >

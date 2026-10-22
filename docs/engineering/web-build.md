@@ -30,6 +30,9 @@ Things that were on every page and are not any more, and how they were kept off:
 
 - The Desk and assistant conversation (with markdown, syntax highlighting and chrono-node): the assistant
   panel and the command palette's answer card are `lazyComponent`s, preloaded on intent.
+- The page access panel: the shell keeps only its Ctrl+Alt+P listener, the page bar's button and
+  the sheet's skeleton (`page-access-mount.tsx`); the sheet, the panel and their queries are
+  `page-access-sheet.tsx`, a `lazyComponent` read on hover, focus or the shortcut.
 - The Desk's 400 kB of CSS: the Desk loading screen, which the router imports for every page,
   imports `components/desk-chat/desk-frame.css`, the few rules it draws with, not the Desk's
   stylesheets.
