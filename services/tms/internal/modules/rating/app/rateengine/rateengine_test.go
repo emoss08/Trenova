@@ -111,8 +111,8 @@ func flatTemplate() *tariffports.Template {
 		Name:          "Flat Rate",
 		Source:        flatSource,
 		Inputs: []tarifftypes.InputDecl{
-			{Name: "rate", Type: rules.RawJSON(`{"kind":"money"}`), Required: true},
-			{Name: "minimumCharge", Type: rules.RawJSON(`{"kind":"money"}`)},
+			{Name: "rate", Descriptor: rules.RawJSON(`{"kind":"money"}`), Required: true},
+			{Name: "minimumCharge", Descriptor: rules.RawJSON(`{"kind":"money"}`)},
 		},
 	}
 }
@@ -124,7 +124,11 @@ func accessorialTemplate() *tariffports.Template {
 		Name:          "Linehaul with fuel and stops",
 		Source:        accessorialSource,
 		Inputs: []tarifftypes.InputDecl{
-			{Name: "rate", Type: rules.RawJSON(`{"kind":"quantity","unit":"$/mi"}`), Required: true},
+			{
+				Name:       "rate",
+				Descriptor: rules.RawJSON(`{"kind":"quantity","unit":"$/mi"}`),
+				Required:   true,
+			},
 		},
 	}
 }
@@ -489,7 +493,9 @@ func TestNoAgreementFallsBackToTheShipmentsOwnTariffAndInputs(t *testing.T) {
 
 	entity := testShipment()
 	entity.FormulaTemplateID = flatTemplateID
-	entity.TariffInputs = tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.RequireFromString("1234.56"))}
+	entity.TariffInputs = tarifftypes.Inputs{
+		"rate": rules.MoneyValue(decimal.RequireFromString("1234.56")),
+	}
 
 	result, err := d.svc.RateShipment(t.Context(), rateRequest(entity))
 

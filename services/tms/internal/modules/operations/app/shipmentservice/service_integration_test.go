@@ -3,39 +3,35 @@
 package shipmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
-	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
-	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
-	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
-	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/hazmatsegregationrulerepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/hazmatsegregationrulerepository"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
@@ -793,13 +789,6 @@ func TestCreateIntegration_RatesWithHydratedCommodityDetails(t *testing.T) {
 	)
 
 	_, err := db.NewUpdate().
-		Model((*formulatemplate.FormulaTemplate)(nil)).
-		Set("expression = ?", "totalLinearFeet + (hasHazmat ? 25 : 0)").
-		Where("id = ?", fixture.FormulaTemplate.ID).
-		Exec(ctx)
-	require.NoError(t, err)
-
-	_, err = db.NewUpdate().
 		Model((*commodity.Commodity)(nil)).
 		Set("linear_feet_per_unit = ?", 1.25).
 		Where("id = ?", commodityOne.ID).
@@ -879,13 +868,6 @@ func TestUpdateIntegration_RecalculatesWithHydratedCommodityDetails(t *testing.T
 	)
 
 	_, err := db.NewUpdate().
-		Model((*formulatemplate.FormulaTemplate)(nil)).
-		Set("expression = ?", "totalLinearFeet").
-		Where("id = ?", fixture.FormulaTemplate.ID).
-		Exec(ctx)
-	require.NoError(t, err)
-
-	_, err = db.NewUpdate().
 		Model((*commodity.Commodity)(nil)).
 		Set("linear_feet_per_unit = ?", 1.0).
 		Where("id IN (?)", bun.List([]pulid.ID{commodityOne.ID, commodityTwo.ID})).
@@ -1043,24 +1025,6 @@ func newIntegrationShipmentServiceWith(
 		DB:     conn,
 		Logger: zap.NewNop(),
 	})
-	formulaRepo := formulatemplaterepository.New(formulatemplaterepository.Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
-	})
-
-	registry := schema.NewRegistry()
-	testutil.RegisterShipmentFormulaSchema(t, registry)
-	res := resolver.NewResolver()
-	formulaSvc := formula.NewService(formula.ServiceParams{
-		Logger:         zap.NewNop(),
-		Registry:       registry,
-		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
-		Resolver:       res,
-		Repo:           formulaRepo,
-		VersionRepo:    shipIntgStubVersionRepo{},
-		RateMatrixRepo: shipIntgStubMatrixRepo{},
-	})
-
 	validator := NewValidator(ValidatorParams{
 		DB:                        conn,
 		ControlRepo:               controlRepo,
@@ -1071,7 +1035,18 @@ func newIntegrationShipmentServiceWith(
 	})
 
 	audit := &mocks.NoopAuditService{}
-	commercial := newTestCommercialCalculator(t, formulaSvc, accessorialRepo)
+	commercial := shipmentcommercial.New(shipmentcommercial.Params{
+		Logger: zap.NewNop(),
+		RateEngine: ratingtest.NewStack(t, ratingtest.StackOptions{
+			Any: &tariffports.Template{
+				TemplateID:    pulid.MustNew("ft_"),
+				VersionNumber: 1,
+				Name:          "Linear feet",
+				Source:        integrationTariff,
+			},
+		}).Engine,
+		AccessorialRepo: accessorialRepo,
+	})
 
 	params := Params{
 		Logger:          zap.NewNop(),
@@ -1183,7 +1158,6 @@ func makeIntegrationShipment(
 		FormulaTemplateID: fixture.FormulaTemplate.ID,
 		Status:            shipment.StatusNew,
 		BOL:               "BOL-INTEGRATION",
-		RatingUnit:        1,
 		Moves: []*shipment.ShipmentMove{
 			{
 				Status:   shipment.MoveStatusNew,
@@ -1230,38 +1204,8 @@ func timeutilsNow() int64 {
 	return timeutils.NowUnix()
 }
 
-type shipIntgStubVersionRepo struct {
-	formulatemplateports.FormulaTemplateVersionRepository
-}
+const integrationTariff = `tariff "Linear feet"
 
-func (shipIntgStubVersionRepo) GetEffectiveVersion(
-	_ context.Context,
-	_ *formulatemplateports.GetEffectiveVersionRequest,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-func (shipIntgStubVersionRepo) ListApproved(
-	_ context.Context,
-	_ *formulatemplateports.ListScheduledVersionsRequest,
-) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-type shipIntgStubMatrixRepo struct {
-	ratematrixports.RateMatrixRepository
-}
-
-func (shipIntgStubMatrixRepo) GetLookupData(
-	_ context.Context,
-	_ *ratematrixports.GetRateMatrixLookupDataRequest,
-) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return nil, nil
-}
-
-func (shipIntgStubMatrixRepo) GetLookupStamp(
-	context.Context,
-	pagination.TenantInfo,
-) (string, error) {
-	return "", nil
-}
+charge "Linear feet" (quantity: shipment.linearFeet, rate: $1/ft)
+charge "Hazmat" = if shipment.hazmat { $25 } else { $0 }
+`

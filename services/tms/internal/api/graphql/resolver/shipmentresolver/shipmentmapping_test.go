@@ -171,8 +171,6 @@ func TestShipmentFromInput_RejectsOutOfRangeTemperature(t *testing.T) {
 	assert.Contains(t, err.Error(), "temperatureMin")
 }
 
-// A shipment with no tariff is rated by hand at the freight charge it carries,
-// new or saved, so a missing template is not an error.
 func TestShipmentFromInput_AllowsAShipmentRatedByHand(t *testing.T) {
 	t.Parallel()
 

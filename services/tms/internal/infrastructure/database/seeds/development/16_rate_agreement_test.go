@@ -150,16 +150,25 @@ func TestRateAgreementSeed_EveryLaneCarriesATariffAndItsInputs(t *testing.T) {
 	}
 }
 
-func TestRateAgreementSeed_MultiStopConditionChecks(t *testing.T) {
+func TestRateAgreementSeed_EveryConditionChecks(t *testing.T) {
 	t.Parallel()
 
-	check, err := rules.CheckTariff(t.Context(), &rules.TariffCheckRequest{
-		Source:  multiStopCondition,
-		Kind:    rules.TariffKindCondition,
-		Context: &rules.TariffContext{},
-	})
-	require.NoError(t, err)
-	assert.True(t, check.OK, "%+v", check.FirstError())
+	checked := 0
+	for _, def := range seededAccessorials() {
+		if def.condition == "" {
+			continue
+		}
+		checked++
+		check, err := rules.CheckTariff(t.Context(), &rules.TariffCheckRequest{
+			Source:  def.condition,
+			Kind:    rules.TariffKindCondition,
+			Context: &rules.TariffContext{},
+		})
+		require.NoError(t, err)
+		assert.Truef(t, check.OK, "%s: %+v", def.code, check.FirstError())
+		assert.Truef(t, def.autoApply, "%s carries a condition but is not applied automatically", def.code)
+	}
+	assert.Positive(t, checked, "the seed carries at least one condition to exercise")
 }
 
 // Every zone the lanes reference has to be one the seed actually creates.

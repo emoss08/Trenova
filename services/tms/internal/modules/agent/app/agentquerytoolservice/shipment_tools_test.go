@@ -712,7 +712,7 @@ func TestGetShipment_FullKeepsTheStoredRecord(t *testing.T) {
 	assert.Equal(t, fixture.entity.ID.String(), document["id"])
 	assert.Equal(t, fixture.entity.FormulaTemplateID.String(), document["formulaTemplateId"])
 	assert.Contains(t, objectAt(t, document, "ratingDetail"), "inputs")
-	assert.Contains(t, objectAt(t, document, "formulaTemplate"), "expression")
+	assert.Contains(t, objectAt(t, document, "formulaTemplate"), "source")
 	assignment := objectAt(t, document, "moves", 0, "assignment")
 	assert.Equal(t, "T-104", objectAt(t, assignment, "tractor")["code"])
 	assert.Equal(t, "Dana", objectAt(t, assignment, "primaryWorker")["firstName"])

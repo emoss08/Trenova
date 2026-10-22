@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
@@ -40,6 +41,27 @@ func StubRateEngineForAgreement(
 ) *ratequoteportsmock.MockRateEngine {
 	t.Helper()
 
+	var agreement *rateagreement.RateAgreement
+	if agreementID != nil {
+		agreement = &rateagreement.RateAgreement{ID: *agreementID}
+	}
+	return StubRateEngineForContract(t, amount, agreement, nil)
+}
+
+func StubRateEngineForContract(
+	t *testing.T,
+	amount int64,
+	agreement *rateagreement.RateAgreement,
+	conditions map[pulid.ID]bool,
+) *ratequoteportsmock.MockRateEngine {
+	t.Helper()
+
+	var agreementID *pulid.ID
+	if agreement != nil {
+		id := agreement.ID
+		agreementID = &id
+	}
+
 	linehaul := decimal.NewFromInt(amount)
 
 	engine := ratequoteportsmock.NewMockRateEngine(t)
@@ -52,6 +74,8 @@ func StubRateEngineForAgreement(
 			Outcome:     ratequote.OutcomeRated,
 			AgreementID: agreementID,
 			Bill:        FreightBill(linehaul),
+			Agreement:   agreement,
+			Conditions:  conditions,
 			Quote: &ratequote.RateQuote{
 				Outcome:         ratequote.OutcomeRated,
 				RateAgreementID: agreementID,

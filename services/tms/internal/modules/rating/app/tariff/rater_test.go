@@ -244,9 +244,9 @@ func TestRateOnlyPassesTheInputsTheTemplateDeclares(t *testing.T) {
 		Template: template(
 			"tariff \"Flat\"\n\ninput rate: Money\n\ncharge \"Freight\" = rate\n",
 			tarifftypes.InputDecl{
-				Name:     "rate",
-				Type:     rules.RawJSON(`{"kind":"money"}`),
-				Required: true,
+				Name:       "rate",
+				Descriptor: rules.RawJSON(`{"kind":"money"}`),
+				Required:   true,
 			},
 		),
 		Inputs: tarifftypes.Inputs{
@@ -266,7 +266,11 @@ func TestRateOnlyPassesTheInputsTheTemplateDeclares(t *testing.T) {
 func flatWithRate() *tariffports.Template {
 	return template(
 		"tariff \"Flat\"\n\ninput rate: Money\n\ncharge \"Freight\" = rate\n",
-		tarifftypes.InputDecl{Name: "rate", Type: rules.RawJSON(`{"kind":"money"}`), Required: true},
+		tarifftypes.InputDecl{
+			Name:       "rate",
+			Descriptor: rules.RawJSON(`{"kind":"money"}`),
+			Required:   true,
+		},
 	)
 }
 

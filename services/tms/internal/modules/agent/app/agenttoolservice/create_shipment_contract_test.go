@@ -342,7 +342,7 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 	)
 	payload["formulaTemplateId"] = template.String()
 	payload["billToCustomerId"] = billTo.String()
-	payload["inputs"] = map[string]any{"rate": "$2.45/mi"}
+	payload["tariffInputs"] = map[string]any{"rate": "$2.45/mi"}
 	payload["freightTerms"] = "Collect"
 	payload["commodities"] = []any{map[string]any{
 		"commodityId": commodityID.String(), "pieces": 26, "weight": 42000,

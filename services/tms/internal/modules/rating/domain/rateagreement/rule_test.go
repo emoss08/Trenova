@@ -287,8 +287,6 @@ func TestWeightRangeBoundsAreInclusive(t *testing.T) {
 	}
 }
 
-// A rule is priced by its tariff, so a rule with none prices at nothing and is
-// refused. Its inputs are the tariff's business, checked when it is saved.
 func TestRuleNeedsATariff(t *testing.T) {
 	t.Parallel()
 

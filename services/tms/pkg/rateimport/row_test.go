@@ -42,8 +42,15 @@ func resolveTemplate(name string) (*rateimport.Template, bool) {
 	}
 
 	return &rateimport.Template{ID: id, Inputs: []tarifftypes.InputDecl{
-		{Name: formulatemplate.StandardInputRate, Type: rules.RawJSON(templateRates[name]), Required: true},
-		{Name: formulatemplate.StandardInputMinimumCharge, Type: rules.RawJSON(`{"kind":"money"}`)},
+		{
+			Name:       formulatemplate.StandardInputRate,
+			Descriptor: rules.RawJSON(templateRates[name]),
+			Required:   true,
+		},
+		{
+			Name:       formulatemplate.StandardInputMinimumCharge,
+			Descriptor: rules.RawJSON(`{"kind":"money"}`),
+		},
 	}}, true
 }
 
@@ -90,7 +97,10 @@ func TestParseRow_YieldsALaneTheEngineCanKey(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))
+	require.NoError(
+		t,
+		rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}),
+	)
 	assert.Equal(t, "ST:IL>ST:GA", rule.LaneKey)
 	assert.NoError(t, rateimport.UnkeyedEnd(rule))
 }
@@ -104,7 +114,10 @@ func TestUnkeyedEnd_NamesAPostalPrefixTooShortToKey(t *testing.T) {
 		DestinationScopeType:  rategeo.ScopeTypeState,
 		DestinationScopeValue: "GA",
 	}
-	require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))
+	require.NoError(
+		t,
+		rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}),
+	)
 
 	assert.Equal(t, rateagreement.RadiusLaneKey, rule.LaneKey)
 	require.EqualError(t, rateimport.UnkeyedEnd(rule), `origin: "60" cannot be read as a Zip3`)

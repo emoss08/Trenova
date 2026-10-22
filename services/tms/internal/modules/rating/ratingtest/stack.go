@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/tarifftest"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
@@ -43,6 +44,7 @@ type StackOptions struct {
 	Context    *rules.TariffContext
 	Hydrator   ratequoteports.ShipmentRatingHydrator
 	Agreements *rateagreementportsmock.MockRateAgreementRepository
+	Catalog    []*accessorialcharge.AccessorialCharge
 }
 
 func NewStack(t *testing.T, opts StackOptions) *Stack {
@@ -82,6 +84,12 @@ func NewStack(t *testing.T, opts StackOptions) *Stack {
 	fuel := fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
 	fuel.EXPECT().FuelChargeIDs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 
+	accessorials := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
+	accessorials.EXPECT().
+		ListCatalog(mock.Anything, mock.Anything).
+		Return(opts.Catalog, nil).
+		Maybe()
+
 	stack.Engine = rateengine.New(rateengine.Params{
 		Logger:        zap.NewNop(),
 		AgreementRepo: agreements,
@@ -90,7 +98,7 @@ func NewStack(t *testing.T, opts StackOptions) *Stack {
 		Rater:         stack.Rater,
 		Records:       tarifftest.Records{},
 		Fuel:          fuel,
-		Accessorials:  accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		Accessorials:  accessorials,
 		Exchange:      exchangerateportsmock.NewMockExchangeRateService(t),
 		Hydrator:      opts.Hydrator,
 	})

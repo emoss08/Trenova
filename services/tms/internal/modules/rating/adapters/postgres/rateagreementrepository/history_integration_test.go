@@ -5,15 +5,14 @@ package rateagreementrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -72,10 +71,8 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Per Mile",
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "baseRate * totalDistance",
+		Source:         perMileTariff,
 		Status:         formulatemplate.StatusActive,
-		SchemaID:       "shipment",
 	}
 	_, err = db.NewInsert().Model(template).Exec(ctx)
 	require.NoError(t, err)
@@ -95,19 +92,19 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 		DestinationScopeValue: "FL",
 		LaneKey:               "ST:GA>ST:FL",
 		Direction:             rateagreement.DirectionDirectional,
-		FormulaTemplateID:     &template.ID,
-		Rate:                  decimal.NewNullDecimal(decimal.RequireFromString("2.00")),
+		FormulaTemplateID:     template.ID,
+		Inputs:                perMileRate("2.00"),
 		EffectiveFrom:         100,
 	}
 	_, err = db.NewInsert().Model(original).Exec(ctx)
 	require.NoError(t, err)
 
-	successorRate := decimal.RequireFromString("2.10")
+	successorRate := perMileRate("2.10")
 	successor := *original
 	successor.ID = pulid.Nil
 	supersededID := original.ID
 	successor.SupersedesRuleID = &supersededID
-	successor.Rate = decimal.NewNullDecimal(successorRate)
+	successor.Inputs = successorRate
 	successor.EffectiveFrom = 0
 
 	require.NoError(t, repo.AmendRules(ctx, &rateagreementports.AmendRateAgreementRulesRequest{
@@ -125,7 +122,7 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, current, 1, "only the successor prices after the amendment")
-	assert.True(t, successorRate.Equal(current[0].Rate.Decimal))
+	assert.True(t, successorRate.Equal(current[0].Inputs))
 
 	history, err := repo.ListRules(ctx, &rateagreementports.ListRateAgreementRulesRequest{
 		TenantInfo:        tenantInfo,
@@ -136,8 +133,8 @@ func TestListRules_HistoryKeepsTheClosedOutRule(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, history, 2, "history keeps the closed-out rule")
 
-	assert.True(t, successorRate.Equal(history[0].Rate.Decimal), "newest first")
-	assert.True(t, decimal.RequireFromString("2.00").Equal(history[1].Rate.Decimal))
+	assert.True(t, successorRate.Equal(history[0].Inputs), "newest first")
+	assert.True(t, perMileRate("2.00").Equal(history[1].Inputs))
 	require.NotNil(t, history[1].EffectiveTo, "the old rule's window closed at the amendment")
 	assert.EqualValues(t, 1_000, *history[1].EffectiveTo)
 	require.NotNil(t, history[0].SupersedesRuleID)
