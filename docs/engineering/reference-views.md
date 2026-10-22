@@ -108,8 +108,9 @@ asks the same port, `permissionports.ReferenceViews`, which refview implements:
   loads and trend are figures about the customer and need customer read, and the customer mix
   lists names in revenue order, so the order alone would rank them: without customer read the
   whole customer mix is `null`, and the card says the reader needs access to customers
-  (`WithheldPanel`). The average margin needs the margins field group. The client draws every
-  other `null` with `WithheldValue`.
+  (`WithheldPanel`). The average margin, and how many loads lost money, need the margins field
+  group (see "Margins" in [permissions.md](permissions.md)). The client draws every other
+  `null` with `WithheldValue`, and a protected field with `WithheldValue group="Margins"`.
 - **Insights** (`insightservice`). A finding names a customer, a location or a driver beside figures
   about it, which no view carries, so the reader needs read on every kind it names, not a view.
   Each detector declares those kinds in `Resources()`; each finding lists the kinds it names in
@@ -166,6 +167,11 @@ Each failure says what to add.
 | `TestReferenceFragmentsAreGenerated` (gqlext) | the generated fragments or views are out of date |
 | `TestEveryFieldAndEdgeIsClassifiedByItsReferenceView` (reportcatalog) | a report catalog field or edge is unclassified, or its class disagrees with the registry's view |
 | `TestEveryProtectedFieldIsGatedInTheReportCatalog` (gqlext) | a schema `@protected` field is not marked `protected` in the report catalog, or the reverse |
+| `TestEveryMarginFieldIsProtectedByTheMarginsGroup` (gqlext) | a GraphQL field named for a margin or profit is not `@protected(group: Margins)`, is not on a type reached only through such fields, and is not listed in `unprotectedMarginNames` with why |
+| `TestEveryMarginEnumValueSaysWhereItIsRefused` (gqlext) | an enum value named for a margin is not listed in `marginEnumValues` with where it is refused |
+| `TestEveryProtectedTypeSaysWhatStandsBehindIt` (gqlext) | a type with protected fields names neither the entity REST withholds it through nor why only GraphQL serves it |
+| `TestEveryMarginFieldARESTResponseCarriesIsWithheld` (responseguard) | a JSON field a REST response carries, named for a margin or profit, has no `WithholdFields` in `restMargins` that clears it, and is not listed in `unprotectedRESTMarginNames` with why |
+| `TestEveryRESTMarginIsClearedWithoutTheMarginsGroupAndKeptWithIt` (responseguard) | a type in `restMargins` leaves a margin to a caller without the group, or clears one for a caller with it |
 | `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a bun relation that is neither a kind nor listed in `carried` |
 | `TestEveryKindAgreesWithTheGraphQLGuard` (responseguard) | a Go type is gated as a different kind on REST than the GraphQL type bound to it |
 | `TestHandlersWriteEveryResponseThroughTheGuard` (responseguard) | a handler writes a response with gin directly instead of `helpers.JSON` |

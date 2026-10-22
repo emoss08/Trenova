@@ -293,7 +293,7 @@ the **Protected fields** category of the role editor:
 | Group | Resource | Fields |
 |---|---|---|
 | Personal details | `protected_personal` | `WorkerProfile.dob`, `licenseNumber`, `twicCardNumber`, `lastDrugTest`; `WorkerCredential.number` |
-| Margins | `protected_margins` | `RateAgreement.marginFloorPercent`, `maxPayPercentOfSell` (and the same values on a version) |
+| Margins | `protected_margins` | every margin figure in the product; see "Margins" below |
 
 The schema marks each field `@protected(group: …)` (`shared.graphqls`; the directive is
 `skip_runtime`). `FieldGuardExtension` (`internal/api/graphql/fieldguard.go`) reads the
@@ -324,8 +324,47 @@ New roles get them from bundles: `safety.drivers` and `hr.workers` carry persona
 
 To protect another field: add the directive to a nullable field, classify it confidential on
 its resource, give the entity `WithholdFields` (the REST response guard calls it wherever the
-entity appears) and `KeepFields`, call `KeepFields` from its update path, show "Hidden" where the client reads it, and add it to the tables in
-`fieldguard_test.go`.
+entity appears) and `KeepFields`, call `KeepFields` from its update path, draw the client's
+null with `WithheldValue group="…"`, and add the type to `protectedTypes`
+(`gqlext/protectedtypes_test.go`) and the set in `fieldguard_test.go`.
+
+### Margins
+
+A person or agent without the Margins group never receives a margin, a margin percent, a
+margin floor or target, or anything that works one out trivially. A record that carries a
+revenue and a cost is treated the same way: the side that is not the record's purpose is
+withheld with the margin (a quote keeps its total and withholds its cost; a cost summary keeps
+its cost and withholds its revenue). Derivation across records (a shipment's charge against
+its carrier assignment's pay) is not gated: each figure is the working number of its own job.
+
+| Surface | Withheld without the group | How |
+|---|---|---|
+| Rate agreements and versions | `marginFloorPercent`, `maxPayPercentOfSell` | `@protected`, `WithholdFields`/`KeepFields`, catalog |
+| Costing control (`costingControl`, `resolvedCostProfile`) | `targetMarginPercent` | `@protected`, `costingcontrol.WithholdFields`/`KeepFields` in `costingservice.Update` |
+| Shipment profitability (`shipmentProfitability`, `Shipment.profitabilityEstimate`) | the whole payload: revenue, cost, profit, margin, break-even | `@protected` on the field that returns it; the client does not ask |
+| Fleet cost summary | `avgMarginPercent`, `unprofitableCount`, `totalRevenue` | `@protected` |
+| Shipment analytics (`/analytics?page=shipment`, Home KPIs) | `avgMarginPct`, `unprofitableCount` | `shipmentprovider/access.go`, and `@protected` on the GraphQL card |
+| Shipment board | the margin column and expanded row, the `LowMargin` quick filter (refused) and its count | `@protected`, `shipment.AuthorizeQuickFilters`, `ShipmentBoardScopeRequest.Margins` |
+| Board brief | no thin-margin fact: the brief is shared by every board reader | `shipmentbriefingservice` counts no margin set |
+| Capacity matches | `marginPercent`, `quote` (beside the load's revenue) | `@protected` |
+| Tender offers | `counterMarginPercent` (`counterMargin` on REST); counter events and notifications state no figure | `@protected`, `tender.TenderOffer.WithholdFields`, `tender.EvaluateCounter` |
+| Detention occurrences, stats, preview, backtest | `driverPayAmount`, `netMargin`, `proposedDriverPay`, `proposedNetMargin`, `negativeMarginStops`, the driver pay step of a calculation trace | `@protected`, `WithholdFields` on each REST type, the `calculationTrace` field resolver |
+| Dispatch control | `tenderCounterMarginFloorPercent` | `dispatchcontrol.WithholdFields`/`KeepFields` |
+| Rate quotes and shopping (REST) | a quote's `costAmount`, `marginAmount`, `marginPercent` and trace totals; an option's margin verdict; the shop's `sellTotal`; ranking by `BestMargin` (refused) | `ratequote.RateQuote` and `ShopOption`/`ShopResult.WithholdFields`, `ratequoteports.AuthorizeShopStrategy` |
+| Carrier assignment | the margin floor refusal names no figure | `carrierassignmentservice.enforceMarginFloor` |
+| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `protected: Margins` in `reportcatalog.yml` |
+| Agent tools | `carrier_shop` margins, sell total and `BestMargin`; `rate_explain` margin | `fieldAccess.groups`, held to the agent's data access |
+
+An agent is held to its person's group and to its own data access. A protected field of a
+record is Confidential and never reaches an agent; a computed figure (a capacity match's
+margin, a tool's margin) is shown only where the agent's ceiling on `protected_margins`
+reaches Restricted (`fieldsensitivity.AgentVisibleGroups`, used by the GraphQL guard through
+`base.VisibleFieldGroups` and by the agent tools through `fieldAccess.groups`).
+
+Two names match margin and are not margins: a document template's page margins, and the GL
+income statement's `grossProfitMinor`, a statement line gated by the general ledger's own
+read. CI holds every field named for a margin to the group (see "What CI checks" in
+[reference-views.md](reference-views.md)).
 
 ## Agents
 
