@@ -8,6 +8,11 @@ use serde_json::value::RawValue;
 use std::collections::BTreeMap;
 use trenova_rules::formula::catalog;
 use trenova_rules::formula::eval::Limits;
+use trenova_rules::formula::eval::Value;
+use trenova_rules::formula::eval::budget::Meter;
+use trenova_rules::formula::eval::builtins;
+use trenova_rules::formula::eval::builtins::Context;
+use trenova_rules::formula::eval::builtins::RegexCache;
 use trenova_rules::formula::eval::interp;
 use trenova_rules::formula::eval::interp::LookupSource;
 use trenova_rules::formula::eval::interp::Setup;
@@ -111,6 +116,40 @@ fn every_catalog_function_is_implemented() {
         let source = format!("duration(\"1h\").{method}()");
         assert!(evaluates(&source), "{source}");
     }
+}
+
+/// The evaluator takes exactly the argument counts the catalog publishes.
+#[test]
+fn every_function_takes_the_arguments_the_catalog_says() {
+    let arity_error = |name: &str, count: usize| {
+        let args = vec![Value::Nil; count];
+        let mut meter = Meter::new(Limits::DEFAULT);
+        let mut regexes = RegexCache::default();
+        let mut context = Context {
+            meter: &mut meter,
+            regexes: &mut regexes,
+        };
+        builtins::call(name, &args, &mut context)
+            .and_then(Result::err)
+            .is_some_and(|error| {
+                let template = error.message.message;
+                template.starts_with("invalid number of arguments")
+                    || template == "{0} requires at least one argument"
+            })
+    };
+    let mut disagreements = Vec::new();
+    for function in catalog::FUNCTIONS {
+        if !builtins::is_builtin(function.name) {
+            continue;
+        }
+        let min = usize::from(function.min_args);
+        for count in 0..=min + 4 {
+            if arity_error(function.name, count) == function.takes(count) {
+                disagreements.push(format!("{} with {count} arguments", function.name));
+            }
+        }
+    }
+    assert!(disagreements.is_empty(), "{disagreements:#?}");
 }
 
 fn evaluates(source: &str) -> bool {

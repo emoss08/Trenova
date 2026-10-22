@@ -175,14 +175,17 @@ pub fn call(
         "sqrt" => unary_number(name, args, number::sqrt),
         "min" => extremum(name, args, Ordering::Less, context),
         "max" => extremum(name, args, Ordering::Greater, context),
-        "sum" => total(args, context).map(|(sum, _)| Value::Number(sum)),
-        "avg" | "mean" => average(args, context),
-        "median" => median(args, context),
-        "coalesce" => Ok(args
-            .iter()
-            .find(|value| !value.is_nil())
-            .cloned()
-            .unwrap_or(Value::Nil)),
+        "sum" => arity(name, args, 1, usize::MAX)
+            .and_then(|()| total(args, context))
+            .map(|(sum, _)| Value::Number(sum)),
+        "avg" | "mean" => arity(name, args, 1, usize::MAX).and_then(|()| average(args, context)),
+        "median" => arity(name, args, 1, usize::MAX).and_then(|()| median(args, context)),
+        "coalesce" => arity(name, args, 1, usize::MAX).map(|()| {
+            args.iter()
+                .find(|value| !value.is_nil())
+                .cloned()
+                .unwrap_or(Value::Nil)
+        }),
         "clamp" => clamp(args),
         "pow" => arity(name, args, 2, 2).and_then(|()| {
             number::pow(number_arg(args, 0)?, number_arg(args, 1)?).map(Value::Number)
@@ -221,10 +224,12 @@ pub fn call(
         "take" => take(args, context),
         "keys" | "values" | "toPairs" => entries(name, args, context),
         "fromPairs" => from_pairs(args, context),
-        "reverse" => list_arg(name, args, 0).and_then(|items| {
-            let reversed: Vec<Value> = items.iter().rev().cloned().collect();
-            built_list(reversed, context)
-        }),
+        "reverse" => arity(name, args, 1, 1)
+            .and_then(|()| list_arg(name, args, 0))
+            .and_then(|items| {
+                let reversed: Vec<Value> = items.iter().rev().cloned().collect();
+                built_list(reversed, context)
+            }),
         "uniq" => uniq(args, context),
         "concat" => concat(args, context),
         "flatten" => flatten(args, context),
@@ -782,8 +787,8 @@ fn entries(name: &str, args: &[Value], context: &mut Context<'_>) -> Result<Valu
 }
 
 fn from_pairs(args: &[Value], context: &mut Context<'_>) -> Result<Value, EvalError> {
-    let pairs = list_arg("fromPairs", args, 0)?;
     arity("fromPairs", args, 1, 1)?;
+    let pairs = list_arg("fromPairs", args, 0)?;
     context.meter.steps(pairs.len())?;
     let mut entries: BTreeMap<Rc<str>, Value> = BTreeMap::new();
     for pair in pairs {
@@ -831,8 +836,8 @@ fn fingerprint(value: &Value) -> Option<Fingerprint> {
 }
 
 fn uniq(args: &[Value], context: &mut Context<'_>) -> Result<Value, EvalError> {
-    let items = list_arg("uniq", args, 0)?;
     arity("uniq", args, 1, 1)?;
+    let items = list_arg("uniq", args, 0)?;
     context.meter.steps(items.len())?;
     let mut seen: BTreeSet<Fingerprint> = BTreeSet::new();
     let mut compound: Vec<&Value> = Vec::new();
@@ -867,8 +872,8 @@ fn concat(args: &[Value], context: &mut Context<'_>) -> Result<Value, EvalError>
 }
 
 fn flatten(args: &[Value], context: &mut Context<'_>) -> Result<Value, EvalError> {
-    let items = list_arg("flatten", args, 0)?;
     arity("flatten", args, 1, 1)?;
+    let items = list_arg("flatten", args, 0)?;
     let mut out = Vec::new();
     flatten_into(items, &mut out, context)?;
     built_list(out, context)
@@ -964,8 +969,8 @@ pub fn sort_by_keys(
 }
 
 fn sort(args: &[Value], context: &mut Context<'_>) -> Result<Value, EvalError> {
-    let items = list_arg("sort", args, 0)?;
     arity("sort", args, 1, 2)?;
+    let items = list_arg("sort", args, 0)?;
     let descending = sort_order(args.get(1))?;
     sort_by_keys(items, items, descending, context)
 }
@@ -1142,7 +1147,8 @@ mod tests {
         check("max", "[[1, 9], 3]", "9");
         check("sum", "[[0.1, 0.2], 0.3]", "0.6");
         check("avg", "[[1, 2], [3, 4]]", "2.5");
-        check("avg", "[]", "0");
+        check("avg", "[[]]", "0");
+        assert_eq!(run("avg", "[]"), Err(Code::Argument));
         check("median", "[3, 1, 2, 4]", "2.5");
         check("clamp", "[15, 0, 10]", "10");
         check("coalesce", "[null, null, 3]", "3");

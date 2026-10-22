@@ -2426,10 +2426,18 @@
       "value": 42
     },
     {
-      "name": "avg of nothing is zero",
+      "name": "avg of an empty list is zero",
       "from": "engine/functions_internal_test.go TestAvgFn_Direct",
-      "source": "avg()",
+      "source": "avg([])",
       "value": 0
+    },
+    {
+      "name": "avg needs an argument, as the catalog says, where Go's direct call returned zero",
+      "from": "engine/functions_internal_test.go TestAvgFn_Direct (no args returns zero)",
+      "source": "avg()",
+      "error": {
+        "code": "argument"
+      }
     },
     {
       "name": "simple addition",
@@ -5015,9 +5023,15 @@
       "value": 2.5
     },
     {
-      "name": "language: median()",
+      "name": "language: median([])",
       "from": "expr builtin/builtin.go and vm/runtime",
-      "source": "median()",
+      "source": "median([])",
+      "value": 0
+    },
+    {
+      "name": "language: sum([], [])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "sum([], [])",
       "value": 0
     },
     {
