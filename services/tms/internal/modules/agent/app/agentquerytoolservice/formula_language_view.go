@@ -11,22 +11,32 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-const maxLanguageLineDoc = 110
+const (
+	maxLanguageLineDoc = 110
+
+	termReefer       = "reefer"
+	termRefrigerated = "refrigerated"
+	termTemperature  = "temperature"
+	termDistance     = "distance"
+	termTables       = "tables"
+	termWeight       = "weight"
+	termClass        = "class"
+)
 
 var formulaVocabulary = map[string][]string{
-	"reefer":        {"temperature", "refrigerated", "reefer"},
-	"refrigerated":  {"temperature", "refrigerated", "reefer"},
-	"temp":          {"temperature"},
-	"cold":          {"temperature", "reefer"},
-	"hazardous":     {"hazmat", "hazardous"},
-	"miles":         {"distance", "mi"},
-	"mileage":       {"distance", "mi"},
-	"hundredweight": {"cwt", "weight"},
-	"pallets":       {"pieces", "pallet"},
-	"fuel":          {"fuel", "diesel", "gal"},
-	"ltl":           {"ltl", "break", "deficit", "class"},
-	"matrix":        {"tables", "cell", "band"},
-	"table":         {"tables", "cell", "band"},
+	termReefer:       {termTemperature, termRefrigerated, termReefer},
+	termRefrigerated: {termTemperature, termRefrigerated, termReefer},
+	"temp":           {termTemperature},
+	"cold":           {termTemperature, termReefer},
+	"hazardous":      {"hazmat", "hazardous"},
+	"miles":          {termDistance, "mi"},
+	"mileage":        {termDistance, "mi"},
+	"hundredweight":  {"cwt", termWeight},
+	"pallets":        {"pieces", "pallet"},
+	"fuel":           {"fuel", "diesel", "gal"},
+	"ltl":            {"ltl", "break", "deficit", termClass},
+	"matrix":         {termTables, "cell", "band"},
+	"table":          {termTables, "cell", "band"},
 }
 
 type catalogDoc string
@@ -291,6 +301,35 @@ func moduleView(module *catalogModule, filter languageFilter) (languageModule, b
 	return out, true
 }
 
+func contextTables(tariffCtx *rules.TariffContext, filter languageFilter) []languageTable {
+	out := make([]languageTable, 0, len(tariffCtx.Tables))
+	for i := range tariffCtx.Tables {
+		table := &tariffCtx.Tables[i]
+		if filter.keeps(table.Code+" "+table.Name+" table tables", "") {
+			out = append(out, tableView(table))
+		}
+	}
+	return out
+}
+
+func contextCodes(tariffCtx *rules.TariffContext, filter languageFilter) []string {
+	if tariffCtx.Codes == nil {
+		return nil
+	}
+	out := make([]string, 0, len(*tariffCtx.Codes))
+	for _, code := range *tariffCtx.Codes {
+		if !code.Active || !filter.keeps(code.Code+" accessorial code", code.Description) {
+			continue
+		}
+		line := code.Code
+		if code.Description != "" {
+			line += ": " + code.Description
+		}
+		out = append(out, line)
+	}
+	return out
+}
+
 func addContext(
 	view *formulaLanguageView,
 	language *formulaassistantservice.Language,
@@ -299,25 +338,8 @@ func addContext(
 	tariffCtx := language.Context
 	if tariffCtx != nil {
 		view.DistanceUnit = tariffCtx.Settings.DistanceUnit
-		for i := range tariffCtx.Tables {
-			table := &tariffCtx.Tables[i]
-			if !filter.keeps(table.Code+" "+table.Name+" table tables", "") {
-				continue
-			}
-			view.Tables = append(view.Tables, tableView(table))
-		}
-		if tariffCtx.Codes != nil {
-			for _, code := range *tariffCtx.Codes {
-				if !code.Active || !filter.keeps(code.Code+" accessorial code", code.Description) {
-					continue
-				}
-				line := code.Code
-				if code.Description != "" {
-					line += ": " + code.Description
-				}
-				view.Codes = append(view.Codes, line)
-			}
-		}
+		view.Tables = append(view.Tables, contextTables(tariffCtx, filter)...)
+		view.Codes = append(view.Codes, contextCodes(tariffCtx, filter)...)
 	}
 
 	sources := map[string]string{}

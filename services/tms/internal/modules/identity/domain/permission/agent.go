@@ -363,7 +363,7 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceFormulaTemplate: {
 		OpRead: {},
 	},
-	ResourceFormulaLibrary: { //nolint:exhaustive // an allow list names only the operations it grants
+	ResourceFormulaLibrary: {
 		OpRead: {},
 	},
 }

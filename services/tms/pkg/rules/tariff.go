@@ -431,7 +431,8 @@ func (r *Runtime) TestTariff(ctx context.Context, req *TariffTestRequest) (*Tari
 
 func (r *Runtime) FormatTariff(ctx context.Context, source string) (*TariffFormatted, error) {
 	var result TariffFormatted
-	if err := r.Call(ctx, OpTariffFormat, &TariffFormatRequest{Source: source}, &result); err != nil {
+	request := &TariffFormatRequest{Source: source}
+	if err := r.Call(ctx, OpTariffFormat, request, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil

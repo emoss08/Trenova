@@ -149,13 +149,13 @@ func TestFormulaTools_Policies(t *testing.T) {
 	preview := (&previewFormulaTool{workbench: workbench}).Policy()
 	assert.Equal(t, agent.ToolKindQuery, preview.Kind)
 
-	formula := newProposeSourceTool(proposeFormulaSpec, workbench, &fakePermissions{})
+	formula := newProposeSourceTool(&proposeFormulaSpec, workbench, &fakePermissions{})
 	assert.Equal(t, agent.ToolScopeSelf, formula.Policy().Scope)
 	assert.Equal(t, agent.ToolEffectPresent, formula.Policy().Effect)
 	assert.Equal(t, permission.ResourceFormulaTemplate, formula.Policy().Resource)
 	assert.True(t, pagedraft.IsEditTool(formula.Name()))
 
-	library := newProposeSourceTool(proposeLibrarySpec, workbench, &fakePermissions{})
+	library := newProposeSourceTool(&proposeLibrarySpec, workbench, &fakePermissions{})
 	assert.Equal(t, "formula_library_propose", library.Name())
 	assert.Equal(t, permission.ResourceFormulaLibrary, library.Policy().Resource)
 	assert.True(t, pagedraft.IsEditTool(library.Name()))
@@ -298,7 +298,7 @@ func TestProposeFormula_HandsACheckedProposalToThePage(t *testing.T) {
 		Explanation: "Bills the miles.",
 		Tests:       pagedraft.ProposalTests{Total: 1, Passed: 1},
 	}}
-	tool := newProposeSourceTool(proposeFormulaSpec, workbench, &authorPermissions{
+	tool := newProposeSourceTool(&proposeFormulaSpec, workbench, &authorPermissions{
 		resource:   permission.ResourceFormulaTemplate,
 		operations: []permission.Operation{permission.OpUpdate},
 	})
@@ -328,7 +328,7 @@ func TestProposeLibrary_LandsInTheLibraryEditor(t *testing.T) {
 		Source: "library \"org.accessorials\"\n",
 		Tests:  pagedraft.ProposalTests{Total: 2, Passed: 2},
 	}}
-	tool := newProposeSourceTool(proposeLibrarySpec, workbench, &authorPermissions{
+	tool := newProposeSourceTool(&proposeLibrarySpec, workbench, &authorPermissions{
 		resource:   permission.ResourceFormulaLibrary,
 		operations: []permission.Operation{permission.OpCreate},
 	})
@@ -362,7 +362,7 @@ func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
 	failing := &fakeWorkbench{outcome: &formulaassistantservice.Checked{
 		Findings: []tariff.Finding{{Severity: "error", Message: "There is no `ratee`"}},
 	}}
-	result, err := newProposeSourceTool(proposeFormulaSpec, failing, author).Query(t.Context(), params)
+	result, err := newProposeSourceTool(&proposeFormulaSpec, failing, author).Query(t.Context(), params)
 	require.NoError(t, err)
 	refused := result.(refusedProposal)
 	assert.False(t, refused.Applied)
@@ -370,7 +370,7 @@ func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
 	assert.NotNil(t, refused.Findings)
 
 	untested := &fakeWorkbench{outcome: &formulaassistantservice.Checked{OK: true}}
-	result, err = newProposeSourceTool(proposeFormulaSpec, untested, author).Query(t.Context(), params)
+	result, err = newProposeSourceTool(&proposeFormulaSpec, untested, author).Query(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, result.(refusedProposal).Note, "no tests")
 
@@ -378,7 +378,7 @@ func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
 		OK:    true,
 		Tests: tariff.TestSummary{Total: 2, Passed: 1},
 	}}
-	result, err = newProposeSourceTool(proposeFormulaSpec, red, author).Query(t.Context(), params)
+	result, err = newProposeSourceTool(&proposeFormulaSpec, red, author).Query(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, result.(refusedProposal).Note, "a test fails")
 }
@@ -387,7 +387,7 @@ func TestProposeFormula_RefusesAPersonWhoMayOnlyRead(t *testing.T) {
 	t.Parallel()
 
 	workbench := &fakeWorkbench{}
-	tool := newProposeSourceTool(proposeFormulaSpec, workbench, &authorPermissions{
+	tool := newProposeSourceTool(&proposeFormulaSpec, workbench, &authorPermissions{
 		resource:   permission.ResourceFormulaTemplate,
 		operations: []permission.Operation{permission.OpRead},
 	})
@@ -399,7 +399,7 @@ func TestProposeFormula_RefusesAPersonWhoMayOnlyRead(t *testing.T) {
 	require.ErrorContains(t, err, "may read but not write a formula template")
 	assert.Nil(t, workbench.proposed)
 
-	library := newProposeSourceTool(proposeLibrarySpec, workbench, &authorPermissions{
+	library := newProposeSourceTool(&proposeLibrarySpec, workbench, &authorPermissions{
 		resource:   permission.ResourceFormulaTemplate,
 		operations: []permission.Operation{permission.OpCreate},
 	})

@@ -23,6 +23,14 @@ import (
 )
 
 const (
+	formulaFieldDescription = "description"
+	formulaFieldRequired    = "required"
+	entityFormulaLibrary    = "formula library"
+	termFormula             = "formula"
+	termTariff              = "tariff"
+)
+
+const (
 	paramSource        = "source"
 	paramFormulaKind   = "kind"
 	paramExplanation   = "explanation"
@@ -227,9 +235,9 @@ func newGetFormulaLibraryTool(
 ) agentports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:   "formula_get_library",
-		entity: "formula library",
+		entity: entityFormulaLibrary,
 		searchTerms: []string{
-			"formula library", "library source", "shared functions", "org module", "use org",
+			entityFormulaLibrary, "library source", "shared functions", "org module", "use org",
 		},
 		resource: permission.ResourceFormulaLibrary,
 		summary: "Retrieve one formula library by id, whole: its Tariff source, the libraries " +
@@ -356,7 +364,7 @@ func (t *checkFormulaTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type":                 "object",
 		"properties":           sourceParams(),
-		"required":             []string{paramSource},
+		formulaFieldRequired:   []string{paramSource},
 		"additionalProperties": false,
 	}
 }
@@ -369,7 +377,9 @@ func (t *checkFormulaTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *checkFormulaTool) SearchTerms() []string {
-	return []string{"check", "validate", "compile", "errors", "diagnostics", "formula", "tariff"}
+	return []string{
+		"check", "validate", "compile", "errors", "diagnostics", termFormula, termTariff,
+	}
 }
 
 type checkedFormula struct {
@@ -449,7 +459,7 @@ func (t *runFormulaTestsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type":                 "object",
 		"properties":           sourceParams(),
-		"required":             []string{paramSource},
+		formulaFieldRequired:   []string{paramSource},
 		"additionalProperties": false,
 	}
 }
@@ -462,7 +472,7 @@ func (t *runFormulaTestsTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *runFormulaTestsTool) SearchTerms() []string {
-	return []string{"test", "run tests", "expect", "verify", "formula", "tariff"}
+	return []string{"test", "run tests", "expect", "verify", termFormula, termTariff}
 }
 
 type testedFormula struct {
@@ -521,7 +531,7 @@ func (t *previewFormulaTool) ParamSchema() map[string]any {
 			paramSource: stringParam(sourceParamDescription),
 			"inputs": map[string]any{
 				"type": "object",
-				"description": "Values for the template's inputs, by name, as wire values: a " +
+				formulaFieldDescription: "Values for the template's inputs, by name, as wire values: a " +
 					"number {\"$n\":\"2.5\"}, money {\"$q\":\"175\",\"u\":\"$\"}, a rate " +
 					"{\"$q\":\"2.85\",\"u\":\"$/mi\"}, a percent {\"$q\":\"18\",\"u\":\"%\"}, a " +
 					"date {\"$date\":\"2026-01-31\"}, text and true/false as themselves. " +
@@ -532,7 +542,7 @@ func (t *previewFormulaTool) ParamSchema() map[string]any {
 				"Optional: rate this saved shipment instead of the sample record, "+
 					"from shipment_list."),
 		},
-		"required":             []string{paramSource},
+		formulaFieldRequired:   []string{paramSource},
 		"additionalProperties": false,
 	}
 }
@@ -548,7 +558,7 @@ func (t *previewFormulaTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *previewFormulaTool) SearchTerms() []string {
-	return []string{"price", "rate", "preview", "bill", "charge", "shipment", "formula"}
+	return []string{"price", "rate", "preview", "bill", "charge", "shipment", termFormula}
 }
 
 type previewedFormula struct {
@@ -631,14 +641,14 @@ func provideProposeFormulaTool(
 	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return newProposeSourceTool(proposeFormulaSpec, workbench, permissions)
+	return newProposeSourceTool(&proposeFormulaSpec, workbench, permissions)
 }
 
 func provideProposeLibraryTool(
 	workbench *formulaassistantservice.Service,
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return newProposeSourceTool(proposeLibrarySpec, workbench, permissions)
+	return newProposeSourceTool(&proposeLibrarySpec, workbench, permissions)
 }
 
 var proposeFormulaSpec = proposeSourceSpec{
@@ -659,7 +669,7 @@ var proposeFormulaSpec = proposeSourceSpec{
 		"without making it.",
 	searchTerms: []string{
 		"write formula", "suggest formula", "build formula", "draft", "rating method",
-		"charge", "tariff",
+		"charge", termTariff,
 	},
 }
 
@@ -668,7 +678,7 @@ var proposeLibrarySpec = proposeSourceSpec{
 	surface:     pagedraft.SurfaceFormulaLibrary,
 	kind:        formulaassistantservice.KindLibrary,
 	resource:    permission.ResourceFormulaLibrary,
-	noun:        "formula library",
+	noun:        entityFormulaLibrary,
 	nameLimit:   pagedraft.MaxLibraryNameLength,
 	nameExample: "accessorials, which templates import as org.accessorials",
 	description: "Change the formula library in the person's editor: its whole Tariff " +
@@ -684,11 +694,15 @@ var proposeLibrarySpec = proposeSourceSpec{
 }
 
 func newProposeSourceTool(
-	spec proposeSourceSpec,
+	spec *proposeSourceSpec,
 	workbench formulaWorkbench,
 	permissions permissionports.PermissionEngine,
 ) *proposeSourceTool {
-	return &proposeSourceTool{spec: spec, workbench: workbench, access: newFieldAccess(permissions)}
+	return &proposeSourceTool{
+		spec:      *spec,
+		workbench: workbench,
+		access:    newFieldAccess(permissions),
+	}
 }
 
 func (t *proposeSourceTool) Name() string { return string(t.spec.action) }
@@ -717,18 +731,18 @@ func (t *proposeSourceTool) ParamSchema() map[string]any {
 			"name": map[string]any{
 				"type":      "string",
 				"maxLength": t.spec.nameLimit,
-				"description": "Only when you draft a new " + t.spec.noun + " and the page " +
+				formulaFieldDescription: "Only when you draft a new " + t.spec.noun + " and the page " +
 					"draft has no name yet: a short name, such as " + t.spec.nameExample + ".",
 			},
-			"description": map[string]any{
+			formulaFieldDescription: map[string]any{
 				"type":      "string",
 				"maxLength": pagedraft.MaxDescriptionLength,
-				"description": "Only when you draft a new " + t.spec.noun + " and the page " +
+				formulaFieldDescription: "Only when you draft a new " + t.spec.noun + " and the page " +
 					"draft has no description yet: one or two sentences for the reviewer who " +
 					"approves it.",
 			},
 		},
-		"required":             []string{paramSource, paramExplanation},
+		formulaFieldRequired:   []string{paramSource, paramExplanation},
 		"additionalProperties": false,
 	}
 }
