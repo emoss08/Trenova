@@ -367,10 +367,9 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	_, permissions, tools := reportingTools(t)
 	permissions.readable = map[string]*permissionports.ResourcePermissionDetail{
 		"shipment": {
-			Resource:         "shipment",
-			Operations:       []permission.Operation{permission.OpRead},
-			MaxSensitivity:   permission.SensitivityConfidential,
-			AccessibleFields: []string{"status"},
+			Resource:       "shipment",
+			Operations:     []permission.Operation{permission.OpRead},
+			MaxSensitivity: permission.SensitivityPublic,
 		},
 	}
 
@@ -412,11 +411,7 @@ func TestDescribeReportDataset_NamesFieldsAndWhatTheActorMayReadOfThem(t *testin
 	assert.NotEmpty(t, status.EnumValues)
 	assert.Contains(t, status.Aggregations, "count")
 	assert.False(t, status.NoFilter)
-	assert.False(t, status.Closed)
-
-	other, found := fields["customerId"]
-	require.True(t, found)
-	assert.True(t, other.Closed, "a field outside the role's allowlist is named but closed")
+	assert.True(t, status.Closed, "a field ranked above the role's ceiling is named but closed")
 }
 
 func TestDescribeReportDataset_NarrowsFieldsByText(t *testing.T) {

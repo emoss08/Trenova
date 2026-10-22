@@ -1,6 +1,7 @@
 package reporting
 
 import (
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"context"
 	"testing"
 
@@ -31,6 +32,14 @@ func (*confidentialReader) GetResourcePermissions(
 		DataScope:      permission.DataScopeOrganization,
 		MaxSensitivity: permission.SensitivityConfidential,
 	}, nil
+}
+
+func (c *confidentialReader) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, c, userID, orgID, resources)
 }
 
 type groupAccess struct {

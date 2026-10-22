@@ -784,9 +784,6 @@ func catalogEntityToModel(
 		)
 
 		accessible := detail.MaxSensitivity.CanAccess(sensitivity)
-		if accessible && len(detail.AccessibleFields) > 0 {
-			accessible = containsString(detail.AccessibleFields, field.Key)
-		}
 
 		enumValues := make([]*gqlmodel.ReportCatalogEnumValue, 0, len(field.EnumValues))
 		for _, ev := range field.EnumValues {

@@ -90,7 +90,10 @@ func (c *Compiler) authorize(
 
 	var linked permissionports.LinkedFields
 	if c.referenceViews != nil {
-		linked = c.referenceViews.Person(actor, details.reads)
+		linked = c.referenceViews.Person(actor, permissionports.PersonGrants{
+			Reads:  details.reads,
+			Detail: details.get,
+		})
 	}
 
 	uses := c.entityUses(v)
@@ -279,13 +282,6 @@ func (c *Compiler) checkFieldAccess(
 		)
 	}
 
-	if len(detail.AccessibleFields) > 0 && !containsField(detail.AccessibleFields, ref.field.Key) {
-		return fmt.Sprintf(
-			"field %q on %s is not in your accessible field set",
-			ref.field.Label, ref.entity.Label,
-		)
-	}
-
 	return ""
 }
 
@@ -316,15 +312,6 @@ func keyLabel(entity *reportcatalog.Entity, key string) string {
 func hasOperation(detail *permissionports.ResourcePermissionDetail, op permission.Operation) bool {
 	for _, allowed := range detail.Operations {
 		if allowed == op {
-			return true
-		}
-	}
-	return false
-}
-
-func containsField(fields []string, field string) bool {
-	for _, f := range fields {
-		if f == field {
 			return true
 		}
 	}

@@ -169,7 +169,10 @@ func (r *requestGuard) fields() permissionports.LinkedFields {
 		auth := r.auth
 		r.linked = r.guard.views.Person(
 			actorutil.FromAuthContext(auth),
-			func(ctx context.Context, kind permission.Resource) (bool, error) {
+			permissionports.PersonGrants{Reads: func(
+				ctx context.Context,
+				kind permission.Resource,
+			) (bool, error) {
 				if engine == nil {
 					return false, nil
 				}
@@ -181,7 +184,7 @@ func (r *requestGuard) fields() permissionports.LinkedFields {
 					return false, err
 				}
 				return result.Allowed, nil
-			},
+			}},
 		)
 	})
 

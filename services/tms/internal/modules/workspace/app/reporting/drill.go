@@ -441,16 +441,5 @@ func (s *Service) fieldVisible(
 	field *reportcatalog.Field,
 ) bool {
 	sensitivity := s.permRegistry.GetFieldSensitivity(entity.Resource.String(), field.Key)
-	if !detail.MaxSensitivity.CanAccess(sensitivity) {
-		return false
-	}
-	if len(detail.AccessibleFields) == 0 {
-		return true
-	}
-	for _, allowed := range detail.AccessibleFields {
-		if allowed == field.Key {
-			return true
-		}
-	}
-	return false
+	return detail.MaxSensitivity.CanAccess(sensitivity)
 }

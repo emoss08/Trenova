@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportrows"
@@ -199,6 +200,14 @@ func (f *fakePermissions) GetResourcePermissions(
 	}
 
 	return &permissionports.ResourcePermissionDetail{Resource: resource}, nil
+}
+
+func (f *fakePermissions) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, f, userID, orgID, resources)
 }
 
 func (f *fakePermissions) Check(

@@ -180,18 +180,7 @@ func (c catalogAccess) fieldAccessible(
 ) (permission.FieldSensitivity, bool) {
 	sensitivity := c.sensitivity.GetFieldSensitivity(entity.Resource.String(), field.Key)
 
-	accessible := detail.MaxSensitivity.CanAccess(sensitivity)
-	if accessible && len(detail.AccessibleFields) > 0 {
-		accessible = false
-		for _, key := range detail.AccessibleFields {
-			if key == field.Key {
-				accessible = true
-				break
-			}
-		}
-	}
-
-	return sensitivity, accessible
+	return sensitivity, detail.MaxSensitivity.CanAccess(sensitivity)
 }
 
 type datasetEdgeRow struct {

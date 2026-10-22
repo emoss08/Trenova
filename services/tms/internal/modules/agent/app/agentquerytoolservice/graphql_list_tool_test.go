@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -460,6 +461,14 @@ func (publicRole) GetResourcePermissions(
 	string,
 ) (*permissionports.ResourcePermissionDetail, error) {
 	return &permissionports.ResourcePermissionDetail{MaxSensitivity: permission.SensitivityPublic}, nil
+}
+
+func (r publicRole) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, r, userID, orgID, resources)
 }
 
 func TestGraphQLListTool_AWithheldFieldStaysWithheld(t *testing.T) {

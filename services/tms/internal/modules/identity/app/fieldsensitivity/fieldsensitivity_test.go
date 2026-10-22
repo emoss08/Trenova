@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -35,6 +36,14 @@ func (f *fakeEngine) GetResourcePermissions(
 		Resource:       resource,
 		MaxSensitivity: f.levels[resource],
 	}, nil
+}
+
+func (f *fakeEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, f, userID, orgID, resources)
 }
 
 func TestPersonCeiling_NeverRisesAboveRestricted(t *testing.T) {
