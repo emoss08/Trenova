@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/authctx"
 )
 
@@ -50,4 +51,30 @@ func (r *Deps) OverviewSections(
 			permission.OpRead,
 		),
 	}
+}
+
+// AttentionAccess is what the home tile may count for the reader. Leave is
+// counted across their team when their leave grant reaches only their team.
+func (r *Deps) AttentionAccess(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+) (workeroverviewservice.AttentionAccess, error) {
+	access := workeroverviewservice.AttentionAccess{
+		Reviews: r.HasPermission(ctx, authCtx, permission.ResourcePerformanceReview, permission.OpRead),
+		Leave:   r.HasPermission(ctx, authCtx, permission.ResourceWorkerLeave, permission.OpRead),
+	}
+	if !access.Leave {
+		return access, nil
+	}
+	_, managerIDs, err := r.RequireListTeamScope(
+		ctx,
+		permission.ResourceWorkerLeave,
+		permission.OpRead,
+		worker.ApprovalScopeTimeOff,
+	)
+	if err != nil {
+		return access, err
+	}
+	access.LeaveManagerIDs = managerIDs
+	return access, nil
 }

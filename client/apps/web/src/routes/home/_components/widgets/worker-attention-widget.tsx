@@ -105,21 +105,25 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
       {data ? (
         <>
           <dl className="border-border/60 mt-2 grid grid-cols-3 gap-x-2 border-t pt-2">
-            <Standing
-              label={t("Reviews to sign")}
-              value={String(data.reviewsAwaitingSignOff)}
-              muted={data.reviewsAwaitingSignOff === 0}
-            />
+            {data.reviewsAwaitingSignOff == null ? null : (
+              <Standing
+                label={t("Reviews to sign")}
+                value={String(data.reviewsAwaitingSignOff)}
+                muted={data.reviewsAwaitingSignOff === 0}
+              />
+            )}
             <Standing
               label={t("PTO liability")}
               value={`${formatPtoDayTotal(data.ptoLiabilityDays)} days`}
               muted={Number(data.ptoLiabilityDays) === 0}
             />
-            <Standing
-              label={t("Certifications owed")}
-              value={String(data.leaveCertificationsOutstanding)}
-              muted={data.leaveCertificationsOutstanding === 0}
-            />
+            {data.leaveCertificationsOutstanding == null ? null : (
+              <Standing
+                label={t("Certifications owed")}
+                value={String(data.leaveCertificationsOutstanding)}
+                muted={data.leaveCertificationsOutstanding === 0}
+              />
+            )}
           </dl>
           <p className="text-muted-foreground mt-1.5 px-1.5 text-xs">
             {t("{0, plural, one {# active worker} other {# active workers}}", data.activeWorkers)}
@@ -134,7 +138,8 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
  * A figure with no list behind it: none of reviews, the PTO liability or the
  * leave certifications owed has a roster view that would show the same number,
  * so these read as standing totals rather than as links that promise a
- * filtered list.
+ * filtered list. Reviews and leave are granted on their own; the server sends
+ * null for a reader who may not read them, and the figure is left out.
  */
 function Standing({ label, value, muted }: { label: string; value: string; muted: boolean }) {
   return (

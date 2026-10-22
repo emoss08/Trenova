@@ -320,7 +320,8 @@ func TestRosterAttention_GathersEveryArea(t *testing.T) {
 		TotalBalanceDays: decimal.NewFromInt(312),
 	}
 
-	attention, err := h.svc.RosterAttention(t.Context(), h.tenant)
+	attention, err := h.svc.RosterAttention(t.Context(), h.tenant,
+		workeroverviewservice.AttentionAccess{Reviews: true})
 	require.NoError(t, err)
 
 	assert.Equal(t, 40, attention.ActiveWorkers)
@@ -328,7 +329,8 @@ func TestRosterAttention_GathersEveryArea(t *testing.T) {
 	assert.Equal(t, 7, attention.TrainingOverdue)
 	assert.Equal(t, 1, attention.AtRisk)
 	assert.Equal(t, 5, attention.ExpiringSoon)
-	assert.Equal(t, 4, attention.ReviewsAwaitingSignOff)
+	require.NotNil(t, attention.ReviewsAwaitingSignOff)
+	assert.Equal(t, 4, *attention.ReviewsAwaitingSignOff)
 	assert.True(t, decimal.NewFromInt(312).Equal(attention.PTOLiabilityDays))
 }
 
@@ -342,11 +344,74 @@ func TestRosterAttention_CountsOnlySubmittedReviews(t *testing.T) {
 		Return(&workerports.RosterAttention{}, nil).
 		Once()
 
-	_, err := h.svc.RosterAttention(t.Context(), h.tenant)
+	_, err := h.svc.RosterAttention(t.Context(), h.tenant,
+		workeroverviewservice.AttentionAccess{Reviews: true})
 	require.NoError(t, err)
 	assert.Equal(
 		t,
 		[]worker.ReviewStatus{worker.ReviewStatusSubmitted},
 		h.reviewCounts.statuses,
 	)
+}
+
+// Reviews and leave are granted on their own, so a reader who holds neither
+// is not told how many there are, rather than told there are none.
+func TestRosterAttention_CountsNothingTheReaderMayNotRead(t *testing.T) {
+	h := newOverviewHarness(t)
+	h.workerRepo.EXPECT().
+		CountRosterAttention(mock.Anything, mock.Anything).
+		Return(&workerports.RosterAttention{ActiveWorkers: 12}, nil).
+		Once()
+	h.reviewCounts.count = 4
+
+	attention, err := h.svc.RosterAttention(t.Context(), h.tenant,
+		workeroverviewservice.AttentionAccess{})
+	require.NoError(t, err)
+
+	assert.Equal(t, 12, attention.ActiveWorkers)
+	assert.Nil(t, attention.ReviewsAwaitingSignOff)
+	assert.Nil(t, attention.LeaveCertificationsOutstanding)
+	assert.Nil(t, h.reviewCounts.statuses, "reviews are not counted at all")
+}
+
+type fakeLeaveCounter struct {
+	count int
+	req   *workerports.ListLeaveCasesRequest
+}
+
+func (f *fakeLeaveCounter) CountCases(
+	_ context.Context,
+	req *workerports.ListLeaveCasesRequest,
+) (int, error) {
+	f.req = req
+	return f.count, nil
+}
+
+// A driver manager's leave grant reaches only their team, so the tile counts
+// only their team's outstanding certifications.
+func TestRosterAttention_CountsLeaveAcrossTheReadersTeam(t *testing.T) {
+	workerRepo := workerportsmock.NewMockWorkerRepository(t)
+	workerRepo.EXPECT().
+		CountRosterAttention(mock.Anything, mock.Anything).
+		Return(&workerports.RosterAttention{}, nil).
+		Once()
+	leave := &fakeLeaveCounter{count: 2}
+	svc := workeroverviewservice.NewWithDeps(workeroverviewservice.Deps{
+		WorkerRepo:   workerRepo,
+		ReviewCounts: &fakeReviewCounter{},
+		PTO:          &fakeBalances{},
+		Leave:        leave,
+	})
+	manager := pulid.MustNew("usr_")
+
+	attention, err := svc.RosterAttention(t.Context(), pagination.TenantInfo{},
+		workeroverviewservice.AttentionAccess{Leave: true, LeaveManagerIDs: []pulid.ID{manager}})
+	require.NoError(t, err)
+
+	require.NotNil(t, attention.LeaveCertificationsOutstanding)
+	assert.Equal(t, 2, *attention.LeaveCertificationsOutstanding)
+	require.NotNil(t, leave.req)
+	assert.Equal(t, []pulid.ID{manager}, leave.req.ManagerIDs)
+	assert.True(t, leave.req.CertificationOutstandingOnly)
+	assert.Nil(t, attention.ReviewsAwaitingSignOff)
 }
