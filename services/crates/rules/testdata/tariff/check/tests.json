@@ -1,0 +1,588 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "the spec's tests check",
+   "source": [
+    "tariff \"t\"",
+    "require let w = shipment.weight else \"This rate needs the shipment's weight\"",
+    "charge \"Linehaul\" = $1/lb * w",
+    "test \"a 1,240 lb load bills at the next hundred pounds\" {",
+    "  given shipment.weight = 1_240 lb",
+    "  given shipment.distance = 412 mi",
+    "  expect charge(\"Linehaul\") == $365.30",
+    "  expect total == $511.20",
+    "}",
+    "test \"a load with no weight refuses to rate\" {",
+    "  given shipment.weight = none",
+    "  expect fails \"This rate needs the shipment's weight\"",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "given sets an input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi",
+    "charge \"Linehaul\" = rate * shipment.distance",
+    "test \"a higher rate\" {",
+    "  given input.rate = $2.10/mi",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$2.10/cwt",
+     "code": "type-mismatch",
+     "message": "`$2.10/cwt` is money per hundredweight, but `input.rate` is money per mile"
+    }
+   ],
+   "name": "given an input of the wrong type",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi",
+    "charge \"Linehaul\" = rate * shipment.distance",
+    "test \"t\" {",
+    "  given input.rate = $2.10/cwt",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rat",
+     "code": "given-target",
+     "fixes": [
+      {
+       "label": "Change to `rate`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/mi = $2/mi",
+        "charge \"Linehaul\" = rate * shipment.distance",
+        "test \"t\" {",
+        "  given input.rate = $2.10/mi",
+        "  expect total > $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "This file has no input `rat`. Did you mean `rate`?",
+     "nth": 3
+    }
+   ],
+   "name": "given an unknown input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi",
+    "charge \"Linehaul\" = rate * shipment.distance",
+    "test \"t\" {",
+    "  given input.rat = $2.10/mi",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "`5 lb` is a weight, but `shipment.distance` is a distance"
+    }
+   ],
+   "name": "given a field of the wrong type",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.distance = 5 lb",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "wieght",
+     "code": "unknown-field",
+     "fixes": [
+      {
+       "label": "Change to `weight`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1",
+        "test \"t\" {",
+        "  given shipment.weight = 5 lb",
+        "  expect total > $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "There is no field `wieght` to set. Did you mean `weight`?"
+    }
+   ],
+   "name": "given an unknown field",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.wieght = 5 lb",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment",
+     "code": "given-target",
+     "message": "Set one field of `shipment`, as in `given shipment.…`"
+    }
+   ],
+   "name": "given a whole root",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment = 5",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "tables",
+     "code": "given-target",
+     "message": "A `given` sets a field of the record (`shipment`, `lane`, `customer`, `fuel`, `rating`) or an input (`input.rate`), not `tables`"
+    }
+   ],
+   "name": "given something that is not a root",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given tables.Zones = 5",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "given nested fields",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given lane.origin.zip3 = \"606\"",
+    "  given rating.mode = Buy",
+    "  given fuel.price = $3.50/gal",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "given shipment.distance = 5 mi",
+     "code": "given-order",
+     "message": "Every `given` comes before the first `expect`: the tariff runs once, after the givens"
+    }
+   ],
+   "name": "given after expect is refused",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect total > $0",
+    "  given shipment.distance = 5 mi",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "total",
+     "code": "type-mismatch",
+     "message": "`total` is money, but a condition must be true or false"
+    }
+   ],
+   "name": "expect takes a Bool",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect total",
+    "}"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": true,
+      "code": "FSC"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "stop and commodity constructors",
+   "source": [
+    "tariff \"t\"",
+    "let drops = shipment.stops.count(s => s.kind == Delivery)",
+    "if drops > 1 {",
+    "  charge \"Extra drops\" as XDROP (quantity: drops - 1, rate: $75)",
+    "}",
+    "charge \"Linehaul\" = $100",
+    "test \"a two-drop load bills one extra drop\" {",
+    "  given shipment.stops = [pickup(), delivery(), delivery()]",
+    "  given shipment.commodities = [commodity(weight: 500 lb, hazmat: true)]",
+    "  expect charge(XDROP) == $75",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"1\"",
+     "code": "type-mismatch",
+     "message": "`\"1\"` is text, but the field `sequence` is a whole number"
+    }
+   ],
+   "name": "constructor fields are checked",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T11:30Z, sequence: \"1\")]",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "arival",
+     "code": "unknown-field",
+     "fixes": [
+      {
+       "label": "Change to `arrival`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1",
+        "test \"t\" {",
+        "  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z)]",
+        "  expect total > $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "`Stop` has no field `arival`. Did you mean `arrival`?"
+    }
+   ],
+   "name": "an unknown constructor field",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(arival: @2026-01-05T08:00Z)]",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "1",
+     "code": "argument-order",
+     "message": "Name each field `pickup` sets, as in `pickup(weight: 500 lb)`",
+     "nth": 2
+    }
+   ],
+   "name": "constructor fields are named",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(1)]",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": true,
+      "code": "FSC"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "FSC",
+     "code": "not-billed",
+     "message": "This tariff never bills `FSC`, so this is always `none`"
+    }
+   ],
+   "name": "charge of a code the tariff never bills",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect charge(FSC) == none",
+    "}"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": true,
+      "code": "FSC"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "FSX",
+     "code": "unknown-code",
+     "fixes": [
+      {
+       "label": "Change to `FSC`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Linehaul\" = $100",
+        "test \"t\" {",
+        "  expect charge(FSC) == none",
+        "}"
+       ]
+      }
+     ],
+     "message": "`FSX` isn't in the accessorial charge catalog. Did you mean `FSC`?"
+    }
+   ],
+   "name": "charge of an unknown code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect charge(FSX) == none",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"Linehual\"",
+     "code": "not-billed",
+     "fixes": [
+      {
+       "label": "Change to `\"Linehaul\"`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Linehaul\" = $100",
+        "test \"t\" {",
+        "  expect charge(\"Linehaul\") == none",
+        "}"
+       ]
+      }
+     ],
+     "message": "This tariff never bills a line labelled `Linehual`, so this is always `none`"
+    }
+   ],
+   "name": "charge of a label the tariff never bills",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect charge(\"Linehual\") == none",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "charge of any label when labels interpolate",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  charge \"Stop {stop.sequence}\" = $10",
+    "}",
+    "test \"t\" {",
+    "  expect charge(\"Stop 1\") == $10",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "()",
+     "code": "arity",
+     "message": "`charge(…)` takes one code or label, as in `charge(FSC)` or `charge(\"Linehaul\")`"
+    }
+   ],
+   "name": "charge takes one code or label",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect charge() == none",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5",
+     "code": "type-mismatch",
+     "message": "`charge(…)` takes a charge code such as `FSC` or a label in quotes"
+    }
+   ],
+   "name": "charge takes a code or text",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect charge(5) == none",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "lines are the bill's lines",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect lines.len == 1 and lines.all(l => l.amount > $0)",
+    "  expect lines.count(l => l.kind == Rounding) == 0",
+    "}"
+   ],
+   "types": {
+    "lines": "List<Line>"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "base",
+     "code": "test-scope",
+     "message": "`base` is the tariff's own binding, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`), the record and the file's functions and constants",
+     "nth": 3
+    },
+    {
+     "at": "rate",
+     "code": "test-scope",
+     "message": "`rate` is an input, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`), the record and the file's functions and constants",
+     "nth": 3
+    }
+   ],
+   "name": "a test cannot read the tariff's lets or inputs",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "let base = $1",
+    "charge \"x\" = base + rate",
+    "test \"t\" {",
+    "  expect total == base + rate",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a test reads the record and the file's functions",
+   "source": [
+    "tariff \"t\"",
+    "fn fee() -> Money = $5",
+    "charge \"x\" = fee()",
+    "test \"t\" {",
+    "  given shipment.distance = 5 mi",
+    "  expect total == fee() and shipment.distance == 5 mi",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a library's tests call its functions",
+   "source": [
+    "library \"t\"",
+    "fn twice(n: Int) -> Int = n * 2",
+    "test \"twice doubles\" {",
+    "  expect twice(2) == 4",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "total",
+     "code": "test-only",
+     "message": "`total` reads the bill, and only a tariff makes one: a library's tests check its functions"
+    },
+    {
+     "at": "charge(\"x\")",
+     "code": "test-only",
+     "message": "`charge(…)` reads a line of the bill, so it can only be used inside a tariff's `test` block"
+    }
+   ],
+   "name": "a library's tests have no bill",
+   "source": [
+    "library \"t\"",
+    "fn twice(n: Int) -> Int = n * 2",
+    "test \"t\" {",
+    "  expect total == $0",
+    "  expect charge(\"x\") == none",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a library test may build sample stops",
+   "source": [
+    "library \"t\"",
+    "fn drops(stops: List<Stop>) -> Int = stops.count(s => s.kind == Delivery)",
+    "test \"t\" {",
+    "  expect drops([pickup(), delivery()]) == 1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "lets inside a test",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  let expected = $1",
+    "  expect total == expected",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "expect fails with an interpolated message",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect fails \"No {1}\"",
+    "}"
+   ]
+  }
+ ]
+}

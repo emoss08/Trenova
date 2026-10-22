@@ -339,3 +339,5 @@ pub struct ImportInfo {
     pub version: Option<String>,
 }
 
+#[cfg(test)]
+mod tests;

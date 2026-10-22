@@ -1,0 +1,749 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "a rate per mile times miles is money",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "charge \"x\" = rate * shipment.distance",
+    "charge \"y\" = shipment.distance * rate"
+   ],
+   "types": {
+    "rate * shipment.distance": "Money",
+    "shipment.distance * rate": "Money"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a rate per hundredweight prices pounds",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $18.50/cwt * 1_200 lb"
+   ],
+   "types": {
+    "$18.50/cwt * 1_200 lb": "Money"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate + w",
+     "code": "unit-mismatch",
+     "message": "`rate` is money per hundredweight and `w` is a weight, so `rate * w` is money. `rate + w` adds money per hundredweight to a weight."
+    }
+   ],
+   "name": "money plus a weight explains both sides",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/cwt = $18.50/cwt",
+    "let w = shipment.weight ?? 0 lb",
+    "charge \"x\" = rate + w"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5 - shipment.distance",
+     "code": "unit-mismatch",
+     "message": "`$5` is money and `shipment.distance` is a distance. `$5 - shipment.distance` subtracts a distance from money. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "money minus a distance",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $5 - shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "money divided by a distance is a rate",
+   "source": [
+    "tariff \"t\"",
+    "let r = $450 / 300 mi",
+    "charge \"x\" = r * shipment.distance"
+   ],
+   "types": {
+    "$450 / 300 mi": "Money/mi"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a quantity over the same dimension is a number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (1_200 lb / 1 cwt)"
+   ],
+   "types": {
+    "1_200 lb / 1 cwt": "Number"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a quantity times a number keeps its dimension",
+   "source": [
+    "tariff \"t\"",
+    "let a = 2 * 500 lb",
+    "let b = 500 lb / 2",
+    "charge \"x\" = $1/lb * (a + b)"
+   ],
+   "types": {
+    "2 * 500 lb": "Weight",
+    "500 lb / 2": "Weight"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "weights in different units add",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/lb * (500 lb + 2 cwt)"
+   ],
+   "types": {
+    "500 lb + 2 cwt": "Weight"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(5 lb * 5 lb)",
+     "code": "unit-mismatch",
+     "message": "`5 lb` is a weight and `5 lb` is a weight. `5 lb * 5 lb` multiplies a weight by a weight. Multiply by a number or a percent, or multiply a rate by the quantity it is priced per."
+    }
+   ],
+   "name": "a weight times a weight has no type",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (5 lb * 5 lb).value"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5 * $5",
+     "code": "unit-mismatch",
+     "message": "`$5` is money and `$5` is money. `$5 * $5` multiplies money by money. Multiply by a number or a percent, or multiply a rate by the quantity it is priced per."
+    }
+   ],
+   "name": "money times money has no meaning",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $5 * $5"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "money times a percent is money",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 * 18%"
+   ],
+   "types": {
+    "$100 * 18%": "Money"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "money divided by a number is money",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 / 3"
+   ],
+   "types": {
+    "$100 / 3": "Money"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "money divided by money is a number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * ($100 / $50)"
+   ],
+   "types": {
+    "$100 / $50": "Number"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(18% * 5%)",
+     "code": "unit-mismatch",
+     "message": "`18% * 5%` multiplies a percent by a percent, which means nothing in a price. Apply each percent to an amount instead"
+    }
+   ],
+   "name": "a percent times a percent is refused",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 * (18% * 5%)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a percent plus a percent is a percent",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 * (18% + 2%)"
+   ],
+   "types": {
+    "18% + 2%": "Percent"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a number times a percent is a number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 * (2.5 * 10%)"
+   ],
+   "types": {
+    "2.5 * 10%": "Number"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a whole number of percents is a percent",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 * (4 * 0.5%)"
+   ],
+   "types": {
+    "4 * 0.5%": "Percent"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(18% + 1)",
+     "code": "unit-mismatch",
+     "message": "`18%` is a percent and `1` is a whole number. `18% + 1` adds a percent to a whole number. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "a percent plus a number is refused",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $100 * (18% + 1)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "Int arithmetic stays Int",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (3 + 4 * 2 - 1)"
+   ],
+   "types": {
+    "3 + 4 * 2 - 1": "Int"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "Int divided by Int is a Number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (7 / 2)"
+   ],
+   "types": {
+    "7 / 2": "Number"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "remainder takes whole numbers",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (7 % 2)"
+   ],
+   "types": {
+    "7 % 2": "Int"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(7.5 % 2)",
+     "code": "unit-mismatch",
+     "message": "`7.5 % 2` needs two whole numbers, but `7.5` is a number and `2` is a whole number. Round first with `floor()`"
+    }
+   ],
+   "name": "remainder of a Number is refused",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (7.5 % 2)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "temperatures subtract",
+   "source": [
+    "tariff \"t\"",
+    "let d = 40 °F - 35 °F",
+    "charge \"x\" = $1",
+    "note \"{d}\""
+   ],
+   "types": {
+    "40 °F - 35 °F": "Temperature"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "40 °F + 35 °F",
+     "code": "unit-mismatch",
+     "message": "Temperatures can only be compared and subtracted, so `40 °F + 35 °F` has no meaning"
+    }
+   ],
+   "name": "temperatures do not add",
+   "source": [
+    "tariff \"t\"",
+    "let d = 40 °F + 35 °F",
+    "note \"{d}\"",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "40 °F * 2",
+     "code": "unit-mismatch",
+     "message": "Temperatures can only be compared and subtracted, so `40 °F * 2` has no meaning"
+    }
+   ],
+   "name": "temperatures do not multiply",
+   "source": [
+    "tariff \"t\"",
+    "let d = 40 °F * 2",
+    "note \"{d}\"",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a temperature compares across units",
+   "source": [
+    "tariff \"t\"",
+    "if (shipment.temperature.min ?? 0 °F) < 4 °C {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "p",
+     "code": "unused",
+     "message": "`p` is never used"
+    },
+    {
+     "at": "18% * 18%",
+     "code": "unit-mismatch",
+     "message": "`18% * 18%` multiplies a percent by a percent, which means nothing in a price. Apply each percent to an amount instead"
+    }
+   ],
+   "name": "a percent times a percent message names the operation",
+   "source": [
+    "tariff \"t\"",
+    "let p = 18% * 18%",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5 > 5 lb",
+     "code": "unit-mismatch",
+     "message": "`$5` is money and `5 lb` is a weight. `$5 > 5 lb` compares money with a weight. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "comparing money with a weight",
+   "source": [
+    "tariff \"t\"",
+    "if $5 > 5 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"a\" < \"b\"",
+     "code": "unit-mismatch",
+     "message": "`\"a\"` is text, which can't be ordered: only numbers, money, quantities and dates compare with `<`"
+    }
+   ],
+   "name": "comparing text is refused",
+   "source": [
+    "tariff \"t\"",
+    "if \"a\" < \"b\" {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(shipment.weight ?? 0 lb) > 500",
+     "code": "unit-mismatch",
+     "fixes": [
+      {
+       "label": "Write it as `500 lb`",
+       "result": [
+        "tariff \"t\"",
+        "if (shipment.weight ?? 0 lb) > 500 lb {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`(shipment.weight ?? 0 lb)` is a weight and `500` is a whole number. `(shipment.weight ?? 0 lb) > 500` compares a weight with a whole number. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "a number literal missing its unit gets a fix",
+   "source": [
+    "tariff \"t\"",
+    "if (shipment.weight ?? 0 lb) > 500 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5 + 10",
+     "code": "unit-mismatch",
+     "fixes": [
+      {
+       "label": "Write it as `$10`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $5 + $10"
+       ]
+      }
+     ],
+     "message": "`$5` is money and `10` is a whole number. `$5 + 10` adds money to a whole number. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "a number literal missing its money sign gets a fix",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $5 + 10"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "dates subtract to a duration",
+   "source": [
+    "tariff \"t\"",
+    "let a = rating.date - rating.date",
+    "let b = @2026-10-22 - @2026-10-01",
+    "charge \"x\" = $1/h * (a + b)"
+   ],
+   "types": {
+    "@2026-10-22 - @2026-10-01": "Duration",
+    "rating.date - rating.date": "Duration"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rating.date - @2026-10-01",
+     "code": "unit-mismatch",
+     "message": "`rating.date` is a date and time and `@2026-10-01` is a date. `rating.date - @2026-10-01` subtracts a date from a date and time. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "a date and a date-time do not subtract",
+   "source": [
+    "tariff \"t\"",
+    "let a = rating.date - @2026-10-01",
+    "charge \"x\" = $1/h * a"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "dates compare",
+   "source": [
+    "tariff \"t\"",
+    "if rating.date.date >= @2026-01-01 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "equality across units",
+   "source": [
+    "tariff \"t\"",
+    "if 1 cwt == 100 lb and $426 == $426.00 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.proNumber == 5",
+     "code": "type-mismatch",
+     "message": "`shipment.proNumber` is text and `5` is a whole number, so they can't be compared"
+    }
+   ],
+   "name": "equality of different types is refused",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.proNumber == 5 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5 == 5 lb",
+     "code": "unit-mismatch",
+     "message": "`$5` is money and `5 lb` is a weight. `$5 == 5 lb` compares money with a weight. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "equality of money and a weight explains units",
+   "source": [
+    "tariff \"t\"",
+    "if $5 == 5 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "equality between T and T? is allowed",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.weight == 500 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance == none",
+     "code": "never-none",
+     "message": "`shipment.distance` is never empty, so comparing it with `none` is always false"
+    }
+   ],
+   "name": "comparing a value that is never empty with none",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.distance == none {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "records compare field by field",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.serviceType == { code: \"STD\", description: \"Standard\" } {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.status == StopKind.Delivery",
+     "code": "type-mismatch",
+     "message": "`shipment.status` is a value of type `ShipmentStatus` and `StopKind.Delivery` is a value of type `StopKind`, so they can't be compared"
+    }
+   ],
+   "name": "enums of different types do not compare",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.status == StopKind.Delivery {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5",
+     "code": "type-mismatch",
+     "message": "`5` is a whole number, but a condition must be true or false"
+    }
+   ],
+   "name": "and/or take Bool",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat and 5 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "type-mismatch",
+     "message": "`shipment.distance` is a distance, but a condition must be true or false"
+    }
+   ],
+   "name": "not takes Bool",
+   "source": [
+    "tariff \"t\"",
+    "if not shipment.distance {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "negation of money and of a weight",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $10 + -$5 + $1/lb * -(5 lb)"
+   ],
+   "types": {
+    "-$5": "Money",
+    "-(5 lb)": "Weight"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "t",
+     "code": "unused",
+     "message": "`t` is never used",
+     "nth": 4
+    },
+    {
+     "at": "\"x\"",
+     "code": "type-mismatch",
+     "message": "`\"x\"` is text, which can't be negated"
+    }
+   ],
+   "name": "negating text is refused",
+   "source": [
+    "tariff \"t\"",
+    "let t = -\"x\"",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "in a list of variants",
+   "source": [
+    "tariff \"t\"",
+    "if rating.date.weekday in [Sat, Sun] {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "in a range of weights",
+   "source": [
+    "tariff \"t\"",
+    "if (shipment.weight ?? 0 lb) in 500 lb..2_000 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "500 lb..2_000 lb",
+     "code": "type-mismatch",
+     "message": "`shipment.distance` is a distance, but the range `500 lb..2_000 lb` is of a weight"
+    }
+   ],
+   "name": "in a range of the wrong dimension",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.distance in 500 lb..2_000 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "not in a list of text",
+   "source": [
+    "tariff \"t\"",
+    "if lane.origin.state not in [\"AK\", \"HI\"] {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "1",
+     "code": "type-mismatch",
+     "message": "`1` is a whole number, but the list holds text"
+    },
+    {
+     "at": "2",
+     "code": "type-mismatch",
+     "message": "`2` is a whole number, but the list holds text"
+    }
+   ],
+   "name": "in a list of the wrong item type",
+   "source": [
+    "tariff \"t\"",
+    "if lane.origin.state in [1, 2] {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "lane.destination.state",
+     "code": "type-mismatch",
+     "message": "`lane.destination.state` is text; `in` needs a list or a range"
+    }
+   ],
+   "name": "in something that is not a list",
+   "source": [
+    "tariff \"t\"",
+    "if lane.origin.state in lane.destination.state {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "r",
+     "code": "unused",
+     "message": "`r` is never used",
+     "nth": 2
+    },
+    {
+     "at": "1..5",
+     "code": "range",
+     "message": "A range can only follow `in`, be walked by `for`, or be a `match` pattern"
+    }
+   ],
+   "name": "a range outside in or for is refused",
+   "source": [
+    "tariff \"t\"",
+    "let r = 1..5",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(shipment.distance + shipment.linearFeet)",
+     "code": "unit-mismatch",
+     "message": "`shipment.distance` is a distance and `shipment.linearFeet` is a length. `shipment.distance + shipment.linearFeet` adds a distance to a length. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "a distance and a length are different dimensions",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/mi * (shipment.distance + shipment.linearFeet)"
+   ]
+  }
+ ]
+}
