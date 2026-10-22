@@ -10,12 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -228,7 +228,7 @@ func TestBuySideDoesNotFallBackToTheShipmentsFormulaTemplate(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, ratequote.OutcomeNoRateFound, result.Outcome)
 	assert.True(t, result.Amount.IsZero(), "amount was %s", result.Amount)
-	d.formula.AssertNotCalled(t, "Calculate", mock.Anything, mock.Anything)
+	assert.Zero(t, d.evaluator.Calls(), "no tariff runs for a carrier without a contract")
 }
 
 // The sell side keeps the fallback, because that is what makes adopting rate
@@ -240,18 +240,13 @@ func TestSellSideStillFallsBackToTheShipmentsFormulaTemplate(t *testing.T) {
 	d := setup(t)
 	expectRules(d)
 
-	templateID := pulid.MustNew("ft_")
 	entity := testShipment()
-	entity.FormulaTemplateID = templateID
-
-	d.formula.EXPECT().Calculate(mock.Anything, mock.Anything).
-		Return(&formulatemplatetypes.CalculateResponse{
-			Amount:            decimal.RequireFromString("1500"),
-			FormulaTemplateID: templateID.String(),
-		}, nil)
+	entity.FormulaTemplateID = flatTemplateID
+	entity.TariffInputs = tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.NewFromInt(1500))}
 
 	result, err := d.svc.RateShipment(t.Context(), rateRequest(entity))
 
 	require.NoError(t, err)
 	assert.Equal(t, ratequote.OutcomeFormulaFallback, result.Outcome)
+	assert.True(t, result.Total.Equal(decimal.NewFromInt(1500)))
 }

@@ -292,7 +292,7 @@ func (s *DetentionSeed) loadRefs(
 	}
 	refs.commodityID = freight.ID
 
-	if err := tx.NewSelect().Model(&refs.formula).Column("id", "name", "expression").
+	if err := tx.NewSelect().Model(&refs.formula).Column("id", "name").
 		Where("organization_id = ?", refs.orgID).Where("business_unit_id = ?", refs.buID).
 		Where("name = ?", "Flat Rate").Limit(1).
 		Scan(ctx); err != nil {
@@ -1256,7 +1256,7 @@ func (s *DetentionSeed) createDetentionShipment(
 		Pieces:              new(def.pieces),
 		Weight:              new(def.weight),
 		ActualShipDate:      new(shippedAt),
-		BaseRate:            decimal.NullDecimal{Decimal: revenue, Valid: true},
+		TariffInputs:        seededTariffInputs(formulatemplate.StandardFlatRate, revenue),
 		FreightChargeAmount: decimal.NullDecimal{Decimal: revenue, Valid: true},
 		TotalChargeAmount:   decimal.NullDecimal{Decimal: revenue, Valid: true},
 	}
@@ -1264,6 +1264,7 @@ func (s *DetentionSeed) createDetentionShipment(
 	if last.ActualDeparture != nil {
 		shp.ActualDeliveryDate = new(*last.ActualDeparture)
 	}
+	shp.FreightLines = seededFreightLines(shp)
 	shp.RatingDetail = seededRatingDetail(shp, &refs.formula, now)
 	if _, err := tx.NewInsert().Model(shp).Exec(ctx); err != nil {
 		return 0, fmt.Errorf("insert shipment: %w", err)

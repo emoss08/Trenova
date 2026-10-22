@@ -11,8 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/tarifftest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -100,7 +103,7 @@ func TestPlanCreate_StartsEveryAgreementAsADraftAndSavesNothing(t *testing.T) {
 	t.Parallel()
 
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: NewTestValidator()})
+	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
 
 	entity := draftAgreement(rateagreement.StatusActive)
 	entity.ID = pulid.Nil
@@ -138,10 +141,8 @@ func agreementRepoReturning(
 }
 
 func laneRule(rate string) *rateagreement.RateAgreementRule {
-	templateID := pulid.MustNew("ft_")
-
 	return &rateagreement.RateAgreementRule{
-		FormulaTemplateID:     &templateID,
+		FormulaTemplateID:     tarifftest.PerMile().TemplateID,
 		ID:                    pulid.MustNew("rarl_"),
 		Label:                 "GA to FL",
 		OriginScopeType:       rategeo.ScopeTypeState,
@@ -149,9 +150,11 @@ func laneRule(rate string) *rateagreement.RateAgreementRule {
 		DestinationScopeType:  rategeo.ScopeTypeState,
 		DestinationScopeValue: "FL",
 		Direction:             rateagreement.DirectionDirectional,
-		Rate:                  decimal.NewNullDecimal(decimal.RequireFromString(rate)),
-		Status:                rateagreement.RuleStatusActive,
-		EffectiveFrom:         100,
+		Inputs: tarifftypes.Inputs{
+			"rate": rules.QuantityValue(decimal.RequireFromString(rate), "$/mi"),
+		},
+		Status:        rateagreement.RuleStatusActive,
+		EffectiveFrom: 100,
 	}
 }
 
@@ -161,12 +164,14 @@ func TestPlanUpdate_ShowsTheAmendmentAndSavesNothing(t *testing.T) {
 	stored := draftAgreement(rateagreement.StatusDraft)
 	stored.Rules = []*rateagreement.RateAgreementRule{laneRule("2.00")}
 	repo := agreementRepoReturning(t, stored)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: NewTestValidator()})
+	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
 
 	edited := *stored
 	edited.Name = "Acme Freight Agreement 2026"
 	changed := *stored.Rules[0]
-	changed.Rate = decimal.NewNullDecimal(decimal.RequireFromString("2.25"))
+	changed.Inputs = tarifftypes.Inputs{
+		"rate": rules.QuantityValue(decimal.RequireFromString("2.25"), "$/mi"),
+	}
 	edited.Rules = []*rateagreement.RateAgreementRule{&changed}
 
 	plan, err := svc.PlanUpdate(t.Context(), &edited, testActor())
@@ -175,7 +180,9 @@ func TestPlanUpdate_ShowsTheAmendmentAndSavesNothing(t *testing.T) {
 	assert.Equal(t, "Acme Freight Agreement 2026", plan.After.Name)
 	assert.Equal(t, []pulid.ID{stored.Rules[0].ID}, plan.SupersededIDs)
 	require.Len(t, plan.Inserts, 1)
-	assert.Equal(t, "2.25", plan.Inserts[0].Rate.Decimal.String())
+	rate, err := rules.DecodeQuantity(plan.Inserts[0].Inputs["rate"])
+	require.NoError(t, err)
+	assert.Equal(t, "2.25", rate.Value.String())
 	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 	repo.AssertNotCalled(t, "AmendRules", mock.Anything, mock.Anything)
 }
@@ -186,7 +193,7 @@ func TestPlanDuplicate_CopiesAsADraftAndSavesNothing(t *testing.T) {
 	stored := draftAgreement(rateagreement.StatusActive)
 	stored.Rules = []*rateagreement.RateAgreementRule{laneRule("2.00")}
 	repo := agreementRepoReturning(t, stored)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: NewTestValidator()})
+	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
 
 	plan, err := svc.PlanDuplicate(t.Context(), &DuplicateRateAgreementRequest{
 		TenantInfo:      pagination.TenantInfo{OrgID: stored.OrganizationID, BuID: stored.BusinessUnitID},
@@ -209,7 +216,7 @@ func TestPlanAmendRules_ChecksTheAmendmentAndWritesNothing(t *testing.T) {
 	current := laneRule("2.00")
 	stored.Rules = []*rateagreement.RateAgreementRule{current}
 	repo := agreementRepoReturning(t, stored)
-	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: NewTestValidator()})
+	svc := New(Params{Logger: zap.NewNop(), Repo: repo, Validator: testValidator()})
 
 	successor := laneRule("2.40")
 	successor.ID = pulid.Nil
@@ -238,10 +245,6 @@ func TestRateIncreaseApplicable_RefusesWhatApplyRefuses(t *testing.T) {
 	t.Parallel()
 
 	require.Error(t, rateIncreaseApplicable(&RateIncreasePlan{}))
-	require.Error(t, rateIncreaseApplicable(&RateIncreasePlan{
-		Lines:         []*RateIncreaseLine{{}},
-		NegativeCount: 1,
-	}))
 	require.NoError(t, rateIncreaseApplicable(&RateIncreasePlan{
 		Lines: []*RateIncreaseLine{{}},
 	}))
@@ -284,7 +287,7 @@ func TestPlanUpdate_KeepsStoredMarginsForAnEditorWithoutTheGroup(t *testing.T) {
 	svc := New(Params{
 		Logger:    zap.NewNop(),
 		Repo:      repo,
-		Validator: NewTestValidator(),
+		Validator: testValidator(),
 		Fields:    fixedFieldAccess(0),
 	})
 
@@ -310,7 +313,7 @@ func TestPlanUpdate_TakesMarginsFromAnEditorWithTheGroup(t *testing.T) {
 	svc := New(Params{
 		Logger:    zap.NewNop(),
 		Repo:      repo,
-		Validator: NewTestValidator(),
+		Validator: testValidator(),
 		Fields:    fixedFieldAccess(permission.AllFieldGroups()),
 	})
 

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -157,9 +156,9 @@ func (s *service) PreviewAutoRate(
 }
 
 type autoRatePlan struct {
-	original         *shipment.Shipment
-	entity           *shipment.Shipment
-	rated            *ratequoteports.RatedShipment
+	original        *shipment.Shipment
+	entity          *shipment.Shipment
+	rated           *ratequoteports.RatedShipment
 	previousFreight decimal.NullDecimal
 }
 
@@ -200,8 +199,8 @@ func (s *service) planAutoRate(
 	}
 
 	plan := &autoRatePlan{
-		original:         original,
-		entity:           entity,
+		original:        original,
+		entity:          entity,
 		previousFreight: entity.FreightChargeAmount,
 	}
 
@@ -265,9 +264,7 @@ func (s *service) describeContractRate(
 		FreightAmount:       rated.Amount,
 		FreightLines:        []shipment.FreightLine{},
 		Charges:             []shipmentports.ContractRateCharge{},
-	}
-	if rated.Refusal != nil {
-		application.Refusal = rated.Refusal.Localize(i18n.FromContext(ctx))
+		Refusal:             rated.Refusal,
 	}
 	if previousFreight.Valid {
 		application.PreviousFreightAmount = previousFreight.Decimal

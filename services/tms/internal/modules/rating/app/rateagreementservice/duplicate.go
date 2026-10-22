@@ -21,7 +21,7 @@ type DuplicateRateAgreementRequest struct {
 	Name string `json:"name"`
 }
 
-// Duplicate copies an agreement — lanes with their breaks, the accessorial
+// Duplicate copies an agreement — lanes with their inputs, the accessorial
 // schedule, the fuel binding — as a fresh Draft with none of the original's
 // identity, history, or approvals. The copy goes through Create, so it is
 // validated like anything typed in by hand and starts its own version chain

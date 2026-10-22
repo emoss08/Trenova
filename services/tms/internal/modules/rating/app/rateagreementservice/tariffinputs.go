@@ -81,7 +81,7 @@ func (t *tariffInputs) checkRules(
 			Kind:       rules.TariffKindTariff,
 			Libraries:  template.Libraries,
 			Values: &rules.TariffInputValues{
-				Rule:      rule.Inputs,
+				Rule:      rule.Inputs.OrEmpty(),
 				Agreement: declaredValues(template.Inputs, agreement.Inputs),
 			},
 		})
@@ -93,7 +93,10 @@ func (t *tariffInputs) checkRules(
 	return nil
 }
 
-func declaredValues(decls []tarifftypes.InputDecl, inputs tarifftypes.Inputs) map[string]rules.RawJSON {
+func declaredValues(
+	decls []tarifftypes.InputDecl,
+	inputs tarifftypes.Inputs,
+) map[string]rules.RawJSON {
 	if len(inputs) == 0 {
 		return nil
 	}

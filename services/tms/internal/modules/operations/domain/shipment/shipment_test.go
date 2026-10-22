@@ -3,6 +3,7 @@ package shipment
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -156,8 +157,8 @@ func TestRestoreRateOwnedFields_CallersCannotClearAnOverride(t *testing.T) {
 }
 
 // The rating detail explains an invoice. A client echoing back the handful of
-// fields it renders must not thereby erase the contract, the breakdown and the
-// guardrail that priced a locked shipment, which is never re-rated.
+// fields it renders must not thereby erase the contract and the bill that
+// priced a locked shipment, which is never re-rated.
 func TestRestoreRateOwnedFields_RatingDetailComesFromTheRaterNotThePayload(t *testing.T) {
 	t.Parallel()
 
@@ -165,28 +166,29 @@ func TestRestoreRateOwnedFields_RatingDetailComesFromTheRaterNotThePayload(t *te
 		RateLocked: true,
 		RatingDetail: &RatingDetail{
 			FormulaTemplateID: "ft_01JT",
-			Result:            1400,
 			AgreementName:     "Acme Master Contract",
 			RuleLabel:         "DFW → LAX dry van",
 			Source:            "Rated",
 			Explanation:       "Priced from the Acme contract",
-			Breakdown: []RatingBreakdownItem{
-				{Name: "Linehaul", Amount: 1200},
-				{Name: "FuelSurcharge", Amount: 200},
+			Bill: &tarifftypes.Bill{
+				Lines: []tarifftypes.Line{
+					{Kind: tarifftypes.LineCharge, Label: "Linehaul", Amount: decimal.NewFromInt(1200)},
+					{Kind: tarifftypes.LineCharge, Code: "FSC", Amount: decimal.NewFromInt(200)},
+				},
+				Total: decimal.NewFromInt(1400),
 			},
-			Guardrail: &RatingGuardrail{Applied: true, Bound: "min", RawResult: 1100},
 		},
 	}
 
 	updated := &Shipment{
-		RatingDetail: &RatingDetail{FormulaTemplateID: "ft_01JT", Result: 1400},
+		RatingDetail: &RatingDetail{FormulaTemplateID: "ft_01JT"},
 	}
 
 	RestoreRateOwnedFields(original, updated)
 
 	require.Equal(t, original.RatingDetail, updated.RatingDetail)
-	require.Len(t, updated.RatingDetail.Breakdown, 2)
-	require.NotNil(t, updated.RatingDetail.Guardrail)
+	require.NotNil(t, updated.RatingDetail.Bill)
+	require.Len(t, updated.RatingDetail.Bill.Lines, 2)
 	require.Equal(t, "Acme Master Contract", updated.RatingDetail.AgreementName)
 }
 

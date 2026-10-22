@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,10 +13,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// LookupMatrixSeed creates the single-axis matrices a development formula's
-// lookup() calls resolve against. These carry the same codes and numbers the
-// old rate table seed created, so a dev expression written before the merge
-// keeps producing the same rate after it.
+// LookupMatrixSeed creates single-axis tables a development tariff can look
+// values up in.
 type LookupMatrixSeed struct {
 	seedhelpers.BaseSeed
 }
@@ -26,14 +23,14 @@ func NewLookupMatrixSeed() *LookupMatrixSeed {
 	seed := &LookupMatrixSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"LookupMatrix",
-		"1.0.0",
-		"Creates sample single-axis lookup matrices for development",
+		"2.0.0",
+		"Creates sample single-axis rate tables for development",
 		[]common.Environment{
 			common.EnvDevelopment,
 		},
 	)
 
-	seed.SetDependencies(seedhelpers.SeedTestOrganizations, seedhelpers.SeedFormulaTemplate)
+	seed.SetDependencies(seedhelpers.SeedTestOrganizations)
 
 	return seed
 }
@@ -50,6 +47,7 @@ type lookupMatrixDef struct {
 	code        string
 	description string
 	matchMode   ratematrix.MatchMode
+	valueType   string
 	cells       []lookupCellDef
 }
 
@@ -76,36 +74,18 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 				}
 			}
 
-			// A matrix names the template that says what its cells mean. These
-			// matrices exist for lookup() alone, whose reads bypass the
-			// template, so they carry the standard Flat Rate template — the
-			// same answer the merge migration's backfill gives a matrix with
-			// no better signal.
-			var flatRate formulatemplate.FormulaTemplate
-			if err = tx.NewSelect().
-				Model(&flatRate).
-				Column("id").
-				Where("organization_id = ?", org.ID).
-				Where("business_unit_id = ?", org.BusinessUnitID).
-				Where("status = ?", formulatemplate.StatusActive).
-				Where("name = ?", "Flat Rate").
-				Order("created_at ASC").
-				Limit(1).
-				Scan(ctx); err != nil {
-				return fmt.Errorf("resolve Flat Rate formula template: %w", err)
-			}
-
 			defs := []lookupMatrixDef{
 				{
 					name:        "Fuel Surcharge",
 					code:        "fuel_surcharge",
 					description: "Fuel surcharge percentage by national average diesel price",
 					matchMode:   ratematrix.MatchModeRange,
+					valueType:   ratematrix.ValueTypePercent,
 					cells: []lookupCellDef{
 						{rangeMin: "0", rangeMax: "3", value: "0"},
-						{rangeMin: "3", rangeMax: "3.5", value: "0.12"},
-						{rangeMin: "3.5", rangeMax: "4", value: "0.18"},
-						{rangeMin: "4", value: "0.25"},
+						{rangeMin: "3", rangeMax: "3.5", value: "12"},
+						{rangeMin: "3.5", rangeMax: "4", value: "18"},
+						{rangeMin: "4", value: "25"},
 					},
 				},
 				{
@@ -113,6 +93,7 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 					code:        "lane_rate",
 					description: "Flat lane rates by origin-destination pair",
 					matchMode:   ratematrix.MatchModeExact,
+					valueType:   ratematrix.ValueTypeMoney,
 					cells: []lookupCellDef{
 						{matchKey: "ATL-MIA", value: "1450"},
 						{matchKey: "ATL-JAX", value: "980"},
@@ -135,11 +116,10 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 				}
 
 				if err = s.createMatrix(ctx, tx, createLookupMatrixParams{
-					sc:         sc,
-					orgID:      org.ID,
-					buID:       org.BusinessUnitID,
-					templateID: flatRate.ID,
-					def:        def,
+					sc:    sc,
+					orgID: org.ID,
+					buID:  org.BusinessUnitID,
+					def:   def,
 				}); err != nil {
 					return err
 				}
@@ -151,11 +131,10 @@ func (s *LookupMatrixSeed) Run(ctx context.Context, tx bun.Tx) error {
 }
 
 type createLookupMatrixParams struct {
-	sc         *seedhelpers.SeedContext
-	orgID      pulid.ID
-	buID       pulid.ID
-	templateID pulid.ID
-	def        lookupMatrixDef
+	sc    *seedhelpers.SeedContext
+	orgID pulid.ID
+	buID  pulid.ID
+	def   lookupMatrixDef
 }
 
 func (s *LookupMatrixSeed) createMatrix(
@@ -166,15 +145,14 @@ func (s *LookupMatrixSeed) createMatrix(
 	sc, orgID, buID, def := params.sc, params.orgID, params.buID, params.def
 
 	matrix := &ratematrix.RateMatrix{
-		ID:                pulid.MustNew("rmx_"),
-		OrganizationID:    orgID,
-		BusinessUnitID:    buID,
-		Code:              def.code,
-		Name:              def.name,
-		Description:       def.description,
-		Status:            domaintypes.StatusActive,
-		Currency:          "USD",
-		FormulaTemplateID: params.templateID,
+		ID:             pulid.MustNew("rmx_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Code:           def.code,
+		Name:           def.name,
+		Description:    def.description,
+		Status:         domaintypes.StatusActive,
+		ValueType:      def.valueType,
 	}
 
 	if _, err := tx.NewInsert().Model(matrix).Exec(ctx); err != nil {

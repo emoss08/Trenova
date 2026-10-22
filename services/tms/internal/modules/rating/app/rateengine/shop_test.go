@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -29,8 +31,8 @@ func buyRule(carrierID pulid.ID, amount string) *rateagreement.RateAgreementRule
 	rule := perMileRule("1", 100)
 	rule.PartyType = rateagreement.PartyTypeCarrier
 	rule.PartyID = carrierID
-	rule.FormulaTemplateID = &flatTemplateID
-	rule.Rate = decimal.NewNullDecimal(decimal.RequireFromString(amount))
+	rule.FormulaTemplateID = flatTemplateID
+	rule.Inputs = tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.RequireFromString(amount))}
 	rule.Agreement.PartyType = rateagreement.PartyTypeCarrier
 
 	return rule
@@ -39,6 +41,9 @@ func buyRule(carrierID pulid.ID, amount string) *rateagreement.RateAgreementRule
 // expectBuyRules answers each carrier's resolution with the rule written for
 // it, so one shopping run exercises several contracts.
 func expectBuyRules(d *deps, byCarrier map[pulid.ID]*rateagreement.RateAgreementRule) {
+	for _, rule := range byCarrier {
+		d.known.LoadOrStore(rule.RateAgreementID, rule.Agreement)
+	}
 	d.agreements.EXPECT().ResolveRules(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
@@ -55,8 +60,6 @@ func expectBuyRules(d *deps, byCarrier map[pulid.ID]*rateagreement.RateAgreement
 
 			return &rateagreementports.ResolveRateRulesResult{}, nil
 		})
-
-	expectTemplates(d)
 }
 
 func expectGuide(d *deps, entries ...*tender.RoutingGuideEntry) *tender.RoutingGuide {
@@ -200,9 +203,9 @@ func TestShop_ReportsMarginAgainstTheSellPrice(t *testing.T) {
 }
 
 // A carrier agreement written as a share of what the customer pays needs the
-// sell total in scope, so the buy side binds it into the template alongside the
-// rule's own rate.
-func TestShop_BindsTheSellTotalIntoTheCarriersTemplate(t *testing.T) {
+// sell total in scope, so the buy side puts it on the record beside the rule's
+// own inputs.
+func TestShop_PutsTheSellTotalOnTheCarriersRecord(t *testing.T) {
 	t.Parallel()
 
 	d := setup(t)
@@ -214,12 +217,12 @@ func TestShop_BindsTheSellTotalIntoTheCarriersTemplate(t *testing.T) {
 	_, err := d.svc.Shop(t.Context(), shopRequest(ratequoteports.ShopStrategyLeastCost))
 
 	require.NoError(t, err)
-	require.Len(t, d.calcRequests, 1)
+	require.Len(t, d.evaluator.Requests(), 1)
 
-	req := d.calcRequests[0]
-	assert.Equal(t, flatTemplateID, req.TemplateID)
-	assertBound(t, "1400", req.Overrides["baseRate"])
-	assertBound(t, "2000", req.Overrides["sellTotal"])
+	req := d.evaluator.Requests()[0]
+	assert.Equal(t, flatSource, req.Programs[0].Source)
+	assert.Contains(t, string(req.Record), `"sellTotal":{"$q":"2000","u":"$"}`)
+	assert.Contains(t, string(req.Record), `"mode":"Buy"`)
 }
 
 // A carrier no contract covers is not an error and must not take the shopping

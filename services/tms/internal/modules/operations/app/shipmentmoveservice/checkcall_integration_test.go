@@ -130,9 +130,9 @@ func newCheckCallHarness(t *testing.T) (context.Context, *checkCallHarness) {
 		Config: &config.Config{
 			Tendering: config.TenderingConfig{PublicBaseURL: "https://app.example.com"},
 		},
-		Repo:     checkcallrepository.New(checkcallrepository.Params{DB: conn, Logger: zap.NewNop()}),
-		Links:    links,
-		MoveRepo: moveRepo,
+		Repo:         checkcallrepository.New(checkcallrepository.Params{DB: conn, Logger: zap.NewNop()}),
+		Links:        links,
+		MoveRepo:     moveRepo,
 		ShipmentRepo: shipmentRepo,
 		CarrierAssignments: carrierassignmentrepository.New(
 			carrierassignmentrepository.Params{DB: conn, Logger: zap.NewNop()},

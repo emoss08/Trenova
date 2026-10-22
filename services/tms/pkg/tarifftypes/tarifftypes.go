@@ -2,6 +2,7 @@ package tarifftypes
 
 import (
 	"bytes"
+	"fmt"
 	"slices"
 
 	"github.com/bytedance/sonic"
@@ -36,12 +37,64 @@ func (i Inputs) Equal(other Inputs) bool {
 	}
 	for name, value := range i {
 		theirs, ok := other[name]
-		if !ok || !bytes.Equal(compact(value), compact(theirs)) {
+		if !ok || !EqualValues(value, theirs) {
 			return false
 		}
 	}
 	return true
 }
+
+func EqualValues(a, b rules.RawJSON) bool {
+	var left, right any
+	if exactJSON.Unmarshal(a, &left) != nil || exactJSON.Unmarshal(b, &right) != nil {
+		return bytes.Equal(a, b)
+	}
+	return sameValue(left, right)
+}
+
+func sameValue(left, right any) bool {
+	switch l := left.(type) {
+	case map[string]any:
+		r, ok := right.(map[string]any)
+		if !ok || len(l) != len(r) {
+			return false
+		}
+		for key, value := range l {
+			theirs, present := r[key]
+			if !present {
+				return false
+			}
+			if key == wireQuantityKey || key == wireNumberKey {
+				if !sameNumber(value, theirs) {
+					return false
+				}
+				continue
+			}
+			if !sameValue(value, theirs) {
+				return false
+			}
+		}
+		return true
+	case []any:
+		r, ok := right.([]any)
+		if !ok || len(l) != len(r) {
+			return false
+		}
+		for index := range l {
+			if !sameValue(l[index], r[index]) {
+				return false
+			}
+		}
+		return true
+	default:
+		return fmt.Sprint(left) == fmt.Sprint(right)
+	}
+}
+
+const (
+	wireQuantityKey = "$q"
+	wireNumberKey   = "$n"
+)
 
 func compact(raw rules.RawJSON) []byte {
 	var decoded any
@@ -53,6 +106,15 @@ func compact(raw rules.RawJSON) []byte {
 		return raw
 	}
 	return out
+}
+
+func sameNumber(left, right any) bool {
+	l, lErr := decimal.NewFromString(fmt.Sprint(left))
+	r, rErr := decimal.NewFromString(fmt.Sprint(right))
+	if lErr != nil || rErr != nil {
+		return fmt.Sprint(left) == fmt.Sprint(right)
+	}
+	return l.Equal(r)
 }
 
 type InputDecl struct {

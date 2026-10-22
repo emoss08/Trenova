@@ -140,7 +140,7 @@ func scaleTree(
 ) (any, bool, error) {
 	switch typed := node.(type) {
 	case map[string]any:
-		if amount, ok := typed["$q"].(string); ok {
+		if amount, ok := typed[wireQuantityKey].(string); ok {
 			unit, _ := typed["u"].(string)
 			if unit != rules.UnitMoney && !strings.HasPrefix(unit, rules.UnitMoney+"/") {
 				return typed, false, nil
@@ -149,7 +149,7 @@ func scaleTree(
 			if err != nil {
 				return nil, false, err
 			}
-			return map[string]any{"$q": round(value.Mul(factor)).String(), "u": unit}, true, nil
+			return map[string]any{wireQuantityKey: round(value.Mul(factor)).String(), "u": unit}, true, nil
 		}
 		changed := false
 		out := make(map[string]any, len(typed))
@@ -190,7 +190,10 @@ func DisplayValue(raw rules.RawJSON) string {
 		case quantity.Unit == rules.UnitPercent:
 			return quantity.Value.String() + rules.UnitPercent
 		case strings.HasPrefix(quantity.Unit, rules.UnitMoney+"/"):
-			return rules.UnitMoney + quantity.Value.String() + strings.TrimPrefix(quantity.Unit, rules.UnitMoney)
+			return rules.UnitMoney + quantity.Value.String() + strings.TrimPrefix(
+				quantity.Unit,
+				rules.UnitMoney,
+			)
 		default:
 			return quantity.Value.String() + " " + quantity.Unit
 		}
@@ -203,4 +206,31 @@ func DisplayValue(raw rules.RawJSON) string {
 		return text
 	}
 	return string(compact(raw))
+}
+
+func (i Inputs) Values() (map[string]any, error) {
+	out := make(map[string]any, len(i))
+	for name, raw := range i {
+		var value any
+		if err := exactJSON.Unmarshal(raw, &value); err != nil {
+			return nil, fmt.Errorf("tarifftypes: decode input %s: %w", name, err)
+		}
+		out[name] = value
+	}
+	return out, nil
+}
+
+func InputsFromValues(values map[string]any) (Inputs, error) {
+	if values == nil {
+		return nil, nil
+	}
+	out := make(Inputs, len(values))
+	for name, value := range values {
+		raw, err := exactJSON.Marshal(value)
+		if err != nil {
+			return nil, fmt.Errorf("tarifftypes: encode input %s: %w", name, err)
+		}
+		out[name] = raw
+	}
+	return out, nil
 }

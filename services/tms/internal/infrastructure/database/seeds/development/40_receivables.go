@@ -535,19 +535,22 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 	delivered := invoiceDate - receivableSeedDay
 	charge := decimal.NullDecimal{Decimal: decimal.RequireFromString(spec.freight), Valid: true}
 	shp := &shipment.Shipment{
-		ID:                     pulid.MustNew("shp_"),
-		BusinessUnitID:         refs.buID,
-		OrganizationID:         refs.orgID,
-		CustomerID:             cus.ID,
-		ServiceTypeID:          refs.serviceType,
-		ShipmentTypeID:         refs.shipmentType,
-		FormulaTemplateID:      refs.template,
-		Status:                 shipment.StatusInvoiced,
-		ProNumber:              spec.pro,
-		BOL:                    "BOL-" + spec.pro,
-		Pieces:                 new(int64(22)),
-		Weight:                 new(int64(38000)),
-		BaseRate:               charge,
+		ID:                pulid.MustNew("shp_"),
+		BusinessUnitID:    refs.buID,
+		OrganizationID:    refs.orgID,
+		CustomerID:        cus.ID,
+		ServiceTypeID:     refs.serviceType,
+		ShipmentTypeID:    refs.shipmentType,
+		FormulaTemplateID: refs.template,
+		Status:            shipment.StatusInvoiced,
+		ProNumber:         spec.pro,
+		BOL:               "BOL-" + spec.pro,
+		Pieces:            new(int64(22)),
+		Weight:            new(int64(38000)),
+		TariffInputs: seededTariffInputs(
+			formulatemplate.StandardFlatRate,
+			charge.Decimal,
+		),
 		FreightChargeAmount:    charge,
 		TotalChargeAmount:      charge,
 		ActualShipDate:         &pickedUp,
@@ -557,6 +560,7 @@ func (s *ReceivablesSeed) createDeliveredShipment(
 		TransferredToBillingAt: &delivered,
 		BilledAt:               &invoiceDate,
 	}
+	shp.FreightLines = seededFreightLines(shp)
 	move := &shipment.ShipmentMove{
 		ID:             pulid.MustNew("sm_"),
 		BusinessUnitID: refs.buID,

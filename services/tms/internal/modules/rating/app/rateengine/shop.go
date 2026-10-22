@@ -301,7 +301,13 @@ func maxPayPercentOf(rated *ratequoteports.RatedShipment) decimal.NullDecimal {
 }
 
 func agreementOf(rated *ratequoteports.RatedShipment) *rateagreement.RateAgreement {
-	if rated == nil || rated.Quote == nil {
+	if rated == nil {
+		return nil
+	}
+	if rated.Agreement != nil {
+		return rated.Agreement
+	}
+	if rated.Quote == nil {
 		return nil
 	}
 

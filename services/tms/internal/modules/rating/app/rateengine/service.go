@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
@@ -481,7 +482,7 @@ func (s *Service) totals(
 		return ratetypes.Totals{}, err
 	}
 	for i := range coded {
-		if _, ok := fuelCodes[coded[i].Code]; ok {
+		if _, ok := fuelCodes[accessorialcharge.NormalizeCode(coded[i].Code)]; ok {
 			totals.Fuel = totals.Fuel.Add(coded[i].Amount)
 			continue
 		}
@@ -509,7 +510,7 @@ func (s *Service) fuelCodes(
 	codes := make(map[string]struct{}, len(ids))
 	for _, charge := range catalog {
 		if _, ok := wanted[charge.ID]; ok {
-			codes[charge.Code] = struct{}{}
+			codes[accessorialcharge.NormalizeCode(charge.Code)] = struct{}{}
 		}
 	}
 	return codes, nil

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/mock"
@@ -46,9 +47,11 @@ func StubRateEngineForAgreement(
 		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
 		Return(&ratequoteports.RatedShipment{
 			Amount:      linehaul,
+			Total:       linehaul,
 			Currency:    "USD",
 			Outcome:     ratequote.OutcomeRated,
 			AgreementID: agreementID,
+			Bill:        FreightBill(linehaul),
 			Quote: &ratequote.RateQuote{
 				Outcome:         ratequote.OutcomeRated,
 				RateAgreementID: agreementID,
@@ -63,4 +66,19 @@ func StubRateEngineForAgreement(
 		Maybe()
 
 	return engine
+}
+
+func FreightBill(amount decimal.Decimal) *tarifftypes.Bill {
+	return &tarifftypes.Bill{
+		Currency: "USD",
+		Lines: []tarifftypes.Line{{
+			Kind:    tarifftypes.LineCharge,
+			Label:   "Linehaul",
+			Freight: true,
+			Amount:  amount,
+		}},
+		FreightTotal:     amount,
+		AccessorialTotal: decimal.Zero,
+		Total:            amount,
+	}
 }

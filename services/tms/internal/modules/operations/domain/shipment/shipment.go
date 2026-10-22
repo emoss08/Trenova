@@ -292,6 +292,7 @@ func RestoreRateOwnedFields(original, updated *Shipment) {
 	}
 
 	updated.RatingDetail = original.RatingDetail
+	updated.FreightLines = original.FreightLines
 }
 
 func (s *Shipment) ClearRatingOutcome() {

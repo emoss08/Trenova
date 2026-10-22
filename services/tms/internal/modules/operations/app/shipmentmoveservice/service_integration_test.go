@@ -371,7 +371,7 @@ func newIntegrationService(
 	formulaSvc := formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
+		Environment:    environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:       res,
 		Repo:           formulaRepo,
 		VersionRepo:    moveIntgStubVersionRepo{},

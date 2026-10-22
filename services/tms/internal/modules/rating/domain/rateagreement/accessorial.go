@@ -137,7 +137,7 @@ func (raga *RateAgreementAccessorial) TariffRateUnit() string {
 	if raga.Method != accessorialcharge.MethodPerUnit {
 		return ""
 	}
-	return raga.RateUnit.TariffUnit()
+	return raga.RateUnit.TariffRateUnit()
 }
 
 func (raga *RateAgreementAccessorial) applyDefaults() {

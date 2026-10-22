@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -124,46 +125,41 @@ func TestRateAgreementSeed_EveryLaneResolvesItsGeography(t *testing.T) {
 	}
 }
 
-// A lane prices through exactly one of a formula template or the zone matrix,
-// and the domain validation that would normally catch a lane carrying neither
-// or both does not run on a seed's direct insert.
-func TestRateAgreementSeed_EveryLaneCarriesExactlyOneWayToPrice(t *testing.T) {
+// Every lane prices through a template with a rate and a minimum the template
+// declares, and the domain validation that would normally catch a lane missing
+// one does not run on a seed's direct insert.
+func TestRateAgreementSeed_EveryLaneCarriesATariffAndItsInputs(t *testing.T) {
 	t.Parallel()
 
 	seed := &RateAgreementSeed{}
 	refs := seedRefsForTest()
 	agreement := agreementForTest()
 
-	matrixLanes := 0
-
 	for _, lane := range seededLanes() {
 		rule, ok := seed.buildRule(refs, agreement, lane)
 		require.True(t, ok)
 
-		if !lane.def.useMatrix {
-			assert.Nilf(t, rule.RateMatrixID,
-				"lane %q is not matrix rated but carries a matrix", lane.def.label)
-			require.NotNilf(t, rule.FormulaTemplateID,
-				"lane %q prices through a template but carries none", lane.def.label)
-			assert.Equalf(t, refs.templates[lane.def.template], *rule.FormulaTemplateID,
-				"lane %q carries a template other than the one it names", lane.def.label)
-			continue
-		}
-
-		matrixLanes++
-
-		require.NotNilf(t, rule.RateMatrixID, "lane %q is matrix rated but carries none",
-			lane.def.label)
-		assert.Equal(t, refs.matrixID, *rule.RateMatrixID)
-		assert.Nilf(t, rule.FormulaTemplateID,
-			"lane %q reads its price from the matrix, so a template would compete with it",
-			lane.def.label)
-		assert.Falsef(t, rule.Rate.Valid,
-			"lane %q reads its price from the matrix, so a rate would be ignored",
-			lane.def.label)
+		assert.Equalf(t, refs.templates[lane.def.template], rule.FormulaTemplateID,
+			"lane %q carries a template other than the one it names", lane.def.label)
+		rate, err := rules.DecodeQuantity(rule.Inputs[formulatemplate.StandardInputRate])
+		require.NoErrorf(t, err, "lane %q has no rate input", lane.def.label)
+		assert.Equal(t, "$/mi", rate.Unit)
+		minimum, err := rules.DecodeQuantity(rule.Inputs[formulatemplate.StandardInputMinimumCharge])
+		require.NoErrorf(t, err, "lane %q has no minimum input", lane.def.label)
+		assert.Equal(t, rules.UnitMoney, minimum.Unit)
 	}
+}
 
-	assert.Positive(t, matrixLanes, "the seed should exercise the matrix path")
+func TestRateAgreementSeed_MultiStopConditionChecks(t *testing.T) {
+	t.Parallel()
+
+	check, err := rules.CheckTariff(t.Context(), &rules.TariffCheckRequest{
+		Source:  multiStopCondition,
+		Kind:    rules.TariffKindCondition,
+		Context: &rules.TariffContext{},
+	})
+	require.NoError(t, err)
+	assert.True(t, check.OK, "%+v", check.FirstError())
 }
 
 // Every zone the lanes reference has to be one the seed actually creates.
@@ -204,7 +200,6 @@ func seedRefsForTest() *rateSeedRefs {
 		states:    make(map[string]pulid.ID),
 		templates: make(map[string]pulid.ID),
 		matrixID:  pulid.MustNew("rmx_"),
-		densityID: pulid.MustNew("rds_"),
 	}
 
 	refs.templates[formulatemplate.StandardPerMile] = pulid.MustNew("ft_")

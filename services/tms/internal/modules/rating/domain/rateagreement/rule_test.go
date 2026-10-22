@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,8 +20,6 @@ func formulaRule(
 	originType, destinationType rategeo.ScopeType,
 	originValue, destinationValue string,
 ) *rateagreement.RateAgreementRule {
-	templateID := pulid.MustNew("ft_")
-
 	return &rateagreement.RateAgreementRule{
 		ID:                    pulid.MustNew("ragr_"),
 		Status:                rateagreement.RuleStatusActive,
@@ -29,9 +28,11 @@ func formulaRule(
 		OriginScopeValue:      originValue,
 		DestinationScopeType:  destinationType,
 		DestinationScopeValue: destinationValue,
-		FormulaTemplateID:     &templateID,
-		Rate:                  nullDec("2.15"),
-		EffectiveFrom:         1,
+		FormulaTemplateID:     pulid.MustNew("ft_"),
+		Inputs: tarifftypes.Inputs{
+			"rate": rules.QuantityValue(dec("2.15"), "$/mi"),
+		},
+		EffectiveFrom: 1,
 	}
 }
 
@@ -286,127 +287,20 @@ func TestWeightRangeBoundsAreInclusive(t *testing.T) {
 	}
 }
 
-// A rule prices through exactly one of a formula template or a rate matrix. A
-// rule naming both leaves the engine to guess which one the contract meant,
-// and a rule naming neither prices at nothing.
-func TestRulePricesByExactlyOneMethod(t *testing.T) {
-	t.Parallel()
-
-	matrixID := pulid.MustNew("rmx_")
-
-	tests := []struct {
-		name    string
-		mutate  func(*rateagreement.RateAgreementRule)
-		wantErr bool
-	}{
-		{
-			name:    "a formula rule with a rate is valid",
-			mutate:  func(*rateagreement.RateAgreementRule) {},
-			wantErr: false,
-		},
-		{
-			name: "a formula rule with neither rate nor breaks is valid",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.Rate = decimal.NullDecimal{}
-			},
-			wantErr: false,
-		},
-		{
-			name: "a formula rule may carry weight breaks instead of a rate",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.Rate = decimal.NullDecimal{}
-				r.Breaks = []*rateagreement.RateAgreementRuleBreak{
-					weightBreak("0", "1000", "30"),
-					weightBreak("1000", "", "10"),
-				}
-			},
-			wantErr: false,
-		},
-		{
-			name: "a rule with no pricing method is rejected",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.FormulaTemplateID = nil
-			},
-			wantErr: true,
-		},
-		{
-			name: "a rule naming both methods is rejected",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.RateMatrixID = &matrixID
-			},
-			wantErr: true,
-		},
-		{
-			name: "a matrix rule with only the matrix is valid",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.FormulaTemplateID = nil
-				r.Rate = decimal.NullDecimal{}
-				r.RateMatrixID = &matrixID
-			},
-			wantErr: false,
-		},
-		{
-			name: "a matrix rule may not carry a rate",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.FormulaTemplateID = nil
-				r.RateMatrixID = &matrixID
-			},
-			wantErr: true,
-		},
-		{
-			name: "a matrix rule may not carry weight breaks",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.FormulaTemplateID = nil
-				r.Rate = decimal.NullDecimal{}
-				r.RateMatrixID = &matrixID
-				r.Breaks = []*rateagreement.RateAgreementRuleBreak{
-					weightBreak("0", "", "30"),
-				}
-			},
-			wantErr: true,
-		},
-		{
-			name: "a negative rate is rejected",
-			mutate: func(r *rateagreement.RateAgreementRule) {
-				r.Rate = nullDec("-1")
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
-			tt.mutate(rule)
-
-			multiErr := errortypes.NewMultiError()
-			rule.Validate(multiErr)
-
-			if tt.wantErr {
-				assert.True(t, multiErr.HasErrors())
-			} else {
-				assert.False(t, multiErr.HasErrors(), "%v", multiErr)
-			}
-		})
-	}
-}
-
-func TestPricingMethodHelpersNameTheMethod(t *testing.T) {
+// A rule is priced by its tariff, so a rule with none prices at nothing and is
+// refused. Its inputs are the tariff's business, checked when it is saved.
+func TestRuleNeedsATariff(t *testing.T) {
 	t.Parallel()
 
 	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
+	multiErr := errortypes.NewMultiError()
+	rule.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), "%v", multiErr)
 
-	assert.True(t, rule.HasFormulaTemplate())
-	assert.False(t, rule.HasRateMatrix())
-
-	matrixID := pulid.MustNew("rmx_")
-	rule.FormulaTemplateID = nil
-	rule.RateMatrixID = &matrixID
-
-	assert.False(t, rule.HasFormulaTemplate())
-	assert.True(t, rule.HasRateMatrix())
+	rule.FormulaTemplateID = pulid.Nil
+	multiErr = errortypes.NewMultiError()
+	rule.Validate(multiErr)
+	assert.Contains(t, multiErr.Error(), "formulaTemplateId")
 }
 
 func TestRadiusLaneNeedsACentreAndADistance(t *testing.T) {
@@ -436,21 +330,4 @@ func TestRadiusLaneNeedsACentreAndADistance(t *testing.T) {
 	assert.False(t, multiErr.HasErrors(), "%v", multiErr)
 	assert.Equal(t, rateagreement.RadiusLaneKey, rule.LaneKey)
 	assert.True(t, rule.IsRadiusLane())
-}
-
-func TestWeightBreaksMustBeContiguous(t *testing.T) {
-	t.Parallel()
-
-	rule := formulaRule(rategeo.ScopeTypeAny, rategeo.ScopeTypeAny, "", "")
-	rule.Rate = decimal.NullDecimal{}
-	rule.Breaks = []*rateagreement.RateAgreementRuleBreak{
-		weightBreak("0", "1000", "30"),
-		// Leaves 1,000 to 2,000 unpriced.
-		weightBreak("2000", "", "10"),
-	}
-
-	multiErr := errortypes.NewMultiError()
-	rule.Validate(multiErr)
-
-	assert.True(t, multiErr.HasErrors(), "a gap between breaks must be rejected")
 }

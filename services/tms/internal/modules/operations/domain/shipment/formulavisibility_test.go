@@ -4,7 +4,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,11 +15,11 @@ import (
 func ratedShipment() *Shipment {
 	return &Shipment{
 		ID:              pulid.MustNew("shp_"),
-		FormulaTemplate: &formulatemplate.FormulaTemplate{Expression: "weight * 2"},
+		FormulaTemplate: &formulatemplate.FormulaTemplate{Name: "Per pound"},
 		RatingDetail: &RatingDetail{
 			FormulaTemplateName: "Per pound",
-			Expression:          "weight * 2",
-			Result:              42,
+			Trace:               rules.RawJSON(`{"statements":["weight * 2"]}`),
+			Bill:                &tarifftypes.Bill{Total: decimal.NewFromInt(42)},
 		},
 	}
 }
@@ -29,12 +32,13 @@ func TestShipment_WithoutFormulaContent(t *testing.T) {
 
 	require.NotSame(t, original, redacted)
 	assert.Nil(t, redacted.FormulaTemplate)
-	assert.Empty(t, redacted.RatingDetail.Expression)
+	assert.Empty(t, redacted.RatingDetail.Trace)
 	assert.Equal(t, "Per pound", redacted.RatingDetail.FormulaTemplateName)
-	assert.InDelta(t, 42, redacted.RatingDetail.Result, 0)
+	assert.True(t, redacted.RatingDetail.Bill.Total.Equal(decimal.NewFromInt(42)),
+		"the bill is the price, not the formula")
 
 	assert.NotNil(t, original.FormulaTemplate)
-	assert.Equal(t, "weight * 2", original.RatingDetail.Expression)
+	assert.NotEmpty(t, original.RatingDetail.Trace)
 }
 
 func TestShipment_WithoutFormulaContentLeavesCleanShipmentAlone(t *testing.T) {
@@ -43,7 +47,10 @@ func TestShipment_WithoutFormulaContentLeavesCleanShipmentAlone(t *testing.T) {
 	var missing *Shipment
 	assert.Nil(t, missing.WithoutFormulaContent())
 
-	plain := &Shipment{ID: pulid.MustNew("shp_"), RatingDetail: &RatingDetail{Result: 1}}
+	plain := &Shipment{
+		ID:           pulid.MustNew("shp_"),
+		RatingDetail: &RatingDetail{Bill: &tarifftypes.Bill{Total: decimal.NewFromInt(1)}},
+	}
 	assert.Same(t, plain, plain.WithoutFormulaContent())
 }
 
@@ -60,10 +67,10 @@ func TestWithoutFormulaContent_Slice(t *testing.T) {
 	assert.Same(t, plain, redacted[0])
 	assert.NotSame(t, rated, redacted[1])
 	assert.Nil(t, redacted[1].FormulaTemplate)
-	assert.Empty(t, redacted[1].RatingDetail.Expression)
+	assert.Empty(t, redacted[1].RatingDetail.Trace)
 	assert.Nil(t, redacted[2])
 	assert.Same(t, rated, items[1])
-	assert.Equal(t, "weight * 2", items[1].RatingDetail.Expression)
+	assert.NotEmpty(t, items[1].RatingDetail.Trace)
 
 	clean := []*Shipment{plain}
 	assert.Equal(t, &clean[0], &WithoutFormulaContent(clean)[0])

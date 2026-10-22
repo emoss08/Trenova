@@ -115,7 +115,7 @@ type TariffContext struct {
 }
 
 type TariffInputValues struct {
-	Rule      map[string]RawJSON `json:"rule,omitempty"`
+	Rule      map[string]RawJSON `json:"rule"`
 	Agreement map[string]RawJSON `json:"agreement,omitempty"`
 }
 

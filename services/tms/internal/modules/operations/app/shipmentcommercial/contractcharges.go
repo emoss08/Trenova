@@ -51,7 +51,12 @@ func (c *Calculator) ContractCharges(
 		return nil, err
 	}
 
-	priced, err := pricedAgreementCharges(ctx, entity, applicable, rated.Amount)
+	priced, err := shipment.PriceAgreementAccessorials(
+		ctx,
+		entity.AccessorialMeasures(),
+		applicable,
+		rated.Amount,
+	)
 	if err != nil {
 		return nil, err
 	}

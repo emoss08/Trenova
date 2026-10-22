@@ -36,3 +36,11 @@ func (u RateUnit) TariffUnit() string {
 		return ""
 	}
 }
+
+func (u RateUnit) TariffRateUnit() string {
+	unit := u.TariffUnit()
+	if unit == "" {
+		return ""
+	}
+	return "$/" + unit
+}

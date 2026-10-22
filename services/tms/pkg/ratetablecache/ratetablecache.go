@@ -72,8 +72,8 @@ type cellKey struct {
 	tenant     tenantKey
 	generation uint64
 	stamp      string
-	table  string
-	keys   string
+	table      string
+	keys       string
 }
 
 var process = struct {
@@ -166,7 +166,12 @@ func Cells(orgID, buID pulid.ID, stamp, table string, keys []string) ([]rules.Ta
 	return process.cells.Get(keyFor(orgID, buID, stamp, table, keys))
 }
 
-func StoreCells(orgID, buID pulid.ID, stamp, table string, keys []string, cells []rules.TariffCell) {
+func StoreCells(
+	orgID, buID pulid.ID,
+	stamp, table string,
+	keys []string,
+	cells []rules.TariffCell,
+) {
 	if stamp == "" {
 		return
 	}

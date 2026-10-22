@@ -3,6 +3,7 @@ package shipmentrepository
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
@@ -97,6 +98,8 @@ func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipme
 		TractorTypeID:       source.TractorTypeID,
 		TrailerTypeID:       source.TrailerTypeID,
 		FormulaTemplateID:   source.FormulaTemplateID,
+		TariffInputs:        source.TariffInputs.Clone(),
+		FreightLines:        slices.Clone(source.FreightLines),
 		Status:              shipment.StatusNew,
 		ProNumber:           spec.ProNumber,
 		BOL:                 spec.BOL,
