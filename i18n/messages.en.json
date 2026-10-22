@@ -67192,6 +67192,15 @@
       "routes/worker"
     ]
   },
+  "Credentials are listed within one organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Credentials coming due": {
     "sites": 1,
     "scope": [
@@ -99279,6 +99288,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Expiring within must be from 1 to 365 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Expiry": {
@@ -170961,6 +170979,15 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib"
+    ]
+  },
+  "Offset cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Offset is not supported for cursor pagination": {
