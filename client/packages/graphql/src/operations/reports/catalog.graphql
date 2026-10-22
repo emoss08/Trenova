@@ -41,7 +41,10 @@ query ReportCatalog {
         traversable
         access
         inReferenceView
-        needsReadOf
+        needsReadOf {
+          resource
+          label
+        }
       }
     }
   }

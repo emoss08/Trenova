@@ -7,6 +7,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
@@ -741,7 +742,7 @@ func reportCatalogToModel(
 		if !entity.Usable() {
 			continue
 		}
-		entities = append(entities, catalogEntityToModel(locale, entity))
+		entities = append(entities, catalogEntityToModel(locale, catalog.Kinds, entity))
 	}
 
 	return &gqlmodel.ReportCatalog{
@@ -765,8 +766,27 @@ func reportFieldAccessToModel(decision reportaccess.Decision) gqlmodel.ReportFie
 	}
 }
 
+func catalogKindToModel(
+	locale i18n.Locale,
+	kinds *reportaccess.Resolver,
+	resource permission.Resource,
+) *gqlmodel.ReportCatalogKind {
+	if resource == "" {
+		return nil
+	}
+	label := resource.String()
+	if kinds != nil {
+		label = kinds.KindLabel(resource)
+	}
+	return &gqlmodel.ReportCatalogKind{
+		Resource: resource.String(),
+		Label:    i18n.Translate(locale, label),
+	}
+}
+
 func catalogEntityToModel(
 	locale i18n.Locale,
+	kinds *reportaccess.Resolver,
 	decided *reportaccess.Entity,
 ) *gqlmodel.ReportCatalogEntity {
 	entity := decided.Entity
@@ -823,7 +843,7 @@ func catalogEntityToModel(
 			Traversable:     edge.Traversable,
 			Access:          reportFieldAccessToModel(use.Decision),
 			InReferenceView: use.Reference,
-			NeedsReadOf:     nilIfEmpty(use.Kind.String()),
+			NeedsReadOf:     catalogKindToModel(locale, kinds, use.Kind),
 		})
 	}
 

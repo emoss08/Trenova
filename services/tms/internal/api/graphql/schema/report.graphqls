@@ -67,7 +67,14 @@ type ReportCatalogEdge {
   The kind whose read the caller lacks to follow the edge, when access is
   NeedsKindRead.
   """
-  needsReadOf: String
+  needsReadOf: ReportCatalogKind
+}
+
+"A kind of record, as the report catalog names it."
+type ReportCatalogKind {
+  resource: String!
+  "The kind's plural label, such as Customers."
+  label: String!
 }
 
 type ReportCatalogEntity {

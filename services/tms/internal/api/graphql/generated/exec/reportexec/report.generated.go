@@ -23,6 +23,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReportCatalogEntity", Implementors: []string{"ReportCatalogEntity"}},
 		{Name: "ReportCatalogEnumValue", Implementors: []string{"ReportCatalogEnumValue"}},
 		{Name: "ReportCatalogField", Implementors: []string{"ReportCatalogField"}},
+		{Name: "ReportCatalogKind", Implementors: []string{"ReportCatalogKind"}},
 		{Name: "ReportColumnDisplay", Implementors: []string{"ReportColumnDisplay"}},
 		{Name: "ReportDashboard", Implementors: []string{"ReportDashboard"}},
 		{Name: "ReportDefinition", Implementors: []string{"ReportDefinition"}},
@@ -666,13 +667,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
-				Name:     "needsReadOf",
-				ChildErr: errNoChild0,
+				Name:      "needsReadOf",
+				HasChild:  true,
+				ChildType: "ReportCatalogKind",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogEdge)
 					return obj.NeedsReadOf, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+				Marshal: gqlexec.Marshal(marshalOReportCatalogKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportCatalogKind),
 			},
 		}},
 		{Object: "ReportCatalogEntity", Fields: []*gqlexec.Field{
@@ -947,6 +949,28 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogField)
 					return obj.Sensitivity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ReportCatalogKind", Fields: []*gqlexec.Field{
+			{
+				Name:     "resource",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogKind)
+					return obj.Resource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogKind)
+					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -6158,6 +6182,13 @@ func marshalOReportBand2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋg
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ReportBand", v)
+}
+
+func marshalOReportCatalogKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportCatalogKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportCatalogKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportCatalogKind", v)
 }
 
 func marshalOReportFieldProtection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldProtection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportFieldProtection) graphql.Marshaler {

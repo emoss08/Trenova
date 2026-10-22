@@ -25590,7 +25590,7 @@ type ReportCatalogEdge {
   The kind whose read the caller lacks to follow the edge, when access is
   NeedsKindRead.
   """
-  needsReadOf: String
+  needsReadOf: ReportCatalogKind
   target: String!
   traversable: Boolean!
 }
@@ -25645,6 +25645,13 @@ type ReportCatalogField {
   protection: ReportFieldProtection
   sensitivity: String!
   type: String!
+}
+
+"""A kind of record, as the report catalog names it."""
+type ReportCatalogKind {
+  """The kind's plural label, such as Customers."""
+  label: String!
+  resource: String!
 }
 
 input ReportChartGoalInput {

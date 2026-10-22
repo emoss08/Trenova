@@ -377,6 +377,23 @@ func edgeRows(
 	return rows, nil
 }
 
+// listedFieldCount is how many described fields report_get_dataset lists:
+// every one on a dataset the person reads, and the reference view alone on
+// one they reach only through a join.
+func listedFieldCount(decided *reportaccess.Entity) int {
+	if decided.Readable {
+		return describedFieldCount(decided.Entity)
+	}
+	count := 0
+	for i := range decided.Entity.Fields {
+		if describedField(&decided.Entity.Fields[i]) &&
+			decided.Fields[i].Decision != reportaccess.NeedsKindRead {
+			count++
+		}
+	}
+	return count
+}
+
 // usableFieldKeys are the described fields of an entity this person may use.
 func usableFieldKeys(decided *reportaccess.Entity) []string {
 	keys := make([]string, 0, len(decided.Fields))
@@ -571,7 +588,7 @@ func (t *describeReportDatasetTool) Query(
 		Description: entity.Description,
 		Category:    entity.Category,
 		Fields:      fields,
-		FieldCount:  describedFieldCount(entity),
+		FieldCount:  listedFieldCount(&decided),
 		Shown:       len(fields),
 		Edges:       edges,
 		Note:        note,

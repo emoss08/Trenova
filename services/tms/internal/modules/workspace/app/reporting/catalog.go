@@ -13,6 +13,8 @@ import (
 type Catalog struct {
 	Version  string
 	Entities []reportaccess.Entity
+	// Kinds names the kinds a decision refers to.
+	Kinds *reportaccess.Resolver
 }
 
 func (s *Service) Catalog(ctx context.Context, req *Request) (*Catalog, error) {
@@ -26,7 +28,11 @@ func (s *Service) Catalog(ctx context.Context, req *Request) (*Catalog, error) {
 		return nil, err
 	}
 
-	return &Catalog{Version: reportcatalog.Default.Version, Entities: entities}, nil
+	return &Catalog{
+		Version:  reportcatalog.Default.Version,
+		Entities: entities,
+		Kinds:    s.access,
+	}, nil
 }
 
 // CatalogAccess is the resolver the catalog and the compiler decide by, for

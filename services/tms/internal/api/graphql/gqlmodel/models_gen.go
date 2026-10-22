@@ -7026,7 +7026,7 @@ type ReportCatalogEdge struct {
 	InReferenceView bool `json:"inReferenceView"`
 	// The kind whose read the caller lacks to follow the edge, when access is
 	// NeedsKindRead.
-	NeedsReadOf *string `json:"needsReadOf,omitempty"`
+	NeedsReadOf *ReportCatalogKind `json:"needsReadOf,omitempty"`
 }
 
 type ReportCatalogEntity struct {
@@ -7071,6 +7071,13 @@ type ReportCatalogField struct {
 	// The protected field group the field belongs to, and whether the caller holds it.
 	Protection  *ReportFieldProtection `json:"protection,omitempty"`
 	Sensitivity string                 `json:"sensitivity"`
+}
+
+// A kind of record, as the report catalog names it.
+type ReportCatalogKind struct {
+	Resource string `json:"resource"`
+	// The kind's plural label, such as Customers.
+	Label string `json:"label"`
 }
 
 type ReportChartGoalInput struct {

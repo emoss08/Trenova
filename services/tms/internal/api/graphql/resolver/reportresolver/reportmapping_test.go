@@ -34,8 +34,8 @@ func TestCatalogEntityReadsInTheRequestersLanguage(t *testing.T) {
 		Edges:    []reportaccess.Use{{Decision: reportaccess.Available}},
 	}
 
-	english := catalogEntityToModel(i18n.EN, decided)
-	spanish := catalogEntityToModel(i18n.ES, decided)
+	english := catalogEntityToModel(i18n.EN, nil, decided)
+	spanish := catalogEntityToModel(i18n.ES, nil, decided)
 
 	assert.Equal(t, "Customer", english.Label)
 	require.Len(t, spanish.Fields, 1)
@@ -85,7 +85,7 @@ func TestCatalogNamesWhatEachFieldNeeds(t *testing.T) {
 		},
 	}
 
-	model := catalogEntityToModel(i18n.EN, decided)
+	model := catalogEntityToModel(i18n.EN, nil, decided)
 
 	assert.False(t, model.Readable)
 	require.Len(t, model.Fields, 3)
@@ -100,5 +100,9 @@ func TestCatalogNamesWhatEachFieldNeeds(t *testing.T) {
 	require.Len(t, model.Edges, 1)
 	assert.Equal(t, gqlmodel.ReportFieldAccessNeedsKindRead, model.Edges[0].Access)
 	require.NotNil(t, model.Edges[0].NeedsReadOf)
-	assert.Equal(t, "worker", *model.Edges[0].NeedsReadOf)
+	assert.Equal(t, "worker", model.Edges[0].NeedsReadOf.Resource)
+	assert.Equal(t, "worker", model.Edges[0].NeedsReadOf.Label)
+
+	named := catalogEntityToModel(i18n.EN, reportaccess.New(reportaccess.Params{}), decided)
+	assert.Equal(t, "Workers", named.Edges[0].NeedsReadOf.Label)
 }

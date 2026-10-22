@@ -588,6 +588,8 @@ func TestDescribeReportDataset_ADatasetTheActorCannotReadShowsOnlyItsReferenceFi
 	assert.Contains(t, keys, "name")
 	assert.NotContains(t, keys, "dotNumber",
 		"a field outside the view needs customer read and is left out")
+	assert.Equal(t, len(description.Fields), description.FieldCount,
+		"the count is of the fields this person can use")
 }
 
 func TestDescribeReportDataset_RefusesADatasetWithNothingTheActorMayUse(t *testing.T) {
