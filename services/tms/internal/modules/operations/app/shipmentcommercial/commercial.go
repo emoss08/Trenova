@@ -191,12 +191,15 @@ func (c *Calculator) calculateCommercialTotals(
 	// the next recalculation. Percentage-method charges are seeded against the
 	// stored freight amount, the only base there is before the linehaul is
 	// priced; the authoritative total is returned below, against the real base.
-	entity.OtherChargeAmount = decimal.NewNullDecimal(
-		shipment.AdditionalChargesTotal(
-			entity.AdditionalCharges,
-			entity.FreightChargeAmount.Decimal,
-		),
+	seeded, err := shipment.AdditionalChargeTotals(
+		ctx,
+		entity.AdditionalCharges,
+		entity.FreightChargeAmount.Decimal,
 	)
+	if err != nil {
+		return decimal.Zero, decimal.Zero, nil, err
+	}
+	entity.OtherChargeAmount = decimal.NewNullDecimal(seeded.Sum)
 
 	baseCharge, ratingDetail, err := c.calculateBaseCharge(ctx, entity, userID)
 	if err != nil {
@@ -216,10 +219,12 @@ func (c *Calculator) calculateCommercialTotals(
 		}
 	}
 
-	return baseCharge, shipment.AdditionalChargesTotal(
-		entity.AdditionalCharges,
-		baseCharge,
-	), ratingDetail, nil
+	other, err := shipment.AdditionalChargeTotals(ctx, entity.AdditionalCharges, baseCharge)
+	if err != nil {
+		return decimal.Zero, decimal.Zero, nil, err
+	}
+
+	return baseCharge, other.Sum, ratingDetail, nil
 }
 
 // calculateBaseCharge produces the linehaul from the shipment's own rating
@@ -658,12 +663,17 @@ func (c *Calculator) syncFuelSurcharge(
 		return nil
 	}
 
+	accessorialTotal, err := nonFuelSurchargeChargeTotal(ctx, entity, baseCharge)
+	if err != nil {
+		return err
+	}
+
 	resolved, err := c.fuelSurcharge.ResolveShipmentCharge(
 		ctx,
 		&fuelsurchargeports.ResolveShipmentChargeRequest{
 			Shipment:         entity,
 			Linehaul:         baseCharge,
-			AccessorialTotal: nonFuelSurchargeChargeTotal(entity, baseCharge),
+			AccessorialTotal: accessorialTotal,
 			Override:         fuelOverride(agreement),
 		},
 	)
@@ -681,17 +691,24 @@ func (c *Calculator) syncFuelSurcharge(
 }
 
 func nonFuelSurchargeChargeTotal(
+	ctx context.Context,
 	entity *shipment.Shipment,
 	baseCharge decimal.Decimal,
-) decimal.Decimal {
-	total := decimal.Zero
+) (decimal.Decimal, error) {
+	charges := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges))
 	for _, charge := range entity.AdditionalCharges {
 		if charge == nil || (charge.IsSystemGenerated && charge.FuelSurchargeProgramID != nil) {
 			continue
 		}
-		total = total.Add(charge.Total(baseCharge))
+		charges = append(charges, charge)
 	}
-	return total
+
+	totals, err := shipment.AdditionalChargeTotals(ctx, charges, baseCharge)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	return totals.Sum, nil
 }
 
 func removeGeneratedFuelSurchargeCharges(entity *shipment.Shipment) {

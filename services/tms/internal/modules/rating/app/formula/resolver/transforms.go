@@ -15,12 +15,11 @@ type TransformFunc func(value any) (any, error)
 var (
 	transformsMu sync.RWMutex
 	transforms   = map[string]TransformFunc{
-		"decimalToFloat64": decimalToFloat64,
-		"int64ToFloat64":   int64ToFloat64,
-		"int16ToFloat64":   int16ToFloat64,
-		"stringToUpper":    stringToUpper,
-		"stringToLower":    stringToLower,
-		"unixToISO8601":    unixToISO8601,
+		"decimal":       exactDecimal,
+		"integer":       exactInteger,
+		"stringToUpper": stringToUpper,
+		"stringToLower": stringToLower,
+		"unixToISO8601": unixToISO8601,
 	}
 )
 
@@ -37,67 +36,58 @@ func RegisterTransform(name string, fn TransformFunc) {
 	transforms[name] = fn
 }
 
-func decimalToFloat64(value any) (any, error) {
+func exactDecimal(value any) (any, error) {
 	switch v := value.(type) {
 	case decimal.Decimal:
-		f, _ := v.Float64()
-		return f, nil
+		return v, nil
 	case *decimal.Decimal:
-		if v == nil {
-			return 0.0, nil
+		if v != nil {
+			return *v, nil
 		}
-		f, _ := v.Float64()
-		return f, nil
 	case decimal.NullDecimal:
-		if !v.Valid {
-			return 0.0, nil
+		if v.Valid {
+			return v.Decimal, nil
 		}
-		f, _ := v.Decimal.Float64()
-		return f, nil
 	case *decimal.NullDecimal:
-		if v == nil || !v.Valid {
-			return 0.0, nil
+		if v != nil && v.Valid {
+			return v.Decimal, nil
 		}
-		f, _ := v.Decimal.Float64()
-		return f, nil
 	default:
 		return nil, fmt.Errorf("expected a number, got %s", errors.DescribeValue(value))
 	}
+	return nil, nil //nolint:nilnil // an empty decimal is the formula's null
 }
 
-func int64ToFloat64(value any) (any, error) {
+func exactInteger(value any) (any, error) {
 	switch v := value.(type) {
 	case int64:
-		return float64(v), nil
+		return v, nil
 	case *int64:
-		if v == nil {
-			return 0.0, nil
+		if v != nil {
+			return *v, nil
 		}
-		return float64(*v), nil
 	case int:
-		return float64(v), nil
+		return int64(v), nil
 	case *int:
-		if v == nil {
-			return 0.0, nil
+		if v != nil {
+			return int64(*v), nil
 		}
-		return float64(*v), nil
-	default:
-		return nil, fmt.Errorf("expected a number, got %s", errors.DescribeValue(value))
-	}
-}
-
-func int16ToFloat64(value any) (any, error) {
-	switch v := value.(type) {
 	case int16:
-		return float64(v), nil
+		return int64(v), nil
 	case *int16:
-		if v == nil {
-			return 0.0, nil
+		if v != nil {
+			return int64(*v), nil
 		}
-		return float64(*v), nil
+	case int32:
+		return int64(v), nil
+	case *int32:
+		if v != nil {
+			return int64(*v), nil
+		}
 	default:
-		return nil, fmt.Errorf("expected a number, got %s", errors.DescribeValue(value))
+		return nil, fmt.Errorf("expected a whole number, got %s", errors.DescribeValue(value))
 	}
+	return nil, nil //nolint:nilnil // an empty integer is the formula's null
 }
 
 func stringToUpper(value any) (any, error) {

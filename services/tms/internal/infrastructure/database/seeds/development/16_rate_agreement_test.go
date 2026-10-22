@@ -3,9 +3,9 @@ package development
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -78,14 +78,18 @@ func seededLaneScores(t *testing.T) map[string]int32 {
 	lanes := seededLanes()
 	require.NotEmpty(t, lanes)
 
-	scores := make(map[string]int32, len(lanes))
-
+	rules := make([]*rateagreement.RateAgreementRule, 0, len(lanes))
 	for _, lane := range lanes {
 		rule, ok := seed.buildRule(refs, agreement, lane)
 		require.Truef(t, ok, "lane %q did not resolve", lane.def.label)
-		require.NotEmptyf(t, rule.LaneKey, "lane %q produced no lane key", lane.def.label)
+		rules = append(rules, rule)
+	}
+	require.NoError(t, rateagreement.ApplyLanes(t.Context(), rules))
 
-		scores[lane.def.label] = rule.SpecificityScore
+	scores := make(map[string]int32, len(lanes))
+	for i, lane := range lanes {
+		require.NotEmptyf(t, rules[i].LaneKey, "lane %q produced no lane key", lane.def.label)
+		scores[lane.def.label] = rules[i].SpecificityScore
 	}
 
 	return scores

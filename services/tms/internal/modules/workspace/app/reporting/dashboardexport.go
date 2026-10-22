@@ -108,7 +108,7 @@ func (s *Service) ExportDashboard(
 	}
 
 	var buf bytes.Buffer
-	renderErr := render.NewXLSX().RenderDashboard(&render.DashboardRenderRequest{
+	renderErr := render.NewXLSX().RenderDashboard(ctx, &render.DashboardRenderRequest{
 		Title:       dashboard.Name,
 		Description: dashboard.Description,
 		GeneratedAt: timeutils.NowUnix(),

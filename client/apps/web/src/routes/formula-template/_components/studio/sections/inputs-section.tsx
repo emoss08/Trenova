@@ -159,7 +159,7 @@ export function InputsSection() {
           {fields.map((field, index) => {
             const variable = variables[index] ?? field;
             const name = variable.name ?? "";
-            const unused = name !== "" && !analysis.inputReads.has(name);
+            const unused = name !== "" && !analysis.pending && !analysis.inputReads.has(name);
             const taken =
               name !== "" &&
               (schemaNames.has(name) ||

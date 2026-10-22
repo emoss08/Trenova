@@ -38,25 +38,27 @@ func (_m *MockFormulaPredicateEvaluator) EXPECT() *MockFormulaPredicateEvaluator
 	return &MockFormulaPredicateEvaluator_Expecter{mock: &_m.Mock}
 }
 
-// EvaluatePredicate provides a mock function for the type MockFormulaPredicateEvaluator
-func (_mock *MockFormulaPredicateEvaluator) EvaluatePredicate(ctx context.Context, req *formulatemplateports.EvaluatePredicateRequest) (bool, error) {
+// EvaluatePredicates provides a mock function for the type MockFormulaPredicateEvaluator
+func (_mock *MockFormulaPredicateEvaluator) EvaluatePredicates(ctx context.Context, req *formulatemplateports.EvaluatePredicatesRequest) ([]formulatemplateports.PredicateOutcome, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for EvaluatePredicate")
+		panic("no return value specified for EvaluatePredicates")
 	}
 
-	var r0 bool
+	var r0 []formulatemplateports.PredicateOutcome
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.EvaluatePredicateRequest) (bool, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.EvaluatePredicatesRequest) ([]formulatemplateports.PredicateOutcome, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.EvaluatePredicateRequest) bool); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.EvaluatePredicatesRequest) []formulatemplateports.PredicateOutcome); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
-		r0 = ret.Get(0).(bool)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]formulatemplateports.PredicateOutcome)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *formulatemplateports.EvaluatePredicateRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *formulatemplateports.EvaluatePredicatesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -64,27 +66,27 @@ func (_mock *MockFormulaPredicateEvaluator) EvaluatePredicate(ctx context.Contex
 	return r0, r1
 }
 
-// MockFormulaPredicateEvaluator_EvaluatePredicate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EvaluatePredicate'
-type MockFormulaPredicateEvaluator_EvaluatePredicate_Call struct {
+// MockFormulaPredicateEvaluator_EvaluatePredicates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EvaluatePredicates'
+type MockFormulaPredicateEvaluator_EvaluatePredicates_Call struct {
 	*mock.Call
 }
 
-// EvaluatePredicate is a helper method to define mock.On call
+// EvaluatePredicates is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.EvaluatePredicateRequest
-func (_e *MockFormulaPredicateEvaluator_Expecter) EvaluatePredicate(ctx interface{}, req interface{}) *MockFormulaPredicateEvaluator_EvaluatePredicate_Call {
-	return &MockFormulaPredicateEvaluator_EvaluatePredicate_Call{Call: _e.mock.On("EvaluatePredicate", ctx, req)}
+//   - req *formulatemplateports.EvaluatePredicatesRequest
+func (_e *MockFormulaPredicateEvaluator_Expecter) EvaluatePredicates(ctx interface{}, req interface{}) *MockFormulaPredicateEvaluator_EvaluatePredicates_Call {
+	return &MockFormulaPredicateEvaluator_EvaluatePredicates_Call{Call: _e.mock.On("EvaluatePredicates", ctx, req)}
 }
 
-func (_c *MockFormulaPredicateEvaluator_EvaluatePredicate_Call) Run(run func(ctx context.Context, req *formulatemplateports.EvaluatePredicateRequest)) *MockFormulaPredicateEvaluator_EvaluatePredicate_Call {
+func (_c *MockFormulaPredicateEvaluator_EvaluatePredicates_Call) Run(run func(ctx context.Context, req *formulatemplateports.EvaluatePredicatesRequest)) *MockFormulaPredicateEvaluator_EvaluatePredicates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *formulatemplateports.EvaluatePredicateRequest
+		var arg1 *formulatemplateports.EvaluatePredicatesRequest
 		if args[1] != nil {
-			arg1 = args[1].(*formulatemplateports.EvaluatePredicateRequest)
+			arg1 = args[1].(*formulatemplateports.EvaluatePredicatesRequest)
 		}
 		run(
 			arg0,
@@ -94,12 +96,12 @@ func (_c *MockFormulaPredicateEvaluator_EvaluatePredicate_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockFormulaPredicateEvaluator_EvaluatePredicate_Call) Return(b bool, err error) *MockFormulaPredicateEvaluator_EvaluatePredicate_Call {
-	_c.Call.Return(b, err)
+func (_c *MockFormulaPredicateEvaluator_EvaluatePredicates_Call) Return(predicateOutcomes []formulatemplateports.PredicateOutcome, err error) *MockFormulaPredicateEvaluator_EvaluatePredicates_Call {
+	_c.Call.Return(predicateOutcomes, err)
 	return _c
 }
 
-func (_c *MockFormulaPredicateEvaluator_EvaluatePredicate_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.EvaluatePredicateRequest) (bool, error)) *MockFormulaPredicateEvaluator_EvaluatePredicate_Call {
+func (_c *MockFormulaPredicateEvaluator_EvaluatePredicates_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.EvaluatePredicatesRequest) ([]formulatemplateports.PredicateOutcome, error)) *MockFormulaPredicateEvaluator_EvaluatePredicates_Call {
 	_c.Call.Return(run)
 	return _c
 }

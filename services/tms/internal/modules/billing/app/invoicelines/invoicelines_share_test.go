@@ -65,7 +65,7 @@ func TestForShipmentSharePartialFreightCarriesItsShare(t *testing.T) {
 	shp.CustomerID = pulid.MustNew("cus_")
 	splitEverything(shp, shp.CustomerID, "60")
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(t.Context(), shp, shp.ChargeAllocations)
 	require.NoError(t, err)
 	share := resolution.ShareFor(shp.CustomerID)
 	require.NotNil(t, share)
@@ -118,7 +118,7 @@ func TestForShipmentShareFullShareMatchesForShipment(t *testing.T) {
 	})
 	shp.CustomerID = pulid.MustNew("cus_")
 
-	resolution, err := shipment.ResolveShares(shp, nil)
+	resolution, err := shipment.ResolveShares(t.Context(), shp, nil)
 	require.NoError(t, err)
 
 	viaShare := invoicelines.ForShipmentShare(
@@ -127,7 +127,7 @@ func TestForShipmentShareFullShareMatchesForShipment(t *testing.T) {
 		resolution.Shares[0],
 		1,
 	)
-	direct := invoicelines.ForShipment(billingqueue.BillTypeInvoice, shp, 1)
+	direct := forShipment(t, billingqueue.BillTypeInvoice, shp, 1)
 	require.Len(t, viaShare, len(direct))
 	for i := range direct {
 		assert.Equal(t, direct[i].Description, viaShare[i].Description)
@@ -148,7 +148,7 @@ func TestForShipmentShareNegatesCreditMemoPartialShares(t *testing.T) {
 	shp.CustomerID = pulid.MustNew("cus_")
 	splitEverything(shp, shp.CustomerID, "25")
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(t.Context(), shp, shp.ChargeAllocations)
 	require.NoError(t, err)
 
 	lines := invoicelines.ForShipmentShare(

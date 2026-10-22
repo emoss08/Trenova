@@ -1,5 +1,5 @@
 import {
-  EXPR_KEYWORDS,
+  isKeyword,
   isKnownFunction,
   isKnownVariable,
   isOperatorWord,
@@ -123,7 +123,7 @@ function identifierKind(
   known: KnownIdentifiers,
   templateVariables: ReadonlySet<string>,
 ): FormulaTokenKind {
-  if (EXPR_KEYWORDS.has(text)) return "kw";
+  if (isKeyword(known, text)) return "kw";
   if (isOperatorWord(known, text)) return "op";
   if (/^\s*\(/u.test(after) && isKnownFunction(known, text)) return "fn";
   if (templateVariables.has(text) || templateVariables.has(rootOf(text))) return "var";

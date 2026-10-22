@@ -1,8 +1,10 @@
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profitability";
 import { getTotalMiles } from "@/lib/shipment-utils";
 import { cn, formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
-import { additionalChargeLineTotal, type Shipment } from "@trenova/shared/types/shipment";
+import { chargeTotals } from "@trenova/shared/rules/allocation";
+import type { Shipment } from "@trenova/shared/types/shipment";
 
 const MARGIN_TEXT = {
   danger: "text-danger",
@@ -42,14 +44,23 @@ function Figure({
 /** What the load pays and what it costs, on one line. */
 export function MoneyLine({ shipment }: { shipment: Shipment }) {
   const t = useT();
+  const rules = useRules();
   const revenue = parseDecimal(shipment.totalChargeAmount as unknown as string);
   const linehaul = parseDecimal(shipment.freightChargeAmount as unknown as string);
   const charges = shipment.additionalCharges ?? [];
   const isFuel = (charge: (typeof charges)[number]) =>
     !!charge.fuelSurchargeProgramId || !!charge.fuelSurchargeDetail;
-  const fuel = charges
-    .filter(isFuel)
-    .reduce((sum, charge) => sum + (additionalChargeLineTotal(charge) ?? 0), 0);
+  // Every fuel charge priced in one call, a percentage one against the line haul.
+  const fuel = Number(
+    chargeTotals(rules, {
+      base: shipment.freightChargeAmount,
+      charges: charges.filter(isFuel).map((charge) => ({
+        method: charge.method,
+        amount: charge.amount,
+        unit: charge.unit,
+      })),
+    }).sum,
+  );
   const accessorials = Math.max(0, revenue - linehaul - fuel);
   const miles = getTotalMiles(shipment);
   const estimate = shipment.profitabilityEstimate;

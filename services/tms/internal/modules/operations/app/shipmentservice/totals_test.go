@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -504,22 +504,12 @@ func newTestFormulaService(
 	res := resolver.NewResolver()
 	resolver.RegisterDefaultComputed(res)
 
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
 
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Engine:         eng,
+		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:       res,
 		Repo:           repo,
 		VersionRepo:    stubTotalsVersionRepo{},

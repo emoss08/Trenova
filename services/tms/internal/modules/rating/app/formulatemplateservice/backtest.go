@@ -10,12 +10,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratesimulation"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
@@ -78,10 +78,7 @@ type rateEachRequest struct {
 }
 
 func (s *Service) rateEach(ctx context.Context, req *rateEachRequest) *BacktestResponse {
-	ctx, cancel := context.WithTimeout(
-		engine.WithEvaluationTimeout(ctx, previewEvaluationTimeout),
-		backtestDeadline,
-	)
+	ctx, cancel := context.WithTimeout(ctx, backtestDeadline)
 	defer cancel()
 
 	resp := &BacktestResponse{Results: make([]*BacktestResult, 0, len(req.shipments))}
@@ -236,19 +233,16 @@ func (s *Service) backtestShipment(
 			entity.RatingDetail.Guardrail.Applied
 	case unresolved != nil:
 		result.CurrentSource = BacktestCurrentRecomputed
-		result.CurrentError = unresolved.Error()
+		result.CurrentError = errortypes.LocalizedText(ctx, unresolved)
 	default:
 		result.CurrentSource = BacktestCurrentRecomputed
 		s.recomputeCurrent(ctx, req, entity, result)
 	}
 
 	if unresolved != nil {
-		result.CandidateError = unresolved.Error()
-	} else if resp, rateErr := s.formulaService.Rate(ctx, &formula.RateRequest{
-		Template: req.candidate,
-		Entity:   entity,
-	}); rateErr != nil {
-		result.CandidateError = rateErr.Error()
+		result.CandidateError = errortypes.LocalizedText(ctx, unresolved)
+	} else if resp, rateErr := s.rateLeashed(ctx, req.candidate, entity); rateErr != nil {
+		result.CandidateError = errortypes.LocalizedText(ctx, rateErr)
 	} else {
 		result.CandidateAmount = resp.Amount
 		if resp.Guardrail != nil && resp.Guardrail.Applied {
@@ -277,16 +271,13 @@ func (s *Service) recomputeCurrent(
 ) {
 	current, err := s.resolveCurrentForShipment(ctx, req.current, entity, req.tenantInfo)
 	if err != nil {
-		result.CurrentError = err.Error()
+		result.CurrentError = errortypes.LocalizedText(ctx, err)
 		return
 	}
 
-	resp, err := s.formulaService.Rate(ctx, &formula.RateRequest{
-		Template: current,
-		Entity:   entity,
-	})
+	resp, err := s.rateLeashed(ctx, current, entity)
 	if err != nil {
-		result.CurrentError = err.Error()
+		result.CurrentError = errortypes.LocalizedText(ctx, err)
 		return
 	}
 
@@ -294,6 +285,24 @@ func (s *Service) recomputeCurrent(
 	if resp.Guardrail != nil && resp.Guardrail.Applied {
 		result.GuardrailApplied = true
 	}
+}
+
+func (s *Service) rateLeashed(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	entity *shipment.Shipment,
+) (*formulatemplatetypes.CalculateResponse, error) {
+	leashed, cancel := context.WithTimeout(ctx, previewEvaluationTimeout)
+	defer cancel()
+
+	resp, err := s.formulaService.Rate(leashed, &formula.RateRequest{
+		Template: template,
+		Entity:   entity,
+	})
+	if err != nil && ctx.Err() == nil && errors.Is(leashed.Err(), context.DeadlineExceeded) {
+		return nil, timeoutMessage().ValidationError("expression", errortypes.ErrInvalid)
+	}
+	return resp, err
 }
 
 func billedFormulaAmount(

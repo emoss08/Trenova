@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -54,6 +55,7 @@ func requestLocation(orgTimezone string) (*time.Location, error) {
 }
 
 func (c *Compiler) emit(
+	ctx context.Context,
 	locale i18n.Locale,
 	req *reportports.ReportCompileRequest,
 	v *validatedDef,
@@ -81,6 +83,9 @@ func (c *Compiler) emit(
 
 	outputs, err := e.buildOutputColumns()
 	if err != nil {
+		return nil, err
+	}
+	if err = e.resolveDisplays(ctx, outputs); err != nil {
 		return nil, err
 	}
 

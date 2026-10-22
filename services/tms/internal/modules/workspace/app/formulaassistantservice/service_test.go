@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
@@ -70,22 +70,12 @@ func newTestService(t *testing.T, matrices ...*ratematrixports.RateMatrixLookupD
 	registry := schema.NewRegistry()
 	require.NoError(t, registry.Register("shipment", []byte(testSchema)))
 	res := resolver.NewResolver()
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-	require.NoError(t, err)
 
 	matrixRepo := &stubMatrixRepo{data: matrices}
 	formulaSvc := formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Engine:         eng,
+		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:       res,
 		VersionRepo:    &stubVersionRepo{},
 		RateMatrixRepo: matrixRepo,
@@ -553,19 +543,3 @@ func TestPropose_RefusesDetailsTheStudioCouldNotHold(t *testing.T) {
 	assert.True(t, fields["breakdown[2].name"])
 }
 
-func TestAmountOf(t *testing.T) {
-	t.Parallel()
-
-	for value, want := range map[any]string{
-		int64(12):  "12",
-		12.5:       "12.5",
-		int(7):     "7",
-		float32(2): "2",
-	} {
-		got, ok := AmountOf(value)
-		assert.True(t, ok)
-		assert.Equal(t, want, got)
-	}
-	_, ok := AmountOf("12")
-	assert.False(t, ok, "text is not an amount")
-}

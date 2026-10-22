@@ -129,21 +129,6 @@ func (u DurationUnit) IsValid() bool {
 	}
 }
 
-func (u DurationUnit) seconds() int64 {
-	switch u {
-	case DurationUnitMinutes:
-		return 60
-	case DurationUnitHours:
-		return 3600
-	case DurationUnitDays:
-		return 86400
-	case DurationUnitAuto, DurationUnitSeconds:
-		return 1
-	default:
-		return 1
-	}
-}
-
 type DurationStyle string
 
 const (
@@ -166,8 +151,6 @@ func (d DurationStyle) IsValid() bool {
 
 const (
 	MaxDecimals      = 10
-	defaultCurrency  = "USD"
-	defaultNullText  = ""
 	maxAffixLength   = 12
 	maxNullTextChars = 24
 )
@@ -214,173 +197,6 @@ type Resolved struct {
 	// Band is set when the column groups a numeric dimension into ranges; the
 	// scanned value is the range's lower bound.
 	Band *Band `json:"band,omitempty"`
-}
-
-func (r *Resolved) IsNumeric() bool {
-	switch r.Style {
-	case StyleNumber, StyleCurrency, StylePercent, StyleDuration:
-		return true
-	case StyleAuto, StyleDate, StyleBool, StyleText:
-		return false
-	default:
-		return false
-	}
-}
-
-type ResolveInput struct {
-	Type      reportcatalog.FieldType
-	Hint      reportcatalog.FormatHint
-	DateStyle DateStyle
-	Band      *Band
-	Spec      *Spec
-}
-
-func Resolve(in ResolveInput) Resolved {
-	resolved := baseline(in.Type, in.Hint)
-	if in.DateStyle != DateStyleAuto && resolved.Style == StyleDate {
-		resolved.DateStyle = in.DateStyle
-	}
-	if !in.Band.IsEmpty() {
-		resolved.Band = in.Band.clone()
-	}
-	if in.Spec == nil {
-		return resolved
-	}
-
-	spec := in.Spec
-	if spec.Style != StyleAuto && spec.Style != resolved.Style {
-		resolved = restyle(&resolved, spec.Style)
-	}
-	if spec.Decimals != nil {
-		resolved.Decimals = clampDecimals(*spec.Decimals)
-	}
-	if spec.Grouping != nil {
-		resolved.Grouping = *spec.Grouping
-	}
-	if spec.Currency != "" {
-		resolved.Currency = normalizeCurrency(spec.Currency)
-	}
-	if spec.Negative != NegativeAuto {
-		resolved.Negative = spec.Negative
-	}
-	if spec.Notation != NotationAuto {
-		resolved.Notation = spec.Notation
-	}
-	if spec.Prefix != "" {
-		resolved.Prefix = spec.Prefix
-	}
-	if spec.Suffix != "" {
-		resolved.Suffix = spec.Suffix
-	}
-	if spec.DateStyle != DateStyleAuto {
-		resolved.DateStyle = spec.DateStyle
-	}
-	if spec.BoolStyle != BoolStyleAuto {
-		resolved.BoolStyle = spec.BoolStyle
-	}
-	if spec.DurationUnit != DurationUnitAuto {
-		resolved.DurationUnit = spec.DurationUnit
-	}
-	if spec.DurationStyle != DurationStyleAuto {
-		resolved.DurationStyle = spec.DurationStyle
-	}
-	if spec.NullText != "" {
-		resolved.NullText = spec.NullText
-	}
-	if len(spec.Rules) > 0 {
-		resolved.Rules = append([]Rule(nil), spec.Rules...)
-	}
-
-	return resolved
-}
-
-func baseline(fieldType reportcatalog.FieldType, hint reportcatalog.FormatHint) Resolved {
-	resolved := Resolved{
-		Style:         StyleText,
-		Grouping:      true,
-		Currency:      defaultCurrency,
-		Negative:      NegativeMinus,
-		Notation:      NotationStandard,
-		DateStyle:     DateStyleDateTime,
-		BoolStyle:     BoolStyleYesNo,
-		DurationUnit:  DurationUnitSeconds,
-		DurationStyle: DurationStyleClock,
-		NullText:      defaultNullText,
-	}
-
-	//nolint:exhaustive // string-like catalog types keep the text baseline
-	switch fieldType {
-	case reportcatalog.FieldEpoch:
-		resolved.Style = StyleDate
-		return resolved
-	case reportcatalog.FieldBool:
-		resolved.Style = StyleBool
-		return resolved
-	case reportcatalog.FieldInt, reportcatalog.FieldDecimal:
-		resolved.Style = StyleNumber
-		if fieldType == reportcatalog.FieldDecimal {
-			resolved.Decimals = 2
-		}
-	default:
-		return resolved
-	}
-
-	return applyHint(&resolved, hint)
-}
-
-func applyHint(base *Resolved, hint reportcatalog.FormatHint) Resolved {
-	resolved := *base
-	switch hint {
-	case reportcatalog.FormatMoney:
-		resolved.Style = StyleCurrency
-		resolved.Decimals = 2
-		resolved.Negative = NegativeParentheses
-	case reportcatalog.FormatPercent:
-		resolved.Style = StylePercent
-		resolved.Decimals = 1
-	case reportcatalog.FormatDuration:
-		resolved.Style = StyleDuration
-		resolved.Decimals = 0
-	case reportcatalog.FormatDistance:
-		resolved.Decimals = 1
-		resolved.Suffix = " mi"
-	case reportcatalog.FormatWeight:
-		resolved.Decimals = 0
-		resolved.Suffix = " lbs"
-	case reportcatalog.FormatCount:
-		resolved.Decimals = 0
-	case reportcatalog.FormatNone:
-	}
-	return resolved
-}
-
-func restyle(base *Resolved, style Style) Resolved {
-	resolved := *base
-	resolved.Style = style
-	switch style {
-	case StyleCurrency:
-		resolved.Decimals = 2
-		resolved.Negative = NegativeParentheses
-	case StylePercent:
-		resolved.Decimals = 1
-	case StyleDuration:
-		resolved.Decimals = 0
-	case StyleNumber:
-		resolved.Suffix = ""
-	case StyleAuto, StyleDate, StyleBool, StyleText:
-	}
-	return resolved
-}
-
-func clampDecimals(decimals int) int {
-	switch {
-	case decimals < 0:
-		return 0
-	case decimals > MaxDecimals:
-		return MaxDecimals
-	default:
-		return decimals
-	}
 }
 
 // Validate rejects display specs that cannot apply to the column's resolved
@@ -479,19 +295,4 @@ func styleAllowed(style Style, fieldType reportcatalog.FieldType) bool {
 	default:
 		return style == StyleText
 	}
-}
-
-func normalizeCurrency(code string) string {
-	if code == "" {
-		return defaultCurrency
-	}
-	out := make([]byte, 0, len(code))
-	for i := range len(code) {
-		c := code[i]
-		if c >= 'a' && c <= 'z' {
-			c -= 'a' - 'A'
-		}
-		out = append(out, c)
-	}
-	return string(out)
 }

@@ -1,34 +1,44 @@
+import type { FormulaDiagnostic } from "@trenova/shared/types/formula-template";
 import { describe, expect, it } from "vitest";
 import type { ExpressionAnalysis } from "../../model/expression-analysis";
 import { proposalCheck } from "../proposal-check";
 
-type NameAnalysis = Pick<ExpressionAnalysis, "pending" | "errorCount" | "problems">;
+type NameAnalysis = Pick<ExpressionAnalysis, "pending" | "problems">;
 
 function analysis(overrides: Partial<NameAnalysis> = {}): NameAnalysis {
-  return { pending: false, errorCount: 0, problems: [], ...overrides };
+  return { pending: false, problems: [], ...overrides };
 }
 
-function problems(...messages: string[]): ExpressionAnalysis["problems"] {
-  return messages.map((message) => ({
-    severity: "error",
-    message,
-  })) as unknown as ExpressionAnalysis["problems"];
+function finding(
+  severity: FormulaDiagnostic["severity"],
+  message: string,
+  from = 0,
+): FormulaDiagnostic {
+  return { from, to: from + 1, severity, code: "syntax", message, fixes: [] };
 }
 
 const ran = { valid: true, error: "" };
 
 describe("proposalCheck", () => {
   it("reports the engine's own failure before anything the editor found", () => {
-    expect(proposalCheck({ valid: false, error: "unknown name foo (1:1)" }, analysis())).toEqual({
-      kind: "engine",
-      message: "unknown name foo (1:1)",
-    });
+    expect(
+      proposalCheck(
+        { valid: false, error: "unknown name foo" },
+        analysis({ problems: [finding("error", "first")] }),
+      ),
+    ).toEqual({ kind: "engine", message: "unknown name foo" });
   });
 
-  it("reports the first error the editor found", () => {
+  it("reports the first error the check found, past any warning before it", () => {
+    const first = finding("error", "first", 4);
     expect(
-      proposalCheck(ran, analysis({ errorCount: 2, problems: problems("first", "second") })),
-    ).toEqual({ kind: "problem", message: "first" });
+      proposalCheck(
+        ran,
+        analysis({
+          problems: [finding("warning", "unused", 0), first, finding("error", "second", 9)],
+        }),
+      ),
+    ).toEqual({ kind: "problem", problem: first });
   });
 
   it("is pending, not ok, while the schema has not arrived", () => {
@@ -36,15 +46,16 @@ describe("proposalCheck", () => {
   });
 
   it("reports a syntax error even while names are unchecked", () => {
-    expect(
-      proposalCheck(
-        ran,
-        analysis({ pending: true, errorCount: 1, problems: problems("Expected )") }),
-      ),
-    ).toEqual({ kind: "problem", message: "Expected )" });
+    const syntax = finding("error", "'{0}' needs a value on its right");
+    expect(proposalCheck(ran, analysis({ pending: true, problems: [syntax] }))).toEqual({
+      kind: "problem",
+      problem: syntax,
+    });
   });
 
   it("vouches for the names only once the schema has arrived", () => {
-    expect(proposalCheck(ran, analysis())).toEqual({ kind: "ok" });
+    expect(proposalCheck(ran, analysis({ problems: [finding("warning", "unused")] }))).toEqual({
+      kind: "ok",
+    });
   });
 });

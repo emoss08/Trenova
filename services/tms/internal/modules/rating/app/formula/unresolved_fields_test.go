@@ -43,7 +43,7 @@ func TestService_Rate_ReferencedUnresolvedFieldIsAValidationError(t *testing.T) 
 	assert.Contains(t, err.Error(), "serviceType.code")
 }
 
-func TestService_Rate_UnresolvedFieldReferencedOnlyByABreakdownFails(t *testing.T) {
+func TestService_Rate_AnUnresolvedFieldReadOnlyByABreakdownFailsThatLine(t *testing.T) {
 	t.Parallel()
 
 	svc := setupService(t)
@@ -52,14 +52,15 @@ func TestService_Rate_UnresolvedFieldReferencedOnlyByABreakdownFails(t *testing.
 		{Name: "customer", Label: "Customer", Expression: `customer.code == "ACME" ? 10 : 0`},
 	}
 
-	_, err := svc.Rate(t.Context(), &formula.RateRequest{
+	resp, err := svc.Rate(t.Context(), &formula.RateRequest{
 		Template: template,
 		Entity:   &shipment.Shipment{ServiceType: &servicetype.ServiceType{Code: "STD"}},
 	})
 
-	require.Error(t, err)
-	assert.True(t, errortypes.IsError(err))
-	assert.Contains(t, err.Error(), "customer.code")
+	require.NoError(t, err, "the bill still prices; only the line that cannot is marked")
+	assert.Equal(t, "100", resp.Amount.String())
+	require.Len(t, resp.Breakdown, 1)
+	assert.Contains(t, resp.Breakdown[0].Error, "customer.code")
 }
 
 func TestService_Rate_UnreferencedUnresolvedFieldIsIgnored(t *testing.T) {
@@ -91,20 +92,23 @@ func TestService_Rate_OverrideSuppliesAnUnresolvedField(t *testing.T) {
 	assert.True(t, decimal.NewFromInt(75).Equal(resp.Amount), resp.Amount.String())
 }
 
-func TestService_EvaluateExpression_ReferencedUnresolvedFieldIsAValidationError(t *testing.T) {
+func TestService_Preview_AFieldTheRecordCouldNotSupplyIsNamedNotPricedAsEmpty(t *testing.T) {
 	t.Parallel()
 
 	svc := setupService(t)
 
-	_, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
+	preview, err := svc.Preview(t.Context(), &formula.PreviewRequest{
 		Expression: `sum(customer.code == "ACME" ? 10 : 0, 5)`,
 		Entity:     &shipment.Shipment{},
 		SchemaID:   "shipment",
 	})
 
-	require.Error(t, err)
-	assert.True(t, errortypes.IsError(err))
-	assert.Contains(t, err.Error(), "customer.code")
+	require.NoError(t, err)
+	require.NotNil(t, preview.Error)
+	assert.Equal(t, formula.MainScope, preview.Error.Scope)
+	assert.Equal(t, formula.CodeUnresolvedField, preview.Error.Err.Code)
+	assert.Equal(t, []string{"customer.code"}, preview.Error.Err.Fields)
+	assert.Contains(t, preview.Error.Err.Message.String(), "could not be read from this record")
 }
 
 func TestService_Calculate_RefusesATemplateReadingAnUnavailableInput(t *testing.T) {

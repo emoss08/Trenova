@@ -145,7 +145,7 @@ func (c *Compiler) compile(
 		return nil, err
 	}
 
-	return c.emit(i18n.FromContext(ctx), req, v, plan, az)
+	return c.emit(ctx, i18n.FromContext(ctx), req, v, plan, az)
 }
 
 func (c *Compiler) complexity(v *validatedDef, plan *joinPlan) reportports.ReportComplexity {

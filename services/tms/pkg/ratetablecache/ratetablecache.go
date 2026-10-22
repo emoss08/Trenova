@@ -1,9 +1,9 @@
-// Package ratetablecache memoizes a tenant's lookup tables for the life of one
-// request or one batch.
+// Package ratetablecache memoizes a tenant's rate tables, encoded once into the
+// rules module's wire form, for the life of one request or one batch and, under
+// the tenant's matrix stamp, across requests in the process.
 //
-// A lookup table — what a formula's lookup() call names — is stored as a
-// single-axis rate matrix. Building the provider reads every one of them with
-// every cell. That was affordable when a formula was evaluated because
+// A rate table — what a formula's lookup() call names — is stored as a one- or
+// two-axis rate matrix. Encoding them reads every one of them with every cell. That was affordable when a formula was evaluated because
 // somebody asked for a rate; it stopped being affordable when rate agreements
 // made rating happen on every shipment write, and made re-rating happen in
 // loops — a fuel price refresh walks every affected shipment, and each one
@@ -26,10 +26,10 @@ import (
 
 type contextKey struct{}
 
-// Build produces a tenant's lookup. It is the expensive call being memoized.
-type Build func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error)
+// Build encodes a tenant's rate tables. It is the expensive call being memoized.
+type Build func(ctx context.Context) (*formulatemplatetypes.RateTables, error)
 
-type StampedBuild func(ctx context.Context, stamp string) (formulatemplatetypes.RateTableLookup, error)
+type StampedBuild func(ctx context.Context, stamp string) (*formulatemplatetypes.RateTables, error)
 
 // tenantKey scopes a memo entry to one organization in one business unit. An
 // organization belongs to exactly one business unit, so the pair is never
@@ -42,7 +42,7 @@ type tenantKey struct {
 
 type cache struct {
 	mu      sync.Mutex
-	entries map[tenantKey]formulatemplatetypes.RateTableLookup
+	entries map[tenantKey]*formulatemplatetypes.RateTables
 }
 
 // With attaches a memo to the context.
@@ -57,11 +57,11 @@ func With(ctx context.Context) context.Context {
 	}
 
 	return context.WithValue(ctx, contextKey{}, &cache{
-		entries: make(map[tenantKey]formulatemplatetypes.RateTableLookup, 1),
+		entries: make(map[tenantKey]*formulatemplatetypes.RateTables, 1),
 	})
 }
 
-// Get returns the tenant's lookup, building it once per context.
+// Get returns the tenant's encoded tables, building it once per context.
 //
 // Without a memo on the context it simply builds, so a caller that never
 // installed one behaves exactly as it did before this package existed.
@@ -69,7 +69,7 @@ func Get(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 	build Build,
-) (formulatemplatetypes.RateTableLookup, error) {
+) (*formulatemplatetypes.RateTables, error) {
 	c := from(ctx)
 	if c == nil {
 		return build(ctx)
@@ -80,18 +80,18 @@ func Get(
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if lookup, ok := c.entries[key]; ok {
-		return lookup, nil
+	if tables, ok := c.entries[key]; ok {
+		return tables, nil
 	}
 
-	lookup, err := build(ctx)
+	tables, err := build(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	c.entries[key] = lookup
+	c.entries[key] = tables
 
-	return lookup, nil
+	return tables, nil
 }
 
 func from(ctx context.Context) *cache {
@@ -102,16 +102,16 @@ func from(ctx context.Context) *cache {
 
 // Stamp answers the cheap question "has anything a formula could read from
 // this tenant's matrices changed?" as an opaque string. Two equal stamps mean
-// a lookup built under the first is still right under the second.
+// tables encoded under the first is still right under the second.
 type Stamp func(ctx context.Context) (string, error)
 
 type processEntry struct {
 	stamp  string
-	lookup formulatemplatetypes.RateTableLookup
+	tables *formulatemplatetypes.RateTables
 }
 
 // process is the store shared by every request in this process. It holds one
-// built lookup per tenant, tagged with the stamp it was built under.
+// set of encoded tables per tenant, tagged with the stamp it was built under.
 var process = struct {
 	mu      sync.Mutex
 	entries map[tenantKey]processEntry
@@ -127,12 +127,12 @@ func GetStamped(
 	orgID, buID pulid.ID,
 	stamp Stamp,
 	build StampedBuild,
-) (formulatemplatetypes.RateTableLookup, error) {
+) (*formulatemplatetypes.RateTables, error) {
 	return Get(
 		ctx,
 		orgID,
 		buID,
-		func(ctx context.Context) (formulatemplatetypes.RateTableLookup, error) {
+		func(ctx context.Context) (*formulatemplatetypes.RateTables, error) {
 			current, err := stamp(ctx)
 			if err != nil || current == "" {
 				return build(ctx, "")
@@ -144,24 +144,24 @@ func GetStamped(
 			entry, ok := process.entries[key]
 			process.mu.Unlock()
 			if ok && entry.stamp == current {
-				return entry.lookup, nil
+				return entry.tables, nil
 			}
 
-			lookup, err := build(ctx, current)
+			tables, err := build(ctx, current)
 			if err != nil {
 				return nil, err
 			}
 
 			process.mu.Lock()
-			process.entries[key] = processEntry{stamp: current, lookup: lookup}
+			process.entries[key] = processEntry{stamp: current, tables: tables}
 			process.mu.Unlock()
 
-			return lookup, nil
+			return tables, nil
 		},
 	)
 }
 
-// Invalidate drops the tenant's process-level lookup. The rate-matrix write
+// Invalidate drops the tenant's process-level tables. The rate-matrix write
 // path calls it so an edit is visible to the next request in this process
 // even before the stamp query would have noticed.
 func Invalidate(orgID, buID pulid.ID) {

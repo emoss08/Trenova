@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -37,10 +38,16 @@ type deliveryEmailContent struct {
 // schedule. The numbers still come from the column display contracts, so the
 // email, the grid, and the exports still agree cell for cell.
 func (a *Activities) deliveryEmailContext(
+	ctx context.Context,
 	content *deliveryEmailContent,
-) documenttemplate.ReportDeliveryEmailContext {
+) (documenttemplate.ReportDeliveryEmailContext, error) {
 	run, schedule := content.run, content.schedule
 	loc := timezoneOrUTC(schedule.Timezone)
+
+	digest, err := digestContext(ctx, content.digest, loc, run.RowCount)
+	if err != nil {
+		return documenttemplate.ReportDeliveryEmailContext{}, err
+	}
 
 	out := documenttemplate.ReportDeliveryEmailContext{
 		Title:        content.title,
@@ -51,7 +58,7 @@ func (a *Activities) deliveryEmailContext(
 		Truncated:    run.Truncated,
 		Attached:     content.attached,
 		AttachedNote: a.attachmentNote(content),
-		Digest:       digestContext(content.digest, loc, run.RowCount),
+		Digest:       digest,
 	}
 
 	if schedule.ReportDefinition != nil {
@@ -73,7 +80,7 @@ func (a *Activities) deliveryEmailContext(
 		out.DownloadURL = template.URL(base + "/reports/runs")
 	}
 
-	return out
+	return out, nil
 }
 
 // attachmentNote says where the file is, which is the one sentence a recipient
@@ -103,12 +110,33 @@ func (a *Activities) attachmentNote(content *deliveryEmailContent) string {
 // what a tone *means* is the report definition's decision, and how it looks
 // belongs to whoever is editing the template.
 func digestContext(
+	ctx context.Context,
 	digest *reportports.ReportDigest,
 	loc *time.Location,
 	rowCount int64,
-) documenttemplate.ReportDigest {
+) (documenttemplate.ReportDigest, error) {
 	if digest.IsEmpty() || len(digest.Rows) == 0 {
-		return documenttemplate.ReportDigest{}
+		return documenttemplate.ReportDigest{}, nil
+	}
+
+	columns := make([]reportfmt.Column, len(digest.Columns))
+	for i := range digest.Columns {
+		columns[i] = reportfmt.Column{
+			Display: &digest.Columns[i].Display,
+			Type:    digest.Columns[i].Type,
+		}
+	}
+	batch := reportfmt.NewBatch(columns, loc)
+	for _, row := range digest.Rows {
+		batch.Add(row)
+	}
+	hasTotals := len(digest.Totals) > 0
+	if hasTotals {
+		batch.Add(digest.Totals)
+	}
+	formatted, err := batch.Format(ctx)
+	if err != nil {
+		return documenttemplate.ReportDigest{}, err
 	}
 
 	out := documenttemplate.ReportDigest{
@@ -121,34 +149,25 @@ func digestContext(
 		out.Headers = append(out.Headers, digest.Columns[i].Label)
 	}
 
-	for _, row := range digest.Rows {
+	for i := range digest.Rows {
 		out.Rows = append(out.Rows, documenttemplate.ReportRow{
-			Cells: digestCells(digest.Columns, row, loc),
+			Cells: digestCells(formatted[i].Cells),
 		})
 	}
 
-	if len(digest.Totals) > 0 {
-		out.Totals = digestTotals(digest, loc)
+	if hasTotals {
+		out.Totals = digestTotals(digest, formatted[len(digest.Rows)].Cells)
 	}
 
-	return out
+	return out, nil
 }
 
-func digestCells(
-	columns []reportports.ReportResultColumn,
-	row reportports.ReportRow,
-	loc *time.Location,
-) []documenttemplate.ReportCell {
-	cells := make([]documenttemplate.ReportCell, 0, len(columns))
-	for i := range columns {
-		var value any
-		if i < len(row) {
-			value = row[i]
-		}
-
+func digestCells(formatted []reportfmt.Cell) []documenttemplate.ReportCell {
+	cells := make([]documenttemplate.ReportCell, 0, len(formatted))
+	for _, cell := range formatted {
 		cells = append(cells, documenttemplate.ReportCell{
-			Text: columns[i].Display.String(value, loc),
-			Tone: string(columns[i].Display.ToneFor(value)),
+			Text: cell.Text,
+			Tone: string(cell.Tone),
 		})
 	}
 
@@ -157,16 +176,11 @@ func digestCells(
 
 // digestTotals labels the leading dimension, which has no total of its own. A
 // blank first cell reads as a missing number rather than as a row label.
-func digestTotals(digest *reportports.ReportDigest, loc *time.Location) []string {
-	totals := make([]string, 0, len(digest.Columns))
-	for i := range digest.Columns {
-		var value any
-		if i < len(digest.Totals) {
-			value = digest.Totals[i]
-		}
-
-		text := digest.Columns[i].Display.String(value, loc)
-		if value == nil && i == 0 {
+func digestTotals(digest *reportports.ReportDigest, formatted []reportfmt.Cell) []string {
+	totals := make([]string, 0, len(formatted))
+	for i, cell := range formatted {
+		text := cell.Text
+		if i == 0 && (len(digest.Totals) == 0 || digest.Totals[0] == nil) {
 			text = digestTotalsLabel
 		}
 		totals = append(totals, text)

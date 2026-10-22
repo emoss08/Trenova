@@ -30,20 +30,15 @@ func TestDescribeSchema(t *testing.T) {
 	assert.True(t, variablesByName["totalDistance"], "computed variables are described")
 	assert.True(t, computedByName["totalDistance"], "totalDistance is computed")
 
-	functionNames := make(map[string]bool, len(description.Functions))
-	operators := make(map[string]bool, len(description.Functions))
-	for _, fn := range description.Functions {
-		functionNames[fn.Name] = true
-		operators[fn.Name] = fn.Operator
-		assert.NotEmpty(t, fn.Signature, "signature for %s", fn.Name)
-		assert.NotEmpty(t, fn.Description, "description for %s", fn.Name)
+	types := make(map[string]string, len(description.Variables))
+	for _, variable := range description.Variables {
+		types[variable.Name] = variable.Type
 	}
-
-	assert.True(t, functionNames["round"])
-	assert.True(t, functionNames["lookup"])
-	assert.True(t, functionNames["startsWith"], "expr string operators are published")
-	assert.True(t, operators["startsWith"], "operators are marked so editors insert them infix")
-	assert.False(t, operators["round"])
+	assert.Equal(t, "array", types["stops"])
+	assert.Equal(t, "string", types["stops[].type"], "a list's item fields are published")
+	assert.Equal(t, "integer", types["stops[].sequence"])
+	assert.Equal(t, "string", types["commodities[].freightClass"])
+	assert.True(t, computedByName["stops[].city"], "an item field of a computed list is computed")
 }
 
 func TestDescribeSchema_UnknownSchema(t *testing.T) {
