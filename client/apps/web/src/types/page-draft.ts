@@ -29,14 +29,12 @@ export const importRequiredFieldKeySchema = z.enum([
   "customerId",
   "serviceTypeId",
   "shipmentTypeId",
-  "formulaTemplateId",
 ]);
 
 export const importDraftRequiredSchema = z.object({
   customerId: z.string(),
   serviceTypeId: z.string(),
   shipmentTypeId: z.string(),
-  formulaTemplateId: z.string(),
 });
 
 export const importDraftStopSchema = z.object({

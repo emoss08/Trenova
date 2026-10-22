@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { apiService } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -11,13 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ContractRate, Shipment } from "@trenova/shared/types/shipment";
 import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { BillView } from "@/components/tariff-bill/bill-view";
+import { storedChargesBill } from "@trenova/shared/lib/tariff-lines";
+import { readStoredTariffBill } from "@trenova/shared/types/tariff-form";
 
 /**
  * Re-rates a shipment from its contract, on request.
@@ -35,7 +36,7 @@ export function AutoRateDialog() {
   const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
-  const [applied, setApplied] = useState<ContractRate | null>(null);
+  const [applied, setApplied] = useState<{ rate: ContractRate; currency: string } | null>(null);
 
   const shipmentId = useWatch({ control, name: "id" });
   const rateLocked = Boolean(useWatch({ control, name: "rateLocked" }));
@@ -54,7 +55,8 @@ export function AutoRateDialog() {
       // Only the rating-owned fields come back into the open form, so unsaved
       // edits elsewhere survive the re-rate landing.
       setValue("formulaTemplateId", shipment.formulaTemplateId, { shouldDirty: false });
-      setValue("baseRate", shipment.baseRate, { shouldDirty: false });
+      setValue("tariffInputs", shipment.tariffInputs, { shouldDirty: false });
+      setValue("freightLines", shipment.freightLines, { shouldDirty: false });
       setValue("additionalCharges", shipment.additionalCharges, { shouldDirty: false });
       setValue("freightChargeAmount", shipment.freightChargeAmount, { shouldDirty: false });
       setValue("otherChargeAmount", shipment.otherChargeAmount, { shouldDirty: false });
@@ -72,7 +74,11 @@ export function AutoRateDialog() {
       void queryClient.invalidateQueries({ queryKey: ["shipment"] });
       void queryClient.invalidateQueries({ queryKey: ["rateQuote"] });
 
-      setApplied(contractRate);
+      // The bill is in the rating currency the shipment's rating detail records.
+      setApplied({
+        rate: contractRate,
+        currency: readStoredTariffBill(shipment.ratingDetail?.bill)?.currency || "USD",
+      });
       setOpen(false);
     },
     onError: () => {
@@ -99,7 +105,13 @@ export function AutoRateDialog() {
         onConfirm={() => mutation.mutate()}
       />
 
-      <AppliedDialog rate={applied} onClose={() => setApplied(null)} />
+      {applied ? (
+        <AppliedDialog
+          rate={applied.rate}
+          currency={applied.currency}
+          onClose={() => setApplied(null)}
+        />
+      ) : null}
     </>
   );
 }
@@ -127,7 +139,7 @@ function ConfirmDialog({
           </DialogTitle>
           <DialogDescription>
             {t(
-              "The rate agreement covering this lane will replace the rating method, the base rate and every charge the contract applies automatically. Anything you have set by hand on those fields is discarded.",
+              "The rate agreement covering this lane will replace the rating method, the tariff's input values and every charge the contract applies automatically. Anything you have set by hand on those fields is discarded.",
             )}
           </DialogDescription>
         </DialogHeader>
@@ -145,16 +157,31 @@ function ConfirmDialog({
 }
 
 /** The account of what the contract just applied. */
-function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: () => void }) {
+function AppliedDialog({
+  rate,
+  currency,
+  onClose,
+}: {
+  rate: ContractRate;
+  currency: string;
+  onClose: () => void;
+}) {
   const t = useT();
 
-  if (!rate) {
-    return null;
-  }
-
-  const previous = Number(rate.previousLinehaulAmount) || 0;
-  const linehaul = Number(rate.linehaulAmount) || 0;
-  const change = linehaul - previous;
+  // An agreement's accessorial has no label of its own; it is named as the catalog names it.
+  const contractBill = storedChargesBill(
+    {
+      ...rate,
+      charges: rate.charges.map((charge) => ({
+        ...charge,
+        label: charge.label || charge.description || charge.code,
+      })),
+    },
+    currency,
+  );
+  const previous = Number(rate.previousFreightAmount) || 0;
+  const freight = Number(rate.freightAmount) || 0;
+  const change = freight - previous;
 
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
@@ -174,49 +201,18 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
         </DialogHeader>
 
         <div className="space-y-2 text-sm">
-          <AppliedRow label={t("Rating method")} value={rate.formulaTemplateName || "—"} />
-          {rate.baseRate ? (
-            <AppliedRow label={t("Base rate")} value={formatCurrency(Number(rate.baseRate))} />
+          <AppliedRow label={t("Tariff")} value={rate.formulaTemplateName || "—"} />
+          {contractBill ? (
+            <div className="rounded-md border p-2">
+              <BillView bill={contractBill} currency={currency} />
+            </div>
           ) : null}
-          <AppliedRow label={t("Freight charges")} value={formatCurrency(linehaul)} />
           {previous > 0 && change !== 0 ? (
             <AppliedRow
-              label={t("Change")}
-              value={`${change > 0 ? "+" : ""}${formatCurrency(change)}`}
+              label={t("Freight change")}
+              value={`${change > 0 ? "+" : ""}${formatCurrency(change, currency)}`}
             />
           ) : null}
-
-          {rate.accessorials.length > 0 && (
-            <>
-              <Separator className="my-2" />
-              <p className="text-2xs text-muted-foreground">
-                {t("Charges the contract applies automatically")}
-              </p>
-              {rate.accessorials.map((accessorial) => (
-                <div
-                  key={accessorial.accessorialChargeId}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <span className="text-muted-foreground flex items-center gap-2">
-                    {accessorial.description || accessorial.accessorialChargeId}
-                    <Badge variant="neutral" appearance="outline" className="text-2xs">
-                      {accessorial.method}
-                    </Badge>
-                  </span>
-                  <span className="tabular-nums">
-                    {formatCurrency(Number(accessorial.amount) || 0)}
-                  </span>
-                </div>
-              ))}
-            </>
-          )}
-
-          <Separator className="my-2" />
-          <AppliedRow
-            label={t("Contract total")}
-            value={formatCurrency(Number(rate.totalChargeAmount) || 0)}
-            bold
-          />
         </div>
 
         <DialogFooter>
@@ -229,11 +225,11 @@ function AppliedDialog({ rate, onClose }: { rate: ContractRate | null; onClose: 
   );
 }
 
-function AppliedRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+function AppliedRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{label}</span>
-      <span className={bold ? "font-semibold tabular-nums" : "tabular-nums"}>{value}</span>
+      <span className="tabular-nums">{value}</span>
     </div>
   );
 }

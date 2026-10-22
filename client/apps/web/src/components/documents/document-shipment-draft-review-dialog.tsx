@@ -173,8 +173,9 @@ function createDefaultShipmentValues(draft: DocumentShipmentDraft | null): Shipm
     formulaTemplateId: "",
     consolidationGroupId: undefined,
     otherChargeAmount: 0,
+    // A tendered rate is a manual rate: one freight amount, and no tariff to run.
     freightChargeAmount: rate,
-    baseRate: rate,
+    tariffInputs: {},
     totalChargeAmount: rate,
     pieces: pieces ?? undefined,
     weight: weight ?? undefined,
@@ -183,7 +184,6 @@ function createDefaultShipmentValues(draft: DocumentShipmentDraft | null): Shipm
     actualDeliveryDate: undefined,
     actualShipDate: undefined,
     canceledAt: undefined,
-    ratingUnit: 1,
     fuelSurchargeLocked: false,
     freightTerms: "Prepaid",
     freightAllocations: [],

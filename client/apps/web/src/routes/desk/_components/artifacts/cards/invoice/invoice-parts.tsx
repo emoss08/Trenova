@@ -232,11 +232,14 @@ export function ChargeBill({
   rows,
   foot,
   note,
+  tariffNotes = [],
   onOpenTemplate,
 }: {
   rows: readonly ChargeRow[];
   foot: readonly FootRow[];
   note?: string;
+  /** The notes the tariffs wrote on the bills, shown as written. */
+  tariffNotes?: readonly string[];
   /** Opens a formula template's card; absent, the template's name is only read. */
   onOpenTemplate?: (templateId: string) => void;
 }) {
@@ -286,6 +289,13 @@ export function ChargeBill({
           </div>
         ))}
       </dl>
+      {tariffNotes.length > 0 && (
+        <ul className="dk-inv-note" aria-label={t("Notes from the tariff")}>
+          {tariffNotes.map((text, index) => (
+            <li key={`${index}-${text}`}>{text}</li>
+          ))}
+        </ul>
+      )}
       {note && <p className="dk-inv-note">{note}</p>}
     </div>
   );

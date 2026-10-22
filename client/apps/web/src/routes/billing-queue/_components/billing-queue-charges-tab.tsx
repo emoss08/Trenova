@@ -25,11 +25,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@trenova/shared/components/ui/collapsible";
-import {
-  NumberFieldGroup,
-  NumberFieldInput,
-  NumberField as NumberFieldRoot,
-} from "@trenova/shared/components/ui/number-field";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRules } from "@trenova/shared/hooks/use-rules";
@@ -43,10 +38,13 @@ import type {
   PayerShareLine,
 } from "@trenova/shared/types/billing-queue";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { AdditionalCharge } from "@trenova/shared/types/shipment";
+import type { AdditionalCharge, ShipmentFreightLine } from "@trenova/shared/types/shipment";
+import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
+import { chargeLineBasis } from "@trenova/shared/lib/tariff-lines";
+import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import type { TariffWireValue } from "@trenova/shared/types/tariff";
 import {
   AlertTriangleIcon,
-  CheckIcon,
   ChevronDownIcon,
   Edit02Icon,
   InfoCircleIcon,
@@ -54,7 +52,6 @@ import {
   Repeat01Icon,
   Trash01Icon,
   Users01Icon,
-  XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { useCallback, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
@@ -84,6 +81,10 @@ function getChargeWarnings(
 }
 
 function formatChargeBreakdown(charge: AdditionalCharge): string {
+  // A charge the tariff billed states its own quantity and rate, as the bill wrote them.
+  if (charge.isTariff) {
+    return chargeLineBasis(charge, translate) ?? translate("Billed by the tariff");
+  }
   const amount = Number(charge.amount ?? 0);
   const unit = charge.unit ?? 1;
   switch (charge.method) {
@@ -103,6 +104,8 @@ function formatChargeBreakdown(charge: AdditionalCharge): string {
 }
 
 function chargeName(charge: AdditionalCharge | undefined, fallback: string): string {
+  // A tariff's charge is named by its label, the customer's text as the tariff wrote it.
+  if (charge?.isTariff && charge.label) return charge.label;
   return charge?.accessorialCharge?.description ?? charge?.accessorialCharge?.code ?? fallback;
 }
 
@@ -202,8 +205,6 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
 
   const [chargeDialogOpen, setChargeDialogOpen] = useState(false);
   const [rerateDialogOpen, setRerateDialogOpen] = useState(false);
-  const [editingFreight, setEditingFreight] = useState(false);
-  const [freightDraft, setFreightDraft] = useState("");
   const [editingCharge, setEditingCharge] = useState<
     (Partial<ChargeDialogResult> & { index: number }) | null
   >(null);
@@ -297,7 +298,6 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   }
 
   const freightCharge = Number(shipment.freightChargeAmount ?? 0);
-  const baseRate = Number(shipment.baseRate ?? 0);
   const otherCharge = Number(shipment.otherChargeAmount ?? 0);
   const totalCharge = Number(shipment.totalChargeAmount ?? 0);
   const additionalCharges = shipment.additionalCharges ?? [];
@@ -305,14 +305,6 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
   const warnings = getChargeWarnings(freightCharge, totalCharge, additionalCharges);
   const resolutionError = item.payerShare?.resolutionError ?? null;
   const share: PayerShare | null = item.payerShare && !resolutionError ? item.payerShare : null;
-
-  const saveBaseRate = () => {
-    saveCharges({
-      baseRate: freightDraft,
-      additionalCharges: buildChargesPayload(additionalCharges),
-    });
-    setEditingFreight(false);
-  };
 
   const chargeActions = (index: number, charge: AdditionalCharge): ChargeRowAction[] => {
     if (!isEditable) return [];
@@ -336,7 +328,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       {
         label: t("Delete {0}", name),
         icon: <Trash01Icon className="size-3" />,
-        disabled: isPending || charge.isSystemGenerated,
+        disabled: isPending || charge.isSystemGenerated || Boolean(charge.isTariff),
         onClick: () => handleDeleteCharge(index),
       },
     ];
@@ -401,14 +393,6 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground">{t("Rating:")}</span>
             <span className="font-medium">{formulaTemplate.name}</span>
-            {formulaTemplate.expression && (
-              <>
-                <span className="text-muted-foreground/50">&middot;</span>
-                <code className="text-muted-foreground font-mono">
-                  {formulaTemplate.expression}
-                </code>
-              </>
-            )}
           </div>
           {isEditable && (
             <Tooltip>
@@ -417,7 +401,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                   <Button
                     size="icon-xs"
                     variant="ghost"
-                    aria-label={t("Change template")}
+                    aria-label={t("Re-rate")}
                     onClick={() => setRerateDialogOpen(true)}
                     disabled={isPending}
                   >
@@ -426,7 +410,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 }
               />
               <TooltipContent side="top" sideOffset={10}>
-                {t("Change template")}
+                {t("Re-rate")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -434,90 +418,12 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       )}
 
       <div className="flex flex-col">
-        <div className="group hover:bg-muted flex items-center justify-between gap-2 rounded-md p-2">
-          <div className="flex min-w-0 flex-col">
-            <span className="text-sm">{t("Base rate")}</span>
-            <span className="text-muted-foreground text-xs">
-              {share ? t("Shipment rate before formula") : t("Per-unit rate before formula")}
-            </span>
-          </div>
-          {editingFreight ? (
-            <div className="flex items-center gap-1">
-              <NumberFieldRoot
-                value={Number(freightDraft) || 0}
-                onValueChange={(val) => setFreightDraft(String(val ?? 0))}
-                step={0.01}
-                min={0}
-                size="sm"
-                className="w-32"
-              >
-                <NumberFieldGroup>
-                  <NumberFieldInput
-                    autoFocus
-                    className="text-right"
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") setEditingFreight(false);
-                      if (e.key === "Enter") saveBaseRate();
-                    }}
-                  />
-                </NumberFieldGroup>
-              </NumberFieldRoot>
-              <Button
-                size="icon-xs"
-                variant="ghostInvert"
-                aria-label={t("Save base rate")}
-                disabled={isPending}
-                onClick={saveBaseRate}
-              >
-                <CheckIcon className="size-3 text-success-foreground" />
-              </Button>
-              <Button
-                size="icon-xs"
-                variant="ghostInvert"
-                aria-label={t("Cancel")}
-                onClick={() => setEditingFreight(false)}
-              >
-                <XCloseIcon className="text-muted-foreground size-3" />
-              </Button>
-            </div>
-          ) : (
-            <div className="relative flex min-w-20 items-center justify-end">
-              <span
-                className={cn(
-                  "text-sm font-medium tabular-nums transition-opacity",
-                  isEditable ? "group-hover:opacity-0" : "",
-                )}
-              >
-                {formatCurrency(baseRate)}
-              </span>
-              {isEditable && (
-                <div className="absolute inset-0 flex items-center justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          size="icon-xs"
-                          variant="ghostInvert"
-                          aria-label={t("Adjust base rate")}
-                          disabled={isPending}
-                          onClick={() => {
-                            setFreightDraft(String(baseRate));
-                            setEditingFreight(true);
-                          }}
-                        >
-                          <Edit02Icon className="size-3" />
-                        </Button>
-                      }
-                    />
-                    <TooltipContent side="top" sideOffset={10}>
-                      {t("Adjust base rate")}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <TariffTermsRow
+          inputs={shipment.tariffInputs ?? undefined}
+          isEditable={isEditable}
+          isPending={isPending}
+          onAdjust={() => setRerateDialogOpen(true)}
+        />
 
         {share ? (
           <PayerBillLines
@@ -538,6 +444,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
               otherCharge={otherCharge}
               totalCharge={totalCharge}
               additionalCharges={additionalCharges}
+              freightLines={shipment.freightLines ?? []}
               freightBasis={freightCharge}
               chargeActions={chargeActions}
               isEditable={isEditable}
@@ -620,6 +527,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           onOpenChange={setRerateDialogOpen}
           itemId={item.id}
           currentTemplateId={shipment.formulaTemplateId ?? undefined}
+          currentInputs={shipment.tariffInputs ?? undefined}
         />
       )}
       {reassignLine ? (
@@ -678,6 +586,7 @@ function ShipmentChargeLines({
   freightCharge,
   otherCharge,
   additionalCharges,
+  freightLines,
   freightBasis,
   chargeActions,
   isEditable,
@@ -688,6 +597,7 @@ function ShipmentChargeLines({
   otherCharge: number;
   totalCharge: number;
   additionalCharges: AdditionalCharge[];
+  freightLines: ShipmentFreightLine[];
   freightBasis: number;
   chargeActions: (index: number, charge: AdditionalCharge) => ChargeRowAction[];
   isEditable: boolean;
@@ -707,7 +617,33 @@ function ShipmentChargeLines({
   });
   return (
     <>
-      <ChargeRow name={t("Line haul")} amount={freightCharge} actions={[]} />
+      {freightLines.length === 0 ? (
+        <ChargeRow name={t("Line haul")} amount={freightCharge} actions={[]} />
+      ) : (
+        <>
+          {freightLines.map((line, index) => (
+            <ChargeRow
+              key={`${index}-${line.label}`}
+              name={line.label}
+              details={
+                <span className="text-muted-foreground text-xs">
+                  {chargeLineBasis(line, t) ?? t("Flat")}
+                </span>
+              }
+              amount={line.amount}
+              actions={[]}
+            />
+          ))}
+          {freightLines.length > 1 && (
+            <div className="text-muted-foreground flex items-center justify-between p-2">
+              <span className="text-xs">{t("Freight subtotal")}</span>
+              <span className="text-xs font-medium tabular-nums">
+                {formatCurrency(freightCharge)}
+              </span>
+            </div>
+          )}
+        </>
+      )}
       <Separator className="my-1" />
       <AccessorialsHeader isEditable={isEditable} isPending={isPending} onAddCharge={onAddCharge} />
       {additionalCharges.length === 0 && (
@@ -864,5 +800,66 @@ function PayerBillLines({
         </Collapsible>
       ) : null}
     </>
+  );
+}
+
+/**
+ * The values the shipment's tariff rated it with, in place of the one base rate a formula
+ * used to read. Adjusting them re-rates the shipment on the new terms.
+ */
+function TariffTermsRow({
+  inputs,
+  isEditable,
+  isPending,
+  onAdjust,
+}: {
+  inputs: Record<string, unknown> | undefined;
+  isEditable: boolean;
+  isPending: boolean;
+  onAdjust: () => void;
+}) {
+  const t = useT();
+  const entries = Object.entries(inputs ?? {});
+
+  return (
+    <div className="group hover:bg-muted flex items-start justify-between gap-2 rounded-md p-2">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-sm">{t("Terms")}</span>
+        {entries.length === 0 ? (
+          <span className="text-muted-foreground text-xs">{t("The tariff's defaults")}</span>
+        ) : (
+          <ul className="flex flex-col gap-0.5" aria-label={t("Terms")}>
+            {entries.map(([name, value]) => (
+              <li key={name} className="text-muted-foreground flex gap-1.5 text-xs">
+                <span>{humanizeTariffName(name)}</span>
+                <span className="text-foreground tabular-nums">
+                  {formatTariffValue(value as TariffWireValue, t)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {isEditable && (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                size="icon-xs"
+                variant="ghostInvert"
+                aria-label={t("Adjust terms")}
+                disabled={isPending}
+                onClick={onAdjust}
+              >
+                <Edit02Icon className="size-3" />
+              </Button>
+            }
+          />
+          <TooltipContent side="top" sideOffset={10}>
+            {t("Adjust terms")}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
   );
 }

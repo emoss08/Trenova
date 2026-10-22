@@ -9,7 +9,11 @@ import { LaneEditor } from "../lane-editor";
 // about each lane, which the rules module answers.
 vi.mock("@/components/autocomplete-fields", () => ({
   FormulaTemplateAutocompleteField: () => null,
-  RateMatrixAutocompleteField: () => null,
+}));
+vi.mock("../lane-tariff-inputs", () => ({
+  LaneTariffInputs: ({ index, templateId }: { index: number; templateId?: string }) => (
+    <p>{`lane ${index} prices through ${templateId}`}</p>
+  ),
 }));
 vi.mock("../lane-scope-fields", () => ({ LaneScopeFields: () => null }));
 vi.mock("../lane-history-popover", () => ({ LaneHistoryPopover: () => null }));
@@ -30,7 +34,8 @@ function lane(overrides: Partial<RateAgreementRule>): RateAgreementRule {
     direction: "Directional",
     priority: 0,
     effectiveFrom: 0,
-    breaks: [],
+    formulaTemplateId: "ft_per_mile",
+    inputs: {},
     ...overrides,
   } as RateAgreementRule;
 }
@@ -89,6 +94,19 @@ describe("LaneEditor", () => {
     expect(ops.filter((op) => op === "lane.keys")).toHaveLength(1);
     expect(ops.filter((op) => op === "lane.specificity")).toHaveLength(1);
     expect(ops.filter((op) => op === "lane.coverage")).toHaveLength(1);
+  });
+
+  it("sets each lane's terms through its own tariff's inputs", () => {
+    render(
+      <Harness
+        rules={[lane({ formulaTemplateId: "ft_per_mile" }), lane({ formulaTemplateId: "ft_ltl" })]}
+      />,
+    );
+
+    expect(screen.getByText("lane 0 prices through ft_per_mile")).toBeInTheDocument();
+    expect(screen.getByText("lane 1 prices through ft_ltl")).toBeInTheDocument();
+    expect(screen.queryByText("Minimum charge")).not.toBeInTheDocument();
+    expect(screen.queryByText("Rate matrix")).not.toBeInTheDocument();
   });
 
   it("says a lane matched by radius has no key", () => {

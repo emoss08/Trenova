@@ -41,7 +41,6 @@ const required = {
   customerId: "cus_01",
   serviceTypeId: "",
   shipmentTypeId: "",
-  formulaTemplateId: "",
 };
 
 function state(overrides: Partial<ReconciliationState> = {}): ReconciliationState {

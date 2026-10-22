@@ -20,6 +20,7 @@ import {
   buildMatrixGrid,
   cellCoordinate,
   coordinateKey,
+  matrixValueUnit,
   sliceBuckets,
   type MatrixAxisPosition,
 } from "@trenova/shared/lib/rate-matrix";
@@ -29,6 +30,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { MatrixGridEditorSkeleton } from "./matrix-grid-editor-skeleton";
 import { toast } from "@trenova/shared/components/ui/toast";
+import { cn } from "@trenova/shared/lib/utils";
 
 function orderByPosition(dimensions: RateMatrixDimension[]): RateMatrixDimension[] {
   return [...dimensions].sort((a, b) => a.position - b.position);
@@ -47,12 +49,22 @@ type MatrixGridEditorProps = {
  * array would re-render all of them on every keystroke. The trade is that this
  * saves separately from the matrix header, which the button says out loud.
  */
+/** Whether a cell's text is a value of the matrix's type: a number, and whole for an `Int` matrix. */
+function cellTextFits(text: string, wholeOnly: boolean): boolean {
+  const parsed = Number(text);
+  if (text.trim() === "" || !Number.isFinite(parsed)) return false;
+  return !wholeOnly || Number.isInteger(parsed);
+}
+
 export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   const t = useT();
   const rules = useRules();
 
   const { control } = useFormContext<RateMatrix>();
   const dimensions = (useWatch({ control, name: "dimensions" }) ?? []) as RateMatrixDimension[];
+  const valueType = useWatch({ control, name: "valueType" }) ?? "Money";
+  const valueUnit = matrixValueUnit(valueType);
+  const wholeOnly = valueType === "Int";
   const queryClient = useQueryClient();
 
   const { data: loadedCells, isLoading } = useQuery({
@@ -160,7 +172,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
       setDrafts((current) => ({ ...current, [coordinate]: text }));
 
       const parsed = Number(text);
-      if (text.trim() === "" || !Number.isFinite(parsed)) return;
+      if (!cellTextFits(text, wholeOnly)) return;
 
       setCells((current) =>
         current.map((cell) =>
@@ -169,8 +181,12 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
       );
       setDirty(true);
     },
-    [ordered],
+    [ordered, wholeOnly],
   );
+
+  // A cell whose text is not a value of the matrix's type keeps its last good value, so the
+  // grid cannot be saved until the person fixes what the screen shows.
+  const unfit = Object.values(drafts).filter((text) => !cellTextFits(text, wholeOnly)).length;
 
   const save = useMutation({
     mutationFn: () => apiService.rateMatrixService.replaceCells(rateMatrixId as string, cells),
@@ -289,11 +305,26 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
                   return (
                     <td key={column.key} className="border-b px-1 py-1">
                       {cell ? (
-                        <Input
-                          className="h-8 w-28 text-right font-mono text-xs"
-                          value={drafts[coordinate] ?? String(cell.value ?? "")}
-                          onChange={(event) => updateValue(coordinate, event.target.value)}
-                        />
+                        <div className="relative w-28">
+                          <Input
+                            className={cn(
+                              "h-8 w-28 text-right font-mono text-xs",
+                              valueUnit && "pr-12",
+                            )}
+                            aria-label={t("Value at {0}, {1}", t(row.label), t(column.label))}
+                            aria-invalid={
+                              drafts[coordinate] !== undefined &&
+                              !cellTextFits(drafts[coordinate], wholeOnly)
+                            }
+                            value={drafts[coordinate] ?? String(cell.value ?? "")}
+                            onChange={(event) => updateValue(coordinate, event.target.value)}
+                          />
+                          {valueUnit ? (
+                            <span className="text-muted-foreground text-2xs pointer-events-none absolute inset-y-0 right-2 flex items-center font-mono select-none">
+                              {valueUnit}
+                            </span>
+                          ) : null}
+                        </div>
                       ) : (
                         <span
                           className="text-muted-foreground block w-28 px-2 text-right text-xs"
@@ -325,7 +356,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
         <Button
           type="button"
           size="sm"
-          disabled={!dirty || save.isPending}
+          disabled={!dirty || unfit > 0 || save.isPending}
           onClick={() => save.mutate()}
         >
           {save.isPending ? (
@@ -335,9 +366,23 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
           )}
           {t("Save rates")}
         </Button>
-        <span className="text-muted-foreground text-xs">
-          {t("Rates save on their own, separately from the rest of this form.")}
-        </span>
+        {unfit > 0 ? (
+          <span role="alert" className="text-destructive text-xs">
+            {wholeOnly
+              ? t(
+                  "{0, plural, one {# cell is not a whole number} other {# cells are not whole numbers}}. This matrix holds whole numbers.",
+                  unfit,
+                )
+              : t(
+                  "{0, plural, one {# cell is not a number} other {# cells are not numbers}}.",
+                  unfit,
+                )}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-xs">
+            {t("Rates save on their own, separately from the rest of this form.")}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -91,8 +91,15 @@ export const tariffWireValueSchema: z.ZodType<TariffWireValue> = z.lazy(() =>
   ]),
 );
 
-/** A record field of a record type descriptor. */
-export type TariffTypeField = { name: string; doc: string | null; type: TariffType };
+/**
+ * A record field of a record type descriptor. Its doc is a catalog message when the standard library wrote it (shown with
+ * `translateMessage`) and plain text, shown as written, when an organisation library did.
+ */
+export type TariffTypeField = {
+  name: string;
+  doc: string | TariffMessage | null;
+  type: TariffType;
+};
 
 /**
  * A type as `tariff.check` describes an input's, for building its form: the scalar kinds,
@@ -147,7 +154,7 @@ export const tariffTypeSchema: z.ZodType<TariffType> = z.lazy(() =>
         z.object({
           name: z.string(),
           doc: z
-            .string()
+            .union([z.string(), tariffMessageSchema])
             .nullish()
             .transform((value) => value ?? null),
           type: tariffTypeSchema,
