@@ -2,36 +2,23 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   backtestResponseSchema,
-  describeInputsResponseSchema,
-  formulaExplainResponseSchema,
-  listFormulaReviewersResponseSchema,
-  listFormulaTemplateReviewsResponseSchema,
-  reviewNoteResponseSchema,
-  scenarioExplanationSchema,
-  type DescribeInputsResponse,
-  type FormulaDraftContent,
-  type FormulaExplainResponse,
-  type FormulaReviewer,
-  type ReviewNoteResponse,
-  type ScenarioExplanation,
-  listStandardsResponseSchema,
-  type FormulaTemplateReview,
-  readinessResponseSchema,
-  reviewDiffResponseSchema,
-  type StandardTemplate,
-  type ReviewDiffResponse,
-  type ReadinessResponse,
   forkLineageSchema,
-  formulaSchemaResponseSchema,
+  formulaExplainResponseSchema,
+  formulaPreviewResponseSchema,
   formulaTemplateSchema,
-  formulaTestCaseSchema,
   formulaTemplateVersionSchema,
   importTemplatesResponseSchema,
   installStandardsResponseSchema,
+  listFormulaReviewersResponseSchema,
   listFormulaTemplateResponseSchema,
-  runTestCasesResponseSchema,
+  listFormulaTemplateReviewsResponseSchema,
+  listStandardsResponseSchema,
+  readinessResponseSchema,
+  reviewDiffResponseSchema,
+  reviewNoteResponseSchema,
+  scaffoldTestResponseSchema,
+  suggestedTestsResponseSchema,
   templateUsageResponseSchema,
-  testExpressionResponseSchema,
   versionDiffSchema,
   type BacktestRequest,
   type BacktestResponse,
@@ -40,29 +27,37 @@ import {
   type CreateVersionRequest,
   type ForkLineage,
   type ForkRequest,
-  type FormulaSchemaResponse,
+  type FormulaDraftContent,
+  type FormulaExplainResponse,
+  type FormulaPreviewRequest,
+  type FormulaPreviewResponse,
+  type FormulaReviewer,
   type FormulaTemplate,
+  type FormulaTemplateReview,
   type FormulaTemplateVersion,
-  type FormulaTestCase,
-  type FormulaTestCaseInput,
-  type RunTestCasesResponse,
-  type TestCaseCandidate,
+  type FormulaTemplateWrite,
   type ImportTemplatesResponse,
   type InstallStandardsResponse,
   type ListFormulaTemplateResponse,
+  type ReadinessResponse,
+  type ReviewDiffResponse,
+  type ReviewNoteResponse,
   type RollbackRequest,
+  type ScaffoldTestRequest,
+  type ScaffoldTestResponse,
+  type StandardTemplate,
+  type SuggestedTestsResponse,
   type TemplateUsageResponse,
-  type TestExpressionRequest,
-  type TestExpressionResponse,
   type VersionDiff,
 } from "@trenova/shared/types/formula-template";
-import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
-import { pageThreadSchema, type PageThread } from "@/types/assistant";
-import { pricedScenarioSchema, type PricedScenario } from "@/types/page-draft";
 import {
+  tariffContextSchema,
   tariffInputDeclarationsSchema,
+  type TariffContext,
   type TariffInputDeclaration,
 } from "@trenova/shared/types/tariff";
+import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import { pageThreadSchema, type PageThread } from "@/types/assistant";
 import { z } from "zod";
 
 const declaredInputsSchema = z.object({
@@ -70,35 +65,13 @@ const declaredInputsSchema = z.object({
   billing: z.object({ versionNumber: z.number().int() }).nullish(),
 });
 
-export type ImportTestCasePayload = {
-  name: string;
-  description?: string;
-  variables?: Record<string, unknown>;
-  expectedAmount: number;
-  tolerance?: number;
-};
-
+/** A template as an export file carries it: its content and where it was forked from. */
 export type ImportTemplatePayload = {
   name: string;
   description?: string;
-  type: FormulaTemplate["type"];
-  expression: string;
-  schemaId?: string;
-  variableDefinitions?: FormulaTemplate["variableDefinitions"];
-  breakdownDefinitions?: FormulaTemplate["breakdownDefinitions"];
-  minCharge?: FormulaTemplate["minCharge"];
-  maxCharge?: FormulaTemplate["maxCharge"];
-  roundingMode?: FormulaTemplate["roundingMode"];
-  roundingPrecision?: FormulaTemplate["roundingPrecision"];
-  metadata?: FormulaTemplate["metadata"];
+  source: string;
   sourceTemplateId?: string | null;
   sourceVersionNumber?: number | null;
-  testCases?: ImportTestCasePayload[];
-};
-
-/** A template as it is created: the form's values and the scenarios held until it exists. */
-export type CreateFormulaTemplateRequest = FormulaTemplate & {
-  testCases?: FormulaTestCaseInput[];
 };
 
 /** Submitting for review: who should look, and the note they read first. */
@@ -108,9 +81,9 @@ export type SubmitForReviewRequest = {
   reviewerNote?: string;
 };
 
-/** The load Nova's explanation is priced on: the preview's sample values or a saved shipment. */
+/** The load Nova's explanation is priced on: the preview's sample inputs or a saved shipment. */
 export type ExplainPreviewLoad = {
-  sampleValues?: Record<string, unknown>;
+  inputs?: Record<string, unknown>;
   shipmentId?: string;
 };
 
@@ -120,18 +93,21 @@ export type ImportTemplatesRequest = {
   onConflict?: "reject" | "rename";
 };
 
+type RequestOptions = { signal?: AbortSignal };
+
+const BASE = "/formula-templates";
+
 export class FormulaTemplateService {
   public async list(
-    params: { limit: number; offset?: number; type?: string },
-    options?: { signal?: AbortSignal },
+    params: { limit: number; offset?: number },
+    options?: RequestOptions,
   ): Promise<GenericLimitOffsetResponse<FormulaTemplate>> {
     const search = new URLSearchParams({
       limit: String(params.limit),
       offset: String(params.offset ?? 0),
     });
-    if (params.type) search.set("type", params.type);
     const response = await api.get<GenericLimitOffsetResponse<FormulaTemplate>>(
-      `/formula-templates/?${search.toString()}`,
+      `${BASE}/?${search.toString()}`,
       { signal: options?.signal },
     );
 
@@ -145,90 +121,54 @@ export class FormulaTemplateService {
     };
   }
 
-  public async get(templateId: FormulaTemplate["id"]): Promise<FormulaTemplate> {
-    const response = await api.get<FormulaTemplate>(`/formula-templates/${templateId}/`);
-
+  public async get(templateId: string, options?: RequestOptions): Promise<FormulaTemplate> {
+    const response = await api.get<unknown>(`${BASE}/${templateId}/`, { signal: options?.signal });
     return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
 
-  public async test(request: TestExpressionRequest): Promise<TestExpressionResponse> {
-    const response = await api.post<TestExpressionResponse>("/formula-templates/test", request);
-
-    return safeParse(testExpressionResponseSchema, response, "Test Expression");
+  public async create(request: FormulaTemplateWrite): Promise<FormulaTemplate> {
+    const response = await api.post<unknown>(`${BASE}/`, request);
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
 
-  public async getSchema(schemaId = "shipment"): Promise<FormulaSchemaResponse> {
-    const response = await api.get<FormulaSchemaResponse>(
-      `/formula-templates/schema?schemaId=${encodeURIComponent(schemaId)}`,
-    );
+  public async update(templateId: string, request: FormulaTemplateWrite): Promise<FormulaTemplate> {
+    const response = await api.put<unknown>(`${BASE}/${templateId}/`, request);
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
 
-    return safeParse(formulaSchemaResponseSchema, response, "Formula Schema");
+  /**
+   * What the browser checks a tariff against: the organisation's settings, its rate tables'
+   * shapes, its accessorial charge codes and the sources of the libraries a tariff may import.
+   */
+  public async getContext(options?: RequestOptions): Promise<TariffContext> {
+    const response = await api.get<unknown>(`${BASE}/context`, { signal: options?.signal });
+    return safeParse(tariffContextSchema, response, "Tariff Context");
+  }
+
+  /** Rates the source against the sample record, or a real shipment, with the given inputs. */
+  public async preview(
+    request: FormulaPreviewRequest,
+    options?: RequestOptions,
+  ): Promise<FormulaPreviewResponse> {
+    const response = await api.post<unknown>(`${BASE}/test`, request, {
+      signal: options?.signal,
+    });
+    return safeParse(formulaPreviewResponseSchema, response, "Formula Preview");
+  }
+
+  /** Writes a `test` block pinning what the tariff bills for a real shipment. */
+  public async scaffoldTest(request: ScaffoldTestRequest): Promise<ScaffoldTestResponse> {
+    const response = await api.post<unknown>(`${BASE}/scaffold-test`, request);
+    return safeParse(scaffoldTestResponseSchema, response, "Scaffolded Test");
   }
 
   public async importTemplates(request: ImportTemplatesRequest): Promise<ImportTemplatesResponse> {
-    const response = await api.post<ImportTemplatesResponse>("/formula-templates/import", request);
-
+    const response = await api.post<unknown>(`${BASE}/import`, request);
     return safeParse(importTemplatesResponseSchema, response, "Formula Template Import");
   }
 
-  public async listTestCases(templateId: FormulaTemplate["id"]): Promise<FormulaTestCase[]> {
-    const response = await api.get<FormulaTestCase[]>(
-      `/formula-templates/${templateId}/test-cases`,
-    );
-
-    return safeParse(z.array(formulaTestCaseSchema), response, "Formula Test Case");
-  }
-
-  public async createTestCase(
-    templateId: FormulaTemplate["id"],
-    input: FormulaTestCaseInput,
-  ): Promise<FormulaTestCase> {
-    const response = await api.post<FormulaTestCase>(
-      `/formula-templates/${templateId}/test-cases`,
-      input,
-    );
-
-    return safeParse(formulaTestCaseSchema, response, "Formula Test Case");
-  }
-
-  public async updateTestCase(
-    templateId: FormulaTemplate["id"],
-    testCaseId: string,
-    input: FormulaTestCaseInput & { version?: number },
-  ): Promise<FormulaTestCase> {
-    const response = await api.put<FormulaTestCase>(
-      `/formula-templates/${templateId}/test-cases/${testCaseId}`,
-      input,
-    );
-
-    return safeParse(formulaTestCaseSchema, response, "Formula Test Case");
-  }
-
-  public async deleteTestCase(
-    templateId: FormulaTemplate["id"],
-    testCaseId: string,
-  ): Promise<void> {
-    await api.delete(`/formula-templates/${templateId}/test-cases/${testCaseId}`);
-  }
-
-  public async runTestCases(
-    templateId: FormulaTemplate["id"],
-    candidate?: TestCaseCandidate,
-  ): Promise<RunTestCasesResponse> {
-    const response = await api.post<RunTestCasesResponse>(
-      `/formula-templates/${templateId}/test-cases/run`,
-      { candidate: candidate ?? null },
-    );
-
-    return safeParse(runTestCasesResponseSchema, response, "Test Case Run");
-  }
-
   public async installStandards(): Promise<InstallStandardsResponse> {
-    const response = await api.post<InstallStandardsResponse>(
-      "/formula-templates/install-standards",
-      {},
-    );
-
+    const response = await api.post<unknown>(`${BASE}/install-standards`, {});
     return safeParse(installStandardsResponseSchema, response, "Standard Templates");
   }
 
@@ -237,42 +177,38 @@ export class FormulaTemplateService {
    * template, or a fresh one while the template is unsaved.
    */
   public async openAssistantThread(templateId: string | null): Promise<PageThread> {
-    const response = await api.post<PageThread>("/formula-templates/ai/thread/", {
+    const response = await api.post<unknown>(`${BASE}/ai/thread/`, {
       templateId: templateId ?? "",
     });
-
     return safeParse(pageThreadSchema, response, "Formula Assistant Conversation");
   }
 
   public async bulkUpdateStatus(request: BulkUpdateStatusRequest) {
     const response = await api.post<ListFormulaTemplateResponse>(
-      "/formula-templates/bulk-update-status",
+      `${BASE}/bulk-update-status`,
       request,
     );
-
     return safeParse(listFormulaTemplateResponseSchema, response, "Formula Template");
   }
 
   public async bulkDuplicate(request: BulkDuplicateFormulaTemplateRequest) {
-    const response = await api.post<ListFormulaTemplateResponse>(
-      "/formula-templates/duplicate",
-      request,
-    );
-
+    const response = await api.post<ListFormulaTemplateResponse>(`${BASE}/duplicate`, request);
     return safeParse(listFormulaTemplateResponseSchema, response, "Formula Template");
   }
 
   public async listVersions(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     params?: { limit?: number; offset?: number },
+    options?: RequestOptions,
   ): Promise<GenericLimitOffsetResponse<FormulaTemplateVersion>> {
     const searchParams = new URLSearchParams();
     if (params?.limit) searchParams.set("limit", String(params.limit));
     if (params?.offset) searchParams.set("offset", String(params.offset));
 
     const queryString = searchParams.toString();
-    const response = await api.get<GenericLimitOffsetResponse<FormulaTemplateVersion>>(
-      `/formula-templates/${templateId}/versions${queryString ? `?${queryString}` : ""}`,
+    const response = await api.get<GenericLimitOffsetResponse<unknown>>(
+      `${BASE}/${templateId}/versions${queryString ? `?${queryString}` : ""}`,
+      { signal: options?.signal },
     );
 
     return {
@@ -293,18 +229,16 @@ export class FormulaTemplateService {
   public async getDeclaredInputs(
     templateId: string,
     versionNumber: number | null,
-    options?: { signal?: AbortSignal },
+    options?: RequestOptions,
   ): Promise<TariffInputDeclaration[]> {
     if (versionNumber !== null) {
-      const version = await api.get<unknown>(
-        `/formula-templates/${templateId}/versions/${versionNumber}`,
-        { signal: options?.signal },
-      );
-      return safeParse(declaredInputsSchema, version, "Formula Template Version Inputs").then(
-        (parsed) => parsed.inputs,
-      );
+      const version = await api.get<unknown>(`${BASE}/${templateId}/versions/${versionNumber}`, {
+        signal: options?.signal,
+      });
+      const parsed = await safeParse(declaredInputsSchema, version, "Formula Template Inputs");
+      return parsed.inputs;
     }
-    const template = await api.get<unknown>(`/formula-templates/${templateId}/`, {
+    const template = await api.get<unknown>(`${BASE}/${templateId}/`, {
       signal: options?.signal,
     });
     const parsed = await safeParse(declaredInputsSchema, template, "Formula Template Inputs");
@@ -313,194 +247,126 @@ export class FormulaTemplateService {
   }
 
   public async getVersion(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     versionNumber: number,
+    options?: RequestOptions,
   ): Promise<FormulaTemplateVersion> {
-    const response = await api.get<FormulaTemplateVersion>(
-      `/formula-templates/${templateId}/versions/${versionNumber}`,
-    );
-
+    const response = await api.get<unknown>(`${BASE}/${templateId}/versions/${versionNumber}`, {
+      signal: options?.signal,
+    });
     return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
   }
 
   public async createVersion(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     data: CreateVersionRequest,
   ): Promise<FormulaTemplateVersion> {
-    const response = await api.post<FormulaTemplateVersion>(
-      `/formula-templates/${templateId}/versions`,
-      data,
-    );
-
+    const response = await api.post<unknown>(`${BASE}/${templateId}/versions`, data);
     return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
   }
 
-  public async rollback(
-    templateId: FormulaTemplate["id"],
-    data: RollbackRequest,
-  ): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>(
-      `/formula-templates/${templateId}/rollback`,
-      data,
-    );
-
+  public async rollback(templateId: string, data: RollbackRequest): Promise<FormulaTemplate> {
+    const response = await api.post<unknown>(`${BASE}/${templateId}/rollback`, data);
     return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
 
-  public async fork(
-    templateId: FormulaTemplate["id"],
-    data: ForkRequest,
-  ): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/fork`, data);
-
+  public async fork(templateId: string, data: ForkRequest): Promise<FormulaTemplate> {
+    const response = await api.post<unknown>(`${BASE}/${templateId}/fork`, data);
     return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
 
   public async compareVersions(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     fromVersion: number,
     toVersion: number,
+    options?: RequestOptions,
   ): Promise<VersionDiff> {
-    const response = await api.get<VersionDiff>(
-      `/formula-templates/${templateId}/compare?from=${fromVersion}&to=${toVersion}`,
+    const response = await api.get<unknown>(
+      `${BASE}/${templateId}/compare?from=${fromVersion}&to=${toVersion}`,
+      { signal: options?.signal },
     );
-
     return safeParse(versionDiffSchema, response, "Version Diff");
   }
 
-  public async getLineage(templateId: FormulaTemplate["id"]): Promise<ForkLineage> {
-    const response = await api.get<ForkLineage>(`/formula-templates/${templateId}/lineage`);
-
+  public async getLineage(templateId: string, options?: RequestOptions): Promise<ForkLineage> {
+    const response = await api.get<unknown>(`${BASE}/${templateId}/lineage`, {
+      signal: options?.signal,
+    });
     return safeParse(forkLineageSchema, response, "Fork Lineage");
   }
 
-  public async getUsage(templateId: FormulaTemplate["id"]): Promise<TemplateUsageResponse> {
-    const response = await api.get<TemplateUsageResponse>(`/formula-templates/${templateId}/usage`);
-
+  public async getUsage(templateId: string, options?: RequestOptions): Promise<TemplateUsageResponse> {
+    const response = await api.get<unknown>(`${BASE}/${templateId}/usage`, {
+      signal: options?.signal,
+    });
     return safeParse(templateUsageResponseSchema, response, "Template Usage");
   }
 
   public async updateVersionTags(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     versionNumber: number,
     tags: string[],
   ): Promise<FormulaTemplateVersion> {
-    const response = await api.patch<FormulaTemplateVersion>(
-      `/formula-templates/${templateId}/versions/${versionNumber}/tags`,
+    const response = await api.patch<unknown>(
+      `${BASE}/${templateId}/versions/${versionNumber}/tags`,
       { tags },
     );
-
     return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
   }
 
-  public async create(request: CreateFormulaTemplateRequest): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>("/formula-templates/", request);
-
-    return safeParse(formulaTemplateSchema, response, "Formula Template");
-  }
-
   public async submit(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     request: string | SubmitForReviewRequest,
   ): Promise<FormulaTemplate> {
     const body = typeof request === "string" ? { comment: request } : request;
-    const response = await api.post<FormulaTemplate>(
-      `/formula-templates/${templateId}/submit`,
-      body,
-    );
-
+    const response = await api.post<unknown>(`${BASE}/${templateId}/submit`, body);
     return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
 
   public async listReviewers(
-    templateId: FormulaTemplate["id"],
-    options?: { signal?: AbortSignal },
+    templateId: string,
+    options?: RequestOptions,
   ): Promise<FormulaReviewer[]> {
-    const response = await api.get<FormulaReviewer[]>(
-      `/formula-templates/${templateId}/reviewers`,
-      { signal: options?.signal },
-    );
-
+    const response = await api.get<unknown>(`${BASE}/${templateId}/reviewers`, {
+      signal: options?.signal,
+    });
     return safeParse(listFormulaReviewersResponseSchema, response, "Formula Template Reviewers");
   }
 
+  /** Nova's statement-by-statement reading of a rating of the draft. */
   public async explainFormula(
     content: FormulaDraftContent,
     load: ExplainPreviewLoad,
-    options?: { signal?: AbortSignal },
+    options?: RequestOptions,
   ): Promise<FormulaExplainResponse> {
-    const response = await api.post<FormulaExplainResponse>(
-      "/formula-templates/ai/explain",
+    const response = await api.post<unknown>(
+      `${BASE}/ai/explain`,
       { ...content, ...load },
       { signal: options?.signal },
     );
-
     return safeParse(formulaExplainResponseSchema, response, "Formula Explanation");
   }
 
-  public async describeInputs(
+  /** Tests Nova suggests for the draft, as `test` blocks it has run against the draft. */
+  public async suggestTests(
     content: FormulaDraftContent,
-    options?: { signal?: AbortSignal },
-  ): Promise<DescribeInputsResponse> {
-    const response = await api.post<DescribeInputsResponse>(
-      "/formula-templates/ai/describe-inputs",
-      content,
-      { signal: options?.signal },
-    );
-
-    return safeParse(describeInputsResponseSchema, response, "Input Descriptions");
-  }
-
-  public async suggestScenarios(
-    content: FormulaDraftContent,
-    existing: Array<{ name: string; variables: Record<string, unknown> }>,
-    options?: { signal?: AbortSignal },
-  ): Promise<PricedScenario[]> {
-    const response = await api.post<{ scenarios: PricedScenario[] }>(
-      "/formula-templates/ai/suggest-scenarios",
-      { ...content, existing },
-      { signal: options?.signal },
-    );
-
-    const parsed = await safeParse(
-      z.object({
-        scenarios: z
-          .array(pricedScenarioSchema)
-          .nullish()
-          .transform((v) => v ?? []),
-      }),
-      response,
-      "Suggested Scenarios",
-    );
-
-    return parsed.scenarios;
-  }
-
-  public async explainScenario(
-    templateId: FormulaTemplate["id"],
-    testCaseId: string,
-    candidate: TestCaseCandidate,
-    options?: { signal?: AbortSignal },
-  ): Promise<ScenarioExplanation> {
-    const response = await api.post<ScenarioExplanation>(
-      `/formula-templates/${templateId}/test-cases/${testCaseId}/explain`,
-      { candidate },
-      { signal: options?.signal },
-    );
-
-    return safeParse(scenarioExplanationSchema, response, "Scenario Explanation");
+    options?: RequestOptions,
+  ): Promise<SuggestedTestsResponse> {
+    const response = await api.post<unknown>(`${BASE}/ai/suggest-tests`, content, {
+      signal: options?.signal,
+    });
+    return safeParse(suggestedTestsResponseSchema, response, "Suggested Tests");
   }
 
   public async draftReviewNote(
-    templateId: FormulaTemplate["id"],
-    options?: { signal?: AbortSignal },
+    templateId: string,
+    options?: RequestOptions,
   ): Promise<ReviewNoteResponse> {
-    const response = await api.post<ReviewNoteResponse>(
-      `/formula-templates/${templateId}/review-note`,
+    const response = await api.post<unknown>(
+      `${BASE}/${templateId}/review-note`,
       {},
       { signal: options?.signal },
     );
-
     return safeParse(reviewNoteResponseSchema, response, "Reviewer Note");
   }
 
@@ -509,46 +375,36 @@ export class FormulaTemplateService {
    * that moment; until then the previously approved content keeps billing.
    */
   public async approve(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     comment: string,
     effectiveFrom?: number | null,
   ): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/approve`, {
+    const response = await api.post<unknown>(`${BASE}/${templateId}/approve`, {
       comment,
       effectiveFrom: effectiveFrom ?? null,
     });
-
     return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
 
-  public async reject(
-    templateId: FormulaTemplate["id"],
-    comment: string,
-  ): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>(`/formula-templates/${templateId}/reject`, {
+  public async reject(templateId: string, comment: string): Promise<FormulaTemplate> {
+    const response = await api.post<unknown>(`${BASE}/${templateId}/reject`, { comment });
+    return safeParse(formulaTemplateSchema, response, "Formula Template");
+  }
+
+  public async requestChanges(templateId: string, comment: string): Promise<FormulaTemplate> {
+    const response = await api.post<unknown>(`${BASE}/${templateId}/request-changes`, {
       comment,
     });
-
     return safeParse(formulaTemplateSchema, response, "Formula Template");
   }
 
-  public async requestChanges(
-    templateId: FormulaTemplate["id"],
-    comment: string,
-  ): Promise<FormulaTemplate> {
-    const response = await api.post<FormulaTemplate>(
-      `/formula-templates/${templateId}/request-changes`,
-      { comment },
-    );
-
-    return safeParse(formulaTemplateSchema, response, "Formula Template");
-  }
-
-  public async listReviews(templateId: FormulaTemplate["id"]): Promise<FormulaTemplateReview[]> {
-    const response = await api.get<FormulaTemplateReview[]>(
-      `/formula-templates/${templateId}/reviews`,
-    );
-
+  public async listReviews(
+    templateId: string,
+    options?: RequestOptions,
+  ): Promise<FormulaTemplateReview[]> {
+    const response = await api.get<unknown>(`${BASE}/${templateId}/reviews`, {
+      signal: options?.signal,
+    });
     return safeParse(
       listFormulaTemplateReviewsResponseSchema,
       response,
@@ -557,68 +413,55 @@ export class FormulaTemplateService {
   }
 
   public async updateVersionEffectiveDate(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
     versionNumber: number,
     effectiveFrom: number | null,
   ): Promise<FormulaTemplateVersion> {
-    const response = await api.patch<FormulaTemplateVersion>(
-      `/formula-templates/${templateId}/versions/${versionNumber}/effective-date`,
+    const response = await api.patch<unknown>(
+      `${BASE}/${templateId}/versions/${versionNumber}/effective-date`,
       { effectiveFrom },
     );
-
     return safeParse(formulaTemplateVersionSchema, response, "Formula Template Version");
   }
 
   public async listScheduledVersions(
-    templateId: FormulaTemplate["id"],
+    templateId: string,
+    options?: RequestOptions,
   ): Promise<FormulaTemplateVersion[]> {
-    const response = await api.get<FormulaTemplateVersion[]>(
-      `/formula-templates/${templateId}/versions/scheduled`,
-    );
-
+    const response = await api.get<unknown>(`${BASE}/${templateId}/versions/scheduled`, {
+      signal: options?.signal,
+    });
     return safeParse(z.array(formulaTemplateVersionSchema), response, "Formula Template Version");
   }
 
-  public async backtest(
-    templateId: FormulaTemplate["id"],
-    request: BacktestRequest,
-  ): Promise<BacktestResponse> {
-    const response = await api.post<BacktestResponse>(
-      `/formula-templates/${templateId}/backtest`,
-      request,
-    );
-
+  public async backtest(templateId: string, request: BacktestRequest): Promise<BacktestResponse> {
+    const response = await api.post<unknown>(`${BASE}/${templateId}/backtest`, request);
     return safeParse(backtestResponseSchema, response, "Backtest");
   }
 
-  public async approvalImpact(
-    templateId: FormulaTemplate["id"],
-    limit?: number,
-  ): Promise<BacktestResponse> {
-    const response = await api.post<BacktestResponse>(`/formula-templates/${templateId}/impact`, {
+  public async approvalImpact(templateId: string, limit?: number): Promise<BacktestResponse> {
+    const response = await api.post<unknown>(`${BASE}/${templateId}/impact`, {
       limit: limit ?? 0,
     });
-
     return safeParse(backtestResponseSchema, response, "Approval Impact");
   }
 
-  public async readiness(templateId: FormulaTemplate["id"]): Promise<ReadinessResponse> {
-    const response = await api.get<ReadinessResponse>(`/formula-templates/${templateId}/readiness`);
-
+  public async readiness(templateId: string, options?: RequestOptions): Promise<ReadinessResponse> {
+    const response = await api.get<unknown>(`${BASE}/${templateId}/readiness`, {
+      signal: options?.signal,
+    });
     return safeParse(readinessResponseSchema, response, "Formula Template Readiness");
   }
 
-  public async listStandards(): Promise<StandardTemplate[]> {
-    const response = await api.get<StandardTemplate[]>("/formula-templates/standards");
-
+  public async listStandards(options?: RequestOptions): Promise<StandardTemplate[]> {
+    const response = await api.get<unknown>(`${BASE}/standards`, { signal: options?.signal });
     return safeParse(listStandardsResponseSchema, response, "Formula Template Standards");
   }
 
-  public async reviewDiff(templateId: FormulaTemplate["id"]): Promise<ReviewDiffResponse> {
-    const response = await api.get<ReviewDiffResponse>(
-      `/formula-templates/${templateId}/review-diff`,
-    );
-
+  public async reviewDiff(templateId: string, options?: RequestOptions): Promise<ReviewDiffResponse> {
+    const response = await api.get<unknown>(`${BASE}/${templateId}/review-diff`, {
+      signal: options?.signal,
+    });
     return safeParse(reviewDiffResponseSchema, response, "Formula Template Review Diff");
   }
 }
