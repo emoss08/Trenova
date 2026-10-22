@@ -2230,7 +2230,6 @@
   "{0} over the rate con": "比運價確認書高 {0}",
   "{0} pending review": "{0} 項待審查",
   "{0} per increment": "每級 {0}",
-  "{0} per {1}": "每{1} {0}",
   "{0} proposed {1, plural, one {# change} other {# changes}}": "{0} 提議了 {1, plural, other {# 項變更}}",
   "{0} received and not yet applied to an invoice.": "已收到 {0}，尚未沖銷至發票。",
   "{0} rejected": "{0} 項已駁回",

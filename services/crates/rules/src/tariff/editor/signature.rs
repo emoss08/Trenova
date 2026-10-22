@@ -9,17 +9,17 @@
 //! `charge(…)` in tests, rate table methods and a charge's `(quantity:, rate:)` options. The
 //! active parameter follows a named argument by its name and a positional one by its place.
 
-use super::complete::{Doc, call_with_open, callee_of};
+use super::complete::{call_with_open, callee_of};
 use super::cursor::{Bracket, Scopes, enclosing, previous};
 use super::describe::{
-    Signature, function_doc, function_signature, method_signature, param_doc, signature as build,
-    type_text,
+    Signature, function_doc, function_signature, method_signature, signature as build, type_text,
 };
 use super::names::receiver_type;
 use super::session::Session;
 use crate::message;
 use crate::message::Message;
 use crate::tariff::check::{CONSTRUCTORS, Callee, TABLE_METHODS};
+use crate::tariff::docs::Doc;
 use crate::tariff::syntax::token::TokenKind;
 
 /// The most brackets signature help looks out through to find a call.
@@ -181,15 +181,11 @@ fn callee_help(
             let params = decl
                 .params
                 .iter()
-                .map(|param| {
-                    doc.as_deref()
-                        .and_then(|doc| param_doc(doc, &param.name.text))
-                        .map(Doc::Text)
-                })
+                .map(|param| doc.as_ref().and_then(|doc| doc.param(&param.name.text)))
                 .collect();
             Some(Help {
                 signature: function_signature(session, *module, decl),
-                doc: doc.map(Doc::Text),
+                doc,
                 params,
             })
         }
@@ -215,11 +211,7 @@ fn callee_help(
             for param in &mut signature.params {
                 param.optional = true;
             }
-            let params = shape
-                .fields
-                .iter()
-                .map(|field| field.doc.clone().map(Doc::Text))
-                .collect();
+            let params = shape.fields.iter().map(|field| field.doc.clone()).collect();
             Some(Help {
                 signature,
                 doc: Some(Doc::Message(Message::with(

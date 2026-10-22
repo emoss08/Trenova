@@ -13,7 +13,8 @@ use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::{Diagnostic, Severity};
-use crate::tariff::schema::Schema;
+use crate::tariff::docs::Doc;
+use crate::tariff::schema::{Schema, TABLES_DOC};
 use crate::tariff::syntax::ast::{
     FileKind, FnBody, FnDecl, ItemKind, Stmt, StmtKind, TextPart, TotalClause,
 };
@@ -33,7 +34,7 @@ pub fn check(program: &Program, context: &Context) -> Analysis {
             module: None,
             span: None,
             ty: Some(ty.clone()),
-            doc: Some((*doc).to_owned()),
+            doc: Some(doc.clone()),
         });
     }
     state.symbols.push(Symbol {
@@ -42,9 +43,7 @@ pub fn check(program: &Program, context: &Context) -> Analysis {
         module: None,
         span: None,
         ty: None,
-        doc: Some(String::from(
-            "The organisation's active rate matrices, by code.",
-        )),
+        doc: Some(Doc::message(TABLES_DOC)),
     });
     let mut modules: Vec<ModuleAnalysis> = program
         .modules

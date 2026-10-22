@@ -421,6 +421,113 @@
      }
     ]
    }
+  },
+  {
+   "name": "a standard library function's docs are translated",
+   "source": [
+    "tariff \"t\"",
+    "use std.accessorials.{ extraStops }",
+    "charge \"x\" = extraStops(|)"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "label": "extraStops(stops: List<Stop>, included: Int, fee: Money) -> Money",
+      "doc": {
+       "message": "Extra stops: `fee` for every stop beyond the first `included`."
+      },
+      "parameters": [
+       {
+        "doc": null
+       },
+       {
+        "doc": {
+         "message": "Extra stops: `fee` for every stop beyond the first `included`."
+        }
+       },
+       {
+        "doc": {
+         "message": "Extra stops: `fee` for every stop beyond the first `included`."
+        }
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "name": "a test constructor's parameter docs are the schema's, translated",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(|)]",
+    "  expect total == $1",
+    "}"
+   ],
+   "expect": {
+    "signatures": [
+     {
+      "parameters": [
+       {
+        "doc": {
+         "message": "The stop's place in the route, from 1."
+        }
+       },
+       {
+        "doc": {
+         "message": "Pickup, delivery or a split."
+        }
+       },
+       {
+        "doc": {
+         "message": "Where the stop is in its life."
+        }
+       },
+       {
+        "doc": {
+         "message": "Whether the stop is by appointment."
+        }
+       },
+       {
+        "doc": {
+         "message": "The scheduled window."
+        }
+       },
+       {
+        "doc": {
+         "message": "When the equipment arrived."
+        }
+       },
+       {
+        "doc": {
+         "message": "When the equipment left."
+        }
+       },
+       {
+        "doc": {
+         "message": "Departure minus arrival, when both are recorded."
+        }
+       },
+       {
+        "doc": {
+         "message": "Pieces handled at the stop."
+        }
+       },
+       {
+        "doc": {
+         "message": "Weight handled at the stop."
+        }
+       },
+       {
+        "doc": {
+         "message": "Where the stop is."
+        }
+       }
+      ]
+     }
+    ]
+   }
   }
  ]
 }

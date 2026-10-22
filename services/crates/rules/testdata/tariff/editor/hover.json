@@ -140,7 +140,9 @@
    ],
    "expect": {
     "contents": {
-     "doc": "The shipment being rated."
+     "doc": {
+      "message": "The shipment being rated."
+     }
     }
    }
   },
@@ -665,7 +667,9 @@
    "expect": {
     "contents": {
      "signature": "use std.fuel",
-     "doc": "Fuel surcharges computed in the language, for contracts that price fuel themselves."
+     "doc": {
+      "message": "Fuel surcharges computed in the language, for contracts that price fuel themselves."
+     }
     }
    }
   },
@@ -952,6 +956,82 @@
    "expect": {
     "contents": {
      "signature": "arrival: DateTime?"
+    }
+   }
+  },
+  {
+   "name": "a schema field's doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "let p = shipment.pro|Number",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "proNumber: Text",
+     "doc": {
+      "message": "The shipment's PRO number."
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library function's doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ billed }",
+    "charge \"x\" = $1/cwt * bil|led(1_240 lb)"
+   ],
+   "expect": {
+    "contents": {
+     "doc": {
+      "message": "The weight to bill: `weight` rounded up to the next multiple of `to`, 100 lb unless given."
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library type's field doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ Break }",
+    "let b: Break = { from: 0 lb, rate: $10/cwt, minimum: none }",
+    "charge \"x\" = b.ra|te * 100 lb"
+   ],
+   "expect": {
+    "contents": {
+     "signature": "rate: Money/cwt",
+     "doc": {
+      "message": "What the break charges per hundredweight."
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library parameter's doc is translated",
+   "source": [
+    "tariff \"t\"",
+    "use std.accessorials.{ extraStops }",
+    "charge \"x\" = extraStops(shipment.stops, incl|uded: 2, fee: $75)"
+   ],
+   "expect": {
+    "contents": {
+     "doc": {
+      "message": "Extra stops: `fee` for every stop beyond the first `included`."
+     }
+    }
+   }
+  },
+  {
+   "name": "an organisation library's doc stays the author's words",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ liftgate }",
+    "charge \"x\" = lift|gate(2)"
+   ],
+   "expect": {
+    "contents": {
+     "doc": "A liftgate at `stops` stops, `fee` each."
     }
    }
   }

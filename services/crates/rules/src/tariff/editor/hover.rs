@@ -8,10 +8,9 @@
 //! exact factor to SI), charge codes, rate tables, modules, keywords, and literals (`1_200 lb` is
 //! `544.31 kg`, `@2026-10-22` falls on a `Thu`).
 
-use super::complete::Doc;
 use super::cursor::{Body, Scopes, token_at};
 use super::describe::{
-    flat, keyword_doc, method_signature, param_doc, si, symbol_signature, type_text, unit_doc,
+    flat, keyword_doc, method_signature, si, symbol_signature, type_text, unit_doc,
 };
 use super::names::{Parameter, parameters};
 use super::session::Session;
@@ -23,6 +22,7 @@ use crate::tariff::check::describe::{snippet, unit_text};
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods;
 use crate::tariff::check::{SymbolId, SymbolKind, TABLE_METHODS};
+use crate::tariff::docs::Doc;
 use crate::tariff::eval::time::Date;
 use crate::tariff::schema::TableShape;
 use crate::tariff::syntax::ast::{Expr, ExprKind, ItemKind, PatternKind, StmtKind};
@@ -197,14 +197,8 @@ impl Hovered<'_, '_> {
             hover.signature = Some(symbol_signature(session, id));
         }
         hover.doc = match symbol.kind {
-            SymbolKind::Module => symbol
-                .doc
-                .as_deref()
-                .and_then(|path| session.program.module_named(path))
-                .and_then(|module| module.file.docs.as_ref())
-                .map(|doc| Doc::Text(doc.text.clone())),
-            SymbolKind::Param => self.param_doc_of(id).map(Doc::Text),
-            _ => symbol.doc.clone().map(Doc::Text),
+            SymbolKind::Param => self.param_doc_of(id),
+            _ => symbol.doc.clone(),
         };
         if symbol.module == Some(ModuleId::ROOT)
             && matches!(
@@ -218,15 +212,14 @@ impl Hovered<'_, '_> {
     }
 
     /// A parameter's doc: the sentences of its function's doc that name it.
-    fn param_doc_of(&self, id: SymbolId) -> Option<String> {
+    fn param_doc_of(&self, id: SymbolId) -> Option<Doc> {
         let symbol = self.session.symbol(id)?;
         let module = symbol.module?;
         let span = symbol.span?;
         let found = self.session.program.module(module)?;
         found.file.items.iter().find_map(|item| match &item.kind {
             ItemKind::Fn(decl) if decl.params.iter().any(|param| param.name.span == span) => {
-                let doc = item.docs.as_ref()?;
-                param_doc(&doc.text, &symbol.name)
+                Doc::of(found.std, item.docs.as_ref())?.param(&symbol.name)
             }
             _ => None,
         })
@@ -302,7 +295,7 @@ impl Hovered<'_, '_> {
         {
             let mut hover = Hover::new(span).typed(Some(&found.ty));
             hover.signature = Some(format!("{}: {}", found.name, type_text(&found.ty)));
-            hover.doc = found.doc.clone().map(Doc::Text);
+            hover.doc.clone_from(&found.doc);
             return Some(hover);
         }
         let method = methods::find(&receiver, &name.text)?;
@@ -331,7 +324,7 @@ impl Hovered<'_, '_> {
             let enum_type = Type::Enum(enumeration.clone());
             if on_head {
                 hover.signature = Some(enum_signature(&enum_type, enumeration));
-                hover.doc = enumeration.doc.clone().map(Doc::Text);
+                hover.doc.clone_from(&enumeration.doc);
                 return Some(hover);
             }
             let variant = member.as_ref().unwrap_or(head);
@@ -372,7 +365,7 @@ impl Hovered<'_, '_> {
             Some(ty) => format!("{}: {}", param.name, type_text(ty)),
             None => param.name.clone(),
         });
-        hover.doc = param.doc.map(Doc::Text);
+        hover.doc = param.doc;
         Some(hover)
     }
 
@@ -435,7 +428,7 @@ impl Hovered<'_, '_> {
             &Type::Enum(enumeration.clone()),
             &enumeration,
         ));
-        hover.doc = enumeration.doc.clone().map(Doc::Text);
+        hover.doc.clone_from(&enumeration.doc);
         Some(hover)
     }
 
@@ -468,8 +461,7 @@ impl Hovered<'_, '_> {
             _ => session
                 .program
                 .module_named(&path)
-                .and_then(|module| module.file.docs.as_ref())
-                .map(|doc| Doc::Text(doc.text.clone())),
+                .and_then(|module| Doc::of(module.std, module.file.docs.as_ref())),
         };
         Some(hover)
     }
@@ -503,7 +495,7 @@ impl Hovered<'_, '_> {
             .map(|part| part.text.as_str())
             .collect();
         hover.signature = Some(format!("{}: {}", written.join("."), type_text(&ty)));
-        hover.doc = doc.map(Doc::Text);
+        hover.doc = doc;
         Some(hover)
     }
 
@@ -557,7 +549,7 @@ fn variant_hover(
         .find(|(name, _)| name == variant)
         .and_then(|(_, doc)| doc.clone())
         .or_else(|| enumeration.doc.clone());
-    hover.doc = doc.map(Doc::Text);
+    hover.doc = doc;
     hover
 }
 

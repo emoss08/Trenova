@@ -1,8 +1,10 @@
 //! The `tariff.*` editor operations. Each takes the file being edited with its context and a
 //! position or range in UTF-16 code units, loads and checks the file (it may be broken), and
 //! answers from what is known. `kind` (`tariff`, `library`, `condition`) is optional, as for
-//! `tariff.check`. A `doc` on the wire is the author's doc comment (a markdown string) or a
-//! built-in's text (a `Message`).
+//! `tariff.check`. A `doc` on the wire is a [`crate::tariff::docs::Doc`]: the author's words
+//! (a markdown string: a doc comment in the file or an organisation library, a table's name, a
+//! code's description) or text the module ships, which the hosts translate (a `Message`: the
+//! built-ins', the schema's and the standard library's docs).
 //!
 //! - `tariff.complete` `{source, context, offset}` → `{"range": {from, to}, "items": [{"label",
 //!   "kind", "detail", "doc", "insert", "snippet", "sort", "range"?}]}`, the items in `sort`
@@ -21,7 +23,7 @@
 //!
 //! `values` is the `trace` a `tariff.evaluate` of the same file returned ([`super::values`]).
 
-use super::complete::{Completion, Doc, complete as completions};
+use super::complete::{Completion, complete as completions};
 use super::definition::definition as definitions;
 use super::hover::hover as hovered;
 use super::inlays::inlays as hints;
@@ -92,14 +94,6 @@ fn range(index: &Utf16Index, span: Span) -> Json {
     json!({ "from": range.from, "to": range.to })
 }
 
-fn doc(doc: Option<&Doc>) -> Json {
-    match doc {
-        Some(Doc::Text(text)) => Json::String(text.clone()),
-        Some(Doc::Message(message)) => serde_json::to_value(message).unwrap_or(Json::Null),
-        None => Json::Null,
-    }
-}
-
 /// `tariff.complete`.
 ///
 /// # Errors
@@ -123,7 +117,7 @@ fn completion_json(session: &Session<'_>, completion: &Completion) -> Json {
                 "label": item.label,
                 "kind": item.kind.as_str(),
                 "detail": item.detail,
-                "doc": doc(item.doc.as_ref()),
+                "doc": item.doc,
                 "insert": item.insert,
                 "snippet": item.snippet,
                 "sort": item.sort,
@@ -154,7 +148,7 @@ pub fn hover(input: &RawValue) -> OpResult {
         "signature": found.signature,
         "type": found.ty,
         "unit": found.unit,
-        "doc": doc(found.doc.as_ref()),
+        "doc": found.doc,
     });
     if let (Some(value), Some(object)) = (found.value, contents.as_object_mut()) {
         object.insert(String::from("value"), value);
@@ -178,10 +172,10 @@ pub fn signature(input: &RawValue) -> OpResult {
         .map(|help| {
             json!({
                 "label": help.signature.label,
-                "doc": doc(help.doc.as_ref()),
+                "doc": help.doc,
                 "parameters": help.signature.params.iter().zip(help.params.iter().chain(std::iter::repeat(&None))).map(|(param, param_doc)| json!({
                     "label": [param.range.0, param.range.1],
-                    "doc": doc(param_doc.as_ref()),
+                    "doc": param_doc,
                 })).collect::<Vec<_>>(),
             })
         })

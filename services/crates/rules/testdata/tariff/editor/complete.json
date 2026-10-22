@@ -2415,6 +2415,57 @@
      "value"
     ]
    }
+  },
+  {
+   "name": "schema field docs are messages",
+   "source": [
+    "tariff \"t\"",
+    "let p = shipment.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "proNumber": {
+      "doc": {
+       "message": "The shipment's PRO number."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "standard library docs are messages",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ |}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "deficit": {
+      "doc": {
+       "message": "Deficit weight rating. Prices `actual` at the rate of the heaviest break at or below it (a weight below every break prices at the lightest), and also the next break's minimum weight at the next break's rate; bills whichever costs less, each priced at no less than its break's minimum. With `allow: false` the actual weight is always billed. Refuses to rate when there are no breaks."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library module's doc is a message",
+   "source": [
+    "tariff \"t\"",
+    "use std.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "time": {
+      "doc": {
+       "message": "Calendar rules for accessorials: weekends, business hours and time spent within them. Every function reads a date-time on its own clock, in the offset it carries."
+      }
+     }
+    }
+   }
   }
  ]
 }

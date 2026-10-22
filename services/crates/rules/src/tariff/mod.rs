@@ -7,6 +7,8 @@
 //! - [`schema`]: the data roots, the schema enums, and the table and charge code shapes.
 //! - [`context`]: the libraries, tables, charge codes and settings a file is read with.
 //! - [`diagnostic`]: findings shared by the parser and the checker.
+//! - [`docs`]: the docs the editor, the catalog and the inputs form show: the author's words or
+//!   translated text.
 //! - [`syntax`]: the lexer, the error-tolerant parser, the syntax tree, the formatter, tokens
 //!   for highlighting, and loading a file with the libraries it imports.
 //! - [`check`]: types, units, inference, flow narrowing, exhaustiveness, modules, inputs and
@@ -22,6 +24,7 @@
 pub mod check;
 pub mod context;
 pub mod diagnostic;
+pub mod docs;
 pub mod editor;
 pub mod eval;
 pub mod schema;

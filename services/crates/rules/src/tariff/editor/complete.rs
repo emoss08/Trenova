@@ -35,6 +35,7 @@ use crate::tariff::check::describe::snippet as source_text;
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods::{self, ParamKind, Receiver};
 use crate::tariff::check::{CONSTRUCTORS, Callee, SymbolKind, TABLE_METHODS};
+use crate::tariff::docs::Doc;
 use crate::tariff::stdlib;
 use crate::tariff::syntax::ast::{Expr, ExprKind, FileKind, ItemKind, StmtKind};
 use crate::tariff::syntax::program::{Decl, ModuleId};
@@ -103,15 +104,6 @@ impl Kind {
             Self::Value => "value",
         }
     }
-}
-
-/// An item's documentation: the author's doc comment (markdown) or a built-in's catalog text.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Doc {
-    /// A doc comment, as written.
-    Text(String),
-    /// A built-in's explanation.
-    Message(Message),
 }
 
 /// One completion item.
@@ -504,7 +496,7 @@ fn patterns(items: &mut Items, ty: Option<&Type>) {
         for (variant, doc) in &enumeration.variants {
             if let Some(item) = items.add(Rank::Expected, Kind::Variant, variant) {
                 item.detail = Some(type_text(&Type::Enum(enumeration.clone())));
-                item.doc = doc.clone().map(Doc::Text);
+                item.doc.clone_from(doc);
             }
         }
     }
@@ -598,10 +590,9 @@ fn use_path(site: &Site<'_, '_>, items: &mut Items) {
         let name = rest.split('.').next().unwrap_or(rest);
         if let Some(item) = items.add(Rank::Root, Kind::Module, name) {
             item.detail = Some(module.clone());
-            let doc = source
+            item.doc = source
                 .map(crate::tariff::syntax::parse)
-                .and_then(|file| file.docs.map(|doc| doc.text));
-            item.doc = doc.map(Doc::Text);
+                .and_then(|file| Doc::of(true, file.docs.as_ref()));
         }
     }
 }
@@ -629,11 +620,7 @@ fn exports(site: &Site<'_, '_>, items: &mut Items, path: &str, written: &[&str])
             && let Some(id) = id
         {
             item.detail = Some(super::describe::symbol_signature(site.session, id));
-            item.doc = site
-                .session
-                .symbol(id)
-                .and_then(|s| s.doc.clone())
-                .map(Doc::Text);
+            item.doc = site.session.symbol(id).and_then(|s| s.doc.clone());
         }
     }
 }
@@ -772,11 +759,7 @@ fn module_members(site: &Site<'_, '_>, items: &mut Items, module: ModuleId) {
         };
         if let Some(item) = items.add(Rank::Global, kind, name) {
             item.detail = Some(super::describe::symbol_signature(site.session, id));
-            item.doc = site
-                .session
-                .symbol(id)
-                .and_then(|s| s.doc.clone())
-                .map(Doc::Text);
+            item.doc = site.session.symbol(id).and_then(|s| s.doc.clone());
             if kind == Kind::Function {
                 fill_call(site, item, module, name);
             }
@@ -811,7 +794,7 @@ fn enum_variants(site: &Site<'_, '_>, items: &mut Items, name: &str) {
     for (variant, doc) in &enumeration.variants {
         if let Some(item) = items.add(Rank::Expected, Kind::Variant, variant) {
             item.detail = Some(type_text(&Type::Enum(enumeration.clone())));
-            item.doc = doc.clone().map(Doc::Text);
+            item.doc.clone_from(doc);
         }
     }
 }
@@ -823,7 +806,7 @@ pub fn members(items: &mut Items, ty: &Type, rewrite: Option<Span>) {
         for field in &record.fields {
             if let Some(item) = items.add(Rank::Expected, Kind::Field, &field.name) {
                 item.detail = Some(type_text(&field.ty));
-                item.doc = field.doc.clone().map(Doc::Text);
+                item.doc.clone_from(&field.doc);
                 if let Some(span) = rewrite {
                     item.insert = format!("?.{}", field.name);
                     item.range = Some(span);
@@ -1014,7 +997,7 @@ fn given_path(site: &Site<'_, '_>, items: &mut Items) -> bool {
         for (root, ty, doc) in &session.schema.roots {
             if let Some(item) = items.add(Rank::Root, Kind::Name, root) {
                 item.detail = Some(type_text(ty));
-                item.doc = Some(Doc::Text((*doc).to_owned()));
+                item.doc = Some(doc.clone());
             }
         }
         if matches!(session.kind(), FileKind::Tariff | FileKind::Condition)
@@ -1048,7 +1031,7 @@ fn given_path(site: &Site<'_, '_>, items: &mut Items) -> bool {
         for field in &record.fields {
             if let Some(item) = items.add(Rank::Expected, Kind::Field, &field.name) {
                 item.detail = Some(type_text(&field.ty));
-                item.doc = field.doc.clone().map(Doc::Text);
+                item.doc.clone_from(&field.doc);
             }
         }
     }
@@ -1133,7 +1116,7 @@ fn types(site: &Site<'_, '_>, items: &mut Items) {
     for (name, enumeration) in names::enums(site) {
         if let Some(item) = items.add(Rank::Expected, Kind::Enum, &name) {
             item.detail = Some(format!("enum {name}"));
-            item.doc = enumeration.doc.clone().map(Doc::Text);
+            item.doc.clone_from(&enumeration.doc);
         }
     }
     let root = site.session.root();
@@ -1160,7 +1143,7 @@ fn types(site: &Site<'_, '_>, items: &mut Items) {
         }
         if let Some(item) = items.add(Rank::Expected, Kind::Type, &name) {
             item.detail = Some(super::describe::symbol_signature(site.session, id));
-            item.doc = symbol.doc.clone().map(Doc::Text);
+            item.doc.clone_from(&symbol.doc);
         }
         let _ = module;
     }
@@ -1268,7 +1251,7 @@ fn record_fields(site: &Site<'_, '_>, bracket: &Bracket, items: &mut Items) -> b
         if let Some(item) = items.add(Rank::Parameter, Kind::Field, &format!("{}:", field.name)) {
             item.insert = format!("{}: ", field.name);
             item.detail = Some(type_text(&field.ty));
-            item.doc = field.doc.clone().map(Doc::Text);
+            item.doc.clone_from(&field.doc);
         }
     }
     true
