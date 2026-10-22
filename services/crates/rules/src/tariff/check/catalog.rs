@@ -15,60 +15,16 @@ use crate::tariff::docs::Doc;
 use crate::tariff::schema::{Schema, Settings, TABLES_DOC};
 use crate::tariff::stdlib;
 use crate::tariff::syntax::ast::{FileKind, ItemKind};
+use crate::tariff::syntax::lexer::{CONTEXTUAL, KEYWORDS};
 use crate::tariff::syntax::program::load;
 use crate::tariff::types::Type;
 use crate::tariff::units::SIMPLE_UNITS;
 use serde_json::{Value as Json, json};
 
-/// The language's keywords.
-pub const KEYWORDS: &[&str] = &[
-    "tariff",
-    "library",
-    "condition",
-    "use",
-    "input",
-    "let",
-    "var",
-    "const",
-    "fn",
-    "type",
-    "enum",
-    "private",
-    "charge",
-    "note",
-    "if",
-    "else",
-    "match",
-    "for",
-    "in",
-    "where",
-    "break",
-    "continue",
-    "return",
-    "minimum",
-    "maximum",
-    "round",
-    "to",
-    "up",
-    "down",
-    "half",
-    "even",
-    "require",
-    "fail",
-    "fails",
-    "test",
-    "given",
-    "expect",
-    "and",
-    "or",
-    "not",
-    "true",
-    "false",
-    "none",
-];
-
-/// The words that mean something only where the grammar expects them.
-pub const CONTEXTUAL: &[&str] = &["cents", "total", "lines", "as"];
+/// The names that mean something only in a test, after the rating: `total` and `lines`. With the
+/// lexer's contextual words ([`CONTEXTUAL`]) they are what the catalog lists as `contextual`:
+/// ordinary names everywhere else, so a parameter may be called `to`.
+pub const TEST_NAMES: &[&str] = &["total", "lines"];
 
 /// The catalog as JSON.
 #[must_use]
@@ -93,7 +49,7 @@ pub fn catalog() -> Json {
         "tableMethods": TABLE_METHODS.iter().map(|(name, doc)| json!({ "name": name, "doc": Doc::message(doc) })).collect::<Vec<_>>(),
         "units": SIMPLE_UNITS.iter().filter(|unit| unit.symbol != "$").map(|unit| json!({
             "unit": unit.symbol,
-            "dimension": unit.base.map_or("Count", |base| if unit.symbol == "%" { "Percent" } else { base.name() }),
+            "dimension": unit.dimension(),
             "factor": unit.factor().normalize().to_string(),
             "si": unit.base.map(|base| match base {
                 crate::tariff::units::Base::Weight => "kg",
@@ -104,7 +60,7 @@ pub fn catalog() -> Json {
             }),
         })).collect::<Vec<_>>(),
         "keywords": KEYWORDS,
-        "contextual": CONTEXTUAL,
+        "contextual": CONTEXTUAL.iter().chain(TEST_NAMES).collect::<Vec<_>>(),
         "schema": schema_json(&schema),
     })
 }
@@ -294,6 +250,23 @@ mod tests {
             .cloned()
             .unwrap_or_default();
         assert!(keywords.contains(&Json::from("charge")));
+        let contextual = out
+            .get("contextual")
+            .and_then(Json::as_array)
+            .cloned()
+            .unwrap_or_default();
+        for word in [
+            "as", "cents", "to", "up", "down", "half", "even", "total", "lines",
+        ] {
+            assert!(
+                contextual.contains(&Json::from(word)),
+                "{word} is contextual"
+            );
+            assert!(
+                !keywords.contains(&Json::from(word)),
+                "{word} is not reserved"
+            );
+        }
         let schema = out.get("schema").cloned().unwrap_or(Json::Null);
         let roots = schema.get("roots").cloned().unwrap_or(Json::Null);
         assert!(find(&roots, "name", "shipment").is_some());

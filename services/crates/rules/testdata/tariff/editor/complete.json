@@ -2466,6 +2466,25 @@
      }
     }
    }
+  },
+  {
+   "name": "a contextual word is an ordinary name: a parameter called `to` completes as one",
+   "source": [
+    "tariff \"t\"",
+    "fn reach(weight: Weight, to: Weight) -> Weight = weight.roundUp(to: |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "to",
+     "weight"
+    ],
+    "items": {
+     "to": {
+      "detail": "Weight"
+     }
+    }
+   }
   }
  ]
 }
