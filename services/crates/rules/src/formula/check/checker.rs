@@ -53,8 +53,8 @@ use crate::message;
 use crate::message::Arg;
 use crate::message::Message;
 use crate::span::Span;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 fn quote(name: &str) -> String {
     format!("`{name}`")
@@ -111,16 +111,16 @@ struct Checker<'a> {
     knowledge: &'a Knowledge,
     tables: Option<&'a [RateTable]>,
     bindings: Vec<Binding>,
-    binding_index: HashMap<String, usize>,
-    defined: HashSet<String>,
+    binding_index: BTreeMap<String, usize>,
+    defined: BTreeSet<String>,
     diagnostics: Vec<Diagnostic>,
     order: Vec<String>,
-    read: HashSet<String>,
-    input_reads: HashSet<String>,
+    read: BTreeSet<String>,
+    input_reads: BTreeSet<String>,
     function_calls: Vec<String>,
-    called: HashSet<String>,
-    guarded: HashSet<Span>,
-    flagged: HashSet<String>,
+    called: BTreeSet<String>,
+    guarded: BTreeSet<Span>,
+    flagged: BTreeSet<String>,
     pointer_depth: u32,
     reduce_depth: u32,
     elements: Vec<Option<String>>,
@@ -143,16 +143,16 @@ pub(super) fn run(
         knowledge: &knowledge,
         tables,
         bindings: Vec::new(),
-        binding_index: HashMap::new(),
-        defined: HashSet::new(),
+        binding_index: BTreeMap::new(),
+        defined: BTreeSet::new(),
         diagnostics: Vec::new(),
         order: Vec::new(),
-        read: HashSet::new(),
-        input_reads: HashSet::new(),
+        read: BTreeSet::new(),
+        input_reads: BTreeSet::new(),
         function_calls: Vec::new(),
-        called: HashSet::new(),
-        guarded: HashSet::new(),
-        flagged: HashSet::new(),
+        called: BTreeSet::new(),
+        guarded: BTreeSet::new(),
+        flagged: BTreeSet::new(),
         pointer_depth: 0,
         reduce_depth: 0,
         elements: Vec::new(),
@@ -187,7 +187,7 @@ pub(super) fn run(
         result_type = checker.statements(&program, expect);
     }
     let pending = schema.is_none();
-    let mut seen = HashSet::new();
+    let mut seen = BTreeSet::new();
     let mut diagnostics: Vec<Diagnostic> = checker
         .diagnostics
         .drain(..)
@@ -2084,7 +2084,7 @@ impl Checker<'_> {
     }
 
     /// Marks any read of a name the surrounding conditional tested for `nil` as guarded.
-    fn mark_tested_reads(&mut self, expr: &Expr, names: &HashSet<String>) {
+    fn mark_tested_reads(&mut self, expr: &Expr, names: &BTreeSet<String>) {
         if expr.path().is_some_and(|path| names.contains(&path)) {
             self.mark_guarded(expr);
         }
@@ -2100,8 +2100,8 @@ impl Checker<'_> {
 /// of `and` (`Some(false)`) the paths it requires to be set (`x != nil`, through `and`) guard its
 /// right; for the left of `or` (`Some(true)`) the paths it lets through when empty (`x == nil`,
 /// through `or`) do.
-fn nil_tests(test: &Expr, empty: impl Into<Option<bool>>) -> HashSet<String> {
-    fn collect(expr: &Expr, empty: Option<bool>, names: &mut HashSet<String>) {
+fn nil_tests(test: &Expr, empty: impl Into<Option<bool>>) -> BTreeSet<String> {
+    fn collect(expr: &Expr, empty: Option<bool>, names: &mut BTreeSet<String>) {
         let ExprKind::Binary(binary) = &expr.kind else {
             return;
         };
@@ -2124,7 +2124,7 @@ fn nil_tests(test: &Expr, empty: impl Into<Option<bool>>) -> HashSet<String> {
             _ => {}
         }
     }
-    let mut names = HashSet::new();
+    let mut names = BTreeSet::new();
     collect(test, empty.into(), &mut names);
     names
 }

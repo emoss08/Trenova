@@ -10,8 +10,8 @@
 use super::types::Type;
 use crate::formula::catalog::RATING_TIME;
 use serde::Deserialize;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::BTreeMap;
+use std::collections::BTreeSet;
 
 /// The schema a formula is checked against.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -95,9 +95,9 @@ pub(super) struct Doc {
 #[derive(Debug, Clone, Default)]
 pub(super) struct Namespace {
     docs: Vec<Doc>,
-    by_name: HashMap<String, usize>,
-    prefixes: HashSet<String>,
-    roots: HashSet<String>,
+    by_name: BTreeMap<String, usize>,
+    prefixes: BTreeSet<String>,
+    roots: BTreeSet<String>,
 }
 
 impl Namespace {
@@ -151,7 +151,7 @@ impl Namespace {
 #[derive(Debug, Clone, Default)]
 pub(super) struct Knowledge {
     pub top: Namespace,
-    pub elements: HashMap<String, Namespace>,
+    pub elements: BTreeMap<String, Namespace>,
 }
 
 fn zero_for(raw: &str) -> &'static str {

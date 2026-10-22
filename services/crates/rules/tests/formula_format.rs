@@ -270,7 +270,10 @@ fn a_broken_elvis_keeps_one_colon() {
         ])
     );
     assert_eq!(
-        formatted("customer.name == \"a very long name indeed\" ?: totalWeight > 10", 60),
+        formatted(
+            "customer.name == \"a very long name indeed\" ?: totalWeight > 10",
+            60
+        ),
         lines(&[
             "customer.name == \"a very long name indeed\" ?:",
             "  totalWeight > 10",

@@ -12,7 +12,7 @@ use crate::formula::syntax::ast::ExprKind;
 use crate::formula::syntax::ast::TokenKind;
 use crate::formula::syntax::lexer;
 use crate::span::Span;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 /// The call the cursor is inside and which argument it is on.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -272,7 +272,7 @@ fn pointer_at(source: &str, position: u32) -> Option<Identifier> {
 }
 
 /// The names the formula binds with `let`, anywhere in it.
-fn let_names(source: &str) -> HashSet<String> {
+fn let_names(source: &str) -> BTreeSet<String> {
     let tokens = lexer::tokenize(source, &[]).tokens;
     let text = |span: Span| {
         source
