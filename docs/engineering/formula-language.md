@@ -252,9 +252,10 @@ The arithmetic rules:
 A rating has exactly one currency: the contract's (the rule's, else the agreement's) or, when no
 contract applies, the customer's billing currency. A money literal is written `$450` whatever that
 currency is; `$` means "money in the rating currency", and a formula cannot mix currencies because
-it can name only one. The host converts every charge on the finished bill to the billing currency
-at the exchange rate in force on the rating date and records the rate on the bill, as the rate
-engine does today. There is no `convert` and no currency literal inside the language.
+it can name only one. When the billing currency differs, the host passes the exchange rate in
+force on the rating date and the module converts the finished bill: each line exactly, rounded the
+way the bill rounds, with any difference on the rounding line, so the converted lines still add
+up to the converted total. The rate is recorded on the bill. There is no `convert` and no currency literal inside the language.
 
 ### Optionals
 
@@ -387,8 +388,9 @@ fn residential(fee: Money = $95) = fee
 - **Shape:** parameters and the return type are annotated. A one-expression body may use `=`.
 - **Arguments:** parameters can have defaults and be named at the call site:
   `deadhead(empty: 80 mi, rate: rate)`.
-- **Purity:** functions are pure. They can't bill a charge or read a `var` from outside, so they
-  can be tested and reused anywhere.
+- **Purity:** functions are pure and closed. They can't bill a charge, and they see only their
+  parameters, constants, other functions, types and imports: not the schema roots, the inputs, a
+  file's `let`s or any `var`. So a function can be tested and reused anywhere.
 - **No recursion:** the call graph must be acyclic, and the checker refuses a cycle. Every
   formula terminates by construction, and the meter is a second line of defence.
 
@@ -532,11 +534,11 @@ now carries instead of assuming miles.
 
 | Root | Fields |
 |---|---|
-| `shipment` | `proNumber: Text`, `status: ShipmentStatus`, `weight: Weight?` (commodity lines, else the shipment's weight), `pieces: Int?`, `distance: Distance`, `duration: Duration`, `linearFeet: Length`, `volume: Volume`, `density: Weight/Volume?`, `hazmat: Bool`, `reefer: Bool`, `temperature: { min: Temperature?, max: Temperature? }`, `freightClass: FreightClass?`, `highestClass: FreightClass?`, `serviceType: { code: Text, description: Text }`, `shipmentType`, `tractorType`, `trailerType` (each `{ code, description }?`), `entered: { freight: Money, other: Money }` (amounts typed on the shipment, for manual-rate tariffs), `stops: List<Stop>`, `commodities: List<Commodity>`, `pickup: Stop?`, `delivery: Stop?` |
+| `shipment` | `proNumber: Text`, `status: ShipmentStatus`, `weight: Weight?` (commodity lines, else the shipment's weight), `pieces: Int?`, `distance: Distance`, `duration: Duration`, `linearFeet: Length`, `volume: Volume`, `density: Weight/Volume?`, `hazmat: Bool`, `reefer: Bool`, `temperature: { min: Temperature?, max: Temperature? }`, `freightClass: FreightClass?`, `highestClass: FreightClass?`, `serviceType: { code: Text, description: Text }`, `shipmentType`, `tractorType`, `trailerType` (each `{ code, description }?`), `stops: List<Stop>`, `commodities: List<Commodity>`, `pickup: Stop?`, `delivery: Stop?` |
 | `lane` | `origin` and `destination`, each `{ city, state, zip, zip3, country: Text, zones: List<Text> }`; `interstate: Bool`; `crossBorder: Bool` |
 | `customer` | `name: Text`, `code: Text` |
 | `fuel` | `price: Money/gal?`, `priceDate: Date?`, `index: Text?` |
-| `rating` | `date: DateTime`, `mode: RatingMode` (`Sell`, `Buy`), `sellTotal: Money?`, `currency: Text` |
+| `rating` | `date: DateTime` (in the organisation's time zone), `mode: RatingMode` (`Sell`, `Buy`), `sellTotal: Money?`, `currency: Text` |
 | `tables` | the organisation's active rate matrices, by code |
 
 - A `Stop` has `sequence: Int`, `kind: StopKind`, `status: StopStatus`, `appointment: Bool`,
@@ -560,6 +562,10 @@ linear feet are quantities in bands.
 
 - `tables.Zones[lane.origin.zip3, lane.destination.zip3]` gives the value type, optional
   (`Money/cwt?`): a miss is `none`, so `?? fail "…"` refuses to rate with a reason.
+- Any identifier may follow `tables.`, in the matrix code's own spelling: `tables.ZONES`,
+  `tables.fuelTiers`.
+- An exact axis's key may be a list, tried in order: `tables.Zones[lane.origin.zones,
+  lane.destination.zones]` takes the first pair of zones that has a cell.
 - `tables.Zones.cell(…)` gives `{ value, minimum: Money?, deficit: Bool }?`, the cell's value
   with its minimum charge and deficit flag.
 - `tables.Breaks.band(weight)` gives the matching band `{ min, max, value }?`, and
@@ -605,8 +611,13 @@ test "a load with no weight refuses to rate" {
 - `given` overrides a field of the sample record, built from the schema's defaults (a one-stop
   pickup and delivery, no commodities) and the inputs' defaults; `given input.rate = $2.10/mi`
   overrides an input.
+- In tests only, `pickup(…)`, `delivery(…)`, `splitPickup(…)` and `splitDelivery(…)` build a
+  `Stop` and `commodity(…)` a `Commodity`; every argument is named and optional, and a stop's
+  `sequence` defaults to its place in the list. After the `given`s, `shipment.pickup`,
+  `shipment.delivery` and each stop's `dwell` are worked out again unless a `given` set them.
 - `expect` takes a `Bool`; `charge("Label")` or `charge(CODE)` reads a line's amount (`Money?`),
-  `total` the bill's total, `lines` the whole list; `expect fails` (optionally with the message)
+  `total` the bill's total, `lines` the whole list (`{ label: Text, code: Text?, amount: Money,
+  kind: LineKind }`, where `LineKind` is `Charge`, `Minimum`, `Maximum` or `Rounding`); `expect fails` (optionally with the message)
   expects a refusal.
 - Tests replace the Studio's test-case rows and recorded scenarios: "Save as test" in the preview
   writes a `test` block from a real shipment's facts into the source.
@@ -624,6 +635,7 @@ The crate's `formula.*` operations are replaced by `tariff.*`, with the same env
 | `tariff.format` | formats a file (one canonical style) |
 | `tariff.tokens` | the token stream for highlighting |
 | `tariff.complete`, `tariff.hover`, `tariff.signature`, `tariff.definition`, `tariff.rename`, `tariff.inlays` | the editor's language features at a cursor or for a range |
+| `tariff.scaffoldTest` | writes a `test` block from a real shipment's record and its bill, for the Studio's "Save as test" |
 | `tariff.catalog` | the standard library's modules, types and functions, and every built-in method, with their docs |
 
 ### Wire values
@@ -656,14 +668,22 @@ and the browser.
   templates (`formula_libraries`, `formula_library_versions`), with GraphQL reads, REST writes,
   permissions, audit, agent tools and an editor.
 - **Rate agreement rules and agreements** gain `inputs` and lose the pricing columns above; the
-  breaks table is dropped. **Rate matrices** gain `valueType` and lose their template and rounding.
+  breaks table is dropped. **Rate matrices** gain `valueType` and lose their template, rounding
+  and currency (a table's money is in the rating currency). Density scales are removed: the NMFC
+  scale is `std.ltl.densityClass`, and a contract's own scale is a `match` or a table.
   **Shipments** replace `baseRate` with `tariffInputs`. **Contract accessorials** store a
   `condition` source.
 - **The rate engine** resolves the rule, gathers the input values and makes one `tariff.evaluate`
   call; the bill becomes the shipment's freight lines and tariff-owned additional charges, the
   quote's linehaul, fuel and accessorial amounts, the carrier assignment's base, fuel and
   accessorials on the buy side, and the shipment's rating detail (which now shows the bill).
-- **Invoices** get one freight line per uncoded charge; **EDI 210** sends each line's charge code.
+- **Invoices** get one freight line per uncoded charge; **EDI 210** sends each accessorial line's
+  charge code and `400` for freight lines.
+- **Accessorial charge codes** are unique per organisation, case-insensitively, and match
+  `^[A-Z][A-Z0-9_]{2,9}$`, so `as CODE` always names one charge.
+- **Manual rates.** A shipment rated by hand (rate locked, or the manual rating method) has one
+  freight line, its typed amount; it runs no tariff. A tendered rate from an EDI 204 or a document
+  is a manual rate.
 - **The schema endpoint** publishes the roots above with types and units; the Studio's preview
   returns the bill, the trace and the test results; Nova's tools read and propose tariff source,
   run `tariff.check` and `tariff.test` before showing anything, and its prompt carries this
