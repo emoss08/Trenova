@@ -1002,10 +1002,15 @@
 }
 .dk-tv-tools {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   padding: 0 16px 10px;
   font-size: 11.5px;
+}
+.dk-tv-tools .dk-ax-btn {
+  flex: none;
+  white-space: nowrap;
 }
 .dk-tv-tools .dk-tv-q {
   width: 260px;
@@ -1231,9 +1236,6 @@
   background: var(--dsk-sunken);
 }
 @container dktv (max-width: 640px) {
-  .dk-tv-tools {
-    flex-wrap: wrap;
-  }
   .dk-tv-tools .dk-tv-q {
     width: 100%;
   }

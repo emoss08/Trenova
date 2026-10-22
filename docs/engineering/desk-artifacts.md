@@ -588,6 +588,13 @@ the agent read. `tableArtifact` keeps the agent's rows with where the list goes 
   the rest, and the strip of pages under the table marks the agent's pages in its accent, the
   ones read and the one open. A failed page keeps the pages read and offers Try again; a 403
   stops the table at the agent's rows with a lock note; withheld columns are named.
+- **The person can read the list again now.** A table that kept `readWith` offers "Read again
+  now": `useTablePages` reads the list from its start, live, with the person's access, in place
+  of the agent's rows (also for a table that holds its whole list, which otherwise reads nothing),
+  and a note under the toolbar says what the agent read is kept, with "Show it" to return to it. The stored table is never changed, since it is
+  what the agent's answer read. Each ask is a read of its own (`readAt` in the query key), never
+  one kept from before; a local sort the server may not take is dropped. A 403 on that read goes
+  back to the agent's rows with the lock note.
 - **The agent is the one the turn ran as, never Nova.** Nova is the product's own AI (Triage,
   briefs, Ask Nova) and wears the Nova badge; a Desk conversation is with an agent the person
   chose and can hand over. The recorder stamps a table with that agent's name and mark when it

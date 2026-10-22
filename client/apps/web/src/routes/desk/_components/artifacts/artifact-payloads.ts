@@ -143,6 +143,8 @@ export type TableViewArtifact = {
   paging: TablePaging;
   /** Null when the table does not say, or the agent could no longer be read when it was kept. */
   readBy: TableReader | null;
+  /** Whether the list can be read again: the table kept the arguments it was read with. */
+  rereadable: boolean;
 };
 
 /** Whether the person's pages go on from the agent's rows, or read the list from its start. */
@@ -282,6 +284,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
     calls: bunchedCallCount(payload),
     paging: tablePagingOf(payload),
     readBy: tableReaderOf(payload.readBy),
+    rereadable: isRecord(payload.readWith),
   };
 }
 

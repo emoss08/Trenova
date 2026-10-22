@@ -92,6 +92,7 @@ function table(payload: Record<string, unknown>): AssistantArtifact {
       ],
       searchedFor: ["status is Active or Inactive"],
       readBy: { id: "agd_dispatch", name: "Dispatch Desk", icon: "", accent: "teal" },
+      readWith: { status: ["Active", "Inactive"] },
       ...payload,
     },
     sourceToolCallId: "call_1",
@@ -407,5 +408,81 @@ describe("DeskTableBody paging a table that holds the whole list", () => {
     expect(screen.queryByRole("button", { name: "Next page" })).not.toBeInTheDocument();
     expect(screen.getByText("12 items")).toBeInTheDocument();
     expect(list.reads).toHaveLength(0);
+  });
+});
+
+describe("DeskTableBody reading a list again", () => {
+  it("reads the list again from its start in place of the agent's rows, and goes back", async () => {
+    renderTable(agentRead());
+    await within(pager()).findByText("1–25 of 60");
+    list.universe = [{ ...commodity(1), name: "Steel, read again" }, ...range(2, 60)];
+
+    fireEvent.click(screen.getByRole("button", { name: "Read again now" }));
+
+    expect(await screen.findByText("Steel, read again")).toBeInTheDocument();
+    expect(list.reads[1]).toEqual({
+      limit: 25,
+      after: undefined,
+      offset: undefined,
+      q: undefined,
+      sortBy: undefined,
+      sortDirection: "asc",
+      total: true,
+    });
+    expect(screen.queryByText("Commodity 1")).not.toBeInTheDocument();
+    expect(screen.getByText("Read just now, with your access")).toBeInTheDocument();
+    expect(screen.queryByText(/^Dispatch Desk read this page · /)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /read by Dispatch Desk/ })).not.toBeInTheDocument();
+
+    list.universe = [{ ...commodity(1), name: "Steel, read twice" }, ...range(2, 60)];
+    fireEvent.click(screen.getByRole("button", { name: "Read again now" }));
+    expect(await screen.findByText("Steel, read twice")).toBeInTheDocument();
+    expect(list.reads[2]).toMatchObject({ after: undefined, total: true });
+
+    expect(
+      screen.getByText("What Dispatch Desk read is kept in the conversation"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show it" }));
+    expect(screen.getByText("Commodity 1")).toBeInTheDocument();
+    expect(screen.getByText(/^Dispatch Desk read this page · /)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Read again now" })).toBeInTheDocument();
+    expect(
+      screen.queryByText("What Dispatch Desk read is kept in the conversation"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("reads a table that holds its whole list again when asked", async () => {
+    renderTable(table({ rows: range(1, 30), rowCount: 30, hasMore: false, pages: 2 }));
+    expect(within(pager()).getByText("1–25 of 30")).toBeInTheDocument();
+    expect(list.reads).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Read again now" }));
+
+    expect(await within(pager()).findByText("1–25 of 60")).toBeInTheDocument();
+    expect(list.reads[0]).toMatchObject({ after: undefined, offset: undefined, total: true });
+    expect(screen.getByText("Read just now, with your access")).toBeInTheDocument();
+  });
+
+  it("offers no reading again for a table that does not say how it was read", () => {
+    renderTable(agentRead({ readWith: undefined }));
+
+    expect(screen.queryByRole("button", { name: "Read again now" })).not.toBeInTheDocument();
+  });
+
+  it("goes back to the agent's rows when the person may no longer read the list", async () => {
+    renderTable(table({ rows: range(1, 30), rowCount: 30, hasMore: false, pages: 2 }));
+    list.failures.push(new ApiRequestError(403, { title: "Forbidden", status: 403 } as never));
+
+    fireEvent.click(screen.getByRole("button", { name: "Read again now" }));
+
+    expect(
+      await screen.findByText(
+        "You can no longer read this list, so only the rows Dispatch Desk read are shown",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Commodity 1")).toBeInTheDocument();
+    expect(screen.getByText(/^Dispatch Desk read every row · /)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Read again now" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

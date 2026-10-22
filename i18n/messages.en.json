@@ -202829,6 +202829,15 @@
       "routes/desk"
     ]
   },
+  "Read again now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Read aloud": {
     "sites": 2,
     "scope": [
@@ -240047,6 +240056,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Show it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Show less": {
@@ -300357,6 +300375,15 @@
       "routes/organization"
     ]
   },
+  "What was read in this conversation is kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What was said": {
     "sites": 2,
     "scope": [
@@ -300508,6 +300535,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What {0} read is kept in the conversation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What {0} would see through a link sent now": {

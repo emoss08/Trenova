@@ -134,6 +134,8 @@ export type ArtifactRowsKey = {
   sortBy: string;
   sortDirection: "asc" | "desc";
   fromStart: boolean;
+  /** When the person asked to read the list again; zero for the table as it was kept. */
+  readAt: number;
 };
 
 export function downloadAssistantTranscript(threadId: AssistantThread["id"]): void {

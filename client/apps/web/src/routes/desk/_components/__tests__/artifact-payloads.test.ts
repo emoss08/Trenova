@@ -369,6 +369,19 @@ describe("tableViewFrom", () => {
     expect(view({ display: 1, columns, rows: [] }).readBy).toBeNull();
   });
 
+  it("can read the list again only when the table kept how it was read", () => {
+    const columns = [{ key: "name", label: "Name", type: "text" }];
+
+    expect(
+      view({ display: 1, columns, rows: [], readWith: { status: ["Active"] } }).rereadable,
+    ).toBe(true);
+    expect(view({ display: 1, columns, rows: [], readWith: {} }).rereadable).toBe(true);
+    expect(view({ display: 1, columns, rows: [], readWith: "status=Active" }).rereadable).toBe(
+      false,
+    );
+    expect(view({ display: 1, columns, rows: [] }).rereadable).toBe(false);
+  });
+
   it("goes on after the agent's rows only from a cursor or an offset", () => {
     const base = { hasMore: true, nextCursor: "", nextOffset: null, total: null, pages: 1 };
 

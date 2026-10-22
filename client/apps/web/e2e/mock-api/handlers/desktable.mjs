@@ -127,6 +127,7 @@ function artifact(state) {
       searchedFor: ["status is In transit or Delayed", "customer is Acme Foods"],
       pages: stage === "short" ? 1 : AGENT_PAGES,
       ...paging,
+      readWith: { customerId: "cus_mock_acme", status: ["InTransit", "Delayed"] },
       ...(stage === "unnamed" ? {} : { readBy: AGENT }),
     },
     sourceToolCallId: "call_acme_in_transit",

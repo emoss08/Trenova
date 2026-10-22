@@ -68,6 +68,8 @@ export type Grid = {
   paging: TablePaging | null;
   /** The agent that read the rows the table holds; null when the table does not say. */
   readBy: TableReader | null;
+  /** Whether the person can read the list again, live, from its start. */
+  rereadable: boolean;
 };
 
 const REPORT_TYPES: Record<string, DisplayType> = {
@@ -108,6 +110,7 @@ export function gridOf(artifact: AssistantArtifact): Grid {
       searchedFor: [],
       paging: null,
       readBy: null,
+      rereadable: false,
     };
   }
   const view = tableViewFrom(artifact);
@@ -121,6 +124,7 @@ export function gridOf(artifact: AssistantArtifact): Grid {
     searchedFor: view.searchedFor,
     paging: view.paging.hasMore ? view.paging : null,
     readBy: view.readBy,
+    rereadable: view.rereadable,
   };
 }
 
@@ -316,6 +320,7 @@ export function DeskTableBody(props: TableBodyProps) {
     columns: grid.columns,
     entity: grid.entity ?? "",
     paging: grid.paging,
+    rereadable: grid.rereadable,
     arrange: (rows, needle, sort) => arrangeRows(grid.columns, rows, needle, sort, t),
   });
   const listed = artifact.kind === "table_view" && !("path" in artifact.payload);
@@ -482,8 +487,10 @@ function TableBodyView({
         </label>
         <span className="dk-tv-sp" />
         <ReadMark artifact={artifact} reader={grid.readBy} pages={pages} />
+        <ReadAgain pages={pages} />
         {versions}
       </div>
+      <KeptRead reader={grid.readBy} pages={pages} />
       {withheld.length > 0 && (
         <div className="dk-tv-note">
           <span className="dk-tv-wh">
@@ -748,6 +755,52 @@ function TableHead({ grid, pages }: { grid: Grid; pages: TablePages }) {
         </span>
       )}
     </header>
+  );
+}
+
+/**
+ * Reads the list again from its start, live, with the person's access, in
+ * place of the rows the agent read. The table the conversation keeps is never
+ * changed: it is what the agent's answer read.
+ */
+function ReadAgain({ pages }: { pages: TablePages }) {
+  const t = useT();
+  if (!pages.rereadable) {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      className="dk-ax-btn dk-ghost"
+      disabled={pages.live && pages.fetching}
+      onClick={pages.readAgain}
+    >
+      <ArtIcon name="retry" size={12} stroke={2} />
+      {t("Read again now")}
+    </button>
+  );
+}
+
+/** While the list is read again: the agent's rows are kept, and one click away. */
+function KeptRead({ reader, pages }: { reader: TableReader | null; pages: TablePages }) {
+  const t = useT();
+  if (!pages.live) {
+    return null;
+  }
+
+  return (
+    <div className="dk-tv-note">
+      <span className="dk-tv-wh">
+        {reader && <DeskAgentTile agent={reader} size="xs" />}
+        {reader
+          ? t("What {0} read is kept in the conversation", reader.name)
+          : t("What was read in this conversation is kept")}
+      </span>
+      <button type="button" className="dk-ax-btn dk-ghost" onClick={pages.backToAgent}>
+        {t("Show it")}
+      </button>
+    </div>
   );
 }
 
