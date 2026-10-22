@@ -1,0 +1,276 @@
+[
+  {
+    "name": "a runaway loop stops at the step budget",
+    "source": "tariff \"t\"\nvar n = 0\nfor i in 0..1_000_000 {\n  n += 1\n}\nnote \"{n}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "budget",
+        "message": {
+          "message": "The tariff used up its step budget ({0, plural, one {# step} other {# steps}}) before it finished",
+          "args": [
+            1000
+          ]
+        }
+      }
+    },
+    "budget": {
+      "steps": 1000
+    }
+  },
+  {
+    "name": "the step budget may only be lowered",
+    "source": "tariff \"t\"\nnote \"ok\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "ok"
+          }
+        ]
+      }
+    },
+    "budget": {
+      "steps": 999999999999
+    }
+  },
+  {
+    "name": "text past the budget stops",
+    "source": "tariff \"t\"\nvar s = \"x\"\nfor i in 0..20 {\n  s = \"{s}{s}\"\n}",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "budget",
+        "message": {
+          "args": [
+            1000
+          ]
+        }
+      }
+    },
+    "budget": {
+      "textBytes": 1000
+    }
+  },
+  {
+    "name": "list items past the budget stop",
+    "source": "tariff \"t\"\nlet xs = [1, 2, 3, 4, 5]\nlet ys = xs.map(x => x).map(x => x)",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "budget",
+        "message": {
+          "args": [
+            6
+          ]
+        }
+      }
+    },
+    "budget": {
+      "items": 6
+    }
+  },
+  {
+    "name": "calls nested past the budget stop",
+    "source": "tariff \"t\"\nfn a(x: Int) -> Int = b(x)\nfn b(x: Int) -> Int = c(x)\nfn c(x: Int) -> Int = x\nnote \"{a(1)}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "budget",
+        "message": {
+          "args": [
+            2
+          ]
+        }
+      }
+    },
+    "budget": {
+      "callDepth": 2
+    }
+  },
+  {
+    "name": "calls within the depth budget run",
+    "source": "tariff \"t\"\nfn a(x: Int) -> Int = b(x)\nfn b(x: Int) -> Int = x\nnote \"{a(1)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1"
+          }
+        ]
+      }
+    },
+    "budget": {
+      "callDepth": 2
+    }
+  },
+  {
+    "name": "an unknown budget field is a request error",
+    "op": "tariff.evaluate",
+    "input": {
+      "budget": {
+        "time": 5
+      },
+      "programs": []
+    },
+    "expect": {
+      "error": {
+        "code": "invalid_input"
+      }
+    }
+  },
+  {
+    "name": "recursion is stopped by the call depth",
+    "source": "tariff \"t\"\nfn loop(x: Int) -> Int = loop(x + 1)\nnote \"{loop(0)}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "budget"
+      }
+    }
+  },
+  {
+    "name": "a self-referential constant is internal",
+    "source": "tariff \"t\"\nconst LOOPED = LOOPED + 1\nnote \"{LOOPED}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "an unknown name is internal",
+    "source": "tariff \"t\"\nnote \"{nothing}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "calling something that is not a function is internal",
+    "source": "tariff \"t\"\nnote \"{nothing(1)}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "an error carries the failing node's range",
+    "source": "tariff \"t\"\nlet a = 1\nlet b = a / 0",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "divideByZero",
+        "message": {
+          "message": "Division by zero"
+        },
+        "range": {
+          "from": 29,
+          "to": 34
+        }
+      }
+    }
+  },
+  {
+    "name": "an overflow carries its message",
+    "source": "tariff \"t\"\nlet a = 999_999_999_999_999 * 999_999_999_999_999",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "overflow",
+        "message": {
+          "message": "The result is too large: it does not fit in 28 significant digits"
+        }
+      }
+    }
+  },
+  {
+    "name": "a regular expression too large to compile",
+    "source": "tariff \"t\"\nlet a = \"x\".matches(\"(a{{1000}}){{1000}}\")",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "regex"
+      }
+    }
+  },
+  {
+    "name": "a function that ends without return is internal",
+    "source": "tariff \"t\"\nfn f(x: Int) -> Int {\n  let y = x\n}\nnote \"{f(1)}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "a refusal inside a deep call keeps the author's text",
+    "source": "tariff \"t\"\nfn a() -> Int = b()\nfn b() -> Int {\n  fail \"deep\"\n}\nlet x = a()",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "deep"
+      }
+    }
+  },
+  {
+    "name": "an internal error names the kinds",
+    "source": "tariff \"t\"\nlet a = true + 1",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal",
+        "message": {
+          "message": "{0} cannot be applied to {1} and {2}",
+          "args": [
+            "+",
+            {
+              "message": "true or false"
+            },
+            {
+              "message": "a whole number"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a missing field is internal",
+    "source": "tariff \"t\"\nnote \"{shipment.nothing}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "reading a field of none without ?. is internal",
+    "source": "tariff \"t\"\nnote \"{shipment.trailerType.code}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "a test statement outside a test is internal",
+    "source": "tariff \"t\"\nexpect 1 == 1",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "syntax"
+      }
+    }
+  }
+]
