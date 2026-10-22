@@ -37,6 +37,7 @@ import {
   meaningfulChanges,
   type ChangeTone,
 } from "@trenova/shared/lib/rate-import";
+import type { RateImportChange } from "@trenova/shared/types/rate";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiProblem } from "@trenova/shared/types/errors";
 import {
@@ -49,6 +50,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { useLaneKeyLabels } from "@/hooks/use-lane-scope-labels";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { LaneKeyTableSkeleton } from "./lane-key-table-skeleton";
 
 const TONE_CLASS: Record<ChangeTone, string> = {
   danger: "text-destructive",
@@ -173,9 +176,6 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
   const changes = meaningfulChanges(batch?.changes);
   const warnings = commitWarnings(batch);
   const reviewing = Boolean(batch);
-  // Lane keys arrive as stored strings, ids and all; a person reviewing the
-  // diff should read names.
-  const displayLaneKey = useLaneKeyLabels(changes.map((change) => change.laneKey));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -342,39 +342,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
             )}
 
             {changes.length > 0 && (
-              <div className="overflow-hidden rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">{t("Lane")}</TableHead>
-                      <TableHead className="text-xs">{t("What happens")}</TableHead>
-                      <TableHead className="text-xs">{t("Changes")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {changes.map((change) => (
-                      <TableRow key={`${change.kind}-${change.laneKey}`}>
-                        <TableCell>
-                          <span className="text-xs font-medium">
-                            {change.label || displayLaneKey(change.laneKey)}
-                          </span>
-                          <p className="text-2xs text-muted-foreground font-mono">
-                            {displayLaneKey(change.laneKey)}
-                          </p>
-                        </TableCell>
-                        <TableCell className={cn("text-xs", TONE_CLASS[changeTone(change.kind)])}>
-                          {changeKindLabel(change.kind)}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-xs">
-                          {(change.fields ?? []).map((field) => (
-                            <p key={field.field}>{describeFieldChange(field)}</p>
-                          ))}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <LazyComponent fallback={<LaneKeyTableSkeleton />}>
+                <ImportChangesTable changes={changes} />
+              </LazyComponent>
             )}
           </div>
         )}
@@ -419,6 +389,52 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
  * and a missing destination arrive together — and each deserves its own line
  * rather than a joined sentence.
  */
+/**
+ * The lanes an import changes, each named by its stored key with names in place of ids. The
+ * keys are read back by the rules module, so this table waits for it under its own skeleton
+ * while the rest of the dialog shows.
+ */
+function ImportChangesTable({ changes }: { changes: RateImportChange[] }) {
+  const t = useT();
+  const displayLaneKey = useLaneKeyLabels(changes.map((change) => change.laneKey));
+
+  return (
+    <div className="overflow-hidden rounded-lg border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-xs">{t("Lane")}</TableHead>
+            <TableHead className="text-xs">{t("What happens")}</TableHead>
+            <TableHead className="text-xs">{t("Changes")}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {changes.map((change) => (
+            <TableRow key={`${change.kind}-${change.laneKey}`}>
+              <TableCell>
+                <span className="text-xs font-medium">
+                  {change.label || displayLaneKey(change.laneKey)}
+                </span>
+                <p className="text-2xs text-muted-foreground font-mono">
+                  {displayLaneKey(change.laneKey)}
+                </p>
+              </TableCell>
+              <TableCell className={cn("text-xs", TONE_CLASS[changeTone(change.kind)])}>
+                {changeKindLabel(change.kind)}
+              </TableCell>
+              <TableCell className="text-muted-foreground text-xs">
+                {(change.fields ?? []).map((field) => (
+                  <p key={field.field}>{describeFieldChange(field)}</p>
+                ))}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
 function fileProblemsOf(error: unknown): string[] {
   if (error instanceof ApiRequestError) {
     const normalized = error.normalize();
