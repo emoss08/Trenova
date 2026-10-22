@@ -92,3 +92,29 @@ func TestALeaveCaseIsNotPartOfItsWorker(t *testing.T) {
 	assert.True(t, registry.PartOf(permission.ResourceWorkerCredential.String(), worker),
 		"the rest of the worker's family is unchanged")
 }
+
+func TestAnHRRecordIsNotPartOfItsWorker(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	worker := permission.ResourceWorker.String()
+	for _, kind := range []permission.Resource{
+		permission.ResourceWorkerInjury,
+		permission.ResourceWorkerDOTTest,
+		permission.ResourceBenefitPlan,
+		permission.ResourceWorkerEmploymentEvent,
+		permission.ResourceWorkerDisciplinaryAction,
+		permission.ResourcePerformanceReview,
+		permission.ResourceTimesheet,
+		permission.ResourceProfileChangeRequest,
+	} {
+		assert.Equal(t, kind.String(), registry.Family(kind.String()), kind)
+		assert.NotContains(t, registry.GetChildren(worker), kind.String())
+		assert.False(t, registry.PartOf(kind.String(), worker),
+			"%s a worker carries is a linked record, gated by its own read", kind)
+		assert.False(t, registry.PartOf(permission.ResourceWorkerSafetyEvent.String(), kind.String()),
+			"a safety event carried by %s is a linked record of the worker's family", kind)
+	}
+	assert.False(t, registry.InReferenceView(permission.ResourceWorkerDOTTest.String(), "result"),
+		"nothing of a drug or alcohol test shows without worker_dot_test read")
+}

@@ -38,7 +38,11 @@ func (r *QueryResolver) WorkerRosterAttention(ctx context.Context) (*workeroverv
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerOverviewService.RosterAttention(ctx, base.TenantInfo(authCtx))
+	access, err := r.AttentionAccess(ctx, authCtx)
+	if err != nil {
+		return nil, err
+	}
+	return r.WorkerOverviewService.RosterAttention(ctx, base.TenantInfo(authCtx), access)
 }
 
 func (r *WorkerRosterAttentionResolver) PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (string, error) {

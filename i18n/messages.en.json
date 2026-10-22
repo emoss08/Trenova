@@ -29235,7 +29235,7 @@
       "apps/web/components"
     ]
   },
-  "Approve time off, timesheets, swaps and profile changes, and schedule a team.": {
+  "Approve time off, timesheets, swaps and profile changes, schedule a team, and invite its drivers to the portal or revoke their access.": {
     "sites": 1,
     "scope": [
       "go"
@@ -34505,7 +34505,7 @@
     ]
   },
   "Authentication required": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -38552,7 +38552,7 @@
     ]
   },
   "Benefits": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -43603,7 +43603,7 @@
       "routes/agent-control"
     ]
   },
-  "Can read every record except leave cases, and change nothing.": {
+  "Can read every record except HR, medical, drug testing and pay records, and change nothing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -67190,6 +67190,15 @@
       "go/other",
       "routes/desk",
       "routes/worker"
+    ]
+  },
+  "Credentials are listed within one organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Credentials coming due": {
@@ -99281,6 +99290,15 @@
       "go/other"
     ]
   },
+  "Expiring within must be from 1 to 365 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Expiry": {
     "sites": 1,
     "scope": [
@@ -125913,12 +125931,23 @@
     ]
   },
   "Invite": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/invoice"
+    ]
+  },
+  "Invite a driver to the portal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Invite teammates": {
@@ -130404,6 +130433,15 @@
       "apps/web/components"
     ]
   },
+  "Keep benefit plans and enroll workers on them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep both": {
     "sites": 1,
     "scope": [
@@ -131091,7 +131129,7 @@
       "go/other"
     ]
   },
-  "Keep worker records, employment events, positions, benefits and checklists.": {
+  "Keep worker records, employment events, positions and checklists, and invite drivers to the portal or revoke their access.": {
     "sites": 1,
     "scope": [
       "go"
@@ -170941,6 +170979,15 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib"
+    ]
+  },
+  "Offset cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Offset is not supported for cursor pagination": {
@@ -219153,6 +219200,15 @@
       "routes/worker"
     ]
   },
+  "Reviews and discipline": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reviews drafted for workers, their ratings, goals and sign-off": {
     "sites": 1,
     "scope": [
@@ -229225,6 +229281,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "See whether a driver is on the portal and the invitations sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "See who is approving in whose place": {
@@ -273509,6 +273574,15 @@
       "routes/shipment"
     ]
   },
+  "This driver has not been invited to Dash.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/worker"
+    ]
+  },
   "This driver will not accrue pay for delivered shipments until a profile is assigned. Assign a shared profile and add driver-specific rate overrides if their rates differ from the template.": {
     "sites": 1,
     "scope": [
@@ -293001,7 +293075,7 @@
     ]
   },
   "View": {
-    "sites": 128,
+    "sites": 129,
     "scope": [
       "go",
       "ts"
@@ -306584,6 +306658,15 @@
       "routes/formula-template"
     ]
   },
+  "Write performance reviews and issue disciplinary actions.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write something before sending": {
     "sites": 1,
     "scope": [
@@ -308266,7 +308349,7 @@
     ]
   },
   "You don't have permission to perform this action: {0} {1}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -308809,8 +308892,17 @@
       "routes/onboarding"
     ]
   },
+  "Your access is limited to your own team, and you answer for no one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Your access is limited to your own team, which cannot be checked right now": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],

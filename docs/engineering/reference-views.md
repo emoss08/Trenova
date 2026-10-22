@@ -23,8 +23,12 @@ A record is reached in one of four ways, and the way decides what is checked:
 
 A kind is part of another only through its `ParentResource` chain. A kind granted on its own
 has no parent, so wherever it is carried it is a linked record: a worker's leave case
-(`worker_leave`) under its worker needs `worker_leave` read, and since nothing links to a leave
-case it has no view, so without that read it shows its id alone. See "Parent resources" in
+(`worker_leave`) or drug test (`worker_dot_test`) under its worker needs that kind's read, and
+since nothing links to either it has no view, so without that read it shows its id alone. An
+injury case, a disciplinary action, a performance review or a benefit plan carried by a worker
+shows its reference view and nothing more. The reverse holds too: a worker's safety event
+carried by a disciplinary action is a linked record of the worker's family, so the discipline
+operations select `...WorkerSafetyEventReference`. See "Parent resources" in
 [permissions.md](permissions.md#parent-resources) for when a kind should have a parent.
 
 A linked record's fields outside its view, read without the kind's read:
@@ -67,7 +71,7 @@ Internal.
   guard walks the value by reflection with a plan cached per Go type: a domain struct named for a
   resource is that kind (`customer.Customer`, `worker.Worker`), `namedKinds` holds the few whose
   name does not spell theirs (`shipment.Stop`, `billingqueue.BillingQueueItem`,
-  `worker.WorkerLeaveCase`), and any other
+  `worker.WorkerLeaveCase`, `worker.TimeClockEntry`, `worker.WorkerDOTViolation`), and any other
   struct is part of the record that carries it. The value a route returns (each item of a list or
   page) is the root record; a record of a kind reached through it is linked, unless it is part of
   the root's family (a shipment's moves and stops), and so on down. A linked record of a kind the
