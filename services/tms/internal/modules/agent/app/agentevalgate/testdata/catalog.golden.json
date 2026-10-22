@@ -43758,7 +43758,7 @@
     },
     {
       "name": "worker_list_safety_events",
-      "description": "List safety events, newest first: one worker's with their roadside violations and recognitions, or, leaving out the worker, those still open across the fleet, each with its driver. Events are accidents, inspections, citations, complaints and near misses with their points and status. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
+      "description": "List safety events newest first: one worker's, or, leaving out the worker, those still open across the fleet. One worker's come with their roadside violations and recognitions; the fleet's each name the driver. Events are accidents, inspections, citations, complaints and near misses with their points and status. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

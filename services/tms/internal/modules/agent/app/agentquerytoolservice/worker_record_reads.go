@@ -55,11 +55,11 @@ const (
 
 	opDeskWorkerRecognitions = "DeskWorkerRecognitions"
 
-	workerSafetyEventsSummary = "List safety events, newest first: one worker's with their " +
-		"roadside violations and recognitions, or, leaving out the worker, those still open " +
-		"across the fleet, each with its driver. Events are accidents, inspections, " +
-		"citations, complaints and near misses with their points and status. It yields the " +
-		"safetyEventId, violationId and recognitionId the safety tools take."
+	workerSafetyEventsSummary = "List safety events newest first: one worker's, or, leaving " +
+		"out the worker, those still open across the fleet. One worker's come with their " +
+		"roadside violations and recognitions; the fleet's each name the driver. Events are " +
+		"accidents, inspections, citations, complaints and near misses with their points and " +
+		"status. It yields the safetyEventId, violationId and recognitionId the safety tools take."
 	noteOpenAcrossTheFleet = "Defaults to true when no worker is named, and to false for one " +
 		"worker's; set it to false for the fleet's closed events too."
 	noteEveryWorker  = "Leave it out for every worker's."
