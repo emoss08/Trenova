@@ -8,14 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,8 +28,7 @@ import (
 type telematicsReader interface {
 	ListVehiclePositions(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		maxAgeSeconds int64,
+		req *telematicsports.ListVehiclePositionsRequest,
 	) ([]*telematics.VehiclePosition, error)
 	ListWorkerHOSStates(
 		ctx context.Context,
@@ -58,8 +56,6 @@ const (
 	// shown. A day-old ping is still the best evidence of where a parked
 	// truck is; the snapshot marks it stale so nobody plans on it.
 	positionLookbackSeconds = int64(24 * 3600)
-	defaultPositionAgeMin   = 240
-	maxPositionAgeMin       = 24 * 60
 	maxHOSStates            = 500
 )
 
@@ -316,17 +312,19 @@ func (t *getShipmentTrackingTool) positions(
 		return out, nil
 	}
 
-	wanted := make(map[pulid.ID]bool, len(tractorIDs))
-	for _, id := range tractorIDs {
-		wanted[id] = true
-	}
-
-	positions, err := t.telematics.ListVehiclePositions(ctx, tenant, positionLookbackSeconds)
+	positions, err := t.telematics.ListVehiclePositions(
+		ctx,
+		&telematicsports.ListVehiclePositionsRequest{
+			TenantInfo:    tenant,
+			TractorIDs:    tractorIDs,
+			MaxAgeSeconds: positionLookbackSeconds,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("read vehicle positions: %w", err)
 	}
 	for _, position := range positions {
-		if position != nil && wanted[position.TractorID] {
+		if position != nil {
 			out[position.TractorID] = position
 		}
 	}
@@ -363,159 +361,6 @@ func tenantOf(params *agentports.QueryToolParams) pagination.TenantInfo {
 		BuID:   params.BusinessUnitID,
 		UserID: params.Actor.UserID,
 	}
-}
-
-type vehiclePositionRow struct {
-	TractorID         string  `json:"tractorId"`
-	Tractor           string  `json:"tractor,omitempty"`
-	Driver            string  `json:"driver,omitempty"`
-	Latitude          float64 `json:"latitude"`
-	Longitude         float64 `json:"longitude"`
-	FormattedLocation string  `json:"formattedLocation,omitempty"`
-	SpeedMph          float64 `json:"speedMph"`
-	EngineState       string  `json:"engineState,omitempty"`
-	RecordedAt        string  `json:"recordedAt"`
-	AgeMinutes        int64   `json:"ageMinutes"`
-}
-
-type listVehiclePositionsTool struct {
-	telematics telematicsReader
-	access     fieldAccess
-}
-
-func newListVehiclePositionsTool(
-	reader telematicsReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &listVehiclePositionsTool{telematics: reader, access: newFieldAccess(permissions)}
-}
-
-func (t *listVehiclePositionsTool) Name() string { return "equipment_list_positions" }
-
-func (t *listVehiclePositionsTool) SearchTerms() []string {
-	return []string{"truck location", "tractor position", "gps", "telematics", "live position"}
-}
-
-func (t *listVehiclePositionsTool) Description() string {
-	return "Where every tractor is right now, from the telematics feed: its last known " +
-		"position, the nearest place name, speed, engine state and how old the reading " +
-		"is. Use it for \"where is truck 104\" or \"which trucks are near " +
-		"Dallas\". A reading older than an hour is where the truck was, not where " +
-		"it is. Drivers have no position of their own; a driver is where the " +
-		"tractor they are logged into is."
-}
-
-func (t *listVehiclePositionsTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"tractorIds": agenttoolschema.OfResource(map[string]any{
-				toolschema.KeyType: toolschema.TypeArray,
-				toolschema.KeyItems: map[string]any{
-					toolschema.KeyType: toolschema.TypeString,
-				},
-				toolschema.KeyDescription: "Optional: only these tractors, by id from equipment_list_tractors.",
-			}, permission.ResourceTractor),
-			"maxAgeMinutes": map[string]any{
-				"type": "integer",
-				"description": fmt.Sprintf(
-					"Ignore readings older than this. Default %d, at most %d.",
-					defaultPositionAgeMin, maxPositionAgeMin,
-				),
-			},
-		},
-		"additionalProperties": false,
-	}
-}
-
-func (t *listVehiclePositionsTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceTractor,
-	})
-}
-
-func (t *listVehiclePositionsTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	maxAge := optionalInt(params.Params, "maxAgeMinutes", defaultPositionAgeMin)
-	if maxAge <= 0 || maxAge > maxPositionAgeMin {
-		maxAge = defaultPositionAgeMin
-	}
-
-	wanted := map[pulid.ID]bool{}
-	if raw, ok := params.Params["tractorIds"]; ok && raw != nil {
-		ids, err := pulidList(raw, "tractorIds")
-		if err != nil {
-			return nil, err
-		}
-		for _, id := range ids {
-			wanted[id] = true
-		}
-	}
-
-	criteria := filtercatalog.NewCriteria("vehicle positions").At(clockFor(params))
-	criteria.Field("readings newer than", fmt.Sprintf("%d minutes", maxAge))
-	if len(wanted) > 0 {
-		criteria.Field("tractors", fmt.Sprintf("%d named", len(wanted)))
-	}
-
-	positions, err := t.telematics.ListVehiclePositions(
-		ctx, tenantOf(params), int64(maxAge)*60,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	now := clockFor(params).Now
-	// The map is a tractor's; who is driving it is a worker's, and a reader
-	// who may not open workers is not told who is where from the map instead.
-	nameDrivers := t.access.mayRead(ctx, params, permission.ResourceWorker)
-
-	rows := make([]vehiclePositionRow, 0, len(positions))
-	for _, position := range positions {
-		if position == nil || (len(wanted) > 0 && !wanted[position.TractorID]) {
-			continue
-		}
-		row := toVehiclePositionRow(position, now, params.Timezone)
-		if !nameDrivers {
-			row.Driver = ""
-		}
-		rows = append(rows, row)
-	}
-
-	return searchResult(criteria, rows, len(rows)), nil
-}
-
-func toVehiclePositionRow(
-	position *telematics.VehiclePosition,
-	now int64,
-	timezone string,
-) vehiclePositionRow {
-	row := vehiclePositionRow{
-		TractorID:         position.TractorID.String(),
-		Latitude:          position.Latitude,
-		Longitude:         position.Longitude,
-		FormattedLocation: position.FormattedLocation,
-		SpeedMph:          position.SpeedMph,
-		EngineState:       string(position.EngineState),
-		RecordedAt:        timeutils.FormatUnixDateTimeIn(position.RecordedAt, timezone),
-		AgeMinutes:        max(0, (now-position.RecordedAt)/60),
-	}
-	if position.Tractor != nil {
-		row.Tractor = position.Tractor.Code
-		if position.Tractor.PrimaryWorker != nil {
-			row.Driver = strings.TrimSpace(
-				position.Tractor.PrimaryWorker.FirstName + " " + position.Tractor.PrimaryWorker.LastName,
-			)
-		}
-	}
-
-	return row
 }
 
 type workerHOSRow struct {

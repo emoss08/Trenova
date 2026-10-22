@@ -132,7 +132,6 @@ export function ImportWorkspace() {
       customerId: "",
       serviceTypeId: "",
       shipmentTypeId: "",
-      formulaTemplateId: "",
       tractorTypeId: "",
       trailerTypeId: "",
       stops: [],
@@ -185,7 +184,6 @@ export function ImportWorkspace() {
         customerId: requiredValues.customerId,
         serviceTypeId: requiredValues.serviceTypeId,
         shipmentTypeId: requiredValues.shipmentTypeId,
-        formulaTemplateId: requiredValues.formulaTemplateId,
         tractorTypeId: requiredValues.tractorTypeId || undefined,
         trailerTypeId: requiredValues.trailerTypeId || undefined,
       });
@@ -261,35 +259,24 @@ export function ImportWorkspace() {
     control: requiredFieldsForm.control,
     name: "shipmentTypeId",
   });
-  const watchedFormulaTemplateId = useWatch({
-    control: requiredFieldsForm.control,
-    name: "formulaTemplateId",
-  });
 
   const requiredFieldValues = useMemo(
     () => ({
       customerId: watchedCustomerId ?? "",
       serviceTypeId: watchedServiceTypeId ?? "",
       shipmentTypeId: watchedShipmentTypeId ?? "",
-      formulaTemplateId: watchedFormulaTemplateId ?? "",
     }),
-    [watchedCustomerId, watchedServiceTypeId, watchedShipmentTypeId, watchedFormulaTemplateId],
+    [watchedCustomerId, watchedServiceTypeId, watchedShipmentTypeId],
   );
 
   const canCreateShipment =
     !!requiredFieldValues.customerId &&
     !!requiredFieldValues.serviceTypeId &&
-    !!requiredFieldValues.shipmentTypeId &&
-    !!requiredFieldValues.formulaTemplateId;
+    !!requiredFieldValues.shipmentTypeId;
 
   const handleSetRequiredField = useCallback(
     (fieldKey: string, value: string) => {
-      const validKeys = [
-        "customerId",
-        "serviceTypeId",
-        "shipmentTypeId",
-        "formulaTemplateId",
-      ] as const;
+      const validKeys = ["customerId", "serviceTypeId", "shipmentTypeId"] as const;
       type ValidKey = (typeof validKeys)[number];
       if (validKeys.includes(fieldKey as ValidKey)) {
         requiredFieldsForm.setValue(fieldKey as ValidKey, value);

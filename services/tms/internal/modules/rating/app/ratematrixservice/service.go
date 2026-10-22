@@ -21,7 +21,6 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Repo         ratematrixports.RateMatrixRepository
-	DensityRepo  ratematrixports.DensityScaleRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
 }
@@ -29,7 +28,6 @@ type Params struct {
 type Service struct {
 	l            *zap.Logger
 	repo         ratematrixports.RateMatrixRepository
-	densityRepo  ratematrixports.DensityScaleRepository
 	validator    *Validator
 	auditService auditports.AuditService
 }
@@ -38,7 +36,6 @@ func New(p Params) *Service {
 	return &Service{
 		l:            p.Logger.Named("service.rate-matrix"),
 		repo:         p.Repo,
-		densityRepo:  p.DensityRepo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
 	}
@@ -215,20 +212,6 @@ func (s *Service) ReplaceCells(
 	ratetablecache.Invalidate(req.TenantInfo.OrgID, req.TenantInfo.BuID)
 
 	return nil
-}
-
-func (s *Service) ListDensityScales(
-	ctx context.Context,
-	req *ratematrixports.ListRateMatrixRequest,
-) (*pagination.ListResult[*ratematrix.DensityScale], error) {
-	return s.densityRepo.List(ctx, req)
-}
-
-func (s *Service) GetDensityScale(
-	ctx context.Context,
-	req *ratematrixports.GetDensityScaleRequest,
-) (*ratematrix.DensityScale, error) {
-	return s.densityRepo.GetByID(ctx, req)
 }
 
 func (s *Service) audit(

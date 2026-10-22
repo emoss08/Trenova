@@ -15,8 +15,8 @@ import {
   rateAgreementStatusChoices,
   rateAgreementTypeChoices,
   ratePartyTypeChoices,
-  rateRoundingModeChoices,
 } from "@/lib/choices";
+import { AgreementTariffInputs } from "./agreement-tariff-inputs";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import type { RateAgreement } from "@trenova/shared/types/rate";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -217,7 +217,7 @@ export function RateAgreementForm() {
       <FormSection
         title={t("Pricing defaults")}
         description={t(
-          "The currency, guardrails, and rounding every lane inherits unless it sets its own.",
+          "The currency every lane rates in unless it sets its own, and the terms every lane's tariff reads when the lane leaves them unset.",
         )}
       >
         <FormGroup cols={2}>
@@ -234,50 +234,8 @@ export function RateAgreementForm() {
               options={currencyChoices}
             />
           </FormControl>
-          <FormControl>
-            <SelectField
-              control={control}
-              name="roundingMode"
-              label={t("Rounding mode")}
-              placeholder={t("Select rounding")}
-              description={t("How the final amount is rounded")}
-              options={rateRoundingModeChoices}
-            />
-          </FormControl>
-          <FormControl>
-            <NumberField
-              control={control}
-              name="defaultMinCharge"
-              label={t("Default minimum charge")}
-              placeholder="0.00"
-              sideText="$"
-              decimalScale={2}
-              thousandSeparator
-              description={t("The floor a lane inherits when it does not set its own")}
-            />
-          </FormControl>
-          <FormControl>
-            <NumberField
-              control={control}
-              name="defaultMaxCharge"
-              label={t("Default maximum charge")}
-              placeholder="0.00"
-              sideText="$"
-              decimalScale={2}
-              thousandSeparator
-              description={t("A ceiling a lane inherits when it does not set its own")}
-            />
-          </FormControl>
-          <FormControl>
-            <NumberField
-              control={control}
-              name="roundingPrecision"
-              label={t("Rounding precision")}
-              placeholder="2"
-              description={t("How many decimal places the rounded amount keeps")}
-            />
-          </FormControl>
         </FormGroup>
+        <AgreementTariffInputs />
       </FormSection>
 
       {partyType === "Carrier" && (

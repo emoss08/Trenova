@@ -58,10 +58,10 @@ func TestBulkDuplicate_CreatesShipmentMoveAndStopCopies(t *testing.T) {
 	mock.ExpectQuery(`SELECT .*FROM "shipments" AS "sp".*sp\.id`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "service_type_id", "customer_id",
-			"formula_template_id", "status", "pro_number", "bol", "rating_unit",
+			"formula_template_id", "status", "pro_number", "bol",
 		}).AddRow(
 			shipmentID, buID, orgID, pulid.MustNew("svc_"), pulid.MustNew("cus_"),
-			pulid.MustNew("fmt_"), shipment.StatusAssigned, "PRO-OLD", "BOL-OLD", 1,
+			pulid.MustNew("fmt_"), shipment.StatusAssigned, "PRO-OLD", "BOL-OLD",
 		))
 	mock.ExpectQuery(`SELECT .*FROM "shipment_moves" AS "sm".*"shipment_id" IN`).
 		WillReturnRows(sqlmock.NewRows([]string{

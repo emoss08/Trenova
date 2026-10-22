@@ -14,7 +14,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { applyTemplateValues, copyValuesFrom, starterValuesFrom } from "../starter-values";
 import { useStudio } from "../studio-context";
 
 const SKELETON_KEYS = ["a", "b", "c", "d"] as const;
@@ -23,7 +22,7 @@ const RECENT_TEMPLATES = 6;
 type Starter = {
   key: string;
   name: string;
-  expression: string;
+  summary: string;
   meta: string;
   apply: () => void;
 };
@@ -50,7 +49,7 @@ export function StartCard() {
   const draft = () => {
     const text = question.trim();
     if (!text || novaBusy) return;
-    askNova(t("Write a formula template: {0}", text));
+    askNova(t("Write a tariff for this rating method: {0}", text));
     setQuestion("");
   };
 
@@ -61,19 +60,7 @@ export function StartCard() {
       action: {
         label: t("Undo"),
         onClick: () => {
-          for (const key of [
-            "name",
-            "description",
-            "type",
-            "schemaId",
-            "expression",
-            "variableDefinitions",
-            "breakdownDefinitions",
-            "minCharge",
-            "maxCharge",
-            "roundingMode",
-            "roundingPrecision",
-          ] as const) {
+          for (const key of ["name", "description", "source"] as const) {
             form.setValue(key, before[key] as never, { shouldDirty: true });
           }
         },
@@ -89,16 +76,14 @@ export function StartCard() {
 
   const fromStandard = (standard: StandardTemplate) =>
     startFrom(standard.name, () => {
-      applyTemplateValues(form.setValue, starterValuesFrom(standard));
-      form.setValue("type", standard.type, { shouldDirty: true });
+      form.setValue("source", standard.source, { shouldDirty: true, shouldValidate: true });
       fillIfEmpty("name", standard.name);
       fillIfEmpty("description", standard.description);
     });
 
   const fromTemplate = (template: FormulaTemplate) =>
     startFrom(template.name, () => {
-      applyTemplateValues(form.setValue, copyValuesFrom(template));
-      form.setValue("type", template.type, { shouldDirty: true });
+      form.setValue("source", template.source, { shouldDirty: true, shouldValidate: true });
       fillIfEmpty("name", t("Copy of {0}", template.name));
       fillIfEmpty("description", template.description ?? "");
     });
@@ -108,26 +93,22 @@ export function StartCard() {
       ? (standards.data ?? []).map((standard) => ({
           key: standard.name,
           name: standard.name,
-          expression: standard.expression,
-          meta: [
-            standard.type === "AccessorialCharge" ? t("Accessorial") : t("Freight"),
-            standard.variableDefinitions.length > 0
-              ? t(
-                  "{0, plural, one {# input} other {# inputs}}",
-                  standard.variableDefinitions.length,
-                )
-              : null,
-          ]
-            .filter(Boolean)
-            .join(" · "),
+          summary: standard.description,
+          meta: t("Standard library"),
           apply: () => fromStandard(standard),
         }))
       : (recent.data?.results ?? []).map((template) => ({
           key: template.id ?? template.name,
           name: template.name,
-          expression: template.expression,
+          summary: template.description ?? "",
           meta: [
             template.status === "InReview" ? t("In review") : t(template.status),
+            template.inputs.length > 0
+              ? t("{0, plural, one {# input} other {# inputs}}", template.inputs.length)
+              : null,
+            template.testCount > 0
+              ? t("{0, plural, one {# test} other {# tests}}", template.testCount)
+              : null,
             template.currentVersionNumber ? t("v{0}", template.currentVersionNumber) : null,
             template.usageCount ? t("{0} in use", template.usageCount) : null,
           ]
@@ -186,7 +167,7 @@ export function StartCard() {
         </div>
       ) : failed ? (
         <p className="text-foreground-muted text-xs">
-          {t("These could not be loaded. Write the formula by hand or ask Nova to draft it.")}
+          {t("These could not be loaded. Write the tariff by hand or ask Nova to draft it.")}
         </p>
       ) : starters.length === 0 ? (
         <p className="text-foreground-muted text-xs">
@@ -206,9 +187,11 @@ export function StartCard() {
               className="flex h-auto min-w-0 flex-col items-stretch gap-1 rounded-md px-3 py-2 text-left whitespace-normal"
             >
               <span className="truncate text-sm font-medium">{starter.name}</span>
-              <code className="text-foreground-muted line-clamp-2 font-mono text-xs wrap-break-word">
-                {starter.expression}
-              </code>
+              {starter.summary && (
+                <span className="text-foreground-muted line-clamp-2 text-xs font-normal wrap-break-word">
+                  {starter.summary}
+                </span>
+              )}
               {starter.meta && (
                 <span className="text-foreground-subtle text-2xs font-normal">{starter.meta}</span>
               )}

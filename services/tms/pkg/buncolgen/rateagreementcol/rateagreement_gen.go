@@ -69,10 +69,7 @@ var RateAgreementColumns = struct {
 	AutoRenew            buncolgen.Column // "auto_renew" → qualified: "rag.auto_renew"
 	RenewalNoticeDays    buncolgen.Column // "renewal_notice_days" → qualified: "rag.renewal_notice_days"
 	Currency             buncolgen.Column // "currency" → qualified: "rag.currency"
-	DefaultMinCharge     buncolgen.Column // "default_min_charge" → qualified: "rag.default_min_charge"
-	DefaultMaxCharge     buncolgen.Column // "default_max_charge" → qualified: "rag.default_max_charge"
-	RoundingMode         buncolgen.Column // "rounding_mode" → qualified: "rag.rounding_mode"
-	RoundingPrecision    buncolgen.Column // "rounding_precision" → qualified: "rag.rounding_precision"
+	Inputs               buncolgen.Column // "inputs" → qualified: "rag.inputs"
 	BillToCustomerID     buncolgen.Column // "bill_to_customer_id" → qualified: "rag.bill_to_customer_id"
 	MarginFloorPercent   buncolgen.Column // "margin_floor_percent" → qualified: "rag.margin_floor_percent"
 	MaxPayPercentOfSell  buncolgen.Column // "max_pay_percent_of_sell" → qualified: "rag.max_pay_percent_of_sell"
@@ -107,10 +104,7 @@ var RateAgreementColumns = struct {
 	AutoRenew:            buncolgen.NewColumn("auto_renew", "rag"),
 	RenewalNoticeDays:    buncolgen.NewColumn("renewal_notice_days", "rag"),
 	Currency:             buncolgen.NewColumn("currency", "rag"),
-	DefaultMinCharge:     buncolgen.NewColumn("default_min_charge", "rag"),
-	DefaultMaxCharge:     buncolgen.NewColumn("default_max_charge", "rag"),
-	RoundingMode:         buncolgen.NewColumn("rounding_mode", "rag"),
-	RoundingPrecision:    buncolgen.NewColumn("rounding_precision", "rag"),
+	Inputs:               buncolgen.NewColumn("inputs", "rag"),
 	BillToCustomerID:     buncolgen.NewColumn("bill_to_customer_id", "rag"),
 	MarginFloorPercent:   buncolgen.NewColumn("margin_floor_percent", "rag"),
 	MaxPayPercentOfSell:  buncolgen.NewColumn("max_pay_percent_of_sell", "rag"),
@@ -151,10 +145,7 @@ var RateAgreementFieldMap = map[string]string{
 	"autoRenew":            "auto_renew",
 	"renewalNoticeDays":    "renewal_notice_days",
 	"currency":             "currency",
-	"defaultMinCharge":     "default_min_charge",
-	"defaultMaxCharge":     "default_max_charge",
-	"roundingMode":         "rounding_mode",
-	"roundingPrecision":    "rounding_precision",
+	"inputs":               "inputs",
 	"billToCustomerId":     "bill_to_customer_id",
 	"marginFloorPercent":   "margin_floor_percent",
 	"maxPayPercentOfSell":  "max_pay_percent_of_sell",
@@ -191,10 +182,7 @@ var RateAgreementInsertableColumns = []string{
 	"auto_renew",
 	"renewal_notice_days",
 	"currency",
-	"default_min_charge",
-	"default_max_charge",
-	"rounding_mode",
-	"rounding_precision",
+	"inputs",
 	"bill_to_customer_id",
 	"margin_floor_percent",
 	"max_pay_percent_of_sell",
@@ -303,10 +291,7 @@ var RateAgreementFilter = struct {
 	AutoRenew            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoRenew" → DB: "auto_renew"
 	RenewalNoticeDays    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "renewalNoticeDays" → DB: "renewal_notice_days"
 	Currency             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
-	DefaultMinCharge     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMinCharge" → DB: "default_min_charge"
-	DefaultMaxCharge     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMaxCharge" → DB: "default_max_charge"
-	RoundingMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
-	RoundingPrecision    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
+	Inputs               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputs" → DB: "inputs"
 	BillToCustomerID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCustomerId" → DB: "bill_to_customer_id"
 	MarginFloorPercent   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginFloorPercent" → DB: "margin_floor_percent"
 	MaxPayPercentOfSell  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxPayPercentOfSell" → DB: "max_pay_percent_of_sell"
@@ -377,17 +362,8 @@ var RateAgreementFilter = struct {
 	Currency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("currency", op, value)
 	},
-	DefaultMinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("defaultMinCharge", op, value)
-	},
-	DefaultMaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("defaultMaxCharge", op, value)
-	},
-	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingMode", op, value)
-	},
-	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingPrecision", op, value)
+	Inputs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("inputs", op, value)
 	},
 	BillToCustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("billToCustomerId", op, value)
@@ -453,51 +429,47 @@ var RateAgreementAccessorialTable = buncolgen.TableInfo{
 //	q.Where(RateAgreementAccessorialColumns.ID.Eq(), id)           // WHERE raga.id = ?
 //	q.Order(RateAgreementAccessorialColumns.CreatedAt.OrderDesc())  // ORDER BY raga.created_at DESC
 var RateAgreementAccessorialColumns = struct {
-	ID                       buncolgen.Column // "id" → qualified: "raga.id"
-	BusinessUnitID           buncolgen.Column // "business_unit_id" → qualified: "raga.business_unit_id"
-	OrganizationID           buncolgen.Column // "organization_id" → qualified: "raga.organization_id"
-	RateAgreementID          buncolgen.Column // "rate_agreement_id" → qualified: "raga.rate_agreement_id"
-	AccessorialChargeID      buncolgen.Column // "accessorial_charge_id" → qualified: "raga.accessorial_charge_id"
-	Method                   buncolgen.Column // "method" → qualified: "raga.method"
-	RateUnit                 buncolgen.Column // "rate_unit" → qualified: "raga.rate_unit"
-	Amount                   buncolgen.Column // "amount" → qualified: "raga.amount"
-	Waived                   buncolgen.Column // "waived" → qualified: "raga.waived"
-	AutoApply                buncolgen.Column // "auto_apply" → qualified: "raga.auto_apply"
-	ApplyCondition           buncolgen.Column // "apply_condition" → qualified: "raga.apply_condition"
-	ConditionLanguageVersion buncolgen.Column // "condition_language_version" → qualified: "raga.condition_language_version"
-	FreeUnits                buncolgen.Column // "free_units" → qualified: "raga.free_units"
-	MaxAmount                buncolgen.Column // "max_amount" → qualified: "raga.max_amount"
-	FormulaTemplateID        buncolgen.Column // "formula_template_id" → qualified: "raga.formula_template_id"
-	ServiceTypeIDs           buncolgen.Column // "service_type_ids" → qualified: "raga.service_type_ids"
-	ShipmentTypeIDs          buncolgen.Column // "shipment_type_ids" → qualified: "raga.shipment_type_ids"
-	EffectiveFrom            buncolgen.Column // "effective_from" → qualified: "raga.effective_from"
-	EffectiveTo              buncolgen.Column // "effective_to" → qualified: "raga.effective_to"
-	Version                  buncolgen.Column // "version" → qualified: "raga.version"
-	CreatedAt                buncolgen.Column // "created_at" → qualified: "raga.created_at"
-	UpdatedAt                buncolgen.Column // "updated_at" → qualified: "raga.updated_at"
+	ID                  buncolgen.Column // "id" → qualified: "raga.id"
+	BusinessUnitID      buncolgen.Column // "business_unit_id" → qualified: "raga.business_unit_id"
+	OrganizationID      buncolgen.Column // "organization_id" → qualified: "raga.organization_id"
+	RateAgreementID     buncolgen.Column // "rate_agreement_id" → qualified: "raga.rate_agreement_id"
+	AccessorialChargeID buncolgen.Column // "accessorial_charge_id" → qualified: "raga.accessorial_charge_id"
+	Method              buncolgen.Column // "method" → qualified: "raga.method"
+	RateUnit            buncolgen.Column // "rate_unit" → qualified: "raga.rate_unit"
+	Amount              buncolgen.Column // "amount" → qualified: "raga.amount"
+	Waived              buncolgen.Column // "waived" → qualified: "raga.waived"
+	AutoApply           buncolgen.Column // "auto_apply" → qualified: "raga.auto_apply"
+	Condition           buncolgen.Column // "condition" → qualified: "raga.condition"
+	FreeUnits           buncolgen.Column // "free_units" → qualified: "raga.free_units"
+	MaxAmount           buncolgen.Column // "max_amount" → qualified: "raga.max_amount"
+	ServiceTypeIDs      buncolgen.Column // "service_type_ids" → qualified: "raga.service_type_ids"
+	ShipmentTypeIDs     buncolgen.Column // "shipment_type_ids" → qualified: "raga.shipment_type_ids"
+	EffectiveFrom       buncolgen.Column // "effective_from" → qualified: "raga.effective_from"
+	EffectiveTo         buncolgen.Column // "effective_to" → qualified: "raga.effective_to"
+	Version             buncolgen.Column // "version" → qualified: "raga.version"
+	CreatedAt           buncolgen.Column // "created_at" → qualified: "raga.created_at"
+	UpdatedAt           buncolgen.Column // "updated_at" → qualified: "raga.updated_at"
 }{
-	ID:                       buncolgen.NewColumn("id", "raga"),
-	BusinessUnitID:           buncolgen.NewColumn("business_unit_id", "raga"),
-	OrganizationID:           buncolgen.NewColumn("organization_id", "raga"),
-	RateAgreementID:          buncolgen.NewColumn("rate_agreement_id", "raga"),
-	AccessorialChargeID:      buncolgen.NewColumn("accessorial_charge_id", "raga"),
-	Method:                   buncolgen.NewColumn("method", "raga"),
-	RateUnit:                 buncolgen.NewColumn("rate_unit", "raga"),
-	Amount:                   buncolgen.NewColumn("amount", "raga"),
-	Waived:                   buncolgen.NewColumn("waived", "raga"),
-	AutoApply:                buncolgen.NewColumn("auto_apply", "raga"),
-	ApplyCondition:           buncolgen.NewColumn("apply_condition", "raga"),
-	ConditionLanguageVersion: buncolgen.NewColumn("condition_language_version", "raga"),
-	FreeUnits:                buncolgen.NewColumn("free_units", "raga"),
-	MaxAmount:                buncolgen.NewColumn("max_amount", "raga"),
-	FormulaTemplateID:        buncolgen.NewColumn("formula_template_id", "raga"),
-	ServiceTypeIDs:           buncolgen.NewColumn("service_type_ids", "raga"),
-	ShipmentTypeIDs:          buncolgen.NewColumn("shipment_type_ids", "raga"),
-	EffectiveFrom:            buncolgen.NewColumn("effective_from", "raga"),
-	EffectiveTo:              buncolgen.NewColumn("effective_to", "raga"),
-	Version:                  buncolgen.NewColumn("version", "raga"),
-	CreatedAt:                buncolgen.NewColumn("created_at", "raga"),
-	UpdatedAt:                buncolgen.NewColumn("updated_at", "raga"),
+	ID:                  buncolgen.NewColumn("id", "raga"),
+	BusinessUnitID:      buncolgen.NewColumn("business_unit_id", "raga"),
+	OrganizationID:      buncolgen.NewColumn("organization_id", "raga"),
+	RateAgreementID:     buncolgen.NewColumn("rate_agreement_id", "raga"),
+	AccessorialChargeID: buncolgen.NewColumn("accessorial_charge_id", "raga"),
+	Method:              buncolgen.NewColumn("method", "raga"),
+	RateUnit:            buncolgen.NewColumn("rate_unit", "raga"),
+	Amount:              buncolgen.NewColumn("amount", "raga"),
+	Waived:              buncolgen.NewColumn("waived", "raga"),
+	AutoApply:           buncolgen.NewColumn("auto_apply", "raga"),
+	Condition:           buncolgen.NewColumn("condition", "raga"),
+	FreeUnits:           buncolgen.NewColumn("free_units", "raga"),
+	MaxAmount:           buncolgen.NewColumn("max_amount", "raga"),
+	ServiceTypeIDs:      buncolgen.NewColumn("service_type_ids", "raga"),
+	ShipmentTypeIDs:     buncolgen.NewColumn("shipment_type_ids", "raga"),
+	EffectiveFrom:       buncolgen.NewColumn("effective_from", "raga"),
+	EffectiveTo:         buncolgen.NewColumn("effective_to", "raga"),
+	Version:             buncolgen.NewColumn("version", "raga"),
+	CreatedAt:           buncolgen.NewColumn("created_at", "raga"),
+	UpdatedAt:           buncolgen.NewColumn("updated_at", "raga"),
 }
 
 // RateAgreementAccessorialFieldMap maps JSON API field names to database column names.
@@ -505,28 +477,26 @@ var RateAgreementAccessorialColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by RateAgreementAccessorial.GetStaticFieldMap().
 var RateAgreementAccessorialFieldMap = map[string]string{
-	"id":                       "id",
-	"businessUnitId":           "business_unit_id",
-	"organizationId":           "organization_id",
-	"rateAgreementId":          "rate_agreement_id",
-	"accessorialChargeId":      "accessorial_charge_id",
-	"method":                   "method",
-	"rateUnit":                 "rate_unit",
-	"amount":                   "amount",
-	"waived":                   "waived",
-	"autoApply":                "auto_apply",
-	"applyCondition":           "apply_condition",
-	"conditionLanguageVersion": "condition_language_version",
-	"freeUnits":                "free_units",
-	"maxAmount":                "max_amount",
-	"formulaTemplateId":        "formula_template_id",
-	"serviceTypeIds":           "service_type_ids",
-	"shipmentTypeIds":          "shipment_type_ids",
-	"effectiveFrom":            "effective_from",
-	"effectiveTo":              "effective_to",
-	"version":                  "version",
-	"createdAt":                "created_at",
-	"updatedAt":                "updated_at",
+	"id":                  "id",
+	"businessUnitId":      "business_unit_id",
+	"organizationId":      "organization_id",
+	"rateAgreementId":     "rate_agreement_id",
+	"accessorialChargeId": "accessorial_charge_id",
+	"method":              "method",
+	"rateUnit":            "rate_unit",
+	"amount":              "amount",
+	"waived":              "waived",
+	"autoApply":           "auto_apply",
+	"condition":           "condition",
+	"freeUnits":           "free_units",
+	"maxAmount":           "max_amount",
+	"serviceTypeIds":      "service_type_ids",
+	"shipmentTypeIds":     "shipment_type_ids",
+	"effectiveFrom":       "effective_from",
+	"effectiveTo":         "effective_to",
+	"version":             "version",
+	"createdAt":           "created_at",
+	"updatedAt":           "updated_at",
 }
 
 // RateAgreementAccessorialInsertableColumns lists column names suitable for INSERT statements on the "rate_agreement_accessorials" table.
@@ -542,11 +512,9 @@ var RateAgreementAccessorialInsertableColumns = []string{
 	"amount",
 	"waived",
 	"auto_apply",
-	"apply_condition",
-	"condition_language_version",
+	"condition",
 	"free_units",
 	"max_amount",
-	"formula_template_id",
 	"service_type_ids",
 	"shipment_type_ids",
 	"effective_from",
@@ -619,28 +587,26 @@ func RateAgreementAccessorialApplyTenant(ti pagination.TenantInfo) func(*bun.Sel
 //	RateAgreementAccessorialFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RateAgreementAccessorialFilter = struct {
-	ID                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RateAgreementID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
-	AccessorialChargeID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialChargeId" → DB: "accessorial_charge_id"
-	Method                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
-	RateUnit                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateUnit" → DB: "rate_unit"
-	Amount                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
-	Waived                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "waived" → DB: "waived"
-	AutoApply                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApply" → DB: "auto_apply"
-	ApplyCondition           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "applyCondition" → DB: "apply_condition"
-	ConditionLanguageVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "conditionLanguageVersion" → DB: "condition_language_version"
-	FreeUnits                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freeUnits" → DB: "free_units"
-	MaxAmount                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxAmount" → DB: "max_amount"
-	FormulaTemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
-	ServiceTypeIDs           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceTypeIds" → DB: "service_type_ids"
-	ShipmentTypeIDs          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentTypeIds" → DB: "shipment_type_ids"
-	EffectiveFrom            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
-	EffectiveTo              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
-	Version                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RateAgreementID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementId" → DB: "rate_agreement_id"
+	AccessorialChargeID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialChargeId" → DB: "accessorial_charge_id"
+	Method              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	RateUnit            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateUnit" → DB: "rate_unit"
+	Amount              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
+	Waived              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "waived" → DB: "waived"
+	AutoApply           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApply" → DB: "auto_apply"
+	Condition           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "condition" → DB: "condition"
+	FreeUnits           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freeUnits" → DB: "free_units"
+	MaxAmount           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxAmount" → DB: "max_amount"
+	ServiceTypeIDs      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceTypeIds" → DB: "service_type_ids"
+	ShipmentTypeIDs     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentTypeIds" → DB: "shipment_type_ids"
+	EffectiveFrom       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
+	EffectiveTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveTo" → DB: "effective_to"
+	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -672,20 +638,14 @@ var RateAgreementAccessorialFilter = struct {
 	AutoApply: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("autoApply", op, value)
 	},
-	ApplyCondition: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("applyCondition", op, value)
-	},
-	ConditionLanguageVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("conditionLanguageVersion", op, value)
+	Condition: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("condition", op, value)
 	},
 	FreeUnits: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("freeUnits", op, value)
 	},
 	MaxAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("maxAmount", op, value)
-	},
-	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("formulaTemplateId", op, value)
 	},
 	ServiceTypeIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("serviceTypeIds", op, value)
@@ -981,19 +941,8 @@ var RateAgreementRuleColumns = struct {
 	HazmatOnly              buncolgen.Column // "hazmat_only" → qualified: "ragr.hazmat_only"
 	TempControlOnly         buncolgen.Column // "temp_control_only" → qualified: "ragr.temp_control_only"
 	FormulaTemplateID       buncolgen.Column // "formula_template_id" → qualified: "ragr.formula_template_id"
-	RateMatrixID            buncolgen.Column // "rate_matrix_id" → qualified: "ragr.rate_matrix_id"
-	Rate                    buncolgen.Column // "rate" → qualified: "ragr.rate"
+	Inputs                  buncolgen.Column // "inputs" → qualified: "ragr.inputs"
 	Currency                buncolgen.Column // "currency" → qualified: "ragr.currency"
-	FreightClassSource      buncolgen.Column // "freight_class_source" → qualified: "ragr.freight_class_source"
-	FixedFreightClass       buncolgen.Column // "fixed_freight_class" → qualified: "ragr.fixed_freight_class"
-	DensityScaleID          buncolgen.Column // "density_scale_id" → qualified: "ragr.density_scale_id"
-	DiscountPercent         buncolgen.Column // "discount_percent" → qualified: "ragr.discount_percent"
-	AbsoluteMinCharge       buncolgen.Column // "absolute_min_charge" → qualified: "ragr.absolute_min_charge"
-	AllowDeficitRating      buncolgen.Column // "allow_deficit_rating" → qualified: "ragr.allow_deficit_rating"
-	MinCharge               buncolgen.Column // "min_charge" → qualified: "ragr.min_charge"
-	MaxCharge               buncolgen.Column // "max_charge" → qualified: "ragr.max_charge"
-	MinBillableDistance     buncolgen.Column // "min_billable_distance" → qualified: "ragr.min_billable_distance"
-	RoundingMode            buncolgen.Column // "rounding_mode" → qualified: "ragr.rounding_mode"
 	Priority                buncolgen.Column // "priority" → qualified: "ragr.priority"
 	SpecificityScore        buncolgen.Column // "specificity_score" → qualified: "ragr.specificity_score"
 	EffectiveFrom           buncolgen.Column // "effective_from" → qualified: "ragr.effective_from"
@@ -1046,19 +995,8 @@ var RateAgreementRuleColumns = struct {
 	HazmatOnly:              buncolgen.NewColumn("hazmat_only", "ragr"),
 	TempControlOnly:         buncolgen.NewColumn("temp_control_only", "ragr"),
 	FormulaTemplateID:       buncolgen.NewColumn("formula_template_id", "ragr"),
-	RateMatrixID:            buncolgen.NewColumn("rate_matrix_id", "ragr"),
-	Rate:                    buncolgen.NewColumn("rate", "ragr"),
+	Inputs:                  buncolgen.NewColumn("inputs", "ragr"),
 	Currency:                buncolgen.NewColumn("currency", "ragr"),
-	FreightClassSource:      buncolgen.NewColumn("freight_class_source", "ragr"),
-	FixedFreightClass:       buncolgen.NewColumn("fixed_freight_class", "ragr"),
-	DensityScaleID:          buncolgen.NewColumn("density_scale_id", "ragr"),
-	DiscountPercent:         buncolgen.NewColumn("discount_percent", "ragr"),
-	AbsoluteMinCharge:       buncolgen.NewColumn("absolute_min_charge", "ragr"),
-	AllowDeficitRating:      buncolgen.NewColumn("allow_deficit_rating", "ragr"),
-	MinCharge:               buncolgen.NewColumn("min_charge", "ragr"),
-	MaxCharge:               buncolgen.NewColumn("max_charge", "ragr"),
-	MinBillableDistance:     buncolgen.NewColumn("min_billable_distance", "ragr"),
-	RoundingMode:            buncolgen.NewColumn("rounding_mode", "ragr"),
 	Priority:                buncolgen.NewColumn("priority", "ragr"),
 	SpecificityScore:        buncolgen.NewColumn("specificity_score", "ragr"),
 	EffectiveFrom:           buncolgen.NewColumn("effective_from", "ragr"),
@@ -1115,19 +1053,8 @@ var RateAgreementRuleFieldMap = map[string]string{
 	"hazmatOnly":              "hazmat_only",
 	"tempControlOnly":         "temp_control_only",
 	"formulaTemplateId":       "formula_template_id",
-	"rateMatrixId":            "rate_matrix_id",
-	"rate":                    "rate",
+	"inputs":                  "inputs",
 	"currency":                "currency",
-	"freightClassSource":      "freight_class_source",
-	"fixedFreightClass":       "fixed_freight_class",
-	"densityScaleId":          "density_scale_id",
-	"discountPercent":         "discount_percent",
-	"absoluteMinCharge":       "absolute_min_charge",
-	"allowDeficitRating":      "allow_deficit_rating",
-	"minCharge":               "min_charge",
-	"maxCharge":               "max_charge",
-	"minBillableDistance":     "min_billable_distance",
-	"roundingMode":            "rounding_mode",
 	"priority":                "priority",
 	"specificityScore":        "specificity_score",
 	"effectiveFrom":           "effective_from",
@@ -1182,19 +1109,8 @@ var RateAgreementRuleInsertableColumns = []string{
 	"hazmat_only",
 	"temp_control_only",
 	"formula_template_id",
-	"rate_matrix_id",
-	"rate",
+	"inputs",
 	"currency",
-	"freight_class_source",
-	"fixed_freight_class",
-	"density_scale_id",
-	"discount_percent",
-	"absolute_min_charge",
-	"allow_deficit_rating",
-	"min_charge",
-	"max_charge",
-	"min_billable_distance",
-	"rounding_mode",
 	"priority",
 	"specificity_score",
 	"effective_from",
@@ -1212,13 +1128,9 @@ var RateAgreementRuleInsertableColumns = []string{
 //	q.Relation(RateAgreementRuleRelations.Agreement)
 //	// Bun eager-loads the Agreement association via a separate query
 var RateAgreementRuleRelations = struct {
-	Agreement  string
-	RateMatrix string
-	Breaks     string
+	Agreement string
 }{
-	Agreement:  "Agreement",
-	RateMatrix: "RateMatrix",
-	Breaks:     "Breaks",
+	Agreement: "Agreement",
 }
 
 // RateAgreementRuleScopeTenant restricts a query to a single tenant by adding:
@@ -1311,19 +1223,8 @@ var RateAgreementRuleFilter = struct {
 	HazmatOnly              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hazmatOnly" → DB: "hazmat_only"
 	TempControlOnly         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tempControlOnly" → DB: "temp_control_only"
 	FormulaTemplateID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
-	RateMatrixID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateMatrixId" → DB: "rate_matrix_id"
-	Rate                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
+	Inputs                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputs" → DB: "inputs"
 	Currency                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
-	FreightClassSource      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightClassSource" → DB: "freight_class_source"
-	FixedFreightClass       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fixedFreightClass" → DB: "fixed_freight_class"
-	DensityScaleID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "densityScaleId" → DB: "density_scale_id"
-	DiscountPercent         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "discountPercent" → DB: "discount_percent"
-	AbsoluteMinCharge       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "absoluteMinCharge" → DB: "absolute_min_charge"
-	AllowDeficitRating      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowDeficitRating" → DB: "allow_deficit_rating"
-	MinCharge               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
-	MaxCharge               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCharge" → DB: "max_charge"
-	MinBillableDistance     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minBillableDistance" → DB: "min_billable_distance"
-	RoundingMode            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
 	Priority                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
 	SpecificityScore        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "specificityScore" → DB: "specificity_score"
 	EffectiveFrom           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "effectiveFrom" → DB: "effective_from"
@@ -1454,44 +1355,11 @@ var RateAgreementRuleFilter = struct {
 	FormulaTemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("formulaTemplateId", op, value)
 	},
-	RateMatrixID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("rateMatrixId", op, value)
-	},
-	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("rate", op, value)
+	Inputs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("inputs", op, value)
 	},
 	Currency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("currency", op, value)
-	},
-	FreightClassSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("freightClassSource", op, value)
-	},
-	FixedFreightClass: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("fixedFreightClass", op, value)
-	},
-	DensityScaleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("densityScaleId", op, value)
-	},
-	DiscountPercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("discountPercent", op, value)
-	},
-	AbsoluteMinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("absoluteMinCharge", op, value)
-	},
-	AllowDeficitRating: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("allowDeficitRating", op, value)
-	},
-	MinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("minCharge", op, value)
-	},
-	MaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("maxCharge", op, value)
-	},
-	MinBillableDistance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("minBillableDistance", op, value)
-	},
-	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingMode", op, value)
 	},
 	Priority: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("priority", op, value)
@@ -1513,207 +1381,6 @@ var RateAgreementRuleFilter = struct {
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("version", op, value)
-	},
-	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("createdAt", op, value)
-	},
-	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("updatedAt", op, value)
-	},
-}
-
-// ---------------------------------------------------------------------------
-// RateAgreementRuleBreak — table "rate_agreement_rule_breaks", alias "ragb"
-// ---------------------------------------------------------------------------
-
-// RateAgreementRuleBreakTable holds the table name, alias, and primary key columns
-// for the "rate_agreement_rule_breaks" table. The alias "ragb" is used in all generated
-// SQL fragments (e.g. "ragb.id = ?").
-var RateAgreementRuleBreakTable = buncolgen.TableInfo{
-	Name:       "rate_agreement_rule_breaks",
-	Alias:      "ragb",
-	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
-}
-
-// RateAgreementRuleBreakColumns provides type-safe column references for the "rate_agreement_rule_breaks" table.
-// Each field is a [Column] whose methods return pre-computed SQL fragments.
-//
-// Use String() when Bun manages the alias (model-aware queries):
-//
-//	q.Column(RateAgreementRuleBreakColumns.ID.String())
-//	// SELECT ragb.id FROM rate_agreement_rule_breaks AS ragb
-//
-// Use expression helpers for raw WHERE/ORDER BY clauses:
-//
-//	q.Where(RateAgreementRuleBreakColumns.ID.Eq(), id)           // WHERE ragb.id = ?
-//	q.Order(RateAgreementRuleBreakColumns.CreatedAt.OrderDesc())  // ORDER BY ragb.created_at DESC
-var RateAgreementRuleBreakColumns = struct {
-	ID                  buncolgen.Column // "id" → qualified: "ragb.id"
-	BusinessUnitID      buncolgen.Column // "business_unit_id" → qualified: "ragb.business_unit_id"
-	OrganizationID      buncolgen.Column // "organization_id" → qualified: "ragb.organization_id"
-	RateAgreementRuleID buncolgen.Column // "rate_agreement_rule_id" → qualified: "ragb.rate_agreement_rule_id"
-	FromWeight          buncolgen.Column // "from_weight" → qualified: "ragb.from_weight"
-	ToWeight            buncolgen.Column // "to_weight" → qualified: "ragb.to_weight"
-	Rate                buncolgen.Column // "rate" → qualified: "ragb.rate"
-	MinCharge           buncolgen.Column // "min_charge" → qualified: "ragb.min_charge"
-	Label               buncolgen.Column // "label" → qualified: "ragb.label"
-	SortOrder           buncolgen.Column // "sort_order" → qualified: "ragb.sort_order"
-	CreatedAt           buncolgen.Column // "created_at" → qualified: "ragb.created_at"
-	UpdatedAt           buncolgen.Column // "updated_at" → qualified: "ragb.updated_at"
-}{
-	ID:                  buncolgen.NewColumn("id", "ragb"),
-	BusinessUnitID:      buncolgen.NewColumn("business_unit_id", "ragb"),
-	OrganizationID:      buncolgen.NewColumn("organization_id", "ragb"),
-	RateAgreementRuleID: buncolgen.NewColumn("rate_agreement_rule_id", "ragb"),
-	FromWeight:          buncolgen.NewColumn("from_weight", "ragb"),
-	ToWeight:            buncolgen.NewColumn("to_weight", "ragb"),
-	Rate:                buncolgen.NewColumn("rate", "ragb"),
-	MinCharge:           buncolgen.NewColumn("min_charge", "ragb"),
-	Label:               buncolgen.NewColumn("label", "ragb"),
-	SortOrder:           buncolgen.NewColumn("sort_order", "ragb"),
-	CreatedAt:           buncolgen.NewColumn("created_at", "ragb"),
-	UpdatedAt:           buncolgen.NewColumn("updated_at", "ragb"),
-}
-
-// RateAgreementRuleBreakFieldMap maps JSON API field names to database column names.
-// The QueryBuilder uses this to translate filter/sort requests from the frontend
-// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by RateAgreementRuleBreak.GetStaticFieldMap().
-var RateAgreementRuleBreakFieldMap = map[string]string{
-	"id":                  "id",
-	"businessUnitId":      "business_unit_id",
-	"organizationId":      "organization_id",
-	"rateAgreementRuleId": "rate_agreement_rule_id",
-	"fromWeight":          "from_weight",
-	"toWeight":            "to_weight",
-	"rate":                "rate",
-	"minCharge":           "min_charge",
-	"label":               "label",
-	"sortOrder":           "sort_order",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
-}
-
-// RateAgreementRuleBreakInsertableColumns lists column names suitable for INSERT statements on the "rate_agreement_rule_breaks" table.
-// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var RateAgreementRuleBreakInsertableColumns = []string{
-	"id",
-	"business_unit_id",
-	"organization_id",
-	"rate_agreement_rule_id",
-	"from_weight",
-	"to_weight",
-	"rate",
-	"min_charge",
-	"label",
-	"sort_order",
-	"created_at",
-	"updated_at",
-}
-
-// RateAgreementRuleBreakRelations provides type-safe names for Bun eager-loading.
-// Use these instead of string literals in .Relation() calls to get compile-time safety.
-//
-//	q.Relation(RateAgreementRuleBreakRelations.Rule)
-//	// Bun eager-loads the Rule association via a separate query
-var RateAgreementRuleBreakRelations = struct {
-	Rule string
-}{
-	Rule: "Rule",
-}
-
-// RateAgreementRuleBreakScopeTenant restricts a query to a single tenant by adding:
-//
-//	WHERE ragb.organization_id = ? AND ragb.business_unit_id = ?
-//
-// Returns the same *bun.SelectQuery so it can be chained fluently:
-//
-//	rateagreementcol.RateAgreementRuleBreakScopeTenant(sq, ti).
-//		Where(rateagreementcol.RateAgreementRuleBreakColumns.ID.Eq(), id)
-func RateAgreementRuleBreakScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return buncolgen.ScopeTenant(q, RateAgreementRuleBreakColumns.OrganizationID, RateAgreementRuleBreakColumns.BusinessUnitID, ti)
-}
-
-// RateAgreementRuleBreakScopeTenantUpdate restricts an update query to a single tenant.
-// Use this inside UpdateQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return rateagreementcol.RateAgreementRuleBreakScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(rateagreementcol.RateAgreementRuleBreakColumns.ID.In(), bun.List(ids))
-//	})
-func RateAgreementRuleBreakScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return buncolgen.ScopeTenantUpdate(q, RateAgreementRuleBreakColumns.OrganizationID, RateAgreementRuleBreakColumns.BusinessUnitID, ti)
-}
-
-// RateAgreementRuleBreakScopeTenantDelete restricts a delete query to a single tenant.
-// Use this inside DeleteQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return rateagreementcol.RateAgreementRuleBreakScopeTenantDelete(dq, req.TenantInfo).
-//			Where(rateagreementcol.RateAgreementRuleBreakColumns.ID.Eq(), id)
-//	})
-func RateAgreementRuleBreakScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return buncolgen.ScopeTenantDelete(q, RateAgreementRuleBreakColumns.OrganizationID, RateAgreementRuleBreakColumns.BusinessUnitID, ti)
-}
-
-// RateAgreementRuleBreakApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
-// Use this instead of wrapping ScopeTenant in an anonymous function:
-//
-//	q.Apply(rateagreementcol.RateAgreementRuleBreakApplyTenant(tenantInfo))
-func RateAgreementRuleBreakApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return buncolgen.ApplyTenant(RateAgreementRuleBreakColumns.OrganizationID, RateAgreementRuleBreakColumns.BusinessUnitID, ti)
-}
-
-// RateAgreementRuleBreakFilter builds [domaintypes.FieldFilter] values using the correct JSON
-// field names for the "rate_agreement_rule_breaks" table. Pass these to the QueryBuilder's ApplyFilters.
-//
-// The JSON field name is baked in — you only provide the operator and value:
-//
-//	RateAgreementRuleBreakFilter.ID(dbtype.OpEq, value)
-//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var RateAgreementRuleBreakFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RateAgreementRuleID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateAgreementRuleId" → DB: "rate_agreement_rule_id"
-	FromWeight          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromWeight" → DB: "from_weight"
-	ToWeight            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toWeight" → DB: "to_weight"
-	Rate                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
-	MinCharge           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCharge" → DB: "min_charge"
-	Label               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "label" → DB: "label"
-	SortOrder           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sortOrder" → DB: "sort_order"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
-}{
-	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("id", op, value)
-	},
-	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("businessUnitId", op, value)
-	},
-	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("organizationId", op, value)
-	},
-	RateAgreementRuleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("rateAgreementRuleId", op, value)
-	},
-	FromWeight: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("fromWeight", op, value)
-	},
-	ToWeight: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("toWeight", op, value)
-	},
-	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("rate", op, value)
-	},
-	MinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("minCharge", op, value)
-	},
-	Label: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("label", op, value)
-	},
-	SortOrder: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("sortOrder", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("createdAt", op, value)
@@ -1773,10 +1440,7 @@ var RateAgreementVersionColumns = struct {
 	RenewalNoticeDays      buncolgen.Column // "renewal_notice_days" → qualified: "ragv.renewal_notice_days"
 	BillToCustomerID       buncolgen.Column // "bill_to_customer_id" → qualified: "ragv.bill_to_customer_id"
 	Currency               buncolgen.Column // "currency" → qualified: "ragv.currency"
-	DefaultMinCharge       buncolgen.Column // "default_min_charge" → qualified: "ragv.default_min_charge"
-	DefaultMaxCharge       buncolgen.Column // "default_max_charge" → qualified: "ragv.default_max_charge"
-	RoundingMode           buncolgen.Column // "rounding_mode" → qualified: "ragv.rounding_mode"
-	RoundingPrecision      buncolgen.Column // "rounding_precision" → qualified: "ragv.rounding_precision"
+	Inputs                 buncolgen.Column // "inputs" → qualified: "ragv.inputs"
 	MarginFloorPercent     buncolgen.Column // "margin_floor_percent" → qualified: "ragv.margin_floor_percent"
 	MaxPayPercentOfSell    buncolgen.Column // "max_pay_percent_of_sell" → qualified: "ragv.max_pay_percent_of_sell"
 	AccessorialTerms       buncolgen.Column // "accessorial_terms" → qualified: "ragv.accessorial_terms"
@@ -1810,10 +1474,7 @@ var RateAgreementVersionColumns = struct {
 	RenewalNoticeDays:      buncolgen.NewColumn("renewal_notice_days", "ragv"),
 	BillToCustomerID:       buncolgen.NewColumn("bill_to_customer_id", "ragv"),
 	Currency:               buncolgen.NewColumn("currency", "ragv"),
-	DefaultMinCharge:       buncolgen.NewColumn("default_min_charge", "ragv"),
-	DefaultMaxCharge:       buncolgen.NewColumn("default_max_charge", "ragv"),
-	RoundingMode:           buncolgen.NewColumn("rounding_mode", "ragv"),
-	RoundingPrecision:      buncolgen.NewColumn("rounding_precision", "ragv"),
+	Inputs:                 buncolgen.NewColumn("inputs", "ragv"),
 	MarginFloorPercent:     buncolgen.NewColumn("margin_floor_percent", "ragv"),
 	MaxPayPercentOfSell:    buncolgen.NewColumn("max_pay_percent_of_sell", "ragv"),
 	AccessorialTerms:       buncolgen.NewColumn("accessorial_terms", "ragv"),
@@ -1853,10 +1514,7 @@ var RateAgreementVersionFieldMap = map[string]string{
 	"renewalNoticeDays":      "renewal_notice_days",
 	"billToCustomerId":       "bill_to_customer_id",
 	"currency":               "currency",
-	"defaultMinCharge":       "default_min_charge",
-	"defaultMaxCharge":       "default_max_charge",
-	"roundingMode":           "rounding_mode",
-	"roundingPrecision":      "rounding_precision",
+	"inputs":                 "inputs",
 	"marginFloorPercent":     "margin_floor_percent",
 	"maxPayPercentOfSell":    "max_pay_percent_of_sell",
 	"accessorialTerms":       "accessorial_terms",
@@ -1894,10 +1552,7 @@ var RateAgreementVersionInsertableColumns = []string{
 	"renewal_notice_days",
 	"bill_to_customer_id",
 	"currency",
-	"default_min_charge",
-	"default_max_charge",
-	"rounding_mode",
-	"rounding_precision",
+	"inputs",
 	"margin_floor_percent",
 	"max_pay_percent_of_sell",
 	"accessorial_terms",
@@ -1995,10 +1650,7 @@ var RateAgreementVersionFilter = struct {
 	RenewalNoticeDays      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "renewalNoticeDays" → DB: "renewal_notice_days"
 	BillToCustomerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCustomerId" → DB: "bill_to_customer_id"
 	Currency               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currency" → DB: "currency"
-	DefaultMinCharge       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMinCharge" → DB: "default_min_charge"
-	DefaultMaxCharge       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMaxCharge" → DB: "default_max_charge"
-	RoundingMode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingMode" → DB: "rounding_mode"
-	RoundingPrecision      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roundingPrecision" → DB: "rounding_precision"
+	Inputs                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputs" → DB: "inputs"
 	MarginFloorPercent     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "marginFloorPercent" → DB: "margin_floor_percent"
 	MaxPayPercentOfSell    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxPayPercentOfSell" → DB: "max_pay_percent_of_sell"
 	AccessorialTerms       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessorialTerms" → DB: "accessorial_terms"
@@ -2080,17 +1732,8 @@ var RateAgreementVersionFilter = struct {
 	Currency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("currency", op, value)
 	},
-	DefaultMinCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("defaultMinCharge", op, value)
-	},
-	DefaultMaxCharge: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("defaultMaxCharge", op, value)
-	},
-	RoundingMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingMode", op, value)
-	},
-	RoundingPrecision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return buncolgen.NewFieldFilter("roundingPrecision", op, value)
+	Inputs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("inputs", op, value)
 	},
 	MarginFloorPercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("marginFloorPercent", op, value)

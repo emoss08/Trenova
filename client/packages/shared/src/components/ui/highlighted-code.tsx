@@ -3,10 +3,12 @@ import {
   createMatcher,
   findMatches,
   highlightLines,
+  highlightSpans,
   lineText,
   markSegments,
   type CodeLine,
   type CodeRole,
+  type CodeSpan,
 } from "@trenova/shared/lib/highlight/code";
 import { cn } from "@trenova/shared/lib/utils";
 import { Fragment, memo, type MouseEvent, type ReactNode, useMemo } from "react";
@@ -43,6 +45,11 @@ export type HighlightedCodeProps = {
   code: string;
   /** A language name or fence label; one the app has no grammar for is shown as plain text. */
   language?: string;
+  /**
+   * Roles from the language's own tokenizer, in place of a grammar: Tariff is coloured from the
+   * rules module's `tariff.tokens`, so the browser holds no second grammar for it.
+   */
+  spans?: readonly CodeSpan[];
   className?: string;
   /** Marks every case-insensitive occurrence, across token boundaries. */
   query?: string;
@@ -90,13 +97,17 @@ const Line = memo(function Line({ line, index, matcher, className, lineEnd }: Li
 export function HighlightedCode({
   code,
   language,
+  spans,
   className,
   query = "",
   lineClassName,
   lineEnd,
   onLineClick,
 }: HighlightedCodeProps) {
-  const lines = useMemo(() => highlightLines(code, language), [code, language]);
+  const lines = useMemo(
+    () => (spans ? highlightSpans(code, spans) : highlightLines(code, language)),
+    [code, language, spans],
+  );
   const matcher = useMemo(() => createMatcher(query), [query]);
 
   const handleClick = onLineClick
@@ -108,7 +119,7 @@ export function HighlightedCode({
 
   return (
     <pre
-      data-language={codeLanguage(language) ?? undefined}
+      data-language={(spans ? language : codeLanguage(language)) ?? undefined}
       className={cn("font-mono text-xs leading-relaxed text-foreground", className)}
     >
       <code onClick={handleClick}>

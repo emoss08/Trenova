@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 634.
+Tools listed: 639.
 
 ## The model
 
@@ -88,7 +88,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 211 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 216 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
@@ -176,11 +176,16 @@ Looks something up. Nothing changes and nothing is sent.
 | List factoring remittances (`factoring_list_remittances`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring submissions (`factoring_list_submissions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Find tools (`find_tools`) | Reads only | Automatic | — | — | Loads more of the agent's own tools into the turn; it reads the catalog and changes nothing. |
-| Describe formula schema (`formula_describe_schema`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Check formula (`formula_check`) | Reads only | Automatic | — | — | Checks source the model holds; nothing is saved and nothing is sent. |
+| Describe formula language (`formula_describe_language`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get formula library (`formula_get_library`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula template (`formula_get_template`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Library formula propose (`formula_library_propose`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
+| List formula libraries (`formula_list_libraries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List formula templates (`formula_list_templates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Preview formula (`formula_preview`) | Reads only | Automatic | — | — | Rates source with the engine, for the sample record or a shipment the caller may read; nothing is saved and nothing is sent. |
 | Propose formula (`formula_propose`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
-| Test formula expression (`formula_test_expression`) | Reads only | Automatic | — | — | Prices an expression with the formula engine, for sample values or a shipment the caller may read; nothing is saved and nothing is sent. |
+| Run formula tests (`formula_run_tests`) | Reads only | Automatic | — | — | Runs the tests in source the model holds; nothing is saved and nothing is sent. |
 | List fuel cards (`fuel_list_cards`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List IFTA jurisdictions (`fuel_list_ifta_jurisdictions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List IFTA mileage entries (`fuel_list_ifta_mileage_entries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

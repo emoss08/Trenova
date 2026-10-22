@@ -56,7 +56,6 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 			"formula_template_id",
 			"status",
 			"pro_number",
-			"rating_unit",
 			"__cursor_value_0",
 			"__cursor_value_1",
 		}).AddRow(
@@ -68,7 +67,6 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 			pulid.MustNew("fmt_"),
 			shipment.StatusNew,
 			"PRO-1",
-			1,
 			1,
 			shipmentID,
 		))

@@ -90,6 +90,7 @@ function base(overrides) {
     voidDisposition: null,
     memoReason: "",
     memoKind: null,
+    ratingNotes: [],
     ediSendStatus: "NotSent",
     ediSentAt: null,
     lastEdiError: "",
@@ -131,13 +132,16 @@ export function deskInvoices(anchor) {
     ediSendStatus: "Sent",
     ediSentAt: issued + 9 * HOUR + 180,
     lastEdiMessageId: "edimsg_210_acme",
+    ratingNotes: ["Team surcharge applies on lanes over 600 mi"],
     createdAt: issued + 8 * HOUR,
     updatedAt: anchor - 5 * DAY,
     chargeSummary: [
       group({
         type: "Freight",
-        description: "Freight charge",
+        description: "Linehaul",
+        quantity: "723.08",
         rate: "3.25",
+        rateUnit: "$/mi",
         formulaTemplateId: "ft_mile",
         formulaTemplateName:
           "Per mile – dry van, Texas triangle lanes with team surcharge and Q4 produce uplift",
@@ -272,7 +276,7 @@ export function deskInvoices(anchor) {
     chargeSummary: [
       group({
         type: "Freight",
-        description: "Freight charge",
+        description: "Linehaul",
         formulaTemplateId: "ft_mile",
         formulaTemplateName: "Per mile – dry van",
         lineCount: 8,
@@ -282,13 +286,14 @@ export function deskInvoices(anchor) {
       }),
       group({
         type: "Freight",
-        description: "Freight charge",
+        description: "Linehaul",
         formulaTemplateId: "ft_flat",
         formulaTemplateName: "Per CWT (Hundredweight)",
         rate: "3.05",
+        rateUnit: "$/cwt",
         lineCount: 4,
         shipmentCount: 4,
-        quantity: "4",
+        quantity: "1652.46",
         amount: "5040",
       }),
       group({

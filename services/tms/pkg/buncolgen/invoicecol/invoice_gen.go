@@ -989,6 +989,7 @@ var InvoiceColumns = struct {
 	LastSendError             buncolgen.Column // "last_send_error" → qualified: "inv.last_send_error"
 	LastSendWarning           buncolgen.Column // "last_send_warning" → qualified: "inv.last_send_warning"
 	Memo                      buncolgen.Column // "memo" → qualified: "inv.memo"
+	RatingNotes               buncolgen.Column // "rating_notes" → qualified: "inv.rating_notes"
 	RemittanceInstructions    buncolgen.Column // "remittance_instructions" → qualified: "inv.remittance_instructions"
 	EmailSubjectSnapshot      buncolgen.Column // "email_subject_snapshot" → qualified: "inv.email_subject_snapshot"
 	EmailBodySnapshot         buncolgen.Column // "email_body_snapshot" → qualified: "inv.email_body_snapshot"
@@ -1077,6 +1078,7 @@ var InvoiceColumns = struct {
 	LastSendError:             buncolgen.NewColumn("last_send_error", "inv"),
 	LastSendWarning:           buncolgen.NewColumn("last_send_warning", "inv"),
 	Memo:                      buncolgen.NewColumn("memo", "inv"),
+	RatingNotes:               buncolgen.NewColumn("rating_notes", "inv"),
 	RemittanceInstructions:    buncolgen.NewColumn("remittance_instructions", "inv"),
 	EmailSubjectSnapshot:      buncolgen.NewColumn("email_subject_snapshot", "inv"),
 	EmailBodySnapshot:         buncolgen.NewColumn("email_body_snapshot", "inv"),
@@ -1171,6 +1173,7 @@ var InvoiceFieldMap = map[string]string{
 	"lastSendError":             "last_send_error",
 	"lastSendWarning":           "last_send_warning",
 	"memo":                      "memo",
+	"ratingNotes":               "rating_notes",
 	"remittanceInstructions":    "remittance_instructions",
 	"emailSubjectSnapshot":      "email_subject_snapshot",
 	"emailBodySnapshot":         "email_body_snapshot",
@@ -1263,6 +1266,7 @@ var InvoiceInsertableColumns = []string{
 	"last_send_error",
 	"last_send_warning",
 	"memo",
+	"rating_notes",
 	"remittance_instructions",
 	"email_subject_snapshot",
 	"email_body_snapshot",
@@ -1432,6 +1436,7 @@ var InvoiceFilter = struct {
 	LastSendError             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastSendError" → DB: "last_send_error"
 	LastSendWarning           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastSendWarning" → DB: "last_send_warning"
 	Memo                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memo" → DB: "memo"
+	RatingNotes               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingNotes" → DB: "rating_notes"
 	RemittanceInstructions    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remittanceInstructions" → DB: "remittance_instructions"
 	EmailSubjectSnapshot      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailSubjectSnapshot" → DB: "email_subject_snapshot"
 	EmailBodySnapshot         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailBodySnapshot" → DB: "email_body_snapshot"
@@ -1626,6 +1631,9 @@ var InvoiceFilter = struct {
 	},
 	Memo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("memo", op, value)
+	},
+	RatingNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("ratingNotes", op, value)
 	},
 	RemittanceInstructions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("remittanceInstructions", op, value)

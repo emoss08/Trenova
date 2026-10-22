@@ -54,7 +54,7 @@ func TestCreate_WritesTheInitialHeaderVersion(t *testing.T) {
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: audit,
 	})
 
@@ -91,7 +91,7 @@ func TestUpdate_ChangedHeaderTermsWriteTheNextVersion(t *testing.T) {
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: audit,
 	})
 
@@ -119,7 +119,7 @@ func TestUpdate_UnchangedHeaderTermsWriteNoVersion(t *testing.T) {
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: audit,
 	})
 

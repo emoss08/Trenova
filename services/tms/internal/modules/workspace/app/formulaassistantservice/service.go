@@ -2,567 +2,396 @@ package formulaassistantservice
 
 import (
 	"context"
-	"fmt"
-	"maps"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
 
+const MaxExplanationRunes = 4000
+
+type Kind string
+
 const (
-	DefaultSchemaID     = "shipment"
-	MaxScenarios        = 5
-	MaxScenarioNameLen  = 120
-	MaxExplanationRunes = 4000
-	maxScenarioVars     = pagedraft.MaxFormulaVariables + 40
+	KindTemplate = Kind("template")
+	KindLibrary  = Kind("library")
 )
+
+func (k Kind) IsValid() bool {
+	return k == KindTemplate || k == KindLibrary
+}
+
+func AllKinds() []Kind {
+	return []Kind{KindTemplate, KindLibrary}
+}
+
+type templateEngine interface {
+	StudioContext(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) (*formulatemplateservice.StudioContext, error)
+	TestSource(
+		ctx context.Context,
+		req *formulatemplateservice.TestSourceRequest,
+	) (*formulatemplateservice.TestSourceResult, error)
+	Preview(
+		ctx context.Context,
+		req *formulatemplateservice.PreviewRequest,
+	) (*formulatemplateports.PreviewResult, error)
+}
+
+type libraryEngine interface {
+	TestSource(
+		ctx context.Context,
+		req *formulalibraryservice.TestSourceRequest,
+	) (*formulalibraryservice.TestSourceResult, error)
+}
+
+type catalogReader interface {
+	Catalog(ctx context.Context) (*tariff.CatalogEntry, error)
+}
 
 type Params struct {
 	fx.In
 
-	FormulaService  *formula.Service
-	TemplateService *formulatemplateservice.Service
-	RateMatrixRepo  ratematrixports.RateMatrixRepository
+	Templates *formulatemplateservice.Service
+	Libraries *formulalibraryservice.Service
+	Checker   *tariff.Checker
 }
 
 type Service struct {
-	formulaService  *formula.Service
-	templateService *formulatemplateservice.Service
-	rateMatrixRepo  ratematrixports.RateMatrixRepository
+	templates templateEngine
+	libraries libraryEngine
+	catalog   catalogReader
 }
 
-func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
-	return &Service{
-		formulaService:  p.FormulaService,
-		templateService: p.TemplateService,
-		rateMatrixRepo:  p.RateMatrixRepo,
-	}
+func New(p Params) *Service {
+	return &Service{templates: p.Templates, libraries: p.Libraries, catalog: p.Checker}
 }
 
-type RateTable struct {
-	Code      string `json:"code"`
-	Name      string `json:"name"`
-	Axes      int    `json:"axes"`
-	Functions string `json:"functions"`
+type Language struct {
+	ModuleVersion string
+	Catalog       rules.RawJSON
+	Context       *rules.TariffContext
+	Libraries     []formulatemplateservice.StudioLibrary
 }
 
-type FunctionReference struct {
-	Name        string `json:"name"`
-	Signature   string `json:"signature"`
-	Description string `json:"description"`
-	Example     string `json:"example"`
-	Category    string `json:"category"`
-	Operator    bool   `json:"operator,omitempty"`
-	Predicate   bool   `json:"predicate,omitempty"`
-}
-
-type DisabledReference struct {
-	Name    string `json:"name"`
-	Message string `json:"message"`
-}
-
-type Reference struct {
-	SchemaID   string                  `json:"schemaId"`
-	Variables  []rules.FormulaVariable `json:"variables"`
-	Functions  []FunctionReference     `json:"functions"`
-	Disabled   []DisabledReference     `json:"disabled"`
-	RateTables []RateTable             `json:"rateTables"`
-}
-
-type Scenario struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description,omitempty"`
-	Variables   map[string]any `json:"variables"`
-}
-
-type TestRequest struct {
-	TenantInfo pagination.TenantInfo
-	SchemaID   string
-	Expression string
-	Variables  map[string]any
-	ShipmentID pulid.ID
-	Scenarios  []Scenario
-	Policy     *pagedraft.FormulaPolicy
-	// declaredOnly checks the expression with Variables alone, for a proposal:
-	// the studio holds only its declared variables.
-	declaredOnly bool
-}
-
-type TestOutcome struct {
-	SchemaID  string                     `json:"schemaId"`
-	Check     pagedraft.FormulaCheck     `json:"check"`
-	Policy    *pagedraft.FormulaPolicy   `json:"policy,omitempty"`
-	Warnings  []string                   `json:"warnings,omitempty"`
-	Resolved  map[string]any             `json:"resolvedVariables,omitempty"`
-	Scenarios []pagedraft.PricedScenario `json:"scenarios,omitempty"`
-}
-
-type ProposeRequest struct {
-	TenantInfo  pagination.TenantInfo
-	SchemaID    string
-	Expression  string
-	Variables   []pagedraft.FormulaVariable
-	Details     pagedraft.FormulaDetails
-	Explanation string
-	Scenarios   []Scenario
-}
-
-func SchemaIDOrDefault(schemaID string) string {
-	if trimmed := strings.TrimSpace(schemaID); trimmed != "" {
-		return trimmed
-	}
-
-	return DefaultSchemaID
-}
-
-func (s *Service) Reference(
+func (s *Service) Language(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
-	schemaID string,
-) (*Reference, error) {
-	schemaID = SchemaIDOrDefault(schemaID)
-	description, err := s.formulaService.DescribeSchema(schemaID)
+	tenantInfo pagination.TenantInfo,
+) (*Language, error) {
+	catalog, err := s.catalog.Catalog(ctx)
 	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"schemaId", errortypes.ErrInvalid,
-			"There is no formula schema named "+schemaID,
-		)
+		return nil, err
 	}
-
-	tables, err := s.rateTables(ctx, tenant)
+	studio, err := s.templates.StudioContext(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	catalog, err := rules.Catalog(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	locale := i18n.FromContext(ctx)
-	functions := make([]FunctionReference, 0, len(catalog.Functions)+len(catalog.Builtins))
-	for _, group := range [][]rules.FormulaFunction{catalog.Functions, catalog.Builtins} {
-		for index := range group {
-			function := &group[index]
-			functions = append(functions, FunctionReference{
-				Name:        function.Name,
-				Signature:   function.Signature,
-				Description: function.Description.Localize(locale),
-				Example:     function.Example.Localize(locale),
-				Category:    function.Category,
-				Operator:    function.Operator,
-				Predicate:   function.Predicate,
-			})
-		}
-	}
-	disabled := make([]DisabledReference, 0, len(catalog.Disabled))
-	for index := range catalog.Disabled {
-		disabled = append(disabled, DisabledReference{
-			Name:    catalog.Disabled[index].Name,
-			Message: catalog.Disabled[index].Message.Localize(locale),
-		})
-	}
-
-	return &Reference{
-		SchemaID:   schemaID,
-		Variables:  description.Variables,
-		Functions:  functions,
-		Disabled:   disabled,
-		RateTables: tables,
+	return &Language{
+		ModuleVersion: catalog.ModuleVersion,
+		Catalog:       catalog.Catalog,
+		Context:       studio.Context,
+		Libraries:     studio.Libraries,
 	}, nil
 }
 
-func (s *Service) rateTables(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-) ([]RateTable, error) {
-	data, err := s.rateMatrixRepo.GetLookupData(
-		ctx,
-		&ratematrixports.GetRateMatrixLookupDataRequest{TenantInfo: tenant},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("read the rate tables a formula may look up: %w", err)
-	}
-
-	tables := make([]RateTable, 0, len(data))
-	for _, entry := range data {
-		if entry == nil || entry.Matrix == nil {
-			continue
-		}
-		table := RateTable{
-			Code: entry.Matrix.Code,
-			Name: entry.Matrix.Name,
-			Axes: len(entry.Matrix.Dimensions),
-		}
-		switch table.Axes {
-		case 1:
-			table.Functions = "lookup, lookupOr"
-		case 2:
-			table.Functions = "lookup2, lookup2Or"
-		default:
-			continue
-		}
-		tables = append(tables, table)
-	}
-
-	return tables, nil
+type Input struct {
+	Name     string        `json:"name"`
+	Type     string        `json:"type"`
+	Required bool          `json:"required"`
+	Default  rules.RawJSON `json:"default,omitempty"`
+	Doc      string        `json:"doc,omitempty"`
 }
 
-func (s *Service) Test(ctx context.Context, req *TestRequest) (*TestOutcome, error) {
-	if err := validateTest(req); err != nil {
-		return nil, err
+type Checked struct {
+	OK       bool               `json:"ok"`
+	Kind     string             `json:"kind,omitempty"`
+	Name     string             `json:"name,omitempty"`
+	Findings []tariff.Finding   `json:"findings"`
+	Inputs   []Input            `json:"inputs"`
+	Imports  []string           `json:"imports"`
+	Charges  []string           `json:"charges"`
+	Tests    tariff.TestSummary `json:"tests"`
+	source   string
+	check    *rules.TariffCheck
+	locale   i18n.Locale
+	warnings []string
+}
+
+func (c *Checked) Passing() bool {
+	return c.OK && c.Tests.Error == "" && c.Tests.Passed == c.Tests.Total
+}
+
+type CheckRequest struct {
+	TenantInfo pagination.TenantInfo
+	Kind       Kind
+	Source     string
+}
+
+func (s *Service) Check(ctx context.Context, req *CheckRequest) (*Checked, error) {
+	if !req.Kind.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"kind", errortypes.ErrInvalid, "Kind must be template or library",
+		)
+	}
+	if strings.TrimSpace(req.Source) == "" {
+		return nil, errortypes.NewValidationError(
+			"source", errortypes.ErrRequired, "Source is required",
+		)
 	}
 
-	schemaID := SchemaIDOrDefault(req.SchemaID)
-	check := policedRequest(&formulatemplateservice.TestExpressionRequest{
-		Expression: req.Expression,
-		SchemaID:   schemaID,
-		Variables:  checkVariables(req),
+	if req.Kind == KindLibrary {
+		result, err := s.libraries.TestSource(ctx, &formulalibraryservice.TestSourceRequest{
+			TenantInfo: req.TenantInfo,
+			Source:     req.Source,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return checkedOf(ctx, req.Source, result.Check, result.Imports, result.Tests), nil
+	}
+
+	result, err := s.templates.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
 		TenantInfo: req.TenantInfo,
-	}, req.Policy)
-	if req.ShipmentID.IsNotNil() {
-		shipmentID := req.ShipmentID
-		check.ShipmentID = &shipmentID
-	}
-
-	result, err := s.templateService.TestExpression(ctx, check)
-	if err != nil {
-		return nil, err
-	}
-	locale := i18n.FromContext(ctx)
-	outcome := &TestOutcome{
-		SchemaID: schemaID,
-		Check:    checkOf(locale, result),
-		Policy:   req.Policy.Resolved(),
-		Resolved: result.ResolvedVariables,
-	}
-	for index := range result.Diagnostics {
-		diagnostic := &result.Diagnostics[index]
-		if diagnostic.Severity == rules.SeverityWarning {
-			outcome.Warnings = append(outcome.Warnings, diagnostic.Message.Localize(locale))
-		}
-	}
-	if outcome.Check.Valid {
-		outcome.Scenarios = s.price(ctx, &pricing{
-			tenant:     req.TenantInfo,
-			schemaID:   schemaID,
-			expression: req.Expression,
-			defaults:   req.Variables,
-			policy:     req.Policy,
-		}, req.Scenarios)
-	}
-
-	return outcome, nil
-}
-
-func policedRequest(
-	req *formulatemplateservice.TestExpressionRequest,
-	policy *pagedraft.FormulaPolicy,
-) *formulatemplateservice.TestExpressionRequest {
-	charge := policy.ChargePolicy()
-	req.MinCharge = charge.MinCharge
-	req.MaxCharge = charge.MaxCharge
-	req.RoundingMode = charge.RoundingMode
-	req.RoundingPrecision = charge.RoundingPrecision
-
-	return req
-}
-
-// checkVariables are the values the expression is checked with: the shared
-// ones, and for a name only the loads set, the first load's value. A template
-// variable given a value per load is as declared as one given once; checking
-// with the shared values alone refused the expression as naming an unknown
-// variable before any load was priced.
-func checkVariables(req *TestRequest) map[string]any {
-	values := maps.Clone(req.Variables)
-	if req.declaredOnly {
-		return values
-	}
-	if values == nil {
-		values = make(map[string]any)
-	}
-	for _, scenario := range req.Scenarios {
-		for name, value := range scenario.Variables {
-			if _, set := values[name]; !set && value != nil {
-				values[name] = value
-			}
-		}
-	}
-
-	return values
-}
-
-func (s *Service) Propose(
-	ctx context.Context,
-	req *ProposeRequest,
-) (*pagedraft.FormulaProposal, error) {
-	if err := validatePropose(req); err != nil {
-		return nil, err
-	}
-
-	defaults := make(map[string]any, len(req.Variables))
-	for _, variable := range req.Variables {
-		if variable.DefaultValue != nil {
-			defaults[variable.Name] = variable.DefaultValue
-		}
-	}
-
-	outcome, err := s.Test(ctx, &TestRequest{
-		TenantInfo:   req.TenantInfo,
-		SchemaID:     req.SchemaID,
-		Expression:   req.Expression,
-		Variables:    defaults,
-		Scenarios:    req.Scenarios,
-		Policy:       req.Details.Policy,
-		declaredOnly: true,
+		Source:     req.Source,
 	})
 	if err != nil {
 		return nil, err
 	}
+	return checkedOf(ctx, req.Source, result.Check, result.Imports, result.Tests), nil
+}
 
-	details := req.Details.Normalized()
-	check := outcome.Check
-	if check.Valid && len(details.Breakdown) > 0 {
-		check = s.checkBreakdown(ctx, req, outcome.SchemaID, defaults, details.Breakdown, check)
+func checkedOf(
+	ctx context.Context,
+	source string,
+	check *rules.TariffCheck,
+	imports []tarifftypes.Import,
+	tests *rules.TariffTestRun,
+) *Checked {
+	locale := i18n.FromContext(ctx)
+	out := &Checked{
+		OK:       check != nil && check.OK && check.FirstError() == nil,
+		Findings: []tariff.Finding{},
+		Inputs:   []Input{},
+		Imports:  []string{},
+		Charges:  []string{},
+		Tests:    tariff.SummarizeTests(locale, source, tests),
+		source:   source,
+		check:    check,
+		locale:   locale,
+	}
+	if check == nil {
+		return out
+	}
+	if check.Header != nil {
+		out.Kind = string(check.Header.Kind)
+		out.Name = check.Header.Name
+	}
+	out.Findings = tariff.Findings(locale, source, check.Diagnostics)
+	for i := range out.Findings {
+		if out.Findings[i].Severity == rules.SeverityWarning {
+			out.warnings = append(out.warnings, out.Findings[i].Message)
+		}
+	}
+	for i := range check.Inputs {
+		input := &check.Inputs[i]
+		out.Inputs = append(out.Inputs, Input{
+			Name:     input.Name,
+			Type:     input.Type,
+			Required: input.Required,
+			Default:  input.Default,
+			Doc:      input.Doc,
+		})
+	}
+	for _, imp := range imports {
+		out.Imports = append(out.Imports, imp.Path)
+	}
+	for i := range check.Charges {
+		out.Charges = append(out.Charges, check.Charges[i].Label)
+	}
+	return out
+}
+
+type PreviewRequest struct {
+	TenantInfo pagination.TenantInfo
+	Source     string
+	Inputs     tarifftypes.Inputs
+	ShipmentID pulid.ID
+}
+
+type Preview struct {
+	*Checked
+	Bill      *tarifftypes.Bill      `json:"bill,omitempty"`
+	Refusal   string                 `json:"refusal,omitempty"`
+	RefusalAt *tariff.SourcePosition `json:"refusalAt,omitempty"`
+	Error     string                 `json:"error,omitempty"`
+	ErrorAt   *tariff.SourcePosition `json:"errorAt,omitempty"`
+}
+
+func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, error) {
+	if strings.TrimSpace(req.Source) == "" {
+		return nil, errortypes.NewValidationError(
+			"source", errortypes.ErrRequired, "Source is required",
+		)
 	}
 
-	return &pagedraft.FormulaProposal{
-		SchemaID:       outcome.SchemaID,
-		Expression:     strings.TrimSpace(req.Expression),
-		Variables:      req.Variables,
-		FormulaDetails: details,
-		Explanation:    strings.TrimSpace(req.Explanation),
-		Check:          check,
-		Scenarios:      outcome.Scenarios,
+	previewReq := &formulatemplateservice.PreviewRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     req.Source,
+		Inputs:     req.Inputs,
+	}
+	if req.ShipmentID.IsNotNil() {
+		shipmentID := req.ShipmentID
+		previewReq.ShipmentID = &shipmentID
+	}
+	result, err := s.templates.Preview(ctx, previewReq)
+	if err != nil {
+		return nil, err
+	}
+
+	check := &rules.TariffCheck{
+		OK:          result.Valid,
+		Diagnostics: result.Diagnostics,
+		Charges:     result.Charges,
+	}
+	for i := range result.Inputs {
+		input := &result.Inputs[i]
+		check.Inputs = append(check.Inputs, rules.TariffInput{
+			Name:     input.Name,
+			Doc:      input.Doc,
+			Type:     input.Type,
+			Required: input.Required,
+			Default:  input.Default,
+		})
+	}
+	checked := checkedOf(ctx, req.Source, check, result.Imports,
+		&rules.TariffTestRun{Tests: result.Tests})
+	checked.OK = result.Valid
+
+	out := &Preview{Checked: checked, Bill: result.Bill}
+	if result.Refusal != nil {
+		out.Refusal = result.Refusal.Localize(checked.locale)
+		out.RefusalAt = positionOf(req.Source, result.Refusal.Range)
+	}
+	if result.Error != nil {
+		out.Error = result.Error.Message
+		out.ErrorAt = positionOf(req.Source, result.Error.Range)
+	}
+	return out, nil
+}
+
+func positionOf(source string, at *rules.TariffRange) *tariff.SourcePosition {
+	if at == nil {
+		return nil
+	}
+	position := tariff.PositionOf(source, at.From)
+	return &position
+}
+
+type ProposeRequest struct {
+	TenantInfo  pagination.TenantInfo
+	Kind        Kind
+	Name        string
+	Description string
+	Source      string
+	Explanation string
+}
+
+type Proposed struct {
+	Proposal *pagedraft.SourceProposal
+	Checked  *Checked
+}
+
+func (r *ProposeRequest) validate() error {
+	multiErr := errortypes.NewMultiError()
+	nameLimit := pagedraft.MaxTemplateNameLength
+	if r.Kind == KindLibrary {
+		nameLimit = pagedraft.MaxLibraryNameLength
+	}
+	if utf8.RuneCountInString(strings.TrimSpace(r.Name)) > nameLimit {
+		multiErr.Add("name", errortypes.ErrInvalid, "Name is too long")
+	}
+	if utf8.RuneCountInString(strings.TrimSpace(r.Description)) >
+		pagedraft.MaxDescriptionLength {
+		multiErr.Add("description", errortypes.ErrInvalid, "Description is too long")
+	}
+	switch explanation := strings.TrimSpace(r.Explanation); {
+	case explanation == "":
+		multiErr.Add("explanation", errortypes.ErrRequired, "Explain the change")
+	case utf8.RuneCountInString(explanation) > MaxExplanationRunes:
+		multiErr.Add("explanation", errortypes.ErrInvalid, "The explanation is too long")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	return nil
+}
+
+func (s *Service) Propose(ctx context.Context, req *ProposeRequest) (*Proposed, error) {
+	if !req.Kind.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"kind", errortypes.ErrInvalid, "Kind must be template or library",
+		)
+	}
+	if err := req.validate(); err != nil {
+		return nil, err
+	}
+
+	checked, err := s.Check(ctx, &CheckRequest{
+		TenantInfo: req.TenantInfo,
+		Kind:       req.Kind,
+		Source:     req.Source,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !checked.Passing() || checked.Tests.Total == 0 {
+		return &Proposed{Checked: checked}, nil
+	}
+
+	return &Proposed{
+		Checked: checked,
+		Proposal: &pagedraft.SourceProposal{
+			Name:        strings.TrimSpace(req.Name),
+			Description: strings.TrimSpace(req.Description),
+			Source:      req.Source,
+			Explanation: strings.TrimSpace(req.Explanation),
+			Inputs:      inputNames(checked.Inputs),
+			Imports:     checked.Imports,
+			Charges:     checked.Charges,
+			Warnings:    orEmpty(checked.warnings),
+			Tests: pagedraft.ProposalTests{
+				Total:  checked.Tests.Total,
+				Passed: checked.Tests.Passed,
+			},
+		},
 	}, nil
 }
 
-func (s *Service) checkBreakdown(
-	ctx context.Context,
-	req *ProposeRequest,
-	schemaID string,
-	defaults map[string]any,
-	lines []pagedraft.BreakdownLine,
-	check pagedraft.FormulaCheck,
-) pagedraft.FormulaCheck {
-	definitions := make([]*formulatypes.BreakdownDefinition, 0, len(lines))
-	for _, line := range lines {
-		definitions = append(definitions, &formulatypes.BreakdownDefinition{
-			Name:       line.Name,
-			Label:      line.Label,
-			Expression: line.Expression,
-		})
+func inputNames(inputs []Input) []string {
+	names := make([]string, 0, len(inputs))
+	for i := range inputs {
+		names = append(names, inputs[i].Name)
 	}
-
-	result, err := s.templateService.TestExpression(ctx, policedRequest(
-		&formulatemplateservice.TestExpressionRequest{
-			Expression: req.Expression,
-			SchemaID:   schemaID,
-			Variables:  defaults,
-			TenantInfo: req.TenantInfo,
-			Breakdowns: definitions,
-		}, req.Details.Policy))
-	if err != nil {
-		return pagedraft.FormulaCheck{Error: errortypes.LocalizedText(ctx, err)}
-	}
-	locale := i18n.FromContext(ctx)
-	for index, line := range lines {
-		scope := formula.PreviewScope(index)
-		for position := range result.Diagnostics {
-			diagnostic := &result.Diagnostics[position]
-			if diagnostic.Scope == scope && diagnostic.IsError() {
-				return lineFailure(line, diagnostic.Message.Localize(locale), diagnostic.Code)
-			}
-		}
-		if result.Error != nil && result.Error.Scope == scope {
-			return lineFailure(line, result.Error.Err.Localize(locale), result.Error.Err.Code)
-		}
-	}
-	if result.FirstErrorDiagnostic() != nil || result.Result == nil {
-		return checkOf(locale, result)
-	}
-
-	return check
+	return names
 }
 
-type pricing struct {
-	tenant     pagination.TenantInfo
-	schemaID   string
-	expression string
-	defaults   map[string]any
-	policy     *pagedraft.FormulaPolicy
-}
-
-func (s *Service) price(
-	ctx context.Context,
-	run *pricing,
-	scenarios []Scenario,
-) []pagedraft.PricedScenario {
-	priced := make([]pagedraft.PricedScenario, 0, len(scenarios))
-	for _, scenario := range scenarios {
-		variables := make(map[string]any, len(run.defaults)+len(scenario.Variables))
-		maps.Copy(variables, run.defaults)
-		for name, value := range scenario.Variables {
-			if value != nil {
-				variables[name] = value
-			}
-		}
-
-		result, err := s.templateService.TestExpression(ctx, policedRequest(
-			&formulatemplateservice.TestExpressionRequest{
-				Expression: run.expression,
-				SchemaID:   run.schemaID,
-				Variables:  variables,
-				TenantInfo: run.tenant,
-			}, run.policy))
-		check := pagedraft.FormulaCheck{Error: errortypes.LocalizedText(ctx, err)}
-		if err == nil {
-			check = checkOf(i18n.FromContext(ctx), result)
-		}
-		priced = append(priced, pagedraft.PricedScenario{
-			Name:        strings.TrimSpace(scenario.Name),
-			Description: strings.TrimSpace(scenario.Description),
-			Variables:   variables,
-			Amount:      check.Result,
-			Valid:       check.Valid,
-			Error:       check.Error,
-			Code:        check.Code,
-		})
+func orEmpty(values []string) []string {
+	if values == nil {
+		return []string{}
 	}
-
-	return priced
-}
-
-func lineFailure(line pagedraft.BreakdownLine, message, code string) pagedraft.FormulaCheck {
-	return pagedraft.FormulaCheck{
-		Error: fmt.Sprintf(
-			"Breakdown line %q (%s) does not run: %s",
-			line.Label,
-			line.Name,
-			strings.TrimSpace(message),
-		),
-		Code: code,
-	}
-}
-
-func checkOf(
-	locale i18n.Locale,
-	result *formulatemplateservice.TestExpressionResponse,
-) pagedraft.FormulaCheck {
-	if result == nil {
-		return pagedraft.FormulaCheck{
-			Error: i18n.Translate(locale, "The expression could not be tested"),
-		}
-	}
-	if diagnostic := result.FirstErrorDiagnostic(); diagnostic != nil {
-		return pagedraft.FormulaCheck{
-			Error: diagnostic.Message.Localize(locale),
-			Code:  diagnostic.Code,
-		}
-	}
-	if result.Error != nil {
-		return pagedraft.FormulaCheck{
-			Error: result.Error.Err.Localize(locale),
-			Code:  result.Error.Err.Code,
-		}
-	}
-	if !result.Valid || result.Result == nil {
-		return pagedraft.FormulaCheck{
-			Error: i18n.Translate(locale, "The expression could not be tested"),
-		}
-	}
-
-	return pagedraft.FormulaCheck{Valid: true, Result: result.Result.String()}
-}
-
-func validateTest(req *TestRequest) error {
-	multiErr := errortypes.NewMultiError()
-
-	expression := strings.TrimSpace(req.Expression)
-	switch {
-	case expression == "":
-		multiErr.Add("expression", errortypes.ErrRequired, "An expression is required")
-	case utf8.RuneCountInString(expression) > pagedraft.MaxExpressionLength:
-		multiErr.Add("expression", errortypes.ErrInvalid,
-			"Expression cannot exceed {0} characters", pagedraft.MaxExpressionLength)
-	}
-	validateValues(multiErr, "variables", req.Variables)
-	req.Policy.Validate("policy", multiErr)
-	if len(req.Scenarios) > MaxScenarios {
-		multiErr.Add("scenarios", errortypes.ErrInvalid,
-			"At most {0} scenarios are priced at once", MaxScenarios)
-	}
-	for idx, scenario := range req.Scenarios {
-		field := fmt.Sprintf("scenarios[%d]", idx)
-		name := strings.TrimSpace(scenario.Name)
-		if name == "" {
-			multiErr.Add(field+".name", errortypes.ErrRequired, "A scenario needs a name")
-		}
-		if utf8.RuneCountInString(name) > MaxScenarioNameLen ||
-			utf8.RuneCountInString(scenario.Description) > pagedraft.MaxVariableTextLength {
-			multiErr.Add(field, errortypes.ErrInvalid, "Scenario text is too long")
-		}
-		validateValues(multiErr, field+".variables", scenario.Variables)
-	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
-}
-
-func validateValues(multiErr *errortypes.MultiError, field string, values map[string]any) {
-	if len(values) > maxScenarioVars {
-		multiErr.Add(field, errortypes.ErrInvalid, "Too many variable values")
-		return
-	}
-	for name, value := range values {
-		if !pagedraft.ValidValuePath(name) {
-			multiErr.Add(field+"."+name, errortypes.ErrInvalid,
-				"Variable name is invalid: use a formula variable's name or a schema field "+
-					"path such as serviceType.code")
-			continue
-		}
-		if !pagedraft.ScalarValue(value, pagedraft.MaxVariableTextLength) {
-			multiErr.Add(field+"."+name, errortypes.ErrInvalid,
-				"A value must be a number, text or true/false")
-		}
-	}
-}
-
-func validatePropose(req *ProposeRequest) error {
-	multiErr := errortypes.NewMultiError()
-	if utf8.RuneCountInString(req.Explanation) > MaxExplanationRunes {
-		multiErr.Add("explanation", errortypes.ErrInvalid,
-			"Explanation cannot exceed {0} characters", MaxExplanationRunes)
-	}
-	if strings.TrimSpace(req.Explanation) == "" {
-		multiErr.Add("explanation", errortypes.ErrRequired,
-			"Say in plain words what the formula charges")
-	}
-	draft := pagedraft.Formula{
-		SchemaID:   SchemaIDOrDefault(req.SchemaID),
-		Expression: req.Expression,
-		Variables:  req.Variables,
-	}
-	(&pagedraft.Draft{Surface: pagedraft.SurfaceFormula, Formula: &draft}).
-		Validate("", multiErr)
-	req.Details.Validate("", multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return values
 }

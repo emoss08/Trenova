@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -35,10 +36,10 @@ func TestRateTraceIsByteStable(t *testing.T) {
 	d := setup(t)
 
 	// Three rules cover the shipment at different widths, so the trace has a
-	// winner, two losers with distinct reasons, a guardrail that lifts the
-	// amount, and a tie-break to name — every section the panel renders.
+	// winner, two losers with distinct reasons, a minimum that lifts the bill,
+	// and a tie-break to name — every section the panel renders.
 	winner := goldenRule("city-pair", "2.55", rategeo.ScopeTypeCityState, 717500)
-	winner.MinCharge = decimal.NewNullDecimal(decimal.RequireFromString("2500"))
+	winner.Inputs["minimumCharge"] = rules.MoneyValue(decimal.RequireFromString("2500"))
 
 	runnerUp := goldenRule("zone-pair", "2.40", rategeo.ScopeTypeZone, 614400)
 
@@ -86,6 +87,7 @@ func stripVolatile(trace *ratetypes.Trace) *ratetypes.Trace {
 	copied.Inputs.OriginLocationID = ""
 	copied.Inputs.DestinationLocationID = ""
 	copied.Inputs.PartyID = ""
+	copied.Statements = nil
 
 	return &copied
 }

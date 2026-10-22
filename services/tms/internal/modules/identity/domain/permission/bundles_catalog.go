@@ -169,6 +169,10 @@ var capabilityBundles = []Bundle{
 				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate, OpSubmit},
 			},
 			{
+				Resource:   ResourceFormulaLibrary,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate, OpSubmit},
+			},
+			{
 				Resource:   ResourceAccessorialCharge,
 				Operations: []Operation{OpRead, OpCreate, OpUpdate},
 			},

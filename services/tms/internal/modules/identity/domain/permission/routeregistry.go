@@ -792,6 +792,16 @@ func (rr *RouteRegistry) registerBillingRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/billing/configuration-files/formula-libraries",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceFormulaLibrary, Operation: OpRead},
+		},
+		DisplayName: "Formula Libraries",
+		Category:    "Billing",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/billing/configuration-files/formula-templates",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{

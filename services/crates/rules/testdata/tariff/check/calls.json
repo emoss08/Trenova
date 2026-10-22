@@ -1,0 +1,697 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "positional and named arguments",
+   "source": [
+    "library \"t\"",
+    "fn deadhead(empty: Distance, rate: Money/mi) -> Money {",
+    "  let paid = (empty - 50 mi).max(0 mi)",
+    "  return rate * paid",
+    "}",
+    "fn f() -> Money = deadhead(80 mi, rate: $2/mi)"
+   ],
+   "types": {
+    "deadhead(80 mi, rate: $2/mi)": "Money"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a default may be left out",
+   "source": [
+    "library \"t\"",
+    "fn residential(fee: Money = $95) = fee",
+    "fn f() -> Money = residential() + residential(fee: $10) + residential($5)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(1)",
+     "code": "arity",
+     "message": "`g` needs the argument `b`"
+    }
+   ],
+   "name": "a missing argument names the parameter",
+   "source": [
+    "library \"t\"",
+    "fn g(a: Int, b: Int) -> Int = a + b",
+    "fn f() -> Int = g(1)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "()",
+     "code": "arity",
+     "message": "`g` needs the arguments `a`, `b`",
+     "nth": 2
+    }
+   ],
+   "name": "several missing arguments",
+   "source": [
+    "library \"t\"",
+    "fn g(a: Int, b: Int) -> Int = a + b",
+    "fn f() -> Int = g()"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "2",
+     "code": "arity",
+     "message": "`g` takes 1 argument"
+    }
+   ],
+   "name": "too many arguments",
+   "source": [
+    "library \"t\"",
+    "fn g(a: Int) -> Int = a",
+    "fn f() -> Int = g(1, 2)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rat",
+     "code": "unknown-argument",
+     "fixes": [
+      {
+       "label": "Change to `rate`",
+       "result": [
+        "library \"t\"",
+        "fn g(rate: Money) -> Money = rate",
+        "fn f() -> Money = g(rate: $1)"
+       ]
+      }
+     ],
+     "message": "`g` has no parameter `rat`. Did you mean `rate`?",
+     "nth": 3
+    }
+   ],
+   "name": "an unknown named argument suggests the closest",
+   "source": [
+    "library \"t\"",
+    "fn g(rate: Money) -> Money = rate",
+    "fn f() -> Money = g(rat: $1)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a: 2",
+     "code": "duplicate-argument",
+     "message": "`a` is given twice",
+     "related": [
+      {
+       "at": "1",
+       "line": 3,
+       "message": "It is first given here"
+      }
+     ]
+    }
+   ],
+   "name": "an argument given twice",
+   "source": [
+    "library \"t\"",
+    "fn g(a: Int) -> Int = a",
+    "fn f() -> Int = g(1, a: 2)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "2",
+     "code": "argument-order",
+     "message": "Positional arguments come before named ones"
+    }
+   ],
+   "name": "positional after named",
+   "source": [
+    "library \"t\"",
+    "fn g(a: Int, b: Int) -> Int = a + b",
+    "fn f() -> Int = g(a: 1, 2)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "`5 lb` is a weight, but `rate` of `g` takes money per mile"
+    }
+   ],
+   "name": "an argument of the wrong type",
+   "source": [
+    "library \"t\"",
+    "fn g(rate: Money/mi) -> Money/mi = rate",
+    "fn f() -> Money/mi = g(5 lb)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "an argument that may be empty",
+   "source": [
+    "tariff \"t\"",
+    "fn g(w: Weight) -> Money = $1/lb * w",
+    "charge \"x\" = g(shipment.weight ?? 0 lb) + g(w: shipment.weight ?? 0 lb)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "deadhed",
+     "code": "unknown-function",
+     "fixes": [
+      {
+       "label": "Change to `deadhead`",
+       "result": [
+        "library \"t\"",
+        "fn deadhead(m: Distance) -> Money = $1/mi * m",
+        "fn f() -> Money = deadhead(1 mi)"
+       ]
+      }
+     ],
+     "message": "No function is named `deadhed`. Did you mean `deadhead`?"
+    }
+   ],
+   "name": "an unknown function suggests the closest",
+   "source": [
+    "library \"t\"",
+    "fn deadhead(m: Distance) -> Money = $1/mi * m",
+    "fn f() -> Money = deadhed(1 mi)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "zork",
+     "code": "unknown-function",
+     "message": "No function is named `zork`: declare it with `fn`, or import it with `use`"
+    }
+   ],
+   "name": "an unknown function with nothing close",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Money = zork(1)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "not-callable",
+     "message": "`a` is money, not a function",
+     "nth": 4
+    }
+   ],
+   "name": "a value is not a function",
+   "source": [
+    "tariff \"t\"",
+    "let a = $1",
+    "charge \"x\" = a(1)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "unused",
+     "message": "The input `a` is never used",
+     "nth": 2
+    },
+    {
+     "at": "a",
+     "code": "not-callable",
+     "message": "`a` is not a function",
+     "nth": 4
+    }
+   ],
+   "name": "an input is not a function",
+   "source": [
+    "tariff \"t\"",
+    "input a: Money = $1",
+    "charge \"x\" = a(1)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a return type may be inferred from an = body",
+   "source": [
+    "library \"t\"",
+    "fn twice(n: Int) = n * 2",
+    "fn f() -> Int = twice(2)"
+   ],
+   "types": {
+    "twice(2)": "Int"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "an inferred function used before it in the file",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Money = later(1)",
+    "fn later(n: Int) = $1 * n"
+   ],
+   "types": {
+    "later(1)": "Money"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "f",
+     "code": "return-type",
+     "message": "`f` has a block body, so it must say what it returns: write `fn f(…) -> Type { … }`",
+     "nth": 2
+    }
+   ],
+   "name": "a block body needs a return type",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) {",
+    "  return n",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "f",
+     "code": "missing-return",
+     "message": "`f` doesn't return on every path: end each path with `return` (or `fail`)",
+     "nth": 2
+    }
+   ],
+   "name": "a block body must return on every path",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int {",
+    "  if n > 1 {",
+    "    return 1",
+    "  }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "returning on both branches of an if",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int {",
+    "  if n > 1 {",
+    "    return 1",
+    "  } else {",
+    "    return 2",
+    "  }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a fail counts as leaving",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int {",
+    "  if n > 1 {",
+    "    return 1",
+    "  }",
+    "  fail \"Too small\"",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "an exhaustive match returns on every path",
+   "source": [
+    "library \"t\"",
+    "fn f(b: Bool) -> Int {",
+    "  match b {",
+    "    true => { return 1 }",
+    "    false => { return 2 }",
+    "  }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "`5 lb` is a weight, but `f` returns money"
+    }
+   ],
+   "name": "returning the wrong type",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Money {",
+    "  return 5 lb",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "`5 lb` is a weight, but `f` returns money"
+    }
+   ],
+   "name": "an = body of the wrong type",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Money = 5 lb"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "tariff \"t\"",
+     "code": "no-charge",
+     "message": "This tariff bills no charge, so its bill is always empty"
+    },
+    {
+     "at": "return $1",
+     "code": "misplaced",
+     "message": "`return` can only be used inside a function"
+    }
+   ],
+   "name": "return outside a function",
+   "source": [
+    "tariff \"t\"",
+    "return $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "let x = 2",
+     "code": "unreachable",
+     "message": "This never runs: the statement before it always leaves",
+     "related": [
+      {
+       "at": "return 1",
+       "line": 3,
+       "message": "It leaves here"
+      }
+     ]
+    },
+    {
+     "at": "x",
+     "code": "unused",
+     "message": "`x` is never used"
+    }
+   ],
+   "name": "code after return never runs",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Int {",
+    "  return 1",
+    "  let x = 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "g()",
+     "code": "not-constant",
+     "message": "This isn't known before rating: a constant or default is computed from literals and other constants",
+     "nth": 2
+    }
+   ],
+   "name": "a parameter default must be a constant",
+   "source": [
+    "library \"t\"",
+    "fn g() -> Int = 1",
+    "fn f(n: Int = g()) -> Int = n"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$5",
+     "code": "type-mismatch",
+     "message": "`$5` is money, but `n` is declared as a whole number"
+    }
+   ],
+   "name": "a parameter default of the wrong type",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int = $5) -> Int = n"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\n/// A residential fee.\nfn fee(amount: Money = $5) -> Money = amount\nconst BASE: Money = $10\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a module-qualified call",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "charge \"x\" = fees.fee() + fees.BASE"
+   ],
+   "types": {
+    "fees.BASE": "Money",
+    "fees.fee()": "Money"
+   }
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "an alias renames a module",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees as f",
+    "charge \"x\" = f.fee()"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "fe",
+     "code": "unknown-member",
+     "fixes": [
+      {
+       "label": "Change to `fee`",
+       "result": [
+        "tariff \"t\"",
+        "use org.fees",
+        "charge \"x\" = fees.fee()"
+       ]
+      }
+     ],
+     "message": "`fees` has no declaration `fe`. Did you mean `fee`?",
+     "nth": 3
+    }
+   ],
+   "name": "a module member that does not exist",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "charge \"x\" = fees.fe()"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nprivate fn fee() -> Money = $5\nfn pub() -> Money = fee()\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "fee",
+     "code": "private",
+     "message": "`fee` is private to `fees`",
+     "nth": 3
+    }
+   ],
+   "name": "a private module member is refused",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "charge \"x\" = fees.fee()"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "f",
+     "code": "unused",
+     "message": "`f` is never used",
+     "nth": 4
+    },
+    {
+     "at": "fee",
+     "code": "not-a-value",
+     "message": "`fees.fee` is a function: call it with its arguments",
+     "nth": 3
+    }
+   ],
+   "name": "a module function must be called",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "let f = fees.fee",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nconst BASE: Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "BASE",
+     "code": "not-callable",
+     "message": "`BASE` is a constant, not a function"
+    }
+   ],
+   "name": "a module constant cannot be called",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "charge \"x\" = fees.BASE()"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fuel",
+      "source": "library \"org.fuel\"\nfn surcharge(price: Money/gal) -> Percent = 1%\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a module alias named like a root still reads the root's fields",
+   "source": [
+    "tariff \"t\"",
+    "use org.fuel",
+    "charge \"x\" = $100 * fuel.surcharge(fuel.price ?? $3/gal)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "f",
+     "code": "recursion",
+     "message": "`f` calls itself through `f → f`: a function can't call itself, directly or through others, so every rating ends",
+     "nth": 2
+    }
+   ],
+   "name": "recursion is refused",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int = f(n)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "recursion",
+     "message": "`a` calls itself through `a → b → c → a`: a function can't call itself, directly or through others, so every rating ends",
+     "nth": 2
+    }
+   ],
+   "name": "mutual recursion names the cycle",
+   "source": [
+    "library \"t\"",
+    "fn a(n: Int) -> Int = b(n)",
+    "fn b(n: Int) -> Int = c(n)",
+    "fn c(n: Int) -> Int = a(n)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "calling a function twice is not recursion",
+   "source": [
+    "library \"t\"",
+    "fn a(n: Int) -> Int = n",
+    "fn b(n: Int) -> Int = a(n) + a(n)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "f(1)",
+     "code": "not-constant",
+     "message": "This isn't known before rating: a constant or default is computed from literals and other constants"
+    }
+   ],
+   "name": "a parameter default cannot call a function, even itself",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int = f(1)) -> Int = n"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge(\"x\")",
+     "code": "test-only",
+     "message": "`charge(…)` reads a line of the bill, so it can only be used inside a tariff's `test` block"
+    }
+   ],
+   "name": "charge is not callable outside tests",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = charge(\"x\") ?? $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "pickup",
+     "code": "test-only",
+     "message": "`pickup` builds a sample record, so it can only be used inside a `test` block"
+    }
+   ],
+   "name": "a test constructor outside a test",
+   "source": [
+    "tariff \"t\"",
+    "let s = pickup()",
+    "charge \"x\" = $1 * s.sequence"
+   ]
+  }
+ ]
+}

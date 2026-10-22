@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -26,7 +28,7 @@ import (
 
 The rate engine already answers that: every rating writes a trace — which rules
 were considered, which one won and on what tie-break, every component with its
-basis and running total, the guardrails that bit, and the warnings. Nobody
+basis and running total, the tariff's refusal or skips, and the warnings. Nobody
 could read it, because it lived in a JSONB column behind a quote id.
 
 This reads the trace of the quote that is actually governing the shipment,
@@ -122,7 +124,9 @@ type rateExplanation struct {
 	// keyed to any of these.
 	LaneKeysTried []string           `json:"laneKeysTried,omitempty"`
 	Components    []rateComponentRow `json:"components,omitempty"`
-	Guardrails    []rateGuardrailRow `json:"guardrails,omitempty"`
+	Inputs        map[string]string  `json:"inputs,omitempty"`
+	Refusal       string             `json:"refusal,omitempty"`
+	Skipped       []rateSkipRow      `json:"skipped,omitempty"`
 	Totals        rateTotalsRow      `json:"totals"`
 	Warnings      []string           `json:"warnings,omitempty"`
 	Error         string             `json:"error,omitempty"`
@@ -142,16 +146,15 @@ type rateExplanation struct {
 }
 
 // pricedByRow is the rating a shipment stores on itself: no agreement and no
-// quote trace, but the method, the expression and what it came to.
+// quote trace, but the tariff, the inputs it priced with and what it came to.
 type pricedByRow struct {
-	// Method is the formula template that priced it, "Flat Rate" say.
-	Method      string           `json:"method,omitempty"`
-	Source      string           `json:"source,omitempty"`
-	Explanation string           `json:"explanation,omitempty"`
-	Expression  string           `json:"expression,omitempty"`
-	Variables   map[string]any   `json:"variables,omitempty"`
-	BaseRate    *decimal.Decimal `json:"baseRate,omitempty"`
-	RatedAt     int64            `json:"ratedAt,omitempty"`
+	// Method is the tariff that priced it, "Flat Rate" say.
+	Method      string            `json:"method,omitempty"`
+	Source      string            `json:"source,omitempty"`
+	Explanation string            `json:"explanation,omitempty"`
+	Inputs      map[string]string `json:"inputs,omitempty"`
+	Refusal     string            `json:"refusal,omitempty"`
+	RatedAt     int64             `json:"ratedAt,omitempty"`
 	// Override is an amount a person entered over the rating, and why.
 	Override       *decimal.Decimal `json:"override,omitempty"`
 	OverrideReason string           `json:"overrideReason,omitempty"`
@@ -186,13 +189,9 @@ type rateComponentRow struct {
 	SourceName   string          `json:"sourceName,omitempty"`
 }
 
-// rateGuardrailRow is a floor or ceiling. Only the ones that actually changed
-// the number are reported: a limit that did not bite is not an explanation.
-type rateGuardrailRow struct {
-	Kind   string          `json:"kind"`
-	Bound  decimal.Decimal `json:"bound"`
-	Raw    decimal.Decimal `json:"raw"`
-	Result decimal.Decimal `json:"result"`
+type rateSkipRow struct {
+	Code   string `json:"code"`
+	Source string `json:"source"`
 }
 
 type rateTotalsRow struct {
@@ -378,19 +377,11 @@ func explainTrace(into rateExplanation, trace *ratetypes.Trace) rateExplanation 
 		})
 	}
 
-	for i := range trace.Guardrails {
-		guardrail := &trace.Guardrails[i]
-		if !guardrail.Applied {
-			continue
-		}
-		into.Guardrails = append(into.Guardrails, rateGuardrailRow{
-			Kind:   string(guardrail.Kind),
-			Bound:  guardrail.Bound,
-			Raw:    guardrail.Raw,
-			Result: guardrail.Result,
-		})
+	into.Inputs = inputTexts(trace.TariffInputs)
+	into.Refusal = trace.Refusal
+	for _, skip := range trace.Skipped {
+		into.Skipped = append(into.Skipped, rateSkipRow{Code: skip.Code, Source: skip.Source})
 	}
-
 	return into
 }
 
@@ -431,10 +422,6 @@ func explainStored(into rateExplanation, record *shipment.Shipment) (rateExplana
 		OverrideReason: record.RateOverrideReason,
 		Locked:         record.RateLocked,
 	}
-	if record.BaseRate.Valid && !record.BaseRate.Decimal.IsZero() {
-		base := record.BaseRate.Decimal
-		priced.BaseRate = &base
-	}
 	if override.Valid {
 		amount := override.Decimal
 		priced.Override = &amount
@@ -445,29 +432,14 @@ func explainStored(into rateExplanation, record *shipment.Shipment) (rateExplana
 		priced.Method = detail.FormulaTemplateName
 		priced.Source = detail.Source
 		priced.Explanation = detail.Explanation
-		priced.Expression = detail.Expression
-		priced.Variables = detail.ResolvedVariables
+		priced.Inputs = inputTexts(detail.Inputs)
+		priced.Refusal = detail.Refusal
 		priced.RatedAt = detail.RatedAt
 
-		into.Components = make([]rateComponentRow, 0, len(detail.Breakdown))
-		for _, item := range detail.Breakdown {
-			amount := decimal.NewFromFloat(item.Amount)
-			running = running.Add(amount)
-			label := item.Label
-			if label == "" {
-				label = item.Name
-			}
-			row := rateComponentRow{
-				Label:        label,
-				Amount:       amount,
-				RunningTotal: running,
-				Source:       "Formula",
-				SourceName:   detail.FormulaTemplateName,
-			}
-			if len(detail.Breakdown) == 1 {
-				row.Basis = detail.Expression
-			}
-			into.Components = append(into.Components, row)
+		into.Components = storedComponents(record, detail)
+		for i := range into.Components {
+			running = running.Add(into.Components[i].Amount)
+			into.Components[i].RunningTotal = running
 		}
 	}
 
@@ -483,8 +455,49 @@ func explainStored(into rateExplanation, record *shipment.Shipment) (rateExplana
 	}
 	into.PricedBy = priced
 	into.Note = "No rate agreement priced this shipment, so there is no agreement to explain. " +
-		"pricedBy is how it was priced instead: the formula template named in method, the " +
-		"expression it evaluated, and any amount a person entered over it."
+		"pricedBy is how it was priced instead: the tariff named in method, the inputs it " +
+		"priced with, and any amount a person entered over it. components are the bill's lines."
 
 	return into, true
+}
+
+func storedComponents(record *shipment.Shipment, detail *shipment.RatingDetail) []rateComponentRow {
+	if detail.Bill == nil {
+		rows := make([]rateComponentRow, 0, len(record.FreightLines))
+		for i := range record.FreightLines {
+			line := &record.FreightLines[i]
+			rows = append(rows, rateComponentRow{
+				Label:  line.Label,
+				Amount: line.Amount,
+				Source: detail.Source,
+			})
+		}
+		return rows
+	}
+	rows := make([]rateComponentRow, 0, len(detail.Bill.Lines))
+	for i := range detail.Bill.Lines {
+		line := &detail.Bill.Lines[i]
+		label := line.Label
+		if label == "" {
+			label = string(line.Kind)
+		}
+		rows = append(rows, rateComponentRow{
+			Label:      label,
+			Kind:       string(line.Kind),
+			Code:       line.Code,
+			Amount:     line.Amount,
+			Source:     "Tariff",
+			SourceName: detail.FormulaTemplateName,
+			Basis:      lineBasis(line),
+		})
+	}
+	return rows
+}
+
+func lineBasis(line *tarifftypes.Line) string {
+	if line.Quantity == nil || line.Rate == nil {
+		return ""
+	}
+	return line.Quantity.String() + " " + line.QuantityUnit + " @ " +
+		tarifftypes.DisplayValue(rules.QuantityValue(*line.Rate, line.RateUnit))
 }

@@ -25,7 +25,15 @@ import {
   type MarginTone,
 } from "@trenova/shared/lib/shop";
 import type { ShopOption, ShopResult, ShopStrategy } from "@trenova/shared/types/rate";
-import { AlertCircleIcon, SearchLgIcon, SpinnerIcon } from "@trenova/shared/components/icons";
+import type { StoredTariffBill } from "@trenova/shared/types/tariff-form";
+import { BillView } from "@/components/tariff-bill/bill-view";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import {
+  AlertCircleIcon,
+  ReceiptTextIcon,
+  SearchLgIcon,
+  SpinnerIcon,
+} from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
@@ -175,7 +183,20 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
                       {note && <p className="text-muted-foreground mt-0.5 text-xs">{note}</p>}
                     </td>
                     <td className="border-b px-3 py-2 text-right font-mono text-xs">
-                      {priced ? `${option.cost} ${option.currency}` : "—"}
+                      {priced ? (
+                        <span className="inline-flex items-center justify-end gap-1">
+                          {`${option.cost} ${option.currency}`}
+                          {option.quote?.trace?.bill && (
+                            <OptionBill
+                              bill={option.quote.trace.bill}
+                              currency={option.currency}
+                              carrier={option.carrierName || option.carrierId}
+                            />
+                          )}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                     <td
                       className={`border-b px-3 py-2 text-right font-mono text-xs ${TONE_CLASS[tone]}`}
@@ -212,5 +233,37 @@ export function CarrierShoppingPanel({ shipmentId, onChoose }: CarrierShoppingPa
         </div>
       )}
     </div>
+  );
+}
+
+/** What a carrier's contract would bill for the load, line by line, from its tariff's bill. */
+function OptionBill({
+  bill,
+  currency,
+  carrier,
+}: {
+  bill: StoredTariffBill;
+  currency: string;
+  carrier: string;
+}) {
+  const t = useT();
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            aria-label={t("What {0} would bill", carrier)}
+          >
+            <ReceiptTextIcon className="size-3" />
+          </Button>
+        }
+      />
+      <PopoverContent align="end" className="w-96 p-3">
+        <BillView bill={bill} currency={bill.currency || currency} />
+      </PopoverContent>
+    </Popover>
   );
 }

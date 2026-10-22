@@ -12,16 +12,16 @@ const BACKTEST_COLUMNS: ExportColumn<BacktestResult>[] = [
   { id: "candidateAmount", header: "Candidate", getValue: (row) => row.candidateAmount },
   { id: "delta", header: "Delta", getValue: (row) => row.delta },
   { id: "deltaPct", header: "Delta %", getValue: (row) => row.deltaPct },
-  {
-    id: "guardrailApplied",
-    header: "Guardrail clamped",
-    getValue: (row) => (row.guardrailApplied ? "Yes" : "No"),
-  },
   { id: "currentError", header: "Current error", getValue: (row) => row.currentError ?? "" },
   {
     id: "candidateError",
     header: "Candidate error",
     getValue: (row) => row.candidateError ?? "",
+  },
+  {
+    id: "candidateRefusal",
+    header: "Candidate refused",
+    getValue: (row) => row.candidateRefusal ?? "",
   },
 ];
 

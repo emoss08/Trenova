@@ -228,11 +228,7 @@ func (r *repository) GetByID(
 							rateagreementcol.RateAgreementRuleColumns.SpecificityScore.OrderDesc(),
 						)
 					},
-				).
-				Relation(buncolgen.Rel(
-					rateagreementcol.RateAgreementRelations.Rules,
-					rateagreementcol.RateAgreementRuleRelations.Breaks,
-				))
+				)
 		}
 
 		if req.IncludeChildren {
@@ -266,7 +262,6 @@ func (r *repository) ListRules(
 			q := r.db.DBForContext(ctx).
 				NewSelect().
 				Model(&entities).
-				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Breaks)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
 						Where(cols.RateAgreementID.Eq(), req.RateAgreementID)
@@ -329,7 +324,6 @@ func (r *repository) GetRuleByID(
 			err := r.db.DBForContext(ctx).
 				NewSelect().
 				Model(entity).
-				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Breaks)).
 				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Agreement)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).

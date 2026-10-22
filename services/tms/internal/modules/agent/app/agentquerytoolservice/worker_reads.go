@@ -85,7 +85,7 @@ func rankWorkerRows(query string, rows []map[string]any) []map[string]any {
 // shapeWorkerRow applies to a GraphQL row what the repository row applied:
 // a NonCompliant worker cannot be assigned, and the credential dates are
 // present, null when nothing is on file, unless the reader may not see them.
-func shapeWorkerRow(row map[string]any, withheld map[string]struct{}) {
+func shapeWorkerRow(row map[string]any, withheld map[string]struct{}, _ clock) {
 	profile, ok := row[workerProfileField].(map[string]any)
 	if !ok {
 		return

@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -50,7 +52,7 @@ func importFixture(t *testing.T, status rateimport.Status) (*Service, *planImpor
 	existing := &rateagreement.RateAgreementRule{
 		ID:      pulid.MustNew("rarl_"),
 		LaneKey: "ST:GA>ST:FL",
-		Rate:    decimal.NewNullDecimal(decimal.RequireFromString("2.00")),
+		Inputs:  tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString("2.00"), "$/mi")},
 	}
 	batch := &rateimport.RateImportBatch{
 		ID:              pulid.MustNew("rib_"),
@@ -64,7 +66,9 @@ func importFixture(t *testing.T, status rateimport.Status) (*Service, *planImpor
 			LaneKey:   "ST:GA>ST:FL",
 			Rule: &rateagreement.RateAgreementRule{
 				LaneKey: "ST:GA>ST:FL",
-				Rate:    decimal.NewNullDecimal(decimal.RequireFromString("2.20")),
+				Inputs: tarifftypes.Inputs{
+					"rate": rules.QuantityValue(decimal.RequireFromString("2.20"), "$/mi"),
+				},
 			},
 		}},
 		Changes: []pkgrateimport.Change{{

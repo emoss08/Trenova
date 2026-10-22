@@ -2,17 +2,6 @@ import { EditorView } from "@codemirror/view";
 
 export const lightTheme = EditorView.theme(
   {
-    "&": {
-      "--expr-keyword": "var(--accent-violet-on-subtle)",
-      "--expr-operator": "var(--foreground-muted)",
-      "--expr-number": "var(--success-foreground)",
-      "--expr-string": "var(--success-foreground)",
-      "--expr-variable": "var(--brand-subtle-foreground)",
-      "--expr-function": "var(--accent-teal-on-subtle)",
-      "--expr-comment": "var(--foreground-subtle)",
-      "--expr-punctuation": "var(--foreground-subtle)",
-      "--expr-unknown": "var(--warning-foreground)",
-    },
     "&.cm-editor": {
       backgroundColor: "var(--field)",
       color: "var(--foreground)",
@@ -23,14 +12,7 @@ export const lightTheme = EditorView.theme(
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
-    ".cm-expr-hover": {
-      padding: "4px 8px",
-      fontFamily: "var(--font-mono, ui-monospace, monospace)",
-      fontSize: "11px",
-      maxWidth: "360px",
-      whiteSpace: "pre-wrap",
-    },
-    ".cm-expr-completion-info": {
+    ".cm-tariff-completion-info": {
       display: "flex",
       flexDirection: "column",
       gap: "4px",
@@ -39,16 +21,9 @@ export const lightTheme = EditorView.theme(
       fontSize: "12px",
       fontFamily: "inherit",
     },
-    ".cm-expr-completion-info-title": {
+    ".cm-tariff-completion-info code": {
       fontFamily: "'Geist Mono', monospace",
       fontWeight: "600",
-    },
-    ".cm-expr-completion-info-example": {
-      fontFamily: "'Geist Mono', monospace",
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
-      borderRadius: "4px",
-      padding: "3px 6px",
-      display: "block",
     },
     ".cm-content": {
       caretColor: "var(--primary)",
@@ -161,17 +136,6 @@ export const lightTheme = EditorView.theme(
 
 export const darkTheme = EditorView.theme(
   {
-    "&": {
-      "--expr-keyword": "var(--accent-violet-on-subtle)",
-      "--expr-operator": "var(--foreground-muted)",
-      "--expr-number": "var(--success-foreground)",
-      "--expr-string": "var(--success-foreground)",
-      "--expr-variable": "var(--brand-subtle-foreground)",
-      "--expr-function": "var(--accent-teal-on-subtle)",
-      "--expr-comment": "var(--foreground-subtle)",
-      "--expr-punctuation": "var(--foreground-subtle)",
-      "--expr-unknown": "var(--warning-foreground)",
-    },
     "&.cm-editor": {
       backgroundColor: "var(--field)",
       color: "var(--foreground)",
@@ -182,14 +146,7 @@ export const darkTheme = EditorView.theme(
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
-    ".cm-expr-hover": {
-      padding: "4px 8px",
-      fontFamily: "var(--font-mono, ui-monospace, monospace)",
-      fontSize: "11px",
-      maxWidth: "360px",
-      whiteSpace: "pre-wrap",
-    },
-    ".cm-expr-completion-info": {
+    ".cm-tariff-completion-info": {
       display: "flex",
       flexDirection: "column",
       gap: "4px",
@@ -198,16 +155,9 @@ export const darkTheme = EditorView.theme(
       fontSize: "12px",
       fontFamily: "inherit",
     },
-    ".cm-expr-completion-info-title": {
+    ".cm-tariff-completion-info code": {
       fontFamily: "'Geist Mono', monospace",
       fontWeight: "600",
-    },
-    ".cm-expr-completion-info-example": {
-      fontFamily: "'Geist Mono', monospace",
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
-      borderRadius: "4px",
-      padding: "3px 6px",
-      display: "block",
     },
     ".cm-content": {
       caretColor: "var(--brand)",
@@ -411,105 +361,76 @@ export const languageServiceTheme = EditorView.theme({
     fontFamily: "inherit",
     cursor: "pointer",
   },
-  ".cm-tooltip .cm-expr-hover": {
+  ".cm-tooltip .cm-tariff-hover": {
     display: "flex",
     flexDirection: "column",
     gap: "4px",
     padding: "8px 10px",
-    maxWidth: "340px",
+    maxWidth: "360px",
     fontSize: "12px",
     fontFamily: "inherit",
     whiteSpace: "normal",
     color: "var(--foreground)",
   },
-  ".cm-expr-hover-head": {
+  ".cm-tariff-hover-head": {
     display: "flex",
     flexWrap: "wrap",
-    alignItems: "center",
-    gap: "6px",
+    alignItems: "baseline",
+    gap: "8px",
   },
-  ".cm-expr-hover-name": {
+  ".cm-tariff-hover-title": {
     fontFamily: "'Geist Mono', monospace",
     fontWeight: "600",
     fontSize: "12px",
   },
-  ".cm-expr-hover-tag": {
-    display: "inline-flex",
-    alignItems: "center",
-    height: "16px",
-    padding: "0 6px",
-    borderRadius: "var(--radius-label)",
-    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 14%, transparent)",
-    color: "var(--muted-foreground)",
-    fontSize: "10.5px",
-    lineHeight: "1",
-  },
-  ".cm-expr-hover-tag-warn": {
-    backgroundColor: "color-mix(in oklab, var(--warning) 18%, transparent)",
-    color: "var(--warning-foreground)",
-  },
-  ".cm-expr-hover-tag-bad": {
-    backgroundColor: "color-mix(in oklab, var(--danger) 18%, transparent)",
-    color: "var(--danger-foreground)",
-  },
-  ".cm-expr-hover-body": {
-    color: "var(--muted-foreground)",
-    lineHeight: "1.45",
-  },
-  ".cm-expr-hover-example": {
-    display: "block",
+  ".cm-tariff-hover-type": {
     fontFamily: "'Geist Mono', monospace",
     fontSize: "11px",
-    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
-    borderRadius: "4px",
-    padding: "3px 6px",
+    color: "var(--syntax-type)",
   },
-  ".cm-expr-hover-value": {
-    display: "flex",
-    alignItems: "baseline",
-    gap: "8px",
+  ".cm-tariff-hover-body, .cm-tariff-signature-body, .cm-tariff-completion-info": {
+    color: "var(--foreground-muted)",
+    lineHeight: "1.45",
+  },
+  ".cm-tariff-hover-body code, .cm-tariff-signature-body code, .cm-tariff-completion-info code": {
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "11px",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-hover-value": {
     marginTop: "2px",
     paddingTop: "6px",
     borderTop: "1px solid var(--border)",
-  },
-  ".cm-expr-hover-value-text": {
     fontFamily: "'Geist Mono', monospace",
-    fontSize: "12px",
+    fontSize: "11px",
     fontVariantNumeric: "tabular-nums",
   },
-  ".cm-expr-hover-source": {
-    color: "var(--muted-foreground)",
-    fontSize: "11px",
-  },
-  ".cm-tooltip .cm-expr-signature": {
+  // The signature tooltip's own element is the `.cm-tooltip` (a hover card is wrapped in one).
+  ".cm-tooltip.cm-tariff-signature, .cm-tooltip .cm-tariff-signature": {
     display: "flex",
     flexDirection: "column",
     gap: "3px",
     padding: "6px 10px",
-    maxWidth: "360px",
+    maxWidth: "380px",
     fontFamily: "inherit",
     fontSize: "12px",
     color: "var(--foreground)",
   },
-  ".cm-expr-signature-code": {
+  ".cm-tariff-signature-code": {
     fontFamily: "'Geist Mono', monospace",
     fontSize: "12px",
-    color: "var(--muted-foreground)",
+    color: "var(--foreground-muted)",
   },
-  ".cm-expr-signature-active": {
+  ".cm-tariff-signature-active": {
     color: "var(--foreground)",
     fontWeight: "600",
     backgroundColor: "color-mix(in oklab, var(--muted-foreground) 14%, transparent)",
     borderRadius: "3px",
     padding: "0 3px",
   },
-  ".cm-expr-signature-body": {
-    color: "var(--muted-foreground)",
-    fontSize: "11.5px",
-  },
-  ".cm-expr-inline-value": {
-    marginLeft: "14px",
-    padding: "0 6px",
+  ".cm-tariff-inlay": {
+    marginLeft: "4px",
+    padding: "0 5px",
     borderRadius: "var(--radius-label)",
     fontFamily: "'Geist Mono', monospace",
     fontSize: "11px",
@@ -517,17 +438,42 @@ export const languageServiceTheme = EditorView.theme({
     verticalAlign: "baseline",
     userSelect: "none",
     pointerEvents: "none",
+    color: "var(--foreground-subtle)",
+    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
   },
-  ".cm-expr-inline-value-ok": {
+  ".cm-tariff-inlay-value": {
+    marginLeft: "14px",
     color: "var(--success-foreground)",
     backgroundColor: "color-mix(in oklab, var(--success) 12%, transparent)",
   },
-  ".cm-expr-inline-value-bad": {
-    color: "var(--danger-foreground)",
-    backgroundColor: "color-mix(in oklab, var(--danger) 12%, transparent)",
+  ".cm-tariff-rename": {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "8px",
+    padding: "6px 10px",
+    fontSize: "12px",
+    color: "var(--foreground)",
+    backgroundColor: "var(--card)",
+    borderBottom: "1px solid var(--border)",
   },
-  ".cm-expr-inline-value-muted": {
-    color: "var(--muted-foreground)",
-    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
+  ".cm-tariff-rename label": {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  ".cm-tariff-rename-input": {
+    height: "24px",
+    padding: "0 8px",
+    borderRadius: "var(--radius-control)",
+    border: "1px solid var(--border-strong)",
+    backgroundColor: "var(--field)",
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "12px",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-rename-refusal": {
+    margin: "0",
+    color: "var(--danger-foreground)",
   },
 });

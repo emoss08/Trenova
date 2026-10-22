@@ -6,10 +6,7 @@ import { formulaTemplate, invalidateFormulaTemplate } from "@/lib/queries/formul
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { apiService } from "@/services/api";
 import {
-  DEFAULT_ROUNDING_MODE,
-  DEFAULT_ROUNDING_PRECISION,
   formulaTemplateSchema,
-  type FormulaTemplate,
   type FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,9 +15,9 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm, useFormState } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { FormulaStudio, type StudioSaveExtras } from "../_components/studio/formula-studio";
+import { FormulaStudio } from "../_components/studio/formula-studio";
 
-export const prefetch: RoutePrefetch = () => [formulaTemplate.schema("shipment")];
+export const prefetch: RoutePrefetch = () => [formulaTemplate.context];
 
 export function FormulaStudioCreatePage() {
   const t = useT();
@@ -32,33 +29,15 @@ export function FormulaStudioCreatePage() {
 
   const form = useForm<FormulaTemplateFormValues>({
     resolver: zodResolver(formulaTemplateSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      type: "FreightCharge",
-      expression: "",
-      status: "Draft",
-      schemaId: "shipment",
-      variableDefinitions: [],
-      breakdownDefinitions: [],
-      minCharge: null,
-      maxCharge: null,
-      roundingMode: DEFAULT_ROUNDING_MODE,
-      roundingPrecision: DEFAULT_ROUNDING_PRECISION,
-    },
+    defaultValues: { name: "", description: "", source: "", status: "Draft" },
   });
 
   const { mutate } = useApiMutation({
-    mutationFn: async ({
-      values,
-      extras,
-    }: {
-      values: FormulaTemplateFormValues;
-      extras: StudioSaveExtras;
-    }) =>
+    mutationFn: async (values: FormulaTemplateFormValues) =>
       apiService.formulaTemplateService.create({
-        ...(values as FormulaTemplate),
-        testCases: extras.testCases,
+        name: values.name,
+        description: values.description ?? "",
+        source: values.source,
       }),
     onSuccess: async (created) => {
       await invalidateFormulaTemplate(queryClient);
@@ -83,9 +62,9 @@ export function FormulaStudioCreatePage() {
 
   // `mutate` reports failure through the hook's error handling; `mutateAsync`
   // would also reject, and a rejection nobody awaits is an unhandled promise.
-  const onSave = (extras: StudioSaveExtras) =>
+  const onSave = () =>
     void form.handleSubmit(
-      (values) => mutate({ values, extras }),
+      (values) => mutate(values),
       () => {
         toast(t("Fix the highlighted fields to create the template"));
       },

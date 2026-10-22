@@ -17,9 +17,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,9 +51,7 @@ const paramRenewalNoticeDays = "renewalNoticeDays"
 
 const paramAgreementCurrency = "currency"
 
-const paramDefaultMinCharge = "defaultMinCharge"
-
-const paramDefaultMaxCharge = "defaultMaxCharge"
+const paramInputs = "inputs"
 
 const paramLanes = "lanes"
 
@@ -74,14 +75,6 @@ const paramDirection = "direction"
 
 const paramFormulaTemplateID = "formulaTemplateId"
 
-const paramRateMatrixID = "rateMatrixId"
-
-const paramLaneRate = "rate"
-
-const paramLaneMinCharge = "minCharge"
-
-const paramLaneMaxCharge = "maxCharge"
-
 const paramHazmatOnly = "hazmatOnly"
 
 const paramTempControlOnly = "tempControlOnly"
@@ -93,8 +86,6 @@ const paramReviewComment = "comment"
 const paramAgreementIDs = "agreementIds"
 
 const paramPercentChange = "percentChange"
-
-const paramFlatChange = "flatChange"
 
 const paramRateImportID = "rateImportId"
 
@@ -129,6 +120,8 @@ const maxLaneLabel = 150
 const maxLaneValue = 120
 
 const maxLaneCity = 100
+
+const maxInputText = 4000
 
 const maxReviewComment = 1000
 
@@ -273,15 +266,9 @@ func laneProperty(forRevision bool) map[string]any {
 		paramDirection: agenttoolschema.Enum("Whether the lane also prices the reverse "+
 			"haul. Defaults to Directional.", laneDirections),
 		paramFormulaTemplateID: agenttoolschema.RecordIDText(permission.ResourceFormulaTemplate,
-			"The formula template that prices the lane, from formula_list_templates, with the "+
-				"lane's rate as its base rate. Give this or rateMatrixId."),
-		paramRateMatrixID: agenttoolschema.RecordIDText(permission.ResourceRateMatrix,
-			"The rate matrix that prices the lane, as a lane of rate_get_agreement names it. "+
-				"Give this or formulaTemplateId."),
-		paramLaneRate: common.StringProperty("The lane's rate as a decimal such as 2.35, in what "+
-			"its formula template charges by.", 0),
-		paramLaneMinCharge: common.StringProperty("The least the lane charges, as a decimal.", 0),
-		paramLaneMaxCharge: common.StringProperty("The most the lane charges, as a decimal.", 0),
+			"The tariff that prices the lane, from formula_list_templates. A new lane needs one."),
+		paramInputs: inputsProperty("The lane's values for the inputs its tariff declares, " +
+			"which formula_get_template lists. They override the agreement's inputs."),
 		paramPriority: common.IntegerProperty("Which lane wins when two match equally; higher "+
 			"wins.", 0, maxAgreementPriority),
 		paramHazmatOnly: common.BooleanProperty("Only hazardous freight rates on this lane."),
@@ -289,7 +276,7 @@ func laneProperty(forRevision bool) map[string]any {
 			"Only temperature-controlled freight rates on this lane.",
 		),
 	}
-	description := "The lanes, each priced through a formula template or a rate matrix."
+	description := "The lanes, each priced by a tariff with its own inputs."
 	if forRevision {
 		properties[paramRuleID] = agenttoolschema.KindID("A lane already on the agreement, from "+
 			"rate_get_agreement, to keep and change; leave it out for a new lane.",
@@ -383,52 +370,78 @@ func (r laneReader) end(
 	return scope, nil
 }
 
-func optionalLaneMoney(fields map[string]any, key string) (decimal.NullDecimal, bool, error) {
-	if _, given := fields[key]; !given {
-		return decimal.NullDecimal{}, false, nil
-	}
-	value, present, err := common.OptionalDecimal(fields, key)
-	if err != nil {
-		return decimal.NullDecimal{}, true, err
-	}
-	if present && value.IsNegative() {
-		return decimal.NullDecimal{}, true, fmt.Errorf("%s cannot be negative", key)
-	}
+func inputsProperty(description string) map[string]any {
+	return agenttoolschema.StringMap(description+" Each value is a Tariff value: money "+
+		"($450), a rate ($2.35/mi), a percent (12%), a quantity (500 mi), a number (3), none, "+
+		"or a JSON wire value for a list or record input. An empty value removes the input.",
+		maxInputText)
+}
 
-	return decimal.NullDecimal{Decimal: value, Valid: present}, true, nil
+func applyInputs(target *tarifftypes.Inputs, fields map[string]any) error {
+	raw, given := fields[paramInputs]
+	if !given {
+		return nil
+	}
+	values, ok := raw.(map[string]any)
+	if !ok {
+		return fmt.Errorf("%s must be an object of input names to values", paramInputs)
+	}
+	inputs := target.Clone().OrEmpty()
+	for name, value := range values {
+		text, isText := value.(string)
+		if !isText {
+			return fmt.Errorf("%s.%s must be text", paramInputs, name)
+		}
+		if strings.TrimSpace(text) == "" {
+			delete(inputs, name)
+			continue
+		}
+		parsed, err := tarifftypes.ParseLiteral(text)
+		if err != nil {
+			return fmt.Errorf("%s.%s: %w", paramInputs, name, err)
+		}
+		inputs[name] = parsed
+	}
+	*target = inputs
+	return nil
+}
+
+func inputsView(inputs tarifftypes.Inputs) map[string]string {
+	if len(inputs) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(inputs))
+	for name, raw := range inputs {
+		out[name] = tarifftypes.DisplayValue(raw)
+	}
+	return out
+}
+
+func headlineRate(inputs tarifftypes.Inputs) decimal.NullDecimal {
+	raw, ok := inputs[formulatemplate.StandardInputRate]
+	if !ok {
+		return decimal.NullDecimal{}
+	}
+	quantity, err := rules.DecodeQuantity(raw)
+	if err != nil || !strings.HasPrefix(quantity.Unit, rules.UnitMoney) {
+		return decimal.NullDecimal{}
+	}
+	return decimal.NewNullDecimal(quantity.Value)
 }
 
 func (r laneReader) applyPricing(
 	rule *rateagreement.RateAgreementRule,
 	fields map[string]any,
 ) error {
-	for key, target := range map[string]**pulid.ID{
-		paramFormulaTemplateID: &rule.FormulaTemplateID,
-		paramRateMatrixID:      &rule.RateMatrixID,
-	} {
-		id, err := common.OptionalPulidParam(fields, key)
-		if err != nil {
-			return err
-		}
-		if id != nil {
-			*target = id
-		}
+	id, err := common.OptionalPulidParam(fields, paramFormulaTemplateID)
+	if err != nil {
+		return err
 	}
-	for key, target := range map[string]*decimal.NullDecimal{
-		paramLaneRate:      &rule.Rate,
-		paramLaneMinCharge: &rule.MinCharge,
-		paramLaneMaxCharge: &rule.MaxCharge,
-	} {
-		value, given, err := optionalLaneMoney(fields, key)
-		if err != nil {
-			return err
-		}
-		if given {
-			*target = value
-		}
+	if id != nil {
+		rule.FormulaTemplateID = *id
 	}
 
-	return nil
+	return applyInputs(&rule.Inputs, fields)
 }
 
 func (r laneReader) applyTerms(rule *rateagreement.RateAgreementRule, fields map[string]any) error {
@@ -629,11 +642,8 @@ func agreementHeaderProperties() map[string]any {
 				"to USD.",
 			common.CurrencyCodeLength,
 		),
-		paramDefaultMinCharge: common.StringProperty(
-			"The least any lane charges, as a decimal.",
-			0,
-		),
-		paramDefaultMaxCharge: common.StringProperty("The most any lane charges, as a decimal.", 0),
+		paramInputs: inputsProperty("Values every lane's tariff prices with unless the lane " +
+			"sets its own, such as minimumCharge."),
 	}
 }
 
@@ -716,20 +726,7 @@ func (h agreementHeader) applyTerms(entity *rateagreement.RateAgreement) error {
 	} else if autoRenew != nil {
 		entity.AutoRenew = *autoRenew
 	}
-	for key, target := range map[string]*decimal.NullDecimal{
-		paramDefaultMinCharge: &entity.DefaultMinCharge,
-		paramDefaultMaxCharge: &entity.DefaultMaxCharge,
-	} {
-		value, given, moneyErr := optionalLaneMoney(h.values, key)
-		if moneyErr != nil {
-			return moneyErr
-		}
-		if given {
-			*target = value
-		}
-	}
-
-	return nil
+	return applyInputs(&entity.Inputs, h.values)
 }
 
 func (h agreementHeader) applyWindow(entity *rateagreement.RateAgreement) error {
@@ -784,22 +781,21 @@ func stampLaneWindows(
 }
 
 type agreementView struct {
-	Code          string `json:"code"`
-	Name          string `json:"name"`
-	PartyType     string `json:"partyType"`
-	CustomerID    string `json:"customerId,omitempty"`
-	CarrierID     string `json:"carrierId,omitempty"`
-	AgreementType string `json:"agreementType"`
-	Status        string `json:"status"`
-	EffectiveFrom int64  `json:"effectiveFrom"`
-	EffectiveTo   int64  `json:"effectiveTo,omitempty"`
-	Currency      string `json:"currency"`
-	Priority      int16  `json:"priority"`
-	ContractRef   string `json:"contractRef,omitempty"`
-	MinCharge     string `json:"defaultMinCharge,omitempty"`
-	MaxCharge     string `json:"defaultMaxCharge,omitempty"`
-	Lanes         int    `json:"lanes"`
-	ReviewComment string `json:"reviewComment,omitempty"`
+	Code          string            `json:"code"`
+	Name          string            `json:"name"`
+	PartyType     string            `json:"partyType"`
+	CustomerID    string            `json:"customerId,omitempty"`
+	CarrierID     string            `json:"carrierId,omitempty"`
+	AgreementType string            `json:"agreementType"`
+	Status        string            `json:"status"`
+	EffectiveFrom int64             `json:"effectiveFrom"`
+	EffectiveTo   int64             `json:"effectiveTo,omitempty"`
+	Currency      string            `json:"currency"`
+	Priority      int16             `json:"priority"`
+	ContractRef   string            `json:"contractRef,omitempty"`
+	Inputs        map[string]string `json:"inputs,omitempty"`
+	Lanes         int               `json:"lanes"`
+	ReviewComment string            `json:"reviewComment,omitempty"`
 }
 
 func agreementViewOf(entity *rateagreement.RateAgreement) *agreementView {
@@ -813,6 +809,7 @@ func agreementViewOf(entity *rateagreement.RateAgreement) *agreementView {
 		Currency:      entity.Currency,
 		Priority:      entity.Priority,
 		ContractRef:   entity.ContractRef,
+		Inputs:        inputsView(entity.Inputs),
 		Lanes:         len(entity.Rules),
 		ReviewComment: entity.ReviewComment,
 	}
@@ -824,12 +821,6 @@ func agreementViewOf(entity *rateagreement.RateAgreement) *agreementView {
 	}
 	if entity.EffectiveTo != nil {
 		view.EffectiveTo = *entity.EffectiveTo
-	}
-	if entity.DefaultMinCharge.Valid {
-		view.MinCharge = entity.DefaultMinCharge.Decimal.String()
-	}
-	if entity.DefaultMaxCharge.Valid {
-		view.MaxCharge = entity.DefaultMaxCharge.Decimal.String()
 	}
 
 	return view
@@ -1588,13 +1579,13 @@ func renderRuleAmendment(
 	for _, rule := range plan.Superseded {
 		lines = append(lines, agent.MoneyLine{
 			Label:  laneRateLabel(rule) + " (closed out)",
-			Before: rule.Rate,
+			Before: headlineRate(rule.Inputs),
 		})
 	}
 	for _, rule := range plan.Rules {
 		lines = append(lines, agent.MoneyLine{
 			Label: laneRateLabel(rule) + " (new)",
-			After: rule.Rate,
+			After: headlineRate(rule.Inputs),
 		})
 	}
 	change := toolpreview.Money(
@@ -1633,16 +1624,11 @@ func rateIncreaseRequestFrom(
 			return nil, err
 		}
 	}
-	for key, target := range map[string]*decimal.NullDecimal{
-		paramPercentChange: &req.Adjustment.PercentChange,
-		paramFlatChange:    &req.Adjustment.FlatChange,
-	} {
-		value, present, decimalErr := common.OptionalDecimal(params.Params, key)
-		if decimalErr != nil {
-			return nil, decimalErr
-		}
-		*target = decimal.NullDecimal{Decimal: value, Valid: present}
+	value, present, err := common.OptionalDecimal(params.Params, paramPercentChange)
+	if err != nil {
+		return nil, err
 	}
+	req.Adjustment.PercentChange = decimal.NullDecimal{Decimal: value, Valid: present}
 
 	return req, nil
 }
@@ -1701,9 +1687,6 @@ func rateAdjustmentLabel(adjustment rateagreementservice.RateAdjustment) string 
 	if adjustment.PercentChange.Valid {
 		return adjustment.PercentChange.Decimal.String() + "%"
 	}
-	if adjustment.FlatChange.Valid {
-		return adjustment.FlatChange.Decimal.String() + " per rating unit"
-	}
 
 	return "nothing"
 }
@@ -1724,16 +1707,16 @@ func renderRateIncrease(
 		samples = append(samples, common.CountOf(more, "more lane"))
 	}
 	summary := fmt.Sprintf(
-		"Would move %s on %s by %s from %s: %s.",
-		common.CountOf(len(plan.Lines), "lane rate"),
+		"Would move the money inputs of %s on %s by %s from %s: %s.",
+		common.CountOf(len(plan.Lines), "lane"),
 		common.CountOf(plan.AgreementCount, rateAgreementKind),
 		rateAdjustmentLabel(req.Adjustment),
 		common.DayLabel(plan.EffectiveFrom),
 		strings.Join(samples, "; "),
 	)
-	if plan.SkippedNoRate > 0 {
-		summary += fmt.Sprintf(" %s priced by a rate matrix are left as they are.",
-			common.CountOf(plan.SkippedNoRate, "lane"))
+	if plan.SkippedNoMoney > 0 {
+		summary += fmt.Sprintf(" %s with no money inputs are left as they are.",
+			common.CountOf(plan.SkippedNoMoney, "lane"))
 	}
 
 	return toolpreview.Build(summary), nil
@@ -1742,10 +1725,11 @@ func renderRateIncrease(
 func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agentports.AgentTool {
 	return RateIncreaseTool{common.NewReceivableTool(rateMoneySpec(&common.ReceivableSpec{
 		Name: "rate_apply_increase",
-		Description: "Propose a general rate increase or decrease on agreements' lane rates, " +
-			"by a percent or a flat amount, from a day. It moves every lane rate on the named " +
+		Description: "Propose a general rate increase or decrease on agreements' lanes, by a " +
+			"percent, from a day. It scales every money input of every lane on the named " +
 			"agreements, one customer's or carrier's, or every active agreement of a party " +
-			"type. The old rates stay in history. A person always decides.",
+			"type, and leaves percents, counts and distances alone. The old rates stay in " +
+			"history. A person always decides.",
 		Operation: permission.OpUpdate,
 		Rationale: "Changes the rates many agreements charge customers or pay carriers; " +
 			"only a person applies a rate increase.",
@@ -1768,15 +1752,12 @@ func NewApplyRateIncreaseTool(agreements RateAgreementKeeper) agentports.AgentTo
 					"when agreementIds are named."),
 			paramPartyType: agenttoolschema.Enum("Every active agreement of this party type, "+
 				"when no agreements, customer or carrier is named.", partyTypes),
-			paramPercentChange: common.StringProperty("The change in percent, such as 3.5 or -2. "+
-				"Give this or flatChange.", 0),
-			paramFlatChange: common.StringProperty(
-				"The change per rating unit, such as 0.10. Give "+
-					"this or percentChange.",
+			paramPercentChange: common.StringProperty(
+				"The change in percent, such as 3.5 or -2.",
 				0,
 			),
 		},
-		Required:    []string{common.ParamEffectiveFrom},
+		Required:    []string{common.ParamEffectiveFrom, paramPercentChange},
 		SearchTerms: []string{"gri", "general rate increase", "raise rates", "price increase"},
 	}), common.ReceivablePlan[*rateagreementservice.RateIncreaseRequest, *rateagreementservice.RateIncreasePlan]{
 		Request: rateIncreaseRequestFrom,

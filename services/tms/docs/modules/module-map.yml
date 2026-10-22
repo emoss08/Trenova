@@ -413,6 +413,7 @@ modules:
   rating:
     level: 6
     domain:
+      - formulalibrary
       - formulatemplate
       - fuelsurcharge
       - rateagreement
@@ -424,7 +425,7 @@ modules:
       - ratezone
     service:
       - carrierassignmentservice
-      - formula
+      - formulalibraryservice
       - formulatemplateservice
       - fuelsurchargeservice
       - rateagreementservice
@@ -436,14 +437,17 @@ modules:
       - ratesimulationservice
       - ratezoneservice
       - ratinghydration
+      - tariff
     job:
       - formulatemplatejobs
       - fuelpricejobs
       - ratesimjobs
     repository:
+      - formulalibraryrepository
+      - formulalibraryreviewrepository
+      - formulalibraryversionrepository
       - formulatemplaterepository
       - formulatemplatereviewrepository
-      - formulatemplatetestcaserepository
       - formulatemplateversionrepository
       - fuelsurchargerepository
       - rateagreementrepository

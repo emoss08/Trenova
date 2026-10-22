@@ -1,118 +1,87 @@
-import { flattenResolvedVariables } from "@/components/formula-editor/resolved-variables";
-import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/default-test-values";
 import { describeApiError } from "@/lib/api-error-message";
-import { formulaTestRequest } from "@/lib/formula-test-request";
 import { apiService } from "@/services/api";
-import type {
-  FormulaTemplateFormValues,
-  TestExpressionRequest,
-  TestExpressionResponse,
-} from "@trenova/shared/types/formula-template";
 import { useMutation } from "@tanstack/react-query";
+import type {
+  FormulaPreviewRequest,
+  FormulaPreviewResponse,
+} from "@trenova/shared/types/formula-template";
+import type { TariffInputValues } from "@trenova/shared/types/tariff";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
 
 const PREVIEW_DEBOUNCE_MS = 600;
 
 export type PreviewSource = "sample" | "shipment";
 
 export type LivePreviewState = {
-  result: TestExpressionResponse | undefined;
+  result: FormulaPreviewResponse | undefined;
   isPending: boolean;
-  /** Set when the preview request itself failed (network, server), as opposed to the expression being invalid. */
+  /** The request failed (network, server), as opposed to the tariff refusing or erroring. */
   requestError: string | null;
-  /** Wall-clock time of the last successful preview run. */
+  /** Wall-clock time of the last successful run. */
   lastRunAt: number | null;
   source: PreviewSource;
   setSource: (source: PreviewSource) => void;
   shipmentId: string;
   setShipmentId: (value: string) => void;
-  /** The sample load's own values, before anything the person changed. */
-  sampleValues: Readonly<Record<string, unknown>>;
-  /** Values the person set over the load, by variable name. */
-  overrides: Readonly<Record<string, unknown>>;
-  setOverride: (name: string, value: unknown) => void;
-  resetOverrides: () => void;
-  /** What the load holds for a name: the person's override, the template default, the sample. */
-  valueOf: (name: string) => unknown;
-  /** The request the preview last priced. */
-  lastRequest: TestExpressionRequest | null;
-  /** Every value the load holds, as a scenario pinned from it records them. */
-  loadValues: () => Record<string, unknown>;
+  /** The request the preview last rated, so a result is never shown against other text. */
+  lastRequest: FormulaPreviewRequest | null;
+  /** True when the source checks with errors, so nothing is sent until they are fixed. */
+  blocked: boolean;
   runNow: () => void;
 };
 
+/** Drops inputs left unset, so the tariff's own defaults apply to them. */
+export function presentInputs(values: TariffInputValues | undefined): TariffInputValues {
+  return Object.fromEntries(
+    Object.entries(values ?? {}).filter(([, value]) => value !== undefined),
+  ) as TariffInputValues;
+}
+
 /**
- * Prices what is in the editor on one load, again after every edit: the
- * sample load with whatever the person changed over it, or a saved shipment.
- * Every amount the studio shows for the preview comes from this response.
+ * Rates what is in the editor on the server (`POST /formula-templates/test`), again once the
+ * source or the sample inputs settle: the sample record with the inputs the person set, or a
+ * saved shipment's record. It watches only the source and those inputs, never the name or the
+ * description, and sends nothing while the source has errors, which the editor already shows.
  */
-export function useLivePreview(): LivePreviewState {
-  const { control } = useFormContext<FormulaTemplateFormValues>();
-
-  const expression = useWatch({ control, name: "expression" });
-  const schemaId = useWatch({ control, name: "schemaId" });
-  const variableDefinitions = useWatch({ control, name: "variableDefinitions" });
-  const breakdownDefinitions = useWatch({ control, name: "breakdownDefinitions" });
-  const minCharge = useWatch({ control, name: "minCharge" });
-  const maxCharge = useWatch({ control, name: "maxCharge" });
-  const roundingMode = useWatch({ control, name: "roundingMode" });
-  const roundingPrecision = useWatch({ control, name: "roundingPrecision" });
-
-  const [source, setSourceState] = useState<PreviewSource>("sample");
+export function useLivePreview({
+  source: text,
+  inputs,
+  errors,
+}: {
+  source: string;
+  inputs: TariffInputValues | undefined;
+  errors: number;
+}): LivePreviewState {
+  const [mode, setModeState] = useState<PreviewSource>("sample");
   const [shipmentId, setShipmentIdState] = useState("");
-  const [overrides, setOverrides] = useState<Record<string, unknown>>({});
   const [lastRunAt, setLastRunAt] = useState<number | null>(null);
-  const [lastRequest, setLastRequest] = useState<TestExpressionRequest | null>(null);
+  const [lastRequest, setLastRequest] = useState<FormulaPreviewRequest | null>(null);
 
   const { mutate, data, error, isPending, reset } = useMutation<
-    TestExpressionResponse,
+    FormulaPreviewResponse,
     Error,
-    TestExpressionRequest
+    FormulaPreviewRequest
   >({
-    mutationFn: (request) => apiService.formulaTemplateService.test(request),
+    mutationFn: (request) => apiService.formulaTemplateService.preview(request),
     onSuccess: (_response, request) => {
       setLastRunAt(Date.now());
       setLastRequest(request);
     },
   });
 
-  const usingShipment = source === "shipment" && shipmentId !== "";
+  const usingShipment = mode === "shipment" && shipmentId !== "";
+  const blocked = errors > 0 || text.trim() === "";
+  const inputsKey = JSON.stringify(presentInputs(inputs));
 
-  const request = useMemo(
-    (): TestExpressionRequest | null =>
-      formulaTestRequest(
-        {
-          expression,
-          schemaId,
-          variableDefinitions,
-          breakdownDefinitions,
-          minCharge,
-          maxCharge,
-          roundingMode,
-          roundingPrecision,
-        },
-        {
-          sampleValues: DEFAULT_TEST_VALUES,
-          overrides,
-          shipmentId: usingShipment ? shipmentId : undefined,
-          traceStatements: true,
-        },
-      ),
-    [
-      expression,
-      schemaId,
-      variableDefinitions,
-      breakdownDefinitions,
-      minCharge,
-      maxCharge,
-      roundingMode,
-      roundingPrecision,
-      overrides,
-      usingShipment,
-      shipmentId,
-    ],
-  );
+  const request = useMemo((): FormulaPreviewRequest | null => {
+    if (blocked) return null;
+    const values = JSON.parse(inputsKey) as TariffInputValues;
+    return {
+      source: text,
+      ...(Object.keys(values).length > 0 ? { inputs: values } : {}),
+      ...(usingShipment ? { shipmentId } : {}),
+    };
+  }, [blocked, text, inputsKey, usingShipment, shipmentId]);
 
   const requestRef = useRef(request);
   useEffect(() => {
@@ -120,85 +89,34 @@ export function useLivePreview(): LivePreviewState {
   }, [request]);
 
   const runNow = useCallback(() => {
-    if (requestRef.current) {
-      mutate(requestRef.current);
-    }
+    if (requestRef.current) mutate(requestRef.current);
   }, [mutate]);
 
   useEffect(() => {
-    if (!request || (source === "shipment" && !usingShipment)) {
+    if (!request || (mode === "shipment" && !usingShipment)) {
       reset();
       return;
     }
     const timer = window.setTimeout(() => mutate(request), PREVIEW_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-  }, [request, source, usingShipment, mutate, reset]);
+  }, [request, mode, usingShipment, mutate, reset]);
 
   const setSource = useCallback((next: PreviewSource) => {
-    setSourceState(next);
-    setOverrides({});
+    setModeState(next);
     if (next === "sample") setShipmentIdState("");
   }, []);
-
-  const setShipmentId = useCallback((value: string) => {
-    setShipmentIdState(value);
-    setOverrides({});
-  }, []);
-
-  const setOverride = useCallback((name: string, value: unknown) => {
-    setOverrides((current) => {
-      if (value !== undefined) return { ...current, [name]: value };
-      return Object.fromEntries(Object.entries(current).filter(([key]) => key !== name));
-    });
-  }, []);
-
-  const resetOverrides = useCallback(() => setOverrides({}), []);
-
-  const resolvedVariables = data?.resolvedVariables;
-  const resolved = useMemo(
-    () => (resolvedVariables ? flattenResolvedVariables(resolvedVariables) : undefined),
-    [resolvedVariables],
-  );
-  const receiptValues = data?.receipt?.variables;
-  const valueOf = useCallback(
-    (name: string): unknown => {
-      if (name in overrides) return overrides[name];
-      const read = receiptValues?.find((variable) => variable.name === name);
-      if (read) return read.value;
-      const definition = (variableDefinitions ?? []).find((variable) => variable.name === name);
-      if (definition && definition.defaultValue !== undefined && definition.defaultValue !== null) {
-        return definition.defaultValue;
-      }
-      if (usingShipment) return resolved?.[name];
-      return DEFAULT_TEST_VALUES[name];
-    },
-    [overrides, receiptValues, variableDefinitions, usingShipment, resolved],
-  );
-
-  const loadValues = useCallback(
-    (): Record<string, unknown> => ({
-      ...(usingShipment ? (resolved ?? {}) : DEFAULT_TEST_VALUES),
-      ...overrides,
-    }),
-    [usingShipment, resolved, overrides],
-  );
 
   return {
     result: data,
     isPending,
     requestError: error ? describeApiError(error, "The preview request failed.") : null,
     lastRunAt,
-    source,
+    source: mode,
     setSource,
     shipmentId,
-    setShipmentId,
-    sampleValues: DEFAULT_TEST_VALUES,
-    overrides,
-    setOverride,
-    resetOverrides,
-    valueOf,
+    setShipmentId: setShipmentIdState,
     lastRequest,
-    loadValues,
+    blocked,
     runNow,
   };
 }

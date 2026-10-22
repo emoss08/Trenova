@@ -1,5 +1,5 @@
 {
-  "engineVersion": "1.0.0",
+  "engineVersion": "2.0.0",
   "inputs": {
     "ratingDate": 1700000000,
     "weekday": 2,
@@ -12,7 +12,6 @@
     "linearFeet": "0",
     "cubicFeet": "0",
     "stops": 2,
-    "densityPcf": null,
     "hasHazmat": false,
     "requiresTempControl": false
   },
@@ -74,45 +73,67 @@
     }
   ],
   "tieBreak": "specificity 717500",
+  "templateId": "ft_per_mile_stub",
+  "templateName": "Per Mile",
+  "templateVersion": 3,
+  "tariffInputs": {
+    "minimumCharge": {
+      "$q": "2500",
+      "u": "$"
+    },
+    "rate": {
+      "$q": "2.55",
+      "u": "$/mi"
+    }
+  },
+  "bill": {
+    "currency": "USD",
+    "lines": [
+      {
+        "kind": "Charge",
+        "label": "Per Mile",
+        "freight": true,
+        "amount": "1836",
+        "quantity": "720",
+        "quantityUnit": "mi",
+        "rate": "2.55",
+        "rateUnit": "$/mi"
+      },
+      {
+        "kind": "Minimum",
+        "freight": true,
+        "amount": "664"
+      }
+    ],
+    "freightTotal": "2500",
+    "accessorialTotal": "0",
+    "total": "2500"
+  },
+  "lookups": [],
   "components": [
     {
       "sequence": 0,
-      "kind": "Linehaul",
-      "label": "Linehaul",
-      "basis": "Per Mile @ 2.55",
-      "quantity": null,
+      "kind": "Freight",
+      "label": "Per Mile",
+      "quantity": "720",
       "rate": "2.55",
       "amount": "1836",
       "runningTotal": "1836",
-      "source": "FormulaTemplate",
+      "source": "Tariff",
       "sourceId": "ft_per_mile_stub",
-      "sourceName": "Per Mile",
-      "detail": {
-        "expression": "baseRate * totalDistance",
-        "formulaTemplateId": "ft_per_mile_stub"
-      }
+      "sourceName": "Per Mile"
     },
     {
       "sequence": 1,
       "kind": "MinimumCharge",
-      "label": "Minimum charge",
-      "basis": "raised from 1836",
+      "label": "",
       "quantity": null,
       "rate": null,
       "amount": "664",
       "runningTotal": "2500",
-      "source": "AgreementRule",
-      "sourceId": "ragr_city-pair",
-      "sourceName": "city-pair"
-    }
-  ],
-  "guardrails": [
-    {
-      "kind": "MinimumCharge",
-      "applied": true,
-      "bound": "2500",
-      "raw": "1836",
-      "result": "2500"
+      "source": "Tariff",
+      "sourceId": "ft_per_mile_stub",
+      "sourceName": "Per Mile"
     }
   ],
   "totals": {

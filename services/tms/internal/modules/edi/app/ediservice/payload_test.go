@@ -33,7 +33,6 @@ func TestBuildTenderPayload(t *testing.T) {
 		CustomerID:        pulid.MustNew("cus_"),
 		FormulaTemplateID: pulid.MustNew("ft_"),
 		BOL:               "BOL-123",
-		RatingUnit:        1,
 		Customer: &customer.Customer{
 			Code: "ACME",
 			Name: "Acme Logistics",
@@ -157,7 +156,14 @@ func TestBuildFreightInvoicePayload(t *testing.T) {
 				LineNumber:  2,
 				Type:        invoice.InvoiceLineTypeAccessorial,
 				Description: "Liftgate",
+				ChargeCode:  "LFT",
 				Amount:      decimal.NewFromInt(50),
+			},
+			{
+				LineNumber:  3,
+				Type:        invoice.InvoiceLineTypeFreight,
+				Description: "Minimum charge adjustment",
+				Amount:      decimal.NewFromInt(0),
 			},
 			{
 				LineNumber:  1,
@@ -182,9 +188,11 @@ func TestBuildFreightInvoicePayload(t *testing.T) {
 	require.True(t, payload.FreightInvoice.TotalAmount.Valid)
 	require.True(t, decimal.NewFromInt(1250).Equal(payload.FreightInvoice.TotalAmount.Decimal))
 	require.Equal(t, "PRO-1001", payload.FreightInvoice.ReferenceNumbers["pro"])
-	require.Len(t, payload.FreightInvoice.LineCharges, 2)
+	require.Len(t, payload.FreightInvoice.LineCharges, 3)
 	require.Equal(t, int64(1), payload.FreightInvoice.LineCharges[0].Sequence)
-	require.Equal(t, "Freight", payload.FreightInvoice.LineCharges[0].Code)
+	require.Equal(t, "400", payload.FreightInvoice.LineCharges[0].Code, "freight is X12 special charge 400")
+	require.Equal(t, "LFT", payload.FreightInvoice.LineCharges[1].Code, "an accessorial sends its catalog code")
+	require.Equal(t, "400", payload.FreightInvoice.LineCharges[2].Code, "every freight line is freight")
 }
 
 func TestBuildShipmentEventStatusPayload(t *testing.T) {
@@ -659,4 +667,18 @@ func TestShipmentStatusPayloads_CarryTheShippersReferenceAndTheWeight(t *testing
 	require.Equal(t, "BOL-1", buildShipmentStatusPayload(untendered).ShipmentStatus.ShipperReference,
 		"without the shipper's own reference the bill of lading stands for it")
 	require.Nil(t, buildShipmentStatusPayload(untendered).ShipmentStatus.Weight)
+}
+
+func TestATenderedRateIsRatedByHand(t *testing.T) {
+	mapped := pulid.MustNew("ft_")
+
+	tendered := &edi.LoadTenderPayload{
+		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1850)),
+	}
+	require.True(t, tenderedTemplate(tendered, mapped).IsNil(),
+		"the receiver bills the tendered rate, so no tariff re-rates it")
+
+	unpriced := &edi.LoadTenderPayload{}
+	require.Equal(t, mapped, tenderedTemplate(unpriced, mapped),
+		"a tender without a rate is priced by the mapped tariff")
 }

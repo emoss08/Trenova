@@ -29,7 +29,6 @@ export type ImportRequiredValues = {
   customerId: string;
   serviceTypeId: string;
   shipmentTypeId: string;
-  formulaTemplateId: string;
 };
 
 /** What the page does with a change the assistant hands it; the same as a person's click. */
@@ -108,7 +107,6 @@ export function importDraftFromState(
         customerId: required.customerId.trim(),
         serviceTypeId: required.serviceTypeId.trim(),
         shipmentTypeId: required.shipmentTypeId.trim(),
-        formulaTemplateId: required.formulaTemplateId.trim(),
       },
       stops: state.stops.slice(0, MAX_STOPS).map(draftStop),
     },

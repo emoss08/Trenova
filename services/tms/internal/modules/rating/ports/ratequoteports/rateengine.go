@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -36,16 +37,6 @@ type RateShipmentRequest struct {
 	// Persist writes the quote. A what-if answers the question without leaving
 	// a record that competes with the shipment's real rate.
 	Persist bool
-	// FormulaOnly prices the shipment through the formula template it already
-	// carries, without resolving an agreement for it.
-	//
-	// This is the routine recalculation: a stop moves, a commodity is added,
-	// the mileage changes, and the linehaul has to follow. A contract is
-	// applied to a shipment once, deliberately, and after that the shipment's
-	// own rating fields are what price it — so re-resolving the contract on
-	// every save would silently replace whatever a rater had since agreed with
-	// the customer. It also skips the zone and lane lookups, which are the only
-	// queries a recalculation would otherwise make.
 	FormulaOnly bool
 	UserID      pulid.ID
 
@@ -56,36 +47,26 @@ type RateShipmentRequest struct {
 	SimulateAgreementID *pulid.ID
 }
 
-// RatedShipment is what the engine produced.
-//
-// It is serialized straight to the client by the quote and explain endpoints,
-// which is why it carries json tags: everything else on the wire is camel case.
 type RatedShipment struct {
-	// Amount is the linehaul, in the organization's billing currency. Fuel and
-	// accessorials are added by the caller that owns them.
 	Amount   decimal.Decimal      `json:"amount"`
+	Total    decimal.Decimal      `json:"total"`
 	Currency string               `json:"currency"`
 	Outcome  ratequote.Outcome    `json:"outcome"`
 	Quote    *ratequote.RateQuote `json:"quote,omitempty"`
 
-	// Agreement and Rule are set when a contract priced the shipment, so the
-	// caller can stamp them on it without re-reading the quote.
-	AgreementID *pulid.ID `json:"agreementId,omitempty"`
-	RuleID      *pulid.ID `json:"ruleId,omitempty"`
-	// BillToCustomerID is the payer the agreement redirects invoicing to, when
-	// it names one; the shipment adopts it unless it already has its own.
+	AgreementID      *pulid.ID `json:"agreementId,omitempty"`
+	RuleID           *pulid.ID `json:"ruleId,omitempty"`
 	BillToCustomerID *pulid.ID `json:"billToCustomerId,omitempty"`
-	// FormulaTemplateID is set when the rule delegated to a formula, or when
-	// the rating fell back to one because no agreement covered the lane.
-	FormulaTemplateID *pulid.ID `json:"formulaTemplateId,omitempty"`
-	// BaseRate is the per-unit rate the template was priced with — the lane
-	// rate on the rule, or the value in the matrix cell that matched.
-	//
-	// It is what lets a contract's answer be seated on a shipment as its own
-	// rating method plus its own base rate, rather than as a total nobody can
-	// re-derive. A rule that binds no rate leaves this unset, and the
-	// shipment's existing base rate stands.
-	BaseRate decimal.NullDecimal `json:"baseRate,omitempty"`
+
+	FormulaTemplateID   *pulid.ID          `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string             `json:"formulaTemplateName,omitempty"`
+	TemplateVersion     int64              `json:"templateVersion,omitempty"`
+	TariffInputs        tarifftypes.Inputs `json:"tariffInputs,omitempty"`
+	Bill                *tarifftypes.Bill  `json:"bill,omitempty"`
+	Refusal             string             `json:"refusal,omitempty"`
+
+	Agreement  *rateagreement.RateAgreement `json:"-"`
+	Conditions map[pulid.ID]bool            `json:"-"`
 }
 
 // ShopStrategy is what "best" means for one shopping run.

@@ -7,7 +7,6 @@ import { ExportTemplateDialog } from "../export-template-dialog";
 const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   listVersions: vi.fn(),
-  listTestCases: vi.fn(),
   buildTemplateExport: vi.fn(),
   getExportFilename: vi.fn(),
   downloadJson: vi.fn(),
@@ -22,7 +21,6 @@ vi.mock("@/services/api", () => ({
     formulaTemplateService: {
       get: mocks.get,
       listVersions: mocks.listVersions,
-      listTestCases: mocks.listTestCases,
     },
   },
 }));
@@ -33,36 +31,28 @@ vi.mock("@/lib/formula-template-export", () => ({
   downloadJson: mocks.downloadJson,
 }));
 
-// The list row is a projection: it carries neither `metadata` nor the typed
-// variable definitions, so an export built from it would silently drop them.
+// The list row is a projection: it carries no source, so an export built from it would have
+// nothing to import.
 const listRow = { id: "ft_01", name: "Per mile" };
 
 const fullTemplate = {
   id: "ft_01",
   name: "Per mile",
   description: "Rates by loaded mile",
-  type: "FreightCharge",
-  expression: "distance * rate",
+  source:
+    'tariff "Per mile"\n\ninput rate: Money/mi\n\ncharge "Linehaul" (quantity: shipment.distance, rate: rate)\n',
   status: "Active",
-  schemaId: "shipment",
-  variableDefinitions: [
-    { name: "rate", type: "Number", description: "", required: true, defaultValue: 1 },
-  ],
-  breakdownDefinitions: [],
-  minCharge: "0",
-  maxCharge: "0",
-  roundingMode: "HalfUp",
-  roundingPrecision: 2,
-  metadata: { category: "standard" },
+  inputs: [],
+  imports: [],
+  testCount: 0,
 } as unknown as FormulaTemplate;
 
 describe("ExportTemplateDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.get.mockResolvedValue(fullTemplate);
-    mocks.listTestCases.mockResolvedValue([]);
     mocks.listVersions.mockResolvedValue({ results: [] });
-    mocks.buildTemplateExport.mockReturnValue({ exportVersion: "1.3" });
+    mocks.buildTemplateExport.mockReturnValue({ exportVersion: "2.0" });
     mocks.getExportFilename.mockReturnValue("per-mile.formula-template.json");
   });
 
@@ -73,10 +63,7 @@ describe("ExportTemplateDialog", () => {
 
     await waitFor(() => expect(mocks.downloadJson).toHaveBeenCalledTimes(1));
     expect(mocks.get).toHaveBeenCalledWith("ft_01");
-    expect(mocks.buildTemplateExport).toHaveBeenCalledWith(fullTemplate, {
-      versions: undefined,
-      testCases: [],
-    });
+    expect(mocks.buildTemplateExport).toHaveBeenCalledWith(fullTemplate, { versions: undefined });
     expect(mocks.getExportFilename).toHaveBeenCalledWith(fullTemplate, false);
     expect(mocks.listVersions).not.toHaveBeenCalled();
   });
@@ -92,10 +79,7 @@ describe("ExportTemplateDialog", () => {
 
     await waitFor(() => expect(mocks.downloadJson).toHaveBeenCalledTimes(1));
     expect(mocks.listVersions).toHaveBeenCalledWith("ft_01", { limit: 1000 });
-    expect(mocks.buildTemplateExport).toHaveBeenCalledWith(fullTemplate, {
-      versions,
-      testCases: [],
-    });
+    expect(mocks.buildTemplateExport).toHaveBeenCalledWith(fullTemplate, { versions });
     expect(mocks.getExportFilename).toHaveBeenCalledWith(fullTemplate, true);
   });
 });

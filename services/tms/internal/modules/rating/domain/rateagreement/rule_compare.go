@@ -27,8 +27,7 @@ func (rar *RateAgreementRule) SameTerms(other *RateAgreementRule) bool {
 	return rar.sameLane(other) &&
 		rar.sameApplicability(other) &&
 		rar.samePricing(other) &&
-		rar.sameWindow(other) &&
-		sameBreakTerms(rar.Breaks, other.Breaks)
+		rar.sameWindow(other)
 }
 
 func (rar *RateAgreementRule) sameLane(other *RateAgreementRule) bool {
@@ -70,48 +69,15 @@ func (rar *RateAgreementRule) sameApplicability(other *RateAgreementRule) bool {
 }
 
 func (rar *RateAgreementRule) samePricing(other *RateAgreementRule) bool {
-	return samePulidPtr(rar.FormulaTemplateID, other.FormulaTemplateID) &&
-		samePulidPtr(rar.RateMatrixID, other.RateMatrixID) &&
-		sameNullDecimal(rar.Rate, other.Rate) &&
-		rar.Currency == other.Currency &&
-		rar.FreightClassSource == other.FreightClassSource &&
-		rar.FixedFreightClass == other.FixedFreightClass &&
-		samePulidPtr(rar.DensityScaleID, other.DensityScaleID) &&
-		sameNullDecimal(rar.DiscountPercent, other.DiscountPercent) &&
-		sameNullDecimal(rar.AbsoluteMinCharge, other.AbsoluteMinCharge) &&
-		rar.AllowDeficitRating == other.AllowDeficitRating &&
-		sameNullDecimal(rar.MinCharge, other.MinCharge) &&
-		sameNullDecimal(rar.MaxCharge, other.MaxCharge) &&
-		sameNullDecimal(rar.MinBillableDistance, other.MinBillableDistance) &&
-		rar.RoundingMode == other.RoundingMode
+	return rar.FormulaTemplateID == other.FormulaTemplateID &&
+		rar.Inputs.Equal(other.Inputs) &&
+		rar.Currency == other.Currency
 }
 
 func (rar *RateAgreementRule) sameWindow(other *RateAgreementRule) bool {
 	return rar.Priority == other.Priority &&
 		rar.EffectiveFrom == other.EffectiveFrom &&
 		sameInt64Ptr(rar.EffectiveTo, other.EffectiveTo)
-}
-
-func sameBreakTerms(a, b []*RateAgreementRuleBreak) bool {
-	sortedA := SortedBreaks(a)
-	sortedB := SortedBreaks(b)
-
-	if len(sortedA) != len(sortedB) {
-		return false
-	}
-
-	for i := range sortedA {
-		left, right := sortedA[i], sortedB[i]
-		if !left.FromWeight.Equal(right.FromWeight) ||
-			!sameNullDecimal(left.ToWeight, right.ToWeight) ||
-			!left.Rate.Equal(right.Rate) ||
-			!sameNullDecimal(left.MinCharge, right.MinCharge) ||
-			left.Label != right.Label {
-			return false
-		}
-	}
-
-	return true
 }
 
 func sameNullDecimal(a, b decimal.NullDecimal) bool {

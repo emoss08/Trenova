@@ -216,3 +216,28 @@ func TestFormatPluralGroupsTheCountTheWayEachLocaleWritesNumbers(t *testing.T) {
 	assert.Equal(t, "999 runs", format(EN, message, []any{999}))
 	assert.Equal(t, "0.123 runs", format(EN, message, []any{0.12345}))
 }
+
+func TestFormatQuoting(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		message string
+		args    []any
+		want    string
+	}{
+		{"a quoted brace is literal", "write '{' to open", nil, "write { to open"},
+		{"a quoted pair is literal", "write '{{' or '}}'", nil, "write {{ or }}"},
+		{"two apostrophes are one", "it''s here", nil, "it's here"},
+		{"a lone apostrophe stays", "the shipment's {0}", []any{"weight"}, "the shipment's weight"},
+		{"quoting next to a placeholder", "'{'{0}'}'", []any{"x"}, "{x}"},
+		{"a quote inside a plural branch", "{0, plural, one {# '{'item'}'} other {# items}}", []any{1}, "1 {item}"},
+		{"an unclosed quote runs to the end", "a '{ b", nil, "a { b"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, format(EN, tt.message, tt.args))
+		})
+	}
+}

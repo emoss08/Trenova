@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -20,14 +20,14 @@ func newStateCoordinator() *shipmentstate.Coordinator {
 
 func newTestCommercialCalculator(
 	t *testing.T,
-	formula formulatemplateports.FormulaCalculator,
+	freight decimal.Decimal,
 	accessorialRepo accessorialchargeports.AccessorialChargeRepository,
 ) *shipmentcommercial.Calculator {
 	t.Helper()
 
 	return shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+		RateEngine:      ratingtest.NewFlatEngine(t, freight),
 		AccessorialRepo: accessorialRepo,
 	})
 }

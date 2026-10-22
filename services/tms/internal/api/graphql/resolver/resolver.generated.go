@@ -70,6 +70,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalyearresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/formulalibraryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/formulatemplateresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelpurchaseresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargeresolver"
@@ -292,6 +293,8 @@ type Resolver struct {
 	fiscalYear                         *fiscalyearresolver.FiscalYearResolver
 	fleetSafetyRank                    *fleetsafetyresolver.FleetSafetyRankResolver
 	fleetSafetyTerminal                *fleetsafetyresolver.FleetSafetyTerminalResolver
+	formulaLibraryImport               *formulatemplateresolver.FormulaLibraryImportResolver
+	formulaLibraryVersion              *formulalibraryresolver.FormulaLibraryVersionResolver
 	formulaTemplate                    *formulatemplateresolver.FormulaTemplateResolver
 	fuelCard                           *fuelpurchaseresolver.FuelCardResolver
 	fuelCardDeskCard                   *fuelpurchaseresolver.FuelCardDeskCardResolver
@@ -777,6 +780,10 @@ func FromServices(s *Services) *Resolver {
 	fleetsafetyDeps := &fleetsafetyresolver.Deps{
 		Core:                s.Core,
 		WorkerSafetyService: s.WorkerSafetyService,
+	}
+	formulalibraryDeps := &formulalibraryresolver.Deps{
+		Core:                  s.Core,
+		FormulaLibraryService: s.FormulaLibraryService,
 	}
 	formulatemplateDeps := &formulatemplateresolver.Deps{
 		Core:                   s.Core,
@@ -1311,6 +1318,8 @@ func FromServices(s *Services) *Resolver {
 		fiscalYear:                   &fiscalyearresolver.FiscalYearResolver{Deps: fiscalyearDeps},
 		fleetSafetyRank:              &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps},
 		fleetSafetyTerminal:          &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps},
+		formulaLibraryImport:         &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps},
+		formulaLibraryVersion:        &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps},
 		formulaTemplate:              &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps},
 		fuelCard:                     &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps},
 		fuelCardDeskCard:             &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps},
@@ -1544,6 +1553,7 @@ func FromServices(s *Services) *Resolver {
 			fiscalyearQuery:               &fiscalyearQuery{Deps: fiscalyearDeps},
 			fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
 			fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
+			formulalibraryQuery:           &formulalibraryQuery{Deps: formulalibraryDeps},
 			formulatemplateQuery:          &formulatemplateQuery{Deps: formulatemplateDeps},
 			fuelpurchaseQuery:             &fuelpurchaseQuery{Deps: fuelpurchaseDeps},
 			fuelsurchargeQuery:            &fuelsurchargeQuery{Deps: fuelsurchargeDeps},
@@ -2313,6 +2323,14 @@ func (r *Resolver) FleetSafetyTerminal() generated.FleetSafetyTerminalResolver {
 	return r.fleetSafetyTerminal
 }
 
+func (r *Resolver) FormulaLibraryImport() generated.FormulaLibraryImportResolver {
+	return r.formulaLibraryImport
+}
+
+func (r *Resolver) FormulaLibraryVersion() generated.FormulaLibraryVersionResolver {
+	return r.formulaLibraryVersion
+}
+
 func (r *Resolver) FormulaTemplate() generated.FormulaTemplateResolver {
 	return r.formulaTemplate
 }
@@ -2777,6 +2795,7 @@ type queryResolver struct {
 	*fiscalyearQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
+	*formulalibraryQuery
 	*formulatemplateQuery
 	*fuelpurchaseQuery
 	*fuelsurchargeQuery
@@ -3288,6 +3307,7 @@ type (
 	fiscalyearQuery                 = fiscalyearresolver.QueryResolver
 	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
+	formulalibraryQuery             = formulalibraryresolver.QueryResolver
 	formulatemplateQuery            = formulatemplateresolver.QueryResolver
 	fuelpurchaseQuery               = fuelpurchaseresolver.QueryResolver
 	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver

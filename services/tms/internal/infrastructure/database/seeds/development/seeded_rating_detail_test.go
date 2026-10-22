@@ -3,9 +3,11 @@ package development
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -15,15 +17,13 @@ import (
 func TestSeededRatingDetail_MirrorsWhatTheCalculatorWritesForAFormulaFallback(t *testing.T) {
 	t.Parallel()
 
-	template := &formulatemplate.FormulaTemplate{
-		ID:         pulid.MustNew("ft_"),
-		Name:       "Flat Rate",
-		Expression: "baseRate",
-	}
+	template := &formulatemplate.FormulaTemplate{ID: pulid.MustNew("ft_"), Name: "Flat Rate"}
 	shippedAt := int64(1_789_333_941)
+	freight := decimal.NewFromInt(3150)
 	shp := &shipment.Shipment{
 		FormulaTemplateID:   template.ID,
-		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromFloat(3150)),
+		FreightChargeAmount: decimal.NewNullDecimal(freight),
+		TariffInputs:        seededTariffInputs(template.Name, freight),
 		ActualShipDate:      &shippedAt,
 	}
 
@@ -32,8 +32,6 @@ func TestSeededRatingDetail_MirrorsWhatTheCalculatorWritesForAFormulaFallback(t 
 	require.NotNil(t, detail)
 	assert.Equal(t, template.ID.String(), detail.FormulaTemplateID)
 	assert.Equal(t, "Flat Rate", detail.FormulaTemplateName)
-	assert.Equal(t, "baseRate", detail.Expression)
-	assert.InDelta(t, 3150, detail.Result, 0)
 	assert.Equal(t, shippedAt, detail.RatedAt)
 	assert.Equal(t, string(ratequote.OutcomeFormulaFallback), detail.Source)
 	assert.Equal(
@@ -41,14 +39,13 @@ func TestSeededRatingDetail_MirrorsWhatTheCalculatorWritesForAFormulaFallback(t 
 		(&ratequote.RateQuote{Outcome: ratequote.OutcomeFormulaFallback}).Explanation(),
 		detail.Explanation,
 	)
-	require.Len(t, detail.Breakdown, 1)
-	assert.Equal(t, "Linehaul", detail.Breakdown[0].Name)
-	assert.Equal(t, "Linehaul", detail.Breakdown[0].Label)
-	assert.InDelta(t, 3150, detail.Breakdown[0].Amount, 0)
-	require.NotNil(t, detail.ResolvedVariables)
-	assert.Empty(t, detail.ResolvedVariables)
-	assert.Nil(t, detail.Guardrail)
-	assert.Nil(t, detail.Receipt)
+	require.NotNil(t, detail.Bill)
+	require.Len(t, detail.Bill.Lines, 1)
+	assert.Equal(t, tarifftypes.LineCharge, detail.Bill.Lines[0].Kind)
+	assert.Empty(t, detail.Bill.Lines[0].Code)
+	assert.True(t, freight.Equal(detail.Bill.FreightTotal))
+	assert.True(t, freight.Equal(detail.Bill.Total))
+	assert.True(t, shp.TariffInputs.Equal(detail.Inputs))
 	assert.Empty(t, detail.AgreementID)
 	assert.Empty(t, detail.RateQuoteID)
 }
@@ -61,7 +58,7 @@ func TestSeededRatingDetail_RatesAtNowWhenTheShipmentHasNotShipped(t *testing.T)
 
 	unshipped := seededRatingDetail(&shipment.Shipment{FormulaTemplateID: template.ID}, template, now)
 	assert.Equal(t, now, unshipped.RatedAt)
-	assert.InDelta(t, 0, unshipped.Result, 0)
+	assert.True(t, unshipped.Bill.Total.IsZero())
 
 	zeroDate := int64(0)
 	blank := seededRatingDetail(
@@ -70,4 +67,20 @@ func TestSeededRatingDetail_RatesAtNowWhenTheShipmentHasNotShipped(t *testing.T)
 		now,
 	)
 	assert.Equal(t, now, blank.RatedAt)
+}
+
+func TestSeededTariffInputs_TypeTheRateToItsTemplate(t *testing.T) {
+	t.Parallel()
+
+	perMile, err := rules.DecodeQuantity(
+		seededTariffInputs(formulatemplate.StandardPerMile, decimal.NewFromInt(2))["rate"],
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "$/mi", perMile.Unit)
+
+	flat, err := rules.DecodeQuantity(
+		seededTariffInputs(formulatemplate.StandardFlatRate, decimal.NewFromInt(900))["rate"],
+	)
+	require.NoError(t, err)
+	assert.Equal(t, rules.UnitMoney, flat.Unit)
 }

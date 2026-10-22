@@ -5,29 +5,70 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/i18n"
-	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/shopspring/decimal"
 )
 
 const (
 	maxSaysRunes       = 400
-	maxStatementErrors = 200
-	explainMaxTokens   = 2500
+	maxExplainedEvents = 200
+	explainMaxTokens   = 3000
 )
 
 const explainSystem = "You are the formula assistant in Trenova's Formula Studio. You explain a " +
-	"rating formula to a billing analyst, one statement at a time. For every statement listed " +
-	"under Engine trace, write one plain sentence of at most 30 words saying what that " +
-	"statement works out and what it means for the charge. Write identifiers in backticks. " +
-	amountsRule + " " + untrustedNote
+	"Tariff formula to a billing analyst from its rate trace, one step at a time. For every " +
+	"step listed under Engine trace, write one plain sentence of at most 30 words saying what " +
+	"it worked out and what it means for the bill, citing the step by its index. Write " +
+	"identifiers in backticks. " + amountsRule + " " + untrustedNote
+
+type traceEvent struct {
+	Kind    string             `json:"kind"`
+	Name    string             `json:"name"`
+	Label   string             `json:"label"`
+	Code    *string            `json:"code"`
+	Display string             `json:"display"`
+	Text    string             `json:"text"`
+	Range   *rules.TariffRange `json:"range"`
+}
+
+func decodeTrace(raw rules.RawJSON) []traceEvent {
+	if len(raw) == 0 {
+		return nil
+	}
+	var events []traceEvent
+	if err := sonic.Unmarshal(raw, &events); err != nil {
+		return nil
+	}
+	if len(events) > maxExplainedEvents {
+		events = events[:maxExplainedEvents]
+	}
+	return events
+}
+
+func (e *traceEvent) describe() string {
+	parts := []string{e.Kind}
+	for _, part := range []string{e.Name, e.Label, e.Text} {
+		if part != "" {
+			parts = append(parts, stringutils.OneLine(part, maxRenderedValueRunes))
+		}
+	}
+	if e.Code != nil && *e.Code != "" {
+		parts = append(parts, "code "+*e.Code)
+	}
+	line := strings.Join(parts, " ")
+	if e.Display != "" {
+		line += " => " + stringutils.OneLine(e.Display, maxRenderedValueRunes)
+	}
+	return line
+}
 
 func (s *Service) ExplainFormula(
 	ctx context.Context,
@@ -39,34 +80,36 @@ func (s *Service) ExplainFormula(
 		return nil, err
 	}
 
-	test := testRequest(&req.Draft, req.TenantInfo, req.SampleValues)
-	test.TraceStatements = true
+	previewReq := &formulatemplateservice.PreviewRequest{
+		TenantInfo: req.TenantInfo,
+		Source:     req.Draft.Source,
+		Inputs:     req.Inputs,
+	}
 	if req.ShipmentID.IsNotNil() {
 		shipmentID := req.ShipmentID
-		test.ShipmentID = &shipmentID
+		previewReq.ShipmentID = &shipmentID
 	}
-	evaluation, err := s.engine.TestExpression(ctx, test)
+	preview, err := s.engine.Preview(ctx, previewReq)
 	if err != nil {
 		return nil, err
 	}
-	if len(evaluation.Statements) == 0 {
-		if failure := evaluation.Failure(); failure != nil {
-			return nil, failure.ValidationError("expression", errortypes.ErrInvalid)
-		}
+	locale := i18n.FromContext(ctx)
+	if !preview.Valid {
 		return nil, errortypes.NewValidationError(
-			"expression",
+			"source",
 			errortypes.ErrInvalid,
-			"The expression must parse before it can be explained",
+			"The source must check before it can be explained: {0}",
+			diagnosticsText(locale, &rules.TariffCheck{Diagnostics: preview.Diagnostics}),
 		)
 	}
 
+	events := decodeTrace(preview.Trace)
 	resp := &agentports.ExplainFormulaResponse{
-		Statements: evaluation.Statements,
-		Guardrail:  evaluation.Guardrail,
+		Preview: preview,
+		Items:   []agentports.FormulaTraceNote{},
 	}
-	if evaluation.Valid && evaluation.Result != nil {
-		resp.BilledAmount = decimalPointer(*evaluation.Result)
-		resp.RawAmount = decimalPointer(evaluation.RawAmount())
+	if len(events) == 0 {
+		return resp, nil
 	}
 
 	var reply explainReply
@@ -75,9 +118,9 @@ func (s *Service) ExplainFormula(
 		definition: definition,
 		feature:    aiusage.FeatureFormulaExplain,
 		system:     explainSystem,
-		sections: append(draftSections(&req.Draft), agentports.ContextSection{
+		sections: append(draftSections(&req.Draft, preview.Inputs), agentports.ContextSection{
 			Title:   "Engine trace",
-			Content: traceText(i18n.FromContext(ctx), evaluation, resp),
+			Content: traceText(locale, events, preview),
 		}),
 		schema:     explainSchema(),
 		schemaName: "formula_explanation",
@@ -87,161 +130,93 @@ func (s *Service) ExplainFormula(
 		return nil, modelFailure(definition, err)
 	}
 
-	resp.Items = boundExplainItems(i18n.FromContext(ctx), reply.Items, evaluation.Statements)
+	resp.Items = boundExplainItems(reply.Items, events)
 	return resp, nil
 }
 
+type explainItem struct {
+	Index int    `json:"index"`
+	Says  string `json:"says"`
+}
+
 type explainReply struct {
-	Items []agentports.FormulaStatementNote `json:"items"`
+	Items []explainItem `json:"items"`
 }
 
 func explainSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"items": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"statementIndex": map[string]any{
-							"type":        "integer",
-							"description": "The statement's index from Engine trace",
-						},
-						"says": map[string]any{
-							"type":        "string",
-							"description": "One sentence of at most 30 words",
-						},
-					},
-					"required":             []string{"statementIndex", "says"},
-					"additionalProperties": false,
-				},
-			},
-		},
-		"required":             []string{"items"},
-		"additionalProperties": false,
-	}
+	return objectSchema(map[string]any{
+		"items": arraySchema(objectSchema(map[string]any{
+			"index": typedField("integer", "The step's index from Engine trace"),
+			"says":  typedField("string", "One sentence of at most 30 words"),
+		}, "index", "says"), ""),
+	}, "items")
 }
 
 func traceText(
 	locale i18n.Locale,
-	evaluation *formulatemplateservice.TestExpressionResponse,
-	resp *agentports.ExplainFormulaResponse,
+	events []traceEvent,
+	preview *formulatemplateports.PreviewResult,
 ) string {
 	var builder strings.Builder
-	for _, statement := range evaluation.Statements {
-		builder.WriteString(fmt.Sprintf("[%d] ", statement.Index))
-		if statement.Kind == formulatemplatetypes.StatementLet {
-			builder.WriteString("let " + statement.Name + ": ")
-		} else {
-			builder.WriteString("result: ")
-		}
-		builder.WriteString(stringutils.OneLine(statement.Code, 2*maxRenderedValueRunes))
-		if statement.Error != nil {
-			builder.WriteString(" => fails (" + statement.Error.Code + "): ")
-			builder.WriteString(stringutils.OneLine(
-				statement.Error.Localize(locale),
-				maxStatementErrors,
-			))
-		} else {
-			builder.WriteString(" => ")
-			builder.WriteString(renderValue(statement.Value))
-		}
-		builder.WriteString("\n")
+	for index := range events {
+		fmt.Fprintf(&builder, "[%d] %s\n", index, events[index].describe())
 	}
-
-	builder.WriteString("Formula before the charge policy: ")
-	builder.WriteString(optionalText(resp.RawAmount))
-	builder.WriteString("\nBilled after the charge policy: ")
-	builder.WriteString(optionalText(resp.BilledAmount))
-	if resp.Guardrail != nil && resp.Guardrail.Applied {
-		builder.WriteString("\nThe ")
-		builder.WriteString(boundName(resp.Guardrail.Bound))
-		builder.WriteString(" replaced the formula's amount")
-	}
-	if !evaluation.Valid && evaluation.Error != nil {
+	switch {
+	case preview.Bill != nil:
+		builder.WriteString("Bill total: " + preview.Bill.Total.String())
+		for i := range preview.Bill.Lines {
+			line := &preview.Bill.Lines[i]
+			fmt.Fprintf(&builder, "\n- %s %s %s: %s",
+				line.Kind, line.Label, line.Code, line.Amount.String())
+		}
+	case preview.Refusal != nil:
+		builder.WriteString("The formula refused to rate: " + preview.Refusal.Localize(locale))
+	case preview.Error != nil:
 		builder.WriteString(
-			"\nThe formula fails on this load (" + evaluation.Error.Err.Code + "): ",
+			"The formula failed (" + preview.Error.Code + "): " + preview.Error.Message,
 		)
-		builder.WriteString(stringutils.OneLine(
-			evaluation.Error.Err.Localize(locale),
-			maxStatementErrors,
-		))
 	}
-
 	return builder.String()
 }
 
-func boundExplainItems(
-	locale i18n.Locale,
-	items []agentports.FormulaStatementNote,
-	statements []formulatemplatetypes.Statement,
-) []agentports.FormulaStatementNote {
-	says := make(map[int]string, len(statements))
+func boundExplainItems(items []explainItem, events []traceEvent) []agentports.FormulaTraceNote {
+	says := make(map[int]string, len(events))
 	for _, item := range items {
-		if item.StatementIndex < 0 || item.StatementIndex >= len(statements) {
+		if item.Index < 0 || item.Index >= len(events) {
 			continue
 		}
-		if _, taken := says[item.StatementIndex]; taken {
+		if _, taken := says[item.Index]; taken {
 			continue
 		}
-		text := stringutils.CollapseWhitespace(item.Says)
-		if text == "" {
-			continue
+		if text := stringutils.CollapseWhitespace(item.Says); text != "" {
+			says[item.Index] = stringutils.Ellipsize(text, maxSaysRunes)
 		}
-		says[item.StatementIndex] = stringutils.Ellipsize(text, maxSaysRunes)
 	}
 
-	bounded := make([]agentports.FormulaStatementNote, 0, len(statements))
-	for index := range statements {
+	notes := make([]agentports.FormulaTraceNote, 0, len(events))
+	for index := range events {
 		text, ok := says[index]
 		if !ok {
-			text = fallbackSays(locale, &statements[index])
+			text = fallbackSays(&events[index])
 		}
-		bounded = append(bounded, agentports.FormulaStatementNote{
-			StatementIndex: index,
-			Says:           text,
+		notes = append(notes, agentports.FormulaTraceNote{
+			Index: index,
+			Range: events[index].Range,
+			Says:  text,
 		})
 	}
-
-	return bounded
+	return notes
 }
 
-func fallbackSays(locale i18n.Locale, statement *formulatemplatetypes.Statement) string {
-	if statement.Kind == formulatemplatetypes.StatementLet {
-		if statement.Error != nil {
-			return fmt.Sprintf("`%s` fails on this load: %s", statement.Name,
-				stringutils.OneLine(statement.Error.Localize(locale), maxStatementErrors))
-		}
-		return fmt.Sprintf("`%s` comes to %s on this load.", statement.Name,
-			renderValue(statement.Value))
+func fallbackSays(event *traceEvent) string {
+	switch {
+	case event.Name != "" && event.Display != "":
+		return fmt.Sprintf("%#q comes to %s on this load.", event.Name, event.Display)
+	case event.Label != "" && event.Display != "":
+		return fmt.Sprintf("%q bills %s on this load.", event.Label, event.Display)
+	case event.Text != "":
+		return event.Text
+	default:
+		return fmt.Sprintf("The formula took a %s step here.", event.Kind)
 	}
-
-	if statement.Error != nil {
-		return "The formula fails on this load: " +
-			stringutils.OneLine(statement.Error.Localize(locale), maxStatementErrors)
-	}
-	if amount := formulatemplateservice.TraceValueText(statement.Value); amount != nil {
-		if parsed, err := decimal.NewFromString(*amount); err == nil {
-			return fmt.Sprintf(
-				"The formula comes to %s before the charge policy.",
-				money.FormatDollars(parsed),
-			)
-		}
-	}
-
-	return "This is the amount the formula charges before the charge policy."
-}
-
-func boundName(bound string) string {
-	if bound == "max" {
-		return "maximum"
-	}
-
-	return "minimum"
-}
-
-func decimalPointer(value decimal.Decimal) *string {
-	text := value.String()
-	return &text
 }

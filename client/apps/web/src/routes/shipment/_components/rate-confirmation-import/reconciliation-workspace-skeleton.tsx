@@ -11,7 +11,7 @@ import { DocumentPreviewPanelSkeleton } from "./document-preview-panel-skeleton"
  * sections and the bar that creates the shipment.
  */
 
-const REQUIRED_FIELDS = 6;
+const REQUIRED_FIELDS = 5;
 const FIELD_SECTIONS = [
   { label: "w-16", fields: ["w-24", "w-32", "w-20", "w-28"] },
   { label: "w-12", fields: ["w-28", "w-16", "w-24"] },

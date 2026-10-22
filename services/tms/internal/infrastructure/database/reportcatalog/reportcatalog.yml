@@ -23,7 +23,6 @@ entities:
       totalChargeAmount: { label: "Total Charge", format: money }
       freightChargeAmount: { label: "Freight Charge", format: money }
       otherChargeAmount: { label: "Accessorial Charges", format: money }
-      baseRate: { label: "Base Rate", format: money }
       weight: { label: "Weight", format: weight }
       pieces: { label: "Pieces", format: count }
       actualShipDate: { label: "Ship Date" }
@@ -1094,10 +1093,6 @@ entities:
       autoRenew: { label: "Auto Renew" }
       renewalNoticeDays: { label: "Renewal Notice (days)", format: count }
       currency: { label: Currency }
-      defaultMinCharge: { label: "Default Minimum Charge", format: money }
-      defaultMaxCharge: { label: "Default Maximum Charge", format: money }
-      roundingMode: { label: "Rounding Mode" }
-      roundingPrecision: { label: "Rounding Precision" }
       marginFloorPercent: { label: "Margin Floor (%)", protected: Margins }
       maxPayPercentOfSell: { label: "Max Pay % of Sell", protected: Margins }
       reviewComment: { label: "Review Comment" }
@@ -1135,29 +1130,9 @@ entities:
       destinationScopeType: { label: "Destination Scope" }
       destinationScopeValue: { label: "Destination Scope Value" }
       laneKey: { label: "Lane Key" }
-      rate: { label: Rate, format: money }
       currency: { label: Currency }
-      discountPercent: { label: "Discount (%)" }
-      minCharge: { label: "Minimum Charge", format: money }
-      maxCharge: { label: "Maximum Charge", format: money }
-      roundingMode: { label: "Rounding Mode" }
       effectiveFrom: { label: "Effective From", type: epoch }
       effectiveTo: { label: "Effective To", type: epoch }
-    edges:
-      breaks: { label: "Weight Breaks" }
-
-  rate_agreement_rule_break:
-    struct: rateagreement.RateAgreementRuleBreak
-    resource: rate_agreement
-    withinRecord: true
-    label: Weight Break
-    pluralLabel: Weight Breaks
-    description: The rate steps of a weight-broken lane rule
-    category: Billing
-    fields:
-      rate: { label: Rate, format: money }
-      minCharge: { label: "Minimum Charge", format: money }
-      sortOrder: { label: "Sort Order" }
 
   rate_agreement_accessorial:
     struct: rateagreement.RateAgreementAccessorial
@@ -1171,7 +1146,7 @@ entities:
       rateUnit: { label: "Rate Unit" }
       amount: { label: Amount, format: money }
       autoApply: { label: "Auto Apply" }
-      applyCondition: { label: "Apply Condition" }
+      condition: { label: "Condition" }
       freeUnits: { label: "Free Units", format: count }
       maxAmount: { label: "Maximum Amount", format: money }
       effectiveFrom: { label: "Effective From", type: epoch }

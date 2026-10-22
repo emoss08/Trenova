@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -15,7 +14,7 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*RateAgreementAccessorial)(nil)
 
-const maxApplyConditionLength = 500
+const maxConditionLength = 20000
 
 // RateAgreementAccessorial is a contract's price for one accessorial.
 //
@@ -42,24 +41,14 @@ type RateAgreementAccessorial struct {
 	// later change to the organization's default price.
 	Waived bool `json:"waived" bun:"waived,type:BOOLEAN,notnull,default:false"`
 
-	// AutoApply adds the charge to every shipment the agreement prices, subject
-	// to ApplyCondition. Left off, the accessorial is merely priced, and a user
-	// still has to add it.
 	AutoApply bool `json:"autoApply" bun:"auto_apply,type:BOOLEAN,notnull,default:false"`
 
-	// ApplyCondition is an expression evaluated against the shipment, in the
-	// same language and against the same schema the formula editor already
-	// exposes — "totalStops > 2", say. Blank means always.
-	ApplyCondition string `json:"applyCondition" bun:"apply_condition,type:TEXT,nullzero"`
-
-	ConditionLanguageVersion formulatypes.LanguageVersion `json:"conditionLanguageVersion" bun:"condition_language_version,type:SMALLINT,notnull,default:1"`
+	Condition string `json:"condition" bun:"condition,type:TEXT,nullzero"`
 
 	// FreeUnits are granted before the charge starts counting, which is how
 	// detention and storage allowances are written.
 	FreeUnits *int16              `json:"freeUnits" bun:"free_units,type:SMALLINT,nullzero"`
 	MaxAmount decimal.NullDecimal `json:"maxAmount" bun:"max_amount,type:NUMERIC(19,4),nullzero"`
-
-	FormulaTemplateID *pulid.ID `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),nullzero"`
 
 	ServiceTypeIDs  []pulid.ID `json:"serviceTypeIds"  bun:"service_type_ids,type:JSONB,nullzero"`
 	ShipmentTypeIDs []pulid.ID `json:"shipmentTypeIds" bun:"shipment_type_ids,type:JSONB,nullzero"`
@@ -99,25 +88,62 @@ func (raga *RateAgreementAccessorial) PricedAmount() decimal.Decimal {
 	return raga.Amount
 }
 
-// BillableUnits deducts any free allowance from a measured quantity, never
-// going below zero.
-func (raga *RateAgreementAccessorial) BillableUnits(units int16) int16 {
-	if raga.FreeUnits == nil {
-		return units
-	}
+type AccessorialMeasures struct {
+	Miles  decimal.Decimal
+	Dwells []decimal.Decimal
+	Days   decimal.Decimal
+	Stops  decimal.Decimal
+}
 
-	if units <= *raga.FreeUnits {
-		return 0
+func (raga *RateAgreementAccessorial) BillableQuantity(
+	measures *AccessorialMeasures,
+) decimal.Decimal {
+	if raga.Method != accessorialcharge.MethodPerUnit {
+		return decimal.NewFromInt(1)
 	}
+	free := decimal.Zero
+	if raga.FreeUnits != nil {
+		free = decimal.NewFromInt(int64(*raga.FreeUnits))
+	}
+	if raga.RateUnit == accessorialcharge.RateUnitHour {
+		billable := decimal.Zero
+		for _, dwell := range measures.Dwells {
+			billable = billable.Add(decimal.Max(dwell.Sub(free), decimal.Zero))
+		}
+		return billable
+	}
+	var measured decimal.Decimal
+	switch raga.RateUnit { //nolint:exhaustive // hours are measured per stop above
+	case accessorialcharge.RateUnitMile:
+		measured = measures.Miles
+	case accessorialcharge.RateUnitDay:
+		measured = measures.Days
+	case accessorialcharge.RateUnitStop:
+		measured = measures.Stops
+	default:
+		measured = decimal.NewFromInt(1)
+	}
+	return decimal.Max(measured.Sub(free), decimal.Zero)
+}
 
-	return units - *raga.FreeUnits
+func (raga *RateAgreementAccessorial) Cap(amount decimal.Decimal) (decimal.Decimal, bool) {
+	if raga.MaxAmount.Valid && amount.GreaterThan(raga.MaxAmount.Decimal) {
+		return raga.MaxAmount.Decimal, true
+	}
+	return amount, false
+}
+
+func (raga *RateAgreementAccessorial) TariffRateUnit() string {
+	if raga.Method != accessorialcharge.MethodPerUnit {
+		return ""
+	}
+	return raga.RateUnit.TariffRateUnit()
 }
 
 func (raga *RateAgreementAccessorial) applyDefaults() {
 	if raga.Method != accessorialcharge.MethodPerUnit {
 		raga.RateUnit = ""
 	}
-	raga.ConditionLanguageVersion = raga.ConditionLanguageVersion.OrCurrent()
 }
 
 func (raga *RateAgreementAccessorial) Validate(multiErr *errortypes.MultiError) {
@@ -147,18 +173,13 @@ func (raga *RateAgreementAccessorial) Validate(multiErr *errortypes.MultiError) 
 				accessorialcharge.RateUnitStop,
 			).Error("Rate unit is invalid"),
 		),
-		validation.Field(&raga.ApplyCondition,
-			validation.Length(0, maxApplyConditionLength).
-				Error("Apply condition cannot be longer than 500 characters"),
+		validation.Field(&raga.Condition,
+			validation.Length(0, maxConditionLength).
+				Error("Condition cannot be longer than 20000 characters"),
 		),
 	))
 
 	raga.validateAmounts(multiErr)
-	formulatypes.ValidateLanguageVersion(
-		"conditionLanguageVersion",
-		raga.ConditionLanguageVersion,
-		multiErr,
-	)
 
 	if raga.EffectiveFrom != nil && raga.EffectiveTo != nil &&
 		*raga.EffectiveTo <= *raga.EffectiveFrom {
@@ -171,9 +192,9 @@ func (raga *RateAgreementAccessorial) Validate(multiErr *errortypes.MultiError) 
 
 	// A condition can only gate a charge that applies on its own; on a row the
 	// user adds by hand it would be stored and never consulted.
-	if raga.ApplyCondition != "" && !raga.AutoApply {
+	if raga.Condition != "" && !raga.AutoApply {
 		multiErr.Add(
-			"applyCondition",
+			"condition",
 			errortypes.ErrInvalid,
 			"A condition only applies to an automatically applied accessorial",
 		)

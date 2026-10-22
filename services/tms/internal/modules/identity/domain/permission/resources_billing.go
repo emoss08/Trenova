@@ -689,6 +689,41 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceFormulaLibrary.String(),
+		DisplayName: "Formula Library",
+		Description: "Organization formula libraries that rate formula templates import",
+		Category:    "Billing",
+		Operations: append(slices.Clone(standardOps),
+			OperationDefinition{
+				Operation:   OpDuplicate,
+				DisplayName: "Duplicate",
+				Description: "Duplicate formula libraries",
+			},
+			OperationDefinition{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Submit formula libraries for review",
+			},
+			OperationDefinition{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve formula library versions templates can pin",
+			},
+			OperationDefinition{
+				Operation:   OpReject,
+				DisplayName: "Reject",
+				Description: "Reject formula libraries under review",
+			},
+			OperationDefinition{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Archive formula libraries so no new template imports them",
+			},
+		),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceFuelSurchargeProgram.String(),
 		DisplayName:        "Fuel Surcharge Program",
 		Description:        "Fuel surcharge programs, fuel price indices, and DOE weekly price data",

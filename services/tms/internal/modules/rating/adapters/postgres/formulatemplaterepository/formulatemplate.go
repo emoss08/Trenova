@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 
@@ -59,20 +58,6 @@ func (r *repository) filterQuery(
 	)
 
 	q = querybuilder.ApplyFilters(q, "ft", req.Filter, (*formulatemplate.FormulaTemplate)(nil))
-
-	if req.Type != "" {
-		t, err := formulatemplate.TemplateTypeFromString(req.Type)
-		if err != nil {
-			log.Warn("rejected unknown template type filter", zap.String("type", req.Type))
-			return q.Err(errortypes.NewValidationError(
-				"type",
-				errortypes.ErrInvalid,
-				"Unknown template type: {0}", req.Type,
-			))
-		}
-
-		q = q.Where(formulatemplatecol.FormulaTemplateColumns.Type.Eq(), t)
-	}
 
 	if req.Status != "" {
 		s, err := formulatemplate.StatusFromString(req.Status)
@@ -304,10 +289,7 @@ func applyClearableColumns(
 	return q.
 		Value(cols.Description.String(), "?", entity.Description).
 		Value(cols.ReviewComment.String(), "?", entity.ReviewComment).
-		Value(cols.MinCharge.String(), "?", entity.MinCharge).
-		Value(cols.MaxCharge.String(), "?", entity.MaxCharge).
-		Value(cols.RoundingMode.String(), "?", entity.RoundingMode).
-		Value(cols.RoundingPrecision.String(), "?", entity.RoundingPrecision).
+		Value(cols.TestCount.String(), "?", entity.TestCount).
 		Value(cols.SubmittedByID.String(), "?", entity.SubmittedByID).
 		Value(cols.SubmittedAt.String(), "?", entity.SubmittedAt).
 		Value(cols.ApprovedByID.String(), "?", entity.ApprovedByID).
@@ -551,8 +533,6 @@ func (r *repository) BulkDuplicate(
 	)
 }
 
-// namesLike collects every template name in the tenant that starts with a
-// source's copy name, so the batch can pick names nothing already holds.
 func (r *repository) namesLike(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -591,9 +571,6 @@ func (r *repository) namesLike(
 	})
 }
 
-// nextAvailableName returns base when it is free, otherwise "base 2",
-// "base 3", and so on: a second duplicate of the same template gets its own
-// name rather than colliding with the first.
 func nextAvailableName(taken map[string]struct{}, base string) string {
 	if _, exists := taken[base]; !exists {
 		return base
@@ -630,20 +607,10 @@ func (r *repository) CountUsages(
 				shipmentcol.ShipmentColumns.FormulaTemplateID,
 				shipmentcol.ShipmentScopeTenant,
 			)
-			matrixUsage := r.usageCount(ctx, req, "rate_matrix",
-				ratematrixcol.RateMatrixTable,
-				ratematrixcol.RateMatrixColumns.FormulaTemplateID,
-				ratematrixcol.RateMatrixScopeTenant,
-			)
 			ruleUsage := r.usageCount(ctx, req, "rate_agreement_rule",
 				rateagreementcol.RateAgreementRuleTable,
 				rateagreementcol.RateAgreementRuleColumns.FormulaTemplateID,
 				rateagreementcol.RateAgreementRuleScopeTenant,
-			)
-			agreementAccessorialUsage := r.usageCount(ctx, req, "rate_agreement_accessorial",
-				rateagreementcol.RateAgreementAccessorialTable,
-				rateagreementcol.RateAgreementAccessorialColumns.FormulaTemplateID,
-				rateagreementcol.RateAgreementAccessorialScopeTenant,
 			)
 			billingFallbackUsage := r.usageCount(ctx, req, "billing_control_fallback",
 				tenantcol.BillingControlTable,
@@ -654,9 +621,7 @@ func (r *repository) CountUsages(
 			var results []usageResult
 			err := r.db.DBForContext(ctx).NewSelect().
 				TableExpr("(?) AS shipment_usage", shipmentUsage).
-				UnionAll(matrixUsage).
 				UnionAll(ruleUsage).
-				UnionAll(agreementAccessorialUsage).
 				UnionAll(billingFallbackUsage).
 				Scan(ctx, &results)
 			if err != nil {
@@ -703,7 +668,6 @@ func (r *repository) SelectOptions(
 						cols.ID.Name,
 						cols.Name.Name,
 						cols.Description.Name,
-						cols.Expression.Name,
 					},
 					OrgColumn: cols.OrganizationID.Qualified(),
 					BuColumn:  cols.BusinessUnitID.Qualified(),
@@ -729,8 +693,6 @@ func duplicateTemplateName(name string) error {
 	)
 }
 
-// usageCount is one branch of the usage union: how many rows of a table point
-// at the template, labelled so the caller can tell shipments from rules.
 func (r *repository) usageCount(
 	ctx context.Context,
 	req *formulatemplateports.GetTemplateUsageRequest,

@@ -25,9 +25,9 @@ func (e *Review) GetStaticFieldMap() map[string]string {
 	return formulatemplatecol.ReviewFieldMap
 }
 
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TestCase].
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [VersionImport].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [formulatemplatecol.TestCaseFieldMap] instead of parsing struct tags via reflection.
-func (e *TestCase) GetStaticFieldMap() map[string]string {
-	return formulatemplatecol.TestCaseFieldMap
+// the generated [formulatemplatecol.VersionImportFieldMap] instead of parsing struct tags via reflection.
+func (e *VersionImport) GetStaticFieldMap() map[string]string {
+	return formulatemplatecol.VersionImportFieldMap
 }

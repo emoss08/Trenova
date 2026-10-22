@@ -210,3 +210,33 @@ describe("extractRust", () => {
     });
   });
 });
+
+describe("extractRust with the Tariff standard library", () => {
+  let root;
+
+  before(async () => {
+    root = await mkdtemp(join(tmpdir(), "extract-rust-std-"));
+    const stdlib = join(root, "services", "crates", "rules", "src", "tariff", "stdlib");
+    await mkdir(stdlib, { recursive: true });
+    await writeFile(join(root, "services", "crates", "rules", "src", "lib.rs"), `pub mod tariff;\n`);
+    await writeFile(
+      join(stdlib, "ltl.tariff"),
+      'library "std.ltl"\n\n/// The weight to bill: `weight`\n/// rounded up.\nfn billed(weight: Weight) -> Weight = weight\n',
+    );
+    await writeFile(join(stdlib, "notes.tariff"), 'library "org.notes"\n\n/// Not shipped.\n');
+  });
+
+  after(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  it("files each standard library doc like the crate's templates", async () => {
+    const { entries } = await extractRust(root);
+    const file = join("services", "crates", "rules", "src", "tariff", "stdlib", "ltl.tariff");
+    const message = "The weight to bill: `weight` rounded up.";
+    assert.deepEqual(entries, [
+      { message, file, line: 3, kind: "rules-doc", area: "rules/tariff", scope: "go" },
+      { message, file, line: 3, kind: "rules-doc", area: RULES_CLIENT_AREA, scope: "ts" },
+    ]);
+  });
+});

@@ -102,22 +102,28 @@ describe("meaningfulChanges", () => {
 
 describe("describeFieldChange", () => {
   it("shows what a term moved from and to", () => {
-    expect(describeFieldChange({ field: "rate", before: "2.10", after: "2.35" })).toBe(
-      "rate 2.10 → 2.35",
-    );
+    expect(
+      describeFieldChange({ field: "inputs.rate", before: "$2.10/mi", after: "$2.35/mi" }),
+    ).toBe("Rate $2.10/mi → $2.35/mi");
   });
 
   // A minimum charge silently disappearing is exactly what a dry run exists to
   // catch, so it says "removed" rather than showing an empty value.
   it("says a term was removed rather than showing a blank", () => {
-    expect(describeFieldChange({ field: "minCharge", before: "450", after: "" })).toBe(
-      "minCharge removed (was 450)",
+    expect(describeFieldChange({ field: "inputs.minimumCharge", before: "$450", after: "" })).toBe(
+      "Minimum charge removed (was $450)",
     );
   });
 
+  it("names a lane's tariff in the form's words", () => {
+    expect(
+      describeFieldChange({ field: "formulaTemplateId", before: "Per mile", after: "Flat" }),
+    ).toBe("Tariff Per mile → Flat");
+  });
+
   it("says a term was set rather than showing a blank before", () => {
-    expect(describeFieldChange({ field: "minCharge", before: "", after: "450" })).toBe(
-      "minCharge set to 450",
+    expect(describeFieldChange({ field: "inputs.minimumCharge", before: "", after: "$450" })).toBe(
+      "Minimum charge set to $450",
     );
   });
 });

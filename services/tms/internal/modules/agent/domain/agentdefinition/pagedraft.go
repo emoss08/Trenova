@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -22,11 +21,32 @@ func describePageDraft(draft *pagedraft.Draft) string {
 		writeImportDraft(&builder, draft.ShipmentImport)
 	case draft.Formula != nil:
 		builder.WriteString(
-			"- The formula in the person's editor, which may not be saved yet. Answer about " +
-				"this expression, and test it before you say what it charges:\n",
+			"- The formula template in the person's editor, which may not be saved yet. Answer " +
+				"about this source, and check and test it before you say what it charges:\n",
 		)
 		builder.WriteString(pageDraftOpenTag)
-		writeFormulaDraft(&builder, draft.Formula)
+		writeSourceDraft(&builder, &sourceDraft{
+			surface:     pagedraft.SurfaceFormula,
+			noun:        "template",
+			id:          draft.Formula.TemplateID,
+			name:        draft.Formula.Name,
+			description: draft.Formula.Description,
+			source:      draft.Formula.Source,
+		})
+	case draft.FormulaLibrary != nil:
+		builder.WriteString(
+			"- The formula library in the person's editor, which may not be saved yet. Answer " +
+				"about this source, and check and test it before you say what it does:\n",
+		)
+		builder.WriteString(pageDraftOpenTag)
+		writeSourceDraft(&builder, &sourceDraft{
+			surface:     pagedraft.SurfaceFormulaLibrary,
+			noun:        "library",
+			id:          draft.FormulaLibrary.LibraryID,
+			name:        draft.FormulaLibrary.Name,
+			description: draft.FormulaLibrary.Description,
+			source:      draft.FormulaLibrary.Source,
+		})
 	default:
 		return ""
 	}
@@ -127,102 +147,39 @@ func writeImportStop(builder *strings.Builder, idx int, stop *pagedraft.ImportSt
 	}
 }
 
-func writeFormulaDraft(builder *strings.Builder, draft *pagedraft.Formula) {
-	builder.WriteString("\nsurface: formula")
-	builder.WriteString("\ntemplate: ")
-	if draft.TemplateID == "" {
+type sourceDraft struct {
+	surface     pagedraft.Surface
+	noun        string
+	id          string
+	name        string
+	description string
+	source      string
+}
+
+func writeSourceDraft(builder *strings.Builder, draft *sourceDraft) {
+	builder.WriteString("\nsurface: ")
+	builder.WriteString(string(draft.surface))
+	builder.WriteString("\n")
+	builder.WriteString(draft.noun)
+	builder.WriteString(": ")
+	if draft.id == "" {
 		builder.WriteString("new, not saved yet")
 	} else {
-		builder.WriteString(draftText(draft.TemplateID))
+		builder.WriteString(draftText(draft.id))
 	}
-	builder.WriteString("\nschema: ")
-	builder.WriteString(draftText(draft.SchemaID))
-	if draft.TemplateType != "" {
-		builder.WriteString("\ntype: ")
-		builder.WriteString(draftText(draft.TemplateType))
-	}
-	if draft.Name != "" {
+	if draft.name != "" {
 		builder.WriteString("\nname: ")
-		builder.WriteString(draftText(draft.Name))
+		builder.WriteString(draftText(draft.name))
 	}
-	if draft.Description != "" {
+	if draft.description != "" {
 		builder.WriteString("\ndescription: ")
-		builder.WriteString(draftText(draft.Description))
+		builder.WriteString(draftText(draft.description))
 	}
-	builder.WriteString("\nexpression: ")
-	if strings.TrimSpace(draft.Expression) == "" {
+	builder.WriteString("\nsource: ")
+	if strings.TrimSpace(draft.source) == "" {
 		builder.WriteString("empty")
-	} else {
-		builder.WriteString("\n")
-		builder.WriteString(draftText(draft.Expression))
+		return
 	}
-	for _, variable := range draft.Variables {
-		builder.WriteString("\nvariable ")
-		builder.WriteString(draftText(variable.Name))
-		builder.WriteString(" (")
-		builder.WriteString(string(variable.Type))
-		builder.WriteString(")")
-		if variable.DefaultValue != nil {
-			builder.WriteString(" default ")
-			builder.WriteString(draftText(formatDraftValue(variable.DefaultValue)))
-		}
-		if variable.Description != "" {
-			builder.WriteString(": ")
-			builder.WriteString(draftText(variable.Description))
-		}
-	}
-	builder.WriteString("\ncharge policy: ")
-	builder.WriteString(draftText(describeChargePolicy(draft.Policy)))
-	for _, line := range draft.Breakdown {
-		builder.WriteString("\nbreakdown line ")
-		builder.WriteString(draftText(line.Name))
-		builder.WriteString(" (")
-		builder.WriteString(draftText(line.Label))
-		builder.WriteString("): ")
-		builder.WriteString(draftText(line.Expression))
-	}
-}
-
-func describeChargePolicy(policy *pagedraft.FormulaPolicy) string {
-	charge := policy.ChargePolicy()
-	parts := make([]string, 0, 3)
-	if charge.MinCharge.Valid {
-		parts = append(parts, "minimum $"+charge.MinCharge.Decimal.String())
-	} else {
-		parts = append(parts, "no minimum")
-	}
-	if charge.MaxCharge.Valid {
-		parts = append(parts, "maximum $"+charge.MaxCharge.Decimal.String())
-	} else {
-		parts = append(parts, "no maximum")
-	}
-	if charge.RoundingMode == ratetypes.RoundingModeNone {
-		parts = append(parts, "no rounding")
-	} else {
-		parts = append(parts, "rounding "+charge.RoundingMode.String()+" to "+
-			strconv.Itoa(int(charge.RoundingPrecision))+" places")
-	}
-
-	return strings.Join(parts, ", ")
-}
-
-func formatDraftValue(value any) string {
-	switch v := value.(type) {
-	case string:
-		return strconv.Quote(v)
-	case bool:
-		return strconv.FormatBool(v)
-	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case float32:
-		return strconv.FormatFloat(float64(v), 'f', -1, 32)
-	case int:
-		return strconv.Itoa(v)
-	case int32:
-		return strconv.FormatInt(int64(v), 10)
-	case int64:
-		return strconv.FormatInt(v, 10)
-	default:
-		return ""
-	}
+	builder.WriteString("\n")
+	builder.WriteString(draftText(draft.source))
 }
