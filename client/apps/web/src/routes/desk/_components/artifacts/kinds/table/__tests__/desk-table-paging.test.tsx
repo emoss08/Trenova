@@ -91,6 +91,7 @@ function table(payload: Record<string, unknown>): AssistantArtifact {
         { key: "rate", label: "Rate", type: "money" },
       ],
       searchedFor: ["status is Active or Inactive"],
+      readBy: { id: "agd_dispatch", name: "Dispatch Desk", icon: "", accent: "teal" },
       ...payload,
     },
     sourceToolCallId: "call_1",
@@ -145,11 +146,11 @@ afterEach(() => {
 });
 
 describe("DeskTableBody paging a list", () => {
-  it("reads the next page as the table opens and pages on from the rows Nova read", async () => {
+  it("reads the next page as the table opens and pages on from the rows the agent read", async () => {
     renderTable(agentRead());
 
     expect(screen.getByText("Commodity 1")).toBeInTheDocument();
-    expect(screen.getByText(/^Nova read this page · /)).toBeInTheDocument();
+    expect(screen.getByText(/^Dispatch Desk read this page · /)).toBeInTheDocument();
     expect(await within(pager()).findByText("1–25 of 60")).toBeInTheDocument();
     expect(list.reads[0]).toEqual({
       limit: 25,
@@ -215,7 +216,7 @@ describe("DeskTableBody paging a list", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Clear the search" }));
     expect(await screen.findByText("Commodity 1")).toBeInTheDocument();
-    expect(screen.getByText(/^Nova read this page · /)).toBeInTheDocument();
+    expect(screen.getByText(/^Dispatch Desk read this page · /)).toBeInTheDocument();
   });
 
   it("filters only the rows read when the list takes no search", async () => {
@@ -281,18 +282,52 @@ describe("DeskTableBody paging a list", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("stops at the rows Nova read when the person may no longer read the list", async () => {
+  it("stops at the rows the agent read when the person may no longer read the list", async () => {
     list.failures.push(new ApiRequestError(403, { title: "Forbidden", status: 403 } as never));
     renderTable(agentRead());
 
     expect(
       await screen.findByText(
-        "You can no longer read this list, so only the rows Nova read are shown",
+        "You can no longer read this list, so only the rows Dispatch Desk read are shown",
       ),
     ).toBeInTheDocument();
     expect(within(pager()).getByText("1–25 of 25+")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Next page" })).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("names the agent that read the rows on its pages and in the page strip", async () => {
+    renderTable(agentRead());
+    await within(pager()).findByText("1–25 of 60");
+
+    expect(screen.getByLabelText("What Dispatch Desk asked for")).toHaveTextContent(
+      "status is Active or Inactive",
+    );
+    expect(screen.getByRole("button", { name: "Page 1, read by Dispatch Desk" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("button", { name: "Page 2" })).toBeInTheDocument();
+    expect(screen.queryByText(/Nova/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(screen.getByText("Read just now, with your access")).toBeInTheDocument();
+  });
+
+  it("says the rows were read in the conversation when the table does not name its agent", async () => {
+    list.failures.push(new ApiRequestError(403, { title: "Forbidden", status: 403 } as never));
+    renderTable(agentRead({ readBy: undefined }));
+
+    expect(
+      await screen.findByText(
+        "You can no longer read this list, so only the rows read in this conversation are shown",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/^Read in this conversation · /)).toBeInTheDocument();
+    expect(screen.getByLabelText("What was asked for")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Page 1, read in this conversation" }),
+    ).toBeInTheDocument();
   });
 
   it("names the columns the person may not see", async () => {
@@ -312,7 +347,7 @@ describe("DeskTableBody paging a list", () => {
     expect(list.reads[0]).toMatchObject({ after: undefined, offset: undefined, total: true });
   });
 
-  it("reads the list from its start when it no longer takes the place Nova stopped at", async () => {
+  it("reads the list from its start when it no longer takes the place the agent stopped at", async () => {
     list.failures.push(
       new ApiRequestError(400, {
         title: "Bad Request",
@@ -358,7 +393,7 @@ describe("DeskTableBody paging a table that holds the whole list", () => {
     renderTable(table({ rows: range(1, 30), rowCount: 30, hasMore: false, pages: 2 }));
 
     expect(within(pager()).getByText("1–25 of 30")).toBeInTheDocument();
-    expect(screen.getByText(/^Nova read every row · /)).toBeInTheDocument();
+    expect(screen.getByText(/^Dispatch Desk read every row · /)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
 
     expect(screen.getByText("Commodity 30")).toBeInTheDocument();

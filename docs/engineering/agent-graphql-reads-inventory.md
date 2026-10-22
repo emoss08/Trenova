@@ -48,8 +48,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `carrier_get` | op | carrier | DeskCarrierCard | n/a | id | Same CarrierRepository.GetByID via CarrierService.Get. |
-| `carrier_get_intelligence_event` | op | carrierIntelEvent | CarrierIntelEvent | n/a | id | Tool repo.GetByIDs; resolver CarrierIntelService. No Desk op. |
 | `carrier_list_capacity_postings` | field-no-op | carrierCapacityPostings | propose DeskCarrierCapacityPostings | cursor | DataTable + typed carrierId, openOnly | Root field reads the same CarrierCapacityPostingRepository; no persisted op selects it. |
 | `carrier_list_intelligence_events` | op | carrierIntelEvents | CarrierIntelEventTable (alt CarrierIntelEventInbox) | cursor | DataTable + bespoke CarrierIntelEventFilterInput (statuses, severities, categories, carrierId, openOnly) | Same CarrierIntelService.ListEvents. fromDate/toDate (DetectedFrom/To) not typed: send as fieldFilters on detectedAt. Picked Table (no Desk op); Inbox is the triage view. |
 | `carrier_list_invoice_matches` | op | carrierInvoiceMatches | CarrierInvoiceMatches | limit/offset | typed args status, carrierId | Same CarrierSettlementService.ListInvoiceMatches. |
@@ -58,7 +56,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `customer_get` | op | customer | DeskCustomerCard | n/a | id | Same CustomerRepository.GetByID via CustomerService.Get. |
 | `customer_get_update_preferences` | field-no-op | customer | propose DeskCustomerUpdatePreferences | n/a | id | customer exposes statusUpdatePreference/statusUpdateRecipients, but no persisted op selects them (DeskCustomerCard does not); fallback recipients need emailProfile.toRecipients. |
 
 ## detention
@@ -211,7 +208,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `location_get` | op | location | DeskLocationCard | n/a | id | Same LocationRepository.GetByID. |
 
 ## masterdata
 
@@ -318,8 +314,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 97 |
-| op, converted (rows removed) | 22 |
+| op, not yet converted | 93 |
+| op, converted (rows removed) | 26 |
 | field-no-op | 6 |
 | partial, not yet converted | 24 |
 | partial, converted (rows removed) | 6 |

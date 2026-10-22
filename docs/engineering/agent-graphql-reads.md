@@ -572,6 +572,10 @@ Each module's PR:
 | Parties | `customer_list` | none | every field the table selects is Internal |
 | Parties | `location_list` | none | every field the table selects is Internal |
 | Parties | `carrier_list` | none | every field the table selects is Internal |
+| Parties | `customer_get` | none | reads `DeskCustomerCard`: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `location_get` | none | reads `DeskLocationCard`; every field it selects is Internal |
+| Parties | `carrier_get` | none | reads `DeskCarrierCard`, named in `reads.yml` because `DeskCarrierIntel` reads the same root; every field it selects is Internal |
+| Parties | `carrier_get_intelligence_event` | none at Internal | reads `CarrierIntelEvent`. `CarrierIntelEvent` had no kind (it is not named for `carrier_intelligence`), so the guard did not gate it and a reader below Internal got every field; it now declares `@kind(resource: "carrier_intelligence")`, so its fields follow `carrier_intelligence`'s Internal default on every read of the type, the carrier intelligence screens' included, as the repository tool gated them. Who acknowledged or resolved it shows the user reference view |
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows the worker reference view (the driver's name) to a reader who cannot read workers, and nothing else |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
 | Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
@@ -677,7 +681,10 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   it says what to loosen.
 - **Gets.** A get returns the operation's record, shaped the same way, with
   `withheldByAccess`. A get for several ids (`invoice_get`) runs one read per id, at most 10
-  concurrently, under one span each.
+  concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
+  parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
+  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, and a card
+  whose root returns nothing is a missing record, not an empty one.
 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by
@@ -720,6 +727,11 @@ For kinds that declare an "own" or "team" scope (shipments, orders, invoices, wo
 module's test also reads as a person narrowed by `readscope` and asserts the GraphQL path returns
 the rows the repository path returned for that person
 (`TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths` for workers).
+
+A converted get is held to the same on Postgres by
+`TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity`: it reads each of the tenant's
+records with nothing withheld at Internal, refuses the other tenant's, and at Public withholds
+what its row names. `TestConvertedGets_RefuseExactlyWhatAuthorizeRefuses` covers refusal.
 
 Every list converted by a spec is listed once, in `graphQLListSpecs`, which registers them and
 which the tests range over: `TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity`

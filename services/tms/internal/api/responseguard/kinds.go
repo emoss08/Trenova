@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -57,6 +58,7 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[driverpay.WorkerBenefitEnrollment]():   permission.ResourceBenefitPlan,
 	reflect.TypeFor[worker.WorkerEmploymentVerification](): permission.ResourceQualification,
 	reflect.TypeFor[worker.WorkerSafetyViolation]():        permission.ResourceWorkerSafetyEvent,
+	reflect.TypeFor[carrierintel.CarrierIntelEvent]():      permission.ResourceCarrierIntelligence,
 }
 
 // kindTable maps a Go type to the kind of record it holds.

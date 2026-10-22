@@ -1,5 +1,5 @@
 {
-  "version": "sha256:4d1a8a3b93d16408915c1f73f6e7e361e9bbedd15c16682d67cd3befccd8a855",
+  "version": "sha256:81ab5f836e6b46fc914fec4839fefc029c671071769049d4b24688869d0883a7",
   "screens": [
     {
       "path": "/",
@@ -18143,7 +18143,8 @@
         }
       ],
       "reads": [
-        "carrier"
+        "carrier",
+        "carrier_intelligence"
       ],
       "references": [
         "user"
@@ -18274,7 +18275,8 @@
         }
       ],
       "reads": [
-        "carrier"
+        "carrier",
+        "carrier_intelligence"
       ],
       "references": [
         "user"
@@ -35764,7 +35766,9 @@
     {
       "name": "CarrierIntelEvent",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -35787,7 +35791,9 @@
     {
       "name": "CarrierIntelEventInbox",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -35801,7 +35807,9 @@
     {
       "name": "CarrierIntelEventTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "carrier_intelligence"
+      ],
       "linked": [
         {
           "kind": "user",
@@ -41307,7 +41315,14 @@
       "name": "ResolveCarrierIntelEvent",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "user",
+          "fields": [
+            "name"
+          ]
+        }
+      ],
       "declared": []
     },
     {

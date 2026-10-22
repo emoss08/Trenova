@@ -583,11 +583,18 @@ the agent read. `tableArtifact` keeps the agent's rows with where the list goes 
   does not search is filtered over the rows read, and a column it does not sort by stays fixed. A
   table cut to fit has no position, so paging past its rows reads the list from its start. A
   table that holds its whole list pages where it is and reads nothing.
-- **Whose read a page is** is shown: the Nova badge on rows the agent read (a part page says
-  so), "Read just now, with your access" on the rest, and the strip of pages under the table
-  marks the agent's pages, the ones read and the one open. A failed page keeps the pages read
-  and offers Try again; a 403 stops the table at the agent's rows with a lock note; withheld
-  columns are named.
+- **Whose read a page is** is shown: rows the conversation's agent read wear its mark and name
+  ("Dispatch Desk read this page", a part page says so), "Read just now, with your access" on
+  the rest, and the strip of pages under the table marks the agent's pages in its accent, the
+  ones read and the one open. A failed page keeps the pages read and offers Try again; a 403
+  stops the table at the agent's rows with a lock note; withheld columns are named.
+- **The agent is the one the turn ran as, never Nova.** Nova is the product's own AI (Triage,
+  briefs, Ask Nova) and wears the Nova badge; a Desk conversation is with an agent the person
+  chose and can hand over. The recorder stamps a table with that agent's name and mark when it
+  keeps it (`readBy`: id, name, icon, accent, read once per turn by `agentIdentities`), as a
+  document keeps its author, so a hand-off later leaves the table credited to the agent that
+  read it. A table without `readBy` (the agent could not be read) says it was read "in this
+  conversation".
 
 The mock API's `athr_desk_table` conversation serves it (`handlers/desktable.mjs`, the
 `deskTable` scenario: paged, slow, failing, locked, withheld, cut, whole, short), and

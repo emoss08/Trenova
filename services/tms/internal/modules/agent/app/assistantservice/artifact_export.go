@@ -39,7 +39,7 @@ var errNotExportable = errortypes.NewValidationError(
 )
 
 var errNotReread = errortypes.NewBusinessError(
-	"This table does not say how it was read, so it cannot be read again. Ask Nova to read it again",
+	"This table does not say how it was read, so it cannot be read again. Ask for the list again in the conversation",
 )
 
 // exportSource is an artifact's table read again from where it came from.

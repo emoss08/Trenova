@@ -5,8 +5,16 @@
 # See docs/engineering/agent-graphql-reads.md.
 reads:
   - tool: carrier_list
+  - tool: carrier_get_intelligence_event
+    operation: CarrierIntelEvent
+    reason: The tool is named for the carrier it watches; its record is the event, read by carrierIntelEvent, which no rule finds from the name.
   - tool: customer_list
   - tool: location_list
+  - tool: carrier_get
+    operation: DeskCarrierCard
+    reason: The carrier's own card; DeskCarrierIntel reads the same root for the intelligence panel.
+  - tool: customer_get
+  - tool: location_get
   - tool: document_list_types
   - tool: equipment_list_manufacturers
   - tool: equipment_list_tractors
