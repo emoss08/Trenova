@@ -59,11 +59,13 @@ modules:
       - organizationservice
       - orgstructureservice
       - orgzone
+      - pageaccessservice
       - passwordresetservice
       - permission
       - planservice
       - ptoledgerservice
       - quotaservice
+      - refview
       - roleassignmentservice
       - roleservice
       - sequenceconfigservice

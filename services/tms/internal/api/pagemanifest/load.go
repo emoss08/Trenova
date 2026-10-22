@@ -65,13 +65,20 @@ func FromRepository(root string, registry *permission.Registry) (*Inputs, error)
 // ClientOperations parses every operation and fragment under a directory of
 // .graphql files.
 func ClientOperations(dir string) (ast.OperationList, ast.FragmentDefinitionList, error) {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer root.Close()
+	fsys := root.FS()
+
 	var operations ast.OperationList
 	var fragments ast.FragmentDefinitionList
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".graphql") {
 			return err
 		}
-		raw, err := os.ReadFile(path)
+		raw, err := fs.ReadFile(fsys, path)
 		if err != nil {
 			return err
 		}

@@ -262,12 +262,11 @@ func newRouteIndex(routes []routelint.Route, checks []permissionlint.Pair) *rout
 	return index
 }
 
-func splitPosition(position string) (string, int, bool) {
+func splitPosition(position string) (file string, line int, ok bool) {
 	at := strings.LastIndex(position, ":")
 	if at < 0 {
 		return "", 0, false
 	}
-	var line int
 	if _, err := fmt.Sscanf(position[at+1:], "%d", &line); err != nil {
 		return "", 0, false
 	}

@@ -6291,6 +6291,84 @@ type PTOPolicyRuleInput struct {
 	OnTermination       *worker.PTOTerminationAction `json:"onTermination,omitempty"`
 }
 
+// What a screen needs and what a person or a role would see on it, from the
+// page access manifest. It never carries record data.
+type PageAccess struct {
+	// The route the location is, such as /shipments/:id.
+	Path string `json:"path"`
+	// The screen's English name from the navigation, or empty.
+	Name       string                   `json:"name"`
+	Operations []string                 `json:"operations"`
+	Requires   []*PageAccessRequirement `json:"requires"`
+	Endpoints  []*PageAccessEndpoint    `json:"endpoints"`
+	Kinds      []*PageAccessKind        `json:"kinds"`
+	// How many selected fields of linked records come back null.
+	Withheld int `json:"withheld"`
+	// The route, or a kind the screen reads as root records, is refused.
+	Blocked bool `json:"blocked"`
+}
+
+type PageAccessDraftPermissionInput struct {
+	Resource   string   `json:"resource"`
+	Operations []string `json:"operations"`
+}
+
+// A REST endpoint a screen calls, and what its route checks before its handler.
+type PageAccessEndpoint struct {
+	Method   string                   `json:"method"`
+	Path     string                   `json:"path"`
+	Requires []*PageAccessRequirement `json:"requires"`
+}
+
+// One field a screen selects on a linked record. A name written Type.field is a
+// field of a record that is part of the kind, which has no view of its own.
+type PageAccessField struct {
+	Name     string             `json:"name"`
+	InView   bool               `json:"inView"`
+	Decision PageAccessDecision `json:"decision"`
+}
+
+// One kind a screen depends on, and what the reader sees of it there.
+type PageAccessKind struct {
+	Resource     string             `json:"resource"`
+	ResourceName string             `json:"resourceName"`
+	Use          PageAccessUse      `json:"use"`
+	CanRead      bool               `json:"canRead"`
+	Fields       []*PageAccessField `json:"fields"`
+	Withheld     int                `json:"withheld"`
+}
+
+type PageAccessPreviewInput struct {
+	// A path in the app, such as /shipments/shp_123.
+	Location string `json:"location"`
+	// A saved role to preview. Exactly one of roleId and draft is set.
+	RoleID *string `json:"roleId,omitempty"`
+	// The role being edited.
+	Draft *PageAccessRoleDraftInput `json:"draft,omitempty"`
+}
+
+// A permission a screen's route or one of its REST endpoints checks.
+type PageAccessRequirement struct {
+	Resource      string `json:"resource"`
+	ResourceName  string `json:"resourceName"`
+	Operation     string `json:"operation"`
+	OperationName string `json:"operationName"`
+	Allowed       bool   `json:"allowed"`
+}
+
+// A role as the role editor holds it before it is saved.
+type PageAccessRoleDraftInput struct {
+	MaxSensitivity string                            `json:"maxSensitivity"`
+	ParentRoleIds  []string                          `json:"parentRoleIds,omitempty"`
+	Permissions    []*PageAccessDraftPermissionInput `json:"permissions"`
+}
+
+// A screen of the page access manifest.
+type PageAccessScreen struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
+}
+
 type PageInfo struct {
 	HasNextPage bool    `json:"hasNextPage"`
 	EndCursor   *string `json:"endCursor,omitempty"`
@@ -7617,6 +7695,32 @@ type RoleConnection struct {
 type RoleEdge struct {
 	Node   *permission.Role `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// What granting and withholding a resource's read means, in sentences built from
+// the permission registry, the resource's reference view and the kinds that link
+// to it, translated for the request.
+type RoleResourceGuide struct {
+	Resource string `json:"resource"`
+	Name     string `json:"name"`
+	Granted  string `json:"granted"`
+	Withheld string `json:"withheld"`
+	// The view's fields above the role's sensitivity ceiling, or null when none are.
+	Ceiling *string               `json:"ceiling,omitempty"`
+	Screens []*RoleResourceScreen `json:"screens"`
+}
+
+type RoleResourceGuideInput struct {
+	// At most 64 resources, such as one category of the role editor.
+	Resources      []string `json:"resources"`
+	MaxSensitivity string   `json:"maxSensitivity"`
+}
+
+// A screen a resource's grant changes, and how it depends on the resource.
+type RoleResourceScreen struct {
+	Path string        `json:"path"`
+	Name string        `json:"name"`
+	Use  PageAccessUse `json:"use"`
 }
 
 // The composed board. It is derived on every read and never stored: a stored week
@@ -12943,6 +13047,130 @@ func (e *NotificationState) UnmarshalJSON(b []byte) error {
 }
 
 func (e NotificationState) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// What the field guard does with one field of a linked record.
+type PageAccessDecision string
+
+const (
+	PageAccessDecisionVisible PageAccessDecision = "VISIBLE"
+	// Outside the kind's reference view, and the reader cannot read the kind.
+	PageAccessDecisionWithheldKind PageAccessDecision = "WITHHELD_KIND"
+	// Above the reader's sensitivity ceiling.
+	PageAccessDecisionWithheldSensitivity PageAccessDecision = "WITHHELD_SENSITIVITY"
+)
+
+var AllPageAccessDecision = []PageAccessDecision{
+	PageAccessDecisionVisible,
+	PageAccessDecisionWithheldKind,
+	PageAccessDecisionWithheldSensitivity,
+}
+
+func (e PageAccessDecision) IsValid() bool {
+	switch e {
+	case PageAccessDecisionVisible, PageAccessDecisionWithheldKind, PageAccessDecisionWithheldSensitivity:
+		return true
+	}
+	return false
+}
+
+func (e PageAccessDecision) String() string {
+	return string(e)
+}
+
+func (e *PageAccessDecision) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageAccessDecision(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageAccessDecision", str)
+	}
+	return nil
+}
+
+func (e PageAccessDecision) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageAccessDecision) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageAccessDecision) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How a screen depends on one kind of record (docs/engineering/reference-views.md).
+type PageAccessUse string
+
+const (
+	// The screen's route, or a REST endpoint it calls, checks the kind.
+	PageAccessUseRequired PageAccessUse = "REQUIRED"
+	// The screen reads records of the kind as root records, which needs the kind's read.
+	PageAccessUseRead PageAccessUse = "READ"
+	// The screen asks for fields beyond the kind's reference view with @requiresRead.
+	PageAccessUseDeclared PageAccessUse = "DECLARED"
+	// The screen shows the kind only through its reference view.
+	PageAccessUseReference PageAccessUse = "REFERENCE"
+)
+
+var AllPageAccessUse = []PageAccessUse{
+	PageAccessUseRequired,
+	PageAccessUseRead,
+	PageAccessUseDeclared,
+	PageAccessUseReference,
+}
+
+func (e PageAccessUse) IsValid() bool {
+	switch e {
+	case PageAccessUseRequired, PageAccessUseRead, PageAccessUseDeclared, PageAccessUseReference:
+		return true
+	}
+	return false
+}
+
+func (e PageAccessUse) String() string {
+	return string(e)
+}
+
+func (e *PageAccessUse) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageAccessUse(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageAccessUse", str)
+	}
+	return nil
+}
+
+func (e PageAccessUse) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageAccessUse) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageAccessUse) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

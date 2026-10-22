@@ -98,6 +98,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgholidayexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
@@ -3124,6 +3125,10 @@ type QueryResolver interface {
 	JobPositionHolders(ctx context.Context, id string) ([]*gqlmodel.PositionHolder, error)
 	MyTeam(ctx context.Context, includeInactive *bool) ([]*gqlmodel.TeamMember, error)
 	ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*worker.ApprovalDelegation, error)
+	PageAccess(ctx context.Context, location string) (*gqlmodel.PageAccess, error)
+	PageAccessPreview(ctx context.Context, input gqlmodel.PageAccessPreviewInput) (*gqlmodel.PageAccess, error)
+	PageAccessScreens(ctx context.Context) ([]*gqlmodel.PageAccessScreen, error)
+	RoleResourceGuides(ctx context.Context, input gqlmodel.RoleResourceGuideInput) ([]*gqlmodel.RoleResourceGuide, error)
 	PerformanceReviewTemplates(ctx context.Context, input gqlmodel.PerformanceReviewTemplatesInput) (*gqlmodel.PerformanceReviewTemplateConnection, error)
 	PerformanceReviewTemplate(ctx context.Context, id string) (*worker.PerformanceReviewTemplate, error)
 	ActivePerformanceReviewTemplates(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error)
@@ -3892,6 +3897,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		orderexec.Shard,
 		orgholidayexec.Shard,
 		orgstructureexec.Shard,
+		pageaccessexec.Shard,
 		performancereviewexec.Shard,
 		preludeexec.Shard,
 		ptopolicyexec.Shard,

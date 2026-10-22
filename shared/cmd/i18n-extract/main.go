@@ -106,7 +106,8 @@ var translatorCalls = map[string]int{
 }
 
 var labelledGeneratedFiles = map[string]struct{}{
-	"catalog_gen.go": {},
+	"catalog_gen.go":   {},
+	"viewwords_gen.go": {},
 }
 
 func isTranslatorCall(fun ast.Expr) (int, bool) {

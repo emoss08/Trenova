@@ -126,3 +126,45 @@ func (a AgentAccess) Ceiling(
 	}
 	return a.Ceilings.For(ctx, kind), true
 }
+
+// RoleAccess is what a role would be shown, from its grants alone: what a
+// person holding only that role (and the roles it inherits) reads, with the
+// same ceiling on what they see of a linked record through its view. It is
+// how an administrator previews a screen as a role, and it never reads a
+// record.
+type RoleAccess struct {
+	registry *permission.Registry
+	grants   permission.RoleGrants
+}
+
+func NewRoleAccess(registry *permission.Registry, grants permission.RoleGrants) RoleAccess {
+	if registry == nil {
+		registry = fieldsensitivity.DefaultRegistry()
+	}
+	return RoleAccess{registry: registry, grants: grants}
+}
+
+func (a RoleAccess) Reads(_ context.Context, kind permission.Resource) bool {
+	return a.grants.Allows(a.registry, kind.String(), permission.OpRead)
+}
+
+// Allows reports whether the role may perform an operation on a resource.
+func (a RoleAccess) Allows(resource string, op permission.Operation) bool {
+	return a.grants.Allows(a.registry, resource, op)
+}
+
+func (a RoleAccess) Ceiling(
+	ctx context.Context,
+	kind permission.Resource,
+	reach Reach,
+) (permission.FieldSensitivity, bool) {
+	if reach != Nested || a.Reads(ctx, kind) {
+		return "", false
+	}
+	ceiling := fieldsensitivity.RoleCeiling(a.grants.MaxSensitivity)
+	if ceiling == "" {
+		ceiling = permission.SensitivityInternal
+	}
+
+	return ceiling, true
+}

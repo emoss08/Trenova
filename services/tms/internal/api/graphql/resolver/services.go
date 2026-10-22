@@ -66,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
@@ -365,6 +366,7 @@ type Params struct {
 	ProposalPreviewService       agentports.ProposalPreviewService `optional:"true"`
 	IAMService                   iamports.IAMService
 	RoleService                  *roleservice.Service
+	PageAccessService            *pageaccessservice.Service
 	UserService                  *userservice.Service
 	APIKeyService                *apikeyservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
@@ -597,6 +599,7 @@ type Services struct {
 	ProposalPreviewService       agentports.ProposalPreviewService
 	IamService                   iamports.IAMService
 	RoleService                  *roleservice.Service
+	PageAccessService            *pageaccessservice.Service
 	UserService                  *userservice.Service
 	APIKeyService                *apikeyservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
@@ -835,6 +838,7 @@ func newServices(p *Params) *Services {
 		ProposalPreviewService:       p.ProposalPreviewService,
 		IamService:                   p.IAMService,
 		RoleService:                  p.RoleService,
+		PageAccessService:            p.PageAccessService,
 		UserService:                  p.UserService,
 		APIKeyService:                p.APIKeyService,
 		TableChangeAlertService:      p.TableChangeAlertService,

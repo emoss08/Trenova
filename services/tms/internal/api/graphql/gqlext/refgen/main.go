@@ -50,6 +50,12 @@ func main() {
 		log.Fatal(err)
 	}
 	write(pagemanifest.ManifestPath, rendered)
+
+	words, err := pagemanifest.RenderWords(schema, registry)
+	if err != nil {
+		log.Fatal(err)
+	}
+	write(pagemanifest.WordsPath, []byte(words))
 }
 
 func write(path string, content []byte) {
