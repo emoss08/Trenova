@@ -136,9 +136,12 @@ A draft prices nothing until it is approved, so drafting, revising and copying a
 the organization; one drafted from a rate sheet or a message someone outside sent is still
 proposed. Lanes are a closed schema: an origin and a destination by scope type (Any, Country,
 State, CityState, Zip3, Zip5, Zone, Location — Radius needs coordinates an agent does not
-have), a two-letter state code the tool resolves to the state on file, a direction, a formula
-template or a rate matrix, and decimal rate, minimum and maximum. `rate_update_agreement_draft`
-revises only a draft and keeps each lane it names by `ruleId`, changing only what it gives.
+have), a two-letter state code the tool resolves to the state on file, a direction, the formula
+template whose tariff prices it (a new lane needs one), that tariff's input values (Tariff
+literals such as `$2.35/mi`, `12%` or `500 mi`, or a JSON wire value for a list or record; they
+override the agreement's own `inputs`), a priority, and the hazmat-only and
+temperature-control-only flags. `rate_update_agreement_draft` revises only a draft and keeps
+each lane it names by `ruleId`, changing only what it gives.
 
 A negotiated rate is confidential: the rate agreement resource's default sensitivity is
 Confidential, so a preview never carries a rate. Amendments, rate sheets and rate increases
@@ -200,9 +203,9 @@ driver, shipment and document reads that find what a purchase or a mile belongs 
 purchases and returns default to Internal sensitivity, so its data access is Internal. The
 formula assistant is the organization's pricing agent and holds 30.
 
-`formula_get_template` reads one formula template whole: its formula, its own variables with
-their defaults, its breakdown lines, its minimum, maximum and rounding, and its status and
-version, so a formula is read before it is explained or changed. The formula assistant, the
+`formula_get_template` reads one formula template whole: its Tariff source, the inputs it
+declares, the libraries it imports, and its status and version, so a formula is read before it
+is explained or changed. The formula assistant, the
 shipment intake desk and the import assistant hold it beside `formula_list_templates`, which
 yields its id. A person sees the template as its own card on the Desk.
 
