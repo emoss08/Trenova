@@ -1802,6 +1802,7 @@ enum AgentSubjectType {
   AccountingInboundChange
   AccountingDriftFinding
   FormulaTemplate
+  FormulaLibrary
   Invoice
   InvoiceDispute
   FactoringNoa
