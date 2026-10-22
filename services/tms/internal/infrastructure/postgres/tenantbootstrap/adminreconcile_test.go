@@ -1,6 +1,7 @@
 package tenantbootstrap
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -125,5 +126,39 @@ func TestPlanAdminGrants_GrantsLeaveToAnAdministratorWhoHoldsOnlyWorkers(t *test
 		permission.OpExport,
 	}, plan.add[0].Operations)
 	assert.Equal(t, permission.DataScopeOrganization, plan.add[0].DataScope)
+	assert.Empty(t, plan.extend)
+}
+
+func TestPlanAdminGrants_GrantsEveryHRKindToAnAdministratorWhoHoldsOnlyWorkers(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	roleID := pulid.MustNew("rol_")
+	own := []permission.Resource{
+		permission.ResourceWorkerInjury,
+		permission.ResourceWorkerDOTTest,
+		permission.ResourceBenefitPlan,
+		permission.ResourceWorkerEmploymentEvent,
+		permission.ResourceWorkerDisciplinaryAction,
+		permission.ResourcePerformanceReview,
+		permission.ResourceTimesheet,
+		permission.ResourceProfileChangeRequest,
+	}
+	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	for _, rp := range fullGrants(registry, roleID) {
+		if !slices.Contains(own, permission.Resource(rp.Resource)) {
+			held = append(held, rp)
+		}
+	}
+
+	plan := planAdminGrants(registry, roleID, held, 100)
+
+	require.Len(t, plan.add, len(own), "each is its own grant, so a worker grant does not cover it")
+	for _, add := range plan.add {
+		assert.Contains(t, own, permission.Resource(add.Resource))
+		assert.ElementsMatch(t, registry.GetOperationsForResource(add.Resource), add.Operations,
+			add.Resource)
+		assert.Equal(t, permission.DataScopeOrganization, add.DataScope)
+	}
 	assert.Empty(t, plan.extend)
 }

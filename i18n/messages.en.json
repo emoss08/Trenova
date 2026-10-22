@@ -38139,7 +38139,7 @@
     ]
   },
   "Benefits": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -43178,7 +43178,7 @@
       "routes/agent-control"
     ]
   },
-  "Can read every record except leave cases, and change nothing.": {
+  "Can read every record except HR, medical, drug testing and pay records, and change nothing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -129886,6 +129886,15 @@
       "apps/web/components"
     ]
   },
+  "Keep benefit plans and enroll workers on them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep both": {
     "sites": 1,
     "scope": [
@@ -130573,7 +130582,7 @@
       "go/other"
     ]
   },
-  "Keep worker records, employment events, positions, benefits and checklists.": {
+  "Keep worker records, employment events, positions and checklists.": {
     "sites": 1,
     "scope": [
       "go"
@@ -218321,6 +218330,15 @@
       "routes/worker"
     ]
   },
+  "Reviews and discipline": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Reviews drafted for workers, their ratings, goals and sign-off": {
     "sites": 1,
     "scope": [
@@ -305051,6 +305069,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Write performance reviews and issue disciplinary actions.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Write something before sending": {
