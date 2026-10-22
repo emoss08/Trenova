@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/formulalibrarycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
@@ -430,6 +431,12 @@ var FiscalPeriodSpec TypeSpec
 var FiscalYearSpec TypeSpec
 
 var FleetCodeSpec TypeSpec
+
+var FormulaLibrarySpec TypeSpec
+
+var FormulaLibraryReviewSpec TypeSpec
+
+var FormulaLibraryVersionSpec TypeSpec
 
 var FormulaTemplateSpec TypeSpec
 
@@ -15870,6 +15877,240 @@ func init() {
 		},
 	}
 
+	FormulaLibrarySpec = TypeSpec{
+		TypeName: "FormulaLibrary",
+		FieldMap: formulalibrarycol.FormulaLibraryFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "path",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "imports",
+				FieldMapKey: "imports",
+			},
+			{
+				Name:        "testCount",
+				FieldMapKey: "testCount",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "reviewComment",
+				FieldMapKey: "reviewComment",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "sourceLibraryId",
+				FieldMapKey: "sourceLibraryId",
+			},
+			{
+				Name:        "sourceVersionNumber",
+				FieldMapKey: "sourceVersionNumber",
+			},
+			{
+				Name:        "currentVersionNumber",
+				FieldMapKey: "currentVersionNumber",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	FormulaLibraryReviewSpec = TypeSpec{
+		TypeName: "FormulaLibraryReview",
+		FieldMap: formulalibrarycol.FormulaLibraryReviewFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "libraryId",
+				FieldMapKey: "libraryId",
+			},
+			{
+				Name:        "round",
+				FieldMapKey: "round",
+			},
+			{
+				Name:        "decision",
+				FieldMapKey: "decision",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "comment",
+				FieldMapKey: "comment",
+			},
+			{
+				Name:        "baseVersionNumber",
+				FieldMapKey: "baseVersionNumber",
+			},
+			{
+				Name:        "requestedReviewerId",
+				FieldMapKey: "requestedReviewerId",
+			},
+			{
+				Name:        "requestedReviewer",
+				FieldMapKey: "requestedReviewerId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "reviewerNote",
+				FieldMapKey: "reviewerNote",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	FormulaLibraryVersionSpec = TypeSpec{
+		TypeName: "FormulaLibraryVersion",
+		FieldMap: formulalibrarycol.FormulaLibraryVersionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "libraryId",
+				FieldMapKey: "libraryId",
+			},
+			{
+				Name:        "versionNumber",
+				FieldMapKey: "versionNumber",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "path",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "imports",
+				FieldMapKey: "imports",
+			},
+			{
+				Name:        "testCount",
+				FieldMapKey: "testCount",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "changeMessage",
+				FieldMapKey: "changeMessage",
+			},
+			{
+				Name:        "changeSummary",
+				FieldMapKey: "changeSummary",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "createdBy",
+				FieldMapKey: "createdById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
 	FormulaTemplateSpec = TypeSpec{
 		TypeName: "FormulaTemplate",
 		FieldMap: formulatemplatecol.FormulaTemplateFieldMap,
@@ -15899,44 +16140,24 @@ func init() {
 				FieldMapKey: "description",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:        "source",
+				FieldMapKey: "source",
 			},
 			{
-				Name:        "expression",
-				FieldMapKey: "expression",
+				Name:        "inputs",
+				FieldMapKey: "inputs",
+			},
+			{
+				Name:        "imports",
+				FieldMapKey: "imports",
+			},
+			{
+				Name:        "testCount",
+				FieldMapKey: "testCount",
 			},
 			{
 				Name:        "status",
 				FieldMapKey: "status",
-			},
-			{
-				Name:        "schemaId",
-				FieldMapKey: "schemaId",
-			},
-			{
-				Name:        "variableDefinitions",
-				FieldMapKey: "variableDefinitions",
-			},
-			{
-				Name:        "breakdownDefinitions",
-				FieldMapKey: "breakdownDefinitions",
-			},
-			{
-				Name:        "minCharge",
-				FieldMapKey: "minCharge",
-			},
-			{
-				Name:        "maxCharge",
-				FieldMapKey: "maxCharge",
-			},
-			{
-				Name:        "roundingMode",
-				FieldMapKey: "roundingMode",
-			},
-			{
-				Name:        "roundingPrecision",
-				FieldMapKey: "roundingPrecision",
 			},
 			{
 				Name:        "submittedById",
@@ -15989,10 +16210,6 @@ func init() {
 			{
 				Name:    "usageCount",
 				Special: "usageCount",
-			},
-			{
-				Name:    "scenarioCount",
-				Special: "scenarioCount",
 			},
 			{
 				Name:        "businessUnit",
@@ -18478,6 +18695,10 @@ func init() {
 				FieldMapKey: "isSplitBill",
 			},
 			{
+				Name:        "ratingNotes",
+				FieldMapKey: "ratingNotes",
+			},
+			{
 				Name:    "relatedInvoices",
 				Special: "relatedInvoices",
 			},
@@ -19089,6 +19310,10 @@ func init() {
 			{
 				Name:        "rate",
 				FieldMapKey: "rate",
+			},
+			{
+				Name:        "rateUnit",
+				FieldMapKey: "rateUnit",
 			},
 			{
 				Name:        "allocationPercent",
@@ -21705,12 +21930,8 @@ func init() {
 				FieldMapKey: "currency",
 			},
 			{
-				Name:        "defaultMinCharge",
-				FieldMapKey: "defaultMinCharge",
-			},
-			{
-				Name:        "defaultMaxCharge",
-				FieldMapKey: "defaultMaxCharge",
+				Name:        "inputs",
+				FieldMapKey: "inputs",
 			},
 			{
 				Name:        "marginFloorPercent",
@@ -21796,16 +22017,8 @@ func init() {
 				FieldMapKey: "status",
 			},
 			{
-				Name:        "formulaTemplateId",
-				FieldMapKey: "formulaTemplateId",
-			},
-			{
-				Name:    "formulaTemplateName",
-				Special: "formulaTemplateName",
-			},
-			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:        "valueType",
+				FieldMapKey: "valueType",
 			},
 			{
 				Name:        "version",
@@ -24123,8 +24336,12 @@ func init() {
 				FieldMapKey: "freightChargeAmount",
 			},
 			{
-				Name:        "baseRate",
-				FieldMapKey: "baseRate",
+				Name:        "tariffInputs",
+				FieldMapKey: "tariffInputs",
+			},
+			{
+				Name:        "freightLines",
+				FieldMapKey: "freightLines",
 			},
 			{
 				Name:        "totalChargeAmount",
@@ -24173,10 +24390,6 @@ func init() {
 			{
 				Name:        "billedAt",
 				FieldMapKey: "billedAt",
-			},
-			{
-				Name:        "ratingUnit",
-				FieldMapKey: "ratingUnit",
 			},
 			{
 				Name:        "fuelSurchargeLocked",
@@ -24398,6 +24611,26 @@ func init() {
 			{
 				Name:        "isDetention",
 				FieldMapKey: "isDetention",
+			},
+			{
+				Name:        "isTariff",
+				FieldMapKey: "isTariff",
+			},
+			{
+				Name:        "label",
+				FieldMapKey: "label",
+			},
+			{
+				Name:        "quantity",
+				FieldMapKey: "quantity",
+			},
+			{
+				Name:        "rate",
+				FieldMapKey: "rate",
+			},
+			{
+				Name:        "rateUnit",
+				FieldMapKey: "rateUnit",
 			},
 			{
 				Name:        "version",
@@ -25393,24 +25626,16 @@ func init() {
 				FieldMapKey: "description",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
-			},
-			{
-				Name:        "expression",
-				FieldMapKey: "expression",
+				Name:        "source",
+				FieldMapKey: "source",
 			},
 			{
 				Name:        "status",
 				FieldMapKey: "status",
 			},
 			{
-				Name:        "schemaId",
-				FieldMapKey: "schemaId",
-			},
-			{
-				Name:        "variableDefinitions",
-				FieldMapKey: "variableDefinitions",
+				Name:        "testCount",
+				FieldMapKey: "testCount",
 			},
 			{
 				Name:        "metadata",

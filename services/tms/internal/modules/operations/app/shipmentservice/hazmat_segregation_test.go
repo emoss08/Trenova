@@ -1,20 +1,21 @@
 package shipmentservice
 
 import (
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"

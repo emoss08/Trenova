@@ -61,6 +61,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glaccounthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
@@ -145,6 +146,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	driverportalhandler.New,
 	pushhandler.New,
 	notificationpreferencehandler.New,
+	formulalibraryhandler.New,
 	formulatemplatehandler.New,
 	pagefavoritehandler.New,
 	equipmenttypehandler.New,

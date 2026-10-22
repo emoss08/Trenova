@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -23,6 +22,14 @@ func ShipmentToModel(
 	if err != nil {
 		return nil, err
 	}
+	tariffInputs, err := TariffInputsToModel(entity.TariffInputs)
+	if err != nil {
+		return nil, err
+	}
+	ratingDetail, err := ratingDetailToModel(entity.RatingDetail)
+	if err != nil {
+		return nil, err
+	}
 	model := &gqlmodel.Shipment{
 		ID:                     entity.ID.String(),
 		BusinessUnitID:         entity.BusinessUnitID.String(),
@@ -36,7 +43,7 @@ func ShipmentToModel(
 		OwnerID:                IDPtr(entity.OwnerID),
 		EnteredByID:            IDPtr(entity.EnteredByID),
 		CanceledByID:           IDPtr(entity.CanceledByID),
-		FormulaTemplateID:      entity.FormulaTemplateID.String(),
+		FormulaTemplateID:      IDPtr(entity.FormulaTemplateID),
 		ConsolidationGroupID:   IDPtr(entity.ConsolidationGroupID),
 		OrderID:                IDPtr(entity.OrderID),
 		Stage:                  entity.Stage(),
@@ -48,7 +55,8 @@ func ShipmentToModel(
 		CancelReason:           entity.CancelReason,
 		OtherChargeAmount:      nullDecimalString(entity.OtherChargeAmount),
 		FreightChargeAmount:    nullDecimalString(entity.FreightChargeAmount),
-		BaseRate:               nullDecimalString(entity.BaseRate),
+		TariffInputs:           tariffInputs,
+		FreightLines:           FreightLinesToModel(entity.FreightLines),
 		TotalChargeAmount:      nullDecimalString(entity.TotalChargeAmount),
 		Pieces:                 IntPtr(entity.Pieces),
 		Weight:                 IntPtr(entity.Weight),
@@ -61,9 +69,8 @@ func ShipmentToModel(
 		TransferredToBillingAt: IntPtr(entity.TransferredToBillingAt),
 		MarkedReadyToBillAt:    IntPtr(entity.MarkedReadyToBillAt),
 		BilledAt:               IntPtr(entity.BilledAt),
-		RatingUnit:             int(entity.RatingUnit),
 		FuelSurchargeLocked:    entity.FuelSurchargeLocked,
-		RatingDetail:           ratingDetailToModel(entity.RatingDetail),
+		RatingDetail:           ratingDetail,
 		AutoRated:              entity.AutoRated,
 		AutoRatedAt:            IntPtr(entity.AutoRatedAt),
 		RateAgreementID:        IDPtrFromPtr(entity.RateAgreementID),
@@ -225,6 +232,11 @@ func ShipmentAdditionalChargeToModel(
 		FuelSurchargeProgramID: IDPtrFromPulidPtr(entity.FuelSurchargeProgramID),
 		FuelSurchargeDetail:    fuelSurchargeDetailToMap(entity.FuelSurchargeDetail),
 		IsDetention:            entity.IsDetention,
+		IsTariff:               entity.IsTariff,
+		Label:                  entity.Label,
+		Quantity:               NullDecimalStringPtr(entity.Quantity),
+		Rate:                   NullDecimalStringPtr(entity.Rate),
+		RateUnit:               entity.RateUnit,
 		Version:                int(entity.Version),
 		CreatedAt:              int(entity.CreatedAt),
 		UpdatedAt:              int(entity.UpdatedAt),
@@ -280,20 +292,37 @@ func nullDecimalString(value decimal.NullDecimal) string {
 	return value.Decimal.String()
 }
 
-func ratingDetailToModel(detail *shipmentdomain.RatingDetail) *gqlmodel.ShipmentRatingDetail {
+func ratingDetailToModel(
+	detail *shipmentdomain.RatingDetail,
+) (*gqlmodel.ShipmentRatingDetail, error) {
 	if detail == nil {
-		return nil
+		return nil, nil //nolint:nilnil // a shipment never rated has no detail
+	}
+	inputs, err := TariffInputsToModel(detail.Inputs)
+	if err != nil {
+		return nil, err
+	}
+	trace, err := TariffTraceToModel(detail.Trace)
+	if err != nil {
+		return nil, err
+	}
+	skipped := make([]*gqlmodel.ShipmentRatingSkip, 0, len(detail.Skipped))
+	for _, skip := range detail.Skipped {
+		skipped = append(
+			skipped,
+			&gqlmodel.ShipmentRatingSkip{Code: skip.Code, Source: skip.Source},
+		)
 	}
 	return &gqlmodel.ShipmentRatingDetail{
 		FormulaTemplateID:   detail.FormulaTemplateID,
 		FormulaTemplateName: detail.FormulaTemplateName,
-		Expression:          detail.Expression,
-		ResolvedVariables:   maputils.OrEmpty(detail.ResolvedVariables),
-		Result:              detail.Result,
 		RatedAt:             int(detail.RatedAt),
 		VersionNumber:       int(detail.VersionNumber),
-		Breakdown:           ratingBreakdownToModel(detail.Breakdown),
-		Guardrail:           ratingGuardrailToModel(detail.Guardrail),
+		Bill:                TariffBillToModel(detail.Bill),
+		Refusal:             detail.Refusal,
+		Inputs:              inputs,
+		Skipped:             skipped,
+		Trace:               trace,
 		RateQuoteID:         detail.RateQuoteID,
 		AgreementID:         detail.AgreementID,
 		AgreementName:       detail.AgreementName,
@@ -301,39 +330,7 @@ func ratingDetailToModel(detail *shipmentdomain.RatingDetail) *gqlmodel.Shipment
 		RuleLabel:           detail.RuleLabel,
 		Source:              detail.Source,
 		Explanation:         detail.Explanation,
-	}
-}
-
-func ratingBreakdownToModel(
-	items []shipmentdomain.RatingBreakdownItem,
-) []*gqlmodel.ShipmentRatingBreakdownItem {
-	models := make([]*gqlmodel.ShipmentRatingBreakdownItem, 0, len(items))
-	for i := range items {
-		models = append(models, &gqlmodel.ShipmentRatingBreakdownItem{
-			Name:   items[i].Name,
-			Label:  items[i].Label,
-			Amount: items[i].Amount,
-			Error:  items[i].Error,
-		})
-	}
-
-	return models
-}
-
-func ratingGuardrailToModel(
-	guardrail *shipmentdomain.RatingGuardrail,
-) *gqlmodel.ShipmentRatingGuardrail {
-	if guardrail == nil {
-		return nil
-	}
-
-	return &gqlmodel.ShipmentRatingGuardrail{
-		Applied:   guardrail.Applied,
-		Bound:     guardrail.Bound,
-		RawResult: guardrail.RawResult,
-		MinCharge: guardrail.MinCharge,
-		MaxCharge: guardrail.MaxCharge,
-	}
+	}, nil
 }
 
 func tenderStatusToModel(status *shipmentdomain.TenderStatus) *gqlmodel.ShipmentTenderStatus {

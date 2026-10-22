@@ -74,14 +74,14 @@ func lineFrom(line *rules.TariffLine) (Line, error) {
 	if line.Code != nil {
 		out.Code = *line.Code
 	}
-	if len(line.Quantity) > 0 && string(line.Quantity) != "null" {
+	if len(line.Quantity) > 0 && string(line.Quantity) != jsonNull {
 		quantity, err := quantityOrNumber(line.Quantity)
 		if err != nil {
 			return Line{}, err
 		}
 		out.Quantity, out.QuantityUnit = &quantity.Value, quantity.Unit
 	}
-	if len(line.Rate) > 0 && string(line.Rate) != "null" {
+	if len(line.Rate) > 0 && string(line.Rate) != jsonNull {
 		rate, err := quantityOrNumber(line.Rate)
 		if err != nil {
 			return Line{}, err

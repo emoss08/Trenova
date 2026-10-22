@@ -102,7 +102,7 @@ models:
         resolver: true
   ShipmentRatingDetail:
     fields:
-      expression:
+      trace:
         resolver: true
   ShipmentCustomer:
     fields:
@@ -3907,9 +3907,21 @@ models:
   FormulaTemplateStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.Status
-  FormulaTemplateType:
+  FormulaReviewDecision:
     model:
-      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.TemplateType
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.ReviewDecision
+  FormulaLibraryImport:
+    model:
+      - github.com/emoss08/trenova/pkg/tarifftypes.Import
+  FormulaLibrary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary.FormulaLibrary
+  FormulaLibraryVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary.FormulaLibraryVersion
+  FormulaLibraryReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary.FormulaLibraryReview
   FormulaTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.FormulaTemplate
@@ -4323,9 +4335,6 @@ models:
   DetentionRoundingMode:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RoundingMode
-  RateRoundingMode:
-    model:
-      - github.com/emoss08/trenova/pkg/ratetypes.RoundingMode
   DetentionRateSource:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RateSource

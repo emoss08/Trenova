@@ -1228,57 +1228,61 @@ projection (`buildMatrixGrid`, `sliceBuckets`, `bucketKeyOf`, `cellCoordinate`,
 them. `DensityScale.ClassFor` and the formula lookups' `KeyNormalization` and `RangeOverflow`
 stay in Go with their callers; `ClassFor` uses the same half-open rule as `contains`.
 
-## The formula server API
+## The Tariff server API
 
-The Studio checks formulas in the browser with the same module the server uses. These are the
-only formula facts that cross HTTP:
+The Studio checks and tests Tariff in the browser with the same module the server uses, so only
+these facts cross HTTP (all under `/api/v1`; every range is a byte offset pair `{from, to}` into
+the source, as the module reports it):
 
-- **`GET /formula-templates/schema?schemaId=`** returns `{schemaId, variables}`.
-  - `variables` is the record's fields, each as `{name, type, description, category, nullable,
-    computed, enum}`.
-  - Every list adds its item fields, named `list[].field` (`stops[].weight`).
-  - Functions, built-ins, disabled and reserved names are not sent: the browser reads them from
-    `formula.catalog` in its own copy of the module, and the server's assistant reads them from
-    `pkg/rules`.
-- **`POST /formula-templates/test`** (the preview) answers:
+- **`GET /formula-templates/context`** returns `{context, libraries}`. `context` is the
+  organisation's `rules.TariffContext` (settings, table shapes, accessorial codes and the source
+  of every importable library, the latest approved version of each); `libraries` lists them as
+  `{path, libraryId, name, description, versionNumber}`. The browser passes `context` to its own
+  `tariff.check`, `tariff.test` and `tariff.format`, and reads the language itself from
+  `tariff.catalog`. It replaces the old `GET /formula-templates/schema`.
+- **`POST /formula-templates/test`** (the preview) takes `{source, inputs?, shipmentId?}`, with
+  `inputs` a map of wire values, and answers:
 
   ```json
   {
-    "valid": false,
-    "result": "125.5",
-    "diagnostics": [{"scope": "expression", "from": 0, "to": 3, "severity": "error", "code": "unknown-variable", "message": "...", "args": ["foo"], "fixes": []}],
-    "error": {"scope": "breakdowns[1].expression", "code": "missingField", "message": "...", "args": [], "from": 4, "to": 10, "fields": ["weight"], "guards": ["coalesce(weight, 0)"]},
-    "statements": [{"index": 0, "kind": "let", "name": "rate", "code": "let rate = 2", "from": 0, "to": 12, "value": "2", "error": null}],
-    "breakdown": [], "resolvedVariables": {}, "guardrail": null, "rounding": null, "receipt": null
+    "valid": true,
+    "diagnostics": [],
+    "inputs": [{"name": "rate", "doc": "...", "type": "Money/mi", "descriptor": {"kind": "quantity", "unit": "$/mi"}, "required": true}],
+    "imports": [{"path": "org.accessorials", "libraryId": "fl_...", "versionNumber": 3}],
+    "charges": [{"label": "Linehaul", "code": null, "range": {"from": 120, "to": 171}}],
+    "bill": {"lines": [], "notes": [], "freightTotal": "865.2", "accessorialTotal": "0", "total": "865.2"},
+    "refusal": null,
+    "error": null,
+    "trace": [],
+    "lookups": [],
+    "tests": [{"name": "...", "range": {"from": 300, "to": 340}, "status": "passed", "failures": []}]
   }
   ```
 
-  The fields:
-  - `diagnostics` holds every finding of `formula.check` on the main expression and on each
-    breakdown line. Each finding carries its `scope`, in the field-path form validation errors use
-    (`expression`, `breakdowns[1].expression`).
-  - `error` is the first evaluation error, with its scope.
-  - `valid` is true when no diagnostic is an error and nothing failed to evaluate.
-  - A statement's `error` is an evaluation error without a scope.
-  - A preview with any error diagnostic is not evaluated: `result`, `breakdown` and `receipt`
-    are null and `statements` come from `formula.check`.
-  - Besides the module's evaluation codes, `error.code` may be one the server adds:
-    `unresolvedField` (the formula reads a field the shipment could not supply, with `fields`),
-    `negativeCharge` (the policy refused a negative amount) and `timeout` (the preview's two
-    seconds ran out).
-  - `breakdown[].error` is plain translated text, not an error object.
-  - `receipt.lookups[]` is `{scope, function, table, keys, value, match?, error?}` from the
-    evaluation's `trace.lookups`; `value` is a JSON number.
-  - A request outside the bounds (expression or variable count, length) is a 400 validation
-    problem, and a shipment that does not exist or cannot be loaded is the usual 404 or 500,
-    not a preview answer.
-  - All positions are UTF-16.
-  - The old fields are gone: `error` as text, `message`, `warnings` (nullable warnings are now
-    `nullable` diagnostics), and `start`/`end`.
-- **Saving a template** validates every expression with `formula.check`. It refuses one with an
-  error-severity diagnostic through the usual validation error on that expression's field path,
-  carrying the translated message of the first error. Each breakdown line is refused on its own
-path (`breakdownDefinitions[i].expression`); warnings never refuse a save.
+  - `diagnostics` are `tariff.check`'s findings, with the latest approved version of each
+    imported library. A source with an error finding is not rated: `bill`, `refusal`, `error` and
+    `trace` are null, and `tests` is empty.
+  - Exactly one of `bill`, `refusal` (`{message, range}`, the source's `fail` or `require`) or
+    `error` (`{code, message, range}`) is set. `error.code` is the module's evaluation code, or
+    `timeout` when the preview's two seconds ran out, or `invalid` when the inputs do not fit
+    the declarations.
+  - Without `shipmentId` the preview rates the sample record; with one it rates that shipment's
+    record, which needs `shipment:read`.
+  - `tests` are the file's own `test` blocks, run by `tariff.test`.
+  - A source over 64 KiB or more than 100 inputs is a 400 validation problem.
+- **`POST /formula-templates/scaffold-test`** takes `{source, inputs?, shipmentId, name}` and
+  answers `{test}`: a `test` block written by `tariff.scaffoldTest` from that shipment's facts,
+  for the person to paste into the source ("Save as test").
+- **Saving** a template (create, update, import, rollback, fork, a schedule of billed content)
+  or a library runs `tariff.check` (kind `tariff` or `library`) and `tariff.test`. An error
+  finding refuses the save with a validation error on `source` carrying the finding's range, so
+  the editor underlines it; the template stores the checker's `inputs` (each with its display
+  `type` and structured `descriptor`), `imports` and `testCount`. Submitting needs a clean
+  check and every test passing; approving pins each `org.*` import to the library version
+  approved at that moment and runs the dependents gate (below).
+- **`/formula-libraries`** (REST writes; reads are GraphQL `formulaLibraries`, `formulaLibrary`,
+  `formulaLibraryVersions`, `formulaLibraryReviews`) holds an organisation's libraries, each a
+  `library "org.<name>"` file whose first line must name it.
 
 ## Hosts
 
@@ -1291,7 +1295,7 @@ own types.
 
 ```go
 err := rules.Call(ctx, "allocation.split", input, &output)  // sonic in and out
-raw, err := rules.CallRaw(ctx, "formula.evaluate", encoded)  // pre-encoded input, raw `ok` out
+raw, err := rules.CallRaw(ctx, "tariff.catalog", []byte("{}")) // pre-encoded input, raw `ok` out
 info, err := rules.Version(ctx)                              // rules.VersionInfo{Version, Operations}
 ```
 
@@ -1416,85 +1420,72 @@ symbols Excel number formats need, `Spec.Validate`, `Band.Validate`, and `Band.B
 `IsLowest` and `IsWhole`, which the query compiler and drill-through use to filter rows rather
 than to label them.
 
-### Go callers: formulas
+### Go callers: Tariff
 
-The formula engine of the TMS is `rating/app/formula`, and its only language is the module. Go
-owns six things: the schema (`formula/schema`), building each record's environment
-(`formula/environment`), encoding the tenant's rate tables (`formula/tables.go`), the charge
-policy (minimum, maximum, rounding, the breakdown remainder: `formula/policy.go`), the receipt,
-and turning the module's errors into `errortypes` at the API edge. The typed calls are in
-`pkg/rules/formula.go` (`CheckFormula`, `EvaluateFormulas`, `Catalog`) and the value encoder
-in `pkg/rules/formula_value.go`.
+The typed calls are in `pkg/rules/tariff.go` (`CheckTariff`, `EvaluateTariffs`, `TestTariff`,
+`FormatTariff`, `TariffCatalog`, `ScaffoldTariffTest`) and the wire values in
+`pkg/rules/tariff_value.go`; `pkg/tarifftypes` holds what the TMS stores (`Inputs`, `InputDecl`,
+`Import`, the decimal `Bill`) and compares (`DeclsEqual`, `ImportsEqual`, `ValuesEqual`). The host
+of the language is `internal/modules/rating/app/tariff`. Authoring owns `check.go`, `test.go`,
+`catalog.go`, `resolver.go`, `libraries.go`, `describe.go` and `errors/`; rating owns the
+record, tables, codes, settings, fuel, the rater and the context source, behind
+`tariffports.ContextSource` and `tariffports.Rater`.
 
-**The environment** is encoded exactly, by `rules.EncodeValue`, never by a generic JSON
-marshaller:
+**The checker.** `tariff.Checker.CheckSource` assembles the context and makes one `tariff.check`
+call. Libraries come two ways:
 
-- `decimal.Decimal` is its exact text as a JSON number; Go integers are numbers;
-- `time.Time` is `{"$date": RFC 3339 with the value's own offset}`, so a stop's appointment keeps
-  its stop's zone; `time.Duration` is `{"$duration": "<nanoseconds>"}`;
-- a nullable value that is empty is `null`; a non-nullable schema field the record leaves empty
-  reads as its type's zero;
-- a `float32` or `float64` anywhere in the tree is refused with its path
-  (`rules.ErrInexactNumber`). The resolver's transforms (`decimal`, `integer`) and the computed
-  fields produce exact values, and `environment.Merge` turns the floats a JSON request body
-  carries (template defaults, overrides) into decimals before they reach the tree;
-- map keys are sorted, and a key starting with `$` is refused (`rules.ErrReservedKey`).
+- `LibrariesLatest` (drafts, saves, the preview): the latest approved version of each `org.*`
+  library the source imports, found by reading the source's `use org.<name>` lines and resolved
+  transitively in batched rounds, one query per round (at most 32 libraries and 8 rounds);
+- `LibrariesPinned` (approved versions, billing): exactly the versions an approved version
+  pinned, read in one query by `(library, version)` and memoised per request.
 
-The environment is built once per rating and not copied per evaluation. A preview without a
-shipment uses `environment.Zero`, the schema's zero values marked as samples; a preview with a
-shipment builds the real one.
+Tables, codes and settings come from `ContextSource`, which loads table shapes only and cells
+on demand. `SourceCheck.Imports` turns the module's imports into pins (`{path, libraryId,
+versionNumber}`). `RunTests` and `TestChecked` run `tariff.test`, loading the cells a test
+`needs` for at most `MaxNeedPasses` (4) passes; a source that does not check runs no tests.
+`Catalog` caches `tariff.catalog` per module version.
 
-**Rate tables** are encoded once per tenant stamp. `formula.NewRateTables` turns the tenant's
-rate matrices into the wire shape (`{name, axes, cells}`, axes in position order), and
-`ratetablecache` keeps the encoded bytes of each table beside its shape under the stamp, per
-request and per process. A call splices the bytes it needs (`EvaluateRequest.Tables` is
-`rules.RawJSON`), so a rating never re-encodes a table. `RateTables.Select` picks them:
+**The resolver.** `TemplateResolver.ResolveBilling` (the `tariffports.Resolver` rating calls)
+returns a template's billing version as of a date with its source, stored input declarations,
+pins and pinned library sources, through the per-request `effectiveversioncache`; a template
+never approved bills nothing, an active template whose versions predate snapshots bills its
+row. `ResolveLibraries` serves `tariffports.LibraryResolver`.
 
-- a source that names no table function (no `lookup` or `deficitWeight`) sends `[]` and the
-  tables are not even loaded;
-- otherwise only the tables whose name appears quoted in a source are sent;
-- a source with a backslash (an escaped name the selector cannot read) sends every table.
+**Templates and libraries.** `formulatemplateservice` and `formulalibraryservice` save through
+the checker (kind `tariff` and `library`), refuse on the first error finding with its range,
+store the derived inputs, imports and test count, and version on a material change (source or
+imports). Approval runs the readiness gates again, pins the imports, and for a template runs the
+**dependents gate**: when the declared inputs differ from the approved version's, every distinct
+set of stored inputs on the rules, agreements and shipments that use the template
+(`rateagreementports.TemplateInputsLister`, grouped in SQL, at most 2,000 sets) is checked with
+`tariff.check`'s `values`, and approval is refused, naming an example and a count, when one no
+longer fits. The billing control's fallback template is checked with no inputs.
 
-The same selection gives `formula.check` the table shapes, so a save that names a missing
-table is refused.
+**The preview, backtest and impact** rate a candidate source through `tariffports.Rater` with a
+two-second timeout per rating (the backtest's past shipments come from
+`tariffports.RatedShipments`, the record of a shipment from `tariffports.RecordBuilder`).
 
-**One call per rating.** `Service.Rate` makes one `formula.evaluate` call for the main
-expression and every breakdown line (program ids `expression` and the line index), with lookup
-tracing on for the receipt and statement tracing on when the preview asks for it. A failing
-line fails only that line. Accessorial conditions are one call per shipment
-(`EvaluatePredicates`, `expect: "predicate"`, one program per condition). The normal path makes
-no `formula.check` call; only when a record field failed to resolve does the rating check its
-sources to learn whether they read it.
+**Errors.** `tariff/errors` maps the module's answers:
 
-**Checks.** Saving a template, readiness, the standard catalog test and the preview check every
-expression with `formula.check`, passing the template's inputs and the table shapes.
-`formula.Refusal` turns the first error of each scope into a validation error on that field
-path. Input names are refused when the catalog reserves them or when they shadow a schema root.
-
-**Errors.**
-
-| Module or host outcome | Becomes |
+| Module outcome | Becomes |
 |---|---|
-| an evaluation error (`FormulaError`) on the main expression | validation on `expression`, with the translated message and `formulaerrors.EvaluationError` as the cause |
-| `missingField` on a field the record could not supply, or a check that the formula reads one | validation on `expression` caused by `formulaerrors.UnresolvedFieldError` (code `unresolvedField` in the preview) |
-| `missingField` on an input the caller marked unavailable (`RateRequest.Unavailable`) | validation on `formulaTemplateId` with that input's message |
-| a negative charge after the policy | validation (code `negativeCharge` in the preview) |
-| an error-severity check diagnostic on save | validation per field path |
+| an error finding of `tariff.check` | validation on `source` with the finding's range (`CheckRefusal`); an `input-value` finding is validation on its `path` |
+| a test that fails or errs at submit or approval | validation naming the failing tests |
+| an evaluation error (`TariffEvalError`) | `EvaluationError`: validation on `source` with its code and range; the preview reports it as `error` |
+| a refusal (`TariffRefusal`) | `RefusalError`: validation on `source`; the preview reports it as `refusal` |
 | `ErrRequest`, `ErrTrap`, `ErrUnavailable` | 500, logged; the detail is never shown |
 | `ErrContextDone` | the context's own error, or `timeout` when the preview's deadline ran out |
 
-Every validation row is an `errortypes` validation error, which the REST edge answers as a
-`validation-error` problem (HTTP 400) and GraphQL as a field error, with the message translated
-in the reader's locale.
+`api/helpers/classifier.go` classifies the three error types as validation, so REST answers a
+`validation-error` problem (HTTP 400) whose error carries `range`, and GraphQL a field error;
+messages translate in the reader's locale through `shared/i18n`.
 
-**Deadlines.** Go adds no timeout around a call beyond the caller's context. The preview
-(`POST /formula-templates/test`) and each backtested shipment run under a two-second
-`context.WithTimeout`, the whole backtest under sixty seconds; the module's budgets bound a
-formula inside that.
-
-**Receipts** come from `trace.lookups` (each with its scope: `expression` or the line's name)
-and statements from `trace.statements`. Messages translate through `shared/i18n`, nested
-arguments included; agent tools and the assistant carry the translated message and the code.
+**Nova** reads the language with `formula_describe_language` (the catalog plus the
+organisation's context, `tariff.Findings` and `tariff.SummarizeTests` turning ranges into lines
+and columns), checks with `formula_check`, runs tests with `formula_run_tests`, rates with
+`formula_preview`, and proposes whole files with `formula_propose` and `formula_library_propose`,
+which are shown only when the source checks clean and has at least one test, all passing.
 
 ### The browser loader (`client/packages/shared/src/rules`)
 

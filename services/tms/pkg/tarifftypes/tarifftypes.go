@@ -2,6 +2,7 @@ package tarifftypes
 
 import (
 	"bytes"
+	"fmt"
 	"slices"
 
 	"github.com/bytedance/sonic"
@@ -23,18 +24,77 @@ func (i Inputs) Clone() Inputs {
 	return out
 }
 
+func (i Inputs) OrEmpty() Inputs {
+	if i == nil {
+		return Inputs{}
+	}
+	return i
+}
+
 func (i Inputs) Equal(other Inputs) bool {
 	if len(i) != len(other) {
 		return false
 	}
 	for name, value := range i {
 		theirs, ok := other[name]
-		if !ok || !bytes.Equal(compact(value), compact(theirs)) {
+		if !ok || !EqualValues(value, theirs) {
 			return false
 		}
 	}
 	return true
 }
+
+func EqualValues(a, b rules.RawJSON) bool {
+	var left, right any
+	if exactJSON.Unmarshal(a, &left) != nil || exactJSON.Unmarshal(b, &right) != nil {
+		return bytes.Equal(a, b)
+	}
+	return sameValue(left, right)
+}
+
+func sameValue(left, right any) bool {
+	switch l := left.(type) {
+	case map[string]any:
+		r, ok := right.(map[string]any)
+		if !ok || len(l) != len(r) {
+			return false
+		}
+		for key, value := range l {
+			theirs, present := r[key]
+			if !present {
+				return false
+			}
+			if key == wireQuantityKey || key == wireNumberKey {
+				if !sameNumber(value, theirs) {
+					return false
+				}
+				continue
+			}
+			if !sameValue(value, theirs) {
+				return false
+			}
+		}
+		return true
+	case []any:
+		r, ok := right.([]any)
+		if !ok || len(l) != len(r) {
+			return false
+		}
+		for index := range l {
+			if !sameValue(l[index], r[index]) {
+				return false
+			}
+		}
+		return true
+	default:
+		return fmt.Sprint(left) == fmt.Sprint(right)
+	}
+}
+
+const (
+	wireQuantityKey = "$q"
+	wireNumberKey   = "$n"
+)
 
 func compact(raw rules.RawJSON) []byte {
 	var decoded any
@@ -48,13 +108,22 @@ func compact(raw rules.RawJSON) []byte {
 	return out
 }
 
+func sameNumber(left, right any) bool {
+	l, lErr := decimal.NewFromString(fmt.Sprint(left))
+	r, rErr := decimal.NewFromString(fmt.Sprint(right))
+	if lErr != nil || rErr != nil {
+		return fmt.Sprint(left) == fmt.Sprint(right)
+	}
+	return l.Equal(r)
+}
+
 type InputDecl struct {
-	Name     string        `json:"name"`
-	Doc      string        `json:"doc,omitempty"`
-	Type     rules.RawJSON `json:"type"`
-	Display  string        `json:"display,omitempty"`
-	Required bool          `json:"required"`
-	Default  rules.RawJSON `json:"default,omitempty"`
+	Name       string        `json:"name"`
+	Doc        string        `json:"doc,omitempty"`
+	Type       string        `json:"type"`
+	Descriptor rules.RawJSON `json:"descriptor"`
+	Required   bool          `json:"required"`
+	Default    rules.RawJSON `json:"default,omitempty"`
 }
 
 func InputDeclsFrom(inputs []rules.TariffInput) []InputDecl {
@@ -62,12 +131,12 @@ func InputDeclsFrom(inputs []rules.TariffInput) []InputDecl {
 	for i := range inputs {
 		in := &inputs[i]
 		out = append(out, InputDecl{
-			Name:     in.Name,
-			Doc:      in.Doc,
-			Type:     in.Type,
-			Display:  in.Display,
-			Required: in.Required,
-			Default:  in.Default,
+			Name:       in.Name,
+			Doc:        in.Doc,
+			Type:       in.Type,
+			Descriptor: in.Descriptor,
+			Required:   in.Required,
+			Default:    in.Default,
 		})
 	}
 	return out

@@ -11,6 +11,11 @@ import (
 )
 
 const (
+	SeverityError   = "error"
+	SeverityWarning = "warning"
+)
+
+const (
 	OpTariffCheck        = "tariff.check"
 	OpTariffEvaluate     = "tariff.evaluate"
 	OpTariffTest         = "tariff.test"
@@ -93,8 +98,8 @@ type TariffTable struct {
 	Name      string       `json:"name,omitempty"`
 	Axes      []TariffAxis `json:"axes"`
 	ValueType string       `json:"valueType"`
-	Cells     []TariffCell `json:"cells,omitempty"`
-	Loaded    [][]string   `json:"loaded,omitempty"`
+	Cells     []TariffCell `json:"cells"`
+	Loaded    [][]string   `json:"loaded"`
 }
 
 type TariffChargeCode struct {
@@ -115,7 +120,7 @@ type TariffContext struct {
 }
 
 type TariffInputValues struct {
-	Rule      map[string]RawJSON `json:"rule,omitempty"`
+	Rule      map[string]RawJSON `json:"rule"`
 	Agreement map[string]RawJSON `json:"agreement,omitempty"`
 }
 
@@ -158,12 +163,13 @@ type TariffHeader struct {
 }
 
 type TariffInput struct {
-	Name     string  `json:"name"`
-	Doc      string  `json:"doc,omitempty"`
-	Type     RawJSON `json:"type"`
-	Display  string  `json:"display,omitempty"`
-	Required bool    `json:"required"`
-	Default  RawJSON `json:"default,omitempty"`
+	Name       string       `json:"name"`
+	Doc        string       `json:"doc,omitempty"`
+	Type       string       `json:"type"`
+	Descriptor RawJSON      `json:"descriptor"`
+	Required   bool         `json:"required"`
+	Default    RawJSON      `json:"default,omitempty"`
+	Range      *TariffRange `json:"range,omitempty"`
 }
 
 type TariffImport struct {

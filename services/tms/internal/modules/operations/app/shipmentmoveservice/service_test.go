@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 
@@ -21,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -97,11 +95,6 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
 	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
 	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		GetByMoveID(mock.Anything, tenantInfo, moveID).
@@ -118,7 +111,7 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -165,7 +158,7 @@ func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+			RateEngine:      ratingtest.NewEngine(t),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -228,7 +221,7 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+			RateEngine:      ratingtest.NewEngine(t),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -351,11 +344,6 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
 	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
 
 	svc := &service{
 		l:            zap.NewNop(),
@@ -366,7 +354,7 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		controlRepo:  controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -469,11 +457,6 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		}, nil).
 		Once()
 	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
 	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		GetByMoveID(mock.Anything, tenantInfo, moveID).
@@ -490,7 +473,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -585,11 +568,6 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		}, nil).
 		Once()
 	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
 	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		GetByMoveID(mock.Anything, tenantInfo, moveID).
@@ -606,7 +584,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		controlRepo:    controlRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -682,7 +660,7 @@ func TestUpdateStatus_RejectsTrailerAlreadyInProgressOnAnotherMove(t *testing.T)
 		continuityRepo: equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+			RateEngine:      ratingtest.NewEngine(t),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -754,7 +732,7 @@ func TestUpdateStatus_RejectsTractorAlreadyInProgressOnAnotherMove(t *testing.T)
 		continuityRepo: equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+			RateEngine:      ratingtest.NewEngine(t),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -884,12 +862,6 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 		Return(&tenant.ShipmentControl{}, nil).
 		Once()
 
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.Zero}, nil).
-		Once()
-
 	svc := &service{
 		l:              zap.NewNop(),
 		db:             testDBConnection{},
@@ -901,7 +873,7 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 		continuityRepo: continuityRepo,
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formula),
+			RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},
@@ -958,7 +930,7 @@ func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
 		controlRepo:  tenantportsmock.NewMockShipmentControlRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFallbackEngine(t, formulatemplateportsmock.NewMockFormulaCalculator(t)),
+			RateEngine:      ratingtest.NewEngine(t),
 			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		}),
 		eventService: noopShipmentEventService{},

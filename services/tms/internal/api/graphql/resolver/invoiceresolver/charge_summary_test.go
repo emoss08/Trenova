@@ -23,7 +23,7 @@ func TestChargeSummarySumsTheLinesTheInvoiceWasReadWith(t *testing.T) {
 		{
 			Type: invoice.InvoiceLineTypeAccessorial, Amount: decimal.RequireFromString("150"),
 			Quantity: decimal.NewFromInt(2), ChargeCode: "DET",
-			ChargeMethod: accessorialcharge.MethodPerUnit, RateUnit: accessorialcharge.RateUnitHour,
+			ChargeMethod: accessorialcharge.MethodPerUnit, RateUnit: "$/h",
 			Rate: decimal.NewNullDecimal(decimal.RequireFromString("75")),
 		},
 	}}
@@ -47,7 +47,7 @@ func TestChargeSummarySumsTheLinesTheInvoiceWasReadWith(t *testing.T) {
 	unit, err := group.RateUnit(t.Context(), groups[1])
 	require.NoError(t, err)
 	require.NotNil(t, unit)
-	assert.Equal(t, accessorialcharge.RateUnitHour, *unit)
+	assert.Equal(t, "$/h", *unit)
 	detentionID, err := group.FormulaTemplateID(t.Context(), groups[1])
 	require.NoError(t, err)
 	assert.Nil(t, detentionID)

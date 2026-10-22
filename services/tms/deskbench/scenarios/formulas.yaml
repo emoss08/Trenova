@@ -13,28 +13,33 @@ scenarios:
           calls: ["formula_propose"]
           maxFailedCalls: 1
           noProposals: true
-          formula: ["totalDistance", "/max\\s*\\(/", "/^[^0-9]*$/"]
+          formula:
+            - "shipment.distance"
+            - '/(?m)^\s*minimum\s+\w+/'
+            - '/(?m)^\s*input\s+\w+\s*:\s*Money\/mi/'
+            - '/(?m)^\s*test\s+"/'
           rubric: >
-            Proposes one expression with a rate-per-mile variable and a minimum variable (2.85 and
-            400 as their defaults), priced on a couple of sample loads, and explains it in a line.
+            Proposes one Tariff source with a per-mile rate input and a minimum-charge input (2.85
+            and 400 as their defaults), a charge on the trip's miles, the minimum as a total clause,
+            and tests for an ordinary load and one the minimum catches, explained in a line.
 
   - name: formula-build-then-change
     description: >
-      Two turns on one draft: the second edit must start from the formula the first one wrote,
+      Two turns on one draft: the second edit must start from the source the first one wrote,
       the way the studio applies each proposal before the next message.
     formula: {}
     steps:
       - say: "flat 1250 for the load"
         expect:
           calls: ["formula_propose"]
-          formula: ["1250|flatRate|baseRate|flat"]
+          formula: ['/\$1,?250/']
       - say: "actually add 18% fuel on top of that"
         expect:
           calls: ["formula_propose"]
-          formula: ["/1\\.18|0\\.18|18|fuel/"]
+          formula: ['/\$1,?250/', "/18%|fuel/"]
           rubric: >
-            Keeps the flat 1250 and adds an 18% fuel surcharge to it, rather than starting a new
-            formula from nothing.
+            Keeps the flat 1250 and adds an 18% fuel surcharge charge to it, rather than starting a
+            new formula from nothing.
 
   - name: formula-edit-existing-per-mile
     description: An existing template opened in the studio and changed by a sentence.
@@ -44,36 +49,49 @@ scenarios:
         expect:
           calls: ["formula_propose"]
           maxFailedCalls: 1
-          formula: ["totalDistance", '/totalStops|len\(stops\)|count\(stops/']
+          formula: ["shipment.distance", '/shipment\.stops|extraStops/']
           rubric: >
-            Keeps baseRate * totalDistance and adds 75 for each stop beyond two, with the 75 and
-            the 2 as named variables, and shows a load with three stops priced.
+            Keeps the per-mile charge and adds 75 for each stop beyond two, with the 75 and the 2
+            as inputs, and a test with a three-stop load.
 
   - name: formula-explain-existing
     description: A question about a template, not a change to it.
-    formula: { template: Hazmat Surcharge, type: AccessorialCharge }
+    formula: { template: Per Pound }
     steps:
-      - say: "what does this one actually do, when does it kick in"
+      - say: "what does this one actually do, when does it cost the minimum"
         expect:
           noCalls: [formula_propose]
           noProposals: true
-          replyIncludes: ["hazmat|hazardous"]
+          replyIncludes: ["weight|pound"]
           rubric: >
-            Explains that it charges the hazmat fee only when the load carries hazardous
-            material, and nothing otherwise, without proposing a change.
+            Explains that it bills the shipment's weight at the contract's rate per pound and that
+            the minimum charge applies when that comes to less, without proposing a change.
 
   - name: formula-price-a-sample
     description: Asking what a template comes to on a load described in words.
-    formula: { template: Per Mile with Minimum }
+    formula: { template: Per Mile }
     steps:
-      - say: "what would this come out to on a 90 mile run at 3 bucks a mile"
+      - say: "what would this come out to on a 90 mile run at 3 bucks a mile with a 250 minimum"
         expect:
-          calls: ["formula_test_expression"]
+          calls: ["formula_preview|formula_run_tests"]
           noProposals: true
-          replyIncludes: ["270|250"]
+          replyIncludes: ["270"]
           rubric: >
-            Prices it with the engine, and says whether the 250 minimum or the 270 per-mile figure
-            wins (270), rather than doing the arithmetic in its head.
+            Rates it with the engine, through a preview or a test, and says the 270 per-mile figure
+            beats the 250 minimum, rather than doing the arithmetic in its head.
+
+  - name: formula-library-add-a-function
+    description: A shared library opened in its editor and given a new function with a test.
+    formula: { library: accessorials }
+    steps:
+      - say: "add a liftgate fee here, 85 flat by default"
+        expect:
+          calls: ["formula_library_propose"]
+          maxFailedCalls: 1
+          formula: ['/fn\s+liftgate/', "hazmat", "residential", '/(?m)^\s*test\s+"/']
+          rubric: >
+            Adds a liftgate function with an $85 default fee, keeps hazmat and residential exactly
+            as they were, and tests the new function.
 
   - name: formula-asked-for-in-the-desk
     description: >
@@ -88,5 +106,6 @@ scenarios:
           noProposals: true
           replyExcludes: ["/(created|saved) (the|a|your) (new )?(formula|template)/"]
           rubric: >
-            Gives the expression (3.10 x miles + 150) and says the formula is saved and approved in
-            the formula studio, offering to open it, rather than saying it created a template.
+            Gives the formula (3.10 a mile on the trip's miles plus a 150 tarp charge) and says the
+            template is saved and approved in the formula studio, offering to open it, rather than
+            saying it created a template.

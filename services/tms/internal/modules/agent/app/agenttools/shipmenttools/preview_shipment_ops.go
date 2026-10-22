@@ -22,7 +22,8 @@ var uncancelFields = []string{
 }
 
 var rerateFields = []string{
-	common.FieldFormulaTemplateID, "baseRate", common.FieldFreightChargeAmount, "otherChargeAmount",
+	common.FieldFormulaTemplateID, "tariffInputs", common.FieldFreightChargeAmount,
+	"otherChargeAmount",
 	"totalChargeAmount",
 }
 

@@ -1,25 +1,27 @@
 package shipmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -333,9 +335,7 @@ func TestBuildShipmentBillingReadiness_BlocksOnRateVarianceWhenConfigured(t *tes
 	entity.ID = pulid.MustNew("shp_")
 	entity.Status = shipment.StatusCompleted
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(125))
-	entity.RatingDetail = &shipment.RatingDetail{
-		Result: 100,
-	}
+	entity.RatingDetail = &shipment.RatingDetail{Bill: billOf(100)}
 
 	readiness := buildShipmentBillingReadiness(
 		entity,
@@ -362,9 +362,7 @@ func TestBuildShipmentBillingReadiness_RequireReviewStopsAutoProgressButAllowsBi
 	entity.ID = pulid.MustNew("shp_")
 	entity.Status = shipment.StatusCompleted
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(125))
-	entity.RatingDetail = &shipment.RatingDetail{
-		Result: 100,
-	}
+	entity.RatingDetail = &shipment.RatingDetail{Bill: billOf(100)}
 
 	readiness := buildShipmentBillingReadiness(
 		entity,
@@ -501,4 +499,9 @@ func TestBuildShipmentBillingReadiness_RejectedPODBlocksReadyToInvoice(t *testin
 	require.Len(t, readiness.MissingRequirements, 1)
 	assert.Equal(t, "POD", readiness.MissingRequirements[0].DocumentTypeCode)
 	assert.False(t, readiness.CanMarkReadyToInvoice)
+}
+
+func billOf(freight int64) *tarifftypes.Bill {
+	amount := decimal.NewFromInt(freight)
+	return &tarifftypes.Bill{Currency: "USD", FreightTotal: amount, Total: amount}
 }

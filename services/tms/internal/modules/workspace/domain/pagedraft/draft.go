@@ -8,10 +8,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 )
 
 type Surface string
@@ -19,11 +17,12 @@ type Surface string
 const (
 	SurfaceShipmentImport = Surface("shipment_import")
 	SurfaceFormula        = Surface("formula")
+	SurfaceFormulaLibrary = Surface("formula_library")
 )
 
 func (s Surface) IsValid() bool {
 	switch s {
-	case SurfaceShipmentImport, SurfaceFormula:
+	case SurfaceShipmentImport, SurfaceFormula, SurfaceFormulaLibrary:
 		return true
 	default:
 		return false
@@ -31,7 +30,7 @@ func (s Surface) IsValid() bool {
 }
 
 func AllSurfaces() []Surface {
-	return []Surface{SurfaceShipmentImport, SurfaceFormula}
+	return []Surface{SurfaceShipmentImport, SurfaceFormula, SurfaceFormulaLibrary}
 }
 
 const (
@@ -41,21 +40,17 @@ const (
 	MaxFieldLabelLength   = 120
 	MaxFieldValueLength   = 1000
 	MaxStopTextLength     = 300
-	MaxExpressionLength   = 10_000
-	MaxFormulaVariables   = 50
-	MaxVariableNameLength = 64
-	MaxVariableTextLength = 500
+	MaxSourceLength       = tarifftypes.MaxSourceLength
 	MaxTemplateNameLength = 100
-	MaxBreakdownLines     = 20
-	MaxBreakdownLabel     = 100
-	maxSchemaIDLength     = 100
-	maxTemplateTypeLength = 50
+	MaxLibraryNameLength  = 64
+	MaxDescriptionLength  = 2_000
 )
 
 type Draft struct {
 	Surface        Surface         `json:"surface"`
 	ShipmentImport *ShipmentImport `json:"shipmentImport,omitempty"`
 	Formula        *Formula        `json:"formula,omitempty"`
+	FormulaLibrary *FormulaLibrary `json:"formulaLibrary,omitempty"`
 }
 
 type FieldStatus string
@@ -94,15 +89,14 @@ type ImportField struct {
 type RequiredField string
 
 const (
-	RequiredCustomer        = RequiredField("customerId")
-	RequiredServiceType     = RequiredField("serviceTypeId")
-	RequiredShipmentType    = RequiredField("shipmentTypeId")
-	RequiredFormulaTemplate = RequiredField("formulaTemplateId")
+	RequiredCustomer     = RequiredField("customerId")
+	RequiredServiceType  = RequiredField("serviceTypeId")
+	RequiredShipmentType = RequiredField("shipmentTypeId")
 )
 
 func (f RequiredField) IsValid() bool {
 	switch f {
-	case RequiredCustomer, RequiredServiceType, RequiredShipmentType, RequiredFormulaTemplate:
+	case RequiredCustomer, RequiredServiceType, RequiredShipmentType:
 		return true
 	default:
 		return false
@@ -114,15 +108,13 @@ func AllRequiredFields() []RequiredField {
 		RequiredCustomer,
 		RequiredServiceType,
 		RequiredShipmentType,
-		RequiredFormulaTemplate,
 	}
 }
 
 type RequiredFields struct {
-	CustomerID        string `json:"customerId"`
-	ServiceTypeID     string `json:"serviceTypeId"`
-	ShipmentTypeID    string `json:"shipmentTypeId"`
-	FormulaTemplateID string `json:"formulaTemplateId"`
+	CustomerID     string `json:"customerId"`
+	ServiceTypeID  string `json:"serviceTypeId"`
+	ShipmentTypeID string `json:"shipmentTypeId"`
 }
 
 func (r RequiredFields) Value(field RequiredField) string {
@@ -133,8 +125,6 @@ func (r RequiredFields) Value(field RequiredField) string {
 		return r.ServiceTypeID
 	case RequiredShipmentType:
 		return r.ShipmentTypeID
-	case RequiredFormulaTemplate:
-		return r.FormulaTemplateID
 	default:
 		return ""
 	}
@@ -194,199 +184,38 @@ var scheduleLayouts = [...]string{
 }
 
 type Formula struct {
-	TemplateID   string            `json:"templateId,omitempty"`
-	SchemaID     string            `json:"schemaId"`
-	TemplateType string            `json:"templateType"`
-	Name         string            `json:"name,omitempty"`
-	Description  string            `json:"description,omitempty"`
-	Expression   string            `json:"expression"`
-	Variables    []FormulaVariable `json:"variables"`
-	Breakdown    []BreakdownLine   `json:"breakdown,omitempty"`
-	Policy       *FormulaPolicy    `json:"policy,omitempty"`
+	TemplateID  string `json:"templateId,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Source      string `json:"source"`
 }
 
-// FormulaPolicy is the charge policy applied after the expression: the bounds and
-// the rounding. A nil bound means none. Amounts are decimal strings, as the engine
-// takes them.
-type FormulaPolicy struct {
-	MinCharge         *string `json:"minCharge,omitempty"`
-	MaxCharge         *string `json:"maxCharge,omitempty"`
-	RoundingMode      string  `json:"roundingMode,omitempty"`
-	RoundingPrecision *int    `json:"roundingPrecision,omitempty"`
-}
-
-// Resolved is the policy as the engine applies it: bounds as canonical decimal
-// strings, and the default rounding filled in where none was chosen. A nil
-// policy resolves to the default policy alone.
-func (p *FormulaPolicy) Resolved() *FormulaPolicy {
-	charge := p.ChargePolicy()
-	precision := int(charge.RoundingPrecision)
-	out := &FormulaPolicy{
-		RoundingMode:      string(charge.RoundingMode),
-		RoundingPrecision: &precision,
-	}
-	if charge.MinCharge.Valid {
-		minCharge := charge.MinCharge.Decimal.String()
-		out.MinCharge = &minCharge
-	}
-	if charge.MaxCharge.Valid {
-		maxCharge := charge.MaxCharge.Decimal.String()
-		out.MaxCharge = &maxCharge
-	}
-
-	return out
-}
-
-// ChargePolicy is the engine's form of a validated policy, normalized. A bound
-// that does not parse as a decimal counts as none; validate refuses one first.
-func (p *FormulaPolicy) ChargePolicy() formulatypes.ChargePolicy {
-	if p == nil {
-		return formulatypes.ChargePolicy{}.Normalized()
-	}
-
-	policy := formulatypes.ChargePolicy{
-		MinCharge:    parseBound(p.MinCharge),
-		MaxCharge:    parseBound(p.MaxCharge),
-		RoundingMode: ratetypes.RoundingMode(strings.TrimSpace(p.RoundingMode)),
-	}
-	if p.RoundingPrecision != nil {
-		policy.RoundingPrecision = int32(*p.RoundingPrecision) //nolint:gosec // validated 0..4
-	}
-
-	return policy.Normalized()
-}
-
-func parseBound(value *string) decimal.NullDecimal {
-	if value == nil {
-		return decimal.NullDecimal{}
-	}
-	amount, err := decimal.NewFromString(strings.TrimSpace(*value))
-	if err != nil {
-		return decimal.NullDecimal{}
-	}
-
-	return decimal.NewNullDecimal(amount)
-}
-
-func (p *FormulaPolicy) normalized() *FormulaPolicy {
-	if p == nil {
-		return nil
-	}
-
-	out := &FormulaPolicy{RoundingMode: strings.TrimSpace(p.RoundingMode)}
-	if p.MinCharge != nil {
-		minCharge := strings.TrimSpace(*p.MinCharge)
-		out.MinCharge = &minCharge
-	}
-	if p.MaxCharge != nil {
-		maxCharge := strings.TrimSpace(*p.MaxCharge)
-		out.MaxCharge = &maxCharge
-	}
-	if p.RoundingPrecision != nil {
-		precision := *p.RoundingPrecision
-		out.RoundingPrecision = &precision
-	}
-
-	return out
-}
-
-func (p *FormulaPolicy) Validate(prefix string, multiErr *errortypes.MultiError) {
-	if p == nil {
-		return
-	}
-	field := fieldNamer(prefix)
-
-	minCharge, minOK := checkBound(multiErr, field("minCharge"), p.MinCharge)
-	maxCharge, maxOK := checkBound(multiErr, field("maxCharge"), p.MaxCharge)
-	if minOK && maxOK && minCharge.Valid && maxCharge.Valid &&
-		minCharge.Decimal.GreaterThan(maxCharge.Decimal) {
-		multiErr.Add(field("minCharge"), errortypes.ErrInvalid,
-			"The minimum charge cannot exceed the maximum charge")
-	}
-
-	mode := ratetypes.RoundingMode(strings.TrimSpace(p.RoundingMode))
-	if mode != "" && !mode.IsValid() {
-		multiErr.Add(field("roundingMode"), errortypes.ErrInvalid, "Rounding mode is invalid")
-	}
-	if p.RoundingPrecision != nil && !validPrecision(*p.RoundingPrecision) {
-		multiErr.Add(field("roundingPrecision"), errortypes.ErrInvalid,
-			"Rounding precision must be between 0 and {0}", formulatypes.MaxRoundingPrecision)
-	}
-}
-
-func validPrecision(places int) bool {
-	return places >= 0 && places <= int(formulatypes.MaxRoundingPrecision)
-}
-
-func checkBound(
-	multiErr *errortypes.MultiError,
-	field string,
-	value *string,
-) (decimal.NullDecimal, bool) {
-	if value == nil {
-		return decimal.NullDecimal{}, true
-	}
-	amount, err := decimal.NewFromString(strings.TrimSpace(*value))
-	if err != nil {
-		multiErr.Add(field, errortypes.ErrInvalid, "A charge bound must be a decimal amount")
-		return decimal.NullDecimal{}, false
-	}
-	if amount.IsNegative() {
-		multiErr.Add(field, errortypes.ErrInvalid, "A charge bound cannot be negative")
-		return decimal.NullDecimal{}, false
-	}
-
-	return decimal.NewNullDecimal(amount), true
-}
-
-type VariableType string
-
-const (
-	VariableNumber  = VariableType("Number")
-	VariableString  = VariableType("String")
-	VariableBoolean = VariableType("Boolean")
-)
-
-func (t VariableType) IsValid() bool {
-	switch t {
-	case VariableNumber, VariableString, VariableBoolean:
-		return true
-	default:
-		return false
-	}
-}
-
-type FormulaVariable struct {
-	Name         string       `json:"name"`
-	Type         VariableType `json:"type"`
-	Description  string       `json:"description,omitempty"`
-	DefaultValue any          `json:"defaultValue,omitempty"`
+type FormulaLibrary struct {
+	LibraryID   string `json:"libraryId,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Source      string `json:"source"`
 }
 
 func (d *Draft) Validate(prefix string, multiErr *errortypes.MultiError) {
 	field := fieldNamer(prefix)
 
-	switch d.Surface {
-	case SurfaceShipmentImport:
-		if d.ShipmentImport == nil {
-			multiErr.Add(field("shipmentImport"), errortypes.ErrRequired,
-				"A shipment import draft is required for this surface")
-		}
-		if d.Formula != nil {
-			multiErr.Add(field("formula"), errortypes.ErrInvalid,
-				"A shipment import draft carries no formula")
-		}
-	case SurfaceFormula:
-		if d.Formula == nil {
-			multiErr.Add(field("formula"), errortypes.ErrRequired,
-				"A formula draft is required for this surface")
-		}
-		if d.ShipmentImport != nil {
-			multiErr.Add(field("shipmentImport"), errortypes.ErrInvalid,
-				"A formula draft carries no shipment import")
-		}
-	default:
+	carried := map[Surface]bool{
+		SurfaceShipmentImport: d.ShipmentImport != nil,
+		SurfaceFormula:        d.Formula != nil,
+		SurfaceFormulaLibrary: d.FormulaLibrary != nil,
+	}
+	if !d.Surface.IsValid() {
 		multiErr.Add(field("surface"), errortypes.ErrInvalid, "Unknown draft surface")
+	} else if !carried[d.Surface] {
+		multiErr.Add(field(d.Surface.payloadField()), errortypes.ErrRequired,
+			"A draft for this surface is required")
+	}
+	for _, surface := range AllSurfaces() {
+		if surface != d.Surface && carried[surface] {
+			multiErr.Add(field(surface.payloadField()), errortypes.ErrInvalid,
+				"A draft carries only its own surface's payload")
+		}
 	}
 
 	if d.ShipmentImport != nil {
@@ -395,6 +224,21 @@ func (d *Draft) Validate(prefix string, multiErr *errortypes.MultiError) {
 	if d.Formula != nil {
 		d.Formula.validate(field("formula"), multiErr)
 	}
+	if d.FormulaLibrary != nil {
+		d.FormulaLibrary.validate(field("formulaLibrary"), multiErr)
+	}
+}
+
+func (s Surface) payloadField() string {
+	switch s {
+	case SurfaceFormula:
+		return "formula"
+	case SurfaceFormulaLibrary:
+		return "formulaLibrary"
+	case SurfaceShipmentImport:
+		return "shipmentImport"
+	}
+	return "surface"
 }
 
 func (s *ShipmentImport) validate(prefix string, multiErr *errortypes.MultiError) {
@@ -460,127 +304,24 @@ func (f *Formula) validate(prefix string, multiErr *errortypes.MultiError) {
 	field := fieldNamer(prefix)
 
 	checkOptionalID(multiErr, field("templateId"), f.TemplateID)
-	if strings.TrimSpace(f.SchemaID) == "" || !validKey(f.SchemaID) ||
-		len(f.SchemaID) > maxSchemaIDLength {
-		multiErr.Add(field("schemaId"), errortypes.ErrInvalid, "Schema is invalid")
-	}
-	if f.TemplateType != "" &&
-		(!validKey(f.TemplateType) || len(f.TemplateType) > maxTemplateTypeLength) {
-		multiErr.Add(field("templateType"), errortypes.ErrInvalid, "Template type is invalid")
-	}
 	checkLength(multiErr, field("name"), f.Name, MaxTemplateNameLength)
-	checkLength(multiErr, field("description"), f.Description, MaxVariableTextLength)
-	checkLength(multiErr, field("expression"), f.Expression, MaxExpressionLength)
-	f.Policy.Validate(field("policy"), multiErr)
-	validateBreakdown(field("breakdown"), f.Breakdown, multiErr)
-
-	if len(f.Variables) > MaxFormulaVariables {
-		multiErr.Add(field("variables"), errortypes.ErrInvalid, "Too many variables")
-		return
-	}
-	seen := make(map[string]struct{}, len(f.Variables))
-	for i := range f.Variables {
-		variable := &f.Variables[i]
-		variableField := indexed(field("variables"), i)
-		if !ValidVariableName(variable.Name) {
-			multiErr.Add(variableField+".name", errortypes.ErrInvalid, "Variable name is invalid")
-		} else if _, dup := seen[variable.Name]; dup {
-			multiErr.Add(variableField+".name", errortypes.ErrDuplicate, "Variable is repeated")
-		}
-		seen[variable.Name] = struct{}{}
-		if !variable.Type.IsValid() {
-			multiErr.Add(variableField+".type", errortypes.ErrInvalid, "Variable type is invalid")
-		}
-		checkLength(multiErr, variableField+".description", variable.Description,
-			MaxVariableTextLength)
-		if !ScalarValue(variable.DefaultValue, MaxVariableTextLength) {
-			multiErr.Add(variableField+".defaultValue", errortypes.ErrInvalid,
-				"Default value must be a number, text or true/false")
-		}
-	}
+	checkLength(multiErr, field("description"), f.Description, MaxDescriptionLength)
+	checkSource(multiErr, field("source"), f.Source)
 }
 
-const (
-	TemplateTypeFreightCharge     = "FreightCharge"
-	TemplateTypeAccessorialCharge = "AccessorialCharge"
-)
-
-func (d *FormulaDetails) Validate(prefix string, multiErr *errortypes.MultiError) {
+func (l *FormulaLibrary) validate(prefix string, multiErr *errortypes.MultiError) {
 	field := fieldNamer(prefix)
 
-	checkLength(multiErr, field("name"), d.Name, MaxTemplateNameLength)
-	checkLength(multiErr, field("description"), d.Description, MaxVariableTextLength)
-	if d.TemplateType != "" && d.TemplateType != TemplateTypeFreightCharge &&
-		d.TemplateType != TemplateTypeAccessorialCharge {
-		multiErr.Add(field("templateType"), errortypes.ErrInvalid,
-			"Template type must be FreightCharge or AccessorialCharge")
-	}
-	d.Policy.Validate(field("policy"), multiErr)
-	validateBreakdown(field("breakdown"), d.Breakdown, multiErr)
+	checkOptionalID(multiErr, field("libraryId"), l.LibraryID)
+	checkLength(multiErr, field("name"), l.Name, MaxLibraryNameLength)
+	checkLength(multiErr, field("description"), l.Description, MaxDescriptionLength)
+	checkSource(multiErr, field("source"), l.Source)
 }
 
-func validateBreakdown(prefix string, lines []BreakdownLine, multiErr *errortypes.MultiError) {
-	if len(lines) > MaxBreakdownLines {
-		multiErr.Add(prefix, errortypes.ErrInvalid,
-			"A formula has at most {0} breakdown lines", MaxBreakdownLines)
-		return
+func checkSource(multiErr *errortypes.MultiError, field, source string) {
+	if len(source) > MaxSourceLength {
+		multiErr.Add(field, errortypes.ErrInvalid, "Source cannot exceed 64 KiB")
 	}
-	seen := make(map[string]struct{}, len(lines))
-	for i := range lines {
-		line := &lines[i]
-		lineField := indexed(prefix, i)
-		if !ValidBreakdownName(line.Name) {
-			multiErr.Add(lineField+".name", errortypes.ErrInvalid,
-				"A breakdown line's name is a camelCase identifier, such as fuelSurcharge")
-		} else if _, dup := seen[line.Name]; dup {
-			multiErr.Add(lineField+".name", errortypes.ErrDuplicate, "Breakdown line is repeated")
-		}
-		seen[line.Name] = struct{}{}
-		if strings.TrimSpace(line.Label) == "" {
-			multiErr.Add(
-				lineField+".label",
-				errortypes.ErrRequired,
-				"A breakdown line needs a label",
-			)
-		}
-		checkLength(multiErr, lineField+".label", line.Label, MaxBreakdownLabel)
-		if strings.TrimSpace(line.Expression) == "" {
-			multiErr.Add(lineField+".expression", errortypes.ErrRequired,
-				"A breakdown line needs an expression")
-		}
-		checkLength(multiErr, lineField+".expression", line.Expression, MaxExpressionLength)
-	}
-}
-
-func (d *FormulaDetails) Normalized() FormulaDetails {
-	return FormulaDetails{
-		Name:         strings.TrimSpace(d.Name),
-		Description:  strings.TrimSpace(d.Description),
-		TemplateType: strings.TrimSpace(d.TemplateType),
-		Breakdown:    normalizedBreakdown(d.Breakdown),
-		Policy:       d.Policy.normalized(),
-	}
-}
-
-func normalizedBreakdown(lines []BreakdownLine) []BreakdownLine {
-	if len(lines) == 0 {
-		return nil
-	}
-
-	out := make([]BreakdownLine, 0, len(lines))
-	for _, line := range lines {
-		out = append(out, BreakdownLine{
-			Name:       strings.TrimSpace(line.Name),
-			Label:      strings.TrimSpace(line.Label),
-			Expression: strings.TrimSpace(line.Expression),
-		})
-	}
-
-	return out
-}
-
-func ValidBreakdownName(name string) bool {
-	return ValidVariableName(name) && name[0] != '_'
 }
 
 func (d *Draft) Normalized() *Draft {
@@ -595,6 +336,9 @@ func (d *Draft) Normalized() *Draft {
 	if d.Formula != nil {
 		out.Formula = d.Formula.normalized()
 	}
+	if d.FormulaLibrary != nil {
+		out.FormulaLibrary = d.FormulaLibrary.normalized()
+	}
 
 	return out
 }
@@ -603,10 +347,9 @@ func (s *ShipmentImport) normalized() *ShipmentImport {
 	out := &ShipmentImport{
 		Fields: make([]ImportField, 0, len(s.Fields)),
 		Required: RequiredFields{
-			CustomerID:        strings.TrimSpace(s.Required.CustomerID),
-			ServiceTypeID:     strings.TrimSpace(s.Required.ServiceTypeID),
-			ShipmentTypeID:    strings.TrimSpace(s.Required.ShipmentTypeID),
-			FormulaTemplateID: strings.TrimSpace(s.Required.FormulaTemplateID),
+			CustomerID:     strings.TrimSpace(s.Required.CustomerID),
+			ServiceTypeID:  strings.TrimSpace(s.Required.ServiceTypeID),
+			ShipmentTypeID: strings.TrimSpace(s.Required.ShipmentTypeID),
 		},
 		Stops: make([]ImportStop, 0, len(s.Stops)),
 	}
@@ -638,76 +381,20 @@ func (s *ShipmentImport) normalized() *ShipmentImport {
 }
 
 func (f *Formula) normalized() *Formula {
-	out := &Formula{
-		TemplateID:   strings.TrimSpace(f.TemplateID),
-		SchemaID:     strings.TrimSpace(f.SchemaID),
-		TemplateType: strings.TrimSpace(f.TemplateType),
-		Name:         strings.TrimSpace(f.Name),
-		Description:  strings.TrimSpace(f.Description),
-		Expression:   strings.TrimSpace(f.Expression),
-		Variables:    make([]FormulaVariable, 0, len(f.Variables)),
-		Breakdown:    normalizedBreakdown(f.Breakdown),
-		Policy:       f.Policy.normalized(),
+	return &Formula{
+		TemplateID:  strings.TrimSpace(f.TemplateID),
+		Name:        strings.TrimSpace(f.Name),
+		Description: strings.TrimSpace(f.Description),
+		Source:      f.Source,
 	}
-	for _, variable := range f.Variables {
-		out.Variables = append(out.Variables, FormulaVariable{
-			Name:         strings.TrimSpace(variable.Name),
-			Type:         VariableType(strings.TrimSpace(string(variable.Type))),
-			Description:  strings.TrimSpace(variable.Description),
-			DefaultValue: variable.DefaultValue,
-		})
-	}
-
-	return out
 }
 
-// ValidValuePath reports whether a value for a priced load may be set under
-// name: a formula variable, or a schema field path such as serviceType.code,
-// each segment a valid name. The engine sets a dotted path on the nested
-// field, so a sample load can say which service type it is.
-func ValidValuePath(name string) bool {
-	if name == "" || len(name) > MaxVariableNameLength {
-		return false
-	}
-	for segment := range strings.SplitSeq(name, ".") {
-		if !ValidVariableName(segment) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func ValidVariableName(name string) bool {
-	if name == "" || len(name) > MaxVariableNameLength {
-		return false
-	}
-	for i, r := range name {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r == '_':
-		case r >= '0' && r <= '9' && i > 0:
-		default:
-			return false
-		}
-	}
-
-	return true
-}
-
-func ScalarValue(value any, maxText int) bool {
-	switch v := value.(type) {
-	case nil, bool:
-		return true
-	case string:
-		return utf8.RuneCountInString(v) <= maxText
-	case float64:
-		return !math.IsNaN(v) && !math.IsInf(v, 0)
-	case float32:
-		return !math.IsNaN(float64(v)) && !math.IsInf(float64(v), 0)
-	case int, int32, int64:
-		return true
-	default:
-		return false
+func (l *FormulaLibrary) normalized() *FormulaLibrary {
+	return &FormulaLibrary{
+		LibraryID:   strings.TrimSpace(l.LibraryID),
+		Name:        strings.TrimSpace(l.Name),
+		Description: strings.TrimSpace(l.Description),
+		Source:      l.Source,
 	}
 }
 

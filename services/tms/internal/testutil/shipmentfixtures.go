@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -89,7 +88,6 @@ func CreateShipmentGraph(
 		Status:            shipment.StatusNew,
 		ProNumber:         params.ProNumber,
 		BOL:               params.BOL,
-		RatingUnit:        1,
 	}
 	_, err := db.NewInsert().Model(shipmentEntity).Exec(ctx)
 	require.NoError(t, err)
@@ -251,14 +249,11 @@ func mustCreateFormulaTemplate(
 	t.Helper()
 
 	entity := &formulatemplate.FormulaTemplate{
-		BusinessUnitID:      tenantInfo.BuID,
-		OrganizationID:      tenantInfo.OrgID,
-		Name:                "Integration Freight Template",
-		Type:                formulatemplate.TemplateTypeFreightCharge,
-		Expression:          "1",
-		Status:              formulatemplate.StatusActive,
-		SchemaID:            "shipment",
-		VariableDefinitions: []*formulatypes.VariableDefinition{},
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		Name:           "Integration Freight Template",
+		Source:         "tariff \"Integration Freight Template\"\n\ncharge \"Freight\" = $1\n",
+		Status:         formulatemplate.StatusActive,
 	}
 	_, err := db.NewInsert().Model(entity).Exec(ctx)
 	require.NoError(t, err)

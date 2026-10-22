@@ -24,6 +24,8 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +70,7 @@ func newSplitShipment() *splitShipment {
 		CustomerID:          acme,
 		Status:              shipment.StatusReadyToInvoice,
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(2850)),
-		BaseRate:            decimal.NewNullDecimal(decimal.NewFromInt(2850)),
+		TariffInputs:        tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.NewFromInt(2850))},
 		OtherChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("1154.38")),
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("4004.38")),
 		AdditionalCharges:   []*shipment.AdditionalCharge{detention},

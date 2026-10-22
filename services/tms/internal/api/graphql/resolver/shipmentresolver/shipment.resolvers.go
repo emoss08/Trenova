@@ -316,7 +316,7 @@ func (r *MutationResolver) PreviewShipmentContractRate(ctx context.Context, inpu
 		return nil, err
 	}
 
-	return contractRateToModel(application), nil
+	return contractRateToModel(application)
 }
 
 func (r *MutationResolver) AutoRateShipment(ctx context.Context, id string) (*gqlmodel.ShipmentAutoRateResponse, error) {
@@ -345,10 +345,14 @@ func (r *MutationResolver) AutoRateShipment(ctx context.Context, id string) (*gq
 	if err != nil {
 		return nil, err
 	}
+	contractRate, err := contractRateToModel(application)
+	if err != nil {
+		return nil, err
+	}
 
 	return &gqlmodel.ShipmentAutoRateResponse{
 		Shipment:     model,
-		ContractRate: contractRateToModel(application),
+		ContractRate: contractRate,
 	}, nil
 }
 
@@ -1196,19 +1200,6 @@ func (r *QueryResolver) ShipmentTrackingEvents(ctx context.Context, shipmentID s
 	})
 }
 
-func (r *ShipmentRatingDetailResolver) Expression(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (string, error) {
-	if obj == nil || obj.Expression == "" {
-		return "", nil
-	}
-
-	allowed, err := mayReadFormulas(ctx, r.Core)
-	if err != nil || !allowed {
-		return "", err
-	}
-
-	return obj.Expression, nil
-}
-
 func (r *ShipmentResolver) FormulaTemplate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentFormulaTemplate, error) {
 	if obj == nil || obj.FormulaTemplate == nil {
 		return nil, nil
@@ -1220,4 +1211,17 @@ func (r *ShipmentResolver) FormulaTemplate(ctx context.Context, obj *gqlmodel.Sh
 	}
 
 	return obj.FormulaTemplate, nil
+}
+
+func (r *ShipmentRatingDetailResolver) Trace(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (map[string]any, error) {
+	if obj == nil || len(obj.Trace) == 0 {
+		return nil, nil
+	}
+
+	allowed, err := mayReadFormulas(ctx, r.Core)
+	if err != nil || !allowed {
+		return nil, err
+	}
+
+	return obj.Trace, nil
 }

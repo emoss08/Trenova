@@ -74,7 +74,7 @@ func TestListLanes_BoundsThePageBeforeReading(t *testing.T) {
 			svc := New(Params{
 				Logger:    zap.NewNop(),
 				Repo:      repo,
-				Validator: NewTestValidator(),
+				Validator: testValidator(),
 			})
 
 			page, err := svc.ListLanes(
@@ -117,7 +117,7 @@ func TestListLanes_PassesNotFoundThrough(t *testing.T) {
 	svc := New(Params{
 		Logger:    zap.NewNop(),
 		Repo:      repo,
-		Validator: NewTestValidator(),
+		Validator: testValidator(),
 	})
 
 	page, err := svc.ListLanes(t.Context(), &rateagreementports.ListRateAgreementLanesRequest{

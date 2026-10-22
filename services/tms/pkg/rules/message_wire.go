@@ -3,6 +3,7 @@ package rules
 import (
 	"fmt"
 	"strconv"
+	"unicode/utf8"
 )
 
 func (m Message) MarshalJSON() ([]byte, error) {
@@ -46,4 +47,47 @@ func appendMessageArgs(dst []byte, args []any) ([]byte, error) {
 		}
 	}
 	return append(dst, ']'), nil
+}
+
+const hexDigits = "0123456789abcdef"
+
+func appendString(dst []byte, text string) []byte {
+	dst = append(dst, '"')
+	start := 0
+	for index := 0; index < len(text); {
+		c := text[index]
+		if c < utf8.RuneSelf {
+			if c >= 0x20 && c != '"' && c != '\\' {
+				index++
+				continue
+			}
+			dst = append(dst, text[start:index]...)
+			switch c {
+			case '"', '\\':
+				dst = append(dst, '\\', c)
+			case '\n':
+				dst = append(dst, '\\', 'n')
+			case '\r':
+				dst = append(dst, '\\', 'r')
+			case '\t':
+				dst = append(dst, '\\', 't')
+			default:
+				dst = append(dst, '\\', 'u', '0', '0', hexDigits[c>>4], hexDigits[c&0xf])
+			}
+			index++
+			start = index
+			continue
+		}
+		r, size := utf8.DecodeRuneInString(text[index:])
+		if r == utf8.RuneError && size == 1 {
+			dst = append(dst, text[start:index]...)
+			dst = append(dst, `�`...)
+			index += size
+			start = index
+			continue
+		}
+		index += size
+	}
+	dst = append(dst, text[start:]...)
+	return append(dst, '"')
 }

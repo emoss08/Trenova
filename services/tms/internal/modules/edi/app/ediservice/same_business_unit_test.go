@@ -135,7 +135,6 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 			ServiceTypeID:     pulid.MustNew("st_"),
 			CustomerID:        pulid.MustNew("cus_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
-			RatingUnit:        1,
 		}, nil)
 
 	service := &Service{

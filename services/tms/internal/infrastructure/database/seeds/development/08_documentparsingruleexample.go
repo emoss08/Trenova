@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"

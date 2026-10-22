@@ -24,14 +24,36 @@ type GetRateZoneByIDRequest struct {
 	IncludeMembers bool                  `json:"includeMembers"`
 }
 
-// ResolveZoneMembershipRequest asks which zones contain a place.
-//
-// The keys are the shipment's own match keys, produced by rategeo, so a zone
-// member and the place it covers are compared as strings the database can index
-// rather than by re-deriving geography at read time.
-type ResolveZoneMembershipRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	MatchKeys  []string              `json:"matchKeys"`
+type ResolveLaneZonesRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	OriginKeys      []string              `json:"originKeys"`
+	DestinationKeys []string              `json:"destinationKeys"`
+}
+
+type ZoneRef struct {
+	ID   pulid.ID `json:"id"`
+	Code string   `json:"code"`
+}
+
+type LaneZones struct {
+	Origin      []ZoneRef `json:"origin"`
+	Destination []ZoneRef `json:"destination"`
+}
+
+func ZoneIDs(refs []ZoneRef) []pulid.ID {
+	ids := make([]pulid.ID, 0, len(refs))
+	for _, ref := range refs {
+		ids = append(ids, ref.ID)
+	}
+	return ids
+}
+
+func ZoneCodes(refs []ZoneRef) []string {
+	codes := make([]string, 0, len(refs))
+	for _, ref := range refs {
+		codes = append(codes, ref.Code)
+	}
+	return codes
 }
 
 type RateZoneRepository interface {
@@ -52,7 +74,10 @@ type RateZoneRepository interface {
 	Update(ctx context.Context, entity *ratezone.RateZone) (*ratezone.RateZone, error)
 	Delete(ctx context.Context, req *GetRateZoneByIDRequest) error
 
-	// ResolveMembership returns the zones whose members cover any of the given
-	// keys. It runs twice per rating, once per end of the lane.
-	ResolveMembership(ctx context.Context, req *ResolveZoneMembershipRequest) ([]pulid.ID, error)
+	ResolveLaneZones(ctx context.Context, req *ResolveLaneZonesRequest) (*LaneZones, error)
+	GetCodesByIDs(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		ids []pulid.ID,
+	) (map[pulid.ID]string, error)
 }

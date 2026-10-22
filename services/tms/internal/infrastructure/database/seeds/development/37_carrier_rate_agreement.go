@@ -6,13 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -146,27 +147,26 @@ func (s *CarrierRateAgreementSeed) ensure(
 	approverID := spec.approverID
 	stamped := spec.now
 	agreement := &rateagreement.RateAgreement{
-		ID:                pulid.MustNew("rag_"),
-		OrganizationID:    spec.carrier.OrganizationID,
-		BusinessUnitID:    spec.carrier.BusinessUnitID,
-		PartyType:         rateagreement.PartyTypeCarrier,
-		CarrierID:         &carrierID,
-		Code:              "SEED-BUY-" + spec.carrier.Code,
-		Name:              spec.carrier.Name + " Linehaul Agreement",
-		Description:       "Seeded buy-side contract so a carrier shop can price any lane",
-		AgreementType:     rateagreement.AgreementTypeContract,
-		Status:            rateagreement.StatusActive,
-		Priority:          10,
-		EffectiveFrom:     rateSeedEffectiveFrom,
-		Currency:          "USD",
-		RoundingMode:      ratetypes.RoundingModeHalfUp,
-		RoundingPrecision: 2,
-		SubmittedByID:     &approverID,
-		SubmittedAt:       &stamped,
-		ApprovedByID:      &approverID,
-		ApprovedAt:        &stamped,
-		CreatedAt:         spec.now,
-		UpdatedAt:         spec.now,
+		ID:             pulid.MustNew("rag_"),
+		OrganizationID: spec.carrier.OrganizationID,
+		BusinessUnitID: spec.carrier.BusinessUnitID,
+		PartyType:      rateagreement.PartyTypeCarrier,
+		CarrierID:      &carrierID,
+		Code:           "SEED-BUY-" + spec.carrier.Code,
+		Name:           spec.carrier.Name + " Linehaul Agreement",
+		Description:    "Seeded buy-side contract so a carrier shop can price any lane",
+		AgreementType:  rateagreement.AgreementTypeContract,
+		Status:         rateagreement.StatusActive,
+		Priority:       10,
+		EffectiveFrom:  rateSeedEffectiveFrom,
+		Currency:       "USD",
+		Inputs:         tarifftypes.Inputs{},
+		SubmittedByID:  &approverID,
+		SubmittedAt:    &stamped,
+		ApprovedByID:   &approverID,
+		ApprovedAt:     &stamped,
+		CreatedAt:      spec.now,
+		UpdatedAt:      spec.now,
 	}
 	if _, err = tx.NewInsert().Model(agreement).Exec(ctx); err != nil {
 		return fmt.Errorf("insert agreement: %w", err)
@@ -175,7 +175,6 @@ func (s *CarrierRateAgreementSeed) ensure(
 		return fmt.Errorf("track agreement: %w", err)
 	}
 
-	templateID := spec.templateID
 	rule := &rateagreement.RateAgreementRule{
 		ID:                   pulid.MustNew("ragr_"),
 		OrganizationID:       agreement.OrganizationID,
@@ -185,16 +184,22 @@ func (s *CarrierRateAgreementSeed) ensure(
 		PartyID:              agreement.PartyID(),
 		Label:                "Anywhere to anywhere, per mile",
 		Status:               rateagreement.RuleStatusActive,
-		AllowDeficitRating:   true,
 		OriginScopeType:      rategeo.ScopeTypeAny,
 		DestinationScopeType: rategeo.ScopeTypeAny,
 		Direction:            rateagreement.DirectionDirectional,
-		FormulaTemplateID:    &templateID,
-		Rate:                 decimal.NewNullDecimal(decimal.RequireFromString(spec.rate)),
-		MinCharge:            decimal.NewNullDecimal(decimal.RequireFromString(carrierMinCharge)),
-		EffectiveFrom:        rateSeedEffectiveFrom,
-		CreatedAt:            spec.now,
-		UpdatedAt:            spec.now,
+		FormulaTemplateID:    spec.templateID,
+		Inputs: tarifftypes.Inputs{
+			formulatemplate.StandardInputRate: rules.QuantityValue(
+				decimal.RequireFromString(spec.rate),
+				rules.UnitMoney+"/mi",
+			),
+			formulatemplate.StandardInputMinimumCharge: rules.MoneyValue(
+				decimal.RequireFromString(carrierMinCharge),
+			),
+		},
+		EffectiveFrom: rateSeedEffectiveFrom,
+		CreatedAt:     spec.now,
+		UpdatedAt:     spec.now,
 	}
 	if err = rateagreement.ApplyLanes(ctx, []*rateagreement.RateAgreementRule{rule}); err != nil {
 		return fmt.Errorf("key the carrier lane: %w", err)
