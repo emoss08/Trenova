@@ -364,7 +364,7 @@ impl Parser<'_> {
             } else if self.at("(") && !self.newline_before() {
                 expr = self.call(expr);
             } else if self.at("[") && !self.newline_before() {
-                expr = self.index(expr);
+                expr = self.bracketed(|parser| parser.index(expr));
             } else {
                 break;
             }
@@ -373,7 +373,7 @@ impl Parser<'_> {
     }
 
     fn call(&mut self, callee: Expr) -> Expr {
-        let args = self.arguments();
+        let args = self.bracketed(Self::arguments);
         let close = self.previous_span();
         if let ExprKind::Field { name, .. } = &callee.kind
             && name.text == "in"
@@ -622,7 +622,7 @@ impl Parser<'_> {
                 let span = text.span;
                 self.node_with(ExprKind::Text(text), span, height)
             }
-            TokenKind::Name if self.peek_is(1, "=>") => self.misplaced_lambda(),
+            TokenKind::Name if self.peek_is(1, "=>") && !self.guard => self.misplaced_lambda(),
             TokenKind::Name | TokenKind::Code | TokenKind::Unit => {
                 self.bump();
                 if token.kind == TokenKind::Unit {
@@ -679,6 +679,15 @@ impl Parser<'_> {
         self.missing()
     }
 
+    /// Reads something in brackets, where a `match` guard's end at `=>` no longer applies: a
+    /// lambda written there is misplaced, as anywhere else outside a list method's arguments.
+    fn bracketed<T>(&mut self, read: impl FnOnce(&mut Self) -> T) -> T {
+        let outer = std::mem::replace(&mut self.guard, false);
+        let value = read(self);
+        self.guard = outer;
+        value
+    }
+
     fn misplaced_lambda(&mut self) -> Expr {
         let lambda = self.lambda();
         self.report(Diagnostic::error(
@@ -728,16 +737,16 @@ impl Parser<'_> {
 
     fn punct_primary(&mut self) -> Expr {
         if self.at("(") {
-            if self.starts_lambda() {
+            if !self.guard && self.starts_lambda() {
                 return self.misplaced_lambda();
             }
-            return self.parenthesized();
+            return self.bracketed(Self::parenthesized);
         }
         if self.at("[") {
-            return self.list();
+            return self.bracketed(Self::list);
         }
         if self.at("{") {
-            return self.record_or_block();
+            return self.bracketed(Self::record_or_block);
         }
         self.expected_value()
     }

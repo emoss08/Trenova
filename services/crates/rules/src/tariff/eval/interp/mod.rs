@@ -224,6 +224,12 @@ impl<'p, 'a> Interp<'p, 'a> {
         self.types.type_of(link::id(module), node)
     }
 
+    /// The declared type of the root file's input `name`, when the oracle knows it.
+    #[must_use]
+    pub fn input_type(&self, name: &str) -> Option<Type> {
+        self.types.input_type(name)
+    }
+
     /// Whether events of code in `env` belong on the trace: the root file's own statements.
     fn traced(&self, env: &Env) -> bool {
         self.trace.enabled() && env.module == 0 && !env.function

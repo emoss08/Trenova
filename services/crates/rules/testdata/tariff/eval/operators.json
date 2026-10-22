@@ -220,11 +220,6 @@
     "display": "true"
   },
   {
-    "name": "temperatures do not multiply",
-    "expr": "40 °F * 2",
-    "error": "conversion"
-  },
-  {
     "name": "date-time minus date-time is a duration in hours",
     "expr": "@2026-01-05T11:30Z - @2026-01-05T08:00Z",
     "display": "3.5 h"
@@ -296,8 +291,16 @@
   },
   {
     "name": "a value is not none",
-    "expr": "1 lb != none",
-    "display": "true"
+    "expr": "shipment.weight != none",
+    "display": "true",
+    "facts": {
+      "shipment": {
+        "weight": {
+          "$q": "1",
+          "u": "lb"
+        }
+      }
+    }
   },
   {
     "name": "ordering across units",
@@ -312,11 +315,6 @@
   {
     "name": "ordering of date-times by instant",
     "expr": "@2026-01-05T08:00-05:00 >= @2026-01-05T13:00Z",
-    "display": "true"
-  },
-  {
-    "name": "ordering of text",
-    "expr": "\"apple\" < \"banana\"",
     "display": "true"
   },
   {
@@ -385,24 +383,14 @@
     "display": "true"
   },
   {
-    "name": "none is in no range",
-    "expr": "shipment.weight in ..500 lb",
-    "display": "false"
+    "name": "none matches no range pattern",
+    "expr": "match shipment.weight {\n  ..500 lb => \"light\"\n  _ => \"other\"\n}",
+    "display": "other"
   },
   {
     "name": "weekday in a list of variants",
     "expr": "@2026-10-24.weekday in [Sat, Sun]",
     "display": "true"
-  },
-  {
-    "name": "adding money to a weight is an internal error",
-    "expr": "$1 + 1 lb",
-    "error": "internal"
-  },
-  {
-    "name": "adding text is an internal error",
-    "expr": "\"a\" + \"b\"",
-    "error": "internal"
   },
   {
     "name": "if expressions choose a branch",

@@ -741,6 +741,59 @@
     "tariff \"t\"",
     "charge \"x\" = $1 * shipment.distance.miles"
    ]
+  },
+  {
+   "diagnostics": [],
+   "name": "list min and max with a lambda give the lambda's value, optional; avg is not optional",
+   "source": [
+    "library \"t\"",
+    "fn f(xs: List<Int>, ws: List<Weight>) -> Bool = xs.min(x => x * 2) == none and xs.max((x, i) => i) == none and xs.avg() > 0 and ws.avg() > 0 lb and ws.avg(w => w.value) > 0"
+   ],
+   "types": {
+    "ws.avg()": "Weight",
+    "ws.avg(w => w.value)": "Number",
+    "xs.avg()": "Number",
+    "xs.max((x, i) => i)": "Int?",
+    "xs.min(x => x * 2)": "Int?"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a percent's value is a number",
+   "source": [
+    "library \"t\"",
+    "fn f(p: Percent) -> Number = p.value"
+   ],
+   "types": {
+    "p.value": "Number"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "in converts a rate by its denominator or by a whole rate unit",
+   "source": [
+    "library \"t\"",
+    "fn f(r: Money/lb) -> Bool = r.in(cwt) > r.in($/cwt)"
+   ],
+   "types": {
+    "r.in($/cwt)": "Money/cwt",
+    "r.in(cwt)": "Money/cwt"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "mi",
+     "code": "unit-mismatch",
+     "fixes": [],
+     "message": "`mi` measures a distance, but this value is money per pound, so it can't be converted to it"
+    }
+   ],
+   "name": "in on a rate takes a unit of its dimension or its denominator's",
+   "source": [
+    "library \"t\"",
+    "fn f(r: Money/lb) -> Money/lb = r.in(mi)"
+   ]
   }
  ]
 }

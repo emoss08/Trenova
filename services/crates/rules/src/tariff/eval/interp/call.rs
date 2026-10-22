@@ -12,7 +12,6 @@ use crate::tariff::eval::record;
 use crate::tariff::eval::value::Value;
 use crate::tariff::eval::{methods, text};
 use crate::tariff::syntax::ast::{Arg as CallArg, Expr, ExprKind, FnBody, FnDecl};
-use crate::tariff::types::Type;
 use rust_decimal::Decimal;
 
 /// The record constructors tests may call, with the stop kind each builds.
@@ -77,14 +76,15 @@ impl<'a> Interp<'_, 'a> {
                 if *optional && receiver.is_none() {
                     return Ok(Value::None);
                 }
-                self.method(env, expr, target, &receiver, &name.text, args)
+                self.method(env, expr, &receiver, &name.text, args)
             }
             _ => Err(internal(crate::message!("This cannot be called"), [])),
         }
     }
 
-    /// Calls a user or library function: arguments by position, then by name, then defaults
-    /// (evaluated in the function's own scope, so they may read earlier parameters).
+    /// Calls a user or library function: arguments by position, then by name, then defaults.
+    /// A default is a compile-time value (literals and constants), so it is evaluated in a
+    /// scope of its own, which sees no parameter.
     pub(super) fn call_function(
         &mut self,
         env: &mut Env,
@@ -145,7 +145,7 @@ impl<'a> Interp<'_, 'a> {
         for (param, value) in decl.params.iter().zip(given) {
             let value = match (value, &param.default) {
                 (Some(value), _) => value,
-                (None, Some(default)) => match self.eval(&mut scope, default) {
+                (None, Some(default)) => match self.eval(&mut Env::new(module, true), default) {
                     Ok(value) => value,
                     Err(stop) => {
                         outcome = Err(stop);
@@ -286,7 +286,6 @@ impl<'a> Interp<'_, 'a> {
         &mut self,
         env: &mut Env,
         expr: &'a Expr,
-        target: &'a Expr,
         receiver: &Value,
         name: &str,
         args: &'a [CallArg],
@@ -294,7 +293,7 @@ impl<'a> Interp<'_, 'a> {
         match receiver {
             Value::List(items) => {
                 let items = std::rc::Rc::clone(items);
-                self.list_method(env, (expr, target), &items, name, args)
+                self.list_method(env, expr, &items, name, args)
             }
             Value::Table(code) => {
                 let code = code.to_string();
@@ -392,7 +391,7 @@ impl<'a> Interp<'_, 'a> {
     fn list_method(
         &mut self,
         env: &mut Env,
-        (expr, target): (&'a Expr, &'a Expr),
+        expr: &'a Expr,
         items: &[Value],
         name: &str,
         args: &'a [CallArg],
@@ -405,24 +404,16 @@ impl<'a> Interp<'_, 'a> {
                 _ => values.push(self.eval(env, &arg.value)?),
             }
         }
-        let call_type = self.static_type(env.module, expr.id);
-        let item_type = match self.static_type(env.module, target.id) {
-            Some(Type::List(item)) => Some((*item).clone()),
-            _ => None,
-        };
-        let hints = lists::Hints {
-            empty_sum: call_type.as_ref().and_then(lists::zero_of),
-            pick_item: matches!(
-                (&call_type, &item_type),
-                (Some(call), Some(item)) if call.unwrapped() == item
-            ),
-        };
+        let empty_sum = self
+            .static_type(env.module, expr.id)
+            .as_ref()
+            .and_then(lists::zero_of);
         let mut host = LambdaHost {
             interp: self,
             env,
             lambda,
         };
-        lists::call(items, name, &values, &hints, &mut host).unwrap_or_else(|| {
+        lists::call(items, name, &values, empty_sum.as_ref(), &mut host).unwrap_or_else(|| {
             Err(internal(
                 crate::message!("A list has no method named {0}"),
                 [Arg::from(name)],

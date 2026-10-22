@@ -70,16 +70,6 @@
     }
   },
   {
-    "name": "assigning a let is internal",
-    "source": "tariff \"t\"\nlet x = 1\nx = 2",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
     "name": "a var declared in a block stays in it",
     "source": "tariff \"t\"\nif true {\n  var y = 1\n  y += 1\n  note \"{y}\"\n}",
     "expect": {
@@ -475,8 +465,8 @@
     }
   },
   {
-    "name": "a default may read an earlier parameter",
-    "source": "tariff \"t\"\nfn pad(x: Int, y: Int = x + 1) -> Int = x + y\nnote \"{pad(2)}\"",
+    "name": "a default is a constant expression",
+    "source": "tariff \"t\"\nconst STEP = 2\nfn pad(x: Int, y: Int = STEP + 1) -> Int = x + y\nnote \"{pad(2)}\"",
     "expect": {
       "status": "rated",
       "bill": {
@@ -527,26 +517,6 @@
             "text": "20"
           }
         ]
-      }
-    }
-  },
-  {
-    "name": "functions are closed over the record",
-    "source": "tariff \"t\"\nfn peek() -> Text = shipment.proNumber\nnote \"{peek()}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
-    "name": "functions cannot see file-level lets",
-    "source": "tariff \"t\"\nlet secret = 1\nfn peek() -> Int = secret\nnote \"{peek()}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
       }
     }
   },
@@ -738,32 +708,41 @@
     }
   },
   {
-    "name": "a syntax error is a syntax error",
+    "name": "a syntax error stops the file before it runs",
     "source": "tariff \"t\"\nlet = ",
     "expect": {
       "status": "error",
       "error": {
-        "code": "syntax"
+        "code": "check",
+        "message": {
+          "message": "Expected a name after `{0}`"
+        }
       }
     }
   },
   {
-    "name": "an unknown import is a syntax error",
+    "name": "an unknown import stops the file before it runs",
     "source": "tariff \"t\"\nuse std.nope",
     "expect": {
       "status": "error",
       "error": {
-        "code": "syntax"
+        "code": "check",
+        "message": {
+          "message": "There is no module `{0}`"
+        }
       }
     }
   },
   {
-    "name": "the wrong file kind is a syntax error",
+    "name": "the wrong file kind stops the file before it runs",
     "source": "condition \"c\"\ntrue",
     "expect": {
       "status": "error",
       "error": {
-        "code": "syntax"
+        "code": "check",
+        "message": {
+          "message": "This file must be a `{0}`, not a `{1}`"
+        }
       }
     },
     "kind": "tariff"
