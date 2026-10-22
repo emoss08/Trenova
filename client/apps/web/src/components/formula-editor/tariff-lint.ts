@@ -62,11 +62,15 @@ export function toTariffLint(diagnostic: TariffDiagnostic, source: string): Diag
   };
 }
 
-/** The linter: the module checks the document 250 ms after the last edit. */
+/**
+ * The linter: the module checks the document 250 ms after the last edit. An empty one is not
+ * underlined: there is nothing wrong with it yet.
+ */
 export function tariffLinter(service: TariffLanguageService): Extension {
   return linter(
     (view): Diagnostic[] => {
       const source = view.state.doc.toString();
+      if (source.trim() === "") return [];
       return checkService(service, source)
         .diagnostics.map((diagnostic) => toTariffLint(diagnostic, source))
         .filter((diagnostic): diagnostic is Diagnostic => diagnostic !== null);

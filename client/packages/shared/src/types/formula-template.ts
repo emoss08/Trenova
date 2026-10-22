@@ -9,7 +9,7 @@ import { z } from "zod";
 import {
   tariffBillSchema,
   tariffDiagnosticsSchema,
-  tariffEvalErrorSchema,
+  tariffMessageSchema,
   tariffInputDeclarationsSchema,
   tariffLookupSchema,
   tariffRangeSchema,
@@ -223,6 +223,12 @@ export type FormulaPreviewRequest = {
   shipmentId?: string;
 };
 
+const previewErrorSchema = z.object({
+  code: z.string(),
+  message: z.union([z.string(), tariffMessageSchema]),
+  range: tariffRangeSchema.nullish().transform((value) => value ?? null),
+});
+
 /**
  * What the preview answers: every finding, the bill (or why the tariff refused, or the error
  * that stopped it), the trace and the table lookups, and the file's tests as the server ran them.
@@ -231,7 +237,8 @@ export const formulaPreviewResponseSchema = z.object({
   diagnostics: tariffDiagnosticsSchema,
   bill: tariffBillSchema.nullish().transform((value) => value ?? null),
   refusal: tariffRefusalSchema.nullish().transform((value) => value ?? null),
-  error: tariffEvalErrorSchema.nullish().transform((value) => value ?? null),
+  /** Why the rating stopped; the server sends its message as text, in the reader's language. */
+  error: previewErrorSchema.nullish().transform((value) => value ?? null),
   trace: z
     .array(tariffTraceEventSchema)
     .nullish()

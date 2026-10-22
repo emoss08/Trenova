@@ -1,7 +1,7 @@
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { BillView } from "@/components/tariff-bill/bill-view";
 import { BillViewSkeleton } from "@/components/tariff-bill/bill-view-skeleton";
-import { refusalText } from "@/components/tariff-bill/refusal-text";
+import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
 import { TraceView } from "@/components/tariff-bill/trace-view";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
 import { describeApiError } from "@/lib/api-error-message";
@@ -70,7 +70,9 @@ function SaveAsTest() {
       });
       if (!scaffold.test) {
         throw new Error(
-          scaffold.error ? translateMessage(scaffold.error.message, t) : t("The test could not be written."),
+          scaffold.error
+            ? translateMessage(scaffold.error.message, t)
+            : t("The test could not be written."),
         );
       }
       return scaffold.test;
@@ -87,7 +89,9 @@ function SaveAsTest() {
       }),
   });
 
-  const fallback = usingShipment ? t("rates the picked shipment as billed") : t("bills the sample load as previewed");
+  const fallback = usingShipment
+    ? t("rates the picked shipment as billed")
+    : t("bills the sample load as previewed");
 
   if (!naming) {
     return (
@@ -143,7 +147,9 @@ export function PreviewPane() {
   const { preview, errors, reveal, jumpTo } = useStudio();
   const [traceOpen, setTraceOpen] = useState(false);
   const result = preview.result;
-  const serverErrors = (result?.diagnostics ?? []).filter((finding) => finding.severity === "error");
+  const serverErrors = (result?.diagnostics ?? []).filter(
+    (finding) => finding.severity === "error",
+  );
 
   return (
     <div className="flex flex-col gap-3 p-3">
@@ -190,7 +196,10 @@ export function PreviewPane() {
           <div className="text-foreground-muted flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
             <Beaker02Icon className="text-foreground-subtle size-5" />
             {errors > 0
-              ? t("Fix the {0, plural, one {error} other {# errors}} in the source to see the bill.", errors)
+              ? t(
+                  "Fix the {0, plural, one {error} other {# errors}} in the source to see the bill.",
+                  errors,
+                )
               : t("Write the tariff and its bill appears here as you type.")}
             {errors > 0 && (
               <Button type="button" variant="link" size="xs" onClick={() => jumpTo("source")}>
@@ -211,7 +220,9 @@ export function PreviewPane() {
           )
         ) : serverErrors.length > 0 ? (
           <div className="flex flex-col gap-1 p-3.5">
-            <span className="text-sm font-medium">{t("The server's check refused the source")}</span>
+            <span className="text-sm font-medium">
+              {t("The server's check refused the source")}
+            </span>
             <ProblemsList
               diagnostics={serverErrors}
               source={preview.lastRequest?.source ?? ""}
@@ -226,7 +237,7 @@ export function PreviewPane() {
             <div className="flex min-w-0 flex-col gap-1">
               <span className="text-sm font-medium">{t("The rating stopped with an error")}</span>
               <p className="text-foreground-muted text-xs break-words">
-                {translateMessage(result.error.message, t)}
+                {tariffMessageText(result.error.message, t)}
               </p>
               {result.error.range && (
                 <Button
@@ -245,7 +256,9 @@ export function PreviewPane() {
           <div className="flex items-start gap-2 p-3.5">
             <XCircleIcon className="text-danger mt-0.5 size-4 shrink-0" />
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="text-sm font-medium">{t("The tariff refused to rate this load")}</span>
+              <span className="text-sm font-medium">
+                {t("The tariff refused to rate this load")}
+              </span>
               <p className="text-sm break-words">{refusalText(result.refusal, t)}</p>
               <div className="flex items-center gap-1">
                 {result.refusal.range && (
@@ -286,11 +299,10 @@ export function PreviewPane() {
             aria-expanded={traceOpen}
             className="ui-focus-ring text-foreground-muted hover:text-foreground flex items-center gap-1 self-start rounded-sm text-xs"
           >
-            <ChevronRightIcon className={cn("size-3 transition-transform", traceOpen && "rotate-90")} />
-            {t(
-              "Trace · {0, plural, one {# step} other {# steps}}",
-              result.trace.length,
-            )}
+            <ChevronRightIcon
+              className={cn("size-3 transition-transform", traceOpen && "rotate-90")}
+            />
+            {t("Trace · {0, plural, one {# step} other {# steps}}", result.trace.length)}
           </button>
           {traceOpen && (
             <TraceView trace={result.trace} lookups={result.lookups} onSelectRange={reveal} />

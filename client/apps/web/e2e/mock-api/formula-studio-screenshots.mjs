@@ -42,8 +42,11 @@ async function typeInEditor(page, text) {
   await page.keyboard.type(text);
 }
 
-/** Clicks the editor just before the character `delta` past the first `text` on a line. */
-async function cursorAt(page, text, delta = 0) {
+/**
+ * Where the character `delta` past the first `text` is drawn in the editor. A line's text
+ * includes its inlay hints, so a needle is written as the line reads on screen.
+ */
+async function pointAt(page, text, delta = 0) {
   const point = await page.evaluate(
     ({ needle, shift }) => {
       for (const line of document.querySelectorAll(".cm-content .cm-line")) {
@@ -68,7 +71,23 @@ async function cursorAt(page, text, delta = 0) {
     { needle: text, shift: delta },
   );
   if (!point) throw new Error(`no ${text} in the editor`);
+  return point;
+}
+
+/** Clicks the editor just before the character `delta` past the first `text` on a line. */
+async function cursorAt(page, text, delta = 0) {
+  const point = await pointAt(page, text, delta);
   await page.mouse.click(point.x, point.y);
+}
+
+/** Picks the real shipment the preview rates. */
+async function pickShipment(page, pro = "S-240741") {
+  await page.getByRole("radio", { name: "Real shipment" }).click();
+  await pause(page, 600);
+  await page.getByText(/^Search by Pro/).first().click();
+  await pause(page, 900);
+  await page.getByText(pro, { exact: true }).first().click();
+  await pause(page);
 }
 
 const ask = (question) => async (page) => {
@@ -120,6 +139,8 @@ function shotsFor(colorScheme) {
       act: async (page) => {
         await page.getByRole("button", { name: "Explain", exact: true }).click();
         await pause(page);
+        await page.getByText(/is an input/).first().scrollIntoViewIfNeeded();
+        await pause(page, 600);
       },
     },
     {
@@ -129,6 +150,8 @@ function shotsFor(colorScheme) {
         await cursorAt(page, "charge \"Fuel surcharge\"");
         await page.keyboard.type("let weekendFee = waekendRate * 2\n");
         await pause(page);
+        await page.getByText(/^Nothing is named/).first().scrollIntoViewIfNeeded();
+        await pause(page, 600);
       },
     },
     {
@@ -136,6 +159,8 @@ function shotsFor(colorScheme) {
       path: DRAFT,
       act: async (page) => {
         await cursorAt(page, "let linehaul");
+        await page.keyboard.press("Enter");
+        await page.keyboard.press("ArrowUp");
         await page.keyboard.type("let w = shipment.");
         await pause(page, 900);
       },
@@ -144,7 +169,8 @@ function shotsFor(colorScheme) {
       name: "editor-hover",
       path: DRAFT,
       act: async (page) => {
-        await page.locator(".cm-content").first().getByText("extraStops", { exact: true }).last().hover();
+        const point = await pointAt(page, "= extraStops", 4);
+        await page.mouse.move(point.x, point.y);
         await pause(page, 900);
       },
     },
@@ -152,7 +178,7 @@ function shotsFor(colorScheme) {
       name: "editor-signature",
       path: DRAFT,
       act: async (page) => {
-        await cursorAt(page, "extraStops(shipment", "extraStops(".length);
+        await cursorAt(page, "extraStops(", "extraStops(".length);
         await pause(page, 800);
       },
     },
@@ -160,7 +186,7 @@ function shotsFor(colorScheme) {
       name: "editor-rename",
       path: DRAFT,
       act: async (page) => {
-        await cursorAt(page, "linehaul =", 2);
+        await cursorAt(page, "let linehaul", 6);
         await page.keyboard.press("F2");
         await pause(page, 600);
       },
@@ -169,7 +195,7 @@ function shotsFor(colorScheme) {
       name: "editor-definition",
       path: DRAFT,
       act: async (page) => {
-        await cursorAt(page, "extraStops(shipment", 2);
+        await cursorAt(page, "= extraStops", 4);
         await page.keyboard.press("F12");
         await pause(page, 1200);
       },
@@ -178,24 +204,20 @@ function shotsFor(colorScheme) {
       name: "inputs",
       path: DRAFT,
       act: async (page) => {
-        await page.getByRole("heading", { name: "Inputs" }).scrollIntoViewIfNeeded();
+        await page.getByRole("heading", { name: "Inputs" }).last().scrollIntoViewIfNeeded();
         await pause(page, 900);
       },
     },
     {
       name: "preview-shipment",
       path: DRAFT,
-      act: async (page) => {
-        await page.getByRole("radio", { name: "Real shipment" }).click();
-        await pause(page);
-      },
+      act: (page) => pickShipment(page),
     },
     {
       name: "save-as-test",
       path: DRAFT,
       act: async (page) => {
-        await page.getByRole("radio", { name: "Real shipment" }).click();
-        await pause(page);
+        await pickShipment(page);
         await page.getByRole("button", { name: "Save as test" }).click();
         await pause(page, 600);
       },
@@ -232,6 +254,15 @@ function shotsFor(colorScheme) {
         await pause(page, 600);
         await page.keyboard.press("Shift+Alt+F");
         await pause(page, 1200);
+      },
+    },
+    {
+      name: "preview-trace",
+      path: DRAFT,
+      act: async (page) => {
+        await pickShipment(page);
+        await page.getByRole("button", { name: /^Trace/ }).click();
+        await pause(page, 900);
       },
     },
     { name: "nova-empty", path: DRAFT, act: tab(/^Nova/) },

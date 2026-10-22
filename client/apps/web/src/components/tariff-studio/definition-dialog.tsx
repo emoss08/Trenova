@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
+import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { tariffCatalog } from "@trenova/shared/rules/tariff";
@@ -36,6 +37,8 @@ export function DefinitionDialog({
   const library = target
     ? (context?.libraries ?? []).find((candidate) => candidate.path === target.module)
     : undefined;
+  const { libraries } = useTariffCheckContext();
+  const approved = library ? libraries.find((entry) => entry.path === library.path) : undefined;
   const std =
     target && !library
       ? tariffCatalog(rules).modules.find((module) => module.path === target.module)
@@ -48,7 +51,9 @@ export function DefinitionDialog({
           <DialogTitle className="font-mono">{target?.module}</DialogTitle>
           <DialogDescription>
             {library
-              ? t("The library as this file imports it: the version its check was given.")
+              ? approved
+                ? t("The library as this file imports it: approved v{0}.", approved.versionNumber)
+                : t("The library as this file imports it: the version its check was given.")
               : t("Part of Tariff's standard library.")}
           </DialogDescription>
         </DialogHeader>

@@ -29,8 +29,9 @@ export type TariffWorkbench = {
 
 /**
  * What a Studio knows about the file in its editor, for a tariff or a library alike: the
- * module's check against the organisation's context, the counts every status line shows, and
- * the file's tests, run in the browser once the source has settled.
+ * module's check against the organisation's context (no findings while the file is empty), the
+ * counts every status line shows, and the file's tests, run in the browser once the source has
+ * settled.
  */
 export function useTariffWorkbench({
   rules,
@@ -43,10 +44,12 @@ export function useTariffWorkbench({
   kind: Exclude<TariffFileKind, "condition">;
   context: TariffContext | null;
 }): TariffWorkbench {
-  const check = useMemo(
-    () => checkTariffSource(rules, source, kind, context),
-    [rules, source, kind, context],
-  );
+  // An empty file has nothing wrong with it yet: the Studio shows where to start instead of
+  // the checker's "a file starts with its header".
+  const check = useMemo(() => {
+    const result = checkTariffSource(rules, source, kind, context);
+    return source.trim() === "" ? { ...result, diagnostics: [] } : result;
+  }, [rules, source, kind, context]);
   const errors = check.diagnostics.filter((finding) => finding.severity === "error").length;
   const warnings = check.diagnostics.filter((finding) => finding.severity === "warning").length;
   const testCount = check.outline?.items.filter((item) => item.kind === "test").length ?? 0;

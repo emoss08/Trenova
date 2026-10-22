@@ -104,6 +104,23 @@ export function tariffContext(state, { except } = {}) {
   return { libraries, tables: [], codes: CODES, settings: SETTINGS };
 }
 
+/** `GET /context`: the context, and each library in it with its approved version. */
+function studioContext(state) {
+  const libraries = [];
+  for (const library of studio(state).libraries.values()) {
+    const approved = library.status === "Inactive" ? null : approvedVersion(library);
+    if (!approved) continue;
+    libraries.push({
+      path: libraryPath(library),
+      libraryId: library.id,
+      name: library.name,
+      description: library.description,
+      versionNumber: approved.versionNumber,
+    });
+  }
+  return { context: tariffContext(state), libraries };
+}
+
 const checks = new Map();
 
 /** The module's check of a source, cached per source, kind and context. */
@@ -304,19 +321,17 @@ function preview(state, _path, body) {
     trace: true,
   });
   const result = results[0];
+  // The server sends the error's message as text in the reader's language.
   const needs =
     result.status === "needs"
-      ? {
-          code: "needs",
-          message: { message: "The tariff needs a value for {0}", args: [(result.needs ?? []).map((need) => need.name ?? need).join(", ")] },
-          range: null,
-        }
+      ? { code: "needs", message: `The tariff needs a value for ${(result.needs ?? []).map((need) => need.name ?? need).join(", ")}`, range: null }
       : null;
+  const stopped = result.status === "error" ? { ...result.error, message: messageText(result.error.message) } : null;
   return {
     diagnostics: check.diagnostics,
     bill: result.status === "rated" ? result.bill : null,
     refusal: result.status === "refused" ? result.refusal : null,
-    error: result.status === "error" ? result.error : needs,
+    error: stopped ?? needs,
     trace: result.trace ?? [],
     lookups: result.lookups ?? [],
     tests: check.ok ? testsOf(source, context).tests : [],
@@ -1046,7 +1061,7 @@ const withTemplate = (fn) => (s, p) => {
 export const FORMULA_ROUTES = [
   ["GET", route(""), listTemplates],
   ["POST", route(""), createTemplate],
-  ["GET", route("/context"), (s) => tariffContext(s)],
+  ["GET", route("/context"), studioContext],
   ["GET", route("/standards"), listStandards],
   ["POST", route("/install-standards"), installStandards],
   ["POST", route("/test"), preview],

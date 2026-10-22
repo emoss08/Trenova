@@ -1,5 +1,5 @@
 import { checkTariffSource } from "@/components/formula-editor/tariff-service";
-import { refusalText } from "@/components/tariff-bill/refusal-text";
+import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
 import { apiService } from "@/services/api";
@@ -49,13 +49,16 @@ export function proposalTargetOf(values: ProposalFormValues): ProposalTarget {
 }
 
 /** What a preview of a proposal billed, in a word or an amount. */
-function pricedText(result: FormulaPreviewResponse, t: ReturnType<typeof useT>): {
+function pricedText(
+  result: FormulaPreviewResponse,
+  t: ReturnType<typeof useT>,
+): {
   ok: boolean;
   text: string;
 } {
   if (result.bill) return { ok: true, text: formatTariffValue(result.bill.total, t) };
   if (result.refusal) return { ok: false, text: refusalText(result.refusal, t) };
-  if (result.error) return { ok: false, text: translateMessage(result.error.message, t) };
+  if (result.error) return { ok: false, text: tariffMessageText(result.error.message, t) };
   const problem = result.diagnostics.find((finding) => finding.severity === "error");
   return {
     ok: false,
@@ -124,11 +127,7 @@ export function ProposalCard({
         : verdict.kind === "failing"
           ? {
               tone: "warn" as const,
-              text: t(
-                "Checks clean, but {0} of {1} tests fail.",
-                verdict.failed,
-                verdict.total,
-              ),
+              text: t("Checks clean, but {0} of {1} tests fail.", verdict.failed, verdict.total),
             }
           : {
               tone: "ok" as const,
@@ -150,7 +149,12 @@ export function ProposalCard({
     staleTime: 5 * 60_000,
   });
   const loads = [
-    { key: "sample", label: t("Sample load"), meta: "", shipmentId: undefined as string | undefined },
+    {
+      key: "sample",
+      label: t("Sample load"),
+      meta: "",
+      shipmentId: undefined as string | undefined,
+    },
     ...(shipments.data?.results ?? []).slice(0, PRICED_SHIPMENTS).map((option) => ({
       key: option.id,
       label: option.label,
@@ -260,7 +264,9 @@ export function ProposalCard({
               <div key={load.key} className="flex items-center gap-2 px-3 py-1 text-xs">
                 <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
                   <b className={cn("font-medium", load.shipmentId && "font-mono")}>{load.label}</b>
-                  {load.meta && <span className="text-foreground-subtle truncate">{load.meta}</span>}
+                  {load.meta && (
+                    <span className="text-foreground-subtle truncate">{load.meta}</span>
+                  )}
                 </span>
                 {query?.isPending ? (
                   <span className="ui-shimmer h-3 w-14 rounded-sm" />

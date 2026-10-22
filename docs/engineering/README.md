@@ -39,7 +39,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [customer-tracking](customer-tracking.md) | `customertracking*`, public tracking endpoints, status email templates | one `customer_status_notifications` row per shipment, event and stop, sent exactly once |
 | [tender-negotiation](tender-negotiation.md) | `tender`, `tenderservice`, `tenderjobs`, tender routes and settings | one workflow per round; a bounce inserts new offer rows; the carrier is paid `AgreedRate()` |
 | [exception-queue](exception-queue.md) | `watchtower`, `watchtowerservice`, exception sources, settings or tools | a source never overwrites owner, status or resolution |
-| [formula-language-service](formula-language-service.md) | the Formula Studio's editor, its linter, hover, signature help or format command, `analyzeExpression`, a consumer of `formula.*` in the browser | the language lives in `services/crates/rules` and is never re-implemented in TypeScript; call the module only after `useRules()` has loaded it, and show its messages with `translateMessage` |
+| [formula-language-service](formula-language-service.md) | the Formula Studio or the library studio, the Tariff editor (highlighting, lint, completion, hover, signature help, definition, rename, inlays, folding, format), the shared `components/tariff-studio` pieces, a consumer of `tariff.*` in the browser | Tariff lives in `services/crates/rules` and is never lexed, checked or evaluated in TypeScript; call the module only after `useRules()` has loaded it, and show its messages with `translateMessage` |
 
 ## Agents and AI
 

@@ -388,7 +388,7 @@ input minimumCharge: Money = ${moneyLiteral(minimum)}
 
 let linehaul = rate * shipment.distance
 
-charge "Linehaul" as LH (quantity: shipment.distance, rate: rate)
+charge "Linehaul" (quantity: shipment.distance, rate: rate)
 charge "Fuel surcharge" as FSC = linehaul * fuelPercent
 
 minimum minimumCharge

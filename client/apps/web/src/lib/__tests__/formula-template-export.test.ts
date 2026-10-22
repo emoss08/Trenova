@@ -36,7 +36,7 @@ function makeTemplate(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate
       description: "A test template",
       source: SOURCE,
       status: "Active",
-      imports: [{ path: "org.accessorials", version: "flv_3" }],
+      imports: [{ path: "org.accessorials", libraryId: "fl_1", versionNumber: 3 }],
       testCount: 1,
       sourceTemplateId: null,
       sourceVersionNumber: null,
@@ -87,7 +87,7 @@ describe("buildTemplateExport", () => {
       description: "A test template",
       source: SOURCE,
       status: "Active",
-      imports: [{ path: "org.accessorials", version: "flv_3" }],
+      imports: [{ path: "org.accessorials", libraryId: "fl_1", versionNumber: 3 }],
       sourceTemplateId: null,
       sourceVersionNumber: null,
     });
@@ -99,11 +99,12 @@ describe("buildTemplateExport", () => {
       versions: [makeVersion(), makeVersion({ versionNumber: 2, source: `${SOURCE}// v2\n` })],
     });
 
-    expect(exported.versionHistory?.map((version) => [version.versionNumber, version.source]))
-      .toEqual([
-        [1, SOURCE],
-        [2, `${SOURCE}// v2\n`],
-      ]);
+    expect(
+      exported.versionHistory?.map((version) => [version.versionNumber, version.source]),
+    ).toEqual([
+      [1, SOURCE],
+      [2, `${SOURCE}// v2\n`],
+    ]);
     expect(exported.versionHistory?.[0]).toMatchObject({ tags: ["Stable"], imports: [] });
   });
 

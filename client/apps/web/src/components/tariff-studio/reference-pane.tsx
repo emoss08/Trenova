@@ -12,7 +12,8 @@ import {
   type TariffCatalog,
   type TariffCatalogField,
 } from "@trenova/shared/rules/tariff";
-import type { TariffContext } from "@trenova/shared/types/tariff";
+import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
+import type { TariffContext, TariffStudioLibrary } from "@trenova/shared/types/tariff";
 import { useMemo, useState } from "react";
 import { REFERENCE_SEARCH_ID } from "./reference-search";
 
@@ -69,29 +70,29 @@ export function dataEntries(
     },
     ...fieldEntries(root.name, root.fields, root.name),
   ]);
-  const tables = (context?.tables ?? []).map(
-    (table): ReferenceEntry => ({
-      key: `table:${table.code}`,
-      group: t("Rate tables"),
-      label: `tables.${table.code}`,
-      meta: t("{0} → {1}", table.axes.map((axis) => axis.label || axis.kind).join(", "), table.valueType),
-      doc: table.name,
-      insert: `tables.${table.code}[]`,
-      cursor: `tables.${table.code}[`.length,
-    }),
-  );
+  const tables = (context?.tables ?? []).map((table): ReferenceEntry => ({
+    key: `table:${table.code}`,
+    group: t("Rate tables"),
+    label: `tables.${table.code}`,
+    meta: t(
+      "{0} → {1}",
+      table.axes.map((axis) => axis.label || axis.kind).join(", "),
+      table.valueType,
+    ),
+    doc: table.name,
+    insert: `tables.${table.code}[]`,
+    cursor: `tables.${table.code}[`.length,
+  }));
   const codes = (context?.codes ?? [])
     .filter((code) => code.active)
-    .map(
-      (code): ReferenceEntry => ({
-        key: `code:${code.code}`,
-        group: t("Accessorial charge codes"),
-        label: code.code,
-        meta: t("charge … as {0}", code.code),
-        doc: code.description,
-        insert: code.code,
-      }),
-    );
+    .map((code): ReferenceEntry => ({
+      key: `code:${code.code}`,
+      group: t("Accessorial charge codes"),
+      label: code.code,
+      meta: t("charge … as {0}", code.code),
+      doc: code.description,
+      insert: code.code,
+    }));
   return [...schema, ...tables, ...codes];
 }
 
@@ -99,65 +100,60 @@ export function dataEntries(
 export function libraryEntries(
   catalog: TariffCatalog,
   context: TariffContext | null,
+  libraries: readonly TariffStudioLibrary[],
   t: TranslateFn,
 ): ReferenceEntry[] {
   const std = catalog.modules.flatMap((module) =>
-    module.declarations.map(
-      (declaration): ReferenceEntry => ({
-        key: `std:${module.path}.${declaration.name}`,
-        group: module.path,
-        label: declaration.name,
-        meta: declaration.signature,
-        doc: tariffDocText(declaration.doc) ?? "",
-        insert: declaration.kind === "fn" ? `${declaration.name}()` : declaration.name,
-        cursor: declaration.kind === "fn" ? declaration.name.length + 1 : undefined,
-      }),
-    ),
+    module.declarations.map((declaration): ReferenceEntry => ({
+      key: `std:${module.path}.${declaration.name}`,
+      group: module.path,
+      label: declaration.name,
+      meta: declaration.signature,
+      doc: tariffDocText(declaration.doc) ?? "",
+      insert: declaration.kind === "fn" ? `${declaration.name}()` : declaration.name,
+      cursor: declaration.kind === "fn" ? declaration.name.length + 1 : undefined,
+    })),
   );
-  const org = (context?.libraries ?? []).map(
-    (library): ReferenceEntry => ({
+  const org = (context?.libraries ?? []).map((library): ReferenceEntry => {
+    const named = libraries.find((entry) => entry.path === library.path);
+    return {
       key: `org:${library.path}`,
       group: t("Your libraries"),
       label: library.path,
-      doc: t("Import it with use {0}", library.path),
+      meta: named ? t("approved v{0}", named.versionNumber) : undefined,
+      doc: named?.description || t("Import it with use {0}", library.path),
       insert: `use ${library.path}\n`,
-    }),
-  );
+    };
+  });
   return [...org, ...std];
 }
 
 /** Methods and properties by the type they are on, the built-in types, units and keywords. */
 export function languageEntries(catalog: TariffCatalog, t: TranslateFn): ReferenceEntry[] {
-  const methods = catalog.methods.map(
-    (method): ReferenceEntry => ({
-      key: `method:${method.receiver}.${method.name}`,
-      group: t("On {0}", method.receiver),
-      label: method.kind === "property" ? `.${method.name}` : `.${method.signature}`,
-      meta: method.returns,
-      doc: tariffDocText(method.doc) ?? "",
-      insert: method.kind === "property" ? `.${method.name}` : `.${method.name}()`,
-      cursor: method.kind === "property" ? undefined : method.name.length + 2,
-    }),
-  );
-  const types = catalog.types.map(
-    (type): ReferenceEntry => ({
-      key: `type:${type.name}`,
-      group: t("Types"),
-      label: type.name,
-      doc: tariffDocText(type.doc) ?? "",
-      insert: type.name,
-    }),
-  );
-  const units = catalog.units.map(
-    (unit): ReferenceEntry => ({
-      key: `unit:${unit.unit}`,
-      group: t("Units"),
-      label: unit.unit,
-      meta: unit.dimension,
-      doc: "",
-      insert: unit.unit,
-    }),
-  );
+  const methods = catalog.methods.map((method): ReferenceEntry => ({
+    key: `method:${method.receiver}.${method.name}`,
+    group: t("On {0}", method.receiver),
+    label: method.kind === "property" ? `.${method.name}` : `.${method.signature}`,
+    meta: method.returns,
+    doc: tariffDocText(method.doc) ?? "",
+    insert: method.kind === "property" ? `.${method.name}` : `.${method.name}()`,
+    cursor: method.kind === "property" ? undefined : method.name.length + 2,
+  }));
+  const types = catalog.types.map((type): ReferenceEntry => ({
+    key: `type:${type.name}`,
+    group: t("Types"),
+    label: type.name,
+    doc: tariffDocText(type.doc) ?? "",
+    insert: type.name,
+  }));
+  const units = catalog.units.map((unit): ReferenceEntry => ({
+    key: `unit:${unit.unit}`,
+    group: t("Units"),
+    label: unit.unit,
+    meta: unit.dimension,
+    doc: "",
+    insert: unit.unit,
+  }));
   return [...types, ...methods, ...units];
 }
 
@@ -199,7 +195,11 @@ function rowsOf(entries: readonly ReferenceEntry[], insert: (entry: ReferenceEnt
     if (entry.group !== group) {
       group = entry.group;
       const label = entry.group;
-      rows.push({ key: `heading:${label}`, sticky: true, render: () => <GroupHeading label={label} /> });
+      rows.push({
+        key: `heading:${label}`,
+        sticky: true,
+        render: () => <GroupHeading label={label} />,
+      });
     }
     rows.push({
       key: entry.key,
@@ -221,6 +221,7 @@ export function ReferencePane({ context }: { context: TariffContext | null }) {
   const rules = useRules();
   const catalog = tariffCatalog(rules);
   const insertText = useActiveEditorInsert();
+  const { libraries } = useTariffCheckContext();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<ReferenceTab>("data");
   const query = search.trim().toLowerCase();
@@ -230,7 +231,7 @@ export function ReferencePane({ context }: { context: TariffContext | null }) {
       tab === "data"
         ? dataEntries(catalog, context, t)
         : tab === "library"
-          ? libraryEntries(catalog, context, t)
+          ? libraryEntries(catalog, context, libraries, t)
           : languageEntries(catalog, t);
     return query
       ? all.filter(
@@ -238,7 +239,7 @@ export function ReferencePane({ context }: { context: TariffContext | null }) {
             entry.label.toLowerCase().includes(query) || entry.doc.toLowerCase().includes(query),
         )
       : all;
-  }, [tab, catalog, context, t, query]);
+  }, [tab, catalog, context, t, query, libraries]);
 
   const rows = useMemo(
     () => rowsOf(entries, (entry) => insertText(entry.insert, entry.cursor)),

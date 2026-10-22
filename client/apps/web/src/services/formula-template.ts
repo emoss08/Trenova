@@ -51,9 +51,9 @@ import {
   type VersionDiff,
 } from "@trenova/shared/types/formula-template";
 import {
-  tariffContextSchema,
+  tariffStudioContextSchema,
   tariffInputDeclarationsSchema,
-  type TariffContext,
+  type TariffStudioContext,
   type TariffInputDeclaration,
   type TariffInputValues,
 } from "@trenova/shared/types/tariff";
@@ -141,9 +141,9 @@ export class FormulaTemplateService {
    * What the browser checks a tariff against: the organisation's settings, its rate tables'
    * shapes, its accessorial charge codes and the sources of the libraries a tariff may import.
    */
-  public async getContext(options?: RequestOptions): Promise<TariffContext> {
+  public async getContext(options?: RequestOptions): Promise<TariffStudioContext> {
     const response = await api.get<unknown>(`${BASE}/context`, { signal: options?.signal });
-    return safeParse(tariffContextSchema, response, "Tariff Context");
+    return safeParse(tariffStudioContextSchema, response, "Tariff Context");
   }
 
   /** Rates the source against the sample record, or a real shipment, with the given inputs. */
@@ -296,7 +296,10 @@ export class FormulaTemplateService {
     return safeParse(forkLineageSchema, response, "Fork Lineage");
   }
 
-  public async getUsage(templateId: string, options?: RequestOptions): Promise<TemplateUsageResponse> {
+  public async getUsage(
+    templateId: string,
+    options?: RequestOptions,
+  ): Promise<TemplateUsageResponse> {
     const response = await api.get<unknown>(`${BASE}/${templateId}/usage`, {
       signal: options?.signal,
     });
@@ -459,7 +462,10 @@ export class FormulaTemplateService {
     return safeParse(listStandardsResponseSchema, response, "Formula Template Standards");
   }
 
-  public async reviewDiff(templateId: string, options?: RequestOptions): Promise<ReviewDiffResponse> {
+  public async reviewDiff(
+    templateId: string,
+    options?: RequestOptions,
+  ): Promise<ReviewDiffResponse> {
     const response = await api.get<unknown>(`${BASE}/${templateId}/review-diff`, {
       signal: options?.signal,
     });

@@ -75,3 +75,14 @@ test "the fee" {
     expect(result.current.tests).toEqual({ status: "blocked", errors: result.current.errors });
   });
 });
+
+describe("useTariffWorkbench on an empty file", () => {
+  it("reports no findings, so the Studio shows where to start instead", () => {
+    const { result } = renderHook(() =>
+      useTariffWorkbench({ rules: rulesSync(), source: "  \n", kind: "tariff", context: null }),
+    );
+    expect(result.current.check.diagnostics).toEqual([]);
+    expect(result.current.errors).toBe(0);
+    expect(result.current.tests).toEqual({ status: "empty" });
+  });
+});

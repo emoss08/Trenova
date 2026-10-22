@@ -1,8 +1,9 @@
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import { useQuery } from "@tanstack/react-query";
-import type { TariffContext } from "@trenova/shared/types/tariff";
+import type { TariffContext, TariffStudioLibrary } from "@trenova/shared/types/tariff";
 
 const CONTEXT_STALE_MS = 5 * 60_000;
+const NO_LIBRARIES: readonly TariffStudioLibrary[] = [];
 
 export type TariffCheckContextState = {
   /**
@@ -10,6 +11,8 @@ export type TariffCheckContextState = {
    * sources; null until they load, which checks with no tables and leaves codes unchecked.
    */
   context: TariffContext | null;
+  /** Each library the context holds, with its name, description and approved version. */
+  libraries: readonly TariffStudioLibrary[];
   isError: boolean;
   refetch: () => void;
 };
@@ -21,7 +24,8 @@ export type TariffCheckContextState = {
 export function useTariffCheckContext(): TariffCheckContextState {
   const query = useQuery({ ...formulaTemplate.context, staleTime: CONTEXT_STALE_MS });
   return {
-    context: query.data ?? null,
+    context: query.data?.context ?? null,
+    libraries: query.data?.libraries ?? NO_LIBRARIES,
     isError: query.isError,
     refetch: () => void query.refetch(),
   };

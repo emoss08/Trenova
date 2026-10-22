@@ -616,6 +616,34 @@ export const tariffContextSchema = z.object({
 });
 export type TariffContext = z.output<typeof tariffContextSchema>;
 
+/** An approved organisation library the context holds, as the Studio names it. */
+export const tariffStudioLibrarySchema = z.object({
+  /** The module path a file imports: `org.<name>`. */
+  path: z.string(),
+  libraryId: z.string(),
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  /** The approved version the context holds, the one a new template version would pin. */
+  versionNumber: z.number().int(),
+});
+export type TariffStudioLibrary = z.output<typeof tariffStudioLibrarySchema>;
+
+/**
+ * What `GET /formula-templates/context` answers: the context every check is given, and each
+ * library in it with its name, description and approved version number.
+ */
+export const tariffStudioContextSchema = z.object({
+  context: tariffContextSchema,
+  libraries: z
+    .array(tariffStudioLibrarySchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type TariffStudioContext = z.output<typeof tariffStudioContextSchema>;
+
 /** The context of a file checked before the organisation's context has loaded. */
 export const EMPTY_TARIFF_CONTEXT: TariffContext = {
   libraries: [],

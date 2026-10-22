@@ -68,7 +68,7 @@ function template(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
           required: true,
         },
       ],
-      imports: [{ path: "org.accessorials", version: "flv_2" }],
+      imports: [{ path: "org.accessorials", libraryId: "fl_1", versionNumber: 2 }],
       testCount: 4,
       currentVersionNumber: 3,
       version: 3,
@@ -135,10 +135,13 @@ beforeEach(() => {
   for (const fn of Object.values(service)) fn.mockReset();
   service.get.mockResolvedValue(template());
   service.getContext.mockResolvedValue({
+    context: {
+      libraries: [],
+      tables: [],
+      codes: [{ code: "REEF", description: "Reefer unit", active: true }],
+      settings: {},
+    },
     libraries: [],
-    tables: [],
-    codes: [{ code: "REEF", description: "Reefer unit", active: true }],
-    settings: {},
   });
   service.getUsage.mockResolvedValue({
     inUse: true,
@@ -218,9 +221,11 @@ describe("DeskFormulaTemplate", () => {
     await screen.findByRole("heading", { name: "Reefer per mile" });
 
     const code = container.querySelector("pre.dk-ft-code");
-    expect(code).toHaveTextContent("charge \"Linehaul\"");
+    expect(code).toHaveTextContent('charge "Linehaul"');
     expect(code?.getAttribute("data-language")).toBe("tariff");
-    expect(within(code as HTMLElement).getAllByText("charge")[0]).toHaveClass("text-syntax-keyword");
+    expect(within(code as HTMLElement).getAllByText("charge")[0]).toHaveClass(
+      "text-syntax-keyword",
+    );
     expect(within(code as HTMLElement).getByText("REEF")).toHaveClass("text-syntax-meta");
   });
 
@@ -351,5 +356,4 @@ describe("DeskFormulaTemplate", () => {
     fireEvent.click(screen.getByRole("button", { name: "Back to the table" }));
     expect(onBack).toHaveBeenCalledOnce();
   });
-
 });

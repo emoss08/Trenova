@@ -1,6 +1,6 @@
 import { checkTariffSource } from "@/components/formula-editor/tariff-service";
 import { BillView } from "@/components/tariff-bill/bill-view";
-import { refusalText } from "@/components/tariff-bill/refusal-text";
+import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
 import { TariffCode } from "@/components/tariff-code/tariff-code";
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -206,12 +206,7 @@ function FormulaCard({
           t("Tariff"),
           ...(template.currentVersionNumber ? [t("v{0}", template.currentVersionNumber)] : []),
           ...(template.imports.length > 0
-            ? [
-                t(
-                  "{0, plural, one {# library} other {# libraries}}",
-                  template.imports.length,
-                ),
-              ]
+            ? [t("{0, plural, one {# library} other {# libraries}}", template.imports.length)]
             : []),
         ]}
         stepper={
@@ -227,7 +222,9 @@ function FormulaCard({
         }
         title={template.name}
         subtitle={template.description || undefined}
-        figure={canPrice ? <SampleTotalFigure result={price.data} pending={price.isPending} /> : null}
+        figure={
+          canPrice ? <SampleTotalFigure result={price.data} pending={price.isPending} /> : null
+        }
         meta={
           <>
             <CardStatus
@@ -268,9 +265,7 @@ function FormulaCard({
       {(charges.length > 0 || totals.length > 0) && (
         <CardSection
           title={t("Bills")}
-          aside={
-            <span>{t("{0, plural, one {# charge} other {# charges}}", charges.length)}</span>
-          }
+          aside={<span>{t("{0, plural, one {# charge} other {# charges}}", charges.length)}</span>}
         >
           <div className="dk-ft-items">
             {charges.map((item) => (
@@ -323,7 +318,10 @@ function FormulaCard({
       )}
 
       {canPrice ? (
-        <CardSection title={t("Sample bill")} aside={<span>{t("Sample load, default inputs")}</span>}>
+        <CardSection
+          title={t("Sample bill")}
+          aside={<span>{t("Sample load, default inputs")}</span>}
+        >
           <SampleBill result={price.data} error={price.error} pending={price.isPending} />
         </CardSection>
       ) : (
@@ -396,7 +394,7 @@ function FormulaCard({
 /** Why the sample load got no bill: the tariff's refusal, the error, or the check's finding. */
 function failureText(result: FormulaPreviewResponse, t: ReturnType<typeof useT>): string {
   if (result.refusal) return refusalText(result.refusal, t);
-  if (result.error) return translateMessage(result.error.message, t);
+  if (result.error) return tariffMessageText(result.error.message, t);
   const problem = result.diagnostics.find((finding) => finding.severity === "error");
   return problem ? translateMessage(problem.message, t) : t("Does not rate");
 }

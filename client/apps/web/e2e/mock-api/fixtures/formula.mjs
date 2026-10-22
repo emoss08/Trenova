@@ -61,9 +61,8 @@ export function userRecord(id) {
 
 // --- The organisation's context ---------------------------------------------------------------
 
-/** The accessorial charge codes a tariff may bill with `charge … as CODE`. */
+/** The accessorial charge codes a tariff may bill with `charge … as CODE`; an uncoded charge is freight. */
 export const CODES = [
-  { code: "LH", description: "Linehaul", active: true },
   { code: "FSC", description: "Fuel surcharge", active: true },
   { code: "STOP", description: "Extra stop", active: true },
   { code: "HAZ", description: "Hazmat handling", active: true },
@@ -405,7 +404,7 @@ input minimumCharge: Money = $350
 
 let linehaul = rate * shipment.distance
 
-charge "Linehaul" as LH (quantity: shipment.distance, rate: rate)
+charge "Linehaul" (quantity: shipment.distance, rate: rate)
 charge "Fuel surcharge" as FSC = linehaul * fuelPercent
 `;
   const extras = accessorials
@@ -426,7 +425,7 @@ minimum minimumCharge
 
 test "a 742 mile load bills linehaul and fuel" {
   given shipment.distance = 742 mi
-  expect charge(LH) == $2_114.70
+  expect charge("Linehaul") == $2_114.70
   expect total == $${total.replace(/^(\d)(\d{3})/, "$1_$2")}
 }
 
