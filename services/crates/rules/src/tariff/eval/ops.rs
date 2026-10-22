@@ -1,4 +1,7 @@
-//! The `tariff.*` operations this area answers: `tariff.evaluate` and `tariff.test`.
+//! The `tariff.*` operations this area answers: `tariff.evaluate`, `tariff.test` and
+//! `tariff.scaffoldTest`.
+//!
+//! `tariff.scaffoldTest` is described in [`super::scaffold`].
 //!
 //! `tariff.evaluate` rates a batch in one call. Request:
 //!
@@ -535,4 +538,13 @@ fn test_json(result: &TestResult, index: &Utf16Index) -> Json {
                 .map_or(Json::Null, |error| error_json(error, index)),
         ),
     ])
+}
+
+/// `tariff.scaffoldTest`: writes a `test` block from a real shipment's facts.
+///
+/// # Errors
+///
+/// When the input does not have the operation's shape.
+pub fn scaffold_test(input: &RawValue) -> OpResult {
+    super::scaffold::op(input)
 }

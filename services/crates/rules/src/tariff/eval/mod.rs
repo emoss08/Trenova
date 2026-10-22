@@ -1,5 +1,5 @@
 //! What runs: values with units, the metered interpreter, the bill and its total clauses, rate
-//! tables, the test runner and the `tariff.evaluate` and `tariff.test`
+//! tables, the test runner and the `tariff.evaluate`, `tariff.test` and `tariff.scaffoldTest`
 //! operations. Exact decimals throughout, no clock, no randomness, maps in key order: the same
 //! answer in the browser and on the server.
 //!
@@ -12,7 +12,7 @@
 //! - [`record`]: the host's record and the sample record; [`declared`]: declared types, for
 //!   decoding inputs.
 //! - [`budget`], [`trace`], [`error`]: budgets, the rate trace, refusals and errors.
-//! - [`tests`]: the test runner.
+//! - [`tests`]: the test runner; [`scaffold`]: a test written from a real shipment.
 //! - [`ops`]: the operations.
 
 pub mod bill;
@@ -26,6 +26,7 @@ pub mod operators;
 pub mod ops;
 pub mod record;
 pub mod run;
+pub mod scaffold;
 pub mod tables;
 pub mod tests;
 pub mod text;
