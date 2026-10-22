@@ -11550,6 +11550,7 @@
   "You've already arrived at this stop": "您已抵達此停靠點",
   "You've already departed this stop": "您已離開此停靠點",
   "You've used your AI allowance for this month ({0} of {1} questions). It refreshes on the first of next month.": "您已用完本月的 AI 額度（{1} 個問題中的 {0} 個）。額度將於下個月 1 日重新計算。",
+  "Your access is limited to your own team, and you answer for no one": "您的存取權限僅限於自己的團隊，而您未負責任何人",
   "Your access is limited to your own team, which cannot be checked right now": "您的存取權限僅限於自己的團隊，目前無法進行檢查",
   "Your account is locked. Please contact your system administrator.": "您的帳戶已鎖定。請聯絡您的系統管理員。",
   "Your account is not active. Please contact your system administrator.": "您的帳戶並非有效狀態。請聯絡您的系統管理員。",

@@ -308847,6 +308847,15 @@
       "routes/onboarding"
     ]
   },
+  "Your access is limited to your own team, and you answer for no one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Your access is limited to your own team, which cannot be checked right now": {
     "sites": 3,
     "scope": [

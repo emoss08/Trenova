@@ -116,7 +116,9 @@ func (r *Core) RequirePTOTeamScope(
 // grant scoped to "team" narrows the list to the people the user answers for,
 // directly or through a fleet code, and the managers it returns are what the
 // repository filters by; a wider grant returns none and the list is the
-// organization's.
+// organization's. A team-scoped caller who answers for no one, such as an
+// unattended agent, which names no person, is refused: no managers would
+// read as the whole organization.
 func (r *Core) RequireListTeamScope(
 	ctx context.Context,
 	resource permission.Resource,
@@ -158,6 +160,11 @@ func (r *Core) RequireListTeamScope(
 	)
 	if err != nil {
 		return nil, nil, err
+	}
+	if len(managerIDs) == 0 {
+		return nil, nil, errortypes.NewAuthorizationError(
+			"Your access is limited to your own team, and you answer for no one",
+		)
 	}
 
 	return authCtx, managerIDs, nil

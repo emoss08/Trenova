@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -246,21 +247,35 @@ func (r *QueryResolver) LeaveControl(ctx context.Context) (*worker.LeaveControl,
 }
 
 func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*worker.WorkerLeaveCase, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerLeave, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-
 	id, err := base.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
 		return nil, err
 	}
-	if err = r.requireLeaveTeam(ctx, permission.OpRead, id); err != nil {
+	var authCtx *authctx.AuthContext
+	var managerIDs []pulid.ID
+	if id.IsNil() {
+		authCtx, managerIDs, err = r.RequireListTeamScope(
+			ctx,
+			permission.ResourceWorkerLeave,
+			permission.OpRead,
+			worker.ApprovalScopeTimeOff,
+		)
+	} else {
+		authCtx, _, err = r.RequireTeamScope(
+			ctx,
+			permission.ResourceWorkerLeave,
+			permission.OpRead,
+			worker.ApprovalScopeTimeOff,
+			id,
+		)
+	}
+	if err != nil {
 		return nil, err
 	}
 	return r.WorkerLeaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
 		TenantInfo:                   base.TenantInfo(authCtx),
 		WorkerID:                     id,
+		ManagerIDs:                   managerIDs,
 		OpenOnly:                     base.BoolValue(openOnly),
 		CertificationOutstandingOnly: base.BoolValue(certificationOutstandingOnly),
 		IncludeWorker:                true,
