@@ -6,17 +6,17 @@
 //! Every item a method visits costs a step and every item it creates counts against the items
 //! budget, so each method is bounded by the list it walks.
 //!
-//! - `min`/`max` with a selector give the smallest or largest selected value (`stops.max(s =>
-//!   s.dwell)` is the longest dwell); when the static type says the call gives the list's own
-//!   item type, they give the item with that value instead.
+//! - `min`/`max` with a lambda give the smallest or largest value of the lambda, never the
+//!   item that has it (`stops.max(s => s.dwell ?? 0 h)` is the longest dwell); without one, the
+//!   smallest or largest item.
 //! - `sum` of an empty list is the zero of the call's static type (`$0`, `0 h`, `0`), `0` when
-//!   the type is not known. `avg`, `min`, `max`, `first`, `last` and `find` of an empty list are
-//!   `none`.
+//!   the type is not known. `min`, `max`, `first`, `last` and `find` of an empty list are
+//!   `none`; `avg` of an empty list is an `argument` error, since it has no average.
 //! - `sortBy` is stable and ascending; `distinct` keeps each value's first occurrence;
 //!   `groupBy` gives `{ key, items }` per key in order of first appearance.
 
 use super::budget::Meter;
-use super::error::{EvalError, Stop};
+use super::error::{Code, EvalError, Stop};
 use super::operators;
 use super::value::Value;
 use crate::message::{Arg, Message};
@@ -35,15 +35,6 @@ pub trait Host {
     fn apply(&mut self, item: &Value, index: usize) -> Result<Value, Stop>;
     /// The budgets.
     fn meter(&mut self) -> &mut Meter;
-}
-
-/// What the static types say about a call, for the cases the values cannot decide.
-#[derive(Debug, Clone, Default)]
-pub struct Hints {
-    /// The zero an empty `sum` gives.
-    pub empty_sum: Option<Value>,
-    /// Whether `min`/`max` give the item rather than the selected value.
-    pub pick_item: bool,
 }
 
 /// The zero of a type: `$0`, `0 h`, `0%`, `0`.
@@ -152,15 +143,15 @@ pub fn call(
     items: &[Value],
     name: &str,
     args: &[Value],
-    hints: &Hints,
+    empty_sum: Option<&Value>,
     host: &mut dyn Host,
 ) -> Option<Result<Value, Stop>> {
     Some(match name {
         "where" | "count" | "any" | "all" | "first" | "last" | "find" => filter(items, name, host),
         "map" => mapped(items, host).and_then(|values| made(host, values)),
-        "sum" => sum(items, hints, host),
+        "sum" => sum(items, empty_sum, host),
         "avg" => average(items, host),
-        "min" | "max" => extreme(items, name == "max", hints, host),
+        "min" | "max" => extreme(items, name == "max", host),
         "sortBy" => sort_by(items, host),
         "take" | "skip" => count_arg(name, args).and_then(|count| {
             let kept: Vec<Value> = if name == "take" {
@@ -237,28 +228,27 @@ fn total(values: &[Value]) -> Result<Option<Value>, Stop> {
     Ok(Some(sum))
 }
 
-fn sum(items: &[Value], hints: &Hints, host: &mut dyn Host) -> Result<Value, Stop> {
+fn sum(items: &[Value], empty_sum: Option<&Value>, host: &mut dyn Host) -> Result<Value, Stop> {
     let values = mapped(items, host)?;
-    Ok(total(&values)?
-        .unwrap_or_else(|| hints.empty_sum.clone().unwrap_or(Value::Int(Decimal::ZERO))))
+    Ok(total(&values)?.unwrap_or_else(|| empty_sum.cloned().unwrap_or(Value::Int(Decimal::ZERO))))
 }
 
 fn average(items: &[Value], host: &mut dyn Host) -> Result<Value, Stop> {
     let values = mapped(items, host)?;
     match total(&values)? {
-        None => Ok(Value::None),
+        None => Err(failed(EvalError::new(
+            Code::Argument,
+            Message::new(crate::message!(
+                "avg needs at least one item: an empty list has no average"
+            )),
+        ))),
         Some(sum) => {
             operators::div(&sum, &Value::Int(Decimal::from(values.len())), true).map_err(failed)
         }
     }
 }
 
-fn extreme(
-    items: &[Value],
-    greatest: bool,
-    hints: &Hints,
-    host: &mut dyn Host,
-) -> Result<Value, Stop> {
+fn extreme(items: &[Value], greatest: bool, host: &mut dyn Host) -> Result<Value, Stop> {
     let keys = mapped(items, host)?;
     let mut best: Option<usize> = None;
     for (index, key) in keys.iter().enumerate() {
@@ -280,15 +270,10 @@ fn extreme(
             best = Some(index);
         }
     }
-    let Some(at) = best else {
-        return Ok(Value::None);
-    };
-    let pool = if hints.pick_item && host.has_lambda() {
-        items
-    } else {
-        &keys
-    };
-    Ok(pool.get(at).cloned().unwrap_or(Value::None))
+    Ok(best
+        .and_then(|at| keys.get(at))
+        .cloned()
+        .unwrap_or(Value::None))
 }
 
 fn sort_by(items: &[Value], host: &mut dyn Host) -> Result<Value, Stop> {

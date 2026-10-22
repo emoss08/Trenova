@@ -267,27 +267,16 @@ fn quantity_method(
 }
 
 /// `q.in(unit)`: the quantity in another unit of its dimension. A rate also converts by its
-/// denominator: `$0.185/lb`.in(cwt) is `$18.50/cwt`.
+/// denominator: `$0.185/lb`.in(cwt) is `$18.50/cwt` ([`Unit::conversion_target`]).
 fn convert(quantity: &Quantity, unit: Option<&Unit>) -> Result<Value, EvalError> {
     let Some(unit) = unit else {
         return Err(EvalError::internal(Message::new(crate::message!(
             "in needs a unit, such as cwt or lb/ft3"
         ))));
     };
-    if unit.dim() == quantity.unit.dim() {
+    if let Some(target) = Unit::conversion_target(quantity.unit.dim(), unit) {
         return quantity
-            .to(unit)
-            .map(|q| quantity_value(q.value, &q.unit))
-            .map_err(|e| unit_error(&e));
-    }
-    let money_first =
-        matches!(quantity.unit.factors().first(), Some((first, 1)) if first.symbol == "$");
-    if money_first
-        && let Ok(rate) = Unit::parse(&format!("$/{unit}"))
-        && rate.dim() == quantity.unit.dim()
-    {
-        return quantity
-            .to(&rate)
+            .to(&target)
             .map(|q| quantity_value(q.value, &q.unit))
             .map_err(|e| unit_error(&e));
     }
@@ -360,22 +349,11 @@ fn date_time_method(at: DateTime, name: &str, args: &[Value]) -> Option<Result<V
     }
 }
 
-/// A count of hours as whole seconds; a fraction of an hour must come to whole seconds.
+/// A whole count of hours, as seconds.
 fn hours_in_seconds(value: &Value) -> Result<i64, EvalError> {
-    let Some(hours) = value.as_decimal() else {
-        return Err(bad_argument("addHours", value));
-    };
-    let seconds = hours
-        .checked_mul(Decimal::from(3600))
-        .ok_or_else(EvalError::overflow)?;
-    if !seconds.fract().is_zero() {
-        return Err(EvalError::with(
-            Code::Argument,
-            crate::message!("addHours needs hours that come to whole seconds, not {0}"),
-            [Arg::from(value.display())],
-        ));
-    }
-    seconds.to_i64().ok_or_else(EvalError::overflow)
+    whole("addHours", value)?
+        .checked_mul(3600)
+        .ok_or_else(EvalError::overflow)
 }
 
 #[cfg(test)]
@@ -462,8 +440,8 @@ mod tests {
             Some("true")
         );
         assert_eq!(
-            run(&at, "addHours", &[Value::Number(d("1.5"))]),
-            "2026-10-24T20:00:00-05:00"
+            run(&at, "addHours", &[Value::Int(d("2"))]),
+            "2026-10-24T20:30:00-05:00"
         );
     }
 }

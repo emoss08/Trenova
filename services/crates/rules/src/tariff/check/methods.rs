@@ -4,6 +4,16 @@
 //! completion and signature help read it. Each entry names its receiver, its parameters (with
 //! their defaults as written), what it returns and a doc, plus the [`Rule`] the checker applies
 //! where the result depends on the receiver or a lambda (`sum` of money is money).
+//!
+//! The list methods agree with the evaluator on these rules:
+//!
+//! - A lambda takes the item, or two parameters `(item, index)`, the index counted from 0.
+//! - `min` and `max` with a lambda give the lambda's smallest or largest value, never the item
+//!   that has it, and without one the smallest or largest item; either way optional (`U?`),
+//!   `none` for an empty list.
+//! - `sum` of an empty list is the zero of its type (`$0`, `0 h`, `0`).
+//! - `avg` is not optional: a `Number` for numbers (whole numbers too), else the values' own
+//!   kind (`Money`, `Weight`). An empty list stops the rating with an `argument` error.
 
 use crate::message;
 use crate::tariff::types::Type;
@@ -14,6 +24,8 @@ use crate::tariff::units::Dim;
 pub enum Receiver {
     /// `Int` and `Number`.
     Number,
+    /// `Percent`.
+    Percent,
     /// `Money`.
     Money,
     /// Quantities other than money: weights, distances, durations, rates, densities.
@@ -34,6 +46,7 @@ impl Receiver {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Number => "Number",
+            Self::Percent => "Percent",
             Self::Money => "Money",
             Self::Quantity => "Quantity",
             Self::Text => "Text",
@@ -48,6 +61,7 @@ impl Receiver {
     pub fn of(ty: &Type) -> Option<Self> {
         match ty {
             Type::Int | Type::Number => Some(Self::Number),
+            Type::Percent => Some(Self::Percent),
             Type::Quantity(quantity) if quantity.dim == Dim::money() => Some(Self::Money),
             Type::Quantity(_) => Some(Self::Quantity),
             Type::Text => Some(Self::Text),
@@ -347,6 +361,13 @@ pub static METHODS: &[Method] = &[
         "Number",
         Rule::Number,
         message!("Its square root, to 28 significant digits."),
+    ),
+    property(
+        "value",
+        R::Percent,
+        "Number",
+        Rule::Number,
+        message!("The bare number of percent: `18%.value` is `18`."),
     ),
     method(
         "round",
@@ -735,7 +756,7 @@ pub static METHODS: &[Method] = &[
         "U?",
         Rule::Extreme,
         message!(
-            "The smallest value of `f` over the items, or the smallest item; `none` for an empty list."
+            "The smallest value of `f` over the items (the value, not the item: `stops.min(s => s.sequence)` is an `Int?`), or the smallest item; `none` for an empty list."
         ),
     ),
     method(
@@ -745,7 +766,7 @@ pub static METHODS: &[Method] = &[
         "U?",
         Rule::Extreme,
         message!(
-            "The largest value of `f` over the items, or the largest item; `none` for an empty list."
+            "The largest value of `f` over the items (the value, not the item: `stops.max(s => s.dwell ?? 0 h)` is a `Duration?`), or the largest item; `none` for an empty list."
         ),
     ),
     method(
@@ -755,7 +776,7 @@ pub static METHODS: &[Method] = &[
         "U",
         Rule::Average,
         message!(
-            "The average of `f` over the items, or of the items. Whole numbers average to a `Number`."
+            "The average of `f` over the items, or of the items: a `Number` for numbers (whole numbers too), else the values' own kind. An empty list has no average, so it stops the rating with an `argument` error."
         ),
     ),
     method(
