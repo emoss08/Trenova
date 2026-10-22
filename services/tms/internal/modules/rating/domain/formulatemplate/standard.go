@@ -21,3 +21,8 @@ const (
 	StandardPerHour           = "Per Hour"
 	StandardPercentOfSellRate = "Percent of Sell Rate"
 )
+
+const (
+	StandardInputRate          = "rate"
+	StandardInputMinimumCharge = "minimumCharge"
+)
