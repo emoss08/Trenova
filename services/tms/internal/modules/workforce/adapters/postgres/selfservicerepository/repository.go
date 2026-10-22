@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -322,20 +323,12 @@ func (r *repository) ListChangeRequests(
 					if len(req.Statuses) > 0 {
 						sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
 					}
-					if len(req.ManagerIDs) > 0 {
-						wrk := workercol.WorkerColumns
-						sq = sq.Where(
-							cols.WorkerID.Qualified()+" IN (?)",
-							r.db.DBForContext(ctx).
-								NewSelect().
-								Model((*worker.Worker)(nil)).
-								Column(wrk.ID.Bare()).
-								Where(wrk.OrganizationID.EqColumn(cols.OrganizationID)).
-								Where(wrk.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-								Where(wrk.ManagerID.In(), bun.List(req.ManagerIDs)),
-						)
-					}
-					return sq
+					return workerteam.Where(r.db.DBForContext(ctx), workerteam.Scope{
+						WorkerID:       cols.WorkerID,
+						OrganizationID: cols.OrganizationID,
+						BusinessUnitID: cols.BusinessUnitID,
+						ManagerIDs:     req.ManagerIDs,
+					})(sq)
 				}).
 				Order(cols.SubmittedAt.OrderDesc()).
 				Limit(int64(limitOr(req.Limit, defaultChangePageSize)))

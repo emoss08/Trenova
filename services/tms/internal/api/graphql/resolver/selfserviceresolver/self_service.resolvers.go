@@ -183,10 +183,11 @@ func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, worker
 
 // ProfileChangeRequests is the resolver for the profileChangeRequests field.
 func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error) {
-	authCtx, err := r.RequirePermission(
+	authCtx, managerIDs, err := r.RequireListTeamScope(
 		ctx,
 		permission.ResourceProfileChangeRequest,
 		permission.OpRead,
+		worker.ApprovalScopeAll,
 	)
 	if err != nil {
 		return nil, err
@@ -195,6 +196,7 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 	req := &workerports.ListProfileChangeRequestsRequest{
 		TenantInfo:    base.TenantInfo(authCtx),
 		IncludeWorker: true,
+		ManagerIDs:    managerIDs,
 	}
 	if filter != nil {
 		if req.WorkerID, err = base.OptionalID(filter.WorkerID); err != nil {
@@ -202,7 +204,7 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 		}
 		req.Statuses = filter.Statuses
 		req.Limit = base.IntValue(filter.Limit)
-		if base.BoolValue(filter.TeamOnly) {
+		if base.BoolValue(filter.TeamOnly) && len(req.ManagerIDs) == 0 {
 			if req.ManagerIDs, err = r.RotaManagerIDs(
 				ctx,
 				authCtx.UserID,
