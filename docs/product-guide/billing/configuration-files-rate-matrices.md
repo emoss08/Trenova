@@ -8,9 +8,9 @@ related:
 ---
 
 ## What it's for
-Rate matrices holds published tariffs entered as the grid they were published as: rates laid out by origin and destination zone, weight break, freight class and similar axes, instead of one lane per cell. A lane on a rate agreement can point at a matrix, and the matrix's own rating method (a formula template) says what each number in the grid means, for example a per-mile rate or a flat charge.
+Rate matrices holds published tariffs entered as the grid they were published as: rates laid out by origin and destination zone, weight break, freight class and similar axes, instead of one lane per cell. A formula template reads a matrix by its code (`tables.ZONES[…]`), and the matrix's **Value type** says what each number in the grid is: money, money per a unit (a mile or kilometre, a pound, hundredweight, kilogram or ton, a foot, inch or metre, a cubic foot, cubic metre, gallon or litre, a minute, hour or day, a pallet, piece or stop), a percent, a plain number, or a whole number. Its money is always in the rating currency of the contract that reads it.
 
-Pricing staff maintain matrices here. The table shows each matrix's **Status**, **Code**, **Name**, **Rates are**, **Currency**, **Description** and **Created** date. A matrix opens with the tabs **Overview**, **Axes** and **Rates**.
+Pricing staff maintain matrices here. The table shows each matrix's **Status**, **Code**, **Name**, **Values are**, **Description** and **Created** date. A matrix opens with the tabs **Overview**, **Axes** and **Rates**.
 
 ## Tasks
 
@@ -18,15 +18,15 @@ Pricing staff maintain matrices here. The table shows each matrix's **Status**, 
 Keywords: new tariff, create rate grid, enter tariff
 1. Open [Rate matrices](/billing/configuration-files/rate-matrices).
 2. Select **New rate matrix**.
-3. On **Overview**, fill in **Status**, **Code**, **Name** and optionally **Description**. Under **Pricing**, pick the **Rating method** and set **Currency**, **Rounding mode** and **Rounding precision**.
-4. On **Axes**, select **Add axis** for each dimension of the grid (up to four). For each, choose the **Dimension** (for example **Zone**, **Weight break**, **Freight class** or **Distance**), the **Match mode** (**Exact key** or **Band**), and give it a **Label**. A banded axis also takes an **Outside every band** policy.
+3. On **Overview**, fill in **Status**, **Code**, **Name** and optionally **Description**. Under **Values**, pick the **Value type** the grid's numbers are.
+4. On **Axes**, select **Add axis** for each dimension of the grid (one to four). For each, choose the **Dimension** (for example **Zone**, **Weight break**, **Freight class** or **Distance**), the **Match mode** (**Exact key** or **Band**), and give it a **Label**. A banded axis also takes an **Outside every band** policy.
 5. Select **Save**. The **Rates** tab is available once the matrix has been saved.
 
 ### Change rates in the grid
 Keywords: edit tariff rates, update cell, reprice matrix
 1. Open [Rate matrices](/billing/configuration-files/rate-matrices) and select the matrix's row.
 2. Open the **Rates** tab. The first axis runs down the rows and the second across the columns; with more axes, pick the sheet to edit from the selectors above the grid.
-3. Type the new values into the cells, then select **Save rates**. Rates save on their own, separately from the rest of the form.
+3. Type the new values into the cells (each cell shows the value type's unit, such as `$/cwt`), then select **Save rates**. Rates save on their own, separately from the rest of the form. A whole-number matrix refuses a fraction: the cell is marked and **Save rates** stays off until it is fixed.
 
 ### Retire a rate matrix
 Keywords: deactivate tariff, disable matrix
@@ -41,4 +41,4 @@ Keywords: search tariffs, filter matrices
 ## Notes
 Viewing the page needs read access to rate matrices; **New rate matrix** only appears for people who can create them.
 
-Changing an axis after rates exist changes what every existing cell means, so re-enter the grid after any change on **Axes**. A matrix with no axes or no rates prices nothing, and an inactive matrix stops pricing; in each case every lane pointing at it stops with it. A lane is attached to a matrix on its rate agreement's **Lanes** tab in [Rate agreements](/billing/rate-agreements). A rate increase applied from Rate agreements does not change matrix rates.
+Changing an axis after rates exist changes what every existing cell means, so re-enter the grid after any change on **Axes**. A matrix with no rates has nothing for a tariff to read, and an inactive matrix is not a table any tariff can read; a tariff that finds no cell refuses to rate with its own reason rather than billing nothing. Rounding is the tariff's, written in its source on [Formula templates](/billing/configuration-files/formula-templates). A rate increase applied from [Rate agreements](/billing/rate-agreements) does not change matrix rates.
