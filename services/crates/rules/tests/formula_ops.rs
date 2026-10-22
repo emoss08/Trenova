@@ -467,3 +467,82 @@ fn malformed_input_is_a_request_error() {
     .expect("JSON");
     assert_eq!(response["error"]["code"], "invalid_input");
 }
+
+#[test]
+fn function_shapes_follow_their_signatures() {
+    let catalog = call("formula.catalog", &json!({}));
+    let all: Vec<Value> = catalog["functions"]
+        .as_array()
+        .expect("functions")
+        .iter()
+        .chain(catalog["builtins"].as_array().expect("builtins"))
+        .cloned()
+        .collect();
+    let shape = |name: &str| {
+        let entry = all
+            .iter()
+            .find(|entry| entry["name"] == name)
+            .unwrap_or_else(|| panic!("{name}"));
+        (
+            entry["minArgs"].as_i64().expect("min"),
+            entry["maxArgs"].as_i64().expect("max"),
+            entry["returns"].as_str().expect("returns").to_owned(),
+            entry["numericArgs"].as_bool().expect("numeric"),
+        )
+    };
+    assert_eq!(shape("round"), (1, 2, String::from("Number"), true));
+    assert_eq!(shape("clamp"), (3, 3, String::from("Number"), true));
+    assert_eq!(shape("sum"), (1, -1, String::from("Number"), false));
+    assert_eq!(shape("avg"), (1, -1, String::from("Number"), false));
+    assert_eq!(shape("coalesce"), (1, -1, String::from("Any"), false));
+    assert_eq!(
+        shape("min"),
+        (1, -1, String::from("Number"), false),
+        "min and max take lists too now"
+    );
+    assert_eq!(shape("date"), (1, 1, String::from("Date"), false));
+    assert_eq!(shape("indexOf").2, "Integer");
+    let predicates: Vec<&str> = all
+        .iter()
+        .filter(|entry| entry["predicate"] == true)
+        .filter_map(|entry| entry["name"].as_str())
+        .collect();
+    assert_eq!(
+        predicates,
+        [
+            "all",
+            "none",
+            "any",
+            "one",
+            "filter",
+            "map",
+            "find",
+            "findIndex",
+            "findLast",
+            "findLastIndex",
+            "count",
+            "groupBy",
+            "sortBy",
+            "reduce"
+        ]
+    );
+}
+
+#[test]
+fn non_literal_table_names_are_not_listed() {
+    let output = call(
+        "formula.check",
+        &json!({"source": "lookup2(tableName, 1, 2) + lookup(other, 1)", "schema": null}),
+    );
+    assert_eq!(output["lookupTables"], json!([]));
+}
+
+#[test]
+fn reads_include_dotted_paths_inside_function_arguments() {
+    let output = call(
+        "formula.check",
+        &json!({"source": "sum(customer.code == \"ACME\" ? 10 : 0, stopFee, 25)", "schema": schema(&json!([{"name": "stopFee", "type": "Number"}]))}),
+    );
+    assert_eq!(output["reads"], json!(["stopFee", "customer.code"]));
+    assert_eq!(output["diagnostics"], json!([]));
+}

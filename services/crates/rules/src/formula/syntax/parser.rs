@@ -47,7 +47,7 @@ use crate::message::Arg;
 use crate::message::Message;
 use crate::span::Span;
 use rust_decimal::Decimal;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 /// An infix operator as the precedence climber sees it.
 #[derive(Debug, Clone)]
@@ -125,7 +125,7 @@ pub(super) struct Parser<'a> {
     index: usize,
     operators: &'a [&'a str],
     pub(super) diagnostics: Vec<SyntaxDiagnostic>,
-    reported: HashMap<u32, Vec<usize>>,
+    reported: BTreeMap<u32, Vec<usize>>,
     nodes: usize,
     recursion: usize,
     stopped: bool,
@@ -145,7 +145,7 @@ impl<'a> Parser<'a> {
             index: 0,
             operators,
             diagnostics: Vec::new(),
-            reported: HashMap::new(),
+            reported: BTreeMap::new(),
             nodes: 0,
             recursion: 0,
             stopped: false,

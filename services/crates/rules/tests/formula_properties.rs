@@ -259,6 +259,21 @@ proptest! {
     }
 
     #[test]
+    fn any_text_that_formats_formats_to_itself(source in "[a-c1-3 ()\\[\\],.#?:!=<+*%|\"'\\n-]{0,60}|(let x = )?[a1(\\[ .,+?:-]{0,30}", width in 8usize..40) {
+        if let FormatOutcome::Formatted { text, .. } = syntax::format(&source, width, &[]) {
+            prop_assert!(syntax::parse(&text, &[]).diagnostics.is_empty(), "{:?} -> {:?}", source, text);
+            prop_assert_eq!(
+                program_shape(&syntax::parse(&source, &[])),
+                program_shape(&syntax::parse(&text, &[]))
+            );
+            prop_assert_eq!(
+                syntax::format(&text, width, &[]),
+                FormatOutcome::Formatted { text: text.clone(), changed: false }
+            );
+        }
+    }
+
+    #[test]
     fn checking_a_generated_formula_never_panics(source in program()) {
         let analysis = check::check(&source, Expect::Amount, Some(&schema()), None);
         prop_assert!(analysis.diagnostics.iter().all(|d| d.span.start <= d.span.end));

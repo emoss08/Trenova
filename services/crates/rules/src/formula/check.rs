@@ -75,7 +75,7 @@ impl Severity {
 }
 
 /// What a diagnostic is about: a stable code the browser and the server can switch on.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Code {
     /// The text does not follow the grammar, or a pointer is used where it means nothing.
     Syntax,
