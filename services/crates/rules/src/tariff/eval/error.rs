@@ -16,9 +16,9 @@ use crate::span::Span;
 /// What went wrong, as a stable name the host may branch on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Code {
-    /// The file does not load: a syntax error, an unknown import, the wrong kind of file. The
-    /// checker reports the details.
-    Syntax,
+    /// The file does not check: a syntax error, an unknown import, the wrong kind of file, a
+    /// type error. The error is the first finding; `tariff.check` reports them all.
+    Check,
     /// The program did something its static types rule out: an operation on values of the
     /// wrong kind, a name nothing declares, a `match` no arm covers. The checker in front of
     /// the evaluator makes this unreachable for a file that checked clean.
@@ -38,8 +38,6 @@ pub enum Code {
     /// An argument of the right kind with an unusable value (a rounding increment of zero, a
     /// negative square root).
     Argument,
-    /// An index outside a list or text.
-    Index,
     /// A regular expression that does not compile or is too large.
     Regex,
     /// A rate table the request did not carry, or one whose cells do not fit its shape.
@@ -55,7 +53,7 @@ impl Code {
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::Syntax => "syntax",
+            Self::Check => "check",
             Self::Internal => "internal",
             Self::Budget => "budget",
             Self::Input => "input",
@@ -64,7 +62,6 @@ impl Code {
             Self::Overflow => "overflow",
             Self::Conversion => "conversion",
             Self::Argument => "argument",
-            Self::Index => "index",
             Self::Regex => "regex",
             Self::Table => "table",
             Self::NegativeCharge => "negativeCharge",

@@ -450,11 +450,29 @@ impl Parser<'_> {
         let (pattern, _) = self.pattern();
         let guard = if self.at_word("if") {
             self.bump();
-            Some(self.expr())
+            let outer = std::mem::replace(&mut self.guard, true);
+            let guard = self.expr();
+            self.guard = outer;
+            Some(guard)
         } else {
             None
         };
-        let body = if self.eat("=>").is_some() {
+        let outer = std::mem::replace(&mut self.guard, false);
+        let body = self.arm_body(statement);
+        self.guard = outer;
+        let end = self.previous_span().end.max(start);
+        Arm {
+            pattern,
+            guard,
+            body,
+            span: Span::new(start, end),
+        }
+    }
+
+    /// What an arm gives, after its pattern and guard: `=> value`, or `=> { … }` in a
+    /// statement.
+    fn arm_body(&mut self, statement: bool) -> ArmBody {
+        if self.eat("=>").is_some() {
             if statement && self.at("{") {
                 ArmBody::Block(self.block(BlockKind::Nested))
             } else if statement && self.at_statement_keyword() {
@@ -471,13 +489,6 @@ impl Parser<'_> {
                 "Expected `=>` and what this arm gives"
             )));
             ArmBody::Expr(self.missing())
-        };
-        let end = self.previous_span().end.max(start);
-        Arm {
-            pattern,
-            guard,
-            body,
-            span: Span::new(start, end),
         }
     }
 

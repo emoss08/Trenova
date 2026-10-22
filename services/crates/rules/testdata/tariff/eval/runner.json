@@ -165,7 +165,7 @@
   },
   {
     "name": "constructors fill sequences, dwell, pickup and delivery",
-    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"stops\" {\n  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T11:30Z), delivery(), splitDelivery(sequence: 9)]\n  expect shipment.stops[0].sequence == 1\n  expect shipment.stops[1].sequence == 2\n  expect shipment.stops[2].sequence == 9\n  expect shipment.stops[0].dwell == 3.5 h\n  expect shipment.stops[1].dwell == none\n  expect shipment.pickup?.sequence == 1\n  expect shipment.delivery?.kind == SplitDelivery\n}",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"stops\" {\n  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T11:30Z), delivery(), splitDelivery(sequence: 9)]\n  expect shipment.stops[0]?.sequence == 1\n  expect shipment.stops[1]?.sequence == 2\n  expect shipment.stops[2]?.sequence == 9\n  expect shipment.stops[0]?.dwell == 3.5 h\n  expect shipment.stops[1]?.dwell == none\n  expect shipment.pickup?.sequence == 1\n  expect shipment.delivery?.kind == SplitDelivery\n}",
     "expect": [
       {
         "name": "stops",
@@ -187,7 +187,7 @@
   },
   {
     "name": "a given dwell is kept",
-    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"dwell\" {\n  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T11:30Z, dwell: 1 h)]\n  expect shipment.stops[0].dwell == 1 h\n}",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"dwell\" {\n  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T11:30Z, dwell: 1 h)]\n  expect shipment.stops[0]?.dwell == 1 h\n}",
     "expect": [
       {
         "name": "dwell",
@@ -198,7 +198,7 @@
   },
   {
     "name": "commodities are built from defaults",
-    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"commodities\" {\n  given shipment.commodities = [commodity(weight: 500 lb, freightClass: Class85), commodity(name: \"b\")]\n  expect shipment.commodities.sum(c => c.weight) == 500 lb\n  expect shipment.commodities[1].name == \"b\"\n  expect shipment.commodities[0].freightClass == Class85\n}",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"commodities\" {\n  given shipment.commodities = [commodity(weight: 500 lb, freightClass: Class85), commodity(name: \"b\")]\n  expect shipment.commodities.sum(c => c.weight) == 500 lb\n  expect shipment.commodities[1]?.name == \"b\"\n  expect shipment.commodities[0]?.freightClass == Class85\n}",
     "expect": [
       {
         "name": "commodities",
@@ -215,19 +215,6 @@
         "name": "nested",
         "status": "passed",
         "failures": []
-      }
-    ]
-  },
-  {
-    "name": "a given to a field that does not exist is an error",
-    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"bad\" {\n  given shipment.nothing = 1\n  expect true\n}",
-    "expect": [
-      {
-        "name": "bad",
-        "status": "error",
-        "error": {
-          "code": "internal"
-        }
       }
     ]
   },
@@ -367,7 +354,10 @@
     "expect": {
       "tests": [],
       "error": {
-        "code": "syntax"
+        "code": "check",
+        "message": {
+          "message": "Expected a name after `{0}`"
+        }
       }
     }
   },

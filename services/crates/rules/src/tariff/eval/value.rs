@@ -271,7 +271,7 @@ impl Value {
         })
     }
 
-    /// Orders two values: numbers, quantities of one dimension, dates, date-times and text.
+    /// Orders two values: numbers, percents, quantities of one dimension, dates and date-times.
     ///
     /// # Errors
     ///
@@ -286,7 +286,6 @@ impl Value {
             }
             (Self::Date(left), Self::Date(right)) => Ok(left.cmp(right)),
             (Self::DateTime(left), Self::DateTime(right)) => Ok(left.cmp_instant(*right)),
-            (Self::Text(left), Self::Text(right)) => Ok(left.cmp(right)),
             _ => Err(unordered(self, other)),
         }
     }
@@ -294,8 +293,8 @@ impl Value {
     /// The value as text interpolation writes it: `Int` plain, `Number` normalised, money
     /// `$1234.50` (at least two decimals, no grouping), rates `$2.35/mi`, quantities `500 lb`,
     /// percents `18%`, dates and date-times ISO 8601, enums as their variant, `true`/`false`.
-    /// Lists and records, which the checker keeps out of interpolation, read `[a, b]` and
-    /// `{ name: value }` for the trace.
+    /// Lists read `[a, b]` and records `{ name: value }`, in interpolation (which the checker
+    /// allows when no item or field may be empty) and on the trace.
     #[must_use]
     pub fn display(&self) -> String {
         let mut out = String::new();

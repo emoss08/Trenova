@@ -136,6 +136,9 @@ pub(crate) struct Parser<'a> {
     /// The nesting at which a `match` arm's value is read: there, a line starting with `-`
     /// begins the next arm (a negative pattern) instead of continuing the value.
     arm_nest: Option<usize>,
+    /// Whether a `match` arm's guard is being read: a guard ends at its arm's `=>`, so there
+    /// `x =>` is the guard's last value followed by the arrow, not a lambda.
+    guard: bool,
     /// The token the statement being read starts at.
     statement_start: usize,
     docs: DocTable,
@@ -171,6 +174,7 @@ impl<'a> Parser<'a> {
             stopped: false,
             statement_failed: false,
             arm_nest: None,
+            guard: false,
             statement_start: 0,
             docs,
         }

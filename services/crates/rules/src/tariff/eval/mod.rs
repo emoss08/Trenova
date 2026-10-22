@@ -9,15 +9,13 @@
 //!   [`run::Outcome`], the step the hosts gate behind the checker ([`run::run_program`]).
 //! - [`bill`]: charge lines, notes, total clauses, rounding and exchange.
 //! - [`tables`]: rate table lookups, loaded on demand.
-//! - [`record`]: the host's record and the sample record; [`declared`]: declared types, for
-//!   decoding inputs.
+//! - [`record`]: the host's record and the sample record.
 //! - [`budget`], [`trace`], [`error`]: budgets, the rate trace, refusals and errors.
 //! - [`tests`]: the test runner; [`scaffold`]: a test written from a real shipment.
 //! - [`ops`]: the operations.
 
 pub mod bill;
 pub mod budget;
-pub mod declared;
 pub mod error;
 pub mod interp;
 pub mod lists;
@@ -39,19 +37,38 @@ use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::types::Type;
 
 /// What the checker knows about a program's types, for the few places a value cannot say what
-/// it is: the `sum` of an empty list, a percent scaled by a number, whether `min`/`max` give an
-/// item or a selected value, and whether an index outside a list is `none`.
+/// it is: the `sum` of an empty list, a percent scaled by a number, and the declared type of
+/// each input, which the value a host sends for it is decoded against.
 pub trait StaticTypes {
     /// The static type of expression `node` in module `module`, when known.
     fn type_of(&self, module: ModuleId, node: NodeId) -> Option<Type>;
+    /// The declared type of the root file's input `name`, when known.
+    fn input_type(&self, name: &str) -> Option<Type>;
 }
 
 /// No static types: every question gets the dynamic default.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NoTypes;
 
+impl StaticTypes for crate::tariff::check::Analysis {
+    fn type_of(&self, module: ModuleId, node: NodeId) -> Option<Type> {
+        crate::tariff::check::Analysis::type_of(self, module, node).cloned()
+    }
+
+    fn input_type(&self, name: &str) -> Option<Type> {
+        self.inputs
+            .iter()
+            .find(|input| input.name == name)
+            .map(|input| input.ty.clone())
+    }
+}
+
 impl StaticTypes for NoTypes {
     fn type_of(&self, _: ModuleId, _: NodeId) -> Option<Type> {
+        None
+    }
+
+    fn input_type(&self, _: &str) -> Option<Type> {
         None
     }
 }

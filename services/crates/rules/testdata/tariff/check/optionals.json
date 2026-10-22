@@ -605,24 +605,8 @@
    ]
   },
   {
-   "diagnostics": [
-    {
-     "at": "shipment.serviceType",
-     "code": "interpolation",
-     "fixes": [
-      {
-       "label": "Write its field `shipment.serviceType.code`",
-       "result": [
-        "tariff \"t\"",
-        "charge \"x\" = $1",
-        "note \"Service {shipment.serviceType.code}\""
-       ]
-      }
-     ],
-     "message": "`shipment.serviceType` is a record (`{ code: Text, description: Text }`), which can't be written into text"
-    }
-   ],
-   "name": "a record in an interpolation offers a text field",
+   "diagnostics": [],
+   "name": "a record of text interpolates",
    "source": [
     "tariff \"t\"",
     "charge \"x\" = $1",
@@ -792,6 +776,60 @@
     "tariff \"t\"",
     "let n = shipment.stops.count(s => s.dwell > 2 h)",
     "charge \"x\" = $1 * n"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a list or a record interpolates as the evaluator prints it",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "let r = { name: \"x\", weight: 5 lb }",
+    "note \"{[1, 2]} {r} {shipment.stops.map(s => s.sequence)} {[r]}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.stops.map(s => s.weight)",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Write its length, `shipment.stops.map(s => s.weight).len`",
+       "result": "tariff \"t\"\ncharge \"x\" = $1\nnote \"{shipment.stops.map(s => s.weight).len}\""
+      }
+     ],
+     "message": "`shipment.stops.map(s => s.weight)` is a list (`List<Weight?>`), which can't be written into text"
+    }
+   ],
+   "name": "a list of optionals is not interpolated",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "note \"{shipment.stops.map(s => s.weight)}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "r",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Write its field `r.name`",
+       "result": "tariff \"t\"\ncharge \"x\" = $1\nlet r = { name: \"x\", weight: shipment.weight }\nnote \"{r.name}\""
+      }
+     ],
+     "message": "`r` is a record (`{ name: Text, weight: Weight? }`), which can't be written into text",
+     "nth": 4
+    }
+   ],
+   "name": "a record with an optional field is not interpolated",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "let r = { name: \"x\", weight: shipment.weight }",
+    "note \"{r}\""
    ]
   }
  ]

@@ -114,7 +114,10 @@ contract. The standard library (`std`) ships with the module and is versioned wi
   `cents`, `total`, `lines` and the unit names are contextual: they mean something only where the
   grammar expects them, and are ordinary names elsewhere (`fn billed(weight: Weight, to: Weight)`).
 - **Text:** `"double quoted"`, with `{expr}` interpolation, `{{` for a literal brace and the usual
-  escapes. There are no raw strings and no single quotes.
+  escapes. There are no raw strings and no single quotes. Interpolation writes any value that
+  can't be empty: numbers, percents, money, quantities, dates, enums (as their variant), and
+  lists and records of such values, as `[a, b]` and `{ name: x, weight: 5 lb }`. An optional,
+  or a list or record holding one, must be handled first (`?? fallback`, `if let`).
 - **Numbers:**
   - `1200`, `1_200` and `2.35`; there are no hex, octal or exponents;
   - with a unit: `500 lb`, `2.5 mi`, `4 h`, `30 min`, `48 ft`;
@@ -138,7 +141,9 @@ The rules:
 
 1. **Every expression has a static type.** The checker runs before anything is evaluated, and
    the same checker runs in the browser and on the server. A file with a type error doesn't
-   save, doesn't preview and doesn't rate.
+   save, doesn't preview and doesn't rate: `tariff.evaluate`, `tariff.test` and
+   `tariff.scaffoldTest` check it first and run nothing, answering with its first finding
+   (code `check`). A file that checks clean runs the way the checker promised.
 2. **Annotate the boundaries; everything else is inferred.** Annotations are required on:
    - `input` declarations;
    - function parameters and return types;
@@ -207,7 +212,7 @@ What the type system leaves out, and why:
 | `Bool` | `true`, `false` | |
 | `Int` | whole numbers | counts, sequences, indexes |
 | `Number` | exact decimals | 28 significant digits; `Int` widens to `Number` |
-| `Percent` | `18%` | multiplies as 0.18; prints as 18% |
+| `Percent` | `18%` | multiplies as 0.18; prints as 18%; `.value` is the bare number, 18 |
 | `Money` | `$450` | the rating currency (below) |
 | Quantities | `Weight`, `Distance`, `Length`, `Volume`, `Duration`, `Temperature`, `Count` | carry a unit; arithmetic checks dimensions |
 | Rates | `Money/mi`, `Money/cwt`, `Money/h`, `Money/pallet`, … | money per unit of a quantity |
@@ -248,8 +253,12 @@ The arithmetic rules:
 - Anything else is an error that says what was meant: "`rate` is money per hundredweight and
   `shipment.weight` is a weight, so `rate × shipment.weight` is money. `rate + shipment.weight`
   adds money to a weight."
-- `.in(unit)` converts explicitly: `shipment.weight.in(cwt)`. `.value` gives the bare `Number`
-  in the unit it was last written or converted to.
+- `.in(unit)` converts explicitly: `shipment.weight.in(cwt)`. The unit is written by name
+  (`cwt`, `lb/ft3`) and must measure the value's dimension. On a rate it may also be a unit of
+  the rate's denominator, which converts the denominator, or a whole rate unit written with
+  `$`: `$0.185/lb.in(cwt)` and `$0.185/lb.in($/cwt)` are both `$18.50/cwt`. The type keeps its
+  dimension and takes that display unit. `.value` gives the bare `Number` in the unit it was
+  last written or converted to.
 
 ### Money and currency
 
@@ -278,6 +287,9 @@ A schema field that can be empty has type `T?` (`shipment.weight: Weight?`). Usi
 - `var total = $0` followed by `total += line`: mutable, for accumulating inside a loop. A `var`
   never escapes its block's scope.
 - `const DIESEL_BASE = $3.50`: a compile-time constant at file level, importable from a library.
+  Constants and defaults (of inputs and of function parameters) are compile-time values:
+  computed from literals and other constants only, never from the record, an input, a
+  binding or another parameter.
 - `input name: Type = default`: a value the contract or template supplies. Inputs are only
   declared at file level; their doc comments label the Studio's inputs form.
 
@@ -356,7 +368,8 @@ let perCwt = match shipment.weight {
 
 ### Collections and lambdas
 
-Lambdas are `x => expr`, or `(a, b) => expr` for two parameters. List methods:
+Lambdas are `x => expr`, or `(item, index) => expr` for two parameters, the index counted from
+0. List methods:
 
 - **Filtering:** `where`, `map`.
 - **Counting and totals:** `count`, `sum`, `min`, `max`, `avg`.
@@ -371,8 +384,22 @@ A few examples:
 ```tariff
 let deliveries = shipment.stops.where(s => s.kind == Delivery)
 let heaviest = shipment.commodities.max(c => c.weight)
-let palletCount = shipment.commodities.sum(c => c.pallets)
+let palletCount = shipment.commodities.sum(c => c.pieces)
 ```
+
+The rules the checker and the evaluator share:
+
+- **`min` and `max`** with a lambda give the lambda's smallest or largest value, never the item
+  that has it (`heaviest` above is a `Weight?`); without one, the smallest or largest item.
+  Either way the result is optional, `none` for an empty list.
+- **`sum`** of an empty list is the zero of its type: `$0`, `0 h`, `0`.
+- **`avg`** is not optional: a `Number` for numbers (whole numbers too), else the values' own
+  kind (`Money`, `Weight`). An empty list has no average, so `avg` of one stops the rating with
+  an `argument` error; test `isEmpty` first when the list may be empty.
+- **`sortBy`, `min` and `max`** order by a value that has an order: numbers, percents, money,
+  quantities, dates and date-times. Text has no order.
+- **Indexing** a list or a text, `xs[i]`, gives `T?`: `none` when `i` is outside it (negative
+  or past the end), so it is handled like any optional (`xs[0] ?? fallback`, `xs[0]?.field`).
 
 `#`, `.field` predicates, `#acc`, `reduce` and pipes are gone. Every list method above is
 bounded by the list it walks.
@@ -391,7 +418,8 @@ fn residential(fee: Money = $95) = fee
 
 - **Shape:** parameters and the return type are annotated. A one-expression body may use `=`.
 - **Arguments:** parameters can have defaults and be named at the call site:
-  `deadhead(empty: 80 mi, rate: rate)`.
+  `deadhead(empty: 80 mi, rate: rate)`. A default is a compile-time value (literals and
+  constants), so it can't read the other parameters.
 - **Purity:** functions are pure and closed. They can't bill a charge, and they see only their
   parameters, constants, other functions, types and imports: not the schema roots, the inputs, a
   file's `let`s or any `var`. So a function can be tested and reused anywhere.
@@ -405,11 +433,12 @@ with them (`amount.roundUp(to: $5)`).
 
 | On | Properties | Methods |
 |---|---|---|
+| `Percent` | `value` (the bare number: `18%.value` is `18`) | |
 | `Number` | | `round(places: Int = 0)`, `roundHalfEven(places: Int = 0)`, `floor()`, `ceil()` (both give `Int`), `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)`, `pow(n: Int)`, `sqrt()` |
 | `Money` | | `round()` (to cents, half up), `roundHalfEven()`, `roundUp(to: Money)`, `roundDown(to: Money)`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)` |
-| Quantities | `value` | `in(unit)`, `round(to: q)`, `roundUp(to: q)` (weight breaks bill to the next hundred: `roundUp(to: 100 lb)`), `roundDown(to: q)`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)` |
+| Quantities | `value` | `in(unit)` (on a rate, also a unit of its denominator: `in(cwt)`),  `round(to: q)`, `roundUp(to: q)` (weight breaks bill to the next hundred: `roundUp(to: 100 lb)`), `roundDown(to: q)`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)` |
 | `Text` | `len`, `isEmpty` | `upper()`, `lower()`, `trim()`, `startsWith(t)`, `endsWith(t)`, `contains(t)`, `replace(a, b)`, `split(sep)`, `matches(pattern)` (a linear-time regular expression) |
-| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Weekday`: `Mon` … `Sun`), `weekend`; `DateTime` also `hour`, `minute`, `date` | `addDays(n)`; `DateTime` also `addHours(n)` |
+| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Weekday`: `Mon` … `Sun`), `weekend`; `DateTime` also `hour`, `minute`, `date` | `addDays(n: Int)`; `DateTime` also `addHours(n: Int)` |
 | `Duration` | `value` | `in(unit)` and the quantity methods |
 | `List<T>` | `len`, `isEmpty` | the collection methods above |
 
@@ -461,7 +490,9 @@ charge "Detention, stop {stop.sequence}" as DET (quantity: billable, rate: $65/h
   - `round to cents` (half up; the default when no `round` clause is written),
     `round half even to cents`, `round up to $5`, `round down to $1`: every line is rounded, and
     any difference between the rounded lines and the rounded total goes on an uncoded "Rounding"
-    line, so the lines always add up to the total.
+    line, so the lines always add up to the total. The step may be any money expression (an
+    input, so a contract sets it); it must be more than `$0`, which the checker enforces for a
+    literal and the rating for any other value (an `argument` error).
 - **One owner per code.** When a tariff bills a code that something else would also generate on
   the same shipment (a contract accessorial, the fuel surcharge program, a detention policy), the
   tariff's line wins, the other is not generated, and the trace says so. Fuel can no longer be
@@ -746,6 +777,8 @@ The normative syntax, in EBNF:
   - before a line that starts with a binary operator, `.`, `?.` or `??`.
 
   So chains and long sums wrap without a continuation character.
+- A `match` arm's guard is an expression that ends at the arm's `=>`: in `x if ready => 1`,
+  `ready =>` is the guard's last value and the arrow, never a lambda.
 
 ```ebnf
 file        = header NL { doc } { item } ;
@@ -797,7 +830,7 @@ require     = "require" condition "else" string NL ;
 fail        = "fail" string NL ;
 return      = "return" expr NL ;
 total       = ( "minimum" | "maximum" ) expr NL
-            | "round" [ "half" "even" | "up" | "down" ] "to" ( "cents" | money ) NL ;
+            | "round" [ "half" "even" | "up" | "down" ] "to" ( "cents" | expr ) NL ;
 given       = "given" lvalue "=" expr NL ;                    (* tests only *)
 expect      = "expect" ( expr | "fails" [ string ] ) NL ;     (* tests only *)
 lvalue      = name { "." name } ;                             (* shipment.weight, input.rate *)
@@ -837,6 +870,8 @@ string      = '"' { char | escape | "{" expr "}" | "{{" | "}}" } '"' ;
 ```
 
 A keyword is never an identifier. Unit names are contextual: `lb` is a unit only directly after
-a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name. `in` directly
+a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name, except
+as the argument of `.in(…)`, which reads `cwt` or `lb/ft3` as a unit. `$` directly followed
+by `/` and a unit is the money unit, so a whole rate unit is written `.in($/cwt)`. `in` directly
 after a number is inches unless what follows starts a value: `48 in` is a length, and in
 `5 in [5, 6]` it is the membership keyword.

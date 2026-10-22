@@ -3,6 +3,10 @@
 //!
 //! `tariff.scaffoldTest` is described in [`super::scaffold`].
 //!
+//! Every operation checks its file first ([`gate`]): a file that does not load or does not
+//! check never runs, and its error (code `check`) is the first finding. A file that checks runs
+//! with the checker's types and its declared input types.
+//!
 //! `tariff.evaluate` rates a batch in one call. Request:
 //!
 //! ```json
@@ -38,9 +42,8 @@
 //! `tariff.test` runs a file's tests: `{"source", "context", "names": […] (optional), "budget"
 //! (optional)}` → `{"tests": [{"name", "range", "status": "passed" | "failed" | "error",
 //! "failures": [{"range", "message", "values": [{"range", "display"}]}], "bill": … | null,
-//! "error": … | null}]}`, plus `"error"` at the top when the file does not load.
+//! "error": … | null}]}`, plus `"error"` at the top when the file does not check.
 
-use super::NoTypes;
 use super::bill::{Converted, Finished, Line};
 use super::budget::{BudgetWire, Limits};
 use super::error::{Code, EvalError, Refusal, RefusalText};
@@ -53,11 +56,12 @@ use super::value::{Value, format_decimal};
 use crate::message::{Arg, Message};
 use crate::ops::{OpResult, decode, encode};
 use crate::span::Utf16Index;
+use crate::tariff::check::{Analysis, check};
 use crate::tariff::context::Context;
-use crate::tariff::diagnostic::Severity;
+use crate::tariff::diagnostic::{Diagnostic, Severity};
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::FileKind;
-use crate::tariff::syntax::program::{Program, load};
+use crate::tariff::syntax::program::{ModuleId, Program, load};
 use crate::tariff::wire::encode as wire;
 use crate::wire::Dec;
 use serde::Deserialize;
@@ -130,12 +134,12 @@ pub fn evaluate(input: &RawValue) -> OpResult {
         .budget
         .map_or(Limits::DEFAULT, |budget| Limits::DEFAULT.lowered(&budget));
     let shared = shared_record(input.record.as_ref(), &input.context, &schema);
-    let mut loaded: Vec<(String, Option<Kind>, Program)> = Vec::new();
+    let mut loaded: Vec<Loaded> = Vec::new();
     let mut results = Vec::with_capacity(input.programs.len());
     for program in &input.programs {
         let found = loaded
             .iter()
-            .position(|(source, kind, _)| *source == program.source && *kind == program.kind);
+            .position(|entry| entry.source == program.source && entry.kind == program.kind);
         let index = if let Some(index) = found {
             index
         } else {
@@ -144,10 +148,16 @@ pub fn evaluate(input: &RawValue) -> OpResult {
                 program.kind.map(Kind::file),
                 &input.context,
             );
-            loaded.push((program.source.clone(), program.kind, built));
+            let checked = gate(&built, &input.context);
+            loaded.push(Loaded {
+                source: program.source.clone(),
+                kind: program.kind,
+                program: built,
+                checked,
+            });
             loaded.len() - 1
         };
-        let Some((_, _, built)) = loaded.get(index) else {
+        let Some(entry) = loaded.get(index) else {
             continue;
         };
         let record = match &program.record {
@@ -156,8 +166,8 @@ pub fn evaluate(input: &RawValue) -> OpResult {
         };
         results.push(evaluate_one(&Evaluation {
             program,
-            loaded: built,
-            schema: &schema,
+            loaded: &entry.program,
+            checked: &entry.checked,
             tables: &tables,
             record,
             limits,
@@ -198,18 +208,45 @@ pub fn load_error(program: &Program) -> Option<EvalError> {
         .diagnostics
         .iter()
         .find(|(_, diagnostic)| diagnostic.severity == Severity::Error)?;
-    let error = EvalError::new(Code::Syntax, diagnostic.message.clone());
-    Some(if module.0 == 0 {
+    Some(finding_error(*module, diagnostic))
+}
+
+/// Checks a loaded program before it runs: a file that does not load or does not check never
+/// runs, and one that does runs with the checker's types. The error is the first finding.
+pub fn gate(program: &Program, context: &Context) -> Result<Analysis, EvalError> {
+    if let Some(error) = load_error(program) {
+        return Err(error);
+    }
+    let analysis = check(program, context);
+    if let Some((module, diagnostic)) = analysis
+        .diagnostics()
+        .find(|(_, diagnostic)| diagnostic.severity == Severity::Error)
+    {
+        return Err(finding_error(module, diagnostic));
+    }
+    Ok(analysis)
+}
+
+fn finding_error(module: ModuleId, diagnostic: &Diagnostic) -> EvalError {
+    let error = EvalError::new(Code::Check, diagnostic.message.clone());
+    if module.0 == 0 {
         error.at(diagnostic.span)
     } else {
         error
-    })
+    }
+}
+
+struct Loaded {
+    source: String,
+    kind: Option<Kind>,
+    program: Program,
+    checked: Result<Analysis, EvalError>,
 }
 
 struct Evaluation<'e> {
     program: &'e ProgramInput,
     loaded: &'e Program,
-    schema: &'e Schema,
+    checked: &'e Result<Analysis, EvalError>,
     tables: &'e Tables,
     record: Result<Value, EvalError>,
     limits: Limits,
@@ -226,13 +263,12 @@ fn evaluate_one(evaluation: &Evaluation<'_>) -> Json {
         String::from("id"),
         Json::String(evaluation.program.id.clone()),
     );
-    let ready = match (load_error(evaluation.loaded), &evaluation.record) {
-        (Some(error), _) => Err(error),
-        (None, Err(error)) => Err(error.clone()),
-        (None, Ok(record)) => Ok(record.clone()),
+    let ready = match (evaluation.checked, &evaluation.record) {
+        (Err(error), _) | (Ok(_), Err(error)) => Err(error.clone()),
+        (Ok(analysis), Ok(record)) => Ok((analysis, record.clone())),
     };
-    let record = match ready {
-        Ok(record) => record,
+    let (analysis, record) = match ready {
+        Ok(ready) => ready,
         Err(error) => {
             status(&mut result, "error");
             result.insert(String::from("error"), error_json(&error, &index));
@@ -243,8 +279,7 @@ fn evaluate_one(evaluation: &Evaluation<'_>) -> Json {
     };
     let run = run_program(Request {
         program: evaluation.loaded,
-        types: &NoTypes,
-        schema: evaluation.schema,
+        types: analysis,
         tables: evaluation.tables,
         record,
         inputs: &evaluation.program.inputs,
@@ -458,17 +493,18 @@ pub fn test(input: &RawValue) -> OpResult {
         .root()
         .map_or_else(|| Utf16Index::new(""), |root| root.utf16.clone());
     let mut output = Map::new();
-    if let Some(error) = load_error(&program) {
-        output.insert(String::from("tests"), Json::Array(Vec::new()));
-        output.insert(String::from("error"), error_json(&error, &index));
-        return encode(&Json::Object(output));
-    }
-    let schema = Schema::new(&input.context.settings);
+    let analysis = match gate(&program, &input.context) {
+        Ok(analysis) => analysis,
+        Err(error) => {
+            output.insert(String::from("tests"), Json::Array(Vec::new()));
+            output.insert(String::from("error"), error_json(&error, &index));
+            return encode(&Json::Object(output));
+        }
+    };
     let tables = Tables::build(&input.context.tables);
     let results = run_tests(&TestRequest {
         program: &program,
-        types: &NoTypes,
-        schema: &schema,
+        types: &analysis,
         settings: &input.context.settings,
         tables: &tables,
         limits: input

@@ -129,6 +129,13 @@ let a = shipment.density.in(lb/ft3)
 tariff "t"
 let a = (call (. (. shipment density) in) (/ lb ft3))
 
+=== in with a whole rate unit
+tariff "t"
+let a = rate.in($/cwt)
+---
+tariff "t"
+let a = (call (. rate in) (/ $ cwt))
+
 === calls with named and positional arguments
 tariff "t"
 let a = deadhead(empty: 80 mi, rate: rate)
