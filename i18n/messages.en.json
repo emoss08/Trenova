@@ -25976,6 +25976,15 @@
       "rules/formula"
     ]
   },
+  "An offset cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "An open case can still accrue days away or restricted; close it once the count is final.": {
     "sites": 1,
     "scope": [
@@ -47451,6 +47460,15 @@
       "routes/worker"
     ]
   },
+  "Case year is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Case {0}": {
     "sites": 3,
     "scope": [
@@ -54437,7 +54455,7 @@
     ]
   },
   "Clear the search": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -54445,6 +54463,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/inbox",
       "routes/intake"
     ]
@@ -107089,6 +107108,15 @@
       "routes/agent-control"
     ]
   },
+  "First page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "First read": {
     "sites": 1,
     "scope": [
@@ -154872,7 +154900,7 @@
     ]
   },
   "Next page": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -161698,6 +161726,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "No rows": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No rows in this view.": {
     "sites": 1,
     "scope": [
@@ -165686,6 +165723,15 @@
       "apps/web/components"
     ]
   },
+  "Not shown at your access: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not stackable": {
     "sites": 1,
     "scope": [
@@ -169392,6 +169438,15 @@
       "routes/agent-control"
     ]
   },
+  "Nova read every row · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nova read it": {
     "sites": 1,
     "scope": [
@@ -169473,6 +169528,15 @@
       "routes/inbox"
     ]
   },
+  "Nova read part of this page · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nova read this as {0}. It's actually…": {
     "sites": 1,
     "scope": [
@@ -169480,6 +169544,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Nova read this page · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nova reads the backlog": {
@@ -173442,6 +173515,15 @@
     ]
   },
   "Only a table or a report preview can be downloaded as CSV": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a table read from a list can be paged": {
     "sites": 1,
     "scope": [
       "go"
@@ -182748,6 +182830,15 @@
       "go/other"
     ]
   },
+  "Page by a cursor or an offset, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Page count cannot be negative": {
     "sites": 1,
     "scope": [
@@ -182875,7 +182966,7 @@
     ]
   },
   "Page {0}": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -182914,6 +183005,15 @@
       "routes/desk"
     ]
   },
+  "Page {0} couldn't be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Page {0} is missing": {
     "sites": 1,
     "scope": [
@@ -182924,7 +183024,7 @@
     ]
   },
   "Page {0} of {1}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -182934,7 +183034,25 @@
       "routes/insights"
     ]
   },
+  "Page {0} of {1}+": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Page {0} of {1}. Page Up and Page Down turn pages.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Page {0}, read by Nova": {
     "sites": 1,
     "scope": [
       "ts"
@@ -182962,7 +183080,7 @@
     ]
   },
   "Pages": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -194338,7 +194456,7 @@
     ]
   },
   "Previous page": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -202872,6 +202990,15 @@
       "template/notification.dash.review_submitted"
     ]
   },
+  "Read just now, with your access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Read on {0}.": {
     "sites": 1,
     "scope": [
@@ -203390,6 +203517,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Reading page {0}…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Reading the PDF": {
@@ -221005,6 +221141,15 @@
       "go/other"
     ]
   },
+  "Rows a page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rows are ready for review; nothing is imported until you commit.": {
     "sites": 1,
     "scope": [
@@ -228221,6 +228366,15 @@
       "routes/detention-desk"
     ]
   },
+  "Search the list": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Search the list on the current tab": {
     "sites": 1,
     "scope": [
@@ -228420,6 +228574,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Searched just now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Searched records": {
@@ -240238,15 +240401,6 @@
       "routes/billing-queue"
     ]
   },
-  "Showing {0} of {1}. Ask for the rest, or open it as a view.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Showing {0} only": {
     "sites": 1,
     "scope": [
@@ -242970,6 +243124,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Sort ascending or descending": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Sort by": {
@@ -262881,6 +263044,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "The list did not answer. The pages read so far are still here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The list this table came from is no longer available": {
     "sites": 1,
     "scope": [
@@ -275266,6 +275438,15 @@
       "go/other"
     ]
   },
+  "This page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This page can't use the microphone.": {
     "sites": 1,
     "scope": [
@@ -276766,6 +276947,24 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "This table cannot be searched": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This table cannot be sorted by that column": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This table cannot be sorted by {0}": {
@@ -284309,7 +284508,7 @@
     ]
   },
   "Try again": {
-    "sites": 68,
+    "sites": 69,
     "scope": [
       "ts"
     ],
@@ -297909,6 +298108,15 @@
       "go/other"
     ]
   },
+  "What Nova asked for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What Nova read": {
     "sites": 3,
     "scope": [
@@ -305298,7 +305506,7 @@
     ]
   },
   "Worker is invalid": {
-    "sites": 30,
+    "sites": 26,
     "scope": [
       "go"
     ],
@@ -307514,6 +307722,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "You can no longer read this list, so only the rows Nova read are shown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "You can only cancel your own requests": {
@@ -325394,6 +325611,15 @@
       "routes/intake"
     ]
   },
+  "{0, plural, one {Filter the # row read} other {Filter the # rows read}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {Found # record} other {Found # records}}": {
     "sites": 1,
     "scope": [
@@ -325978,6 +326204,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Search # row} other {Search all # rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {Searched the web # time} other {Searched the web # times}}": {
@@ -326737,6 +326972,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {of # row read} other {of # rows read}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {on # confirmed document} other {on # confirmed documents}}": {
     "sites": 1,
     "scope": [
@@ -326789,6 +327033,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {row matches} other {rows match}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {row} other {rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {· a carrier backed out once} other {· carriers backed out # times}}": {
@@ -339155,12 +339417,22 @@
     ]
   },
   "{0}–{1} of {2}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "{0}–{1} of {2}+": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/desk"
     ]
   },
   "{0}–{1} °F": {

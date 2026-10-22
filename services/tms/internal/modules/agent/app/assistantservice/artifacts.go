@@ -188,6 +188,10 @@ func (r *artifactRecorder) observe(
 		}
 	}
 
+	if shown, continued := r.continueTable(&observation); continued {
+		return shown, nil
+	}
+
 	artifact := artifactFromObservation(observation)
 	if artifact == nil {
 		return nil, nil
@@ -571,6 +575,12 @@ func (r *artifactRecorder) save(
 	}
 	r.assignSlug(artifact, previous)
 
+	return r.store(artifact)
+}
+
+func (r *artifactRecorder) store(
+	artifact *assistantartifact.Artifact,
+) (*assistantartifact.Artifact, error) {
 	saved, err := r.repo.Upsert(r.ctx, artifact)
 	if err != nil {
 		r.logger.Error("artifact could not be kept",
@@ -636,6 +646,7 @@ func shownArtifact(artifact *assistantartifact.Artifact) *agentports.ShownArtifa
 		Opens:        opensView(artifact),
 		OpensRecords: opensRecords(artifact),
 		Ranked:       rankedTable(artifact),
+		Paged:        pagedTable(artifact),
 		Written:      writtenPhrase(artifact),
 		Lineage:      lineageRoot(artifact),
 	}
@@ -1069,6 +1080,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		payload["recordEntity"] = projection.recordEntity
 	}
 	fitRows(payload, "rows")
+	notePaging(payload, result)
 
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindTableView,
@@ -1216,6 +1228,7 @@ func candidateRankingArtifact(callID string, result map[string]any) *assistantar
 		payload["recordEntity"] = projection.recordEntity
 	}
 	fitRows(payload, "rows")
+	notePaging(payload, result)
 
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindTableView,

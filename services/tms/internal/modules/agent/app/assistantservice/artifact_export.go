@@ -152,54 +152,22 @@ func (s *Service) exportTable(
 	source *exportSource,
 	sink io.Writer,
 ) error {
-	toolName := typeutils.StringOfTrimmed(source.artifact.Payload["tool"])
-	if s.queries == nil || toolName == "" {
-		return errNotExportable
-	}
-	tool, ok := s.queries.Get(toolName)
-	if !ok {
-		return errortypes.NewBusinessError("The list this table came from is no longer available")
-	}
-	if err := s.mayRead(ctx, actor, tool.Policy()); err != nil {
+	list, err := s.listOf(ctx, &req, actor, source)
+	if err != nil {
 		return err
 	}
 
-	entity := typeutils.StringOfTrimmed(source.artifact.Payload["entity"])
-	params := &agentports.QueryToolParams{
-		OrganizationID:    req.TenantInfo.OrgID,
-		BusinessUnitID:    req.TenantInfo.BuID,
-		Actor:             actor,
-		Timezone:          s.timezoneOf(ctx, req),
-		DataAccessCeiling: s.ceilingOf(ctx, req),
-	}
-
 	return writeTableCSV(sink, func(at tablePosition) (map[string]any, error) {
-		arguments := make(map[string]any, len(source.arguments)+2)
-		for key, value := range source.arguments {
-			if key != "offset" && key != "after" {
-				arguments[key] = value
-			}
-		}
-		arguments["limit"] = exportPageRows
+		page := map[string]any{argLimit: exportPageRows}
 		switch {
 		case at.after != "":
-			arguments["after"] = at.after
+			page[argAfter] = at.after
 		case at.offset > 0:
-			arguments["offset"] = at.offset
-		}
-		params.Params = arguments
-
-		data, err := tool.Query(ctx, params)
-		if err != nil {
-			return nil, err
-		}
-		document, ok := toJSONDocument(data)
-		if !ok {
-			return nil, errors.New("the list returned something that is not a table")
+			page[argOffset] = at.offset
 		}
 
-		return document.fields, nil
-	}, entity)
+		return list.read(ctx, page, false)
+	}, list.entity)
 }
 
 type tablePosition struct {

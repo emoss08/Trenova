@@ -1,6 +1,9 @@
 package typeutils
 
-import "strings"
+import (
+	"math"
+	"strings"
+)
 
 // StringOf reads a string out of a decoded JSON value, reporting "" for
 // anything that is not a string. Numbers and booleans that came out of a
@@ -24,4 +27,23 @@ func BoolOf(value any) bool {
 	result, _ := value.(bool)
 
 	return result
+}
+
+func IntOf(value any) (int, bool) {
+	switch number := value.(type) {
+	case int:
+		return number, true
+	case int32:
+		return int(number), true
+	case int64:
+		return int(number), true
+	case float64:
+		if number != math.Trunc(number) || math.IsInf(number, 0) {
+			return 0, false
+		}
+
+		return int(number), true
+	default:
+		return 0, false
+	}
 }
