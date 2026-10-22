@@ -122,6 +122,7 @@ export function libraryEntries(
       label: library.path,
       meta: named ? t("approved v{0}", named.versionNumber) : undefined,
       doc: named?.description || t("Import it with use {0}", library.path),
+      // i18n-ignore: Tariff source, the `use` line written into the editor
       insert: `use ${library.path}\n`,
     };
   });

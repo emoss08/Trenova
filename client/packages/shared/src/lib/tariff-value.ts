@@ -77,7 +77,7 @@ function show(value: TariffValue, t: TranslateFn, options: TariffValueFormatOpti
         timeStyle: "short",
         timeZone: "UTC",
       }).format(wall);
-      return `${text} UTC${value.offset}`;
+      return t("{0} UTC{1}", text, value.offset);
     }
     case "list":
       return t("{0, plural, one {# item} other {# items}}", value.items.length);

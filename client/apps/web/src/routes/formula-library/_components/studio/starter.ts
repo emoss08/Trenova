@@ -14,6 +14,7 @@ export function libraryPath(name: string): string {
  */
 export function starterLibrary(name: string): string {
   const path = libraryPath(FORMULA_LIBRARY_NAME_PATTERN.test(name) ? name : "example");
+  // i18n-ignore: Tariff source, the file a new library starts from
   return `library "${path}"
 
 /// A flat fee, unless the caller sets another.

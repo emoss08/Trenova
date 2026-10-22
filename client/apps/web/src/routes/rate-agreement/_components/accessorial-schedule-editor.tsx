@@ -22,6 +22,7 @@ const NEW_ACCESSORIAL = {
 } as unknown as RateAgreementAccessorial;
 
 /** What a new condition starts as: a condition file's header and the expression to write. */
+// i18n-ignore: Tariff source, the condition file a new charge starts from
 const NEW_CONDITION = `condition "Applies when"
 
 shipment.hazmat
