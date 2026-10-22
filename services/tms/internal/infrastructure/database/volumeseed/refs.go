@@ -175,7 +175,6 @@ func loadTemplates(ctx context.Context, db bun.IDB, refs *tenantRefs) error {
 	if err := db.NewSelect().Model(&refs.templates).
 		Where("organization_id = ?", refs.orgID).
 		Where("status = ?", formulatemplate.StatusActive).
-		Where("type = ?", formulatemplate.TemplateTypeFreightCharge).
 		Scan(ctx); err != nil {
 		return fmt.Errorf("load formula templates: %w", err)
 	}

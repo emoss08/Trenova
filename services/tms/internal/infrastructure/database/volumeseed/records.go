@@ -143,6 +143,7 @@ type shipmentRecord struct {
 	DeliveredAt       int64
 	Miles             float64
 	Freight           decimal.Decimal
+	FreightLines      []shipment.FreightLine
 	Charges           []chargeRecord
 	Total             decimal.Decimal
 	Stage             billingStage

@@ -20,12 +20,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
@@ -932,7 +935,6 @@ func (b *shpBuilder) build(batch *shpBatch, p *shpPlan, pro, orderNumber string)
 		BOL:            bol,
 		Pieces:         ptr(p.pieces),
 		Weight:         ptr(p.weight),
-		RatingUnit:     1,
 		FreightTerms:   shipment.FreightTermsPrepaid,
 		Version:        1,
 	}
@@ -1430,30 +1432,34 @@ func (b *shpBuilder) price(
 
 	var tmpl *formulatemplate.FormulaTemplate
 	var baseRate, freight decimal.Decimal
+	var unit shpRateUnit
 	cwt := decimal.NewFromInt((p.weight + 99) / 100)
 	roll := f.float()
 	switch {
 	case p.weight < 12_000 && roll < 0.5 && b.template(formulatemplate.StandardPerCwt) != nil:
 		tmpl = b.template(formulatemplate.StandardPerCwt)
 		baseRate = decimal.NewFromFloat(target).Div(cwt).Round(2)
-		freight = baseRate.Mul(cwt).Round(2)
+		unit = shpRateUnit{quantity: cwt, quantityUnit: "cwt", rate: "/cwt"}
 	case stops > 2 && !p.relay && roll < 0.5 && b.template(formulatemplate.StandardPerStop) != nil:
 		tmpl = b.template(formulatemplate.StandardPerStop)
 		baseRate = decimal.NewFromFloat(target / float64(stops)).Round(2)
-		freight = baseRate.Mul(decimal.NewFromInt(int64(stops))).Round(2)
+		unit = shpRateUnit{quantity: decimal.NewFromInt(int64(stops)), quantityUnit: "stop", rate: "/stop"}
 	case miles*rpm >= shpMinimumPrice && roll < 0.6 && b.template(formulatemplate.StandardPerMile) != nil:
 		tmpl = b.template(formulatemplate.StandardPerMile)
 		baseRate = decimal.NewFromFloat(rpm).Round(2)
-		freight = baseRate.Mul(decimal.NewFromFloat(miles)).Round(2)
+		unit = shpRateUnit{quantity: decimal.NewFromFloat(miles), quantityUnit: "mi", rate: "/mi"}
 	default:
 		tmpl = b.template(formulatemplate.StandardFlatRate)
 		baseRate = decimal.NewFromFloat(math.Round(target/5) * 5)
-		freight = baseRate
 	}
 	if tmpl == nil {
 		tmpl = pick(f, b.g.refs.templates)
 		baseRate = decimal.NewFromFloat(math.Round(target/5) * 5)
-		freight = baseRate
+		unit = shpRateUnit{}
+	}
+	freight = baseRate
+	if unit.rate != "" {
+		freight = baseRate.Mul(unit.quantity).Round(2)
 	}
 
 	delivered := entity.Status == shipment.StatusCompleted ||
@@ -1550,23 +1556,97 @@ func (b *shpBuilder) price(
 	}
 	if p.canceled {
 		freight = decimal.Zero
-		if len(charges) == 0 {
-			baseRate = decimal.Zero
-		}
 	}
 	total := freight.Add(other)
 
 	entity.FormulaTemplateID = tmpl.ID
-	entity.BaseRate = decimal.NewNullDecimal(baseRate)
-	entity.FreightChargeAmount = decimal.NewNullDecimal(freight)
+	if p.canceled {
+		entity.TariffInputs = tarifftypes.Inputs{}
+		entity.SetFreightLines([]shipment.FreightLine{})
+	} else {
+		entity.TariffInputs = unit.inputs(baseRate)
+		entity.SetFreightLines([]shipment.FreightLine{unit.line(baseRate, freight)})
+		entity.RatingDetail = shpRatingDetail(entity, tmpl, max(p.pickupAt, rec.CreatedAt))
+	}
 	entity.OtherChargeAmount = decimal.NewNullDecimal(other)
 	entity.TotalChargeAmount = decimal.NewNullDecimal(total)
 
 	rec.FormulaTemplateID = tmpl.ID
 	rec.FormulaName = tmpl.Name
 	rec.Freight = freight
+	rec.FreightLines = entity.FreightLines
 	rec.Charges = charges
 	rec.Total = total
+}
+
+const shpFreightLabel = "Linehaul"
+
+// shpRateUnit is how a standard tariff measures freight: per mile, per stop or
+// per hundredweight, or a flat amount when rate is empty.
+type shpRateUnit struct {
+	quantity     decimal.Decimal
+	quantityUnit string
+	rate         string
+}
+
+func (u shpRateUnit) inputs(rate decimal.Decimal) tarifftypes.Inputs {
+	if u.rate == "" {
+		return tarifftypes.Inputs{formulatemplate.StandardInputRate: rules.MoneyValue(rate)}
+	}
+	return tarifftypes.Inputs{
+		formulatemplate.StandardInputRate: rules.QuantityValue(rate, rules.UnitMoney+u.rate),
+	}
+}
+
+func (u shpRateUnit) line(rate, amount decimal.Decimal) shipment.FreightLine {
+	line := shipment.FreightLine{Label: shpFreightLabel, Amount: amount}
+	if u.rate != "" {
+		line.Quantity = ptr(u.quantity)
+		line.QuantityUnit = u.quantityUnit
+		line.Rate = ptr(rate)
+		line.RateUnit = rules.UnitMoney + u.rate
+	}
+	return line
+}
+
+// shpRatingDetail is the rating a standard tariff leaves on a shipment it rated,
+// as the development seed's seededRatingDetail records it.
+func shpRatingDetail(
+	entity *shipment.Shipment,
+	tmpl *formulatemplate.FormulaTemplate,
+	ratedAt int64,
+) *shipment.RatingDetail {
+	freight := entity.FreightChargeAmount.Decimal
+	lines := make([]tarifftypes.Line, 0, len(entity.FreightLines))
+	for _, fl := range entity.FreightLines {
+		lines = append(lines, tarifftypes.Line{
+			Kind:         tarifftypes.LineCharge,
+			Label:        fl.Label,
+			Freight:      true,
+			Amount:       fl.Amount,
+			Quantity:     fl.Quantity,
+			QuantityUnit: fl.QuantityUnit,
+			Rate:         fl.Rate,
+			RateUnit:     fl.RateUnit,
+		})
+	}
+	quote := ratequote.RateQuote{Outcome: ratequote.OutcomeFormulaFallback}
+	return &shipment.RatingDetail{
+		Bill: &tarifftypes.Bill{
+			Currency:         "USD",
+			Lines:            lines,
+			FreightTotal:     freight,
+			AccessorialTotal: decimal.Zero,
+			Total:            freight,
+		},
+		Source:              string(ratequote.OutcomeFormulaFallback),
+		RatedAt:             ratedAt,
+		FormulaTemplateID:   tmpl.ID.String(),
+		FormulaTemplateName: tmpl.Name,
+		Inputs:              entity.TariffInputs.Clone().OrEmpty(),
+		Skipped:             []shipment.RatingSkip{},
+		Explanation:         quote.Explanation(),
+	}
 }
 
 type shpCommentSpec struct {

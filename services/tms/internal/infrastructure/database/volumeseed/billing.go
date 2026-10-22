@@ -687,21 +687,43 @@ func (g *generator) bilEvent(
 }
 
 func (g *generator) bilLines(r *shipmentRecord) []*invoice.InvoiceLine {
-	lines := make([]*invoice.InvoiceLine, 0, len(r.Charges)+1)
-	freight := &invoice.InvoiceLine{
-		ShipmentID:          r.ID,
-		ShipmentProNumber:   r.ProNumber,
-		ShipmentBOL:         r.BOL,
-		LineNumber:          1,
-		Type:                invoice.InvoiceLineTypeFreight,
-		Description:         bilFreightLine,
-		Quantity:            decimal.NewFromInt(1),
-		UnitPrice:           r.Freight,
-		Amount:              r.Freight,
-		FormulaTemplateID:   r.FormulaTemplateID,
-		FormulaTemplateName: r.FormulaName,
+	freightLines := r.FreightLines
+	if len(freightLines) == 0 {
+		freightLines = []shipment.FreightLine{{Label: bilFreightLine, Amount: r.Freight}}
 	}
-	lines = append(lines, freight)
+	lines := make([]*invoice.InvoiceLine, 0, len(r.Charges)+len(freightLines))
+	for i := range freightLines {
+		fl := &freightLines[i]
+		description := strings.TrimSpace(fl.Label)
+		if description == "" {
+			description = bilFreightLine
+		}
+		freight := &invoice.InvoiceLine{
+			ShipmentID:          r.ID,
+			ShipmentProNumber:   r.ProNumber,
+			ShipmentBOL:         r.BOL,
+			LineNumber:          len(lines) + 1,
+			Type:                invoice.InvoiceLineTypeFreight,
+			Description:         description,
+			Quantity:            decimal.NewFromInt(1),
+			UnitPrice:           fl.Amount,
+			Amount:              fl.Amount,
+			FormulaTemplateID:   r.FormulaTemplateID,
+			FormulaTemplateName: r.FormulaName,
+			RateUnit:            fl.RateUnit,
+		}
+		// Itemized the way invoicelines.itemized does: quantity at the tariff's
+		// rate when the rate times the quantity is the amount billed.
+		if fl.Rate != nil {
+			freight.Rate = decimal.NewNullDecimal(*fl.Rate)
+			if fl.Quantity != nil && fl.Quantity.IsPositive() &&
+				fl.Rate.Mul(*fl.Quantity).Round(shipment.SharePlaces).Equal(fl.Amount) {
+				freight.Quantity = *fl.Quantity
+				freight.UnitPrice = *fl.Rate
+			}
+		}
+		lines = append(lines, freight)
+	}
 
 	for i := range r.Charges {
 		c := &r.Charges[i]
@@ -728,9 +750,6 @@ func (g *generator) bilLines(r *shipmentRecord) []*invoice.InvoiceLine {
 		if def := g.refs.accessorial(c.Code); def != nil {
 			if d := strings.TrimSpace(def.Description); d != "" {
 				line.Description = d
-			}
-			if c.Method == accessorialcharge.MethodPerUnit {
-				line.RateUnit = def.RateUnit
 			}
 		}
 		if c.Method == accessorialcharge.MethodPercentage {
