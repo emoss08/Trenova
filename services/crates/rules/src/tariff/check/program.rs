@@ -270,6 +270,12 @@ fn bodies(declarer: &Declarer<'_>, state: &mut State, out: &mut ModuleAnalysis) 
         let ((), _) = declarer.run(state, &globals, out, Body::Test, |checker| {
             checker.billed.clone_from(&billed);
             checker.file_lets.clone_from(&file_lets);
+            checker.expects_refusal = test.body.stmts.iter().any(|stmt| {
+                matches!(
+                    stmt.kind,
+                    StmtKind::Expect(crate::tariff::syntax::ast::Expect::Fails(_))
+                )
+            });
             checker.scopes.push_barrier();
             checker.block(&test.body);
             used.extend(std::mem::take(&mut checker.used));

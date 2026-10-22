@@ -205,6 +205,9 @@ pub struct Checker<'a> {
     /// Names read before the `let` that defines them (already reported), so that `let` is not
     /// also reported unused.
     pub early: std::collections::BTreeSet<String>,
+    /// Whether the body is a test that expects a refusal, whose `let`s run code for the refusal
+    /// it may raise and so are not reported unused.
+    pub expects_refusal: bool,
 }
 
 /// The charges a tariff writes, for checking `charge(…)` in tests.

@@ -1627,7 +1627,10 @@ impl Checker<'_> {
             let Some(local) = self.scopes.get(id) else {
                 continue;
             };
-            if local.reads == 0 && matches!(local.kind, LocalKind::Let | LocalKind::Var) {
+            if local.reads == 0
+                && matches!(local.kind, LocalKind::Let | LocalKind::Var)
+                && !self.expects_refusal
+            {
                 let diagnostic = Diagnostic::warning(
                     "unused",
                     local.span,

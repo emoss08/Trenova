@@ -222,6 +222,24 @@ fn run_case(file: &str, case: &Json) -> Option<String> {
         .map(|list| list.iter().map(normalise).collect())
         .unwrap_or_default();
     let mut problems = Vec::new();
+    for input in &analysis.inputs {
+        let Some(default) = &input.default else {
+            continue;
+        };
+        match crate::tariff::wire::decode(default, &input.ty, &input.name) {
+            Ok(value) if crate::tariff::wire::encode(&value) == *default => {}
+            Ok(value) => problems.push(format!(
+                "the default of {} is {default}, but the codec writes it {}",
+                input.name,
+                crate::tariff::wire::encode(&value)
+            )),
+            Err(error) => problems.push(format!(
+                "the default of {} does not decode: {}",
+                input.name,
+                error.message.english()
+            )),
+        }
+    }
     if actual != expected {
         problems.push(format!(
             "diagnostics differ\nexpected: {}\nactual:   {}",

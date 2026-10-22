@@ -583,6 +583,39 @@
     "  expect fails \"No {1}\"",
     "}"
    ]
+  },
+  {
+   "name": "a test expecting a refusal may bind a value only to run it",
+   "source": [
+    "library \"t\"",
+    "fn half(n: Int) -> Number {",
+    "  require n > 0 else \"No\"",
+    "  return n / 2",
+    "}",
+    "test \"zero refuses\" {",
+    "  let rated = half(0)",
+    "  expect fails \"No\"",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "an unused let in a test that expects no refusal is a warning",
+   "source": [
+    "library \"t\"",
+    "fn half(n: Int) -> Number = n / 2",
+    "test \"halves\" {",
+    "  let rated = half(4)",
+    "  expect half(2) == 1",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "code": "unused",
+     "at": "rated",
+     "message": "`rated` is never used"
+    }
+   ]
   }
  ]
 }

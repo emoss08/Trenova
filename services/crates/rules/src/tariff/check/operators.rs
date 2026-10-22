@@ -7,8 +7,8 @@
 //!   dimension is a `Number`, and any quantity times or over a number keeps its dimension. The
 //!   result must be a dimension a type can name: a single dimension, one per another, or none.
 //! - `Money × Number|Percent|Int` and `Money / Number` are money; `Percent × Percent` has no
-//!   meaning; a percent of a `Number` is a `Number`, and a whole number of percents (`4 ×
-//!   0.5%`) is a `Percent`.
+//!   meaning; a percent scaled by a number, in either order, or divided by one, is a `Percent`
+//!   (`4 × 0.5%` is `2%`).
 //! - `Int / Int` is a `Number`; `%` takes `Int`s only.
 //! - Temperatures only compare and subtract.
 //! - `Date - Date` and `DateTime - DateTime` are durations.
@@ -101,8 +101,7 @@ fn multiply(left: &Type, right: &Type) -> Result<Type, Problem> {
         (Type::Int, Type::Int) => Ok(Type::Int),
         (l, r) if number(l) && number(r) => Ok(Type::Number),
         (Type::Percent, Type::Percent) => Err(Problem::PercentTimesPercent),
-        (Type::Percent, Type::Int) | (Type::Int, Type::Percent) => Ok(Type::Percent),
-        (Type::Percent, Type::Number) | (Type::Number, Type::Percent) => Ok(Type::Number),
+        (Type::Percent, other) | (other, Type::Percent) if number(other) => Ok(Type::Percent),
         (Type::Quantity(q), other) | (other, Type::Quantity(q))
             if number(other) || matches!(other, Type::Percent) =>
         {
@@ -127,11 +126,8 @@ fn multiply(left: &Type, right: &Type) -> Result<Type, Problem> {
 fn divide(left: &Type, right: &Type) -> Result<Type, Problem> {
     match (left, right) {
         (l, r) if number(l) && number(r) => Ok(Type::Number),
-        (Type::Percent, Type::Percent) => Ok(Type::Number),
-        (Type::Percent, Type::Int) => Ok(Type::Percent),
-        (Type::Percent, Type::Number) | (Type::Int | Type::Number, Type::Percent) => {
-            Ok(Type::Number)
-        }
+        (Type::Percent, other) if number(other) => Ok(Type::Percent),
+        (Type::Percent | Type::Int | Type::Number, Type::Percent) => Ok(Type::Number),
         (Type::Quantity(q), other) if number(other) || matches!(other, Type::Percent) => {
             if q.dim.has_temperature() {
                 return Err(Problem::Temperature);
@@ -317,7 +313,7 @@ mod tests {
         );
         assert_eq!(
             arithmetic(BinaryOp::Mul, &Type::Number, &Type::Percent),
-            Ok(Type::Number)
+            Ok(Type::Percent)
         );
         assert_eq!(
             arithmetic(BinaryOp::Mul, &Type::Percent, &Type::Int),

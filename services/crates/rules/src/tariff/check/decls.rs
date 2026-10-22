@@ -644,9 +644,11 @@ impl Declarer<'_> {
             let ty = Self::lower(globals, &decl.ty, out);
             if let Some(default) = &decl.default {
                 let want = Want::Annotation { name: name.clone() };
+                let before = out.diagnostics.len();
                 let (_, folded) =
                     self.constant_value(state, globals, out, default, Some(&ty), &want);
-                if let Ok(value) = folded {
+                let clean = out.diagnostics.len() == before && !matches!(ty, Type::Error);
+                if let (Ok(value), true) = (folded, clean) {
                     state.defaults.insert((self.id().0, name.clone()), value);
                 }
             }
@@ -760,6 +762,7 @@ impl Declarer<'_> {
             exhaustive: BTreeSet::new(),
             expected_yet: false,
             early: BTreeSet::new(),
+            expects_refusal: false,
         };
         let result = run(&mut checker);
         let calls = std::mem::take(&mut checker.calls);

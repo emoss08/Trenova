@@ -191,13 +191,13 @@
   },
   {
    "diagnostics": [],
-   "name": "a number times a percent is a number",
+   "name": "a number times a percent is a percent",
    "source": [
     "tariff \"t\"",
     "charge \"x\" = $100 * (2.5 * 10%)"
    ],
    "types": {
-    "2.5 * 10%": "Number"
+    "2.5 * 10%": "Percent"
    }
   },
   {
@@ -205,10 +205,12 @@
    "name": "a whole number of percents is a percent",
    "source": [
     "tariff \"t\"",
-    "charge \"x\" = $100 * (4 * 0.5%)"
+    "charge \"x\" = $100 * (4 * 0.5%) + $100 * (0.5% * 4) + $100 * (10% / 4)"
    ],
    "types": {
-    "4 * 0.5%": "Percent"
+    "4 * 0.5%": "Percent",
+    "0.5% * 4": "Percent",
+    "10% / 4": "Percent"
    }
   },
   {

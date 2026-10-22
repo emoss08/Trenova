@@ -409,15 +409,9 @@
          },
          "rate": {
           "$q": "15",
-          "u": "$/mi"
+          "u": "$/cwt"
          },
          "extra": true
-        },
-        {
-         "rate": {
-          "$q": "1",
-          "u": "$/cwt"
-         }
         }
        ],
        "drops": 2
@@ -433,7 +427,7 @@
        "code": "input-value",
        "path": "rule.drops",
        "message": {
-        "message": "{0} isn't a whole number",
+        "message": "{0} is not a whole number",
         "args": [
          "1.5"
         ]
@@ -443,9 +437,10 @@
        "code": "input-value",
        "path": "rule.mode",
        "message": {
-        "message": "This value must be one of {0}",
+        "message": "\"{0}\" is not a {1}",
         "args": [
-         "Sell, Buy"
+         "Sel",
+         "RatingMode"
         ]
        }
       },
@@ -464,11 +459,9 @@
        "code": "input-value",
        "path": "rule.start",
        "message": {
-        "message": "This value must be {0}",
+        "message": "\"{0}\" is not a date (YYYY-MM-DD)",
         "args": [
-         {
-          "message": "a date"
-         }
+         "2026-02-30"
         ]
        }
       },
@@ -476,34 +469,17 @@
        "code": "input-value",
        "path": "rule.waived",
        "message": {
-        "message": "This value can't be empty"
-       }
-      },
-      {
-       "code": "input-value",
-       "path": "agreement.breaks[2].rate",
-       "message": {
-        "message": "{0} isn't a unit of {1}"
+        "message": "Expected {0}, got {1}"
        }
       },
       {
        "code": "input-value",
        "path": "agreement.breaks[2].extra",
        "message": {
-        "message": "{0} has no field {1}",
+        "message": "{0} is not a field of {1}",
         "args": [
-         "`Break`",
-         "`extra`"
-        ]
-       }
-      },
-      {
-       "code": "input-value",
-       "path": "agreement.breaks[3]",
-       "message": {
-        "message": "The field {0} is missing",
-        "args": [
-         "`from`"
+         "extra",
+         "Break"
         ]
        }
       },
@@ -511,12 +487,7 @@
        "code": "input-value",
        "path": "agreement.drops",
        "message": {
-        "message": "This value must be {0}",
-        "args": [
-         {
-          "message": "a whole number"
-         }
-        ]
+        "message": "Expected {0}, got {1}"
        }
       },
       {
@@ -528,6 +499,60 @@
          "`rate`"
         ]
        }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "a wrong unit and a missing field are named by path",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "type Break = { from: Weight, rate: Money/cwt }",
+      "input breaks: List<Break> = []",
+      "input other: List<Break> = []",
+      "charge \"x\" = $1 * (breaks.len + other.len)"
+     ],
+     "values": {
+      "rule": {
+       "breaks": [
+        {
+         "from": {
+          "$q": "0",
+          "u": "lb"
+         },
+         "rate": {
+          "$q": "15",
+          "u": "$/mi"
+         }
+        }
+       ],
+       "other": [
+        {
+         "rate": {
+          "$q": "1",
+          "u": "$/cwt"
+         }
+        }
+       ]
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "code": "input-value",
+       "path": "rule.breaks[0].rate"
+      },
+      {
+       "code": "input-value",
+       "path": "rule.other[0].from"
       }
      ]
     }
