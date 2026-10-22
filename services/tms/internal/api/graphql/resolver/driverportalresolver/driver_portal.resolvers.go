@@ -31,13 +31,19 @@ import (
 )
 
 func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPortal, permission.OpCreate)
-	if err != nil {
-		return nil, err
-	}
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
+	}
+	authCtx, _, err := r.RequireTeamScope(
+		ctx,
+		permission.ResourceDriverPortal,
+		permission.OpCreate,
+		worker.ApprovalScopeAll,
+		workerID,
+	)
+	if err != nil {
+		return nil, err
 	}
 	req := &driverportalservice.InviteWorkerRequest{
 		TenantInfo: base.TenantInfo(authCtx),
@@ -50,13 +56,19 @@ func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmo
 }
 
 func (r *MutationResolver) RevokeWorkerPortalAccess(ctx context.Context, workerID string) (bool, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPortal, permission.OpCancel)
-	if err != nil {
-		return false, err
-	}
 	id, err := pulid.MustParse(workerID)
 	if err != nil {
 		return false, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
+	}
+	authCtx, _, err := r.RequireTeamScope(
+		ctx,
+		permission.ResourceDriverPortal,
+		permission.OpCancel,
+		worker.ApprovalScopeAll,
+		id,
+	)
+	if err != nil {
+		return false, err
 	}
 	if err = r.DriverPortalService.RevokeAccess(
 		ctx,
@@ -566,13 +578,19 @@ func (r *PortalCredentialResolver) DocumentID(ctx context.Context, obj *driverpo
 }
 
 func (r *QueryResolver) WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalservice.PortalStatus, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceDriverPortal, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
 	id, err := pulid.MustParse(workerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Invalid worker")
+	}
+	authCtx, _, err := r.RequireTeamScope(
+		ctx,
+		permission.ResourceDriverPortal,
+		permission.OpRead,
+		worker.ApprovalScopeAll,
+		id,
+	)
+	if err != nil {
+		return nil, err
 	}
 	return r.DriverPortalService.GetPortalStatus(ctx, base.TenantInfo(authCtx), id)
 }

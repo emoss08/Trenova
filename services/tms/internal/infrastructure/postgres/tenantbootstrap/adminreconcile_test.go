@@ -1,6 +1,7 @@
 package tenantbootstrap
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -126,4 +127,75 @@ func TestPlanAdminGrants_GrantsLeaveToAnAdministratorWhoHoldsOnlyWorkers(t *test
 	}, plan.add[0].Operations)
 	assert.Equal(t, permission.DataScopeOrganization, plan.add[0].DataScope)
 	assert.Empty(t, plan.extend)
+}
+
+func TestPlanAdminGrants_GrantsEveryHRKindToAnAdministratorWhoHoldsOnlyWorkers(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	roleID := pulid.MustNew("rol_")
+	own := []permission.Resource{
+		permission.ResourceWorkerInjury,
+		permission.ResourceWorkerDOTTest,
+		permission.ResourceBenefitPlan,
+		permission.ResourceWorkerEmploymentEvent,
+		permission.ResourceWorkerDisciplinaryAction,
+		permission.ResourcePerformanceReview,
+		permission.ResourceTimesheet,
+		permission.ResourceProfileChangeRequest,
+	}
+	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	for _, rp := range fullGrants(registry, roleID) {
+		if !slices.Contains(own, permission.Resource(rp.Resource)) {
+			held = append(held, rp)
+		}
+	}
+
+	plan := planAdminGrants(registry, roleID, held, 100)
+
+	require.Len(t, plan.add, len(own), "each is its own grant, so a worker grant does not cover it")
+	for _, add := range plan.add {
+		assert.Contains(t, own, permission.Resource(add.Resource))
+		assert.ElementsMatch(t, registry.GetOperationsForResource(add.Resource), add.Operations,
+			add.Resource)
+		assert.Equal(t, permission.DataScopeOrganization, add.DataScope)
+	}
+	assert.Empty(t, plan.extend)
+}
+
+func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOperations(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	roleID := pulid.MustNew("rol_")
+	portal := permission.ResourceDriverPortal.String()
+	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	for _, rp := range fullGrants(registry, roleID) {
+		if rp.Resource != portal {
+			held = append(held, rp)
+		}
+	}
+
+	plan := planAdminGrants(registry, roleID, held, 100)
+	require.Len(t, plan.add, 1, "driver_portal is its own grant, so a worker grant does not cover it")
+	assert.Equal(t, portal, plan.add[0].Resource)
+	assert.ElementsMatch(t, []permission.Operation{
+		permission.OpRead,
+		permission.OpCreate,
+		permission.OpCancel,
+	}, plan.add[0].Operations, "inviting and revoking are the portal's own operations")
+
+	previous := &permission.ResourcePermission{
+		ID:       pulid.MustNew("rp_"),
+		RoleID:   roleID,
+		Resource: portal,
+		Operations: []permission.Operation{
+			permission.OpRead, permission.OpCreate, permission.OpUpdate,
+			permission.OpExport, permission.OpImport, permission.OpCancel,
+		},
+		DataScope: permission.DataScopeOrganization,
+	}
+	plan = planAdminGrants(registry, roleID, append(held, previous), 100)
+	assert.Empty(t, plan.add)
+	assert.Empty(t, plan.extend, "an administrator who held the old operations already invites and revokes")
 }

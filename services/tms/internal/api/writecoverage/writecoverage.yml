@@ -1170,7 +1170,7 @@ writes:
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
   "mutation inviteWorkerToPortal":
     exempt: security
-    reason: "Gives a driver a sign-in to the driver portal."
+    reason: "Gives a driver a sign-in to the driver portal, under the portal's own Invite operation (driver_portal create); a person decides who may sign in."
   "mutation markAllMyNotificationsRead":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."
@@ -1204,7 +1204,7 @@ writes:
     tools: [settlement_review_driver_expense]
   "mutation revokeWorkerPortalAccess":
     exempt: security
-    reason: "Removes a driver's sign-in to the driver portal."
+    reason: "Removes a driver's sign-in to the driver portal, under the portal's own Revoke operation (driver_portal cancel); a person decides who may sign in."
   "mutation setMyAvailability":
     exempt: counterparty
     reason: "The driver doing this for themselves in their own portal; an agent acting for the organization must not act as the driver."

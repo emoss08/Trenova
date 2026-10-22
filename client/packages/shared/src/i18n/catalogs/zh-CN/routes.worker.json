@@ -954,6 +954,7 @@
   "This case is not designated as FMLA. The day is recorded but draws nothing down.": "此案件未指定为 FMLA。该日会登记，但不扣减任何额度。",
   "This driver": "此司机",
   "This driver has a clean hours-of-service record for the past month.": "此司机上个月的服勤时数记录无异常。",
+  "This driver has not been invited to Dash.": "尚未邀请此司机加入 Dash。",
   "This driver will not accrue pay for delivered shipments until a profile is assigned. Assign a shared profile and add driver-specific rate overrides if their rates differ from the template.": "在分配配置文件之前，此司机不会就已送达的运单累计薪酬。请分配共用配置文件；若其费率与模板不同，请另行添加司机专属的费率覆盖。",
   "This employment": "此段雇佣",
   "This ends employment": "此举将终止任职",
