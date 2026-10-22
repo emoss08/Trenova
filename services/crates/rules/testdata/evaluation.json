@@ -1,0 +1,6094 @@
+{
+  "about": "Evaluation semantics of the formula language, ported from the Go engine's tests (engine/*_test.go and formula/*_test.go). Each case names the Go test it comes from; where a Go expectation existed only because of float64 or Go's map order, the case expects the exact or ordered result and its name says so. 'value' is a value tree compared exactly (numbers by value), 'near' a number within a tolerance, 'error' the evaluation error's code and, optionally, part of its message template ('message'), of its English text ('english'), its fields and guards. 'lookups' names a table set below, or 'stub' for the predicate stub; without it lookups are unavailable. 'recorded' lists the lookups the receipt records.",
+  "environments": {
+    "conformance": {
+      "totalWeight": 1200,
+      "weight": 1200,
+      "totalStops": 2,
+      "hasHazmat": false,
+      "stops": [
+        {
+          "type": "Pickup",
+          "status": "New",
+          "sequence": 0,
+          "city": "Dallas",
+          "scheduledWindowStart": {
+            "$date": "2027-01-15T08:00:00Z"
+          }
+        },
+        {
+          "type": "Delivery",
+          "status": "New",
+          "sequence": 1,
+          "city": "Austin",
+          "scheduledWindowStart": {
+            "$date": "2027-01-15T13:33:20Z"
+          }
+        }
+      ],
+      "ratingTime": {
+        "$date": "2027-01-15T08:00:00Z"
+      },
+      "baseRate": 2.5,
+      "isRush": false,
+      "laneCode": "TX-OK"
+    },
+    "realistic": {
+      "totalDistance": 575.8,
+      "totalWeight": 45000,
+      "totalPieces": 24,
+      "totalStops": 3,
+      "hasHazmat": true,
+      "requiresTemperatureControl": true,
+      "temperatureDifferential": 4,
+      "temperatureMin": 34,
+      "temperatureMax": 38,
+      "status": "InTransit",
+      "proNumber": "PRO-2024-00001"
+    }
+  },
+  "tables": {
+    "matrix": [
+      {
+        "name": "lane_rate",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "ATL-MIA"
+              }
+            ],
+            "value": "1450"
+          },
+          {
+            "at": [
+              {
+                "key": "ATL-JAX"
+              }
+            ],
+            "value": "980"
+          }
+        ]
+      },
+      {
+        "name": "fuel_surcharge",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "3"
+              }
+            ],
+            "value": "0"
+          },
+          {
+            "at": [
+              {
+                "min": "3",
+                "max": "3.5"
+              }
+            ],
+            "value": "0.12"
+          },
+          {
+            "at": [
+              {
+                "min": "3.5",
+                "max": "4"
+              }
+            ],
+            "value": "0.18"
+          },
+          {
+            "at": [
+              {
+                "min": "4"
+              }
+            ],
+            "value": "0.25"
+          }
+        ]
+      },
+      {
+        "name": "fuel_steps",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "3",
+                "max": "3.5"
+              }
+            ],
+            "value": "0.12"
+          },
+          {
+            "at": [
+              {
+                "min": "3.5",
+                "max": "4"
+              }
+            ],
+            "value": "0.18"
+          }
+        ]
+      },
+      {
+        "name": "fuel_open",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "4"
+              }
+            ],
+            "value": "0.10"
+          },
+          {
+            "at": [
+              {
+                "min": "4"
+              }
+            ],
+            "value": "0.25"
+          }
+        ]
+      },
+      {
+        "name": "zone_rate",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "3"
+              }
+            ],
+            "value": "215"
+          }
+        ]
+      },
+      {
+        "name": "class_tariff",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          },
+          {
+            "match": "Range",
+            "kind": "WeightBreak"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "SE"
+              },
+              {}
+            ],
+            "value": "100"
+          }
+        ]
+      },
+      {
+        "name": "class_rates",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          },
+          {
+            "match": "Range",
+            "kind": "WeightBreak"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "ZONE_5"
+              },
+              {
+                "min": "0",
+                "max": "5000"
+              }
+            ],
+            "value": "18.50"
+          },
+          {
+            "at": [
+              {
+                "key": "ZONE_5"
+              },
+              {
+                "min": "5000",
+                "max": "10000"
+              }
+            ],
+            "value": "12.25"
+          },
+          {
+            "at": [
+              {
+                "key": "ZONE_5"
+              },
+              {
+                "min": "10000"
+              }
+            ],
+            "value": "9.10"
+          },
+          {
+            "at": [
+              {
+                "key": "ZONE_8"
+              },
+              {
+                "min": "0",
+                "max": "5000"
+              }
+            ],
+            "value": "24.00"
+          }
+        ]
+      },
+      {
+        "name": "lane_class",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          },
+          {
+            "match": "Exact",
+            "kind": "WeightBreak"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "ATL"
+              },
+              {
+                "key": "MIA"
+              }
+            ],
+            "value": "1450"
+          },
+          {
+            "at": [
+              {
+                "key": "ATL"
+              },
+              {
+                "key": "ORD"
+              }
+            ],
+            "value": "1720"
+          }
+        ]
+      },
+      {
+        "name": "distance_zone",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Custom"
+          },
+          {
+            "match": "Exact",
+            "kind": "WeightBreak"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              },
+              {
+                "key": "DRY"
+              }
+            ],
+            "value": "2.10"
+          },
+          {
+            "at": [
+              {
+                "min": "500"
+              },
+              {
+                "key": "DRY"
+              }
+            ],
+            "value": "1.85"
+          },
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              },
+              {
+                "key": "REEFER"
+              }
+            ],
+            "value": "2.65"
+          }
+        ]
+      },
+      {
+        "name": "distance_weight",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Custom"
+          },
+          {
+            "match": "Range",
+            "kind": "WeightBreak"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              },
+              {
+                "min": "0",
+                "max": "10000"
+              }
+            ],
+            "value": "3.10"
+          },
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              },
+              {
+                "min": "10000"
+              }
+            ],
+            "value": "2.40"
+          },
+          {
+            "at": [
+              {
+                "min": "500"
+              },
+              {
+                "min": "0",
+                "max": "10000"
+              }
+            ],
+            "value": "2.80"
+          },
+          {
+            "at": [
+              {
+                "min": "500"
+              },
+              {
+                "min": "10000"
+              }
+            ],
+            "value": "2.05"
+          }
+        ]
+      },
+      {
+        "name": "fsc",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "DIESEL"
+              }
+            ],
+            "value": "0.35"
+          }
+        ]
+      },
+      {
+        "name": "miles",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              }
+            ],
+            "value": "2.5"
+          }
+        ]
+      },
+      {
+        "name": "zip3_zone",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom",
+            "normalization": "Zip3"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "752"
+              }
+            ],
+            "value": "1.10"
+          },
+          {
+            "at": [
+              {
+                "key": "300"
+              }
+            ],
+            "value": "1.00"
+          }
+        ]
+      },
+      {
+        "name": "lane_upper",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom",
+            "normalization": "Upper"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "atl-mia"
+              }
+            ],
+            "value": "1450"
+          }
+        ]
+      },
+      {
+        "name": "lane_trim",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom",
+            "normalization": "Trim"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": " ATL-JAX "
+              }
+            ],
+            "value": "980"
+          }
+        ]
+      },
+      {
+        "name": "lane_plain",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "ATL-MIA"
+              }
+            ],
+            "value": "1450"
+          }
+        ]
+      },
+      {
+        "name": "strict",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity",
+            "overflow": "Error"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "100",
+                "max": "500"
+              }
+            ],
+            "value": "2.00"
+          },
+          {
+            "at": [
+              {
+                "min": "500",
+                "max": "1000"
+              }
+            ],
+            "value": "1.50"
+          },
+          {
+            "at": [
+              {
+                "min": "1000",
+                "max": "5000"
+              }
+            ],
+            "value": "1.00"
+          }
+        ]
+      },
+      {
+        "name": "clamped",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity",
+            "overflow": "ClampToTopBand"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "100",
+                "max": "500"
+              }
+            ],
+            "value": "2.00"
+          },
+          {
+            "at": [
+              {
+                "min": "500",
+                "max": "1000"
+              }
+            ],
+            "value": "1.50"
+          },
+          {
+            "at": [
+              {
+                "min": "1000",
+                "max": "5000"
+              }
+            ],
+            "value": "1.00"
+          }
+        ]
+      },
+      {
+        "name": "nearest",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity",
+            "overflow": "Nearest"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "100",
+                "max": "500"
+              }
+            ],
+            "value": "2.00"
+          },
+          {
+            "at": [
+              {
+                "min": "500",
+                "max": "1000"
+              }
+            ],
+            "value": "1.50"
+          },
+          {
+            "at": [
+              {
+                "min": "1000",
+                "max": "5000"
+              }
+            ],
+            "value": "1.00"
+          }
+        ]
+      },
+      {
+        "name": "weight_zone",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "WeightBreak",
+            "overflow": "ClampToTopBand"
+          },
+          {
+            "match": "Exact",
+            "kind": "Zone",
+            "normalization": "Upper"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "1000"
+              },
+              {
+                "key": "se"
+              }
+            ],
+            "value": "20"
+          },
+          {
+            "at": [
+              {
+                "min": "1000",
+                "max": "5000"
+              },
+              {
+                "key": "se"
+              }
+            ],
+            "value": "15"
+          },
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "1000"
+              },
+              {
+                "key": "mw"
+              }
+            ],
+            "value": "22"
+          }
+        ]
+      },
+      {
+        "name": "fuel_curve",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "2.00",
+                "max": "3.00"
+              }
+            ],
+            "value": "0.10"
+          },
+          {
+            "at": [
+              {
+                "min": "3.00",
+                "max": "4.00"
+              }
+            ],
+            "value": "0.20"
+          },
+          {
+            "at": [
+              {
+                "min": "4.00"
+              }
+            ],
+            "value": "0.40"
+          }
+        ]
+      },
+      {
+        "name": "zones",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "A"
+              }
+            ],
+            "value": "1"
+          }
+        ]
+      },
+      {
+        "name": "cwt",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              }
+            ],
+            "value": "30"
+          },
+          {
+            "at": [
+              {
+                "min": "500",
+                "max": "1000"
+              }
+            ],
+            "value": "20"
+          },
+          {
+            "at": [
+              {
+                "min": "1000",
+                "max": "2000"
+              }
+            ],
+            "value": "15"
+          },
+          {
+            "at": [
+              {
+                "min": "2000"
+              }
+            ],
+            "value": "12"
+          }
+        ]
+      },
+      {
+        "name": "capped",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              }
+            ],
+            "value": "30"
+          },
+          {
+            "at": [
+              {
+                "min": "500",
+                "max": "1000"
+              }
+            ],
+            "value": "20"
+          },
+          {
+            "at": [
+              {
+                "min": "1000",
+                "max": "2000"
+              }
+            ],
+            "value": "15"
+          }
+        ]
+      }
+    ],
+    "explain": [
+      {
+        "name": "fsc",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "Custom"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "DIESEL"
+              }
+            ],
+            "value": "0.35"
+          }
+        ]
+      },
+      {
+        "name": "miles",
+        "axes": [
+          {
+            "match": "Range",
+            "kind": "Quantity"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "min": "0",
+                "max": "500"
+              }
+            ],
+            "value": "2.5"
+          },
+          {
+            "at": [
+              {
+                "min": "500"
+              }
+            ],
+            "value": "2.0"
+          }
+        ]
+      }
+    ],
+    "classes": [
+      {
+        "name": "class_rates",
+        "axes": [
+          {
+            "match": "Exact",
+            "kind": "FreightClass"
+          }
+        ],
+        "cells": [
+          {
+            "at": [
+              {
+                "key": "Class85"
+              }
+            ],
+            "value": "20"
+          },
+          {
+            "at": [
+              {
+                "key": "Class100"
+              }
+            ],
+            "value": "31.5"
+          },
+          {
+            "at": [
+              {
+                "key": "Class77_5"
+              }
+            ],
+            "value": "18"
+          }
+        ]
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "round to nearest integer up",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(3.7)",
+      "value": 4
+    },
+    {
+      "name": "round to nearest integer down",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(3.2)",
+      "value": 3
+    },
+    {
+      "name": "round to 2 decimal places",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(3.14159, 2)",
+      "value": 3.14
+    },
+    {
+      "name": "round to 3 decimal places",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(3.14159, 3)",
+      "value": 3.142
+    },
+    {
+      "name": "round negative number",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(-2.7)",
+      "value": -3
+    },
+    {
+      "name": "round half up",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(2.5)",
+      "value": 3
+    },
+    {
+      "name": "round zero",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(0.0)",
+      "value": 0
+    },
+    {
+      "name": "round to 0 decimal places explicitly",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(3.7, 0)",
+      "value": 4
+    },
+    {
+      "name": "round with 1 decimal place",
+      "from": "engine/functions_test.go TestRoundFunction",
+      "source": "round(3.456, 1)",
+      "value": 3.5
+    },
+    {
+      "name": "round an integer input",
+      "from": "engine/functions_test.go TestRoundFunctionWithIntegerInput",
+      "source": "round(val)",
+      "env": {
+        "val": 5
+      },
+      "value": 5
+    },
+    {
+      "name": "ceil positive fractional",
+      "from": "engine/functions_test.go TestCeilFunction",
+      "source": "ceil(3.2)",
+      "value": 4
+    },
+    {
+      "name": "ceil already integer",
+      "from": "engine/functions_test.go TestCeilFunction",
+      "source": "ceil(3.0)",
+      "value": 3
+    },
+    {
+      "name": "ceil negative",
+      "from": "engine/functions_test.go TestCeilFunction",
+      "source": "ceil(-3.7)",
+      "value": -3
+    },
+    {
+      "name": "ceil small fraction",
+      "from": "engine/functions_test.go TestCeilFunction",
+      "source": "ceil(0.01)",
+      "value": 1
+    },
+    {
+      "name": "ceil zero",
+      "from": "engine/functions_test.go TestCeilFunction",
+      "source": "ceil(0.0)",
+      "value": 0
+    },
+    {
+      "name": "ceil negative small",
+      "from": "engine/functions_test.go TestCeilFunction",
+      "source": "ceil(-0.1)",
+      "value": 0
+    },
+    {
+      "name": "floor positive",
+      "from": "engine/functions_test.go TestFloorFunction",
+      "source": "floor(3.7)",
+      "value": 3
+    },
+    {
+      "name": "floor already integer",
+      "from": "engine/functions_test.go TestFloorFunction",
+      "source": "floor(3.0)",
+      "value": 3
+    },
+    {
+      "name": "floor negative",
+      "from": "engine/functions_test.go TestFloorFunction",
+      "source": "floor(-3.2)",
+      "value": -4
+    },
+    {
+      "name": "floor zero",
+      "from": "engine/functions_test.go TestFloorFunction",
+      "source": "floor(0.0)",
+      "value": 0
+    },
+    {
+      "name": "floor large value",
+      "from": "engine/functions_test.go TestFloorFunction",
+      "source": "floor(999.999)",
+      "value": 999
+    },
+    {
+      "name": "abs positive",
+      "from": "engine/functions_test.go TestAbsFunction",
+      "source": "abs(5.0)",
+      "value": 5
+    },
+    {
+      "name": "abs negative",
+      "from": "engine/functions_test.go TestAbsFunction",
+      "source": "abs(-5.0)",
+      "value": 5
+    },
+    {
+      "name": "abs zero",
+      "from": "engine/functions_test.go TestAbsFunction",
+      "source": "abs(0.0)",
+      "value": 0
+    },
+    {
+      "name": "abs large negative",
+      "from": "engine/functions_test.go TestAbsFunction",
+      "source": "abs(-999.99)",
+      "value": 999.99
+    },
+    {
+      "name": "abs small fraction",
+      "from": "engine/functions_test.go TestAbsFunction",
+      "source": "abs(-0.001)",
+      "value": 0.001
+    },
+    {
+      "name": "min first smaller",
+      "from": "engine/functions_test.go TestMinFunction",
+      "source": "min(3.0, 5.0)",
+      "value": 3
+    },
+    {
+      "name": "min second smaller",
+      "from": "engine/functions_test.go TestMinFunction",
+      "source": "min(5.0, 3.0)",
+      "value": 3
+    },
+    {
+      "name": "min equal values",
+      "from": "engine/functions_test.go TestMinFunction",
+      "source": "min(3.0, 3.0)",
+      "value": 3
+    },
+    {
+      "name": "min with negative",
+      "from": "engine/functions_test.go TestMinFunction",
+      "source": "min(-5.0, 3.0)",
+      "value": -5
+    },
+    {
+      "name": "min both negative",
+      "from": "engine/functions_test.go TestMinFunction",
+      "source": "min(-2.0, -5.0)",
+      "value": -5
+    },
+    {
+      "name": "min with zero",
+      "from": "engine/functions_test.go TestMinFunction",
+      "source": "min(0.0, 5.0)",
+      "value": 0
+    },
+    {
+      "name": "max first larger",
+      "from": "engine/functions_test.go TestMaxFunction",
+      "source": "max(5.0, 3.0)",
+      "value": 5
+    },
+    {
+      "name": "max second larger",
+      "from": "engine/functions_test.go TestMaxFunction",
+      "source": "max(3.0, 5.0)",
+      "value": 5
+    },
+    {
+      "name": "max equal values",
+      "from": "engine/functions_test.go TestMaxFunction",
+      "source": "max(3.0, 3.0)",
+      "value": 3
+    },
+    {
+      "name": "max with negative",
+      "from": "engine/functions_test.go TestMaxFunction",
+      "source": "max(-5.0, 3.0)",
+      "value": 3
+    },
+    {
+      "name": "max both negative",
+      "from": "engine/functions_test.go TestMaxFunction",
+      "source": "max(-2.0, -5.0)",
+      "value": -2
+    },
+    {
+      "name": "max with zero",
+      "from": "engine/functions_test.go TestMaxFunction",
+      "source": "max(0.0, -5.0)",
+      "value": 0
+    },
+    {
+      "name": "sum two values",
+      "from": "engine/functions_test.go TestSumFunction",
+      "source": "sum(1.0, 2.0)",
+      "value": 3
+    },
+    {
+      "name": "sum multiple values",
+      "from": "engine/functions_test.go TestSumFunction",
+      "source": "sum(1.0, 2.0, 3.0, 4.0)",
+      "value": 10
+    },
+    {
+      "name": "sum single value",
+      "from": "engine/functions_test.go TestSumFunction",
+      "source": "sum(5.0)",
+      "value": 5
+    },
+    {
+      "name": "sum with negatives",
+      "from": "engine/functions_test.go TestSumFunction",
+      "source": "sum(10.0, -3.0, 5.0)",
+      "value": 12
+    },
+    {
+      "name": "sum all negative",
+      "from": "engine/functions_test.go TestSumFunction",
+      "source": "sum(-1.0, -2.0, -3.0)",
+      "value": -6
+    },
+    {
+      "name": "sum with zeros",
+      "from": "engine/functions_test.go TestSumFunction",
+      "source": "sum(0.0, 0.0, 5.0)",
+      "value": 5
+    },
+    {
+      "name": "avg two values",
+      "from": "engine/functions_test.go TestAvgFunction",
+      "source": "avg(2.0, 4.0)",
+      "value": 3
+    },
+    {
+      "name": "avg multiple values",
+      "from": "engine/functions_test.go TestAvgFunction",
+      "source": "avg(1.0, 2.0, 3.0, 4.0)",
+      "value": 2.5
+    },
+    {
+      "name": "avg single value",
+      "from": "engine/functions_test.go TestAvgFunction",
+      "source": "avg(5.0)",
+      "value": 5
+    },
+    {
+      "name": "avg with negatives",
+      "from": "engine/functions_test.go TestAvgFunction",
+      "source": "avg(-4.0, 4.0)",
+      "value": 0
+    },
+    {
+      "name": "avg identical values",
+      "from": "engine/functions_test.go TestAvgFunction",
+      "source": "avg(3.0, 3.0, 3.0)",
+      "value": 3
+    },
+    {
+      "name": "coalesce first non-nil",
+      "from": "engine/functions_test.go TestCoalesceFunction",
+      "source": "coalesce(a, b, c)",
+      "env": {
+        "a": 1.0,
+        "b": 2.0,
+        "c": 3.0
+      },
+      "value": 1
+    },
+    {
+      "name": "coalesce skips nil values",
+      "from": "engine/functions_test.go TestCoalesceFunction",
+      "source": "coalesce(a, b, c)",
+      "env": {
+        "a": null,
+        "b": null,
+        "c": 3.0
+      },
+      "value": 3
+    },
+    {
+      "name": "coalesce first value is nil",
+      "from": "engine/functions_test.go TestCoalesceFunction",
+      "source": "coalesce(a, b)",
+      "env": {
+        "a": null,
+        "b": "hello"
+      },
+      "value": "hello"
+    },
+    {
+      "name": "coalesce string result",
+      "from": "engine/functions_test.go TestCoalesceFunction",
+      "source": "coalesce(a, b)",
+      "env": {
+        "a": null,
+        "b": "default"
+      },
+      "value": "default"
+    },
+    {
+      "name": "coalesce boolean result",
+      "from": "engine/functions_test.go TestCoalesceFunction",
+      "source": "coalesce(a, b)",
+      "env": {
+        "a": null,
+        "b": true
+      },
+      "value": true
+    },
+    {
+      "name": "coalesce of all nil is nil",
+      "from": "engine/functions_test.go TestCoalesceFunction",
+      "source": "coalesce(a, b)",
+      "env": {
+        "a": null,
+        "b": null
+      },
+      "value": null
+    },
+    {
+      "name": "clamp value within range",
+      "from": "engine/functions_test.go TestClampFunction",
+      "source": "clamp(5.0, 0.0, 10.0)",
+      "value": 5
+    },
+    {
+      "name": "clamp value below min",
+      "from": "engine/functions_test.go TestClampFunction",
+      "source": "clamp(-5.0, 0.0, 10.0)",
+      "value": 0
+    },
+    {
+      "name": "clamp value above max",
+      "from": "engine/functions_test.go TestClampFunction",
+      "source": "clamp(15.0, 0.0, 10.0)",
+      "value": 10
+    },
+    {
+      "name": "clamp value equals min",
+      "from": "engine/functions_test.go TestClampFunction",
+      "source": "clamp(0.0, 0.0, 10.0)",
+      "value": 0
+    },
+    {
+      "name": "clamp value equals max",
+      "from": "engine/functions_test.go TestClampFunction",
+      "source": "clamp(10.0, 0.0, 10.0)",
+      "value": 10
+    },
+    {
+      "name": "clamp negative range",
+      "from": "engine/functions_test.go TestClampFunction",
+      "source": "clamp(-5.0, -10.0, -1.0)",
+      "value": -5
+    },
+    {
+      "name": "clamp clamp below negative range",
+      "from": "engine/functions_test.go TestClampFunction",
+      "source": "clamp(-20.0, -10.0, -1.0)",
+      "value": -10
+    },
+    {
+      "name": "pow power of 3",
+      "from": "engine/functions_test.go TestPowFunction",
+      "source": "pow(2.0, 3.0)",
+      "value": 8
+    },
+    {
+      "name": "pow power of 0",
+      "from": "engine/functions_test.go TestPowFunction",
+      "source": "pow(5.0, 0.0)",
+      "value": 1
+    },
+    {
+      "name": "pow power of 1",
+      "from": "engine/functions_test.go TestPowFunction",
+      "source": "pow(5.0, 1.0)",
+      "value": 5
+    },
+    {
+      "name": "pow square",
+      "from": "engine/functions_test.go TestPowFunction",
+      "source": "pow(4.0, 2.0)",
+      "value": 16
+    },
+    {
+      "name": "pow fractional exponent",
+      "from": "engine/functions_test.go TestPowFunction",
+      "source": "pow(9.0, 0.5)",
+      "value": 3
+    },
+    {
+      "name": "pow negative exponent",
+      "from": "engine/functions_test.go TestPowFunction",
+      "source": "pow(2.0, -1.0)",
+      "value": 0.5
+    },
+    {
+      "name": "sqrt of 4.0",
+      "from": "engine/functions_test.go TestSqrtFunction",
+      "source": "sqrt(4.0)",
+      "value": 2
+    },
+    {
+      "name": "sqrt of 9.0",
+      "from": "engine/functions_test.go TestSqrtFunction",
+      "source": "sqrt(9.0)",
+      "value": 3
+    },
+    {
+      "name": "sqrt of 0.0",
+      "from": "engine/functions_test.go TestSqrtFunction",
+      "source": "sqrt(0.0)",
+      "value": 0
+    },
+    {
+      "name": "sqrt of 16.0",
+      "from": "engine/functions_test.go TestSqrtFunction",
+      "source": "sqrt(16.0)",
+      "value": 4
+    },
+    {
+      "name": "sqrt of 100.0",
+      "from": "engine/functions_test.go TestSqrtFunction",
+      "source": "sqrt(100.0)",
+      "value": 10
+    },
+    {
+      "name": "sqrt of 1.0",
+      "from": "engine/functions_test.go TestSqrtFunction",
+      "source": "sqrt(1.0)",
+      "value": 1
+    },
+    {
+      "name": "sqrt of 2 to the last digit a decimal holds",
+      "from": "engine/functions_test.go TestSqrtFunction (was InDelta 1.4142)",
+      "source": "sqrt(2.0)",
+      "value": 1.4142135623730950488016887242
+    },
+    {
+      "name": "billing formula with max",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "max(baseRate, ratePerMile * distance)",
+      "env": {
+        "baseRate": 100.0,
+        "ratePerMile": 2.5,
+        "distance": 50.0
+      },
+      "value": 125
+    },
+    {
+      "name": "billing formula base rate wins",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "max(baseRate, ratePerMile * distance)",
+      "env": {
+        "baseRate": 200.0,
+        "ratePerMile": 2.5,
+        "distance": 50.0
+      },
+      "value": 200
+    },
+    {
+      "name": "weight-based pricing with rounding",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "round(ceil(weight / 100) * ratePerCWT, 2)",
+      "env": {
+        "weight": 4550.0,
+        "ratePerCWT": 15.75
+      },
+      "value": 724.5
+    },
+    {
+      "name": "conditional hazmat fee true",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "hasHazmat ? hazmatFee : 0.0",
+      "env": {
+        "hasHazmat": true,
+        "hazmatFee": 150.0
+      },
+      "value": 150
+    },
+    {
+      "name": "conditional hazmat fee false",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "hasHazmat ? hazmatFee : 0.0",
+      "env": {
+        "hasHazmat": false,
+        "hazmatFee": 150.0
+      },
+      "value": 0
+    },
+    {
+      "name": "combined formula with clamp",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "clamp(baseRate + (distance * ratePerMile), minCharge, maxCharge)",
+      "env": {
+        "baseRate": 50.0,
+        "distance": 100.0,
+        "ratePerMile": 1.5,
+        "minCharge": 100.0,
+        "maxCharge": 500.0
+      },
+      "value": 200
+    },
+    {
+      "name": "sum with avg",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "sum(avg(a, b), avg(c, d))",
+      "env": {
+        "a": 10.0,
+        "b": 20.0,
+        "c": 30.0,
+        "d": 40.0
+      },
+      "value": 50
+    },
+    {
+      "name": "nested function calls",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "round(pow(sqrt(x), 2.0), 2)",
+      "env": {
+        "x": 7.0
+      },
+      "value": 7
+    },
+    {
+      "name": "abs with min",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "min(abs(a), abs(b))",
+      "env": {
+        "a": -10.0,
+        "b": 5.0
+      },
+      "value": 5
+    },
+    {
+      "name": "floor division with clamp",
+      "from": "engine/functions_test.go TestComplexExpressions",
+      "source": "clamp(floor(total / units), 1.0, 100.0)",
+      "env": {
+        "total": 550.0,
+        "units": 6.0
+      },
+      "value": 91
+    },
+    {
+      "name": "ceil with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "ceil(x)",
+      "env": {
+        "x": 5
+      },
+      "value": 5
+    },
+    {
+      "name": "floor with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "floor(x)",
+      "env": {
+        "x": 5
+      },
+      "value": 5
+    },
+    {
+      "name": "abs with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "abs(x)",
+      "env": {
+        "x": -5
+      },
+      "value": 5
+    },
+    {
+      "name": "min with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "min(a, b)",
+      "env": {
+        "a": 3,
+        "b": 7
+      },
+      "value": 3
+    },
+    {
+      "name": "max with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "max(a, b)",
+      "env": {
+        "a": 3,
+        "b": 7
+      },
+      "value": 7
+    },
+    {
+      "name": "pow with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "pow(a, b)",
+      "env": {
+        "a": 2,
+        "b": 3
+      },
+      "value": 8
+    },
+    {
+      "name": "sqrt with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "sqrt(x)",
+      "env": {
+        "x": 25
+      },
+      "value": 5
+    },
+    {
+      "name": "sum with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "sum(a, b, c)",
+      "env": {
+        "a": 1,
+        "b": 2,
+        "c": 3
+      },
+      "value": 6
+    },
+    {
+      "name": "avg with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "avg(a, b)",
+      "env": {
+        "a": 4,
+        "b": 6
+      },
+      "value": 5
+    },
+    {
+      "name": "clamp with int",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "clamp(x, lo, hi)",
+      "env": {
+        "x": 15,
+        "lo": 0,
+        "hi": 10
+      },
+      "value": 10
+    },
+    {
+      "name": "abs of a large integer",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "abs(x)",
+      "env": {
+        "x": -10
+      },
+      "value": 10
+    },
+    {
+      "name": "sqrt of 49",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "sqrt(x)",
+      "env": {
+        "x": 49
+      },
+      "value": 7
+    },
+    {
+      "name": "abs of -7",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "abs(x)",
+      "env": {
+        "x": -7
+      },
+      "value": 7
+    },
+    {
+      "name": "sqrt of 36",
+      "from": "engine/functions_test.go TestFunctionsWithIntegerInputs",
+      "source": "sqrt(x)",
+      "env": {
+        "x": 36
+      },
+      "value": 6
+    },
+    {
+      "name": "decimal rounding round(2.675, 2)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "round(2.675, 2)",
+      "value": 2.68
+    },
+    {
+      "name": "decimal rounding round(2.5)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "round(2.5)",
+      "value": 3
+    },
+    {
+      "name": "decimal rounding round(1234.5, -2)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "round(1234.5, -2)",
+      "value": 1200
+    },
+    {
+      "name": "decimal rounding roundUp(2.001, 2)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundUp(2.001, 2)",
+      "value": 2.01
+    },
+    {
+      "name": "decimal rounding roundUp(2.0, 2)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundUp(2.0, 2)",
+      "value": 2
+    },
+    {
+      "name": "decimal rounding roundDown(2.999, 2)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundDown(2.999, 2)",
+      "value": 2.99
+    },
+    {
+      "name": "decimal rounding roundHalfEven(2.665, 2)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundHalfEven(2.665, 2)",
+      "value": 2.66
+    },
+    {
+      "name": "decimal rounding roundHalfEven(2.675, 2)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundHalfEven(2.675, 2)",
+      "value": 2.68
+    },
+    {
+      "name": "decimal rounding roundHalfEven(2.5)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundHalfEven(2.5)",
+      "value": 2
+    },
+    {
+      "name": "decimal rounding roundTo(123.4, 5)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundTo(123.4, 5)",
+      "value": 125
+    },
+    {
+      "name": "decimal rounding roundTo(122.4, 5)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundTo(122.4, 5)",
+      "value": 120
+    },
+    {
+      "name": "decimal rounding roundTo(10.13, 0.25)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundTo(10.13, 0.25)",
+      "value": 10.25
+    },
+    {
+      "name": "decimal rounding roundTo(0.1 + 0.2, 0.01)",
+      "from": "engine/functions_test.go TestRoundingFunctions_UseDecimalSemantics",
+      "source": "roundTo(0.1 + 0.2, 0.01)",
+      "value": 0.3
+    },
+    {
+      "name": "rounding refuses roundTo(10, 0)",
+      "from": "engine/functions_test.go TestRoundingFunctions_RejectBadArguments",
+      "source": "roundTo(10, 0)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "rounding refuses roundTo(10, -5)",
+      "from": "engine/functions_test.go TestRoundingFunctions_RejectBadArguments",
+      "source": "roundTo(10, -5)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "rounding refuses roundUp(1.5, 400)",
+      "from": "engine/functions_test.go TestRoundingFunctions_RejectBadArguments",
+      "source": "roundUp(1.5, 400)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "variadic min(5, 3, 8)",
+      "from": "engine/functions_test.go TestMinMax_AreVariadic",
+      "source": "min(5, 3, 8)",
+      "value": 3
+    },
+    {
+      "name": "variadic max(5, 3, 8)",
+      "from": "engine/functions_test.go TestMinMax_AreVariadic",
+      "source": "max(5, 3, 8)",
+      "value": 8
+    },
+    {
+      "name": "variadic min(10)",
+      "from": "engine/functions_test.go TestMinMax_AreVariadic",
+      "source": "min(10)",
+      "value": 10
+    },
+    {
+      "name": "variadic min(-5, -3, -8)",
+      "from": "engine/functions_test.go TestMinMax_AreVariadic",
+      "source": "min(-5, -3, -8)",
+      "value": -8
+    },
+    {
+      "name": "aggregate sum([1.0, 2.0, 3.5])",
+      "from": "engine/functions_test.go TestSumAndAvg_AcceptArraysAndMappedCollections",
+      "source": "sum([1.0, 2.0, 3.5])",
+      "value": 6.5
+    },
+    {
+      "name": "aggregate sum([1, 2], 3)",
+      "from": "engine/functions_test.go TestSumAndAvg_AcceptArraysAndMappedCollections",
+      "source": "sum([1, 2], 3)",
+      "value": 6
+    },
+    {
+      "name": "aggregate sum([])",
+      "from": "engine/functions_test.go TestSumAndAvg_AcceptArraysAndMappedCollections",
+      "source": "sum([])",
+      "value": 0
+    },
+    {
+      "name": "aggregate sum(map([{\"w\": 2.0}, {\"w\": 3.0}], .w))",
+      "from": "engine/functions_test.go TestSumAndAvg_AcceptArraysAndMappedCollections",
+      "source": "sum(map([{\"w\": 2.0}, {\"w\": 3.0}], .w))",
+      "value": 5
+    },
+    {
+      "name": "aggregate avg([2.0, 4.0])",
+      "from": "engine/functions_test.go TestSumAndAvg_AcceptArraysAndMappedCollections",
+      "source": "avg([2.0, 4.0])",
+      "value": 3
+    },
+    {
+      "name": "aggregate avg([1, 2], [3, 4])",
+      "from": "engine/functions_test.go TestSumAndAvg_AcceptArraysAndMappedCollections",
+      "source": "avg([1, 2], [3, 4])",
+      "value": 2.5
+    },
+    {
+      "name": "string argument to ceil",
+      "from": "engine/functions_error_test.go",
+      "source": "ceil(x)",
+      "env": {
+        "x": "notanumber"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool argument to floor",
+      "from": "engine/functions_error_test.go",
+      "source": "floor(x)",
+      "env": {
+        "x": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "list argument to abs",
+      "from": "engine/functions_error_test.go",
+      "source": "abs(x)",
+      "env": {
+        "x": [
+          1,
+          2,
+          3
+        ]
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "map argument to sqrt",
+      "from": "engine/functions_error_test.go",
+      "source": "sqrt(x)",
+      "env": {
+        "x": {
+          "a": 1
+        }
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "map argument to floor",
+      "from": "engine/functions_error_test.go",
+      "source": "floor(x)",
+      "env": {
+        "x": {
+          "V": 5
+        }
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool argument to ceil",
+      "from": "engine/functions_error_test.go",
+      "source": "ceil(x)",
+      "env": {
+        "x": false
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string argument to abs",
+      "from": "engine/functions_error_test.go",
+      "source": "abs(x)",
+      "env": {
+        "x": "negative"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool argument to sqrt",
+      "from": "engine/functions_error_test.go",
+      "source": "sqrt(x)",
+      "env": {
+        "x": false
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "negative argument to sqrt",
+      "from": "engine/functions_error_test.go",
+      "source": "sqrt(x)",
+      "env": {
+        "x": -9.0
+      },
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "string base to pow",
+      "from": "engine/functions_error_test.go",
+      "source": "pow(x, 2.0)",
+      "env": {
+        "x": "two"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string exponent to pow",
+      "from": "engine/functions_error_test.go",
+      "source": "pow(2.0, x)",
+      "env": {
+        "x": "three"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "both pow arguments invalid",
+      "from": "engine/functions_error_test.go",
+      "source": "pow(a, b)",
+      "env": {
+        "a": "x",
+        "b": "y"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool base to pow",
+      "from": "engine/functions_error_test.go",
+      "source": "pow(x, 2.0)",
+      "env": {
+        "x": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool exponent to pow",
+      "from": "engine/functions_error_test.go",
+      "source": "pow(2.0, x)",
+      "env": {
+        "x": false
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string first argument to min",
+      "from": "engine/functions_error_test.go",
+      "source": "min(a, 5.0)",
+      "env": {
+        "a": "abc"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string second argument to min",
+      "from": "engine/functions_error_test.go",
+      "source": "min(5.0, b)",
+      "env": {
+        "b": "xyz"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool argument to min",
+      "from": "engine/functions_error_test.go",
+      "source": "min(a, 5.0)",
+      "env": {
+        "a": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool second argument to min",
+      "from": "engine/functions_error_test.go",
+      "source": "min(5.0, b)",
+      "env": {
+        "b": false
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string first argument to max",
+      "from": "engine/functions_error_test.go",
+      "source": "max(a, 5.0)",
+      "env": {
+        "a": "abc"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "both max arguments text",
+      "from": "engine/functions_error_test.go",
+      "source": "max(a, b)",
+      "env": {
+        "a": "x",
+        "b": "y"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool argument to max",
+      "from": "engine/functions_error_test.go",
+      "source": "max(a, 5.0)",
+      "env": {
+        "a": false
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string value to clamp",
+      "from": "engine/functions_error_test.go",
+      "source": "clamp(x, 0.0, 10.0)",
+      "env": {
+        "x": "five"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string min to clamp",
+      "from": "engine/functions_error_test.go",
+      "source": "clamp(5.0, lo, 10.0)",
+      "env": {
+        "lo": "zero"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "string max to clamp",
+      "from": "engine/functions_error_test.go",
+      "source": "clamp(5.0, 0.0, hi)",
+      "env": {
+        "hi": "ten"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool value to clamp",
+      "from": "engine/functions_error_test.go",
+      "source": "clamp(x, 0.0, 10.0)",
+      "env": {
+        "x": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool max to clamp",
+      "from": "engine/functions_error_test.go",
+      "source": "clamp(5.0, 0.0, hi)",
+      "env": {
+        "hi": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "text in avg",
+      "from": "engine/functions_error_test.go",
+      "source": "avg(a, b)",
+      "env": {
+        "a": "x",
+        "b": "y"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "text in sum",
+      "from": "engine/functions_error_test.go",
+      "source": "sum(a, b)",
+      "env": {
+        "a": "hello",
+        "b": 2.0
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool in sum",
+      "from": "engine/functions_error_test.go",
+      "source": "sum(a, b)",
+      "env": {
+        "a": 1.0,
+        "b": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "text value to round",
+      "from": "engine/functions_error_test.go",
+      "source": "round(x)",
+      "env": {
+        "x": "abc"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool value to round",
+      "from": "engine/functions_error_test.go",
+      "source": "round(x)",
+      "env": {
+        "x": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "text value to round with decimals",
+      "from": "engine/functions_error_test.go",
+      "source": "round(x, 2)",
+      "env": {
+        "x": "abc"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "text decimals to round",
+      "from": "engine/functions_error_test.go",
+      "source": "round(3.14, x)",
+      "env": {
+        "x": "two"
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "bool decimals to round",
+      "from": "engine/functions_error_test.go",
+      "source": "round(3.14, x)",
+      "env": {
+        "x": true
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "list decimals to round",
+      "from": "engine/functions_error_test.go",
+      "source": "round(3.14, x)",
+      "env": {
+        "x": [
+          2
+        ]
+      },
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "decimals above the range",
+      "from": "engine/functions_error_test.go",
+      "source": "round(3.14, d)",
+      "env": {
+        "d": 13
+      },
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "decimals below the range",
+      "from": "engine/functions_error_test.go",
+      "source": "round(3.14, d)",
+      "env": {
+        "d": -13
+      },
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "a number argument that is text says so",
+      "from": "engine/functions_internal_test.go TestToFloat64_AllBranches",
+      "source": "ceil(x)",
+      "env": {
+        "x": "abc"
+      },
+      "error": {
+        "code": "type",
+        "message": "expected a number, got {0}"
+      }
+    },
+    {
+      "name": "a whole-number argument that is text says so",
+      "from": "engine/functions_internal_test.go TestToInt_AllBranches",
+      "source": "round(1, x)",
+      "env": {
+        "x": "abc"
+      },
+      "error": {
+        "code": "type",
+        "message": "expected a whole number, got {0}"
+      }
+    },
+    {
+      "name": "round decimals must be whole, where Go truncated 3.9 to 3",
+      "from": "engine/functions_internal_test.go TestToInt_AllBranches (float64 3.9 -> 3)",
+      "source": "round(3.14159, 3.9)",
+      "error": {
+        "code": "argument",
+        "english": "expected a whole number, got 3.9"
+      }
+    },
+    {
+      "name": "an empty argument to ceil is a missing field",
+      "from": "engine/functions_error_test.go TestToFloat64_InvalidTypes (nil argument)",
+      "source": "ceil(x)",
+      "env": {
+        "x": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "x"
+        ],
+        "guards": [
+          "coalesce(x, 0)"
+        ]
+      }
+    },
+    {
+      "name": "empty decimals to round are a missing field",
+      "from": "engine/functions_error_test.go TestToInt_InvalidTypes (nil argument)",
+      "source": "round(3.14, x)",
+      "env": {
+        "x": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "x"
+        ],
+        "guards": [
+          "coalesce(x, 0)"
+        ]
+      }
+    },
+    {
+      "name": "round to 2 places from a field",
+      "from": "engine/functions_error_test.go TestToInt_WithValidTypes",
+      "source": "round(3.14159, x)",
+      "env": {
+        "x": 2
+      },
+      "value": 3.14
+    },
+    {
+      "name": "round to 3 places from a field",
+      "from": "engine/functions_error_test.go TestToInt_WithValidTypes",
+      "source": "round(3.14159, x)",
+      "env": {
+        "x": 3
+      },
+      "value": 3.142
+    },
+    {
+      "name": "round to 1 places from a field",
+      "from": "engine/functions_error_test.go TestToInt_WithValidTypes",
+      "source": "round(3.14159, x)",
+      "env": {
+        "x": 1
+      },
+      "value": 3.1
+    },
+    {
+      "name": "avg of one field",
+      "from": "engine/functions_error_test.go TestAvgFn_EdgeCases",
+      "source": "avg(x)",
+      "env": {
+        "x": 7.0
+      },
+      "value": 7
+    },
+    {
+      "name": "min() needs an argument",
+      "from": "engine/functions_error_test.go TestMinMax_RejectZeroArguments",
+      "source": "min()",
+      "error": {
+        "code": "argument",
+        "english": "requires at least one argument"
+      }
+    },
+    {
+      "name": "max() needs an argument",
+      "from": "engine/functions_error_test.go TestMinMax_RejectZeroArguments",
+      "source": "max()",
+      "error": {
+        "code": "argument",
+        "english": "requires at least one argument"
+      }
+    },
+    {
+      "name": "rounding at the edge round(3.14159, 12)",
+      "from": "engine/functions_internal_test.go TestRoundFn_DecimalsRange",
+      "source": "round(3.14159, 12)",
+      "value": 3.14159
+    },
+    {
+      "name": "rounding at the edge round(3.14159, -12)",
+      "from": "engine/functions_internal_test.go TestRoundFn_DecimalsRange",
+      "source": "round(3.14159, -12)",
+      "value": 0
+    },
+    {
+      "name": "rounding past the edge round(3.14159, 13)",
+      "from": "engine/functions_internal_test.go TestRoundFn_DecimalsRange",
+      "source": "round(3.14159, 13)",
+      "error": {
+        "code": "argument",
+        "message": "round decimals must be between"
+      }
+    },
+    {
+      "name": "rounding past the edge round(3.14159, -13)",
+      "from": "engine/functions_internal_test.go TestRoundFn_DecimalsRange",
+      "source": "round(3.14159, -13)",
+      "error": {
+        "code": "argument",
+        "message": "round decimals must be between"
+      }
+    },
+    {
+      "name": "coalesce returns the first value of any kind",
+      "from": "engine/functions_internal_test.go TestCoalesceFn_Direct",
+      "source": "coalesce(\"hello\", nil, 42.0)",
+      "value": "hello"
+    },
+    {
+      "name": "coalesce skips leading nils",
+      "from": "engine/functions_internal_test.go TestCoalesceFn_Direct",
+      "source": "coalesce(nil, nil, 42.0)",
+      "value": 42
+    },
+    {
+      "name": "avg of an empty list is zero",
+      "from": "engine/functions_internal_test.go TestAvgFn_Direct",
+      "source": "avg([])",
+      "value": 0
+    },
+    {
+      "name": "avg needs an argument, as the catalog says, where Go's direct call returned zero",
+      "from": "engine/functions_internal_test.go TestAvgFn_Direct (no args returns zero)",
+      "source": "avg()",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "simple addition",
+      "from": "engine/engine_test.go",
+      "source": "x + y",
+      "env": {
+        "x": 10.0,
+        "y": 20.0
+      },
+      "value": 30
+    },
+    {
+      "name": "with functions",
+      "from": "engine/engine_test.go",
+      "source": "max(a, b) * 2",
+      "env": {
+        "a": 5.0,
+        "b": 3.0
+      },
+      "value": 10
+    },
+    {
+      "name": "integer result",
+      "from": "engine/engine_test.go",
+      "source": "a + b",
+      "env": {
+        "a": 3,
+        "b": 4
+      },
+      "value": 7
+    },
+    {
+      "name": "simple multiplication",
+      "from": "engine/engine_test.go",
+      "source": "baseRate * distance",
+      "env": {
+        "baseRate": 2.5,
+        "distance": 100.0
+      },
+      "value": 250
+    },
+    {
+      "name": "with rounding",
+      "from": "engine/engine_test.go",
+      "source": "round(baseRate * distance, 2)",
+      "env": {
+        "baseRate": 2.555,
+        "distance": 100.0
+      },
+      "value": 255.5
+    },
+    {
+      "name": "conditional with true",
+      "from": "engine/engine_test.go",
+      "source": "hasHazmat ? hazmatFee : 0",
+      "env": {
+        "hasHazmat": true,
+        "hazmatFee": 150.0
+      },
+      "value": 150
+    },
+    {
+      "name": "conditional with false",
+      "from": "engine/engine_test.go",
+      "source": "hasHazmat ? hazmatFee : 0",
+      "env": {
+        "hasHazmat": false,
+        "hazmatFee": 150.0
+      },
+      "value": 0
+    },
+    {
+      "name": "complex formula",
+      "from": "engine/engine_test.go",
+      "source": "max(minCharge, baseRate + (distance * ratePerMile))",
+      "env": {
+        "minCharge": 100.0,
+        "baseRate": 50.0,
+        "distance": 200.0,
+        "ratePerMile": 1.5
+      },
+      "value": 350
+    },
+    {
+      "name": "an integer field",
+      "from": "engine/engine_test.go",
+      "source": "x",
+      "env": {
+        "x": 42
+      },
+      "value": 42
+    },
+    {
+      "name": "a decimal field",
+      "from": "engine/engine_test.go",
+      "source": "x",
+      "env": {
+        "x": 42.5
+      },
+      "value": 42.5
+    },
+    {
+      "name": "a decimal field read exactly",
+      "from": "engine/engine_test.go",
+      "source": "x",
+      "env": {
+        "x": 12.5
+      },
+      "value": 12.5
+    },
+    {
+      "name": "a conditional on a comparison",
+      "from": "engine/engine_test.go",
+      "source": "a > b ? 150 : 0",
+      "env": {
+        "a": 2.0,
+        "b": 1.0
+      },
+      "value": 150
+    },
+    {
+      "name": "a comparison is true or false",
+      "from": "engine/engine_test.go",
+      "source": "a > b",
+      "env": {
+        "a": 10.0,
+        "b": 5.0
+      },
+      "value": true
+    },
+    {
+      "name": "an absent field reads as empty",
+      "from": "engine/engine_test.go TestEngine_EvaluateWithEnv (runtime error undefined var)",
+      "source": "x + z",
+      "env": {
+        "x": 1.0
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "z"
+        ],
+        "guards": [
+          "coalesce(z, 0)"
+        ]
+      }
+    },
+    {
+      "name": "positive infinity is division by zero",
+      "from": "engine/engine_test.go TestEngine_EvaluateWithEnv (non-finite under float64)",
+      "source": "x / y",
+      "env": {
+        "x": 1.0,
+        "y": 0.0
+      },
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "negative infinity is division by zero",
+      "from": "engine/engine_test.go TestEngine_EvaluateWithEnv (non-finite under float64)",
+      "source": "x / y",
+      "env": {
+        "x": -1.0,
+        "y": 0.0
+      },
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "NaN is division by zero",
+      "from": "engine/engine_test.go TestEngine_EvaluateWithEnv (non-finite under float64)",
+      "source": "x / y",
+      "env": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "sqrt of a negative field fails",
+      "from": "engine/engine_test.go TestEngine_EvaluateWithEnv",
+      "source": "sqrt(x)",
+      "env": {
+        "x": -1.0
+      },
+      "error": {
+        "code": "argument",
+        "english": "sqrt of negative number -1"
+      }
+    },
+    {
+      "name": "an index past the end fails",
+      "from": "engine/engine_test.go TestEngine_EvaluateWithEnv_RuntimeError",
+      "source": "arr[10]",
+      "env": {
+        "arr": [
+          1,
+          2,
+          3
+        ]
+      },
+      "error": {
+        "code": "index",
+        "english": "index out of range: 10 (array length is 3)"
+      }
+    },
+    {
+      "name": "an index into an empty list fails",
+      "from": "engine/engine_test.go TestEngine_ValidateExpressionWithEnv",
+      "source": "arr[10]",
+      "env": {
+        "arr": []
+      },
+      "error": {
+        "code": "index"
+      }
+    },
+    {
+      "name": "text concatenation",
+      "from": "engine/engine_test.go TestEngine_ValidateExpressionWithEnv",
+      "source": "name + \"!\"",
+      "env": {
+        "name": "a"
+      },
+      "value": "a!"
+    },
+    {
+      "name": "a nil field in arithmetic is explained",
+      "from": "engine/nullable_test.go TestEvaluateWithEnv_NilFieldIsExplained",
+      "source": "weight * rate",
+      "env": {
+        "weight": null,
+        "rate": 2.5
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "weight"
+        ],
+        "guards": [
+          "coalesce(weight, 0)"
+        ],
+        "english": "no value for weight on this record; write coalesce(weight, 0)"
+      }
+    },
+    {
+      "name": "coalesce guards a nil field",
+      "from": "engine/nullable_test.go TestEvaluateWithEnv_NilFieldIsExplained",
+      "source": "coalesce(weight, 0) * rate",
+      "env": {
+        "weight": null,
+        "rate": 2.5
+      },
+      "value": 0
+    },
+    {
+      "name": "a nil field in a comparison is explained",
+      "from": "engine/nullable_test.go TestUnguardedNullableFields",
+      "source": "weight > 100 ? 50 : 0",
+      "env": {
+        "weight": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "weight"
+        ],
+        "guards": [
+          "coalesce(weight, 0)"
+        ]
+      }
+    },
+    {
+      "name": "an unevaluated branch never reads its empty field",
+      "from": "engine/nullable_test.go guardFor",
+      "source": "origin.zip == \"75201\" ? 1 : 0 + origin.miles * 2",
+      "env": {
+        "origin": {
+          "zip": "75201",
+          "miles": null
+        }
+      },
+      "value": 1
+    },
+    {
+      "name": "reading through a nil object names the path",
+      "from": "engine/nullable_test.go guardFor",
+      "source": "origin.zip + \"\"",
+      "env": {
+        "origin": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "origin.zip"
+        ],
+        "guards": [
+          "origin?.zip ?? 0"
+        ]
+      }
+    },
+    {
+      "name": "a nil nested field names its path",
+      "from": "engine/nullable_test.go guardFor",
+      "source": "origin.miles * 2",
+      "env": {
+        "origin": {
+          "miles": null
+        }
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "origin.miles"
+        ],
+        "guards": [
+          "origin?.miles ?? 0"
+        ]
+      }
+    },
+    {
+      "name": "a nil text field compared with text suggests empty text",
+      "from": "engine/nullable_test.go guardFor",
+      "source": "laneCode < \"M\" ? 1 : 0",
+      "env": {
+        "laneCode": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "laneCode"
+        ],
+        "guards": [
+          "coalesce(laneCode, \"\")"
+        ]
+      }
+    },
+    {
+      "name": "a nil flag in a condition suggests false",
+      "from": "engine/nullable_test.go guardFor",
+      "source": "isRush ? 1 : 0",
+      "env": {
+        "isRush": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "isRush"
+        ],
+        "guards": [
+          "coalesce(isRush, false)"
+        ]
+      }
+    },
+    {
+      "name": "a nil date method suggests ratingTime",
+      "from": "determinism_test.go TestService_NullableDateGuardSuggestsRatingTime",
+      "source": "pickupDate.Hour() > 12 ? 10 : 0",
+      "env": {
+        "pickupDate": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "pickupDate"
+        ],
+        "guards": [
+          "coalesce(pickupDate, ratingTime)"
+        ]
+      }
+    },
+    {
+      "name": "a nil read through a let names the field",
+      "from": "engine/nullable_test.go nilReferencedFields",
+      "source": "let w = weight; w * 2",
+      "env": {
+        "weight": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "weight"
+        ]
+      }
+    },
+    {
+      "name": "a nil item field inside a predicate is relative",
+      "from": "engine/nullable_test.go nilReferencedFields",
+      "source": "sum(map(stops, .weight * 2))",
+      "env": {
+        "stops": [
+          {
+            "weight": 1
+          },
+          {
+            "weight": null
+          }
+        ]
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          ".weight"
+        ],
+        "guards": [
+          ".weight ?? 0"
+        ]
+      }
+    },
+    {
+      "name": "both empty operands are named",
+      "from": "formula_rating_methods_test.go TestRatingMethod_FlatFeeWithNilAmounts",
+      "source": "freightChargeAmount + otherChargeAmount",
+      "env": {
+        "freightChargeAmount": null,
+        "otherChargeAmount": null
+      },
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "freightChargeAmount",
+          "otherChargeAmount"
+        ]
+      }
+    },
+    {
+      "name": "== nil takes an empty value",
+      "from": "engine/nullable_test.go",
+      "source": "weight == nil ? 1 : 0",
+      "env": {
+        "weight": null
+      },
+      "value": 1
+    },
+    {
+      "name": "?? takes an empty value",
+      "from": "engine/nullable_test.go",
+      "source": "weight ?? 7",
+      "env": {
+        "weight": null
+      },
+      "value": 7
+    },
+    {
+      "name": "optional chaining takes an empty object",
+      "from": "engine/nullable_test.go",
+      "source": "origin?.zip ?? \"none\"",
+      "env": {
+        "origin": null
+      },
+      "value": "none"
+    },
+    {
+      "name": "optional chaining stops the whole chain",
+      "from": "engine/nullable_test.go",
+      "source": "origin?.address.zip == nil",
+      "env": {
+        "origin": null
+      },
+      "value": true
+    },
+    {
+      "name": "a nil lookup key is a missing field",
+      "from": "engine/nullable_test.go",
+      "source": "lookup(\"fsc\", fuel)",
+      "env": {
+        "fuel": null
+      },
+      "lookups": "explain",
+      "error": {
+        "code": "missingField",
+        "fields": [
+          "fuel"
+        ]
+      }
+    },
+    {
+      "name": "lookup2 reads a two-axis table",
+      "from": "engine/lookup_test.go TestEngine_EvaluateExpression_Lookup2CallsTheProvider",
+      "source": "lookup2(\"class_rates\", \"ZONE_5\", 8500)",
+      "lookups": "matrix",
+      "value": 12.25,
+      "recorded": [
+        {
+          "function": "lookup2",
+          "table": "class_rates",
+          "value": "12.25",
+          "matchedKey": "ZONE_5 × 5000–10000"
+        }
+      ]
+    },
+    {
+      "name": "lookup2Or falls back on a miss",
+      "from": "engine/lookup_test.go TestEngine_EvaluateExpression_Lookup2OrFallsBackOnMiss",
+      "source": "lookup2Or(\"class_rates\", \"ZONE_9\", 5, 2.5)",
+      "lookups": "matrix",
+      "value": 2.5,
+      "recorded": [
+        {
+          "function": "lookup2Or",
+          "table": "class_rates",
+          "error": "lookupMiss"
+        }
+      ]
+    },
+    {
+      "name": "lookupOr falls back on a miss",
+      "from": "engine/lookup_test.go TestEngine_EvaluateExpression_LookupOrFallsBackOnMiss",
+      "source": "lookupOr(\"fsc\", \"GAS\", 1.25)",
+      "lookups": "matrix",
+      "value": 1.25
+    },
+    {
+      "name": "lookupOr surfaces a missing table",
+      "from": "engine/lookup_test.go TestEngine_EvaluateExpression_LookupOrPropagatesMissingTable",
+      "source": "lookupOr(\"missing\", \"x\", 1.25)",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableNotFound",
+        "english": "rate table \"missing\" not found"
+      }
+    },
+    {
+      "name": "lookup2Or surfaces a missing table",
+      "from": "engine/lookup_test.go TestEngine_EvaluateExpression_Lookup2OrPropagatesMissingTable",
+      "source": "lookup2Or(\"missing\", \"row\", 5, 2.5)",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableNotFound",
+        "english": "two-axis rate table \"missing\" not found"
+      }
+    },
+    {
+      "name": "lookups without tables are unavailable, not zero",
+      "from": "engine/lookup_test.go TestEngine_EvaluateExpression_NilLookupIsUnavailableNotZero",
+      "source": "lookup(\"fsc\", \"DIESEL\")",
+      "error": {
+        "code": "lookupUnavailable",
+        "english": "rate table lookups are not available in this context: \"fsc\""
+      }
+    },
+    {
+      "name": "a lookup times a field",
+      "from": "engine/lookup_test.go TestEngine_EvaluateWithEnv_UsesProvidedLookup",
+      "source": "lookup(\"fsc\", \"DIESEL\") * miles",
+      "env": {
+        "miles": 100.0
+      },
+      "lookups": "matrix",
+      "value": 35
+    },
+    {
+      "name": "the stub resolves every table to zero",
+      "from": "engine/lookup_test.go TestEngine_StubLookup_ResolvesEveryTableToZero",
+      "source": "lookup(\"anything\", 1) + lookup2(\"grid\", \"a\", 2) + 4",
+      "lookups": "stub",
+      "value": 4
+    },
+    {
+      "name": "the stub interpolates to zero",
+      "from": "engine/lookup_test.go TestEngine_BandedHelpers_StubbedAndReserved",
+      "source": "lookupInterp(\"curve\", 5)",
+      "lookups": "stub",
+      "value": 0
+    },
+    {
+      "name": "the stub deficit weight is zero",
+      "from": "engine/lookup_test.go TestEngine_BandedHelpers_StubbedAndReserved",
+      "source": "deficitWeight(\"cwt\", 900)",
+      "lookups": "stub",
+      "value": 0
+    },
+    {
+      "name": "interpolating a keyed table fails",
+      "from": "engine/lookup_test.go TestEngine_BandedHelpers_RequireABandedProvider",
+      "source": "lookupInterp(\"fsc\", 5)",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableShape",
+        "message": "matches exact keys, not bands"
+      }
+    },
+    {
+      "name": "lookupOr does not absorb a bad key",
+      "from": "formula/matrix_lookup.go (only a miss falls back)",
+      "source": "lookupOr(\"miles\", \"heavy\", 1)",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupKey"
+      }
+    },
+    {
+      "name": "matrix: an exact key",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_ResolvesAnExactKey",
+      "source": "lookup(\"lane_rate\", \"ATL-MIA\")",
+      "lookups": "matrix",
+      "value": 1450
+    },
+    {
+      "name": "matrix: the band containing the quantity",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_PicksTheBandContainingTheQuantity",
+      "source": "lookup(\"fuel_surcharge\", 3.2)",
+      "lookups": "matrix",
+      "value": 0.12
+    },
+    {
+      "name": "matrix: an upper bound belongs to the next band",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_UpperBoundBelongsToTheNextBand",
+      "source": "lookup(\"fuel_steps\", 3.5)",
+      "lookups": "matrix",
+      "value": 0.18
+    },
+    {
+      "name": "matrix: an open top band catches everything above",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_OpenEndedTopBandCatchesEverythingAbove",
+      "source": "lookup(\"fuel_open\", 99)",
+      "lookups": "matrix",
+      "value": 0.25
+    },
+    {
+      "name": "matrix: numeric keys match exact tables",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_NumericKeysMatchExactTables",
+      "source": "lookup(\"zone_rate\", 3)",
+      "lookups": "matrix",
+      "value": 215
+    },
+    {
+      "name": "matrix: exact row and range column",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_ExactRowRangeColumn",
+      "source": "lookup2(\"class_rates\", \"ZONE_5\", 8500)",
+      "lookups": "matrix",
+      "value": 12.25
+    },
+    {
+      "name": "matrix: a column upper bound belongs to the next band",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_ColumnUpperBoundBelongsToTheNextBand",
+      "source": "lookup2(\"class_rates\", \"ZONE_5\", 5000)",
+      "lookups": "matrix",
+      "value": 12.25
+    },
+    {
+      "name": "matrix: an open column band catches everything above",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_OpenEndedColumnBandCatchesEverythingAbove",
+      "source": "lookup2(\"class_rates\", \"ZONE_5\", 250000)",
+      "lookups": "matrix",
+      "value": 9.1
+    },
+    {
+      "name": "matrix: exact row and exact column",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_ExactRowExactColumn",
+      "source": "lookup2(\"lane_class\", \"ATL\", \"ORD\")",
+      "lookups": "matrix",
+      "value": 1720
+    },
+    {
+      "name": "matrix: range row and exact column",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_RangeRowExactColumn",
+      "source": "lookup2(\"distance_zone\", 750, \"DRY\")",
+      "lookups": "matrix",
+      "value": 1.85
+    },
+    {
+      "name": "matrix: range row and range column",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_RangeRowRangeColumn",
+      "source": "lookup2(\"distance_weight\", 620, 14000)",
+      "lookups": "matrix",
+      "value": 2.05
+    },
+    {
+      "name": "matrix: zip3 keeps the first three digits",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_KeyNormalizationModes",
+      "source": "lookup(\"zip3_zone\", \"75201-1234\")",
+      "lookups": "matrix",
+      "value": 1.1
+    },
+    {
+      "name": "matrix: numeric zips normalise the same way",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_KeyNormalizationModes",
+      "source": "lookup(\"zip3_zone\", 30012)",
+      "lookups": "matrix",
+      "value": 1.0
+    },
+    {
+      "name": "matrix: upper normalises both keys",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_KeyNormalizationModes",
+      "source": "lookup(\"lane_upper\", \"Atl-Mia\")",
+      "lookups": "matrix",
+      "value": 1450
+    },
+    {
+      "name": "matrix: trim normalises stored keys",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_KeyNormalizationModes",
+      "source": "lookup(\"lane_trim\", \"ATL-JAX\")",
+      "lookups": "matrix",
+      "value": 980
+    },
+    {
+      "name": "matrix: clamping prices above the top band",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_RangeOverflowModes",
+      "source": "lookup(\"clamped\", 9000)",
+      "lookups": "matrix",
+      "value": 1.0
+    },
+    {
+      "name": "matrix: nearest prices below the bottom band",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_RangeOverflowModes",
+      "source": "lookup(\"nearest\", 50)",
+      "lookups": "matrix",
+      "value": 2.0
+    },
+    {
+      "name": "matrix: nearest prices above the top band",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_RangeOverflowModes",
+      "source": "lookup(\"nearest\", 9000)",
+      "lookups": "matrix",
+      "value": 1.0
+    },
+    {
+      "name": "matrix: a row clamps and a column upper-cases",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_TwoAxisRowOverflowAndColumnNormalization",
+      "source": "lookup2(\"weight_zone\", 9000, \"SE\")",
+      "lookups": "matrix",
+      "value": 15
+    },
+    {
+      "name": "matrix: halfway between two floors",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_LookupInterpBetweenBandFloors",
+      "source": "lookupInterp(\"fuel_curve\", 3.5)",
+      "lookups": "matrix",
+      "value": 0.3
+    },
+    {
+      "name": "matrix: on a floor",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_LookupInterpBetweenBandFloors",
+      "source": "lookupInterp(\"fuel_curve\", 2.0)",
+      "lookups": "matrix",
+      "value": 0.1
+    },
+    {
+      "name": "matrix: below the first floor",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_LookupInterpBetweenBandFloors",
+      "source": "lookupInterp(\"fuel_curve\", 1.0)",
+      "lookups": "matrix",
+      "value": 0.1
+    },
+    {
+      "name": "matrix: past the last floor",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_LookupInterpBetweenBandFloors",
+      "source": "lookupInterp(\"fuel_curve\", 9.0)",
+      "lookups": "matrix",
+      "value": 0.4
+    },
+    {
+      "name": "matrix: 450 at 30 costs more than 500 at 20",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_DeficitWeightRatesAsNextBreakWhenCheaper",
+      "source": "deficitWeight(\"cwt\", 450)",
+      "lookups": "matrix",
+      "value": 500
+    },
+    {
+      "name": "matrix: 300 at 30 is cheaper than 500 at 20",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_DeficitWeightRatesAsNextBreakWhenCheaper",
+      "source": "deficitWeight(\"cwt\", 300)",
+      "lookups": "matrix",
+      "value": 300
+    },
+    {
+      "name": "matrix: the top band has no next break",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_DeficitWeightRatesAsNextBreakWhenCheaper",
+      "source": "deficitWeight(\"cwt\", 2500)",
+      "lookups": "matrix",
+      "value": 2500
+    },
+    {
+      "name": "matrix: a freight class by number",
+      "from": "hardening_test.go TestRate_StampsTheRateTables",
+      "source": "lookup(\"class_rates\", \"85\")",
+      "lookups": "classes",
+      "value": 20
+    },
+    {
+      "name": "matrix: a freight class by name",
+      "from": "data_contract_test.go TestDataContract_HighestFreightClass",
+      "source": "lookup(\"class_rates\", highestFreightClass)",
+      "lookups": "classes",
+      "value": 31.5,
+      "env": {
+        "highestFreightClass": "Class100"
+      }
+    },
+    {
+      "name": "matrix: a freight class by a number value",
+      "from": "commodity.ParseFreightClass",
+      "source": "lookup(\"class_rates\", 77.5)",
+      "lookups": "classes",
+      "value": 18
+    },
+    {
+      "name": "matrix: an unknown key on an exact table",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_UnknownKeyOnAnExactTableErrors",
+      "source": "lookup(\"lane_rate\", \"ATL-ORD\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss",
+        "english": "ATL-ORD"
+      }
+    },
+    {
+      "name": "matrix: an unknown table",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_UnknownTableErrors",
+      "source": "lookup(\"nothing\", \"key\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableNotFound"
+      }
+    },
+    {
+      "name": "matrix: a two-axis table by single key",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_TwoAxisMatrixIsNotAddressableBySingleKeyLookup",
+      "source": "lookup(\"class_tariff\", \"SE\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableShape",
+        "english": "lookup2"
+      }
+    },
+    {
+      "name": "matrix: an unknown row",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_UnknownRowErrors",
+      "source": "lookup2(\"class_rates\", \"ZONE_9\", 500)",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss",
+        "english": "no cell matching"
+      }
+    },
+    {
+      "name": "matrix: a column outside every band",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_ColumnOutsideEveryBandErrors",
+      "source": "lookup2(\"class_rates\", \"ZONE_8\", 7500)",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss",
+        "english": "no cell matching"
+      }
+    },
+    {
+      "name": "matrix: a non-numeric column key",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_NonNumericColumnKeyAgainstRangeAxisErrors",
+      "source": "lookup2(\"class_rates\", \"ZONE_5\", \"heavy\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupKey",
+        "english": "column key"
+      }
+    },
+    {
+      "name": "matrix: an exact miss on a cell",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_ExactRowExactColumn",
+      "source": "lookup2(\"lane_class\", \"ATL\", \"JFK\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss",
+        "english": "no cell matching"
+      }
+    },
+    {
+      "name": "matrix: a single-axis table by two keys",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_SingleAxisTableErrorsWithGuidance",
+      "source": "lookup2(\"lane_rate\", \"ATL-MIA\", \"anything\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableShape",
+        "english": "single axis"
+      }
+    },
+    {
+      "name": "matrix: an unknown two-axis table",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup2_UnknownTableErrors",
+      "source": "lookup2(\"nothing\", \"a\", \"b\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableNotFound",
+        "english": "not found"
+      }
+    },
+    {
+      "name": "matrix: a miss on a keyed table",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_MissIsDistinguishableFromMissingTable",
+      "source": "lookup(\"fsc\", \"GAS\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss"
+      }
+    },
+    {
+      "name": "matrix: a miss past every band",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_MissIsDistinguishableFromMissingTable",
+      "source": "lookup(\"miles\", 900)",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss"
+      }
+    },
+    {
+      "name": "matrix: a missing table is not a miss",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_MissIsDistinguishableFromMissingTable",
+      "source": "lookup(\"nope\", \"DIESEL\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableNotFound"
+      }
+    },
+    {
+      "name": "matrix: an unusable key is not a miss",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_MissIsDistinguishableFromMissingTable",
+      "source": "lookup(\"fsc\", {})",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupKey"
+      }
+    },
+    {
+      "name": "matrix: no mode means exact",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_KeyNormalizationModes",
+      "source": "lookup(\"lane_plain\", \"atl-mia\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss"
+      }
+    },
+    {
+      "name": "matrix: a strict table misses",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_RangeOverflowModes",
+      "source": "lookup(\"strict\", 9000)",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss"
+      }
+    },
+    {
+      "name": "matrix: clamping only covers the top",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_RangeOverflowModes",
+      "source": "lookup(\"clamped\", 50)",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss"
+      }
+    },
+    {
+      "name": "matrix: clamping never invents a cell",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_TwoAxisRowOverflowAndColumnNormalization",
+      "source": "lookup2(\"weight_zone\", 9000, \"MW\")",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss"
+      }
+    },
+    {
+      "name": "matrix: a keyed table has nothing to interpolate",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_LookupInterpBetweenBandFloors",
+      "source": "lookupInterp(\"zones\", 1)",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableShape"
+      }
+    },
+    {
+      "name": "matrix: interpolating an unknown table",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_LookupInterpBetweenBandFloors",
+      "source": "lookupInterp(\"nope\", 1)",
+      "lookups": "matrix",
+      "error": {
+        "code": "tableNotFound"
+      }
+    },
+    {
+      "name": "matrix: a strict table still misses its deficit weight",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_DeficitWeightRatesAsNextBreakWhenCheaper",
+      "source": "deficitWeight(\"capped\", 9000)",
+      "lookups": "matrix",
+      "error": {
+        "code": "lookupMiss"
+      }
+    },
+    {
+      "name": "matrix: the receipt names the band clamped into",
+      "from": "formula/matrix_lookup_test.go TestMatrixLookup_RangeOverflowModes",
+      "source": "lookup(\"clamped\", 9000)",
+      "lookups": "matrix",
+      "value": 1,
+      "recorded": [
+        {
+          "function": "lookup",
+          "table": "clamped",
+          "value": "1",
+          "bandMin": "1000",
+          "bandMax": "5000",
+          "adjusted": true
+        }
+      ]
+    },
+    {
+      "name": "matrix: an exact match names its key",
+      "from": "formula/matrix_explain_test.go TestMatrixLookup_ExplainsWhatMatched",
+      "source": "lookup(\"fsc\", \"DIESEL\")",
+      "lookups": "explain",
+      "value": 0.35,
+      "recorded": [
+        {
+          "function": "lookup",
+          "table": "fsc",
+          "value": "0.35",
+          "matchedKey": "DIESEL"
+        }
+      ]
+    },
+    {
+      "name": "matrix: an open top band has no ceiling",
+      "from": "formula/matrix_explain_test.go TestMatrixLookup_ExplainsWhatMatched",
+      "source": "lookup(\"miles\", 750)",
+      "lookups": "explain",
+      "value": 2,
+      "recorded": [
+        {
+          "function": "lookup",
+          "table": "miles",
+          "value": "2",
+          "bandMin": "500"
+        }
+      ]
+    },
+    {
+      "name": "matrix: an open top band matches anything above",
+      "from": "formula/matrix_explain_test.go TestMatrixLookup_ExplainsWhatMatched",
+      "source": "lookup(\"miles\", 9999999)",
+      "lookups": "explain",
+      "value": 2
+    },
+    {
+      "name": "matrix: a banded helper is recorded by name",
+      "from": "engine/receipt.go recordBanded",
+      "source": "lookupInterp(\"fuel_curve\", 3.5)",
+      "lookups": "matrix",
+      "value": 0.3,
+      "recorded": [
+        {
+          "function": "lookupInterp",
+          "table": "fuel_curve",
+          "value": "0.3",
+          "matchedKey": "lookupInterp"
+        }
+      ]
+    },
+    {
+      "name": "matrix: a two-axis cell with range rows names its band",
+      "from": "formula/matrix_lookup.go describeCell",
+      "source": "lookup2(\"distance_zone\", 750, \"DRY\")",
+      "lookups": "matrix",
+      "value": 1.85,
+      "recorded": [
+        {
+          "function": "lookup2",
+          "table": "distance_zone",
+          "value": "1.85",
+          "matchedKey": "500+ × DRY"
+        }
+      ]
+    },
+    {
+      "name": "money round(0.145 * 100)",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "round(0.145 * 100)",
+      "value": 15
+    },
+    {
+      "name": "money round(1.005, 2)",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "round(1.005, 2)",
+      "value": 1.01
+    },
+    {
+      "name": "money roundUp(0.145 * 100)",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "roundUp(0.145 * 100)",
+      "value": 15
+    },
+    {
+      "name": "money roundTo(0.145 * 100, 1)",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "roundTo(0.145 * 100, 1)",
+      "value": 15
+    },
+    {
+      "name": "money 0.1 + 0.2",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "0.1 + 0.2",
+      "value": 0.3
+    },
+    {
+      "name": "money sum([0.1, 0.2, 0.3])",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "sum([0.1, 0.2, 0.3])",
+      "value": 0.6
+    },
+    {
+      "name": "money sum(0.1, 0.2, 0.3)",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "sum(0.1, 0.2, 0.3)",
+      "value": 0.6
+    },
+    {
+      "name": "money avg([0.1, 0.2, 0.3])",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "avg([0.1, 0.2, 0.3])",
+      "value": 0.2
+    },
+    {
+      "name": "money 1.15 * 100",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "1.15 * 100",
+      "value": 115
+    },
+    {
+      "name": "money sum(map([0.7, 0.1], # * 10))",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "sum(map([0.7, 0.1], # * 10))",
+      "value": 8
+    },
+    {
+      "name": "money 10.004 + 20.004 + 30.004",
+      "from": "formula/money_test.go TestService_MoneyArithmeticCarriesNoBinaryNoise",
+      "source": "10.004 + 20.004 + 30.004",
+      "value": 60.012
+    },
+    {
+      "name": "a range within the item budget",
+      "from": "engine/resource_limits_test.go TestEvaluate_TheVMMemoryBudgetIsBounded",
+      "source": "len(1..n)",
+      "env": {
+        "n": 1000
+      },
+      "value": 1000
+    },
+    {
+      "name": "a range past the item budget",
+      "from": "engine/resource_limits_test.go TestEvaluate_TheVMMemoryBudgetIsBounded",
+      "source": "len(1..n)",
+      "env": {
+        "n": 150000
+      },
+      "error": {
+        "code": "budget",
+        "english": "memory budget exceeded"
+      }
+    },
+    {
+      "name": "text budget: concatenation doubling",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringGrowthIsBounded",
+      "source": "len(reduce(1..22, #acc + #acc, \"xxxxxxxx\"))",
+      "env": {
+        "code": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "error": {
+        "code": "budget",
+        "message": "expression built more text than a formula may"
+      }
+    },
+    {
+      "name": "text budget: concatenation in a map",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringGrowthIsBounded",
+      "source": "len(map(1..20000, code + \"-\"))",
+      "env": {
+        "code": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "error": {
+        "code": "budget",
+        "message": "expression built more text than a formula may"
+      }
+    },
+    {
+      "name": "text budget: replace doubling",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringGrowthIsBounded",
+      "source": "len(reduce(1..22, replace(#acc, \"x\", \"xx\"), \"x\"))",
+      "env": {
+        "code": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "error": {
+        "code": "budget",
+        "message": "expression built more text than a formula may"
+      }
+    },
+    {
+      "name": "text budget: join",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringGrowthIsBounded",
+      "source": "len(join(map(1..20000, code), \"\"))",
+      "env": {
+        "code": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "error": {
+        "code": "budget",
+        "message": "expression built more text than a formula may"
+      }
+    },
+    {
+      "name": "text budget: string of a list",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringGrowthIsBounded",
+      "source": "len(string(map(1..20000, code)))",
+      "env": {
+        "code": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "error": {
+        "code": "budget",
+        "message": "expression built more text than a formula may"
+      }
+    },
+    {
+      "name": "strings within the budget compare",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringsWithinTheBudgetStillWork",
+      "source": "origin.state + \"-\" + destination == \"TX-CA\" ? miles + 1 : 0",
+      "env": {
+        "origin": {
+          "state": "TX"
+        },
+        "destination": "CA",
+        "miles": 120.0
+      },
+      "value": 121
+    },
+    {
+      "name": "text functions within the budget",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringsWithinTheBudgetStillWork",
+      "source": "len(join([\"a\", \"b\"], \"-\") + replace(\"ab\", \"b\", \"cd\") + string(12))",
+      "env": {
+        "origin": {
+          "state": "TX"
+        },
+        "destination": "CA",
+        "miles": 120.0
+      },
+      "value": 8
+    },
+    {
+      "name": "text plus a number fails",
+      "from": "engine/resource_limits_test.go TestEvaluate_StringsWithinTheBudgetStillWork",
+      "source": "\"lane\" + 5",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "a step budget stops a long reduce",
+      "from": "engine/limits.go (the five-second timeout, now a step budget)",
+      "source": "reduce(1..50000, #acc + #, 0)",
+      "limits": {
+        "steps": 10000
+      },
+      "error": {
+        "code": "budget",
+        "english": "formula evaluation exceeded its time budget"
+      }
+    },
+    {
+      "name": "a step budget is per program and generous by default",
+      "from": "engine/limits.go",
+      "source": "reduce(1..50000, #acc + #, 0)",
+      "value": 1250025000
+    },
+    {
+      "name": "a date field's hour",
+      "from": "engine/datetime_env_test.go TestEngine_DatetimeVariablesEvaluateWithExprDateMethods",
+      "source": "pickupDate.Hour() >= 18 ? 75 : 0",
+      "env": {
+        "pickupDate": {
+          "$date": "2026-06-05T20:30:00Z"
+        },
+        "weight": 100.0
+      },
+      "value": 75
+    },
+    {
+      "name": "an hour reads in the stop's own offset",
+      "from": "rules-engine.md Dates",
+      "source": "pickupDate.Hour()",
+      "env": {
+        "pickupDate": {
+          "$date": "2026-06-05T20:30:00-05:00"
+        }
+      },
+      "value": 20
+    },
+    {
+      "name": "dates parse in UTC",
+      "from": "formula/determinism_test.go TestService_DatesParseInUTC",
+      "source": "date(\"2025-03-01\")",
+      "value": {
+        "$date": "2025-03-01T00:00:00Z"
+      }
+    },
+    {
+      "name": "a parsed date equals its UTC instant",
+      "from": "formula/determinism_test.go TestService_DatesParseInUTC",
+      "source": "date(\"2025-03-01\") == date(\"2025-03-01T00:00:00Z\") ? 1 : 0",
+      "value": 1
+    },
+    {
+      "name": "the rating time's year and day",
+      "from": "formula/determinism_test.go TestService_Rate_RatingTimeIsTheShipmentsRatingDate",
+      "source": "ratingTime.Year() == 2025 && ratingTime.Day() == 1 ? 10 : 0",
+      "env": {
+        "ratingTime": {
+          "$date": "2025-03-01T15:00:00Z"
+        }
+      },
+      "value": 10
+    },
+    {
+      "name": "the rating time's day of the month",
+      "from": "formula/determinism_test.go TestService_Rate_RatingTimeIsTheShipmentsRatingDate",
+      "source": "ratingTime.Day()",
+      "env": {
+        "ratingTime": {
+          "$date": "2025-02-20T09:00:00Z"
+        }
+      },
+      "value": 20
+    },
+    {
+      "name": "the requested rating date's year",
+      "from": "formula/determinism_test.go TestService_Calculate_RatingTimeFollowsTheRequestedRatingDate",
+      "source": "ratingTime.Year() == 2024 ? 10 : 0",
+      "env": {
+        "ratingTime": {
+          "$date": "2024-07-04T00:00:00Z"
+        }
+      },
+      "value": 10
+    },
+    {
+      "name": "dates and durations: date(\"2026-06-05T20:30:00Z\").Month()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-06-05T20:30:00Z\").Month()",
+      "value": 6
+    },
+    {
+      "name": "dates and durations: date(\"2026-06-05\").Weekday()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-06-05\").Weekday()",
+      "value": 5
+    },
+    {
+      "name": "dates and durations: date(\"2024-12-31\").YearDay()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2024-12-31\").YearDay()",
+      "value": 366
+    },
+    {
+      "name": "dates and durations: date(\"1970-01-02\").Unix()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"1970-01-02\").Unix()",
+      "value": 86400
+    },
+    {
+      "name": "dates and durations: date(\"2026-06-05 20:30\").Minute()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-06-05 20:30\").Minute()",
+      "value": 30
+    },
+    {
+      "name": "dates and durations: date(\"2026-06-05T20:30:15\").Second()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-06-05T20:30:15\").Second()",
+      "value": 15
+    },
+    {
+      "name": "dates and durations: duration(\"1h30m\").Hours()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "duration(\"1h30m\").Hours()",
+      "value": 1.5
+    },
+    {
+      "name": "dates and durations: duration(\"90s\").Minutes()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "duration(\"90s\").Minutes()",
+      "value": 1.5
+    },
+    {
+      "name": "dates and durations: duration(\"1500ms\").Seconds()",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "duration(\"1500ms\").Seconds()",
+      "value": 1.5
+    },
+    {
+      "name": "dates and durations: date(\"2026-01-01\") + duration(\"36h\")",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-01-01\") + duration(\"36h\")",
+      "value": {
+        "$date": "2026-01-02T12:00:00Z"
+      }
+    },
+    {
+      "name": "dates and durations: date(\"2026-01-02\") - date(\"2026-01-01\")",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-01-02\") - date(\"2026-01-01\")",
+      "value": {
+        "$duration": "86400000000000"
+      }
+    },
+    {
+      "name": "dates and durations: date(\"2026-01-02\") - duration(\"1h\")",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-01-02\") - duration(\"1h\")",
+      "value": {
+        "$date": "2026-01-01T23:00:00Z"
+      }
+    },
+    {
+      "name": "dates and durations: duration(\"1h\") * 2",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "duration(\"1h\") * 2",
+      "value": {
+        "$duration": "7200000000000"
+      }
+    },
+    {
+      "name": "dates and durations: duration(\"1h\") / 4",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "duration(\"1h\") / 4",
+      "value": {
+        "$duration": "900000000000"
+      }
+    },
+    {
+      "name": "dates and durations: duration(\"3h\") / duration(\"1h\")",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "duration(\"3h\") / duration(\"1h\")",
+      "value": 3
+    },
+    {
+      "name": "dates and durations: -duration(\"1h\")",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "-duration(\"1h\")",
+      "value": {
+        "$duration": "-3600000000000"
+      }
+    },
+    {
+      "name": "dates and durations: date(\"2026-01-02T00:00:00+02:00\") < date(\"2026-01-01T23:00:00Z\")",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-01-02T00:00:00+02:00\") < date(\"2026-01-01T23:00:00Z\")",
+      "value": true
+    },
+    {
+      "name": "dates and durations: date(\"2026-01-01T00:00:00+02:00\") == date(\"2025-12-31T22:00:00Z\")",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "date(\"2026-01-01T00:00:00+02:00\") == date(\"2025-12-31T22:00:00Z\")",
+      "value": true
+    },
+    {
+      "name": "dates and durations: string(date(\"2026-01-01T00:00:00-05:00\"))",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "string(date(\"2026-01-01T00:00:00-05:00\"))",
+      "value": "2026-01-01T00:00:00-05:00"
+    },
+    {
+      "name": "dates and durations: string(duration(\"90m\"))",
+      "from": "rules-engine.md Dates (expr vm/runtime date arithmetic)",
+      "source": "string(duration(\"90m\"))",
+      "value": "1h30m0s"
+    },
+    {
+      "name": "dates and durations refuse date(\"03/01/2025\")",
+      "from": "rules-engine.md Dates",
+      "source": "date(\"03/01/2025\")",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "dates and durations refuse duration(\"1d\")",
+      "from": "rules-engine.md Dates",
+      "source": "duration(\"1d\")",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "dates and durations refuse duration(\"10\")",
+      "from": "rules-engine.md Dates",
+      "source": "duration(\"10\")",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "dates and durations refuse date(\"9999-12-31\") + duration(\"48h\")",
+      "from": "rules-engine.md Dates",
+      "source": "date(\"9999-12-31\") + duration(\"48h\")",
+      "error": {
+        "code": "overflow"
+      }
+    },
+    {
+      "name": "dates and durations refuse date(\"2026-01-01\") + 1",
+      "from": "rules-engine.md Dates",
+      "source": "date(\"2026-01-01\") + 1",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "status: status == \"InTransit\" ? 1 : 0",
+      "from": "formula/loud_failures_test.go TestDataContract_StatusComparesAsText",
+      "source": "status == \"InTransit\" ? 1 : 0",
+      "env": {
+        "status": "InTransit"
+      },
+      "value": 1
+    },
+    {
+      "name": "status: status in [\"New\", \"InTransit\"] ? 1 : 0",
+      "from": "formula/loud_failures_test.go TestDataContract_StatusComparesAsText",
+      "source": "status in [\"New\", \"InTransit\"] ? 1 : 0",
+      "env": {
+        "status": "InTransit"
+      },
+      "value": 1
+    },
+    {
+      "name": "status: status != \"Canceled\" ? 1 : 0",
+      "from": "formula/loud_failures_test.go TestDataContract_StatusComparesAsText",
+      "source": "status != \"Canceled\" ? 1 : 0",
+      "env": {
+        "status": "InTransit"
+      },
+      "value": 1
+    },
+    {
+      "name": "status: hasPrefix(status, \"In\") ? 1 : 0",
+      "from": "formula/loud_failures_test.go TestDataContract_StatusComparesAsText",
+      "source": "hasPrefix(status, \"In\") ? 1 : 0",
+      "env": {
+        "status": "InTransit"
+      },
+      "value": 1
+    },
+    {
+      "name": "status: status in [\"ReadyToInvoice\", \"Invoiced\"] ? 1 : 0",
+      "from": "formula/loud_failures_test.go TestDataContract_StatusComparesAsText",
+      "source": "status in [\"ReadyToInvoice\", \"Invoiced\"] ? 1 : 0",
+      "env": {
+        "status": "InTransit"
+      },
+      "value": 0
+    },
+    {
+      "name": "temperature differential on a dry van",
+      "from": "formula/loud_failures_test.go TestDataContract_TemperatureDifferentialIsZeroOnADryVan",
+      "source": "requiresTemperatureControl ? temperatureDifferential * 2 : 0",
+      "env": {
+        "requiresTemperatureControl": false,
+        "temperatureDifferential": 0
+      },
+      "value": 0
+    },
+    {
+      "name": "temperature differential on a reefer",
+      "from": "formula/loud_failures_test.go TestDataContract_TemperatureDifferentialIsZeroOnADryVan",
+      "source": "requiresTemperatureControl ? temperatureDifferential * 2 : 0",
+      "env": {
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 6
+      },
+      "value": 12
+    },
+    {
+      "name": "comparing text with a number is refused",
+      "from": "rules-engine.md Equality and comparison",
+      "source": "origin.zip == 75201",
+      "env": {
+        "origin": {
+          "zip": "75201"
+        }
+      },
+      "error": {
+        "code": "type",
+        "message": "cannot compare"
+      }
+    },
+    {
+      "name": "complex: per mile with minimum and fuel surcharge",
+      "from": "formula/formula_complex_test.go",
+      "source": "max(minimumCharge, (startingRate + (ratePerMile * totalDistance)) * (1 + fuelSurchargePercent / 100))",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "minimumCharge": 250.0,
+        "startingRate": 75.0,
+        "ratePerMile": 2.85,
+        "fuelSurchargePercent": 18.5
+      },
+      "value": 2033.49555
+    },
+    {
+      "name": "complex: tiered weight pricing",
+      "from": "formula/formula_complex_test.go",
+      "source": "totalWeight < 10000 ? totalWeight * tierOneRate : totalWeight < 25000 ? 10000 * tierOneRate + (totalWeight - 10000) * tierTwoRate : totalWeight < 40000 ? 10000 * tierOneRate + 15000 * tierTwoRate + (totalWeight - 25000) * tierThreeRate : 10000 * tierOneRate + 15000 * tierTwoRate + 15000 * tierThreeRate + (totalWeight - 40000) * tierFourRate",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "tierOneRate": 0.15,
+        "tierTwoRate": 0.12,
+        "tierThreeRate": 0.09,
+        "tierFourRate": 0.06
+      },
+      "value": 4950
+    },
+    {
+      "name": "complex: cwt with accessorials",
+      "from": "formula/formula_complex_test.go",
+      "source": "round((ratePerCWT * ceil(totalWeight / 100)) + (hasHazmat ? hazmatFee : 0) + (requiresTemperatureControl ? reeferFee : 0) + (totalStops > 2 ? (totalStops - 2) * additionalStopFee : 0), 2)",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "ratePerCWT": 18.5,
+        "hazmatFee": 175.0,
+        "reeferFee": 225.0,
+        "additionalStopFee": 50.0
+      },
+      "value": 8775
+    },
+    {
+      "name": "complex: full freight bill",
+      "from": "formula/formula_complex_test.go",
+      "source": "round(max(minimumCharge, clamp((startingRate + (ratePerMile * totalDistance) + (ratePerStop * totalStops)) * (1 + fuelSurcharge / 100) + (hasHazmat ? hazmatFee : 0) + (requiresTemperatureControl ? reeferSurcharge + (temperatureDifferential < 10 ? tightTempFee : 0) : 0), minimumCharge, maximumCharge)), 2)",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "minimumCharge": 350.0,
+        "maximumCharge": 10000.0,
+        "startingRate": 125.0,
+        "ratePerMile": 3.25,
+        "ratePerStop": 45.0,
+        "fuelSurcharge": 22.0,
+        "hazmatFee": 200.0,
+        "reeferSurcharge": 275.0,
+        "tightTempFee": 100.0
+      },
+      "value": 3175.25
+    },
+    {
+      "name": "complex: distance based tiers",
+      "from": "formula/formula_complex_test.go",
+      "source": "totalDistance <= 100 ? startingRate + (totalDistance * shortHaulRate) : totalDistance <= 500 ? startingRate + 100 * shortHaulRate + (totalDistance - 100) * mediumHaulRate : startingRate + 100 * shortHaulRate + 400 * mediumHaulRate + (totalDistance - 500) * longHaulRate",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "startingRate": 100.0,
+        "shortHaulRate": 4.5,
+        "mediumHaulRate": 3.25,
+        "longHaulRate": 2.75
+      },
+      "value": 2058.45
+    },
+    {
+      "name": "complex: negotiated rate",
+      "from": "formula/formula_complex_test.go",
+      "source": "round((negotiatedRate * totalDistance) * (1 - discountPercent / 100), 2)",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "negotiatedRate": 4.25,
+        "discountPercent": 12.5
+      },
+      "value": 2141.26
+    },
+    {
+      "name": "complex: complex conditional logic",
+      "from": "formula/formula_complex_test.go",
+      "source": "hasHazmat ? (requiresTemperatureControl ? startingRate * hazmatReeferMultiplier : startingRate * hazmatMultiplier) : (requiresTemperatureControl ? startingRate * reeferMultiplier : startingRate * standardMultiplier)",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "startingRate": 1000.0,
+        "standardMultiplier": 1.0,
+        "reeferMultiplier": 1.35,
+        "hazmatMultiplier": 1.5,
+        "hazmatReeferMultiplier": 1.85
+      },
+      "value": 1850
+    },
+    {
+      "name": "complex: math function chain",
+      "from": "formula/formula_complex_test.go",
+      "source": "round(sqrt(pow(totalDistance, 2) + pow(totalWeight / 1000, 2)) * rateMultiplier, 2)",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "rateMultiplier": 1.5
+      },
+      "value": 866.33
+    },
+    {
+      "name": "complex: average and sum",
+      "from": "formula/formula_complex_test.go",
+      "source": "round(sum(baseCharge, distanceCharge, weightCharge, stopCharge) * (1 + avg(fuelSurcharge, adminFee, insuranceFee) / 100), 2)",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "baseCharge": 100.0,
+        "distanceCharge": 500.0,
+        "weightCharge": 250.0,
+        "stopCharge": 75.0,
+        "fuelSurcharge": 18.0,
+        "adminFee": 3.0,
+        "insuranceFee": 6.0
+      },
+      "value": 1008.25
+    },
+    {
+      "name": "complex: coalesce default values",
+      "from": "formula/formula_complex_test.go",
+      "source": "coalesce(customRate, defaultRate) * totalDistance",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "customRate": null,
+        "defaultRate": 2.5
+      },
+      "value": 1439.5
+    },
+    {
+      "name": "complex: temperature variance charge",
+      "from": "formula/formula_complex_test.go",
+      "source": "requiresTemperatureControl ? baseCharge + (abs(temperatureDifferential - targetDifferential) * variancePenalty) : baseCharge",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "baseCharge": 500.0,
+        "targetDifferential": 10.0,
+        "variancePenalty": 25.0
+      },
+      "value": 650
+    },
+    {
+      "name": "complex: rounded unit pricing",
+      "from": "formula/formula_complex_test.go",
+      "source": "ceil(totalWeight / 100) * ratePerCWT + floor(totalDistance / 100) * ratePer100Miles + round(totalStops * stopRate, 2)",
+      "env": {
+        "totalDistance": 575.8,
+        "totalWeight": 45000,
+        "totalPieces": 24,
+        "totalStops": 3,
+        "hasHazmat": true,
+        "requiresTemperatureControl": true,
+        "temperatureDifferential": 4,
+        "temperatureMin": 34,
+        "temperatureMax": 38,
+        "status": "InTransit",
+        "proNumber": "PRO-2024-00001",
+        "ratePerCWT": 12.5,
+        "ratePer100Miles": 85.0,
+        "stopRate": 33.33
+      },
+      "value": 6149.99
+    },
+    {
+      "name": "complex: safe minimal calculation",
+      "from": "formula/formula_complex_test.go",
+      "source": "max(minimumCharge, startingRate + (ratePerMile * totalDistance) + (hasHazmat ? hazmatFee : 0) + (requiresTemperatureControl ? tempFee : 0))",
+      "env": {
+        "totalDistance": 50.0,
+        "hasHazmat": false,
+        "requiresTemperatureControl": false,
+        "minimumCharge": 150.0,
+        "startingRate": 50.0,
+        "ratePerMile": 2.0,
+        "hazmatFee": 100.0,
+        "tempFee": 75.0
+      },
+      "value": 150
+    },
+    {
+      "name": "complex: graceful nil handling",
+      "from": "formula/formula_complex_test.go",
+      "source": "startingRate + (ratePerMile * totalDistance) + (hasHazmat ? hazmatFee : 0) + (requiresTemperatureControl ? tempFee : 0)",
+      "env": {
+        "totalDistance": 0,
+        "hasHazmat": false,
+        "requiresTemperatureControl": false,
+        "startingRate": 100.0,
+        "ratePerMile": 2.0,
+        "hazmatFee": 150.0,
+        "tempFee": 200.0
+      },
+      "value": 100
+    },
+    {
+      "name": "rating method: flat rate",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "baseRate",
+      "env": {
+        "baseRate": 1500.0
+      },
+      "value": 1500
+    },
+    {
+      "name": "rating method: per mile",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "baseRate * totalDistance",
+      "env": {
+        "baseRate": 2.5,
+        "totalDistance": 450.0
+      },
+      "value": 1125
+    },
+    {
+      "name": "rating method: per stop",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "baseRate * totalStops",
+      "env": {
+        "baseRate": 125.0,
+        "totalStops": 3
+      },
+      "value": 375
+    },
+    {
+      "name": "rating method: per pound",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "baseRate * totalWeight",
+      "env": {
+        "baseRate": 0.08,
+        "totalWeight": 25000
+      },
+      "value": 2000
+    },
+    {
+      "name": "rating method: per pallet",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "baseRate * totalPieces",
+      "env": {
+        "baseRate": 85.0,
+        "totalPieces": 12
+      },
+      "value": 1020
+    },
+    {
+      "name": "rating method: per linear foot",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "baseRate * totalLinearFeet",
+      "env": {
+        "baseRate": 35.0,
+        "totalLinearFeet": 32
+      },
+      "value": 1120
+    },
+    {
+      "name": "rating method: flat fee from existing charges",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "freightChargeAmount + otherChargeAmount",
+      "env": {
+        "freightChargeAmount": 1500.0,
+        "otherChargeAmount": 250.0
+      },
+      "value": 1750
+    },
+    {
+      "name": "rating method: per hundredweight",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "baseRate * ceil(totalWeight / 100)",
+      "env": {
+        "baseRate": 15.0,
+        "totalWeight": 25000
+      },
+      "value": 3750
+    },
+    {
+      "name": "rating method: per mile with minimum",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "max(minimumCharge, baseRate * totalDistance)",
+      "env": {
+        "minimumCharge": 500.0,
+        "baseRate": 2.5,
+        "totalDistance": 50.0
+      },
+      "value": 500
+    },
+    {
+      "name": "rating method: rating unit multiplier",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "ratingUnit * baseRate",
+      "env": {
+        "ratingUnit": 5,
+        "baseRate": 150.0
+      },
+      "value": 750
+    },
+    {
+      "name": "rating method: combined rate with accessorials",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "round(max(minimumCharge, baseRate * totalDistance) * (1 + fuelSurchargePercent / 100) + (totalStops > 2 ? (totalStops - 2) * additionalStopFee : 0), 2)",
+      "env": {
+        "minimumCharge": 300.0,
+        "fuelSurchargePercent": 18.0,
+        "additionalStopFee": 50.0,
+        "baseRate": 2.25,
+        "totalDistance": 450.0,
+        "totalStops": 3
+      },
+      "value": 1244.75
+    },
+    {
+      "name": "rating method: current total charge",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "currentTotalCharge",
+      "env": {
+        "currentTotalCharge": 1750.0
+      },
+      "value": 1750
+    },
+    {
+      "name": "rating method: per linear foot without commodities",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "max(minimumCharge, ratePerLinearFoot * totalLinearFeet)",
+      "env": {
+        "minimumCharge": 200.0,
+        "ratePerLinearFoot": 35.0,
+        "totalLinearFeet": 0
+      },
+      "value": 200
+    },
+    {
+      "name": "rating method: charges the environment read as zero",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "freightChargeAmount + otherChargeAmount",
+      "env": {
+        "freightChargeAmount": 0,
+        "otherChargeAmount": 0
+      },
+      "value": 0
+    },
+    {
+      "name": "rating method: one valid and one zero charge",
+      "from": "formula/formula_rating_methods_test.go",
+      "source": "freightChargeAmount + otherChargeAmount",
+      "env": {
+        "freightChargeAmount": 500.0,
+        "otherChargeAmount": 0
+      },
+      "value": 500
+    },
+    {
+      "name": "rating method: positive over zero is division by zero",
+      "from": "formula/formula_rating_methods_test.go TestRatingMethod_DivisionByZero (non-finite under float64)",
+      "source": "numerator / denominator",
+      "env": {
+        "numerator": 1500.0,
+        "denominator": 0.0
+      },
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "rating method: negative over zero is division by zero",
+      "from": "formula/formula_rating_methods_test.go TestRatingMethod_DivisionByZero (non-finite under float64)",
+      "source": "numerator / denominator",
+      "env": {
+        "numerator": -1500.0,
+        "denominator": 0.0
+      },
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "rating method: zero over zero is division by zero",
+      "from": "formula/formula_rating_methods_test.go TestRatingMethod_DivisionByZero (non-finite under float64)",
+      "source": "numerator / denominator",
+      "env": {
+        "numerator": 0.0,
+        "denominator": 0.0
+      },
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "language: upper(\"tx\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "upper(\"tx\")",
+      "value": "TX"
+    },
+    {
+      "name": "language: lower(\"TX\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "lower(\"TX\")",
+      "value": "tx"
+    },
+    {
+      "name": "language: trim(\"  a  \")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "trim(\"  a  \")",
+      "value": "a"
+    },
+    {
+      "name": "language: trim(\"xxaxx\", \"x\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "trim(\"xxaxx\", \"x\")",
+      "value": "a"
+    },
+    {
+      "name": "language: trimPrefix(\"C-ACME\", \"C-\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "trimPrefix(\"C-ACME\", \"C-\")",
+      "value": "ACME"
+    },
+    {
+      "name": "language: trimSuffix(\"75201-0000\", \"-0000\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "trimSuffix(\"75201-0000\", \"-0000\")",
+      "value": "75201"
+    },
+    {
+      "name": "language: trimPrefix(\" a\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "trimPrefix(\" a\")",
+      "value": "a"
+    },
+    {
+      "name": "language: hasPrefix(\"75201\", \"7\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "hasPrefix(\"75201\", \"7\")",
+      "value": true
+    },
+    {
+      "name": "language: hasSuffix(\"ACME-EXP\", \"-EXP\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "hasSuffix(\"ACME-EXP\", \"-EXP\")",
+      "value": true
+    },
+    {
+      "name": "language: indexOf(\"ACME-EXP\", \"-\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "indexOf(\"ACME-EXP\", \"-\")",
+      "value": 4
+    },
+    {
+      "name": "language: indexOf(\"é-x\", \"-\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "indexOf(\"é-x\", \"-\")",
+      "value": 1
+    },
+    {
+      "name": "language: lastIndexOf(\"a-b-c\", \"-\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "lastIndexOf(\"a-b-c\", \"-\")",
+      "value": 3
+    },
+    {
+      "name": "language: indexOf(\"abc\", \"z\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "indexOf(\"abc\", \"z\")",
+      "value": -1
+    },
+    {
+      "name": "language: replace(\"75201-1234\", \"-\", \"\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "replace(\"75201-1234\", \"-\", \"\")",
+      "value": "752011234"
+    },
+    {
+      "name": "language: replace(\"aaa\", \"a\", \"b\", 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "replace(\"aaa\", \"a\", \"b\", 2)",
+      "value": "bba"
+    },
+    {
+      "name": "language: split(\"A-B-C\", \"-\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "split(\"A-B-C\", \"-\")",
+      "value": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "name": "language: split(\"A-B-C\", \"-\", 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "split(\"A-B-C\", \"-\", 2)",
+      "value": [
+        "A",
+        "B-C"
+      ]
+    },
+    {
+      "name": "language: splitAfter(\"A-B\", \"-\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "splitAfter(\"A-B\", \"-\")",
+      "value": [
+        "A-",
+        "B"
+      ]
+    },
+    {
+      "name": "language: splitAfter(\"A-B-C\", \"-\", 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "splitAfter(\"A-B-C\", \"-\", 2)",
+      "value": [
+        "A-",
+        "B-C"
+      ]
+    },
+    {
+      "name": "language: join([\"a\", \"b\"])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "join([\"a\", \"b\"])",
+      "value": "ab"
+    },
+    {
+      "name": "language: join([\"a\", \"b\"], \", \")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "join([\"a\", \"b\"], \", \")",
+      "value": "a, b"
+    },
+    {
+      "name": "language: len(\"🚚é\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "len(\"🚚é\")",
+      "value": 2
+    },
+    {
+      "name": "language: len([1, 2, 3])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "len([1, 2, 3])",
+      "value": 3
+    },
+    {
+      "name": "language: len({a: 1, b: 2})",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "len({a: 1, b: 2})",
+      "value": 2
+    },
+    {
+      "name": "language: string(12)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "string(12)",
+      "value": "12"
+    },
+    {
+      "name": "language: string(2.50)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "string(2.50)",
+      "value": "2.5"
+    },
+    {
+      "name": "language: string(true)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "string(true)",
+      "value": "true"
+    },
+    {
+      "name": "language: string([1, \"a\"])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "string([1, \"a\"])",
+      "value": "[1 a]"
+    },
+    {
+      "name": "language: string({b: 1, a: 2})",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "string({b: 1, a: 2})",
+      "value": "map[a:2 b:1]"
+    },
+    {
+      "name": "language: float(\"1.25\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "float(\"1.25\")",
+      "value": 1.25
+    },
+    {
+      "name": "language: float(3)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "float(3)",
+      "value": 3
+    },
+    {
+      "name": "language: int(\"42\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "int(\"42\")",
+      "value": 42
+    },
+    {
+      "name": "language: int(3.9)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "int(3.9)",
+      "value": 3
+    },
+    {
+      "name": "language: int(-3.9)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "int(-3.9)",
+      "value": -3
+    },
+    {
+      "name": "language: type(1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "type(1)",
+      "value": "number"
+    },
+    {
+      "name": "language: type(\"a\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "type(\"a\")",
+      "value": "string"
+    },
+    {
+      "name": "language: type(nil)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "type(nil)",
+      "value": "nil"
+    },
+    {
+      "name": "language: type([])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "type([])",
+      "value": "array"
+    },
+    {
+      "name": "language: type({})",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "type({})",
+      "value": "map"
+    },
+    {
+      "name": "language: type(true)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "type(true)",
+      "value": "bool"
+    },
+    {
+      "name": "language: first([1, 2])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "first([1, 2])",
+      "value": 1
+    },
+    {
+      "name": "language: first([])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "first([])",
+      "value": null
+    },
+    {
+      "name": "language: last([1, 2])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "last([1, 2])",
+      "value": 2
+    },
+    {
+      "name": "language: get([1, 2], 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "get([1, 2], 1)",
+      "value": 2
+    },
+    {
+      "name": "language: get([1, 2], -1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "get([1, 2], -1)",
+      "value": 2
+    },
+    {
+      "name": "language: get([1, 2], 5)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "get([1, 2], 5)",
+      "value": null
+    },
+    {
+      "name": "language: get({a: 1}, \"a\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "get({a: 1}, \"a\")",
+      "value": 1
+    },
+    {
+      "name": "language: get({a: 1}, \"b\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "get({a: 1}, \"b\")",
+      "value": null
+    },
+    {
+      "name": "language: get(\"abc\", 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "get(\"abc\", 1)",
+      "value": "b"
+    },
+    {
+      "name": "language: take([1, 2, 3], 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "take([1, 2, 3], 2)",
+      "value": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "language: take([1], 5)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "take([1], 5)",
+      "value": [
+        1
+      ]
+    },
+    {
+      "name": "language: keys({b: 1, a: 2})",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "keys({b: 1, a: 2})",
+      "value": [
+        "a",
+        "b"
+      ]
+    },
+    {
+      "name": "language: values({b: 1, a: 2})",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "values({b: 1, a: 2})",
+      "value": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "language: toPairs({b: 1, a: 2})",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "toPairs({b: 1, a: 2})",
+      "value": [
+        [
+          "a",
+          2
+        ],
+        [
+          "b",
+          1
+        ]
+      ]
+    },
+    {
+      "name": "language: fromPairs([[\"b\", 1], [\"a\", 2]])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "fromPairs([[\"b\", 1], [\"a\", 2]])",
+      "value": {
+        "a": 2,
+        "b": 1
+      }
+    },
+    {
+      "name": "language: reverse([1, 2, 3])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "reverse([1, 2, 3])",
+      "value": [
+        3,
+        2,
+        1
+      ]
+    },
+    {
+      "name": "language: uniq([1, 2, 1, 3, 2])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "uniq([1, 2, 1, 3, 2])",
+      "value": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "language: concat([1], [2, 3], [])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "concat([1], [2, 3], [])",
+      "value": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "language: flatten([1, [2, [3, [4]]]])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "flatten([1, [2, [3, [4]]]])",
+      "value": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "name": "language: sort([3, 1, 2])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "sort([3, 1, 2])",
+      "value": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "language: sort([\"b\", \"a\", \"c\"], \"desc\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "sort([\"b\", \"a\", \"c\"], \"desc\")",
+      "value": [
+        "c",
+        "b",
+        "a"
+      ]
+    },
+    {
+      "name": "language: bitand(12, 10)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitand(12, 10)",
+      "value": 8
+    },
+    {
+      "name": "language: bitor(12, 10)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitor(12, 10)",
+      "value": 14
+    },
+    {
+      "name": "language: bitxor(12, 10)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitxor(12, 10)",
+      "value": 6
+    },
+    {
+      "name": "language: bitnand(12, 10)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitnand(12, 10)",
+      "value": 4
+    },
+    {
+      "name": "language: bitshl(1, 4)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitshl(1, 4)",
+      "value": 16
+    },
+    {
+      "name": "language: bitshr(256, 4)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitshr(256, 4)",
+      "value": 16
+    },
+    {
+      "name": "language: bitushr(-1, 60)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitushr(-1, 60)",
+      "value": 15
+    },
+    {
+      "name": "language: bitnot(5)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "bitnot(5)",
+      "value": -6
+    },
+    {
+      "name": "language: mean(1, 2, 3, 4)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "mean(1, 2, 3, 4)",
+      "value": 2.5
+    },
+    {
+      "name": "language: median(3, 1, 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "median(3, 1, 2)",
+      "value": 2
+    },
+    {
+      "name": "language: median([4, 1], 3, 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "median([4, 1], 3, 2)",
+      "value": 2.5
+    },
+    {
+      "name": "language: median([])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "median([])",
+      "value": 0
+    },
+    {
+      "name": "language: sum([], [])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "sum([], [])",
+      "value": 0
+    },
+    {
+      "name": "language: all([1, 2], # > 0)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "all([1, 2], # > 0)",
+      "value": true
+    },
+    {
+      "name": "language: all([1, -2], # > 0)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "all([1, -2], # > 0)",
+      "value": false
+    },
+    {
+      "name": "language: none([1, 2], # > 5)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "none([1, 2], # > 5)",
+      "value": true
+    },
+    {
+      "name": "language: any([1, 2], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "any([1, 2], # > 1)",
+      "value": true
+    },
+    {
+      "name": "language: one([1, 2], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "one([1, 2], # > 1)",
+      "value": true
+    },
+    {
+      "name": "language: one([2, 3], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "one([2, 3], # > 1)",
+      "value": false
+    },
+    {
+      "name": "language: filter([1, 2, 3], # % 2 == 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "filter([1, 2, 3], # % 2 == 1)",
+      "value": [
+        1,
+        3
+      ]
+    },
+    {
+      "name": "language: map([1, 2], # * 10)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "map([1, 2], # * 10)",
+      "value": [
+        10,
+        20
+      ]
+    },
+    {
+      "name": "language: find([1, 2, 3], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "find([1, 2, 3], # > 1)",
+      "value": 2
+    },
+    {
+      "name": "language: find([1], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "find([1], # > 1)",
+      "value": null
+    },
+    {
+      "name": "language: findIndex([1, 2, 3], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "findIndex([1, 2, 3], # > 1)",
+      "value": 1
+    },
+    {
+      "name": "language: findIndex([1], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "findIndex([1], # > 1)",
+      "value": -1
+    },
+    {
+      "name": "language: findLast([1, 2, 3], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "findLast([1, 2, 3], # > 1)",
+      "value": 3
+    },
+    {
+      "name": "language: findLastIndex([1, 2, 3], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "findLastIndex([1, 2, 3], # > 1)",
+      "value": 2
+    },
+    {
+      "name": "language: count([1, 2, 3], # > 1)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "count([1, 2, 3], # > 1)",
+      "value": 2
+    },
+    {
+      "name": "language: count([true, false, true])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "count([true, false, true])",
+      "value": 2
+    },
+    {
+      "name": "language: groupBy([1, 2, 3], # % 2 == 0 ? \"even\" : \"odd\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "groupBy([1, 2, 3], # % 2 == 0 ? \"even\" : \"odd\")",
+      "value": {
+        "even": [
+          2
+        ],
+        "odd": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "name": "language: groupBy([{t: \"a\", v: 1}, {t: \"b\", v: 2}, {t: \"a\", v: 3}], .t).a",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "groupBy([{t: \"a\", v: 1}, {t: \"b\", v: 2}, {t: \"a\", v: 3}], .t).a",
+      "value": [
+        {
+          "t": "a",
+          "v": 1
+        },
+        {
+          "t": "a",
+          "v": 3
+        }
+      ]
+    },
+    {
+      "name": "language: sortBy([{w: 3}, {w: 1}, {w: 2}], .w)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "sortBy([{w: 3}, {w: 1}, {w: 2}], .w)",
+      "value": [
+        {
+          "w": 1
+        },
+        {
+          "w": 2
+        },
+        {
+          "w": 3
+        }
+      ]
+    },
+    {
+      "name": "language: sortBy([1, 3, 2], #, \"desc\")",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "sortBy([1, 3, 2], #, \"desc\")",
+      "value": [
+        3,
+        2,
+        1
+      ]
+    },
+    {
+      "name": "language: sortBy([{k: 1, n: \"a\"}, {k: 0, n: \"b\"}, {k: 1, n: \"c\"}], .k)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "sortBy([{k: 1, n: \"a\"}, {k: 0, n: \"b\"}, {k: 1, n: \"c\"}], .k)",
+      "value": [
+        {
+          "k": 0,
+          "n": "b"
+        },
+        {
+          "k": 1,
+          "n": "a"
+        },
+        {
+          "k": 1,
+          "n": "c"
+        }
+      ]
+    },
+    {
+      "name": "language: reduce([1, 2, 3], #acc + #)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "reduce([1, 2, 3], #acc + #)",
+      "value": 6
+    },
+    {
+      "name": "language: reduce([1, 2, 3], #acc + #, 10)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "reduce([1, 2, 3], #acc + #, 10)",
+      "value": 16
+    },
+    {
+      "name": "language: reduce([5, 6], #acc + #index, 0)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "reduce([5, 6], #acc + #index, 0)",
+      "value": 1
+    },
+    {
+      "name": "language: map([10, 20], #index)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "map([10, 20], #index)",
+      "value": [
+        0,
+        1
+      ]
+    },
+    {
+      "name": "language: map([[1, 2], [3]], len(#))",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "map([[1, 2], [3]], len(#))",
+      "value": [
+        2,
+        1
+      ]
+    },
+    {
+      "name": "language: map([{a: {b: 1}}], .a.b)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "map([{a: {b: 1}}], .a.b)",
+      "value": [
+        1
+      ]
+    },
+    {
+      "name": "language: map([1, 2], map([10, 20], # + 1))",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "map([1, 2], map([10, 20], # + 1))",
+      "value": [
+        [
+          11,
+          21
+        ],
+        [
+          11,
+          21
+        ]
+      ]
+    },
+    {
+      "name": "language: filter([{w: 1}, {w: 5}], .w > 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "filter([{w: 1}, {w: 5}], .w > 2)",
+      "value": [
+        {
+          "w": 5
+        }
+      ]
+    },
+    {
+      "name": "language: map([1, 2], { let d = # * 2; d + 1 })",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "map([1, 2], { let d = # * 2; d + 1 })",
+      "value": [
+        3,
+        5
+      ]
+    },
+    {
+      "name": "language: [1, 2, 3][-1]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, 2, 3][-1]",
+      "value": 3
+    },
+    {
+      "name": "language: [1, 2, 3][0:2]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, 2, 3][0:2]",
+      "value": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "language: [1, 2, 3][1:]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, 2, 3][1:]",
+      "value": [
+        2,
+        3
+      ]
+    },
+    {
+      "name": "language: [1, 2, 3][:-1]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, 2, 3][:-1]",
+      "value": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "language: [1, 2, 3][5:9]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, 2, 3][5:9]",
+      "value": []
+    },
+    {
+      "name": "language: \"75201\"[0:3]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"75201\"[0:3]",
+      "value": "752"
+    },
+    {
+      "name": "language: \"🚚 é\"[-1]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"🚚 é\"[-1]",
+      "value": "é"
+    },
+    {
+      "name": "language: \"abc\"[1:]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"abc\"[1:]",
+      "value": "bc"
+    },
+    {
+      "name": "language: {a: {b: 2}}.a.b",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "{a: {b: 2}}.a.b",
+      "value": 2
+    },
+    {
+      "name": "language: {a: 1}.b",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "{a: 1}.b",
+      "value": null
+    },
+    {
+      "name": "language: {\"b c\": 2}[\"b c\"]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "{\"b c\": 2}[\"b c\"]",
+      "value": 2
+    },
+    {
+      "name": "language: {a: 1}?.b",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "{a: 1}?.b",
+      "value": null
+    },
+    {
+      "name": "language: 2 in [1, 2]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "2 in [1, 2]",
+      "value": true
+    },
+    {
+      "name": "language: 3 not in [1, 2]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "3 not in [1, 2]",
+      "value": true
+    },
+    {
+      "name": "language: \"a\" in {a: 1}",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"a\" in {a: 1}",
+      "value": true
+    },
+    {
+      "name": "language: \"z\" in {a: 1}",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"z\" in {a: 1}",
+      "value": false
+    },
+    {
+      "name": "language: 1 in nil",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1 in nil",
+      "value": false
+    },
+    {
+      "name": "language: \"ACME Clinic\" contains \"Clinic\"",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"ACME Clinic\" contains \"Clinic\"",
+      "value": true
+    },
+    {
+      "name": "language: \"75201\" startsWith \"75\"",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"75201\" startsWith \"75\"",
+      "value": true
+    },
+    {
+      "name": "language: \"75201\" endsWith \"01\"",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"75201\" endsWith \"01\"",
+      "value": true
+    },
+    {
+      "name": "language: \"75201\" matches \"^7[0-9]{4}$\"",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"75201\" matches \"^7[0-9]{4}$\"",
+      "value": true
+    },
+    {
+      "name": "language: \"85201\" not matches \"^7\"",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"85201\" not matches \"^7\"",
+      "value": true
+    },
+    {
+      "name": "language: 1..3",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1..3",
+      "value": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "name": "language: 3..1",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "3..1",
+      "value": []
+    },
+    {
+      "name": "language: -1..1",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "-1..1",
+      "value": [
+        -1,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "language: 2 ** 10",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "2 ** 10",
+      "value": 1024
+    },
+    {
+      "name": "language: 2 ^ 3 ^ 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "2 ^ 3 ^ 2",
+      "value": 512
+    },
+    {
+      "name": "language: -2 ** 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "-2 ** 2",
+      "value": -4
+    },
+    {
+      "name": "language: 7 % 3",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "7 % 3",
+      "value": 1
+    },
+    {
+      "name": "language: -7 % 3",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "-7 % 3",
+      "value": -1
+    },
+    {
+      "name": "language: 10 / 4",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "10 / 4",
+      "value": 2.5
+    },
+    {
+      "name": "language: 1 / 3 * 3",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1 / 3 * 3",
+      "value": 0.9999999999999999999999999999
+    },
+    {
+      "name": "language: not true",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "not true",
+      "value": false
+    },
+    {
+      "name": "language: !false",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "!false",
+      "value": true
+    },
+    {
+      "name": "language: true and false",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "true and false",
+      "value": false
+    },
+    {
+      "name": "language: true or false",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "true or false",
+      "value": true
+    },
+    {
+      "name": "language: false || true",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "false || true",
+      "value": true
+    },
+    {
+      "name": "language: true && true",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "true && true",
+      "value": true
+    },
+    {
+      "name": "language: false and (1 / 0 > 0)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "false and (1 / 0 > 0)",
+      "value": false
+    },
+    {
+      "name": "language: true or (1 / 0 > 0)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "true or (1 / 0 > 0)",
+      "value": true
+    },
+    {
+      "name": "language: 1 ?? (1 / 0)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1 ?? (1 / 0)",
+      "value": 1
+    },
+    {
+      "name": "language: nil ?? 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "nil ?? 2",
+      "value": 2
+    },
+    {
+      "name": "language: 1 < 2 < 3",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1 < 2 < 3",
+      "value": true
+    },
+    {
+      "name": "language: 3 > 2 > 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "3 > 2 > 2",
+      "value": false
+    },
+    {
+      "name": "language: 1 < 2 <= 2 < 3",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1 < 2 <= 2 < 3",
+      "value": true
+    },
+    {
+      "name": "language: 1 > 2 < (1 / 0)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1 > 2 < (1 / 0)",
+      "value": false
+    },
+    {
+      "name": "language: true ? 1 : 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "true ? 1 : 2",
+      "value": 1
+    },
+    {
+      "name": "language: false ? 1 : 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "false ? 1 : 2",
+      "value": 2
+    },
+    {
+      "name": "language: true ?: 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "true ?: 2",
+      "value": true
+    },
+    {
+      "name": "language: false ?: 2",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "false ?: 2",
+      "value": 2
+    },
+    {
+      "name": "language: if false { 1 } else if true { 2 } else { 3 }",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "if false { 1 } else if true { 2 } else { 3 }",
+      "value": 2
+    },
+    {
+      "name": "language: let a = 2; let b = a * 3; b + 1",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "let a = 2; let b = a * 3; b + 1",
+      "value": 7
+    },
+    {
+      "name": "language: (let x = 1; x) + (let x = 2; x)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "(let x = 1; x) + (let x = 2; x)",
+      "value": 3
+    },
+    {
+      "name": "language: [1, 2] | map(# * 2)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, 2] | map(# * 2)",
+      "value": [
+        2,
+        4
+      ]
+    },
+    {
+      "name": "language: [1, 2, 3] | filter(# > 1) | len()",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, 2, 3] | filter(# > 1) | len()",
+      "value": 2
+    },
+    {
+      "name": "language: \"a\" < \"b\"",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"a\" < \"b\"",
+      "value": true
+    },
+    {
+      "name": "language: \"B\" < \"a\"",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "\"B\" < \"a\"",
+      "value": true
+    },
+    {
+      "name": "language: [1, [2]] == [1, [2.0]]",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "[1, [2]] == [1, [2.0]]",
+      "value": true
+    },
+    {
+      "name": "language: {a: 1} == {a: 1.0}",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "{a: 1} == {a: 1.0}",
+      "value": true
+    },
+    {
+      "name": "language: nil == nil",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "nil == nil",
+      "value": true
+    },
+    {
+      "name": "language: 1 != nil",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1 != nil",
+      "value": true
+    },
+    {
+      "name": "language: 10_000 + 0x10 + 0o10 + 0b10",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "10_000 + 0x10 + 0o10 + 0b10",
+      "value": 10026
+    },
+    {
+      "name": "language: 1e3",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "1e3",
+      "value": 1000
+    },
+    {
+      "name": "language: 2.50",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "2.50",
+      "value": 2.5
+    },
+    {
+      "name": "language: max([1, 9], 3)",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "max([1, 9], 3)",
+      "value": 9
+    },
+    {
+      "name": "language: min([4], [2, 8])",
+      "from": "expr builtin/builtin.go and vm/runtime",
+      "source": "min([4], [2, 8])",
+      "value": 2
+    },
+    {
+      "name": "language refuses: 1 / 0",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1 / 0",
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "language refuses: 1 % 0",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1 % 0",
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "language refuses: 7.5 % 2",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "7.5 % 2",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: bitand(1.5, 1)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "bitand(1.5, 1)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: bitshl(1, -1)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "bitshl(1, -1)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: [1, 2][2]",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "[1, 2][2]",
+      "error": {
+        "code": "index"
+      }
+    },
+    {
+      "name": "language refuses: \"ab\"[5]",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "\"ab\"[5]",
+      "error": {
+        "code": "index"
+      }
+    },
+    {
+      "name": "language refuses: 1 + \"a\"",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1 + \"a\"",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: -\"a\"",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "-\"a\"",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: not 1",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "not 1",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: 1 and true",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1 and true",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: 1 ? 2 : 3",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1 ? 2 : 3",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: \"a\" matches \"(\"",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "\"a\" matches \"(\"",
+      "error": {
+        "code": "regex"
+      }
+    },
+    {
+      "name": "language refuses: 1 < \"a\"",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1 < \"a\"",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: [1] < [2]",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "[1] < [2]",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: sort([1, \"a\"])",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "sort([1, \"a\"])",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: sort([1], \"up\")",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "sort([1], \"up\")",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: take([1], -1)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "take([1], -1)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: reduce([], #acc + #)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "reduce([], #acc + #)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: fromPairs([[1]])",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "fromPairs([[1]])",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: fromPairs([1])",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "fromPairs([1])",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: join([1, 2])",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "join([1, 2])",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: len(5)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "len(5)",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: keys([1])",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "keys([1])",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: first(1)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "first(1)",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: concat([1], 2)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "concat([1], 2)",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: map(5, # * 2)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "map(5, # * 2)",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: filter([1], #)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "filter([1], #)",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: int(\"abc\")",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "int(\"abc\")",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: float(true)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "float(true)",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: \"a\" in \"abc\"",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "\"a\" in \"abc\"",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: (5).b",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "(5).b",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: 1..1.5",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1..1.5",
+      "error": {
+        "code": "argument"
+      }
+    },
+    {
+      "name": "language refuses: 1..1000000",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1..1000000",
+      "error": {
+        "code": "budget"
+      }
+    },
+    {
+      "name": "language refuses: 10 ** 30",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "10 ** 30",
+      "error": {
+        "code": "overflow"
+      }
+    },
+    {
+      "name": "language refuses: (-8) ** 0.5",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "(-8) ** 0.5",
+      "error": {
+        "code": "nonFinite"
+      }
+    },
+    {
+      "name": "language refuses: 0 ** -1",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "0 ** -1",
+      "error": {
+        "code": "nonFinite"
+      }
+    },
+    {
+      "name": "language refuses: 79228162514264337593543950335 + 1",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "79228162514264337593543950335 + 1",
+      "error": {
+        "code": "overflow"
+      }
+    },
+    {
+      "name": "language refuses: 1 == \"1\"",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "1 == \"1\"",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: now()",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "now()",
+      "error": {
+        "code": "unknownName"
+      }
+    },
+    {
+      "name": "language refuses: toBase64(\"x\")",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "toBase64(\"x\")",
+      "error": {
+        "code": "unknownName"
+      }
+    },
+    {
+      "name": "language refuses: upper(1)",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "upper(1)",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: duration(\"1h\").Year()",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "duration(\"1h\").Year()",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: date(\"2026-01-01\").Hours()",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "date(\"2026-01-01\").Hours()",
+      "error": {
+        "code": "type"
+      }
+    },
+    {
+      "name": "language refuses: let x = 1 / 0; 2",
+      "from": "expr builtin/builtin.go and vm/runtime (errors)",
+      "source": "let x = 1 / 0; 2",
+      "error": {
+        "code": "divideByZero"
+      }
+    },
+    {
+      "name": "keys are in key order, where Go's map order was random",
+      "from": "expr builtin keys (Go map order)",
+      "source": "keys({zebra: 1, apple: 2, mango: 3})",
+      "value": [
+        "apple",
+        "mango",
+        "zebra"
+      ]
+    },
+    {
+      "name": "values follow key order, where Go's map order was random",
+      "from": "expr builtin values (Go map order)",
+      "source": "values({zebra: 1, apple: 2, mango: 3})",
+      "value": [
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "name": "pairs follow key order, where Go's map order was random",
+      "from": "expr builtin toPairs (Go map order)",
+      "source": "toPairs({b: 1, a: 2})[0][0]",
+      "value": "a"
+    }
+  ]
+}
