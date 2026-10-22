@@ -267,3 +267,33 @@ func TestPersonRead_TheResponseNamesWhatWasWithheld(t *testing.T) {
 	})
 	assert.NotContains(t, resp.Extensions, withheldExtension, "nothing withheld, nothing named")
 }
+
+func TestPersonRead_AnInjuryCaseAWorkerCarriesNeedsInjuryRead(t *testing.T) {
+	t.Parallel()
+
+	injuryField := func(field string) []fieldStep {
+		return []fieldStep{
+			{object: "Query", field: "worker"},
+			{object: "Worker", field: "injuries"},
+			{object: "WorkerInjury", field: field},
+		}
+	}
+
+	guard, ctx := personGuard(t, permission.ResourceWorkerInjury)
+	for _, field := range []string{"bodyPart", "harmfulAgent"} {
+		result, resolved := resolveNested(t, guard, ctx, injuryField(field)...)
+		assert.Nil(t, result, "a worker reader without worker_injury read sees no %s", field)
+		assert.False(t, resolved, field)
+	}
+	for _, field := range []string{"id", "caseNumber", "status"} {
+		result, resolved := resolveNested(t, guard, ctx, injuryField(field)...)
+		assert.Equal(t, "stored value", result, "%s is in the injury's reference view", field)
+		assert.True(t, resolved, field)
+	}
+	assert.Contains(t, withheldPaths(ctx), "worker.injuries.bodyPart")
+
+	guard, ctx = personGuard(t, permission.ResourceWorker)
+	result, resolved := resolveNested(t, guard, ctx, injuryField("bodyPart")...)
+	assert.Equal(t, "stored value", result, "worker_injury read shows the case")
+	assert.True(t, resolved)
+}
