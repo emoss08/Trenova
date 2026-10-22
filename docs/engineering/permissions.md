@@ -312,6 +312,22 @@ that never received a field cannot clear it. Creating a record takes the values 
 Workers are published to the realtime stream without their entity, so a subscriber refetches
 through the guarded paths.
 
+The audit trail withholds the same fields when an entry is read, not when it is written, so a
+reader who holds the group (an administrator reviewing a change) still sees the whole diff.
+An audit entry stores its record as JSON, so the fields are declared as JSON paths in
+`permission.ProtectedPaths` (`protectedpaths.go`): a path matches at any depth unless it is
+rooted at a resource (`WorkerCredential.number`, `RateQuote.costAmount`), `[]` steps into a
+list, and a `When` condition limits it to the object holding it (only the driver pay step of a
+calculation trace). `audit.Entry.WithholdFields` applies them to `previousState`,
+`currentState` and `changes`: a change to a protected field keeps its path and type and loses
+both values, and a change to an object or list keeps the object with the protected fields
+inside it nulled. GraphQL resolves the three `AuditEntry` fields through it, on every path that
+reaches an entry (the audit log, a record's history, an AI audit event); an entry in a REST
+response is a `FieldWithholder`, so the response guard does the same. No agent tool or export
+carries audit states (an AI audit export lists entry IDs). A new protected field on a stored
+record needs its path declared there; `TestEveryProtectedFieldIsWithheldFromTheAuditTrail`
+fails until it is.
+
 Every protected field is also classified confidential in the registry, which keeps it out
 of agent tools, reports and proposal previews by tier. `fieldguard_test.go` fails if a field
 is protected without that classification, without an entity that withholds it, or if the
@@ -354,6 +370,7 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Carrier assignment | the margin floor refusal names no figure | `carrierassignmentservice.enforceMarginFloor` |
 | Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `protected: Margins` in `reportcatalog.yml` |
 | Agent tools | `carrier_shop` margins, sell total and `BestMargin`; `rate_explain` margin | `fieldAccess.groups`, held to the agent's data access |
+| Audit trail | every field above in an entry's previous and current state and its changes | `permission.ProtectedPaths`, `audit.Entry.WithholdFields` at read time |
 
 An agent is held to its person's group and to its own data access. A protected field of a
 record is Confidential and never reaches an agent; a computed figure (a capacity match's

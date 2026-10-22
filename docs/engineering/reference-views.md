@@ -172,6 +172,7 @@ Each failure says what to add.
 | `TestEveryProtectedTypeSaysWhatStandsBehindIt` (gqlext) | a type with protected fields names neither the entity REST withholds it through nor why only GraphQL serves it |
 | `TestEveryMarginFieldARESTResponseCarriesIsWithheld` (responseguard) | a JSON field a REST response carries, named for a margin or profit, has no `WithholdFields` in `restMargins` that clears it, and is not listed in `unprotectedRESTMarginNames` with why |
 | `TestEveryRESTMarginIsClearedWithoutTheMarginsGroupAndKeptWithIt` (responseguard) | a type in `restMargins` leaves a margin to a caller without the group, or clears one for a caller with it |
+| `TestEveryProtectedFieldIsWithheldFromTheAuditTrail` (responseguard) | a field a stored record's `WithholdFields` clears (worker, credential and every domain type in `restMargins`) stays in an audit entry of that record for a reader without the group, because no `permission.ProtectedPaths` entry covers it, or is withheld from a reader with every group |
 | `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a bun relation that is neither a kind nor listed in `carried` |
 | `TestEveryKindAgreesWithTheGraphQLGuard` (responseguard) | a Go type is gated as a different kind on REST than the GraphQL type bound to it |
 | `TestHandlersWriteEveryResponseThroughTheGuard` (responseguard) | a handler writes a response with gin directly instead of `helpers.JSON` |

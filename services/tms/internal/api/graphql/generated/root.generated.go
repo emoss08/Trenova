@@ -941,6 +941,9 @@ type ApprovalDelegationResolver interface {
 }
 
 type AuditEntryResolver interface {
+	Changes(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	PreviousState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
 	Resource(ctx context.Context, obj *audit.Entry) (string, error)
 	Operation(ctx context.Context, obj *audit.Entry) (string, error)
 	EntityRef(ctx context.Context, obj *audit.Entry) (*string, error)

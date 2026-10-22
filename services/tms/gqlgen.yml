@@ -4999,6 +4999,12 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.Entry
     fields:
+      changes:
+        resolver: true
+      previousState:
+        resolver: true
+      currentState:
+        resolver: true
       resource:
         resolver: true
       operation:
