@@ -144,6 +144,30 @@ mutationFn: async (values) => {
 Keep what the caller needs synchronously (types, the function that opens the result) in a
 separate light module (`capture-cover-sheet-print.ts`), so the static import stays small.
 
+## A rule the rules module answers
+
+Money splits, report formatting, lane keys and matrix coverage come from the WebAssembly
+module (`@trenova/shared/rules/*`, `docs/engineering/rules-engine.md`), never from a TS copy.
+
+```tsx
+// Render: suspend until loaded, under the section's own skeleton; one call for the whole list.
+<LazyComponent fallback={<ChargeLinesSkeleton />}>
+  <ChargeLines charges={charges} />
+</LazyComponent>;
+
+function ChargeLines({ charges }: { charges: Charge[] }) {
+  const rules = useRules();
+  const { totals } = chargeTotals(rules, { charges }); // decimal strings; Number() only to format
+}
+
+// A form: the resolver awaits the module, so validation never runs before it has loaded.
+useForm({
+  resolver: rulesResolver((rules) => zodResolver(withChargeAllocations(schema, rules, total))),
+});
+```
+
+A message the module returns is shown with `translateMessage(message, t)`.
+
 ## Showing a file
 
 ```tsx

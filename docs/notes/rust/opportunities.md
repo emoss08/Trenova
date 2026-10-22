@@ -153,6 +153,10 @@ protocol drift. Effort is small, because the Rust code already exists.
 
 ### R3. One shared calculation crate for the browser and the server
 
+**Status.** Built: `services/crates/rules`. The browser no longer has its own copy of the
+allocation, report formatting, lane or matrix rules; the TypeScript files in the table below keep
+only display and shaping helpers. See [rules-engine.md](../../engineering/rules-engine.md).
+
 **Today.** Several rule sets live twice, once in Go and once in TypeScript, held together by tests on
 one side or by nothing.
 
