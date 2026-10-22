@@ -443,3 +443,55 @@ func TestStepData_KeepsOnlyAnObjectSmallEnoughToShowAgain(t *testing.T) {
 }
 
 var _ agentports.RunStepLedger = (*keyedLedger)(nil)
+
+func TestRun_TheObserverIsToldTheArgumentsTheToolRanWith(t *testing.T) {
+	t.Parallel()
+
+	ledger := newKeyedLedger()
+	list := queryTool("shipment_list", map[string]any{
+		"items": []any{map[string]any{"proNumber": "S-1001"}},
+	}, nil)
+	list.Schema = map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"ids": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+		},
+	}
+	runID := pulid.MustNew("ar_")
+	threadID := pulid.MustNew("th_")
+
+	ranWith := make([]map[string]any, 0, 2)
+	for attempt := 1; attempt <= 2; attempt++ {
+		completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+			toolTurn("shipment_list", map[string]any{"ids": "shp_1"}),
+			textTurn("One shipment."),
+		}}
+		rt := newRuntime(completion,
+			&stubQueryRegistry{Tools: []agentports.AgentQueryTool{list}},
+			&stubActionRegistry{}, nil)
+
+		_, err := rt.Run(t.Context(), &agentports.RunRequest{
+			Definition: testDefinition("shipment_list"),
+			Actor:      testActor(),
+			Input:      "Show shipment shp_1",
+			RunID:      runID,
+			ThreadID:   threadID,
+			Steps:      ledger,
+			StepOwner:  agentports.RunStepOwner{Kind: agentports.RunStepOwnerAgentRun, ID: runID},
+			Attempt:    attempt,
+			ToolObserver: func(
+				observation agentports.ToolObservation,
+			) (*agentports.ShownArtifact, error) {
+				assert.Equal(t, "shp_1", observation.Call.Arguments["ids"])
+				ranWith = append(ranWith, observation.RanWith)
+				return nil, nil
+			},
+		})
+		require.NoError(t, err)
+	}
+
+	want := map[string]any{"ids": []any{"shp_1"}}
+	assert.Equal(t, 1, list.Calls)
+	assert.Equal(t, want, list.LastParams.Params)
+	assert.Equal(t, []map[string]any{want, want}, ranWith)
+}

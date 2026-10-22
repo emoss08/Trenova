@@ -297,6 +297,7 @@ func (o *ProposalOutcome) Pending() bool {
 // ToolObservation is one tool call as it finished.
 type ToolObservation struct {
 	Call ToolCall
+	RanWith map[string]any
 	// Data is what a query tool returned; nil for a write, a refusal or a
 	// failure.
 	Data   any

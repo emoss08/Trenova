@@ -20,7 +20,6 @@ var (
 )
 
 var (
-	ErrStaleCursor        = errStaleCursor
 	ErrOffsetOnCursorList = errOffsetOnCursorList
 )
 
