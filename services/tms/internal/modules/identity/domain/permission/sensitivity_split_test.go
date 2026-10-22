@@ -49,6 +49,13 @@ func TestMedicalRecordsKeepWhatHappenedToThePersonRestricted(t *testing.T) {
 				"findings", "notes", "documentId",
 			},
 		},
+		ResourceWorkerCredential: {
+			internal: []string{
+				"workerId", "credentialTypeId", "status", "issuingAuthority", "issuedAt",
+				"expiresAt", "health", "daysUntilExpiry", "documentId", "verifiedAt",
+			},
+			restricted: []string{"notes", "archiveReason"},
+		},
 		ResourceWorkerInjury: {
 			internal: []string{
 				"caseNumber", "caseYear", "classification", "illnessType", "status",

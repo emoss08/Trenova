@@ -18190,6 +18190,27 @@ export type CancelWorkerChecklistMutationVariables = Exact<{
 
 export type CancelWorkerChecklistMutation = { cancelWorkerChecklist: { ' $fragmentRefs'?: { 'WorkerChecklistFieldsFragment': WorkerChecklistFieldsFragment } } };
 
+export type DeskWorkerCredentialListQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  includeArchived?: boolean | null | undefined;
+  expiringWithinDays?: number | null | undefined;
+  includeExpired?: boolean | null | undefined;
+  credentialTypeCode?: string | null | undefined;
+  requiredOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type DeskWorkerCredentialListQuery = { workerCredentials: Array<{ id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, daysUntilExpiry: number | null, health: WorkerCredentialHealth, verifiedAt: number | null, documentId: string | null, credentialType: { ' $fragmentRefs'?: { 'WorkerCredentialTypeReferenceFragment': WorkerCredentialTypeReferenceFragment } } | null, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
+
+export type DeskWorkerCredentialTypesQueryVariables = Exact<{
+  input: WorkerCredentialTypesInput;
+}>;
+
+
+export type DeskWorkerCredentialTypesQuery = { workerCredentialTypes: { edges: Array<{ node: { id: string, code: string, name: string, category: WorkerCredentialCategory, isRequired: boolean } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type WorkerCredentialTypeFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string | null, category: WorkerCredentialCategory, status: EntityStatus | null, isRequired: boolean, requiredForDriverTypes: Array<DriverType> | null, renewalWindowDays: number, validityMonths: number | null, requiresNumber: boolean, requiresDocument: boolean, profileField: string | null, isSystem: boolean, sortOrder: number, activeCredentialCount: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'WorkerCredentialTypeFieldsFragment' };
 
 export type WorkerCredentialFieldsFragment = { id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, number: string | null, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, documentId: string | null, notes: string | null, verifiedById: string | null, verifiedAt: number | null, archivedById: string | null, archivedAt: number | null, archiveReason: string | null, health: WorkerCredentialHealth, daysUntilExpiry: number | null, version: number, createdAt: number, updatedAt: number, credentialType: { id: string, code: string, name: string, category: WorkerCredentialCategory, isRequired: boolean, renewalWindowDays: number, validityMonths: number | null, requiresNumber: boolean, requiresDocument: boolean, profileField: string | null, isSystem: boolean, sortOrder: number } | null, document: { id: string, fileName: string, originalName: string, fileType: string, fileSize: number, createdAt: number } | null, verifiedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'WorkerCredentialFieldsFragment' };
@@ -19291,6 +19312,7 @@ export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/us
 export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
 export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } from "./documents/worker-checklist/desk";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
+export { DeskWorkerCredentialListDocument, DeskWorkerCredentialTypesDocument } from "./documents/worker-credential/desk";
 export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
 export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument, DeskWorkersDocument } from "./documents/worker-desk/desk";
 export { DeskWorkerEmploymentVerificationsDocument } from "./documents/worker-dqf/desk";

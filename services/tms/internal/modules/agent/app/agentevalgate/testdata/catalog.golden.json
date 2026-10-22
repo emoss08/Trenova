@@ -43412,20 +43412,28 @@
     },
     {
       "name": "worker_list_credentials",
-      "description": "List worker (driver) credentials: one worker's licences, medical cards and endorsements, or those falling due across the organization, soonest expiry first. With workerId and no expiry filter it returns every credential that worker holds, with its dates and whether it is verified, and the credential types the organization tracks; a required type with nothing on file was never recorded, which is worse than expiring soon. Without workerId, or with withinDays or includeExpired, it lists active credentials expiring within withinDays, soonest first, for one worker when workerId is given: the tool for any question about who is expiring, lapsed or out of compliance by a date. Narrow to one kind with credentialTypeCode, such as MED_CARD for a medical card or CDL for a licence. It yields the credentialId and credentialTypeId the credential tools take.",
+      "description": "List worker credentials: one worker's licences, medical cards and endorsements, or those falling due across the organization. With a worker and no expiry window it returns every credential the worker holds, with its dates and whether it is verified, and the credential types the organization tracks; a required type with nothing on file was never recorded, which is worse than expiring soon. Without a worker, or with expiringWithinDays or includeExpired, it lists active credentials expiring within that many days from now, soonest first, a page at a time: the tool for any question about who is expiring, lapsed or out of compliance by a date. Narrow to one kind with credentialTypeCode, such as MED_CARD for a medical card or CDL for a licence. It yields the credentialId and credentialTypeId the credential tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "credentialTypeCode": {
-            "description": "Optional credential type code, such as MED_CARD or CDL. Omit to include every kind the organization tracks.",
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
+          "credentialTypeCode": {
+            "description": "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case. Only records whose credential type code contains this text.",
+            "type": "string"
+          },
+          "expiringWithinDays": {
+            "description": "Only active credentials expiring within this many days from now, from 1 to 365. 30 when no worker is named.",
+            "type": "integer"
+          },
           "includeArchived": {
-            "description": "With workerId and no expiry filter, also return the worker's archived credentials. What falls due is always active credentials.",
+            "description": "With a worker and no expiry window, also read their archived credentials.",
             "type": "boolean"
           },
           "includeExpired": {
-            "description": "List what falls due including credentials that lapsed in the last 90 days. Defaults to false, which returns only what is still valid but due.",
+            "description": "With an expiry window, also those that lapsed in the last 90 days.",
             "type": "boolean"
           },
           "limit": {
@@ -43435,24 +43443,12 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
-          },
           "requiredOnly": {
             "description": "Only credential types the organization marks required.",
             "type": "boolean"
           },
-          "withinDays": {
-            "description": "List only credentials expiring within this many days, soonest first. Defaults to 30 when no workerId is given, at most 365.",
-            "maximum": 365,
-            "minimum": 1,
-            "type": "integer",
-            "x-clamp": true
-          },
           "workerId": {
-            "description": "Narrow to one worker, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one. Leave it out for the credentials falling due across the organization.",
             "type": "string",
             "x-recordOf": "worker"
           }

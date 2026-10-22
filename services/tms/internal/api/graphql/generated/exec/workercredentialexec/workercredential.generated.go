@@ -278,7 +278,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerCredentials_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredentials(ctx, fc.Args["workerId"].(string), fc.Args["includeArchived"].(*bool))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredentials(ctx, fc.Args["workerId"].(*string), fc.Args["includeArchived"].(*bool), fc.Args["expiringWithinDays"].(*int), fc.Args["includeExpired"].(*bool), fc.Args["credentialTypeCode"].(*string), fc.Args["requiredOnly"].(*bool), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialᚄ),
 			},
@@ -1081,7 +1081,7 @@ type resolverQuery interface {
 	WorkerCredentialTypes(ctx context.Context, input gqlmodel.WorkerCredentialTypesInput) (*gqlmodel.WorkerCredentialTypeConnection, error)
 	WorkerCredentialType(ctx context.Context, id string) (*worker.WorkerCredentialType, error)
 	ActiveWorkerCredentialTypes(ctx context.Context) ([]*worker.WorkerCredentialType, error)
-	WorkerCredentials(ctx context.Context, workerID string, includeArchived *bool) ([]*worker.WorkerCredential, error)
+	WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error)
 	WorkerCredential(ctx context.Context, id string) (*worker.WorkerCredential, error)
 	WorkerCredentialSummary(ctx context.Context, workerID string) (*worker.WorkerCredentialSummary, error)
 	CredentialExpiryForecast(ctx context.Context, days *int, limit *int) (*workercredentialservice.ExpiryForecast, error)
@@ -1290,10 +1290,10 @@ func field_Query_workerCredentialType_args(ctx context.Context, ec *gqlexec.Exec
 }
 
 func field_Query_workerCredentials_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
+	args := make(map[string]any, 8)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -1307,6 +1307,54 @@ func field_Query_workerCredentials_args(ctx context.Context, ec *gqlexec.Exec, r
 		return nil, err
 	}
 	args["includeArchived"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "expiringWithinDays",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["expiringWithinDays"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "includeExpired",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeExpired"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "credentialTypeCode",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["credentialTypeCode"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "requiredOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["requiredOnly"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "offset",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg7
 	return args, nil
 }
 
