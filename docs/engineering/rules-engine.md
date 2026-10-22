@@ -472,9 +472,10 @@ The codes:
 | `rate-table` | error | a table name that is not a string literal, or (with `tables`) an unknown table or one of the wrong shape |
 
 Messages reuse the TypeScript language service's English templates wherever a check carried
-over, so their translations in `i18n/messages.*.json` still apply. An inner phrase that the old
-service translated separately (a value's description such as ``"`x` is a number"``, a type's
-name) is passed as an English argument, because `Arg` has no nested message yet.
+over, so their translations in `i18n/messages.*.json` still apply. An inner phrase (a value's
+description such as ``"`x` is a number"``, a type's name, a hint sentence) is a nested
+`Message` argument, translated on its own; a template never starts or ends with a space to join
+one, because the template is its catalog key exactly as written.
 
 #### `formula.format`
 
@@ -1398,3 +1399,15 @@ fetch. The file must be served as `application/wasm`:
 - the Vite dev server does;
 - Cloud's Worker (`trenova-cloud-deploy`, `edition/cloudflare/web/worker.ts`) must add the same
   `script-src` source.
+
+#### Browser callers
+
+Every caller renders only after the module has loaded (`useRules()` behind the screen's
+skeleton) and wraps `call` in a typed module beside `runtime.ts`.
+
+- **Formula Studio** (`rules/formula.ts`; [formula-language-service.md](formula-language-service.md)):
+  the editor's linter, hover, signature help and format command, the Studio's analysis, Nova's
+  proposal cards and the Desk formula template card. `StudioProvider`, `ExpressionEditor`,
+  `ProposalCard` and the Desk card call `useRules()`; `formula.catalog` is read once per loaded
+  runtime and joined with the schema endpoint's variables into `KnownIdentifiers`. No formula
+  is parsed, checked or formatted in TypeScript.
