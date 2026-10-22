@@ -364,9 +364,8 @@ fn spec_blocks() -> Vec<String> {
     out
 }
 
-/// The libraries and codes the reference's examples use. `std.fuel` and
-/// `std.accessorials` are supplied as organisation libraries with the same declarations, since
-/// the standard library's sources are written elsewhere.
+/// The organisation library and the codes the reference's examples use; `std` is the crate's
+/// own standard library.
 fn spec_context() -> Context {
     serde_json::from_value(json!({
         "codes": [
@@ -377,8 +376,6 @@ fn spec_context() -> Context {
         ],
         "libraries": [
             {"path": "org.accessorials", "source": "library \"org.accessorials\"\n\n/// Hazmat handling per loaded mile.\nfn hazmat(miles: Distance) -> Money = $0.10/mi * miles\n"},
-            {"path": "org.fuel", "source": "library \"org.fuel\"\n\n/// Whole steps of `step` above `peg`, each worth `perStep`.\nfn stepPercent(price: Money/gal, peg: Money/gal, step: Money/gal, perStep: Percent) -> Percent {\n  let steps = ((price - peg) / step).floor().max(0)\n  return perStep * steps\n}\n"},
-            {"path": "org.detention", "source": "library \"org.detention\"\n\n/// Time past `free`, rounded up to `increment`, at `rate`.\nfn detention(dwell: Duration, free: Duration = 2 h, rate: Money/h, increment: Duration = 15 min) -> Money {\n  let billable = (dwell - free).max(0 h).roundUp(to: increment)\n  return rate * billable\n}\n"},
         ],
     }))
     .unwrap_or_default()
@@ -387,19 +384,9 @@ fn spec_context() -> Context {
 /// Each block as a whole file: fragments get the header and the bindings they assume.
 fn spec_file(index: usize, block: &str) -> String {
     match index {
-        0 => block
-            .replace(
-                "use std.fuel.{ stepPercent }",
-                "use org.fuel.{ stepPercent }",
-            )
-            .replace(
-                "use std.accessorials.{ detention }",
-                "use org.detention.{ detention }",
-            ),
         1 => format!("tariff \"t\"\n{block}\ncharge \"x\" = perCwt * (shipment.weight ?? 0 lb)\n"),
         2 => format!(
-            "tariff \"t\"\n{}\ncharge \"x\" = $1 * (deliveries.len + palletCount) + $1/lb * (heaviest ?? 0 lb)\n",
-            block.replace("c.pallets", "c.pieces")
+            "tariff \"t\"\n{block}\ncharge \"x\" = $1 * (deliveries.len + palletCount) + $1/lb * (heaviest ?? 0 lb)\n"
         ),
         3 => format!("library \"t\"\n{block}\n"),
         4 => {
