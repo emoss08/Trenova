@@ -1,4 +1,3 @@
-import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { formatMessage } from "@trenova/shared/i18n/format-message";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import type { VariableDefinition } from "@trenova/shared/types/formula-template";
@@ -20,11 +19,11 @@ import {
   type FormulaToken,
 } from "../formula-template-card";
 import { money } from "../../../record-card/record-card-values";
-import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
+import { knownFor } from "@/components/formula-editor/__tests__/formula-fixtures";
 
 const t: TranslateFn = (message, ...args) => formatMessage("en", message ?? "", args);
 
-const known = buildKnownIdentifiers(describedShipment, []);
+const known = knownFor();
 
 function tokens(expression: string, variables: string[] = []): FormulaToken[] {
   return tokenizeFormula(expression, known, new Set(variables));

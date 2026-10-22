@@ -1,20 +1,21 @@
-import type { ExprDiagnostic, ExprFix } from "@/components/formula-editor/expr-check";
-import { guardNullableField, scopeToFormPath } from "@/components/formula-editor/guard-nullable";
 import type { EditorRange } from "@/components/formula-editor/highlight-range";
+import { EXPRESSION_SCOPE } from "@/lib/formula-preview";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
-  ExpressionWarning,
+  FormulaDiagnostic,
+  FormulaFix,
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import { AlertTriangleIcon, InfoCircleIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState, type ReactNode } from "react";
-import { useFormContext, type Path } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { NovaButton } from "../ai/nova-button";
 import { TickedText } from "../ai/ticked-text";
-import { engineProblem } from "../model/expression-analysis";
+import { scopeTarget, type ScopeTarget } from "../model/preview-scope";
 import { useStudio } from "../studio-context";
 
 type Tone = "error" | "warning" | "info";
@@ -32,6 +33,19 @@ type ProblemRow = {
   source?: string;
   actions: ReactNode;
 };
+
+/** The text of a fix's edits applied to `text`, last edit first so offsets hold. */
+function applyChanges(text: string, fix: Extract<FormulaFix, { kind: "replace" }>): string {
+  let next = text;
+  for (const change of [...fix.changes].sort((a, b) => b.from - a.from)) {
+    next = next.slice(0, change.from) + change.insert + next.slice(change.to);
+  }
+  return next;
+}
+
+function findingKey(scope: string, finding: FormulaDiagnostic): string {
+  return `${scope}:${finding.code}:${finding.from}:${finding.to}:${finding.message}:${JSON.stringify(finding.args ?? [])}`;
+}
 
 function lineColumn(expression: string, offset: number): { line: number; column: number } {
   const before = expression.slice(0, Math.max(0, Math.min(offset, expression.length)));
@@ -73,12 +87,12 @@ function FilterChip({
 }
 
 /**
- * The problems strip under the editor: every finding of the language
- * service, what the engine said on the preview load, and the fields the
- * server says can be empty, each on one row with its position, its message
- * and the fix beside it. A row selects what it is about in the editor. A
- * long list folds to its first rows, errors first, and can be narrowed to
- * one severity; the count in the header is always the whole.
+ * The problems strip under the editor: every finding of `formula.check` on
+ * the expression, what the engine said when it ran the preview load, and what
+ * the server's check found on the breakdown lines, each on one row with its
+ * position, its message and the fix beside it. A row selects what it is about
+ * in the editor. A long list folds to its first rows, errors first, and can be
+ * narrowed to one severity; the count in the header is always the whole.
  */
 export function ExpressionProblems({
   onJump,
@@ -91,30 +105,20 @@ export function ExpressionProblems({
   const { analysis, preview, askNova, declareInput } = useStudio();
   const form = useFormContext<FormulaTemplateFormValues>();
   const expression = form.watch("expression") ?? "";
+  const breakdownDefinitions = form.watch("breakdownDefinitions");
   const result = preview.result;
+  const request = preview.lastRequest;
   const [filter, setFilter] = useState<Filter>("all");
   const [expanded, setExpanded] = useState(false);
 
-  const applyFix = (fix: ExprFix) => {
+  const applyFix = (fix: FormulaFix, path: ScopeTarget["path"] = "expression") => {
     if (fix.kind === "declare") {
       declareInput(fix.name, fix.type);
       return;
     }
-    let next = expression;
-    for (const change of [...fix.changes].sort((a, b) => b.from - a.from)) {
-      next = next.slice(0, change.from) + change.insert + next.slice(change.to);
-    }
-    form.setValue("expression", next, { shouldDirty: true, shouldValidate: true });
-  };
-
-  const guard = (warning: ExpressionWarning) => {
-    const path = scopeToFormPath(warning.scope) as Path<FormulaTemplateFormValues>;
     const current = form.getValues(path);
     if (typeof current !== "string") return;
-    const guarded = guardNullableField(current, warning.field, warning.suggestion);
-    if (guarded !== current) {
-      form.setValue(path, guarded as never, { shouldDirty: true, shouldValidate: true });
-    }
+    form.setValue(path, applyChanges(current, fix), { shouldDirty: true, shouldValidate: true });
   };
 
   const fixWithNova = (message: string) =>
@@ -122,9 +126,6 @@ export function ExpressionProblems({
 
   const rows = useMemo((): ProblemRow[] => {
     const list: ProblemRow[] = [];
-    const flaggedFields = new Set(
-      analysis.problems.filter((p) => p.code === "nullable").map((p) => p.name ?? ""),
-    );
     const order: Record<Tone, number> = { error: 0, warning: 1, info: 2 };
     const sorted = [...analysis.problems].sort(
       (a, b) => order[a.severity] - order[b.severity] || a.from - b.from,
@@ -133,11 +134,18 @@ export function ExpressionProblems({
     // value), so the key carries the message, and a repeat gets its index:
     // React keeps a stale row on screen when keys collide.
     const seen = new Map<string, number>();
-    for (const problem of sorted) {
-      const base = `${problem.code}:${problem.from}:${problem.to}:${problem.message}`;
+    const keyed = (base: string) => {
       const repeat = seen.get(base) ?? 0;
       seen.set(base, repeat + 1);
-      list.push(diagnosticRow(problem, repeat === 0 ? base : `${base}#${repeat}`));
+      return repeat === 0 ? base : `${base}#${repeat}`;
+    };
+    for (const problem of sorted) {
+      list.push(
+        findingRow(problem, keyed(findingKey(EXPRESSION_SCOPE, problem)), {
+          path: "expression",
+          range: { from: problem.from, to: problem.to },
+        }),
+      );
     }
 
     if (analysis.pending && !analysis.empty) {
@@ -150,71 +158,75 @@ export function ExpressionProblems({
       });
     }
 
-    if (analysis.errorCount === 0 && result && !result.valid && !analysis.empty) {
-      const engine = engineProblem(
-        expression,
-        result.error ?? result.message ?? "",
-        result.statements,
-      );
+    const failure = result?.error;
+    if (analysis.errorCount === 0 && failure && !analysis.empty) {
+      const target = scopeTarget(failure.scope, request, breakdownDefinitions ?? []);
+      const onExpression = target?.path === "expression" && target.checked === expression;
+      const message = translateMessage(failure, t);
       list.push({
         key: "engine",
         tone: "error",
-        range: { from: engine.from, to: engine.to },
-        message: <TickedText text={engine.message} />,
-        source: t("on the preview load"),
-        actions: (
-          <NovaButton onClick={() => fixWithNova(engine.message)}>{t("Fix with Nova")}</NovaButton>
-        ),
+        range:
+          onExpression && failure.from != null && failure.to != null
+            ? { from: failure.from, to: failure.to }
+            : onExpression
+              ? { from: 0, to: expression.length }
+              : null,
+        message: <TickedText text={message} />,
+        source:
+          failure.scope === EXPRESSION_SCOPE ? t("on the preview load") : t("in a breakdown line"),
+        actions: <NovaButton onClick={() => fixWithNova(message)}>{t("Fix with Nova")}</NovaButton>,
       });
     }
 
-    for (const warning of result?.valid ? (result.warnings ?? []) : []) {
-      if (warning.scope === "expression" && flaggedFields.has(warning.field)) continue;
-      list.push({
-        key: `${warning.scope}:${warning.field}`,
-        tone: "warning",
-        range: null,
-        message: warning.message,
-        source: warning.scope === "expression" ? undefined : t("in a breakdown line"),
-        actions: (
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            className="font-mono"
-            onClick={() => guard(warning)}
-          >
-            {t("Use {0}", warning.suggestion)}
-          </Button>
-        ),
-      });
+    // The editor checks the expression itself; the server's findings on the
+    // breakdown lines are listed while the line still reads as it was checked.
+    for (const finding of result?.diagnostics ?? []) {
+      if (finding.scope === EXPRESSION_SCOPE) continue;
+      const target = scopeTarget(finding.scope, request, breakdownDefinitions ?? []);
+      if (!target || form.getValues(target.path) !== target.checked) continue;
+      list.push(
+        findingRow(finding, keyed(findingKey(finding.scope, finding)), {
+          path: target.path,
+          range: null,
+          source: t("in a breakdown line"),
+        }),
+      );
     }
     return list;
 
-    function diagnosticRow(problem: ExprDiagnostic, key: string): ProblemRow {
+    function findingRow(
+      problem: FormulaDiagnostic,
+      key: string,
+      at: { path: ScopeTarget["path"]; range: EditorRange | null; source?: string },
+    ): ProblemRow {
       const primary = problem.fixes[0];
+      const message = translateMessage(problem, t);
       return {
         key,
         tone: problem.severity,
-        range: { from: problem.from, to: problem.to },
-        message: <TickedText text={problem.message} />,
+        range: at.range,
+        message: <TickedText text={message} />,
+        source: at.source,
         actions: (
           <>
-            {problem.fixes.map((fix) => (
-              <Button
-                key={fix.label}
-                type="button"
-                variant={fix === primary ? "outline" : "ghost"}
-                size="xs"
-                onClick={() => applyFix(fix)}
-              >
-                {fix.label}
-              </Button>
-            ))}
+            {problem.fixes.map((fix) => {
+              const label = translateMessage(fix.label, t);
+              return (
+                <Button
+                  key={label}
+                  type="button"
+                  variant={fix === primary ? "outline" : "ghost"}
+                  size="xs"
+                  className={problem.code === "nullable" ? "font-mono" : undefined}
+                  onClick={() => applyFix(fix, at.path)}
+                >
+                  {label}
+                </Button>
+              );
+            })}
             {problem.fixes.length === 0 && problem.severity === "error" && (
-              <NovaButton onClick={() => fixWithNova(problem.message)}>
-                {t("Fix with Nova")}
-              </NovaButton>
+              <NovaButton onClick={() => fixWithNova(message)}>{t("Fix with Nova")}</NovaButton>
             )}
           </>
         ),
@@ -222,7 +234,7 @@ export function ExpressionProblems({
     }
     // The handlers read the form and the expression at click time.
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [analysis, result, expression, t]);
+  }, [analysis, result, request, expression, breakdownDefinitions, t]);
 
   if (rows.length === 0) return null;
 
