@@ -286,3 +286,39 @@ fn a_range_from_a_trailing_dot_number_keeps_its_spaces() {
     assert_eq!(formatted("1. .. a", DEFAULT_WIDTH), "1. .. a");
     assert_eq!(formatted("1 .. 3", DEFAULT_WIDTH), "1..3");
 }
+
+#[test]
+fn a_member_of_a_number_keeps_the_space_that_keeps_its_dot_apart() {
+    let text = formatted("g..27\n.g4\n..54\n..5.", 71);
+    assert_eq!(text, "g..27 .g4..54..5.");
+    assert!(syntax::parse(&text, &[]).diagnostics.is_empty());
+    assert_eq!(
+        format(&text, 71),
+        FormatOutcome::Formatted {
+            text: text.clone(),
+            changed: false
+        }
+    );
+}
+
+#[test]
+fn a_dot_after_a_number_is_spaced_only_when_the_number_would_take_it() {
+    for (source, expected) in [
+        ("27 .g4", "27 .g4"),
+        ("27\n.e5", "27 .e5"),
+        ("27 .E1", "27 .E1"),
+        ("1_ .x", "1_ .x"),
+        ("5. .x", "5. .x"),
+        ("27 .abs()", "27 .abs()"),
+        ("27 ?.g4", "27?.g4"),
+        ("1.5 .x", "1.5.x"),
+        (".5 .x", ".5.x"),
+        ("1e5 .x", "1e5.x"),
+        ("0x1F .x", "0x1F.x"),
+        ("(27) .g4", "(27).g4"),
+        ("27 .g4 .. 5.", "27 .g4..5."),
+        ("5. .. .5", "5. .. .5"),
+    ] {
+        assert_eq!(formatted(source, DEFAULT_WIDTH), expected, "{source:?}");
+    }
+}

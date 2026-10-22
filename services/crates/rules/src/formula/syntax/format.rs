@@ -22,6 +22,7 @@ use super::ast::Statement;
 use super::ast::StatementKind;
 use super::ast::Ternary;
 use super::ast::UnaryOp;
+use super::lexer::adjoins;
 use super::parse;
 
 /// The column a line is broken before when the caller names none.
@@ -114,6 +115,19 @@ fn has_blank_line(gap: &str) -> bool {
         let rest = rest.strip_prefix('\r').unwrap_or(rest);
         rest.starts_with('\n')
     })
+}
+
+/// `object` then `dot` and `name`, spaced apart when the dot would otherwise join a bare
+/// number: `27 .g4` stays a member, where `27.g4` reads as `27.` then `g4`. Only a bare
+/// number can take in a following dot; every other unparenthesised object ends in a name,
+/// a bracket or a quote.
+fn access(object: &Expr, printed: &str, dot: &str, name: &str) -> String {
+    let bare_number = object.parens == 0 && matches!(object.kind, ExprKind::Number(_));
+    let access = format!("{dot}{name}");
+    if bare_number && !adjoins(printed, &access) {
+        return format!("{printed} {access}");
+    }
+    format!("{printed}{access}")
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -247,7 +261,7 @@ impl Printer<'_> {
             ExprKind::Member(member) => {
                 let object = self.node(&member.object, column, indent);
                 let dot = if member.optional { "?." } else { "." };
-                format!("{object}{dot}{}", member.property.text)
+                access(&member.object, &object, dot, &member.property.text)
             }
             ExprKind::Index(index) => {
                 let object = self.node(&index.object, column, indent);
@@ -409,7 +423,7 @@ impl Printer<'_> {
     fn broken_method(&self, method: &Method, column: usize, indent: usize) -> String {
         let receiver = self.node(&method.receiver, column, indent);
         let dot = if method.optional { "?." } else { "." };
-        let callee = format!("{receiver}{dot}{}", method.method.text);
+        let callee = access(&method.receiver, &receiver, dot, &method.method.text);
         if method.args.is_empty() {
             return format!("{callee}()");
         }
@@ -501,7 +515,8 @@ impl Printer<'_> {
                     return format!(".{}", member.property.text);
                 }
                 let dot = if member.optional { "?." } else { "." };
-                format!("{}{dot}{}", self.flat(&member.object), member.property.text)
+                let object = self.flat(&member.object);
+                access(&member.object, &object, dot, &member.property.text)
             }
             ExprKind::Index(index) => {
                 let open = if index.optional { "?.[" } else { "[" };
@@ -582,12 +597,9 @@ impl Printer<'_> {
             ExprKind::Method(method) => {
                 let dot = if method.optional { "?." } else { "." };
                 let args: Vec<String> = method.args.iter().map(|arg| self.flat(arg)).collect();
-                format!(
-                    "{}{dot}{}({})",
-                    self.flat(&method.receiver),
-                    method.method.text,
-                    args.join(", ")
-                )
+                let receiver = self.flat(&method.receiver);
+                let callee = access(&method.receiver, &receiver, dot, &method.method.text);
+                format!("{callee}({})", args.join(", "))
             }
             ExprKind::Unary(unary) => {
                 let operand = self.flat(&unary.operand);

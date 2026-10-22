@@ -118,6 +118,29 @@ pub fn tokenize(source: &str, operators: &[&str]) -> Tokenized {
     }
 }
 
+/// Whether `left` followed directly by `right` lexes as `left`'s tokens then `right`'s, so the
+/// two may be printed with nothing between them: `27` and `.g4` may not, since `27.` is a number.
+#[must_use]
+pub fn adjoins(left: &str, right: &str) -> bool {
+    let bounds = |source: &str, offset: usize| -> Vec<(TokenKind, usize, usize)> {
+        tokenize(source, &[])
+            .tokens
+            .into_iter()
+            .filter(|token| token.kind != TokenKind::Eof)
+            .map(|token| {
+                (
+                    token.kind,
+                    token.span.start as usize + offset,
+                    token.span.end as usize + offset,
+                )
+            })
+            .collect()
+    };
+    let mut apart = bounds(left, 0);
+    apart.extend(bounds(right, left.len()));
+    bounds(&format!("{left}{right}"), 0) == apart
+}
+
 impl Lexer<'_> {
     fn rest(&self) -> &str {
         self.source.get(self.position..).unwrap_or_default()

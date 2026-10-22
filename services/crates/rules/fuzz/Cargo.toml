@@ -1,7 +1,9 @@
 # cargo-fuzz targets for the formula language service. Outside the services workspace
 # (cargo-fuzz builds with nightly and its own flags); run with
 #   cargo +nightly fuzz run formula_check -- -max_total_time=60
-#   cargo +nightly fuzz run formula_format -- -max_total_time=60
+#   cargo +nightly fuzz run formula_format corpus/formula_format seeds/formula_format -- -max_total_time=60
+# seeds/<target>/ holds the committed inputs (each a crash once found, kept so it stays fixed);
+# corpus/ and artifacts/ are what a run writes, and are not committed.
 [package]
 name = "trenova-rules-fuzz"
 version = "0.0.0"

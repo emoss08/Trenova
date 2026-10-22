@@ -194,6 +194,12 @@ fn formula() -> impl Strategy<Value = String> {
             inner
                 .clone()
                 .prop_map(|object| format!("({object})?.field")),
+            (
+                leaf(),
+                prop::sample::select(vec![" ", "\n"]),
+                prop::sample::select(vec![".g4", ".e5", ".abs()", "?.field"])
+            )
+                .prop_map(|(object, gap, access)| format!("({object}{gap}{access})")),
             prop::collection::vec(inner.clone(), 0..4)
                 .prop_map(|items| format!("[{}]", items.join(", "))),
             (inner.clone(), inner.clone())
@@ -334,4 +340,74 @@ fn the_deepest_formula_that_parses_formats_and_checks() {
         })
         .expect("a thread");
     assert!(worker.join().is_ok(), "the stack overflowed");
+}
+
+/// Every pair of tokens the formatter prints with nothing between them, written apart: a number
+/// next to a dot, a range next to numbers, dots and names, a unary operator next to its operand.
+/// Formatting must keep each one's tree, at a width that keeps it flat and one that breaks it.
+#[test]
+fn no_joined_tokens_lex_differently_from_the_tokens_written_apart() {
+    const ATOMS: &[&str] = &[
+        "27", "5.", ".5", "1.5", "1e5", "1.5e3", "1_", "10_000", "0x1F", "0b1", "0o7", "x", "e",
+        "e5", "E1", "_", "#", "#acc", ".weight", "\"s\"", "`r`", "(1)", "[1]", "nil", "a.b",
+        "f(1)",
+    ];
+    const ACCESSES: &[&str] = &[
+        ".g4", ".e5", ".E1", "._x", ".x_1", ".abs()", ".e5()", "?.g4", "?.e5()", "[0]", "?.[0]",
+    ];
+    const GAPS: &[&str] = &["", " ", "\n"];
+    let mut sources = Vec::new();
+    for atom in ATOMS {
+        for gap in GAPS {
+            for access in ACCESSES {
+                sources.push(format!("{atom}{gap}{access}"));
+                sources.push(format!("{atom}{gap}{access}{gap}..{gap}{atom}"));
+            }
+            for op in ["-", "+", "!", "not "] {
+                sources.push(format!("{op}{gap}{atom}"));
+                sources.push(format!("{op}{gap}{op}{gap}{atom}"));
+            }
+            for other in ATOMS {
+                sources.push(format!("{atom}{gap}..{gap}{other}"));
+                sources.push(format!("x[{atom}{gap}:{gap}{other}]"));
+            }
+        }
+    }
+    let mut checked = 0;
+    for source in &sources {
+        let program = syntax::parse(source, &[]);
+        if !program.diagnostics.is_empty() {
+            continue;
+        }
+        checked += 1;
+        for width in [80, 1] {
+            let FormatOutcome::Formatted { text, .. } = syntax::format(source, width, &[]) else {
+                panic!("{source:?} was refused");
+            };
+            let reparsed = syntax::parse(&text, &[]);
+            assert!(
+                reparsed.diagnostics.is_empty(),
+                "{source:?} formatted to {text:?}: {:?}",
+                reparsed.diagnostics
+            );
+            assert_eq!(
+                program_shape(&program),
+                program_shape(&reparsed),
+                "{source:?} formatted to {text:?}"
+            );
+            assert_eq!(
+                syntax::format(&text, width, &[]),
+                FormatOutcome::Formatted {
+                    text: text.clone(),
+                    changed: false
+                },
+                "{source:?}"
+            );
+        }
+    }
+    assert!(
+        checked > sources.len() / 2,
+        "{checked} of {}",
+        sources.len()
+    );
 }

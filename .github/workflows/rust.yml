@@ -213,8 +213,9 @@ jobs:
       - name: Formula language
         working-directory: services/crates/rules/fuzz
         run: |
+          mkdir -p corpus/formula_format
           cargo +nightly fuzz run formula_check -- -max_total_time=60 -rss_limit_mb=1024
-          cargo +nightly fuzz run formula_format -- -max_total_time=30 -rss_limit_mb=1024
+          cargo +nightly fuzz run formula_format corpus/formula_format seeds/formula_format -- -max_total_time=30 -rss_limit_mb=1024
 
   image:
     name: Imaging image

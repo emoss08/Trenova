@@ -170,7 +170,9 @@ Fat-LTO builds are slow; do not run them over and over. Cap parallelism with
 - Property tests (`proptest`) for every parser and every invariant a type promises.
 - Golden tests compare produced artifacts with a tolerance where pixels are involved.
 - `cargo-fuzz` targets under `<crate>/fuzz/` for every parser that reads untrusted bytes; CI
-  runs each for a bounded time.
+  runs each for a bounded time. Every crash a run finds becomes a unit test and a file in
+  `<crate>/fuzz/seeds/<target>/`, which CI passes as a second corpus so the input is replayed
+  on every run; the generated `corpus/` and `artifacts/` are gitignored.
 - Tests that need a native library read its path from the environment
   (`TRENOVA_PDFIUM_LIBRARY`) and skip without it; the image's `test` stage and CI provide them.
 - `criterion` benchmarks for hot paths, run with the `bench` profile.

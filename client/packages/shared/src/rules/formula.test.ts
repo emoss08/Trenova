@@ -285,6 +285,16 @@ describe("formulaFormat", () => {
     const result = formulaFormat(rules, { source: "alpha + beta + gamma", width: 12 });
     expect(result).toEqual({ ok: true, text: "alpha\n  + beta\n  + gamma", changed: true });
   });
+
+  it("keeps the space that stops a number taking the dot of a member after it", () => {
+    const result = formulaFormat(rules, { source: "g..27\n.g4\n..54\n..5.", width: 71 });
+    expect(result).toEqual({ ok: true, text: "g..27 .g4..54..5.", changed: true });
+    expect(formulaFormat(rules, { source: "g..27 .g4..54..5.", width: 71 })).toEqual({
+      ok: true,
+      text: "g..27 .g4..54..5.",
+      changed: false,
+    });
+  });
 });
 
 describe("formulaSignature", () => {
