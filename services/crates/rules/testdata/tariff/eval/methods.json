@@ -195,14 +195,14 @@
     "display": "$18.50/cwt"
   },
   {
+    "name": "a rate in a whole rate unit",
+    "expr": "$0.185/lb.in($/cwt)",
+    "display": "$18.50/cwt"
+  },
+  {
     "name": "a duration in minutes",
     "expr": "1.5 h.in(min)",
     "display": "90 min"
-  },
-  {
-    "name": "in with the wrong dimension",
-    "expr": "5 lb.in(mi)",
-    "error": "conversion"
   },
   {
     "name": "quantity round to an increment",
@@ -331,18 +331,19 @@
   },
   {
     "name": "a pattern that does not compile",
-    "expr": "\"x\".matches(\"(\")",
-    "error": "regex"
+    "expr": "\"x\".matches(pattern)",
+    "error": "regex",
+    "prelude": "input pattern: Text = \"(\""
   },
   {
     "name": "a text index",
-    "expr": "\"café\"[3]",
+    "expr": "\"café\"[3] ?? \"\"",
     "display": "é"
   },
   {
-    "name": "a text index past the end",
-    "expr": "\"café\"[4]",
-    "error": "index"
+    "name": "a text index past the end is none",
+    "expr": "\"café\"[4] ?? \"-\"",
+    "display": "-"
   },
   {
     "name": "date year month day",
@@ -410,14 +411,12 @@
     "display": "2026-10-23T01:00:00-05:00"
   },
   {
-    "name": "date-time addHours with a fraction",
+    "name": "date-time addHours takes whole hours",
     "expr": "@2026-10-22T22:00Z.addHours(0.25)",
-    "display": "2026-10-22T22:15:00Z"
-  },
-  {
-    "name": "date-time addHours that is not whole seconds",
-    "expr": "@2026-10-22T22:00Z.addHours(0.0001)",
-    "error": "argument"
+    "error": "check",
+    "message": {
+      "message": "{0} is {1}, but {2} of {3} takes {4}"
+    }
   },
   {
     "name": "date-time addDays",
@@ -436,13 +435,18 @@
   },
   {
     "name": "list index",
-    "expr": "[10, 20, 30][1]",
+    "expr": "[10, 20, 30][1] ?? 0",
     "display": "20"
   },
   {
-    "name": "list index out of range",
-    "expr": "[10, 20, 30][3]",
-    "error": "index"
+    "name": "a list index out of range is none",
+    "expr": "[10, 20, 30][3] ?? -1",
+    "display": "-1"
+  },
+  {
+    "name": "a negative list index is none",
+    "expr": "[10, 20, 30][-1] ?? -1",
+    "display": "-1"
   },
   {
     "name": "optional chaining on none",

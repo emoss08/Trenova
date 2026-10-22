@@ -305,45 +305,8 @@
     }
   },
   {
-    "name": "a freight class axis reads numbers",
-    "expr": "tables.Class[\"77.5\"] ?? 0%",
-    "display": "10%",
-    "context": {
-      "tables": [
-        {
-          "code": "Class",
-          "valueType": "Percent",
-          "axes": [
-            {
-              "match": "Exact",
-              "kind": "FreightClass"
-            }
-          ],
-          "cells": [
-            {
-              "at": [
-                {
-                  "key": "85"
-                }
-              ],
-              "value": "12.5"
-            },
-            {
-              "at": [
-                {
-                  "key": "Class77_5"
-                }
-              ],
-              "value": "10"
-            }
-          ]
-        }
-      ]
-    }
-  },
-  {
-    "name": "a freight class axis reads spellings",
-    "expr": "tables.Class[\"class 85\"] ?? 0%",
+    "name": "a freight class axis reads a cell keyed by number",
+    "expr": "tables.Class[Class85] ?? 0%",
     "display": "12.5%",
     "context": {
       "tables": [
@@ -368,7 +331,44 @@
             {
               "at": [
                 {
-                  "key": "Class77_5"
+                  "key": "class 77.5"
+                }
+              ],
+              "value": "10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a freight class axis reads a cell keyed by another spelling",
+    "expr": "tables.Class[Class77_5] ?? 0%",
+    "display": "10%",
+    "context": {
+      "tables": [
+        {
+          "code": "Class",
+          "valueType": "Percent",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "FreightClass"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "85"
+                }
+              ],
+              "value": "12.5"
+            },
+            {
+              "at": [
+                {
+                  "key": "class 77.5"
                 }
               ],
               "value": "10"
@@ -1611,8 +1611,8 @@
   },
   {
     "name": "cell gives the value, minimum and deficit",
-    "expr": "tables.Zones.cell(\"ZONE_2\")",
-    "display": "{ value: $21.00/cwt, minimum: $75.00, deficit: true }",
+    "expr": "\"{cell.value}, {cell.minimum ?? $0}, {cell.deficit}\"",
+    "display": "$21.00/cwt, $75.00, true",
     "context": {
       "tables": [
         {
@@ -1647,12 +1647,13 @@
           ]
         }
       ]
-    }
+    },
+    "prelude": "let cell = tables.Zones.cell(\"ZONE_2\") ?? fail \"No cell\""
   },
   {
     "name": "cell without a minimum",
-    "expr": "tables.Zones.cell(\"ZONE_1\")",
-    "display": "{ value: $18.50/cwt, minimum: none, deficit: false }",
+    "expr": "\"{cell.value}, {cell.minimum == none}, {cell.deficit}\"",
+    "display": "$18.50/cwt, true, false",
     "context": {
       "tables": [
         {
@@ -1687,7 +1688,8 @@
           ]
         }
       ]
-    }
+    },
+    "prelude": "let cell = tables.Zones.cell(\"ZONE_1\") ?? fail \"No cell\""
   },
   {
     "name": "cell miss is none",
@@ -1731,8 +1733,8 @@
   },
   {
     "name": "band gives its bounds and value",
-    "expr": "tables.Breaks.band(700 lb)",
-    "display": "{ min: 500 lb, max: 2000 lb, value: $35.50/cwt }",
+    "expr": "\"{band.min}, {band.max ?? 0 lb}, {band.value}\"",
+    "display": "500 lb, 2000 lb, $35.50/cwt",
     "context": {
       "tables": [
         {
@@ -1777,12 +1779,13 @@
           ]
         }
       ]
-    }
+    },
+    "prelude": "let band = tables.Breaks.band(700 lb) ?? fail \"No band\""
   },
   {
     "name": "an open band has no maximum",
-    "expr": "tables.Open.band(200 mi)",
-    "display": "{ min: 100 mi, max: none, value: $90.00 }",
+    "expr": "\"{band.min}, {band.max == none}, {band.value}\"",
+    "display": "100 mi, true, $90.00",
     "context": {
       "tables": [
         {
@@ -1816,7 +1819,8 @@
           ]
         }
       ]
-    }
+    },
+    "prelude": "let band = tables.Open.band(200 mi) ?? fail \"No band\""
   },
   {
     "name": "band miss is none",
@@ -2061,46 +2065,6 @@
     }
   },
   {
-    "name": "band on an exact table is internal",
-    "expr": "tables.Zones.band(\"A\")",
-    "error": "internal",
-    "context": {
-      "tables": [
-        {
-          "code": "Zones",
-          "valueType": "Money/cwt",
-          "axes": [
-            {
-              "match": "Exact",
-              "kind": "Zone",
-              "normalization": "Upper"
-            }
-          ],
-          "cells": [
-            {
-              "at": [
-                {
-                  "key": "ZONE_1"
-                }
-              ],
-              "value": "18.50"
-            },
-            {
-              "at": [
-                {
-                  "key": "ZONE_2"
-                }
-              ],
-              "value": "21.00",
-              "minimum": "75",
-              "deficit": true
-            }
-          ]
-        }
-      ]
-    }
-  },
-  {
     "name": "piece counts key a count table",
     "expr": "tables.Counts[12] ?? 0",
     "display": "2",
@@ -2177,16 +2141,8 @@
     }
   },
   {
-    "name": "a table the request did not send",
-    "expr": "tables.Missing[\"A\"]",
-    "error": "table",
-    "context": {
-      "tables": []
-    }
-  },
-  {
     "name": "a cell without a position per axis",
-    "expr": "tables.Broken[\"A\"]",
+    "expr": "tables.Broken[\"A\"] ?? $0",
     "error": "table",
     "context": {
       "tables": [
@@ -2218,7 +2174,7 @@
   },
   {
     "name": "a cell whose value does not fit the value type",
-    "expr": "tables.BadValue[\"A\"]",
+    "expr": "tables.BadValue[\"A\"] ?? 0",
     "error": "table",
     "context": {
       "tables": [

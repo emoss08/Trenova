@@ -3,7 +3,7 @@
 use super::{Env, Interp, refusal, unknown_name};
 use crate::message::{Arg, Message};
 use crate::span::Span;
-use crate::tariff::eval::error::{Code, EvalError, Stop};
+use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators::{self, scales_a_percent};
 use crate::tariff::eval::time::{Date, DateTime};
 use crate::tariff::eval::trace::Event;
@@ -342,35 +342,19 @@ impl<'a> Interp<'_, 'a> {
                     .map_err(Stop::Failed)?;
                 Ok(self.answer(env, read, expr.span))
             }
-            (Value::List(items), [Value::Int(at)]) => {
-                match at.to_usize().and_then(|at| items.get(at)) {
-                    Some(item) => Ok(item.clone()),
-                    None => self.out_of_range(env, expr, at),
-                }
+            (Value::List(items), [Value::Int(at)]) => Ok(at
+                .to_usize()
+                .and_then(|at| items.get(at))
+                .cloned()
+                .unwrap_or(Value::None)),
+            (Value::Text(content), [Value::Int(at)]) => {
+                Ok(text::index(content, *at).unwrap_or(Value::None))
             }
-            (Value::Text(content), [Value::Int(at)]) => match text::index(content, *at) {
-                Some(character) => Ok(character),
-                None => self.out_of_range(env, expr, at),
-            },
             _ => Err(internal(
                 crate::message!("{0} cannot be indexed like this"),
                 [Arg::from(target_value.kind())],
             )),
         }
-    }
-
-    fn out_of_range(&self, env: &Env, expr: &Expr, at: &Decimal) -> Result<Value, Stop> {
-        if matches!(
-            self.static_type(env.module, expr.id),
-            Some(Type::Optional(_))
-        ) {
-            return Ok(Value::None);
-        }
-        Err(Stop::Failed(EvalError::with(
-            Code::Index,
-            crate::message!("There is no item at position {0}"),
-            [Arg::from(at.to_string())],
-        )))
     }
 
     /// Records a table read and gives its value.

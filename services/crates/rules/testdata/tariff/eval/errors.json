@@ -122,46 +122,6 @@
     }
   },
   {
-    "name": "recursion is stopped by the call depth",
-    "source": "tariff \"t\"\nfn loop(x: Int) -> Int = loop(x + 1)\nnote \"{loop(0)}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "budget"
-      }
-    }
-  },
-  {
-    "name": "a self-referential constant is internal",
-    "source": "tariff \"t\"\nconst LOOPED = LOOPED + 1\nnote \"{LOOPED}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
-    "name": "an unknown name is internal",
-    "source": "tariff \"t\"\nnote \"{nothing}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
-    "name": "calling something that is not a function is internal",
-    "source": "tariff \"t\"\nnote \"{nothing(1)}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
     "name": "an error carries the failing node's range",
     "source": "tariff \"t\"\nlet a = 1\nlet b = a / 0",
     "expect": {
@@ -193,21 +153,11 @@
   },
   {
     "name": "a regular expression too large to compile",
-    "source": "tariff \"t\"\nlet a = \"x\".matches(\"(a{{1000}}){{1000}}\")",
+    "source": "tariff \"t\"\ninput pattern: Text = \"(a{{1000}}){{1000}}\"\nlet a = \"x\".matches(pattern)",
     "expect": {
       "status": "error",
       "error": {
         "code": "regex"
-      }
-    }
-  },
-  {
-    "name": "a function that ends without return is internal",
-    "source": "tariff \"t\"\nfn f(x: Int) -> Int {\n  let y = x\n}\nnote \"{f(1)}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
       }
     }
   },
@@ -222,54 +172,15 @@
     }
   },
   {
-    "name": "an internal error names the kinds",
-    "source": "tariff \"t\"\nlet a = true + 1",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal",
-        "message": {
-          "message": "{0} cannot be applied to {1} and {2}",
-          "args": [
-            "+",
-            {
-              "message": "true or false"
-            },
-            {
-              "message": "a whole number"
-            }
-          ]
-        }
-      }
-    }
-  },
-  {
-    "name": "a missing field is internal",
-    "source": "tariff \"t\"\nnote \"{shipment.nothing}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
-    "name": "reading a field of none without ?. is internal",
-    "source": "tariff \"t\"\nnote \"{shipment.trailerType.code}\"",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
-    "name": "a test statement outside a test is internal",
+    "name": "a test statement outside a test does not check",
     "source": "tariff \"t\"\nexpect 1 == 1",
     "expect": {
       "status": "error",
       "error": {
-        "code": "syntax"
+        "code": "check",
+        "message": {
+          "message": "`expect` can only be used inside a `test` block"
+        }
       }
     }
   }

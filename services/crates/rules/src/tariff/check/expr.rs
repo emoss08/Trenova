@@ -21,6 +21,28 @@ use crate::tariff::types::{EnumType, FieldDef, RecordType, Type};
 use crate::tariff::units::{SIMPLE_UNITS, Unit, simple};
 use std::sync::Arc;
 
+/// Whether text interpolation can write a value of this type: a scalar, an enum, or a list or
+/// record whose items and fields are themselves interpolatable, written as the evaluator prints
+/// them (`[a, b]`, `{ name: x, weight: 5 lb }`). An optional is not: it needs handling first.
+fn interpolatable(ty: &Type) -> bool {
+    match ty {
+        Type::Error
+        | Type::Never
+        | Type::Bool
+        | Type::Int
+        | Type::Number
+        | Type::Percent
+        | Type::Text
+        | Type::Date
+        | Type::DateTime
+        | Type::Quantity(_)
+        | Type::Enum(_) => true,
+        Type::List(item) => interpolatable(item),
+        Type::Record(record) => record.fields.iter().all(|field| interpolatable(&field.ty)),
+        Type::Optional(_) => false,
+    }
+}
+
 impl Checker<'_> {
     /// The type of an expression, checked with the type expected where it is written.
     pub fn expr(&mut self, expr: &Expr, expected: Option<&Type>) -> Type {
@@ -186,18 +208,10 @@ impl Checker<'_> {
 
     fn interpolation(&mut self, expr: &Expr) {
         let ty = self.expr(expr, None);
+        if interpolatable(&ty) {
+            return;
+        }
         let fix = match &ty {
-            Type::Error
-            | Type::Never
-            | Type::Bool
-            | Type::Int
-            | Type::Number
-            | Type::Percent
-            | Type::Text
-            | Type::Date
-            | Type::DateTime
-            | Type::Quantity(_)
-            | Type::Enum(_) => return,
             Type::Optional(inner) => zero(inner).map(|fallback| {
                 let code = format!("{} ?? {fallback}", self.text(expr.span));
                 replace(
@@ -226,6 +240,7 @@ impl Checker<'_> {
                         code,
                     )
                 }),
+            _ => None,
         };
         let mut diagnostic = Diagnostic::error(
             "interpolation",

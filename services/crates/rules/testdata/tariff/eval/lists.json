@@ -73,21 +73,24 @@
   },
   {
     "name": "avg of ints is a number",
-    "expr": "xs.avg() ?? 0",
+    "expr": "xs.avg()",
     "display": "2.8",
     "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
   },
   {
     "name": "avg of weights",
-    "expr": "ws.avg() ?? 0 lb",
+    "expr": "ws.avg()",
     "display": "566.66666666666666666666666667 lb",
     "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
   },
   {
-    "name": "avg of an empty list is none",
-    "expr": "[].avg() ?? -1",
-    "display": "-1",
-    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+    "name": "avg of an empty list is an argument error",
+    "expr": "empty.avg()",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]\nlet empty: List<Int> = []",
+    "error": "argument",
+    "message": {
+      "message": "avg needs at least one item: an empty list has no average"
+    }
   },
   {
     "name": "any",
@@ -690,6 +693,18 @@
     }
   },
   {
+    "name": "max with a lambda of the item's own type gives the lambda's value",
+    "expr": "xs.max(x => x * 2) ?? 0",
+    "display": "10",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
+    "name": "min with a lambda gives the lambda's value, not the item",
+    "expr": "xs.min(x => 10 - x) ?? 0",
+    "display": "5",
+    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
+  },
+  {
     "name": "commodities sum pieces",
     "expr": "shipment.commodities.sum(c => c.pieces)",
     "display": "8",
@@ -996,17 +1011,5 @@
         ]
       }
     }
-  },
-  {
-    "name": "a test that is not a bool is internal",
-    "expr": "xs.where(x => x)",
-    "error": "internal",
-    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
-  },
-  {
-    "name": "an unknown list method is internal",
-    "expr": "xs.shuffle()",
-    "error": "internal",
-    "prelude": "let xs = [3, 1, 4, 1, 5]\nlet ws = [500 lb, 2 cwt, 1_000 lb]"
   }
 ]

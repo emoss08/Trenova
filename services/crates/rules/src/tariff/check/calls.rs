@@ -15,7 +15,7 @@ use crate::span::Span;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{Arg as CallArg, BinaryOp, Expr, ExprKind, FileKind, Name};
 use crate::tariff::types::{FieldDef, RecordType, Type};
-use crate::tariff::units::{Dim, Unit, simple};
+use crate::tariff::units::{Unit, simple};
 use std::sync::Arc;
 
 /// The test record constructors and the schema record each builds.
@@ -723,14 +723,16 @@ impl Checker<'_> {
         Some(ty)
     }
 
-    /// `.in(unit)`: the unit written as names, of the receiver's dimension.
+    /// `.in(unit)`: the unit written as names, of the receiver's dimension or, on a rate, of
+    /// its denominator's; gives the unit the value converts to.
     fn unit_argument(&mut self, value: &Expr, receiver: &Type) -> Option<Unit> {
         let text = self.unit_names(value)?;
         let unit = Unit::parse(&text).ok()?;
         let Type::Quantity(quantity) = receiver else {
             return None;
         };
-        if unit.dim() != quantity.dim || unit.dim() == Dim::NONE {
+        let target = Unit::conversion_target(quantity.dim, &unit);
+        if target.is_none() {
             let unit_words = match unit.dim() {
                 dim if dim.is_none() => Message::new(message!("a count")),
                 dim => words(&Type::quantity(dim)),
@@ -751,7 +753,7 @@ impl Checker<'_> {
             ));
             return None;
         }
-        Some(unit)
+        target
     }
 
     /// The unit text of `.in(…)`'s argument: `cwt` or `lb/ft3`, reporting what is not a unit.
