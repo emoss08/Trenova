@@ -6,6 +6,7 @@ import { DESK_CARD_ROUTES } from "./deskcards.mjs";
 import { DESK_CASE_ROUTES } from "./deskcase.mjs";
 import { EDI_DRAFT_ROUTES } from "./deskedidraft.mjs";
 import { DESK_PLAN_ROUTES } from "./deskplan.mjs";
+import { DESK_TABLE_ROUTES } from "./desktable.mjs";
 import { EXTRACTION_ROUTES } from "./deskextraction.mjs";
 import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
 import { ORG, permissionManifest } from "../fixtures/session.mjs";
@@ -24,6 +25,7 @@ const ROUTES = [
   ...DESK_CASE_ROUTES,
   ...EDI_DRAFT_ROUTES,
   ...DESK_PLAN_ROUTES,
+  ...DESK_TABLE_ROUTES,
   ...EXTRACTION_ROUTES,
   ...DESK_THREAD_ROUTES,
   ...PALETTE_ROUTES,

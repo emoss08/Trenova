@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -61,9 +62,10 @@ type guardedDispatchParams struct {
 // scriptGate is what decides whether a call may run a script: the model that
 // asked for it and how many scripts the turn asked for up to it.
 type scriptGate struct {
-	model    string
-	provider aiprovider.Kind
-	position int
+	model      string
+	provider   aiprovider.Kind
+	providerID pulid.ID
+	position   int
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a

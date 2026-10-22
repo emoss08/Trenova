@@ -56,6 +56,18 @@ type AIAgentRosterStat {
   shadowRecorded: Int!
 }
 
+"""
+Anthropic's advisor over a set of runs: how often the model consulted it, the
+advisor's own tokens and its share of the cost. costUsd on the runs already
+includes it.
+"""
+type AIAnalyticsAdvisor {
+  calls: Decimal!
+  costUsd: Decimal!
+  outputTokens: Decimal!
+  promptTokens: Decimal!
+}
+
 type AIAnalyticsAgentSuggestions {
   agentDefinitionId: ID!
   autoSwitched: Int!
@@ -215,6 +227,10 @@ are 0 to 1 and absent when there is nothing to divide by.
 """
 type AIAnalyticsSeries {
   accepted: Int!
+  """
+  What consulting Anthropic's advisor came to; zero where no provider turned it on.
+  """
+  advisor: AIAnalyticsAdvisor!
   """Approved as proposed, of every decided proposal."""
   approvalRate: Float
   """
@@ -366,6 +382,10 @@ type AIAnalyticsToolCell {
 }
 
 type AIAnalyticsTotals {
+  """
+  What consulting Anthropic's advisor came to; zero where no provider turned it on.
+  """
+  advisor: AIAnalyticsAdvisor!
   completed: Int!
   completedRate: Float
   costPerCompletedRun: Decimal
@@ -978,6 +998,22 @@ One configured model endpoint. The credential never leaves the server; only
 whether one is stored is exposed.
 """
 type AIProvider {
+  """
+  Every chat call routed to this provider declares Anthropic's advisor tool,
+  so the model can consult advisorModel mid-reply. Off by default; each
+  consultation is billed at the advisor's price.
+  """
+  advisorEnabled: Boolean!
+  """
+  The model the advisor runs on. Empty consults the default advisor, claude-opus-5-5.
+  """
+  advisorModel: String!
+  """
+  The API's refusal of that advisor for the provider's model, from the first
+  call it refused. Calls go out without the advisor until the advisor, the
+  model or the platform changes. Null when nothing was refused.
+  """
+  advisorRefusal: AIProviderAdvisorRefusal
   allowPrivateNetwork: Boolean!
   """
   The stored credential, described without the secret. Null when none is stored.
@@ -1047,6 +1083,16 @@ type AIProvider {
   platformSettings: AIProviderPlatformSettings
   priority: Int!
   reasoningEffort: AIReasoningEffort!
+  """
+  The provider's scripts may prepare writes, proposed as one batch a person approves. Needs scripts.
+  """
+  scriptWrites: Boolean!
+  """
+  The provider's model may answer a fan-out question with one read-only
+  script (code mode). The organization must also turn on read-only scripts
+  in its E2B extension and grant code_mode.
+  """
+  scripts: Boolean!
   structuredOutputMode: AIStructuredOutputMode!
   tasks: [AITask!]!
   """How a Claude model behind an id the system cannot read takes thinking."""
@@ -1058,6 +1104,16 @@ type AIProvider {
   trusted: Boolean!
   updatedAt: Timestamp!
   version: Int!
+}
+
+"""The API refusing the advisor a provider declared, in its own words."""
+type AIProviderAdvisorRefusal {
+  """The advisor the refused call declared."""
+  advisor: String!
+  message: String!
+  """The provider's model it was asked to advise."""
+  model: String!
+  refusedAt: Timestamp!
 }
 
 """What a provider does with a task once its monthly cap is reached."""

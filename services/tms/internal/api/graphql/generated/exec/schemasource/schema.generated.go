@@ -5094,6 +5094,8 @@ type AIAnalyticsSeries {
   costPerCompletedRun: Decimal
   "Prompt and output tokens, with the prompt split by what the provider's cache served."
   tokens: AIAnalyticsTokens!
+  "What consulting Anthropic's advisor came to; zero where no provider turned it on."
+  advisor: AIAnalyticsAdvisor!
   firstTokenMedianMs: Int
   lastRanAt: Timestamp
   "Nothing ran for longer than a day before the end of the window."
@@ -5130,6 +5132,8 @@ type AIAnalyticsTotals {
   pricedRuns: Int!
   costPerCompletedRun: Decimal
   tokens: AIAnalyticsTokens!
+  "What consulting Anthropic's advisor came to; zero where no provider turned it on."
+  advisor: AIAnalyticsAdvisor!
   "Tool calls fail often enough to call out."
   toolFailureAlarm: Boolean!
 }
@@ -5146,6 +5150,18 @@ type AIAnalyticsTokens {
   output: Decimal!
   "Cache reads over every prompt token; absent when nothing was sent."
   cacheReadShare: Float
+}
+
+"""
+Anthropic's advisor over a set of runs: how often the model consulted it, the
+advisor's own tokens and its share of the cost. costUsd on the runs already
+includes it.
+"""
+type AIAnalyticsAdvisor {
+  calls: Decimal!
+  promptTokens: Decimal!
+  outputTokens: Decimal!
+  costUsd: Decimal!
 }
 
 "One series in one hour or day."
@@ -6247,6 +6263,28 @@ type AIProvider {
   thinkingStyle: AIThinkingStyle!
   "Where an Anthropic Messages provider reaches Claude."
   platform: AIProviderPlatform!
+  """
+  Every chat call routed to this provider declares Anthropic's advisor tool,
+  so the model can consult advisorModel mid-reply. Off by default; each
+  consultation is billed at the advisor's price.
+  """
+  advisorEnabled: Boolean!
+  "The model the advisor runs on. Empty consults the default advisor, claude-opus-5-5."
+  advisorModel: String!
+  """
+  The API's refusal of that advisor for the provider's model, from the first
+  call it refused. Calls go out without the advisor until the advisor, the
+  model or the platform changes. Null when nothing was refused.
+  """
+  advisorRefusal: AIProviderAdvisorRefusal
+  """
+  The provider's model may answer a fan-out question with one read-only
+  script (code mode). The organization must also turn on read-only scripts
+  in its E2B extension and grant code_mode.
+  """
+  scripts: Boolean!
+  "The provider's scripts may prepare writes, proposed as one batch a person approves. Needs scripts."
+  scriptWrites: Boolean!
   "What the platform needs besides the credential. Null for a provider called directly."
   platformSettings: AIProviderPlatformSettings
   """
@@ -6295,6 +6333,16 @@ type AIProvider {
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"The API refusing the advisor a provider declared, in its own words."
+type AIProviderAdvisorRefusal {
+  "The advisor the refused call declared."
+  advisor: String!
+  "The provider's model it was asked to advise."
+  model: String!
+  message: String!
+  refusedAt: Timestamp!
 }
 
 "What a provider does with a task once its monthly cap is reached."

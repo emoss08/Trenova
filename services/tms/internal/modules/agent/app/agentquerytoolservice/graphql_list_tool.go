@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -26,12 +27,13 @@ const (
 	graphQLListLimit  = 25
 	graphQLListMost   = 50
 
-	connectionEdges    = "edges"
-	connectionNode     = "node"
-	connectionPageInfo = "pageInfo"
-	pageHasNext        = "hasNextPage"
-	pageEndCursor      = "endCursor"
-	typenameField      = "__typename"
+	connectionEdges      = "edges"
+	connectionNode       = "node"
+	connectionPageInfo   = "pageInfo"
+	connectionTotalCount = "totalCount"
+	pageHasNext          = "hasNextPage"
+	pageEndCursor        = "endCursor"
+	typenameField        = "__typename"
 
 	inputFirst        = "first"
 	inputAfter        = "after"
@@ -421,6 +423,7 @@ type graphQLListOutcome struct {
 	Note             string           `json:"note,omitempty"`
 	HasMore          bool             `json:"hasMore"`
 	NextCursor       string           `json:"nextCursor,omitempty"`
+	Total            *int             `json:"total,omitempty"`
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
 }
@@ -460,6 +463,7 @@ func (t *graphQLListTool) Query(
 		sort:    t.sort(params.Params),
 		limit:   window.limit,
 		after:   window.info.After,
+		total:   params.IncludeTotal,
 	})
 	if err != nil {
 		return nil, err
@@ -475,6 +479,7 @@ func (t *graphQLListTool) Query(
 		Items:            page.items,
 		Columns:          selectedColumns(t.read.Fields, page.items),
 		HasMore:          page.hasMore,
+		Total:            page.total,
 		WithheldByAccess: page.withheld,
 	}
 	if page.hasMore {
@@ -500,6 +505,7 @@ type pageRequest struct {
 	sort    []map[string]any
 	limit   int
 	after   string
+	total   bool
 }
 
 type graphQLPage struct {
@@ -508,6 +514,7 @@ type graphQLPage struct {
 	endCursor string
 	withheld  []string
 	first     bool
+	total     *int
 }
 
 func (t *graphQLListTool) page(
@@ -539,7 +546,7 @@ func (t *graphQLListTool) page(
 	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
-		Variables:         map[string]any{t.input: input, includeTotalCount: false},
+		Variables:         map[string]any{t.input: input, includeTotalCount: req.total},
 		DataAccessCeiling: params.DataAccessCeiling,
 		RequestID:         params.RunID.String(),
 	})
@@ -572,6 +579,11 @@ func (t *graphQLListTool) page(
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {
 		page.hasMore, _ = info[pageHasNext].(bool)
 		page.endCursor, _ = info[pageEndCursor].(string)
+	}
+	if req.total {
+		if total, counted := typeutils.IntOf(connection[connectionTotalCount]); counted {
+			page.total = &total
+		}
 	}
 
 	return page, nil
