@@ -1,6 +1,7 @@
 import { formatMessage } from "@trenova/shared/i18n/format-message";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { formatPercent } from "@trenova/shared/lib/utils";
+import { rulesSync } from "@trenova/shared/rules/runtime";
 import type {
   Shipment,
   ShipmentBillingReadiness,
@@ -1123,19 +1124,20 @@ describe("chargesOf", () => {
     ] as unknown as Shipment["additionalCharges"],
   });
 
-  it("lists the linehaul first, then each charge, with the total", () => {
-    expect(chargesOf(charged, t)).toEqual({
+  // A percentage charge is priced against the linehaul, as the server prices it: 12% of 2,400.
+  it("lists the linehaul first, then each charge at its exact total, with the total", () => {
+    expect(chargesOf(rulesSync(), charged, t)).toEqual({
       lines: [
         { key: "linehaul", label: "Linehaul", detail: "Acme 2026 · Dry van TX-GA", amount: 2400 },
-        { key: "c1", label: "Detention", detail: `2 × ${money(45)}`, amount: 90 },
+        { key: "c1", label: "Detention", detail: `2 × ${money(45)}`, amount: "90" },
         {
           key: "c2",
           label: "FSC",
           detail: `${formatPercent(12, 0)} of linehaul`,
-          amount: null,
+          amount: "288",
         },
-        { key: "c3", label: "Lumper", detail: "", amount: 75 },
-        { key: "charge-3", label: "Charge", detail: "", amount: 35 },
+        { key: "c3", label: "Lumper", detail: "", amount: "75" },
+        { key: "charge-3", label: "Charge", detail: "", amount: "35" },
       ],
       total: 2565,
       ratedBy: "Rated by Acme 2026",
@@ -1147,6 +1149,7 @@ describe("chargesOf", () => {
 
   it("names the formula when no contract priced it, and says when the rate was overridden", () => {
     const charges = chargesOf(
+      rulesSync(),
       shipment({
         freightChargeAmount: 1800,
         totalChargeAmount: 1800,
@@ -1173,6 +1176,7 @@ describe("chargesOf", () => {
   it("falls back to the shipment's formula, and to nothing", () => {
     expect(
       chargesOf(
+        rulesSync(),
         shipment({
           ratingDetail: null,
           formulaTemplate: { name: "Flat rate" } as Shipment["formulaTemplate"],
@@ -1182,6 +1186,7 @@ describe("chargesOf", () => {
     ).toBe("Flat rate");
 
     const bare = chargesOf(
+      rulesSync(),
       shipment({ freightChargeAmount: null, totalChargeAmount: null, additionalCharges: [] }),
       t,
     );
@@ -1197,6 +1202,7 @@ describe("chargesOf", () => {
 
   it("writes a fractional percentage to two places", () => {
     const charges = chargesOf(
+      rulesSync(),
       shipment({
         additionalCharges: [
           { id: "f", method: "Percentage", amount: 12.5, unit: 3, accessorialCharge: null },
@@ -1208,7 +1214,7 @@ describe("chargesOf", () => {
       key: "f",
       label: "Charge",
       detail: `${formatPercent(12.5, 2)} of linehaul`,
-      amount: null,
+      amount: "0",
     });
   });
 });

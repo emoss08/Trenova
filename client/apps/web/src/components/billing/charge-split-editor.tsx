@@ -11,7 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
-import { allocationRemainder } from "@trenova/shared/lib/charge-split";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { allocationRemainders } from "@trenova/shared/rules/allocation";
+import type { DecimalInput } from "@trenova/shared/rules/wire";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { ChargeAllocation, ChargeAllocationMethod } from "@trenova/shared/types/shipment";
 import { PlusIcon, SplitIcon, Trash01Icon } from "@trenova/shared/components/icons";
@@ -25,13 +29,14 @@ import {
 } from "react-hook-form";
 import { allocationMethodChoices } from "@/lib/choices";
 import { selectOptionMetaString } from "@/lib/select-option-meta";
+import { ChargeSplitRemainderSkeleton } from "./charge-split-remainder-skeleton";
 
 export type ChargeSplitEditorProps = {
   control: Control<FieldValues>;
   /** Path of the allocation array in the form, e.g. `additionalCharges.2.allocations`. */
   name: string;
-  /** What the charge comes to, for amount splits and the remainder line. */
-  chargeAmount: number | null;
+  /** What the charge comes to, for amount splits and the remainder line; null when unknown. */
+  chargeAmount: DecimalInput;
   /** Restricts the split to percentages, for charges whose total is only known server-side. */
   percentOnly?: boolean;
   /** Who is billed when no split is entered. */
@@ -77,7 +82,6 @@ export function ChargeSplitEditor({
   const [splitMode, setSplitMode] = useState(rows.length > 1);
 
   const method: ChargeAllocationMethod = rows[0]?.method === "Amount" ? "Amount" : "Percent";
-  const state = allocationRemainder(rows, chargeAmount);
   const rootError = getFieldState(name, formState).error;
   const rootMessage =
     (rootError as { message?: string } | undefined)?.message ??
@@ -253,22 +257,60 @@ export function ChargeSplitEditor({
           {t("Bill to one payer")}
         </Button>
       </div>
-      <p
-        className={cn(
-          "text-2xs tabular-nums",
-          state.isOver ? "text-destructive font-medium" : "text-muted-foreground",
-        )}
-        data-testid="charge-split-remainder"
-      >
-        {method === "Amount"
-          ? t(
-              "Allocated {0} · {1} remaining",
-              formatCurrency(state.allocated, currencyCode),
-              formatCurrency(state.remaining, currencyCode),
-            )
-          : t("Allocated {0}% · {1}% remaining", state.allocated, state.remaining)}
-      </p>
+      <LazyComponent fallback={<ChargeSplitRemainderSkeleton />}>
+        <SplitRemainder rows={rows} chargeAmount={chargeAmount} currencyCode={currencyCode} />
+      </LazyComponent>
       {rootMessage ? <p className="text-destructive text-2xs">{rootMessage}</p> : null}
     </div>
+  );
+}
+
+const PERCENT_DIGITS = { maximumFractionDigits: 6 } as const;
+
+/**
+ * How much of the charge the rows assign and what is left, measured by the rules module the
+ * way the server will judge the split: percents against 100 at six places, amounts in cents.
+ */
+function SplitRemainder({
+  rows,
+  chargeAmount,
+  currencyCode,
+}: {
+  rows: readonly ChargeAllocation[];
+  chargeAmount: DecimalInput;
+  currencyCode: string;
+}) {
+  const t = useT();
+  const rules = useRules();
+  const total = chargeAmount === null || chargeAmount === undefined ? {} : { total: chargeAmount };
+  const [state] = allocationRemainders(rules, { charges: [{ ...total, allocations: rows }] });
+
+  let text: string;
+  if (state.method === "Percent") {
+    text = t(
+      "Allocated {0}% · {1}% remaining",
+      formatNumber(Number(state.allocated), PERCENT_DIGITS),
+      formatNumber(Number(state.remaining ?? 0), PERCENT_DIGITS),
+    );
+  } else if (state.remaining === null) {
+    text = t("Allocated {0}", formatCurrency(Number(state.allocated), currencyCode));
+  } else {
+    text = t(
+      "Allocated {0} · {1} remaining",
+      formatCurrency(Number(state.allocated), currencyCode),
+      formatCurrency(Number(state.remaining), currencyCode),
+    );
+  }
+
+  return (
+    <p
+      className={cn(
+        "text-2xs tabular-nums",
+        state.over ? "text-destructive font-medium" : "text-muted-foreground",
+      )}
+      data-testid="charge-split-remainder"
+    >
+      {text}
+    </p>
   );
 }

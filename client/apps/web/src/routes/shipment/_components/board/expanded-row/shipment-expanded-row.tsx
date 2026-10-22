@@ -1,9 +1,11 @@
 import { ChevronUpIcon } from "@trenova/shared/components/icons";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import type { Row } from "@trenova/shared/types/data-table";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useShipmentRecordActions } from "../record-actions";
 import { DocPills } from "./doc-pills";
 import { MoneyLine } from "./money-line";
+import { MoneyLineSkeleton } from "./money-line-skeleton";
 import { NextStep } from "./next-step";
 import { QuickActions } from "./quick-actions";
 import { RouteTrack } from "./route-track";
@@ -23,7 +25,9 @@ export function ShipmentExpandedRow({ row, onCollapse }: ShipmentExpandedRowProp
         <div className="flex min-w-0 flex-col gap-4 px-5 py-4">
           <RouteTrack shipment={shipment} />
           <div className="border-border flex flex-col gap-3 border-t border-dashed pt-3 @[1100px]/board:flex-row @[1100px]/board:items-end @[1100px]/board:justify-between">
-            <MoneyLine shipment={shipment} />
+            <LazyComponent fallback={<MoneyLineSkeleton />}>
+              <MoneyLine shipment={shipment} />
+            </LazyComponent>
             <DocPills shipment={shipment} />
           </div>
         </div>
