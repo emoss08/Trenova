@@ -145,6 +145,12 @@ workflow retry decisions and reach operators through job history, never a transl
 end-user surface. Moving one into `messageArgs` is the only edit needed if that judgement
 changes.
 
+**`rules.Message{Template: "..."}` is a message.** A Go-authored message that travels as a
+`rules.Message` (the formula preview's `timeout` and `negativeCharge` errors, the
+unresolved-field error) is read from the `Template` literal of that composite literal
+(`recordRulesMessage`). Write the template there, not in a constant: a constant passed to a
+constructor is dynamic and never reaches the catalog.
+
 **Why an unlisted constructor fails the run.** Skipping it would drop a whole class of
 messages from the catalog with nothing anywhere failing. The gate is what turned up 25
 constructors on the first run.

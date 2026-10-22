@@ -11166,7 +11166,7 @@
     ]
   },
   "A template cannot have more than 20 breakdown definitions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -37624,14 +37624,13 @@
     ]
   },
   "Banker's rounding: exact halves go to the even neighbour, so a large book of charges does not drift upward.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -41446,6 +41445,15 @@
       "go/other",
       "routes/driver-pay-event",
       "routes/formula-template"
+    ]
+  },
+  "Breakdown expression cannot exceed 10,000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Breakdown label or expression is too long": {
@@ -60603,14 +60611,13 @@
     ]
   },
   "Constrains a value between a minimum and maximum bound.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -62129,62 +62136,57 @@
     ]
   },
   "Converts a number or boolean to text.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Converts numeric text or a number to a whole number, truncating toward zero.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Converts numeric text or an integer to a number.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Converts text to lower case.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Converts text to upper case.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -100261,7 +100263,7 @@
     ]
   },
   "Expression cannot exceed 10,000 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -100287,24 +100289,6 @@
       "routes/formula-template"
     ]
   },
-  "Expression evaluated against shipment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Expression evaluation failed": {
-    "sites": 4,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Expression is required": {
     "sites": 4,
     "scope": [
@@ -100317,7 +100301,7 @@
     ]
   },
   "Expression is valid": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -102733,15 +102717,6 @@
       "apps/web/components"
     ]
   },
-  "Failed to load rate tables": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Failed to load record. Please try again.": {
     "sites": 1,
     "scope": [
@@ -102758,15 +102733,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Failed to load shipment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to load suggestions": {
@@ -111460,26 +111426,24 @@
     ]
   },
   "Function form of endsWith.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Function form of startsWith.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -135851,26 +135815,24 @@
     ]
   },
   "Like lookup, but returns fallback when the table has no entry or band for the key. A missing table still errors, so a deleted matrix cannot silently reprice.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Like lookup2, but returns fallback when the table has no cell at the row/column intersection. A missing table still errors, so a deleted matrix cannot silently reprice.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -169685,14 +169647,13 @@
     ]
   },
   "Number of characters in text or items in a list.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -192057,14 +192018,13 @@
     ]
   },
   "Position of the first occurrence of part, or -1 when absent.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -201279,24 +201239,6 @@
       "routes/desk"
     ]
   },
-  "Rate table {0} has a single axis — address it with lookup(table, key)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Rate table {0} has two axes — address it with lookup2(table, rowKey, colKey)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Rate tables": {
     "sites": 1,
     "scope": [
@@ -203541,14 +203483,13 @@
     ]
   },
   "Reads a banded single-axis table as a curve: between two band floors the value is interpolated linearly between those bands' values. Below the first floor or past the last, the edge band's value is used.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -211344,14 +211285,13 @@
     ]
   },
   "Removes leading and trailing whitespace.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -211365,26 +211305,24 @@
     ]
   },
   "Removes the prefix when the text begins with it.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Removes the suffix when the text ends with it.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -212325,14 +212263,13 @@
     ]
   },
   "Replaces every occurrence of old with new.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -217410,15 +217347,6 @@
       "routes/worker"
     ]
   },
-  "Returns base raised to the power of exponent.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Returns base raised to the power of exponent: exact for a whole exponent, correct to the last digit otherwise.": {
     "sites": 2,
     "scope": [
@@ -217431,38 +217359,35 @@
     ]
   },
   "Returns the absolute value of a number.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Returns the average of numbers and lists of numbers; every element counts once.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Returns the first non-null argument. Zero and empty string count as values.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -217485,24 +217410,14 @@
     ]
   },
   "Returns the largest integer less than or equal to x.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
-    ]
-  },
-  "Returns the largest of one or more numbers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Returns the largest of one or more numbers; a list counts as its numbers, and the first of equal values wins.": {
@@ -217517,24 +217432,14 @@
     ]
   },
   "Returns the smallest integer greater than or equal to x.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
-    ]
-  },
-  "Returns the smallest of one or more numbers.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Returns the smallest of one or more numbers; a list counts as its numbers, and the first of equal values wins.": {
@@ -217549,50 +217454,46 @@
     ]
   },
   "Returns the square root of a non-negative number.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Returns the sum of numbers and lists of numbers, so it works over a mapped collection such as map(stops, .weight).": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Returns the value at the row/column intersection of the active two-axis rate matrix named table. Each axis matches by its own mode (exact key or quantity band). Errors when the table or intersection is missing.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Returns the value for key in the active single-axis rate matrix named table. Errors when the table or entry is missing.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -220319,38 +220220,35 @@
     ]
   },
   "Rounds a number down (toward negative infinity) at the given decimal places.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Rounds a number to the given decimal places (default 0, between -12 and 12).": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "Rounds a number up (toward positive infinity) at the given decimal places; roundUp(x, 2) is the cent-level ceiling a tariff means by \"rounded up to the nearest cent\".": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -220382,14 +220280,13 @@
     ]
   },
   "Rounds to the nearest multiple of increment: roundTo(x, 5) prices to the nearest $5, roundTo(x, 0.25) to the nearest quarter.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -241877,14 +241774,13 @@
     ]
   },
   "Slices characters from start up to but not including end. Either bound may be left out; negative bounds count from the end.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -244352,14 +244248,13 @@
     ]
   },
   "Splits text into a list on the separator.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -259020,6 +258915,15 @@
       "routes/recurring-deduction"
     ]
   },
+  "The default of {0} is not a usable number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The delay notice was not sent": {
     "sites": 1,
     "scope": [
@@ -260350,6 +260254,24 @@
       "go/other"
     ]
   },
+  "The expression could not be evaluated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The expression could not be tested": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The expression has errors": {
     "sites": 1,
     "scope": [
@@ -260357,6 +260279,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The expression must parse before it can be explained": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The extended linehaul amount, unformatted.": {
@@ -261286,6 +261217,15 @@
       "go/other"
     ]
   },
+  "The formula came to {0}, and a charge cannot be negative. Keep it at zero or above with max(..., 0), or set a minimum charge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The formula ends on a 'let'; add the amount it charges on the last line": {
     "sites": 2,
     "scope": [
@@ -261384,6 +261324,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The formula took longer than {0} to price, so it was stopped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The four digits printed at the end of the card number.": {
@@ -270101,14 +270050,13 @@
     ]
   },
   "The weight to bill under a per-unit break table: the actual weight, unless rating the next break's minimum at the next break's rate is cheaper. Pair it with lookup on the same table.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -284021,50 +283969,46 @@
     ]
   },
   "True when the text begins with the prefix. Case-sensitive.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "True when the text ends with the suffix. Case-sensitive.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "True when the text includes the part anywhere. Case-sensitive; wrap both sides in lower() to ignore case.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
   "True when the text matches the regular expression. Anchor with ^ and $ to match the whole value.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "go/other",
       "rules/formula"
     ]
   },
@@ -287156,24 +287100,6 @@
     ]
   },
   "Unknown quick filter": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Unknown rate table: {0} — a lookup table is an active rate matrix with a single axis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Unknown rate table: {0} — lookup2 addresses an active rate matrix with exactly two axes": {
     "sites": 1,
     "scope": [
       "go"
@@ -318920,6 +318846,15 @@
       "rules/formula"
     ]
   },
+  "the formula reads {0}, which could not be read from this record; it cannot be priced until the field has a value": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "the full number is never stored": {
     "sites": 1,
     "scope": [
@@ -330696,7 +330631,7 @@
     ]
   },
   "{0} is already a shipment value; an input cannot replace it, so choose another name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -331561,7 +331496,7 @@
     ]
   },
   "{0} is the name of a formula function; choose another name for the input": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
