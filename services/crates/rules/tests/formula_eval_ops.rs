@@ -47,6 +47,33 @@ fn request_error(input: &Json) -> String {
 }
 
 #[test]
+fn the_documented_example_holds() {
+    let out = ok(&json!({
+        "programs": [
+            {"id": "expression", "source": "lookup(\"fsc\", fuelType) * miles + linehaul", "expect": "amount"},
+            {"id": "linehaul", "source": "baseRate * miles", "expect": "amount"},
+            {"id": "rush", "source": "isRush and miles > 100", "expect": "predicate"}
+        ],
+        "env": {"baseRate": 2.5, "miles": 120, "linehaul": 300, "fuelType": "DIESEL", "isRush": true,
+                "pickup": {"$date": "2026-01-02T08:00:00-06:00"}, "wait": {"$duration": "1800000000000"}},
+        "tables": [{"name": "fsc", "axes": [{"match": "Exact"}],
+                    "cells": [{"at": [{"key": "DIESEL"}], "value": "0.35"}]}],
+        "trace": {"statements": false, "lookups": true},
+        "budget": {"steps": 200_000}
+    }));
+    assert_eq!(
+        out,
+        json!({"results": [
+            {"id": "expression", "value": "342",
+             "lookups": [{"function": "lookup", "table": "fsc", "keys": ["DIESEL"], "value": "0.35",
+                          "match": {"matchedKey": "DIESEL"}}]},
+            {"id": "linehaul", "value": "300", "lookups": []},
+            {"id": "rush", "value": true, "lookups": []}
+        ]})
+    );
+}
+
+#[test]
 fn one_request_prices_the_main_expression_and_every_breakdown_line() {
     let out = results(&json!({
         "programs": [
@@ -215,6 +242,21 @@ fn a_result_that_is_true_or_false_is_reported_in_the_trace() {
     let statements = out[0]["statements"].as_array().cloned().expect("traced");
     assert_eq!(statements[0]["value"], "3");
     assert_eq!(statements[1]["error"]["code"], "booleanAmount");
+}
+
+#[test]
+fn a_spent_budget_stops_the_trace_where_it_is_spent() {
+    let out = results(&json!({
+        "programs": [{"id": "t", "source": "let a = 1; a; len(1..200000); a + 1", "expect": "amount"}],
+        "trace": {"statements": true},
+    }));
+    let statements = out[0]["statements"].as_array().cloned().expect("traced");
+    assert_eq!(statements.len(), 3, "{statements:?}");
+    assert_eq!(statements[0]["value"], "1");
+    assert_eq!(statements[1]["kind"], "result");
+    assert_eq!(statements[1]["value"], "1");
+    assert_eq!(statements[2]["error"]["code"], "budget");
+    assert_eq!(out[0]["error"]["code"], "budget");
 }
 
 #[test]

@@ -265,13 +265,14 @@ impl<'a> Interpreter<'a> {
         let mut last = Value::Nil;
         for (index, statement) in program.statements.iter().enumerate() {
             let outcome = self.eval(&statement.value);
-            if let Err(error) = &outcome {
-                if error.is_fatal() || !trace {
-                    return Err(error.clone());
-                }
-                if first_error.is_none() {
-                    first_error = Some(error.clone());
-                }
+            let fatal = outcome.as_ref().err().map(EvalError::is_fatal);
+            if fatal.is_some() && !trace {
+                return outcome;
+            }
+            if let Err(error) = &outcome
+                && first_error.is_none()
+            {
+                first_error = Some(error.clone());
             }
             if trace {
                 statements.push(StatementOutcome {
@@ -283,6 +284,9 @@ impl<'a> Interpreter<'a> {
                     span: statement.span,
                     outcome: outcome.clone(),
                 });
+                if fatal == Some(true) {
+                    return outcome;
+                }
             }
             match &statement.kind {
                 StatementKind::Let(name) => {
@@ -581,8 +585,8 @@ impl<'a> Interpreter<'a> {
             }
             ExprKind::Method(method) => {
                 if !method.args.is_empty() {
-                    let placeholders = vec![Value::Nil; method.args.len()];
-                    return Err(builtins::arity(&method.method.text, &placeholders, 0, 0)
+                    let given = vec![Value::Nil; method.args.len()];
+                    return Err(builtins::arity(&method.method.text, &given, 0, 0)
                         .err()
                         .unwrap_or_else(|| unknown_name(&method.method.text)));
                 }
@@ -876,8 +880,8 @@ impl<'a> Interpreter<'a> {
             _ => (2, 2),
         };
         if !(min..=max).contains(&args.len()) {
-            let placeholders = vec![Value::Nil; args.len()];
-            return builtins::arity(name, &placeholders, min, max).map(|()| Value::Nil);
+            let given = vec![Value::Nil; args.len()];
+            return builtins::arity(name, &given, min, max).map(|()| Value::Nil);
         }
         let list = self.items(name, args)?;
         let items = list.items();

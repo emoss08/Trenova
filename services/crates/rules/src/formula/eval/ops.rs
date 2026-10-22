@@ -257,7 +257,7 @@ fn run_program(program: &ProgramInput, context: &Context<'_>) -> ProgramOutput {
         .result
         .and_then(|value| conclude(program.expect, &value).map_err(|error| error.at(result_span)));
     let statements = context.trace.statements.then(|| {
-        let last = evaluation.statements.len().saturating_sub(1);
+        let last = parsed.statements.len().saturating_sub(1);
         evaluation
             .statements
             .iter()
