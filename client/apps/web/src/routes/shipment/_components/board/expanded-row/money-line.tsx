@@ -3,6 +3,9 @@ import { getMarginTone, parseDecimal, resolveTargetMarginPct } from "@/lib/profi
 import { getTotalMiles } from "@/lib/shipment-utils";
 import { cn, formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
 import { additionalChargeLineTotal, type Shipment } from "@trenova/shared/types/shipment";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
+import type { ReactNode } from "react";
 
 const MARGIN_TEXT = {
   danger: "text-danger",
@@ -17,7 +20,7 @@ function Figure({
   className,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   emphasis?: string;
   className?: string;
 }) {
@@ -42,6 +45,8 @@ function Figure({
 /** What the load pays and what it costs, on one line. */
 export function MoneyLine({ shipment }: { shipment: Shipment }) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
+  const withheld = <WithheldValue group="Margins" />;
   const revenue = parseDecimal(shipment.totalChargeAmount as unknown as string);
   const linehaul = parseDecimal(shipment.freightChargeAmount as unknown as string);
   const charges = shipment.additionalCharges ?? [];
@@ -72,11 +77,17 @@ export function MoneyLine({ shipment }: { shipment: Shipment }) {
       <Figure label={t("Accessorials")} value={formatCurrency(accessorials)} />
       <Figure
         label={t("Est. cost")}
-        value={estimate ? formatCurrency(parseDecimal(estimate.estimatedCost)) : "—"}
+        value={
+          !marginsVisible
+            ? withheld
+            : estimate
+              ? formatCurrency(parseDecimal(estimate.estimatedCost))
+              : "—"
+        }
       />
       <Figure
         label={t("Margin")}
-        value={margin != null ? formatPercent(margin) : "—"}
+        value={!marginsVisible ? withheld : margin != null ? formatPercent(margin) : "—"}
         className={marginTone ? MARGIN_TEXT[marginTone] : undefined}
       />
     </dl>

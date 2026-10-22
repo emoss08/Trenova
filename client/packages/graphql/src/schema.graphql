@@ -7708,12 +7708,16 @@ type CapacityMatch {
   deadheadMiles: Float
   destinationCity: String!
   fitPercent: Float
-  marginPercent: Float
+  """Null to a reader without the margins field group."""
+  marginPercent: Float @protected(group: Margins)
   moveId: ID!
   originCity: String!
   pickupAt: Timestamp
   proNumber: String
-  quote: Decimal
+  """
+  What the carrier would cost. Null to a reader without the margins field group, since beside the revenue it gives the margin.
+  """
+  quote: Decimal @protected(group: Margins)
   revenue: Decimal!
   shipmentId: ID!
 }
@@ -10301,7 +10305,10 @@ type CostingControl {
   milesPerGallon: Decimal!
   organizationId: ID!
   plannedMonthlyMiles: Int
-  targetMarginPercent: Decimal
+  """
+  The margin the organization aims for. Null to a reader without the margins field group.
+  """
+  targetMarginPercent: Decimal @protected(group: Margins)
   updatedAt: Timestamp!
   useLiveFuelPrice: Boolean!
   version: Int!
@@ -10847,8 +10854,12 @@ type CustomerDetentionStat {
   customerId: ID!
   customerName: String!
   disputeCount: Int!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   stopCount: Int!
   suppressedCount: Int!
   waivedAmount: Decimal!
@@ -11769,10 +11780,14 @@ type DetentionBacktestBucket {
   billableCount: Int!
   """proposedAmount minus baselineAmount."""
   delta: Decimal!
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   key: String!
   label: String!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   proposedAmount: Decimal!
   stopCount: Int!
 }
@@ -11791,9 +11806,12 @@ type DetentionBacktestResult {
   byCustomer: [DetentionBacktestBucket!]!
   byFacility: [DetentionBacktestBucket!]!
   from: Timestamp!
-  negativeMarginStops: Int!
-  proposedDriverPay: Decimal!
-  proposedNetMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  negativeMarginStops: Int @protected(group: Margins)
+  """Null to a reader without the margins field group."""
+  proposedDriverPay: Decimal @protected(group: Margins)
+  """Null to a reader without the margins field group."""
+  proposedNetMargin: Decimal @protected(group: Margins)
   proposedRevenue: Decimal!
   revenueDelta: Decimal!
   stopsBillable: Int!
@@ -12017,7 +12035,10 @@ type DetentionOccurrence {
   detentionPolicyId: ID
   disputeNote: String!
   disputedAt: Timestamp
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   driverPayMinutes: Int!
   evidenceHead: String!
   freeMinutesGranted: Int!
@@ -12032,7 +12053,8 @@ type DetentionOccurrence {
   location: Location
   locationId: ID!
   locationName: String!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   noticeDeadlineAt: Timestamp
   noticeDueAt: Timestamp
   noticeSentAt: Timestamp
@@ -12220,10 +12242,14 @@ type DetentionPreviewResult {
   billableMinutes: Int!
   calculationTrace: JSON
   capApplied: DetentionCapKind!
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   freeMinutesGranted: Int!
   grossAmount: Decimal!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   notificationStatus: DetentionNotificationStatus!
   policySnapshot: JSON!
   rawDwellMinutes: Int!
@@ -15308,11 +15334,15 @@ type FacilityDetentionStat {
   billedAmount: Decimal!
   breachCount: Int!
   disputeCount: Int!
-  driverPayAmount: Decimal!
+  """
+  What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+  """
+  driverPayAmount: Decimal @protected(group: Margins)
   locationId: ID!
   locationName: String!
   medianDwellMinutes: Float!
-  netMargin: Decimal!
+  """Null to a reader without the margins field group."""
+  netMargin: Decimal @protected(group: Margins)
   p90DwellMinutes: Float!
   stopCount: Int!
   suppressedCount: Int!
@@ -16534,15 +16564,20 @@ type FleetCodeEdge {
   node: FleetCode!
 }
 
+"""
+What the fleet's loads cost over a window. The margin figures, and the revenue
+that would let a reader work the margin out from the cost, are null to a reader
+without the margins field group.
+"""
 type FleetCostSummary {
   avgCpm: Decimal!
-  avgMarginPercent: Decimal
+  avgMarginPercent: Decimal @protected(group: Margins)
   emptyMiles: Float!
   shipmentCount: Int!
   totalEstimatedCost: Decimal!
   totalMiles: Float!
-  totalRevenue: Decimal!
-  unprofitableCount: Int!
+  totalRevenue: Decimal @protected(group: Margins)
+  unprofitableCount: Int @protected(group: Margins)
 }
 
 """
@@ -23686,7 +23721,8 @@ without the grant receives null for every field in the set.
 """
 enum ProtectedFieldGroup {
   """
-  The margin floor and pay ceiling a rate agreement sets against the sell price.
+  Every margin figure: a margin, a margin percent, a margin floor or target, and
+  the cost beside a revenue that would give the margin away.
   """
   Margins
   """
@@ -24640,7 +24676,11 @@ type Query {
   shipmentEvents(input: ShipmentEventsInput!): [ShipmentEvent!]!
   shipmentFormSubmissions(shipmentId: ID!): [TelematicsFormSubmission!]!
   shipmentPreviousRates(input: ShipmentPreviousRatesInput!): ShipmentPreviousRatesResponse!
-  shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
+  """
+  A shipment's revenue against its estimated cost. Null to a reader without the
+  margins field group: every figure in it is the margin or works it out.
+  """
+  shipmentProfitability(shipmentId: ID!): ShipmentProfitability @protected(group: Margins)
   shipmentQuickFilterCounts(input: ShipmentBoardScopeInput!): [ShipmentQuickFilterCount!]!
   shipmentStageSummary(input: ShipmentBoardScopeInput!): [ShipmentStageSummary!]!
   shipmentSuggestions(timezone: String!): ShipmentSuggestionQueue!
@@ -26088,7 +26128,8 @@ type ResolvedCostProfile {
   fuel: FuelCostResolution
   glWindow: GLActualsWindow
   includeDeadheadMiles: Boolean!
-  targetMarginPercent: Decimal
+  """Null to a reader without the margins field group."""
+  targetMarginPercent: Decimal @protected(group: Margins)
   totalCpm: Decimal!
   variableCpm: Decimal!
 }
@@ -27353,7 +27394,10 @@ type Shipment {
   ownerId: ID
   pieces: Int
   proNumber: String!
-  profitabilityEstimate: ShipmentProfitabilityEstimate
+  """
+  The shipment's estimated cost and margin. Null to a reader without the margins field group.
+  """
+  profitabilityEstimate: ShipmentProfitabilityEstimate @protected(group: Margins)
   rateAgreementId: ID
   rateAgreementRuleId: ID
   """Freezes the numbers of a shipment that has already been invoiced."""
@@ -28852,11 +28896,14 @@ type ShipmentProfitability {
 type ShipmentProfitabilityAnalytics {
   avgCpm: Float!
   """Null when the reader does not hold the margins field group."""
-  avgMarginPct: Float
+  avgMarginPct: Float @protected(group: Margins)
   hasMargin: Boolean!
   shipmentCount: Int!
   totalMiles: Float!
-  unprofitableCount: Int!
+  """
+  How many loads lost money. Null when the reader does not hold the margins field group.
+  """
+  unprofitableCount: Int @protected(group: Margins)
 }
 
 type ShipmentProfitabilityEstimate {
@@ -29921,9 +29968,10 @@ type TenderOffer {
   counterDecidedAt: Timestamp
   counterDecidedById: ID
   """
-  The margin the counter leaves, as a percentage of the sell price. Null when the load has no sell price.
+  The margin the counter leaves, as a percentage of the sell price. Null when the
+  load has no sell price, or to a reader without the margins field group.
   """
-  counterMarginPercent: Decimal
+  counterMarginPercent: Decimal @protected(group: Margins)
   """
   True when the counter is below the margin floor, so taking it needs the tender approve permission.
   """

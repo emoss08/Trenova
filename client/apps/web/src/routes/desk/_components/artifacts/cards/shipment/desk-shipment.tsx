@@ -1,5 +1,6 @@
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -55,6 +56,7 @@ import {
   CoverageRow,
   FreightBlock,
   MarginMeter,
+  MarginWithheld,
   NowStrip,
   StopRail,
 } from "./shipment-parts";
@@ -165,6 +167,7 @@ function ShipmentCard({
   const freight = freightOf(shipment);
   const charges = chargesOf(shipment, t);
   const margin = marginOf(shipment);
+  const marginsVisible = useProtectedFieldAccess("Margins");
   const miles = totalMiles(moves);
   const billing = billingPhase(shipment);
   const shipmentPath = recordPath("shipment", recordId);
@@ -316,7 +319,7 @@ function ShipmentCard({
 
       <CardSection title={t("Charges")}>
         <ChargesBlock charges={charges} />
-        {margin && <MarginMeter margin={margin} />}
+        {!marginsVisible ? <MarginWithheld /> : margin && <MarginMeter margin={margin} />}
       </CardSection>
 
       {billing === "readiness" && readiness && (

@@ -1,5 +1,7 @@
 import { BOARD_GROUPINGS, type BoardGrouping } from "@/lib/shipment-board/grouping";
-import { parseAsQuickFilters } from "@/lib/shipment-board/quick-filters";
+import { applicableQuickFilters, parseAsQuickFilters } from "@/lib/shipment-board/quick-filters";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
+import { useMemo } from "react";
 import {
   createParser,
   parseAsArrayOf,
@@ -45,6 +47,18 @@ export const shipmentBoardParser = {
   capacity: parseAsStringLiteral(CAPACITY_KINDS),
 };
 
+/**
+ * The board's URL state. A shared link can name a quick filter the reader may not apply (low
+ * margin, for someone without the margins field group); it is left out rather than sent to a
+ * server that would refuse the whole board for it.
+ */
 export function useShipmentBoardUrl() {
-  return useQueryStates(shipmentBoardParser, { history: "replace" });
+  const [state, setState] = useQueryStates(shipmentBoardParser, { history: "replace" });
+  const marginsVisible = useProtectedFieldAccess("Margins");
+  const applicable = useMemo(
+    () => ({ ...state, qf: applicableQuickFilters(state.qf, marginsVisible) }),
+    [state, marginsVisible],
+  );
+
+  return [applicable, setState] as const;
 }

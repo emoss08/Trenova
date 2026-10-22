@@ -742,9 +742,10 @@ export type ShopStrategy = z.infer<typeof shopStrategySchema>;
 /**
  * What a shipment's two sides came to, and whether that is allowed.
  *
- * The three numbers are never absent: the server carries them as plain decimals
- * rather than nullable ones, and a margin of zero is a real answer that a null
- * would blur into "not measured".
+ * Within a verdict the three numbers are never absent: the server carries them
+ * as plain decimals, and a margin of zero is a real answer that a null would blur
+ * into "not measured". The verdict as a whole is null to a reader without the
+ * margins field group.
  */
 export const marginVerdictSchema = z.object({
   amount: decimalStringSchema.nullish().transform((value) => value ?? 0),
@@ -775,7 +776,8 @@ export const shopOptionSchema = z.object({
   cost: decimalStringSchema.nullish().transform((value) => value ?? 0),
   currency: z.string().default("USD"),
 
-  margin: marginVerdictSchema,
+  /** Null when the option was not priced, or to a reader without the margins field group. */
+  margin: marginVerdictSchema.nullable(),
 
   quote: rateQuoteSchema.nullish(),
   agreementId: z.string().nullish(),
