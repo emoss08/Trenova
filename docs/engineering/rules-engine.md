@@ -524,7 +524,160 @@ takes under 2 ms in an unoptimised test build, and a small fraction of that opti
 `fuzz/` holds cargo-fuzz targets for `formula.check` (with the signature and identifier lookups)
 and `formula.format` (which must give text that parses and formats to itself).
 
-<!-- formula.evaluate and the rate table format -->
+### `formula.evaluate`
+
+Evaluates a batch of formulas against one environment in one boundary crossing: the server sends
+a template's main expression and every breakdown line for a shipment together. The environment
+is read once and the rate tables are indexed once; each program runs under its own budget. The
+host runs `formula.check` first. `schema` is the same as `formula.check` takes, and only its
+`operators` matter here, since the grammar needs them: a published word operator runs the
+two-argument function of its name written infix (`zip hasPrefix "75"`), and one with no such
+function is `unknownName`.
+
+```json
+{"op": "formula.evaluate", "input": {
+  "programs": [
+    {"id": "expression", "source": "lookup(\"fsc\", fuelType) * miles + linehaul", "expect": "amount"},
+    {"id": "linehaul", "source": "baseRate * miles", "expect": "amount"},
+    {"id": "rush", "source": "isRush and miles > 100", "expect": "predicate"}
+  ],
+  "env": {"baseRate": 2.5, "miles": 120, "linehaul": 300, "fuelType": "DIESEL", "isRush": true,
+          "pickup": {"$date": "2026-01-02T08:00:00-06:00"}, "wait": {"$duration": "1800000000000"}},
+  "tables": [{"name": "fsc", "axes": [{"match": "Exact"}],
+              "cells": [{"at": [{"key": "DIESEL"}], "value": "0.35"}]}],
+  "trace": {"statements": false, "lookups": true},
+  "budget": {"steps": 200000}
+}}
+```
+
+```json
+{"ok": {"results": [
+  {"id": "expression", "value": "342",
+   "lookups": [{"function": "lookup", "table": "fsc", "keys": ["DIESEL"], "value": "0.35",
+                "match": {"matchedKey": "DIESEL"}}]},
+  {"id": "linehaul", "value": "300", "lookups": []},
+  {"id": "rush", "value": true, "lookups": []}
+]}}
+```
+
+**Programs.** `expect` is `amount` or `predicate`. Results come back in request order with the
+program's `id`, and either a `value` or an `error`, never both.
+
+- An **amount** is a decimal string. Anything else is an error, as the Go engine's `toDecimal`
+  and `rejectBooleanAmount` decided: true or false is `booleanAmount`, nil is `nullResult`, text,
+  a date, a list or a map is `nonNumericResult`.
+- A **predicate** is `true`, `false` or a decimal string; the host reads a number as true when it
+  is not zero. A predicate never reads rate tables: every lookup in it is zero (the Go engine's
+  `StubLookup`), so a yes-or-no condition never loads a tenant's tables.
+- A program that does not parse comes back with a `syntax` error at the first diagnostic and is
+  not run; the other programs still run.
+
+**The environment** is a value tree (see Wire conventions): an object of fields and inputs,
+nested objects for relations, lists for stops and commodities. Numbers are read exactly from
+their JSON text; a JSON string is always text, never a number. Dates are `{"$date": ...}` in the
+offset of the stop they came from; durations `{"$duration": "<nanoseconds>"}`. A field the host
+leaves out reads as nil, the same as one sent as `null`. Objects nest at most 32 levels.
+
+**Tables.** `tables` absent means the context loaded none: every lookup fails with
+`lookupUnavailable`. `tables: []` means none exist: every lookup fails with `tableNotFound`. Each
+table is one rate matrix, encoded once by the host from the stamped matrix and cached as bytes:
+
+| Field | Meaning |
+|---|---|
+| `name` | the matrix code a formula names |
+| `axes` | one or two axes, in position order: `{match, kind?, normalization?, overflow?}` |
+| `axes[].match` | `Exact` or `Range` (Go's `ratematrix.MatchMode`) |
+| `axes[].kind` | Go's `DimensionKind`; only `FreightClass` changes how keys read; default `Custom` |
+| `axes[].normalization` | `None` (default), `Trim`, `Upper` (trim, upper-case) or `Zip3` (trim, upper-case, first three characters) |
+| `axes[].overflow` | `Error` (default), `ClampToTopBand` or `Nearest` |
+| `cells` | `{at, value}`: `at` has one `{key?, min?, max?}` per axis; `value` an exact decimal |
+
+A range axis matches half-open bands `[min, max)`; a band without `max` is open-ended; a cell
+without `min` on a range axis is ignored, as Go ignored it. A freight-class axis reads `85`,
+`"77.5"` and `"Class92_5"` as the NMFC class before normalising. A table with no axis or more
+than two, a cell whose `at` does not have one entry per axis, or a name sent twice for the same
+number of axes is a request error. A name may be both a one-axis and a two-axis table: `lookup`
+reads one, `lookup2` the other.
+
+The lookups are `matrix_lookup.go`'s, in exact decimals: `lookupOr` and `lookup2Or` fall back
+only on a miss (`lookupMiss`); a missing table, the wrong shape or an unusable key always
+surfaces. `lookup2` narrows to the cells whose row matches (overlapping row bands are all
+candidates), takes the first whose column matches, and on a range column retries once with the
+column moved into a band by its overflow policy. `lookupInterp` interpolates between band floors
+and holds the edge values outside them; `deficitWeight` bills the next break's minimum when that
+is cheaper at the next break's rate.
+
+**Traces.** `trace.statements` adds `statements` to each result, from one pass over the program
+(the Go engine compiled it once per statement):
+`{index, kind: "let" | "result", name?, code, from, to, value?, error?}`, with `from` and `to` in
+UTF-16 units. The last statement's `value` is the program's result as above; other values are
+shown as the Go engine's `traceValue` showed them: decimals as strings, dates in UTC to the
+second, durations as `1h30m0s`, text past 500 characters ellipsised, lists and maps to 3 levels
+and 50 items (`"[N items]"`, `"{N fields}"`), nil map entries left out. A failed `let` is shown
+with its error and the trace goes on; the program's result is the first failure.
+
+`trace.lookups` adds `lookups`, every call in order, for the receipt (Go's `LookupTrace`; the
+scope is the program's `id`): `{function, table, keys, value?, match?, error?}`. `match` is
+`{matchedKey?, bandMin?, bandMax?, adjusted?}`: the normalised key of an exact table, the band of
+a range table, `row × col` of a two-axis cell (a band reads `500–1000` or `500+`), the helper's
+name for `lookupInterp` and `deficitWeight`; `adjusted` says an overflow policy moved the key. A
+miss `lookupOr` absorbed is recorded with its error.
+
+**Budgets.** Each program runs under `budget` (`steps`, `textBytes`, `items`), which may lower the
+defaults and never raise them (raising one is a request error):
+
+| Budget | Default | Counts |
+|---|---|---|
+| `steps` | 1,000,000 | every node evaluated and every element a built-in visits |
+| `textBytes` | 1,048,576 | every byte of text an operation builds |
+| `items` | 100,000 | every list item and map entry a formula creates |
+
+**Errors.** An evaluation error is `{code, message, args?, from?, to?, fields?, guards?}`; the
+message is a `Message` template with positional arguments, where the kind of a value is an ICU
+`select` argument (`nil`, `boolean`, `text`, `number`, `date`, `duration`, `list`, `map`). For
+`missingField`, `fields` are the field paths read without a value and `guards` the edit that keeps
+the formula pricing for each (`coalesce(weight, 0)`, `origin?.zip ?? 0`, `.weight ?? 0` inside a
+predicate, `coalesce(pickupDate, ratingTime)` for a date).
+
+| Code | When |
+|---|---|
+| `syntax` | the program does not parse, or has no statements |
+| `missingField` | a value the formula needs is nil |
+| `unknownName` | a function, `#name` or method that does not exist |
+| `type` | an operand or argument of the wrong kind, or `==` between different kinds |
+| `argument` | an argument of the right kind with an unusable value (`round(x, 13)`, `date("x")`) |
+| `index` | an index outside a list or text |
+| `divideByZero` | `/` or `%` by zero |
+| `overflow` | a number past 28 significant digits, a date past 9999, a duration past 292 years |
+| `nonFinite` | a negative number to a fractional power, zero to a negative power |
+| `regex` | a `matches` pattern that does not compile |
+| `budget` | a budget is spent, or values nest past 32 levels |
+| `lookupMiss`, `tableNotFound`, `tableShape`, `lookupKey`, `lookupUnavailable` | the rate table failures above |
+| `booleanAmount`, `nullResult`, `nonNumericResult` | an amount or predicate that is not a number |
+
+**Where it differs from the Go engine, deliberately.**
+
+- Numbers are exact: `0.1 + 0.2` is `0.3`; division by zero is `divideByZero`, where float64 gave
+  ±Inf or NaN; an unused `let` that divides by zero fails the formula. A result keeps 28
+  significant digits: past that its last digit is rounded (`1 / 3 * 3` is
+  `0.9999999999999999999999999999`), and a whole part past 28 digits is `overflow`.
+- A nil reaching an operator is `missingField` naming the one field that caused it; Go named
+  every nil field the formula referenced whenever anything failed.
+- `==` between different kinds is an error at run time too; Go answered false.
+- Rounding decimals, `%`, bits, ranges, slices and `take` need whole numbers; Go truncated 3.9.
+- `int(text)` reads decimal text and truncates (`int("12.7")` is 12); Go's `Atoi` refused it.
+- `type()` answers `number` for every number (one number type); dates and durations answer
+  `date` and `duration`. `string()` writes nil as `nil`, a date in RFC 3339 and maps in key order.
+- `indexOf`, `lastIndexOf`, `len`, indexes and slices count characters, not bytes.
+- `upper` and `lower` use full Unicode case mapping.
+- `min` and `max` take lists, flattened one level, like the other aggregates.
+- A date minus a date that does not fit a duration is `overflow`; Go saturated.
+- `duration()` applies the fraction in integer arithmetic; Go went through float64.
+- `date(text)` reads only the five forms above; `date(text, layout, zone)` and `timezone()` are
+  gone. Map keys built by `groupBy` and `fromPairs` are text (`1` becomes `"1"`).
+
+The cases are in `testdata/evaluation.json` (ported from the Go engine's tests, each naming the
+Go test it comes from) and the `value`s of `testdata/conformance.json`.
 
 ### Charge allocation (`allocation.*`)
 
