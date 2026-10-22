@@ -437,7 +437,7 @@ func agreementPrices(
 	shp *shipment.Shipment,
 ) (map[pulid.ID]decimal.Decimal, error) {
 	if agreement == nil {
-		return nil, nil
+		return map[pulid.ID]decimal.Decimal{}, nil
 	}
 
 	ids := make([]pulid.ID, 0, len(shp.AdditionalCharges))
@@ -458,7 +458,7 @@ func agreementPrices(
 		})
 	}
 	if len(priced) == 0 {
-		return nil, nil
+		return map[pulid.ID]decimal.Decimal{}, nil
 	}
 
 	totals, err := shipment.AdditionalChargeTotals(ctx, priced, shp.FreightChargeAmount.Decimal)

@@ -2,6 +2,7 @@ package invoiceservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -187,15 +188,15 @@ func (s *Service) createConsolidatedTx(
 		Shares:      shares,
 		IsSplitBill: isSplit,
 	})
-	if err != nil {
-		return nil, err
-	}
-	if entity == nil {
+	if errors.Is(err, errNothingToBill) {
 		return nil, errortypes.NewValidationError(
 			"shipmentIds",
 			errortypes.ErrInvalidOperation,
 			"Nothing on this selection could be billed",
 		)
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	if multiErr := s.validator.ValidateCreate(txCtx, entity); multiErr != nil {

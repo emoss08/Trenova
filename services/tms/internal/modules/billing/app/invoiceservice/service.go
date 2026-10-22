@@ -3,6 +3,7 @@ package invoiceservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/bytedance/sonic"
@@ -453,15 +454,15 @@ func (s *Service) planDraftFromItem(
 		Shares:         sharesForLeg(dependencies.Shipment, dependencies.Share),
 		IsSplitBill:    dependencies.IsSplitBill,
 	})
-	if err != nil {
-		return nil, err
-	}
-	if entity == nil {
+	if errors.Is(err, errNothingToBill) {
 		return nil, errortypes.NewValidationError(
 			"billingQueueItemId",
 			errortypes.ErrInvalidOperation,
 			"Billing queue item has no shipment or adjustment context to bill from",
 		)
+	}
+	if err != nil {
+		return nil, err
 	}
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
@@ -1176,27 +1177,14 @@ func (s *Service) buildInvoiceEntity(
 	p *buildInvoiceParams,
 ) (*invoice.Invoice, error) {
 	if p.Anchor.IsAdjustmentOrigin {
-		entity, err := s.buildAdjustmentOriginInvoiceEntity(
-			ctx,
-			p.Anchor,
-			firstLeg(p.Legs),
-			p.Customer,
-			p.Control,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if entity != nil {
-			if p.Order != nil {
-				entity.OrderID = p.Order.ID
-				entity.OrderNumber = p.Order.OrderNumber
-			}
-			return entity, nil
+		entity, err := s.adjustmentOriginEntity(ctx, p)
+		if !errors.Is(err, errNothingToBill) {
+			return entity, err
 		}
 	}
 
 	if len(p.Legs) == 0 {
-		return nil, nil
+		return nil, errNothingToBill
 	}
 
 	invoiceDate := p.InvoiceDate
@@ -1213,6 +1201,56 @@ func (s *Service) buildInvoiceEntity(
 		number = p.Anchor.Number
 	}
 
+	lines, err := invoiceLines(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := &invoice.Invoice{
+		OrganizationID:     p.Anchor.OrganizationID,
+		BusinessUnitID:     p.Anchor.BusinessUnitID,
+		BillingQueueItemID: p.Anchor.ID,
+		Scope:              p.Scope,
+		CustomerID:         p.Customer.ID,
+		Number:             number,
+		BillType:           p.Anchor.BillType,
+		Status:             invoice.StatusDraft,
+		PaymentTerm:        paymentTerm,
+		CurrencyCode:       billingCurrencyFromCustomer(p.Customer),
+		InvoiceDate:        invoiceDate,
+		DueDate:            invoice.DueDateFromPaymentTerm(invoiceDate, paymentTerm),
+		ShipmentCount:      len(p.Legs),
+		BillToName:         p.Customer.Name,
+		BillToCode:         p.Customer.Code,
+		BillToAddressLine1: p.Customer.AddressLine1,
+		BillToAddressLine2: p.Customer.AddressLine2,
+		BillToCity:         p.Customer.City,
+		BillToPostalCode:   p.Customer.PostalCode,
+		AppliedAmount:      decimal.Zero,
+		SettlementStatus:   invoice.SettlementStatusUnpaid,
+		DisputeStatus:      invoice.DisputeStatusNone,
+		OffCycleReason:     p.OffCycleReason,
+		IsSplitBill:        p.IsSplitBill,
+		Lines:              lines,
+	}
+
+	applyInvoiceDetail(entity, p.Customer)
+	applyInvoiceScopeHeader(entity, p)
+	applyShipper(entity, p)
+
+	if p.Customer.State != nil {
+		entity.BillToState = p.Customer.State.Abbreviation
+		entity.BillToCountry = p.Customer.State.CountryName
+	}
+
+	syncInvoiceTotalsFromLines(entity)
+	entity.SyncMinorAmounts()
+
+	return entity, nil
+}
+
+// invoiceLines numbers every leg's lines, then the order-level charges.
+func invoiceLines(ctx context.Context, p *buildInvoiceParams) ([]*invoice.InvoiceLine, error) {
 	lines := make([]*invoice.InvoiceLine, 0, len(p.Legs))
 	nextLineNumber := 1
 	for _, leg := range p.Legs {
@@ -1264,47 +1302,7 @@ func (s *Service) buildInvoiceEntity(
 		}
 	}
 
-	entity := &invoice.Invoice{
-		OrganizationID:     p.Anchor.OrganizationID,
-		BusinessUnitID:     p.Anchor.BusinessUnitID,
-		BillingQueueItemID: p.Anchor.ID,
-		Scope:              p.Scope,
-		CustomerID:         p.Customer.ID,
-		Number:             number,
-		BillType:           p.Anchor.BillType,
-		Status:             invoice.StatusDraft,
-		PaymentTerm:        paymentTerm,
-		CurrencyCode:       billingCurrencyFromCustomer(p.Customer),
-		InvoiceDate:        invoiceDate,
-		DueDate:            invoice.DueDateFromPaymentTerm(invoiceDate, paymentTerm),
-		ShipmentCount:      len(p.Legs),
-		BillToName:         p.Customer.Name,
-		BillToCode:         p.Customer.Code,
-		BillToAddressLine1: p.Customer.AddressLine1,
-		BillToAddressLine2: p.Customer.AddressLine2,
-		BillToCity:         p.Customer.City,
-		BillToPostalCode:   p.Customer.PostalCode,
-		AppliedAmount:      decimal.Zero,
-		SettlementStatus:   invoice.SettlementStatusUnpaid,
-		DisputeStatus:      invoice.DisputeStatusNone,
-		OffCycleReason:     p.OffCycleReason,
-		IsSplitBill:        p.IsSplitBill,
-		Lines:              lines,
-	}
-
-	applyInvoiceDetail(entity, p.Customer)
-	applyInvoiceScopeHeader(entity, p)
-	applyShipper(entity, p)
-
-	if p.Customer.State != nil {
-		entity.BillToState = p.Customer.State.Abbreviation
-		entity.BillToCountry = p.Customer.State.CountryName
-	}
-
-	syncInvoiceTotalsFromLines(entity)
-	entity.SyncMinorAmounts()
-
-	return entity, nil
+	return lines, nil
 }
 
 // applyInvoiceScopeHeader stamps the identity fields that belong to this scope,
@@ -1414,6 +1412,30 @@ type adjustmentInvoiceContext struct {
 	SourceAdjustmentID pulid.ID               `json:"sourceAdjustmentId"`
 }
 
+func (s *Service) adjustmentOriginEntity(
+	ctx context.Context,
+	p *buildInvoiceParams,
+) (*invoice.Invoice, error) {
+	entity, err := s.buildAdjustmentOriginInvoiceEntity(
+		ctx,
+		p.Anchor,
+		firstLeg(p.Legs),
+		p.Customer,
+		p.Control,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if p.Order != nil {
+		entity.OrderID = p.Order.ID
+		entity.OrderNumber = p.Order.OrderNumber
+	}
+
+	return entity, nil
+}
+
+var errNothingToBill = errors.New("there is no leg and no adjustment context to bill from")
+
 func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
@@ -1422,17 +1444,17 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	control *tenant.BillingControl,
 ) (*invoice.Invoice, error) {
 	if len(item.AdjustmentContext) == 0 {
-		return nil, nil
+		return nil, errNothingToBill
 	}
 
 	raw, err := sonic.Marshal(item.AdjustmentContext)
 	if err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("%w: %w", errNothingToBill, err)
 	}
 
 	var adjustment adjustmentInvoiceContext
 	if err = sonic.Unmarshal(raw, &adjustment); err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("%w: %w", errNothingToBill, err)
 	}
 
 	invoiceDate := adjustment.AccountingDate
@@ -1446,7 +1468,7 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	lines := adjustment.ReplacementLines
 	if len(lines) == 0 {
 		if shp == nil {
-			return nil, nil
+			return nil, errNothingToBill
 		}
 		lines, err = invoicelines.ForShipment(ctx, item.BillType, shp, 1)
 		if err != nil {
