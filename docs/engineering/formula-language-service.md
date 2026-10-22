@@ -33,7 +33,7 @@ CodeMirror counts. A refused request throws `RulesRequestError {op, code, detail
 | `tariffTokens(rules, source)` | `tariff.tokens` | the editor's highlighting and every read-only view of a source (`TariffCode`) |
 | `tariffFormat(rules, source)` | `tariff.format` | the format command and Nova's proposals; `formatted: null` with the syntax errors that stop it |
 | `tariffTest(rules, {source, context})` | `tariff.test` | the tests panel, the outline's test dots, readiness and Nova's proposal card |
-| `tariffEvaluate(rules, {context, record, programs, trace})` | `tariff.evaluate` | a test's bill in the panel; the Studio's preview is rated on the server |
+| `tariffEvaluate(rules, {context, record, programs, trace})` | `tariff.evaluate` | no screen: the Studio's preview is rated on the server, and a test's bill comes from `tariff.test` |
 | `tariffScaffoldTest(rules, {source, context, record, inputs, name})` | `tariff.scaffoldTest` | "Save as test" on the sample load (a real shipment is scaffolded on the server) |
 | `tariffCatalog(rules)` | `tariff.catalog` | the reference pane and the definition dialog for a standard library name; memoised per runtime in a `WeakMap` |
 | `tariffComplete`, `tariffHover`, `tariffSignature`, `tariffDefinition`, `tariffRename`, `tariffPrepareRename`, `tariffInlays` | `tariff.complete`, `.hover`, `.signature`, `.definition`, `.rename` (with and without `newName`), `.inlays` | the editor's features at a cursor or over the visible range |

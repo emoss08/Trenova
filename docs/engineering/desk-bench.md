@@ -378,7 +378,7 @@ scenarios:
 | `maxCalls`, `maxFailedCalls` | tool calls in the step, and those refused (`denied`, `invalid`, `duplicate`, `over_budget`, `failed`, `unregistered`) |
 | `replyIncludes`, `replyExcludes` | case-insensitive text; `a\|b` alternatives; `/pattern/` is a regular expression |
 | `noRecordIds` | the reply shows no internal record id, by the same detector the reply pass uses (`shared/recordids`), so an `artifact:` link is not counted |
-| `formula` | on a formula scenario: the studio's draft expression, after the step, contains each entry (`a\|b`, `/pattern/`) |
+| `formula` | on a formula scenario: the studio's draft Tariff source, after the step, contains each entry (`a\|b`, `/pattern/`) |
 | `refused` | the scope guard refused (`true`) or answered (`false`) |
 | `proposals` | a proposal of `tool` was filed whose arguments contain `args` (strings compared case-insensitively, numbers by value) |
 | `noProposals` | nothing was proposed |

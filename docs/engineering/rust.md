@@ -32,7 +32,7 @@ Why one workspace rather than one per service: shared crates (`service-kit`, `sa
 `proto`, `imaging-core`) are edited together with their users, a dependency is audited and
 upgraded once, and two services cannot quietly drift onto different majors of `tonic` or
 `rustls`. Why services stay separate processes: the imaging worker is sized by CPU and memory
-per document, a future rules engine by request rate; one container cannot be sized for both,
+per document, a request-serving service by request rate; one container cannot be sized for both,
 and a crash in a PDF parser must never stop anything else.
 
 ## Layout
@@ -219,11 +219,11 @@ WebAssembly crate, and the pattern for any later one.
   `rust.yml` runs it, and clippy for `--target wasm32-unknown-unknown`, the only build that
   compiles `abi.rs`. The Go host's tests run with the rest of the TMS in `test-tms.yml`, the
   loader's with the client in `test-client.yml`.
-- **Calls take batches.** Every call copies its request and its response through linear
-  memory and holds an instance from the pool while it runs. One call per request, never one
-  per item: an operation takes the whole list (every charge line, every lane, every band) and
-  answers for all of it. A loop that calls the module once per row is a review failure, like
-  an N+1 query.
+- **Calls take batches.** Every call copies its request and its response through linear memory
+  and holds an instance from the pool while it runs. One call per request, never one per item:
+  an operation takes the whole list (every charge line, every lane, every band, every program of
+  a rating) and answers for all of it. A loop that calls the module once per row is a review
+  failure, like an N+1 query.
 
 ## Tasks
 
