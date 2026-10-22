@@ -1059,6 +1059,45 @@ projection (`buildMatrixGrid`, `sliceBuckets`, `bucketKeyOf`, `cellCoordinate`,
 them. `DensityScale.ClassFor` and the formula lookups' `KeyNormalization` and `RangeOverflow`
 stay in Go with their callers; `ClassFor` uses the same half-open rule as `contains`.
 
+## The formula server API
+
+The Studio checks formulas in the browser with the same module the server uses. These are the
+only formula facts that cross HTTP:
+
+- **`GET /formula-templates/schema?schemaId=`** returns `{schemaId, variables}`.
+  - `variables` is the record's fields, each as `{name, type, description, category, nullable,
+    computed, enum}`.
+  - Every list adds its item fields, named `list[].field` (`stops[].weight`).
+  - Functions, built-ins, disabled and reserved names are not sent: the browser reads them from
+    `formula.catalog` in its own copy of the module, and the server's assistant reads them from
+    `pkg/rules`.
+- **`POST /formula-templates/test`** (the preview) answers:
+
+  ```json
+  {
+    "valid": false,
+    "result": "125.5",
+    "diagnostics": [{"scope": "expression", "from": 0, "to": 3, "severity": "error", "code": "unknown-variable", "message": "...", "args": ["foo"], "fixes": []}],
+    "error": {"scope": "breakdowns[1].expression", "code": "missingField", "message": "...", "args": [], "from": 4, "to": 10, "fields": ["weight"], "guards": ["coalesce(weight, 0)"]},
+    "statements": [{"index": 0, "kind": "let", "name": "rate", "code": "let rate = 2", "from": 0, "to": 12, "value": "2", "error": null}],
+    "breakdown": [], "resolvedVariables": {}, "guardrail": null, "rounding": null, "receipt": null
+  }
+  ```
+
+  The fields:
+  - `diagnostics` holds every finding of `formula.check` on the main expression and on each
+    breakdown line. Each finding carries its `scope`, in the field-path form validation errors use
+    (`expression`, `breakdowns[1].expression`).
+  - `error` is the first evaluation error, with its scope.
+  - `valid` is true when no diagnostic is an error and nothing failed to evaluate.
+  - A statement's `error` is an evaluation error without a scope.
+  - All positions are UTF-16.
+  - The old fields are gone: `error` as text, `message`, `warnings` (nullable warnings are now
+    `nullable` diagnostics), and `start`/`end`.
+- **Saving a template** validates every expression with `formula.check`. It refuses one with an
+  error-severity diagnostic through the usual validation error on that expression's field path,
+  carrying the translated message of the first error.
+
 ## Hosts
 
 Both hosts load the same committed bytes and speak the ABI above; neither knows anything about
