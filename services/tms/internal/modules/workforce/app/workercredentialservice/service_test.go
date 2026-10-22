@@ -2,6 +2,8 @@ package workercredentialservice_test
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -166,6 +168,9 @@ func (f *fakeRepo) ListForWorker(
 		}
 		out = append(out, cred)
 	}
+	slices.SortFunc(out, func(a, b *worker.WorkerCredential) int {
+		return strings.Compare(a.ID.String(), b.ID.String())
+	})
 	return out, nil
 }
 
