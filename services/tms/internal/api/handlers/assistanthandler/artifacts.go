@@ -163,7 +163,7 @@ func (h *Handler) artifactRows(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "no-store")
-	c.JSON(http.StatusOK, rows)
+	helpers.JSON(c, http.StatusOK, rows)
 }
 
 // exportArtifactCSV streams the table as it is read. The name and the checks
