@@ -20,7 +20,10 @@ train = [
   "bitsandbytes>=0.45; platform_system == 'Linux'",
 ]
 predict = [
-  "vllm>=0.30,<1",
+  "vllm>=0.32,<1",
+  # Pillow 13 fixes CVEs that 12.x carries. Only here: llmcompressor 0.14 (quantize)
+  # still caps pillow<13, and predict and quantize resolve separately.
+  "pillow>=13",
 ]
 quantize = [
   "llmcompressor>=0.14,<0.15",
