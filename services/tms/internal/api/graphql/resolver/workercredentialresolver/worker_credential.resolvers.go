@@ -240,7 +240,7 @@ func (r *QueryResolver) ActiveWorkerCredentialTypes(ctx context.Context) ([]*wor
 	return r.WorkerCredentialService.ActiveTypes(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int) ([]*worker.WorkerCredential, error) {
+func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerCredential, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -258,6 +258,14 @@ func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID *string,
 			"Expiring within must be from 1 to 365 days",
 		)
 	}
+	skip := base.IntValue(offset)
+	if skip < 0 {
+		return nil, errortypes.NewValidationError(
+			"offset",
+			errortypes.ErrInvalid,
+			"Offset cannot be negative",
+		)
+	}
 	archived := true
 	if includeArchived != nil {
 		archived = *includeArchived
@@ -272,6 +280,7 @@ func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID *string,
 		CredentialTypeCode: base.StringValue(credentialTypeCode),
 		RequiredOnly:       base.BoolValue(requiredOnly),
 		Limit:              base.RecordListLimit(limit, id.IsNotNil()),
+		Offset:             skip,
 	})
 }
 

@@ -33,6 +33,8 @@ const (
 	outcomeNote         = "note"
 	outcomeWithheld     = "withheldByAccess"
 	outcomeWithheldNote = "withheldNote"
+	outcomeHasMore      = "hasMore"
+	outcomeNextCursor   = "nextCursor"
 )
 
 var errUnpagedSpec = errors.New("an unpaged list reads by its root field's arguments alone")
@@ -62,9 +64,12 @@ type alongsideSpec struct {
 // parameters are the operation's variables, sent as the screen sends them,
 // and it neither pages nor filters by a record's fields.
 type graphQLUnpagedListTool struct {
-	spec        graphQLListSpec
-	read        graphQLRead
-	params      []graphQLParam
+	spec   graphQLListSpec
+	read   graphQLRead
+	params []graphQLParam
+	// paged marks a root that takes a limit and an offset, which the tool
+	// pages by cursor: the offset stays inside the nextCursor it hands out.
+	paged       bool
 	required    []string
 	alongside   []graphQLAlongside
 	reader      agentports.GraphQLReader
@@ -131,6 +136,7 @@ func newGraphQLUnpagedListTool(
 		spec:        *spec,
 		read:        read,
 		params:      params,
+		paged:       read.pagesByOffset(),
 		required:    required,
 		alongside:   alongside,
 		reader:      reader,
@@ -168,14 +174,28 @@ func matchAlongside(
 	return out, nil
 }
 
+// pagesByOffset reports whether an unpaged list's root takes a limit and an
+// offset, so the tool can page it by cursor.
+func (r *graphQLRead) pagesByOffset() bool {
+	var limit, offset bool
+	for _, variable := range r.Variables {
+		limit = limit || (variable.Name == paramLimit && variable.Type == graphQLTypeInt)
+		offset = offset || (variable.Name == paramOffset && variable.Type == graphQLTypeInt)
+	}
+
+	return limit && offset
+}
+
 // argumentParams are an unpaged list's parameters: each of its operation's
 // variables, typed by the root field argument it is sent as and sent as
-// that variable, and the names of those the operation requires.
+// that variable, and the names of those the operation requires. The offset
+// of a list that pages by cursor is the tool's to send, never a parameter.
 func (r *graphQLRead) argumentParams(tool string) (params []graphQLParam, required []string,
 	err error,
 ) {
+	paged := r.pagesByOffset()
 	for _, variable := range r.Variables {
-		if variable.Kind == graphQLKindInput {
+		if variable.Kind == graphQLKindInput || (paged && variable.Name == paramOffset) {
 			continue
 		}
 		field := graphQLField{
@@ -284,6 +304,9 @@ func (t *graphQLUnpagedListTool) ParamSchema() map[string]any {
 	for _, param := range t.params {
 		properties[param.Name] = param.Schema
 	}
+	if t.paged {
+		properties[paramAfter] = cursorPageSchema(graphQLListLimit, unpagedMost)[paramAfter]
+	}
 	schema := map[string]any{
 		toolschema.KeyType:                 toolschema.TypeObject,
 		toolschema.KeyProperties:           properties,
@@ -315,6 +338,15 @@ func (t *graphQLUnpagedListTool) Query(
 	for name, value := range t.spec.inputs {
 		variables[name] = value
 	}
+	var window offsetWindow
+	if t.paged {
+		if window, err = readOffsetWindow(t.spec.name, args, graphQLListLimit,
+			unpagedMost); err != nil {
+			return nil, err
+		}
+		variables[paramLimit] = window.fetch(unpagedMost)
+		variables[paramOffset] = window.offset
+	}
 
 	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 		Actor:             params.Actor,
@@ -331,6 +363,10 @@ func (t *graphQLUnpagedListTool) Query(
 	}
 
 	rows, _ := result.Data[t.read.RootField].([]any)
+	more := t.paged && window.more(len(rows), unpagedMost)
+	if t.paged && len(rows) > window.limit {
+		rows = rows[:window.limit]
+	}
 	items := make([]map[string]any, 0, len(rows))
 	for _, row := range rows {
 		if node, ok := row.(map[string]any); ok {
@@ -361,8 +397,14 @@ func (t *graphQLUnpagedListTool) Query(
 	if len(items) == 0 {
 		notes = append(notes, criteria.EmptyNote())
 	}
-	if note := cutShort(args, len(items), t.spec.entityPlural); note != "" {
-		notes = append(notes, note)
+	switch {
+	case more:
+		outcome[outcomeHasMore] = true
+		outcome[outcomeNextCursor] = window.next()
+	case !t.paged:
+		if note := cutShort(args, len(items), t.spec.entityPlural); note != "" {
+			notes = append(notes, note)
+		}
 	}
 	beside, besideWithheld, besideNotes, err := t.readAlongside(ctx, params, variables)
 	if err != nil {

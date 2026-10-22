@@ -679,6 +679,23 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 				})
 			}
 
+			if c.tool == "worker_list_credentials" {
+				t.Run("what falls due is walked page by page, with no repeats", func(t *testing.T) {
+					var seen []string
+					args := map[string]any{"limit": float64(1)}
+					for range len(ours.open) + 1 {
+						page := call(args)
+						seen = append(seen, itemIDs(page)...)
+						cursor, _ := page["nextCursor"].(string)
+						if cursor == "" {
+							break
+						}
+						args = map[string]any{"limit": float64(1), "after": cursor}
+					}
+					assert.ElementsMatch(t, ours.open, seen)
+				})
+			}
+
 			if c.nested != "" {
 				t.Run("each record carries its "+c.nested, func(t *testing.T) {
 					page := call(withWorker(ours.workerID, c.allArgs))

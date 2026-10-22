@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -145,6 +146,61 @@ func readCursorWindow(
 	window.info.IncludeTotalCount = false
 
 	return window, nil
+}
+
+// offsetWindow is a window of a list that pages by offset under the cursor
+// contract: the offset never reaches the model, only a nextCursor bound to
+// the call's other arguments, so it learns one convention for every list.
+type offsetWindow struct {
+	limit  int
+	offset int
+	scope  string
+}
+
+func readOffsetWindow(
+	tool string,
+	params map[string]any,
+	fallback, most int,
+) (offsetWindow, error) {
+	if optionalInt(params, paramOffset, 0) != 0 {
+		return offsetWindow{}, errOffsetOnCursorList
+	}
+	scope, err := cursorScope(tool, params)
+	if err != nil {
+		return offsetWindow{}, err
+	}
+
+	window := offsetWindow{limit: readLimit(params, fallback, most), scope: scope}
+	if after := optionalString(params, paramAfter); after != "" {
+		key, decodeErr := pagination.DecodeKeyCursor(scope, after)
+		if decodeErr != nil {
+			return offsetWindow{}, errStaleCursor
+		}
+		offset, parseErr := strconv.Atoi(key)
+		if parseErr != nil || offset < 0 {
+			return offsetWindow{}, errStaleCursor
+		}
+		window.offset = offset
+	}
+
+	return window, nil
+}
+
+// fetch is how many rows to ask for: one more than the page, so the answer
+// knows whether another page exists, within the server's page bound.
+func (w offsetWindow) fetch(most int) int {
+	return min(w.limit+1, most)
+}
+
+// more reports whether rows remain past the page, given what a fetch
+// returned. A fetch the server's bound held to the page itself cannot tell,
+// and says there may be more when it came back full.
+func (w offsetWindow) more(fetched, most int) bool {
+	return fetched > w.limit || (w.fetch(most) == w.limit && fetched == w.limit)
+}
+
+func (w offsetWindow) next() string {
+	return pagination.EncodeKeyCursor(w.scope, strconv.Itoa(w.offset+w.limit))
 }
 
 func firstCursorWindow(limit int) cursorWindow {

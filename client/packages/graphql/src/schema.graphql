@@ -24846,6 +24846,8 @@ type Query {
     At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization.
     """
     limit: Int
+    """Skip this many credentials of the same list, for the page after them."""
+    offset: Int
     """Only credential types the organization marks required."""
     requiredOnly: Boolean
     """

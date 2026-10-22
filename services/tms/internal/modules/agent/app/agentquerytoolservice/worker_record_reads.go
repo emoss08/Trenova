@@ -72,7 +72,8 @@ const (
 		"and whether it is verified, and the credential types the organization tracks; a " +
 		"required type with nothing on file was never recorded, which is worse than expiring " +
 		"soon. Without a worker, or with expiringWithinDays or includeExpired, it lists " +
-		"active credentials expiring within that many days, soonest first: the tool for any " +
+		"active credentials expiring within that many days from now, soonest first, a page " +
+		"at a time: the tool for any " +
 		"question about who is expiring, lapsed or out of compliance by a date. Narrow to one " +
 		"kind with credentialTypeCode, such as MED_CARD for a medical card or CDL for a " +
 		"licence. It yields the credentialId and credentialTypeId the credential tools take."

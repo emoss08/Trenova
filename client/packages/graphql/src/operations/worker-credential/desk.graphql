@@ -6,6 +6,7 @@ query DeskWorkerCredentialList(
   $credentialTypeCode: String
   $requiredOnly: Boolean
   $limit: Int
+  $offset: Int
 ) {
   workerCredentials(
     workerId: $workerId
@@ -15,6 +16,7 @@ query DeskWorkerCredentialList(
     credentialTypeCode: $credentialTypeCode
     requiredOnly: $requiredOnly
     limit: $limit
+    offset: $offset
   ) {
     id
     workerId

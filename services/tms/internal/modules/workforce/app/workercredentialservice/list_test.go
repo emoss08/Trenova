@@ -54,6 +54,19 @@ func TestList_OneWorkerReadsWhatTheyHoldNarrowedByTypeAndRequired(t *testing.T) 
 	})
 	require.NoError(t, err)
 	assert.Len(t, limited, 1)
+
+	rest, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Limit: 1, Offset: 1,
+	})
+	require.NoError(t, err)
+	require.Len(t, rest, 1)
+	assert.NotEqual(t, limited[0].ID, rest[0].ID, "the next page starts after the first")
+
+	past, err := h.svc.List(t.Context(), &workercredentialservice.ListRequest{
+		TenantInfo: h.tenant, WorkerID: h.wrk.ID, Offset: 5,
+	})
+	require.NoError(t, err)
+	assert.Empty(t, past)
 }
 
 func TestList_WhatFallsDueIsWalkedInTheQuery(t *testing.T) {
@@ -77,6 +90,10 @@ func TestList_WhatFallsDueIsWalkedInTheQuery(t *testing.T) {
 			req:     workercredentialservice.ListRequest{IncludeExpired: true},
 			horizon: workercredentialservice.DefaultExpiryHorizonDays,
 			grace:   workercredentialservice.ExpiredGraceDays,
+		},
+		"the next page is walked from its offset": {
+			req:     workercredentialservice.ListRequest{Limit: 26, Offset: 25},
+			horizon: workercredentialservice.DefaultExpiryHorizonDays,
 		},
 		"a code narrows the walk itself, upper-cased": {
 			req: workercredentialservice.ListRequest{
@@ -104,6 +121,7 @@ func TestList_WhatFallsDueIsWalkedInTheQuery(t *testing.T) {
 			assert.Equal(t, tc.codes, got.CredentialTypeCodes)
 			assert.Equal(t, req.RequiredOnly, got.RequiredOnly)
 			assert.Equal(t, req.Limit, got.Limit)
+			assert.Equal(t, req.Offset, got.Offset)
 			assert.True(t, got.SoonestFirst)
 		})
 	}

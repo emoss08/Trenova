@@ -1116,6 +1116,7 @@ var graphQLReads = map[string]graphQLRead{
 			{Name: "includeArchived", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "With a worker and no expiry window, also read their archived credentials."},
 			{Name: "includeExpired", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "With an expiry window, also those that lapsed in the last 90 days."},
 			{Name: "limit", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization."},
+			{Name: "offset", Type: "Int", NonNull: false, List: false, Kind: "scalar", Description: "Skip this many credentials of the same list, for the page after them."},
 			{Name: "requiredOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only credential types the organization marks required."},
 			{Name: "workerId", Type: "ID", NonNull: false, List: false, Kind: "scalar", Description: "The worker whose credentials are read. Leave it out for those falling due across the organization."},
 		},

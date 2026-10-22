@@ -3281,7 +3281,7 @@ type QueryResolver interface {
 	WorkerCredentialTypes(ctx context.Context, input gqlmodel.WorkerCredentialTypesInput) (*gqlmodel.WorkerCredentialTypeConnection, error)
 	WorkerCredentialType(ctx context.Context, id string) (*worker.WorkerCredentialType, error)
 	ActiveWorkerCredentialTypes(ctx context.Context) ([]*worker.WorkerCredentialType, error)
-	WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int) ([]*worker.WorkerCredential, error)
+	WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error)
 	WorkerCredential(ctx context.Context, id string) (*worker.WorkerCredential, error)
 	WorkerCredentialSummary(ctx context.Context, workerID string) (*worker.WorkerCredentialSummary, error)
 	CredentialExpiryForecast(ctx context.Context, days *int, limit *int) (*workercredentialservice.ExpiryForecast, error)

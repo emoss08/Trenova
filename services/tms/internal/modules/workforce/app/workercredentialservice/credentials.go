@@ -46,6 +46,7 @@ type ListRequest struct {
 	CredentialTypeCode string
 	RequiredOnly       bool
 	Limit              int
+	Offset             int
 }
 
 // fallingDue reports whether a list reads what falls due rather than what a
@@ -89,6 +90,7 @@ func (s *Service) List(
 			out = append(out, credential)
 		}
 	}
+	out = out[min(max(req.Offset, 0), len(out)):]
 	if req.Limit > 0 && len(out) > req.Limit {
 		out = out[:req.Limit]
 	}
@@ -123,6 +125,7 @@ func (s *Service) listFallingDue(
 		WorkerID:            req.WorkerID,
 		SoonestFirst:        true,
 		Limit:               req.Limit,
+		Offset:              max(req.Offset, 0),
 	})
 }
 

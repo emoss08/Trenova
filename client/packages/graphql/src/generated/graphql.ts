@@ -18198,6 +18198,7 @@ export type DeskWorkerCredentialListQueryVariables = Exact<{
   credentialTypeCode?: string | null | undefined;
   requiredOnly?: boolean | null | undefined;
   limit?: number | null | undefined;
+  offset?: number | null | undefined;
 }>;
 
 
