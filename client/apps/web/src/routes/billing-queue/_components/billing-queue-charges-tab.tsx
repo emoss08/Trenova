@@ -9,6 +9,7 @@ import {
 } from "@/lib/billing-queue-charges";
 import { apiService } from "@/services/api";
 import { useMutation } from "@tanstack/react-query";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import {
   AlertDialog,
@@ -31,7 +32,9 @@ import {
 } from "@trenova/shared/components/ui/number-field";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { chargeLineTotal } from "@trenova/shared/lib/charge-split";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { chargeTotals } from "@trenova/shared/rules/allocation";
+import type { DecimalString } from "@trenova/shared/rules/wire";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type {
   BillingQueueItem,
@@ -56,6 +59,7 @@ import {
 import { useCallback, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { BillingQueueChargeDialog, type ChargeDialogResult } from "./billing-queue-charge-dialog";
+import { BillingQueueChargeLinesSkeleton } from "./billing-queue-charge-lines-skeleton";
 import { BillingQueueReassignChargeDialog } from "./billing-queue-reassign-charge-dialog";
 import { BillingQueueRerateDialog } from "./billing-queue-rerate-dialog";
 import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
@@ -125,7 +129,7 @@ function ChargeRow({
   testId?: string;
   name: string;
   details?: ReactNode;
-  amount: number | null | undefined;
+  amount: number | DecimalString | null | undefined;
   secondary?: string | null;
   actions: ChargeRowAction[];
   muted?: boolean;
@@ -528,17 +532,19 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
             onAddCharge={() => setChargeDialogOpen(true)}
           />
         ) : (
-          <ShipmentChargeLines
-            freightCharge={freightCharge}
-            otherCharge={otherCharge}
-            totalCharge={totalCharge}
-            additionalCharges={additionalCharges}
-            freightBasis={freightCharge}
-            chargeActions={chargeActions}
-            isEditable={isEditable}
-            isPending={isPending}
-            onAddCharge={() => setChargeDialogOpen(true)}
-          />
+          <LazyComponent fallback={<BillingQueueChargeLinesSkeleton />}>
+            <ShipmentChargeLines
+              freightCharge={freightCharge}
+              otherCharge={otherCharge}
+              totalCharge={totalCharge}
+              additionalCharges={additionalCharges}
+              freightBasis={freightCharge}
+              chargeActions={chargeActions}
+              isEditable={isEditable}
+              isPending={isPending}
+              onAddCharge={() => setChargeDialogOpen(true)}
+            />
+          </LazyComponent>
         )}
       </div>
 
@@ -689,6 +695,16 @@ function ShipmentChargeLines({
   onAddCharge: () => void;
 }) {
   const t = useT();
+  const rules = useRules();
+  // Every accessorial is priced in one call, a percentage one against the line haul.
+  const { totals } = chargeTotals(rules, {
+    base: freightBasis,
+    charges: additionalCharges.map((charge) => ({
+      method: charge.method,
+      amount: charge.amount,
+      unit: charge.unit,
+    })),
+  });
   return (
     <>
       <ChargeRow name={t("Line haul")} amount={freightCharge} actions={[]} />
@@ -704,7 +720,7 @@ function ShipmentChargeLines({
           details={
             <span className="text-muted-foreground text-xs">{formatChargeBreakdown(charge)}</span>
           }
-          amount={chargeLineTotal(charge, freightBasis)}
+          amount={totals[index]}
           actions={chargeActions(index, charge)}
         />
       ))}

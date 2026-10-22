@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -35,6 +36,10 @@ const (
 
 var errNotExportable = errortypes.NewValidationError(
 	"artifact", errortypes.ErrInvalid, "Only a table or a report preview can be downloaded as CSV",
+)
+
+var errNotReread = errortypes.NewBusinessError(
+	"This table does not say how it was read, so it cannot be read again. Ask Nova to read it again",
 )
 
 // exportSource is an artifact's table read again from where it came from.
@@ -64,23 +69,30 @@ func (s *Service) exportSourceOf(
 	if artifact.ThreadID != req.ID {
 		return nil, errortypes.NewNotFoundError("Artifact not found")
 	}
-	family := assistantartifact.FamilyOf(artifact.Kind, artifact.Payload)
-	if artifact.Kind != assistantartifact.KindReportPreview &&
-		(artifact.Kind != assistantartifact.KindTableView || family != assistantartifact.FamilyTable) {
+	if !rereadable(artifact) {
 		return nil, errNotExportable
 	}
-
-	arguments, err := s.artifacts.ToolCallArguments(
-		ctx, req.ID, req.TenantInfo, artifact.SourceToolCallID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if arguments == nil {
-		arguments = map[string]any{}
+	arguments, recorded := artifact.Payload[payloadReadWith].(map[string]any)
+	if !recorded {
+		return nil, errNotReread
 	}
 
 	return &exportSource{artifact: artifact, arguments: arguments}, nil
+}
+
+func rereadable(artifact *assistantartifact.Artifact) bool {
+	if artifact.Kind == assistantartifact.KindReportPreview {
+		return true
+	}
+
+	return artifact.Kind == assistantartifact.KindTableView &&
+		assistantartifact.FamilyOf(artifact.Kind, artifact.Payload) == assistantartifact.FamilyTable
+}
+
+func noteReadWith(artifact *assistantartifact.Artifact, arguments map[string]any) {
+	if arguments != nil && rereadable(artifact) {
+		artifact.Payload[payloadReadWith] = maputils.CloneDeep(arguments)
+	}
 }
 
 // ArtifactCSVName is the file a table downloads as, named for its title.
@@ -152,54 +164,22 @@ func (s *Service) exportTable(
 	source *exportSource,
 	sink io.Writer,
 ) error {
-	toolName := typeutils.StringOfTrimmed(source.artifact.Payload["tool"])
-	if s.queries == nil || toolName == "" {
-		return errNotExportable
-	}
-	tool, ok := s.queries.Get(toolName)
-	if !ok {
-		return errortypes.NewBusinessError("The list this table came from is no longer available")
-	}
-	if err := s.mayRead(ctx, actor, tool.Policy()); err != nil {
+	list, err := s.listOf(ctx, &req, actor, source)
+	if err != nil {
 		return err
 	}
 
-	entity := typeutils.StringOfTrimmed(source.artifact.Payload["entity"])
-	params := &agentports.QueryToolParams{
-		OrganizationID:    req.TenantInfo.OrgID,
-		BusinessUnitID:    req.TenantInfo.BuID,
-		Actor:             actor,
-		Timezone:          s.timezoneOf(ctx, req),
-		DataAccessCeiling: s.ceilingOf(ctx, req),
-	}
-
 	return writeTableCSV(sink, func(at tablePosition) (map[string]any, error) {
-		arguments := make(map[string]any, len(source.arguments)+2)
-		for key, value := range source.arguments {
-			if key != "offset" && key != "after" {
-				arguments[key] = value
-			}
-		}
-		arguments["limit"] = exportPageRows
+		page := map[string]any{argLimit: exportPageRows}
 		switch {
 		case at.after != "":
-			arguments["after"] = at.after
+			page[argAfter] = at.after
 		case at.offset > 0:
-			arguments["offset"] = at.offset
-		}
-		params.Params = arguments
-
-		data, err := tool.Query(ctx, params)
-		if err != nil {
-			return nil, err
-		}
-		document, ok := toJSONDocument(data)
-		if !ok {
-			return nil, errors.New("the list returned something that is not a table")
+			page[argOffset] = at.offset
 		}
 
-		return document.fields, nil
-	}, entity)
+		return list.read(ctx, page, false)
+	}, list.entity)
 }
 
 type tablePosition struct {

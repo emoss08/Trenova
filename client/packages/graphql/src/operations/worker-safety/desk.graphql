@@ -1,0 +1,44 @@
+query DeskWorkerSafetyEvents($workerId: ID, $openOnly: Boolean, $limit: Int) {
+  workerSafetyEvents(workerId: $workerId, openOnly: $openOnly, limit: $limit) {
+    id
+    workerId
+    kind
+    severity
+    status
+    occurredAt
+    location
+    description
+    preventable
+    points
+    pointsExpireAt
+    activePoints
+    referenceNumber
+    shipmentId
+    inspectionLevel
+    inspectionResult
+    outOfService
+    resolution
+    closedAt
+    worker {
+      ...WorkerReference
+    }
+    violations {
+      id
+      basic
+      code
+      description
+      severityWeight
+      outOfService
+    }
+  }
+}
+
+query DeskWorkerRecognitions($workerId: ID!) {
+  workerRecognitions(workerId: $workerId) {
+    id
+    kind
+    title
+    occurredAt
+    visibleToWorker
+  }
+}

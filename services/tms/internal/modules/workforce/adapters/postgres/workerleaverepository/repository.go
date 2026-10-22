@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -129,9 +130,16 @@ func (r *repository) UpdateControl(
 // caseFilter is the one place the case predicates live, so a count and a list
 // can never disagree about what they are counting.
 func caseFilter(
+	db bun.IDB,
 	req *workerports.ListLeaveCasesRequest,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	cols := workercol.WorkerLeaveCaseColumns
+	team := workerteam.Where(db, &workerteam.Scope{
+		WorkerID:       cols.WorkerID,
+		OrganizationID: cols.OrganizationID,
+		BusinessUnitID: cols.BusinessUnitID,
+		ManagerIDs:     req.ManagerIDs,
+	})
 	return func(sq *bun.SelectQuery) *bun.SelectQuery {
 		sq = workercol.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo)
 		if !req.WorkerID.IsNil() {
@@ -153,7 +161,7 @@ func caseFilter(
 				}),
 			)
 		}
-		return sq
+		return team(sq)
 	}
 }
 
@@ -168,7 +176,7 @@ func (r *repository) ListCases(
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			WhereGroup(" AND ", caseFilter(req)).
+			WhereGroup(" AND ", caseFilter(r.db.DBForContext(ctx), req)).
 			Order(cols.StartsAt.OrderDesc()).
 			Limit(int64(limitOr(req.Limit, defaultCasePageSize)))
 
@@ -199,7 +207,7 @@ func (r *repository) CountCases(
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerLeaveCase)(nil)).
-			WhereGroup(" AND ", caseFilter(req)).
+			WhereGroup(" AND ", caseFilter(r.db.DBForContext(ctx), req)).
 			Count(ctx)
 		if err != nil {
 			r.l.Error("failed to count leave cases", zap.Error(err))

@@ -26,7 +26,9 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { FormSection } from "@trenova/shared/components/ui/form";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { getProfile } from "@trenova/shared/lib/capability";
+import { allocationRemainders } from "@trenova/shared/rules/allocation";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CreditStatus } from "@trenova/shared/types/customer";
 import type {
@@ -286,7 +288,13 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
   const otherChargeAmount = useWatch({ control, name: "otherChargeAmount" });
   const totalChargeAmount = useWatch({ control, name: "totalChargeAmount" });
   const freightChargeAmount = useWatch({ control, name: "freightChargeAmount" });
+  const freightAllocations = useWatch({ control, name: "freightAllocations" });
   const defaultPayer = useShipmentDefaultPayer();
+  const rules = useRules();
+  const freightTotal = freightChargeAmount ?? 0;
+  const [freightSplit] = allocationRemainders(rules, {
+    charges: [{ kind: "Freight", total: freightTotal, allocations: freightAllocations }],
+  });
 
   return (
     <div className="bg-muted/50 relative mt-3 overflow-hidden rounded-lg border p-2">
@@ -320,7 +328,8 @@ function ChargeSummary({ isCalculating, error }: { isCalculating: boolean; error
           action={
             <ChargePayerControl
               name="freightAllocations"
-              chargeAmount={Number(freightChargeAmount ?? 0)}
+              chargeAmount={freightTotal}
+              complete={freightSplit.complete}
               defaultPayer={defaultPayer}
               splitTitle={t("Split freight charge")}
               splitDescription={t(

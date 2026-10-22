@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
@@ -324,13 +324,17 @@ func (s *RateAgreementSeed) createZones(
 				CreatedAt:      refs.now,
 				UpdatedAt:      refs.now,
 			}
-			member.ApplyMatchKey()
 
 			members = append(members, member)
 		}
 
 		if len(members) == 0 {
 			return fmt.Errorf("rate zone %s resolved no states", def.code)
+		}
+
+		zone.Members = members
+		if err := zone.StampMembers(ctx); err != nil {
+			return fmt.Errorf("key rate zone %s: %w", def.code, err)
 		}
 
 		if _, err := tx.NewInsert().Model(&members).Exec(ctx); err != nil {
@@ -758,6 +762,10 @@ func (s *RateAgreementSeed) createRules(
 		return fmt.Errorf("no seeded lanes resolved to a rate rule")
 	}
 
+	if err := rateagreement.ApplyLanes(ctx, rules); err != nil {
+		return fmt.Errorf("key seeded rate agreement lanes: %w", err)
+	}
+
 	if _, err := tx.NewInsert().Model(&rules).Exec(ctx); err != nil {
 		return fmt.Errorf("insert rate agreement rules: %w", err)
 	}
@@ -824,11 +832,6 @@ func (s *RateAgreementSeed) buildRule(
 		}
 		rule.FormulaTemplateID = &templateID
 	}
-
-	// The lane key and specificity are what the database indexes and orders by,
-	// so they are derived here rather than left to a write path the seed skips.
-	rule.ApplyLaneKey()
-	rule.SpecificityScore = rule.ComputeSpecificity()
 
 	return rule, true
 }

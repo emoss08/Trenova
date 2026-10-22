@@ -214,8 +214,11 @@ linters:
           - gocritic
       # The permission registry declares GraphQL field names as data: each
       # kind's field sensitivities and reference view. A constant per field
-      # name would hide which field a view or a sensitivity names.
-      - path: internal/modules/identity/domain/permission/(resources_.*|referenceview)\.go
+      # name would hide which field a view or a sensitivity names. The bundle
+      # and job template catalog declares labels and descriptions, which the
+      # i18n extractor reads only as literals in their Label and Description
+      # fields: a constant would take the copy out of the catalogs.
+      - path: internal/modules/identity/domain/permission/(resources_.*|referenceview|bundles_catalog)\.go
         linters:
           - goconst
     paths:

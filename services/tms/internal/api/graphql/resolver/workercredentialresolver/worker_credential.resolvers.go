@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -239,22 +240,48 @@ func (r *QueryResolver) ActiveWorkerCredentialTypes(ctx context.Context) ([]*wor
 	return r.WorkerCredentialService.ActiveTypes(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID string, includeArchived *bool) ([]*worker.WorkerCredential, error) {
+func (r *QueryResolver) WorkerCredentials(ctx context.Context, workerID *string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerCredential, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	wid, err := pulid.MustParse(workerID)
+	id, err := base.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
 		return nil, err
 	}
-
+	within := base.IntValue(expiringWithinDays)
+	if within < 0 || within > workercredentialservice.MaxExpiryHorizonDays {
+		return nil, errortypes.NewValidationError(
+			"expiringWithinDays",
+			errortypes.ErrInvalid,
+			"Expiring within must be from 1 to 365 days",
+		)
+	}
+	skip := base.IntValue(offset)
+	if skip < 0 {
+		return nil, errortypes.NewValidationError(
+			"offset",
+			errortypes.ErrInvalid,
+			"Offset cannot be negative",
+		)
+	}
 	archived := true
 	if includeArchived != nil {
 		archived = *includeArchived
 	}
-	return r.WorkerCredentialService.ListForWorker(ctx, base.TenantInfo(authCtx), wid, archived)
+
+	return r.WorkerCredentialService.List(ctx, &workercredentialservice.ListRequest{
+		TenantInfo:         base.TenantInfo(authCtx),
+		WorkerID:           id,
+		IncludeArchived:    archived,
+		ExpiringWithinDays: within,
+		IncludeExpired:     base.BoolValue(includeExpired),
+		CredentialTypeCode: base.StringValue(credentialTypeCode),
+		RequiredOnly:       base.BoolValue(requiredOnly),
+		Limit:              base.RecordListLimit(limit, id.IsNotNil()),
+		Offset:             skip,
+	})
 }
 
 func (r *QueryResolver) WorkerCredential(ctx context.Context, id string) (*worker.WorkerCredential, error) {

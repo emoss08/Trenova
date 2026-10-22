@@ -324,7 +324,15 @@ func (s *service) chargeReview(
 		}
 	}
 	agreement := s.ratingAgreement(ctx, shp, tenantInfo)
-	freight := shp.FreightChargeAmount.Decimal
+	contracted, err := agreementPrices(ctx, agreement, shp)
+	if err != nil {
+		s.l.Warn(
+			"failed to price the contract's accessorials for billing review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
+		contracted = nil
+	}
 
 	for idx, share := range item.PayerShare.Lines {
 		line := &billingqueue.ChargeLine{
@@ -367,20 +375,20 @@ func (s *service) chargeReview(
 				line.Expected = scale(occurrence.BillableAmount)
 				line.Basis = detentionBasis(occurrence)
 			} else {
-				line.Expected = scale(charge.Total(freight))
+				line.Expected = scale(share.ChargeTotal)
 			}
 		case charge.FuelSurchargeProgramID != nil || charge.FuelSurchargeDetail != nil:
 			line.Source = billingqueue.ChargeSourceFuel
-			line.Expected = scale(charge.Total(freight))
+			line.Expected = scale(share.ChargeTotal)
 			line.Basis = fuelBasis(charge.FuelSurchargeDetail)
 		default:
-			if priced := agreementPrice(agreement, charge, freight); priced.Valid {
+			if priced, ok := contracted[charge.ID]; ok {
 				line.Source = billingqueue.ChargeSourceAgreement
-				line.Expected = scale(priced.Decimal)
+				line.Expected = scale(priced)
 				line.Basis = "Per rate con"
 			} else if charge.RateQuoteID != nil {
 				line.Source = billingqueue.ChargeSourceQuote
-				line.Expected = scale(charge.Total(freight))
+				line.Expected = scale(share.ChargeTotal)
 				line.Basis = "Per quote"
 			} else {
 				line.Basis = manualBasis(charge)
@@ -423,35 +431,64 @@ func (s *service) ratingAgreement(
 	return agreement
 }
 
-// agreementPrice is what the contract's accessorial schedule charges for the
-// charge: the accessorial the charge was generated from, or else the one the
-// contract prices for the same accessorial.
-func agreementPrice(
+func agreementPrices(
+	ctx context.Context,
+	agreement *rateagreement.RateAgreement,
+	shp *shipment.Shipment,
+) (map[pulid.ID]decimal.Decimal, error) {
+	if agreement == nil {
+		return map[pulid.ID]decimal.Decimal{}, nil
+	}
+
+	ids := make([]pulid.ID, 0, len(shp.AdditionalCharges))
+	priced := make([]*shipment.AdditionalCharge, 0, len(shp.AdditionalCharges))
+	for _, charge := range shp.AdditionalCharges {
+		if charge == nil {
+			continue
+		}
+		acc := contractAccessorial(agreement, charge)
+		if acc == nil {
+			continue
+		}
+		ids = append(ids, charge.ID)
+		priced = append(priced, &shipment.AdditionalCharge{
+			Method: acc.Method,
+			Amount: acc.PricedAmount(),
+			Unit:   max(acc.BillableUnits(charge.Unit), 0),
+		})
+	}
+	if len(priced) == 0 {
+		return map[pulid.ID]decimal.Decimal{}, nil
+	}
+
+	totals, err := shipment.AdditionalChargeTotals(ctx, priced, shp.FreightChargeAmount.Decimal)
+	if err != nil {
+		return nil, err
+	}
+
+	prices := make(map[pulid.ID]decimal.Decimal, len(ids))
+	for i, id := range ids {
+		prices[id] = totals.Each[i].Round(2)
+	}
+
+	return prices, nil
+}
+
+func contractAccessorial(
 	agreement *rateagreement.RateAgreement,
 	charge *shipment.AdditionalCharge,
-	freight decimal.Decimal,
-) decimal.NullDecimal {
-	if agreement == nil {
-		return decimal.NullDecimal{}
-	}
+) *rateagreement.RateAgreementAccessorial {
 	for _, acc := range agreement.Accessorials {
 		if acc == nil {
 			continue
 		}
-		matches := (charge.RateAgreementAccessorialID != nil && acc.ID == *charge.RateAgreementAccessorialID) ||
-			acc.AccessorialChargeID == charge.AccessorialChargeID
-		if !matches {
-			continue
+		if (charge.RateAgreementAccessorialID != nil && acc.ID == *charge.RateAgreementAccessorialID) ||
+			acc.AccessorialChargeID == charge.AccessorialChargeID {
+			return acc
 		}
-		priced := &shipment.AdditionalCharge{
-			Method: acc.Method,
-			Amount: acc.PricedAmount(),
-			Unit:   max(acc.BillableUnits(charge.Unit), 0),
-		}
-		return decimal.NewNullDecimal(priced.Total(freight).Round(2))
 	}
 
-	return decimal.NullDecimal{}
+	return nil
 }
 
 func freightBasis(shp *shipment.Shipment) string {

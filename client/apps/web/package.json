@@ -20,8 +20,6 @@
     "test:storybook": "vitest run --project=storybook",
     "test:storybook:watch": "vitest --project=storybook",
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
-    "b:dev": "bunx --bun vite",
-    "b:build": "bunx --bun vite build",
     "doctor": "npx react-doctor@latest",
     "guide:generate": "node scripts/product-guide/generate.mjs",
     "guide:check": "node scripts/product-guide/generate.mjs --check",

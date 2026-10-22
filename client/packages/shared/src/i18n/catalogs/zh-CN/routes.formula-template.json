@@ -193,6 +193,7 @@
   "Lines exceed the total by {0}": "各行之和超出总额 {0}",
   "Lines explain the total": "明细可解释总额",
   "Ln {0}, Col {1}": "行 {0}，列 {1}",
+  "Loading the formula studio": "正在加载公式工作室",
   "Looks intended": "看起来符合预期",
   "Looks like a regression": "看起来是回归问题",
   "Lowered to maximum": "已降至最大值",

@@ -226,17 +226,22 @@ func (a *Activities) deliverRunEmail(
 	// A styling problem must not cost a scheduled delivery, so a failed render
 	// falls back to the shipped default. If even that fails the schedule owner is
 	// told, because the alternative is a report nobody knows never arrived.
+	emailContext, err := a.deliveryEmailContext(ctx, &deliveryEmailContent{
+		run:            run,
+		schedule:       schedule,
+		title:          title,
+		digest:         digest,
+		attached:       attach != nil,
+		attachTooLarge: attachTooLarge,
+	})
+	if err != nil {
+		return fmt.Errorf("format the report digest: %w", err)
+	}
+
 	rendered, err := a.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo: tenantInfo,
-		Kind:       documenttemplate.KindReportDeliveryEmail,
-		Data: a.deliveryEmailContext(&deliveryEmailContent{
-			run:            run,
-			schedule:       schedule,
-			title:          title,
-			digest:         digest,
-			attached:       attach != nil,
-			attachTooLarge: attachTooLarge,
-		}),
+		TenantInfo:        tenantInfo,
+		Kind:              documenttemplate.KindReportDeliveryEmail,
+		Data:              emailContext,
 		ReferenceID:       run.ID,
 		UserID:            schedule.RunAsID,
 		FallbackToBuiltIn: true,

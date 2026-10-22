@@ -1470,6 +1470,9 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: time off | `worker_list_time_off` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: one worker's records | `worker_list_checklists`, `worker_list_training`, `worker_list_performance_reviews` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: injuries and drug tests | `worker_list_injuries`, `worker_list_dot_tests` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: leave and previous employers | `worker_list_leave_cases`, `worker_list_employment_verifications` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: safety events | `worker_list_safety_events` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1605,6 +1608,18 @@ The drug test description now says the result can be withheld, so the embedding 
 re-recorded; held-out ranking is unchanged (keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82
 over 165).
 
+The leave and previous employers row converts the last two of those reads. Their GraphQL types had
+no kind, so the field guard would have shown a leave reason or a previous employer's findings at
+any ceiling; `WorkerLeaveCase` now declares `@kind(resource: "worker_leave")` and
+`WorkerEmploymentVerification` `@kind(resource: "qualification")`, the qualification file declares
+that it authorizes the verifications it carries, both kinds declare which fields are Internal, and
+the REST response guard names both structs. `qualification` was not given worker as its parent:
+the permission engine reads a child through its parent's grant, so worker read would have granted
+every qualification record. A Postgres test reads each list for one worker and for the
+organization, against the repository tool's service read, and checks that an agent at Internal is
+never shown a leave reason, a finding or a drug and alcohol answer. Held-out ranking is unchanged
+(keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82 over 165).
+
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
 - One runtime: an agent definition supplies a profile.
@@ -1614,20 +1629,30 @@ over 165).
   reported; end-to-end pass^k on cross-desk requests ("bill it and email the customer").
 - **Built (2026-10-19, PR #821).** See §8.3.
 
-**Phase 5: code mode for reads, then batch writes (4–6 weeks, gated).**
+**Phase 5: code mode for reads, then batch writes (4–6 weeks).**
 
 - A read-only SDK through a broker, in the existing E2B sandbox.
 - Next, write intents to an outbox that becomes a batch proposal, re-previewed at commit.
-- Enabled per model by eval.
+- Turned on per chat provider in AI Control: "Scripts", and "Scripts may propose writes", which
+  requires it. Both are off by default and read at dispatch from the provider that answered,
+  beside the organization's own opt-in (plan capability, E2B setting, permission).
 - **Check:** paired scenarios in discrete mode and code mode, mixing fan-out reads, batch writes
   and τ-style sequential controls; adversarial cases (injection, sandbox escape, stale approval).
-  The bar is zero unauthorized commits.
+  The bar is zero unauthorized commits. The bench gate measures them and recommends the
+  settings per model; it changes none ([desk-bench-gate.md](engineering/desk-bench-gate.md)).
+- **Built (2026-10-20, PRs #837, #838, #849); settings on the provider since 2026-10-21.** See
+  [agent-code-mode.md](engineering/agent-code-mode.md) and
+  [agent-code-mode-writes.md](engineering/agent-code-mode-writes.md).
 
 **Phase 6: tune the models (ongoing).**
 
-- Choose effort per route.
-- Try the advisor (Haiku with Opus) on hard steps.
-- Run the full matrix every quarter, and whenever a provider ships a model.
+- Set effort per route on the provider; the bench gate recommends one.
+- The advisor (Haiku with Opus) on hard steps is a provider setting ("Advisor"), off by
+  default; the gate recommends it per route where it helps, and the API's own refusal of an
+  advisor is recorded on the provider and the call answered without it
+  ([agent-runtime.md](engineering/agent-runtime.md), "The advisor").
+- Run the full matrix every quarter, and whenever a provider ships a model, as measurement:
+  its output is a recommended setting, never a switch.
 
 ## 6. Eval plan
 
@@ -1904,7 +1929,7 @@ changes the plan in four ways.
 
       Behind it, the bench is compared against the baseline.
    3. **Tool surface consolidation** (Phase 3), module by module, with no aliases.
-   4. **Code mode** (Phase 5), gated by eval for each model.
+   4. **Code mode** (Phase 5), a provider setting off by default, measured by eval for each model.
    5. **Model tuning** (Phase 6).
 4. **Evals cannot draw on production traffic.** No production threads, thumbs or decided
    proposals exist to mine. The eval set (§6) is built from:

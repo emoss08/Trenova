@@ -62,7 +62,7 @@ type Inputs struct {
 }
 
 func Build(in *Inputs) (*pageaccess.Manifest, error) {
-	accesses, err := gqlext.Operations(in.Schema, in.Registry, in.Operations, in.Fragments)
+	accesses, err := gqlext.Operations(in.Schema, in.Registry, in.Operations, in.Fragments, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -103,12 +103,13 @@ func TestDeliveryEmailContext(t *testing.T) {
 			EmailAttach:     true,
 		})
 
-		out := a.deliveryEmailContext(&deliveryEmailContent{
+		out, err := a.deliveryEmailContext(t.Context(), &deliveryEmailContent{
 			run:      deliveryTestRun(),
 			schedule: schedule,
 			title:    "Fleet <Utilization>",
 			attached: true,
 		})
+		require.NoError(t, err)
 
 		// The title is carried verbatim; escaping it here would double-escape it
 		// once html/template does its job.
@@ -134,12 +135,13 @@ func TestDeliveryEmailContext(t *testing.T) {
 			EmailAttach:     true,
 		})
 
-		out := a.deliveryEmailContext(&deliveryEmailContent{
+		out, err := a.deliveryEmailContext(t.Context(), &deliveryEmailContent{
 			run:            deliveryTestRun(),
 			schedule:       schedule,
 			title:          "Fleet Utilization",
 			attachTooLarge: true,
 		})
+		require.NoError(t, err)
 
 		assert.False(t, out.Attached)
 		assert.Contains(t, out.AttachedNote, "exceeds the")
@@ -154,11 +156,12 @@ func TestDeliveryEmailContext(t *testing.T) {
 			EmailRecipients: []string{"ops@example.com"},
 		})
 
-		out := a.deliveryEmailContext(&deliveryEmailContent{
+		out, err := a.deliveryEmailContext(t.Context(), &deliveryEmailContent{
 			run:      deliveryTestRun(),
 			schedule: schedule,
 			title:    "Fleet Utilization",
 		})
+		require.NoError(t, err)
 
 		assert.Contains(t, out.AttachedNote, "run history")
 	})
@@ -171,11 +174,12 @@ func TestDeliveryEmailContext(t *testing.T) {
 		run := deliveryTestRun()
 		run.Truncated = true
 
-		out := a.deliveryEmailContext(&deliveryEmailContent{
+		out, err := a.deliveryEmailContext(t.Context(), &deliveryEmailContent{
 			run:      run,
 			schedule: schedule,
 			title:    "Fleet Utilization",
 		})
+		require.NoError(t, err)
 
 		assert.True(t, out.Truncated,
 			"the template warns on this flag; losing it hides that rows were dropped")

@@ -35,6 +35,8 @@ export const SCENARIO_DEFAULTS = {
   // the EDI desk's guide conversation: held | ready | proposed | revised
   ediDraft: process.env.MOCK_EDI_DRAFT ?? "ready",
   deskPlan: process.env.MOCK_DESK_PLAN ?? "awaiting",
+  // the Desk table conversation's list: paged | slow | failing | locked | withheld | cut | whole | short
+  deskTable: process.env.MOCK_DESK_TABLE ?? "paged",
   // the command palette's waiting counts in the sidebar and on the palette's home
   palette: process.env.MOCK_PALETTE === "1",
 };

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e7af9c5543a3a2905cc62474c2bfa7c2f4ea9885e58883e9df88e147a12ea004",
+  "version": "sha256:4d1a8a3b93d16408915c1f73f6e7e361e9bbedd15c16682d67cd3befccd8a855",
   "screens": [
     {
       "path": "/",
@@ -2719,6 +2719,11 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
         },
         {
@@ -7816,6 +7821,11 @@
           "requires": []
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
+          "requires": []
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/",
           "requires": []
@@ -8910,6 +8920,11 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
         },
         {
@@ -13088,6 +13103,11 @@
           "requires": []
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
+          "requires": []
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/",
           "requires": []
@@ -14874,6 +14894,11 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
         },
         {
@@ -16731,6 +16756,11 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
         },
         {
@@ -29357,6 +29387,7 @@
         "performance_review",
         "performance_review_template",
         "pto_policy",
+        "qualification",
         "rate_agreement",
         "shipment",
         "training_course",
@@ -29368,6 +29399,7 @@
         "worker_dot_test",
         "worker_employment_event",
         "worker_injury",
+        "worker_leave",
         "worker_pto",
         "worker_recognition",
         "worker_safety_event"
@@ -31092,7 +31124,8 @@
         "order"
       ],
       "references": [
-        "customer"
+        "customer",
+        "invoice"
       ],
       "declared": [
         "user"
@@ -32506,6 +32539,11 @@
           "requires": []
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
+          "requires": []
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/",
           "requires": []
@@ -33393,6 +33431,11 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
         },
         {
@@ -34879,7 +34922,16 @@
       "name": "ApplyCreditMemo",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "invoice",
+          "fields": [
+            "billType",
+            "number",
+            "status"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -36396,7 +36448,19 @@
       "name": "CreateInvoicesFromShipments",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "invoice",
+          "fields": [
+            "billToName",
+            "currencyCode",
+            "customerId",
+            "isSplitBill",
+            "number",
+            "totalAmount"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -38108,7 +38172,9 @@
     {
       "name": "DriverQualificationFile",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "qualification"
+      ],
       "linked": [],
       "declared": []
     },
@@ -39661,6 +39727,13 @@
           "fields": [
             "name"
           ]
+        },
+        {
+          "kind": "worker_safety_event",
+          "fields": [
+            "kind",
+            "occurredAt"
+          ]
         }
       ],
       "declared": []
@@ -41191,6 +41264,13 @@
           "fields": [
             "name"
           ]
+        },
+        {
+          "kind": "worker_safety_event",
+          "fields": [
+            "kind",
+            "occurredAt"
+          ]
         }
       ],
       "declared": []
@@ -41797,7 +41877,17 @@
       "name": "SetInvoiceFactoringOverride",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "invoice",
+          "fields": [
+            "billToName",
+            "currencyCode",
+            "number",
+            "status"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -42739,7 +42829,16 @@
       "name": "UnapplyCreditMemoApplication",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "invoice",
+          "fields": [
+            "billType",
+            "number",
+            "status"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43056,7 +43155,15 @@
       "name": "UpdateDotRandomDrawEntry",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "worker",
+          "fields": [
+            "firstName",
+            "lastName"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43556,7 +43663,19 @@
       "name": "VoidInvoice",
       "type": "mutation",
       "reads": [],
-      "linked": [],
+      "linked": [
+        {
+          "kind": "invoice",
+          "fields": [
+            "number",
+            "status",
+            "voidDisposition",
+            "voidReason",
+            "voidedAt",
+            "voidedByAdjustmentId"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43732,6 +43851,13 @@
           "fields": [
             "name"
           ]
+        },
+        {
+          "kind": "worker_safety_event",
+          "fields": [
+            "kind",
+            "occurredAt"
+          ]
         }
       ],
       "declared": []
@@ -43839,7 +43965,9 @@
     {
       "name": "WorkerLeaveFile",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "worker_leave"
+      ],
       "linked": [],
       "declared": []
     },
@@ -44082,7 +44210,9 @@
     {
       "name": "WorkerSafetyViolations",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "worker_safety_event"
+      ],
       "linked": [],
       "declared": []
     },

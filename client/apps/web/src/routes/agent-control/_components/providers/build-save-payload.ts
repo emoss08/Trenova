@@ -1,4 +1,5 @@
 import type { AITask, SaveAIProviderRequest } from "@/types/ai-provider";
+import { agentSettingsPayload } from "./agent-settings-model";
 
 export type ProviderFormValues = Omit<
   SaveAIProviderRequest,
@@ -47,6 +48,7 @@ export function buildSavePayload(
   return {
     ...rest,
     tasks: assigned,
+    ...agentSettingsPayload({ ...rest, tasks: assigned }),
     apiKey: trimmedKey !== "" ? trimmedKey : isEditing ? undefined : "",
     extraBody: parseExtraBody(extraBodyText),
     embeddingDimensions: embeds ? parseEmbeddingDimensions(embeddingDimensionsChoice) : null,

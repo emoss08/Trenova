@@ -15,7 +15,6 @@ import (
 const (
 	ScopeOwn  = "own"
 	ScopeTeam = "team"
-	ScopeNone = "none"
 
 	GinContextKey = "trenova.readscope"
 )
@@ -118,7 +117,7 @@ func (h *Holder) load(ctx context.Context) {
 }
 
 func narrow(scope string) bool {
-	return scope == ScopeOwn || scope == ScopeTeam || scope == ScopeNone
+	return scope == ScopeOwn || scope == ScopeTeam
 }
 
 func (g Grants) Encode() (string, error) {

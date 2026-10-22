@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/require"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/parser"
@@ -50,7 +51,18 @@ func linkedFields(t *testing.T) []LinkedField {
 	schema, err := schemadiff.LoadDir("../schema")
 	require.NoError(t, err)
 	operations, fragments := clientOperations(t)
-	found, err := LinkedFields(schema, fieldsensitivity.DefaultRegistry(), operations, fragments)
+	checked := resolverReadChecks(t)
+	checks := func(root, field string) []permission.Resource {
+		kinds := checked[strings.ToLower(root+"."+field)]
+		out := make([]permission.Resource, 0, len(kinds))
+		for _, kind := range kinds {
+			out = append(out, permission.Resource(kind))
+		}
+		return out
+	}
+	found, err := LinkedFields(
+		schema, fieldsensitivity.DefaultRegistry(), operations, fragments, checks,
+	)
 	require.NoError(t, err)
 	sort.Slice(found, func(i, j int) bool { return found[i].String() < found[j].String() })
 

@@ -278,13 +278,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "reviewsAwaitingSignOff",
-				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.ReviewsAwaitingSignOff, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:       "ptoLiabilityDays",
@@ -300,13 +299,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "leaveCertificationsOutstanding",
-				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*workeroverviewservice.RosterAttention)
 					return obj.LeaveCertificationsOutstanding, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 		}},
 	},
@@ -441,6 +439,14 @@ func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

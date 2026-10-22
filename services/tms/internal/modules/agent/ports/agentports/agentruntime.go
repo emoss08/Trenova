@@ -297,6 +297,7 @@ func (o *ProposalOutcome) Pending() bool {
 // ToolObservation is one tool call as it finished.
 type ToolObservation struct {
 	Call ToolCall
+	RanWith map[string]any
 	// Data is what a query tool returned; nil for a write, a refusal or a
 	// failure.
 	Data   any
@@ -345,6 +346,7 @@ type ShownArtifact struct {
 	// for a move: the person picks from it, so it is pointed to however
 	// short it is.
 	Ranked   bool       `json:"ranked,omitempty"`
+	Paged    bool       `json:"paged,omitempty"`
 	Written  string     `json:"written,omitempty"`
 	Lineage  pulid.ID   `json:"lineage,omitempty"`
 	Replaces []pulid.ID `json:"replaces,omitempty"`
@@ -370,7 +372,8 @@ func (a *ShownArtifact) MustBeLinked() bool {
 		a.Written != "":
 		return true
 	case a.Tabular():
-		return a.Opens || a.Actionable || a.OpensRecords || a.Ranked || a.Rows > InlineTableRows
+		return a.Opens || a.Actionable || a.OpensRecords || a.Ranked || a.Paged ||
+			a.Rows > InlineTableRows
 	default:
 		return false
 	}

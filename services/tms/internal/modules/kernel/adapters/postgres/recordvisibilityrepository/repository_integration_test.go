@@ -78,7 +78,12 @@ func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 	assert.Empty(t, visible)
 }
 
-func TestVisibleIDs_ANoneScopeLeavesOnlyWhatIsThePersonsOwn(t *testing.T) {
+// A person who cannot read shipments or workers is sent no read scope for
+// them, so the database shows every row of both kinds: a record that links to
+// one shows its reference view. Whether the person may see such a record as a
+// search hit is the caller's decision (globalsearchservice refuses a kind the
+// person cannot read before it asks), not the database's.
+func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 	ctx, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -140,12 +145,7 @@ func TestVisibleIDs_ANoneScopeLeavesOnlyWhatIsThePersonsOwn(t *testing.T) {
 	cannotRead := readscope.With(
 		dbscope.WithTenant(t.Context(), tenant.DBTenant()),
 		func(context.Context) (readscope.Grants, error) {
-			return readscope.Grants{
-				"shipment": {Scope: readscope.ScopeNone},
-				"worker":   {Scope: readscope.ScopeNone},
-				"order":    {Scope: readscope.ScopeNone},
-				"invoice":  {Scope: readscope.ScopeNone},
-			}, nil
+			return readscope.Grants{}, nil
 		},
 	)
 
@@ -155,7 +155,7 @@ func TestVisibleIDs_ANoneScopeLeavesOnlyWhatIsThePersonsOwn(t *testing.T) {
 		IDs:        []pulid.ID{driven.Shipment.ID, unassigned.Shipment.ID},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []pulid.ID{driven.Shipment.ID}, shipments)
+	assert.ElementsMatch(t, []pulid.ID{driven.Shipment.ID, unassigned.Shipment.ID}, shipments)
 
 	workers, err := repo.VisibleIDs(cannotRead, &kernelports.ListVisibleRecordsRequest{
 		TenantInfo: tenant,
@@ -163,16 +163,19 @@ func TestVisibleIDs_ANoneScopeLeavesOnlyWhatIsThePersonsOwn(t *testing.T) {
 		IDs:        []pulid.ID{me.ID, colleague.ID},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []pulid.ID{me.ID}, workers)
+	assert.ElementsMatch(t, []pulid.ID{me.ID, colleague.ID}, workers)
 
-	everything, err := repo.VisibleIDs(
+	ownShipments := readscope.With(
 		dbscope.WithTenant(t.Context(), tenant.DBTenant()),
-		&kernelports.ListVisibleRecordsRequest{
-			TenantInfo: tenant,
-			Kind:       "worker",
-			IDs:        []pulid.ID{me.ID, colleague.ID},
+		func(context.Context) (readscope.Grants, error) {
+			return readscope.Grants{"shipment": {Scope: readscope.ScopeOwn}}, nil
 		},
 	)
+	owned, err := repo.VisibleIDs(ownShipments, &kernelports.ListVisibleRecordsRequest{
+		TenantInfo: tenant,
+		Kind:       "shipment",
+		IDs:        []pulid.ID{driven.Shipment.ID, unassigned.Shipment.ID},
+	})
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []pulid.ID{me.ID, colleague.ID}, everything)
+	assert.Empty(t, owned, "an own scope still narrows: the person owns neither shipment")
 }

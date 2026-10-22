@@ -31,6 +31,7 @@ import { findFragments, formatFinding } from "./fragments.mjs";
 import { translationProblems } from "./validate.mjs";
 import { extractTemplates } from "./extract-templates.mjs";
 import { extractTypeScript } from "./extract-ts.mjs";
+import { extractRust } from "./extract-rust.mjs";
 import { reject } from "./filter.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -66,6 +67,17 @@ async function extractGo() {
   return { entries, rejected };
 }
 
+// addRustEntries files the rules crate's message! templates (extract-rust.mjs) with both
+// tiers: each template arrives once in the Go scope, for the errors the server translates,
+// and once in the client scope under the web app, for the formula editor and rule screens.
+function addRustEntries(go, ts, rust) {
+  for (const entry of rust.entries) {
+    if (entry.scope === "go") go.entries.push(entry);
+    else ts.entries.push(entry);
+  }
+  go.rejected.push(...rust.rejected);
+}
+
 // goArea buckets Go messages by the domain or service they belong to, mirroring how the
 // frontend buckets by route, so one feature can be translated across both tiers together.
 function goArea(file) {
@@ -93,12 +105,14 @@ async function loadLocales() {
 }
 
 async function report({ showRejected }) {
-  const [go, ts, templates] = await Promise.all([
+  const [go, ts, templates, rust] = await Promise.all([
     extractGo(),
     extractTypeScript(repoRoot),
     extractTemplates(repoRoot),
+    extractRust(repoRoot),
   ]);
   go.entries.push(...templates.entries);
+  addRustEntries(go, ts, rust);
 
   if (ts.errors.length > 0) {
     console.error(`\nParse failures (${ts.errors.length}):`);
@@ -128,6 +142,7 @@ async function report({ showRejected }) {
   console.log("\n=== Trenova i18n inventory ===\n");
   console.log(`  Go message sites          ${go.entries.length}`);
   console.log(`  TypeScript message sites  ${ts.entries.length}`);
+  console.log(`  Rust (rules) templates    ${rust.entries.length / 2}, counted in both above`);
   console.log(`  ---------------------------------`);
   console.log(`  Total sites               ${all.length}`);
   console.log(`  UNIQUE STRINGS            ${unique.size}   <- the translation workload`);
@@ -216,12 +231,14 @@ function localePath(locale) {
 // and scope travel with each entry so translation can be batched by screen and so the emit
 // step can keep backend messages out of the browser bundle.
 async function buildSource() {
-  const [go, ts, templates] = await Promise.all([
+  const [go, ts, templates, rust] = await Promise.all([
     extractGo(),
     extractTypeScript(repoRoot),
     extractTemplates(repoRoot),
+    extractRust(repoRoot),
   ]);
   go.entries.push(...templates.entries);
+  addRustEntries(go, ts, rust);
   const editionGo = new Map();
   const publicGo = [];
   for (const entry of go.entries) {

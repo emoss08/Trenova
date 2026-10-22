@@ -104,7 +104,7 @@ func (s *Service) planOrderInvoices(
 		return nil, err
 	}
 
-	buckets, err := bucketLegsByPayer(ord, legs)
+	buckets, err := bucketLegsByPayer(ctx, ord, legs)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +183,12 @@ func (s *Service) buildBucketInvoice(
 	if err != nil {
 		return nil, nil, err
 	}
-	chargeShare, chargeSplit, err := orderChargeShareFor(charges, plan.defaultPayer, bucket.PayerID)
+	chargeShare, chargeSplit, err := orderChargeShareFor(
+		ctx,
+		charges,
+		plan.defaultPayer,
+		bucket.PayerID,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -193,7 +198,7 @@ func (s *Service) buildBucketInvoice(
 		shipper = orderCustomer
 	}
 
-	entity := s.buildInvoiceEntity(&buildInvoiceParams{
+	entity, err := s.buildInvoiceEntity(ctx, &buildInvoiceParams{
 		Anchor:           anchor,
 		Scope:            invoice.ScopeOrder,
 		Customer:         cus,
@@ -206,6 +211,9 @@ func (s *Service) buildBucketInvoice(
 		Shares:           bucket.Shares,
 		IsSplitBill:      bucket.IsSplit || chargeSplit,
 	})
+	if err != nil {
+		return nil, nil, err
+	}
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, nil, multiErr
 	}
@@ -355,7 +363,7 @@ func (s *Service) planShipmentDrafts(
 		return nil, err
 	}
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}

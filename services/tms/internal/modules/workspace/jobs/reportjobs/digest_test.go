@@ -47,7 +47,7 @@ func moneyColumn(label string, rules ...reportfmt.Rule) reportports.ReportResult
 		ID:    strings.ToLower(label),
 		Label: label,
 		Type:  reportcatalog.FieldDecimal,
-		Display: reportfmt.Resolve(reportfmt.ResolveInput{
+		Display: mustResolve(reportfmt.ResolveInput{
 			Type: reportcatalog.FieldDecimal,
 			Hint: reportcatalog.FormatMoney,
 			Spec: &reportfmt.Spec{Rules: rules},
@@ -60,8 +60,16 @@ func textColumn(label string) reportports.ReportResultColumn {
 		ID:      strings.ToLower(label),
 		Label:   label,
 		Type:    reportcatalog.FieldString,
-		Display: reportfmt.Resolve(reportfmt.ResolveInput{Type: reportcatalog.FieldString}),
+		Display: mustResolve(reportfmt.ResolveInput{Type: reportcatalog.FieldString}),
 	}
+}
+
+func mustResolve(in reportfmt.ResolveInput) reportfmt.Resolved {
+	displays, err := reportfmt.Resolve(context.Background(), []reportfmt.ResolveInput{in})
+	if err != nil {
+		panic(err)
+	}
+	return displays[0]
 }
 
 func drainDigest(t *testing.T, reader *digestReader) *reportports.ReportDigest {
@@ -162,7 +170,8 @@ func TestDigestContextFormatsThroughTheDisplayContract(t *testing.T) {
 		Totals: reportports.ReportRow{nil, decimal.NewFromInt(2500)},
 	}
 
-	out := digestContext(digest, nil, 2)
+	out, err := digestContext(t.Context(), digest, nil, 2)
+	require.NoError(t, err)
 
 	assert.Equal(t, []string{"Customer", "Revenue"}, out.Headers)
 	require.Len(t, out.Rows, 2)
@@ -186,7 +195,8 @@ func TestDigestContextPadsShortRows(t *testing.T) {
 		Rows:    []reportports.ReportRow{{"ACME"}},
 	}
 
-	out := digestContext(digest, nil, 1)
+	out, err := digestContext(t.Context(), digest, nil, 1)
+	require.NoError(t, err)
 
 	require.Len(t, out.Rows, 1)
 	require.Len(t, out.Rows[0].Cells, 2)
@@ -194,15 +204,20 @@ func TestDigestContextPadsShortRows(t *testing.T) {
 }
 
 func TestDigestContextIsEmptyWhenThereIsNothingToShow(t *testing.T) {
-	assert.Empty(t, digestContext(nil, nil, 0).Rows)
-	assert.Empty(t, digestContext(&reportports.ReportDigest{}, nil, 0).Rows)
+	none, err := digestContext(t.Context(), nil, nil, 0)
+	require.NoError(t, err)
+	assert.Empty(t, none.Rows)
+	empty, err := digestContext(t.Context(), &reportports.ReportDigest{}, nil, 0)
+	require.NoError(t, err)
+	assert.Empty(t, empty.Rows)
 
 	// Columns but no rows is a real case — an alert that fired on an empty
 	// result should not draw a headers-only table.
 	headersOnly := &reportports.ReportDigest{
 		Columns: []reportports.ReportResultColumn{textColumn("Customer")},
 	}
-	out := digestContext(headersOnly, nil, 0)
+	out, err := digestContext(t.Context(), headersOnly, nil, 0)
+	require.NoError(t, err)
 	assert.Empty(t, out.Rows)
 	assert.Empty(t, out.Headers, "no rows means no table, so no headers either")
 }

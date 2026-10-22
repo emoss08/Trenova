@@ -1,5 +1,4 @@
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
-import { formatReportValue } from "@trenova/shared/lib/report-format";
 import type { ReportIR } from "@/types/report";
 import type { DrillTarget } from "./drill-through-sheet";
 
@@ -9,13 +8,15 @@ import type { DrillTarget } from "./drill-through-sheet";
  * clicked so a filtered or pivoted measure carries its own scope down.
  *
  * Returns null when the report is already a record list — there is nothing
- * underneath a row that is itself a record.
+ * underneath a row that is itself a record. `textOf` is the text the grid shows
+ * for a cell of this row, by column index, which names the row in the sheet.
  */
 export function buildDrillTarget(
   ir: ReportIR,
   columns: ReportPreviewColumn[],
   row: unknown[],
   columnIndex: number,
+  textOf: (columnIndex: number) => string,
 ): DrillTarget | null {
   if (!ir.columns.some((column) => column.kind !== "dimension")) return null;
 
@@ -32,15 +33,11 @@ export function buildDrillTarget(
   const clicked = columns[columnIndex];
   const firstDimension = ir.columns.find((column) => column.kind === "dimension");
   const labelIndex = firstDimension ? indexById.get(firstDimension.id) : undefined;
-  const labelColumn = labelIndex === undefined ? undefined : columns[labelIndex];
 
   return {
     dimensions,
     columnId: clicked?.id,
     columnLabel: clicked?.label,
-    rowLabel:
-      labelIndex === undefined
-        ? undefined
-        : formatReportValue(row[labelIndex], labelColumn?.display),
+    rowLabel: labelIndex === undefined ? undefined : textOf(labelIndex),
   };
 }

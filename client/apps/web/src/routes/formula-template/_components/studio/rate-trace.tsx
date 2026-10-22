@@ -1,3 +1,4 @@
+import { previewWarnings } from "@/lib/formula-preview";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -141,9 +142,9 @@ export function RateTrace({ className }: { className?: string }) {
       }))
     : analysis.reads.map((name) => ({ name, value: preview.valueOf(name) }));
   const unused = (variableDefinitions ?? []).filter(
-    (variable) => variable.name && !analysis.inputReads.has(variable.name),
+    (variable) => variable.name && !analysis.pending && !analysis.inputReads.has(variable.name),
   ).length;
-  const statementCount = empty ? 0 : analysis.bindings.size + 1;
+  const statementCount = empty ? 0 : analysis.statements.length;
   const edited = Object.keys(preview.overrides).length;
 
   const usingShipment = preview.source === "shipment" && preview.shipmentId !== "";
@@ -169,7 +170,7 @@ export function RateTrace({ className }: { className?: string }) {
     ? "todo"
     : analysis.errorCount > 0 || runtimeError
       ? "bad"
-      : (result?.warnings?.length ?? 0) > 0
+      : analysis.warningCount > 0 || previewWarnings(result).length > 0
         ? "warn"
         : "ok";
 

@@ -145,8 +145,8 @@ func TestAdoptContractRate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 
 	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
 	predicate.EXPECT().
-		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicateRequest")).
-		Return(false, nil).
+		EvaluatePredicates(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicatesRequest")).
+		Return([]formulatemplateports.PredicateOutcome{{Holds: false}}, nil).
 		Once()
 
 	calculator := agreementCalculator(t, agreement, predicate)
@@ -154,6 +154,49 @@ func TestAdoptContractRate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 	adoptContract(t, calculator, entity)
 
 	assert.Empty(t, entity.AdditionalCharges)
+}
+
+func TestAdoptContractRate_EvaluatesEveryConditionInOneCall(t *testing.T) {
+	t.Parallel()
+
+	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
+	agreement.Accessorials[0].ApplyCondition = "totalStops > 2"
+	second := *agreement.Accessorials[0]
+	second.ID = pulid.MustNew("raga_")
+	second.AccessorialChargeID = pulid.MustNew("acc_")
+	second.ApplyCondition = "hasHazmat"
+	unconditional := *agreement.Accessorials[0]
+	unconditional.ID = pulid.MustNew("raga_")
+	unconditional.AccessorialChargeID = pulid.MustNew("acc_")
+	unconditional.ApplyCondition = ""
+	agreement.Accessorials = append(agreement.Accessorials, &second, &unconditional)
+	entity := ratedShipment(agreement.ID)
+
+	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
+	predicate.EXPECT().
+		EvaluatePredicates(mock.Anything, mock.MatchedBy(
+			func(req *formulatemplateports.EvaluatePredicatesRequest) bool {
+				return assert.ObjectsAreEqual(
+					[]string{"totalStops > 2", "hasHazmat"},
+					req.Expressions,
+				) && req.SchemaID == shipmentSchemaID
+			},
+		)).
+		Return([]formulatemplateports.PredicateOutcome{
+			{Holds: false},
+			{Holds: true},
+		}, nil).
+		Once()
+
+	calculator := agreementCalculator(t, agreement, predicate)
+
+	adoptContract(t, calculator, entity)
+
+	applied := make([]pulid.ID, 0, len(entity.AdditionalCharges))
+	for _, charge := range entity.AdditionalCharges {
+		applied = append(applied, *charge.RateAgreementAccessorialID)
+	}
+	assert.ElementsMatch(t, []pulid.ID{second.ID, unconditional.ID}, applied)
 }
 
 // Charging a customer for something the contract may not entitle us to is the
@@ -168,8 +211,8 @@ func TestAdoptContractRate_WithholdsAccessorialWhenConditionErrors(t *testing.T)
 
 	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
 	predicate.EXPECT().
-		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicateRequest")).
-		Return(false, errors.New("compile failed")).
+		EvaluatePredicates(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicatesRequest")).
+		Return([]formulatemplateports.PredicateOutcome{{Err: errors.New("does not evaluate")}}, nil).
 		Once()
 
 	calculator := agreementCalculator(t, agreement, predicate)

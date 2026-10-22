@@ -32,7 +32,8 @@ type QueryToolParams struct {
 	Broker codemode.Broker
 	// StepKey is the step the call is claimed under, for the tool that runs a
 	// script to name its sandbox.
-	StepKey string
+	StepKey      string
+	IncludeTotal bool
 }
 
 // AgentQueryTool reads data and returns it.

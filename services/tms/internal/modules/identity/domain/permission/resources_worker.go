@@ -171,18 +171,40 @@ func (r *Registry) registerWorkerResources() {
 				Description: "Archive worker credentials",
 			},
 		},
+		// What a credential is, whose, when it was issued and expires, by whom,
+		// and whether it is verified and has a scan on file is what dispatch
+		// and compliance work from, so it is Internal. The notes and why it
+		// was archived stay Restricted, and the number Confidential.
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
-			"number": SensitivityConfidential,
+			"id":               SensitivityInternal,
+			"businessUnitId":   SensitivityInternal,
+			"organizationId":   SensitivityInternal,
+			"workerId":         SensitivityInternal,
+			"credentialTypeId": SensitivityInternal,
+			"status":           SensitivityInternal,
+			"issuingAuthority": SensitivityInternal,
+			"issuedAt":         SensitivityInternal,
+			"expiresAt":        SensitivityInternal,
+			"health":           SensitivityInternal,
+			"daysUntilExpiry":  SensitivityInternal,
+			"documentId":       SensitivityInternal,
+			"verifiedById":     SensitivityInternal,
+			"verifiedAt":       SensitivityInternal,
+			"archivedById":     SensitivityInternal,
+			"archivedAt":       SensitivityInternal,
+			"version":          SensitivityInternal,
+			"createdAt":        SensitivityInternal,
+			"updatedAt":        SensitivityInternal,
+			"number":           SensitivityConfidential,
 		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceWorkerEmploymentEvent.String(),
-		DisplayName:    "Employment Event",
-		Description:    "Hires, terminations, leave, suspensions, transfers and other employment history",
-		Category:       "Human resources",
-		ParentResource: ResourceWorker.String(),
+		Resource:    ResourceWorkerEmploymentEvent.String(),
+		DisplayName: "Employment Event",
+		Description: "Hires, terminations, leave, suspensions, transfers and other employment history",
+		Category:    "Human resources",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
@@ -348,15 +370,17 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceWorkerDOTTest.String(),
-		DisplayName:    "Drug & Alcohol Testing",
-		Description:    "Controlled-substances and alcohol tests, violations and Clearinghouse queries on a worker's record",
-		Category:       "Human resources",
-		ParentResource: ResourceWorker.String(),
-		// That a test was ordered, why and when, and where it stands is what
-		// scheduling a collection needs, and is Internal. What it found (the
-		// result, the substances, the alcohol reading) and who collected,
-		// tested and verified the specimen are Restricted (49 CFR 40.321).
+		Resource:    ResourceWorkerDOTTest.String(),
+		DisplayName: "Drug & Alcohol Testing",
+		Description: "Controlled-substances and alcohol tests, violations and Clearinghouse queries on a worker's record",
+		Category:    "Human resources",
+		// 49 CFR 40.321 releases test results only to those whose job is DOT
+		// compliance, so the kind has no parent: a worker grant never reaches
+		// it, and only the safety bundle grants it. That a test was ordered,
+		// why and when, and where it stands is what scheduling a collection
+		// needs, and is Internal. What it found (the result, the substances,
+		// the alcohol reading) and who collected, tested and verified the
+		// specimen are Restricted.
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
 			"id":             SensitivityInternal,
@@ -413,15 +437,48 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceWorkerLeave.String(),
-		DisplayName:    "Leave & FMLA",
-		Description:    "Leave cases, the FMLA entitlement drawn against them, and medical certification",
-		Category:       "Human resources",
-		ParentResource: ResourceWorker.String(),
+		Resource:    ResourceWorkerLeave.String(),
+		DisplayName: "Leave & FMLA",
+		Description: "Leave cases, the FMLA entitlement drawn against them, and medical certification",
+		Category:    "Human resources",
 		// A leave case carries the reason somebody is off work and the medical
-		// certification behind it. It is granted separately for the same reason
-		// the injury log is.
+		// certification behind it (29 CFR 825.500(g)), so it has no parent:
+		// reading a worker never reaches their leave, and only a worker_leave
+		// grant does. A leave case is its own record wherever it is carried,
+		// and nothing links to one, so it has no reference view. That a worker
+		// is on leave, of what kind, when, and where the certification stands
+		// is Internal, as are the days taken; the reason, the certificate and
+		// the notes stay Restricted.
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":                       SensitivityInternal,
+			"businessUnitId":           SensitivityInternal,
+			"organizationId":           SensitivityInternal,
+			"workerId":                 SensitivityInternal,
+			"leaveType":                SensitivityInternal,
+			"status":                   SensitivityInternal,
+			"frequency":                SensitivityInternal,
+			"fmlaDesignated":           SensitivityInternal,
+			"requestedAt":              SensitivityInternal,
+			"startsAt":                 SensitivityInternal,
+			"endsAt":                   SensitivityInternal,
+			"decidedAt":                SensitivityInternal,
+			"closedAt":                 SensitivityInternal,
+			"certificationStatus":      SensitivityInternal,
+			"certificationRequestedAt": SensitivityInternal,
+			"certificationDueAt":       SensitivityInternal,
+			"certificationReceivedAt":  SensitivityInternal,
+			"recertificationDueAt":     SensitivityInternal,
+			"certificationLate":        SensitivityInternal,
+			"leaveCaseId":              SensitivityInternal,
+			"usedOn":                   SensitivityInternal,
+			"hours":                    SensitivityInternal,
+			"countsAgainstEntitlement": SensitivityInternal,
+			"ptoId":                    SensitivityInternal,
+			"version":                  SensitivityInternal,
+			"createdAt":                SensitivityInternal,
+			"updatedAt":                SensitivityInternal,
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View leave cases and balances"},
 			{
@@ -446,15 +503,17 @@ func (r *Registry) registerWorkerResources() {
 			},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export leave data"},
 		},
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeTeam, EnforcedBy: ScopeEnforcedByApplication},
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceBenefitPlan.String(),
-		DisplayName:    "Benefits",
-		Description:    "Benefit plans and who is enrolled on them",
-		Category:       "Human resources",
-		ReferenceView:  []string{"code", "name", "planType"},
-		ParentResource: ResourceWorker.String(),
+		Resource:      ResourceBenefitPlan.String(),
+		DisplayName:   "Benefits",
+		Description:   "Benefit plans and who is enrolled on them",
+		Category:      "Human resources",
+		ReferenceView: []string{"code", "name", "planType"},
 		// An enrollment says what cover somebody has and what they pay for it.
 		// It is granted separately for the same reason the injury log is.
 		DefaultSensitivity: SensitivityRestricted,
@@ -538,11 +597,10 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceTimesheet.String(),
-		DisplayName:    "Timesheet",
-		Description:    "Hours worked by staff paid by the clock, and the sign-off on them",
-		Category:       "Human resources",
-		ParentResource: ResourceWorker.String(),
+		Resource:    ResourceTimesheet.String(),
+		DisplayName: "Timesheet",
+		Description: "Hours worked by staff paid by the clock, and the sign-off on them",
+		Category:    "Human resources",
 		// A timesheet is a wage record. It is granted separately for the same
 		// reason pay is.
 		DefaultSensitivity: SensitivityRestricted,
@@ -592,11 +650,10 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceProfileChangeRequest.String(),
-		DisplayName:    "Profile Change",
-		Description:    "Changes drivers ask to make to their own record from the portal",
-		Category:       "Human resources",
-		ParentResource: ResourceWorker.String(),
+		Resource:    ResourceProfileChangeRequest.String(),
+		DisplayName: "Profile Change",
+		Description: "Changes drivers ask to make to their own record from the portal",
+		Category:    "Human resources",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View the queue"},
 			{
@@ -660,12 +717,11 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceWorkerInjury.String(),
-		DisplayName:    "Injury & Illness",
-		Description:    "Injury and illness cases, the OSHA 300 log and the 300A annual summary",
-		Category:       "Human resources",
-		ReferenceView:  []string{"caseNumber", "caseYear", "status"},
-		ParentResource: ResourceWorker.String(),
+		Resource:      ResourceWorkerInjury.String(),
+		DisplayName:   "Injury & Illness",
+		Description:   "Injury and illness cases, the OSHA 300 log and the 300A annual summary",
+		Category:      "Human resources",
+		ReferenceView: []string{"caseNumber", "caseYear", "status"},
 		// The log carries body parts, treatment and workers' compensation
 		// claims. It is granted separately from the rest of a worker's record
 		// because most people who need the roster have no business reading it.
@@ -764,12 +820,11 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceWorkerDisciplinaryAction.String(),
-		DisplayName:    "Disciplinary Action",
-		Description:    "Progressive-discipline actions issued to workers",
-		Category:       "Human resources",
-		ReferenceView:  []string{"status", "issuedAt"},
-		ParentResource: ResourceWorker.String(),
+		Resource:      ResourceWorkerDisciplinaryAction.String(),
+		DisplayName:   "Disciplinary Action",
+		Description:   "Progressive-discipline actions issued to workers",
+		Category:      "Human resources",
+		ReferenceView: []string{"status", "issuedAt"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View disciplinary actions"},
 			{Operation: OpCreate, DisplayName: "Issue", Description: "Issue disciplinary actions"},
@@ -819,12 +874,11 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourcePerformanceReview.String(),
-		DisplayName:    "Performance Review",
-		Description:    "Reviews drafted for workers, their ratings, goals and sign-off",
-		Category:       "Human resources",
-		ReferenceView:  []string{"title", "status", "periodEnd"},
-		ParentResource: ResourceWorker.String(),
+		Resource:      ResourcePerformanceReview.String(),
+		DisplayName:   "Performance Review",
+		Description:   "Reviews drafted for workers, their ratings, goals and sign-off",
+		Category:      "Human resources",
+		ReferenceView: []string{"title", "status", "periodEnd"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View performance reviews"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Start reviews"},

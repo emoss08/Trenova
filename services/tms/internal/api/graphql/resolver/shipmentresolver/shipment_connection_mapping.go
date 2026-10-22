@@ -1,6 +1,8 @@
 package shipmentresolver
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -8,13 +10,16 @@ import (
 )
 
 func shipmentConnectionToModel(
+	ctx context.Context,
 	result *pagination.CursorListResult[*shipmentdomain.Shipment],
 ) (*gqlmodel.ShipmentConnection, error) {
 	edges, endCursor, err := mappedEntityCursorEdges(
 		result.Items,
 		result.CursorSort,
 		result,
-		base.ShipmentToModel,
+		func(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
+			return base.ShipmentToModel(ctx, entity)
+		},
 		func(node *gqlmodel.Shipment, cursor string) *gqlmodel.ShipmentEdge {
 			return &gqlmodel.ShipmentEdge{
 				Node:   node,

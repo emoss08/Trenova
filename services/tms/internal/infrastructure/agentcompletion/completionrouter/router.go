@@ -51,6 +51,9 @@ type Params struct {
 	Spend agentports.AIProviderSpendService  `optional:"true"`
 	Slots agentports.ProviderSlotRepository  `optional:"true"`
 	Keys  agentports.AIProviderKeyRepository `optional:"true"`
+	// Advisors records the API's refusal of a provider's advisor on the
+	// provider. Optional: without it the refusal is only logged.
+	Advisors agentports.AIProviderAdvisorRecorder `optional:"true"`
 	// Files reads the files a person attached, for a model that reads files
 	// itself. Optional: without it every file is read as its text.
 	Files agentports.MessageFileReader `optional:"true"`
@@ -75,6 +78,8 @@ type Service struct {
 	limits *providerLimits
 	// files reads attached files for a model that reads files itself.
 	files agentports.MessageFileReader
+	// advisors records the API's refusal of a provider's advisor.
+	advisors agentports.AIProviderAdvisorRecorder
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
 	pause func(ctx context.Context, wait time.Duration) error
@@ -109,6 +114,7 @@ func newService(p Params) *Service {
 		health:        newProviderHealth(nil).share(p.Breakers, logger),
 		limits:        newProviderLimits(&p),
 		files:         p.Files,
+		advisors:      p.Advisors,
 		pause:         pauseFor,
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),

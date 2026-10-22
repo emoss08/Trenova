@@ -695,6 +695,7 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  qualification: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   rate_agreement: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   rate_matrix: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   rate_quote: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
@@ -977,6 +978,7 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  worker_leave: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   worker_policy: [
     "businessUnitId",
     "createdAt",
@@ -1138,9 +1140,12 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   WorkerDOTTest: "worker_dot_test",
   WorkerDisciplinaryAction: "worker_disciplinary_action",
   WorkerEmploymentEvent: "worker_employment_event",
+  WorkerEmploymentVerification: "qualification",
   WorkerInjury: "worker_injury",
+  WorkerLeaveCase: "worker_leave",
   WorkerPTO: "worker_pto",
   WorkerPolicy: "worker_policy",
   WorkerRecognition: "worker_recognition",
   WorkerSafetyEvent: "worker_safety_event",
+  WorkerSafetyViolation: "worker_safety_event",
 };

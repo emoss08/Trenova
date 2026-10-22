@@ -543,28 +543,20 @@ func (s *Service) runSingleCase(
 		Tolerance:      testCase.Tolerance,
 	}
 
-	evaluation := s.TestExpression(
+	evaluation, err := s.TestExpression(
 		ctx,
 		candidateRequest(schemaID, tenantInfo, candidate, testCase.Variables),
 	)
-
-	if !evaluation.Valid {
-		result.Error = evaluation.Error
-		if result.Error == "" {
-			result.Error = evaluation.Message
-		}
+	if err != nil {
+		result.Error = errortypes.LocalizedText(ctx, err)
+		return result
+	}
+	if !evaluation.Valid || evaluation.Result == nil {
+		result.Error = evaluationError(ctx, evaluation)
 		return result
 	}
 
-	actual, ok := evaluation.Result.(decimal.Decimal)
-	if !ok {
-		result.Error = fmt.Sprintf(
-			"expression produced a non-numeric result: %v",
-			evaluation.Result,
-		)
-		return result
-	}
-
+	actual := *evaluation.Result
 	result.ActualAmount = actual
 	result.Difference = actual.Sub(testCase.ExpectedAmount)
 	result.Passed = result.Difference.Abs().LessThanOrEqual(testCase.Tolerance)

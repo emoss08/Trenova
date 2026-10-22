@@ -1,4 +1,8 @@
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { formatList } from "@trenova/shared/i18n/format";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { matrixCoverage } from "@trenova/shared/rules/matrix";
 import { apiService } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
@@ -16,7 +20,6 @@ import {
   buildMatrixGrid,
   cellCoordinate,
   coordinateKey,
-  findMatrixCoverageIssues,
   sliceBuckets,
   type MatrixAxisPosition,
 } from "@trenova/shared/lib/rate-matrix";
@@ -24,6 +27,7 @@ import type { RateMatrix, RateMatrixCell, RateMatrixDimension } from "@trenova/s
 import { AlertCircleIcon, Save01Icon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { MatrixGridEditorSkeleton } from "./matrix-grid-editor-skeleton";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 function orderByPosition(dimensions: RateMatrixDimension[]): RateMatrixDimension[] {
@@ -45,6 +49,7 @@ type MatrixGridEditorProps = {
  */
 export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   const t = useT();
+  const rules = useRules();
 
   const { control } = useFormContext<RateMatrix>();
   const dimensions = (useWatch({ control, name: "dimensions" }) ?? []) as RateMatrixDimension[];
@@ -139,7 +144,16 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
     [ordered, cells, rowPosition, columnPosition, slice],
   );
 
-  const issues = useMemo(() => findMatrixCoverageIssues(ordered, cells), [ordered, cells]);
+  // The whole matrix is checked in one call, again only when its axes or cells change. Each
+  // axis goes with the name this screen shows, so the findings name it the same way.
+  const issues = useMemo(
+    () =>
+      matrixCoverage(rules, {
+        dimensions: ordered.map((dimension) => ({ ...dimension, label: axisLabel(dimension) })),
+        cells,
+      }),
+    [rules, ordered, cells],
+  );
 
   const updateValue = useCallback(
     (coordinate: string, text: string) => {
@@ -188,12 +202,7 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="text-muted-foreground flex items-center gap-2 text-sm">
-        <SpinnerIcon className="size-4 animate-spin" />
-        {t("Loading rates")}
-      </div>
-    );
+    return <MatrixGridEditorSkeleton />;
   }
 
   return (
@@ -234,8 +243,15 @@ export function MatrixGridEditor({ rateMatrixId }: MatrixGridEditorProps) {
           <AlertCircleIcon className="size-4" />
           <AlertDescription>
             <ul className="list-disc pl-4">
-              {issues.map((issue) => (
-                <li key={`${issue.kind}-${issue.position}-${issue.message}`}>{issue.message}</li>
+              {issues.map((issue, index) => (
+                <li key={`${issue.kind}-${issue.position}-${index}`}>
+                  {translateMessage(issue.message, t)}
+                  {issue.slices && issue.slices.length > 0 ? (
+                    <span className="text-muted-foreground block text-xs">
+                      {t("Seen in {0}", formatList(issue.slices))}
+                    </span>
+                  ) : null}
+                </li>
               ))}
             </ul>
           </AlertDescription>

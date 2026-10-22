@@ -221,7 +221,7 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 			AccessorialCharge:   &accessorialcharge.AccessorialCharge{Description: "Lumper fee"},
 		}},
 	}
-	syncTotals(shp)
+	syncTotals(t, shp)
 
 	biller := pulid.MustNew("usr_")
 	item := &billingqueue.BillingQueueItem{
@@ -294,7 +294,7 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 				charges = append(charges, &c)
 			}
 			w.shp.AdditionalCharges = charges
-			syncTotals(w.shp)
+			syncTotals(t, w.shp)
 			return w.shp, nil
 		}).Maybe()
 
@@ -331,11 +331,14 @@ func newReviewWorld(t *testing.T, status billingqueue.Status) *reviewWorld {
 	return w
 }
 
-func syncTotals(shp *shipment.Shipment) {
+func syncTotals(t *testing.T, shp *shipment.Shipment) {
+	t.Helper()
+
 	freight := shp.FreightChargeAmount.Decimal
-	other := shipment.AdditionalChargesTotal(shp.AdditionalCharges, freight)
-	shp.OtherChargeAmount = decimal.NewNullDecimal(other)
-	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(other))
+	other, err := shipment.AdditionalChargeTotals(t.Context(), shp.AdditionalCharges, freight)
+	require.NoError(t, err)
+	shp.OtherChargeAmount = decimal.NewNullDecimal(other.Sum)
+	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(other.Sum))
 }
 
 func (w *reviewWorld) read(t *testing.T) *billingqueue.BillingQueueItem {
@@ -645,7 +648,7 @@ func TestApproveIfReadyMakesTheApproverTheBillerWhenThatIsAllItWaitsOn(t *testin
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	w.unassigned()
 	w.shp.AdditionalCharges = nil
-	syncTotals(w.shp)
+	syncTotals(t, w.shp)
 	w.item.AllocatedTotalAmount = w.shp.TotalChargeAmount.Decimal
 	invoices := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoices.EXPECT().ListByShipmentIDs(mock.Anything, mock.Anything).
@@ -687,7 +690,7 @@ func TestApproveIfReadyLeavesAnUnassignedItemWhenNotAskedToAssign(t *testing.T) 
 	w := newReviewWorld(t, billingqueue.StatusInReview)
 	w.unassigned()
 	w.shp.AdditionalCharges = nil
-	syncTotals(w.shp)
+	syncTotals(t, w.shp)
 	w.item.AllocatedTotalAmount = w.shp.TotalChargeAmount.Decimal
 
 	result, err := w.svc.ApproveIfReady(t.Context(), &billingqueueports.ApproveIfReadyRequest{

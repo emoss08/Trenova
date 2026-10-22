@@ -75,6 +75,26 @@ type Counts struct {
 	PricedRuns        int
 	LastRanAt         int64
 	Tokens            TokenTotals
+	Advisor           AdvisorTotals
+}
+
+// AdvisorTotals is what consulting Anthropic's advisor came to over a set of
+// runs: the consultations, the advisor's prompt and output tokens, and its
+// share of the cost, which the runs' cost already includes.
+type AdvisorTotals struct {
+	Calls        int64
+	PromptTokens int64
+	OutputTokens int64
+	CostUSD      decimal.Decimal
+}
+
+func (a AdvisorTotals) Add(other AdvisorTotals) AdvisorTotals {
+	return AdvisorTotals{
+		Calls:        a.Calls + other.Calls,
+		PromptTokens: a.PromptTokens + other.PromptTokens,
+		OutputTokens: a.OutputTokens + other.OutputTokens,
+		CostUSD:      a.CostUSD.Add(other.CostUSD),
+	}
 }
 
 type TokenTotals struct {

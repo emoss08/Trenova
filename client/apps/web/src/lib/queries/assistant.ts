@@ -14,7 +14,7 @@ import {
   type AgentAccessPreviewRequest,
 } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
-import type { ArtifactListParams, ThreadListFilter } from "@/services/assistant";
+import type { ArtifactListParams, ArtifactRowsKey, ThreadListFilter } from "@/services/assistant";
 import type { DeskSearchKind, MentionPageKind } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -168,6 +168,14 @@ export const assistant = createQueryKeys("assistant", {
         queryKey: [filters],
       }),
     },
+  }),
+  // The pages of a table's list a person reads beside the conversation, read
+  // again from its source with their own access and paged by useInfiniteQuery.
+  // It sits outside the thread's artifact keys so a turn that refreshes them
+  // does not read every page the person turned again; the table's own stamp
+  // in the key starts it over when the agent reads another page into it.
+  artifactRows: (threadId: string, artifactId: string, read: ArtifactRowsKey) => ({
+    queryKey: ["assistant-artifact-rows", threadId, artifactId, read],
   }),
   // The organization's agents with everything an administrator configures;
   // AI Control only. Chat surfaces read myAgents.

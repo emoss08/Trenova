@@ -128,6 +128,7 @@ func insertRules(
 ) {
 	t.Helper()
 
+	require.NoError(t, rateagreement.ApplyLanes(ctx, rules))
 	for _, rule := range rules {
 		_, err := db.NewInsert().Model(rule).Exec(ctx)
 		require.NoError(t, err)

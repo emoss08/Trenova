@@ -1,4 +1,5 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 
 /*
@@ -143,8 +144,13 @@ export function NovaPaneSkeleton() {
 
 /** The whole studio before its template arrives: the top bar, the trace, the form and the rail. */
 export function StudioSkeleton({ className }: { className?: string }) {
+  const t = useT();
   return (
-    <div className={cn("bg-canvas flex h-full flex-col overflow-hidden", className)} aria-busy>
+    <div
+      className={cn("bg-canvas flex h-full flex-col overflow-hidden", className)}
+      aria-busy
+      aria-label={t("Loading the formula studio")}
+    >
       <div className="flex h-13 items-center gap-3 border-b px-3">
         <Skeleton className="size-7 rounded-md" />
         <Skeleton className="h-5 w-48" />

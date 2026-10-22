@@ -1711,6 +1711,10 @@
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
@@ -4696,6 +4700,10 @@
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
@@ -5230,6 +5238,10 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
         },
         {
           "method": "POST",
@@ -7386,6 +7398,10 @@
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
@@ -8254,6 +8270,10 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
         },
         {
           "method": "POST",
@@ -9201,6 +9221,10 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
         },
         {
           "method": "POST",
@@ -17393,6 +17417,10 @@
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
         },
         {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
@@ -17858,6 +17886,10 @@
         {
           "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
         },
         {
           "method": "POST",

@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -238,7 +240,7 @@ func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) e
 	return nil
 }
 
-func newOpenLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
+func newOpenLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[common.ParamWorkerID] = common.WorkerProperty()
 	properties[paramStartsAt] = agenttoolschema.Date("The first day of leave.")
@@ -282,6 +284,13 @@ func newOpenLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 					entity.RequestedAt = *requested
 				}
 				return entity, applyLeaveCaseOpen(entity, params.Params)
+			},
+			Settle: func(
+				ctx context.Context,
+				entity *worker.WorkerLeaveCase,
+				params *agentports.ToolExecuteParams,
+			) error {
+				return scope.worker(ctx, params, permission.OpCreate, entity.WorkerID)
 			},
 			Plan: func(
 				ctx context.Context,
@@ -404,7 +413,7 @@ func renderLeaveCaseChange(
 	}
 }
 
-func newUpdateLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
+func newUpdateLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[paramLeaveCaseID] = leaveCaseIDProperty()
 	properties[paramStartsAt] = agenttoolschema.Date("The first day of leave.")
@@ -425,6 +434,13 @@ func newUpdateLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 		*workerleaveservice.UpdateCaseRequest, *workerleaveservice.CaseChange,
 	]{
 		Request: leaveCaseUpdateFrom,
+		Settle: func(
+			ctx context.Context,
+			req *workerleaveservice.UpdateCaseRequest,
+			params *agentports.ToolExecuteParams,
+		) error {
+			return scope.leaveCase(ctx, params, permission.OpUpdate, req.CaseID)
+		},
 		Plan: func(
 			ctx context.Context,
 			req *workerleaveservice.UpdateCaseRequest,
@@ -456,7 +472,7 @@ func newUpdateLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 	})
 }
 
-func newCloseLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
+func newCloseLeaveCaseTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	spec := personOnly(targeting(withSchema(wfSpec(
 		"worker_close_leave_case",
 		"Close a decided leave case once the leave is over. The days recorded against it "+
@@ -477,6 +493,13 @@ func newCloseLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 		spec,
 		common.ReceivablePlan[*recordDelete, *workerleaveservice.CaseChange]{
 			Request: recordDeleteFrom(paramLeaveCaseID),
+			Settle: func(
+				ctx context.Context,
+				req *recordDelete,
+				params *agentports.ToolExecuteParams,
+			) error {
+				return scope.leaveCase(ctx, params, permission.OpApprove, req.id)
+			},
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
@@ -504,7 +527,7 @@ func newCloseLeaveCaseTool(cases LeaveKeeper) agentports.AgentTool {
 	)
 }
 
-func newRequestLeaveCertificationTool(cases LeaveKeeper) agentports.AgentTool {
+func newRequestLeaveCertificationTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_request_leave_certification",
 		"Record that medical certification was asked for on a leave case and start its "+
@@ -543,6 +566,13 @@ func newRequestLeaveCertificationTool(cases LeaveKeeper) agentports.AgentTool {
 				DueAt:      due,
 				UserID:     params.Actor.UserID,
 			}, nil
+		},
+		Settle: func(
+			ctx context.Context,
+			req *workerleaveservice.RequestCertificationRequest,
+			params *agentports.ToolExecuteParams,
+		) error {
+			return scope.leaveCase(ctx, params, permission.OpUpdate, req.CaseID)
 		},
 		Plan: func(
 			ctx context.Context,
@@ -594,7 +624,41 @@ func leaveDayOptions() []toolpreview.Option {
 	}))
 }
 
-func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
+func recordLeaveDayRequest(
+	params *agentports.ToolExecuteParams,
+) (*workerleaveservice.RecordDayRequest, error) {
+	caseID, err := common.RequirePulid(params.Params, paramLeaveCaseID)
+	if err != nil {
+		return nil, err
+	}
+	usedOn, err := common.RequireScheduleDay(params.Params, paramUsedOn)
+	if err != nil {
+		return nil, err
+	}
+	hours, err := requireHours(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	ptoID, err := common.OptionalID(params.Params, paramPTOLink)
+	if err != nil {
+		return nil, err
+	}
+	notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
+	if err != nil {
+		return nil, err
+	}
+	return &workerleaveservice.RecordDayRequest{
+		TenantInfo: common.TenantFrom(*params),
+		CaseID:     caseID,
+		UsedOn:     usedOn,
+		Hours:      hours,
+		PTOID:      ptoID,
+		Notes:      notes,
+		UserID:     params.Actor.UserID,
+	}, nil
+}
+
+func newRecordLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	spec := withSchema(wfSpec(
 		"worker_record_leave_day",
 		"Record a day of leave taken against an open or approved leave case, with the "+
@@ -617,38 +681,13 @@ func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 	return common.NewReportingReceivableTool(spec, common.ReceivablePlan[
 		*workerleaveservice.RecordDayRequest, *worker.WorkerLeaveEntry,
 	]{
-		Request: func(
+		Request: recordLeaveDayRequest,
+		Settle: func(
+			ctx context.Context,
+			req *workerleaveservice.RecordDayRequest,
 			params *agentports.ToolExecuteParams,
-		) (*workerleaveservice.RecordDayRequest, error) {
-			caseID, err := common.RequirePulid(params.Params, paramLeaveCaseID)
-			if err != nil {
-				return nil, err
-			}
-			usedOn, err := common.RequireScheduleDay(params.Params, paramUsedOn)
-			if err != nil {
-				return nil, err
-			}
-			hours, err := requireHours(params.Params)
-			if err != nil {
-				return nil, err
-			}
-			ptoID, err := common.OptionalID(params.Params, paramPTOLink)
-			if err != nil {
-				return nil, err
-			}
-			notes, err := common.BoundedText(params.Params, common.ParamNote, wfNoteChars)
-			if err != nil {
-				return nil, err
-			}
-			return &workerleaveservice.RecordDayRequest{
-				TenantInfo: common.TenantFrom(*params),
-				CaseID:     caseID,
-				UsedOn:     usedOn,
-				Hours:      hours,
-				PTOID:      ptoID,
-				Notes:      notes,
-				UserID:     params.Actor.UserID,
-			}, nil
+		) error {
+			return scope.leaveCase(ctx, params, permission.OpCreate, req.CaseID)
 		},
 		Plan: func(
 			ctx context.Context,
@@ -694,7 +733,7 @@ func newRecordLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 	})
 }
 
-func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
+func newUpdateLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_update_leave_day",
 		"Correct a day of leave already recorded: the hours, whether it counts against the "+
@@ -752,6 +791,13 @@ func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 			}
 			return req, nil
 		},
+		Settle: func(
+			ctx context.Context,
+			req *workerleaveservice.UpdateDayRequest,
+			params *agentports.ToolExecuteParams,
+		) error {
+			return scope.entry(ctx, params, permission.OpUpdate, req.EntryID)
+		},
 		Plan: func(
 			ctx context.Context,
 			req *workerleaveservice.UpdateDayRequest,
@@ -788,7 +834,7 @@ func newUpdateLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 	})
 }
 
-func newDeleteLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
+func newDeleteLeaveDayTool(cases LeaveKeeper, scope LeaveScope) agentports.AgentTool {
 	spec := targeting(withSchema(wfSpec(
 		"worker_delete_leave_day",
 		"Remove a day of leave recorded in error, which gives its hours back to the "+
@@ -807,6 +853,13 @@ func newDeleteLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 		spec,
 		common.ReceivablePlan[*recordDelete, *worker.WorkerLeaveEntry]{
 			Request: recordDeleteFrom(paramLeaveEntryID),
+			Settle: func(
+				ctx context.Context,
+				req *recordDelete,
+				params *agentports.ToolExecuteParams,
+			) error {
+				return scope.entry(ctx, params, permission.OpUpdate, req.id)
+			},
 			Plan: func(
 				ctx context.Context,
 				req *recordDelete,
@@ -838,30 +891,58 @@ func newDeleteLeaveDayTool(cases LeaveKeeper) agentports.AgentTool {
 	)
 }
 
-func provideOpenLeaveCaseTool(s *workerleaveservice.Service) agentports.AgentTool {
-	return newOpenLeaveCaseTool(s)
+func provideOpenLeaveCaseTool(
+	s *workerleaveservice.Service,
+	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
+) agentports.AgentTool {
+	return newOpenLeaveCaseTool(s, NewLeaveScope(permissions, teams, s))
 }
 
-func provideUpdateLeaveCaseTool(s *workerleaveservice.Service) agentports.AgentTool {
-	return newUpdateLeaveCaseTool(s)
+func provideUpdateLeaveCaseTool(
+	s *workerleaveservice.Service,
+	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
+) agentports.AgentTool {
+	return newUpdateLeaveCaseTool(s, NewLeaveScope(permissions, teams, s))
 }
 
-func provideCloseLeaveCaseTool(s *workerleaveservice.Service) agentports.AgentTool {
-	return newCloseLeaveCaseTool(s)
+func provideCloseLeaveCaseTool(
+	s *workerleaveservice.Service,
+	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
+) agentports.AgentTool {
+	return newCloseLeaveCaseTool(s, NewLeaveScope(permissions, teams, s))
 }
 
-func provideRequestLeaveCertificationTool(s *workerleaveservice.Service) agentports.AgentTool {
-	return newRequestLeaveCertificationTool(s)
+func provideRequestLeaveCertificationTool(
+	s *workerleaveservice.Service,
+	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
+) agentports.AgentTool {
+	return newRequestLeaveCertificationTool(s, NewLeaveScope(permissions, teams, s))
 }
 
-func provideRecordLeaveDayTool(s *workerleaveservice.Service) agentports.AgentTool {
-	return newRecordLeaveDayTool(s)
+func provideRecordLeaveDayTool(
+	s *workerleaveservice.Service,
+	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
+) agentports.AgentTool {
+	return newRecordLeaveDayTool(s, NewLeaveScope(permissions, teams, s))
 }
 
-func provideUpdateLeaveDayTool(s *workerleaveservice.Service) agentports.AgentTool {
-	return newUpdateLeaveDayTool(s)
+func provideUpdateLeaveDayTool(
+	s *workerleaveservice.Service,
+	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
+) agentports.AgentTool {
+	return newUpdateLeaveDayTool(s, NewLeaveScope(permissions, teams, s))
 }
 
-func provideDeleteLeaveDayTool(s *workerleaveservice.Service) agentports.AgentTool {
-	return newDeleteLeaveDayTool(s)
+func provideDeleteLeaveDayTool(
+	s *workerleaveservice.Service,
+	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
+) agentports.AgentTool {
+	return newDeleteLeaveDayTool(s, NewLeaveScope(permissions, teams, s))
 }

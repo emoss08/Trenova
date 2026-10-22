@@ -203,7 +203,7 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 
 	svc := &Service{l: zap.NewNop()}
 
-	entity := svc.buildInvoiceEntity(&buildInvoiceParams{
+	entity := buildEntity(t, svc, &buildInvoiceParams{
 		Anchor:   item,
 		Scope:    invoice.ScopeShipment,
 		Customer: cus,
@@ -264,7 +264,7 @@ func TestBuildInvoiceEntityDerivesAccessorialTotalsFromLines(t *testing.T) {
 		Name: "Acme Logistics",
 	}
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(&buildInvoiceParams{
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), &buildInvoiceParams{
 		Anchor:   item,
 		Scope:    invoice.ScopeShipment,
 		Customer: cus,

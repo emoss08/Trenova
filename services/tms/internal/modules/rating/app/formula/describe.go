@@ -1,23 +1,38 @@
 package formula
 
 import (
-	"sort"
+	"slices"
+	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/rules"
 )
 
 const (
 	computedVariableCategory = "computed"
 	providedVariableCategory = "context"
+	itemFieldSeparator       = "[]."
 )
 
 func (s *Service) DescribeSchema(
 	schemaID string,
 ) (*formulatemplatetypes.SchemaDescription, error) {
-	definition, ok := s.registry.Get(schemaID)
+	variables, err := s.SchemaVariables(schemaID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &formulatemplatetypes.SchemaDescription{
+		SchemaID:  schemaID,
+		Variables: variables,
+	}, nil
+}
+
+func (s *Service) SchemaVariables(schemaID string) ([]rules.FormulaVariable, error) {
+	variables, ok := s.schemas[schemaID]
 	if !ok {
 		return nil, errortypes.NewValidationError(
 			"schemaId",
@@ -25,114 +40,60 @@ func (s *Service) DescribeSchema(
 			"Unknown formula schema: {0}", schemaID,
 		)
 	}
+	return variables, nil
+}
 
+func schemaVariables(definition *formulatypes.Definition, schemaID string) []rules.FormulaVariable {
 	rootCategory := definition.FormulaContext.Category
 	if rootCategory == "" {
 		rootCategory = schemaID
 	}
 
 	variables := collectSchemaVariables(definition.Properties, "", rootCategory, false)
-	sort.Slice(variables, func(i, j int) bool {
-		if variables[i].Category != variables[j].Category {
-			return variables[i].Category < variables[j].Category
+	slices.SortFunc(variables, func(a, b rules.FormulaVariable) int {
+		if a.Category != b.Category {
+			return strings.Compare(a.Category, b.Category)
 		}
-		return variables[i].Name < variables[j].Name
+		return strings.Compare(a.Name, b.Name)
 	})
-
-	return &formulatemplatetypes.SchemaDescription{
-		SchemaID:  schemaID,
-		Variables: variables,
-		Functions: describeFunctions(),
-		Builtins:  describeBuiltins(),
-		Disabled:  describeDisabled(),
-	}, nil
-}
-
-func describeFunctions() []formulatemplatetypes.SchemaFunctionInfo {
-	specs := engine.FunctionSpecs()
-	functions := make([]formulatemplatetypes.SchemaFunctionInfo, 0, len(specs))
-	for i := range specs {
-		spec := &specs[i]
-		info := functionInfo(spec.Name, spec.Signature, spec.FunctionShape)
-		info.Description = spec.Description
-		info.Example = spec.Example
-		info.Category = spec.Category
-		info.Operator = spec.Operator
-		functions = append(functions, info)
-	}
-	return functions
-}
-
-func describeBuiltins() []formulatemplatetypes.SchemaFunctionInfo {
-	specs := engine.BuiltinSpecs()
-	builtins := make([]formulatemplatetypes.SchemaFunctionInfo, 0, len(specs))
-	for _, spec := range specs {
-		builtins = append(builtins, functionInfo(spec.Name, spec.Signature, spec.FunctionShape))
-	}
-	return builtins
-}
-
-func describeDisabled() []formulatemplatetypes.SchemaDisabledFunction {
-	disabled := engine.DisabledFunctions()
-	described := make([]formulatemplatetypes.SchemaDisabledFunction, 0, len(disabled))
-	for _, fn := range disabled {
-		described = append(described, formulatemplatetypes.SchemaDisabledFunction{
-			Name:        fn.Name,
-			Reason:      fn.Reason,
-			Replacement: fn.Replacement,
-		})
-	}
-	return described
-}
-
-func functionInfo(
-	name, signature string,
-	fnShape engine.FunctionShape,
-) formulatemplatetypes.SchemaFunctionInfo {
-	return formulatemplatetypes.SchemaFunctionInfo{
-		Name:        name,
-		Signature:   signature,
-		MinArgs:     fnShape.MinArgs,
-		MaxArgs:     fnShape.MaxArgs,
-		Returns:     fnShape.Returns,
-		NumericArgs: fnShape.NumericArgs,
-		Predicate:   fnShape.Predicate,
-	}
+	return variables
 }
 
 func collectSchemaVariables(
 	properties map[string]formulatypes.Property,
 	prefix, category string,
 	optionalParent bool,
-) []formulatemplatetypes.SchemaVariableInfo {
-	variables := make([]formulatemplatetypes.SchemaVariableInfo, 0, len(properties))
+) []rules.FormulaVariable {
+	variables := make([]rules.FormulaVariable, 0, len(properties))
 
 	for name := range properties {
 		prop := properties[name]
 
 		path := name
-		if prefix != "" {
+		if prefix != "" && strings.HasSuffix(prefix, itemFieldSeparator) {
+			path = prefix + name
+		} else if prefix != "" {
 			path = prefix + "." + name
 		}
+
+		variableType, nullable := environment.TypeOf(&prop)
 
 		if len(prop.Properties) > 0 {
 			nestedCategory := name
 			if prefix != "" {
 				nestedCategory = category
 			}
-			_, objectNullable := normalizePropertyType(prop.Type)
 			variables = append(
 				variables,
 				collectSchemaVariables(
 					prop.Properties,
 					path,
 					nestedCategory,
-					optionalParent || objectNullable || prop.Source.Nullable,
+					optionalParent || nullable,
 				)...)
 			continue
 		}
 
-		variableType, nullable := normalizePropertyType(prop.Type)
 		if prop.IsDateTime() {
 			variableType = "datetime"
 		}
@@ -145,42 +106,37 @@ func collectSchemaVariables(
 			variableCategory = providedVariableCategory
 		}
 
-		variables = append(variables, formulatemplatetypes.SchemaVariableInfo{
+		variables = append(variables, rules.FormulaVariable{
 			Name:        path,
 			Type:        variableType,
 			Description: prop.Description,
 			Category:    variableCategory,
-			Nullable:    nullable || prop.Source.Nullable || optionalParent,
+			Nullable:    nullable || optionalParent,
 			Computed:    prop.Source.Computed,
 			Enum:        prop.Enum,
 		})
+
+		if variableType == "array" && prop.Items != nil && len(prop.Items.Properties) > 0 {
+			variables = append(
+				variables,
+				itemVariables(prop.Items.Properties, path+itemFieldSeparator, variableCategory,
+					prop.Source.Computed)...,
+			)
+		}
 	}
 
 	return variables
 }
 
-func normalizePropertyType(propType any) (string, bool) {
-	switch typed := propType.(type) {
-	case string:
-		return typed, false
-	case []any:
-		nullable := false
-		resolved := ""
-		for _, entry := range typed {
-			value, ok := entry.(string)
-			if !ok {
-				continue
-			}
-			if value == "null" {
-				nullable = true
-				continue
-			}
-			if resolved == "" {
-				resolved = value
-			}
-		}
-		return resolved, nullable
-	default:
-		return "", false
+func itemVariables(
+	properties map[string]formulatypes.Property,
+	prefix, category string,
+	computed bool,
+) []rules.FormulaVariable {
+	items := collectSchemaVariables(properties, prefix, category, false)
+	for index := range items {
+		items[index].Category = category
+		items[index].Computed = items[index].Computed || computed
 	}
+	return items
 }

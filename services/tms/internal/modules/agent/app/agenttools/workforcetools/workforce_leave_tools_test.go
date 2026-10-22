@@ -5,6 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -188,7 +192,7 @@ func TestOpenLeaveCase_WaitsForADecision(t *testing.T) {
 	t.Parallel()
 
 	cases := newFakeLeave()
-	tool := newOpenLeaveCaseTool(cases)
+	tool := newOpenLeaveCaseTool(cases, orgLeaveScope(cases))
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		common.ParamWorkerID:  cases.lcase.WorkerID.String(),
 		paramLeaveType:        "Parental",
@@ -229,7 +233,7 @@ func TestUpdateLeaveCase_KeepsWhatIsNotNamed(t *testing.T) {
 	t.Parallel()
 
 	cases := newFakeLeave()
-	tool := newUpdateLeaveCaseTool(cases)
+	tool := newUpdateLeaveCaseTool(cases, orgLeaveScope(cases))
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramLeaveCaseID: cases.lcase.ID.String(),
 		"endsAt":         "2026-10-30",
@@ -247,7 +251,7 @@ func TestCloseLeaveCase_IsAPersonsDecision(t *testing.T) {
 	t.Parallel()
 
 	cases := newFakeLeave()
-	tool := newCloseLeaveCaseTool(cases)
+	tool := newCloseLeaveCaseTool(cases, orgLeaveScope(cases))
 	raw := map[string]any{paramLeaveCaseID: cases.lcase.ID.String()}
 
 	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrNeedsAPersonsApproval)
@@ -266,7 +270,7 @@ func TestRecordLeaveDay_SaysWhetherItCounts(t *testing.T) {
 	t.Parallel()
 
 	cases := newFakeLeave()
-	tool := newRecordLeaveDayTool(cases)
+	tool := newRecordLeaveDayTool(cases, orgLeaveScope(cases))
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		paramLeaveCaseID: cases.lcase.ID.String(),
 		"usedOn":         "2026-10-06",
@@ -287,7 +291,7 @@ func TestDeleteLeaveDay_IsOnlyProposed(t *testing.T) {
 	t.Parallel()
 
 	cases := newFakeLeave()
-	tool := newDeleteLeaveDayTool(cases)
+	tool := newDeleteLeaveDayTool(cases, orgLeaveScope(cases))
 	params := agenttoolstest.ExecuteParams(map[string]any{paramLeaveEntryID: cases.entry.ID.String()})
 
 	preview := agenttoolstest.PreviewWithoutWrites(t, cases.guard, func() (*agent.ToolPreview, error) {
@@ -296,5 +300,73 @@ func TestDeleteLeaveDay_IsOnlyProposed(t *testing.T) {
 	assert.Equal(t, agent.PreviewOperationDelete, agenttoolstest.PreviewChange(t, preview, 0).Operation)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 	require.NoError(t, tool.Execute(t.Context(), params))
+	assert.Equal(t, []pulid.ID{cases.entry.ID}, cases.deleted)
+}
+
+func (f *fakeLeave) CaseWorker(_ context.Context, _ pagination.TenantInfo, id pulid.ID) (pulid.ID, error) {
+	if id != f.lcase.ID {
+		return pulid.Nil, errortypes.NewNotFoundError("Leave case not found")
+	}
+	return f.lcase.WorkerID, nil
+}
+
+func (f *fakeLeave) EntryWorker(_ context.Context, _ pagination.TenantInfo, id pulid.ID) (pulid.ID, error) {
+	if id != f.entry.ID {
+		return pulid.Nil, errortypes.NewNotFoundError("Leave day not found")
+	}
+	return f.entry.WorkerID, nil
+}
+
+type leaveGrant struct{ scope permission.DataScope }
+
+func (g leaveGrant) Check(
+	_ context.Context,
+	_ *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	return &permissionports.PermissionCheckResult{Allowed: true, DataScope: g.scope}, nil
+}
+
+type leaveTeam map[pulid.ID]bool
+
+func (t leaveTeam) CanActFor(
+	_ context.Context,
+	req *orgstructureservice.ScopeRequest,
+) (*orgstructureservice.ScopeResult, error) {
+	return &orgstructureservice.ScopeResult{Allowed: t[req.WorkerID]}, nil
+}
+
+func orgLeaveScope(cases *fakeLeave) LeaveScope {
+	return NewLeaveScope(leaveGrant{scope: permission.DataScopeOrganization}, nil, cases)
+}
+
+func TestLeaveTools_ATeamGrantReachesOnlyTheTeamsCases(t *testing.T) {
+	t.Parallel()
+
+	cases := newFakeLeave()
+	onTeam := NewLeaveScope(leaveGrant{scope: permission.DataScopeTeam},
+		leaveTeam{cases.lcase.WorkerID: true}, cases)
+	offTeam := NewLeaveScope(leaveGrant{scope: permission.DataScopeTeam}, leaveTeam{}, cases)
+	closeCase := map[string]any{paramLeaveCaseID: cases.lcase.ID.String()}
+	removeDay := map[string]any{paramLeaveEntryID: cases.entry.ID.String()}
+	openCase := map[string]any{
+		common.ParamWorkerID: cases.lcase.WorkerID.String(),
+		paramLeaveType:       "FMLA",
+		"startsAt":           "2026-10-05",
+	}
+
+	require.ErrorIs(t, newCloseLeaveCaseTool(cases, offTeam).Execute(t.Context(),
+		agenttoolstest.ApprovedParams(closeCase)), teamscope.ErrOutsideTeam)
+	require.ErrorIs(t, newDeleteLeaveDayTool(cases, offTeam).Execute(t.Context(),
+		agenttoolstest.ExecuteParams(removeDay)), teamscope.ErrOutsideTeam)
+	require.ErrorIs(t, newOpenLeaveCaseTool(cases, offTeam).(agentports.ToolValidator).Validate(
+		t.Context(), agenttoolstest.ExecuteParams(openCase)), teamscope.ErrOutsideTeam)
+	assert.Empty(t, cases.closed)
+	assert.Empty(t, cases.deleted)
+
+	require.NoError(t, newCloseLeaveCaseTool(cases, onTeam).Execute(t.Context(),
+		agenttoolstest.ApprovedParams(closeCase)))
+	require.NoError(t, newDeleteLeaveDayTool(cases, onTeam).Execute(t.Context(),
+		agenttoolstest.ExecuteParams(removeDay)))
+	assert.Equal(t, []pulid.ID{cases.lcase.ID}, cases.closed)
 	assert.Equal(t, []pulid.ID{cases.entry.ID}, cases.deleted)
 }

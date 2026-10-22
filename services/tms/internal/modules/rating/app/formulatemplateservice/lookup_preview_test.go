@@ -1,6 +1,9 @@
 package formulatemplateservice
 
 import (
+	"time"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"context"
 	"strings"
 	"testing"
@@ -85,10 +88,9 @@ func rangeMatrixFixture(code string, bands [][3]string) *ratematrixports.RateMat
 
 func resultAmount(t *testing.T, result *TestExpressionResponse) decimal.Decimal {
 	t.Helper()
-	require.True(t, result.Valid, result.Error)
-	amount, ok := result.Result.(decimal.Decimal)
-	require.True(t, ok, "result should be a decimal, got %T", result.Result)
-	return amount
+	require.True(t, result.Valid, failureOf(result))
+	require.NotNil(t, result.Result)
+	return *result.Result
 }
 
 func TestTestExpression_PreviewUsesRealRateTables(t *testing.T) {
@@ -97,12 +99,12 @@ func TestTestExpression_PreviewUsesRealRateTables(t *testing.T) {
 		exactMatrixFixture("fsc", map[string]string{"DIESEL": "0.35"}),
 	})
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: `lookup("fsc", "DIESEL") * totalDistance`,
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"totalDistance": 100.0},
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 
 	assert.True(t, decimal.NewFromFloat(35).Equal(resultAmount(t, result)), result.Result)
 }
@@ -113,7 +115,7 @@ func TestTestExpression_BreakdownLinesUseRealRateTables(t *testing.T) {
 		rangeMatrixFixture("miles", [][3]string{{"0", "500", "2.5"}, {"500", "", "2.0"}}),
 	})
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "totalDistance * 3",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"totalDistance": 600.0},
@@ -125,9 +127,9 @@ func TestTestExpression_BreakdownLinesUseRealRateTables(t *testing.T) {
 				Expression: `lookup("miles", totalDistance) * totalDistance`,
 			},
 		},
-	})
+	}))
 
-	require.True(t, result.Valid, result.Error)
+	require.True(t, result.Valid, failureOf(result))
 	require.Len(t, result.Breakdown, 1)
 	assert.Empty(t, result.Breakdown[0].Error)
 	assert.True(t, decimal.NewFromInt(1200).Equal(result.Breakdown[0].Amount))
@@ -139,34 +141,38 @@ func TestTestExpression_LookupOrFallsBackOnlyWhenKeyMisses(t *testing.T) {
 		exactMatrixFixture("fsc", map[string]string{"DIESEL": "0.35"}),
 	})
 
-	miss := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	miss := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: `lookupOr("fsc", "GAS", 9)`,
 		SchemaID:   "shipment",
 		Variables:  map[string]any{},
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 	assert.True(t, decimal.NewFromInt(9).Equal(resultAmount(t, miss)))
 
-	missingTable := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	missingTable := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: `lookupOr("nope", "GAS", 9)`,
 		SchemaID:   "shipment",
 		Variables:  map[string]any{},
 		TenantInfo: newTenantInfo(),
-	})
-	assert.False(t, missingTable.Valid)
-	assert.Contains(t, missingTable.Error, "nope")
+	}))
+	assert.False(t, missingTable.Valid, "a missing table is no miss to fall back on")
+	refusal := missingTable.FirstErrorDiagnostic()
+	require.NotNil(t, refusal)
+	assert.Equal(t, "expression", refusal.Scope)
+	assert.Equal(t, "rate-table", refusal.Code)
+	assert.Contains(t, failureOf(missingTable), "nope")
 }
 
 func TestTestExpression_WithoutTableReferencesNeverLoadsTables(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "totalDistance * 2",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"totalDistance": 10.0},
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 
 	assert.True(t, decimal.NewFromInt(20).Equal(resultAmount(t, result)))
 }
@@ -222,25 +228,25 @@ func TestTestExpression_AppliesRoundingPolicy(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	halfUp := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	halfUp := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "10 / 3",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{},
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 	assert.True(t, decimal.RequireFromString("3.33").Equal(resultAmount(t, halfUp)), halfUp.Result)
 	require.NotNil(t, halfUp.Rounding)
 	assert.True(t, halfUp.Rounding.Applied)
 	assert.Equal(t, "HalfUp", halfUp.Rounding.Mode)
 
-	wholeUp := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	wholeUp := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression:        "10 / 3",
 		SchemaID:          "shipment",
 		Variables:         map[string]any{},
 		TenantInfo:        newTenantInfo(),
 		RoundingMode:      ratetypes.RoundingModeUp,
 		RoundingPrecision: 0,
-	})
+	}))
 	assert.True(t, decimal.NewFromInt(4).Equal(resultAmount(t, wholeUp)), wholeUp.Result)
 }
 
@@ -248,7 +254,7 @@ func TestTestExpression_GuardrailFloorIsNotRoundedAway(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression:        "249.996",
 		SchemaID:          "shipment",
 		Variables:         map[string]any{},
@@ -256,7 +262,7 @@ func TestTestExpression_GuardrailFloorIsNotRoundedAway(t *testing.T) {
 		MinCharge:         decimal.NewNullDecimal(decimal.RequireFromString("250.00")),
 		RoundingMode:      ratetypes.RoundingModeDown,
 		RoundingPrecision: 0,
-	})
+	}))
 
 	assert.True(t, decimal.NewFromInt(250).Equal(resultAmount(t, result)), result.Result)
 	require.NotNil(t, result.Guardrail)
@@ -267,15 +273,15 @@ func TestTestExpression_BooleanExpressionIsRejected(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "totalDistance > 100",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"totalDistance": 500.0},
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 
 	assert.False(t, result.Valid)
-	assert.Contains(t, result.Error, "true/false")
+	assert.Contains(t, failureOf(result), "true/false")
 }
 
 func TestRunTestCases_ScenarioUsesCandidateRoundingPolicy(t *testing.T) {
@@ -305,11 +311,11 @@ func TestRunTestCases_ScenarioUsesCandidateRoundingPolicy(t *testing.T) {
 	assert.True(t, decimal.NewFromInt(34).Equal(result.Results[0].ActualAmount))
 }
 
-func TestTestExpression_WarnsAboutUnguardedNullableFields(t *testing.T) {
+func TestTestExpression_ReportsUnguardedNullableFieldsAsScopedDiagnostics(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "weight * 0.5",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"weight": 1000.0},
@@ -318,29 +324,32 @@ func TestTestExpression_WarnsAboutUnguardedNullableFields(t *testing.T) {
 			{Name: "perPound", Label: "Per pound", Expression: "weight * 0.5"},
 			{Name: "safe", Label: "Guarded", Expression: "coalesce(weight, 0) * 0.5"},
 		},
-	})
+	}))
 
-	require.True(t, result.Valid, result.Error)
-	require.Len(t, result.Warnings, 2)
-	assert.Equal(t, "expression", result.Warnings[0].Scope)
-	assert.Equal(t, "weight", result.Warnings[0].Field)
-	assert.Equal(t, "coalesce(weight, 0)", result.Warnings[0].Suggestion)
-	assert.Equal(t, "breakdownDefinitions[0].expression", result.Warnings[1].Scope)
+	require.True(t, result.Valid, failureOf(result))
+	require.Len(t, result.Diagnostics, 2)
+	assert.Equal(t, "expression", result.Diagnostics[0].Scope)
+	assert.Equal(t, "nullable", result.Diagnostics[0].Code)
+	assert.Equal(t, "warning", result.Diagnostics[0].Severity)
+	assert.Equal(t, "weight", result.Diagnostics[0].Name)
+	assert.Equal(t, "coalesce(weight, 0)", result.Diagnostics[0].Fixes[0].Changes[0].Insert)
+	assert.Equal(t, "breakdowns[0].expression", result.Diagnostics[1].Scope)
+	assert.Equal(t, []string{"weight"}, result.Unguarded())
 }
 
 func TestTestExpression_GuardedNullableFieldHasNoWarning(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "coalesce(weight, 0) * 0.5 + totalDistance",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"totalDistance": 10.0},
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 
-	require.True(t, result.Valid, result.Error)
-	assert.Empty(t, result.Warnings)
+	require.True(t, result.Valid, failureOf(result))
+	assert.Empty(t, result.Diagnostics)
 }
 
 func readinessByKey(resp *ReadinessResponse) map[string]ReadinessCheck {
@@ -492,7 +501,7 @@ func TestTestExpression_ReturnsAReceipt(t *testing.T) {
 		rangeMatrixFixture("miles", [][3]string{{"0", "500", "2.5"}, {"500", "", "2.0"}}),
 	})
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "totalDistance * 3",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"totalDistance": 600.0},
@@ -505,9 +514,9 @@ func TestTestExpression_ReturnsAReceipt(t *testing.T) {
 				Expression: `lookup("miles", totalDistance) * totalDistance`,
 			},
 		},
-	})
+	}))
 
-	require.True(t, result.Valid, result.Error)
+	require.True(t, result.Valid, failureOf(result))
 	require.NotNil(t, result.Receipt)
 	assert.True(t, decimal.NewFromInt(1800).Equal(result.Receipt.RawAmount),
 		"the receipt keeps the pre-guardrail amount")
@@ -639,31 +648,14 @@ func TestTestExpression_PreviewSeesProvidedContextVariables(t *testing.T) {
 		&stubContextProvider{variables: map[string]any{"fuelPrice": 3.85}},
 	)
 
-	resp := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	resp := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "100 * fuelPrice",
 		SchemaID:   "shipment",
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 
-	require.True(t, resp.Valid, resp.Error)
+	require.True(t, resp.Valid, failureOf(resp))
 	assert.InDelta(t, 385, resultAmount(t, resp).InexactFloat64(), 0.0001)
-}
-
-func TestTestExpression_WarnsThatCurrentTotalChargeIsTheStoredTotal(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	deps.svc.formulaService = ratingtest.NewFormulaService(t)
-
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
-		Expression: "currentTotalCharge * 0.1",
-		SchemaID:   "shipment",
-		TenantInfo: newTenantInfo(),
-	})
-
-	require.True(t, result.Valid, result.Error)
-	require.Len(t, result.Warnings, 1)
-	assert.Equal(t, "currentTotalCharge", result.Warnings[0].Field)
-	assert.Contains(t, result.Warnings[0].Message, "before this rating")
 }
 
 func TestReadiness_WarnsWhenAFreightChargeReadsTheStoredTotal(t *testing.T) {
@@ -695,14 +687,14 @@ func TestTestExpression_LoadsTablesNamedInsideTheEnginesOwnFunctions(t *testing.
 		exactMatrixFixture("fsc", map[string]string{"DIESEL": "0.35"}),
 	})
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: `sum(lookup("fsc", "DIESEL") * totalDistance, 10, 25)`,
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"totalDistance": 100.0},
 		TenantInfo: newTenantInfo(),
-	})
+	}))
 
-	require.True(t, result.Valid, result.Error)
+	require.True(t, result.Valid, failureOf(result))
 	assert.True(t, decimal.NewFromFloat(70).Equal(resultAmount(t, result)), result.Result)
 }
 
@@ -738,24 +730,69 @@ func TestTestExpression_EnforcesTheSaveTimeCaps(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	tooLong := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	_, err := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: strings.Repeat("1 + ", formulatemplate.MaxExpressionLength/4) + "1",
 		SchemaID:   "shipment",
 		TenantInfo: newTenantInfo(),
 	})
-	assert.False(t, tooLong.Valid)
-	assert.Contains(t, tooLong.Error, "10,000")
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err))
+	assert.Contains(t, err.Error(), "10,000")
 
 	breakdowns := make([]*formulatypes.BreakdownDefinition, formulatypes.MaxBreakdownDefinitions+1)
 	for i := range breakdowns {
 		breakdowns[i] = &formulatypes.BreakdownDefinition{Name: "line", Label: "Line", Expression: "1"}
 	}
-	tooMany := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	_, err = deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "1",
 		SchemaID:   "shipment",
 		TenantInfo: newTenantInfo(),
 		Breakdowns: breakdowns,
 	})
-	assert.False(t, tooMany.Valid)
-	assert.Contains(t, tooMany.Error, "20 breakdown")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "20 breakdown")
+}
+
+func must(t *testing.T) func(*TestExpressionResponse, error) *TestExpressionResponse {
+	t.Helper()
+	return func(resp *TestExpressionResponse, err error) *TestExpressionResponse {
+		t.Helper()
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		return resp
+	}
+}
+
+func failureOf(resp *TestExpressionResponse) string {
+	return resp.FailureText(i18n.Default)
+}
+
+type stalledContextProvider struct{}
+
+func (stalledContextProvider) ContextVariables(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+) (map[string]any, error) {
+	<-ctx.Done()
+	return nil, ctx.Err()
+}
+
+func TestTestExpression_ThePreviewStopsAtItsDeadlineAndSaysSo(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	deps.svc.formulaService = newFormulaServiceWithProviders(t, stalledContextProvider{})
+
+	started := time.Now()
+	resp := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression: "100",
+		SchemaID:   "shipment",
+		TenantInfo: newTenantInfo(),
+	}))
+
+	assert.Less(t, time.Since(started), previewEvaluationTimeout+time.Second)
+	assert.False(t, resp.Valid)
+	require.NotNil(t, resp.Error)
+	assert.Equal(t, "expression", resp.Error.Scope)
+	assert.Equal(t, CodeTimeout, resp.Error.Err.Code)
+	assert.Contains(t, failureOf(resp), "2s")
 }
