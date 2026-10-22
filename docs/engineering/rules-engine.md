@@ -991,7 +991,7 @@ decimal.
 `report.format`); `Resolved.String`, `ToneFor`, `Band.Bounds` and `bandLabel` → `report.format`.
 They stay native:
 
-- dates (Go time layouts; `formatDate` and `dateParts` with `Intl`), fed by the `date` cells;
+- dates (Go time layouts; `formatReportDate` with `Intl` in the browser), fed by the `date` cells;
 - `reportfmt.ExcelFormat` (Go only; nothing in the browser writes XLSX number formats);
 - `Spec.Validate` and `Band.Validate`, which are save-time checks with developer messages;
 - `Band.IsWhole` and `IsLowest`, which the query compiler and drill-through use;
@@ -1126,8 +1126,9 @@ TypeScript bug and two blind spots:
 `Place.MatchKeys` and `LaneKeyCandidates` → `lane.keys`; `laneKeyScopeIds` and the parsing in
 `laneKeyStringDisplay` → `lane.parse`; `findCoverageIssues` → `lane.coverage`; `normalizePostal`
 and the weight and scale constants → inside those operations. They stay native: `laneKeyDisplay`
-and `laneKeyStringDisplay` (substituting translated record names into `segments`),
-`laneEndDisplay` and `laneDisplayLabel` (translated labels only), `IsEffectiveAt` and
+and `laneSegmentsDisplay` (substituting translated record names into `segments`),
+`laneEndDisplay` (translated labels around the ends `lane.keys` returns) and `laneDisplayLabel`
+(translated labels only), `IsEffectiveAt` and
 `MatchesDayOfWeek` and the rest of rule matching (server-side, against shipment facts).
 
 ### Rate matrices (`matrix.*`)
@@ -1191,10 +1192,11 @@ The kinds:
 
 Bands are swept by lower bound (none first), each compared with the furthest reach so far.
 Numbers are written exactly with English thousands grouping. An overlap's band arguments are
-the English band labels ("{0} – under {1}", "{0} and over", "under {0}", "Any"), and `bands`
-gives both bands' bounds, because a `Message` argument cannot be a `Message`: a host that
-translates rebuilds the labels from `bands`. The same finding in several slices is reported
-once, with `slices` listing the other axes' coordinates (absent for a one-axis matrix).
+nested messages, the band labels ("{0} – under {1}", "{0} and over", "under {0}", "Any") with
+their bounds as arguments, so a host that translates the warning translates each label too;
+`bands` also gives both bands' bounds as decimals. The same finding in several slices is
+reported once, with `slices` listing the other axes' coordinates (absent for a one-axis
+matrix).
 
 Moving it from TypeScript fixed three things. Its messages are TypeScript's English unchanged.
 
@@ -1400,14 +1402,50 @@ fetch. The file must be served as `application/wasm`:
 - Cloud's Worker (`trenova-cloud-deploy`, `edition/cloudflare/web/worker.ts`) must add the same
   `script-src` source.
 
-#### Browser callers
+### Browser callers
 
-Every caller renders only after the module has loaded (`useRules()` behind the screen's
-skeleton) and wraps `call` in a typed module beside `runtime.ts`.
+The typed wrappers beside the loader are `formula.ts`, `allocation.ts` (with
+`allocation-form.ts` for zod), `report.ts`, `lane.ts` and `matrix.ts`; `wire.ts` shapes form values for them, sending a value
+that is not a decimal yet ("abc", `NaN`, "1.") as "not filled in" so a half-typed form never
+refuses the request. Decimal outputs stay strings in every client type and become numbers only
+where a formatter or a chart needs one. Messages are shown with `translateMessage(message, t)`
+(`@trenova/shared/i18n/message`), which translates nested messages first; `task i18n-check`
+reports `t(x.message, ...x.args)` and a literal handed to it.
 
-- **Formula Studio** (`rules/formula.ts`; [formula-language-service.md](formula-language-service.md)):
-  the editor's linter, hover, signature help and format command, the Studio's analysis, Nova's
-  proposal cards and the Desk formula template card. `StudioProvider`, `ExpressionEditor`,
-  `ProposalCard` and the Desk card call `useRules()`; `formula.catalog` is read once per loaded
-  runtime and joined with the schema endpoint's variables into `KnownIdentifiers`. No formula
-  is parsed, checked or formatted in TypeScript.
+Each screen calls once per question for everything it shows, and waits in one of two ways:
+
+- **Render** calls `useRules()` under a `Suspense` boundary with the screen's skeleton (its own
+  `LazyComponent` fallback, or the lazy section or Desk card it is already inside). The idle
+  preload has almost always finished first, so the skeleton rarely shows.
+- **Validation** goes through `rulesResolver` (`apps/web/src/lib/rules-resolver.ts`): the form's
+  resolver is asynchronous, awaits `loadRules()` (importing the loader only then) and validates
+  with the schema built from the loaded module. The shared zod schemas, which also parse server
+  data, carry no allocation rule; `withShipmentAllocations` and `withChargeAllocations` add it
+  for a form, and run even while other fields fail so a split dialog shows its problem.
+
+| Screen | Operation | One call covers | Waits by |
+|---|---|---|---|
+| Shipment form, document draft review (`shipment-panel.tsx`, `document-shipment-draft-review-dialog.tsx`) | `allocation.remainder` | the freight and every additional charge, per validation | `rulesResolver` |
+| Order add-charge, billing queue reassign-charge dialogs | `allocation.remainder` | the charge being split, per validation | `rulesResolver` |
+| Charge split editor's remainder line (`components/billing`) | `allocation.remainder` | the charge being split | `ChargeSplitRemainderSkeleton` |
+| Shipment charge summary, additional charges list, billing by payer | `allocation.remainder`, `allocation.chargeTotal`, `allocation.split` | the freight; every listed charge; every charge of the shipment | the shipment form's lazy sections (`ShipmentFormSkeleton`) |
+| Additional charge dialog | `allocation.chargeTotal` | the charge being edited | the shipment form's lazy sections |
+| Shipment board money line, billing queue charge lines, Desk shipment card | `allocation.chargeTotal` | every charge of the shipment, a percentage one against the freight | `MoneyLineSkeleton`, `BillingQueueChargeLinesSkeleton`, the card's skeleton |
+| Report result grid (builder preview, explore, dashboards, drill-through) | `report.format` | 200 rows of every column, formatted the first time a row of the page is read and kept for that result (memoised on the module, columns and rows); the totals row | `ResultGridSkeleton` |
+| Report chart and KPI | `report.format` | every plotted value; an axis tick Recharts picks later is formatted once and kept | `ReportChartSkeleton` |
+| Report builder column format and band editors | `report.resolve`, `report.format` (with `resolve`) | the column's display and its sample; every previewed band | `ColumnFormatEditorSkeleton`, `BandPreviewSkeleton` |
+| Rate agreement lane editor | `lane.keys`, `lane.specificity`, `lane.coverage` | every lane of the agreement, again only when a field they read changes | `LaneEditorSkeleton` |
+| Lane key labels (`useLaneKeyLabels`: import rate sheet, simulation) | `lane.parse` | every distinct key on screen | `LaneKeyTableSkeleton`, `SimulationPanelSkeleton` |
+| Desk rate agreement card | `lane.keys` | every lane read so far, again when a page arrives | the card's skeleton |
+| Formula Studio editor: linter, hover, signature help, format command (`components/formula-editor`) | `formula.check`, `formula.identifier`, `formula.signature`, `formula.format` | the document at the cursor; one check per text and knowledge, shared by the linter and the Studio's analysis | `StudioSkeleton` (`StudioProvider`), and `ExpressionEditor`'s own `useRules()` for every editor |
+| Formula Studio analysis, reference pane, highlighter and completions | `formula.check`, `formula.catalog` | the main expression; the catalog once per loaded runtime | `StudioSkeleton` |
+| Nova's formula proposal card | `formula.format`, `formula.check` | the proposal's expression and breakdown lines | the Studio's boundary |
+| Desk formula template card | `formula.catalog` | once per loaded runtime, for the highlighter | the card's skeleton |
+| Rate matrix grid editor | `matrix.coverage` | the whole matrix, on each change of its cells or axes; each axis labelled as the screen names it | `MatrixGridEditorSkeleton` |
+
+Tests read the corpora through `rules/__tests__/corpus.ts`, so a wrapper or screen test asserts
+the case the crate is pinned to, never what the code returned when the test was written.
+
+The Formula Studio is the language's only browser caller, and no formula is parsed, checked or
+formatted in TypeScript; [formula-language-service.md](formula-language-service.md) has the
+editor's side.

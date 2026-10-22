@@ -30,10 +30,13 @@ import { useMemo, useState } from "react";
 import { useForm, type Resolver } from "react-hook-form";
 import { AccessorialScheduleEditor } from "./accessorial-schedule-editor";
 import { FuelBindingForm } from "./fuel-binding-form";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { LaneEditor } from "./lane-editor";
+import { LaneEditorSkeleton } from "./lane-editor-skeleton";
 import { RateAgreementForm } from "./rate-agreement-form";
 import { ReviewActionDialog } from "./review-action-dialog";
 import { SimulationPanel } from "./simulation-panel";
+import { SimulationPanelSkeleton } from "./simulation-panel-skeleton";
 import { VersionsTab } from "./versions-tab";
 
 const DEFAULT_AGREEMENT: Partial<RateAgreement> = {
@@ -218,7 +221,12 @@ export function RateAgreementPanel({
         value: "lanes",
         label: t("Lanes"),
         icon: Map01Icon,
-        content: <LaneEditor />,
+        // The lanes and the simulation read lane keys through the rules module.
+        content: (
+          <LazyComponent fallback={<LaneEditorSkeleton />}>
+            <LaneEditor />
+          </LazyComponent>
+        ),
       },
       {
         value: "accessorials",
@@ -236,7 +244,11 @@ export function RateAgreementPanel({
         value: "simulation",
         label: t("Simulation"),
         icon: Beaker02Icon,
-        content: <SimulationPanel rateAgreementId={row?.id} />,
+        content: (
+          <LazyComponent fallback={<SimulationPanelSkeleton />}>
+            <SimulationPanel rateAgreementId={row?.id} />
+          </LazyComponent>
+        ),
       },
       {
         value: "versions",

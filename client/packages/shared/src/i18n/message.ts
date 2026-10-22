@@ -31,5 +31,6 @@ export function translateMessage(message: CatalogMessage, t: TranslateFn = trans
   const args = (message.args ?? []).map((arg) =>
     typeof arg === "object" && arg !== null ? translateMessage(arg, t) : arg,
   );
+  // i18n-ignore: the one place a catalog message is spread, after its nested messages are translated
   return t(message.message, ...args);
 }

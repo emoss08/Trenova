@@ -7,13 +7,18 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@trenova/shared/components/ui/chart";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { cn } from "@trenova/shared/lib/utils";
 import { ReportMap } from "./report-map";
 import {
-  formatReportValue,
   reportNumericValue,
   type ReportColumnDisplayLike,
 } from "@trenova/shared/lib/report-format";
+import { reportCellText } from "@trenova/shared/rules/report";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
+import { createValueFormatter, formatReportRow } from "./report-cells";
+import { ReportChartSkeleton } from "./report-chart-skeleton";
 import type { ReportChartSpec } from "@/types/report";
 import { TrendDown01Icon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
@@ -55,6 +60,8 @@ export type ChartColumn = {
   id: string;
   label: string;
   display?: ReportColumnDisplayLike | null;
+  /** The catalog value type, so decimals that arrive as strings read as numbers. */
+  type?: string;
 };
 
 type ReportChartProps = {
@@ -86,9 +93,11 @@ function columnIndexMap(columns: ChartColumn[]): Map<string, number> {
 /**
  * Flattens the result rows into what recharts wants: one object per category,
  * with each plotted measure as a numeric key. Non-numeric cells become null so
- * a gap reads as missing data rather than as zero.
+ * a gap reads as missing data rather than as zero. Every category label is
+ * formatted in one call.
  */
 function buildPoints(
+  rules: RulesRuntime,
   chart: ReportChartSpec,
   columns: ChartColumn[],
   rows: unknown[][],
@@ -97,13 +106,19 @@ function buildPoints(
   const labelIndex = chart.xColumnId ? indexes.get(chart.xColumnId) : undefined;
   const labelColumn = labelIndex === undefined ? undefined : columns[labelIndex];
   const seriesIds = chart.seriesIds ?? [];
+  const label =
+    labelIndex === undefined || !labelColumn
+      ? null
+      : createValueFormatter(
+          rules,
+          labelColumn,
+          rows.map((row) => row[labelIndex]),
+        );
 
   const points = rows.map((row, rowIndex) => {
     const point: ChartPoint = {
       [LABEL_KEY]:
-        labelIndex === undefined
-          ? `#${rowIndex + 1}`
-          : formatReportValue(row[labelIndex], labelColumn?.display) || "—",
+        labelIndex === undefined ? `#${rowIndex + 1}` : (label?.(row[labelIndex]) ?? "") || "—",
       [RAW_KEY]: labelIndex === undefined ? null : row[labelIndex],
     };
     for (const seriesId of seriesIds) {
@@ -131,16 +146,19 @@ function buildPoints(
  * Axis ticks and bar labels have to fit in a few characters, so they keep the
  * column's unit (currency symbol, suffix) but drop to compact notation.
  */
-function compactDisplay(
-  display: ReportColumnDisplayLike | null | undefined,
-): ReportColumnDisplayLike | null | undefined {
-  if (!display) return display;
+function compactColumn(column: ChartColumn | undefined): ChartColumn | undefined {
+  if (!column?.display) return column;
   return {
-    ...display,
-    notation: "compact",
-    decimals: Math.min(display.decimals ?? 1, 1),
+    ...column,
+    display: {
+      ...column.display,
+      notation: "compact",
+      decimals: Math.min(column.display.decimals ?? 1, 1),
+    },
   };
 }
+
+const NO_COLUMN: ChartColumn = { id: "", label: "" };
 
 export type ChartFormatters = {
   /** Full precision, for tooltips. */
@@ -152,18 +170,42 @@ export type ChartFormatters = {
 };
 
 // Charts render the same numbers the table does, so they read the column's
-// resolved display rather than dumping the raw value onto the axis.
-function buildFormatters(chart: ReportChartSpec, columns: ChartColumn[]): ChartFormatters {
+// resolved display rather than dumping the raw value onto the axis. Every value
+// a point carries is formatted up front, one call per series; the axis ticks
+// Recharts picks are formatted the first time each is asked for.
+function buildFormatters(
+  rules: RulesRuntime,
+  chart: ReportChartSpec,
+  columns: ChartColumn[],
+  points: ChartPoint[],
+): ChartFormatters {
   const byId = new Map(columns.map((column) => [column.id, column]));
   const primary = chart.seriesIds?.[0];
-  const primaryDisplay = primary ? byId.get(primary)?.display : undefined;
-  const xDisplay = chart.xColumnId ? byId.get(chart.xColumnId)?.display : undefined;
+  const valuesOf = (key: string | undefined) =>
+    key === undefined ? [] : points.map((point) => point[key]);
+  const series = new Map(
+    (chart.seriesIds ?? []).map((seriesId) => [
+      seriesId,
+      createValueFormatter(rules, byId.get(seriesId) ?? NO_COLUMN, valuesOf(seriesId)),
+    ]),
+  );
+  const axis = createValueFormatter(
+    rules,
+    compactColumn(primary ? byId.get(primary) : undefined) ?? NO_COLUMN,
+    valuesOf(primary),
+  );
+  const xAxis = createValueFormatter(
+    rules,
+    compactColumn(chart.xColumnId ? byId.get(chart.xColumnId) : undefined) ?? NO_COLUMN,
+    chart.type === "scatter" ? valuesOf("x") : [],
+  );
 
   return {
-    value: (seriesId, value) => formatReportValue(value, byId.get(seriesId)?.display),
+    value: (seriesId, value) =>
+      (series.get(seriesId) ?? createValueFormatter(rules, NO_COLUMN))(value),
     label: (seriesId) => byId.get(seriesId)?.label ?? seriesId,
-    axis: (value) => formatReportValue(value, compactDisplay(primaryDisplay)),
-    xAxis: (value) => formatReportValue(value, compactDisplay(xDisplay)),
+    axis,
+    xAxis,
   };
 }
 
@@ -287,6 +329,7 @@ function KpiTile({
   className,
 }: ReportChartProps & { indexes: Map<string, number> }) {
   const t = useT();
+  const rules = useRules();
 
   const seriesId = chart.seriesIds?.[0];
   const byId = new Map(columns.map((column) => [column.id, column]));
@@ -316,7 +359,7 @@ function KpiTile({
     <div className={cn("flex h-full flex-col justify-center gap-1 p-4", className)}>
       <p className="text-xs text-muted-foreground font-medium">{chart.title || column.label}</p>
       <p className="text-2xl font-semibold tracking-tight tabular-nums">
-        {formatReportValue(value, column.display) || "—"}
+        {reportCellText(formatReportRow(rules, [column], [value])[0], column.display) || "—"}
       </p>
       {delta !== null && (
         <p
@@ -355,17 +398,33 @@ function KpiTile({
   );
 }
 
+/**
+ * A report's result as a chart. Its labels go through the rules module like the grid's cells;
+ * until the module has loaded the chart's skeleton stands in.
+ */
 export function ReportChart(props: ReportChartProps) {
+  return (
+    <LazyComponent fallback={<ReportChartSkeleton className={props.className} />}>
+      <FormattedReportChart {...props} />
+    </LazyComponent>
+  );
+}
+
+function FormattedReportChart(props: ReportChartProps) {
   const t = useT();
+  const rules = useRules();
 
   const { chart, columns, rows, className, categorySelect } = props;
   const indexes = useMemo(() => columnIndexMap(columns), [columns]);
   const points = useMemo(
-    () => buildPoints(chart, columns, rows, indexes),
-    [chart, columns, rows, indexes],
+    () => buildPoints(rules, chart, columns, rows, indexes),
+    [rules, chart, columns, rows, indexes],
   );
   const config = useMemo(() => chartConfig(chart, columns), [chart, columns]);
-  const format = useMemo(() => buildFormatters(chart, columns), [chart, columns]);
+  const format = useMemo(
+    () => buildFormatters(rules, chart, columns, points),
+    [rules, chart, columns, points],
+  );
   const target = goalValue(chart, rows, indexes);
   const seriesIds = chart.seriesIds ?? [];
 

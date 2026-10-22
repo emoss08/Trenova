@@ -25,6 +25,37 @@ after(async () => {
 });
 
 describe("findFragments", () => {
+  it("reports a message from the rules module spelled out by hand", async () => {
+    const found = await scan(`
+      t(issue.message.message, ...(issue.message.args ?? []));
+      translate(state.problem?.message, ...args);
+    `);
+    assert.deepEqual(
+      found.map((f) => [f.kind, f.detail]),
+      [
+        ["spread-message", "t"],
+        ["spread-message", "translate"],
+      ],
+    );
+  });
+
+  it("accepts translateMessage, and a message key passed without spread arguments", async () => {
+    const found = await scan(`
+      translateMessage(issue.message, t);
+      translateMessage(state.problem);
+      translate(issue.message);
+    `);
+    assert.deepEqual(found, []);
+  });
+
+  it("reports a literal handed to translateMessage, which no catalog collects", async () => {
+    const found = await scan(`translateMessage({ message: "Saved", args: [] }, t);`);
+    assert.deepEqual(
+      found.map((f) => [f.kind, f.detail]),
+      [["literal-message", "Saved"]],
+    );
+  });
+
   it("reports a sentence split by markup", async () => {
     const found = await scan(`const A = () => <p>{t("You've used")} <b>{pct}</b> {t("of this month's allowance")}</p>;`);
     assert.deepEqual(found.map((f) => f.kind), ["split-sentence"]);
@@ -178,24 +209,6 @@ toast.success({ submit: "Submitted", post: t("Posted") }[action] ?? "Updated");
       "Submitted",
       "Updated",
     ]);
-  });
-
-  it("reports a rules message handed to a translator by hand, not an ordinary message lookup", async () => {
-    const found = await scan(`
-const a = t(diagnostic.message, ...diagnostic.args);
-const b = translate(failure.message, ...(failure.args ?? []));
-const c = t(fix.label.message, fix.label.args);
-const d = t(fieldState.error.message);
-const e = translateMessage(diagnostic, t);
-`);
-    assert.deepEqual(
-      found.map((f) => [f.kind, f.detail, f.line]),
-      [
-        ["catalog-message", "t", 2],
-        ["catalog-message", "translate", 3],
-        ["catalog-message", "t", 4],
-      ],
-    );
   });
 
   it("reports English a template builds anywhere, not only where it is shown", async () => {

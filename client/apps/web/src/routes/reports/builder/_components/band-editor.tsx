@@ -9,7 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
-import { formatReportValue, resolveReportDisplay } from "@trenova/shared/lib/report-format";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { formatReportColumns, reportCellText } from "@trenova/shared/rules/report";
 import {
   MAX_BAND_EDGES,
   bandIsUsable,
@@ -20,6 +22,7 @@ import {
 } from "@/types/report";
 import { PlusIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
+import { BandPreviewSkeleton } from "./band-preview-skeleton";
 
 type BandEditorProps = {
   column: ReportColumnSpec;
@@ -167,12 +170,14 @@ export function BandEditor({ column, valueType, formatHint, onUpdate }: BandEdit
       )}
 
       {bandIsUsable(band) && ascending && (
-        <BandPreview
-          band={band as ReportBandSpec}
-          column={column}
-          valueType={valueType}
-          formatHint={formatHint}
-        />
+        <LazyComponent fallback={<BandPreviewSkeleton />}>
+          <BandPreview
+            band={band as ReportBandSpec}
+            column={column}
+            valueType={valueType}
+            formatHint={formatHint}
+          />
+        </LazyComponent>
       )}
     </div>
   );
@@ -193,21 +198,28 @@ function BandPreview({
   valueType: string;
   formatHint: string | undefined;
 }) {
+  const rules = useRules();
+  // The display is resolved and every previewed range labelled in one call.
   const labels = useMemo(() => {
-    const display = resolveReportDisplay({
-      type: valueType,
-      hint: formatHint,
-      band: { width: band.width ?? 0, edges: band.edges ?? [] },
-      overrides: column.display,
-    });
-
     const lowerBounds =
       band.edges && band.edges.length > 0
         ? band.edges
         : Array.from({ length: PREVIEW_LIMIT }, (_, i) => i * (band.width ?? 0));
 
-    return lowerBounds.slice(0, PREVIEW_LIMIT).map((bound) => formatReportValue(bound, display));
-  }, [band, column.display, formatHint, valueType]);
+    const [cells] = formatReportColumns(rules, [
+      {
+        resolve: {
+          type: valueType,
+          hint: formatHint,
+          band: { width: band.width ?? 0, edges: band.edges ?? [] },
+          spec: column.display,
+        },
+        valueType,
+        values: lowerBounds.slice(0, PREVIEW_LIMIT),
+      },
+    ]);
+    return cells.map((cell) => reportCellText(cell, null));
+  }, [rules, band, column.display, formatHint, valueType]);
 
   const truncated = (band.edges?.length ?? PREVIEW_LIMIT + 1) > PREVIEW_LIMIT;
 

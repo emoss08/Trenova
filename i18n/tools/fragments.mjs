@@ -25,6 +25,15 @@
 //     never reach the catalog, and translate() there would freeze the language active at
 //     import. Declare it with defineLabels({ ... }) from @trenova/shared/i18n/labels.
 //
+//   - a message that arrived as data, spelled by hand: t(issue.message.message,
+//     ...issue.message.args). A `{ message, args }` from the rules module can carry a nested
+//     message as an argument, which this spelling hands to the formatter untranslated (it
+//     renders as "[object Object]"). Write translateMessage(issue.message, t) from
+//     @trenova/shared/i18n/message, the one function that translates nested messages first.
+//   - a literal handed to translateMessage: translateMessage({ message: "Saved" }). The
+//     extractor collects only literals passed to t/translate/rt/translateRich (and the crate's
+//     message! templates), so this one never reaches a catalog. Write t("Saved").
+//
 // Only shapes that are wrong wherever they appear are reported, so a finding is always a
 // defect: an argument that is a variable may well hold translated text, and is left alone.
 // A literal in a reported position that really is not prose for a person — a key, a code,
@@ -38,6 +47,8 @@ import { TEXT_PROPS } from "./filter.mjs";
 const SKIP_DIR = new Set(["node_modules", "generated", "__tests__", "__snapshots__", "dist"]);
 const SKIP_FILE = /\.(test|spec|stories)\.[jt]sx?$/;
 const TRANSLATORS = new Set(["t", "translate", "rt", "translateRich"]);
+// Translates a `{ message, args }` that arrived as data (i18n/message.ts).
+const MESSAGE_TRANSLATOR = "translateMessage";
 // Helpers that turn an identifier or a count into English words.
 const ENGLISH_HELPERS = new Set(["pluralize", "toTitleCase", "humanizeToolName", "capitalize"]);
 // Where a person reads a string: the props and keys the extractor treats as text, less the
@@ -135,6 +146,29 @@ function splitSentence(element) {
     }
   }
   return false;
+}
+
+/**
+ * spreadMessage says whether a translator call spells out a message that arrived as data:
+ * `t(x.message, ...x.args)`, a `.message` key and spread arguments. translateMessage does
+ * that, and translates the nested messages an argument may be.
+ */
+function spreadMessage(call) {
+  const [first, ...rest] = call.arguments;
+  if (first?.type !== "MemberExpression" && first?.type !== "OptionalMemberExpression") return false;
+  if (first.computed || keyName(first.property) !== "message") return false;
+  return rest.some((arg) => arg.type === "SpreadElement");
+}
+
+/** literalMessage returns the literal template a translateMessage call is handed, or null. */
+function literalMessage(call) {
+  if (call.callee.type !== "Identifier" || call.callee.name !== MESSAGE_TRANSLATOR) return null;
+  const arg = call.arguments[0];
+  if (arg?.type !== "ObjectExpression") return null;
+  const message = arg.properties.find(
+    (prop) => prop.type === "ObjectProperty" && keyName(prop.key) === "message",
+  );
+  return message?.value.type === "StringLiteral" ? message.value : null;
 }
 
 /** englishArgument returns the English an argument passes into a message, or null. */
@@ -466,7 +500,7 @@ function codeContext(chain) {
             : callee.type === "MemberExpression" && !callee.computed
               ? callee.property.name
               : null;
-        if (TRANSLATORS.has(name)) return true;
+        if (TRANSLATORS.has(name) || name === MESSAGE_TRANSLATOR) return true;
         if (callee.type === "MemberExpression" && callee.object.type === "Identifier" && callee.object.name === "console") {
           return true;
         }
@@ -508,42 +542,6 @@ function writtenWords(template) {
     return null;
   }
   return text.replaceAll("\u0000", "{…}").replace(/\s+/g, " ").trim();
-}
-
-// The one place a message that arrived as data ({ message, args }, from the rules module) is
-// handed to a translator by its template; everywhere else goes through translateMessage, which
-// translates a nested message argument first. Spreading `x.args` into a translator by hand
-// would pass a nested message through as an object, so the sentence would read
-// "[object Object]" where its phrase belongs.
-const CATALOG_MESSAGE_HELPER = join("client", "packages", "shared", "src", "i18n", "message.ts");
-
-function memberNamed(node, property) {
-  return (
-    node?.type === "MemberExpression" &&
-    !node.computed &&
-    node.property.type === "Identifier" &&
-    node.property.name === property
-  );
-}
-
-/**
- * catalogMessage reports a translator handed a message object by hand: its template read off
- * `x.message` and its arguments off `x.args` (spread or not). `t(error.message)` alone is an
- * ordinary lookup of a text message and is not reported.
- */
-function catalogMessage(call) {
-  const [template, ...rest] = call.arguments;
-  if (!memberNamed(template, "message")) return false;
-  return rest.some((arg) => memberNamed(argsOperand(arg), "args"));
-}
-
-/** The expression an argument reads its value from: `...x`, `x ?? []` and `x!` read `x`. */
-function argsOperand(node) {
-  if (node?.type === "SpreadElement" || node?.type === "TSNonNullExpression") {
-    return argsOperand(node.argument ?? node.expression);
-  }
-  if (node?.type === "LogicalExpression") return argsOperand(node.left);
-  return node;
 }
 
 function ignored(node, lines) {
@@ -614,11 +612,15 @@ export async function findFragments(repoRoot, roots = SOURCE_ROOTS) {
             if (ignored(literal, lines)) continue;
             findings.push({ file: rel, line: literal.loc.start.line, kind: "untranslated-schema-message", detail: literal.value });
           }
+          const literal = literalMessage(node);
+          if (literal !== null && !ignored(literal, lines)) {
+            findings.push({ file: rel, line: literal.loc.start.line, kind: "literal-message", detail: literal.value });
+          }
         }
         const name = translatorName(node);
         if (!TRANSLATORS.has(name)) return;
-        if (catalogMessage(node) && rel !== CATALOG_MESSAGE_HELPER && !ignored(node, lines)) {
-          findings.push({ file: rel, line: node.loc.start.line, kind: "catalog-message", detail: name });
+        if (spreadMessage(node) && !ignored(node, lines)) {
+          findings.push({ file: rel, line: node.loc.start.line, kind: "spread-message", detail: name });
         }
         const skip = name === "rt" || name === "translateRich" ? 2 : 1;
         for (const arg of node.arguments.slice(skip)) {
@@ -645,10 +647,12 @@ export function formatFinding({ file, line, kind, detail }) {
       return `${file}:${line}  ${detail} is a label map the catalog never sees; declare it with defineLabels()`;
     case "english-template":
       return `${file}:${line}  \`${detail}\` builds English in a template; use t()/translate() with placeholders, or mark it i18n-ignore: <reason>`;
-    case "catalog-message":
-      return `${file}:${line}  ${detail}(x.message, ...x.args) shows a message from the rules module without translating its nested arguments; use translateMessage(x, t) from @trenova/shared/i18n/message`;
     case "untranslated-template":
       return `${file}:${line}  ${detail} builds English outside the catalog; use t()/translate() with placeholders`;
+    case "spread-message":
+      return `${file}:${line}  ${detail}(x.message, ...x.args) leaves a nested message untranslated; use translateMessage(x, t)`;
+    case "literal-message":
+      return `${file}:${line}  ${JSON.stringify(detail)} is handed to translateMessage as a literal the catalog never sees; use t() or translate()`;
     default:
       return `${file}:${line}  ${JSON.stringify(detail)} is English passed into a message; use a plural or one message per case`;
   }

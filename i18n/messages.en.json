@@ -22689,6 +22689,15 @@
       "routes/detention-policy"
     ]
   },
+  "Allocated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Allocated {0} · {1} remaining": {
     "sites": 1,
     "scope": [
@@ -26546,14 +26555,13 @@
     ]
   },
   "Another lane covers the same geography with a higher priority, so this one can never apply.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/lane"
     ]
   },
@@ -39605,7 +39613,7 @@
     ]
   },
   "Billing by payer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -80810,7 +80818,7 @@
     ]
   },
   "Divide the {0} freight charge between the customers who pay for it. Each payer receives an invoice for their share.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -87427,6 +87435,15 @@
     "areas": [
       "apps/web/rules",
       "rules/allocation"
+    ]
+  },
+  "Each payer's share shows once every split adds up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Each payment waits on the payments from the books page until someone applies or ignores it.": {
@@ -139414,6 +139431,25 @@
       "routes/accounting-dashboard"
     ]
   },
+  "Loading the charges…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/shipment"
+    ]
+  },
+  "Loading the chart…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Loading the collections worklist": {
     "sites": 1,
     "scope": [
@@ -139477,6 +139513,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the formatting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Loading the formula studio": {
@@ -139560,6 +139605,15 @@
       "routes/desk"
     ]
   },
+  "Loading the lanes…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
   "Loading the location…": {
     "sites": 1,
     "scope": [
@@ -139632,6 +139686,15 @@
       "routes/desk"
     ]
   },
+  "Loading the ranges…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Loading the rate agreement…": {
     "sites": 1,
     "scope": [
@@ -139657,6 +139720,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the results…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Loading the return": {
@@ -139720,6 +139792,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the simulation…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
     ]
   },
   "Loading the statement": {
@@ -146140,6 +146221,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Measuring the split…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Mechanic": {
@@ -228967,6 +229057,15 @@
       "routes/worker"
     ]
   },
+  "Seen in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Sees {0} of {1} details": {
     "sites": 1,
     "scope": [
@@ -244025,7 +244124,7 @@
     ]
   },
   "Split freight charge": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -274341,14 +274440,13 @@
     ]
   },
   "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/lane"
     ]
   },
@@ -274654,26 +274752,24 @@
     ]
   },
   "This matrix has no axes, so nothing can ever look a rate up in it.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/matrix"
     ]
   },
   "This matrix has no rates yet, so every lane pointing at it prices nothing.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -275740,6 +275836,15 @@
     ]
   },
   "This report returned no rows with usable coordinates.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "This report returned no rows.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -280286,7 +280391,7 @@
     ]
   },
   "Total": {
-    "sites": 47,
+    "sites": 48,
     "scope": [
       "go",
       "ts"
@@ -280308,6 +280413,7 @@
       "routes/order",
       "routes/rate-agreement",
       "routes/rate-confirmation-public",
+      "routes/reports",
       "routes/shipment",
       "template/customer.statement.pdf",
       "template/factoring.schedule.email",
@@ -284787,14 +284893,13 @@
     ]
   },
   "Two rates sit at {0}. The engine will take the one entered first and never mention the other.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -327774,14 +327879,13 @@
     ]
   },
   "{0} bands {1} and {2} overlap, so the same shipment matches both.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -329827,14 +329931,13 @@
     ]
   },
   "{0} has no band below {1}, so anything smaller finds no rate.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -331738,14 +331841,13 @@
     ]
   },
   "{0} jumps from {1} to {2} with nothing in between.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/matrix"
     ]
   },
@@ -335386,14 +335488,13 @@
     ]
   },
   "{0} stops at {1}. Anything at or above that finds no rate — give the top band no upper bound to catch it.": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
-      "packages/shared/lib",
       "rules/matrix"
     ]
   },
