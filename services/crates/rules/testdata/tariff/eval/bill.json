@@ -326,16 +326,6 @@
     }
   },
   {
-    "name": "a non-money amount is internal",
-    "source": "tariff \"t\"\ncharge \"Weight\" = 5 lb",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
     "name": "minimum adds the shortfall",
     "source": "tariff \"t\"\ncharge \"Linehaul\" = $300\nminimum $450",
     "expect": {
@@ -465,7 +455,7 @@
   },
   {
     "name": "minimum then maximum",
-    "source": "tariff \"t\"\ncharge \"Linehaul\" = $10\nminimum $50\nmaximum $40",
+    "source": "tariff \"t\"\ninput floor: Money = $50\ncharge \"Linehaul\" = $10\nminimum floor\nmaximum $40",
     "expect": {
       "status": "rated",
       "bill": {
@@ -758,7 +748,7 @@
   },
   {
     "name": "round to a zero increment is an error",
-    "source": "tariff \"t\"\ncharge \"A\" = $1\nround up to $0",
+    "source": "tariff \"t\"\ninput step: Money = $0\ncharge \"A\" = $1\nround up to step",
     "expect": {
       "status": "error",
       "error": {

@@ -158,9 +158,9 @@ fn a_rating_that_fails_gives_its_error() {
     assert_eq!(output["test"], Value::Null);
     assert_eq!(output["error"]["code"], "divideByZero");
     let output = scaffold(&json!({"source": "tariff \"t\"\nlet = 1", "name": "x"}));
-    assert_eq!(output["error"]["code"], "syntax");
+    assert_eq!(output["error"]["code"], "check");
     let output = scaffold(&json!({"source": "condition \"c\"\ntrue", "name": "x"}));
-    assert_eq!(output["error"]["code"], "syntax");
+    assert_eq!(output["error"]["code"], "check");
 }
 
 #[test]

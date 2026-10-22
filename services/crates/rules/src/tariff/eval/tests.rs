@@ -32,7 +32,7 @@ use super::tables::Tables;
 use super::value::{Record, Value};
 use crate::message::{Arg, Message};
 use crate::span::Span;
-use crate::tariff::schema::{Schema, Settings};
+use crate::tariff::schema::Settings;
 use crate::tariff::syntax::ast::{
     Expect, Expr, ExprKind, FileKind, Name, Stmt, StmtKind, Test, TextPart,
 };
@@ -46,8 +46,6 @@ pub struct TestRequest<'p> {
     pub program: &'p Program,
     /// The checker's types, or [`super::NoTypes`].
     pub types: &'p dyn StaticTypes,
-    /// The schema.
-    pub schema: &'p Schema,
     /// The organisation's settings, for the sample record.
     pub settings: &'p Settings,
     /// The request's tables.
@@ -194,13 +192,8 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
         let (record, inputs) = self.givens(test)?;
         let mut interp = self.interp(record.clone());
         let mut env = Env::new(0, false);
-        let ran = bind_inputs(
-            &mut interp,
-            &mut env,
-            self.request.schema,
-            &Supplied::Values(&inputs),
-        )
-        .and_then(|()| interp.run_file(&mut env));
+        let ran = bind_inputs(&mut interp, &mut env, &Supplied::Values(&inputs))
+            .and_then(|()| interp.run_file(&mut env));
         if !interp.needs.is_empty() {
             return Err(EvalError::internal(Message::new(crate::message!(
                 "The test reads rate table cells the request did not carry"

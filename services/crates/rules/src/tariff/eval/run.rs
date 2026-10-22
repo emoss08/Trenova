@@ -1,13 +1,15 @@
 //! Running one loaded program: the step the hosts gate behind the checker.
 //!
-//! [`run_program`] takes a program the loader built (and, in `tariff.evaluate`, the checker
-//! passed), the record, the input values the host sent, the tables and the budgets, and gives
-//! back the [`Outcome`] and the trace:
+//! [`run_program`] takes a program the loader built and the checker passed, the record, the
+//! input values the host sent, the tables and the budgets, and gives back the [`Outcome`] and
+//! the trace:
 //!
-//! 1. **Inputs.** Each input takes the value the host sent (decoded against its declared type),
-//!    else its default. An input value that does not fit is an error with code `input`; so is
-//!    a value for an input the file does not declare. An input with neither a value nor a
-//!    default refuses to rate, naming the input.
+//! 1. **Inputs.** Each input takes the value the host sent, decoded against the type the
+//!    checker lowered from its annotation ([`super::StaticTypes::input_type`]; without the
+//!    checker's types a sent value is an `internal` error), else its default. An input value
+//!    that does not fit is an error with code `input`; so is a value for an input the file does
+//!    not declare. An input with neither a value nor a default refuses to rate, naming the
+//!    input.
 //! 2. **The body.** The root file's statements run top to bottom.
 //! 3. **The result.** A tariff's bill is finished by its total clauses; a condition's last
 //!    expression is its value. When a table lookup needed cells the request did not carry, the
@@ -17,7 +19,6 @@
 use super::StaticTypes;
 use super::bill::{Clauses, Finished};
 use super::budget::{Limits, Meter};
-use super::declared::Lowering;
 use super::error::{Code, EvalError, Refusal, RefusalText, Stop};
 use super::interp::link::Linked;
 use super::interp::{Env, Interp, Setup};
@@ -25,7 +26,6 @@ use super::tables::{Need, Tables};
 use super::trace::Trace;
 use super::value::Value;
 use crate::message::{Arg, Message};
-use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::FileKind;
 use crate::tariff::syntax::program::Program;
 use crate::tariff::wire::decode;
@@ -38,8 +38,6 @@ pub struct Request<'p> {
     pub program: &'p Program,
     /// The checker's types, or [`super::NoTypes`].
     pub types: &'p dyn StaticTypes,
-    /// The schema the record and inputs are read against.
-    pub schema: &'p Schema,
     /// The request's tables.
     pub tables: &'p Tables,
     /// The record, already decoded.
@@ -110,13 +108,8 @@ pub fn run_program(request: Request<'_>) -> Run {
         .and_then(|root| root.file.header.as_ref())
         .map(|header| header.kind);
     let mut env = Env::new(0, false);
-    let ran = bind_inputs(
-        &mut interp,
-        &mut env,
-        request.schema,
-        &Supplied::Wire(request.inputs),
-    )
-    .and_then(|()| interp.run_file(&mut env));
+    let ran = bind_inputs(&mut interp, &mut env, &Supplied::Wire(request.inputs))
+        .and_then(|()| interp.run_file(&mut env));
     let outcome = finish(&mut interp, kind, ran);
     let outcome = if interp.needs.is_empty() {
         outcome
@@ -202,7 +195,6 @@ enum Given<'s> {
 pub fn bind_inputs(
     interp: &mut Interp<'_, '_>,
     env: &mut Env,
-    schema: &Schema,
     provided: &Supplied<'_>,
 ) -> Result<(), Stop> {
     let linked = *interp.linked;
@@ -218,7 +210,6 @@ pub fn bind_inputs(
             [Arg::from(unknown)],
         )));
     }
-    let lowering = Lowering::new(&linked, schema);
     for input in declared {
         let name = input.name.text.as_str();
         let supplied = match provided {
@@ -228,7 +219,17 @@ pub fn bind_inputs(
         let value = match (supplied, &input.default) {
             (Some(Given::Value(value)), _) => value.clone(),
             (Some(Given::Wire(json)), _) => {
-                let ty = lowering.lower(0, &input.ty);
+                let ty = interp.input_type(name).ok_or_else(|| {
+                    Stop::Failed(
+                        EvalError::internal(Message::with(
+                            crate::message!(
+                                "The input {0} has no checked type, so its value can't be read"
+                            ),
+                            [Arg::from(name)],
+                        ))
+                        .at(input.name.span),
+                    )
+                })?;
                 decode(json, &ty, name).map_err(|error| {
                     Stop::Failed(
                         EvalError::with(

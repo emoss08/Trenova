@@ -15,14 +15,12 @@
 //! "error": …}` when the tariff does not load or the rating fails; or `{"test": null, "status":
 //! "needs", "needs": […]}` when it needs table cells the request did not carry.
 
-use super::NoTypes;
 use super::bill::LineKind;
 use super::budget::Limits;
-use super::declared::Lowering;
 use super::error::{Code, EvalError};
 use super::interp::link::Linked;
 use super::interp::{Env, Interp, Setup};
-use super::ops::{error_json, load_error};
+use super::ops::{error_json, gate};
 use super::record::{decode_record, sample, settle, stop, with_dwell};
 use super::run::{Outcome, Request, run_program};
 use super::tables::Tables;
@@ -30,6 +28,7 @@ use super::value::{Record, Value, format_decimal, format_quantity, money_digits}
 use crate::message::Message;
 use crate::ops::{OpResult, decode, encode};
 use crate::span::Utf16Index;
+use crate::tariff::check::Analysis;
 use crate::tariff::context::Context;
 use crate::tariff::schema::{ENUMS, Schema};
 use crate::tariff::syntax::ast::FileKind;
@@ -94,18 +93,17 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
             )
         }),
     };
-    let record = match (load_error(&program), record) {
-        (Some(error), _) | (None, Err(error)) => {
+    let (analysis, record) = match (gate(&program, &input.context), record) {
+        (Err(error), _) | (Ok(_), Err(error)) => {
             output.insert(String::from("error"), error_json(&error, &index));
             return encode(&Json::Object(output));
         }
-        (None, Ok(record)) => record,
+        (Ok(analysis), Ok(record)) => (analysis, record),
     };
     let tables = Tables::build(&input.context.tables);
     let run = run_program(Request {
         program: &program,
-        types: &NoTypes,
-        schema: &schema,
+        types: &analysis,
         tables: &tables,
         record: record.clone(),
         inputs: &input.inputs,
@@ -146,7 +144,13 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
     let writer = Writer { schema: &schema };
     let mut givens = writer.record_givens(&record, &sample(&input.context.settings));
     let linked = Linked::new(&program);
-    givens.extend(input_givens(linked, &schema, &tables, &input.inputs));
+    givens.extend(input_givens(&Inputs {
+        linked,
+        analysis: &analysis,
+        schema: &schema,
+        tables: &tables,
+        values: &input.inputs,
+    }));
     let mut test = format!("test {} {{\n", text_literal(&input.name));
     for line in givens.iter().chain(&expects) {
         let _ = writeln!(test, "  {line}");
@@ -192,30 +196,35 @@ fn charge_expects(lines: &[super::bill::Line], total: Decimal) -> Vec<String> {
     out
 }
 
+/// What [`input_givens`] reads.
+struct Inputs<'i> {
+    linked: Linked<'i>,
+    analysis: &'i Analysis,
+    schema: &'i Schema,
+    tables: &'i Tables,
+    values: &'i BTreeMap<String, Json>,
+}
+
 /// A `given input.x` for each input sent with a value other than its default.
-fn input_givens(
-    linked: Linked<'_>,
-    schema: &Schema,
-    tables: &Tables,
-    inputs: &BTreeMap<String, Json>,
-) -> Vec<String> {
-    let lowering = Lowering::new(&linked, schema);
+fn input_givens(inputs: &Inputs<'_>) -> Vec<String> {
     let mut interp = Interp::new(Setup {
-        linked: &linked,
-        types: &NoTypes,
-        tables,
+        linked: &inputs.linked,
+        types: inputs.analysis,
+        tables: inputs.tables,
         record: Value::None,
         meter: super::budget::Meter::new(Limits::DEFAULT),
         trace: false,
     });
-    let writer = Writer { schema };
+    let writer = Writer {
+        schema: inputs.schema,
+    };
     let mut out = Vec::new();
-    for input in linked.inputs(0) {
-        let Some(json) = inputs.get(&input.name.text) else {
+    for input in inputs.linked.inputs(0) {
+        let name = &input.name.text;
+        let (Some(json), Some(ty)) = (inputs.values.get(name), interp.input_type(name)) else {
             continue;
         };
-        let ty = lowering.lower(0, &input.ty);
-        let Ok(value) = decode_wire(json, &ty, &input.name.text) else {
+        let Ok(value) = decode_wire(json, &ty, name) else {
             continue;
         };
         let default = input.default.as_ref().and_then(|default| {
@@ -225,7 +234,7 @@ fn input_givens(
         if default.is_some_and(|default| default.equals(&value).unwrap_or(false)) {
             continue;
         }
-        out.push(writer.given(&format!("input.{}", input.name.text), &value, &ty));
+        out.push(writer.given(&format!("input.{name}"), &value, &ty));
     }
     out
 }

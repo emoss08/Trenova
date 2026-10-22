@@ -297,16 +297,6 @@
     }
   },
   {
-    "name": "no arm covering a value is internal",
-    "source": "tariff \"t\"\nlet n = 9\nlet label = match n {\n  1 => \"one\"\n}",
-    "expect": {
-      "status": "error",
-      "error": {
-        "code": "internal"
-      }
-    }
-  },
-  {
     "name": "date range patterns",
     "source": "tariff \"t\"\nlet d = @2026-07-04\nlet season = match d {\n  @2026-06-01..@2026-09-01 => \"summer\"\n  _ => \"other\"\n}\nnote \"{season}\"",
     "expect": {
