@@ -421,7 +421,20 @@ export const tariffTestFailureSchema = z.object({
 });
 export type TariffTestFailure = z.output<typeof tariffTestFailureSchema>;
 
-export const tariffTestStatusSchema = z.enum(["passed", "failed", "error"]);
+/**
+ * Rate table cells a run read that the request did not carry: the table's code and one key per
+ * exact axis. The host loads them into the context's table and runs again.
+ */
+export const tariffNeedSchema = z.object({ table: z.string(), keys: z.array(z.string()) });
+export type TariffNeed = z.output<typeof tariffNeedSchema>;
+
+const tariffNeedsSchema = z
+  .array(tariffNeedSchema)
+  .nullish()
+  .transform((value) => value ?? []);
+
+/** `needs`: the test read rate table cells the context did not carry, so it is not final yet. */
+export const tariffTestStatusSchema = z.enum(["passed", "failed", "error", "needs"]);
 export type TariffTestStatus = z.output<typeof tariffTestStatusSchema>;
 
 /** One `test` block's result: the failing expectations with their values, and its bill. */
@@ -438,9 +451,13 @@ export const tariffTestResultSchema = z.object({
 });
 export type TariffTestResult = z.output<typeof tariffTestResultSchema>;
 
-/** What `tariff.test` answers; `error` is set when the file does not load, and no test ran. */
+/**
+ * What `tariff.test` answers; `error` is set when the file does not load, and no test ran.
+ * `needs` is every test's needs, each once.
+ */
 export const tariffTestRunSchema = z.object({
   tests: z.array(tariffTestResultSchema),
+  needs: tariffNeedsSchema,
   error: tariffEvalErrorSchema.nullish().transform((value) => value ?? null),
 });
 export type TariffTestRun = z.output<typeof tariffTestRunSchema>;
@@ -528,10 +545,7 @@ export const tariffEvaluationResultSchema = z.object({
     .transform((value) => value ?? null),
   refusal: tariffRefusalSchema.nullish().transform((value) => value ?? null),
   error: tariffEvalErrorSchema.nullish().transform((value) => value ?? null),
-  needs: z
-    .array(z.object({ table: z.string(), keys: z.array(z.string()) }))
-    .nullish()
-    .transform((value) => value ?? []),
+  needs: tariffNeedsSchema,
   trace: z
     .array(tariffTraceEventSchema)
     .nullish()
@@ -569,10 +583,58 @@ export const tariffTableAxisSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? undefined),
+  /** An exact axis's key rule: `None`, `Trim`, `Upper` or `Zip3`. */
+  normalization: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? undefined),
+  /** A range axis's rule for a key no band covers: `Error`, `ClampToTopBand` or `Nearest`. */
+  overflow: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? undefined),
 });
 export type TariffTableAxis = z.output<typeof tariffTableAxisSchema>;
 
-/** A rate matrix as a tariff reads it, `tables.<code>`: its axes and the type of its cells. */
+const optionalDecimalSchema = decimalTextSchema.nullish().transform((value) => value ?? undefined);
+
+/** One priced cell: a `{key}` on each exact axis and a `{min, max?}` band on each range axis. */
+export const tariffTableCellSchema = z.object({
+  at: z.array(
+    z.object({
+      key: z
+        .string()
+        .nullish()
+        .transform((value) => value ?? undefined),
+      min: optionalDecimalSchema,
+      max: optionalDecimalSchema,
+    }),
+  ),
+  value: decimalTextSchema,
+  minimum: optionalDecimalSchema,
+  deficit: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? undefined),
+});
+export type TariffTableCell = z.output<typeof tariffTableCellSchema>;
+
+const tableCellsSchema = z
+  .array(tariffTableCellSchema)
+  .nullish()
+  .transform((value) => value ?? undefined);
+
+const loadedSchema = z
+  .array(z.array(z.string()))
+  .nullish()
+  .transform((value) => value ?? undefined);
+
+/**
+ * A rate matrix as a tariff reads it, `tables.<code>`: its axes, the type of its cells and the
+ * cells the context carries. `cells` absent carries none; `loaded` absent means `cells` is the
+ * whole table, and present that it holds exactly those exact-key combinations' cells (the
+ * on-demand protocol, docs/engineering/rules-engine.md).
+ */
 export const tariffTableShapeSchema = z.object({
   code: z.string(),
   name: z
@@ -581,8 +643,22 @@ export const tariffTableShapeSchema = z.object({
     .transform((value) => value ?? ""),
   axes: z.array(tariffTableAxisSchema),
   valueType: z.string(),
+  cells: tableCellsSchema,
+  loaded: loadedSchema,
 });
 export type TariffTableShape = z.output<typeof tariffTableShapeSchema>;
+
+/**
+ * What `POST /formula-templates/context/cells` answers: the needed tables' cells, read at the
+ * organisation's rate table `stamp`. A table's `loaded` absent means it came whole.
+ */
+export const tariffTableCellsSchema = z.object({
+  stamp: z.string(),
+  tables: z.array(
+    z.object({ code: z.string(), cells: z.array(tariffTableCellSchema), loaded: loadedSchema }),
+  ),
+});
+export type TariffTableCells = z.output<typeof tariffTableCellsSchema>;
 
 /** An accessorial charge code a tariff may bill with `charge … as CODE`. */
 export const tariffChargeCodeSchema = z.object({
@@ -650,6 +726,11 @@ export const tariffStudioContextSchema = z.object({
     .array(tariffStudioLibrarySchema)
     .nullish()
     .transform((value) => value ?? []),
+  /** The organisation's rate table stamp the context was read at; cells are cached per stamp. */
+  tablesStamp: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
 });
 export type TariffStudioContext = z.output<typeof tariffStudioContextSchema>;
 

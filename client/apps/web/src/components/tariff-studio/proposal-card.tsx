@@ -92,7 +92,7 @@ export function ProposalCard({
 }) {
   const t = useT();
   const rules = useRules();
-  const { context } = useTariffCheckContext();
+  const { context, tablesStamp } = useTariffCheckContext();
   const { control } = useFormContext<ProposalFormValues>();
   const [name, description, source] = useWatch({
     control,
@@ -113,7 +113,14 @@ export function ProposalCard({
   );
   const errors = check.diagnostics.filter((finding) => finding.severity === "error").length;
   const testCount = check.outline?.items.filter((item) => item.kind === "test").length ?? 0;
-  const tests = useTariffTests({ rules, source: next.source, context, errors, testCount });
+  const tests = useTariffTests({
+    rules,
+    source: next.source,
+    context,
+    tablesStamp,
+    errors,
+    testCount,
+  });
   const verdict = proposalCheck(check, tests);
   const status =
     verdict.kind === "problem"

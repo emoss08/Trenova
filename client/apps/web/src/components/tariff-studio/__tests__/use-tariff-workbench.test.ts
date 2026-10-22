@@ -1,7 +1,13 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
 import { rulesSync } from "@trenova/shared/rules/runtime";
 import { describe, expect, it, vi } from "vitest";
+import { createElement, type ReactNode } from "react";
 import { useTariffEditorBinding, useTariffWorkbench } from "../use-tariff-workbench";
+
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(QueryClientProvider, { client: new QueryClient() }, children);
+}
 
 describe("useTariffEditorBinding before the editor has loaded", () => {
   it("writes a fix's changes to the form, last change first so offsets hold", () => {
@@ -52,8 +58,16 @@ test "the fee" {
   expect fee() == $10
 }
 `;
-    const { result } = renderHook(() =>
-      useTariffWorkbench({ rules: rulesSync(), source, kind: "library", context: null }),
+    const { result } = renderHook(
+      () =>
+        useTariffWorkbench({
+          rules: rulesSync(),
+          source,
+          kind: "library",
+          context: null,
+          tablesStamp: "",
+        }),
+      { wrapper },
     );
     expect(result.current.errors).toBe(0);
     expect(result.current.warnings).toBe(0);
@@ -62,13 +76,16 @@ test "the fee" {
   });
 
   it("blocks the tests while the source has errors", () => {
-    const { result } = renderHook(() =>
-      useTariffWorkbench({
-        rules: rulesSync(),
-        source: 'library "org.fees"\n\nfn fee() -> Money {\n  return nope\n}\n',
-        kind: "library",
-        context: null,
-      }),
+    const { result } = renderHook(
+      () =>
+        useTariffWorkbench({
+          rules: rulesSync(),
+          source: 'library "org.fees"\n\nfn fee() -> Money {\n  return nope\n}\n',
+          kind: "library",
+          context: null,
+          tablesStamp: "",
+        }),
+      { wrapper },
     );
     expect(result.current.errors).toBeGreaterThan(0);
     expect(result.current.tests).toEqual({ status: "blocked", errors: result.current.errors });
@@ -77,8 +94,16 @@ test "the fee" {
 
 describe("useTariffWorkbench on an empty file", () => {
   it("reports no findings, so the Studio shows where to start instead", () => {
-    const { result } = renderHook(() =>
-      useTariffWorkbench({ rules: rulesSync(), source: "  \n", kind: "tariff", context: null }),
+    const { result } = renderHook(
+      () =>
+        useTariffWorkbench({
+          rules: rulesSync(),
+          source: "  \n",
+          kind: "tariff",
+          context: null,
+          tablesStamp: "",
+        }),
+      { wrapper },
     );
     expect(result.current.check.diagnostics).toEqual([]);
     expect(result.current.errors).toBe(0);

@@ -14,10 +14,12 @@ const TABS: { value: Exclude<Tab, "nova">; label: string }[] = [
 
 const ran = (passed: number, failed: number): TariffTestsState => ({
   status: "ran",
-  run: { tests: [], error: null },
+  run: { tests: [], needs: [], error: null },
   passed,
   failed,
   stale: false,
+  cells: "ready",
+  retryCells: () => {},
 });
 
 function strip(tests: TariffTestsState, overrides: { tab?: Tab; novaBusy?: boolean } = {}) {

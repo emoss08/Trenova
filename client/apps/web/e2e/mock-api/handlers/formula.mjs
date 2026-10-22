@@ -124,7 +124,24 @@ function studioContext(state) {
       versionNumber: approved.versionNumber,
     });
   }
-  return { context: tariffContext(state), libraries };
+  return { context: tariffContext(state), libraries, tablesStamp: TABLES_STAMP };
+}
+
+/** The rate table stamp the mock's context is read at: it has no rate tables, so it never moves. */
+const TABLES_STAMP = "0:0:0";
+
+/**
+ * `POST /context/cells`: the cells of the rate table combinations the browser's tests need. The
+ * mock's context has no rate tables, so every needed table is unknown and left out, as Go does.
+ */
+function contextCells(state, _path, body) {
+  const needs = Array.isArray(body?.needs) ? body.needs : [];
+  if (needs.length === 0) return invalid("needs", "Name the rate table cells to load", "REQUIRED");
+  const known = new Set(tariffContext(state).tables.map((table) => table.code));
+  const tables = [...new Set(needs.map((need) => need.table))]
+    .filter((code) => known.has(code))
+    .map((code) => ({ code, cells: [], loaded: body.whole ? null : [] }));
+  return { stamp: TABLES_STAMP, tables };
 }
 
 const checks = new Map();
@@ -1298,6 +1315,7 @@ export const FORMULA_ROUTES = [
   ["GET", route(""), listTemplates],
   ["POST", route(""), createTemplate],
   ["GET", route("/context"), studioContext],
+  ["POST", route("/context/cells"), contextCells],
   ["GET", route("/standards"), listStandards],
   ["POST", route("/install-standards"), installStandards],
   ["POST", route("/test"), preview],

@@ -13,10 +13,12 @@ const clean = tariffCheckResultSchema.parse({ ok: true, diagnostics: [] });
 const failing = tariffCheckResultSchema.parse({ ok: false, diagnostics: [finding] });
 const passing: TariffTestsState = {
   status: "ran",
-  run: { tests: [], error: null },
+  run: { tests: [], needs: [], error: null },
   passed: 2,
   failed: 0,
   stale: false,
+  cells: "ready",
+  retryCells: () => {},
 };
 
 describe("proposalCheck", () => {

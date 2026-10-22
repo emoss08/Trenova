@@ -57,7 +57,10 @@ import {
 import {
   tariffStudioContextSchema,
   tariffInputDeclarationsSchema,
+  tariffTableCellsSchema,
+  type TariffNeed,
   type TariffStudioContext,
+  type TariffTableCells,
   type TariffInputDeclaration,
   type TariffInputValues,
 } from "@trenova/shared/types/tariff";
@@ -148,6 +151,20 @@ export class FormulaTemplateService {
   public async getContext(options?: RequestOptions): Promise<TariffStudioContext> {
     const response = await api.get<unknown>(`${BASE}/context`, { signal: options?.signal });
     return safeParse(tariffStudioContextSchema, response, "Tariff Context");
+  }
+
+  /**
+   * The rate table cells a file's tests read in the browser (the `needs` `tariff.test` answered),
+   * or with `whole` the tables those needs name, entire, with the stamp they were read at.
+   */
+  public async getContextCells(
+    request: { needs: readonly TariffNeed[]; whole: boolean },
+    options?: RequestOptions,
+  ): Promise<TariffTableCells> {
+    const response = await api.post<unknown>(`${BASE}/context/cells`, request, {
+      signal: options?.signal,
+    });
+    return safeParse(tariffTableCellsSchema, response, "Tariff Table Cells");
   }
 
   /** Rates the source against the sample record, or a real shipment, with the given inputs. */
