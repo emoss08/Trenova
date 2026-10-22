@@ -354,6 +354,7 @@ impl Printer<'_> {
         let mut cases = Vec::new();
         let mut current = expr;
         let mut first = true;
+        let mut lead = ": ";
         while let ExprKind::Ternary(Ternary {
             test,
             then,
@@ -363,7 +364,7 @@ impl Printer<'_> {
             if !first && current.parens > 0 {
                 break;
             }
-            let column = if first { indent } else { next + 2 };
+            let column = if first { indent } else { next + lead.len() };
             let test = self.node(test, column, next);
             let branch = match then {
                 None => format!("{test} ?:"),
@@ -375,17 +376,21 @@ impl Printer<'_> {
             cases.push(if first {
                 branch
             } else {
-                format!("{}: {branch}", pad(next))
+                format!("{}{lead}{branch}", pad(next))
             });
+            lead = if then.is_none() { "" } else { ": " };
             current = otherwise;
             first = false;
         }
         cases.push(format!(
-            "{}: {}",
+            "{}{lead}{}",
             pad(next),
-            self.node(current, next + 2, next)
+            self.node(current, next + lead.len(), next)
         ));
-        cases.join("\n")
+        cases.join(
+            "
+",
+        )
     }
 
     fn broken_call(&self, call: &Call, column: usize, indent: usize) -> String {
@@ -606,6 +611,9 @@ impl Printer<'_> {
                     return format!("{left} not {} {right}", binary.op.text());
                 }
                 if binary.op == BinaryOp::Range {
+                    if left.ends_with('.') || right.starts_with('.') {
+                        return format!("{left} .. {right}");
+                    }
                     return format!("{left}..{right}");
                 }
                 format!("{left} {} {right}", binary.op.text())
