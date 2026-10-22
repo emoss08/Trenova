@@ -408,8 +408,6 @@ virtuals:
   FormulaTemplate:
     - usageCount
     - scenarioCount
-  RateMatrix:
-    - formulaTemplateName
   VehiclePosition:
     - tractorCode
     - primaryWorkerId

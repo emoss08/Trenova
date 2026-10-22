@@ -60,9 +60,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.replaceCells,
 	)
 
-	density := api.Group("/density-scales")
-	density.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.listDensityScales)
-
 	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
 }
@@ -327,35 +324,6 @@ func (h *Handler) replaceCells(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-// @Summary List density classification scales
-// @ID listDensityScales
-// @Tags Rate Matrices
-// @Produce json
-// @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]ratematrix.DensityScale]
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 403 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /rate-matrices/density-scales/ [get]
-func (h *Handler) listDensityScales(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-	req := pagination.NewQueryOptions(c, authCtx)
-
-	pagination.List(
-		c,
-		req,
-		h.eh,
-		func() (*pagination.ListResult[*ratematrix.DensityScale], error) {
-			return h.service.ListDensityScales(
-				c.Request.Context(),
-				&ratematrixports.ListRateMatrixRequest{Filter: req},
-			)
-		},
-	)
 }
 
 // @Summary List rate matrix options

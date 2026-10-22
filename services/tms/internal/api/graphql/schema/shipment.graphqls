@@ -214,7 +214,8 @@ type Shipment {
   ownerId: ID
   enteredById: ID
   canceledById: ID
-  formulaTemplateId: ID!
+  "The tariff that rates the shipment. Null when it is rated by hand."
+  formulaTemplateId: ID
   consolidationGroupId: ID
   orderId: ID
   orderNumber: String
@@ -229,8 +230,12 @@ type Shipment {
   externalReference: String
   cancelReason: String!
   otherChargeAmount: Decimal!
+  "The sum of the freight lines."
   freightChargeAmount: Decimal!
-  baseRate: Decimal!
+  "The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value."
+  tariffInputs: JSON!
+  "The freight the shipment bills, line by line, as its last rating produced it."
+  freightLines: [ShipmentFreightLine!]!
   totalChargeAmount: Decimal!
   pieces: Int
   weight: Int
@@ -243,12 +248,11 @@ type Shipment {
   transferredToBillingAt: Timestamp
   markedReadyToBillAt: Timestamp
   billedAt: Timestamp
-  ratingUnit: Int!
   fuelSurchargeLocked: Boolean!
   ratingDetail: ShipmentRatingDetail
   """
   Whether this shipment still carries the rate its contract applied. It goes
-  false the moment somebody edits the rating method, the base rate, or one of
+  false the moment somebody edits the tariff, its inputs, or one of
   the contract's own accessorial charges.
   """
   autoRated: Boolean!
@@ -282,22 +286,53 @@ type Shipment {
   billingSplitSummary: [ShipmentBillingSplitSummary!]!
 }
 
-"One line of the arithmetic that produced the rate, in the order it was applied."
-type ShipmentRatingBreakdownItem {
-  name: String!
+"One freight line of a shipment's bill."
+type ShipmentFreightLine {
   label: String!
-  amount: Float!
-  "Set when the line could not be evaluated, in which case the amount is zero."
-  error: String!
+  quantity: Decimal
+  "The quantity's unit, such as mi or cwt."
+  quantityUnit: String!
+  rate: Decimal
+  "The rate's unit, such as $/mi."
+  rateUnit: String!
+  amount: Decimal!
 }
 
-"A bound that changed the answer — a minimum or maximum charge that took over from the computed rate."
-type ShipmentRatingGuardrail {
-  applied: Boolean!
-  bound: String!
-  rawResult: Float!
-  minCharge: Float
-  maxCharge: Float
+"One line of a bill a tariff produced. Freight lines have no code; accessorial lines carry their catalog code."
+type TariffBillLine {
+  "Charge, Minimum, Maximum or Rounding."
+  kind: String!
+  label: String!
+  code: String!
+  quantity: Decimal
+  quantityUnit: String!
+  rate: Decimal
+  rateUnit: String!
+  amount: Decimal!
+}
+
+"The conversion a bill was priced through when the tariff's currency differs from the billing currency."
+type TariffBillExchange {
+  currency: String!
+  rate: Decimal!
+}
+
+"The bill a tariff produced for a shipment."
+type TariffBill {
+  currency: String!
+  lines: [TariffBillLine!]!
+  notes: [String!]!
+  freightTotal: Decimal!
+  accessorialTotal: Decimal!
+  total: Decimal!
+  exchange: TariffBillExchange
+}
+
+"A charge the shipment's other engines left out because the tariff already billed its code."
+type ShipmentRatingSkip {
+  code: String!
+  "RateAgreement, Detention or FuelSurcharge."
+  source: String!
 }
 
 """
@@ -310,15 +345,21 @@ and copying it here would let the two drift.
 type ShipmentRatingDetail {
   formulaTemplateId: String!
   formulaTemplateName: String!
-  expression: String!
-  "Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended."
-  resolvedVariables: JSON!
-  result: Float!
   ratedAt: Timestamp!
-  "Zero when the rate did not come from a versioned formula template."
+  "The template version that rated the shipment. Zero when it was rated by hand."
   versionNumber: Int!
-  breakdown: [ShipmentRatingBreakdownItem!]!
-  guardrail: ShipmentRatingGuardrail
+  "The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand."
+  bill: TariffBill
+  "The tariff's reason for refusing to rate the shipment."
+  refusal: String!
+  "The inputs the tariff priced with, by name. Each value is a Tariff wire value."
+  inputs: JSON!
+  skipped: [ShipmentRatingSkip!]!
+  """
+  The values each statement of the tariff took and the table lookups it made, for the
+  people who may read formula templates. Null for everyone else and for a hand rate.
+  """
+  trace: JSON
   rateQuoteId: String!
   agreementId: String!
   agreementName: String!
@@ -342,27 +383,37 @@ type ShipmentContractRate {
   agreementName: String!
   ruleId: ID
   ruleLabel: String!
-  "The rating method the contract seats on the shipment."
+  "The tariff the contract seats on the shipment."
   formulaTemplateId: ID
   formulaTemplateName: String!
-  "The rate that method prices with. Null when the rule defers to the shipment."
-  baseRate: Decimal
-  linehaulAmount: Decimal!
+  templateVersion: Int!
+  "The inputs the contract prices with, by name. Each value is a Tariff wire value."
+  inputs: JSON!
+  "The tariff's reason for refusing to rate the shipment."
+  refusal: String!
+  freightLines: [ShipmentFreightLine!]!
+  freightAmount: Decimal!
   otherChargeAmount: Decimal!
   totalChargeAmount: Decimal!
-  "What the shipment charged before, so a dialog can state the change."
-  previousLinehaulAmount: Decimal!
-  accessorials: [ShipmentContractRateAccessorial!]!
+  "What the shipment charged for freight before, so a dialog can state the change."
+  previousFreightAmount: Decimal!
+  "The accessorials the contract bills: the tariff's own coded lines and the agreement's schedule."
+  charges: [ShipmentContractRateCharge!]!
   explanation: String!
 }
 
-"One charge a contract applies automatically to every shipment it prices."
-type ShipmentContractRateAccessorial {
+"One accessorial a contract bills on a shipment it prices."
+type ShipmentContractRateCharge {
   accessorialChargeId: ID!
+  code: String!
   description: String!
-  method: AccessorialMethod!
+  "Tariff when the tariff billed it, RateAgreement when the agreement's schedule did."
+  owner: String!
+  label: String!
   amount: Decimal!
-  unit: Int!
+  quantity: Decimal
+  rate: Decimal
+  rateUnit: String!
 }
 
 "The result of re-rating a saved shipment from its contract."
@@ -407,11 +458,7 @@ type ShipmentFormulaTemplate {
   businessUnitId: ID!
   name: String!
   description: String!
-  type: String!
-  expression: String!
   status: String!
-  schemaId: String!
-  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
   "Formula template metadata is admin-defined and intentionally open-ended."
   metadata: JSON
   version: Int!
@@ -420,16 +467,6 @@ type ShipmentFormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-}
-
-type ShipmentFormulaVariableDefinition {
-  name: String!
-  type: String!
-  description: String!
-  required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
 }
 
 enum MoveCoverageType {
@@ -620,6 +657,14 @@ type ShipmentAdditionalCharge {
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
   isDetention: Boolean!
+  "Whether the shipment's tariff billed this charge."
+  isTariff: Boolean!
+  "The tariff's label for the charge."
+  label: String!
+  quantity: Decimal
+  rate: Decimal
+  "The rate's unit, such as $/mi."
+  rateUnit: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -830,11 +875,10 @@ type ShipmentPreviousRateSummary {
   customerId: ID!
   serviceTypeId: ID!
   shipmentTypeId: ID!
-  formulaTemplateId: ID!
+  formulaTemplateId: ID
   freightChargeAmount: Decimal!
   otherChargeAmount: Decimal!
   totalChargeAmount: Decimal!
-  ratingUnit: Int!
   pieces: Int
   weight: Int
   createdAt: Timestamp!
@@ -1614,7 +1658,8 @@ input ShipmentInput {
   ownerId: ID
   enteredById: ID
   canceledById: ID
-  formulaTemplateId: ID!
+  "Null rates the shipment by hand at its freight charge amount."
+  formulaTemplateId: ID
   consolidationGroupId: ID
   orderId: ID
   status: ShipmentStatus = New
@@ -1627,7 +1672,8 @@ input ShipmentInput {
   cancelReason: String
   otherChargeAmount: Decimal = "0"
   freightChargeAmount: Decimal = "0"
-  baseRate: Decimal = "0"
+  "The values the tariff prices with, by input name, as Tariff wire values. Omitted inputs take the template's defaults."
+  tariffInputs: JSON
   totalChargeAmount: Decimal = "0"
   pieces: Int
   weight: Int
@@ -1640,7 +1686,6 @@ input ShipmentInput {
   transferredToBillingAt: Timestamp
   markedReadyToBillAt: Timestamp
   billedAt: Timestamp
-  ratingUnit: Int = 1
   fuelSurchargeLocked: Boolean = false
   """
   Why this shipment is billed at something other than its contract rate. It is

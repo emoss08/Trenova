@@ -102,7 +102,7 @@ models:
         resolver: true
   ShipmentRatingDetail:
     fields:
-      expression:
+      trace:
         resolver: true
   ShipmentCustomer:
     fields:

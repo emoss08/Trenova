@@ -37,7 +37,6 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 		Status:            shipmentdomain.StatusNew,
 		EntryMethod:       shipmentdomain.EntryMethodManual,
 		ProNumber:         "SHP-100",
-		RatingUnit:        1,
 		Customer: &customer.Customer{
 			ID:                    customerID,
 			BusinessUnitID:        buID,
@@ -60,10 +59,7 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 			OrganizationID:       orgID,
 			Name:                 "Standard",
 			Description:          "Standard tariff",
-			Type:                 formulatemplate.TemplateTypeFreightCharge,
-			Expression:           "base",
 			Status:               formulatemplate.StatusActive,
-			SchemaID:             "shipment",
 			Metadata:             map[string]any{"mode": "auto"},
 			Version:              5,
 			SourceVersionNumber:  &sourceVersion,

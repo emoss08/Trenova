@@ -6,14 +6,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,22 +51,20 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 	unit := 4
 	pieces := 6
 	weight := 700
-	ratingUnit := 2
 
 	entity, err := shipmentFromInput(gqlmodel.ShipmentInput{
 		ServiceTypeID:         serviceTypeID.String(),
 		ShipmentTypeID:        shipmentTypeID.String(),
 		CustomerID:            customerID.String(),
-		FormulaTemplateID:     formulaTemplateID.String(),
+		FormulaTemplateID:     new(formulaTemplateID.String()),
 		Status:                &status,
 		ProNumber:             new("SHP-100"),
 		OtherChargeAmount:     new("1.25"),
 		FreightChargeAmount:   new("2.50"),
-		BaseRate:              new("3.75"),
+		TariffInputs:          map[string]any{"rate": map[string]any{"$q": "3.75", "u": "$/mi"}},
 		TotalChargeAmount:     new("5.00"),
 		TemperatureMin:        new(-10),
 		TemperatureMax:        new(42),
-		RatingUnit:            &ratingUnit,
 		SourceDocumentID:      new("doc_123"),
 		BillingTransferStatus: new("Pending"),
 		Moves: []*gqlmodel.ShipmentMoveInput{
@@ -112,13 +111,15 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 	assert.Equal(t, "SHP-100", entity.ProNumber)
 	assert.Equal(t, "1.25", entity.OtherChargeAmount.Decimal.String())
 	assert.Equal(t, "2.5", entity.FreightChargeAmount.Decimal.String())
-	assert.Equal(t, "3.75", entity.BaseRate.Decimal.String())
+	rate, err := rules.DecodeQuantity(entity.TariffInputs["rate"])
+	require.NoError(t, err)
+	assert.Equal(t, "3.75", rate.Value.String())
+	assert.Equal(t, "$/mi", rate.Unit)
 	assert.Equal(t, "5", entity.TotalChargeAmount.Decimal.String())
 	require.NotNil(t, entity.TemperatureMin)
 	require.NotNil(t, entity.TemperatureMax)
 	assert.Equal(t, int16(-10), *entity.TemperatureMin)
 	assert.Equal(t, int16(42), *entity.TemperatureMax)
-	assert.Equal(t, int64(2), entity.RatingUnit)
 	assert.Equal(t, "doc_123", entity.SourceDocumentID)
 
 	require.Len(t, entity.Moves, 1)
@@ -159,7 +160,7 @@ func TestShipmentFromInput_RejectsOutOfRangeTemperature(t *testing.T) {
 		ServiceTypeID:     pulid.MustNew("svc_").String(),
 		ShipmentTypeID:    pulid.MustNew("sht_").String(),
 		CustomerID:        pulid.MustNew("cus_").String(),
-		FormulaTemplateID: pulid.MustNew("ft_").String(),
+		FormulaTemplateID: new(pulid.MustNew("ft_").String()),
 		TemperatureMin:    new(40_000),
 	}, pulid.Nil, &authctx.AuthContext{
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -170,45 +171,26 @@ func TestShipmentFromInput_RejectsOutOfRangeTemperature(t *testing.T) {
 	assert.Contains(t, err.Error(), "temperatureMin")
 }
 
-// The contract preview prices a shipment that is still being typed, and what a
-// rater is waiting for it to tell them is the rating method. Refusing the
-// mapping because none has been chosen refuses the question before it can be
-// asked, and no shipment created through the panel is ever auto-rated.
-func TestShipmentFromInput_AllowsANewShipmentWithNoRatingMethod(t *testing.T) {
+// A shipment with no tariff is rated by hand at the freight charge it carries,
+// new or saved, so a missing template is not an error.
+func TestShipmentFromInput_AllowsAShipmentRatedByHand(t *testing.T) {
 	t.Parallel()
 
-	entity, err := shipmentFromInput(gqlmodel.ShipmentInput{
-		ServiceTypeID:     pulid.MustNew("svc_").String(),
-		ShipmentTypeID:    pulid.MustNew("sht_").String(),
-		CustomerID:        pulid.MustNew("cus_").String(),
-		FormulaTemplateID: "",
-	}, pulid.Nil, &authctx.AuthContext{
-		BusinessUnitID: pulid.MustNew("bu_"),
-		OrganizationID: pulid.MustNew("org_"),
-	})
+	for _, id := range []pulid.ID{pulid.Nil, pulid.MustNew("shp_")} {
+		entity, err := shipmentFromInput(gqlmodel.ShipmentInput{
+			ServiceTypeID:  pulid.MustNew("svc_").String(),
+			ShipmentTypeID: pulid.MustNew("sht_").String(),
+			CustomerID:     pulid.MustNew("cus_").String(),
+		}, id, &authctx.AuthContext{
+			BusinessUnitID: pulid.MustNew("bu_"),
+			OrganizationID: pulid.MustNew("org_"),
+		})
 
-	require.NoError(t, err)
-	assert.True(t, entity.FormulaTemplateID.IsNil())
-}
-
-// An existing shipment's rating method is a field the rater owns and nothing
-// restores on save, so a payload arriving without one would unprice a load
-// somebody had already rated.
-func TestShipmentFromInput_RequiresARatingMethodOnAnExistingShipment(t *testing.T) {
-	t.Parallel()
-
-	_, err := shipmentFromInput(gqlmodel.ShipmentInput{
-		ServiceTypeID:     pulid.MustNew("svc_").String(),
-		ShipmentTypeID:    pulid.MustNew("sht_").String(),
-		CustomerID:        pulid.MustNew("cus_").String(),
-		FormulaTemplateID: "",
-	}, pulid.MustNew("shp_"), &authctx.AuthContext{
-		BusinessUnitID: pulid.MustNew("bu_"),
-		OrganizationID: pulid.MustNew("org_"),
-	})
-
-	require.Error(t, err)
-	assertRatingMethodError(t, err, errortypes.ErrRequired)
+		require.NoError(t, err)
+		assert.True(t, entity.FormulaTemplateID.IsNil())
+		assert.True(t, entity.RatedByHand())
+		assert.NotNil(t, entity.TariffInputs)
+	}
 }
 
 // A value that is present but not an identifier is a client bug either way, and
@@ -220,7 +202,7 @@ func TestShipmentFromInput_RejectsAMalformedRatingMethodOnANewShipment(t *testin
 		ServiceTypeID:     pulid.MustNew("svc_").String(),
 		ShipmentTypeID:    pulid.MustNew("sht_").String(),
 		CustomerID:        pulid.MustNew("cus_").String(),
-		FormulaTemplateID: "not-an-id",
+		FormulaTemplateID: new("not-an-id"),
 	}, pulid.Nil, &authctx.AuthContext{
 		BusinessUnitID: pulid.MustNew("bu_"),
 		OrganizationID: pulid.MustNew("org_"),

@@ -1788,7 +1788,7 @@ type InvoiceAdjustmentLineResolver interface {
 type InvoiceChargeGroupResolver interface {
 	ChargeCode(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	ChargeMethod(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.Method, error)
-	RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.RateUnit, error)
+	RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	Rate(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	RateBasisAmount(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	Quantity(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
@@ -3410,7 +3410,7 @@ type ShipmentMoveJurisdictionMileResolver interface {
 }
 
 type ShipmentRatingDetailResolver interface {
-	Expression(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (string, error)
+	Trace(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (map[string]any, error)
 }
 
 type TCASubscriptionResolver interface {

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -28,11 +29,11 @@ import (
 
 type visibleShipment struct {
 	FormulaTemplate *struct {
-		Expression string `json:"expression"`
+		Name string `json:"name"`
 	} `json:"formulaTemplate"`
 	RatingDetail struct {
-		FormulaTemplateName string `json:"formulaTemplateName"`
-		Expression          string `json:"expression"`
+		FormulaTemplateName string         `json:"formulaTemplateName"`
+		Trace               map[string]any `json:"trace"`
 	} `json:"ratingDetail"`
 }
 
@@ -46,10 +47,10 @@ func ratedItem() *billingqueue.BillingQueueItem {
 		ID: pulid.MustNew("bqi_"),
 		Shipment: &shipment.Shipment{
 			ID:              pulid.MustNew("shp_"),
-			FormulaTemplate: &formulatemplate.FormulaTemplate{Expression: "miles * rate"},
+			FormulaTemplate: &formulatemplate.FormulaTemplate{Name: "Per mile"},
 			RatingDetail: &shipment.RatingDetail{
 				FormulaTemplateName: "Per mile",
-				Expression:          "miles * rate",
+				Trace:               rules.RawJSON(`{"statements":["miles * rate"]}`),
 			},
 		},
 	}
@@ -144,13 +145,13 @@ func TestBillingQueueHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			assert.Equal(t, "Per mile", body.Shipment.RatingDetail.FormulaTemplateName)
 			if tt.wantVisible {
 				require.NotNil(t, body.Shipment.FormulaTemplate)
-				assert.Equal(t, "miles * rate", body.Shipment.FormulaTemplate.Expression)
-				assert.Equal(t, "miles * rate", body.Shipment.RatingDetail.Expression)
+				assert.Equal(t, "Per mile", body.Shipment.FormulaTemplate.Name)
+				assert.NotEmpty(t, body.Shipment.RatingDetail.Trace)
 				return
 			}
 			assert.Nil(t, body.Shipment.FormulaTemplate)
-			assert.Empty(t, body.Shipment.RatingDetail.Expression)
-			assert.Equal(t, "miles * rate", item.Shipment.RatingDetail.Expression)
+			assert.Empty(t, body.Shipment.RatingDetail.Trace)
+			assert.NotEmpty(t, item.Shipment.RatingDetail.Trace, "the stored shipment keeps its trace")
 		})
 	}
 }
@@ -185,6 +186,6 @@ func TestBillingQueueHandler_List_HidesFormulaContentWithoutFormulaRead(t *testi
 	require.NoError(t, ginCtx.ResponseJSON(&body))
 	require.Len(t, body.Items, 2)
 	assert.Nil(t, body.Items[0].Shipment.FormulaTemplate)
-	assert.Empty(t, body.Items[0].Shipment.RatingDetail.Expression)
+	assert.Empty(t, body.Items[0].Shipment.RatingDetail.Trace)
 	assert.Equal(t, "Per mile", body.Items[0].Shipment.RatingDetail.FormulaTemplateName)
 }
