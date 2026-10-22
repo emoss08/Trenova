@@ -440,20 +440,28 @@ cases:
     expect: [formula_list_templates]
   - request: which rating methods are active
     expect: [formula_list_templates]
-  - request: show me the reefer formula template with its minimum charge and rounding
+  - request: show me the reefer formula template with its source and inputs
     expect: [formula_get_template, formula_list_templates]
-  - request: what variables and functions can a rating formula use
-    expect: [formula_describe_schema]
-  - request: describe the formula schema and its rate tables
-    expect: [formula_describe_schema]
-  - request: test this formula expression on a 500 mile load
-    expect: [formula_test_expression]
-  - request: what would this formula charge for a sample load
-    expect: [formula_test_expression]
+  - request: what fields and functions can a tariff formula use
+    expect: [formula_describe_language]
+  - request: describe the formula language and our rate tables
+    expect: [formula_describe_language]
+  - request: check this tariff source for errors
+    expect: [formula_check]
+  - request: run the tests in this formula
+    expect: [formula_run_tests]
+  - request: what would this formula charge on shipment 1042
+    expect: [formula_preview]
   - request: write a formula that charges per mile with a minimum
     expect: [formula_propose]
   - request: propose a rating formula with a hazmat surcharge
     expect: [formula_propose]
+  - request: list our shared formula libraries
+    expect: [formula_list_libraries]
+  - request: show me the accessorials library source
+    expect: [formula_get_library, formula_list_libraries]
+  - request: add a liftgate function to this formula library
+    expect: [formula_library_propose]
   - request: reopen the canceled shipment, the load is back on
     expect: [shipment_uncancel]
   - request: make Maria the owner of shipment 4471

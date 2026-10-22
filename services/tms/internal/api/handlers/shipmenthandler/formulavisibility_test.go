@@ -25,7 +25,7 @@ import (
 
 type formulaVisibilityShipment struct {
 	FormulaTemplate *struct {
-		Name string `json:"name"`
+		Source string `json:"source"`
 	} `json:"formulaTemplate"`
 	RatingDetail struct {
 		FormulaTemplateName string         `json:"formulaTemplateName"`
@@ -39,7 +39,7 @@ type formulaVisibilityShipment struct {
 func ratedShipment(id pulid.ID) *shipment.Shipment {
 	return &shipment.Shipment{
 		ID:              id,
-		FormulaTemplate: &formulatemplate.FormulaTemplate{Name: "Per pound"},
+		FormulaTemplate: &formulatemplate.FormulaTemplate{Source: "tariff \"Per pound\"\n"},
 		RatingDetail: &shipment.RatingDetail{
 			FormulaTemplateName: "Per pound",
 			Trace:               rules.RawJSON(`{"statements":["weight * 2"]}`),
@@ -107,7 +107,7 @@ func TestShipmentHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			assert.Equal(t, "42", body.RatingDetail.Bill.Total)
 			if tt.wantVisible {
 				require.NotNil(t, body.FormulaTemplate)
-				assert.Equal(t, "Per pound", body.FormulaTemplate.Name)
+				assert.Equal(t, "tariff \"Per pound\"\n", body.FormulaTemplate.Source)
 				assert.NotEmpty(t, body.RatingDetail.Trace)
 				return
 			}

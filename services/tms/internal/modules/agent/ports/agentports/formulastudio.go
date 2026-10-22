@@ -4,41 +4,36 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type FormulaStudioDraft struct {
-	TemplateID  pulid.ID
-	Name        string
-	Description string
-	Type        formulatemplate.TemplateType
-	SchemaID    string
-	Content     formulatemplate.ScenarioContent
+	TemplateID  pulid.ID `json:"templateId"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Source      string   `json:"source"`
 }
 
 type ExplainFormulaRequest struct {
-	TenantInfo   pagination.TenantInfo
-	Draft        FormulaStudioDraft
-	SampleValues map[string]any
-	ShipmentID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Draft      FormulaStudioDraft
+	Inputs     tarifftypes.Inputs
+	ShipmentID pulid.ID
 }
 
-type FormulaStatementNote struct {
-	StatementIndex int    `json:"statementIndex"`
-	Says           string `json:"says"`
+type FormulaTraceNote struct {
+	Index int                `json:"index"`
+	Range *rules.TariffRange `json:"range"`
+	Says  string             `json:"says"`
 }
 
 type ExplainFormulaResponse struct {
-	Statements   []formulatemplatetypes.Statement      `json:"statements"`
-	Items        []FormulaStatementNote                `json:"items"`
-	RawAmount    *string                               `json:"rawAmount"`
-	BilledAmount *string                               `json:"billedAmount"`
-	Guardrail    *formulatemplatetypes.GuardrailResult `json:"guardrail"`
+	Preview *formulatemplateports.PreviewResult `json:"preview"`
+	Items   []FormulaTraceNote                  `json:"items"`
 }
 
 type DescribeFormulaInputsRequest struct {
@@ -50,41 +45,50 @@ type DescribeFormulaInputsResponse struct {
 	Descriptions map[string]string `json:"descriptions"`
 }
 
-type ExistingFormulaScenario struct {
-	Name      string         `json:"name"`
-	Variables map[string]any `json:"variables"`
-}
-
-type SuggestFormulaScenariosRequest struct {
+type SuggestFormulaTestsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Draft      FormulaStudioDraft
-	Existing   []ExistingFormulaScenario
 }
 
-type SuggestFormulaScenariosResponse struct {
-	Scenarios []pagedraft.PricedScenario `json:"scenarios"`
+type SuggestedFormulaTest struct {
+	Name     string                    `json:"name"`
+	Block    string                    `json:"block"`
+	Status   rules.TariffTestStatus    `json:"status"`
+	Failures []rules.TariffTestFailure `json:"failures,omitempty"`
 }
 
-type ExplainFormulaScenarioRequest struct {
+type SuggestFormulaTestsResponse struct {
+	Tests []SuggestedFormulaTest `json:"tests"`
+}
+
+type FormulaTestVerdict string
+
+const (
+	FormulaTestVerdictIntended = FormulaTestVerdict("intended")
+	FormulaTestVerdictBug      = FormulaTestVerdict("bug")
+	FormulaTestVerdictUnclear  = FormulaTestVerdict("unclear")
+)
+
+func (v FormulaTestVerdict) IsValid() bool {
+	switch v {
+	case FormulaTestVerdictIntended, FormulaTestVerdictBug, FormulaTestVerdictUnclear:
+		return true
+	default:
+		return false
+	}
+}
+
+type ExplainFormulaTestRequest struct {
 	TenantInfo pagination.TenantInfo
-	TemplateID pulid.ID
-	TestCaseID pulid.ID
-	Candidate  formulatemplate.ScenarioContent
+	Draft      FormulaStudioDraft
+	TestName   string
 }
 
-type ExplainFormulaScenarioResponse struct {
-	Verdict           formulatemplateports.ScenarioVerdict    `json:"verdict"`
-	Why               string                                  `json:"why"`
-	Generated         bool                                    `json:"generated"`
-	Expected          string                                  `json:"expected"`
-	Actual            *string                                 `json:"actual"`
-	Delta             *string                                 `json:"delta"`
-	BaselineLabel     string                                  `json:"baselineLabel"`
-	RecordedOnVersion *int64                                  `json:"recordedOnVersion"`
-	RecordedBy        *formulatemplateports.ScenarioRecorder  `json:"recordedBy"`
-	Error             string                                  `json:"error,omitempty"`
-	ErrorCode         string                                  `json:"errorCode,omitempty"`
-	Rows              []formulatemplateports.ScenarioTraceRow `json:"rows"`
+type ExplainFormulaTestResponse struct {
+	Verdict   FormulaTestVerdict      `json:"verdict"`
+	Why       string                  `json:"why"`
+	Generated bool                    `json:"generated"`
+	Test      *rules.TariffTestResult `json:"test"`
 }
 
 type DraftFormulaReviewNoteRequest struct {
@@ -110,16 +114,16 @@ type FormulaStudioAssist interface {
 		req *DescribeFormulaInputsRequest,
 		actor *permissionports.RequestActor,
 	) (*DescribeFormulaInputsResponse, error)
-	SuggestScenarios(
+	SuggestTests(
 		ctx context.Context,
-		req *SuggestFormulaScenariosRequest,
+		req *SuggestFormulaTestsRequest,
 		actor *permissionports.RequestActor,
-	) (*SuggestFormulaScenariosResponse, error)
-	ExplainScenario(
+	) (*SuggestFormulaTestsResponse, error)
+	ExplainTest(
 		ctx context.Context,
-		req *ExplainFormulaScenarioRequest,
+		req *ExplainFormulaTestRequest,
 		actor *permissionports.RequestActor,
-	) (*ExplainFormulaScenarioResponse, error)
+	) (*ExplainFormulaTestResponse, error)
 	DraftReviewNote(
 		ctx context.Context,
 		req *DraftFormulaReviewNoteRequest,

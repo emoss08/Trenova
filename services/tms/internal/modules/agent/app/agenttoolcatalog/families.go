@@ -91,7 +91,9 @@ var families = [...][]string{
 	{"edi_preview_x12", "edi_send_status_update"},
 	{"edi_draft_connection", "edi_apply_connection_draft"},
 	{"rate_list_agreements", "rate_get_agreement", "rate_explain"},
-	{"formula_describe_schema", "formula_test_expression", "formula_propose"},
+	{"formula_describe_language", "formula_check", "formula_run_tests", "formula_propose"},
+	{"formula_preview", "formula_get_template", "formula_run_tests"},
+	{"formula_list_libraries", "formula_get_library", "formula_library_propose"},
 	{
 		"intake_accept_field",
 		"intake_accept_confident",

@@ -2,9 +2,11 @@ package rating
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryreviewrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplatereviewrepository"
-	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplatetestcaserepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplateversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/fuelsurchargerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateagreementrepository"
@@ -15,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratesimulationrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratezonerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -40,9 +42,12 @@ func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			formulatemplaterepository.New,
-			formulatemplatetestcaserepository.New,
 			formulatemplatereviewrepository.New,
 			formulatemplateversionrepository.New,
+			formulalibraryrepository.New,
+			formulalibraryversionrepository.New,
+			formulalibraryreviewrepository.New,
+			rateagreementrepository.NewTemplateInputsLister,
 			rateconfirmationrepository.New,
 			rateagreementrepository.New,
 			ratezonerepository.New,
@@ -81,8 +86,9 @@ func SharedOptions() fx.Option {
 			tariff.NewRecordSource,
 			func(r *tariff.RecordSource) tariffports.RecordBuilder { return r },
 		),
-		formula.Module,
+		tariff.AuthoringModule,
 		formulatemplateservice.Module,
+		formulalibraryservice.Module,
 		rateengine.Module,
 	)
 }

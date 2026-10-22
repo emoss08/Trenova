@@ -65,7 +65,6 @@ func TestSubmit_OpensARoundAgainstTheApprovedBase(t *testing.T) {
 	reviews := primeReviews(deps, nil)
 
 	template := newTestTemplate()
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -101,7 +100,6 @@ func TestSubmit_AfterChangesRequestedStaysInTheSameRound(t *testing.T) {
 	})
 
 	template := newTestTemplate()
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -293,8 +291,15 @@ func approvableTemplate(deps *testDeps) *formulatemplate.FormulaTemplate {
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
+	allowApprovalReads(deps)
 	return template
+}
+
+func allowApprovalReads(deps *testDeps) {
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return((*formulatemplate.FormulaTemplateVersion)(nil), nil).Maybe()
+	deps.repo.On("CountUsages", mock.Anything, mock.Anything).
+		Return(&formulatemplateports.GetTemplateUsageResponse{}, nil).Maybe()
 }
 
 func TestApprove_TheApprovedSnapshotTakesEffectWhenApproved(t *testing.T) {

@@ -6379,6 +6379,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "source",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
+					return obj.Source, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "status",
 				NonNull:  true,
 				ChildErr: errNoChild2,
@@ -6387,6 +6397,16 @@ var Shard = &gqlexec.Shard{
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "testCount",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
+					return obj.TestCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
 				Name:     "metadata",

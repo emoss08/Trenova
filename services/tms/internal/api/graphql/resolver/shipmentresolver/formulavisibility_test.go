@@ -60,7 +60,10 @@ func TestShipmentFormulaContent_NeedsFormulaTemplateRead(t *testing.T) {
 			ctx := gqlctx.WithAuthContext(t.Context(), formulaVisibilityContext(t))
 
 			template, err := (&ShipmentResolver{deps}).FormulaTemplate(ctx, &gqlmodel.Shipment{
-				FormulaTemplate: &gqlmodel.ShipmentFormulaTemplate{Name: "Per Mile"},
+				FormulaTemplate: &gqlmodel.ShipmentFormulaTemplate{
+					Name:   "Per Mile",
+					Source: "tariff \"Per Mile\"\n",
+				},
 			})
 			require.NoError(t, err)
 			assert.Equal(t, tc.wantTemplate, template != nil)

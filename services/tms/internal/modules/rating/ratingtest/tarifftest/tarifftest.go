@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -39,11 +40,19 @@ func PerMile() *tariffports.Template {
 		Source:        PerMileSource,
 		Inputs: []tarifftypes.InputDecl{
 			{
-				Name:     "rate",
-				Type:     rules.RawJSON(`{"kind":"quantity","unit":"$/mi"}`),
+				Name: "rate",
+				Type: "Money/mi",
+				Descriptor: rules.RawJSON(
+					`{"dimension":"Money/Distance","kind":"quantity","unit":"$/mi"}`,
+				),
 				Required: true,
 			},
-			{Name: "minimumCharge", Type: rules.RawJSON(`{"kind":"money"}`)},
+			{
+				Name:       "minimumCharge",
+				Type:       "Money",
+				Descriptor: rules.RawJSON(`{"kind":"money"}`),
+				Default:    rules.MoneyValue(decimal.Zero),
+			},
 		},
 	}
 }

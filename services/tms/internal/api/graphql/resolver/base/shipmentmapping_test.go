@@ -59,6 +59,8 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 			OrganizationID:       orgID,
 			Name:                 "Standard",
 			Description:          "Standard tariff",
+			Source:               "tariff \"Standard\"\n",
+			TestCount:            2,
 			Status:               formulatemplate.StatusActive,
 			Metadata:             map[string]any{"mode": "auto"},
 			Version:              5,
@@ -128,6 +130,8 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 	assert.Equal(t, "Acme", model.Customer.Name)
 	require.NotNil(t, model.FormulaTemplate)
 	assert.Equal(t, "Standard", model.FormulaTemplate.Name)
+	assert.Equal(t, "tariff \"Standard\"\n", model.FormulaTemplate.Source)
+	assert.Equal(t, 2, model.FormulaTemplate.TestCount)
 	assert.Equal(t, map[string]any{"mode": "auto"}, model.FormulaTemplate.Metadata)
 	require.Len(t, model.AdditionalCharges, 1)
 	require.NotNil(t, model.AdditionalCharges[0].AccessorialCharge)

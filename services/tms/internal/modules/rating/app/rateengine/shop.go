@@ -8,8 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -73,7 +72,6 @@ func (s *Service) Shop(
 	// Every candidate reads the same tenant's rate tables, so the run pays for
 	// them once rather than once per carrier.
 	ctx = ratetablecache.With(ctx)
-	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
 	for _, candidate := range candidates {

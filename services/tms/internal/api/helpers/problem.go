@@ -24,12 +24,13 @@ type ProblemDetail struct {
 }
 
 type ValidationError struct {
-	Field    string `json:"field"`
-	Message  string `json:"message"`
-	Code     string `json:"code,omitempty"`
-	Location string `json:"location,omitempty"`
-	Args     []any  `json:"-"`
-	Details  string `json:"-"`
+	Field    string                  `json:"field"`
+	Message  string                  `json:"message"`
+	Code     string                  `json:"code,omitempty"`
+	Location string                  `json:"location,omitempty"`
+	Range    *errortypes.SourceRange `json:"range,omitempty"`
+	Args     []any                   `json:"-"`
+	Details  string                  `json:"-"`
 }
 
 type Message struct {

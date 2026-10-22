@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
@@ -264,6 +265,21 @@ func (f *FormulaTemplateStatsLoaderFactory) Attach(
 ) context.Context {
 	return attach(ctx, func(s *set) {
 		s.formulaTemplateStatsByID = newFormulaTemplateStatsLoader(f, tenantInfo)
+	})
+}
+
+func FormulaLibraryByID(ctx context.Context, key string) (*formulalibrary.FormulaLibrary, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, *formulalibrary.FormulaLibrary] {
+		return s.formulaLibraryByID
+	})
+}
+
+func (f *FormulaLibraryByIDLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.formulaLibraryByID = newFormulaLibraryByIDLoader(f, tenantInfo)
 	})
 }
 

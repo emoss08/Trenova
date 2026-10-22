@@ -29,7 +29,7 @@ import (
 
 type visibleShipment struct {
 	FormulaTemplate *struct {
-		Name string `json:"name"`
+		Source string `json:"source"`
 	} `json:"formulaTemplate"`
 	RatingDetail struct {
 		FormulaTemplateName string         `json:"formulaTemplateName"`
@@ -47,7 +47,7 @@ func ratedItem() *billingqueue.BillingQueueItem {
 		ID: pulid.MustNew("bqi_"),
 		Shipment: &shipment.Shipment{
 			ID:              pulid.MustNew("shp_"),
-			FormulaTemplate: &formulatemplate.FormulaTemplate{Name: "Per mile"},
+			FormulaTemplate: &formulatemplate.FormulaTemplate{Source: "tariff \"Per mile\"\n"},
 			RatingDetail: &shipment.RatingDetail{
 				FormulaTemplateName: "Per mile",
 				Trace:               rules.RawJSON(`{"statements":["miles * rate"]}`),
@@ -145,7 +145,7 @@ func TestBillingQueueHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			assert.Equal(t, "Per mile", body.Shipment.RatingDetail.FormulaTemplateName)
 			if tt.wantVisible {
 				require.NotNil(t, body.Shipment.FormulaTemplate)
-				assert.Equal(t, "Per mile", body.Shipment.FormulaTemplate.Name)
+				assert.Equal(t, "tariff \"Per mile\"\n", body.Shipment.FormulaTemplate.Source)
 				assert.NotEmpty(t, body.Shipment.RatingDetail.Trace)
 				return
 			}

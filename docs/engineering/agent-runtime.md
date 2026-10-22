@@ -2538,14 +2538,16 @@ tainted by the document, so every write it proposes waits for a person.
 `/assistant/threads/:id/turns/` route with `pageContext.draft`, a bounded copy
 of what the page holds (`pagedraft.Draft`): the fields read from the document
 with their confidence and status, the four required records and the stops, or
-the formula's expression and variables. The prompt renders it in a
+the Tariff source in the formula template or library editor (`formula`,
+`formulaLibrary`: id, name, description, source). The prompt renders it in a
 `<page_draft>` fence as data. `prepareTurn` refuses a draft on any thread that
 is not a live page thread of the matching surface, and re-checks that the
 subject is still readable.
 
 **Draft tools present; they do not save.** `intake_accept_field`,
 `intake_accept_confident`, `intake_set_field`, `intake_set_required_field`,
-`intake_set_stop_location`, `intake_set_stop_schedule` and `formula_propose` are query tools
+`intake_set_stop_location`, `intake_set_stop_schedule`, `formula_propose` and
+`formula_library_propose` are query tools
 with self scope and effect `present`. Each returns a `pagedraft.Edit`; the
 turn saves it as a `draft_edit` artifact and the artifact event carries it, and
 the page applies it once, the way a navigation artifact is followed. Nothing
@@ -2553,15 +2555,18 @@ reaches the database until the person creates the shipment or saves the
 formula. `intake_set_required_field` and `intake_set_stop_location` read the record they name
 under the person's own permission and hand the page its label.
 `location_create` is an internal-egress action at `ActWithApproval`, requiring
-location create. The formula tools price with the formula engine:
-`formula_describe_schema` lists the variables, functions and rate tables,
-`formula_test_expression` prices sample loads or a saved shipment the person
-may read, and `formula_propose` hands the editor an expression with its
-variables, an explanation and engine-priced scenarios, and, when it drafts a new
-template or the person asks for itemized lines, a name, a description, a type and
-breakdown lines, each line priced by the engine as part of the proposal's check. It requires formula
-template create or update. The model never states an amount the engine did not
-produce.
+location create. The formula tools run the Tariff module:
+`formula_describe_language` lists the record fields, types, units, methods, std
+modules, the organization's tables, accessorial codes and importable libraries
+(shortened, or in full for a query, with a library's source); `formula_check` and
+`formula_run_tests` answer the checker's findings with lines and columns and each
+test's outcome; `formula_preview` rates a source for the sample record or a saved
+shipment the person may read; and `formula_propose` and `formula_library_propose`
+hand the editor a whole file with an explanation, its inputs, imports, charges and
+test counts. A proposal is shown only when its source checks clean and has at least
+one test, all passing; otherwise the model gets the findings or failures and fixes
+them. Proposing requires create or update on the formula template or the formula
+library. The model never states an amount the engine did not produce.
 
 **In the web app.** Both pages mount `PageAssistant`
 (`components/assistant/page-assistant.tsx`), which opens the page thread and
@@ -2579,26 +2584,24 @@ fresh one.
 **The studio's one-shot calls.** Besides its thread, the Formula Studio asks the
 formula assistant five single questions through `agentports.FormulaStudioAssist`
 (`formulastudioservice`): `POST /formula-templates/ai/explain` (one sentence per
-statement), `ai/describe-inputs` (descriptions for inputs that have none),
-`ai/suggest-scenarios` (three to five edge-case loads),
-`/:templateID/test-cases/:testCaseID/explain` (why a scenario no longer bills what
-it expects, with a verdict) and `/:templateID/review-note` (the note for the
-reviewer). Each requires formula template read and `assistant:create`, ensures the
-organization's `formula_assistant` and checks `MayUseAgent`, then asks on the
-structured path with the agent's preferred provider, attributed to the agent and
-the person (`FormulaExplain`, or `FormulaGenerate` for inputs and scenarios). The
-engine does every sum first: `TestExpression` with `traceStatements` evaluates each
-`let` and the result (split with expr's own parser and lexer, offsets in UTF-16 code
-units for CodeMirror), suggested loads are priced as billed amounts with the charge
-policy applied, the scenario trace evaluates the recorded content and the editor's on
-the scenario's inputs and keeps only the rows that differ, and the review note reads
-`ReviewDiff` and a backtest of the saved content when an approved version exists and
-the person may read shipments. The model only writes words: page content reaches it
-in untrusted sections, it is told to quote amounts only from the engine's, and its
-answer is bounded (lengths, a statement index in range, the verdict enum) with a
-written fallback filling any statement it skipped. Without a provider the calls
-answer a 422 business error, except the scenario explanation, which falls back to a
-cause written from the trace with `generated: false`.
+step of the rate trace), `ai/describe-inputs` (doc comments for inputs that have
+none), `ai/suggest-tests` (up to five `test` blocks, each run by `tariff.test`
+before it is answered), `ai/explain-test` (why a test fails, with a verdict) and
+`/:templateID/review-note` (the note for the reviewer). Each requires formula
+template read and `assistant:create`, ensures the organization's
+`formula_assistant` and checks `MayUseAgent`, then asks on the structured path with
+the agent's preferred provider, attributed to the agent and the person
+(`FormulaExplain`, or `FormulaGenerate` for inputs and tests). The engine does every
+sum first: the preview rates the source with its trace, suggested tests are appended
+to the source and run, a failing test's failures come from `tariff.test`, and the
+review note reads `ReviewDiff` and a backtest of the saved source when an approved
+version exists and the person may read shipments. The model only writes words: page
+content reaches it in untrusted sections, it is told to quote amounts only from the
+engine's, and its answer is bounded (lengths, a step index in range, single-line
+`given` and `expect` statements with balanced braces, the verdict enum) with a
+written fallback filling any step it skipped. Without a provider the calls answer a
+422 business error, except the test explanation, which falls back to the engine's
+failure with `generated: false`.
 
 **What stayed behind.** Conversations that were still active when this shipped
 were carried into page threads by `20261231006560_carry_import_conversations`:

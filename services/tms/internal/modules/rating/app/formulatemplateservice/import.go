@@ -2,59 +2,36 @@ package formulatemplateservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
-	"github.com/emoss08/trenova/shared/timeutils"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const (
 	importMaxTemplates = 50
-	importMaxTestCases = 100
 
-	maxImportTestCaseNameLength = 100
+	ExportVersion = "2.0"
 
 	ImportConflictReject = "reject"
 	ImportConflictRename = "rename"
 )
 
-var supportedImportVersions = map[string]struct{}{
-	"1.0": {},
-	"1.1": {},
-	"1.2": {},
-	"1.3": {},
-	"1.4": {},
-}
-
 type ImportTemplatePayload struct {
-	Name                 string                              `json:"name"`
-	Description          string                              `json:"description"`
-	Type                 formulatemplate.TemplateType        `json:"type"`
-	Expression           string                              `json:"expression"`
-	SchemaID             string                              `json:"schemaId"`
-	LanguageVersion      formulatypes.LanguageVersion        `json:"languageVersion"`
-	VariableDefinitions  []*formulatypes.VariableDefinition  `json:"variableDefinitions"`
-	BreakdownDefinitions []*formulatypes.BreakdownDefinition `json:"breakdownDefinitions"`
-	MinCharge            decimal.NullDecimal                 `json:"minCharge"`
-	MaxCharge            decimal.NullDecimal                 `json:"maxCharge"`
-	RoundingMode         ratetypes.RoundingMode              `json:"roundingMode"`
-	RoundingPrecision    *int32                              `json:"roundingPrecision"`
-	Metadata             map[string]any                      `json:"metadata"`
-	SourceTemplateID     *pulid.ID                           `json:"sourceTemplateId"`
-	SourceVersionNumber  *int64                              `json:"sourceVersionNumber"`
-	TestCases            []*TestCaseInput                    `json:"testCases"`
+	Name                string         `json:"name"`
+	Description         string         `json:"description"`
+	Source              string         `json:"source"`
+	Metadata            map[string]any `json:"metadata"`
+	SourceTemplateID    *pulid.ID      `json:"sourceTemplateId"`
+	SourceVersionNumber *int64         `json:"sourceVersionNumber"`
 }
 
 type ImportTemplatesRequest struct {
@@ -94,7 +71,7 @@ func (s *Service) Import(
 	var created []*formulatemplate.FormulaTemplate
 	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		created = make([]*formulatemplate.FormulaTemplate, 0, len(entities))
-		for index, entity := range entities {
+		for _, entity := range entities {
 			createdEntity, txErr := s.repo.Create(txCtx, entity)
 			if txErr != nil {
 				log.Error("failed to create imported template", zap.Error(txErr))
@@ -105,13 +82,6 @@ func (s *Service) Import(
 				txCtx, createdEntity, 1, req.TenantInfo.UserID, "Imported", nil,
 			); txErr != nil {
 				log.Error("failed to create version snapshot", zap.Error(txErr))
-				return txErr
-			}
-
-			if txErr = s.createImportedTestCases(
-				txCtx, createdEntity, req.TenantInfo, payloads[index].TestCases,
-			); txErr != nil {
-				log.Error("failed to create imported test scenarios", zap.Error(txErr))
 				return txErr
 			}
 
@@ -142,7 +112,7 @@ func (s *Service) Import(
 func normalizeImportRequest(req *ImportTemplatesRequest) ([]*ImportTemplatePayload, error) {
 	multiErr := errortypes.NewMultiError()
 
-	if _, ok := supportedImportVersions[req.ExportVersion]; !ok {
+	if req.ExportVersion != ExportVersion {
 		multiErr.Add(
 			"exportVersion",
 			errortypes.ErrInvalid,
@@ -298,16 +268,7 @@ func (s *Service) buildImportEntities(
 			BusinessUnitID:       req.TenantInfo.BuID,
 			Name:                 payload.Name,
 			Description:          payload.Description,
-			Type:                 payload.Type,
-			Expression:           payload.Expression,
-			SchemaID:             payload.SchemaID,
-			LanguageVersion:      payload.LanguageVersion,
-			VariableDefinitions:  payload.VariableDefinitions,
-			BreakdownDefinitions: payload.BreakdownDefinitions,
-			MinCharge:            payload.MinCharge,
-			MaxCharge:            payload.MaxCharge,
-			RoundingMode:         payload.RoundingMode,
-			RoundingPrecision:    importedPrecision(payload),
+			Source:               payload.Source,
 			Metadata:             payload.Metadata,
 		}.Build()
 
@@ -325,13 +286,12 @@ func (s *Service) buildImportEntities(
 		}
 
 		indexed := multiErr.WithIndex("templates", index)
-		entity.Validate(indexed)
-
-		if vErr := s.validateExpression(ctx, entity); vErr != nil {
+		if vErr := s.prepareContent(ctx, entity); vErr != nil {
+			if !errortypes.IsError(vErr) {
+				return nil, vErr
+			}
 			addIndexedValidationError(indexed, vErr)
 		}
-
-		validateImportTestCases(indexed, payload.TestCases)
 
 		entities = append(entities, entity)
 	}
@@ -343,106 +303,18 @@ func (s *Service) buildImportEntities(
 	return entities, nil
 }
 
-// validateImportTestCases mirrors the domain rules for a scenario before any
-// template exists to hang one on, so a broken export is refused with indexed
-// field errors instead of failing mid-transaction.
-func validateImportTestCases(indexed *errortypes.MultiError, testCases []*TestCaseInput) {
-	if len(testCases) > importMaxTestCases {
-		indexed.Add(
-			"testCases",
-			errortypes.ErrInvalid,
-			"Cannot import more than {0} test scenarios per template", importMaxTestCases,
-		)
+func addIndexedValidationError(indexed *errortypes.MultiError, err error) {
+	var multiErr *errortypes.MultiError
+	if errors.As(err, &multiErr) {
+		for _, fieldErr := range multiErr.Errors {
+			indexed.AddError(fieldErr)
+		}
 		return
 	}
-
-	for index, testCase := range testCases {
-		if testCase == nil {
-			continue
-		}
-
-		caseErrs := indexed.WithIndex("testCases", index)
-		switch {
-		case testCase.Name == "":
-			caseErrs.Add("name", errortypes.ErrRequired, "Name is required")
-		case len(testCase.Name) > maxImportTestCaseNameLength:
-			caseErrs.Add(
-				"name",
-				errortypes.ErrInvalid,
-				"Name cannot be longer than 100 characters",
-			)
-		}
-
-		if testCase.ExpectedAmount.IsNegative() {
-			caseErrs.Add(
-				"expectedAmount",
-				errortypes.ErrInvalid,
-				"Expected amount cannot be negative",
-			)
-		}
-
-		if testCase.Tolerance.IsNegative() {
-			caseErrs.Add("tolerance", errortypes.ErrInvalid, "Tolerance cannot be negative")
-		}
-
-		ValidateScenarioContent(caseErrs, "candidate", testCase.Candidate)
+	var fieldErr *errortypes.Error
+	if errors.As(err, &fieldErr) {
+		indexed.AddError(fieldErr)
+		return
 	}
-}
-
-func (s *Service) createImportedTestCases(
-	ctx context.Context,
-	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-	testCases []*TestCaseInput,
-) error {
-	return s.createRecordedTestCases(ctx, template, tenantInfo, testCases)
-}
-
-func (s *Service) createRecordedTestCases(
-	ctx context.Context,
-	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-	testCases []*TestCaseInput,
-) error {
-	now := timeutils.NowUnix()
-	for _, testCase := range testCases {
-		if testCase == nil {
-			continue
-		}
-
-		entity := buildTestCaseEntity(template.ID, tenantInfo, testCase)
-		entity.Record(recordedContent(template, testCase.Candidate), 0, tenantInfo.UserID, now)
-		if _, err := s.testCaseRepo.Create(ctx, entity); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func addIndexedValidationError(indexed *errortypes.MultiError, err error) {
-	switch typed := err.(type) {
-	case *errortypes.MultiError:
-		for _, fieldErr := range typed.Errors {
-			indexed.Add(fieldErr.Field, fieldErr.Code, fieldErr.Message, fieldErr.Args...)
-		}
-	case *errortypes.Error:
-		indexed.Add(typed.Field, typed.Code, typed.Message, typed.Args...)
-	default:
-		indexed.Add("expression", errortypes.ErrInvalid, err.Error())
-	}
-}
-
-// importedPrecision reads the precision an export carried. Exports before 1.3
-// carried no policy at all, and an export that names a mode without a
-// precision meant the default; NormalizeRounding settles the fully absent
-// case when the entity is validated.
-func importedPrecision(payload *ImportTemplatePayload) int32 {
-	if payload.RoundingPrecision != nil {
-		return *payload.RoundingPrecision
-	}
-	if payload.RoundingMode != "" {
-		return formulatypes.DefaultRoundingPrecision
-	}
-	return 0
+	indexed.Add(fieldSource, errortypes.ErrInvalid, err.Error())
 }

@@ -458,7 +458,10 @@ type ShipmentFormulaTemplate {
   businessUnitId: ID!
   name: String!
   description: String!
+  "The formula's Tariff source."
+  source: String!
   status: String!
+  testCount: Int!
   "Formula template metadata is admin-defined and intentionally open-ended."
   metadata: JSON
   version: Int!

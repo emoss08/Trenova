@@ -22,19 +22,15 @@ type descriptor struct {
 
 func (d *InputDecl) scalar() (descriptor, bool) {
 	var parsed descriptor
-	if err := sonic.Unmarshal(d.Type, &parsed); err == nil && parsed.Kind != "" {
-		if parsed.Kind == "optional" && parsed.Inner != nil {
-			return *parsed.Inner, true
-		}
-		return parsed, true
-	}
-	text := strings.TrimSuffix(strings.TrimSpace(d.Display), "?")
-	if text == "" {
-		var display string
-		if err := sonic.Unmarshal(d.Type, &display); err == nil {
-			text = strings.TrimSuffix(strings.TrimSpace(display), "?")
+	if len(d.Descriptor) > 0 {
+		if err := sonic.Unmarshal(d.Descriptor, &parsed); err == nil && parsed.Kind != "" {
+			if parsed.Kind == "optional" && parsed.Inner != nil {
+				return *parsed.Inner, true
+			}
+			return parsed, true
 		}
 	}
+	text := strings.TrimSuffix(strings.TrimSpace(d.Type), "?")
 	switch {
 	case text == "Money":
 		return descriptor{Kind: "money"}, true
