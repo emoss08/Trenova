@@ -26,13 +26,10 @@ func TestClassifyTariff_TenantAuthoredFaultsAreValidationProblems(t *testing.T) 
 			}),
 		},
 		{
-			name: "a refusal returned bare",
-			err:  &tarifferrors.RefusalError{Text: "No rate for this lane"},
-		},
-		{
-			name: "a refusal as a validation error",
-			err: tarifferrors.Refusal("formulaTemplateId", &rules.TariffRefusal{
-				Text: "No rate for this lane",
+			name: "an evaluation error as a validation error",
+			err: tarifferrors.Evaluation("source", &rules.TariffEvalError{
+				Code:    "divideByZero",
+				Message: rules.Message{Template: "Division by zero"},
 			}),
 		},
 	}

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	tarifferrors "github.com/emoss08/trenova/internal/modules/rating/app/tariff/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,7 +16,6 @@ import (
 )
 
 const (
-	codeInputValue  = "input-value"
 	pathRule        = "rule."
 	pathAgreement   = "agreement."
 	fieldInputs     = "inputs"
@@ -120,7 +120,7 @@ func mapDiagnostics(
 		if diagnostic.Severity != rules.SeverityError {
 			continue
 		}
-		if diagnostic.Code != codeInputValue {
+		if diagnostic.Code != tarifferrors.CodeInputValue {
 			rule.Add(
 				fieldTemplateID,
 				errortypes.ErrInvalid,
