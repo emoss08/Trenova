@@ -351,6 +351,24 @@ describe("tableViewFrom", () => {
     expect(resumesAfterAgent(paging)).toBe(false);
   });
 
+  it("reads the agent that read the rows, and no agent from a table that does not say", () => {
+    const columns = [{ key: "name", label: "Name", type: "text" }];
+
+    expect(
+      view({
+        display: 1,
+        columns,
+        rows: [],
+        readBy: { id: "agd_1", name: "Dispatch Desk", icon: "truck", accent: "teal" },
+      }).readBy,
+    ).toEqual({ id: "agd_1", name: "Dispatch Desk", icon: "truck", accent: "teal" });
+    expect(
+      view({ display: 1, columns, rows: [], readBy: { id: "agd_1", name: "  " } }).readBy,
+    ).toBeNull();
+    expect(view({ display: 1, columns, rows: [], readBy: "Dispatch Desk" }).readBy).toBeNull();
+    expect(view({ display: 1, columns, rows: [] }).readBy).toBeNull();
+  });
+
   it("goes on after the agent's rows only from a cursor or an offset", () => {
     const base = { hasMore: true, nextCursor: "", nextOffset: null, total: null, pages: 1 };
 

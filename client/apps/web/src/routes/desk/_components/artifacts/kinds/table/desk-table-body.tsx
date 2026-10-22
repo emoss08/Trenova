@@ -1,4 +1,5 @@
 import { DisplayValue } from "@/components/assistant/display-value";
+import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import {
   formatDisplayValue,
   isDetailType,
@@ -13,10 +14,14 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueSummary } from "@trenova/shared/types/billing-queue";
 import { describeError } from "@trenova/shared/lib/error-presentation";
-import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Link, useNavigate } from "react-router";
-import { reportPreviewFrom, tableViewFrom, type TablePaging } from "../../artifact-payloads";
+import {
+  reportPreviewFrom,
+  tableViewFrom,
+  type TablePaging,
+  type TableReader,
+} from "../../artifact-payloads";
 import {
   selectionState,
   toggleAll,
@@ -61,6 +66,8 @@ export type Grid = {
   searchedFor: string[];
   /** Where the list goes on from the rows held; null for a table that is all there is. */
   paging: TablePaging | null;
+  /** The agent that read the rows the table holds; null when the table does not say. */
+  readBy: TableReader | null;
 };
 
 const REPORT_TYPES: Record<string, DisplayType> = {
@@ -100,6 +107,7 @@ export function gridOf(artifact: AssistantArtifact): Grid {
         : null,
       searchedFor: [],
       paging: null,
+      readBy: null,
     };
   }
   const view = tableViewFrom(artifact);
@@ -112,6 +120,7 @@ export function gridOf(artifact: AssistantArtifact): Grid {
     totals: null,
     searchedFor: view.searchedFor,
     paging: view.paging.hasMore ? view.paging : null,
+    readBy: view.readBy,
   };
 }
 
@@ -472,7 +481,7 @@ function TableBodyView({
           )}
         </label>
         <span className="dk-tv-sp" />
-        <ReadMark artifact={artifact} pages={pages} />
+        <ReadMark artifact={artifact} reader={grid.readBy} pages={pages} />
         {versions}
       </div>
       {withheld.length > 0 && (
@@ -487,7 +496,14 @@ function TableBodyView({
         <div className="dk-tv-note">
           <span className="dk-tv-wh">
             <ArtIcon name="lock" size={11} stroke={2} />
-            {t("You can no longer read this list, so only the rows Nova read are shown")}
+            {grid.readBy
+              ? t(
+                  "You can no longer read this list, so only the rows {0} read are shown",
+                  grid.readBy.name,
+                )
+              : t(
+                  "You can no longer read this list, so only the rows read in this conversation are shown",
+                )}
           </span>
         </div>
       )}
@@ -667,7 +683,7 @@ function TableBodyView({
           </div>
         )}
       </div>
-      {showsPager && <TablePager pages={pages} />}
+      {showsPager && <TablePager pages={pages} reader={grid.readBy} />}
       {kit && (
         <BillingBulkBar
           selected={kit.selected}
@@ -720,7 +736,12 @@ function TableHead({ grid, pages }: { grid: Grid; pages: TablePages }) {
         </span>
       </div>
       {grid.searchedFor.length > 0 && (
-        <span className="dk-tv-terms" aria-label={t("What Nova asked for")}>
+        <span
+          className="dk-tv-terms"
+          aria-label={
+            grid.readBy ? t("What {0} asked for", grid.readBy.name) : t("What was asked for")
+          }
+        >
           {grid.searchedFor.map((term) => (
             <span key={term}>{term}</span>
           ))}
@@ -730,14 +751,45 @@ function TableHead({ grid, pages }: { grid: Grid; pages: TablePages }) {
   );
 }
 
-/** Whose read the page is: rows Nova read, or the list read just now with the person's access. */
-function ReadMark({ artifact, pages }: { artifact: AssistantArtifact; pages: TablePages }) {
+function readShare(
+  t: TranslateFn,
+  whole: boolean,
+  reader: TableReader | null,
+  when: string,
+): string {
+  if (reader) {
+    return whole
+      ? t("{0} read this page · {1}", reader.name, when)
+      : t("{0} read part of this page · {1}", reader.name, when);
+  }
+
+  return whole
+    ? t("Read in this conversation · {0}", when)
+    : t("Partly read in this conversation · {0}", when);
+}
+
+/**
+ * Whose read the page is: rows the conversation's agent read, wearing its
+ * mark, or the list read just now with the person's access.
+ */
+function ReadMark({
+  artifact,
+  reader,
+  pages,
+}: {
+  artifact: AssistantArtifact;
+  reader: TableReader | null;
+  pages: TablePages;
+}) {
   const t = useT();
+  const when = cardTime(artifact.updatedAt);
   if (!pages.remote) {
     return artifact.kind === "table_view" ? (
-      <span className="dk-tv-nova">
-        <NovaBadge size="xs" />
-        {t("Nova read every row · {0}", cardTime(artifact.updatedAt))}
+      <span className="dk-tv-agent">
+        {reader && <DeskAgentTile agent={reader} size="xs" />}
+        {reader
+          ? t("{0} read every row · {1}", reader.name, when)
+          : t("Every row read in this conversation · {0}", when)}
       </span>
     ) : null;
   }
@@ -755,11 +807,9 @@ function ReadMark({ artifact, pages }: { artifact: AssistantArtifact; pages: Tab
   const share = agentShare(pages.page, pages.size, pages.agentRows, pages.rows.length);
   if (share !== "none") {
     return (
-      <span className="dk-tv-nova">
-        <NovaBadge size="xs" />
-        {share === "all"
-          ? t("Nova read this page · {0}", cardTime(artifact.updatedAt))
-          : t("Nova read part of this page · {0}", cardTime(artifact.updatedAt))}
+      <span className="dk-tv-agent">
+        {reader && <DeskAgentTile agent={reader} size="xs" />}
+        {readShare(t, share === "all", reader, when)}
       </span>
     );
   }

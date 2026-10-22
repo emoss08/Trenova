@@ -1,6 +1,6 @@
 // Screenshots of a table that pages on the Desk: Acme Foods' 128 shipments in
-// transit, of which Nova read two pages, paged on with the person's own
-// access. Run with the mock API and the web app up (see README.md):
+// transit, of which the conversation's agent read two pages, paged on with the
+// person's own access. Run with the mock API and the web app up (see README.md):
 //
 //   node e2e/mock-api/desk-table-screenshots.mjs [outDir] [name,name,...]
 //
@@ -26,8 +26,8 @@ const next = (times) => async (page) => {
 };
 
 const shots = [
-  { name: "nova-light", path: PAGE, stage: "paged", colorScheme: "light", full: true },
-  { name: "nova-dark", path: PAGE, stage: "paged", colorScheme: "dark", full: true },
+  { name: "agent-light", path: PAGE, stage: "paged", colorScheme: "light", full: true },
+  { name: "agent-dark", path: PAGE, stage: "paged", colorScheme: "dark", full: true },
   {
     name: "live-light",
     path: PAGE,
@@ -79,6 +79,7 @@ const shots = [
     act: next(3),
   },
   { name: "locked-light", path: PAGE, stage: "locked", colorScheme: "light", full: true },
+  { name: "unnamed-light", path: PAGE, stage: "unnamed", colorScheme: "light", full: true },
   {
     name: "withheld-dark",
     path: PAGE,
@@ -90,10 +91,10 @@ const shots = [
   { name: "cut-light", path: PAGE, stage: "cut", colorScheme: "light", full: true, act: next(2) },
   { name: "whole-light", path: PAGE, stage: "whole", colorScheme: "light", full: true },
   { name: "short-light", path: PAGE, stage: "short", colorScheme: "light", full: true },
-  { name: "nova-pane-light", path: PANE, stage: "paged", colorScheme: "light" },
+  { name: "agent-pane-light", path: PANE, stage: "paged", colorScheme: "light" },
   { name: "live-pane-dark", path: PANE, stage: "paged", colorScheme: "dark", act: next(2) },
   {
-    name: "nova-narrow-light",
+    name: "agent-narrow-light",
     path: PAGE,
     stage: "paged",
     colorScheme: "light",

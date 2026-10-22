@@ -1,5 +1,8 @@
+import { resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import type { CSSProperties } from "react";
+import type { TableReader } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
 import { PAGE_SIZES, railPages, type PageSize } from "./table-pages";
 import type { TablePages } from "./use-table-pages";
@@ -7,10 +10,11 @@ import type { TablePages } from "./use-table-pages";
 /**
  * The foot of a table that pages: which rows show of how many, the strip of
  * pages with the agent's and the ones read marked, the way through, and how
- * many rows a page holds.
+ * many rows a page holds. The agent's pages wear its accent.
  */
-export function TablePager({ pages }: { pages: TablePages }) {
+export function TablePager({ pages, reader }: { pages: TablePages; reader: TableReader | null }) {
   const t = useT();
+  const accent = reader ? resolveAgentIdentity(reader).accent : "slate";
   const start = pages.page * pages.size;
   const expected =
     pages.total !== null ? Math.min(pages.size, Math.max(0, pages.total - start)) : pages.size;
@@ -36,13 +40,17 @@ export function TablePager({ pages }: { pages: TablePages }) {
           : t("{0}–{1} of {2}+", from, to, totalText)}
       </span>
       {rail.length > 1 && (
-        <ol className="dk-tv-rail" aria-label={t("Pages")}>
+        <ol
+          className={cn("dk-tv-rail", accent === "slate" && "dk-slate")}
+          style={{ "--dk-ah": `var(--hue-${accent})` } as CSSProperties}
+          aria-label={t("Pages")}
+        >
           {rail.map((segment) => (
             <li
               key={segment.index}
               className={cn(
                 segment.current && "dk-on",
-                segment.agent && "dk-nova",
+                segment.agent && "dk-agent",
                 segment.read && "dk-seen",
                 segment.locked && "dk-locked",
               )}
@@ -52,9 +60,11 @@ export function TablePager({ pages }: { pages: TablePages }) {
                 disabled={segment.locked}
                 aria-current={segment.current ? "page" : undefined}
                 aria-label={
-                  segment.agent
-                    ? t("Page {0}, read by Nova", segment.index + 1)
-                    : t("Page {0}", segment.index + 1)
+                  !segment.agent
+                    ? t("Page {0}", segment.index + 1)
+                    : reader
+                      ? t("Page {0}, read by {1}", segment.index + 1, reader.name)
+                      : t("Page {0}, read in this conversation", segment.index + 1)
                 }
                 onClick={() => pages.setPage(segment.index)}
               >

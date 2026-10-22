@@ -67192,6 +67192,15 @@
       "routes/worker"
     ]
   },
+  "Credentials are listed within one organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Credentials coming due": {
     "sites": 1,
     "scope": [
@@ -96456,6 +96465,15 @@
       "rules/allocation"
     ]
   },
+  "Every row read in this conversation · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Every run was on a local provider": {
     "sites": 1,
     "scope": [
@@ -99279,6 +99297,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Expiring within must be from 1 to 365 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Expiry": {
@@ -169447,15 +169474,6 @@
       "routes/agent-control"
     ]
   },
-  "Nova read every row · {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Nova read it": {
     "sites": 1,
     "scope": [
@@ -169537,15 +169555,6 @@
       "routes/inbox"
     ]
   },
-  "Nova read part of this page · {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Nova read this as {0}. It's actually…": {
     "sites": 1,
     "scope": [
@@ -169553,15 +169562,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Nova read this page · {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Nova reads the backlog": {
@@ -170941,6 +170941,15 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib"
+    ]
+  },
+  "Offset cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Offset is not supported for cursor pagination": {
@@ -183070,7 +183079,16 @@
       "routes/desk"
     ]
   },
-  "Page {0}, read by Nova": {
+  "Page {0}, read by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Page {0}, read in this conversation": {
     "sites": 1,
     "scope": [
       "ts"
@@ -184264,6 +184282,15 @@
     ]
   },
   "Partly processed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Partly read in this conversation · {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -202988,6 +203015,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Read in this conversation · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Read insight": {
@@ -277030,7 +277066,7 @@
       "api/graphql"
     ]
   },
-  "This table does not say how it was read, so it cannot be read again. Ask Nova to read it again": {
+  "This table does not say how it was read, so it cannot be read again. Ask for the list again in the conversation": {
     "sites": 1,
     "scope": [
       "go"
@@ -298144,15 +298180,6 @@
       "go/other"
     ]
   },
-  "What Nova asked for": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "What Nova read": {
     "sites": 3,
     "scope": [
@@ -300202,6 +300229,15 @@
       "apps/web/components"
     ]
   },
+  "What was asked for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What was asked was not kept": {
     "sites": 1,
     "scope": [
@@ -300407,6 +300443,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What {0} asked for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "What {0} found": {
@@ -307760,7 +307805,16 @@
       "go/other"
     ]
   },
-  "You can no longer read this list, so only the rows Nova read are shown": {
+  "You can no longer read this list, so only the rows read in this conversation are shown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "You can no longer read this list, so only the rows {0} read are shown": {
     "sites": 1,
     "scope": [
       "ts"
@@ -334884,6 +334938,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} read every row · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} read part of this page · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0} read this page · {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} read · {1} propose · {2} act": {
