@@ -8926,7 +8926,7 @@ type CarrierIntelEquipment {
   year: Int
 }
 
-type CarrierIntelEvent {
+type CarrierIntelEvent @kind(resource: "carrier_intelligence") {
   acknowledgedAt: Timestamp
   acknowledgedBy: User
   acknowledgedById: ID
