@@ -13,6 +13,8 @@ use trenova_rules::formula::check::Schema;
 use trenova_rules::formula::check::SchemaInput;
 use trenova_rules::formula::check::Severity;
 use trenova_rules::formula::check::Type;
+use trenova_rules::message::Arg;
+use trenova_rules::message::Message;
 
 const DESCRIBE: &str = include_str!(
     "../../../tms/internal/modules/rating/app/formula/testdata/shipment.describe.json"
@@ -231,6 +233,63 @@ fn arithmetic_on_a_flag_suggests_the_ternary() {
             .contains("(hasHazmat ? amount : 0)")
     );
     assert_eq!(inserts(&analysis.diagnostics[0]), ["(hasHazmat ? 1 : 0)"]);
+}
+
+/// Every template in a message, nested arguments included.
+fn templates(message: &Message, out: &mut Vec<&'static str>) {
+    out.push(message.message);
+    for arg in &message.args {
+        if let Arg::Message(inner) = arg {
+            templates(inner, out);
+        }
+    }
+}
+
+#[test]
+fn arithmetic_on_a_value_that_is_no_number_words_a_hint_as_its_own_sentence() {
+    let english = |source: &str| {
+        analyse(source)
+            .diagnostics
+            .iter()
+            .find(|diagnostic| diagnostic.code == Code::Type)
+            .map(|diagnostic| diagnostic.message.english())
+            .unwrap_or_default()
+    };
+    assert!(
+        english("hasHazmat * hazmatFee")
+            .ends_with(". Write (hasHazmat ? amount : 0) to charge when it is true.")
+    );
+    assert!(
+        english("(totalStops > 2) * hazmatFee")
+            .ends_with(". Write (test ? amount : 0) to charge when a test holds.")
+    );
+    assert!(
+        english("customer.name * 2")
+            .ends_with(". Compare text with ==, or look its rate up with lookup().")
+    );
+    let bare = english("pickupDate * 2");
+    assert!(bare.starts_with("'*' works on numbers, but "), "{bare}");
+    assert!(
+        bare.ends_with('.') && !bare.ends_with(". ") && !bare.contains(".."),
+        "{bare}"
+    );
+
+    // A template is its catalog key exactly as written, so none may carry stray spaces.
+    for source in [
+        "hasHazmat * hazmatFee",
+        "(totalStops > 2) * hazmatFee",
+        "customer.name * 2",
+        "pickupDate * 2",
+    ] {
+        for diagnostic in analyse(source).diagnostics {
+            let mut found = Vec::new();
+            templates(&diagnostic.message, &mut found);
+            for template in found {
+                let tidy = template.split_whitespace().collect::<Vec<_>>().join(" ");
+                assert_eq!(template, tidy, "{source}");
+            }
+        }
+    }
 }
 
 #[test]
