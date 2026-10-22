@@ -14,7 +14,7 @@
 //! - [`eval`]: values with units, the metered interpreter, the bill and its total clauses, rate
 //!   tables and the test runner.
 //! - [`editor`]: completion, hover, signature help, go to definition, rename and inlay hints.
-//! - `stdlib/`: the standard library, written in Tariff and compiled into the module.
+//! - [`stdlib`]: the standard library, written in Tariff and compiled into the module.
 //!
 //! Each area's `ops` module holds the `tariff.*` operations it answers.
 
@@ -24,6 +24,7 @@ pub mod diagnostic;
 pub mod editor;
 pub mod eval;
 pub mod schema;
+pub mod stdlib;
 pub mod syntax;
 pub mod types;
 pub mod units;
