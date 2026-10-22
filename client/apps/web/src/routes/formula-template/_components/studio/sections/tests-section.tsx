@@ -7,7 +7,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
 import { useFormContext, useWatch } from "react-hook-form";
-import { NovaButton } from "../ai/nova-button";
+import { NovaButton } from "@/components/tariff-studio/nova-button";
 import { useStudio } from "../studio-context";
 import { SectionHead } from "./section-head";
 

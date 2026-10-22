@@ -1,242 +1,151 @@
 import { describe, expect, it } from "vitest";
 import { slugify } from "@trenova/shared/lib/utils";
 import {
-  buildTemplateExport,
+  FORMULA_TEMPLATE_EXPORT_VERSION,
   buildBulkExport,
+  buildTemplateExport,
   buildVersionExport,
-  getExportFilename,
   getBulkExportFilename,
+  getExportFilename,
   getVersionExportFilename,
 } from "../formula-template-export";
-import type {
-  FormulaTemplate,
-  FormulaTemplateVersion,
-  FormulaTestCase,
+import {
+  formulaTemplateSchema,
+  formulaTemplateVersionSchema,
+  type FormulaTemplate,
+  type FormulaTemplateVersion,
 } from "@trenova/shared/types/formula-template";
+
+const SOURCE = `tariff "My Template"
+
+input rate: Money/mi = $2.35/mi
+
+charge "Linehaul" (quantity: shipment.distance, rate: rate)
+
+test "bills the miles" {
+  given shipment.distance = 100 mi
+  expect total == $235
+}
+`;
 
 function makeTemplate(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
   return {
-    name: "My Template",
-    description: "A test template",
-    type: "FreightCharge",
-    expression: "weight * 0.5",
-    status: "Active",
-    schemaId: "shipment",
-    languageVersion: 1,
-    variableDefinitions: [],
-    breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
-    minCharge: 250,
-    maxCharge: 5000,
-    roundingMode: "HalfUp",
-    roundingPrecision: 2,
-    metadata: null,
-    sourceTemplateId: null,
-    sourceVersionNumber: null,
+    ...formulaTemplateSchema.parse({
+      id: "fmt_1",
+      name: "My Template",
+      description: "A test template",
+      source: SOURCE,
+      status: "Active",
+      imports: [{ path: "org.accessorials", version: "flv_3" }],
+      testCount: 1,
+      sourceTemplateId: null,
+      sourceVersionNumber: null,
+    }),
     ...overrides,
-  } as FormulaTemplate;
+  };
 }
 
 function makeVersion(overrides: Partial<FormulaTemplateVersion> = {}): FormulaTemplateVersion {
   return {
-    id: "v1",
-    templateId: "t1",
-    organizationId: "org1",
-    businessUnitId: "bu1",
-    versionNumber: 1,
-    name: "My Template",
-    description: "Version 1",
-    type: "FreightCharge",
-    expression: "weight * 0.5",
-    status: "Active",
-    schemaId: "shipment",
-    languageVersion: 1,
-    variableDefinitions: [],
-    breakdownDefinitions: [{ name: "linehaul", label: "Linehaul", expression: "weight * 0.5" }],
-    minCharge: 250,
-    maxCharge: 5000,
-    roundingMode: "HalfUp",
-    roundingPrecision: 2,
-    metadata: null,
-    changeMessage: "Initial version",
-    changeSummary: null,
-    tags: ["Stable"],
-    createdById: "user1",
-    createdAt: 1700000000,
-    createdBy: null,
+    ...formulaTemplateVersionSchema.parse({
+      id: "v1",
+      templateId: "fmt_1",
+      organizationId: "org1",
+      businessUnitId: "bu1",
+      versionNumber: 1,
+      name: "My Template",
+      description: "Version 1",
+      source: SOURCE,
+      status: "Active",
+      imports: [],
+      changeMessage: "Initial version",
+      tags: ["Stable"],
+      createdById: "usr_1",
+      createdAt: 1_700_000_000,
+    }),
     ...overrides,
-  } as FormulaTemplateVersion;
+  };
 }
 
 describe("slugify", () => {
   it("converts spaces to hyphens and lowercases", () => {
-    expect(slugify("My Template")).toBe("my-template");
+    expect(slugify("My Template Name")).toBe("my-template-name");
   });
 
-  it("replaces special chars with hyphens", () => {
-    expect(slugify("Test (v2) & More!")).toBe("test-v2-more");
-  });
-
-  it("trims leading and trailing hyphens", () => {
-    expect(slugify("--hello--")).toBe("hello");
-  });
-
-  it("leaves already slugified string unchanged", () => {
-    expect(slugify("my-template")).toBe("my-template");
-  });
-
-  it("collapses multiple special chars into single hyphen", () => {
-    expect(slugify("a   b___c")).toBe("a-b-c");
+  it("trims and collapses special characters", () => {
+    expect(slugify("--rate @ 2.35/mi!--")).toBe("rate-2-35-mi");
   });
 });
 
-function makeTestCase(overrides: Partial<FormulaTestCase> = {}): FormulaTestCase {
-  return {
-    id: "ftc1",
-    templateId: "t1",
-    organizationId: "org1",
-    businessUnitId: "bu1",
-    name: "500 mile haul",
-    description: "Baseline lane",
-    variables: { totalDistance: 500 },
-    expectedAmount: 1250,
-    tolerance: 0.01,
-    createdById: "user1",
-    createdAt: 1700000000,
-    updatedAt: 1700000000,
-    ...overrides,
-  } as FormulaTestCase;
-}
-
 describe("buildTemplateExport", () => {
-  it("builds export without versions", () => {
-    const template = makeTemplate();
-    const result = buildTemplateExport(template);
-    expect(result.exportVersion).toBe("1.4");
-    expect(result.exportedAt).toBeDefined();
-    expect(result.template.name).toBe("My Template");
-    expect(result.template.languageVersion).toBe(1);
-    expect(result.versionHistory).toBeUndefined();
-    expect(result.template.testCases).toBeUndefined();
-  });
+  it("exports the source, which carries the tests, and the pinned imports", () => {
+    const exported = buildTemplateExport(makeTemplate());
 
-  it("carries test scenarios so an import keeps the approval gate", () => {
-    const result = buildTemplateExport(makeTemplate(), {
-      testCases: [makeTestCase(), makeTestCase({ name: "Zero-distance move", expectedAmount: 0 })],
+    expect(exported.exportVersion).toBe(FORMULA_TEMPLATE_EXPORT_VERSION);
+    expect(exported.template).toEqual({
+      name: "My Template",
+      description: "A test template",
+      source: SOURCE,
+      status: "Active",
+      imports: [{ path: "org.accessorials", version: "flv_3" }],
+      sourceTemplateId: null,
+      sourceVersionNumber: null,
     });
-    expect(result.template.testCases).toEqual([
-      {
-        name: "500 mile haul",
-        description: "Baseline lane",
-        variables: { totalDistance: 500 },
-        expectedAmount: 1250,
-        tolerance: 0.01,
-      },
-      {
-        name: "Zero-distance move",
-        description: "Baseline lane",
-        variables: { totalDistance: 500 },
-        expectedAmount: 0,
-        tolerance: 0.01,
-      },
-    ]);
+    expect(exported.versionHistory).toBeUndefined();
   });
 
-  it("carries breakdown definitions and guardrails so an import round-trips", () => {
-    const result = buildTemplateExport(makeTemplate());
-    expect(result.template.breakdownDefinitions).toEqual([
-      { name: "linehaul", label: "Linehaul", expression: "weight * 0.5" },
-    ]);
-    expect(result.template.minCharge).toBe(250);
-    expect(result.template.maxCharge).toBe(5000);
-    expect(result.template.roundingMode).toBe("HalfUp");
-    expect(result.template.roundingPrecision).toBe(2);
+  it("includes the version history when given, each version with its own source", () => {
+    const exported = buildTemplateExport(makeTemplate(), {
+      versions: [makeVersion(), makeVersion({ versionNumber: 2, source: `${SOURCE}// v2\n` })],
+    });
+
+    expect(exported.versionHistory?.map((version) => [version.versionNumber, version.source]))
+      .toEqual([
+        [1, SOURCE],
+        [2, `${SOURCE}// v2\n`],
+      ]);
+    expect(exported.versionHistory?.[0]).toMatchObject({ tags: ["Stable"], imports: [] });
   });
 
-  it("includes version history when provided", () => {
-    const template = makeTemplate();
-    const versions = [makeVersion({ versionNumber: 1 }), makeVersion({ versionNumber: 2 })];
-    const result = buildTemplateExport(template, { versions });
-    expect(result.versionHistory).toHaveLength(2);
-    expect(result.versionHistory![0].versionNumber).toBe(1);
-    expect(result.versionHistory![0].breakdownDefinitions).toHaveLength(1);
-    expect(result.versionHistory![0].minCharge).toBe(250);
-  });
-
-  it("omits versionHistory for empty versions array", () => {
-    const template = makeTemplate();
-    const result = buildTemplateExport(template, { versions: [] });
-    expect(result.versionHistory).toBeUndefined();
+  it("omits the history for an empty list of versions", () => {
+    expect(buildTemplateExport(makeTemplate(), { versions: [] }).versionHistory).toBeUndefined();
   });
 });
 
 describe("buildVersionExport", () => {
-  it("exports one version's content including breakdowns and guardrails", () => {
-    const result = buildVersionExport(makeTemplate(), makeVersion({ versionNumber: 3 }));
-    expect(result.exportVersion).toBe("1.4");
-    expect(result.template.expression).toBe("weight * 0.5");
-    expect(result.template.breakdownDefinitions).toHaveLength(1);
-    expect(result.template.minCharge).toBe(250);
-    expect(result.template.maxCharge).toBe(5000);
-    expect(result.template.sourceVersionNumber).toBe(3);
-  });
-});
-
-describe("getVersionExportFilename", () => {
-  it("names the file by slug and version", () => {
-    expect(getVersionExportFilename(makeTemplate(), 3)).toBe(
-      "my-template.v3.formula-template.json",
-    );
+  it("exports one version as a template forked from that version", () => {
+    const exported = buildVersionExport({ name: "My Template" }, makeVersion({ versionNumber: 4 }));
+    expect(exported.template).toEqual({
+      name: "My Template",
+      description: "Version 1",
+      source: SOURCE,
+      status: "Active",
+      imports: [],
+      sourceTemplateId: undefined,
+      sourceVersionNumber: 4,
+    });
   });
 });
 
 describe("buildBulkExport", () => {
-  it("maps all templates", () => {
-    const templates = [makeTemplate({ name: "A" }), makeTemplate({ name: "B" })];
-    const result = buildBulkExport(templates);
-    expect(result.templates).toHaveLength(2);
-    expect(result.templates[0].name).toBe("A");
-    expect(result.templates[1].name).toBe("B");
-  });
-
-  it("has exportVersion and exportedAt", () => {
-    const result = buildBulkExport([makeTemplate()]);
-    expect(result.exportVersion).toBe("1.4");
-    expect(result.exportedAt).toBeDefined();
-  });
-
-  it("carries breakdown definitions and guardrails for every template", () => {
-    const result = buildBulkExport([makeTemplate()]);
-    expect(result.templates[0].breakdownDefinitions).toHaveLength(1);
-    expect(result.templates[0].minCharge).toBe(250);
-    expect(result.templates[0].maxCharge).toBe(5000);
+  it("exports every template's source", () => {
+    const exported = buildBulkExport([makeTemplate(), makeTemplate({ name: "Second" })]);
+    expect(exported.exportVersion).toBe(FORMULA_TEMPLATE_EXPORT_VERSION);
+    expect(exported.templates.map((template) => [template.name, template.source])).toEqual([
+      ["My Template", SOURCE],
+      ["Second", SOURCE],
+    ]);
   });
 });
 
-describe("getExportFilename", () => {
-  it("generates filename without versions", () => {
-    const template = makeTemplate({ name: "My Template" });
-    expect(getExportFilename(template, false)).toBe("my-template.formula-template.json");
-  });
-
-  it("generates filename with versions", () => {
-    const template = makeTemplate({ name: "My Template" });
-    expect(getExportFilename(template, true)).toBe("my-template.formula-template-full.json");
-  });
-
-  it("slugifies the name", () => {
-    const template = makeTemplate({ name: "Test & Debug" });
-    expect(getExportFilename(template, false)).toBe("test-debug.formula-template.json");
-  });
-});
-
-describe("getBulkExportFilename", () => {
-  it("matches expected pattern", () => {
-    const filename = getBulkExportFilename();
-    expect(filename).toMatch(/^formula-templates-export-\d{4}-\d{2}-\d{2}\.json$/);
-  });
-
-  it("contains today's date", () => {
+describe("file names", () => {
+  it("names a template, its full history, a version and a bulk export", () => {
+    expect(getExportFilename(makeTemplate(), false)).toBe("my-template.formula-template.json");
+    expect(getExportFilename(makeTemplate(), true)).toBe("my-template.formula-template-full.json");
+    expect(getVersionExportFilename({ name: "My Template" }, 3)).toBe(
+      "my-template.v3.formula-template.json",
+    );
     const today = new Date().toISOString().split("T")[0];
-    expect(getBulkExportFilename()).toContain(today);
+    expect(getBulkExportFilename()).toBe(`formula-templates-export-${today}.json`);
   });
 });

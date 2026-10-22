@@ -6,7 +6,7 @@ import type { FormulaExplainResponse } from "@trenova/shared/types/formula-templ
 import { ArrowRightIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import type { TariffRange } from "@trenova/shared/types/tariff";
-import { TickedText } from "../ai/ticked-text";
+import { TickedText } from "@/components/tariff-studio/ticked-text";
 
 const MAX_CODE = 70;
 

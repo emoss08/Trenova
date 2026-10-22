@@ -26,7 +26,7 @@ import type { TariffInputValues } from "@trenova/shared/types/tariff";
 import type { EditorView } from "@codemirror/view";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
-import { NovaButton } from "../ai/nova-button";
+import { NovaButton } from "@/components/tariff-studio/nova-button";
 import { useStudio } from "../studio-context";
 import { presentInputs } from "../use-live-preview";
 import { ExplainPanel, type ExplainState } from "./explain-panel";

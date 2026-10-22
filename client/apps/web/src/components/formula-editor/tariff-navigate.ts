@@ -13,7 +13,11 @@ import {
 } from "@codemirror/view";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import { translate } from "@trenova/shared/i18n/runtime";
-import { tariffDefinition, tariffRename } from "@trenova/shared/rules/tariff";
+import {
+  tariffDefinition,
+  tariffPrepareRename,
+  tariffRename,
+} from "@trenova/shared/rules/tariff";
 import { unlessUnanswered } from "./tariff-doc";
 import type { TariffLanguageService } from "./tariff-service";
 
@@ -35,26 +39,26 @@ export function goToDefinition(
   view: EditorView,
   position: number,
 ): boolean {
-  const target = unlessUnanswered(
+  const targets = unlessUnanswered(
     () =>
       tariffDefinition(service.rules(), {
         source: view.state.doc.toString(),
-        position,
-        kind: service.kind(),
+        offset: position,
         context: service.context(),
       }),
-    null,
+    [],
   );
+  const target = targets[0];
   if (!target) return false;
   if (target.module) {
-    service.openDefinition({ module: target.module, range: target.range });
+    service.openDefinition({ module: target.module, range: target.selectionRange });
   } else {
-    revealRange(view, target.range);
+    revealRange(view, target.selectionRange);
   }
   return true;
 }
 
-type RenameState = { position: number; name: string; refusal: string | null } | null;
+type RenameState = { offset: number; name: string; refusal: string | null } | null;
 
 const openRename = StateEffect.define<RenameState>();
 
@@ -113,9 +117,8 @@ function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
       () =>
         tariffRename(service.rules(), {
           source: view.state.doc.toString(),
-          position: state.position,
-          name,
-          kind: service.kind(),
+          offset: state.offset,
+          newName: name,
           context: service.context(),
         }),
       null,
@@ -124,14 +127,14 @@ function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
       close();
       return;
     }
-    if ("refusal" in answer) {
+    if ("error" in answer) {
       view.dispatch({
-        effects: openRename.of({ ...state, refusal: translateMessage(answer.refusal) }),
+        effects: openRename.of({ ...state, refusal: translateMessage(answer.error) }),
       });
       return;
     }
     view.dispatch({
-      changes: answer.changes.map((change) => ({
+      changes: answer.edits.map((change) => ({
         from: change.range.from,
         to: change.range.to,
         insert: change.insert,
@@ -151,17 +154,30 @@ function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
   };
 }
 
-/** Opens rename for the name under the cursor. */
+/**
+ * Opens rename for the name under the cursor, after the module says it can be renamed; a name
+ * that cannot (a schema root, a standard library name, a keyword) opens the panel with why.
+ */
 export function startRename(view: EditorView): boolean {
-  const head = view.state.selection.main.head;
-  const word = view.state.wordAt(head);
-  if (!word) return false;
+  const service = view.state.facet(serviceFacet);
+  if (!service) return false;
+  const offset = view.state.selection.main.head;
+  const prepared = unlessUnanswered(
+    () =>
+      tariffPrepareRename(service.rules(), {
+        source: view.state.doc.toString(),
+        offset,
+        context: service.context(),
+      }),
+    null,
+  );
+  if (!prepared) return false;
   view.dispatch({
-    effects: openRename.of({
-      position: head,
-      name: view.state.sliceDoc(word.from, word.to),
-      refusal: null,
-    }),
+    effects: openRename.of(
+      "error" in prepared
+        ? { offset, name: "", refusal: translateMessage(prepared.error) }
+        : { offset, name: prepared.placeholder, refusal: null },
+    ),
   });
   return true;
 }

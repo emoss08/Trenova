@@ -23,6 +23,7 @@ import {
   type TariffFileKind,
   type TariffInputValues,
   type TariffTestRun,
+  type TariffTraceEvent,
   type TariffWireValue,
 } from "@trenova/shared/types/tariff";
 import { z } from "zod";
@@ -330,29 +331,29 @@ export function tariffScaffoldTest(
   );
 }
 
-/** A request about the cursor: the file, its kind and context, and a UTF-16 position. */
+/**
+ * A request about the cursor: the file, its context and a UTF-16 offset. The editor operations
+ * work on a file with errors (the file being typed) and answer from what is known.
+ */
 export type TariffCursorRequest = {
   source: string;
-  kind?: TariffFileKind;
   context: TariffContext;
-  position: number;
+  offset: number;
 };
 
 function cursorInput(request: TariffCursorRequest) {
   return {
     source: request.source,
-    ...(request.kind ? { kind: request.kind } : {}),
     context: wireContext(request.context),
-    position: request.position,
+    offset: request.offset,
   };
 }
 
 /** What a completion offers. */
 export const tariffCompletionKindSchema = z.enum([
   "keyword",
-  "variable",
+  "name",
   "input",
-  "const",
   "function",
   "method",
   "property",
@@ -361,25 +362,29 @@ export const tariffCompletionKindSchema = z.enum([
   "enum",
   "variant",
   "unit",
-  "module",
-  "table",
   "code",
+  "table",
+  "module",
   "snippet",
 ]);
 export type TariffCompletionKind = z.output<typeof tariffCompletionKindSchema>;
 
+const nullableText = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? null);
+
 const completionSchema = z.object({
   label: z.string(),
-  kind: tariffCompletionKindSchema.catch("variable"),
-  detail: z
-    .string()
-    .nullish()
-    .transform((value) => value ?? null),
+  kind: tariffCompletionKindSchema,
+  /** The type or signature, shown beside the label. */
+  detail: nullableText,
   doc: docSchema,
-  insert: z
-    .string()
-    .nullish()
-    .transform((value) => value ?? null),
+  /** What a pick inserts; a snippet marks its fields with `${1:name}`. */
+  insert: z.string(),
+  snippet: z.boolean().default(false),
+  /** The module's order, as text that sorts. */
+  sort: nullableText,
 });
 export type TariffCompletion = z.output<typeof completionSchema>;
 
@@ -397,108 +402,151 @@ export function tariffComplete(
   return completionsSchema.parse(rules.call(TARIFF_COMPLETE_OP, cursorInput(request)));
 }
 
+/** The last preview's trace, which hover and inlay hints read binding values from. */
+export type TariffPreviewValues = readonly TariffTraceEvent[];
+
 const hoverSchema = z
   .object({
     range: tariffRangeSchema,
-    title: z.string(),
-    type: z
-      .string()
-      .nullish()
-      .transform((value) => value ?? null),
-    doc: docSchema,
+    contents: z.object({
+      /** The declaration as Tariff code. */
+      signature: nullableText,
+      type: nullableText,
+      unit: nullableText,
+      /** Markdown. */
+      doc: docSchema,
+      /** What the binding came to in the last preview. */
+      value: nullableText,
+    }),
   })
   .nullable();
 export type TariffHover = z.output<typeof hoverSchema>;
 
-/** What the name under the cursor is: its declaration, its type and its doc; null on nothing. */
-export function tariffHover(rules: RulesRuntime, request: TariffCursorRequest): TariffHover {
-  return hoverSchema.parse(rules.call(TARIFF_HOVER_OP, cursorInput(request)));
+/** What the thing under the cursor is: its declaration, type, unit, doc and previewed value. */
+export function tariffHover(
+  rules: RulesRuntime,
+  request: TariffCursorRequest & { values?: TariffPreviewValues },
+): TariffHover {
+  return hoverSchema.parse(
+    rules.call(TARIFF_HOVER_OP, {
+      ...cursorInput(request),
+      ...(request.values && request.values.length > 0 ? { values: request.values } : {}),
+    }),
+  );
 }
 
 const signatureSchema = z
   .object({
-    label: z.string(),
-    doc: docSchema,
-    params: z.array(
+    signatures: z.array(
       z.object({
         label: z.string(),
         doc: docSchema,
+        parameters: z.array(
+          z.object({
+            /** Where the parameter is in the label: UTF-16 `[from, to]`. */
+            label: z.tuple([z.number().int(), z.number().int()]),
+            doc: docSchema,
+          }),
+        ),
       }),
     ),
     active: z.number().int(),
+    activeParameter: z.number().int().nullable(),
   })
   .nullable();
-export type TariffSignature = z.output<typeof signatureSchema>;
+export type TariffSignatureHelp = z.output<typeof signatureSchema>;
 
-/** The call the cursor is in and the parameter it is on; null outside any call. */
+/** The call the cursor is in, each candidate signature and the parameter being written. */
 export function tariffSignature(
   rules: RulesRuntime,
   request: TariffCursorRequest,
-): TariffSignature {
+): TariffSignatureHelp {
   return signatureSchema.parse(rules.call(TARIFF_SIGNATURE_OP, cursorInput(request)));
 }
 
-const definitionSchema = z
-  .object({
-    range: tariffRangeSchema,
-    /** The library the declaration is in, or null for this file. */
-    module: z
-      .string()
-      .nullish()
-      .transform((value) => value ?? null),
-  })
-  .nullable();
-export type TariffDefinition = z.output<typeof definitionSchema>;
+const definitionSchema = z.object({
+  targets: z.array(
+    z.object({
+      /** The library the declaration is in (`std.ltl`, `org.x`), or null for this file. */
+      module: nullableText,
+      range: tariffRangeSchema,
+      selectionRange: tariffRangeSchema,
+    }),
+  ),
+});
+export type TariffDefinitionTargets = z.output<typeof definitionSchema>["targets"];
 
 /** Where the name under the cursor is declared: in this file, or in a library it imports. */
 export function tariffDefinition(
   rules: RulesRuntime,
   request: TariffCursorRequest,
-): TariffDefinition {
-  return definitionSchema.parse(rules.call(TARIFF_DEFINITION_OP, cursorInput(request)));
+): TariffDefinitionTargets {
+  return definitionSchema.parse(rules.call(TARIFF_DEFINITION_OP, cursorInput(request))).targets;
 }
 
+const editSchema = z.object({ range: tariffRangeSchema, insert: z.string() });
+
 const renameSchema = z.union([
-  z.object({
-    changes: z.array(z.object({ range: tariffRangeSchema, insert: z.string() })),
-  }),
-  z.object({ refusal: tariffMessageSchema }),
+  z.object({ edits: z.array(editSchema) }),
+  z.object({ error: tariffMessageSchema }),
 ]);
 export type TariffRename = z.output<typeof renameSchema>;
 
 /** Every edit renaming the name under the cursor, or why it cannot be renamed. */
 export function tariffRename(
   rules: RulesRuntime,
-  request: TariffCursorRequest & { name: string },
+  request: TariffCursorRequest & { newName: string },
 ): TariffRename {
   return renameSchema.parse(
-    rules.call(TARIFF_RENAME_OP, { ...cursorInput(request), name: request.name }),
+    rules.call(TARIFF_RENAME_OP, { ...cursorInput(request), newName: request.newName }),
   );
 }
 
+const prepareRenameSchema = z.union([
+  z.object({ range: tariffRangeSchema, placeholder: z.string() }),
+  z.object({ error: tariffMessageSchema }),
+]);
+export type TariffPrepareRename = z.output<typeof prepareRenameSchema>;
+
+/** Whether the name under the cursor can be renamed: its range and current text, or why not. */
+export function tariffPrepareRename(
+  rules: RulesRuntime,
+  request: TariffCursorRequest,
+): TariffPrepareRename {
+  return prepareRenameSchema.parse(rules.call(TARIFF_RENAME_OP, cursorInput(request)));
+}
+
 const inlaysSchema = z.object({
-  inlays: z.array(
+  hints: z.array(
     z.object({
-      position: z.number().int(),
+      offset: z.number().int(),
       label: z.string(),
-      kind: z.enum(["type", "value"]),
+      kind: z.enum(["type", "value", "parameter"]),
     }),
   ),
 });
-export type TariffInlay = z.output<typeof inlaysSchema>["inlays"][number];
+export type TariffInlay = z.output<typeof inlaysSchema>["hints"][number];
 
-/** Inlay hints for a range: each binding's inferred type. */
+/**
+ * Inlay hints for a range: inferred types after bindings and lambda parameters, parameter names
+ * before positional arguments, and with the last preview's trace each binding's value.
+ */
 export function tariffInlays(
   rules: RulesRuntime,
-  request: Omit<TariffCursorRequest, "position"> & { from: number; to: number },
+  request: {
+    source: string;
+    context: TariffContext;
+    from: number;
+    to: number;
+    values?: TariffPreviewValues;
+  },
 ): TariffInlay[] {
   return inlaysSchema.parse(
     rules.call(TARIFF_INLAYS_OP, {
       source: request.source,
-      ...(request.kind ? { kind: request.kind } : {}),
       context: wireContext(request.context),
       range: { from: request.from, to: request.to },
+      ...(request.values && request.values.length > 0 ? { values: request.values } : {}),
     }),
-  ).inlays;
+  ).hints;
 }
-

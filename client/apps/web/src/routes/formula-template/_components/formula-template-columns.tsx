@@ -1,15 +1,10 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { formulaTemplateStatusChoices, formulaTemplateTypeChoices } from "@/lib/choices";
+import { formulaTemplateStatusChoices } from "@/lib/choices";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import type { FormulaTemplateRow } from "@/lib/graphql/formula-template-table";
-
-const TYPE_BADGE_VARIANT: Record<string, "info"> = {
-  FreightCharge: "info",
-  AccessorialCharge: "info",
-};
 
 export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
   return [
@@ -68,27 +63,29 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
       maxSize: 150,
     },
     {
-      accessorKey: "type",
-      header: t("Type"),
-      cell: ({ row }) => {
-        const typeLabel = formulaTemplateTypeChoices.find(
-          (c) => c.value === row.original.type,
-        )?.label;
-        const variant = TYPE_BADGE_VARIANT[row.original.type] ?? "info";
-        return <Badge variant={variant}>{typeLabel || row.original.type}</Badge>;
-      },
+      id: "imports",
+      header: t("Libraries"),
+      cell: ({ row }) =>
+        row.original.imports.length > 0 ? (
+          <span className="flex flex-wrap gap-1">
+            {row.original.imports.map((library) => (
+              <Badge key={library.path} variant="neutral" appearance="outline" className="font-mono">
+                {library.path}
+              </Badge>
+            ))}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-xs">{t("None")}</span>
+        ),
       meta: {
-        label: t("Type"),
-        apiField: "type",
-        filterable: true,
-        sortable: true,
-        filterType: "select",
-        filterOptions: formulaTemplateTypeChoices,
-        defaultFilterOperator: "eq",
+        label: t("Libraries"),
+        apiField: "imports",
+        filterable: false,
+        sortable: false,
       },
-      size: 160,
-      minSize: 140,
-      maxSize: 200,
+      size: 180,
+      minSize: 120,
+      maxSize: 280,
     },
     {
       accessorKey: "currentVersionNumber",
@@ -134,10 +131,10 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
       maxSize: 120,
     },
     {
-      accessorKey: "scenarioCount",
-      header: t("Scenarios"),
+      accessorKey: "testCount",
+      header: t("Tests"),
       cell: ({ row }) => {
-        const count = row.original.scenarioCount ?? 0;
+        const count = row.original.testCount;
         return count > 0 ? (
           <Badge variant="neutral" appearance="outline" className="font-mono">
             {count}
@@ -147,8 +144,8 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
         );
       },
       meta: {
-        label: t("Scenarios"),
-        apiField: "scenarioCount",
+        label: t("Tests"),
+        apiField: "testCount",
         filterable: false,
         sortable: false,
         filterType: "number",

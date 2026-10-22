@@ -65,8 +65,8 @@ type FormulaTemplateBacktestTabProps = {
 const SOURCE_OPTIONS: { value: CandidateSource; label: string; description: string }[] = [
   {
     value: "editor",
-    label: "Current expression",
-    description: "Use the expression currently in the editor",
+    label: "The editor's source",
+    description: "Rate with the tariff as it is in the editor, saved or not",
   },
   {
     value: "version",
@@ -93,9 +93,9 @@ function BacktestSummaryRow({ summary }: { summary: BacktestSummary }) {
         <StatTile label={t("Increased")} value={String(summary.increasedCount)} tone="success" />
         <StatTile label={t("Decreased")} value={String(summary.decreasedCount)} tone="danger" />
         <StatTile
-          label={t("Clamped")}
-          value={String(summary.guardrailCount)}
-          tone={summary.guardrailCount > 0 ? "info" : undefined}
+          label={t("Refused")}
+          value={String(summary.refusedCount)}
+          tone={summary.refusedCount > 0 ? "warning" : undefined}
         />
         <StatTile
           label={t("Failed")}
@@ -202,11 +202,13 @@ function BacktestResultRow({
       </TableCell>
       <TableCell>
         <div className="flex items-center justify-end gap-1.5">
-          {result.guardrailApplied && (
+          {result.candidateRefusal && (
             <Tooltip>
-              <TooltipTrigger render={<Shield01Icon className="size-3.5 text-info-foreground" />} />
-              <TooltipContent side="left" className="text-xs">
-                {t("Guardrail clamped the candidate amount")}
+              <TooltipTrigger
+                render={<Shield01Icon className="text-warning-foreground size-3.5" />}
+              />
+              <TooltipContent side="left" className="max-w-72 text-xs">
+                {t("The candidate refused: {0}", result.candidateRefusal)}
               </TooltipContent>
             </Tooltip>
           )}
@@ -291,12 +293,12 @@ export default function FormulaTemplateBacktestTab({
   const [versionNumber, setVersionNumber] = useState<number>(template?.currentVersionNumber ?? 1);
   const [limit, setLimit] = useState<number>(50);
 
-  const expression = useWatch({ control: form.control, name: "expression" });
+  const editorSource = useWatch({ control: form.control, name: "source" });
 
   const mutation = useMutation({
     mutationFn: () =>
       apiService.formulaTemplateService.backtest(template?.id ?? "", {
-        ...(source === "editor" ? { expression } : { versionNumber }),
+        ...(source === "editor" ? { source: editorSource } : { versionNumber }),
         limit,
       }),
     onError: () => {
@@ -306,7 +308,7 @@ export default function FormulaTemplateBacktestTab({
     },
   });
 
-  const canRun = !!template?.id && (source === "editor" ? !!expression?.trim() : versionNumber > 0);
+  const canRun = !!template?.id && (source === "editor" ? !!editorSource?.trim() : versionNumber > 0);
 
   const handleExport = () => {
     if (!mutation.data || mutation.data.results.length === 0) return;
@@ -462,7 +464,7 @@ export default function FormulaTemplateBacktestTab({
             <p className="text-sm font-medium">{t("No backtest results yet")}</p>
             <p className="text-muted-foreground mt-1 max-w-sm text-xs">
               {t(
-                "Run a backtest to preview how the candidate expression would change charges on shipments already rated by this template.",
+                "Run a backtest to preview how the candidate tariff would change the bills of shipments this template already rated.",
               )}
               {template?.currentVersionNumber ? (
                 <Badge variant="neutral" appearance="outline" className="text-2xs ml-1 font-mono">

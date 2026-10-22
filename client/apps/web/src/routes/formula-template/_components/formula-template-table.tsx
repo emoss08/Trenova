@@ -239,15 +239,10 @@ export default function FormulaTemplatesDataTable() {
   const handleBulkExport = useCallback(
     async (rows: FormulaTemplateRow[]) => {
       try {
-        const [templates, testCaseLists] = await Promise.all([
-          Promise.all(rows.map((row) => apiService.formulaTemplateService.get(row.id))),
-          Promise.all(rows.map((row) => apiService.formulaTemplateService.listTestCases(row.id))),
-        ]);
-        const testCasesByTemplateId = Object.fromEntries(
-          rows.map((row, index) => [row.id, testCaseLists[index]]),
+        const templates = await Promise.all(
+          rows.map((row) => apiService.formulaTemplateService.get(row.id)),
         );
-
-        const exportData = buildBulkExport(templates, testCasesByTemplateId);
+        const exportData = buildBulkExport(templates);
         const filename = getBulkExportFilename();
         downloadJson(exportData, filename);
       } catch {

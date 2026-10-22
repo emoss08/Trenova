@@ -24,24 +24,24 @@ export function BacktestDialog({
   open,
   onOpenChange,
   template,
-  expression,
+  source,
   onOpenDetails,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   template: FormulaTemplate;
-  expression: string;
+  source: string;
   onOpenDetails: () => void;
 }) {
   const t = useT();
   const backtest = useQuery({
-    queryKey: ["formula-template-backtest", template.id, expression],
+    queryKey: ["formula-template-backtest", template.id, source],
     queryFn: () =>
       apiService.formulaTemplateService.backtest(template.id ?? "", {
-        expression,
+        source,
         limit: BACKTEST_LIMIT,
       }),
-    enabled: open && !!template.id && expression.trim() !== "",
+    enabled: open && !!template.id && source.trim() !== "",
     staleTime: 30_000,
     retry: false,
   });

@@ -1,10 +1,12 @@
 // tariff-complete.ts is completion from `tariff.complete`: the module knows what may be written
 // at the cursor (names in scope, fields of a record, methods of a type, units after a number,
-// enum variants, table codes and keys, accessorial codes, std modules), so the editor lists what
-// it answers and replaces the range it names.
+// enum variants, table codes and keys, accessorial codes, std modules, snippets), so the editor
+// lists what it answers, in its order, and replaces the range it names. A snippet's fields are
+// tab stops.
 
 import {
   autocompletion,
+  snippet,
   type Completion,
   type CompletionContext,
   type CompletionResult,
@@ -17,9 +19,8 @@ import type { TariffLanguageService } from "./tariff-service";
 /** CodeMirror's icon class for each kind the module completes. */
 const COMPLETION_TYPE: Record<TariffCompletionKind, string> = {
   keyword: "keyword",
-  variable: "variable",
+  name: "variable",
   input: "variable",
-  const: "constant",
   function: "function",
   method: "method",
   property: "property",
@@ -44,17 +45,18 @@ export function tariffCompletions(
     () =>
       tariffComplete(service.rules(), {
         source,
-        position,
-        kind: service.kind(),
+        offset: position,
         context: service.context(),
       }),
     null,
   );
   if (!answer || answer.items.length === 0) return null;
-  const options: Completion[] = answer.items.map((item) => ({
+  const count = answer.items.length;
+  const options: Completion[] = answer.items.map((item, index) => ({
     label: item.label,
-    apply: item.insert ?? item.label,
+    apply: item.snippet ? snippet(item.insert) : item.insert,
     type: COMPLETION_TYPE[item.kind],
+    boost: Math.round(((count - index) / count) * 99) - 99,
     ...(item.detail ? { detail: item.detail } : {}),
     ...(item.doc
       ? {

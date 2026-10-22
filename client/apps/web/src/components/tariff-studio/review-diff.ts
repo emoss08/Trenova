@@ -1,4 +1,3 @@
-import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -11,27 +10,13 @@ export type ChangedFieldRow = {
 const FIELD_LABELS: Record<string, string> = defineLabels({
   name: "Name",
   description: "Description",
-  type: "Type",
-  schemaId: "Schema",
-  minCharge: "Minimum charge",
-  maxCharge: "Maximum charge",
-  roundingMode: "Rounding mode",
-  roundingPrecision: "Rounding precision",
-  variableDefinitions: "Variables",
-  breakdownDefinitions: "Breakdown",
-  metadata: "Metadata",
+  imports: "Pinned libraries",
 });
 
 const SEGMENT_LABELS: Record<string, string> = {
-  variableDefinitions: "Variable",
-  breakdownDefinitions: "Breakdown item",
-  defaultValue: "default value",
-  expression: "expression",
-  name: "name",
-  label: "label",
-  description: "description",
-  type: "type",
-  required: "required",
+  imports: "Pinned library",
+  path: "path",
+  version: "version",
 };
 
 function formatSide(value: unknown): string {
@@ -61,22 +46,17 @@ function labelFor(path: string): string {
 }
 
 /**
- * Turns the server's change map into rows a reviewer can scan. The expression
- * is left out because it gets a proper diff viewer of its own; everything
- * else is one line of "was → now".
+ * Turns the server's change map into rows a reviewer can scan. The source is
+ * left out because it gets a line diff of its own; everything else is one line
+ * of "was → now".
  */
 export function describeChangedFields(changes: Record<string, FieldChange>): ChangedFieldRow[] {
   return Object.entries(changes)
-    .filter(([path]) => path !== "expression")
+    .filter(([path]) => path !== "source")
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([path, change]) => ({
       path,
       label: labelFor(path),
       summary: `${formatSide(change.from)} → ${formatSide(change.to)}`,
     }));
-}
-
-/** The studio, opened straight onto the approve step. */
-export function reviewLinkFor(templateId: string): string {
-  return `${formulaTemplateRoutes.edit(templateId)}?review=approve`;
 }

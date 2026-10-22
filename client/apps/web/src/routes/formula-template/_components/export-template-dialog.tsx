@@ -42,11 +42,10 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
           .listVersions(template.id, { limit: 1000 })
           .then((response) => response.results)
       : Promise.resolve(undefined);
-    const testCasesPromise = apiService.formulaTemplateService.listTestCases(template.id);
 
-    await Promise.all([templatePromise, versionsPromise, testCasesPromise])
-      .then(([fullTemplate, versions, testCases]) => {
-        const exportData = buildTemplateExport(fullTemplate, { versions, testCases });
+    await Promise.all([templatePromise, versionsPromise])
+      .then(([fullTemplate, versions]) => {
+        const exportData = buildTemplateExport(fullTemplate, { versions });
         const filename = getExportFilename(fullTemplate, includeVersionHistory);
         downloadJson(exportData, filename);
         onOpenChange(false);
@@ -76,7 +75,7 @@ export function ExportTemplateDialog({ open, onOpenChange, template }: ExportTem
           </DialogTitle>
           <DialogDescription>
             {t(
-              "Export “{0}” as a JSON file, including its test scenarios. You can import this template later or share it with others.",
+              "Export “{0}” as a JSON file: its source, tests included. You can import this template later or share it with others.",
               template?.name,
             )}
           </DialogDescription>
