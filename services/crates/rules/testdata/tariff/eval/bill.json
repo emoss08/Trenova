@@ -1,0 +1,1149 @@
+[
+  {
+    "name": "an uncoded charge is freight",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $100",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "100",
+              "u": "$"
+            },
+            "label": "Linehaul",
+            "code": null,
+            "freight": true
+          }
+        ],
+        "total": {
+          "$q": "100",
+          "u": "$"
+        },
+        "freightTotal": {
+          "$q": "100",
+          "u": "$"
+        },
+        "accessorialTotal": {
+          "$q": "0",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a coded charge is an accessorial",
+    "source": "tariff \"t\"\ncharge \"Fuel\" as FSC = $25",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "25",
+              "u": "$"
+            },
+            "code": "FSC",
+            "freight": false
+          }
+        ],
+        "total": {
+          "$q": "25",
+          "u": "$"
+        },
+        "freightTotal": {
+          "$q": "0",
+          "u": "$"
+        },
+        "accessorialTotal": {
+          "$q": "25",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "quantity and rate give the amount",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" (quantity: 812 mi, rate: $2.35/mi)",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "1908.2",
+              "u": "$"
+            },
+            "quantity": {
+              "$q": "812",
+              "u": "mi"
+            },
+            "rate": {
+              "$q": "2.35",
+              "u": "$/mi"
+            }
+          }
+        ],
+        "total": {
+          "$q": "1908.2",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a rate per hundredweight prices a weight",
+    "source": "tariff \"t\"\ncharge \"Freight\" (quantity: 1_240 lb, rate: $18.50/cwt)",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "229.4",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "229.4",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "an explicit amount wins over the options",
+    "source": "tariff \"t\"\ncharge \"Stops\" as XS (quantity: 3, rate: $75) = $200",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "200",
+              "u": "$"
+            },
+            "quantity": {
+              "$n": "3"
+            },
+            "rate": {
+              "$q": "75",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "200",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "labels interpolate",
+    "source": "tariff \"t\"\nfor i in 1..=2 {\n  charge \"Stop {i}\" = $10 * i\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "10",
+              "u": "$"
+            },
+            "label": "Stop 1"
+          },
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "20",
+              "u": "$"
+            },
+            "label": "Stop 2"
+          }
+        ],
+        "total": {
+          "$q": "30",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "charge ranges cover the statement",
+    "source": "tariff \"t\"\ncharge \"A\" = $1",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "1",
+              "u": "$"
+            },
+            "range": {
+              "from": 11,
+              "to": 26
+            }
+          }
+        ],
+        "total": {
+          "$q": "1",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a zero charge is dropped",
+    "source": "tariff \"t\"\ncharge \"Nothing\" = $0\ncharge \"Something\" = $5",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "5",
+              "u": "$"
+            },
+            "label": "Something"
+          }
+        ],
+        "total": {
+          "$q": "5",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a zero coded charge is dropped",
+    "source": "tariff \"t\"\ncharge \"Nothing\" as DET = $0",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [],
+        "total": {
+          "$q": "0",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a zero line is noted on the trace",
+    "source": "tariff \"t\"\ncharge \"Nothing\" = $0",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "dropped",
+          "label": "Nothing",
+          "code": null
+        }
+      ]
+    },
+    "trace": true
+  },
+  {
+    "name": "an uncoded charge may be a discount",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $100\ncharge \"Discount\" = -$10",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "100",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "-10",
+              "u": "$"
+            },
+            "label": "Discount"
+          }
+        ],
+        "total": {
+          "$q": "90",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a negative coded charge names its code",
+    "source": "tariff \"t\"\ncharge \"Credit\" as FSC = -$5",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "negativeCharge",
+        "message": {
+          "message": "The {0} charge came out at {1}: a coded charge must be more than zero",
+          "args": [
+            "FSC",
+            "-$5.00"
+          ]
+        },
+        "range": {
+          "from": 11,
+          "to": 39
+        }
+      }
+    }
+  },
+  {
+    "name": "negative freight is a rating error",
+    "source": "tariff \"t\"\ncharge \"Discount\" = -$10",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "negativeTotal"
+      }
+    }
+  },
+  {
+    "name": "negative freight is an error even with accessorials",
+    "source": "tariff \"t\"\ncharge \"Discount\" = -$10\ncharge \"Fuel\" as FSC = $50",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "negativeTotal"
+      }
+    }
+  },
+  {
+    "name": "a non-money amount is internal",
+    "source": "tariff \"t\"\ncharge \"Weight\" = 5 lb",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "minimum adds the shortfall",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $300\nminimum $450",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "300",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "minimum",
+            "amount": {
+              "$q": "150",
+              "u": "$"
+            },
+            "label": null,
+            "code": null,
+            "freight": true,
+            "range": null
+          }
+        ],
+        "total": {
+          "$q": "450",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "minimum adds nothing when met",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $500\nminimum $450",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "500",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "500",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "minimum with no charges bills the minimum",
+    "source": "tariff \"t\"\nminimum $75",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "minimum",
+            "amount": {
+              "$q": "75",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "75",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "maximum takes off the excess",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $1200\nmaximum $1000",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "1200",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "maximum",
+            "amount": {
+              "$q": "-200",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "1000",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "maximum takes nothing when under",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $900\nmaximum $1000",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "900",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "900",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "minimum then maximum",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $10\nminimum $50\nmaximum $40",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "10",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "minimum",
+            "amount": {
+              "$q": "40",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "maximum",
+            "amount": {
+              "$q": "-10",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "40",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "the default rounding is to cents half up",
+    "source": "tariff \"t\"\ncharge \"A\" = $0.125",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "0.13",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "0.13",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "rounding lines add a remainder line",
+    "source": "tariff \"t\"\ncharge \"A\" = $0.335\ncharge \"B\" = $0.335\ncharge \"C\" = $0.335",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "0.34",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "0.34",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "0.34",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "rounding",
+            "amount": {
+              "$q": "-0.01",
+              "u": "$"
+            },
+            "label": null,
+            "code": null,
+            "freight": true
+          }
+        ],
+        "total": {
+          "$q": "1.01",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "round half even to cents",
+    "source": "tariff \"t\"\ncharge \"A\" = $0.125\nround half even to cents",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "0.12",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "0.12",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "round half even keeps lines and total in step",
+    "source": "tariff \"t\"\ncharge \"A\" = $0.135\ncharge \"B\" = $0.145\nround half even to cents",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "0.14",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "0.14",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "0.28",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "round up to five dollars",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $451.20\nround up to $5",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "451.2",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "rounding",
+            "amount": {
+              "$q": "3.8",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "455",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "round down to a dollar",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $451.99\nround down to $1",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "451.99",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "rounding",
+            "amount": {
+              "$q": "-0.99",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "451",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "round up to cents rounds every line up",
+    "source": "tariff \"t\"\ncharge \"A\" = $1.001\ncharge \"B\" = $1.001\nround up to cents",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "1.01",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "1.01",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "rounding",
+            "amount": {
+              "$q": "-0.01",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "2.01",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "round down to cents",
+    "source": "tariff \"t\"\ncharge \"A\" = $1.009\nround down to cents",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "1",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "1",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a line that rounds to zero is dropped",
+    "source": "tariff \"t\"\ncharge \"Big\" = $10\ncharge \"Tiny\" = $0.004",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "10",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "10",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "round to a zero increment is an error",
+    "source": "tariff \"t\"\ncharge \"A\" = $1\nround up to $0",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "argument"
+      }
+    }
+  },
+  {
+    "name": "minimum and rounding together",
+    "source": "tariff \"t\"\ncharge \"A\" = $100.005\nminimum $100.01\nround to cents",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "100.01",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "minimum",
+            "amount": {
+              "$q": "0.01",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "rounding",
+            "amount": {
+              "$q": "-0.01",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "100.01",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "the minimum line is rounded too",
+    "source": "tariff \"t\"\ncharge \"A\" = $99.994\nminimum $150.004",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "99.99",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "minimum",
+            "amount": {
+              "$q": "50.01",
+              "u": "$"
+            }
+          }
+        ],
+        "total": {
+          "$q": "150",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "charges inside match arms",
+    "source": "tariff \"t\"\nlet k = Delivery\nmatch k {\n  Delivery => {\n    charge \"Delivery fee\" = $35\n  }\n  _ => {\n    charge \"Other\" = $1\n  }\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "35",
+              "u": "$"
+            },
+            "label": "Delivery fee"
+          }
+        ],
+        "total": {
+          "$q": "35",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "charges inside loops over stops",
+    "source": "tariff \"t\"\nfor s in shipment.stops where s.kind == Delivery {\n  charge \"Drop {s.sequence}\" as DROP = $40\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "amount": {
+              "$q": "40",
+              "u": "$"
+            },
+            "label": "Drop 2",
+            "code": "DROP"
+          }
+        ],
+        "total": {
+          "$q": "40",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "the bill converts into the billing currency",
+    "source": "tariff \"t\"\ncharge \"Linehaul\" = $1000\ncharge \"Fuel\" as FSC = $180.25",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "1180.25",
+          "u": "$"
+        },
+        "converted": {
+          "currency": "CAD",
+          "rate": "1.3502",
+          "lines": [
+            {
+              "$q": "1350.2",
+              "u": "$"
+            },
+            {
+              "$q": "243.37",
+              "u": "$"
+            }
+          ],
+          "total": {
+            "$q": "1593.57",
+            "u": "$"
+          }
+        }
+      }
+    },
+    "exchange": {
+      "rate": "1.3502",
+      "currency": "CAD"
+    }
+  },
+  {
+    "name": "conversion moves the remainder onto the rounding line",
+    "source": "tariff \"t\"\ncharge \"A\" = $0.335\ncharge \"B\" = $0.335\ncharge \"C\" = $0.335",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "1.01",
+          "u": "$"
+        },
+        "converted": {
+          "lines": [
+            {
+              "$q": "0.51",
+              "u": "$"
+            },
+            {
+              "$q": "0.51",
+              "u": "$"
+            },
+            {
+              "$q": "0.51",
+              "u": "$"
+            },
+            {
+              "$q": "-0.01",
+              "u": "$"
+            }
+          ],
+          "total": {
+            "$q": "1.52",
+            "u": "$"
+          }
+        }
+      }
+    },
+    "exchange": {
+      "rate": "1.5",
+      "currency": "CAD"
+    }
+  },
+  {
+    "name": "conversion adds a rounding entry when the bill had none",
+    "source": "tariff \"t\"\ncharge \"A\" = $0.01\ncharge \"B\" = $0.01\ncharge \"C\" = $0.01",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "0.03",
+          "u": "$"
+        },
+        "converted": {
+          "lines": [
+            {
+              "$q": "0.02",
+              "u": "$"
+            },
+            {
+              "$q": "0.02",
+              "u": "$"
+            },
+            {
+              "$q": "0.02",
+              "u": "$"
+            },
+            {
+              "$q": "-0.01",
+              "u": "$"
+            }
+          ],
+          "total": {
+            "$q": "0.05",
+            "u": "$"
+          }
+        }
+      }
+    },
+    "exchange": {
+      "rate": "1.5",
+      "currency": "EUR"
+    }
+  },
+  {
+    "name": "conversion rounds the total to the bill's increment",
+    "source": "tariff \"t\"\ncharge \"A\" = $451.20\nround up to $5",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "455",
+          "u": "$"
+        },
+        "converted": {
+          "lines": [
+            {
+              "$q": "902.4",
+              "u": "$"
+            },
+            {
+              "$q": "7.6",
+              "u": "$"
+            }
+          ],
+          "total": {
+            "$q": "910",
+            "u": "$"
+          }
+        }
+      }
+    },
+    "exchange": {
+      "rate": "2",
+      "currency": "MXN"
+    }
+  },
+  {
+    "name": "a zero exchange rate is an error",
+    "source": "tariff \"t\"\ncharge \"A\" = $1",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "argument"
+      }
+    },
+    "exchange": {
+      "rate": "0",
+      "currency": "CAD"
+    }
+  },
+  {
+    "name": "the trace records bindings, branches, loops and charges",
+    "source": "tariff \"t\"\nlet a = $5\nif a > $1 {\n  charge \"A\" = a\n}\nfor i in 1..=2 {\n  note \"{i}\"\n}",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "a",
+          "value": {
+            "$q": "5",
+            "u": "$"
+          },
+          "display": "$5.00"
+        },
+        {
+          "kind": "branch",
+          "taken": 0
+        },
+        {
+          "kind": "charge",
+          "label": "A",
+          "value": {
+            "$q": "5",
+            "u": "$"
+          }
+        },
+        {
+          "kind": "iteration",
+          "name": "i",
+          "index": 0,
+          "display": "1"
+        },
+        {
+          "kind": "note",
+          "text": "1"
+        },
+        {
+          "kind": "iteration",
+          "name": "i",
+          "index": 1
+        },
+        {
+          "kind": "note",
+          "text": "2"
+        },
+        {
+          "kind": "loop",
+          "name": "i",
+          "iterations": 2
+        }
+      ]
+    },
+    "trace": true
+  },
+  {
+    "name": "the trace records a refusal",
+    "source": "tariff \"t\"\nfail \"stop\"",
+    "expect": {
+      "status": "refused",
+      "trace": [
+        {
+          "kind": "refusal",
+          "message": "stop"
+        }
+      ]
+    },
+    "trace": true
+  },
+  {
+    "name": "without trace the trace is null",
+    "source": "tariff \"t\"\ncharge \"A\" = $1",
+    "expect": {
+      "status": "rated",
+      "trace": null,
+      "lookups": []
+    }
+  },
+  {
+    "name": "the trace records match arms and assignments",
+    "source": "tariff \"t\"\nvar x = 1\nx += 2\nmatch x {\n  3 => {\n    note \"three\"\n  }\n  _ => {\n    note \"other\"\n  }\n}",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "x"
+        },
+        {
+          "kind": "assign",
+          "name": "x",
+          "display": "3"
+        },
+        {
+          "kind": "arm",
+          "arm": 0
+        },
+        {
+          "kind": "note"
+        }
+      ]
+    },
+    "trace": true
+  }
+]

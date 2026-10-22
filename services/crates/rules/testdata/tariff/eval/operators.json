@@ -1,0 +1,512 @@
+[
+  {
+    "name": "int addition stays whole",
+    "expr": "2 + 3",
+    "display": "5"
+  },
+  {
+    "name": "int subtraction goes negative",
+    "expr": "2 - 5",
+    "display": "-3"
+  },
+  {
+    "name": "int multiplication",
+    "expr": "12 * 100",
+    "display": "1200"
+  },
+  {
+    "name": "int division gives a number",
+    "expr": "3 / 2",
+    "display": "1.5"
+  },
+  {
+    "name": "int division that terminates exactly",
+    "expr": "1 / 8",
+    "display": "0.125"
+  },
+  {
+    "name": "int remainder",
+    "expr": "17 % 5",
+    "display": "2"
+  },
+  {
+    "name": "remainder by zero is an error",
+    "expr": "17 % 0",
+    "error": "divideByZero"
+  },
+  {
+    "name": "division by zero is an error",
+    "expr": "1 / 0",
+    "error": "divideByZero"
+  },
+  {
+    "name": "numbers normalise their scale",
+    "expr": "2.50 + 0.50",
+    "display": "3"
+  },
+  {
+    "name": "underscores in numbers",
+    "expr": "1_200 + 1",
+    "display": "1201"
+  },
+  {
+    "name": "int widens to number",
+    "expr": "2 + 0.5",
+    "display": "2.5"
+  },
+  {
+    "name": "unary minus",
+    "expr": "-(3 * 4)",
+    "display": "-12"
+  },
+  {
+    "name": "overflow past 28 digits is an error",
+    "expr": "9_999_999_999_999_999_999_999_999_999 * 10",
+    "error": "overflow"
+  },
+  {
+    "name": "operator precedence",
+    "expr": "2 + 3 * 4 - 6 / 2",
+    "display": "11"
+  },
+  {
+    "name": "parentheses group",
+    "expr": "(2 + 3) * 4",
+    "display": "20"
+  },
+  {
+    "name": "pounds plus hundredweight is pounds",
+    "expr": "500 lb + 2 cwt",
+    "display": "700 lb"
+  },
+  {
+    "name": "hundredweight plus pounds is hundredweight",
+    "expr": "2 cwt + 50 lb",
+    "display": "2.5 cwt"
+  },
+  {
+    "name": "kilograms plus pounds converts exactly",
+    "expr": "1 kg + 0 lb",
+    "display": "1 kg"
+  },
+  {
+    "name": "miles minus kilometres",
+    "expr": "10 mi - 1.609344 km",
+    "display": "9 mi"
+  },
+  {
+    "name": "a rate per mile prices miles",
+    "expr": "$2.35/mi * 812 mi",
+    "display": "$1908.20"
+  },
+  {
+    "name": "a rate per hundredweight prices pounds",
+    "expr": "$18.50/cwt * 1_200 lb",
+    "display": "$222.00"
+  },
+  {
+    "name": "pounds times a rate per hundredweight",
+    "expr": "1_200 lb * $18.50/cwt",
+    "display": "$222.00"
+  },
+  {
+    "name": "a rate per mile prices kilometres",
+    "expr": "$1/mi * 1.609344 km",
+    "display": "$1.00"
+  },
+  {
+    "name": "money times a number",
+    "expr": "$450 * 1.5",
+    "display": "$675.00"
+  },
+  {
+    "name": "a number times money",
+    "expr": "3 * $25",
+    "display": "$75.00"
+  },
+  {
+    "name": "money times a percent",
+    "expr": "$1000 * 18%",
+    "display": "$180.00"
+  },
+  {
+    "name": "a percent times money",
+    "expr": "18% * $1000",
+    "display": "$180.00"
+  },
+  {
+    "name": "money divided by a number",
+    "expr": "$100 / 8",
+    "display": "$12.50"
+  },
+  {
+    "name": "money divided by a distance is a rate",
+    "expr": "$450 / 300 mi",
+    "display": "$1.50/mi"
+  },
+  {
+    "name": "a weight over a weight is a number",
+    "expr": "1_200 lb / 1 cwt",
+    "display": "12"
+  },
+  {
+    "name": "a duration over a duration is a number",
+    "expr": "90 min / 1 h",
+    "display": "1.5"
+  },
+  {
+    "name": "a weight over a volume is a density",
+    "expr": "1000 lb / 125 ft3",
+    "display": "8 lb/ft3"
+  },
+  {
+    "name": "a rate per pallet times a count",
+    "expr": "$75/pallet * 3",
+    "display": "$225.00"
+  },
+  {
+    "name": "a count literal is a whole number",
+    "expr": "3 pallet + 1",
+    "display": "4"
+  },
+  {
+    "name": "percents add",
+    "expr": "18% + 2%",
+    "display": "20%"
+  },
+  {
+    "name": "a percent scaled by a number stays a percent",
+    "expr": "0.5% * 3",
+    "display": "1.5%"
+  },
+  {
+    "name": "a percent divided by a number stays a percent",
+    "expr": "18% / 2",
+    "display": "9%"
+  },
+  {
+    "name": "money divided by zero distance is an error",
+    "expr": "$5 / 0 mi",
+    "error": "divideByZero"
+  },
+  {
+    "name": "money minus money",
+    "expr": "$10.25 - $0.25",
+    "display": "$10.00"
+  },
+  {
+    "name": "negative money prints its sign first",
+    "expr": "$5 - $7.5",
+    "display": "-$2.50"
+  },
+  {
+    "name": "durations add across units",
+    "expr": "1 h + 30 min",
+    "display": "1.5 h"
+  },
+  {
+    "name": "days convert to hours",
+    "expr": "1 d + 0 h",
+    "display": "1 d"
+  },
+  {
+    "name": "temperatures subtract",
+    "expr": "40 °F - 32 °F",
+    "display": "8 °F"
+  },
+  {
+    "name": "temperatures compare across scales",
+    "expr": "40 °F > 4 °C",
+    "display": "true"
+  },
+  {
+    "name": "temperatures do not multiply",
+    "expr": "40 °F * 2",
+    "error": "conversion"
+  },
+  {
+    "name": "date-time minus date-time is a duration in hours",
+    "expr": "@2026-01-05T11:30Z - @2026-01-05T08:00Z",
+    "display": "3.5 h"
+  },
+  {
+    "name": "date-time minus date-time in minutes when hours are not exact",
+    "expr": "@2026-01-05T08:07Z - @2026-01-05T08:00Z",
+    "display": "7 min"
+  },
+  {
+    "name": "date-times across offsets subtract by instant",
+    "expr": "@2026-01-05T08:00-05:00 - @2026-01-05T12:00Z",
+    "display": "1 h"
+  },
+  {
+    "name": "date minus date is whole days",
+    "expr": "@2026-03-01 - @2026-02-01",
+    "display": "28 d"
+  },
+  {
+    "name": "a leap year's february",
+    "expr": "@2024-03-01 - @2024-02-01",
+    "display": "29 d"
+  },
+  {
+    "name": "equality across units",
+    "expr": "1 cwt == 100 lb",
+    "display": "true"
+  },
+  {
+    "name": "equality across scales",
+    "expr": "$426 == $426.00",
+    "display": "true"
+  },
+  {
+    "name": "inequality across units",
+    "expr": "1 kg != 1 lb",
+    "display": "true"
+  },
+  {
+    "name": "int equals number",
+    "expr": "2 == 2.0",
+    "display": "true"
+  },
+  {
+    "name": "records compare field by field",
+    "expr": "{ a: 1, b: $2 } == { a: 1, b: $2.00 }",
+    "display": "true"
+  },
+  {
+    "name": "records differ by a field",
+    "expr": "{ a: 1, b: 2 } == { a: 1, b: 3 }",
+    "display": "false"
+  },
+  {
+    "name": "lists compare item by item",
+    "expr": "[1 lb, 2 lb] == [1 lb, 0.02 cwt]",
+    "display": "true"
+  },
+  {
+    "name": "lists of different lengths differ",
+    "expr": "[1, 2] == [1, 2, 3]",
+    "display": "false"
+  },
+  {
+    "name": "none equals none",
+    "expr": "none == none",
+    "display": "true"
+  },
+  {
+    "name": "a value is not none",
+    "expr": "1 lb != none",
+    "display": "true"
+  },
+  {
+    "name": "ordering across units",
+    "expr": "999 lb < 10 cwt",
+    "display": "true"
+  },
+  {
+    "name": "ordering of dates",
+    "expr": "@2026-01-05 < @2026-01-06",
+    "display": "true"
+  },
+  {
+    "name": "ordering of date-times by instant",
+    "expr": "@2026-01-05T08:00-05:00 >= @2026-01-05T13:00Z",
+    "display": "true"
+  },
+  {
+    "name": "ordering of text",
+    "expr": "\"apple\" < \"banana\"",
+    "display": "true"
+  },
+  {
+    "name": "and short-circuits",
+    "expr": "false and (1 / 0 > 0)",
+    "display": "false"
+  },
+  {
+    "name": "or short-circuits",
+    "expr": "true or (1 / 0 > 0)",
+    "display": "true"
+  },
+  {
+    "name": "not negates",
+    "expr": "not (1 > 2)",
+    "display": "true"
+  },
+  {
+    "name": "coalesce takes the value when present",
+    "expr": "shipment.pieces ?? 4",
+    "display": "4"
+  },
+  {
+    "name": "coalesce keeps a present value",
+    "expr": "rating.sellTotal ?? $1",
+    "display": "$1.00"
+  },
+  {
+    "name": "coalesce with fail refuses",
+    "expr": "fuel.price ?? fail \"No fuel price\"",
+    "refusal": "No fuel price"
+  },
+  {
+    "name": "in a list",
+    "expr": "3 in [1, 2, 3]",
+    "display": "true"
+  },
+  {
+    "name": "not in a list",
+    "expr": "4 not in [1, 2, 3]",
+    "display": "true"
+  },
+  {
+    "name": "in a half-open range excludes the end",
+    "expr": "500 lb in 0 lb..500 lb",
+    "display": "false"
+  },
+  {
+    "name": "in a closed range includes the end",
+    "expr": "500 lb in 0 lb..=500 lb",
+    "display": "true"
+  },
+  {
+    "name": "in a range converts units",
+    "expr": "2 cwt in 100 lb..500 lb",
+    "display": "true"
+  },
+  {
+    "name": "in an open-ended range",
+    "expr": "2_000 lb in 1_000 lb..",
+    "display": "true"
+  },
+  {
+    "name": "in a range open below",
+    "expr": "100 lb in ..500 lb",
+    "display": "true"
+  },
+  {
+    "name": "none is in no range",
+    "expr": "shipment.weight in ..500 lb",
+    "display": "false"
+  },
+  {
+    "name": "weekday in a list of variants",
+    "expr": "@2026-10-24.weekday in [Sat, Sun]",
+    "display": "true"
+  },
+  {
+    "name": "adding money to a weight is an internal error",
+    "expr": "$1 + 1 lb",
+    "error": "internal"
+  },
+  {
+    "name": "adding text is an internal error",
+    "expr": "\"a\" + \"b\"",
+    "error": "internal"
+  },
+  {
+    "name": "if expressions choose a branch",
+    "expr": "if 2 > 1 { $5 } else { $6 }",
+    "display": "$5.00"
+  },
+  {
+    "name": "else if chains",
+    "expr": "if 1 > 2 { 1 } else if 2 > 1 { 2 } else { 3 }",
+    "display": "2"
+  },
+  {
+    "name": "if let binds the present value",
+    "expr": "if let w = shipment.weight { w } else { 0 lb }",
+    "display": "0 lb"
+  },
+  {
+    "name": "money keeps digits beyond cents until rounded",
+    "expr": "$0.185/lb * 3 lb",
+    "display": "$0.555"
+  },
+  {
+    "name": "conversion of rates by multiplication",
+    "expr": "$0.185/lb * 1 cwt",
+    "display": "$18.50"
+  },
+  {
+    "name": "kilogram rate prices tonnes",
+    "expr": "$0.5/kg * 2 t",
+    "display": "$1000.00"
+  },
+  {
+    "name": "short tons are 2000 pounds",
+    "expr": "1 ton == 2_000 lb",
+    "display": "true"
+  },
+  {
+    "name": "gallons and litres",
+    "expr": "1 gal == 3.785411784 l",
+    "display": "true"
+  },
+  {
+    "name": "cubic metres and feet",
+    "expr": "1 m3 > 35 ft3",
+    "display": "true"
+  },
+  {
+    "name": "inches feet and metres",
+    "expr": "12 in == 1 ft",
+    "display": "true"
+  },
+  {
+    "name": "an interpolated text",
+    "expr": "\"{1 + 1} pallets\"",
+    "display": "2 pallets"
+  },
+  {
+    "name": "date literal",
+    "expr": "@2026-10-22",
+    "display": "2026-10-22"
+  },
+  {
+    "name": "date-time literal keeps its offset",
+    "expr": "@2026-10-22T08:00-05:00",
+    "display": "2026-10-22T08:00:00-05:00"
+  },
+  {
+    "name": "utc date-time literal",
+    "expr": "@2026-10-22T08:00:15Z",
+    "display": "2026-10-22T08:00:15Z"
+  },
+  {
+    "name": "an enum variant",
+    "expr": "Delivery",
+    "display": "Delivery"
+  },
+  {
+    "name": "a qualified enum variant",
+    "expr": "StopStatus.Completed",
+    "display": "Completed"
+  },
+  {
+    "name": "Number converts an int",
+    "expr": "Number(3) / 2",
+    "display": "1.5"
+  },
+  {
+    "name": "Int.parse reads digits",
+    "expr": "Int.parse(\"42\") ?? 0",
+    "display": "42"
+  },
+  {
+    "name": "Int.parse gives none for other text",
+    "expr": "Int.parse(\"4.2\") ?? -1",
+    "display": "-1"
+  },
+  {
+    "name": "a list literal",
+    "expr": "[1, 2, 3]",
+    "display": "[1, 2, 3]"
+  },
+  {
+    "name": "a record literal",
+    "expr": "{ name: \"x\", weight: 5 lb }",
+    "display": "{ name: x, weight: 5 lb }"
+  }
+]
