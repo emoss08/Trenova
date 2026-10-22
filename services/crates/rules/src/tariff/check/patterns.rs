@@ -601,7 +601,7 @@ fn segments(intervals: &[&Interval], discrete: bool) -> Vec<Segment> {
             }
         }
     }
-    bounds.sort_by(|a, b| a.value.cmp(&b.value));
+    bounds.sort_by_key(|bound| bound.value);
     let mut out = Vec::with_capacity(bounds.len() * 2 + 1);
     let mut previous: Option<Bound> = None;
     for bound in bounds {

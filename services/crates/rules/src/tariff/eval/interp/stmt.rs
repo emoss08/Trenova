@@ -387,10 +387,7 @@ impl<'a> Interp<'_, 'a> {
         let traced = self.traced(env);
         let mut position = 0usize;
         let mut ran = 0usize;
-        loop {
-            let Some(item) = walk.get(position) else {
-                break;
-            };
+        while let Some(item) = walk.get(position) {
             position += 1;
             self.meter
                 .step()
