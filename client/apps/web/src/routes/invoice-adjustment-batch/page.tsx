@@ -65,13 +65,13 @@ export function InvoiceAdjustmentBatchPage() {
   });
 
   const selectedRow =
-    listQuery.data?.results.find((row) => row.batchId === selectedBatchId) ??
+    listQuery.data?.results.find((row) => row.id === selectedBatchId) ??
     listQuery.data?.results[0] ??
     null;
 
   const detailQuery = useQuery({
-    ...invoiceAdjustment.batch(selectedRow?.batchId ?? ""),
-    enabled: Boolean(selectedRow?.batchId),
+    ...invoiceAdjustment.batch(selectedRow?.id ?? ""),
+    enabled: Boolean(selectedRow?.id),
   });
 
   return (
@@ -156,19 +156,19 @@ export function InvoiceAdjustmentBatchPage() {
               ) : null}
               {listQuery.data?.results.map((row) => (
                 <button
-                  key={row.batchId}
+                  key={row.id}
                   type="button"
-                  onClick={() => void setSearchParams({ item: row.batchId })}
+                  onClick={() => void setSearchParams({ item: row.id })}
                   className={[
                     "rounded-xl border p-3 text-left transition-colors",
-                    row.batchId === selectedRow?.batchId
+                    row.id === selectedRow?.id
                       ? "border-primary bg-primary/5"
                       : "hover:bg-muted/40",
                   ].join(" ")}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-medium">{row.batchId}</p>
+                      <p className="text-sm font-medium">{row.id}</p>
                       <p className="text-muted-foreground text-xs">
                         {row.submittedByName || row.submittedById || t("System")}
                       </p>
@@ -212,7 +212,7 @@ export function InvoiceAdjustmentBatchPage() {
           ) : (
             <div className="space-y-4 p-4">
               <SectionPanel
-                title={selectedRow.batchId}
+                title={selectedRow.id}
                 hint={selectedRow.submittedByName || selectedRow.submittedById || t("System batch")}
               >
                 <DescriptionList columns={4} className="p-3">
