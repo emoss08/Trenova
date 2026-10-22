@@ -2,17 +2,20 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import {
-  formatReportValue,
   isNumericDisplay,
   reportNumericValue,
-  reportValueTone,
   type ReportDisplayTone,
 } from "@trenova/shared/lib/report-format";
+import { reportCellText } from "@trenova/shared/rules/report";
 import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDownIcon, ArrowUpIcon } from "@trenova/shared/components/icons";
 import { useMemo, useRef } from "react";
+import { createReportPages, formatReportRow, type ReportPages } from "./report-cells";
+import { ResultGridSkeleton } from "./result-grid-skeleton";
 
 export type GridSort = { columnId: string; direction: "asc" | "desc" };
 
@@ -25,8 +28,11 @@ export type ResultGridProps = {
   hiddenColumnIds?: ReadonlySet<string>;
   sort?: GridSort | null;
   onSortChange?: (sort: GridSort | null) => void;
-  /** Receives indexes into the original, unsorted row array. */
-  onCellClick?: (rowIndex: number, columnIndex: number) => void;
+  /**
+   * Receives indexes into the original, unsorted row array, and the text the grid shows for
+   * any cell (by the same indexes), so a caller can name the row without formatting it again.
+   */
+  onCellClick?: (rowIndex: number, columnIndex: number, cellText: ReportPages["text"]) => void;
   quickFilter?: string;
   emptyMessage?: string;
   density?: "compact" | "default";
@@ -76,17 +82,19 @@ function compareValues(a: unknown, b: unknown): number {
 function useVisibleRows(
   columns: ReportPreviewColumn[],
   rows: unknown[][],
+  pages: ReportPages,
   sort: GridSort | null | undefined,
   quickFilter: string | undefined,
 ): IndexedRow[] {
   return useMemo(() => {
     let indexed: IndexedRow[] = rows.map((row, index) => ({ row, index }));
 
+    // Filtering reads every row's text, so every page is formatted, still a page per call.
     const needle = quickFilter?.trim().toLowerCase();
     if (needle) {
-      indexed = indexed.filter(({ row }) =>
-        columns.some((column, columnIndex) =>
-          formatReportValue(row[columnIndex], column.display).toLowerCase().includes(needle),
+      indexed = indexed.filter(({ index }) =>
+        columns.some((_, columnIndex) =>
+          pages.text(index, columnIndex).toLowerCase().includes(needle),
         ),
       );
     }
@@ -102,7 +110,7 @@ function useVisibleRows(
     }
 
     return indexed;
-  }, [columns, rows, sort, quickFilter]);
+  }, [columns, rows, pages, sort, quickFilter]);
 }
 
 function nextSort(current: GridSort | null | undefined, columnId: string): GridSort | null {
@@ -111,7 +119,20 @@ function nextSort(current: GridSort | null | undefined, columnId: string): GridS
   return null;
 }
 
-export function ResultGrid({
+/**
+ * A report's rows in a virtualised grid. Cells are formatted by the rules module a page of
+ * rows per call as they scroll into view; until the module has loaded the grid's skeleton
+ * stands in.
+ */
+export function ResultGrid(props: ResultGridProps) {
+  return (
+    <LazyComponent fallback={<ResultGridSkeleton density={props.density} />}>
+      <FormattedResultGrid {...props} />
+    </LazyComponent>
+  );
+}
+
+function FormattedResultGrid({
   columns,
   rows,
   totals,
@@ -121,11 +142,18 @@ export function ResultGrid({
   onSortChange,
   onCellClick,
   quickFilter,
-  emptyMessage = "This report returned no rows.",
+  emptyMessage,
   density = "default",
   className,
 }: ResultGridProps) {
   const t = useT();
+  const rules = useRules();
+
+  const pages = useMemo(() => createReportPages(rules, columns, rows), [rules, columns, rows]);
+  const totalCells = useMemo(
+    () => (totals ? formatReportRow(rules, columns, totals) : null),
+    [rules, columns, totals],
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const rowHeight = ROW_HEIGHT[density];
@@ -138,7 +166,7 @@ export function ResultGrid({
     [columns, hiddenColumnIds],
   );
 
-  const visibleRows = useVisibleRows(columns, rows, sort, quickFilter);
+  const visibleRows = useVisibleRows(columns, rows, pages, sort, quickFilter);
 
   // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual is incompatible with the React Compiler; file is already "use no memo", which oxlint 1.89 ignores
   const virtualizer = useVirtualizer({
@@ -199,10 +227,11 @@ export function ResultGrid({
                   }}
                 >
                   {visibleColumns.map(({ column, index: columnIndex }) => {
-                    const text = formatReportValue(entry.row[columnIndex], column.display);
+                    const cell = pages.cell(entry.index, columnIndex);
+                    const text = reportCellText(cell, column.display);
                     const numeric = isNumericDisplay(column.display);
                     const clickable = Boolean(onCellClick);
-                    const tone = reportValueTone(entry.row[columnIndex], column.display);
+                    const tone = cell.tone;
                     return (
                       <div
                         key={column.id}
@@ -216,7 +245,9 @@ export function ResultGrid({
                         )}
                         title={text}
                         onClick={
-                          clickable ? () => onCellClick?.(entry.index, columnIndex) : undefined
+                          clickable
+                            ? () => onCellClick?.(entry.index, columnIndex, pages.text)
+                            : undefined
                         }
                       >
                         {text}
@@ -229,12 +260,14 @@ export function ResultGrid({
           </div>
 
           {visibleRows.length === 0 && (
-            <p className="text-muted-foreground p-8 text-center text-xs">{emptyMessage}</p>
+            <p className="text-muted-foreground p-8 text-center text-xs">
+              {emptyMessage ?? t("This report returned no rows.")}
+            </p>
           )}
         </div>
       </div>
 
-      {totals && (
+      {totals && totalCells && (
         <div className="border-border bg-muted/40 flex shrink-0 border-t-2">
           {visibleColumns.map(({ column, index: columnIndex }) => {
             const numeric = isNumericDisplay(column.display);
@@ -242,9 +275,9 @@ export function ResultGrid({
             const text =
               value === null || value === undefined
                 ? columnIndex === 0
-                  ? "Total"
+                  ? t("Total")
                   : ""
-                : formatReportValue(value, column.display);
+                : reportCellText(totalCells[columnIndex], column.display);
             return (
               <div
                 key={column.id}

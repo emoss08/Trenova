@@ -107,6 +107,7 @@ func scenarioResponse(
 		RecordedOnVersion: trace.RecordedOnVersion,
 		RecordedBy:        trace.RecordedBy,
 		Error:             trace.Error,
+		ErrorCode:         trace.ErrorCode,
 		Rows:              rows,
 	}
 }

@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
+import type { DecimalInput } from "@trenova/shared/rules/wire";
 import type { ChargeAllocation } from "@trenova/shared/types/shipment";
 import { useEffect, useRef } from "react";
 import { type Control, type FieldValues, useFormContext } from "react-hook-form";
@@ -19,7 +20,7 @@ export type ChargeSplitDialogProps = {
   onOpenChange: (open: boolean) => void;
   /** Path of the allocation array in the form, e.g. `freightAllocations`. */
   name: string;
-  chargeAmount: number | null;
+  chargeAmount: DecimalInput;
   percentOnly?: boolean;
   defaultPayer: { id: string; label: string } | null;
   title: string;

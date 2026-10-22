@@ -26,6 +26,11 @@
 # only the origins the app itself uses: Google Maps, Google Fonts, map tiles
 # (OpenStreetMap, RainViewer, OpenWeatherMap), Brandfetch logos, and your object
 # storage.
+#
+# 'wasm-unsafe-eval' lets the web app compile the rules engine (assets/rules.<hash>.wasm,
+# docs/engineering/rules-engine.md) without the broader 'unsafe-eval', so WebAssembly keeps
+# working once that is removed. Caddy serves .wasm as application/wasm (Go's built-in MIME
+# table), which the browser needs to compile it while it downloads.
 {
 	{$CADDY_GLOBAL_OPTIONS}
 }
@@ -44,7 +49,7 @@
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(), microphone=(self), geolocation=()"
-		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.googleusercontent.com https://tile.openstreetmap.org https://tilecache.rainviewer.com https://tile.openweathermap.org https://cdn.brandfetch.io {$STORAGE_ORIGIN}; connect-src 'self' https://api.rainviewer.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com {$STORAGE_ORIGIN}; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.googleusercontent.com https://tile.openstreetmap.org https://tilecache.rainviewer.com https://tile.openweathermap.org https://cdn.brandfetch.io {$STORAGE_ORIGIN}; connect-src 'self' https://api.rainviewer.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com {$STORAGE_ORIGIN}; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
 	}
 }
 

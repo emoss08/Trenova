@@ -18326,6 +18326,15 @@ export type DeskWorkersQueryVariables = Exact<{
 
 export type DeskWorkersQuery = { workers: { edges: Array<{ node: { id: string, status: EntityStatus, type: WorkerType, driverType: DriverType, firstName: string, lastName: string, wholeName: string, city: string, externalId: string, assignmentBlocked: string, canBeAssigned: boolean, availableForDispatch: boolean, createdAt: number, fleetCodeId: string | null, fleetCode: { id: string, code: string } | null, profile: { cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, complianceStatus: ComplianceStatus, isQualified: boolean, eldExempt: boolean, shortHaulExempt: boolean, licenseExpiry: number, hazmatExpiry: number | null, medicalCardExpiry: number | null, twicExpiry: number | null, physicalDueDate: number | null, mvrDueDate: number | null, lastMvrCheck: number, lastComplianceCheck: number } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
+export type DeskWorkerEmploymentVerificationsQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  outstandingOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskWorkerEmploymentVerificationsQuery = { workerEmploymentVerifications: Array<{ id: string, workerId: string, employerName: string, employerDotNumber: string | null, employedFrom: number | null, employedTo: number | null, wasDotRegulated: boolean, status: EmploymentVerificationStatus, method: EmploymentVerificationMethod, requestedAt: number | null, responseReceivedAt: number | null, followUpCount: number, hadAccidents: boolean, accidentCount: number, hadDrugAlcoholViolations: boolean, findings: string | null, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
+
 export type DriverQualificationFileQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -18377,6 +18386,15 @@ export type DeleteEmploymentVerificationMutationVariables = Exact<{
 
 
 export type DeleteEmploymentVerificationMutation = { deleteEmploymentVerification: boolean };
+
+export type DeskWorkerDotTestsQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  openOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskWorkerDotTestsQuery = { workerDotTests: Array<{ id: string, workerId: string, testType: DotTestType, substance: DotTestSubstance, status: DotTestStatus, result: DotTestResult, isDot: boolean, reason: string | null, scheduledAt: number | null, collectedAt: number | null, collectionSite: string | null, safetyEventId: string | null, drawEntryId: string | null, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
 
 export type WorkerDotTestFieldsFragment = { id: string, workerId: string, testType: DotTestType, substance: DotTestSubstance, status: DotTestStatus, result: DotTestResult, isDot: boolean, reason: string | null, scheduledAt: number | null, collectedAt: number | null, resultAt: number | null, collectionSite: string | null, collectorName: string | null, specimenId: string | null, labName: string | null, mroName: string | null, mroVerifiedAt: number | null, alcoholConcentration: string | null, safetyEventId: string | null, drawEntryId: string | null, documentId: string | null, notes: string | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'WorkerDotTestFieldsFragment' };
 
@@ -18537,6 +18555,17 @@ export type AmendWorkerEmploymentEventMutationVariables = Exact<{
 
 export type AmendWorkerEmploymentEventMutation = { amendWorkerEmploymentEvent: { ' $fragmentRefs'?: { 'WorkerEmploymentEventFieldsFragment': WorkerEmploymentEventFieldsFragment } } };
 
+export type DeskWorkerInjuriesQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  caseYear?: number | null | undefined;
+  recordableOnly?: boolean | null | undefined;
+  openOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskWorkerInjuriesQuery = { workerInjuries: Array<{ id: string, workerId: string, caseNumber: number, caseYear: number, classification: OshaCaseClassification, illnessType: OshaIllnessType, treatment: InjuryTreatment, status: InjuryCaseStatus, recordable: boolean, occurredAt: number, returnedToWorkAt: number | null, description: string, bodyPart: string | null, daysAway: number, daysRestricted: number, privacyCase: boolean, logName: string, claimStatus: WorkersCompClaimStatus, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
+
 export type WorkerInjuriesQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -18597,6 +18626,16 @@ export type UncertifyOshaSummaryMutationVariables = Exact<{
 
 
 export type UncertifyOshaSummaryMutation = { uncertifyOshaSummary: { id: string, year: number, status: OshaSummaryStatus, version: number } };
+
+export type DeskWorkerLeaveCasesQueryVariables = Exact<{
+  workerId?: string | number | null | undefined;
+  openOnly?: boolean | null | undefined;
+  certificationOutstandingOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskWorkerLeaveCasesQuery = { workerLeaveCases: Array<{ id: string, workerId: string, leaveType: WorkerLeaveType, status: LeaveCaseStatus, frequency: LeaveFrequency, fmlaDesignated: boolean, reason: string | null, requestedAt: number, startsAt: number, endsAt: number | null, certificationStatus: LeaveCertificationStatus, certificationDueAt: number | null, certificationLate: boolean, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null, entries: Array<{ id: string, usedOn: number, hours: string, countsAgainstEntitlement: boolean, ptoId: string | null }> }> };
 
 export type WorkerLeaveFileQueryVariables = Exact<{
   workerId: string | number;
@@ -19236,10 +19275,14 @@ export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } fr
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
 export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument, DeskWorkersDocument } from "./documents/worker-desk/desk";
+export { DeskWorkerEmploymentVerificationsDocument } from "./documents/worker-dqf/desk";
 export { DriverQualificationFileDocument, OutstandingEmploymentVerificationsDocument, DqfRetentionCandidatesDocument, RecordEmploymentVerificationDocument, UpdateEmploymentVerificationDocument, MarkEmploymentVerificationRequestedDocument, RecordEmploymentVerificationFollowUpDocument, DeleteEmploymentVerificationDocument } from "./documents/worker-dqf/operations";
+export { DeskWorkerDotTestsDocument } from "./documents/worker-drug-alcohol/desk";
 export { WorkerDotTestFieldsFragmentDoc, WorkerDotViolationFieldsFragmentDoc, ClearinghouseQueryFieldsFragmentDoc, DotRandomPoolFieldsFragmentDoc, DotRandomDrawEntryFieldsFragmentDoc, DotRandomDrawFieldsFragmentDoc, WorkerDrugAlcoholFileDocument, DotRandomPoolsDocument, DotRandomDrawsDocument, DotRandomDrawDocument, RecordDotTestDocument, RecordDotTestResultDocument, CancelDotTestDocument, RecordDotViolationDocument, UpdateDotViolationDocument, RecordClearinghouseQueryDocument, CompleteClearinghouseQueryDocument, CreateDotRandomPoolDocument, UpdateDotRandomPoolDocument, RunDotRandomDrawDocument, FinalizeDotRandomDrawDocument, CancelDotRandomDrawDocument, UpdateDotRandomDrawEntryDocument } from "./documents/worker-drug-alcohol/operations";
 export { WorkerEmploymentEventFieldsFragmentDoc, WorkerEmploymentEventsDocument, RecordWorkerEmploymentEventDocument, AmendWorkerEmploymentEventDocument } from "./documents/worker-employment/operations";
+export { DeskWorkerInjuriesDocument } from "./documents/worker-injury/desk";
 export { WorkerInjuriesDocument, OshaLogDocument, OshaSummariesDocument, RecordWorkerInjuryDocument, UpdateWorkerInjuryDocument, DeleteWorkerInjuryDocument, SaveOshaSummaryDocument, CertifyOshaSummaryDocument, UncertifyOshaSummaryDocument } from "./documents/worker-injury/operations";
+export { DeskWorkerLeaveCasesDocument } from "./documents/worker-leave/desk";
 export { WorkerLeaveFileDocument, LeaveControlDocument, OpenLeaveCaseDocument, UpdateLeaveCaseDocument, DecideLeaveCaseDocument, CloseLeaveCaseDocument, RequestLeaveCertificationDocument, RecordLeaveCertificationDocument, RecordLeaveDayDocument, DeleteLeaveDayDocument, UpdateLeaveControlDocument } from "./documents/worker-leave/operations";
 export { WorkerOverviewDocument, WorkerRosterAttentionDocument } from "./documents/worker-overview/operations";
 export { WorkerSafetyEventFieldsFragmentDoc, WorkerDisciplinaryActionFieldsFragmentDoc, WorkerRecognitionFieldsFragmentDoc, SafetyScorecardFieldsFragmentDoc, WorkerSafetyEventsDocument, WorkerSafetyScorecardDocument, WorkerDisciplinaryActionsDocument, WorkerDisciplinaryLadderDocument, WorkerRecognitionsDocument, DefaultSafetyPointsDocument, CreateWorkerSafetyEventDocument, UpdateWorkerSafetyEventDocument, CloseWorkerSafetyEventDocument, ReviewWorkerSafetyEventDocument, ReopenWorkerSafetyEventDocument, DeleteWorkerSafetyEventDocument, IssueDisciplinaryActionDocument, RescindDisciplinaryActionDocument, GiveWorkerRecognitionDocument, DeleteWorkerRecognitionDocument } from "./documents/worker-safety/operations";

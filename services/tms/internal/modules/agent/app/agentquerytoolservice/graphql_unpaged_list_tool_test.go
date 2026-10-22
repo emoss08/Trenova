@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"testing"
 
@@ -236,4 +237,62 @@ func TestUnpagedList_SpecsMatchWhatTheGeneratorProved(t *testing.T) {
 	spec.references = nil
 	_, err = newGraphQLUnpagedListTool(&spec, &keyedReader{}, nil)
 	require.ErrorContains(t, err, "requires workerId, which no tool supplies")
+}
+
+func TestUnpagedList_ReadsTheWholeOrganizationWithAPageAndSaysWhenItIsFull(t *testing.T) {
+	t.Parallel()
+
+	rows := make([]any, 0, graphQLListLimit)
+	for idx := range graphQLListLimit {
+		rows = append(rows, map[string]any{"id": "wdt_" + strconv.Itoa(idx), "status": "Scheduled"})
+	}
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskWorkerDotTests": {Data: map[string]any{"workerDotTests": rows}},
+	}}
+	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolListWorkerDOTTests), reader,
+		&mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+	assert.NotContains(t, tool.ParamSchema(), "required", "the worker is optional")
+
+	data, err := tool.Query(t.Context(), keyedCall(map[string]any{wfParamOpenOnly: true}))
+	require.NoError(t, err)
+
+	sent := reader.sent("DeskWorkerDotTests")
+	require.NotNil(t, sent)
+	assert.Equal(t, map[string]any{"openOnly": true, "limit": graphQLListLimit}, sent.Variables)
+	outcome, _ := data.(map[string]any)
+	assert.Contains(t, outcome["note"], "more may exist")
+}
+
+func TestUnpagedList_LeavesOutTheWorkerOfAPrivacyCase(t *testing.T) {
+	t.Parallel()
+
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskWorkerInjuries": {Data: map[string]any{"workerInjuries": []any{
+			map[string]any{
+				"id": "winj_1", "workerId": "wrk_1", "privacyCase": true, "logName": "Privacy Case",
+				"worker": map[string]any{"id": "wrk_1", "wholeName": "Jane Smith"},
+			},
+			map[string]any{
+				"id": "winj_2", "workerId": "wrk_2", "privacyCase": false,
+				"worker": map[string]any{"id": "wrk_2", "wholeName": "Sam Lee"},
+			},
+		}}},
+	}}
+	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolListWorkerInjuries), reader,
+		&mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+
+	data, err := tool.Query(t.Context(), keyedCall(map[string]any{"caseYear": float64(2026)}))
+	require.NoError(t, err)
+
+	sent := reader.sent("DeskWorkerInjuries")
+	require.NotNil(t, sent)
+	assert.Equal(t, float64(2026), sent.Variables["caseYear"])
+	outcome, _ := data.(map[string]any)
+	items, _ := outcome["items"].([]map[string]any)
+	require.Len(t, items, 2)
+	assert.NotContains(t, items[0], "worker", "a privacy case never carries its worker's name")
+	assert.Equal(t, "wrk_1", items[0]["workerId"])
+	assert.Contains(t, items[1], "worker")
 }

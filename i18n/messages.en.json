@@ -227,372 +227,465 @@
     ]
   },
   "'#' stands for the current item inside filter(), map() and the like": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'#acc' is the running total inside reduce() and nowhere else": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'#{0}' isn't a pointer; use #, #index or, inside reduce(), #acc": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'%' takes whole numbers, but this part can come to a fraction": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'%' takes whole numbers, but {0} can hold a fraction. Use int({1}) to take its whole part": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'(' opened here is never closed": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'()' is empty": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'+' adds two numbers or joins two texts; here one side is text and the other a number. Convert with string() or float().": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'.' needs a field name after it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'=' assigns; use '==' to compare": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'?' needs ':' and the value for the other case: test ? a : b": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'?' needs a value for when the test holds": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'[' opened here is never closed": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'if' needs an 'else' with the other value": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'in' looks inside a list, a record or text, but {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'let {0}' needs '=' and a value": {
     "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'let {0}' needs a value after '='": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'let' assigns with one '='": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'let' lines come before the formula's amount, each ending with ';'": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'let' needs a name, '=' and a value": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'let' needs a name: let fuel = …": {
     "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'let' needs a value after '='": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' compares numbers, but {1}. Use it as the test itself.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' compares values of the same kind, but {1} and {2}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' flips a true/false test, but {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' has no matching '{1}'": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' is a keyword and cannot be a name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
-  "'{0}' is an operator: write text {0} \"value\"": {
-    "sites": 1,
+  "'{0}' is not an escape the formula language knows": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' is text": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' is true/false": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' joins two true/false tests, but {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' joins two true/false tests, but {1}. Compare it, such as {2} > 0": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' needs a value after it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' needs a value before it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' needs a value on its right": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' needs its value in braces after it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' opened here is never closed": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' works on numbers, but {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
-  "'{0}' works on numbers, but {1}.{2}": {
-    "sites": 1,
+  "'{0}' works on numbers, but {1}.": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "'{0}' works on numbers, but {1}. {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'{0}' works on text, but {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "'|' pipes into a function: value | round(2)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "(Select all)": {
@@ -693,15 +786,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "({0} values)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "+ stop: {0}": {
@@ -3180,30 +3264,36 @@
     ]
   },
   "A 'let' here needs the value it is for after it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A 'let' line ends with ';'": {
     "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A 'let' line ends with ';', then the formula's amount follows on the next line": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A CSV built in your browser, up to {0} rows.": {
@@ -4323,12 +4413,14 @@
     ]
   },
   "A charge must be split either by percent or by amount, not both": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/allocation"
     ]
   },
   "A chart can plot at most {0} measures": {
@@ -5135,13 +5227,37 @@
       "apps/web/components"
     ]
   },
-  "A date moves by a duration, not a number: write {0} {1} duration(\"24h\")": {
-    "sites": 1,
+  "A date from text: RFC 3339 (\"2026-01-02T15:04:05-05:00\"), \"2026-01-02T15:04:05\", \"2026-01-02T15:04\", \"2026-01-02 15:04\" or \"2026-01-02\". Text without an offset is UTC.": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A date has no method {0}; it has Year(), Month(), Day(), Hour(), Minute(), Second(), Weekday(), YearDay() and Unix()": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A date moves by a duration, not a number: write {0} {1} duration(\"24h\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A date or time within this many hours of the value.": {
@@ -5848,6 +5964,28 @@
       "go/other"
     ]
   },
+  "A duration adds to another duration, not a number: write {0} {1} duration(\"1h\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A duration has no method {0}; it has Hours(), Minutes() and Seconds()": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "A factor's funding or reserve report was read and matched to schedule items; its matched lines wait to be applied to the ledger and its exceptions wait to be resolved.": {
     "sites": 1,
     "scope": [
@@ -6313,12 +6451,14 @@
     ]
   },
   "A function after '|' needs its parentheses: value | {0}()": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A funded invoice sold with recourse is still unpaid and its chargeback window closes within 7 days; unless the customer pays, the factor will charge it back and the organization will owe the advance and fee.": {
@@ -6609,6 +6749,17 @@
       "routes/order"
     ]
   },
+  "A length of time from text such as \"90m\" or \"1h30m\", in the units ns, us, ms, s, m and h. Add it to or subtract it from a date.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "A licence must have an expiry date": {
     "sites": 1,
     "scope": [
@@ -6688,6 +6839,50 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A list in reverse order.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A list of lists as one list, every level flattened.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A list of numbers or text in order, \"asc\" (the default) or \"desc\".": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A list without its repeated items, each kept where it first appears.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A load already on the board has the same lane and day.": {
@@ -6853,12 +7048,14 @@
     ]
   },
   "A map entry is written key: value": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A map needs a {0} column": {
@@ -8582,6 +8779,17 @@
       "routes/desk"
     ]
   },
+  "A record as a list of [key, value] pairs, sorted by key.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "A record changed after it was written; the evidence chain no longer verifies": {
     "sites": 1,
     "scope": [
@@ -8589,6 +8797,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "A record from a list of [key, value] pairs.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A record hidden by your data access": {
@@ -8618,6 +8837,17 @@
       "go/other"
     ]
   },
+  "A record of lists: the items grouped by the predicate's value.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "A record that is no longer there": {
     "sites": 2,
     "scope": [
@@ -8634,6 +8864,28 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "A record's keys, sorted.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A record's values, in the order of its sorted keys.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A recurring shipment already covers this lane": {
@@ -10914,7 +11166,7 @@
     ]
   },
   "A template cannot have more than 20 breakdown definitions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -11706,6 +11958,50 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "A whole number with every bit flipped: -a - 1.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A whole number's 64 bits shifted right by b places, filling with zeros.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A whole number's bits shifted left by b places.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "A whole number's bits shifted right by b places, keeping its sign.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "A widget reads from a saved report or a canned report, not both": {
@@ -16283,21 +16579,25 @@
     ]
   },
   "Add ';'": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Add ()": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Add Customer": {
@@ -22388,6 +22688,15 @@
       "routes/detention-policy"
     ]
   },
+  "Allocated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Allocated {0} · {1} remaining": {
     "sites": 1,
     "scope": [
@@ -22425,12 +22734,15 @@
     ]
   },
   "Allocation method must be Percent or Amount": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "go/other",
+      "rules/allocation"
     ]
   },
   "Allocation points at an additional charge that does not exist": {
@@ -23513,12 +23825,14 @@
     ]
   },
   "Amount allocations for this charge must add up to {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/allocation"
     ]
   },
   "Amount cannot be negative": {
@@ -23599,14 +23913,16 @@
     ]
   },
   "Amount must be greater than zero": {
-    "sites": 10,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/rules",
       "go/other",
-      "packages/shared/types"
+      "packages/shared/types",
+      "rules/allocation"
     ]
   },
   "Amount paid": {
@@ -23720,13 +24036,26 @@
       "go/other"
     ]
   },
-  "An 'if' that is part of a calculation needs parentheses around the whole 'if … else …'": {
-    "sites": 1,
+  "Amounts must add up to the charge": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/allocation"
+    ]
+  },
+  "An 'if' that is part of a calculation needs parentheses around the whole 'if … else …'": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "An API key": {
@@ -25578,6 +25907,28 @@
       "go/other"
     ]
   },
+  "An item of {0} has no field {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "An item of {0} has no field {1}. Did you mean {2}?": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "An offset cannot be negative": {
     "sites": 1,
     "scope": [
@@ -26211,12 +26562,14 @@
     ]
   },
   "Another lane covers the same geography with a higher priority, so this one can never apply.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/lane"
     ]
   },
   "Another line already matched it": {
@@ -26590,17 +26943,19 @@
     ]
   },
   "Any": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/rules",
       "go/other",
       "packages/shared/lib",
       "routes/carrier-sourcing",
       "routes/desk",
-      "routes/fuel-management"
+      "routes/fuel-management",
+      "rules/matrix"
     ]
   },
   "Any commodity": {
@@ -37278,12 +37633,14 @@
     ]
   },
   "Banker's rounding: exact halves go to the even neighbour, so a large book of charges does not drift upward.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Bar": {
@@ -38864,12 +39221,15 @@
     ]
   },
   "Bill-to customer is required": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "go/other",
+      "rules/allocation"
     ]
   },
   "Bill-to customer was not found": {
@@ -39259,7 +39619,7 @@
     ]
   },
   "Billing by payer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -41094,6 +41454,15 @@
       "go/other",
       "routes/driver-pay-event",
       "routes/formula-template"
+    ]
+  },
+  "Breakdown expression cannot exceed 10,000 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Breakdown label or expression is too long": {
@@ -47044,6 +47413,15 @@
       "routes/worker"
     ]
   },
+  "Case year is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Case {0}": {
     "sites": 3,
     "scope": [
@@ -48314,30 +48692,36 @@
     ]
   },
   "Change to ({0} ? 1 : 0)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Change to int({0})": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Change to {0}": {
-    "sites": 4,
+    "sites": 12,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Change tool rule": {
@@ -57139,12 +57523,14 @@
     ]
   },
   "Compare text with ==, or look its rate up with lookup().": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Compare the non-AI fallback result with the AI candidate and see why the AI output was accepted, rejected, or skipped.": {
@@ -60244,12 +60630,14 @@
     ]
   },
   "Constrains a value between a minimum and maximum bound.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Constraint role IDs must be unique": {
@@ -61767,48 +62155,58 @@
     ]
   },
   "Converts a number or boolean to text.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Converts numeric text or a number to a whole number, truncating toward zero.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Converts numeric text or an integer to a number.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Converts text to lower case.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Converts text to upper case.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Coordinates": {
@@ -63295,7 +63693,7 @@
     ]
   },
   "Could not be priced": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -68396,6 +68794,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Custom variable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Custom variables": {
     "sites": 1,
     "scope": [
@@ -72311,12 +72718,14 @@
     ]
   },
   "Declare {0} as a {1} input": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Decline": {
@@ -80428,7 +80837,7 @@
     ]
   },
   "Divide the {0} freight charge between the customers who pay for it. Each payer receives an invoice for their share.": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -80455,12 +80864,14 @@
     ]
   },
   "Dividing by 0 fails on every load": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Division 1.1: Mass Explosion Hazard": {
@@ -81932,7 +82343,7 @@
     ]
   },
   "Does not price": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -87034,6 +87445,26 @@
       "routes/inbox"
     ]
   },
+  "Each payer may appear only once": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/allocation"
+    ]
+  },
+  "Each payer's share shows once every split adds up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Each payment waits on the payments from the books page until someone applies or ignores it.": {
     "sites": 1,
     "scope": [
@@ -88098,15 +88529,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Edit values below to test your expression with different inputs": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Edit what a case expects, activate, quarantine or retire it, and cancel runs": {
@@ -95958,6 +96380,17 @@
       "routes/agent-control"
     ]
   },
+  "Every row needs a payer": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/allocation"
+    ]
+  },
   "Every run was on a local provider": {
     "sites": 1,
     "scope": [
@@ -99849,7 +100282,7 @@
     ]
   },
   "Expression cannot exceed 10,000 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -99875,24 +100308,6 @@
       "routes/formula-template"
     ]
   },
-  "Expression evaluated against shipment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Expression evaluation failed": {
-    "sites": 4,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Expression is required": {
     "sites": 4,
     "scope": [
@@ -99905,7 +100320,7 @@
     ]
   },
   "Expression is valid": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -101669,6 +102084,15 @@
       "go/other"
     ]
   },
+  "Failed to compute the reconciliation total": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Failed to confirm": {
     "sites": 1,
     "scope": [
@@ -102312,15 +102736,6 @@
       "apps/web/components"
     ]
   },
-  "Failed to load rate tables": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Failed to load record. Please try again.": {
     "sites": 1,
     "scope": [
@@ -102337,15 +102752,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Failed to load shipment": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Failed to load suggestions": {
@@ -107809,6 +108215,17 @@
       "routes/inbox"
     ]
   },
+  "Folds the list into one value: the predicate sees the running value as #acc and the item as #; initial is the first #acc (the first item when left out).": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "Follow Up Testing": {
     "sites": 1,
     "scope": [
@@ -111037,21 +111454,25 @@
     ]
   },
   "Function form of endsWith.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Function form of startsWith.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Function name": {
@@ -118466,6 +118887,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "How many items the predicate holds for; without a predicate, how many items are true.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "How many messages the schedule is sent in. Required: the factor must know when it has every packet.": {
@@ -128948,6 +129380,17 @@
       "routes/capture"
     ]
   },
+  "Joins a list of text into one text, with the separator (none by default) between items.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "Journal": {
     "sites": 1,
     "scope": [
@@ -135400,21 +135843,25 @@
     ]
   },
   "Like lookup, but returns fallback when the table has no entry or band for the key. A missing table still errors, so a deleted matrix cannot silently reprice.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Like lookup2, but returns fallback when the table has no cell at the row/column intersection. A missing table still errors, so a deleted matrix cannot silently reprice.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Liked reply": {
@@ -138981,6 +139428,25 @@
       "routes/accounting-dashboard"
     ]
   },
+  "Loading the charges…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue",
+      "routes/shipment"
+    ]
+  },
+  "Loading the chart…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Loading the collections worklist": {
     "sites": 1,
     "scope": [
@@ -139044,6 +139510,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the formatting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Loading the formula studio": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Loading the formula template…": {
@@ -139118,6 +139602,15 @@
       "routes/desk"
     ]
   },
+  "Loading the lanes…": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
+    ]
+  },
   "Loading the location…": {
     "sites": 1,
     "scope": [
@@ -139190,6 +139683,15 @@
       "routes/desk"
     ]
   },
+  "Loading the ranges…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Loading the rate agreement…": {
     "sites": 1,
     "scope": [
@@ -139215,6 +139717,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the results…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Loading the return": {
@@ -139278,6 +139789,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the simulation…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-agreement"
     ]
   },
   "Loading the statement": {
@@ -145698,6 +146218,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Measuring the split…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Mechanic": {
@@ -159076,6 +159605,17 @@
       "routes/edi"
     ]
   },
+  "No matrix cell matches the supplied values": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/matrix"
+    ]
+  },
   "No maximum": {
     "sites": 1,
     "scope": [
@@ -162401,6 +162941,17 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No value was supplied for the matrix dimension {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/matrix"
     ]
   },
   "No values match.": {
@@ -169169,12 +169720,14 @@
     ]
   },
   "Number of characters in text or items in a list.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Number of copies": {
@@ -171554,6 +172107,17 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "One list of the items of every list given, in order.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "One notice per obligation": {
@@ -187243,12 +187807,14 @@
     ]
   },
   "Percent allocations for this charge must total 100": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/allocation"
     ]
   },
   "Percent basis is invalid": {
@@ -187297,12 +187863,15 @@
     ]
   },
   "Percent must be greater than 0 and at most 100": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "go/other",
+      "rules/allocation"
     ]
   },
   "Percent of Revenue": {
@@ -187423,6 +187992,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Percents must add up to 100": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/allocation"
     ]
   },
   "Performance": {
@@ -191556,12 +192136,25 @@
     ]
   },
   "Position of the first occurrence of part, or -1 when absent.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "Position of the last occurrence of part, or -1 when absent.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Position update": {
@@ -200764,24 +201357,6 @@
       "routes/desk"
     ]
   },
-  "Rate table {0} has a single axis — address it with lookup(table, key)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Rate table {0} has two axes — address it with lookup2(table, rowKey, colKey)": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Rate tables": {
     "sites": 1,
     "scope": [
@@ -203044,12 +203619,14 @@
     ]
   },
   "Reads a banded single-axis table as a curve: between two band floors the value is interpolated linearly between those bands' values. Below the first floor or past the last, the edge band's value is used.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Reads a captured batch, divides it into documents and files what needs no person.": {
@@ -210513,12 +211090,14 @@
     ]
   },
   "Remove the ',' or add a value after it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Remove the attached document": {
@@ -210842,12 +211421,14 @@
     ]
   },
   "Removes leading and trailing whitespace.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Removes the assigned reason code while preserving the service failure record.": {
@@ -210860,21 +211441,25 @@
     ]
   },
   "Removes the prefix when the text begins with it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Removes the suffix when the text ends with it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Removes this user's authenticator app and recovery codes, for someone who lost their device. They can set it up again from their settings.": {
@@ -211814,12 +212399,14 @@
     ]
   },
   "Replaces every occurrence of old with new.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Replaces the subject from your invoice email template. Supports {number}, {customer}, {company}, {invoiceTotal}, {dueDate}, {shipmentPro} and {shipmentBol}.": {
@@ -214625,7 +215212,7 @@
     ]
   },
   "Reset": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -216838,12 +217425,14 @@
     ]
   },
   "Return {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Return-to-duty process": {
@@ -216894,40 +217483,48 @@
       "routes/worker"
     ]
   },
-  "Returns base raised to the power of exponent.": {
-    "sites": 1,
+  "Returns base raised to the power of exponent: exact for a whole exponent, correct to the last digit otherwise.": {
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the absolute value of a number.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the average of numbers and lists of numbers; every element counts once.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the first non-null argument. Zero and empty string count as values.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the first shipment reference qualifier, falling back to BM.": {
@@ -216949,75 +217546,91 @@
     ]
   },
   "Returns the largest integer less than or equal to x.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
-  "Returns the largest of one or more numbers.": {
-    "sites": 1,
+  "Returns the largest of one or more numbers; a list counts as its numbers, and the first of equal values wins.": {
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the smallest integer greater than or equal to x.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
-  "Returns the smallest of one or more numbers.": {
-    "sites": 1,
+  "Returns the smallest of one or more numbers; a list counts as its numbers, and the first of equal values wins.": {
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the square root of a non-negative number.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the sum of numbers and lists of numbers, so it works over a mapped collection such as map(stops, .weight).": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the value at the row/column intersection of the active two-axis rate matrix named table. Each axis matches by its own mode (exact key or quantity band). Errors when the table or intersection is missing.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the value for key in the active single-axis rate matrix named table. Errors when the table or entry is missing.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Returns the worker to the dispatch board.": {
@@ -219743,30 +220356,36 @@
     ]
   },
   "Rounds a number down (toward negative infinity) at the given decimal places.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Rounds a number to the given decimal places (default 0, between -12 and 12).": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Rounds a number up (toward positive infinity) at the given decimal places; roundUp(x, 2) is the cent-level ceiling a tariff means by \"rounded up to the nearest cent\".": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Rounds after the first tender; at most 5.": {
@@ -219797,12 +220416,14 @@
     ]
   },
   "Rounds to the nearest multiple of increment: roundTo(x, 5) prices to the nearest $5, roundTo(x, 0.25) to the nearest quarter.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Rounds {0} to {1, plural, one {# place} other {# places}}": {
@@ -222769,12 +223390,11 @@
     ]
   },
   "Sample data": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/onboarding"
     ]
   },
@@ -228503,6 +229123,15 @@
       "routes/worker"
     ]
   },
+  "Seen in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/rate-matrix"
+    ]
+  },
   "Sees {0} of {1} details": {
     "sites": 1,
     "scope": [
@@ -229157,7 +229786,7 @@
     ]
   },
   "Select a value": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -241299,12 +241928,14 @@
     ]
   },
   "Slices characters from start up to but not including end. Either bound may be left out; negative bounds count from the end.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Slowest 5%": {
@@ -243546,8 +244177,19 @@
       "routes/desk"
     ]
   },
-  "Split freight charge": {
+  "Split every row by percent or every row by amount": {
     "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/allocation"
+    ]
+  },
+  "Split freight charge": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -243757,13 +244399,26 @@
       "routes/admin"
     ]
   },
-  "Splits text into a list on the separator.": {
-    "sites": 1,
+  "Splits text after each separator, keeping it on the piece before; n caps the number of pieces.": {
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "Splits text into a list on the separator.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Splitting...": {
@@ -255653,6 +256308,17 @@
       "routes/admin"
     ]
   },
+  "The average of numbers and lists of numbers; the same as avg.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "The backtest could not run": {
     "sites": 1,
     "scope": [
@@ -255887,6 +256553,50 @@
       "routes/detention-policy"
     ]
   },
+  "The bits set in a and not in b.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The bits set in both whole numbers.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The bits set in either whole number.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The bits set in exactly one of the whole numbers.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "The blocking rule applies again immediately. Open tenders are re-checked the next time the gate runs.": {
     "sites": 1,
     "scope": [
@@ -255930,6 +256640,17 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "The braces after '{0}' are empty; put its value inside them": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The break is as long as the entry — nothing would be paid": {
@@ -258357,6 +259078,15 @@
       "routes/recurring-deduction"
     ]
   },
+  "The default of {0} is not a usable number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The delay notice was not sent": {
     "sites": 1,
     "scope": [
@@ -259687,6 +260417,24 @@
       "go/other"
     ]
   },
+  "The expression could not be evaluated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The expression could not be tested": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The expression has errors": {
     "sites": 1,
     "scope": [
@@ -259694,6 +260442,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The expression must parse before it can be explained": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The extended linehaul amount, unformatted.": {
@@ -260400,6 +261157,39 @@
       "routes/admin"
     ]
   },
+  "The first item of a list, or empty when it has none.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The first item the predicate holds for, or empty when none does.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The first n items of a list.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "The first name of the person who can decide.": {
     "sites": 1,
     "scope": [
@@ -260590,13 +261380,24 @@
       "go/other"
     ]
   },
-  "The formula ends on a 'let'; add the amount it charges on the last line": {
+  "The formula came to {0}, and a charge cannot be negative. Keep it at zero or above with max(..., 0), or set a minimum charge": {
     "sites": 1,
     "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The formula ends on a 'let'; add the amount it charges on the last line": {
+    "sites": 2,
+    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The formula fields no longer apply. Nothing is saved until you save the program — switching the method back undoes this.": {
@@ -260608,22 +261409,48 @@
       "routes/fuel-management"
     ]
   },
-  "The formula must come to an amount, but this comes to true/false. Write {0} ? amount : 0": {
-    "sites": 1,
+  "The formula is empty": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The formula must come to an amount, but this comes to true/false. Write {0} ? amount : 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The formula must come to an amount, but this comes to {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The formula must come to true/false or a number, but this comes to {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The formula returned {0}. It needs to return a number.": {
@@ -260660,6 +261487,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The formula took longer than {0} to price, so it was stopped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The four digits printed at the end of the card number.": {
@@ -261319,6 +262155,17 @@
       "routes/shipment"
     ]
   },
+  "The item at a position of a list or the value at a key of a record, or empty when there is none, where value[key] would fail.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "The item completes itself once a worker document of this type is on file.": {
     "sites": 1,
     "scope": [
@@ -261344,6 +262191,46 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The item the predicate is looking at": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The item's position in the list, from 0": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The items ordered by the predicate's value, \"asc\" (the default) or \"desc\".": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The items the predicate holds for, in order.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The journal": {
@@ -261578,6 +262465,28 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The last item of a list, or empty when it has none.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The last item the predicate holds for, or empty when none does.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The last one I used": {
@@ -262482,6 +263391,17 @@
       "apps/web/components"
     ]
   },
+  "The middle of numbers and lists of numbers once sorted; the average of the two middle values for an even count.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.": {
     "sites": 1,
     "scope": [
@@ -262870,6 +263790,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The name of a value's kind: \"int\", \"float\", \"string\", \"bool\", \"array\", \"map\", \"time.Time\", \"time.Duration\" or \"nil\".": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The name of the VAN provider hosting this mailbox.": {
@@ -264464,6 +265395,28 @@
       "routes/desk"
     ]
   },
+  "The position of the first item the predicate holds for, or -1.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "The position of the last item the predicate holds for, or -1.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers.": {
     "sites": 1,
     "scope": [
@@ -264480,6 +265433,17 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "The predicate's value for each item, in order.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The preview could not be drawn": {
@@ -268300,21 +269264,25 @@
     ]
   },
   "The test before '?' must be true/false, but {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The test before '?' must be true/false, but {0}. Compare it: {1} > 0 ? …": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The test could not run": {
@@ -269254,12 +270222,14 @@
     ]
   },
   "The weight to bill under a per-unit break table: the actual weight, unless rating the next break's minimum at the next break's rate is cheaper. Pair it with lookup on the same table.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "The whole rule": {
@@ -270045,6 +271015,28 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "There is no rate table named {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "There is no rate table named {0}. Did you mean {1}?": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "There is no sheet to stage": {
@@ -271485,12 +272477,14 @@
     ]
   },
   "This comment is never closed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "This comment was deleted": {
@@ -272961,6 +273955,39 @@
       "go/other"
     ]
   },
+  "This formula is too long: a formula has at most {0} parts": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "This formula is too long: a formula holds at most {0} characters": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "This formula nests more than {0} levels deep; split it into 'let' lines": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "This formula template could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -273539,12 +274566,14 @@
     ]
   },
   "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/lane"
     ]
   },
   "This lane's window closes before the change would take effect": {
@@ -273584,12 +274613,14 @@
     ]
   },
   "This line's value is worked out and thrown away; only the last line is the charge. Bind it with 'let' to use it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "This link expires in {0, plural, one {# day} other {# days}}, on {1}.": {
@@ -273847,21 +274878,25 @@
     ]
   },
   "This matrix has no axes, so nothing can ever look a rate up in it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/matrix"
     ]
   },
   "This matrix has no rates yet, so every lane pointing at it prices nothing.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/matrix"
     ]
   },
   "This matrix has no rates yet. Every lane pointing at it prices nothing until it does.": {
@@ -274944,6 +275979,15 @@
       "routes/reports"
     ]
   },
+  "This report returned no rows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "This report returns no measures to show as a KPI.": {
     "sites": 1,
     "scope": [
@@ -275955,12 +276999,14 @@
     ]
   },
   "This text is never closed": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "This tile's report is no longer available.": {
@@ -279498,7 +280544,7 @@
     ]
   },
   "Total": {
-    "sites": 47,
+    "sites": 48,
     "scope": [
       "go",
       "ts"
@@ -279520,6 +280566,7 @@
       "routes/order",
       "routes/rate-agreement",
       "routes/rate-confirmation-public",
+      "routes/reports",
       "routes/shipment",
       "template/customer.statement.pdf",
       "template/factoring.schedule.email",
@@ -283058,6 +284105,50 @@
       "go/other"
     ]
   },
+  "True when the predicate holds for at least one item.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "True when the predicate holds for every item; true for an empty list.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "True when the predicate holds for exactly one item.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "True when the predicate holds for no item.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "True when the proof of delivery is on file.": {
     "sites": 1,
     "scope": [
@@ -283077,39 +284168,47 @@
     ]
   },
   "True when the text begins with the prefix. Case-sensitive.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "True when the text ends with the suffix. Case-sensitive.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "True when the text includes the part anywhere. Case-sensitive; wrap both sides in lower() to ignore case.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "True when the text matches the regular expression. Anchor with ^ and $ to match the whole value.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "True while the customer disputes the invoice.": {
@@ -283922,6 +285021,17 @@
       "packages/shared/lib"
     ]
   },
+  "Two dates can't be added; subtract one from the other to get a duration": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "Two dimensions cannot share a position": {
     "sites": 1,
     "scope": [
@@ -283932,12 +285042,14 @@
     ]
   },
   "Two rates sit at {0}. The engine will take the one entered first and never mention the other.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/matrix"
     ]
   },
   "Two readings disagree": {
@@ -284630,6 +285742,15 @@
     ]
   },
   "Unable to allocate a unique location code. Retry the request.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Unable to check how the charge is split": {
     "sites": 1,
     "scope": [
       "go"
@@ -285470,39 +286591,47 @@
     ]
   },
   "Unexpected ';'": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Unexpected '{0}'": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Unexpected '{0}' here": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Unexpected character '{0}'": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Unexpected error codes": {
@@ -285524,21 +286653,25 @@
     ]
   },
   "Unexpected {0}": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Unexpected {0} inside the call": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Unfile": {
@@ -286166,24 +287299,6 @@
     ]
   },
   "Unknown quick filter": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Unknown rate table: {0} — a lookup table is an active rate matrix with a single axis": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Unknown rate table: {0} — lookup2 addresses an active rate matrix with exactly two axes": {
     "sites": 1,
     "scope": [
       "go"
@@ -288880,30 +289995,25 @@
     ]
   },
   "Use '='": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Use '=='": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Use ({0} ?? {1})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Use <down/> to reach the cards and <enter/> to add one.": {
@@ -289494,14 +290604,16 @@
     ]
   },
   "Use {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "apps/web/rules",
       "routes/agent-control",
       "routes/desk",
-      "routes/formula-template"
+      "rules/formula"
     ]
   },
   "Use {0} to vet and monitor carriers and brokers.": {
@@ -289514,12 +290626,14 @@
     ]
   },
   "Use {0}(map(…))": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Used": {
@@ -297983,6 +299097,15 @@
       "routes/worker"
     ]
   },
+  "What reduce has added up so far": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What shipped for Acme Manufacturing this week?": {
     "sites": 1,
     "scope": [
@@ -304189,7 +305312,7 @@
     ]
   },
   "Worker is invalid": {
-    "sites": 30,
+    "sites": 26,
     "scope": [
       "go"
     ],
@@ -304937,12 +306060,14 @@
     ]
   },
   "Wrap the '??' part in parentheses before '{0}': (a ?? 0) {0} b": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Wrapping up. I handled <b>{0}</b> and you closed <b>{1}</b>.": {
@@ -304982,21 +306107,25 @@
     ]
   },
   "Write (test ? amount : 0) to charge when a test holds.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Write ({0} ? amount : 0) to charge when it is true.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "Write Off": {
@@ -309122,12 +310251,15 @@
     ]
   },
   "a date": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "a delay on the road": {
@@ -309139,6 +310271,17 @@
       "routes/shipment"
     ]
   },
+  "a duration": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "a full profile": {
     "sites": 1,
     "scope": [
@@ -309148,13 +310291,27 @@
       "apps/web/components"
     ]
   },
-  "a list": {
-    "sites": 1,
+  "a group of fields": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "a list": {
+    "sites": 5,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "a lite profile": {
@@ -309166,13 +310323,27 @@
       "apps/web/components"
     ]
   },
-  "a number": {
-    "sites": 1,
+  "a map key must be text, got {0}": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "a number": {
+    "sites": 5,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "a page": {
@@ -309194,12 +310365,15 @@
     ]
   },
   "a record": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "a script needs a broker to read through": {
@@ -309250,12 +310424,15 @@
     ]
   },
   "a value": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "a week on average": {
@@ -309265,6 +310442,17 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "abs(-5) // 5": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "accounting date": {
@@ -309393,6 +310581,17 @@
       "routes/inbox"
     ]
   },
+  "all(stops, .status == \"Completed\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "amount must be greater than zero": {
     "sites": 1,
     "scope": [
@@ -309400,6 +310599,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "an empty value": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "an event you pick": {
@@ -309483,6 +310693,17 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "any(commodities, .freightClass == \"85\") ? 25 : 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "anything but": {
@@ -309586,15 +310807,6 @@
       "routes/reports"
     ]
   },
-  "at least {0, plural, one {# argument} other {# arguments}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "at most": {
     "sites": 1,
     "scope": [
@@ -309674,6 +310886,17 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "avg(map(commodities, .density)) // mean pounds per cubic foot": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "awaiting a decision": {
@@ -309764,6 +310987,28 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "baseRate * (1 + lookup(\"fuel_surcharge\", fuelPrice))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "baseRate * (1 + lookupInterp(\"fuel_curve\", fuelPrice))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "baseRate * totalDistance": {
@@ -309863,6 +311108,94 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "bitand(pickupDayOfWeek, 1) == 1": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "bitnand(7, 2) // 5": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "bitnot(1) // -2": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "bitor(4, 1) // 5": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "bitshl(1, 3) // 8": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "bitshr(-8, 1) // -4": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "bitushr(8, 1) // 4": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "bitxor(5, 1) // 4": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "by amount past due": {
@@ -309986,6 +311319,28 @@
       "apps/web/components"
     ]
   },
+  "cannot compare {0} with {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "cannot fetch {0} from {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "cannot grant '{0}' operation on '{1}' that you don't have": {
     "sites": 1,
     "scope": [
@@ -310022,6 +311377,28 @@
       "go/other"
     ]
   },
+  "cannot slice {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "cannot take {0} elements": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "carrier settlement": {
     "sites": 1,
     "scope": [
@@ -310038,6 +311415,17 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "ceil(3.1) // 4": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "change how they're split": {
@@ -310076,6 +311464,17 @@
       "routes/agent-control"
     ]
   },
+  "clamp(rate, 100, 1000)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "coaching conversation": {
     "sites": 1,
     "scope": [
@@ -310083,6 +311482,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "coalesce(customRate, baseRate, 0)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "code {0}": {
@@ -310119,6 +311529,15 @@
     ],
     "areas": [
       "template/report.delivery.email"
+    ]
+  },
+  "computed from shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "confirmed by {0}": {
@@ -310173,6 +311592,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "count(stops, .type == \"Delivery\") * stopFee": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "count_distinct is not supported across to-many relationships": {
@@ -310265,6 +311695,17 @@
       "go/other"
     ]
   },
+  "customer.code endsWith \"-EXP\" ? 75 : 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "customers": {
     "sites": 1,
     "scope": [
@@ -310346,6 +311787,26 @@
       "routes/desk"
     ]
   },
+  "declared default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "deficitWeight(\"cwt\", totalWeight) / 100 * lookup(\"cwt\", deficitWeight(\"cwt\", totalWeight))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "delivered · last 7 days": {
     "sites": 1,
     "scope": [
@@ -310353,6 +311814,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "deliveryDate - pickupDate > duration(\"48h\") ? 150 : 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "description": {
@@ -310453,6 +311925,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "division by zero": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "do something": {
@@ -312803,6 +314286,17 @@
       "go/other"
     ]
   },
+  "empty": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "empty list": {
     "sites": 1,
     "scope": [
@@ -312839,6 +314333,15 @@
       "routes/time-attendance"
     ]
   },
+  "engine override": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "engine {0}": {
     "sites": 1,
     "scope": [
@@ -312864,6 +314367,17 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "error parsing regexp {0}: {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "escrow accounts": {
@@ -313024,6 +314538,61 @@
       "routes/invoice"
     ]
   },
+  "expected a list, got {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expected a number, got {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expected a whole number, got {0}": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expected text, got {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expected true/false, got {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "expires {0}": {
     "sites": 1,
     "scope": [
@@ -313031,6 +314600,61 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "expression built more text than a formula may ({0, plural, one {# byte} other {# bytes}}); formulas compare codes, they do not assemble documents": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expression has no statements": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expression must produce a numeric result, got {0}": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expression produced a non-finite number": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "expression produced true/false rather than an amount; write a conditional such as condition ? amount : 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "external EDI connections can be configured but are not accepted through invite flow": {
@@ -313123,6 +314747,50 @@
       "go/other"
     ]
   },
+  "find(stops, .type == \"Delivery\")?.status": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "findIndex(stops, .type == \"Delivery\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "findLast(stops, .type == \"Pickup\")?.status": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "findLastIndex(stops, .type == \"Pickup\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "first 100 shown": {
     "sites": 1,
     "scope": [
@@ -313159,6 +314827,50 @@
       "routes/reports"
     ]
   },
+  "first(reverse(stops))?.type": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "first(sort(map(commodities, .weight ?? 0), \"desc\"))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "first(sortBy(commodities, .weight, \"desc\")).weight": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "first(stops)?.type": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "fiscal periods": {
     "sites": 1,
     "scope": [
@@ -313175,6 +314887,28 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "float(trim(customer.creditTier))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "floor(3.9) // 3": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "fmcsa.dot.gov": {
@@ -313223,6 +314957,17 @@
       "routes/agent-control"
     ]
   },
+  "formula evaluation exceeded its time budget": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "free time": {
     "sites": 1,
     "scope": [
@@ -313248,6 +314993,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "from shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "from the evaluation budget": {
@@ -313323,6 +315077,17 @@
       "go/other"
     ]
   },
+  "fromPairs([[\"TX\", 1.1], [\"OK\", 1.0]])[origin.state] ?? 1": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "fuel cards": {
     "sites": 1,
     "scope": [
@@ -313348,6 +315113,17 @@
     ],
     "areas": [
       "routes/carrier-settlement-workspace"
+    ]
+  },
+  "get(stops, 5) == nil ? 0 : 75": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "granted {0}, expires {1}": {
@@ -313402,6 +315178,28 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "hasPrefix(origin.zip, \"7\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "hasSuffix(customer.code, \"-EXP\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "head v{0}": {
@@ -313486,7 +315284,7 @@
     ]
   },
   "in a breakdown line": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -313543,6 +315341,28 @@
       "routes/agent-control"
     ]
   },
+  "index out of range: {0} (array length is {1})": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "indexOf(customer.code, \"-\") > 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "indexer round": {
     "sites": 1,
     "scope": [
@@ -313579,6 +315399,17 @@
       "api/helpers"
     ]
   },
+  "int(origin.zip[0:1])": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "invalid OANDA base URL": {
     "sites": 1,
     "scope": [
@@ -313588,6 +315419,17 @@
       "go/other"
     ]
   },
+  "invalid argument for {0} (type {1})": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "invalid date format, use YYYY-MM-DD": {
     "sites": 1,
     "scope": [
@@ -313595,6 +315437,105 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "invalid date {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid number of arguments for {0} (expected {1}, got {2})": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid operation: negative shift count {0} (type int)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid operation: {0} {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid operation: {0} {1} {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid operation: {0}({1})": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid order {0}, expected asc or desc": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid pair length {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "invalid pair {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "invalid realtime invalidation payload": {
@@ -313704,6 +315645,17 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "join([origin.state, destination.state], \"-\") == \"TX-OK\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "journal entry": {
@@ -313864,6 +315816,28 @@
       "routes/agent-control"
     ]
   },
+  "last(stops)?.status": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "lastIndexOf(customer.code, \"-\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "late {0}": {
     "sites": 1,
     "scope": [
@@ -313889,6 +315863,83 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "len(concat(stops, commodities))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "len(filter(stops, .type == \"Delivery\"))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "len(keys(groupBy(stops, .type)))": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "len(origin.zip) == 5": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "len(toPairs(groupBy(stops, .type)))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "len(uniq(map(stops, .type)))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "len(values(groupBy(stops, .type)))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "length {0} over": {
@@ -313990,6 +316041,50 @@
       "packages/shared/lib"
     ]
   },
+  "lookup2Or(\"zone_weight_rates\", origin.zip, totalWeight, 0)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "lookupOr(\"lane_rate\", laneCode, 0)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "lower(customer.name) contains \"clinic\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "lower(customer.name) contains \"hospital\" ? 50 : 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "lowercase": {
     "sites": 1,
     "scope": [
@@ -314037,6 +316132,15 @@
       "routes/formula-template"
     ]
   },
+  "market data feed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "matched by radius": {
     "sites": 1,
     "scope": [
@@ -314053,6 +316157,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "max(baseRate * totalDistance, 250, minimumCharge) // highest floor wins": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "maximum active api keys reached": {
@@ -314082,6 +316197,17 @@
       "routes/formula-template"
     ]
   },
+  "mean(map(commodities, .weight ?? 0))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "measured {0}": {
     "sites": 1,
     "scope": [
@@ -314100,6 +316226,28 @@
       "routes/detention-intelligence"
     ]
   },
+  "median(map(commodities, .weight ?? 0))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "memory budget exceeded": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "messages in 90 days": {
     "sites": 1,
     "scope": [
@@ -314116,6 +316264,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "min(baseRate, 500) // caps at 500": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "minimum {0} → {1}": {
@@ -314478,6 +316637,17 @@
       "apps/web/lib"
     ]
   },
+  "no value for {0} on this record; write {1} so the formula still prices when it is missing": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "no vector size": {
     "sites": 1,
     "scope": [
@@ -314512,6 +316682,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "none(commodities, .hazmat) ? 0 : hazmatFee": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "not billable": {
@@ -314991,6 +317172,17 @@
       "go/other"
     ]
   },
+  "one(stops, .type == \"Delivery\") ? 0 : 50": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "only proposes": {
     "sites": 1,
     "scope": [
@@ -315070,6 +317262,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "operator \"in\" not defined on {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "ops@acme.example, dispatch@acme.example": {
@@ -315170,6 +317373,39 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "origin.zip matches \"^(75|76)\" ? 25 : 0": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "origin.zip startsWith \"7\" ? 1.10 : 1.00": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "origin.zip[0:3] == \"750\" ? 1.05 : 1.00": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "other messages": {
@@ -315436,6 +317672,17 @@
       "routes/settlement-workspace"
     ]
   },
+  "pow(1.05, years)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "profile: {0}{1}": {
     "sites": 1,
     "scope": [
@@ -315526,6 +317773,171 @@
       "routes/inbox"
     ]
   },
+  "rate table \"{0}\" column key: lookup key \"{1}\" is not numeric": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" column key: unsupported lookup key type {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" has a single axis — use lookup(table, key)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" has no band matching {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" has no bands": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" has no cell matching row {1} and column {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" has no entry for key \"{1}\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" has two axes — use lookup2(table, rowKey, colKey)": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" matches exact keys, not bands — use lookup(table, key)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" not found": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" row key: lookup key \"{1}\" is not numeric": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\" row key: unsupported lookup key type {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\": lookup key \"{1}\" is not numeric": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table \"{0}\": unsupported lookup key type {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "rate table lookups are not available in this context: \"{0}\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "rates raised up to {0}%": {
     "sites": 1,
     "scope": [
@@ -315533,6 +317945,17 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "ratingTime >= date(\"2026-07-01\") ? 1.05 : 1.00": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "read content written outside the organization": {
@@ -315598,6 +318021,28 @@
       "routes/agent-control"
     ]
   },
+  "reduce of empty array with no initial value": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "reduce(map(stops, .weight ?? 0), #acc + #, 0)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "rendering this invoice's PDF would email it to the customer at once, as their billing profile sends invoices when the PDF is made; use invoice_send, which a person approves, instead": {
     "sites": 1,
     "scope": [
@@ -315614,6 +318059,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "replace(origin.zip, \"-\", \"\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "replies@example.com": {
@@ -315716,6 +318172,83 @@
       "routes/carrier"
     ]
   },
+  "round decimals must be between -12 and 12, got {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "round(3.14159, 2) // 3.14": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "roundDown(2.999, 2) // 2.99": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "roundHalfEven(2.665, 2) // 2.66": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "roundTo increment must be a positive number, got {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "roundTo(123.4, 5) // 125": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "roundUp(2.001, 2) // 2.01": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "row limit reached": {
     "sites": 1,
     "scope": [
@@ -315786,6 +318319,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "sample data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "scheduled version": {
@@ -316014,6 +318556,17 @@
       "routes/desk"
     ]
   },
+  "sort order argument must be a string (got {0})": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "specificity {0}": {
     "sites": 1,
     "scope": [
@@ -316039,6 +318592,50 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "split(customer.code, \"-\")[0]": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "splitAfter(customer.code, \"-\")[0]": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "sqrt of negative number {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "sqrt(16) // 4": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...": {
@@ -316149,6 +318746,17 @@
       "routes/desk"
     ]
   },
+  "string(totalPieces) + \" pcs\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "sum of {0}": {
     "sites": 1,
     "scope": [
@@ -316156,6 +318764,50 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "sum(flatten([[1, 2], [3]])) // 6": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "sum(map(commodities, .weight ?? 0))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "sum(map(commodities, .weight)) // total commodity weight": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "sum(take(map(commodities, .weight ?? 0), 3))": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "superload {0} over": {
@@ -316257,6 +318909,28 @@
       "go/other"
     ]
   },
+  "test": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "text": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "the accounting system": {
     "sites": 3,
     "scope": [
@@ -316306,12 +318980,25 @@
     ]
   },
   "the date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "the date is out of range (years 0000 to 9999)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "the dispute on invoice {0}": {
@@ -316323,13 +319010,26 @@
       "routes/desk"
     ]
   },
-  "the end of the formula": {
-    "sites": 1,
+  "the duration": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "the duration is out of range (about 292 years either way)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "the file": {
@@ -316339,6 +319039,37 @@
     ],
     "areas": [
       "routes/factoring-remittance"
+    ]
+  },
+  "the formula built lists or maps nested too deeply": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "the formula has a syntax error here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "the formula reads {0}, which could not be read from this record; it cannot be priced until the field has a value": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "the full number is never stored": {
@@ -316456,6 +319187,17 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "the result is too large for a number (28 significant digits)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "the script was stopped": {
@@ -316676,12 +319418,14 @@
     ]
   },
   "this part is {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "this policy": {
@@ -316718,6 +319462,39 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "time: invalid duration \"{0}\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "time: missing unit in duration \"{0}\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "time: unknown unit in duration \"{0}\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "to answer": {
@@ -316936,6 +319713,17 @@
       "routes/rate-agreement"
     ]
   },
+  "totalWeight * lookup2(\"class_rates\", destination.state, totalWeight)": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "totals and customer balances": {
     "sites": 1,
     "scope": [
@@ -316999,13 +319787,60 @@
       "routes/agent-control"
     ]
   },
-  "true/false": {
-    "sites": 1,
+  "trim(customer.code) == \"ACME\"": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "trimPrefix(customer.code, \"C-\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "trimSuffix(origin.zip, \"-0000\")": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "true/false": {
+    "sites": 5,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "two-axis rate table \"{0}\" not found": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "type it as plain text": {
@@ -317026,6 +319861,17 @@
       "go/other"
     ]
   },
+  "type(fuelPrice) == \"nil\" ? 0 : fuelPrice": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "under review": {
     "sites": 1,
     "scope": [
@@ -317036,12 +319882,15 @@
     ]
   },
   "under {0}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "packages/shared/lib",
+      "rules/matrix"
     ]
   },
   "unit(s)": {
@@ -317052,6 +319901,17 @@
     "areas": [
       "routes/billing-queue",
       "routes/shipment"
+    ]
+  },
+  "unknown name {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "unsupported exchange rate date policy": {
@@ -317143,6 +320003,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "upper(origin.state) == \"TX\"": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "usable by everyone": {
@@ -317699,6 +320570,15 @@
       "routes/onboarding"
     ]
   },
+  "your input": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "your team": {
     "sites": 1,
     "scope": [
@@ -318025,12 +320905,11 @@
     ]
   },
   "{0, plural, one {# argument} other {# arguments}}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -324667,12 +327546,14 @@
     ]
   },
   "{0} adds up values and does not take a predicate; map the list first: {0}(map(list, .field))": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} advance": {
@@ -324830,12 +327711,15 @@
     ]
   },
   "{0} and over": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "packages/shared/lib",
+      "rules/matrix"
     ]
   },
   "{0} and {1} are typing…": {
@@ -324875,22 +327759,15 @@
       "routes/factoring-remittance"
     ]
   },
-  "{0} and {1}, so this is never {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "{0} and {1}; the engine compares only values of the same kind": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} answered": {
@@ -325214,12 +328091,14 @@
     ]
   },
   "{0} bands {1} and {2} overlap, so the same shipment matches both.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/matrix"
     ]
   },
   "{0} base rate": {
@@ -326278,6 +329157,17 @@
       "go/other"
     ]
   },
+  "{0} does not fit in a formula number, which holds up to 28 significant digits": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "{0} does not have a plain-text body": {
     "sites": 1,
     "scope": [
@@ -327253,12 +330143,25 @@
     ]
   },
   "{0} has no band below {1}, so anything smaller finds no rate.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/matrix"
+    ]
+  },
+  "{0} has no bands, so {1}() can't read it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} has no driver portal access, so the message would not reach them.": {
@@ -327271,21 +330174,25 @@
     ]
   },
   "{0} has no field {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} has no field {1}. Did you mean {2}?": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} has no invoice email recipients. Add one to the customer's email profile or enter a recipient.": {
@@ -327442,6 +330349,17 @@
       "go/other"
     ]
   },
+  "{0} has one axis; read it with lookup() or lookupOr()": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "{0} has reached its monthly spending cap. Raise the cap or add another provider for this task": {
     "sites": 1,
     "scope": [
@@ -327494,6 +330412,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} has two axes; read it with lookup2() or lookup2Or()": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} has used <b>{1}%</b> of {2}'s budget": {
@@ -327933,12 +330862,14 @@
     ]
   },
   "{0} is a value, not a function; it can't be called with ( )": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is a {1} account, which cannot be used for this role": {
@@ -327951,16 +330882,18 @@
     ]
   },
   "{0} is already a shipment field, and a 'let' can't redeclare it. Use another name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is already a shipment value; an input cannot replace it, so choose another name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -327969,12 +330902,14 @@
     ]
   },
   "{0} is already defined above; use another name": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is already mapped to {1}": {
@@ -328131,21 +331066,25 @@
     ]
   },
   "{0} is defined further down; a 'let' must come before the lines that read it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
-  "{0} is empty on some shipments, and the formula would fail to rate them. Give it a fallback: ({0} ?? {1})": {
-    "sites": 1,
+  "{0} is empty on some shipments, and the formula would fail to rate them. Give it a fallback: {1}": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is given twice": {
@@ -328250,10 +331189,12 @@
   "{0} is never used": {
     "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is no longer ready to move up a tier on this agent": {
@@ -328637,12 +331578,25 @@
     ]
   },
   "{0} is one of this template's inputs, and a 'let' can't redeclare it. Use another name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} is only defined inside a predicate": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is outside the allowed range": {
@@ -328793,16 +331747,18 @@
     ]
   },
   "{0} is the name of a formula function, and a 'let' can't take it. Use another name": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is the name of a formula function; choose another name for the input": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -328901,12 +331857,14 @@
     ]
   },
   "{0} is {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} is {1} and cannot be ignored": {
@@ -328973,66 +331931,80 @@
     ]
   },
   "{0} isn't a formula function. Did you mean {1}?": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} isn't a formula function; pick one from the reference": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} isn't a shipment field or one of this template's inputs. Declare it as an input, or pick a field from the reference.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} isn't a shipment field or one of this template's inputs. Did you mean {1}?": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} isn't available in formulas: formulas compare codes and do not build text": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} isn't available in formulas: formulas read the shipment's fields directly and do not convert them to or from JSON": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} isn't connected. The scan waits a few minutes for it to come online.": {
@@ -329081,12 +332053,14 @@
     ]
   },
   "{0} jumps from {1} to {2} with nothing in between.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/matrix"
     ]
   },
   "{0} kept both documents": {
@@ -329952,12 +332926,14 @@
     ]
   },
   "{0} names its rate table in quotes: {0}(\"zone_rates\", …)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} need attention": {
@@ -331663,12 +334639,14 @@
     ]
   },
   "{0} reads a field of the current item, so it only works inside filter(), map() and the like": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} ready": {
@@ -332039,6 +335017,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} requires at least one argument": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} responded off-channel — by phone or a direct email. Record it here so the tender advances.": {
@@ -332711,12 +335700,14 @@
     ]
   },
   "{0} stops at {1}. Anything at or above that finds no rate — give the top band no upper bound to catch it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "rules/matrix"
     ]
   },
   "{0} stops paying {1}. Its invoices are no longer ready to factor until a new notice is acknowledged.": {
@@ -332802,6 +335793,39 @@
       "routes/detention-intelligence"
     ]
   },
+  "{0} takes a list, but {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes a record, but {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes at least {1, plural, one {# argument} other {# arguments}}; {2, plural, one {# was} other {# were}} given": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
   "{0} takes it": {
     "sites": 1,
     "scope": [
@@ -332821,12 +335845,47 @@
     ]
   },
   "{0} takes numbers, but {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes text or a number, but {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes text, a list or a record, but {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes text, but {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} takes this step": {
@@ -332838,13 +335897,48 @@
       "routes/desk"
     ]
   },
-  "{0} takes {1}; {2, plural, one {# was} other {# were}} given": {
-    "sites": 1,
+  "{0} takes whole numbers, but this part can come to a fraction": {
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes whole numbers, but {1} can hold a fraction. Use int({2}) to take its whole part": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes {1, plural, one {# argument} other {# arguments}}; {2, plural, one {# was} other {# were}} given": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0} takes {1} to {2} arguments; {3, plural, one {# was} other {# were}} given": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0} tax + {1} surcharge, in {2}": {
@@ -332999,15 +336093,6 @@
       "template/customer.statement.email",
       "template/customer.statement.pdf",
       "template/invoice.email"
-    ]
-  },
-  "{0} to {1} arguments": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} to {1} by {2}": {
@@ -334793,12 +337878,15 @@
     ]
   },
   "{0} – under {1}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "packages/shared/lib"
+      "apps/web/rules",
+      "packages/shared/lib",
+      "rules/matrix"
     ]
   },
   "{0} – {1} · pays {2}": {
@@ -335686,21 +338774,36 @@
     ]
   },
   "{0}; it can't be indexed with [ ]": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0}; it has no field {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/rules",
+      "rules/formula"
+    ]
+  },
+  "{0}; it has no method {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/formula"
     ]
   },
   "{0}; it is advisory.": {

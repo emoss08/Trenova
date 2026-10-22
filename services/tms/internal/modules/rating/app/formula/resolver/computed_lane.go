@@ -192,9 +192,12 @@ func pickupPart(read func(time.Time) any, zero any) ComputedFunc {
 }
 
 var (
-	computePickupDayOfWeek = pickupPart(func(t time.Time) any { return int(t.Weekday()) }, 0)
-	computePickupHour      = pickupPart(func(t time.Time) any { return t.Hour() }, 0)
-	computePickupMonth     = pickupPart(func(t time.Time) any { return int(t.Month()) }, 0)
+	computePickupDayOfWeek = pickupPart(
+		func(t time.Time) any { return int64(t.Weekday()) },
+		int64(0),
+	)
+	computePickupHour      = pickupPart(func(t time.Time) any { return int64(t.Hour()) }, int64(0))
+	computePickupMonth     = pickupPart(func(t time.Time) any { return int64(t.Month()) }, int64(0))
 	computeIsWeekendPickup = pickupPart(func(t time.Time) any {
 		return t.Weekday() == time.Saturday || t.Weekday() == time.Sunday
 	}, false)

@@ -926,7 +926,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerDotTests_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDOTTests(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerDOTTests(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerDOTTest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerDOTTestᚄ),
 			},
@@ -1923,7 +1923,7 @@ type resolverMutation interface {
 }
 
 type resolverQuery interface {
-	WorkerDOTTests(ctx context.Context, workerID string) ([]*worker.WorkerDOTTest, error)
+	WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerDOTTest, error)
 	WorkerDOTTest(ctx context.Context, id string) (*worker.WorkerDOTTest, error)
 	OpenDOTTests(ctx context.Context) ([]*worker.WorkerDOTTest, error)
 	WorkerDOTViolations(ctx context.Context, workerID string) ([]*worker.WorkerDOTViolation, error)
@@ -2195,15 +2195,31 @@ func field_Mutation_updateDotRandomDrawEntry_args(ctx context.Context, ec *gqlex
 }
 
 func field_Query_workerDotTests_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "openOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["openOnly"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg2
 	return args, nil
 }
 

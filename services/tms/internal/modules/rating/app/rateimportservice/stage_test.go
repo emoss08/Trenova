@@ -53,7 +53,7 @@ func existingRule(laneKey, rate string) *rateagreement.RateAgreementRule {
 func TestStage_ReadsEveryRowAndKeepsTheOnesThatFailed(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(sheet(
+	staged, err := stage(t.Context(), sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"TX", "CA", "per furlong", "1.90"},
 		[]string{"OH", "PA", "PerMile", "2.00"},
@@ -72,7 +72,7 @@ func TestStage_ReadsEveryRowAndKeepsTheOnesThatFailed(t *testing.T) {
 func TestStage_NumbersRowsAsTheyAppearInTheFile(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(sheet(
+	staged, err := stage(t.Context(), sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"TX", "CA", "PerMile", "1.90"},
 	), nil, resolveTemplate)
@@ -88,7 +88,7 @@ func TestStage_NumbersRowsAsTheyAppearInTheFile(t *testing.T) {
 func TestStage_AFailedRowDoesNotLookLikeARemoval(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(
+	staged, err := stage(t.Context(),
 		sheet([]string{"IL", "GA", "per furlong", "2.35"}),
 		[]*rateagreement.RateAgreementRule{existingRule("ST:IL>ST:GA", "2.10")},
 		resolveTemplate,
@@ -108,7 +108,7 @@ func TestStage_AFailedRowDoesNotLookLikeARemoval(t *testing.T) {
 func TestStage_DiffsWhatReadAgainstTheContract(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(
+	staged, err := stage(t.Context(),
 		sheet([]string{"IL", "GA", "PerMile", "2.35"}),
 		[]*rateagreement.RateAgreementRule{existingRule("ST:IL>ST:GA", "2.10")},
 		resolveTemplate,
@@ -131,7 +131,7 @@ func TestStage_ASheetWithNoUsableMappingIsRefusedUpFront(t *testing.T) {
 		FirstDataRow: 2,
 	}
 
-	_, err := stage(unusable, nil, resolveTemplate)
+	_, err := stage(t.Context(), unusable, nil, resolveTemplate)
 
 	require.Error(t, err)
 }
@@ -148,7 +148,7 @@ func TestStage_ReportsTheColumnsItReadNothingFrom(t *testing.T) {
 		FirstDataRow: 2,
 	}
 
-	staged, err := stage(withExtra, nil, resolveTemplate)
+	staged, err := stage(t.Context(), withExtra, nil, resolveTemplate)
 
 	require.NoError(t, err)
 	assert.Equal(t, []string{"Sales Rep"}, staged.UnmappedHeaders)
@@ -159,7 +159,7 @@ func TestStage_ReportsTheColumnsItReadNothingFrom(t *testing.T) {
 func TestStage_BlankRowsAreNotStagedAtAll(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(sheet(
+	staged, err := stage(t.Context(), sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"", "", "", ""},
 	), nil, resolveTemplate)
@@ -179,7 +179,7 @@ func TestCommitPlan_SupersedesOnlyWhatTheDiffSaidWouldChange(t *testing.T) {
 
 	// The sheet restates OH→PA at exactly its current rate, so it is genuinely
 	// untouched rather than simply absent.
-	staged, err := stage(
+	staged, err := stage(t.Context(),
 		sheet(
 			[]string{"IL", "GA", "PerMile", "2.35"},
 			[]string{"OH", "PA", "PerMile", "2.00"},
@@ -203,7 +203,7 @@ func TestCommitPlan_WithdrawsTheLanesTheSheetDropped(t *testing.T) {
 
 	dropped := existingRule("ST:TX>ST:CA", "1.90")
 
-	staged, err := stage(
+	staged, err := stage(t.Context(),
 		sheet([]string{"IL", "GA", "PerMile", "2.35"}),
 		[]*rateagreement.RateAgreementRule{dropped},
 		resolveTemplate,
@@ -220,7 +220,7 @@ func TestCommitPlan_WithdrawsTheLanesTheSheetDropped(t *testing.T) {
 func TestCommitPlan_CarriesOnlyTheRowsThatRead(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(sheet(
+	staged, err := stage(t.Context(), sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"TX", "CA", "per furlong", "1.90"},
 	), nil, resolveTemplate)
@@ -237,7 +237,7 @@ func TestCommitPlan_CarriesOnlyTheRowsThatRead(t *testing.T) {
 func TestCommitPlan_DropsADuplicatedLaneRatherThanWritingBoth(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(sheet(
+	staged, err := stage(t.Context(), sheet(
 		[]string{"IL", "GA", "PerMile", "2.35"},
 		[]string{"IL", "GA", "PerMile", "2.60"},
 	), nil, resolveTemplate)
@@ -251,7 +251,7 @@ func TestCommitPlan_DropsADuplicatedLaneRatherThanWritingBoth(t *testing.T) {
 func TestStagedBatch_KnowsWhetherCommittingWouldDoAnything(t *testing.T) {
 	t.Parallel()
 
-	staged, err := stage(
+	staged, err := stage(t.Context(),
 		sheet([]string{"IL", "GA", "PerMile", "2.10"}),
 		[]*rateagreement.RateAgreementRule{existingRule("ST:IL>ST:GA", "2.10")},
 		resolveTemplate,

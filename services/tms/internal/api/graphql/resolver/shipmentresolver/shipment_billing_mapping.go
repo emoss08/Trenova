@@ -85,19 +85,20 @@ func shipmentBillingPayersToModel(
 }
 
 func transferToBillingResultToModel(
+	ctx context.Context,
 	result *billingqueueports.TransferToBillingResult,
 ) (*gqlmodel.ShipmentTransferToBillingResult, error) {
 	if result == nil {
 		return nil, errortypes.NewDatabaseError("Billing queue transfer did not return a result").
 			WithInternal(errors.New("shipment service returned nil transfer result"))
 	}
-	primary, err := base.RequiredBillingQueueItemToModel(result.Primary)
+	primary, err := base.RequiredBillingQueueItemToModel(ctx, result.Primary)
 	if err != nil {
 		return nil, err
 	}
 	items := make([]*gqlmodel.BillingQueueItem, 0, len(result.Items))
 	for _, item := range result.Items {
-		model, itemErr := base.BillingQueueItemToModel(item)
+		model, itemErr := base.BillingQueueItemToModel(ctx, item)
 		if itemErr != nil {
 			return nil, itemErr
 		}
@@ -191,13 +192,13 @@ func bulkTransferToBillingToModel(
 	for i := range response.Results {
 		item := &response.Results[i]
 
-		queueItem, err := base.BillingQueueItemToModel(item.Item)
+		queueItem, err := base.BillingQueueItemToModel(ctx, item.Item)
 		if err != nil {
 			return nil, err
 		}
 		queueItems := make([]*gqlmodel.BillingQueueItem, 0, len(item.Items))
 		for _, created := range item.Items {
-			model, itemErr := base.BillingQueueItemToModel(created)
+			model, itemErr := base.BillingQueueItemToModel(ctx, created)
 			if itemErr != nil {
 				return nil, itemErr
 			}

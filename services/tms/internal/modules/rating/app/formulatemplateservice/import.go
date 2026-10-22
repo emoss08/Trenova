@@ -424,10 +424,10 @@ func addIndexedValidationError(indexed *errortypes.MultiError, err error) {
 	switch typed := err.(type) {
 	case *errortypes.MultiError:
 		for _, fieldErr := range typed.Errors {
-			indexed.Add(fieldErr.Field, fieldErr.Code, fieldErr.Message)
+			indexed.Add(fieldErr.Field, fieldErr.Code, fieldErr.Message, fieldErr.Args...)
 		}
 	case *errortypes.Error:
-		indexed.Add(typed.Field, typed.Code, typed.Message)
+		indexed.Add(typed.Field, typed.Code, typed.Message, typed.Args...)
 	default:
 		indexed.Add("expression", errortypes.ErrInvalid, err.Error())
 	}

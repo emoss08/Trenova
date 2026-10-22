@@ -6,18 +6,21 @@ import {
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { unguardedFields } from "@/lib/formula-preview";
 import { hasMaterialChange } from "@/lib/formula-template-material";
 import { formulaTemplate } from "@/lib/queries/formula-template";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type {
   FormulaDraftContent,
+  FormulaInputType,
   FormulaTemplate,
   FormulaTemplateFormValues,
   FormulaTestCaseInput,
   ReadinessCheck,
   TemplateUsageResponse,
-  VariableValueType,
 } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
@@ -32,11 +35,7 @@ import {
   type RefObject,
 } from "react";
 import { useFormContext, useFormState, useWatch } from "react-hook-form";
-import {
-  analyzeExpression,
-  inferInputType,
-  type ExpressionAnalysis,
-} from "./model/expression-analysis";
+import { analyzeExpression, type ExpressionAnalysis } from "./model/expression-analysis";
 import { studioReadiness } from "./model/readiness";
 import { useLivePreview, type LivePreviewState } from "./use-live-preview";
 import { useStudioScenarios, type StudioScenariosState } from "./use-studio-scenarios";
@@ -117,10 +116,12 @@ type StudioActionsValue = StudioProps & {
   draftContent: () => FormulaDraftContent;
   save: () => void;
   /** Adds an input for a name the formula reads, and takes the person to its row. */
-  declareInput: (name: string, type?: VariableValueType) => void;
+  declareInput: (name: string, type: FormulaInputType) => void;
   clearFocusInput: () => void;
   /** Names Nova's conversation about a template not yet created, for the life of the page. */
   unsavedNovaKey: string;
+  /** The loaded rules module, for work done outside a render (applying a proposal). */
+  rules: RulesRuntime;
 };
 
 type StudioContextValue = StudioStateValue & StudioActionsValue;
@@ -154,6 +155,10 @@ function stringAmount(value: number | string | null | undefined): string | null 
 
 export function StudioProvider({ children, ...props }: StudioProps & { children: ReactNode }) {
   const t = useT();
+  // Everything below analyses the formula synchronously with the rules
+  // module, so the studio suspends here, behind its skeleton, until the
+  // module has loaded (it is usually ready already: main.tsx preloads it).
+  const rules = useRules();
   const { mode, template, onSave } = props;
   const form = useFormContext<FormulaTemplateFormValues>();
   const { isDirty } = useFormState({ control: form.control });
@@ -188,8 +193,11 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     ],
   });
 
-  const known = useKnownIdentifiers(schemaId || "shipment", variableDefinitions ?? []);
-  const analysis = useMemo(() => analyzeExpression(expression ?? "", known), [expression, known]);
+  const known = useKnownIdentifiers(rules, schemaId || "shipment", variableDefinitions ?? []);
+  const analysis = useMemo(
+    () => analyzeExpression(rules, expression ?? "", known),
+    [rules, expression, known],
+  );
 
   const preview = useLivePreview();
   const author = useMemo(() => (user?.id ? { id: user.id, name: user.name } : null), [user]);
@@ -259,7 +267,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
           expressionEmpty: analysis.empty,
           expressionErrors: analysis.errorCount,
           previewValid: result ? result.valid : null,
-          unguardedFields: [...new Set((result?.warnings ?? []).map((warning) => warning.field))],
+          unguardedFields: unguardedFields(result),
           scenarioTotal: scenarios.total,
           scenarioPassed: scenarios.passed,
           breakdownLines: (breakdownDefinitions ?? []).length,
@@ -344,21 +352,20 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const [focusInput, setFocusInput] = useState<string | null>(null);
   const clearFocusInput = useCallback(() => setFocusInput(null), []);
   const declareInput = useCallback(
-    (name: string, type?: VariableValueType) => {
+    (name: string, type: FormulaInputType) => {
       const current = form.getValues("variableDefinitions") ?? [];
       const existing = current.findIndex((variable) => variable.name === name);
       if (existing === -1) {
-        const kind = type ?? inferInputType(name);
         form.setValue(
           "variableDefinitions",
           [
             ...current,
             {
               name,
-              type: kind,
+              type,
               description: "",
               required: false,
-              defaultValue: kind === "Boolean" ? false : kind === "String" ? "" : undefined,
+              defaultValue: type === "Boolean" ? false : type === "String" ? "" : undefined,
             },
           ],
           { shouldDirty: true, shouldValidate: true },
@@ -398,6 +405,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       declareInput,
       clearFocusInput,
       unsavedNovaKey,
+      rules,
     }),
     [
       mode,
@@ -415,6 +423,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       declareInput,
       clearFocusInput,
       unsavedNovaKey,
+      rules,
     ],
   );
 

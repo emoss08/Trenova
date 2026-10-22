@@ -1,0 +1,654 @@
+{
+  "op": "allocation.split",
+  "cases": [
+    {
+      "name": "decimalutils: even thirds fold the remainder into the last share",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": "100.00", "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": "33.333333", "sequence": 0},
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": "33.333333", "sequence": 1},
+        {"billToCustomerId": "cus_c", "method": "Percent", "percent": "33.333334", "sequence": 2}
+      ]}]},
+      "output": {"charges": [{"total": "100", "shares": [
+        {"amount": "33.33", "percent": "33.333333", "partial": true},
+        {"amount": "33.33", "percent": "33.333333", "partial": true},
+        {"amount": "33.34", "percent": "33.333334", "partial": true}
+      ]}], "payers": [
+        {"payerId": "cus_a", "freightAmount": "33.33", "accessorialAmount": "0", "totalAmount": "33.33"},
+        {"payerId": "cus_b", "freightAmount": "33.33"},
+        {"payerId": "cus_c", "freightAmount": "33.34"}
+      ], "isSplit": true}
+    },
+    {
+      "name": "decimalutils: sixty forty splits exactly",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": "1250.50", "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": 60, "sequence": 0},
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": 40, "sequence": 1}
+      ]}]},
+      "output": {"charges": [{"shares": [{"amount": "750.3"}, {"amount": "500.2"}]}]}
+    },
+    {
+      "name": "decimalutils: a single cent goes entirely to the last share",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": "0.01", "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": "33.333333", "sequence": 0},
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": "33.333333", "sequence": 1},
+        {"billToCustomerId": "cus_c", "method": "Percent", "percent": "33.333334", "sequence": 2}
+      ]}]},
+      "output": {"charges": [{"shares": [{"amount": "0"}, {"amount": "0"}, {"amount": "0.01"}]}]}
+    },
+    {
+      "name": "decimalutils: negative totals keep their sign",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": "-100.00", "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": 50, "sequence": 0},
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": 50, "sequence": 1}
+      ]}]},
+      "output": {"charges": [{"shares": [{"amount": "-50"}, {"amount": "-50"}]}]}
+    },
+    {
+      "name": "decimalutils: a single full share",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": "42.42", "allocations": [
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": 100}
+      ]}]},
+      "output": {"charges": [{"shares": [{"amount": "42.42", "partial": false}]}]}
+    },
+    {
+      "name": "decimalutils: a zero percent is refused",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": 10, "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": 0, "sequence": 0},
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": 100, "sequence": 1}
+      ]}]},
+      "output": {"charges": [{"total": "10", "shares": "$absent", "error": {"message": "Percent allocations for this charge must total 100"}}], "payers": null, "isSplit": null}
+    },
+    {
+      "name": "decimalutils: a percent over one hundred is refused",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": 10, "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": 101}
+      ]}]},
+      "output": {"charges": [{"error": {"message": "Percent allocations for this charge must total 100"}}]}
+    },
+    {
+      "name": "decimalutils: percents that do not total one hundred are refused",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": 10, "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": 60},
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": 30}
+      ]}]},
+      "output": {"charges": [{"error": {"message": "Percent allocations for this charge must total 100"}}]}
+    },
+    {
+      "name": "percents that total one hundred at six places are accepted",
+      "input": {"defaultPayerId": "cus_a", "charges": [{"kind": "Freight", "total": 90, "allocations": [
+        {"billToCustomerId": "cus_a", "method": "Percent", "percent": "33.3333333", "sequence": 0},
+        {"billToCustomerId": "cus_b", "method": "Percent", "percent": "33.3333333", "sequence": 1},
+        {"billToCustomerId": "cus_c", "method": "Percent", "percent": "33.3333333", "sequence": 2}
+      ]}]},
+      "output": {"charges": [{"shares": [{"amount": "30"}, {"amount": "30"}, {"amount": "30"}]}]}
+    },
+    {
+      "name": "resolver: with no allocations the payer is billed in full",
+      "input": {"defaultPayerId": "cus_intel", "base": 1000, "charges": [
+        {"kind": "Freight", "total": 1000},
+        {"kind": "Accessorial", "method": "Flat", "amount": 50, "unit": 2}
+      ]},
+      "exact": true,
+      "output": {"charges": [
+        {"total": "1000", "shares": [{"billToCustomerId": "cus_intel", "method": null, "amount": "1000", "percent": "100", "partial": false}]},
+        {"total": "100", "shares": [{"billToCustomerId": "cus_intel", "method": null, "amount": "100", "percent": "100", "partial": false}]}
+      ], "payers": [
+        {"payerId": "cus_intel", "freightAmount": "1000", "accessorialAmount": "100", "totalAmount": "1100"}
+      ], "isSplit": false}
+    },
+    {
+      "name": "resolver: Intel pays freight and AMD pays the accessorials",
+      "input": {"defaultPayerId": "cus_intel", "base": 2450, "charges": [
+        {"kind": "Freight", "total": 2450},
+        {"kind": "Accessorial", "method": "Flat", "amount": 75, "unit": 2, "allocations": [
+          {"id": "chal_1", "billToCustomerId": "cus_amd", "method": "Percent", "percent": 100}
+        ]},
+        {"kind": "Accessorial", "method": "Flat", "amount": 120, "unit": 1, "allocations": [
+          {"id": "chal_2", "billToCustomerId": "cus_amd", "method": "Percent", "percent": 100}
+        ]}
+      ]},
+      "output": {"charges": [
+        {"total": "2450", "shares": [{"billToCustomerId": "cus_intel", "amount": "2450", "allocation": "$absent"}]},
+        {"total": "150", "shares": [{"allocation": 0, "allocationId": "chal_1", "billToCustomerId": "cus_amd", "method": "Percent", "amount": "150", "partial": false}]},
+        {"total": "120", "shares": [{"allocation": 0, "allocationId": "chal_2", "billToCustomerId": "cus_amd", "amount": "120", "partial": false}]}
+      ], "payers": [
+        {"payerId": "cus_intel", "freightAmount": "2450", "accessorialAmount": "0", "totalAmount": "2450"},
+        {"payerId": "cus_amd", "freightAmount": "0", "accessorialAmount": "270", "totalAmount": "270"}
+      ], "isSplit": true}
+    },
+    {
+      "name": "resolver: a percent freight split puts the remainder on the last row by sequence",
+      "input": {"defaultPayerId": "cus_first", "charges": [
+        {"kind": "Freight", "total": "1000.01", "allocations": [
+          {"id": "chal_b", "billToCustomerId": "cus_second", "method": "Percent", "percent": 40, "sequence": 1},
+          {"id": "chal_a", "billToCustomerId": "cus_first", "method": "Percent", "percent": 60, "sequence": 0}
+        ]}
+      ]},
+      "output": {"charges": [{"shares": [
+        {"allocation": 1, "billToCustomerId": "cus_first", "amount": "600.01", "percent": "60", "partial": true},
+        {"allocation": 0, "billToCustomerId": "cus_second", "amount": "400", "percent": "40", "partial": true}
+      ]}], "payers": [
+        {"payerId": "cus_first", "freightAmount": "600.01"},
+        {"payerId": "cus_second", "freightAmount": "400"}
+      ], "isSplit": true}
+    },
+    {
+      "name": "resolver: a three way split still sums to the charge",
+      "input": {"defaultPayerId": "cus_a", "charges": [
+        {"kind": "Freight", "total": 100, "allocations": [
+          {"billToCustomerId": "cus_a", "method": "Percent", "percent": "33.333333", "sequence": 0},
+          {"billToCustomerId": "cus_b", "method": "Percent", "percent": "33.333333", "sequence": 1},
+          {"billToCustomerId": "cus_c", "method": "Percent", "percent": "33.333334", "sequence": 2}
+        ]}
+      ]},
+      "output": {"payers": [
+        {"payerId": "cus_a", "totalAmount": "33.33"},
+        {"payerId": "cus_b", "totalAmount": "33.33"},
+        {"payerId": "cus_c", "totalAmount": "33.34"}
+      ]}
+    },
+    {
+      "name": "resolver: a percentage accessorial is computed on the full freight, then split",
+      "input": {"defaultPayerId": "cus_first", "base": 1000, "charges": [
+        {"kind": "Freight", "total": 1000, "allocations": [
+          {"billToCustomerId": "cus_first", "method": "Percent", "percent": 60, "sequence": 0},
+          {"billToCustomerId": "cus_second", "method": "Percent", "percent": 40, "sequence": 1}
+        ]},
+        {"kind": "Accessorial", "method": "Percentage", "amount": 10, "unit": 1, "allocations": [
+          {"billToCustomerId": "cus_first", "method": "Percent", "percent": 60, "sequence": 0},
+          {"billToCustomerId": "cus_second", "method": "Percent", "percent": 40, "sequence": 1}
+        ]}
+      ]},
+      "output": {"charges": [
+        {"total": "1000"},
+        {"total": "100", "shares": [{"amount": "60"}, {"amount": "40"}]}
+      ], "payers": [
+        {"payerId": "cus_first", "freightAmount": "600", "accessorialAmount": "60"},
+        {"payerId": "cus_second", "freightAmount": "400", "accessorialAmount": "40"}
+      ]}
+    },
+    {
+      "name": "resolver: amount rows must add up to the charge",
+      "input": {"defaultPayerId": "cus_a", "base": 500, "charges": [
+        {"kind": "Freight", "total": 500},
+        {"kind": "Accessorial", "method": "Flat", "amount": 100, "unit": 1, "allocations": [
+          {"billToCustomerId": "cus_a", "method": "Amount", "amount": 60, "sequence": 0},
+          {"billToCustomerId": "cus_b", "method": "Amount", "amount": "39.99", "sequence": 1}
+        ]}
+      ]},
+      "output": {"charges": [
+        {"total": "500"},
+        {"total": "100", "error": {"message": "Amount allocations for this charge must add up to {0}", "args": ["100.00"]}}
+      ], "payers": null, "isSplit": null}
+    },
+    {
+      "name": "resolver: exact amount rows are accepted and carry their percent",
+      "input": {"defaultPayerId": "cus_a", "charges": [
+        {"kind": "Freight", "total": 500, "allocations": [
+          {"billToCustomerId": "cus_a", "method": "Amount", "amount": 300, "sequence": 0},
+          {"billToCustomerId": "cus_b", "method": "Amount", "amount": 200, "sequence": 1}
+        ]}
+      ]},
+      "output": {"charges": [{"shares": [
+        {"billToCustomerId": "cus_a", "method": "Amount", "amount": "300", "percent": "60"},
+        {"billToCustomerId": "cus_b", "method": "Amount", "amount": "200", "percent": "40"}
+      ]}], "payers": [{"payerId": "cus_a", "freightAmount": "300"}, {"payerId": "cus_b", "freightAmount": "200"}]}
+    },
+    {
+      "name": "resolver: mixed methods on one charge are refused",
+      "input": {"defaultPayerId": "cus_a", "charges": [
+        {"kind": "Freight", "total": 500, "allocations": [
+          {"billToCustomerId": "cus_a", "method": "Percent", "percent": 60, "sequence": 0},
+          {"billToCustomerId": "cus_b", "method": "Amount", "amount": 200, "sequence": 1}
+        ]}
+      ]},
+      "output": {"charges": [{"error": {"message": "A charge must be split either by percent or by amount, not both"}}], "payers": null}
+    },
+    {
+      "name": "resolver: the default payer leads with an empty share, the others follow by ID",
+      "input": {"defaultPayerId": "cus_MMM", "charges": [
+        {"kind": "Freight", "total": 300, "allocations": [
+          {"billToCustomerId": "cus_ZZZ", "method": "Percent", "percent": 50, "sequence": 0},
+          {"billToCustomerId": "cus_AAA", "method": "Percent", "percent": 50, "sequence": 1}
+        ]}
+      ]},
+      "output": {"payers": [
+        {"payerId": "cus_MMM", "totalAmount": "0"},
+        {"payerId": "cus_AAA", "totalAmount": "150"},
+        {"payerId": "cus_ZZZ", "totalAmount": "150"}
+      ], "isSplit": true}
+    },
+    {
+      "name": "resolver: redirecting a whole charge is a split but not partial",
+      "input": {"defaultPayerId": "cus_a", "charges": [
+        {"kind": "Freight", "total": 300, "allocations": [
+          {"billToCustomerId": "cus_other", "method": "Percent", "percent": 100}
+        ]}
+      ]},
+      "output": {"charges": [{"shares": [{"billToCustomerId": "cus_other", "partial": false}]}], "payers": [
+        {"payerId": "cus_a", "totalAmount": "0"},
+        {"payerId": "cus_other", "totalAmount": "300"}
+      ], "isSplit": true}
+    },
+    {
+      "name": "resolver: order charges bill the order's payer unless allocated",
+      "input": {"defaultPayerId": "cus_default", "charges": [
+        {"kind": "OrderCharge", "total": 250},
+        {"kind": "OrderCharge", "total": 80, "allocations": [
+          {"id": "chal_9", "billToCustomerId": "cus_other", "method": "Percent", "percent": 100}
+        ]}
+      ]},
+      "output": {"charges": [
+        {"shares": [{"billToCustomerId": "cus_default", "allocation": "$absent", "allocationId": "$absent", "amount": "250"}]},
+        {"shares": [{"billToCustomerId": "cus_other", "allocationId": "chal_9", "amount": "80"}]}
+      ], "payers": [
+        {"payerId": "cus_default", "freightAmount": "0", "accessorialAmount": "250", "totalAmount": "250"},
+        {"payerId": "cus_other", "accessorialAmount": "80", "totalAmount": "80"}
+      ], "isSplit": true}
+    },
+    {
+      "name": "resolver: a bad order charge allocation names the charge",
+      "input": {"defaultPayerId": "cus_default", "charges": [
+        {"kind": "OrderCharge", "total": 100, "allocations": [
+          {"billToCustomerId": "cus_other", "method": "Percent", "percent": 50}
+        ]}
+      ]},
+      "output": {"charges": [{"error": {"message": "Percent allocations for this charge must total 100"}}], "payers": null}
+    },
+    {
+      "name": "resolver: each share records the split method; an unsplit charge has none",
+      "input": {"defaultPayerId": "cus_a", "base": 2850, "charges": [
+        {"kind": "Freight", "total": 2850, "allocations": [
+          {"billToCustomerId": "cus_peak", "method": "Amount", "amount": 1500, "sequence": 0},
+          {"billToCustomerId": "cus_a", "method": "Amount", "amount": 1350, "sequence": 1}
+        ]},
+        {"kind": "Accessorial", "method": "Flat", "amount": 100, "unit": 1}
+      ]},
+      "output": {"charges": [
+        {"shares": [{"method": "Amount"}, {"method": "Amount"}]},
+        {"shares": [{"method": null}]}
+      ]}
+    },
+    {
+      "name": "TS: rows are ordered by sequence so the remainder lands on the row shown last",
+      "input": {"defaultPayerId": "first", "charges": [
+        {"kind": "Freight", "total": "0.01", "allocations": [
+          {"billToCustomerId": "last", "method": "Percent", "percent": 50, "sequence": 5},
+          {"billToCustomerId": "first", "method": "Percent", "percent": 50, "sequence": 1}
+        ]}
+      ]},
+      "output": {"charges": [{"shares": [
+        {"billToCustomerId": "first", "amount": "0"},
+        {"billToCustomerId": "last", "amount": "0.01"}
+      ]}]}
+    },
+    {
+      "name": "TS: amount rows pass through and derive their percent",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Accessorial", "total": 250, "allocations": [
+          {"billToCustomerId": "a", "method": "Amount", "amount": 100},
+          {"billToCustomerId": "b", "method": "Amount", "amount": 150}
+        ]}
+      ]},
+      "output": {"charges": [{"shares": [
+        {"amount": "100", "percent": "40"},
+        {"amount": "150", "percent": "60"}
+      ]}]}
+    },
+    {
+      "name": "TS: the whole charge goes to the default payer when nothing is allocated",
+      "input": {"defaultPayerId": "cus_default", "charges": [{"kind": "Accessorial", "total": "42.42"}]},
+      "exact": true,
+      "output": {"charges": [{"total": "42.42", "shares": [
+        {"billToCustomerId": "cus_default", "method": null, "amount": "42.42", "percent": "100", "partial": false}
+      ]}], "payers": [{"payerId": "cus_default", "freightAmount": "0", "accessorialAmount": "42.42", "totalAmount": "42.42"}], "isSplit": false}
+    },
+    {
+      "name": "TS summarizeBillingByPayer: freight and accessorial shares merge per payer, the shipment's payer first",
+      "input": {"defaultPayerId": "intel", "base": 1000, "charges": [
+        {"kind": "Freight", "total": 1000, "allocations": [
+          {"billToCustomerId": "amd", "method": "Percent", "percent": 40, "sequence": 1},
+          {"billToCustomerId": "intel", "method": "Percent", "percent": 60, "sequence": 0}
+        ]},
+        {"kind": "Accessorial", "method": "Flat", "amount": 150, "unit": 1, "allocations": [
+          {"billToCustomerId": "amd", "method": "Percent", "percent": 100}
+        ]},
+        {"kind": "Accessorial", "method": "Percentage", "amount": 10, "unit": 1, "allocations": []}
+      ]},
+      "output": {"payers": [
+        {"payerId": "intel", "freightAmount": "600", "accessorialAmount": "100", "totalAmount": "700"},
+        {"payerId": "amd", "freightAmount": "400", "accessorialAmount": "150", "totalAmount": "550"}
+      ], "isSplit": true}
+    },
+    {
+      "name": "TS summarizeBillingByPayer: a single unsplit payer when nothing is allocated",
+      "input": {"defaultPayerId": "reseller", "charges": [{"kind": "Freight", "total": 100}]},
+      "output": {"payers": [{"payerId": "reseller", "totalAmount": "100"}], "isSplit": false}
+    },
+    {
+      "name": "fix: a sub-cent total still splits into shares that add up to its rounded cents",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": "0.015", "allocations": [
+          {"billToCustomerId": "a", "method": "Percent", "percent": 50, "sequence": 0},
+          {"billToCustomerId": "b", "method": "Percent", "percent": 50, "sequence": 1}
+        ]}
+      ]},
+      "output": {"charges": [{"total": "0.015", "shares": [{"amount": "0.01"}, {"amount": "0.01"}]}]}
+    },
+    {
+      "name": "fix: sub-cent amounts must add up in cents, not before rounding",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": "0.01", "allocations": [
+          {"billToCustomerId": "a", "method": "Amount", "amount": "0.005", "sequence": 0},
+          {"billToCustomerId": "b", "method": "Amount", "amount": "0.005", "sequence": 1}
+        ]}
+      ]},
+      "output": {"charges": [{"error": {"message": "Amount allocations for this charge must add up to {0}", "args": ["0.01"]}}]}
+    },
+    {
+      "name": "the amount message writes the unrounded total half away from zero",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": "100.005", "allocations": [
+          {"billToCustomerId": "a", "method": "Amount", "amount": 1}
+        ]}
+      ]},
+      "output": {"charges": [{"error": {"args": ["100.01"]}}]}
+    },
+    {
+      "name": "a row without a payer cannot be split",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": 100, "allocations": [
+          {"billToCustomerId": "a", "method": "Percent", "percent": 50},
+          {"billToCustomerId": "", "method": "Percent", "percent": 50}
+        ]}
+      ]},
+      "output": {"charges": [{"error": {"message": "Bill-to customer is required"}}]}
+    },
+    {
+      "name": "a method that is neither percent nor amount is refused",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": 100, "allocations": [{"billToCustomerId": "a", "method": "Share"}]}
+      ]},
+      "output": {"charges": [{"error": {"message": "Allocation method must be Percent or Amount"}}]}
+    },
+    {
+      "name": "unsaved rows of one sequence keep their request order and sort before saved rows",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": "0.03", "allocations": [
+          {"id": "chal_1", "billToCustomerId": "saved", "method": "Percent", "percent": "33.333334", "sequence": 0},
+          {"billToCustomerId": "new1", "method": "Percent", "percent": "33.333333", "sequence": 0},
+          {"billToCustomerId": "new2", "method": "Percent", "percent": "33.333333", "sequence": 0}
+        ]}
+      ]},
+      "output": {"charges": [{"shares": [
+        {"allocation": 1, "billToCustomerId": "new1", "amount": "0.01"},
+        {"allocation": 2, "billToCustomerId": "new2", "amount": "0.01"},
+        {"allocation": 0, "billToCustomerId": "saved", "amount": "0.01"}
+      ]}]}
+    },
+    {
+      "name": "null allocation entries are skipped and positions are kept",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": 10, "allocations": [null, {"billToCustomerId": "b", "method": "Percent", "percent": 100}]}
+      ]},
+      "output": {"charges": [{"shares": [{"allocation": 1, "billToCustomerId": "b", "amount": "10"}]}]}
+    },
+    {
+      "name": "blank decimals read as not filled in",
+      "input": {"defaultPayerId": "a", "charges": [
+        {"kind": "Freight", "total": 10, "allocations": [{"billToCustomerId": "b", "method": "Percent", "percent": ""}]}
+      ]},
+      "output": {"charges": [{"error": {"message": "Percent allocations for this charge must total 100"}}]}
+    },
+    {
+      "name": "null lists and strings read as empty, as GraphQL writes them",
+      "input": {"defaultPayerId": "a", "charges": [{"kind": "Freight", "total": 10, "allocations": null}]},
+      "output": {"charges": [{"shares": [{"billToCustomerId": "a", "amount": "10"}]}], "isSplit": false}
+    },
+    {
+      "name": "a charge without a kind is a request error",
+      "input": {"defaultPayerId": "a", "charges": [{"total": 10}]},
+      "error": "invalid_input"
+    },
+    {
+      "name": "a decimal that is not a number is a request error",
+      "input": {"defaultPayerId": "a", "charges": [{"kind": "Freight", "total": "ten"}]},
+      "error": "invalid_input"
+    },
+    {
+      "name": "chargeTotal: flat, per unit and percentage lines (Go TestAdditionalChargeTotal)",
+      "op": "allocation.chargeTotal",
+      "input": {"base": 2450, "charges": [
+        {"method": "Flat", "amount": 150, "unit": 1},
+        {"method": "Flat", "amount": 150, "unit": 0},
+        {"method": "Flat", "amount": 150, "unit": 2},
+        {"method": "PerUnit", "amount": 75, "unit": 2},
+        {"method": "PerUnit", "amount": 75, "unit": 0},
+        {"method": "Percentage", "amount": 10, "unit": 1},
+        {"method": "Tiered", "amount": 10},
+        {}
+      ]},
+      "exact": true,
+      "output": {"totals": ["150", "150", "300", "150", "0", "245", "0", "0"], "sum": "995"}
+    },
+    {
+      "name": "chargeTotal: the charges sum (Go TestAdditionalChargesTotalSumsEveryCharge)",
+      "op": "allocation.chargeTotal",
+      "input": {"base": 2450, "charges": [
+        {"method": "Flat", "amount": 150, "unit": 1},
+        {"method": "Percentage", "amount": 10, "unit": 1}
+      ]},
+      "exact": true,
+      "output": {"totals": ["150", "245"], "sum": "395"}
+    },
+    {
+      "name": "chargeTotal: TS chargeLineTotal cases",
+      "op": "allocation.chargeTotal",
+      "input": {"base": 2450, "charges": [
+        {"method": "Flat", "amount": 25, "unit": 2},
+        {"method": "PerUnit", "amount": "1.5", "unit": 4},
+        {"method": "Percentage", "amount": 10, "unit": 1}
+      ]},
+      "output": {"totals": ["50", "6", "245"]}
+    },
+    {
+      "name": "chargeTotal: a given total wins over the line, and no base means zero",
+      "op": "allocation.chargeTotal",
+      "input": {"charges": [{"total": "12.345", "method": "Flat", "amount": 1}, {"method": "Percentage", "amount": 10}]},
+      "output": {"totals": ["12.345", "0"], "sum": "12.345"}
+    },
+    {
+      "name": "chargeTotal: a percentage of a fractional base is exact",
+      "op": "allocation.chargeTotal",
+      "input": {"base": "1000.01", "charges": [{"method": "Percentage", "amount": "12.5"}]},
+      "output": {"totals": ["125.00125"]}
+    },
+    {
+      "name": "remainder: what is left of 100%, and when a split is over",
+      "op": "allocation.remainder",
+      "input": {"charges": [
+        {"total": 100, "allocations": [{"billToCustomerId": "a", "method": "Percent", "percent": 60}]},
+        {"total": 100, "allocations": [
+          {"billToCustomerId": "a", "method": "Percent", "percent": 60},
+          {"billToCustomerId": "b", "method": "Percent", "percent": 50}
+        ]}
+      ]},
+      "output": {"charges": [
+        {"method": "Percent", "allocated": "60", "remaining": "40", "complete": false, "over": false, "valid": false, "problem": {"message": "Percents must add up to 100"}},
+        {"allocated": "110", "remaining": "-10", "complete": false, "over": true, "valid": false}
+      ]}
+    },
+    {
+      "name": "remainder: 33.33 + 33.33 + 33.34 is complete",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": 100, "allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": 33.33},
+        {"billToCustomerId": "b", "method": "Percent", "percent": 33.33},
+        {"billToCustomerId": "c", "method": "Percent", "percent": 33.34}
+      ]}]},
+      "output": {"charges": [{"allocated": "100", "remaining": "0", "complete": true, "valid": true, "problem": null}]}
+    },
+    {
+      "name": "remainder: three thirds at seven places are complete, as the server rounds percents to six",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": 100, "allocations": [
+        {"billToCustomerId": "a", "method": "Percent", "percent": "33.3333333"},
+        {"billToCustomerId": "b", "method": "Percent", "percent": "33.3333333"},
+        {"billToCustomerId": "c", "method": "Percent", "percent": "33.3333333"}
+      ]}]},
+      "output": {"charges": [{"allocated": "99.9999999", "remaining": "0.0000001", "complete": true, "valid": true}]}
+    },
+    {
+      "name": "remainder: amount rows are measured against the charge in cents",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": "20.3", "allocations": [
+        {"billToCustomerId": "a", "method": "Amount", "amount": 10.1},
+        {"billToCustomerId": "b", "method": "Amount", "amount": 10.2}
+      ]}]},
+      "output": {"charges": [{"method": "Amount", "allocated": "20.3", "remaining": "0", "complete": true, "over": false, "valid": true}]}
+    },
+    {
+      "name": "remainder: the charge total can come from its line",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"method": "Flat", "amount": 50, "unit": 2, "allocations": [
+        {"billToCustomerId": "a", "method": "Amount", "amount": 60},
+        {"billToCustomerId": "b", "method": "Amount", "amount": 50}
+      ]}]},
+      "output": {"charges": [{"allocated": "110", "remaining": "-10", "complete": false, "over": true, "problem": {"message": "Amounts must add up to the charge"}}]}
+    },
+    {
+      "name": "remainder: amount rows against an unknown total cannot be judged complete",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"allocations": [{"billToCustomerId": "a", "method": "Amount", "amount": 60}]}]},
+      "output": {"charges": [{"allocated": "60", "remaining": null, "complete": false, "over": false, "problem": null, "valid": true}]}
+    },
+    {
+      "name": "remainder: mixed methods, duplicate payers and blank payers are flagged in that order",
+      "op": "allocation.remainder",
+      "input": {"charges": [
+        {"total": 100, "allocations": [
+          {"billToCustomerId": "a", "method": "Percent", "percent": 50},
+          {"billToCustomerId": "b", "method": "Amount", "amount": 50}
+        ]},
+        {"total": 100, "allocations": [
+          {"billToCustomerId": "a", "method": "Percent", "percent": 50},
+          {"billToCustomerId": "a", "method": "Percent", "percent": 50}
+        ]},
+        {"total": 100, "allocations": [{"billToCustomerId": "", "method": "Percent", "percent": 100}]}
+      ]},
+      "output": {"charges": [
+        {"mixedMethods": true, "problem": {"message": "Split every row by percent or every row by amount"}, "valid": false},
+        {"mixedMethods": false, "duplicatePayers": true, "complete": true, "problem": {"message": "Each payer may appear only once"}, "valid": false},
+        {"missingPayers": true, "problem": {"message": "Every row needs a payer"}, "valid": false}
+      ]}
+    },
+    {
+      "name": "remainder (TS allocationsValid): empty is valid, 99.99 is not, 100 is, a zero row is not",
+      "op": "allocation.remainder",
+      "input": {"charges": [
+        {"total": 100, "allocations": []},
+        {"total": 100, "allocations": [{"billToCustomerId": "a", "method": "Percent", "percent": 99.99}]},
+        {"total": 100, "allocations": [{"billToCustomerId": "a", "method": "Percent", "percent": 100}]},
+        {"total": 100, "allocations": [{"billToCustomerId": "a", "method": "Percent", "percent": 0}]}
+      ]},
+      "output": {"charges": [
+        {"method": "Percent", "allocated": "0", "complete": false, "valid": true, "problem": null},
+        {"valid": false, "problem": {"message": "Percents must add up to 100"}},
+        {"valid": true, "complete": true},
+        {"valid": false, "problem": {"message": "Percent must be greater than 0 and at most 100"}}
+      ]}
+    },
+    {
+      "name": "remainder: a non-positive amount row is refused",
+      "op": "allocation.remainder",
+      "input": {"charges": [{"total": 10, "allocations": [
+        {"billToCustomerId": "a", "method": "Amount", "amount": 10},
+        {"billToCustomerId": "b", "method": "Amount", "amount": 0}
+      ]}]},
+      "output": {"charges": [{"complete": true, "problem": {"message": "Amount must be greater than zero"}}]}
+    },
+    {
+      "name": "rebalance: freight amounts that no longer add up convert to proportional percents",
+      "op": "allocation.rebalance",
+      "input": {"charges": [{"total": 3000, "allocations": [
+        {"billToCustomerId": "peak", "method": "Amount", "amount": 1500, "sequence": 0},
+        {"billToCustomerId": "acme", "method": "Amount", "amount": 1350, "sequence": 1}
+      ]}]},
+      "exact": true,
+      "output": {"charges": [{"stale": true, "allocatedTotal": "2850", "chargeTotal": "3000", "percents": ["52.631579", "47.368421"]}], "converted": 1}
+    },
+    {
+      "name": "rebalance: the converted percents split the new charge without loss",
+      "input": {"defaultPayerId": "x", "charges": [{"kind": "Freight", "total": 3000, "allocations": [
+        {"billToCustomerId": "peak", "method": "Percent", "percent": "52.631579", "sequence": 0},
+        {"billToCustomerId": "acme", "method": "Percent", "percent": "47.368421", "sequence": 1}
+      ]}]},
+      "output": {"payers": [
+        {"payerId": "x", "totalAmount": "0"},
+        {"payerId": "acme", "totalAmount": "1421.05"},
+        {"payerId": "peak", "totalAmount": "1578.95"}
+      ]}
+    },
+    {
+      "name": "rebalance: percent splits and balanced amounts are current",
+      "op": "allocation.rebalance",
+      "input": {"base": 2850, "charges": [
+        {"total": 2850, "allocations": [
+          {"billToCustomerId": "peak", "method": "Amount", "amount": 1500, "sequence": 0},
+          {"billToCustomerId": "acme", "method": "Amount", "amount": 1350, "sequence": 1}
+        ]},
+        {"method": "Flat", "amount": 100, "unit": 1, "allocations": [
+          {"billToCustomerId": "peak", "method": "Percent", "percent": 60, "sequence": 0},
+          {"billToCustomerId": "acme", "method": "Percent", "percent": 40, "sequence": 1}
+        ]},
+        {"method": "Flat", "amount": 100, "unit": 1}
+      ]},
+      "exact": true,
+      "output": {"charges": [
+        {"stale": false, "allocatedTotal": null, "chargeTotal": null, "percents": null},
+        {"stale": false, "allocatedTotal": null, "chargeTotal": null, "percents": null},
+        {"stale": false, "allocatedTotal": null, "chargeTotal": null, "percents": null}
+      ], "converted": 0}
+    },
+    {
+      "name": "rebalance: an accessorial is reported at its position with its line total",
+      "op": "allocation.rebalance",
+      "input": {"base": 1000, "charges": [
+        {"total": 1000},
+        {"method": "Flat", "amount": 50, "unit": 1},
+        {"method": "Flat", "amount": 200, "unit": 1, "allocations": [
+          {"billToCustomerId": "peak", "method": "Amount", "amount": 150}
+        ]}
+      ]},
+      "output": {"charges": [{"stale": false}, {"stale": false}, {"stale": true, "allocatedTotal": "150", "chargeTotal": "200", "percents": ["100"]}], "converted": 1}
+    },
+    {
+      "name": "rebalance: a three way split totals exactly one hundred",
+      "op": "allocation.rebalance",
+      "input": {"charges": [{"total": 1000, "allocations": [
+        {"billToCustomerId": "a", "method": "Amount", "amount": 100, "sequence": 0},
+        {"billToCustomerId": "b", "method": "Amount", "amount": 100, "sequence": 1},
+        {"billToCustomerId": "c", "method": "Amount", "amount": 100, "sequence": 2}
+      ]}]},
+      "output": {"charges": [{"stale": true, "percents": ["33.333333", "33.333333", "33.333334"]}]}
+    },
+    {
+      "name": "rebalance: the last row by sequence absorbs rounding, wherever it sits in the request",
+      "op": "allocation.rebalance",
+      "input": {"charges": [{"total": 1000, "allocations": [
+        {"billToCustomerId": "c", "method": "Amount", "amount": 100, "sequence": 2},
+        null,
+        {"billToCustomerId": "a", "method": "Amount", "amount": 100, "sequence": 0},
+        {"billToCustomerId": "b", "method": "Amount", "amount": 100, "sequence": 1}
+      ]}]},
+      "output": {"charges": [{"stale": true, "percents": ["33.333334", null, "33.333333", "33.333333"]}]}
+    },
+    {
+      "name": "rebalance: a stale split summing to zero cannot be converted",
+      "op": "allocation.rebalance",
+      "input": {"charges": [{"total": 100, "allocations": [{"billToCustomerId": "a", "method": "Amount", "amount": 0}]}]},
+      "exact": true,
+      "output": {"charges": [{"stale": true, "allocatedTotal": "0", "chargeTotal": "100", "percents": null}], "converted": 0}
+    }
+  ]
+}

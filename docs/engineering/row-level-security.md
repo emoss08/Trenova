@@ -161,7 +161,11 @@ tenant scope, and restrictive `read_scope` policies on `shipments`, `orders`,
 `invoices` and `workers` read it through `trenova_rls.read_scope(kind)` and
 `trenova_rls.read_scope_ids(kind)`. It is unsigned because it can only narrow a read
 below what the signed scope allows; `apply_policy` and `reconcile()` leave the
-`read_scope` policies alone. See [permissions.md](permissions.md#data-scopes).
+`read_scope` policies alone. It carries only `own` and `team` grants: a kind the
+principal cannot read is left out, so its rows stay visible to the relations, loaders
+and joins that reach them from a readable record, and the application decides what of
+them shows (the kind's reference view) and refuses a root read of the kind before it
+queries. See [permissions.md](permissions.md#data-scopes).
 
 ## Getting the scope right
 

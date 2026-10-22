@@ -46,6 +46,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		config.Module,
 		config.Hooks(),
 		infrastructure.ObservabilityModule,
+		infrastructure.RulesModule,
 		infrastructure.RedisModule,
 		infrastructure.RedisRepositoriesModule,
 		infrastructure.RateLimitModule,

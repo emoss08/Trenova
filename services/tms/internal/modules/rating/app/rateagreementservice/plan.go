@@ -116,6 +116,9 @@ func (s *Service) PlanCreate(
 	planned.Status = rateagreement.StatusDraft
 	planned.CurrentVersionNumber = 1
 	planned.StampRules()
+	if err := rateagreement.ApplyLanes(ctx, planned.Rules); err != nil {
+		return nil, err
+	}
 
 	if multiErr := s.validator.ValidateCreate(ctx, &planned); multiErr != nil {
 		return nil, multiErr
@@ -142,6 +145,9 @@ func (s *Service) PlanUpdate(
 	planned.Status = original.Status
 	planned.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
 	planned.StampRules()
+	if err = rateagreement.ApplyLanes(ctx, planned.Rules); err != nil {
+		return nil, err
+	}
 
 	changeSummary, termsChanged := headerTermsChanged(original, &planned)
 	planned.CurrentVersionNumber = original.CurrentVersionNumber
@@ -208,6 +214,9 @@ func (s *Service) PlanAmendRules(
 		return nil, err
 	}
 
+	if err = rateagreement.ApplyLanes(ctx, req.Rules); err != nil {
+		return nil, err
+	}
 	if multiErr := s.validator.ValidateAmendment(ctx, agreement, req); multiErr != nil {
 		return nil, multiErr
 	}

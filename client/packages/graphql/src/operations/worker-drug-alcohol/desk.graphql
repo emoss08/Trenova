@@ -1,0 +1,20 @@
+query DeskWorkerDotTests($workerId: ID, $openOnly: Boolean, $limit: Int) {
+  workerDotTests(workerId: $workerId, openOnly: $openOnly, limit: $limit) {
+    id
+    workerId
+    testType
+    substance
+    status
+    result
+    isDot
+    reason
+    scheduledAt
+    collectedAt
+    collectionSite
+    safetyEventId
+    drawEntryId
+    worker {
+      ...WorkerReference
+    }
+  }
+}

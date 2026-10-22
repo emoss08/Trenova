@@ -31221,11 +31221,13 @@ One previous employer's safety performance history investigation
 (49 CFR 391.23). The drug and alcohol half is tracked separately because
 49 CFR 382.413 asks for it specifically and employers often answer without it.
 """
-type WorkerEmploymentVerification {
+type WorkerEmploymentVerification @kind(resource: "qualification") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
   workerId: ID!
+  "The driver whose previous employer this is."
+  worker: Worker
   employerName: String!
   employerDotNumber: String
   employerMcNumber: String
@@ -31358,8 +31360,19 @@ input UpdateEmploymentVerificationInput {
 }
 
 extend type Query {
-  driverQualificationFile(workerId: ID!): DQFFile!
-  workerEmploymentVerifications(workerId: ID!): [WorkerEmploymentVerification!]!
+  driverQualificationFile(workerId: ID!): DQFFile! @authorizes(resource: "qualification")
+  """
+  Previous employers on drivers' qualification files: one driver's, or every
+  driver's when no worker is named.
+  """
+  workerEmploymentVerifications(
+    "The driver whose previous employers are read. Leave it out for every driver's."
+    workerId: ID
+    "Only the employers who have not answered yet."
+    outstandingOnly: Boolean
+    "At most this many employers, from 1 to 100. Every one of a named driver when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerEmploymentVerification!]!
   """
   Investigations across the organisation that are still owed a request or a
   chase.
@@ -31822,7 +31835,18 @@ input UpdateDOTRandomDrawEntryInput {
 }
 
 extend type Query {
-  workerDotTests(workerId: ID!): [WorkerDOTTest!]!
+  """
+  Drug and alcohol tests, newest first: one worker's, or every worker's when
+  no worker is named.
+  """
+  workerDotTests(
+    "The worker whose tests are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the collections not yet completed or cancelled."
+    openOnly: Boolean
+    "At most this many tests, from 1 to 100. Every test of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerDOTTest!]!
   workerDotTest(id: ID!): WorkerDOTTest!
   """
   Open collections across the organisation: what the office is waiting on.
@@ -32246,7 +32270,22 @@ input SaveOSHASummaryInput {
 }
 
 extend type Query {
-  workerInjuries(workerId: ID!): [WorkerInjury!]!
+  """
+  Injury and illness cases, newest first: one worker's, or the
+  establishment's log when no worker is named.
+  """
+  workerInjuries(
+    "The worker whose cases are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the cases of one calendar year's log, such as 2026."
+    caseYear: Int
+    "Only the cases that belong on the OSHA 300 log."
+    recordableOnly: Boolean
+    "Only the cases still open."
+    openOnly: Boolean
+    "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerInjury!]!
   workerInjury(id: ID!): WorkerInjury!
   """
   One year of the OSHA 300 log with its 300A totals. Leave the year empty for
@@ -32374,7 +32413,7 @@ type WorkerLeaveEntry {
 One qualifying reason for leave. Entitlement is drawn down by the days recorded
 against a case, so a case open for months has used nothing until days are.
 """
-type WorkerLeaveCase {
+type WorkerLeaveCase @kind(resource: "worker_leave") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -32491,7 +32530,20 @@ input UpdateLeaveControlInput {
 
 extend type Query {
   leaveControl: LeaveControl!
-  workerLeaveCases(workerId: ID!): [WorkerLeaveCase!]!
+  """
+  Leave cases, newest first: one worker's, or every worker's when no worker
+  is named.
+  """
+  workerLeaveCases(
+    "The worker whose cases are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the cases still pending or approved."
+    openOnly: Boolean
+    "Only the cases still waiting on the certification the worker owes."
+    certificationOutstandingOnly: Boolean
+    "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerLeaveCase!]!
   workerLeaveCase(id: ID!): WorkerLeaveCase!
   """
   A worker's FMLA balance. Leave asOf empty for today.

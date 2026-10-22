@@ -212,6 +212,59 @@ describe("ShipmentBillingDetails split billing", () => {
     expect(card).toHaveTextContent("$200.00");
   });
 
+  // The server rounds every share but the last half to even and gives the last the rest, so a
+  // 60/40 split of $1,000.01 bills $600.01 and $400.00 (testdata/allocation.json). The old
+  // float split rounded the other way on half cents.
+  it("divides the freight to the cent the way the server bills it", async () => {
+    render(
+      <Harness
+        values={{
+          ...SPLIT_SHIPMENT,
+          billToCustomerId: "cus_intel",
+          billToCustomer: SPLIT_SHIPMENT.customer as Shipment["billToCustomer"],
+          freightChargeAmount: 1000.01,
+          additionalCharges: [],
+          freightAllocations: [
+            {
+              billToCustomerId: "cus_amd",
+              method: "Percent",
+              percent: 40,
+              sequence: 1,
+              billToCustomer: { id: "cus_amd", name: "AMD", code: "AMD" },
+            },
+            { billToCustomerId: "cus_intel", method: "Percent", percent: 60, sequence: 0 },
+          ] as Shipment["chargeAllocations"],
+        }}
+      />,
+    );
+
+    const card = await screen.findByTestId("billing-by-payer");
+    const rows = card.querySelectorAll(".divide-y > div");
+    expect([...rows].map((row) => row.textContent)).toEqual([
+      "INTEL – IntelPrimaryFreight $600.01Accessorials $0.00$600.01",
+      "AMD – AMDFreight $400.00Accessorials $0.00$400.00",
+    ]);
+  });
+
+  it("waits for a split that mixes percents and amounts before naming what anyone owes", async () => {
+    render(
+      <Harness
+        values={{
+          ...SPLIT_SHIPMENT,
+          freightAllocations: [
+            { billToCustomerId: "cus_intel", method: "Percent", percent: 60, sequence: 0 },
+            { billToCustomerId: "cus_amd", method: "Amount", amount: 400, sequence: 1 },
+          ] as Shipment["chargeAllocations"],
+        }}
+      />,
+    );
+
+    const card = await screen.findByTestId("billing-by-payer");
+    expect(card).toHaveTextContent(
+      "Billing by payerEach payer's share shows once every split adds up.",
+    );
+  });
+
   // A bill-to was chosen for Intel's shipment. Once the shipment belongs to
   // someone else that choice, and every split naming a payer, is stale.
   it("clears the bill-to and every split when the customer changes", async () => {

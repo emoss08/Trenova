@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerEmploymentVerifications_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentVerifications(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerEmploymentVerifications(ctx, fc.Args["workerId"].(*string), fc.Args["outstandingOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerEmploymentVerification2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerEmploymentVerificationᚄ),
 			},
@@ -449,6 +449,16 @@ var Shard = &gqlexec.Shard{
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "worker",
+				HasChild:  true,
+				ChildType: "Worker",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*worker.WorkerEmploymentVerification)
+					return obj.Worker, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:     "employerName",
@@ -746,7 +756,7 @@ type resolverMutation interface {
 
 type resolverQuery interface {
 	DriverQualificationFile(ctx context.Context, workerID string) (*worker.DQFFile, error)
-	WorkerEmploymentVerifications(ctx context.Context, workerID string) ([]*worker.WorkerEmploymentVerification, error)
+	WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*worker.WorkerEmploymentVerification, error)
 	OutstandingEmploymentVerifications(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error)
 	DqfRetentionCandidates(ctx context.Context) ([]*workerports.DQFRetentionCandidate, error)
 }
@@ -852,15 +862,31 @@ func field_Query_driverQualificationFile_args(ctx context.Context, ec *gqlexec.E
 }
 
 func field_Query_workerEmploymentVerifications_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "outstandingOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["outstandingOnly"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg2
 	return args, nil
 }
 
@@ -1400,6 +1426,13 @@ func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
 func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {

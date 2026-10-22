@@ -16,6 +16,15 @@ import (
 	"go.uber.org/zap"
 )
 
+func buildEntity(t *testing.T, svc *Service, params *buildInvoiceParams) *invoice.Invoice {
+	t.Helper()
+
+	entity, err := svc.buildInvoiceEntity(t.Context(), params)
+	require.NoError(t, err)
+
+	return entity
+}
+
 func builderLeg(pro string, freight int64) *shipment.Shipment {
 	serviceDate := int64(1_700_000_000)
 	return &shipment.Shipment{
@@ -49,7 +58,7 @@ func TestBuildInvoiceEntityShipmentScope(t *testing.T) {
 	t.Parallel()
 
 	leg := builderLeg("PRO-1", 100)
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}),
 		builderParams(invoice.ScopeShipment, leg),
 	)
 
@@ -68,7 +77,7 @@ func TestBuildInvoiceEntityOrderScope(t *testing.T) {
 	params := builderParams(invoice.ScopeOrder, legs...)
 	params.Order = &order.Order{ID: pulid.MustNew("ord_"), OrderNumber: "ORD-9"}
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
 
 	require.NotNil(t, entity)
 	assert.Equal(t, invoice.ScopeOrder, entity.Scope)
@@ -98,7 +107,7 @@ func TestBuildInvoiceEntityConsolidatedScope(t *testing.T) {
 	params.PeriodStart = &start
 	params.PeriodEnd = &end
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
 
 	require.NotNil(t, entity)
 	assert.Equal(t, invoice.ScopeConsolidated, entity.Scope)
@@ -120,7 +129,7 @@ func TestBuildInvoiceEntityNumbersLinesContinuouslyAcrossLegs(t *testing.T) {
 		builderLeg("PRO-2", 250),
 		builderLeg("PRO-3", 400),
 	}
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}),
 		builderParams(invoice.ScopeConsolidated, legs...),
 	)
 
@@ -141,7 +150,7 @@ func TestBuildInvoiceEntityOrderChargesCarryNoAttribution(t *testing.T) {
 		{Description: "Customs brokerage", Amount: decimal.NewFromInt(75)},
 	}
 
-	entity := (&Service{l: zap.NewNop()}).buildInvoiceEntity(params)
+	entity := buildEntity(t, (&Service{l: zap.NewNop()}), params)
 
 	require.NotNil(t, entity)
 	require.Len(t, entity.Lines, 2)
@@ -151,11 +160,13 @@ func TestBuildInvoiceEntityOrderChargesCarryNoAttribution(t *testing.T) {
 	assert.Equal(t, 2, entity.Lines[1].LineNumber)
 }
 
-func TestBuildInvoiceEntityNoLegs(t *testing.T) {
+func TestBuildInvoiceEntityNoLegsHasNothingToBill(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(
-		t,
-		(&Service{l: zap.NewNop()}).buildInvoiceEntity(builderParams(invoice.ScopeConsolidated)),
+	entity, err := (&Service{l: zap.NewNop()}).buildInvoiceEntity(
+		t.Context(),
+		builderParams(invoice.ScopeConsolidated),
 	)
+	require.ErrorIs(t, err, errNothingToBill)
+	assert.Nil(t, entity)
 }

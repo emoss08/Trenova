@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -472,7 +473,6 @@ func (e *emitter) computedResultColumn(
 		Label:       label,
 		Type:        resultType,
 		Format:      col.spec.Computed.Format,
-		Display:     resolveDisplay(col, resultType, col.spec.Computed.Format),
 		Sensitivity: sensitivity,
 	}
 }
@@ -501,7 +501,6 @@ func (e *emitter) resultColumn(
 		Label:       label,
 		Type:        resultType,
 		Format:      format,
-		Display:     resolveDisplay(col, resultType, format),
 		Sensitivity: e.fieldSensitivity(col),
 	}
 }
@@ -513,18 +512,29 @@ func outputColumnID(col *validatedColumn, pivotValue string) string {
 	return col.spec.ID + pivotIDSeparator + pivotValue
 }
 
-func resolveDisplay(
-	col *validatedColumn,
-	resultType reportcatalog.FieldType,
-	hint reportcatalog.FormatHint,
-) reportfmt.Resolved {
-	return reportfmt.Resolve(reportfmt.ResolveInput{
-		Type:      resultType,
-		Hint:      hint,
-		DateStyle: bucketDateStyle(col.spec.Bucket),
-		Band:      col.spec.Band,
-		Spec:      col.spec.Display,
-	})
+func (e *emitter) resolveDisplays(ctx context.Context, outputs []outputColumn) error {
+	inputs := make([]reportfmt.ResolveInput, len(outputs))
+	for i := range outputs {
+		inputs[i] = reportfmt.ResolveInput{
+			Type: outputs[i].column.Type,
+			Hint: outputs[i].column.Format,
+		}
+		if col := e.v.columnByID(outputs[i].sourceID); col != nil {
+			inputs[i].DateStyle = bucketDateStyle(col.spec.Bucket)
+			inputs[i].Band = col.spec.Band
+			inputs[i].Spec = col.spec.Display
+		}
+	}
+
+	displays, err := reportfmt.Resolve(ctx, inputs)
+	if err != nil {
+		return fmt.Errorf("resolve report column displays: %w", err)
+	}
+	for i := range outputs {
+		outputs[i].column.Display = displays[i]
+	}
+
+	return nil
 }
 
 func bucketDateStyle(bucket report.DateBucket) reportfmt.DateStyle {

@@ -282,7 +282,15 @@ func (v *Validator) validatePostingReconciliation(
 		return
 	}
 
-	expectedTotal := reconciliationExpectedTotal(entity, legs)
+	expectedTotal, err := reconciliationExpectedTotal(ctx, entity, legs)
+	if err != nil {
+		multiErr.Add(
+			"totalAmount",
+			errortypes.ErrSystemError,
+			"Failed to compute the reconciliation total",
+		)
+		return
+	}
 	discrepancy := entity.TotalAmount.Sub(expectedTotal).Abs()
 	if !discrepancy.GreaterThan(control.ReconciliationToleranceAmount) {
 		return

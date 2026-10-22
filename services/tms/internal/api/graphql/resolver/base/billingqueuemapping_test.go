@@ -20,7 +20,7 @@ func TestBillingQueueItemToModel_MapsTypedBillingQueueItem(t *testing.T) {
 	reviewStartedAt := int64(1780415883)
 	canceledAt := int64(1780415999)
 
-	model, err := BillingQueueItemToModel(&billingqueue.BillingQueueItem{
+	model, err := BillingQueueItemToModel(t.Context(), &billingqueue.BillingQueueItem{
 		ID:                        pulid.MustNew("bqi_"),
 		OrganizationID:            pulid.MustNew("org_"),
 		BusinessUnitID:            pulid.MustNew("bu_"),
@@ -67,7 +67,7 @@ func TestBillingQueueItemToModel_MapsTypedBillingQueueItem(t *testing.T) {
 func TestBillingQueueItemToModel_DefaultsNilAdjustmentContext(t *testing.T) {
 	t.Parallel()
 
-	model, err := BillingQueueItemToModel(&billingqueue.BillingQueueItem{
+	model, err := BillingQueueItemToModel(t.Context(), &billingqueue.BillingQueueItem{
 		ID:                    pulid.MustNew("bqi_"),
 		OrganizationID:        pulid.MustNew("org_"),
 		BusinessUnitID:        pulid.MustNew("bu_"),
@@ -86,7 +86,7 @@ func TestBillingQueueItemToModel_DefaultsNilAdjustmentContext(t *testing.T) {
 func TestRequiredBillingQueueItemToModel_RejectsNilItem(t *testing.T) {
 	t.Parallel()
 
-	model, err := RequiredBillingQueueItemToModel(nil)
+	model, err := RequiredBillingQueueItemToModel(t.Context(), nil)
 
 	require.Error(t, err)
 	assert.Nil(t, model)

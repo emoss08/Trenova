@@ -3,9 +3,8 @@ package formulatemplateports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/pagination"
-
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 type FormulaCalculator interface {
@@ -15,22 +14,21 @@ type FormulaCalculator interface {
 	) (*formulatemplatetypes.CalculateResponse, error)
 }
 
-// EvaluatePredicateRequest asks whether a condition holds for one entity.
-type EvaluatePredicateRequest struct {
-	Expression string
-	SchemaID   string
-	Entity     any
-	TenantInfo pagination.TenantInfo
+type EvaluatePredicatesRequest struct {
+	Expressions []string
+	SchemaID    string
+	Entity      any
+	TenantInfo  pagination.TenantInfo
 }
 
-// FormulaPredicateEvaluator answers yes-or-no questions written in the same
-// expression language formulas use.
-//
-// It is separate from FormulaCalculator because a condition is not a price: it
-// takes no rate tables, produces no breakdown, and runs far more often — once
-// per accessorial on a contract, on every save. Sharing the calculator's entry
-// point would drag a full rate-table load onto that path for a question like
-// "does this load have more than two stops".
+type PredicateOutcome struct {
+	Holds bool
+	Err   error
+}
+
 type FormulaPredicateEvaluator interface {
-	EvaluatePredicate(ctx context.Context, req *EvaluatePredicateRequest) (bool, error)
+	EvaluatePredicates(
+		ctx context.Context,
+		req *EvaluatePredicatesRequest,
+	) ([]PredicateOutcome, error)
 }

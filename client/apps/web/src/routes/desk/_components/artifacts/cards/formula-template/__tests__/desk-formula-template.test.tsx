@@ -1,13 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import type {
-  FormulaTemplate,
-  TestExpressionRequest,
+import {
+  testExpressionResponseSchema,
+  type FormulaTemplate,
+  type TestExpressionRequest,
 } from "@trenova/shared/types/formula-template";
 import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DeskFormulaTemplate } from "../desk-formula-template";
-import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
+import { shipmentSchema } from "@/components/formula-editor/__tests__/formula-fixtures";
 
 const service = vi.hoisted(() => ({
   get: vi.fn(),
@@ -86,15 +87,15 @@ function template(overrides: Partial<FormulaTemplate> = {}): FormulaTemplate {
 function priced(request: TestExpressionRequest) {
   const rate = Number(request.variables.baseRate);
   const result = rate * 500 + Number(request.variables.reeferFee);
-  return {
+  return testExpressionResponseSchema.parse({
     valid: true,
-    result,
-    message: "Expression evaluated",
+    result: String(result),
+    diagnostics: [],
+    error: null,
     breakdown: [],
     guardrail: { applied: false, rawAmount: result },
     rounding: { mode: "HalfUp", precision: 2, applied: false, unroundedAmount: result },
-    warnings: [],
-  };
+  });
 }
 
 function draw(props: Partial<Parameters<typeof DeskFormulaTemplate>[0]> = {}) {
@@ -125,7 +126,7 @@ beforeEach(() => {
   access.write = true;
   for (const fn of Object.values(service)) fn.mockReset();
   service.get.mockResolvedValue(template());
-  service.getSchema.mockResolvedValue(describedShipment);
+  service.getSchema.mockResolvedValue(shipmentSchema);
   service.getUsage.mockResolvedValue({
     inUse: true,
     usages: [
@@ -293,16 +294,89 @@ describe("DeskFormulaTemplate", () => {
     expect(screen.getByText('["GA"]')).toBeInTheDocument();
   });
 
-  it("says why the engine could not price it", async () => {
-    service.test.mockResolvedValue({
-      valid: false,
-      error: "unknown name reeferFees",
-      message: "Expression is invalid",
-    });
+  it("says why the engine could not price it, in the engine's words", async () => {
+    service.test.mockResolvedValue(
+      testExpressionResponseSchema.parse({
+        valid: false,
+        diagnostics: [],
+        error: {
+          scope: "expression",
+          code: "missingField",
+          message:
+            "no value for {0} on this record; write {1} so the formula still prices when it is missing",
+          args: ["reeferFee", "coalesce(reeferFee, 0)"],
+          from: 25,
+          to: 34,
+          fields: ["reeferFee"],
+          guards: ["coalesce(reeferFee, 0)"],
+        },
+        statements: [],
+      }),
+    );
     draw();
 
-    expect(await screen.findByText("unknown name reeferFees")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "no value for reeferFee on this record; write coalesce(reeferFee, 0) so the formula still prices when it is missing",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Does not price")).toBeInTheDocument();
+  });
+
+  it("says why it could not price a formula the check refused", async () => {
+    service.test.mockResolvedValue(
+      testExpressionResponseSchema.parse({
+        valid: false,
+        diagnostics: [
+          {
+            scope: "expression",
+            from: 0,
+            to: 10,
+            severity: "error",
+            code: "unknown-variable",
+            message:
+              "{0} isn't a shipment field or one of this template's inputs. Declare it as an input, or pick a field from the reference.",
+            args: ["`reeferFees`"],
+            name: "reeferFees",
+            fixes: [],
+          },
+        ],
+      }),
+    );
+    draw();
+
+    expect(
+      await screen.findByText(
+        "`reeferFees` isn't a shipment field or one of this template's inputs. Declare it as an input, or pick a field from the reference.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("lists every warning the server's check found, breakdown lines included", async () => {
+    service.test.mockImplementation(async (request: TestExpressionRequest) => ({
+      ...priced(request),
+      diagnostics: [
+        {
+          scope: "breakdowns[0].expression",
+          from: 0,
+          to: 6,
+          severity: "warning" as const,
+          code: "nullable" as const,
+          message:
+            "{0} is empty on some shipments, and the formula would fail to rate them. Give it a fallback: {1}",
+          args: ["`weight`", "coalesce(weight, 0)"],
+          name: "weight",
+          fixes: [],
+        },
+      ],
+    }));
+    draw();
+
+    expect(
+      await screen.findByText(
+        "`weight` is empty on some shipments, and the formula would fail to rate them. Give it a fallback: coalesce(weight, 0)",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("prices nothing for a person who may not write formulas, and says why", async () => {

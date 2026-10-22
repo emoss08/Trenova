@@ -218,24 +218,24 @@ func (r *QueryResolver) LeaveControl(ctx context.Context) (*worker.LeaveControl,
 	return r.WorkerLeaveService.GetControl(ctx, base.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID string) ([]*worker.WorkerLeaveCase, error) {
+func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*worker.WorkerLeaveCase, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerLeave, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := pulid.MustParse(workerID)
+	id, err := base.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"workerId",
-			errortypes.ErrInvalid,
-			"Worker is invalid",
-		)
+		return nil, err
 	}
 	return r.WorkerLeaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
-		TenantInfo:      base.TenantInfo(authCtx),
-		WorkerID:        id,
-		IncludeDocument: true,
+		TenantInfo:                   base.TenantInfo(authCtx),
+		WorkerID:                     id,
+		OpenOnly:                     base.BoolValue(openOnly),
+		CertificationOutstandingOnly: base.BoolValue(certificationOutstandingOnly),
+		IncludeWorker:                true,
+		IncludeDocument:              true,
+		Limit:                        base.RecordListLimit(limit, id.IsNotNil()),
 	})
 }
 

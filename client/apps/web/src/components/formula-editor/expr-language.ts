@@ -7,15 +7,23 @@ import {
   syntaxHighlighting,
 } from "@codemirror/language";
 import { Tag, tags as t } from "@lezer/highlight";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import {
-  EXPR_KEYWORDS,
-  buildKnownIdentifiers,
   functionInsertion,
+  isKeyword,
   isKnownFunction,
   isOperatorWord,
   isKnownVariable,
   type KnownIdentifiers,
 } from "./known-identifiers";
+
+/*
+ * The syntax highlighter: a CodeMirror StreamLanguage, so it stays
+ * synchronous and incremental line by line. It colours, nothing more; what a
+ * formula means is the rules module's (`formula.check` underlines it), and the
+ * words it colours as keywords, operators and functions come from the
+ * module's catalog through `KnownIdentifiers`.
+ */
 
 export const unknownVariableTag = Tag.define();
 
@@ -85,7 +93,7 @@ export function createExprLanguage(known: KnownIdentifiers) {
           return "localVariable";
         }
 
-        if (EXPR_KEYWORDS.has(word) || word === "#" || isOperatorWord(known, word)) {
+        if (isKeyword(known, word) || word === "#" || isOperatorWord(known, word)) {
           state.binding = word === "let";
           return "keyword";
         }
@@ -178,8 +186,10 @@ export const exprHighlightStyle = HighlightStyle.define([
   { tag: t.punctuation, color: "var(--expr-punctuation)" },
 ]);
 
-function completionInfo(title: string, description: string, example?: string) {
+function completionInfo(title: string, describe: () => string, exemplify?: () => string) {
   return () => {
+    const description = describe();
+    const example = exemplify?.();
     const node = document.createElement("div");
     node.className = "cm-expr-completion-info";
 
@@ -213,7 +223,7 @@ function createCompletions(known: KnownIdentifiers): Completion[] {
       label: variable.name,
       type: "variable",
       detail: variable.type,
-      info: completionInfo(variable.name, variable.description),
+      info: completionInfo(variable.name, () => variable.description),
       boost: variable.custom ? 3 : 2,
     });
   }
@@ -224,7 +234,11 @@ function createCompletions(known: KnownIdentifiers): Completion[] {
       label: fn.name,
       type: fn.operator ? "keyword" : "function",
       detail: fn.signature,
-      info: completionInfo(fn.signature, fn.description, fn.example),
+      info: completionInfo(
+        fn.signature,
+        () => translateMessage(fn.description),
+        () => translateMessage(fn.example),
+      ),
       apply: (view, _completion, from, to) => {
         view.dispatch({
           changes: { from, to, insert: insertion.text },
@@ -261,6 +275,3 @@ export function exprLanguageSupport(known: KnownIdentifiers) {
     language.data.of({ autocomplete: completionSource }),
   ]);
 }
-
-export { buildKnownIdentifiers };
-export type { KnownIdentifiers };

@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/shopspring/decimal"
 )
 
 func computeStops(entity any) (any, error) {
@@ -23,7 +24,7 @@ func stopRecord(stop *shipment.Stop) map[string]any {
 		"type":            string(stop.Type),
 		"status":          string(stop.Status),
 		"scheduleType":    string(stop.ScheduleType),
-		"sequence":        int(stop.Sequence),
+		"sequence":        stop.Sequence,
 		"pieces":          optionalInt64(stop.Pieces),
 		"weight":          optionalInt64(stop.Weight),
 		"windowStart":     positiveTimestamp(stop.ScheduledWindowStart),
@@ -41,14 +42,14 @@ func optionalInt64(value *int64) any {
 	if value == nil {
 		return nil
 	}
-	return float64(*value)
+	return *value
 }
 
-func optionalFloat(value *float64) any {
+func optionalFeet(value *float64) any {
 	if value == nil {
 		return nil
 	}
-	return *value
+	return decimal.NewFromFloat(*value)
 }
 
 func positiveTimestamp(value int64) any {
@@ -87,11 +88,11 @@ func commodityRecord(line *shipment.ShipmentCommodity) map[string]any {
 		"freightClass": "",
 		"stackable":    false,
 		"hazmat":       false,
-		"weight":       float64(line.Weight),
-		"pieces":       float64(line.Pieces),
-		"lengthFeet":   optionalFloat(line.LengthFeet),
-		"widthFeet":    optionalFloat(line.WidthFeet),
-		"heightFeet":   optionalFloat(line.HeightFeet),
+		"weight":       line.Weight,
+		"pieces":       line.Pieces,
+		"lengthFeet":   optionalFeet(line.LengthFeet),
+		"widthFeet":    optionalFeet(line.WidthFeet),
+		"heightFeet":   optionalFeet(line.HeightFeet),
 		"cubicFeet":    nil,
 		"density":      nil,
 	}
@@ -105,8 +106,8 @@ func commodityRecord(line *shipment.ShipmentCommodity) map[string]any {
 	}
 
 	if cube := line.CubicFeet(); cube.IsPositive() {
-		record["cubicFeet"] = cube.InexactFloat64()
-		record["density"] = float64(line.Weight) / cube.InexactFloat64()
+		record["cubicFeet"] = cube
+		record["density"] = decimal.NewFromInt(line.Weight).Div(cube)
 	}
 
 	return record
@@ -115,9 +116,9 @@ func commodityRecord(line *shipment.ShipmentCommodity) map[string]any {
 func computeTotalCubicFeet(entity any) (any, error) {
 	entry, err := shipmentOf(entity)
 	if err != nil {
-		return 0.0, err
+		return decimal.Zero, err
 	}
-	return entry.RatingCubicFeet().InexactFloat64(), nil
+	return entry.RatingCubicFeet(), nil
 }
 
 func computeDensity(entity any) (any, error) {
@@ -129,7 +130,7 @@ func computeDensity(entity any) (any, error) {
 	if !ok {
 		return nil, nil //nolint:nilnil // no cube means density is unknown
 	}
-	return density.InexactFloat64(), nil
+	return density, nil
 }
 
 func computePrimaryFreightClass(entity any) (any, error) {

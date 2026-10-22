@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -51,8 +51,7 @@ var Module = fx.Module(
 	fx.Provide(
 		NewSchemaRegistry,
 		resolver.NewResolver,
-		engine.NewEngine,
-		engine.NewEnvironmentBuilder,
+		environment.NewBuilder,
 		NewService,
 		asFormulaCalculator,
 		asFormulaPredicateEvaluator,

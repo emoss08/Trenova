@@ -1,4 +1,3 @@
-import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { EditorView } from "@codemirror/view";
 import { render, waitFor } from "@testing-library/react";
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
@@ -6,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { ExpressionEditor } from "../expression-editor";
-import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
+import { knownFor } from "@/components/formula-editor/__tests__/formula-fixtures";
 
 vi.mock("@trenova/shared/components/theme-provider", () => ({
   useTheme: () => ({ theme: "system", setTheme: vi.fn() }),
@@ -30,7 +29,7 @@ function Harness({
     <ExpressionEditor
       name="expression"
       control={control}
-      knownIdentifiers={buildKnownIdentifiers(describedShipment, [])}
+      knownIdentifiers={knownFor()}
       editorRef={ref}
       lint={false}
     />

@@ -29,7 +29,7 @@ func TestMatrixCellBindsTheSellTotalOnTheBuySide(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, d.calcRequests, 1)
-	assert.InDelta(t, 2_000.0, d.calcRequests[0].Overrides["sellTotal"], 0.0001)
+	assertBound(t, "2000", d.calcRequests[0].Overrides["sellTotal"])
 	assert.Empty(t, d.calcRequests[0].UnavailableInputs)
 }
 

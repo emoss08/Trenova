@@ -6,15 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestService_EvaluateExpression_ReadsRelatedRecordsOnARealShipment(t *testing.T) {
+func TestService_Preview_ReadsRelatedRecordsOnARealShipment(t *testing.T) {
 	t.Parallel()
 
 	svc := setupService(t)
@@ -66,25 +62,13 @@ round(100 * expedite, 2)`,
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
-				Expression: tt.expression,
-				Entity:     entity,
-				SchemaID:   "shipment",
-				Variables:  tt.variables,
-			})
-			require.NoError(t, err)
-			assert.True(
-				t,
-				decimal.RequireFromString(tt.want).Equal(resp.Amount),
-				"expected %s, got %s",
-				tt.want,
-				resp.Amount,
-			)
+			amount := evaluateWith(t, svc, entity, tt.expression, tt.variables)
+			assertAmount(t, tt.want, amount, tt.expression)
 		})
 	}
 }
 
-func TestService_EvaluateExpression_AbsentOptionalRelationReadsAsEmpty(t *testing.T) {
+func TestService_Preview_AbsentOptionalRelationReadsAsNil(t *testing.T) {
 	t.Parallel()
 
 	svc := setupService(t)
@@ -92,11 +76,6 @@ func TestService_EvaluateExpression_AbsentOptionalRelationReadsAsEmpty(t *testin
 		ServiceType: &servicetype.ServiceType{Code: "STD"},
 	}
 
-	resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
-		Expression: `(trailerType?.code ?? "none") == "none" && shipmentType == nil ? 1 : 0`,
-		Entity:     entity,
-		SchemaID:   "shipment",
-	})
-	require.NoError(t, err)
-	assert.True(t, decimal.NewFromInt(1).Equal(resp.Amount), "got %s", resp.Amount)
+	expression := `(trailerType?.code ?? "none") == "none" && shipmentType == nil ? 1 : 0`
+	assertAmount(t, "1", evaluate(t, svc, entity, expression), expression)
 }

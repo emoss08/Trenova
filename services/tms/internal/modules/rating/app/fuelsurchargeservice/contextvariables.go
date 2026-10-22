@@ -73,7 +73,7 @@ func (s *Service) ContextVariables(
 	}
 
 	return map[string]any{
-		fuelPriceVariable:     chosenPrice.Price.InexactFloat64(),
+		fuelPriceVariable:     chosenPrice.Price,
 		fuelPriceDateVariable: fuelsurcharge.NormalizePriceDate(chosenPrice.PriceDate),
 		fuelIndexCodeVariable: chosenIndex.Code,
 	}, nil

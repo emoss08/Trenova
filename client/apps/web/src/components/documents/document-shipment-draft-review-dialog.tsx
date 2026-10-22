@@ -23,11 +23,13 @@ import type {
   DocumentShipmentDraft,
 } from "@trenova/shared/types/document";
 import { shipmentCreateSchema, type ShipmentCreateInput } from "@trenova/shared/types/shipment";
+import { rulesResolver } from "@/lib/rules-resolver";
+import { withShipmentAllocations } from "@trenova/shared/rules/allocation-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, CheckCircleIcon, SpinnerIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, type Resolver, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
@@ -215,7 +217,12 @@ export function DocumentShipmentDraftReviewDialog({
 
   const queryClient = useQueryClient();
   const form = useForm({
-    resolver: zodResolver(shipmentCreateSchema),
+    resolver: rulesResolver(
+      (rules) =>
+        zodResolver(
+          withShipmentAllocations(shipmentCreateSchema, rules),
+        ) as Resolver<ShipmentCreateInput>,
+    ),
     defaultValues: createDefaultShipmentValues(draft),
     mode: "onChange",
   });
