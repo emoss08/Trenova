@@ -98,7 +98,7 @@ is a linked record gated by its own read, and the Read-only template excepts eac
 | `worker_employment_event` | `hr.workers` | Human resources |
 | `worker_disciplinary_action`, `performance_review` | `hr.performance` | Human resources |
 | `timesheet`, `profile_change_request` | `hr.team` at team scope | Driver manager, Human resources (team) |
-| `driver_portal` | `hr.workers` (view, invite); `hr.team` (view, team) | Human resources; Driver manager (team) |
+| `driver_portal` | `hr.workers` (view, invite, revoke); `hr.team` (view, invite, revoke, team) | Human resources; Driver manager (team) |
 
 **Drug and alcohol tests (49 CFR 40.321).** An employer may release a DOT test result only
 to those whose job is DOT compliance (the designated employer representative and the
@@ -110,8 +110,9 @@ grants it to that role by hand. With no reference view, a test a worker carries 
 its id to anyone else.
 
 **Driver portal access.** Inviting a driver gives them a sign-in, so `driver_portal` has no
-parent and its own operations: View (read), Invite (create) and Revoke (cancel). Revoke is
-in no bundle; administrators hold it.
+parent and its own operations: View (read), Invite (create) and Revoke (cancel). Whoever may
+invite a driver may also revoke them: `hr.workers` grants all three across the organization
+and `hr.team` grants them for a driver manager's team.
 
 `worker_safety_event` and `worker_credential` keep worker as their parent, and
 `rate_confirmation` keeps carrier: whoever reads the worker or the carrier needs them to plan

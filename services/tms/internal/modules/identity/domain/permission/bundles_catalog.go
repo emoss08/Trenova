@@ -377,7 +377,7 @@ var capabilityBundles = []Bundle{
 		ID:          "hr.workers",
 		Module:      "Workforce",
 		Label:       "Worker records",
-		Description: "Keep worker records, employment events, positions and checklists, and invite drivers to the portal.",
+		Description: "Keep worker records, employment events, positions and checklists, and invite drivers to the portal or revoke their access.",
 		Grants: []BundleGrant{
 			{
 				Resource:   ResourceWorker,
@@ -394,7 +394,10 @@ var capabilityBundles = []Bundle{
 			},
 			{Resource: ResourceWorkerPolicy, Operations: []Operation{OpRead}},
 			{Resource: ResourceProtectedPersonal, Operations: []Operation{OpRead}},
-			{Resource: ResourceDriverPortal, Operations: []Operation{OpRead, OpCreate}},
+			{
+				Resource:   ResourceDriverPortal,
+				Operations: []Operation{OpRead, OpCreate, OpCancel},
+			},
 		},
 	},
 	{
@@ -441,7 +444,7 @@ var capabilityBundles = []Bundle{
 		ID:          "hr.team",
 		Module:      "Workforce",
 		Label:       "Manage a team",
-		Description: "Approve time off, timesheets, swaps and profile changes, and schedule a team.",
+		Description: "Approve time off, timesheets, swaps and profile changes, schedule a team, and invite its drivers to the portal or revoke their access.",
 		Grants: []BundleGrant{
 			{Resource: ResourceWorker, Operations: []Operation{OpRead}, Scope: DataScopeTeam},
 			{Resource: ResourceWorkerPTO, Operations: []Operation{OpRead, OpApprove, OpReject}},
@@ -469,7 +472,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceShiftTemplate, Operations: []Operation{OpRead}},
 			{
 				Resource:   ResourceDriverPortal,
-				Operations: []Operation{OpRead},
+				Operations: []Operation{OpRead, OpCreate, OpCancel},
 				Scope:      DataScopeTeam,
 			},
 		},

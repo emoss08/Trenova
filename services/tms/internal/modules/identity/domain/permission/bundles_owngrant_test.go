@@ -56,7 +56,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 		"driver_manager": {
 			ResourceTimesheet:            "approve,read,reject,update@team",
 			ResourceProfileChangeRequest: "approve,read,reject@team",
-			ResourceDriverPortal:         "read@team",
+			ResourceDriverPortal:         "cancel,create,read@team",
 			ResourceWorkerLeave:          "approve,read,update@team",
 		},
 		"hr": {
@@ -66,7 +66,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 			ResourcePerformanceReview:        "create,read,update@organization",
 			ResourceTimesheet:                "approve,read,reject,update@team",
 			ResourceProfileChangeRequest:     "approve,read,reject@team",
-			ResourceDriverPortal:             "create,read@organization",
+			ResourceDriverPortal:             "cancel,create,read@organization",
 			ResourceWorkerLeave:              "approve,create,read,update@organization",
 		},
 		"read_only": {
@@ -138,12 +138,12 @@ func TestTemplateGrants_ReadOnlyReadsNoKindGrantedOnItsOwn(t *testing.T) {
 	assert.NotEmpty(t, effectiveGrant(reg, grants, ResourceWorkerCredential))
 }
 
-func TestBundles_OnlyHumanResourcesInviteDriversToThePortal(t *testing.T) {
+func TestBundles_HumanResourcesAndDriverManagersInviteAndRevokePortalAccess(t *testing.T) {
 	t.Parallel()
 
 	expected := map[string][]Operation{
-		"hr.workers": {OpCreate, OpRead},
-		"hr.team":    {OpRead},
+		"hr.workers": Normalize([]Operation{OpRead, OpCreate, OpCancel}),
+		"hr.team":    Normalize([]Operation{OpRead, OpCreate, OpCancel}),
 	}
 	for _, bundle := range Bundles() {
 		var got []Operation

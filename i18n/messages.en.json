@@ -28824,7 +28824,7 @@
       "apps/web/components"
     ]
   },
-  "Approve time off, timesheets, swaps and profile changes, and schedule a team.": {
+  "Approve time off, timesheets, swaps and profile changes, schedule a team, and invite its drivers to the portal or revoke their access.": {
     "sites": 1,
     "scope": [
       "go"
@@ -130593,7 +130593,7 @@
       "go/other"
     ]
   },
-  "Keep worker records, employment events, positions and checklists, and invite drivers to the portal.": {
+  "Keep worker records, employment events, positions and checklists, and invite drivers to the portal or revoke their access.": {
     "sites": 1,
     "scope": [
       "go"
