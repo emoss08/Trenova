@@ -402,4 +402,5 @@ These look like real failures and are not:
 - **`golangci-lint` refuses to run** when it was built with an older Go than the module
   targets. That needs CI, not a workaround.
 - **`node --test i18n/tools/`** resolves a bare directory as a module on Node 22 and fails
-  before running anything. Pass a glob.
+  before running anything. Node 26, the pinned version, runs it fine; on older Node,
+  pass a glob.

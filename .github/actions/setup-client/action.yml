@@ -14,10 +14,11 @@ runs:
       with:
         package_json_file: client/package.json
 
+    # client/.nvmrc is the Node pin; deploy/Dockerfile.client's NODE_VERSION matches it.
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: "24"
+        node-version-file: client/.nvmrc
         cache: pnpm
         cache-dependency-path: client/pnpm-lock.yaml
 
