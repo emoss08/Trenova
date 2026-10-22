@@ -207,6 +207,7 @@ func (r *Rater) result(
 			return nil, err
 		}
 		out.Bill = bill
+		out.WireBill = result.Bill
 		return out, nil
 	case rules.TariffRefused:
 		out.Refusal = result.Refusal

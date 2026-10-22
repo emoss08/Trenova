@@ -189,7 +189,7 @@ func newFixture(t *testing.T, reply any) *fixture {
 		preview: &formulatemplateports.PreviewResult{
 			Valid:  true,
 			Inputs: declaredInputs(),
-			Bill: &tarifftypes.Bill{
+			RatedBill: &tarifftypes.Bill{
 				Total: decimal.NewFromInt(250),
 				Lines: []tarifftypes.Line{{
 					Kind:   tarifftypes.LineCharge,

@@ -281,7 +281,7 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, e
 		&rules.TariffTestRun{Tests: result.Tests})
 	checked.OK = result.Valid
 
-	out := &Preview{Checked: checked, Bill: result.Bill}
+	out := &Preview{Checked: checked, Bill: result.RatedBill}
 	if result.Refusal != nil {
 		out.Refusal = result.Refusal.Localize(checked.locale)
 		out.RefusalAt = positionOf(req.Source, result.Refusal.Range)
