@@ -323,6 +323,146 @@ export const testExpressionRequestSchema = z.object({
 export type TestExpressionRequest = z.infer<typeof testExpressionRequestSchema>;
 
 /**
+ * User-facing text from the rules module (docs/engineering/rules-engine.md): an
+ * English ICU template, which is also the catalog key, and its positional
+ * arguments. An argument is text, a count or a nested message, translated at
+ * the display edge with `translateMessage` (`@trenova/shared/i18n/message`).
+ */
+export type FormulaMessage = {
+  message: string;
+  args?: FormulaMessageArg[];
+};
+export type FormulaMessageArg = string | number | FormulaMessage;
+
+const formulaMessageArgSchema: z.ZodType<FormulaMessageArg> = z.lazy(() =>
+  z.union([z.string(), z.number(), formulaMessageSchema]),
+);
+
+export const formulaMessageSchema: z.ZodType<FormulaMessage> = z.object({
+  message: z.string(),
+  args: z.array(formulaMessageArgSchema).optional(),
+});
+
+/** A static type of the formula language; `Integer` is a whole `Number`. */
+export const formulaValueTypeSchema = z.enum([
+  "Number",
+  "Integer",
+  "String",
+  "Boolean",
+  "Date",
+  "Duration",
+  "Array",
+  "Object",
+  "Nil",
+  "Any",
+]);
+export type FormulaValueType = z.output<typeof formulaValueTypeSchema>;
+
+/** The type of input a declare fix asks the Studio to add. */
+export const formulaInputTypeSchema = z.enum(["Number", "String", "Boolean"]);
+export type FormulaInputType = z.output<typeof formulaInputTypeSchema>;
+
+export const formulaDiagnosticCodeSchema = z.enum([
+  "syntax",
+  "limit",
+  "empty",
+  "unknown-variable",
+  "unknown-field",
+  "unknown-function",
+  "disabled-function",
+  "arity",
+  "type",
+  "nullable",
+  "let-unused",
+  "let-duplicate",
+  "let-before-definition",
+  "let-shadows",
+  "let-last",
+  "result-type",
+  "discarded",
+  "divide-by-zero",
+  "rate-table",
+]);
+export type FormulaDiagnosticCode = z.output<typeof formulaDiagnosticCodeSchema>;
+
+export const formulaSeveritySchema = z.enum(["error", "warning"]);
+export type FormulaSeverity = z.output<typeof formulaSeveritySchema>;
+
+/** One text change of a replace fix, in UTF-16 code units. */
+export const formulaChangeSchema = z.object({
+  from: z.number().int(),
+  to: z.number().int(),
+  insert: z.string(),
+});
+export type FormulaChange = z.output<typeof formulaChangeSchema>;
+
+/** What resolves a finding: edits to the formula, or an input for the Studio to declare. */
+export const formulaFixSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("replace"),
+    label: formulaMessageSchema,
+    changes: z.array(formulaChangeSchema),
+  }),
+  z.object({
+    kind: z.literal("declare"),
+    label: formulaMessageSchema,
+    name: z.string(),
+    type: formulaInputTypeSchema,
+  }),
+]);
+export type FormulaFix = z.output<typeof formulaFixSchema>;
+
+/**
+ * A finding of `formula.check`: its range in UTF-16 code units, a stable code,
+ * the message (flattened into the diagnostic's own `message` and `args`), the
+ * identifier it is about, and its fixes.
+ */
+export const formulaDiagnosticSchema = z.object({
+  from: z.number().int(),
+  to: z.number().int(),
+  severity: formulaSeveritySchema,
+  code: formulaDiagnosticCodeSchema,
+  message: z.string(),
+  args: z.array(formulaMessageArgSchema).optional(),
+  name: z.string().optional(),
+  fixes: z.array(formulaFixSchema).default([]),
+});
+export type FormulaDiagnostic = z.output<typeof formulaDiagnosticSchema>;
+
+/** A finding on one of the expressions the preview checked, with the field path it is on. */
+export const scopedFormulaDiagnosticSchema = formulaDiagnosticSchema.extend({
+  scope: z.string(),
+});
+export type ScopedFormulaDiagnostic = z.output<typeof scopedFormulaDiagnosticSchema>;
+
+/**
+ * Why a formula failed to evaluate: a stable code, the message, the range of
+ * the node that failed when one did, and for a missing value the fields read
+ * without one and the guard that keeps the formula pricing, one per field.
+ */
+export const formulaEvaluationErrorSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  args: z.array(formulaMessageArgSchema).optional(),
+  from: z.number().int().nullish(),
+  to: z.number().int().nullish(),
+  fields: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  guards: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type FormulaEvaluationError = z.output<typeof formulaEvaluationErrorSchema>;
+
+export const scopedFormulaEvaluationErrorSchema = formulaEvaluationErrorSchema.extend({
+  scope: z.string(),
+});
+export type ScopedFormulaEvaluationError = z.output<typeof scopedFormulaEvaluationErrorSchema>;
+
+/**
  * One statement of an expression as the engine evaluated it: each `let`, then
  * the final expression whose value is the raw amount. Offsets are UTF-16 code
  * units into the expression, the units CodeMirror counts in.
@@ -332,10 +472,10 @@ export const formulaStatementSchema = z.object({
   kind: z.enum(["let", "result"]),
   name: z.string().nullish(),
   code: z.string(),
-  start: z.number().int(),
-  end: z.number().int(),
+  from: z.number().int(),
+  to: z.number().int(),
   value: z.unknown().optional(),
-  error: z.string().nullish(),
+  error: formulaEvaluationErrorSchema.nullish(),
 });
 export type FormulaStatement = z.output<typeof formulaStatementSchema>;
 
@@ -409,25 +549,25 @@ export const formulaReceiptSchema = z.object({
 });
 export type FormulaReceipt = z.output<typeof formulaReceiptSchema>;
 
-export const expressionWarningSchema = z.object({
-  scope: z.string(),
-  field: z.string(),
-  type: z.string().optional(),
-  message: z.string(),
-  suggestion: z.string(),
-});
-export type ExpressionWarning = z.output<typeof expressionWarningSchema>;
-
+/**
+ * What `POST /formula-templates/test` answers (docs/engineering/rules-engine.md,
+ * "The formula server API"): every `formula.check` finding on the expression and
+ * each breakdown line with its scope, the first evaluation error with its scope,
+ * and the trace. `valid` is true when no diagnostic is an error and nothing
+ * failed to evaluate.
+ */
 export const testExpressionResponseSchema = z.object({
   valid: z.boolean(),
   result: z.any().optional(),
-  error: z.string().optional(),
-  message: z.string(),
+  diagnostics: z
+    .array(scopedFormulaDiagnosticSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  error: scopedFormulaEvaluationErrorSchema.nullish(),
   resolvedVariables: z.record(z.string(), z.any()).nullish(),
   breakdown: z.array(testBreakdownItemSchema).nullish(),
   guardrail: guardrailResultSchema.nullish(),
   rounding: roundingResultSchema.nullish(),
-  warnings: z.array(expressionWarningSchema).nullish(),
   receipt: formulaReceiptSchema.nullish(),
   statements: z.array(formulaStatementSchema).nullish(),
 });
@@ -564,41 +704,53 @@ export const formulaSchemaVariableSchema = z.object({
 });
 export type FormulaSchemaVariable = z.output<typeof formulaSchemaVariableSchema>;
 
-/** What a value is in the formula language, as the engine publishes it for each function's result. */
-export const formulaValueTypeSchema = z.enum([
-  "Number",
-  "Integer",
-  "String",
-  "Boolean",
-  "Date",
-  "Duration",
-  "Array",
-  "Object",
-  "Any",
-]);
-export type FormulaValueType = z.output<typeof formulaValueTypeSchema>;
+/**
+ * What `GET /formula-templates/schema` answers: the record's fields, and each
+ * list's item fields named `list[].field`. Functions are not sent; the browser
+ * reads them from `formula.catalog` in its own copy of the rules module.
+ */
+export const formulaSchemaResponseSchema = z.object({
+  schemaId: z.string(),
+  variables: z.array(formulaSchemaVariableSchema),
+});
+export type FormulaSchemaResponse = z.output<typeof formulaSchemaResponseSchema>;
 
-/** A function's maxArgs when it takes any number of arguments. */
+/** A function's `maxArgs` when it takes any number of arguments. */
 export const VARIADIC_ARGS = -1;
 
-export const formulaSchemaFunctionSchema = z.object({
+export const formulaFunctionCategorySchema = z.enum([
+  "math",
+  "rounding",
+  "aggregate",
+  "conditional",
+  "rateTable",
+  "string",
+  "list",
+  "predicate",
+  "bits",
+  "date",
+]);
+export type FormulaFunctionCategory = z.output<typeof formulaFunctionCategorySchema>;
+
+/** One function, built-in or word operator as `formula.catalog` lists it. */
+export const formulaFunctionSchema = z.object({
   name: z.string(),
   signature: z.string(),
-  description: z.string().default(""),
-  example: z.string().default(""),
-  category: z.string().default(""),
-  operator: z.boolean().default(false),
-  minArgs: z.number().int().default(0),
-  maxArgs: z.number().int().default(VARIADIC_ARGS),
-  returns: formulaValueTypeSchema.catch("Any").default("Any"),
-  /** Every argument must be a number, so text or a flag passed to it is an error. */
-  numericArgs: z.boolean().default(false),
-  /** The second argument is a predicate over each item, where `#` and `.field` read the item. */
-  predicate: z.boolean().default(false),
+  description: formulaMessageSchema,
+  example: formulaMessageSchema,
+  category: formulaFunctionCategorySchema,
+  /** Written infix (`text startsWith "x"`) or as a slice, not as a call. */
+  operator: z.boolean(),
+  minArgs: z.number().int(),
+  /** `VARIADIC_ARGS` when it takes any number of arguments. */
+  maxArgs: z.number().int(),
+  returns: formulaValueTypeSchema,
+  numericArgs: z.boolean(),
+  /** Its second argument is evaluated per item, where `#` and `.field` read the item. */
+  predicate: z.boolean(),
 });
-export type FormulaSchemaFunction = z.output<typeof formulaSchemaFunctionSchema>;
+export type FormulaFunction = z.output<typeof formulaFunctionSchema>;
 
-/** Why the engine turns an expr builtin off; the editor words the reason. */
 export const formulaDisabledReasonSchema = z.enum([
   "nondeterministic",
   "serialization",
@@ -606,28 +758,26 @@ export const formulaDisabledReasonSchema = z.enum([
 ]);
 export type FormulaDisabledReason = z.output<typeof formulaDisabledReasonSchema>;
 
-export const formulaSchemaDisabledSchema = z.object({
+/** A name the language turns off, with what the checker says when a formula calls it. */
+export const formulaDisabledFunctionSchema = z.object({
   name: z.string(),
   reason: formulaDisabledReasonSchema,
-  replacement: z.string().nullish(),
+  replacement: z.string().optional(),
+  message: formulaMessageSchema,
 });
-export type FormulaSchemaDisabled = z.output<typeof formulaSchemaDisabledSchema>;
+export type FormulaDisabledFunction = z.output<typeof formulaDisabledFunctionSchema>;
 
-export const formulaSchemaResponseSchema = z.object({
-  schemaId: z.string(),
-  variables: z.array(formulaSchemaVariableSchema),
-  functions: z.array(formulaSchemaFunctionSchema),
-  /** The expr builtins the engine keeps beyond the documented functions: callable, not listed in the reference. */
-  builtins: z
-    .array(formulaSchemaFunctionSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-  disabled: z
-    .array(formulaSchemaDisabledSchema)
-    .nullish()
-    .transform((v) => v ?? []),
+/** What `formula.catalog` answers: every function, built-in, disabled and reserved name. */
+export const formulaCatalogSchema = z.object({
+  /** The functions the reference lists, word operators and the slice among them. */
+  functions: z.array(formulaFunctionSchema),
+  /** The list, predicate, bit and date functions: callable, not listed in the reference. */
+  builtins: z.array(formulaFunctionSchema),
+  disabled: z.array(formulaDisabledFunctionSchema),
+  /** Every name an input may not take: the keywords and every function name, sorted. */
+  reserved: z.array(z.string()),
 });
-export type FormulaSchemaResponse = z.output<typeof formulaSchemaResponseSchema>;
+export type FormulaCatalog = z.output<typeof formulaCatalogSchema>;
 
 export const importTemplatesResponseSchema = z.object({
   created: listFormulaTemplateResponseSchema,

@@ -1,6 +1,7 @@
 package rateimportservice
 
 import (
+	"context"
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -35,6 +36,7 @@ type stagedBatch struct {
 // read: staging thousands of rows against a mapping that cannot work fills the
 // table with rows nobody will look at.
 func stage(
+	ctx context.Context,
 	sheet *pkgrateimport.Sheet,
 	existing []*rateagreement.RateAgreementRule,
 	templates pkgrateimport.TemplateResolver,
@@ -58,7 +60,8 @@ func stage(
 		}
 	}
 
-	incoming := make([]*rateagreement.RateAgreementRule, 0, len(sheet.Rows))
+	parsed := make([]*rateagreement.RateAgreementRule, 0, len(sheet.Rows))
+	parsedRows := make([]*rateimport.RateImportRow, 0, len(sheet.Rows))
 
 	for index, cells := range sheet.Rows {
 		rule, err := pkgrateimport.ParseRow(mapping, cells, templates)
@@ -78,12 +81,28 @@ func stage(
 			row.Error = err.Error()
 			staged.ErrorCount++
 		} else {
-			row.Rule = rule
-			row.LaneKey = rule.LaneKey
-			incoming = append(incoming, rule)
+			parsed = append(parsed, rule)
+			parsedRows = append(parsedRows, row)
 		}
 
 		staged.Rows = append(staged.Rows, row)
+	}
+
+	if err := rateagreement.ApplyLanes(ctx, parsed); err != nil {
+		return nil, err
+	}
+
+	incoming := make([]*rateagreement.RateAgreementRule, 0, len(parsed))
+	for i, rule := range parsed {
+		row := parsedRows[i]
+		if laneErr := pkgrateimport.UnkeyedEnd(rule); laneErr != nil {
+			row.Error = laneErr.Error()
+			staged.ErrorCount++
+			continue
+		}
+		row.Rule = rule
+		row.LaneKey = rule.LaneKey
+		incoming = append(incoming, rule)
 	}
 
 	staged.Changes = pkgrateimport.Diff(existing, incoming)

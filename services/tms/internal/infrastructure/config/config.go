@@ -1856,7 +1856,6 @@ type Config struct {
 	Tendering           TenderingConfig           `mapstructure:"tendering"`
 	CarrierIntelligence CarrierIntelligenceConfig `mapstructure:"carrierIntelligence"`
 	Accounting          AccountingConfig          `mapstructure:"accounting"`
-	Formula             FormulaConfig             `mapstructure:"formula"`
 	EDI                 EDIConfig                 `mapstructure:"edi"`
 	Imports             ImportsConfig             `mapstructure:"imports"`
 	ContentScan         ContentScanConfig         `mapstructure:"contentScan"`
@@ -2030,19 +2029,6 @@ func (c *CarrierIntelligenceConfig) GetReplicaHint() int {
 
 type PortalConfig struct {
 	BaseURL string `mapstructure:"baseUrl" validate:"omitempty,url"`
-}
-
-const defaultMaxConcurrentFormulaEvaluations = 64
-
-type FormulaConfig struct {
-	MaxConcurrentEvaluations int `mapstructure:"maxConcurrentEvaluations" validate:"min=0,max=4096"`
-}
-
-func (c *FormulaConfig) GetMaxConcurrentEvaluations() int {
-	if c.MaxConcurrentEvaluations <= 0 {
-		return defaultMaxConcurrentFormulaEvaluations
-	}
-	return c.MaxConcurrentEvaluations
 }
 
 type TenderingConfig struct {

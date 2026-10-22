@@ -7,6 +7,7 @@ import {
   nextItemAfterReassignment,
   reassignSummary,
 } from "@/lib/billing-queue-charges";
+import { rulesResolver } from "@/lib/rules-resolver";
 import { apiService } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -25,11 +26,9 @@ import type {
   ReassignChargeInput,
   ReassignChargeResult,
 } from "@trenova/shared/types/billing-queue";
-import {
-  chargeAllocationSchema,
-  chargeAllocationsRefinement,
-  type ChargeAllocation,
-} from "@trenova/shared/types/shipment";
+import { withChargeAllocations } from "@trenova/shared/rules/allocation-form";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
+import { chargeAllocationSchema, type ChargeAllocation } from "@trenova/shared/types/shipment";
 import { useQueryStates } from "nuqs";
 import { useEffect, useMemo } from "react";
 import {
@@ -46,12 +45,12 @@ import { useInvalidateBillingQueue } from "./use-billing-queue-invalidate";
 
 type ReassignFormValues = { allocations: ChargeAllocation[] };
 
-function reassignFormSchema(chargeTotal: number | null) {
-  return z
-    .object({ allocations: z.array(chargeAllocationSchema) })
-    .superRefine((values, ctx) =>
-      chargeAllocationsRefinement(ctx, values.allocations, chargeTotal, ["allocations"]),
-    );
+function reassignFormSchema(rules: RulesRuntime, chargeTotal: number | null) {
+  return withChargeAllocations(
+    z.object({ allocations: z.array(chargeAllocationSchema) }),
+    rules,
+    () => chargeTotal,
+  );
 }
 
 function toReassignInput(line: PayerShareLine, rows: ChargeAllocation[]): ReassignChargeInput {
@@ -99,7 +98,10 @@ export function BillingQueueReassignChargeDialog({
     [shipment, line],
   );
   const form = useForm<ReassignFormValues>({
-    resolver: zodResolver(reassignFormSchema(chargeTotal)) as Resolver<ReassignFormValues>,
+    resolver: rulesResolver(
+      (rules) =>
+        zodResolver(reassignFormSchema(rules, chargeTotal)) as Resolver<ReassignFormValues>,
+    ),
     defaultValues: defaults,
   });
 

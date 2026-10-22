@@ -2015,6 +2015,7 @@
   "{0, plural, one {# agent regressed} other {# agents regressed}}": "{0, plural, other {# 个智能体退步}}",
   "{0, plural, one {# agent scored} other {# agents scored}}": "{0, plural, other {# 个智能体已评分}}",
   "{0, plural, one {# agent still regressed} other {# agents still regressed}}": "{0, plural, other {# 个智能体仍处于退步}}",
+  "{0, plural, one {# argument} other {# arguments}}": "{0, plural, other {# 个参数}}",
   "{0, plural, one {# awaiting decision} other {# awaiting decision}}": "{0, plural, other {# 项等待决定}}",
   "{0, plural, one {# call had no price} other {# calls had no price}}": "{0, plural, other {# 次调用没有价格}}",
   "{0, plural, one {# call} other {# calls}}": "{0, plural, other {# 次调用}}",

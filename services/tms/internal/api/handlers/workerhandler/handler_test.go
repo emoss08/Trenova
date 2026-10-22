@@ -57,6 +57,16 @@ func setupWorkerHandlerWithEngine(
 	engine permissionports.PermissionEngine,
 ) *handlerDeps {
 	t.Helper()
+	return setupWorkerHandlerWithEngines(t, repo, &mocks.AllowAllPermissionEngine{}, engine)
+}
+
+func setupWorkerHandlerWithEngines(
+	t *testing.T,
+	repo *workerportsmock.MockWorkerRepository,
+	routes permissionports.PermissionEngine,
+	engine permissionports.PermissionEngine,
+) *handlerDeps {
+	t.Helper()
 
 	logger := zap.NewNop()
 	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)
@@ -100,7 +110,7 @@ func setupWorkerHandlerWithEngine(
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-		PermissionEngine: &mocks.AllowAllPermissionEngine{},
+		PermissionEngine: routes,
 		ErrorHandler:     errorHandler,
 	})
 
@@ -161,6 +171,35 @@ func TestWorkerHandler_List_Success(t *testing.T) {
 	require.NotNil(t, resp.TotalCount)
 	assert.Equal(t, total, *resp.TotalCount)
 	assert.Len(t, resp.Results, 1)
+}
+
+// Row-level security shows every worker to a person who cannot read workers,
+// because a record that links to one shows its reference view. A root read of
+// workers is therefore refused by the route before it reaches the database.
+func TestWorkerHandler_RefusesARootReadWithoutWorkerRead(t *testing.T) {
+	t.Parallel()
+
+	noWorkerRead := &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceWorker.String()},
+	}
+	for _, path := range []string{
+		"/api/v1/workers/",
+		"/api/v1/workers/" + pulid.MustNew("wrk_").String() + "/",
+	} {
+		repo := workerportsmock.NewMockWorkerRepository(t)
+		deps := setupWorkerHandlerWithEngines(t, repo, noWorkerRead, noWorkerRead)
+
+		ginCtx := testutil.NewGinTestContext().
+			WithMethod(http.MethodGet).
+			WithPath(path).
+			WithDefaultAuthContext()
+		deps.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+		ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+		assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode(), path)
+		repo.AssertNotCalled(t, "List", mock.Anything, mock.Anything)
+		repo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
+	}
 }
 
 func TestWorkerHandler_Get_Success(t *testing.T) {

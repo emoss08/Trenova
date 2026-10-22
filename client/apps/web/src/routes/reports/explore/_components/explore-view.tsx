@@ -270,8 +270,10 @@ export function ExploreView({
             sort={sort}
             onSortChange={setSort}
             quickFilter={debouncedFilter}
-            onCellClick={(rowIndex, columnIndex) => {
-              const drill = buildDrillTarget(ir, columns, rows[rowIndex], columnIndex);
+            onCellClick={(rowIndex, columnIndex, cellText) => {
+              const drill = buildDrillTarget(ir, columns, rows[rowIndex], columnIndex, (at) =>
+                cellText(rowIndex, at),
+              );
               if (drill) setDrillTarget(drill);
             }}
           />

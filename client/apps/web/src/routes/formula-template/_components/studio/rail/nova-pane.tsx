@@ -163,6 +163,7 @@ export function NovaPane() {
     analysis,
     askNova,
     unsavedNovaKey,
+    rules,
   } = useStudio();
   const form = useFormContext<FormulaTemplateFormValues>();
   const [records, setRecords] = useState<ReadonlyMap<string, ProposalRecord>>(() => new Map());
@@ -261,13 +262,13 @@ export function NovaPane() {
       const current = proposalTargetOf(form.getValues());
       apply(
         artifactId,
-        applyProposal(current, proposal),
+        applyProposal(rules, current, proposal),
         current.expression.trim() === ""
           ? t("Nova drafted the formula")
           : t("Nova changed the formula"),
       );
     },
-    [apply, form, setRecord, t],
+    [apply, form, rules, setRecord, t],
   );
 
   const page = useMemo<PageBinding>(

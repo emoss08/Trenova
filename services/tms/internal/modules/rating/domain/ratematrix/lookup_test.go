@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func band(minimum, maximum string) (decimal.NullDecimal, decimal.NullDecimal) {
 	return lower, decimal.NewNullDecimal(decimal.RequireFromString(maximum))
 }
 
-func TestSelectCellAcrossZoneAndWeightBreak(t *testing.T) {
+func TestLookupCellAcrossZoneAndWeightBreak(t *testing.T) {
 	t.Parallel()
 
 	dimensions := []*ratematrix.RateMatrixDimension{
@@ -65,7 +66,8 @@ func TestSelectCellAcrossZoneAndWeightBreak(t *testing.T) {
 		quantity("4200"),
 	}
 
-	match, err := ratematrix.SelectCell(
+	match, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		[]*ratematrix.RateMatrixCell{light, heavy},
 		&values,
@@ -96,7 +98,8 @@ func TestWeightBreakBoundaryBelongsToTheUpperBand(t *testing.T) {
 	}
 	upper.D0Min, upper.D0Max = band("1000", "5000")
 
-	match, err := ratematrix.SelectCell(
+	match, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		[]*ratematrix.RateMatrixCell{lower, upper},
 		&ratematrix.LookupValues{quantity("1000")},
@@ -118,7 +121,8 @@ func TestOpenEndedTopBandCatchesAnythingHeavier(t *testing.T) {
 	}
 	top.D0Min, top.D0Max = band("20000", "")
 
-	match, err := ratematrix.SelectCell(
+	match, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		[]*ratematrix.RateMatrixCell{top},
 		&ratematrix.LookupValues{quantity("48000")},
@@ -147,7 +151,8 @@ func TestEarlierCandidateKeyWins(t *testing.T) {
 		Value: decimal.RequireFromString("2.40"),
 	}
 
-	match, err := ratematrix.SelectCell(
+	match, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		// Deliberately supplied in the losing order to prove the ranking, not
 		// the slice order, decides.
@@ -179,14 +184,16 @@ func TestTieBreaksDeterministicallyByCellID(t *testing.T) {
 		Value: decimal.RequireFromString("2"),
 	}
 
-	forward, err := ratematrix.SelectCell(
+	forward, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		[]*ratematrix.RateMatrixCell{first, second},
 		&ratematrix.LookupValues{exactKeys("SE")},
 	)
 	require.NoError(t, err)
 
-	reversed, err := ratematrix.SelectCell(
+	reversed, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		[]*ratematrix.RateMatrixCell{second, first},
 		&ratematrix.LookupValues{exactKeys("SE")},
@@ -197,7 +204,7 @@ func TestTieBreaksDeterministicallyByCellID(t *testing.T) {
 	assert.Equal(t, first.ID, forward.Cell.ID)
 }
 
-func TestSelectCellRejectsAMissingDimensionValue(t *testing.T) {
+func TestLookupCellRejectsAMissingDimensionValue(t *testing.T) {
 	t.Parallel()
 
 	dimensions := []*ratematrix.RateMatrixDimension{
@@ -205,16 +212,23 @@ func TestSelectCellRejectsAMissingDimensionValue(t *testing.T) {
 		dim(1, ratematrix.DimensionKindWeightBreak, ratematrix.MatchModeRange),
 	}
 
-	_, err := ratematrix.SelectCell(
+	_, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		nil,
 		&ratematrix.LookupValues{exactKeys("SE")},
 	)
 
-	require.ErrorIs(t, err, ratematrix.ErrDimensionValueMissing)
+	var refused *rules.MatrixSelectError
+	require.ErrorAs(t, err, &refused)
+	assert.Equal(t, rules.MatrixErrorValueMissing, refused.Code)
+	require.NotNil(t, refused.Position)
+	assert.Equal(t, int64(1), *refused.Position)
+	assert.Equal(t, "No value was supplied for the matrix dimension {0}", refused.Message.Template)
+	assert.Equal(t, []any{"Weight break"}, refused.Message.Args)
 }
 
-func TestSelectCellReportsWhenNothingCovers(t *testing.T) {
+func TestLookupCellReportsWhenNothingCovers(t *testing.T) {
 	t.Parallel()
 
 	dimensions := []*ratematrix.RateMatrixDimension{
@@ -225,13 +239,17 @@ func TestSelectCellReportsWhenNothingCovers(t *testing.T) {
 		ID: pulid.MustNew("rmc_"), D0Key: "NE", Value: decimal.RequireFromString("1"),
 	}
 
-	_, err := ratematrix.SelectCell(
+	_, err := ratematrix.LookupCell(
+		t.Context(),
 		dimensions,
 		[]*ratematrix.RateMatrixCell{cell},
 		&ratematrix.LookupValues{exactKeys("SE")},
 	)
 
-	require.ErrorIs(t, err, ratematrix.ErrNoMatchingCell)
+	var refused *rules.MatrixSelectError
+	require.ErrorAs(t, err, &refused)
+	assert.Equal(t, rules.MatrixErrorNoMatchingCell, refused.Code)
+	assert.Equal(t, "No matrix cell matches the supplied values", refused.Error())
 }
 
 func TestOrderedDimensionsSortsByPosition(t *testing.T) {

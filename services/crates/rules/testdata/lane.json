@@ -1,0 +1,351 @@
+{
+  "op": "lane.keys",
+  "cases": [
+    {
+      "name": "rategeo: each scope's key (origin), with the destination anywhere",
+      "input": {"rules": [
+        {"originScopeType": "Any"},
+        {"originScopeType": "Location", "originScopeValue": "loc_1"},
+        {"originScopeType": "Zip5", "originScopeValue": "60601-1234"},
+        {"originScopeType": "Zip3", "originScopeValue": "60601"},
+        {"originScopeType": "Zip3", "originScopeValue": "60"},
+        {"originScopeType": "CityState", "originScopeValue": "ust_il", "originCity": "  saint   louis "},
+        {"originScopeType": "Zone", "originScopeValue": "rzn_1"},
+        {"originScopeType": "State", "originScopeValue": "ust_il"},
+        {"originScopeType": "Country", "originScopeValue": "usa"},
+        {"originScopeType": "Radius"}
+      ]},
+      "output": {"rules": [
+        {"origin": "ANY", "destination": "ANY", "key": "ANY>ANY", "stored": "ANY>ANY", "reverse": null},
+        {"origin": "LOC:loc_1", "key": "LOC:loc_1>ANY"},
+        {"origin": "Z5:60601", "key": "Z5:60601>ANY"},
+        {"origin": "Z3:606", "key": "Z3:606>ANY"},
+        {"origin": null, "key": null, "stored": "RADIUS", "reverse": null, "segments": []},
+        {"origin": "CS:ust_il|SAINT LOUIS", "key": "CS:ust_il|SAINT LOUIS>ANY"},
+        {"origin": "ZN:rzn_1"},
+        {"origin": "ST:ust_il"},
+        {"origin": "CT:USA"},
+        {"origin": null, "key": null, "stored": "RADIUS"}
+      ], "shipments": []}
+    },
+    {
+      "name": "rategeo: an end with no value, or an unknown type, cannot be keyed",
+      "input": {"rules": [
+        {"originScopeType": "Location", "originScopeValue": ""},
+        {"originScopeType": "CityState", "originScopeValue": "ust_il"},
+        {"originScopeType": "County", "originScopeValue": "cook"},
+        {"destinationScopeType": "Zone"},
+        {"originScopeType": ""}
+      ]},
+      "output": {"rules": [
+        {"key": null, "stored": "RADIUS"},
+        {"key": null, "stored": "RADIUS"},
+        {"key": null, "stored": "RADIUS"},
+        {"key": null, "stored": "RADIUS"},
+        {"key": "ANY>ANY"}
+      ]}
+    },
+    {
+      "name": "rategeo: postal codes keep a leading dash, their inner spaces and fold case like Go",
+      "input": {"rules": [
+        {"originScopeType": "Zip5", "originScopeValue": "  606 01 "},
+        {"originScopeType": "Zip5", "originScopeValue": "-123"},
+        {"originScopeType": "Zip3", "originScopeValue": " k1a 0b1"},
+        {"originScopeType": "Zip5", "originScopeValue": "straße"},
+        {"originScopeType": "Zip3", "originScopeValue": "ÅÄ"},
+        {"originScopeType": "Zip3", "originScopeValue": "ÅÄÖ"},
+        {"originScopeType": "Zip5", "originScopeValue": "  "}
+      ]},
+      "output": {"rules": [
+        {"origin": "Z5:606 01"},
+        {"origin": "Z5:-123"},
+        {"origin": "Z3:K1A"},
+        {"origin": "Z5:STRAßE"},
+        {"origin": "Z3:Å"},
+        {"origin": "Z3:Å"},
+        {"origin": "Z5:"}
+      ]}
+    },
+    {
+      "name": "rateagreement: the lane key is origin then destination",
+      "input": {"rules": [
+        {"originScopeType": "Zip3", "originScopeValue": "60601", "destinationScopeType": "State", "destinationScopeValue": "ust_ga"}
+      ]},
+      "output": {"rules": [{"origin": "Z3:606", "destination": "ST:ust_ga", "key": "Z3:606>ST:ust_ga", "stored": "Z3:606>ST:ust_ga", "reverse": null}]}
+    },
+    {
+      "name": "rateagreement: a bidirectional rule is reachable from either end; a directional one is not",
+      "input": {"rules": [
+        {"direction": "Bidirectional", "originScopeType": "Zip3", "originScopeValue": "606", "destinationScopeType": "Zip3", "destinationScopeValue": "303"},
+        {"direction": "Directional", "originScopeType": "Zip3", "originScopeValue": "606", "destinationScopeType": "Zip3", "destinationScopeValue": "303"},
+        {"direction": "Bidirectional", "originScopeType": "Radius", "destinationScopeType": "Zip3", "destinationScopeValue": "303"}
+      ]},
+      "output": {"rules": [
+        {"key": "Z3:606>Z3:303", "reverse": "Z3:303>Z3:606"},
+        {"key": "Z3:606>Z3:303", "reverse": null},
+        {"key": null, "stored": "RADIUS", "reverse": null}
+      ]}
+    },
+    {
+      "name": "TS laneKeyPreview: anywhere, prefixes, folded cities, postal prefixes and radius",
+      "input": {"rules": [
+        {"originScopeType": "Any", "originScopeValue": "", "destinationScopeType": "Any", "destinationScopeValue": ""},
+        {"originScopeType": "Zone", "originScopeValue": "rzn_sw", "destinationScopeType": "State", "destinationScopeValue": "us_il"},
+        {"originScopeType": "CityState", "originScopeValue": "us_tx", "originCity": " dallas "},
+        {"originScopeType": "CityState", "originScopeValue": "us_tx", "originCity": "DALLAS"},
+        {"originScopeType": "Zip3", "originScopeValue": "60601-1234"},
+        {"originScopeType": "Radius"},
+        {"destinationScopeType": "Radius"}
+      ]},
+      "output": {"rules": [
+        {"key": "ANY>ANY"},
+        {"key": "ZN:rzn_sw>ST:us_il"},
+        {"key": "CS:us_tx|DALLAS>ANY"},
+        {"key": "CS:us_tx|DALLAS>ANY"},
+        {"key": "Z3:606>ANY"},
+        {"key": null},
+        {"key": null}
+      ]}
+    },
+    {
+      "name": "a rule's key comes with its ends parsed for display",
+      "input": {"rules": [
+        {"originScopeType": "CityState", "originScopeValue": "us_tx", "originCity": "Dallas", "destinationScopeType": "Zip3", "destinationScopeValue": "303"}
+      ]},
+      "exact": true,
+      "output": {"rules": [{
+        "origin": "CS:us_tx|DALLAS", "destination": "Z3:303", "key": "CS:us_tx|DALLAS>Z3:303", "stored": "CS:us_tx|DALLAS>Z3:303", "reverse": null,
+        "segments": [
+          {"text": "CS:us_tx|DALLAS", "scope": "CityState", "id": "us_tx", "prefix": "CS:", "suffix": "|DALLAS"},
+          {"text": "Z3:303"}
+        ]
+      }], "shipments": []}
+    },
+    {
+      "name": "rategeo: a place's match keys cover every scope a rule could store, ending with ANY",
+      "input": {"shipments": [
+        {"origin": {"locationId": "loc_1", "postalCode": "60601-1234", "city": "Chicago", "stateId": "ust_il", "countryIso3": "USA", "zoneIds": ["rzn_1"]}, "destination": {}}
+      ]},
+      "exact": true,
+      "output": {"rules": [], "shipments": [{
+        "originKeys": ["LOC:loc_1", "Z5:60601", "Z3:606", "CS:ust_il|CHICAGO", "ZN:rzn_1", "ST:ust_il", "CT:USA", "ANY"],
+        "destinationKeys": ["ANY"],
+        "candidates": ["LOC:loc_1>ANY", "Z5:60601>ANY", "Z3:606>ANY", "CS:ust_il|CHICAGO>ANY", "ZN:rzn_1>ANY", "ST:ust_il>ANY", "CT:USA>ANY", "ANY>ANY"]
+      }]}
+    },
+    {
+      "name": "null place fields read as empty",
+      "input": {"rules": null, "shipments": [{"origin": {"locationId": null, "postalCode": null, "city": null, "stateId": "ust_1", "countryIso3": null, "zoneIds": null}, "destination": null}]},
+      "output": {"rules": [], "shipments": [{"originKeys": ["ST:ust_1", "ANY"], "destinationKeys": ["ANY"]}]}
+    },
+    {
+      "name": "rategeo: lane key candidates are the cross product, origin major",
+      "input": {"shipments": [
+        {"origin": {"countryIso3": " usa "}, "destination": {"stateId": "ust_ga"}}
+      ]},
+      "output": {"shipments": [{
+        "originKeys": ["CT:USA", "ANY"],
+        "destinationKeys": ["ST:ust_ga", "ANY"],
+        "candidates": ["CT:USA>ST:ust_ga", "CT:USA>ANY", "ANY>ST:ust_ga", "ANY>ANY"]
+      }]}
+    },
+    {
+      "name": "rategeo: a short postal code gives no prefix; blank zones and a city without a state are skipped",
+      "input": {"shipments": [
+        {"origin": {"postalCode": "60", "city": "Chicago", "zoneIds": ["", "rzn_2"]}, "destination": {"postalCode": "  "}}
+      ]},
+      "output": {"shipments": [{"originKeys": ["Z5:60", "ZN:rzn_2", "ANY"], "destinationKeys": ["ANY"]}]}
+    },
+    {
+      "name": "rateagreement: a rule's stored key is reachable from the shipment's candidates",
+      "input": {
+        "rules": [{"originScopeType": "Zip3", "originScopeValue": "60601", "destinationScopeType": "State", "destinationScopeValue": "ust_ga"}],
+        "shipments": [{"origin": {"postalCode": "60601", "city": "Chicago", "countryIso3": "USA"}, "destination": {"stateId": "ust_ga", "city": "Atlanta", "countryIso3": "USA"}}]
+      },
+      "output": {"rules": [{"stored": "Z3:606>ST:ust_ga"}], "shipments": [{
+        "originKeys": ["Z5:60601", "Z3:606", "CT:USA", "ANY"],
+        "destinationKeys": ["CS:ust_ga|ATLANTA", "ST:ust_ga", "CT:USA", "ANY"]
+      }]}
+    },
+    {
+      "name": "parse (TS laneKeyScopeIds, laneKeyStringDisplay): ID-backed ends and literal ends",
+      "op": "lane.parse",
+      "input": {"keys": ["CS:us_tx|DALLAS>ZN:rzn_sw", "ZN:rzn_sw>LOC:loc_dal", "ST:us_il>ANY", "Z3:606>CT:USA", "RADIUS", "", "ZN:>ST:", "XX:1>LOC:a:b"]},
+      "exact": true,
+      "output": {"keys": [
+        {"segments": [
+          {"text": "CS:us_tx|DALLAS", "scope": "CityState", "id": "us_tx", "prefix": "CS:", "suffix": "|DALLAS"},
+          {"text": "ZN:rzn_sw", "scope": "Zone", "id": "rzn_sw", "prefix": "ZN:", "suffix": ""}
+        ]},
+        {"segments": [
+          {"text": "ZN:rzn_sw", "scope": "Zone", "id": "rzn_sw", "prefix": "ZN:", "suffix": ""},
+          {"text": "LOC:loc_dal", "scope": "Location", "id": "loc_dal", "prefix": "LOC:", "suffix": ""}
+        ]},
+        {"segments": [
+          {"text": "ST:us_il", "scope": "State", "id": "us_il", "prefix": "ST:", "suffix": ""},
+          {"text": "ANY"}
+        ]},
+        {"segments": [{"text": "Z3:606"}, {"text": "CT:USA"}]},
+        {"segments": [{"text": "RADIUS"}]},
+        {"segments": [{"text": ""}]},
+        {"segments": [{"text": "ZN:"}, {"text": "ST:"}]},
+        {"segments": [{"text": "XX:1"}, {"text": "LOC:a:b", "scope": "Location", "id": "a:b", "prefix": "LOC:", "suffix": ""}]}
+      ]}
+    },
+    {
+      "name": "specificity: every scope weight, mirrored from rategeo and the lane editor",
+      "op": "lane.specificity",
+      "input": {"rules": [
+        {"originScopeType": "Any"},
+        {"originScopeType": "Country"},
+        {"originScopeType": "State"},
+        {"originScopeType": "Zone"},
+        {"originScopeType": "Radius"},
+        {"originScopeType": "CityState"},
+        {"originScopeType": "Zip3"},
+        {"originScopeType": "Zip5"},
+        {"originScopeType": "Location"},
+        {"originScopeType": "County"},
+        {}
+      ]},
+      "exact": true,
+      "output": {"scores": [0, 307200, 512000, 614400, 665600, 716800, 819200, 921600, 1024000, 0, 0]}
+    },
+    {
+      "name": "specificity: every condition weight",
+      "op": "lane.specificity",
+      "input": {"rules": [
+        {"commodityIds": ["c1"]},
+        {"freightClasses": ["70"]},
+        {"tractorTypeIds": ["t1"]},
+        {"trailerTypeIds": ["t2"]},
+        {"equipmentClasses": ["Van"]},
+        {"serviceTypeIds": ["s1"]},
+        {"shipmentTypeIds": ["st1"]},
+        {"minWeight": "1000"},
+        {"maxDistance": 900},
+        {"serviceModels": ["Truckload"]},
+        {"hazmatOnly": true},
+        {"tempControlOnly": true}
+      ]},
+      "exact": true,
+      "output": {"scores": [512, 256, 128, 128, 128, 64, 32, 16, 8, 4, 2, 1]}
+    },
+    {
+      "name": "specificity: geography outranks every condition combined",
+      "op": "lane.specificity",
+      "input": {"rules": [
+        {"originScopeType": "Zip5", "originScopeValue": "60601", "destinationScopeType": "Zip5", "destinationScopeValue": "30301"},
+        {"originScopeType": "State", "originScopeValue": "ust_il", "destinationScopeType": "State", "destinationScopeValue": "ust_ga",
+          "commodityIds": ["com_1"], "freightClasses": ["70"], "tractorTypeIds": ["eqt_1"], "serviceTypeIds": ["svt_1"], "shipmentTypeIds": ["sht_1"],
+          "minWeight": "1000", "minDistance": "100", "serviceModels": ["Truckload"], "hazmatOnly": true, "tempControlOnly": true}
+      ]},
+      "exact": true,
+      "output": {"scores": [1843200, 1025023]}
+    },
+    {
+      "name": "TS laneSpecificity: anywhere is zero, the ends weigh the same, conditions never outweigh one step of geography",
+      "op": "lane.specificity",
+      "input": {"rules": [
+        {"originScopeType": "Any", "destinationScopeType": "Any"},
+        {"originScopeType": "Location", "destinationScopeType": "Any"},
+        {"originScopeType": "Any", "destinationScopeType": "Location"},
+        {"commodityIds": ["c1"], "freightClasses": ["70"], "tractorTypeIds": ["t1"], "trailerTypeIds": ["t2"], "equipmentClasses": ["Van"],
+          "serviceTypeIds": ["s1"], "shipmentTypeIds": ["st1"], "serviceModels": ["Truckload"], "minWeight": 1000, "maxWeight": 40000,
+          "minDistance": 100, "maxDistance": 900, "hazmatOnly": true, "tempControlOnly": true},
+        {"originScopeType": "Country"},
+        {"originScopeType": "State"},
+        {"originScopeType": "State", "commodityIds": ["c1"]},
+        {"originScopeType": "State", "commodityIds": ["c1"], "freightClasses": ["70"]},
+        {"tractorTypeIds": ["t1"], "trailerTypeIds": ["t2"], "equipmentClasses": ["Van"]},
+        {"serviceTypeIds": []},
+        {"serviceTypeIds": null}
+      ]},
+      "exact": true,
+      "output": {"scores": [0, 1024000, 1024000, 1023, 307200, 512000, 512512, 512768, 128, 0, 0]}
+    },
+    {
+      "name": "specificity: a blank or null bound is unset, and null flags are off",
+      "op": "lane.specificity",
+      "input": {"rules": [{"minWeight": "", "maxWeight": null, "minDistance": " ", "hazmatOnly": null, "tempControlOnly": false}]},
+      "exact": true,
+      "output": {"scores": [0]}
+    },
+    {
+      "name": "coverage: lanes written at different widths are fine",
+      "op": "lane.coverage",
+      "input": {"rules": [
+        {"status": "Active", "originScopeType": "CityState", "originScopeValue": "us_tx", "originCity": "Dallas", "destinationScopeType": "Any"},
+        {"status": "Active", "originScopeType": "State", "originScopeValue": "us_tx", "destinationScopeType": "Any"},
+        {"status": "Active", "originScopeType": "Any", "destinationScopeType": "Any"}
+      ]},
+      "exact": true,
+      "output": {"issues": []}
+    },
+    {
+      "name": "coverage: two equally narrow lanes leave the winner to a tie-break",
+      "op": "lane.coverage",
+      "input": {"rules": [
+        {"label": "first", "status": "Active", "originScopeType": "State", "originScopeValue": "us_tx", "priority": 0},
+        {"label": "second", "status": "Active", "originScopeType": "State", "originScopeValue": "us_tx", "priority": 0}
+      ]},
+      "exact": true,
+      "output": {"issues": [{"index": 1, "kind": "duplicate", "other": 0, "message": {"message": "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you."}}]}
+    },
+    {
+      "name": "coverage: a lane behind an identical one with a higher priority is shadowed",
+      "op": "lane.coverage",
+      "input": {"rules": [
+        {"status": "Active", "originScopeType": "State", "originScopeValue": "us_tx", "priority": 10},
+        {"status": "Active", "originScopeType": "State", "originScopeValue": "us_tx", "priority": 0}
+      ]},
+      "exact": true,
+      "output": {"issues": [{"index": 1, "kind": "shadowed", "other": 0, "message": {"message": "Another lane covers the same geography with a higher priority, so this one can never apply."}}]}
+    },
+    {
+      "name": "coverage (fixes TS): the lower-priority lane is the shadowed one wherever it sits",
+      "op": "lane.coverage",
+      "input": {"rules": [
+        {"originScopeType": "State", "originScopeValue": "us_tx", "priority": 0},
+        {"originScopeType": "State", "originScopeValue": "us_tx", "priority": 10}
+      ]},
+      "output": {"issues": [{"index": 0, "kind": "shadowed", "other": 1}]}
+    },
+    {
+      "name": "coverage: lanes narrowing on different conditions, inactive lanes and radius lanes are not faulted",
+      "op": "lane.coverage",
+      "input": {"rules": [
+        {"status": "Active", "originScopeType": "State", "originScopeValue": "us_tx", "commodityIds": ["c1"]},
+        {"status": "Active", "originScopeType": "State", "originScopeValue": "us_tx"},
+        {"status": "Inactive", "originScopeType": "State", "originScopeValue": "us_tx"},
+        {"status": "Active", "originScopeType": "Radius", "originRadiusMeters": 80000},
+        {"status": "Active", "originScopeType": "Radius", "originRadiusMeters": 80000}
+      ]},
+      "exact": true,
+      "output": {"issues": []}
+    },
+    {
+      "name": "coverage: lanes whose effective windows do not overlap never compete",
+      "op": "lane.coverage",
+      "input": {"rules": [
+        {"originScopeType": "State", "originScopeValue": "us_tx", "effectiveFrom": 100, "effectiveTo": 200},
+        {"originScopeType": "State", "originScopeValue": "us_tx", "effectiveFrom": 200},
+        {"originScopeType": "State", "originScopeValue": "us_tx", "effectiveFrom": 150, "effectiveTo": 160}
+      ]},
+      "output": {"issues": [{"index": 2, "kind": "duplicate", "other": 0}]}
+    },
+    {
+      "name": "coverage: a bidirectional lane meets the lane written the other way round",
+      "op": "lane.coverage",
+      "input": {"rules": [
+        {"direction": "Bidirectional", "originScopeType": "Zip3", "originScopeValue": "606", "destinationScopeType": "Zip3", "destinationScopeValue": "303"},
+        {"originScopeType": "Zip3", "originScopeValue": "303", "destinationScopeType": "Zip3", "destinationScopeValue": "606"},
+        {"originScopeType": "Zip3", "originScopeValue": "606", "destinationScopeType": "Zip3", "destinationScopeValue": "303", "priority": 5}
+      ]},
+      "output": {"issues": [
+        {"index": 0, "kind": "shadowed", "other": 2},
+        {"index": 1, "kind": "duplicate", "other": 0}
+      ]}
+    }
+  ]
+}

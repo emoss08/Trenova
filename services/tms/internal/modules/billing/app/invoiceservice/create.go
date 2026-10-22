@@ -96,7 +96,7 @@ func (s *Service) CreateInvoicesFromShipments(
 		return nil, err
 	}
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}
@@ -388,12 +388,13 @@ type orderPayerBucket struct {
 // primary payer leads: the order's customer when they have a share, otherwise
 // the first payer in a stable order.
 func bucketLegsByPayer(
+	ctx context.Context,
 	ord *order.Order,
 	legs []*shipment.Shipment,
 ) ([]*orderPayerBucket, error) {
 	byPayer := make(map[pulid.ID]*orderPayerBucket, 2)
 	for _, leg := range legs {
-		resolution, err := shipment.ResolveShares(leg, leg.ChargeAllocations)
+		resolution, err := shipment.ResolveShares(ctx, leg, leg.ChargeAllocations)
 		if err != nil {
 			return nil, err
 		}
@@ -534,6 +535,7 @@ func (s *Service) createOrderInvoicesTx(
 // to them. Charges with no allocation go whole to the default payer, so they
 // appear only on that payer's invoice.
 func orderChargeShareFor(
+	ctx context.Context,
 	charges []*order.OrderCharge,
 	defaultPayerID pulid.ID,
 	payerID pulid.ID,
@@ -556,7 +558,7 @@ func orderChargeShareFor(
 		allocations = append(allocations, charge.Allocations...)
 	}
 
-	resolution, err := shipment.ResolveOrderChargeShares(refs, allocations, defaultPayerID)
+	resolution, err := shipment.ResolveOrderChargeShares(ctx, refs, allocations, defaultPayerID)
 	if err != nil {
 		return nil, false, err
 	}

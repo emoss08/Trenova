@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// stampedMatrixRepo answers the cheap stamp question and counts the expensive
-// read, so a test can tell reuse from rebuild.
 type stampedMatrixRepo struct {
 	ratematrixports.RateMatrixRepository
 	stamp atomic.Value
@@ -32,7 +30,9 @@ func (r *stampedMatrixRepo) GetLookupData(
 	*ratematrixports.GetRateMatrixLookupDataRequest,
 ) ([]*ratematrixports.RateMatrixLookupData, error) {
 	r.reads.Add(1)
-	return nil, nil
+	return []*ratematrixports.RateMatrixLookupData{
+		exactLookupMatrix("fsc", map[string]string{"DIESEL": "0.35"}),
+	}, nil
 }
 
 func (r *stampedMatrixRepo) GetLookupStamp(
@@ -42,26 +42,32 @@ func (r *stampedMatrixRepo) GetLookupStamp(
 	return r.stamp.Load().(string), nil //nolint:errcheck // always a string
 }
 
-func TestBuildLookup_SharesAcrossRequestsUntilAMatrixChanges(t *testing.T) {
+func TestRateTables_EncodedOncePerStampAndSharedAcrossRequests(t *testing.T) {
 	t.Parallel()
 
 	repo := newStampedMatrixRepo("2:5:1700000000")
 	svc := setupCountingService(t, repo)
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	_, err := svc.BuildLookup(t.Context(), tenant)
+	first, err := svc.RateTables(t.Context(), tenant)
 	require.NoError(t, err)
-	_, err = svc.BuildLookup(t.Context(), tenant)
+	second, err := svc.RateTables(t.Context(), tenant)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, repo.reads.Load(), "two requests, one full read")
+	assert.Same(t, first, second, "the second request reuses the encoded bytes")
+	require.Len(t, first.Tables, 1)
+	assert.Equal(t, "2:5:1700000000", first.Stamp)
+	assert.Contains(t, string(first.Tables[0].Encoded), `"value":"0.35"`)
 
 	repo.stamp.Store("2:6:1700000900")
-	_, err = svc.BuildLookup(t.Context(), tenant)
+	third, err := svc.RateTables(t.Context(), tenant)
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, repo.reads.Load(), "an edited matrix is read again")
+	assert.NotSame(t, first, third)
+	assert.Equal(t, "2:6:1700000900", third.Stamp)
 
 	ratetablecache.Invalidate(tenant.OrgID, tenant.BuID)
-	_, err = svc.BuildLookup(t.Context(), tenant)
+	_, err = svc.RateTables(t.Context(), tenant)
 	require.NoError(t, err)
 	assert.EqualValues(t, 3, repo.reads.Load(), "the write path can evict directly")
 }

@@ -12,10 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -186,12 +184,12 @@ func (s *service) planReassignment(
 		return nil, err
 	}
 
-	chargeTotal, description, err := reassignTarget(shp, req)
+	target, description, err := reassignTarget(shp, req)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := reassignRows(shp, req, chargeTotal)
+	rows, err := reassignRows(ctx, shp, req, target)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +213,7 @@ func (s *service) planReassignment(
 		return nil, multiErr
 	}
 
-	resolution, err := shipment.ResolveShares(&candidate, merged)
+	resolution, err := shipment.ResolveShares(ctx, &candidate, merged)
 	if err != nil {
 		return nil, err
 	}
@@ -259,14 +257,13 @@ func (s *service) planReassignment(
 	return plan, nil
 }
 
-// reassignTarget finds the charge being reassigned and its total.
+// reassignTarget finds the charge being reassigned: nil for freight.
 func reassignTarget(
 	shp *shipment.Shipment,
 	req *billingqueueports.ReassignChargeRequest,
-) (total decimal.Decimal, description string, err error) {
-	freight := shp.FreightChargeAmount.Decimal
+) (target *shipment.AdditionalCharge, description string, err error) {
 	if req.ChargeKind == shipment.ChargeAllocationKindFreight {
-		return freight, "Freight", nil
+		return nil, "Freight", nil
 	}
 	for _, charge := range shp.AdditionalCharges {
 		if charge == nil || charge.ID != req.AdditionalChargeID {
@@ -279,10 +276,10 @@ func reassignTarget(
 				name = charge.AccessorialCharge.Code
 			}
 		}
-		return charge.Total(freight), name, nil
+		return charge, name, nil
 	}
 
-	return decimal.Zero, "", errortypes.NewValidationError(
+	return nil, "", errortypes.NewValidationError(
 		"additionalChargeId",
 		errortypes.ErrInvalid,
 		"That accessorial charge is not on this shipment",
@@ -308,9 +305,10 @@ func targetsCharge(
 // is refused so a reassignment cannot move another charge's rows. A single row
 // giving the whole charge to the shipment's own payer is the same as no rows.
 func reassignRows(
+	ctx context.Context,
 	shp *shipment.Shipment,
 	req *billingqueueports.ReassignChargeRequest,
-	chargeTotal decimal.Decimal,
+	target *shipment.AdditionalCharge,
 ) ([]*shipment.ChargeAllocation, error) {
 	existing := make(map[pulid.ID]*shipment.ChargeAllocation, len(shp.ChargeAllocations))
 	for _, allocation := range shp.ChargeAllocations {
@@ -357,28 +355,19 @@ func reassignRows(
 		rows = append(rows, row)
 	}
 
-	if len(rows) == 1 && rows[0].BillToCustomerID == shp.PayerID() &&
-		wholeCharge(rows[0], chargeTotal) {
+	if len(rows) != 1 || rows[0].BillToCustomerID != shp.PayerID() {
+		return rows, nil
+	}
+
+	whole, err := shipment.BillsWholeChargeToPayer(ctx, shp, target, rows)
+	if err != nil {
+		return nil, err
+	}
+	if whole {
 		return []*shipment.ChargeAllocation{}, nil
 	}
 
 	return rows, nil
-}
-
-func wholeCharge(row *shipment.ChargeAllocation, total decimal.Decimal) bool {
-	switch row.Method {
-	case shipment.ChargeAllocationMethodPercent:
-		return row.Percent.Valid && row.Percent.Decimal.Equal(decimalutils.Percent100)
-	case shipment.ChargeAllocationMethodAmount:
-		return row.Amount.Valid &&
-			decimalutils.SumEquals(
-				[]decimal.Decimal{row.Amount.Decimal},
-				total,
-				shipment.SharePlaces,
-			)
-	default:
-		return false
-	}
 }
 
 // reconcileQueueItems compares who pays after the reassignment with who has an

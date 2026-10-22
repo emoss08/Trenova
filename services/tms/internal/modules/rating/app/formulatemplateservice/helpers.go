@@ -1,10 +1,11 @@
 package formulatemplateservice
 
 import (
+	"context"
 	goErrors "errors"
 
-	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 var versionDiffIgnoreFields = []string{
@@ -16,16 +17,12 @@ var versionDiffIgnoreFields = []string{
 	"changeSummary",
 }
 
-func expressionErrorMessage(err error) string {
-	message := err.Error()
-	for {
-		var schemaErr *formulaerrors.SchemaError
-		if !goErrors.As(err, &schemaErr) || schemaErr.Cause == nil {
-			return message
-		}
-		err = schemaErr.Cause
-		message = err.Error()
+func expressionErrorMessage(ctx context.Context, err error) string {
+	var multiErr *errortypes.MultiError
+	if goErrors.As(err, &multiErr) && len(multiErr.Errors) > 0 {
+		return errortypes.LocalizedText(ctx, multiErr.Errors[0])
 	}
+	return errortypes.LocalizedText(ctx, err)
 }
 
 func clearApprovalFields(template *formulatemplate.FormulaTemplate) {

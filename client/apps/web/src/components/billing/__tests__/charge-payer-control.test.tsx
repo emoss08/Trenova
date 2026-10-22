@@ -1,11 +1,14 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { allocationRemainders } from "@trenova/shared/rules/allocation";
+import { rulesSync } from "@trenova/shared/rules/runtime";
 import type { ChargeAllocation } from "@trenova/shared/types/shipment";
 import { useEffect } from "react";
 import {
   FormProvider,
   useController,
   useForm,
+  useWatch,
   type Control,
   type FieldValues,
   type UseFormReturn,
@@ -65,6 +68,24 @@ afterEach(cleanup);
 
 let latestForm: UseFormReturn<FieldValues> | null = null;
 
+// The parent measures the charge with the rules module, as the shipment form's lists do.
+function MeasuredControl({ control }: { control: Control<FieldValues> }) {
+  const rows = (useWatch({ control, name: "allocations" }) ?? []) as ChargeAllocation[];
+  const [state] = allocationRemainders(rulesSync(), {
+    charges: [{ total: 1000, allocations: rows }],
+  });
+  return (
+    <ChargePayerControl
+      name="allocations"
+      chargeAmount={1000}
+      complete={state.complete}
+      defaultPayer={{ id: "cus_intel", label: "Intel" }}
+      splitTitle="Split freight charge"
+      splitDescription="Divide the freight charge."
+    />
+  );
+}
+
 function Harness({ allocations }: { allocations: ChargeAllocation[] }) {
   const form = useForm<FieldValues>({ defaultValues: { allocations } });
   useEffect(() => {
@@ -72,13 +93,7 @@ function Harness({ allocations }: { allocations: ChargeAllocation[] }) {
   }, [form]);
   return (
     <FormProvider {...form}>
-      <ChargePayerControl
-        name="allocations"
-        chargeAmount={1000}
-        defaultPayer={{ id: "cus_intel", label: "Intel" }}
-        splitTitle="Split freight charge"
-        splitDescription="Divide the freight charge."
-      />
+      <MeasuredControl control={form.control} />
     </FormProvider>
   );
 }
@@ -229,5 +244,26 @@ describe("ChargePayerControl", () => {
     );
 
     expect(screen.getByTestId("charge-payer-control")).toHaveTextContent("Split 2 ways");
+  });
+
+  it("names the payer of one amount row only when its cents are the whole charge", () => {
+    const amountRow = (amount: number) =>
+      [
+        {
+          billToCustomerId: "cus_amd",
+          method: "Amount",
+          amount,
+          sequence: 0,
+          billToCustomer: { id: "cus_amd", name: "AMD", code: "AMD" },
+        },
+      ] as ChargeAllocation[];
+
+    const { unmount } = render(<Harness allocations={amountRow(1000)} />);
+    expect(screen.getByTestId("charge-payer-control")).toHaveTextContent("Bill to:");
+    expect(screen.getByTestId("charge-payer-control")).not.toHaveTextContent("Split");
+    unmount();
+
+    render(<Harness allocations={amountRow(999.99)} />);
+    expect(screen.getByTestId("charge-payer-control")).toHaveTextContent("Split 1 ways");
   });
 });

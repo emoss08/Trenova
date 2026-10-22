@@ -71,7 +71,7 @@ function Harness({
   onValues,
 }: {
   allocations: ChargeAllocation[];
-  chargeAmount?: number | null;
+  chargeAmount?: number | string | null;
   percentOnly?: boolean;
   onValues: (values: FieldValues) => void;
 }) {
@@ -186,6 +186,38 @@ describe("ChargeSplitEditor", () => {
     const remainder = screen.getByTestId("charge-split-remainder");
     expect(remainder).toHaveTextContent("Allocated $650.00 · -$150.00 remaining");
     expect(remainder).toHaveClass("text-destructive");
+  });
+
+  it("measures amount rows exactly against a decimal total the rules module computed", () => {
+    render(
+      <Harness
+        chargeAmount="1000.01"
+        allocations={[
+          { billToCustomerId: "cus_intel", method: "Amount", amount: 600.01 } as ChargeAllocation,
+          { billToCustomerId: "cus_amd", method: "Amount", amount: 400 } as ChargeAllocation,
+        ]}
+        onValues={vi.fn()}
+      />,
+    );
+
+    const remainder = screen.getByTestId("charge-split-remainder");
+    expect(remainder).toHaveTextContent("Allocated $1,000.01 · $0.00 remaining");
+    expect(remainder).not.toHaveClass("text-destructive");
+  });
+
+  it("shows only what is assigned when amount rows split a charge of unknown total", () => {
+    render(
+      <Harness
+        chargeAmount={null}
+        allocations={[
+          { billToCustomerId: "cus_intel", method: "Amount", amount: 400 } as ChargeAllocation,
+          { billToCustomerId: "cus_amd", method: "Amount", amount: 250 } as ChargeAllocation,
+        ]}
+        onValues={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("charge-split-remainder")).toHaveTextContent("Allocated $650.00");
   });
 
   // A percentage-of-freight accessorial has no dollar total on the client, so

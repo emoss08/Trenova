@@ -30,7 +30,7 @@ func TestWithReadScope_NarrowsARunToItsRequestersScope(t *testing.T) {
 	team := pulid.MustNew("usr_")
 	scopes := &recordingReadScopes{grants: readscope.Grants{
 		"worker":   {Scope: readscope.ScopeTeam, Team: []pulid.ID{team}},
-		"shipment": {Scope: readscope.ScopeNone},
+		"shipment": {Scope: readscope.ScopeOwn},
 	}}
 	tenant := pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
@@ -43,7 +43,7 @@ func TestWithReadScope_NarrowsARunToItsRequestersScope(t *testing.T) {
 
 	encoded, err := readscope.Encode(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, "shipment:none;worker:team:"+team.String(), encoded)
+	assert.Equal(t, "shipment:own;worker:team:"+team.String(), encoded)
 	require.NotNil(t, scopes.principal)
 	assert.Equal(t, permissionports.PrincipalTypeUser, scopes.principal.PrincipalType)
 	assert.Equal(t, tenant.UserID, scopes.principal.UserID)

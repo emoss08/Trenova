@@ -44,14 +44,27 @@ type LookupMatch struct {
 	Adjusted bool `json:"adjusted,omitempty"`
 }
 
+type Number struct {
+	decimal.Decimal
+}
+
+func (n Number) MarshalJSON() ([]byte, error) {
+	return []byte(n.String()), nil
+}
+
+func (n *Number) UnmarshalJSON(data []byte) error {
+	return n.Decimal.UnmarshalJSON(data)
+}
+
 type LookupTrace struct {
 	// Scope is "expression" for the main formula or the breakdown line's name.
-	Scope string       `json:"scope"`
-	Table string       `json:"table"`
-	Keys  []any        `json:"keys"`
-	Value float64      `json:"value"`
-	Match *LookupMatch `json:"match,omitempty"`
-	Error string       `json:"error,omitempty"`
+	Scope    string       `json:"scope"`
+	Function string       `json:"function"`
+	Table    string       `json:"table"`
+	Keys     []any        `json:"keys"`
+	Value    Number       `json:"value"`
+	Match    *LookupMatch `json:"match,omitempty"`
+	Error    string       `json:"error,omitempty"`
 }
 
 // Receipt is everything needed to read a formula result the way a person

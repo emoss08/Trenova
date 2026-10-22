@@ -193,6 +193,7 @@
   "Lines exceed the total by {0}": "明細行超出總額 {0}",
   "Lines explain the total": "明細可解釋總額",
   "Ln {0}, Col {1}": "第 {0} 行，第 {1} 欄",
+  "Loading the formula studio": "正在載入公式工作室",
   "Looks intended": "看起來符合預期",
   "Looks like a regression": "看起來是迴歸問題",
   "Lowered to maximum": "已降至上限",

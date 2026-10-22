@@ -1,5 +1,5 @@
 import { flattenResolvedVariables } from "@/components/formula-editor/resolved-variables";
-import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/test-data-editor";
+import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/default-test-values";
 import { describeApiError } from "@/lib/api-error-message";
 import { formulaTestRequest } from "@/lib/formula-test-request";
 import { apiService } from "@/services/api";

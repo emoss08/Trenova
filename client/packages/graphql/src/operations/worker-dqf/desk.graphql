@@ -1,0 +1,27 @@
+query DeskWorkerEmploymentVerifications($workerId: ID, $outstandingOnly: Boolean, $limit: Int) {
+  workerEmploymentVerifications(
+    workerId: $workerId
+    outstandingOnly: $outstandingOnly
+    limit: $limit
+  ) {
+    id
+    workerId
+    employerName
+    employerDotNumber
+    employedFrom
+    employedTo
+    wasDotRegulated
+    status
+    method
+    requestedAt
+    responseReceivedAt
+    followUpCount
+    hadAccidents
+    accidentCount
+    hadDrugAlcoholViolations
+    findings
+    worker {
+      ...WorkerReference
+    }
+  }
+}

@@ -77,7 +77,10 @@ type ListVisibleRecordsRequest struct {
 
 // RecordVisibility answers, through the database's read scope, which of a
 // set of records the current request may read. A search index cannot apply
-// an own or team scope, so its hits for a scoped kind go through it.
+// an own or team scope, so its hits for a scoped kind go through it. It does
+// not check the kind's read: the database shows every row of a kind the
+// person cannot read (a record linking to one shows its reference view), so
+// a caller refuses such a kind before asking.
 type RecordVisibility interface {
 	Scoped(kind string) bool
 	VisibleIDs(ctx context.Context, req *ListVisibleRecordsRequest) ([]pulid.ID, error)

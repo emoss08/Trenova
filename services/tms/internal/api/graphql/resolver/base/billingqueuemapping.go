@@ -1,6 +1,7 @@
 package base
 
 import (
+	"context"
 	"errors"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -8,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func RequiredBillingQueueItemToModel(
+func RequiredBillingQueueItemToModel(ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 ) (*gqlmodel.BillingQueueItem, error) {
 	if item == nil {
@@ -16,17 +17,17 @@ func RequiredBillingQueueItemToModel(
 			WithInternal(errors.New("shipment service returned nil billing queue item"))
 	}
 
-	return BillingQueueItemToModel(item)
+	return BillingQueueItemToModel(ctx, item)
 }
 
-func BillingQueueItemToModel(
+func BillingQueueItemToModel(ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 ) (*gqlmodel.BillingQueueItem, error) {
 	if item == nil {
 		return nil, nil
 	}
 
-	shipment, err := ShipmentToModel(item.Shipment)
+	shipment, err := ShipmentToModel(ctx, item.Shipment)
 	if err != nil {
 		return nil, err
 	}

@@ -16,6 +16,8 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { toChargeAllocationInput } from "@trenova/shared/lib/charge-split";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { addOrderCharge, updateOrderCharge, type OrderCharge } from "@/lib/graphql/order";
+import { rulesResolver } from "@/lib/rules-resolver";
+import { withChargeAllocations } from "@trenova/shared/rules/allocation-form";
 import { orderChargeFormSchema, type OrderChargeFormValues } from "@trenova/shared/types/order";
 import type { ChargeAllocation } from "@trenova/shared/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -86,7 +88,12 @@ export function AddChargeDialog({
   const isEditing = !!charge;
 
   const form = useForm<OrderChargeFormValues>({
-    resolver: zodResolver(orderChargeFormSchema) as Resolver<OrderChargeFormValues>,
+    resolver: rulesResolver(
+      (rules) =>
+        zodResolver(
+          withChargeAllocations(orderChargeFormSchema, rules, (values) => values.amount),
+        ) as Resolver<OrderChargeFormValues>,
+    ),
     defaultValues: emptyCharge,
     mode: "onChange",
   });

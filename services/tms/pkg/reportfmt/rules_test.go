@@ -9,56 +9,94 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func bandedMoney(rules ...Rule) Resolved {
-	resolved := Resolve(ResolveInput{
+func tones(cells []Cell) []Tone {
+	out := make([]Tone, 0, len(cells))
+	for _, cell := range cells {
+		out = append(out, cell.Tone)
+	}
+	return out
+}
+
+func bandedMoney(t *testing.T, rules ...Rule) Resolved {
+	t.Helper()
+	return resolveOne(t, ResolveInput{
 		Type: reportcatalog.FieldDecimal,
 		Hint: reportcatalog.FormatMoney,
 		Spec: &Spec{Rules: rules},
 	})
-	return resolved
 }
 
 func TestToneFirstMatchWins(t *testing.T) {
-	display := bandedMoney(
+	t.Parallel()
+
+	display := bandedMoney(t,
 		Rule{Op: RuleGreaterThan, Value: 100_000, Tone: ToneNegative},
 		Rule{Op: RuleGreaterThan, Value: 10_000, Tone: ToneWarning},
 	)
 
-	assert.Equal(t, ToneNegative, display.ToneFor(decimal.NewFromInt(250_000)))
-	assert.Equal(t, ToneWarning, display.ToneFor(decimal.NewFromInt(50_000)))
-	assert.Equal(t, ToneNone, display.ToneFor(decimal.NewFromInt(500)))
+	assert.Equal(t, []Tone{ToneNegative, ToneWarning, ToneNone},
+		tones(formatValues(t, display, reportcatalog.FieldDecimal,
+			decimal.NewFromInt(250_000), decimal.NewFromInt(50_000), decimal.NewFromInt(500))))
 }
 
 func TestToneIgnoresNonNumericAndNull(t *testing.T) {
-	display := bandedMoney(Rule{Op: RuleGreaterThan, Value: 0, Tone: ToneNegative})
+	t.Parallel()
 
-	assert.Equal(t, ToneNone, display.ToneFor(nil))
-	assert.Equal(t, ToneNone, display.ToneFor("ACME"))
-	assert.Equal(t, ToneNone, display.ToneFor(true))
+	display := bandedMoney(t, Rule{Op: RuleGreaterThan, Value: 0, Tone: ToneNegative})
+
+	assert.Equal(t, []Tone{ToneNone, ToneNone, ToneNone},
+		tones(formatValues(t, display, reportcatalog.FieldDecimal, nil, "ACME", true)))
 }
 
-// A percent column stores a fraction and displays it times 100, so a threshold
-// the author typed as "12" has to mean 12%.
 func TestTonePercentComparesOnDisplayedScale(t *testing.T) {
-	display := Resolve(ResolveInput{
+	t.Parallel()
+
+	display := resolveOne(t, ResolveInput{
 		Type: reportcatalog.FieldDecimal,
 		Hint: reportcatalog.FormatPercent,
 		Spec: &Spec{Rules: []Rule{{Op: RuleGreaterThan, Value: 12, Tone: ToneNegative}}},
 	})
 
-	assert.Equal(t, ToneNegative, display.ToneFor(decimal.NewFromFloat(0.15)))
-	assert.Equal(t, ToneNone, display.ToneFor(decimal.NewFromFloat(0.08)))
+	assert.Equal(t, []Tone{ToneNegative, ToneNone},
+		tones(formatValues(t, display, reportcatalog.FieldDecimal,
+			decimal.RequireFromString("0.15"), decimal.RequireFromString("0.08"))))
 }
 
 func TestToneBetweenIsInclusive(t *testing.T) {
-	display := bandedMoney(Rule{Op: RuleBetween, Value: 10, Upper: 20, Tone: ToneWarning})
+	t.Parallel()
 
-	assert.Equal(t, ToneWarning, display.ToneFor(int64(10)))
-	assert.Equal(t, ToneWarning, display.ToneFor(int64(20)))
-	assert.Equal(t, ToneNone, display.ToneFor(int64(21)))
+	display := bandedMoney(t, Rule{Op: RuleBetween, Value: 10, Upper: 20, Tone: ToneWarning})
+
+	assert.Equal(t, []Tone{ToneWarning, ToneWarning, ToneNone},
+		tones(formatValues(t, display, reportcatalog.FieldInt, int64(10), int64(20), int64(21))))
+}
+
+func TestToneComparesExactly(t *testing.T) {
+	t.Parallel()
+
+	display := bandedMoney(t, Rule{Op: RuleEqual, Value: 0.3, Tone: ToneNeutral})
+
+	assert.Equal(t, []Tone{ToneNeutral},
+		tones(formatValues(t, display, reportcatalog.FieldDecimal, decimal.RequireFromString("0.3"))))
+}
+
+func TestResolveKeepsTheRules(t *testing.T) {
+	t.Parallel()
+
+	display := bandedMoney(t,
+		Rule{Op: RuleBetween, Value: 10.5, Upper: 20, Tone: ToneWarning},
+		Rule{Op: RuleLessThan, Value: -1, Tone: ToneNegative},
+	)
+
+	assert.Equal(t, []Rule{
+		{Op: RuleBetween, Value: 10.5, Upper: 20, Tone: ToneWarning},
+		{Op: RuleLessThan, Value: -1, Tone: ToneNegative},
+	}, display.Rules)
 }
 
 func TestRuleValidation(t *testing.T) {
+	t.Parallel()
+
 	spec := &Spec{Rules: []Rule{{Op: "nonsense", Value: 1, Tone: ToneNegative}}}
 	require.ErrorContains(t, spec.Validate(reportcatalog.FieldDecimal), "unknown comparison")
 
@@ -79,9 +117,9 @@ func TestRuleValidation(t *testing.T) {
 	)
 }
 
-// A display carrying only rules must still be persisted; the emptiness check
-// moved off a struct comparison when Spec gained a slice.
 func TestSpecIsEmpty(t *testing.T) {
+	t.Parallel()
+
 	assert.True(t, (&Spec{}).IsEmpty())
 	assert.True(t, (*Spec)(nil).IsEmpty())
 	assert.False(t, (&Spec{Rules: []Rule{{Op: RuleGreaterThan, Tone: ToneWarning}}}).IsEmpty())

@@ -12,6 +12,7 @@ require (
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/ledongthuc/pdf v0.0.0-20260929131644-d0d294e5c96a
 	github.com/pgvector/pgvector-go v0.4.1
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/vikstrous/dataloadgen v0.0.10
@@ -30,7 +31,6 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/bytedance/sonic v1.15.4
 	github.com/coreos/go-oidc/v3 v3.21.0
-	github.com/expr-lang/expr v1.17.8
 	github.com/fatih/color v1.19.0
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/gin-contrib/cors v1.7.9

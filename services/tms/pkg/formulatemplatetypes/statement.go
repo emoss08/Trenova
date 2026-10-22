@@ -1,19 +1,10 @@
 package formulatemplatetypes
 
-type StatementKind string
+import "github.com/emoss08/trenova/pkg/rules"
 
 const (
-	StatementLet    = StatementKind("let")
-	StatementResult = StatementKind("result")
+	StatementLet    = "let"
+	StatementResult = "result"
 )
 
-type Statement struct {
-	Index int           `json:"index"`
-	Kind  StatementKind `json:"kind"`
-	Name  string        `json:"name,omitempty"`
-	Code  string        `json:"code"`
-	Start int           `json:"start"`
-	End   int           `json:"end"`
-	Value any           `json:"value,omitempty"`
-	Error string        `json:"error,omitempty"`
-}
+type Statement = rules.FormulaTraceStatement

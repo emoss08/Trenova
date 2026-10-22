@@ -350,8 +350,8 @@ func TestTestExpression_TracesStatementsWhenAsked(t *testing.T) {
 	assert.Equal(t, "let", first["kind"])
 	assert.Equal(t, "base", first["name"])
 	assert.Equal(t, "let base = totalDistance * 2", first["code"])
-	assert.EqualValues(t, 0, first["start"])
-	assert.EqualValues(t, 28, first["end"])
+	assert.EqualValues(t, 0, first["from"])
+	assert.EqualValues(t, 28, first["to"])
 	assert.Equal(t, "200", first["value"])
 
 	result := statements[1].(map[string]any)
@@ -367,5 +367,119 @@ func TestTestExpression_TracesStatementsWhenAsked(t *testing.T) {
 	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 	var untraced map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&untraced))
-	assert.NotContains(t, untraced, "statements")
+	assert.Nil(t, untraced["statements"], "statements are traced only when asked")
+}
+
+func TestTestExpression_AnswersTheDocumentedShapeFieldForField(t *testing.T) {
+	t.Parallel()
+
+	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
+	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/test", map[string]any{
+		"expression": "let rate = 2;\nrate * coalesce(weight, 0) + totalDistance",
+		"schemaId":   "shipment",
+		"variables":  map[string]any{"totalDistance": 100, "weight": 10},
+		"breakdowns": []map[string]any{
+			{"name": "linehaul", "label": "Linehaul", "expression": "totalDistance"},
+			{"name": "perPound", "label": "Per pound", "expression": "weight / (totalDistance - 100)"},
+		},
+		"traceStatements": true,
+	})
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	for _, key := range []string{
+		"valid", "result", "diagnostics", "error", "statements", "breakdown",
+		"resolvedVariables", "guardrail", "rounding", "receipt",
+	} {
+		assert.Contains(t, resp, key)
+	}
+	for _, gone := range []string{"message", "warnings"} {
+		assert.NotContains(t, resp, gone)
+	}
+
+	assert.Equal(t, false, resp["valid"], "a line that fails to evaluate makes the preview invalid")
+	assert.Equal(t, "120", resp["result"], "an amount is a decimal string")
+
+	diagnostics := resp["diagnostics"].([]any)
+	require.Len(t, diagnostics, 1)
+	nullable := diagnostics[0].(map[string]any)
+	assert.Equal(t, "breakdowns[1].expression", nullable["scope"])
+	assert.Equal(t, "nullable", nullable["code"])
+	assert.Equal(t, "warning", nullable["severity"])
+	assert.Equal(t, "weight", nullable["name"])
+	assert.IsType(t, "", nullable["message"])
+	assert.IsType(t, []any{}, nullable["args"])
+
+	failure := resp["error"].(map[string]any)
+	assert.Equal(t, "breakdowns[1].expression", failure["scope"])
+	assert.Equal(t, "divideByZero", failure["code"])
+	assert.IsType(t, "", failure["message"])
+	assert.Contains(t, failure, "from")
+	assert.Contains(t, failure, "to")
+
+	statements := resp["statements"].([]any)
+	require.Len(t, statements, 2)
+	let := statements[0].(map[string]any)
+	assert.Equal(t, "let", let["kind"])
+	assert.Equal(t, "rate", let["name"])
+	assert.Equal(t, "2", let["value"])
+	assert.EqualValues(t, 0, let["from"])
+	assert.EqualValues(t, 12, let["to"])
+	assert.Nil(t, let["error"])
+
+	breakdown := resp["breakdown"].([]any)
+	require.Len(t, breakdown, 2)
+	assert.Equal(t, "100", breakdown[0].(map[string]any)["amount"])
+	assert.IsType(t, "", breakdown[1].(map[string]any)["error"], "a line's error is plain text")
+
+	assert.Equal(t, "100", resp["resolvedVariables"].(map[string]any)["totalDistance"])
+	receipt := resp["receipt"].(map[string]any)
+	assert.Equal(t, "120", receipt["rawAmount"])
+}
+
+func TestTestExpression_ARunawayFormulaIsStoppedAtThePreviewDeadline(t *testing.T) {
+	t.Parallel()
+
+	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
+	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/test", map[string]any{
+		"expression": "sum(map(1..9999, sum(map(1..9999, sum(map(1..99, # * 2)))))) * 0",
+		"schemaId":   "shipment",
+		"variables":  map[string]any{},
+	})
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, false, resp["valid"])
+	failure, ok := resp["error"].(map[string]any)
+	require.True(t, ok, "%v", resp)
+	assert.Contains(t, []any{"timeout", "budget"}, failure["code"],
+		"either the deadline or the step budget stops it, and it says which")
+}
+
+func TestGetSchema_PublishesTheRecordsFieldsAndEachListsItemFields(t *testing.T) {
+	t.Parallel()
+
+	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
+	ginCtx := f.serve(http.MethodGet, "/api/v1/formula-templates/schema", nil)
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Len(t, resp, 2, "only schemaId and variables cross HTTP")
+	assert.Equal(t, "shipment", resp["schemaId"])
+
+	byName := make(map[string]map[string]any)
+	for _, raw := range resp["variables"].([]any) {
+		variable := raw.(map[string]any)
+		byName[variable["name"].(string)] = variable
+	}
+	require.Contains(t, byName, "stops[].type")
+	require.Contains(t, byName, "commodities[].freightClass")
+	weight := byName["weight"]
+	for _, key := range []string{"name", "type", "description", "category", "nullable", "computed"} {
+		assert.Contains(t, weight, key)
+	}
+	assert.Equal(t, true, weight["nullable"])
 }

@@ -1,6 +1,7 @@
 package resolver_test
 
 import (
+	"github.com/shopspring/decimal"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -279,13 +280,13 @@ func TestResolveField_WithTransform(t *testing.T) {
 
 	source := &formulatypes.FieldSource{
 		Field:     "Value",
-		Transform: "int64ToFloat64",
+		Transform: "integer",
 	}
 
 	entity := &Entity{Value: 42}
 	got, err := r.ResolveField(entity, source)
 	require.NoError(t, err)
-	assert.Equal(t, float64(42), got)
+	assert.Equal(t, int64(42), got)
 }
 
 func TestResolveField_WithUnknownTransform(t *testing.T) {
@@ -335,7 +336,7 @@ func TestResolveAllFields(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(5000), result["weight"])
 	assert.Equal(t, int64(100), result["pieces"])
-	assert.InDelta(t, 100.0, result["totalDistance"], 0.001)
+	assert.Equal(t, "100", result["totalDistance"].(decimal.Decimal).String())
 }
 
 func TestResolveAllFields_NullableFieldError(t *testing.T) {

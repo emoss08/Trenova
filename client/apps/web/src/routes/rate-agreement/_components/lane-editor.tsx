@@ -12,14 +12,20 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import {
-  findCoverageIssues,
   laneDisplayLabel,
   laneKeyDisplay,
-  laneKeyPreview,
-  laneSpecificity,
   type LaneScopeLabelResolver,
 } from "@trenova/shared/lib/rate";
+import {
+  laneCoverage,
+  laneKeys,
+  laneRuleWire,
+  laneSpecificities,
+  type LaneRuleKeys,
+} from "@trenova/shared/rules/lane";
 import type { RateAgreement, RateAgreementRule } from "@trenova/shared/types/rate";
 import { AlertTriangleIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
@@ -64,22 +70,24 @@ export function LaneEditor() {
   const rules = (useWatch({ control, name: "rules" }) ?? []) as RateAgreementRule[];
   const resolveScopeValue = useLaneScopeLabels(rules);
   const agreementId = useWatch({ control, name: "id" }) ?? undefined;
+  const runtime = useRules();
 
-  // `rules` is a watched array and so is a fresh reference on every render.
-  // Keying the memo on what coverage actually depends on means it recomputes
-  // when a lane changes rather than on every keystroke elsewhere in the form.
-  const coverageKey = rules
-    .map(
-      (rule) =>
-        `${rule.status}|${laneKeyPreview(rule) ?? "radius"}|${laneSpecificity(rule)}|${rule.priority ?? 0}`,
-    )
-    .join(";");
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const issues = useMemo(() => findCoverageIssues(rules), [coverageKey]);
-  const issueByIndex = useMemo(
-    () => new Map(issues.map((issue) => [issue.index, issue])),
-    [issues],
+  // `rules` is a watched array and so is a fresh reference on every render. The
+  // module is asked again only when a field the lane rules read changes, and then
+  // once per question for the whole agreement: every lane's keys, every lane's
+  // specificity, and the lanes that can never apply.
+  const signature = JSON.stringify(rules.map(laneRuleWire));
+  const lanes = useMemo(() => {
+    const wired = JSON.parse(signature) as ReturnType<typeof laneRuleWire>[];
+    return {
+      keys: laneKeys(runtime, wired),
+      scores: laneSpecificities(runtime, wired),
+      issues: laneCoverage(runtime, wired),
+    };
+  }, [runtime, signature]);
+  const issues = lanes.issues;
+  const issueTexts = new Map(
+    issues.map((issue) => [issue.index, translateMessage(issue.message, t)]),
   );
 
   const appendLane = () => {
@@ -121,7 +129,9 @@ export function LaneEditor() {
           control={control}
           index={index}
           rule={rules[index]}
-          issue={issueByIndex.get(index)?.message}
+          keys={lanes.keys[index]}
+          specificity={lanes.scores[index]}
+          issue={issueTexts.get(index)}
           resolveScopeValue={resolveScopeValue}
           rateAgreementId={agreementId}
           onRemove={() => remove(index)}
@@ -140,6 +150,9 @@ type LaneRowProps = {
   control: Control<RateAgreement>;
   index: number;
   rule?: RateAgreementRule;
+  /** The lane's keys from the rules module; absent only while a new lane is being added. */
+  keys?: LaneRuleKeys;
+  specificity?: number;
   issue?: string;
   resolveScopeValue: LaneScopeLabelResolver;
   rateAgreementId?: string;
@@ -150,6 +163,8 @@ function LaneRow({
   control,
   index,
   rule,
+  keys,
+  specificity,
   issue,
   resolveScopeValue,
   rateAgreementId,
@@ -164,10 +179,10 @@ function LaneRow({
   // The key is shown with names in place of record ids — "CS:TX|DALLAS", never
   // "CS:us_01M0…|DALLAS". A person debugging "why did the other rate apply"
   // needs the key's shape, not its identifiers.
-  const laneKey = rule ? laneKeyDisplay(rule, resolveScopeValue) : null;
+  const laneKey = keys ? laneKeyDisplay(keys, resolveScopeValue) : null;
   // History is queried by the stored key, ids and all — the display key exists
   // only for people, and the database has never heard of it.
-  const storedLaneKey = rule ? laneKeyPreview(rule) : null;
+  const storedLaneKey = keys?.key ?? null;
 
   return (
     <div className="bg-card flex flex-col gap-4 rounded-md border p-4">
@@ -180,9 +195,9 @@ function LaneRow({
             <Badge variant="neutral" appearance="outline" className="font-mono text-2xs">
               {laneKey ?? t("matched by radius")}
             </Badge>
-            {rule && (
+            {rule && specificity !== undefined && (
               <Badge variant="neutral" className="text-2xs">
-                {t("specificity {0}", laneSpecificity(rule))}
+                {t("specificity {0}", specificity)}
               </Badge>
             )}
           </div>

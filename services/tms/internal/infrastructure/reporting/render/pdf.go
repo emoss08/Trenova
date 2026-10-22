@@ -2,10 +2,8 @@ package render
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"strings"
 	"time"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -139,30 +138,22 @@ func (r *PDFRenderer) Render(
 		data.Headers = append(data.Headers, schema[i].Label)
 	}
 
-	for {
-		row, err := req.Dataset.Next(ctx)
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
+	if err := streamFormatted(ctx, req.Dataset, loc, func(row *reportfmt.Row) error {
 		if int64(len(data.Rows)) >= r.maxRows {
-			return nil, fmt.Errorf(
+			return fmt.Errorf(
 				"PDF output is limited to %d rows; export this report as CSV or XLSX instead",
 				r.maxRows,
 			)
 		}
 
-		record := make([]pdfCell, len(schema))
-		for i := range schema {
-			record[i] = pdfCell{
-				Text: formatCell(&schema[i], row[i], loc),
-				Tone: string(schema[i].Display.ToneFor(row[i])),
-			}
+		record := make([]pdfCell, len(row.Cells))
+		for i := range row.Cells {
+			record[i] = pdfCell{Text: row.Cells[i].Text, Tone: string(row.Cells[i].Tone)}
 		}
 		data.Rows = append(data.Rows, record)
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	totals, totalsErr := totalsCells(ctx, req.Dataset, loc)
