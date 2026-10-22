@@ -1,27 +1,18 @@
 package ratematrix
 
 import (
+	"context"
 	"errors"
-	"sort"
+	"fmt"
 
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/shopspring/decimal"
 )
 
-var (
-	// ErrDimensionValueMissing is returned when a lookup does not supply a value
-	// for an axis the matrix declares.
-	ErrDimensionValueMissing = errors.New("no value supplied for matrix dimension")
+var errCellOutOfRange = errors.New("the rules module picked a cell that was not sent")
 
-	// ErrNoMatchingCell is returned when nothing in the matrix covers the
-	// supplied values.
-	ErrNoMatchingCell = errors.New("no matrix cell matches the supplied values")
-)
-
-// DimensionValue is the input for one axis of a lookup.
-//
-// Exact axes carry Keys rather than a single key because one shipment can sit
-// in several zones at once. The slice is ordered most preferred first, and that
-// ordering is what breaks a tie between two cells that both match.
+// DimensionValue is the input for one axis of a lookup. Exact axes carry Keys,
+// most preferred first, because one shipment can sit in several zones at once.
 type DimensionValue struct {
 	Keys     []string
 	Quantity decimal.NullDecimal
@@ -30,128 +21,75 @@ type DimensionValue struct {
 // LookupValues holds one DimensionValue per axis, indexed by position.
 type LookupValues [MaxDimensions]DimensionValue
 
-// Match is a cell that satisfied a lookup, together with why it won.
+// Match is the cell that priced a lookup, together with why it won.
 type Match struct {
-	Cell *RateMatrixCell
-	// Preference is the summed index of each matched key within the candidate
-	// list it came from. Zero means every axis matched its first choice.
-	Preference int
-	// MatchedKeys records the key actually used per axis, so a rating trace can
-	// say which zone or class the cell was found under rather than only which
-	// cell it was.
+	Cell        *RateMatrixCell
+	Preference  int
 	MatchedKeys [MaxDimensions]string
 }
 
-// SelectCell picks the one cell that prices this lookup.
-//
-// Candidates come from the database already narrowed by the exact keys and, for
-// banded axes, by the quantity's bounds. What is left for this function is the
-// part SQL cannot express well: preferring the caller's earlier key choices
-// when several zones matched, and settling any remaining tie the same way every
-// time.
-//
-// The final tiebreak is the cell id. PULIDs sort by creation, so two otherwise
-// indistinguishable cells always resolve to the older one — on every server,
-// on every run. Without it the winner would follow whatever order the database
-// happened to return, and the same shipment could rate two ways.
-func SelectCell(
+func LookupCell(
+	ctx context.Context,
 	dimensions []*RateMatrixDimension,
 	cells []*RateMatrixCell,
 	values *LookupValues,
 ) (*Match, error) {
-	if err := validateLookupInputs(dimensions, values); err != nil {
-		return nil, err
+	req := &rules.MatrixSelectRequest{
+		Dimensions: make([]rules.MatrixDimension, 0, len(dimensions)),
+		Cells:      make([]rules.MatrixCell, 0, len(cells)),
+		Values:     make([]rules.MatrixValue, 0, MaxDimensions),
 	}
-
-	matches := make([]*Match, 0, len(cells))
-
+	for _, dimension := range dimensions {
+		if dimension == nil {
+			continue
+		}
+		req.Dimensions = append(req.Dimensions, rules.MatrixDimension{
+			Position:  int64(dimension.Position),
+			MatchMode: string(dimension.MatchMode),
+			Kind:      string(dimension.Kind),
+			Label:     dimension.Label,
+		})
+	}
+	sent := make([]*RateMatrixCell, 0, len(cells))
 	for _, cell := range cells {
 		if cell == nil {
 			continue
 		}
-
-		if match, ok := matchCell(dimensions, cell, values); ok {
-			matches = append(matches, match)
-		}
+		sent = append(sent, cell)
+		req.Cells = append(req.Cells, rules.MatrixCell{
+			ID:    cell.ID.String(),
+			D0Key: cell.D0Key,
+			D1Key: cell.D1Key,
+			D2Key: cell.D2Key,
+			D3Key: cell.D3Key,
+			D0Min: cell.D0Min,
+			D0Max: cell.D0Max,
+			D1Min: cell.D1Min,
+			D1Max: cell.D1Max,
+			D2Min: cell.D2Min,
+			D2Max: cell.D2Max,
+			D3Min: cell.D3Min,
+			D3Max: cell.D3Max,
+		})
+	}
+	for _, value := range values {
+		req.Values = append(req.Values, rules.MatrixValue{
+			Keys:     value.Keys,
+			Quantity: value.Quantity,
+		})
 	}
 
-	if len(matches) == 0 {
-		return nil, ErrNoMatchingCell
+	selection, err := rules.SelectMatrixCell(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if selection.Index < 0 || selection.Index >= len(sent) {
+		return nil, fmt.Errorf("%w: %d of %d", errCellOutOfRange, selection.Index, len(sent))
 	}
 
-	sort.Slice(matches, func(a, b int) bool {
-		if matches[a].Preference != matches[b].Preference {
-			return matches[a].Preference < matches[b].Preference
-		}
-		return matches[a].Cell.ID.String() < matches[b].Cell.ID.String()
-	})
-
-	return matches[0], nil
-}
-
-func validateLookupInputs(dimensions []*RateMatrixDimension, values *LookupValues) error {
-	for _, dimension := range dimensions {
-		if dimension == nil {
-			continue
-		}
-
-		value := values[dimension.Position]
-
-		switch dimension.MatchMode {
-		case MatchModeExact:
-			if len(value.Keys) == 0 {
-				return ErrDimensionValueMissing
-			}
-		case MatchModeRange:
-			if !value.Quantity.Valid {
-				return ErrDimensionValueMissing
-			}
-		}
-	}
-
-	return nil
-}
-
-func matchCell(
-	dimensions []*RateMatrixDimension,
-	cell *RateMatrixCell,
-	values *LookupValues,
-) (*Match, bool) {
-	match := &Match{Cell: cell}
-
-	for _, dimension := range dimensions {
-		if dimension == nil {
-			continue
-		}
-
-		position := dimension.Position
-		value := values[position]
-
-		switch dimension.MatchMode {
-		case MatchModeExact:
-			rank, ok := keyRank(value.Keys, cell.KeyAt(position))
-			if !ok {
-				return nil, false
-			}
-			match.Preference += rank
-			match.MatchedKeys[position] = cell.KeyAt(position)
-		case MatchModeRange:
-			if !cell.ContainsQuantity(position, value.Quantity.Decimal) {
-				return nil, false
-			}
-			match.MatchedKeys[position] = value.Quantity.Decimal.String()
-		}
-	}
-
-	return match, true
-}
-
-func keyRank(candidates []string, key string) (int, bool) {
-	for i, candidate := range candidates {
-		if candidate == key {
-			return i, true
-		}
-	}
-
-	return 0, false
+	return &Match{
+		Cell:        sent[selection.Index],
+		Preference:  selection.Preference,
+		MatchedKeys: selection.MatchedKeys,
+	}, nil
 }

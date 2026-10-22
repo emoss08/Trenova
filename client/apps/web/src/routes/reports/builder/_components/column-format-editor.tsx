@@ -10,7 +10,9 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
-import { formatReportValue } from "@trenova/shared/lib/report-format";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { formatReportColumns, reportCellText } from "@trenova/shared/rules/report";
 import {
   MAX_TRANSFORM_PRECISION,
   bandIsSet,
@@ -31,6 +33,7 @@ import {
 } from "@/types/report";
 import { RefreshCcw01Icon } from "@trenova/shared/components/icons";
 import { DisplayRulesEditor } from "./display-rules-editor";
+import { ColumnFormatEditorSkeleton } from "./column-format-editor-skeleton";
 import { resolvePreviewDisplay, sampleValueFor } from "./display-preview";
 
 type ColumnFormatEditorProps = {
@@ -85,21 +88,34 @@ function SelectField<T extends string>({
   );
 }
 
-export function ColumnFormatEditor({
+/** A column's formatting, resolved and previewed by the rules module once it has loaded. */
+export function ColumnFormatEditor(props: ColumnFormatEditorProps) {
+  return (
+    <LazyComponent fallback={<ColumnFormatEditorSkeleton />}>
+      <ResolvedColumnFormatEditor {...props} />
+    </LazyComponent>
+  );
+}
+
+function ResolvedColumnFormatEditor({
   column,
   fieldType,
   formatHint,
   onUpdate,
 }: ColumnFormatEditorProps) {
   const t = useT();
+  const rules = useRules();
 
   const valueType = columnValueType(column, fieldType);
   const display = column.display ?? {};
   const transform = column.transform;
   const transformChoices = transformChoicesForType(valueType);
 
-  const resolved = resolvePreviewDisplay(valueType, formatHint, column, display);
-  const preview = formatReportValue(sampleValueFor(resolved, valueType), resolved);
+  const resolved = resolvePreviewDisplay(rules, valueType, formatHint, column, display);
+  const [[sample]] = formatReportColumns(rules, [
+    { display: resolved, valueType, values: [sampleValueFor(resolved, valueType)] },
+  ]);
+  const preview = reportCellText(sample, resolved);
 
   const patchDisplay = (patch: Partial<ReportDisplaySpec>) => {
     const next = { ...display, ...patch };

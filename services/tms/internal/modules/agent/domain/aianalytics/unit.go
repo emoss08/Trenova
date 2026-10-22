@@ -38,6 +38,14 @@ type WorkUnit struct {
 	CacheReadTokens  int64 `json:"cacheReadTokens"  bun:"cache_read_tokens,type:BIGINT,notnull,default:0"`
 	CacheWriteTokens int64 `json:"cacheWriteTokens" bun:"cache_write_tokens,type:BIGINT,notnull,default:0"`
 
+	// The advisor's share of the unit: its consultations, its prompt (fresh,
+	// cached and cache-written together) and output tokens, and its cost,
+	// which CostUSD already includes.
+	AdvisorCalls        int              `json:"advisorCalls"        bun:"advisor_calls,type:INTEGER,notnull,default:0"`
+	AdvisorPromptTokens int64            `json:"advisorPromptTokens" bun:"advisor_prompt_tokens,type:BIGINT,notnull,default:0"`
+	AdvisorOutputTokens int64            `json:"advisorOutputTokens" bun:"advisor_output_tokens,type:BIGINT,notnull,default:0"`
+	AdvisorCostUSD      *decimal.Decimal `json:"advisorCostUsd"      bun:"advisor_cost_usd,type:NUMERIC(14,6),nullzero"`
+
 	ToolCalls         int `json:"toolCalls"         bun:"tool_calls,type:INTEGER,notnull,default:0"`
 	ToolFailuresModel int `json:"toolFailuresModel" bun:"tool_failures_model,type:INTEGER,notnull,default:0"`
 	ToolFailuresTool  int `json:"toolFailuresTool"  bun:"tool_failures_tool,type:INTEGER,notnull,default:0"`

@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"slices"
@@ -47,7 +48,7 @@ type DashboardRenderRequest struct {
 // RenderDashboard writes one sheet per tile plus a leading info sheet naming
 // the dashboard and the filter values it was run with — without those, two
 // exports of the same dashboard are indistinguishable.
-func (r *XLSXRenderer) RenderDashboard(req *DashboardRenderRequest) error {
+func (r *XLSXRenderer) RenderDashboard(ctx context.Context, req *DashboardRenderRequest) error {
 	file := excelize.NewFile()
 	defer file.Close()
 
@@ -66,7 +67,7 @@ func (r *XLSXRenderer) RenderDashboard(req *DashboardRenderRequest) error {
 	for i := range req.Sheets {
 		sheet := &req.Sheets[i]
 		name := uniqueSheetName(sheet.Title, i, used)
-		if err = r.writeDashboardSheet(file, sheet, name, headerStyle, loc); err != nil {
+		if err = r.writeDashboardSheet(ctx, file, sheet, name, headerStyle, loc); err != nil {
 			return err
 		}
 	}
@@ -119,6 +120,7 @@ func (r *XLSXRenderer) writeDashboardInfoSheet(
 }
 
 func (r *XLSXRenderer) writeDashboardSheet(
+	ctx context.Context,
 	file *excelize.File,
 	sheet *DashboardSheet,
 	sheetName string,
@@ -152,16 +154,25 @@ func (r *XLSXRenderer) writeDashboardSheet(
 		return err
 	}
 
+	rows := sheet.Rows
+	if len(sheet.Totals) > 0 {
+		rows = append(slices.Clip(rows), sheet.Totals)
+	}
+	formatted, err := formatRows(ctx, sheet.Schema, rows, loc)
+	if err != nil {
+		return err
+	}
+
 	cells := make([]any, len(sheet.Schema))
 	rowNum := 2
-	for _, row := range sheet.Rows {
+	for _, row := range formatted[:len(sheet.Rows)] {
 		for i := range sheet.Schema {
-			var value any
-			if i < len(row) {
-				value = row[i]
-			}
 			cells[i] = xlsxCell(
-				&sheet.Schema[i], value, loc, styles.styleFor(i, &sheet.Schema[i], value),
+				&sheet.Schema[i],
+				cellAt(row.Values, i),
+				row.Cells[i],
+				loc,
+				styles.styleFor(i, row.Cells[i].Tone),
 			)
 		}
 		if err = r.writeRow(writer, rowNum, cells); err != nil {
@@ -171,12 +182,15 @@ func (r *XLSXRenderer) writeDashboardSheet(
 	}
 
 	if len(sheet.Totals) > 0 {
+		totalsRow := formatted[len(sheet.Rows)]
 		totals := make([]any, len(sheet.Schema))
 		for i := range sheet.Schema {
 			if i >= len(sheet.Totals) || sheet.Totals[i] == nil {
 				continue
 			}
-			totals[i] = xlsxCell(&sheet.Schema[i], sheet.Totals[i], loc, styles.totals[i])
+			totals[i] = xlsxCell(
+				&sheet.Schema[i], sheet.Totals[i], totalsRow.Cells[i], loc, styles.totals[i],
+			)
 		}
 		if sheet.Totals[0] == nil && len(totals) > 0 {
 			totals[0] = excelize.Cell{StyleID: headerStyle, Value: totalsLabel}

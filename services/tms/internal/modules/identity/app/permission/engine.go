@@ -873,36 +873,6 @@ func (e *engine) registered(resource string) bool {
 	return ok
 }
 
-func (e *engine) resourceDetail(
-	perms *permissionports.CachedPermissions,
-	resource string,
-) *permissionports.ResourcePermissionDetail {
-	maxSensitivity := permission.FieldSensitivity(perms.MaxSensitivity)
-
-	effectiveResource := e.registry.GetEffectiveResource(resource)
-	resourcePerms, ok := perms.Resources[effectiveResource]
-	if !ok {
-		return &permissionports.ResourcePermissionDetail{
-			Resource:       resource,
-			Operations:     []permission.Operation{},
-			DataScope:      "",
-			MaxSensitivity: maxSensitivity,
-		}
-	}
-
-	ops := make([]permission.Operation, len(resourcePerms.Operations))
-	for i, op := range resourcePerms.Operations {
-		ops[i] = permission.Operation(op)
-	}
-
-	return &permissionports.ResourcePermissionDetail{
-		Resource:       resource,
-		Operations:     ops,
-		DataScope:      permission.DataScope(resourcePerms.DataScope),
-		MaxSensitivity: maxSensitivity,
-	}
-}
-
 func (e *engine) InvalidateUser(ctx context.Context, userID, orgID pulid.ID) error {
 	return e.cacheRepo.Delete(ctx, userID, orgID)
 }

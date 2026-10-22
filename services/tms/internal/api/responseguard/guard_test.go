@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"testing"
 
 	"github.com/bytedance/sonic"
@@ -501,6 +502,59 @@ func TestAPartOfALinkedRecordShowsOnlyItsIDWithoutTheLinkedKindsRead(t *testing.
 	assert.Nil(t, shp["moves"], "a linked shipment's moves are outside its view")
 }
 
+func TestALeaveCaseAWorkerCarriesNeedsLeaveRead(t *testing.T) {
+	t.Parallel()
+
+	registry := refview.Default().Registry()
+	walker := &walker{
+		ctx:      t.Context(),
+		decider:  denyAll{},
+		planner:  newPlanner(newKindTable(registry)),
+		registry: registry,
+	}
+	kind, ok := newKindTable(registry).kindOf(reflect.TypeFor[worker.WorkerLeaveCase]())
+	require.True(t, ok)
+	require.Equal(t, permission.ResourceWorkerLeave, kind)
+
+	root := walker.recordOf(permission.ResourceWorker, nil, false)
+	leave := walker.recordOf(permission.ResourceWorkerLeave, root, false)
+	assert.Equal(t, &record{kind: permission.ResourceWorkerLeave, linked: true}, leave,
+		"a leave case under its worker is a linked record, not part of the worker")
+	assert.Equal(t, gateView, walker.gate(permission.ResourceWorkerLeave, leave))
+	assert.Same(t, root, walker.recordOf(permission.ResourceWorkerCredential, root, false),
+		"a credential is still part of its worker")
+
+	type result struct {
+		Worker     *worker.Worker            `json:"worker"`
+		LeaveCases []*worker.WorkerLeaveCase `json:"leaveCases"`
+	}
+	value := result{
+		Worker: driver(),
+		LeaveCases: []*worker.WorkerLeaveCase{{
+			ID:                  pulid.MustNew("wlc_"),
+			LeaveType:           worker.LeaveTypeMedical,
+			Reason:              "Surgery",
+			Notes:               "Certified by the surgeon",
+			CertificationStatus: worker.CertificationReceived,
+		}},
+	}
+
+	body, header := serve(t, []permission.Resource{permission.ResourceWorkerLeave}, value, guarded)
+	assert.Equal(t, "dana@example.com", object(t, body, "worker")["email"])
+	leaveCase := object(t, body, "leaveCases", 0)
+	assert.NotEmpty(t, leaveCase["id"])
+	for _, field := range []string{"leaveType", "reason", "notes", "certificationStatus"} {
+		value, present := leaveCase[field]
+		assert.Truef(t, present, "%s should be answered, as null", field)
+		assert.Nilf(t, value, "%s needs worker_leave read", field)
+	}
+	assert.Equal(t, "leaveCases", header)
+
+	body, _ = serve(t, []permission.Resource{permission.ResourceWorker}, value, guarded)
+	assert.Equal(t, "Surgery", object(t, body, "leaveCases", 0)["reason"],
+		"worker_leave read shows the case without worker read")
+}
+
 type denyAll struct{}
 
 func (denyAll) reads(context.Context, permission.Resource) bool { return false }
@@ -508,3 +562,51 @@ func (denyAll) reads(context.Context, permission.Resource) bool { return false }
 func (denyAll) visible(context.Context, permission.Resource, string) bool { return false }
 
 func (denyAll) groups() permission.FieldGroupSet { return 0 }
+
+func TestADrugTestAWorkerCarriesNeedsDOTTestRead(t *testing.T) {
+	t.Parallel()
+
+	registry := refview.Default().Registry()
+	kinds := newKindTable(registry)
+	for typ, want := range map[reflect.Type]permission.Resource{
+		reflect.TypeFor[worker.WorkerDOTTest]():              permission.ResourceWorkerDOTTest,
+		reflect.TypeFor[worker.WorkerDOTViolation]():         permission.ResourceWorkerDOTTest,
+		reflect.TypeFor[worker.WorkerInjury]():               permission.ResourceWorkerInjury,
+		reflect.TypeFor[worker.TimeClockEntry]():             permission.ResourceTimesheet,
+		reflect.TypeFor[worker.WorkerProfileChangeRequest](): permission.ResourceProfileChangeRequest,
+	} {
+		kind, ok := kinds.kindOf(typ)
+		require.True(t, ok, typ.String())
+		assert.Equal(t, want, kind, typ.String())
+	}
+
+	type result struct {
+		Worker *worker.Worker          `json:"worker"`
+		Tests  []*worker.WorkerDOTTest `json:"tests"`
+	}
+	value := result{
+		Worker: driver(),
+		Tests: []*worker.WorkerDOTTest{{
+			ID:            pulid.MustNew("wdot_"),
+			Result:        worker.DOTResultNegative,
+			CollectorName: "Pat Collector",
+			MROName:       "Dr. Reviewer",
+		}},
+	}
+
+	body, header := serve(t, []permission.Resource{permission.ResourceWorkerDOTTest}, value, guarded)
+	assert.Equal(t, "dana@example.com", object(t, body, "worker")["email"],
+		"the worker reader still sees the worker")
+	test := object(t, body, "tests", 0)
+	assert.NotEmpty(t, test["id"])
+	for _, field := range []string{"result", "collectorName", "mroName"} {
+		value, present := test[field]
+		assert.Truef(t, present, "%s should be answered, as null", field)
+		assert.Nilf(t, value, "%s needs worker_dot_test read (49 CFR 40.321)", field)
+	}
+	assert.Equal(t, "tests", header)
+
+	body, _ = serve(t, []permission.Resource{permission.ResourceWorker}, value, guarded)
+	assert.Equal(t, "Negative", object(t, body, "tests", 0)["result"],
+		"worker_dot_test read shows the result")
+}

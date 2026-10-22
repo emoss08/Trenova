@@ -30,20 +30,20 @@ var gateFlags struct {
 
 var gateCmd = &cobra.Command{
 	Use:   "gate [scenario file or directory ...]",
-	Short: "Run the gate that decides code mode per model, effort per route and the advisor",
+	Short: "Measure code mode per model, effort per route and the advisor, and recommend settings",
 	Long: `Runs the matrix in deskbench/gate.yaml (docs/engineering/desk-bench-gate.md) as one run:
 each group's cells on the group's scenarios, 4 trials each, then evaluates the rules written in
 the spec before the run. The run directory holds:
 
-  gate.md, gate.json   the decisions and the figures each read
+  gate.md, gate.json   the recommendations and the figures each read
   summary.md           cell figures by split, with no scenario detail
   development/         the development split's report, transcripts and call files
   sealed/              everything else: the full report, the held-out and adversarial
                        splits, and the logs; never handed over
 
-Only development/ and gate.md are handed over. Code mode is recommended per model, never
-written: a model that holds in run 2 is listed with the codemode/models.yaml entry a pull
-request would add.
+Only development/ and gate.md are handed over. The output is a recommendation for the chat
+providers' settings in AI Control (reasoning effort, advisor, Scripts, Scripts may propose
+writes); the gate changes no setting, and an organization decides from its own use.
 
 Three steps, in order:
   trenova desk gate --probe                       # project cost and time; refuses over budget

@@ -24,6 +24,7 @@ func (h *Handler) registerArtifactRoutes(api *gin.RouterGroup, resource string) 
 	api.GET("/threads/:threadID/artifacts/", read, h.listThreadArtifacts)
 	api.GET("/threads/:threadID/artifacts/by-slug/:slug/", read, h.artifactBySlug)
 	api.GET("/threads/:threadID/artifacts/:artifactID/", read, h.artifactLineage)
+	api.GET("/threads/:threadID/artifacts/:artifactID/rows/", read, h.artifactRows)
 	api.GET("/threads/:threadID/artifacts/:artifactID/export.csv", read, h.exportArtifactCSV)
 	api.GET("/threads/:threadID/artifacts/:artifactID/export/", read, h.exportDocument)
 	api.POST("/threads/:threadID/artifacts/:artifactID/versions/", read, h.saveDocumentVersion)
@@ -112,6 +113,57 @@ func (h *Handler) artifactBySlug(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, gin.H{resultsKey: versions})
+}
+
+type artifactRowsQuery struct {
+	After         string `form:"after"`
+	Offset        int    `form:"offset"`
+	Limit         int    `form:"limit"`
+	Query         string `form:"q"`
+	SortBy        string `form:"sortBy"`
+	SortDirection string `form:"sortDirection"`
+	Total         bool   `form:"total"`
+}
+
+func (h *Handler) artifactRows(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	artifactID, err := artifactParam(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var query artifactRowsQuery
+	if err = c.ShouldBindQuery(&query); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	rows, err := h.service.ArtifactRows(
+		c.Request.Context(),
+		req,
+		artifactID,
+		&agentports.ArtifactRowsQuery{
+			After:         query.After,
+			Offset:        query.Offset,
+			Limit:         query.Limit,
+			Query:         query.Query,
+			SortBy:        query.SortBy,
+			SortDirection: query.SortDirection,
+			IncludeTotal:  query.Total,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Header("Cache-Control", "no-store")
+	helpers.JSON(c, http.StatusOK, rows)
 }
 
 // exportArtifactCSV streams the table as it is read. The name and the checks

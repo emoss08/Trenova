@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -177,4 +178,41 @@ func (s *Service) nameDelegatedSteps(
 			}
 		}
 	}
+}
+
+func (r *artifactRecorder) noteReader(artifact *assistantartifact.Artifact) {
+	if artifact.Kind != assistantartifact.KindTableView {
+		return
+	}
+	reader := r.readingAgent()
+	if reader == nil {
+		return
+	}
+	artifact.Payload[payloadReadBy] = tableReader{
+		ID:     r.thread.AgentDefinitionID.String(),
+		Name:   reader.name,
+		Icon:   reader.icon,
+		Accent: reader.accent,
+	}
+}
+
+type tableReader struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Icon   string `json:"icon"`
+	Accent string `json:"accent"`
+}
+
+func (r *artifactRecorder) readingAgent() *agentIdentity {
+	if r.readBy != nil || r.svc == nil || r.thread.AgentDefinitionID.IsNil() {
+		return r.readBy
+	}
+	identity, found := r.svc.agentIdentities(
+		r.ctx, r.tenant, []pulid.ID{r.thread.AgentDefinitionID},
+	)[r.thread.AgentDefinitionID]
+	if found && identity.name != "" {
+		r.readBy = &identity
+	}
+
+	return r.readBy
 }

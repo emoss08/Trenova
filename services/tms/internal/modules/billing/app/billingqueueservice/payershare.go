@@ -18,9 +18,9 @@ func (s *service) attachPayerShare(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
-) {
+) error {
 	if item == nil || item.Shipment == nil || item.BillType != billingqueue.BillTypeInvoice {
-		return
+		return nil
 	}
 	payerID := item.BillToCustomerID
 	if payerID.IsNil() {
@@ -28,7 +28,13 @@ func (s *service) attachPayerShare(
 	}
 
 	names := s.payerNames(ctx, item, tenantInfo)
-	item.PayerShare = billingqueue.BuildPayerShare(item.Shipment, payerID, names)
+	share, err := billingqueue.BuildPayerShare(ctx, item.Shipment, payerID, names)
+	if err != nil {
+		return err
+	}
+	item.PayerShare = share
+
+	return nil
 }
 
 func (s *service) payerNames(

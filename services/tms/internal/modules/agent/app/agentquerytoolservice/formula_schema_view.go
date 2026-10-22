@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -46,6 +46,7 @@ type formulaSchemaView struct {
 	Query      string                              `json:"query,omitempty"`
 	Variables  []schemaVariableLine                `json:"variables"`
 	Functions  []schemaFunctionLine                `json:"functions"`
+	Disabled   []formulaassistantservice.DisabledReference `json:"disabled"`
 	RateTables []formulaassistantservice.RateTable `json:"rateTables"`
 	Note       string                              `json:"note,omitempty"`
 }
@@ -57,6 +58,7 @@ func schemaView(reference *formulaassistantservice.Reference, query string) *for
 		Query:      query,
 		Variables:  make([]schemaVariableLine, 0, len(reference.Variables)),
 		Functions:  make([]schemaFunctionLine, 0, len(reference.Functions)),
+		Disabled:   reference.Disabled,
 		RateTables: reference.RateTables,
 	}
 	terms := formulaTerms(query)
@@ -110,7 +112,7 @@ func schemaView(reference *formulaassistantservice.Reference, query string) *for
 	return view
 }
 
-func variableLine(variable *formulatemplatetypes.SchemaVariableInfo, full bool) schemaVariableLine {
+func variableLine(variable *rules.FormulaVariable, full bool) schemaVariableLine {
 	description := variable.Description
 	if !full {
 		description = stringutils.Ellipsize(

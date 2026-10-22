@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
@@ -39,7 +39,7 @@ const shipmentSchemaID = "shipment"
 type Params struct {
 	fx.In
 
-	Environment       *engine.EnvironmentBuilder
+	Environment       *environment.Builder
 	CustomerRepo      customerports.CustomerRepository
 	ServiceTypeRepo   servicetypeports.ServiceTypeRepository
 	ShipmentTypeRepo  shipmenttypeports.ShipmentTypeRepository
@@ -73,7 +73,7 @@ type hydration struct {
 func New(p Params) (*Hydrator, error) {
 	loaders := relationLoaders(&p)
 
-	relations := p.Environment.GetRequiredPreloads(shipmentSchemaID)
+	relations := p.Environment.RequiredPreloads(shipmentSchemaID)
 	if len(relations) == 0 {
 		return nil, fmt.Errorf("formula schema %q declares no relations", shipmentSchemaID)
 	}

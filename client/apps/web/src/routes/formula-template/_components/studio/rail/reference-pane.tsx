@@ -16,6 +16,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { PlusIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
@@ -117,10 +118,11 @@ export function ReferencePane() {
       query
         ? known.functions.filter(
             (fn) =>
-              fn.name.toLowerCase().includes(query) || fn.description.toLowerCase().includes(query),
+              fn.name.toLowerCase().includes(query) ||
+              translateMessage(fn.description, t).toLowerCase().includes(query),
           )
         : known.functions,
-    [known.functions, query],
+    [known.functions, query, t],
   );
 
   const rows = useMemo((): VirtualRow[] => {
@@ -148,33 +150,31 @@ export function ReferencePane() {
         ],
       );
     }
-    return groupBy<FunctionDoc>(functions, (fn) => fn.category ?? "").flatMap(
-      ([category, items]) => [
-        {
-          key: `heading:${category || "general"}`,
-          sticky: true,
-          render: () => (
-            <GroupHeading
-              label={categoryLabel(category, FUNCTION_CATEGORY_LABELS) || t("Functions")}
-            />
-          ),
-        },
-        ...items.map((fn): VirtualRow => ({
-          key: `function:${fn.name}`,
-          render: () => (
-            <ReferenceRow
-              label={fn.signature}
-              description={fn.description}
-              example={fn.example}
-              onInsert={() => {
-                const insertion = functionInsertion(fn);
-                insert(insertion.text, insertion.cursor);
-              }}
-            />
-          ),
-        })),
-      ],
-    );
+    return groupBy<FunctionDoc>(functions, (fn) => fn.category).flatMap(([category, items]) => [
+      {
+        key: `heading:${category || "general"}`,
+        sticky: true,
+        render: () => (
+          <GroupHeading
+            label={categoryLabel(category, FUNCTION_CATEGORY_LABELS) || t("Functions")}
+          />
+        ),
+      },
+      ...items.map((fn): VirtualRow => ({
+        key: `function:${fn.name}`,
+        render: () => (
+          <ReferenceRow
+            label={fn.signature}
+            description={translateMessage(fn.description, t)}
+            example={translateMessage(fn.example, t)}
+            onInsert={() => {
+              const insertion = functionInsertion(fn);
+              insert(insertion.text, insertion.cursor);
+            }}
+          />
+        ),
+      })),
+    ]);
   }, [tab, variables, functions, insert, t]);
 
   return (

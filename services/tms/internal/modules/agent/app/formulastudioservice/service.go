@@ -34,7 +34,7 @@ type formulaEngine interface {
 	TestExpression(
 		ctx context.Context,
 		req *formulatemplateservice.TestExpressionRequest,
-	) *formulatemplateservice.TestExpressionResponse
+	) (*formulatemplateservice.TestExpressionResponse, error)
 	PriceScenario(
 		ctx context.Context,
 		req *formulatemplateservice.PriceScenarioRequest,

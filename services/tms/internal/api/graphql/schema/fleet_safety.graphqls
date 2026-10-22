@@ -18,7 +18,7 @@ One violation cited on a safety event. A roadside inspection routinely produces
 several, in different BASICs, so they are rows rather than a column on the
 event.
 """
-type WorkerSafetyViolation {
+type WorkerSafetyViolation @kind(resource: "worker_safety_event") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!

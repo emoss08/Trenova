@@ -574,7 +574,7 @@ func (s *service) resolvePayerShares(
 		source = full
 	}
 
-	resolution, err := shipment.ResolveShares(source, source.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(ctx, source, source.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}

@@ -78,7 +78,8 @@ type RunStepOutcome struct {
 	// whose results are shown beside it. A replayed step has no raw result to
 	// build its artifacts from, and without this the pane lost what the
 	// original call had shown.
-	Data map[string]any `json:"data,omitempty"`
+	Data    map[string]any `json:"data,omitempty"`
+	RanWith map[string]any `json:"ranWith,omitempty"`
 	// Taint is the outside content the call read, so a replayed step taints
 	// the run the way the original did.
 	Taint []agent.TaintMark `json:"taint,omitempty"`

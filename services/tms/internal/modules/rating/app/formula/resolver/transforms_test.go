@@ -15,9 +15,9 @@ func TestGetTransform(t *testing.T) {
 		name   string
 		exists bool
 	}{
-		{"decimalToFloat64", true},
-		{"int64ToFloat64", true},
-		{"int16ToFloat64", true},
+		{"decimal", true},
+		{"integer", true},
+		{"decimalToFloat64", false},
 		{"stringToUpper", true},
 		{"stringToLower", true},
 		{"unixToISO8601", true},
@@ -51,189 +51,57 @@ func TestRegisterTransform(t *testing.T) {
 	assert.Equal(t, "custom", result)
 }
 
-func TestDecimalToFloat64(t *testing.T) {
-	fn, ok := resolver.GetTransform("decimalToFloat64")
+func TestExactDecimal_KeepsTheDecimalAndReadsAnEmptyOneAsNil(t *testing.T) {
+	fn, ok := resolver.GetTransform("decimal")
 	require.True(t, ok)
 
-	d := decimal.NewFromFloat(123.456)
-	ptrD := &d
+	value := decimal.RequireFromString("123.456")
 
-	tests := []struct {
-		name    string
-		value   any
-		want    any
-		wantErr bool
-	}{
-		{
-			name:    "decimal value",
-			value:   decimal.NewFromFloat(123.456),
-			want:    123.456,
-			wantErr: false,
-		},
-		{
-			name:    "decimal pointer",
-			value:   ptrD,
-			want:    123.456,
-			wantErr: false,
-		},
-		{
-			name:    "nil decimal pointer",
-			value:   (*decimal.Decimal)(nil),
-			want:    0.0,
-			wantErr: false,
-		},
-		{
-			name:    "NullDecimal valid",
-			value:   decimal.NullDecimal{Decimal: decimal.NewFromFloat(99.99), Valid: true},
-			want:    99.99,
-			wantErr: false,
-		},
-		{
-			name:    "NullDecimal invalid",
-			value:   decimal.NullDecimal{Valid: false},
-			want:    0.0,
-			wantErr: false,
-		},
-		{
-			name:    "unsupported type",
-			value:   "not a decimal",
-			want:    nil,
-			wantErr: true,
-		},
+	got, err := fn(value)
+	require.NoError(t, err)
+	assert.Equal(t, value, got)
+
+	got, err = fn(&value)
+	require.NoError(t, err)
+	assert.Equal(t, value, got)
+
+	got, err = fn(decimal.NewNullDecimal(decimal.RequireFromString("99.99")))
+	require.NoError(t, err)
+	assert.Equal(t, decimal.RequireFromString("99.99"), got)
+
+	for _, empty := range []any{(*decimal.Decimal)(nil), decimal.NullDecimal{}, (*decimal.NullDecimal)(nil)} {
+		got, err = fn(empty)
+		require.NoError(t, err)
+		assert.Nil(t, got, "%T", empty)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := fn(tt.value)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.InDelta(t, tt.want, got, 0.001)
-		})
-	}
+	_, err = fn("not a decimal")
+	require.Error(t, err)
 }
 
-func TestInt64ToFloat64(t *testing.T) {
-	fn, ok := resolver.GetTransform("int64ToFloat64")
+func TestExactInteger_WidensToInt64AndReadsAnEmptyOneAsNil(t *testing.T) {
+	fn, ok := resolver.GetTransform("integer")
 	require.True(t, ok)
 
-	i64 := int64(42)
-	i := 100
-
-	tests := []struct {
-		name    string
-		value   any
-		want    any
-		wantErr bool
-	}{
-		{
-			name:    "int64 value",
-			value:   int64(42),
-			want:    42.0,
-			wantErr: false,
-		},
-		{
-			name:    "int64 pointer",
-			value:   &i64,
-			want:    42.0,
-			wantErr: false,
-		},
-		{
-			name:    "nil int64 pointer",
-			value:   (*int64)(nil),
-			want:    0.0,
-			wantErr: false,
-		},
-		{
-			name:    "int value",
-			value:   100,
-			want:    100.0,
-			wantErr: false,
-		},
-		{
-			name:    "int pointer",
-			value:   &i,
-			want:    100.0,
-			wantErr: false,
-		},
-		{
-			name:    "nil int pointer",
-			value:   (*int)(nil),
-			want:    0.0,
-			wantErr: false,
-		},
-		{
-			name:    "unsupported type",
-			value:   "not an int",
-			want:    nil,
-			wantErr: true,
-		},
+	i64, i, i16, i32 := int64(42), 100, int16(-7), int32(9)
+	for value, want := range map[any]int64{i64: 42, i: 100, i16: -7, i32: 9} {
+		got, err := fn(value)
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	}
+	for value, want := range map[any]int64{&i64: 42, &i: 100, &i16: -7, &i32: 9} {
+		got, err := fn(value)
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	}
+	for _, empty := range []any{(*int64)(nil), (*int)(nil), (*int16)(nil), (*int32)(nil)} {
+		got, err := fn(empty)
+		require.NoError(t, err)
+		assert.Nil(t, got, "%T", empty)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := fn(tt.value)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestInt16ToFloat64(t *testing.T) {
-	fn, ok := resolver.GetTransform("int16ToFloat64")
-	require.True(t, ok)
-
-	i16 := int16(16)
-
-	tests := []struct {
-		name    string
-		value   any
-		want    any
-		wantErr bool
-	}{
-		{
-			name:    "int16 value",
-			value:   int16(16),
-			want:    16.0,
-			wantErr: false,
-		},
-		{
-			name:    "int16 pointer",
-			value:   &i16,
-			want:    16.0,
-			wantErr: false,
-		},
-		{
-			name:    "nil int16 pointer",
-			value:   (*int16)(nil),
-			want:    0.0,
-			wantErr: false,
-		},
-		{
-			name:    "unsupported type",
-			value:   int32(32),
-			want:    nil,
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := fn(tt.value)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
+	_, err := fn(1.5)
+	require.Error(t, err, "a float is not a whole number")
 }
 
 func TestStringToUpper(t *testing.T) {

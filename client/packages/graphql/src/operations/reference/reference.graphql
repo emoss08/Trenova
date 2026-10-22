@@ -604,3 +604,7 @@ fragment WorkerSafetyEventReference on WorkerSafetyEvent {
   kind
   occurredAt
 }
+
+fragment WorkerSafetyViolationReference on WorkerSafetyViolation {
+  id
+}

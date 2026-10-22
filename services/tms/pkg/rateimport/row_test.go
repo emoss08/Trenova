@@ -3,8 +3,9 @@ package rateimport_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +57,7 @@ func TestParseRow_ReadsALaneAndItsPrice(t *testing.T) {
 
 // The lane key is what the engine matches on, and a row that produced a rule
 // without one would be stored and never looked up.
-func TestParseRow_BuildsTheLaneKeyTheEngineMatchesOn(t *testing.T) {
+func TestParseRow_YieldsALaneTheEngineCanKey(t *testing.T) {
 	t.Parallel()
 
 	mapping, _ := stateSheet()
@@ -68,8 +69,24 @@ func TestParseRow_BuildsTheLaneKeyTheEngineMatchesOn(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	assert.NotEmpty(t, rule.LaneKey)
-	assert.Contains(t, rule.LaneKey, ">")
+	require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))
+	assert.Equal(t, "ST:IL>ST:GA", rule.LaneKey)
+	assert.NoError(t, rateimport.UnkeyedEnd(rule))
+}
+
+func TestUnkeyedEnd_NamesAPostalPrefixTooShortToKey(t *testing.T) {
+	t.Parallel()
+
+	rule := &rateagreement.RateAgreementRule{
+		OriginScopeType:       rategeo.ScopeTypeZip3,
+		OriginScopeValue:      "60",
+		DestinationScopeType:  rategeo.ScopeTypeState,
+		DestinationScopeValue: "GA",
+	}
+	require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))
+
+	assert.Equal(t, rateagreement.RadiusLaneKey, rule.LaneKey)
+	require.EqualError(t, rateimport.UnkeyedEnd(rule), `origin: "60" cannot be read as a Zip3`)
 }
 
 // A sheet that does not say what kind of place its values are is the ordinary

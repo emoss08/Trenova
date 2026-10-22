@@ -1,4 +1,5 @@
-import { formatExpression } from "@/components/formula-editor/expr-format";
+import { formulaCheck, formulaFormat } from "@trenova/shared/rules/formula";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type {
   FormulaDraftBreakdown,
   FormulaDraftVariable,
@@ -166,19 +167,25 @@ export function formulaDraftFromEditor(editor: FormulaEditorState): PageDraft {
   };
 }
 
-/** The expression as the editor formats it, or as written when it does not parse. */
-export function formattedOrAsWritten(expression: string): string {
-  const result = formatExpression(expression);
+/**
+ * The expression as the rules module formats it, or as written when the
+ * formatter refuses it (it does not parse, or holds a comment).
+ */
+export function formattedOrAsWritten(rules: RulesRuntime, expression: string): string {
+  const result = formulaFormat(rules, { source: expression });
   return result.ok ? result.text : expression;
 }
 
 /** A formula the assistant proposed, as the editor takes it when the person inserts it. */
-export function proposalForEditor(proposal: FormulaProposal): {
+export function proposalForEditor(
+  rules: RulesRuntime,
+  proposal: FormulaProposal,
+): {
   expression: string;
   variableDefinitions: VariableDefinition[];
 } {
   return {
-    expression: formattedOrAsWritten(proposal.expression),
+    expression: formattedOrAsWritten(rules, proposal.expression),
     variableDefinitions: proposal.variables.map((variable) => ({
       name: variable.name,
       type: variable.type,
@@ -247,8 +254,12 @@ export function policyChanged(current: ProposalTarget, next: ProposalTarget): bo
  * are), its breakdown lines when it has any, and its name, description and
  * type only where the editor has none of its own.
  */
-export function applyProposal(current: ProposalTarget, proposal: FormulaProposal): ProposalTarget {
-  const fromProposal = proposalForEditor(proposal);
+export function applyProposal(
+  rules: RulesRuntime,
+  current: ProposalTarget,
+  proposal: FormulaProposal,
+): ProposalTarget {
+  const fromProposal = proposalForEditor(rules, proposal);
   const existing = new Set(current.variableDefinitions.map((variable) => variable.name));
   const additions = fromProposal.variableDefinitions.filter(
     (variable) => variable.name !== "" && !existing.has(variable.name),
@@ -259,11 +270,15 @@ export function applyProposal(current: ProposalTarget, proposal: FormulaProposal
       ? proposal.breakdown.map((line) => ({
           name: line.name,
           label: line.label,
-          expression: formattedOrAsWritten(line.expression),
+          expression: formattedOrAsWritten(rules, line.expression),
         }))
       : current.breakdownDefinitions;
   const proposed = new Set(fromProposal.variableDefinitions.map((variable) => variable.name));
-  const read = identifiersIn([proposal.expression, ...breakdown.map((line) => line.expression)]);
+  const read = inputsRead(
+    rules,
+    [proposal.expression, ...breakdown.map((line) => line.expression)],
+    current.variableDefinitions,
+  );
   const kept = current.variableDefinitions.filter(
     (variable) => proposed.has(variable.name) || read.has(variable.name),
   );
@@ -280,13 +295,24 @@ export function applyProposal(current: ProposalTarget, proposal: FormulaProposal
   };
 }
 
-const IDENTIFIER = /[A-Za-z_][A-Za-z0-9_]*/g;
-
-/** Every bare name the expressions mention, so an input the formula stopped reading is let go. */
-function identifiersIn(expressions: readonly string[]): Set<string> {
+/**
+ * The inputs the expressions read, as the rules module's check reads them (a
+ * name in a string, a comment or a `let` of the same name is no read), so an
+ * input the formula stopped reading is let go. Only the inputs are declared:
+ * the record's fields do not decide which inputs are read.
+ */
+function inputsRead(
+  rules: RulesRuntime,
+  expressions: readonly string[],
+  inputs: readonly VariableDefinition[],
+): Set<string> {
+  const schema = {
+    variables: [],
+    inputs: inputs.map((input) => ({ name: input.name, type: input.type })),
+  };
   const names = new Set<string>();
-  for (const expression of expressions) {
-    for (const match of expression.matchAll(IDENTIFIER)) names.add(match[0]);
+  for (const source of expressions) {
+    for (const name of formulaCheck(rules, { source, schema }).inputReads) names.add(name);
   }
   return names;
 }

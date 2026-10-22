@@ -978,6 +978,7 @@ func (s *Service) validateChargeAllocations(
 	}
 
 	if _, err := shipment.ResolveOrderChargeShares(
+		ctx,
 		[]shipment.OrderChargeRef{
 			{ID: chargeID, Description: charge.Description, Amount: charge.Amount},
 		},
@@ -985,11 +986,16 @@ func (s *Service) validateChargeAllocations(
 		pulid.Nil,
 	); err != nil {
 		var typed *errortypes.Error
-		if errors.As(err, &typed) {
-			multiErr.Add(typed.Field, typed.Code, typed.Message)
-		} else {
-			multiErr.Add("allocations", errortypes.ErrInvalid, err.Error())
+		if !errors.As(err, &typed) {
+			s.l.Error("failed to split the order charge", zap.Error(err))
+			multiErr.Add(
+				"allocations",
+				errortypes.ErrSystemError,
+				"Unable to check how the charge is split",
+			)
+			return multiErr
 		}
+		multiErr.Add(typed.Field, typed.Code, typed.Message, typed.Args...)
 		return multiErr
 	}
 

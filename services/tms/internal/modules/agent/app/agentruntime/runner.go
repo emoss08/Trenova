@@ -78,6 +78,10 @@ type Params struct {
 	Config      *config.Config                                 `optional:"true"`
 	Disclosures agentports.ToolDisclosureObserver              `optional:"true"`
 	Shadow      *agentshadow.Resolver                          `optional:"true"`
+	// Scripts is optional. With it the code-mode gate reads the chat
+	// providers' script settings; without it no model is offered scripts
+	// unless the bench forces them.
+	Scripts agentports.ScriptProviders `optional:"true"`
 }
 
 type Service struct {
@@ -109,6 +113,7 @@ type Service struct {
 	matchable  func() []string
 	registry   *permission.Registry
 	codeMode   codemode.Gate
+	scripts    agentports.ScriptProviders
 	shadow     shadowVerdicts
 }
 
@@ -140,15 +145,16 @@ func New(p Params) *Service {
 		matchable:   matchableTools(p.Catalog),
 		registry:    permission.NewRegistry(),
 		codeMode:    codeModeGate(p.Config),
+		scripts:     p.Scripts,
 		shadow:      shadowFrom(p.Shadow),
 	}
 }
 
-// codeModeGate is the shipped model ledger, forced open on request only in a
-// development or test deployment, where the desk bench runs.
+// codeModeGate decides from the chat providers' script settings, and is
+// forced open on request only in a development or test deployment, where the
+// desk bench runs.
 func codeModeGate(cfg *config.Config) codemode.Gate {
 	return codemode.Gate{
-		Ledger: codemode.Shipped(),
 		Forced: cfg != nil && (cfg.App.IsDevelopment() || cfg.App.IsTest()),
 	}
 }
@@ -635,6 +641,7 @@ func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) Di
 		Beyond:               t.beyondTier(call.Name),
 		Model:                t.result.Model,
 		Provider:             t.providerKind,
+		ProviderID:           t.result.ProviderID,
 		ScriptPosition:       t.scriptPosition(call),
 	}
 }
@@ -837,6 +844,7 @@ func (s *Service) observe(
 
 	shown, err := observe(agentports.ToolObservation{
 		Call:    call,
+		RanWith: outcome.ranWith,
 		Data:    outcome.data,
 		Failed:  outcome.failed,
 		Action:  outcome.action,

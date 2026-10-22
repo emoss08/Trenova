@@ -52,6 +52,7 @@ func ToolProviders() []any {
 		workforceQueryToolProviders(),
 		masterDataReadProviders(),
 		graphQLListProviders(),
+		graphQLGetProviders(),
 	}
 
 	size := 0
@@ -85,17 +86,13 @@ func coreToolProviders() []any {
 		newListDashboardsTool,
 		newListInvoicesTool,
 		newListCarrierCapacityPostingsTool,
-		newGetCustomerTool,
-		newGetCarrierTool,
 		newGetTractorTool,
 		newGetTrailerTool,
-		newGetLocationTool,
 		newGetInvoiceTool,
 		newListBillingQueueItemsTool,
 		newGetBillingQueueItemTool,
 		newListBillingTransferCandidatesTool,
 		provideGetDetentionOccurrenceTool,
-		newGetCarrierIntelEventTool,
 		newListCarrierIntelEventsTool,
 		newGetCustomerUpdatePreferencesTool,
 		newGetAgentRunTool,

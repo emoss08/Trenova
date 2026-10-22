@@ -72,6 +72,64 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    operation already carries the action, say so in its description rather than adding a
    verb no role holds.
 
+## Parent resources
+
+A resource with a `ParentResource` is part of its parent's family, and that does two
+things. The engine lets a grant on the parent satisfy a check on the child
+(`Registry.GetEffectiveResource`, `engine.resolveResourcePermission`), so worker read is
+also read on a worker's credentials and timesheets. And `Registry.PartOf` treats a record
+of the child carried by one of its family as part of it rather than a linked record, so the
+GraphQL field guard, the REST response guard and the report catalog's `withinRecord` show
+it whole to whoever may read the carrier.
+
+Give a resource a parent only when everyone who may read the parent may read all of it.
+Data most readers of the parent have no business seeing (medical, leave, disciplinary,
+compensation) is a resource with no parent, granted on its own through the bundles for the
+jobs that need it. Worker read reaches none of these, a record of one that a worker carries
+is a linked record gated by its own read, and the Read-only template excepts each
+(`ownGrantKinds` in `bundles_catalog.go`):
+
+| Kind | Granted by | Templates |
+|---|---|---|
+| `worker_leave` | `hr.leave`; `hr.team` at team scope | Human resources; Driver manager (team) |
+| `worker_injury` | `safety.drivers` | Safety and compliance |
+| `worker_dot_test` | `safety.drivers` | Safety and compliance only (below) |
+| `benefit_plan` | `hr.benefits` | Human resources |
+| `worker_employment_event` | `hr.workers` | Human resources |
+| `worker_disciplinary_action`, `performance_review` | `hr.performance` | Human resources |
+| `timesheet`, `profile_change_request` | `hr.team` at team scope | Driver manager, Human resources (team) |
+| `driver_portal` | `hr.workers` (view, invite, revoke); `hr.team` (view, invite, revoke, team) | Human resources; Driver manager (team) |
+
+**Drug and alcohol tests (49 CFR 40.321).** An employer may release a DOT test result only
+to those whose job is DOT compliance (the designated employer representative and the
+compliance staff working for them). `worker_dot_test` is therefore granted by
+`safety.drivers` alone, and `TestJobTemplates_OnlyDOTComplianceReadsDrugAndAlcoholResults`
+fails if any other template or bundle reaches it. Dispatch, carrier sales, billing, driver
+managers and Human resources do not read it; an organization whose HR staff is its DER
+grants it to that role by hand. With no reference view, a test a worker carries shows only
+its id to anyone else.
+
+**Driver portal access.** Inviting a driver gives them a sign-in, so `driver_portal` has no
+parent and its own operations: View (read), Invite (create) and Revoke (cancel). Whoever may
+invite a driver may also revoke them: `hr.workers` grants all three across the organization
+and `hr.team` grants them for a driver manager's team.
+
+`worker_safety_event` and `worker_credential` keep worker as their parent, and
+`rate_confirmation` keeps carrier: whoever reads the worker or the carrier needs them to plan
+and cover work.
+
+Taking a parent away moves no stored grant: administrators already hold every registry
+resource, and `trenova db migrate` (`ReconcileAdminRoles`) adds any that is missing, and
+other roles lose what they reached only through the parent until a bundle or a person
+grants it. `TestJobTemplates_KindsGrantedOnTheirOwn` holds every stock template's effective
+operations and scope on each of these kinds; a new template fails it until it has a row.
+
+`GetResourcePermissions`, which the report compiler, the report catalog, the agent dataset
+tools and `GET /me/permissions/:resource` read, reports a kind's own grant together with the
+operations its parent's grant implies, with the scope the engine applies to a read
+(`resourcedetail.go`). `TestGetResourcePermissions_AgreesWithCheckOnEveryKind` holds it to
+`Check` on every operation of every kind.
+
 ## Saved table views
 
 Anyone may keep private views of a table they can read. Sharing a view with the
@@ -91,7 +149,17 @@ Billing clerk, Accountant, Driver manager, Read-only and others) is a list of bu
 a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant with the
 scope it will actually apply in this deployment (a scope the deployment does not enforce
 comes back as organization), and each template already composed (`Registry.TemplateGrants`:
-operations merged, the widest scope kept).
+operations merged, the widest scope kept). The Read-only template reads every readable
+kind except those its `ReadExcept` names (the kinds granted on their own, above), so it
+never reaches data that is granted on its own.
+
+Because a template holds one grant per kind, merging keeps the widest scope: a bundle that
+grants a kind organization-wide widens any team-scoped grant of it in the same template.
+Leave is held to Human resources: `hr.leave` grants `worker_leave` read, create, update and
+approve organization-wide, and `hr.team` read and approve at team scope, so a driver manager
+reads and decides only their team's cases (`TestJobTemplates_OnlyHumanResourcesReachLeave`
+lists every template's leave operations). Configuring leave (`worker_leave:manage`) and
+exporting it stay with administrators.
 
 Bundles are a way of choosing grants, not a second kind of grant: choosing one writes its
 grants into the role's ordinary `resource_permissions`, so evaluation, delegation and the
@@ -125,7 +193,19 @@ definition's `Scopes`:
 | `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
 | `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
 | `capture_batch`, `report` | own | application (`captureservice`, the report compiler) |
-| `worker_schedule`, `timesheet`, `profile_change_request` | team | application (`RequireTeamScope`, `teamscope.Guard`) |
+| `worker_schedule`, `timesheet`, `profile_change_request`, `worker_leave`, `driver_portal` | team | application (`RequireTeamScope`, `RequireListTeamScope`, `teamscope.Guard`, `teamscope.ListGuard`) |
+
+**Application enforcement.** A team is the workers a person manages directly
+(`workers.manager_id`) or through a fleet code they run, plus those of anyone who has
+delegated their approvals to them (`OrgStructureService.ManagerIDs`), the same team the
+`workers` read scope applies. An action on one worker checks it with `RequireTeamScope`
+(resolvers) or `teamscope.Guard` (agent tools), taking the worker from the record acted on,
+never from the request. A list across workers asks `RequireListTeamScope` or
+`teamscope.ListGuard` for the managers a team-scoped grant narrows it to and passes them as
+the request's `ManagerIDs`; the repository filters with `workerteam.Where`
+(`workforce/adapters/postgres/workerteam`), so every list applies one definition of a team.
+A list never relies on the client asking for `teamOnly`. Leave counts delegations for time
+off (`worker.ApprovalScopeTimeOff`); the others count delegations of everything.
 
 **Database enforcement.** Each authenticated request (`ReadScopeMiddleware`) and each
 agent tool call (`agentflow.runTool`) carries a `pkg/readscope` holder. At its first
@@ -138,27 +218,55 @@ applies it to every read: lists, lookups, loaders, search, insights and reports 
 The value only narrows what the signed tenant scope allows, so it is not signed; work
 with no holder (jobs, unattended agents) reads its whole tenant.
 
-A kind the principal cannot read at all is sent as `<kind>:none`, so a relation, loader,
-join or index check that reaches it finds nothing rather than the whole organization.
-Under `none` a person still sees what is their own: the worker linked to their user
-(`workers.user_id`) and the shipments a move assigns them to drive, which is what the
-driver portal and the `My…` self-service reads stand on; orders and invoices are hidden
-entirely. Because the policies are `FOR SELECT`, an update whose `WHERE` reads a row the
-person cannot see changes nothing, so a role that writes a kind needs read on it too. Policies are
+Only `own` and `team` grants are sent. A kind the principal cannot read at all is left
+out of the setting, so the database shows its rows to whatever reaches them from a record
+the person can read (a tractor's driver, a shipment's order, a document's shipment), and
+the application shows each as its kind's reference view: the GraphQL field guard, the
+REST response guard, search, reports and analytics all decide it through `refview`, so a
+linked record reads the same with row-level security on or off. (Until
+`20261231010190_read_scope_linked_rows` such a kind was sent as `<kind>:none`, and the
+four policies hid every row of it but the person's own worker and the shipments a move
+assigned them to drive, which made a linked driver or order come back null under RLS.)
+
+A root read of a kind the person cannot read is refused in the application before it
+queries, and CI holds every path to it:
+
+- GraphQL: every root field that returns a shipment, order, invoice or worker, directly
+  or through a connection, checks read (or an operation implying it) on the kind in its
+  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). One that such a mutation's
+  payload carries rather than returns (a training record's worker) is the root record only
+  for a caller who reads its kind or when the mutation declares `@authorizes`; otherwise
+  the field guard shows it as linked, and `TestEveryLinkedFieldIsDeclared` holds client
+  operations to that (`applyCreditMemo` and `unapplyCreditMemoApplication` check invoice
+  read for it).
+- REST: only the kind's own handler, whose every route requires an operation on the kind
+  or marks its records `responseguard.References()`, writes one as a response's own
+  record (`TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler`).
+- Search: global search drops the index of a kind the person cannot read and a document
+  attached to one before it asks `RecordVisibility`, which answers only the narrowing.
+- Agents, reports, insights and analytics check the kind's read (the tool's policy, the
+  report compiler, each detector's `Resources()`, the analytics page) before they read.
+
+The driver portal and the `My…` self-service reads never relied on the database here:
+they read the worker linked to the caller's user and the assignments naming that worker
+in SQL (`driverportalrepository`), so a driver still sees only their own records.
+Every write operation implies read, so a role that writes a kind reads it. Policies are
 `FOR SELECT`, so an update or a `RETURNING` on a row outside the scope finds nothing.
 
 A cache cannot apply them either. The synced Redis caches (`cache:shipments`,
 `cache:workers`, `cache:customers`, `cache:documents`) hold the tenant's rows, so each one
 asks `readscope.Narrows` for the kind it holds and answers only a request its kind is not
-narrowed for (or one whose scope could not be resolved); anything else reads through the
-database.
+narrowed for (an own or team grant); a request whose scope could not be resolved, or one
+the kind is narrowed for, reads through the database.
 
 A search index cannot apply them: Meilisearch holds every record of the tenant. Global
 search therefore passes each shipment, order, invoice and worker hit, and each document
 attached to one, through `kernelports.RecordVisibility`, which asks the database which of
 those ids the request may read under its read scope; a hit it does not return, or a check
-that fails, is not shown, a kind the person cannot read at all hides the documents attached
-to it, and a narrowed group reports only the hits it shows as its total. Every index query
+that fails, is not shown, and a narrowed group reports only the hits it shows as its total.
+A kind the person cannot read at all is refused by the service itself (its index is not
+searched and the documents attached to it are hidden without asking), because the
+database would return every one of its rows. Every index query
 names the fields it returns (`SearchRequest.Attributes`, the id alone when none are named)
 and builds its filter with `shared/searchfilter`, which quotes each value.
 
@@ -270,8 +378,9 @@ record's **reference view** to everyone who can read the record that links to it
 linking screen needs to identify and use it (a customer's name, code and billing address, a
 driver's name). Every other field of the linked record needs that kind's own read; without it a
 nullable field is answered null and named in `extensions.withheldByAccess`, and a non-null one is
-refused. The record a root resolver returns, records that are part of it (`ParentResource`), and
-everything under a self-scoped resolver are not gated this way.
+refused. The record a root resolver returns, records that are part of it (its `ParentResource`
+family, see [Parent resources](#parent-resources)), and everything under a self-scoped resolver
+are not gated this way.
 
 Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
 one package, `refview`, which the GraphQL field guard asks for people and agents alike, and the

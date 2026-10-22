@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"go.uber.org/zap"
 )
 
 // runScriptTool runs the tool that runs a script, once the call has passed
@@ -25,7 +27,7 @@ func (s *Service) runScriptTool(
 	call *agentports.ToolCall,
 ) toolOutcome {
 	req := p.req
-	decision := s.codeMode.Decide(req.CodeMode, p.gate.provider, p.gate.model)
+	decision := s.codeMode.Decide(req.CodeMode, p.gate.model, s.scriptSettings(ctx, req, p.gate))
 	if !decision.Allowed {
 		return refusedOutcome(aitrace.OutcomeDenied, decision.Reason,
 			"Tool %q was not run: %s. Answer with the reads you hold, one call at a time.",
@@ -69,6 +71,43 @@ func (s *Service) runScriptTool(
 	})
 
 	return outcome
+}
+
+// scriptsOffered reports whether a turn opening now may be shown the script
+// tool: some provider that may answer it has scripts on. Only a turn left to
+// the providers' settings asks; a failed read offers nothing.
+func (s *Service) scriptsOffered(ctx context.Context, req *agentports.RunRequest) bool {
+	if req.CodeMode != codemode.OverrideDefault || s.scripts == nil || req.Actor == nil {
+		return false
+	}
+	offered, err := s.scripts.ScriptsOffered(ctx, req.Actor.TenantInfo())
+	if err != nil {
+		s.logger.Warn("could not read the providers' script settings; scripts are not offered",
+			zap.Error(err))
+		return false
+	}
+
+	return offered
+}
+
+// scriptSettings is what the provider that asked for the script holds now.
+// A failed read runs no script.
+func (s *Service) scriptSettings(
+	ctx context.Context,
+	req *agentports.RunRequest,
+	gate scriptGate,
+) aiprovider.ScriptSettings {
+	if req.CodeMode != codemode.OverrideDefault || s.scripts == nil || req.Actor == nil {
+		return aiprovider.ScriptSettings{}
+	}
+	settings, err := s.scripts.ScriptSettings(ctx, gate.providerID, req.Actor.TenantInfo())
+	if err != nil {
+		s.logger.Warn("could not read the provider's script settings; the script is refused",
+			zap.String("provider", gate.providerID.String()), zap.Error(err))
+		return aiprovider.ScriptSettings{}
+	}
+
+	return settings
 }
 
 // withoutScripts takes the tool that runs a script out of a turn the code-mode

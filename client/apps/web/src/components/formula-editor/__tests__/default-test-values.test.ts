@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import shipmentSchemaJSON from "../../../../../../../services/tms/internal/modules/rating/app/formula/schema/definitions/shipment.schema.json";
-import { DEFAULT_TEST_VALUES } from "../test-data-editor";
+import { DEFAULT_TEST_VALUES } from "../default-test-values";
 
 type SchemaProperty = {
   properties?: Record<string, SchemaProperty>;

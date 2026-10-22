@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
@@ -26,12 +27,13 @@ const (
 	graphQLListLimit  = 25
 	graphQLListMost   = 50
 
-	connectionEdges    = "edges"
-	connectionNode     = "node"
-	connectionPageInfo = "pageInfo"
-	pageHasNext        = "hasNextPage"
-	pageEndCursor      = "endCursor"
-	typenameField      = "__typename"
+	connectionEdges      = "edges"
+	connectionNode       = "node"
+	connectionPageInfo   = "pageInfo"
+	connectionTotalCount = "totalCount"
+	pageHasNext          = "hasNextPage"
+	pageEndCursor        = "endCursor"
+	typenameField        = "__typename"
 
 	inputFirst        = "first"
 	inputAfter        = "after"
@@ -77,6 +79,10 @@ type graphQLListSpec struct {
 	// defaultsAt are defaults that depend on the day (time off from today),
 	// applied together only when a call gives none of them.
 	defaultsAt func(clk clock) map[string]any
+	// unscoped are defaults a call that names none of its references reads
+	// with (the open safety events across the organization, where one
+	// worker's are read whole).
+	unscoped map[string]any
 	// inputs are input fields every call sends, as the screen sets them for
 	// its own rendering (each time-off request's worker).
 	inputs map[string]any
@@ -294,11 +300,18 @@ func applyDefaults(spec *graphQLListSpec, args map[string]any, clk clock) map[st
 			}
 		}
 	}
-	if len(spec.defaults) == 0 && len(dated) == 0 {
+	var unscoped map[string]any
+	if !namesReference(spec, args) {
+		unscoped = spec.unscoped
+	}
+	if len(spec.defaults) == 0 && len(dated) == 0 && len(unscoped) == 0 {
 		return args
 	}
-	out := make(map[string]any, len(args)+len(spec.defaults)+len(dated))
+	out := make(map[string]any, len(args)+len(spec.defaults)+len(dated)+len(unscoped))
 	for name, value := range spec.defaults {
+		out[name] = value
+	}
+	for name, value := range unscoped {
 		out[name] = value
 	}
 	for name, value := range dated {
@@ -309,6 +322,18 @@ func applyDefaults(spec *graphQLListSpec, args map[string]any, clk clock) map[st
 	}
 
 	return out
+}
+
+// namesReference reports whether a call names any record its spec's
+// references point to (the worker whose events are read).
+func namesReference(spec *graphQLListSpec, args map[string]any) bool {
+	for name := range spec.references {
+		if raw, given := args[name]; given && raw != nil && raw != "" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // describable reports whether a parameter's field can be filtered at the
@@ -398,6 +423,7 @@ type graphQLListOutcome struct {
 	Note             string           `json:"note,omitempty"`
 	HasMore          bool             `json:"hasMore"`
 	NextCursor       string           `json:"nextCursor,omitempty"`
+	Total            *int             `json:"total,omitempty"`
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
 }
@@ -437,6 +463,7 @@ func (t *graphQLListTool) Query(
 		sort:    t.sort(params.Params),
 		limit:   window.limit,
 		after:   window.info.After,
+		total:   params.IncludeTotal,
 	})
 	if err != nil {
 		return nil, err
@@ -452,6 +479,7 @@ func (t *graphQLListTool) Query(
 		Items:            page.items,
 		Columns:          selectedColumns(t.read.Fields, page.items),
 		HasMore:          page.hasMore,
+		Total:            page.total,
 		WithheldByAccess: page.withheld,
 	}
 	if page.hasMore {
@@ -477,6 +505,7 @@ type pageRequest struct {
 	sort    []map[string]any
 	limit   int
 	after   string
+	total   bool
 }
 
 type graphQLPage struct {
@@ -485,6 +514,7 @@ type graphQLPage struct {
 	endCursor string
 	withheld  []string
 	first     bool
+	total     *int
 }
 
 func (t *graphQLListTool) page(
@@ -516,7 +546,7 @@ func (t *graphQLListTool) page(
 	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
-		Variables:         map[string]any{t.input: input, includeTotalCount: false},
+		Variables:         map[string]any{t.input: input, includeTotalCount: req.total},
 		DataAccessCeiling: params.DataAccessCeiling,
 		RequestID:         params.RunID.String(),
 	})
@@ -549,6 +579,11 @@ func (t *graphQLListTool) page(
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {
 		page.hasMore, _ = info[pageHasNext].(bool)
 		page.endCursor, _ = info[pageEndCursor].(string)
+	}
+	if req.total {
+		if total, counted := typeutils.IntOf(connection[connectionTotalCount]); counted {
+			page.total = &total
+		}
 	}
 
 	return page, nil

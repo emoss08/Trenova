@@ -1,13 +1,16 @@
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { summarizeBillingByPayer } from "@trenova/shared/lib/charge-split";
+import { splitAllocations } from "@trenova/shared/rules/allocation";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useFormContext, useWatch } from "react-hook-form";
 
 /**
  * The invoices a save would produce: one row per payer with their share of
- * freight and accessorials. Nothing is shown for an unsplit shipment billed to
- * its own customer, which is the ordinary case and needs no explaining.
+ * freight and accessorials, divided by the rules module exactly as the server
+ * bills them, every charge in one call. Nothing is shown for an unsplit
+ * shipment billed to its own customer, which is the ordinary case and needs no
+ * explaining.
  */
 export function BillingByPayerCard() {
   const t = useT();
@@ -19,6 +22,7 @@ export function BillingByPayerCard() {
   const additionalCharges = useWatch({ control, name: "additionalCharges" });
   const customer = useWatch({ control, name: "customer" });
   const billToCustomer = useWatch({ control, name: "billToCustomer" });
+  const rules = useRules();
 
   if (!customerId) return null;
 
@@ -46,20 +50,36 @@ export function BillingByPayerCard() {
     }
   }
 
-  const rows = summarizeBillingByPayer(
-    {
-      customerId,
-      billToCustomerId,
-      freightChargeAmount,
-      freightAllocations: freightAllocations ?? [],
-      additionalCharges: additionalCharges ?? [],
-    },
-    (id) => labels.get(id) ?? null,
-  );
+  const split = splitAllocations(rules, {
+    defaultPayerId: billToCustomerId || customerId,
+    base: freightChargeAmount,
+    charges: [
+      { kind: "Freight", total: freightChargeAmount ?? 0, allocations: freightAllocations },
+      ...(additionalCharges ?? []).map((charge) => ({
+        kind: "Accessorial" as const,
+        method: charge?.method,
+        amount: charge?.amount,
+        unit: charge?.unit,
+        allocations: charge?.allocations,
+      })),
+    ],
+  });
+  const payers = split.payers;
 
-  const split = rows.some((row) => row.isSplit) || rows.length > 1;
-  const redirected = rows.length === 1 && rows[0].payerId !== customerId;
-  if (!split && !redirected) return null;
+  // A charge whose rows do not add up cannot be divided yet; its own split editor says why.
+  if (payers === null) {
+    return (
+      <div className="bg-muted/50 mt-3 rounded-lg border p-2" data-testid="billing-by-payer">
+        <span className="text-xs font-medium">{t("Billing by payer")}</span>
+        <p className="text-2xs text-muted-foreground mt-0.5">
+          {t("Each payer's share shows once every split adds up.")}
+        </p>
+      </div>
+    );
+  }
+
+  const redirected = payers.length === 1 && payers[0].payerId !== customerId;
+  if (!split.isSplit && !redirected) return null;
 
   return (
     <div className="bg-muted/50 mt-3 rounded-lg border p-2" data-testid="billing-by-payer">
@@ -70,27 +90,24 @@ export function BillingByPayerCard() {
         </p>
       </div>
       <div className="divide-y">
-        {rows.map((row) => {
-          const label = row.payerCode
-            ? `${row.payerCode} – ${row.payerName}`
-            : row.payerName || row.payerId;
+        {payers.map((row, index) => {
+          const payer = labels.get(row.payerId);
+          const label = payer?.code ? `${payer.code} – ${payer.name}` : payer?.name || row.payerId;
           return (
             <div key={row.payerId} className="flex items-center justify-between gap-3 py-1.5">
               <div className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate text-xs font-medium">{label}</span>
-                {row.isPrimary ? (
+                {index === 0 ? (
                   <span className="bg-primary/10 text-2xs text-primary rounded-md px-1 py-0.5">
                     {t("Primary")}
                   </span>
                 ) : null}
               </div>
               <div className="text-muted-foreground flex shrink-0 items-center gap-3 text-xs tabular-nums">
-                <span>{t("Freight {0}", formatCurrency(Number(row.freightAmount ?? 0)))}</span>
-                <span>
-                  {t("Accessorials {0}", formatCurrency(Number(row.accessorialAmount ?? 0)))}
-                </span>
+                <span>{t("Freight {0}", formatCurrency(Number(row.freightAmount)))}</span>
+                <span>{t("Accessorials {0}", formatCurrency(Number(row.accessorialAmount)))}</span>
                 <span className={cn("text-foreground font-semibold")}>
-                  {formatCurrency(Number(row.totalAmount ?? 0))}
+                  {formatCurrency(Number(row.totalAmount))}
                 </span>
               </div>
             </div>

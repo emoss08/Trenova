@@ -239,7 +239,7 @@ func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 		},
 		Required: []string{common.ParamShipmentID},
 		Target:   targetShipment,
-	}, common.ReceivablePlan[*shipmentports.AutoRateShipmentRequest, *shipmentports.ShipmentAutoRatePreview]{
+	}, common.ReceivablePlan[*shipmentports.AutoRateShipmentRequest, *reratePlan]{
 		Request: func(
 			params *agentports.ToolExecuteParams,
 		) (*shipmentports.AutoRateShipmentRequest, error) {
@@ -257,8 +257,23 @@ func NewRerateShipmentTool(shipments shipmentOperator) agentports.AgentTool {
 			ctx context.Context,
 			req *shipmentports.AutoRateShipmentRequest,
 			params *agentports.ToolExecuteParams,
-		) (*shipmentports.ShipmentAutoRatePreview, error) {
-			return shipments.PreviewAutoRate(ctx, req, params.Actor)
+		) (*reratePlan, error) {
+			preview, err := shipments.PreviewAutoRate(ctx, req, params.Actor)
+			if err != nil {
+				return nil, err
+			}
+			plan := &reratePlan{ShipmentAutoRatePreview: preview}
+			if preview.Before != nil && preview.After != nil {
+				if plan.money, err = common.ChargeEditMoney(
+					ctx,
+					preview.Before,
+					preview.After,
+				); err != nil {
+					return nil, err
+				}
+			}
+
+			return plan, nil
 		},
 		Refused: func(*shipmentports.AutoRateShipmentRequest) string {
 			return "Would price the shipment again from its contract."

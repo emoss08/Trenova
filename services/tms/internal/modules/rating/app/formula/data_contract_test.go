@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -26,14 +27,32 @@ func evaluate(
 	expression string,
 ) decimal.Decimal {
 	t.Helper()
+	return evaluateWith(t, svc, entity, expression, nil)
+}
 
-	resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
+func evaluateWith(
+	t *testing.T,
+	svc *formula.Service,
+	entity *shipment.Shipment,
+	expression string,
+	variables map[string]any,
+) decimal.Decimal {
+	t.Helper()
+
+	preview, err := svc.Preview(t.Context(), &formula.PreviewRequest{
 		Expression: expression,
 		Entity:     entity,
 		SchemaID:   "shipment",
+		Variables:  variables,
+		TenantInfo: testTenant(),
 	})
 	require.NoError(t, err, expression)
-	return resp.Amount
+	for _, diagnostic := range preview.Diagnostics {
+		require.False(t, diagnostic.IsError(), "%s: %s", expression, diagnostic.Message)
+	}
+	require.NotNil(t, preview.Evaluated, expression)
+	require.Nil(t, preview.Error, "%s: %v", expression, preview.Error)
+	return preview.Evaluated.Amount
 }
 
 func assertAmount(t *testing.T, want string, got decimal.Decimal, expression string) {
@@ -99,14 +118,8 @@ func TestDataContract_FreightClassLooksUpAClassKeyedTable(t *testing.T) {
 		commodityLine(commodity.FreightClass100, 900, 2),
 	}
 
-	resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
-		Expression: `lookup("class_rates", highestFreightClass)`,
-		Entity:     entity,
-		SchemaID:   "shipment",
-		TenantInfo: testTenant(),
-	})
-	require.NoError(t, err)
-	assertAmount(t, "31.5", resp.Amount, "lookup by highestFreightClass")
+	expression := `lookup("class_rates", highestFreightClass)`
+	assertAmount(t, "31.5", evaluate(t, svc, entity, expression), expression)
 }
 
 func stopAt(
@@ -232,16 +245,23 @@ func TestDataContract_UnguardedOptionalRelationMemberIsWarned(t *testing.T) {
 
 	svc := setupService(t)
 
-	warnings, err := svc.UnguardedNullableFields(
-		t.Context(),
-		`hasPrefix(tractorType.code, "DC") ? 1 : 0`,
-		"shipment",
-		nil,
-	)
+	checked, err := svc.Check(t.Context(), &formula.CheckRequest{
+		SchemaID: "shipment",
+		Expect:   rules.ExpectAmount,
+		Sources: []formula.CheckSource{{
+			Scope:  formula.MainScope,
+			Source: `hasPrefix(tractorType.code, "DC") ? 1 : 0`,
+		}},
+	})
 	require.NoError(t, err)
-	require.NotEmpty(t, warnings)
-	assert.Equal(t, "tractorType.code", warnings[0].Field)
-	assert.Equal(t, `tractorType?.code ?? ""`, warnings[0].Suggestion)
+	require.Len(t, checked, 1)
+	assert.True(t, checked[0].Check.Accepted())
+	assert.Equal(t, []string{"tractorType.code"}, checked[0].Check.Unguarded())
+
+	diagnostic := checked[0].Check.Diagnostics[0]
+	require.NotEmpty(t, diagnostic.Fixes)
+	require.NotEmpty(t, diagnostic.Fixes[0].Changes)
+	assert.Equal(t, `(tractorType?.code ?? "")`, diagnostic.Fixes[0].Changes[0].Insert)
 }
 
 func TestDataContract_AggregatesAgreeWithTheShipment(t *testing.T) {

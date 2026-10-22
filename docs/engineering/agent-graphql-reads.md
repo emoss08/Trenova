@@ -365,7 +365,9 @@ most 100, the server's page), and the resolver reads every row of a named record
 sent and one default page when no record is named (`base.RecordListLimit`). An unpaged list has
 no next page, so when the rows fill the limit the result's `note` says more may exist and how to
 narrow the call. Any other `Int` argument is a parameter only when the schema describes it
-(`caseYear`).
+(`caseYear`). A default that holds only when the call names no record goes in the spec's
+`unscoped`, not `defaults`: the safety events list reads what is still open across the
+organization when no worker is named, and one worker's record whole.
 
 **Reads alongside.** Where the repository tool returned records of another kind beside the list
 because the next call needs their ids (the checklist templates a person starts by hand, the review
@@ -377,6 +379,15 @@ the reader may read that kind (`AgentCeilings.Reads`), so a reader without it ge
 templates, as before, and a refusal is never charged to the budget. It reads at most 100 records
 and says so in `note` when there are more. Only an unpaged list reads alongside; a paged list's
 next call pages its own records.
+
+A read alongside may instead be an unpaged list keyed by the list's own arguments (a worker's
+recognitions beside their safety events). The generator proves that each of its variables is one
+the list's operation declares, of the same type, and the tool sends it the value the call sent,
+and makes the read only when the call names every one of them: with no worker named, the safety
+events list reads every worker's events and no recognitions. It takes no table input and is never
+cut short. A read alongside marked `scoped` is made only when the call names one of the list's
+records: the credential types come beside one worker's credentials, as the repository tool read
+them, and not beside what falls due across the organization.
 
 **Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
@@ -448,11 +459,20 @@ read with `errStaleCursor` ("call it again without after"), and `offset` with
 `TestGraphQLListTool_PagesThroughWhatTheRepositoryToolPagedThrough` walks every page of both paths
 and compares them.
 
+A person's table pages the same list again through the Desk's rows endpoint (see "A table that
+pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool handed out. Only that
+read sets `QueryToolParams.IncludeTotal`, which sends `includeTotalCount: true` and returns the
+connection's `totalCount` as `total`; the model's reads never pay for the count, and the
+parameter is not in any tool's schema.
+
 Three kinds of root field do not page this way, and their tools say so:
 
-- limit/offset fields (`carrierInvoiceMatches`, `ediCarrierInvoices`, `mySettlements`): offset
-  stays internal; the tool hands out `nextCursor` as an opaque encoded offset, so the model learns
-  one convention;
+- limit/offset fields (`carrierInvoiceMatches`, `ediCarrierInvoices`, `mySettlements`,
+  `workerCredentials`): offset stays internal; the tool hands out `nextCursor` as an opaque encoded
+  offset, so the model learns one convention. An unpaged list whose root takes both a `limit` and
+  an `offset` pages this way through `readOffsetWindow`: `offset` is never a parameter, `after`
+  is, the read asks for one row past the page, and the cursor is bound to the call's other
+  arguments as a connection cursor is;
 - unpaged lists: no `limit` or `after` parameter, and `hasMore` is never set; the list keyed by a
   record (above) returns every record the screen shows for it;
 - `DeskMemoryPage` (`items`, `next`): the tool reads `next` as the cursor.
@@ -552,6 +572,10 @@ Each module's PR:
 | Parties | `customer_list` | none | every field the table selects is Internal |
 | Parties | `location_list` | none | every field the table selects is Internal |
 | Parties | `carrier_list` | none | every field the table selects is Internal |
+| Parties | `customer_get` | none | reads `DeskCustomerCard`: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `location_get` | none | reads `DeskLocationCard`; every field it selects is Internal |
+| Parties | `carrier_get` | none | reads `DeskCarrierCard`, named in `reads.yml` because `DeskCarrierIntel` reads the same root; every field it selects is Internal |
+| Parties | `carrier_get_intelligence_event` | none at Internal | reads `CarrierIntelEvent`. `CarrierIntelEvent` had no kind (it is not named for `carrier_intelligence`), so the guard did not gate it and a reader below Internal got every field; it now declares `@kind(resource: "carrier_intelligence")`, so its fields follow `carrier_intelligence`'s Internal default on every read of the type, the carrier intelligence screens' included, as the repository tool gated them. Who acknowledged or resolved it shows the user reference view |
 | Equipment | `equipment_list_tractors` | none | a driver (`primaryWorker`, `secondaryWorker`) shows the worker reference view (the driver's name) to a reader who cannot read workers, and nothing else |
 | Equipment | `equipment_list_trailers` | none | every field the table selects is Internal |
 | Workforce | `worker_list_training_courses` | none | every field the table selects is Internal |
@@ -561,6 +585,10 @@ Each module's PR:
 | Workforce | `worker_list_performance_reviews` | none | reads `DeskWorkerPerformanceReviews`; every review field, the summary and rating comments among them, is Internal, as the repository row gated them |
 | Workforce | `worker_list_injuries` | none | reads `DeskWorkerInjuries`. `worker_injury` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; what the OSHA 300 log posts (case, classification, illness type, status, dates, days away or restricted, privacy flag, log name, claim status) is now Internal, and treatment, description, body part, harmful agent, location, claim details and notes stay Restricted, as the repository row gated the medical detail. A privacy case's `worker` is left out by the spec's `shape`, as the repository row left out its name |
 | Workforce | `worker_list_dot_tests` | `substance`, `result`, `collectionSite` | reads `DeskWorkerDotTests`. `worker_dot_test` declared no field sensitivities and defaulted to Internal, so results showed at Internal; by the owner's decision the test type, reason, status, dates and random-selection fields are Internal, and the result, substance, alcohol reading, collector, lab, MRO, specimen, notes and document are Restricted (49 CFR 40.321). This also changes what a person whose role reaches only Internal sees where sensitivity applies to them. The description says the substance and result can be withheld |
+| Workforce | `worker_list_leave_cases` | none | reads `DeskWorkerLeaveCases`. `WorkerLeaveCase` had no kind (it is not named for `worker_leave`), so the guard did not gate it; it now declares `@kind(resource: "worker_leave")`. `worker_leave` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; that a worker is on leave, of what kind, when, where the certification stands and the days taken are now Internal, and the reason, notes, certificate, military caregiver flag and eligibility hours stay Restricted, as the repository row gated the reason. The read is gated by `worker_leave` read through the root's own check and the `@kind`, not by the worker family, so it stays correct when `worker_leave` stops inheriting from worker read |
+| Workforce | `worker_list_employment_verifications` | `hadDrugAlcoholViolations` | reads `DeskWorkerEmploymentVerifications`. `WorkerEmploymentVerification` had no kind; it now declares `@kind(resource: "qualification")`, and `driverQualificationFile` declares `@authorizes(resource: "qualification")`, so the verifications its file carries are that root's own records. `qualification` declared no field sensitivities; the employer, the dates, status, method, follow-ups and accident history are now Internal, and the employer's contact details, the driver's drug and alcohol history, the findings and notes stay Restricted. The type gains `worker`, so an organization-wide list names each driver by the worker reference view, as the repository row did. `qualification` takes no `ParentResource`: the permission engine resolves a child through its parent's grant, so worker read would have granted every qualification record |
+| Workforce | `worker_list_safety_events` | none | reads `DeskWorkerSafetyEvents`, with each worker's recognitions read alongside (`DeskWorkerRecognitions`) when the call names a worker. `worker_safety_event` and `worker_recognition` declare no field sensitivities and default to Internal, as the repository row read them. Each event gains `violations` (a loader, one query per page of events), which the repository tool read beside the events; `WorkerSafetyViolation` now declares `@kind(resource: "worker_safety_event")`, so its fields follow the event's. With no worker the list reads the events still open across the organization, newest first, as the repository tool did (the spec's `unscoped` default); `openOnly: false` lists the closed ones too, and one worker's record is read whole |
+| Workforce | `worker_list_credentials` | none | reads `DeskWorkerCredentialList`, with the active credential types read alongside (`DeskWorkerCredentialTypes`) when the call names a worker. `workerCredentials` takes an optional worker and the repository tool's filters (`expiringWithinDays`, `includeExpired`, `credentialTypeCode`, `requiredOnly`, `limit`), read by `WorkerCredentialService.List`: one worker's credentials, or with no worker or an expiry window the active ones falling due, soonest first, walked in the query. The window counts days from now, as the screen's expiry forecast does and the description says, where the repository tool counted calendar days in the caller's zone: GraphQL carries no caller's day. It pages by cursor over the root's `limit` and `offset`, as the repository tool paged by offset. `worker_credential` defaulted to Restricted with only `number` declared (Confidential), so every field outside its reference view would be withheld at Internal; what a credential is, whose, its dates, health, issuer, verification and whether a scan is on file are now Internal, and the notes and archive reason stay Restricted. The operation never selects `number`, which the repository tool withheld too |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
 
 None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
@@ -653,7 +681,10 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   it says what to loosen.
 - **Gets.** A get returns the operation's record, shaped the same way, with
   `withheldByAccess`. A get for several ids (`invoice_get`) runs one read per id, at most 10
-  concurrently, under one span each.
+  concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
+  parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
+  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, and a card
+  whose root returns nothing is a missing record, not an empty one.
 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by
@@ -696,6 +727,11 @@ For kinds that declare an "own" or "team" scope (shipments, orders, invoices, wo
 module's test also reads as a person narrowed by `readscope` and asserts the GraphQL path returns
 the rows the repository path returned for that person
 (`TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths` for workers).
+
+A converted get is held to the same on Postgres by
+`TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity`: it reads each of the tenant's
+records with nothing withheld at Internal, refuses the other tenant's, and at Public withholds
+what its row names. `TestConvertedGets_RefuseExactlyWhatAuthorizeRefuses` covers refusal.
 
 Every list converted by a spec is listed once, in `graphQLListSpecs`, which registers them and
 which the tests range over: `TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity`

@@ -119,7 +119,7 @@ export function ExplainPanel({
             return (
               <div
                 key={statement.index}
-                onMouseEnter={() => onHover({ from: statement.start, to: statement.end })}
+                onMouseEnter={() => onHover({ from: statement.from, to: statement.to })}
                 onMouseLeave={() => onHover(null)}
                 className="hover:bg-surface-hover flex gap-2.5 rounded-sm px-2.5 py-1.5"
               >

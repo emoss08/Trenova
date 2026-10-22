@@ -12,7 +12,8 @@ source:
 agent:
   name: Billing assistant
   tools: [agent_run_script, inbox_get_inbound_message, customer_get, customer_send_email]
-  codeMode: true
+  provider:
+    scripts: true
 responses:
   inbox_get_inbound_message:
     id: imsg_01JREDTEAMEMA1100000000000

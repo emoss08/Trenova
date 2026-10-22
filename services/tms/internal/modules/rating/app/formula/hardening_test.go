@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
+	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,20 +28,14 @@ func setupServiceWithResolver(
 	t.Helper()
 
 	registry := newTestRegistry(t)
-	eng, err := engine.NewEngine(engine.Params{
+
+	return formula.NewService(formula.ServiceParams{
+		Logger:   zap.NewNop(),
 		Registry: registry,
-		Resolver: res,
-		EnvBuilder: engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
+		Environment: environment.NewBuilder(environment.Params{
 			Registry: registry,
 			Resolver: res,
 		}),
-	})
-	require.NoError(t, err)
-
-	return formula.NewService(formula.ServiceParams{
-		Logger:         zap.NewNop(),
-		Registry:       registry,
-		Engine:         eng,
 		Resolver:       res,
 		VersionRepo:    &stubVersionRepo{},
 		RateMatrixRepo: matrices,
@@ -65,6 +60,9 @@ func TestService_Rate_APanickingResolverIsAValidationErrorNotACrash(t *testing.T
 	assert.True(t, errortypes.IsError(err), "a 422 the author can act on, not a 500")
 	assert.Contains(t, err.Error(), "hasHazmat")
 	assert.NotContains(t, err.Error(), "reflect")
+	var unresolved *formulaerrors.UnresolvedFieldError
+	require.ErrorAs(t, err, &unresolved)
+	assert.Equal(t, []string{"hasHazmat"}, unresolved.Fields)
 
 	resp, err := svc.Rate(t.Context(), &formula.RateRequest{
 		Template: activeTemplate(`totalStops + 10`),
@@ -74,29 +72,32 @@ func TestService_Rate_APanickingResolverIsAValidationErrorNotACrash(t *testing.T
 	assert.Equal(t, "10", resp.Amount.String())
 }
 
-func TestService_ErrorsNameNoGoTypes(t *testing.T) {
+func TestService_RefusalsNameNoGoTypes(t *testing.T) {
 	t.Parallel()
 
 	svc := setupService(t)
 
 	cases := map[string]string{
-		"a list result":                     `stops`,
-		"a text result":                     `"85"`,
-		"unresolved fields beside an error": `stops * 2`,
+		"a list result":        `stops`,
+		"a text result":        `"85"`,
+		"arithmetic on a list": `stops * 2`,
 	}
 
 	for name, expression := range cases {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
+			preview, err := svc.Preview(t.Context(), &formula.PreviewRequest{
 				Expression: expression,
 				Entity:     &shipment.Shipment{},
 				SchemaID:   "shipment",
 			})
-			require.Error(t, err)
+			require.NoError(t, err)
+			require.False(t, preview.Valid())
+			require.NotEmpty(t, preview.Diagnostics)
+			message := preview.Diagnostics[0].Message.String()
 			for _, internal := range []string{"*shipment.", "shipment.Shipment", "interface {}", "[]"} {
-				assert.NotContains(t, err.Error(), internal)
+				assert.NotContains(t, message, internal)
 			}
 		})
 	}
@@ -128,8 +129,16 @@ func TestService_Rate_TheReceiptCarriesTheRateTableStamp(t *testing.T) {
 		Entity:   shippedOnMarchFirst(),
 	})
 	require.NoError(t, err)
-	require.NotEmpty(t, resp.Receipt.Lookups)
+	require.Len(t, resp.Receipt.Lookups, 1)
 	assert.Equal(t, "3:7:1700000000", resp.Receipt.RateTableStamp)
+	lookup := resp.Receipt.Lookups[0]
+	assert.Equal(t, formula.MainScope, lookup.Scope)
+	assert.Equal(t, "lookup", lookup.Function)
+	assert.Equal(t, "class_rates", lookup.Table)
+	assert.Equal(t, []any{"85"}, lookup.Keys)
+	assert.Equal(t, "20", lookup.Value.String())
+	require.NotNil(t, lookup.Match)
+	assert.Equal(t, "Class85", lookup.Match.MatchedKey, "a freight class reads as its NMFC class")
 
 	template.Expression = `25`
 	resp, err = svc.Rate(t.Context(), &formula.RateRequest{

@@ -2,6 +2,7 @@ package mocks
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
@@ -192,6 +193,22 @@ func (d *DenyResourcesPermissionEngine) Check(
 	}
 
 	return d.AllowAllPermissionEngine.Check(ctx, req)
+}
+
+func (d *DenyResourcesPermissionEngine) CheckBatch(
+	_ context.Context,
+	req *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
+	results := make([]permissionports.PermissionCheckResult, len(req.Checks))
+	for i, check := range req.Checks {
+		allowed := !slices.Contains(d.Denied, check.Resource)
+		results[i] = permissionports.PermissionCheckResult{Allowed: allowed}
+		if allowed {
+			results[i].DataScope = permission.DataScopeOrganization
+		}
+	}
+
+	return &permissionports.BatchPermissionCheckResult{Results: results}, nil
 }
 
 var _ permissionports.PermissionEngine = (*FailingPermissionEngine)(nil)

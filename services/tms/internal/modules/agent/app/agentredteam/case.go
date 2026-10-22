@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"gopkg.in/yaml.v3"
 )
 
@@ -94,12 +95,23 @@ type AgentSpec struct {
 	Autonomy     string   `yaml:"autonomy"`
 	Unattended   bool     `yaml:"unattended"`
 	Extensions   bool     `yaml:"extensions"`
-	CodeMode     bool     `yaml:"codeMode"`
-	// CodeModeWrites lets the case's scripts prepare changes, as the bench
-	// forces it for a batch-write case.
-	CodeModeWrites bool `yaml:"codeModeWrites"`
+	// Provider is the code-mode setting of the chat provider that answers
+	// the case, as an administrator sets it in AI control.
+	Provider ProviderSpec `yaml:"provider"`
 	// Denied are the permissions, as resource:operation, the person lacks.
 	Denied []string `yaml:"denied"`
+}
+
+// ProviderSpec is a chat provider's script settings: Scripts lets its model
+// answer with a read-only script, ScriptWrites lets those scripts prepare
+// writes proposed as one batch.
+type ProviderSpec struct {
+	Scripts      bool `yaml:"scripts"`
+	ScriptWrites bool `yaml:"scriptWrites"`
+}
+
+func (p ProviderSpec) settings() aiprovider.ScriptSettings {
+	return aiprovider.ScriptSettings{Scripts: p.Scripts, Writes: p.Scripts && p.ScriptWrites}
 }
 
 type Step struct {

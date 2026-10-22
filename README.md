@@ -75,7 +75,7 @@ docs/                     Engineering guides (indexed in docs/engineering/README
 
 ## Quick start (local development)
 
-Prerequisites: Go 1.26+, Node.js with pnpm, Docker, and [Task](https://taskfile.dev/).
+Prerequisites: Go 1.26+, Node.js 26 (`client/.nvmrc`) with pnpm, Docker, and [Task](https://taskfile.dev/).
 
 ```bash
 git clone https://github.com/emoss08/trenova.git

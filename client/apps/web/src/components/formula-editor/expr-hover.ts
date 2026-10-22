@@ -1,10 +1,12 @@
-import { translate } from "@trenova/shared/i18n/runtime";
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
+import { translateMessage } from "@trenova/shared/i18n/message";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { formulaIdentifier, type FormulaIdentifier } from "@trenova/shared/rules/formula";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type { FormulaValueSource } from "@trenova/shared/types/formula-template";
-import { normalizeType, typeWords } from "./expr-check";
-import { collectIdentifierTokens, letBindings } from "./expr-lint";
 import { lostFocus } from "./expr-signature";
-import { isKnownFunction, type KnownIdentifiers } from "./known-identifiers";
+import { itemFieldDoc, type KnownIdentifiers, type VariableDoc } from "./known-identifiers";
 
 export type HoverVariable = {
   name: string;
@@ -12,9 +14,7 @@ export type HoverVariable = {
   source: FormulaValueSource;
 };
 
-export type HoveredIdentifier = { name: string; from: number; to: number; isCall: boolean };
-
-const SOURCE_WORDS: Record<FormulaValueSource, string> = {
+const SOURCE_WORDS: Record<FormulaValueSource, string> = defineLabels({
   field: "from shipment",
   computed: "computed from shipment",
   input: "your input",
@@ -22,20 +22,20 @@ const SOURCE_WORDS: Record<FormulaValueSource, string> = {
   default: "declared default",
   sample: "sample data",
   provided: "market data feed",
-};
+});
 
-/** The identifier under a document position, if the position is on one. */
-export function findHoveredIdentifier(doc: string, pos: number): HoveredIdentifier | null {
-  for (const token of collectIdentifierTokens(doc)) {
-    if (pos >= token.from && pos < token.to) {
-      return { name: token.name, from: token.from, to: token.to, isCall: token.isCall };
-    }
-  }
-  return null;
+/** The identifier under a document position and what it is, as the rules module reads it. */
+export function findHoveredIdentifier(
+  rules: RulesRuntime,
+  doc: string,
+  pos: number,
+  known: KnownIdentifiers,
+): FormulaIdentifier | null {
+  return formulaIdentifier(rules, { source: doc, position: pos, schema: known.schema });
 }
 
 function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return "empty";
+  if (value === null || value === undefined) return translate("empty");
   if (typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number" || typeof value === "boolean" || typeof value === "bigint") {
     return String(value);
@@ -54,8 +54,44 @@ function formatValue(value: unknown): string {
 
 /** One line: what the variable was in the last preview and where it came from. */
 export function formatHoverValue(variable: HoverVariable): string {
-  return `${variable.name} = ${formatValue(variable.value)} (${SOURCE_WORDS[variable.source]})`;
+  return translate(
+    "{0} = {1} ({2})",
+    variable.name,
+    formatValue(variable.value),
+    SOURCE_WORDS[variable.source],
+  );
 }
+
+/** What a schema type is called on the card. */
+function typeWords(type: string): string {
+  switch (type.toLowerCase()) {
+    case "number":
+    case "integer":
+    case "decimal":
+      return translate("a number");
+    case "string":
+    case "text":
+      return translate("text");
+    case "boolean":
+      return translate("true/false");
+    case "date":
+    case "datetime":
+      return translate("a date");
+    case "array":
+    case "list":
+      return translate("a list");
+    case "object":
+      return translate("a record");
+    default:
+      return translate("a value");
+  }
+}
+
+const POINTER_WORDS: Record<string, string> = defineLabels({
+  "#": "The item the predicate is looking at",
+  "#index": "The item's position in the list, from 0",
+  "#acc": "What reduce has added up so far",
+});
 
 function element(tag: string, className: string, text?: string): HTMLElement {
   const node = document.createElement(tag);
@@ -64,11 +100,39 @@ function element(tag: string, className: string, text?: string): HTMLElement {
   return node;
 }
 
-/** The card drawn for a name: what it is, what it holds on the preview load, and where that came from. */
+function tag(text: string, tone?: "warn" | "bad"): HTMLElement {
+  // i18n-ignore: CSS class names, not text
+  const className = tone ? `cm-expr-hover-tag cm-expr-hover-tag-${tone}` : "cm-expr-hover-tag";
+  return element("span", className, text);
+}
+
+function variableBody(card: HTMLElement, head: HTMLElement, doc: VariableDoc) {
+  head.appendChild(tag(typeWords(doc.type)));
+  if (doc.custom) head.appendChild(tag(translate("input")));
+  if (doc.nullable) head.appendChild(tag(translate("can be empty"), "warn"));
+  card.appendChild(head);
+  if (doc.description) card.appendChild(element("div", "cm-expr-hover-body", doc.description));
+  if (doc.enum && doc.enum.length > 0) {
+    card.appendChild(
+      element("div", "cm-expr-hover-body", translate("One of: {0}", doc.enum.join(", "))),
+    );
+  }
+}
+
+function unknownBody(card: HTMLElement, head: HTMLElement, text: string) {
+  head.appendChild(tag(translate("unknown"), "bad"));
+  card.appendChild(head);
+  card.appendChild(element("div", "cm-expr-hover-body", text));
+}
+
+/**
+ * The card drawn for a name: what it is, what it holds on the preview load,
+ * and where that came from. Null when there is nothing to say, such as a name
+ * the schema has not arrived to vouch for.
+ */
 export function renderHoverCard(
-  hovered: HoveredIdentifier,
+  hovered: FormulaIdentifier,
   known: KnownIdentifiers,
-  bindings: ReadonlySet<string>,
   value: HoverVariable | undefined,
 ): HTMLElement | null {
   const card = element("div", "cm-expr-hover");
@@ -76,81 +140,74 @@ export function renderHoverCard(
   const name = element("code", "cm-expr-hover-name", hovered.name);
   head.appendChild(name);
 
-  const root = hovered.name.split(".")[0];
-  const fn = hovered.isCall
-    ? known.functions.find((item) => item.name === hovered.name)
-    : undefined;
-  const doc = known.variables.find((item) => item.name === hovered.name);
-
-  if (hovered.isCall) {
-    if (fn) {
-      name.textContent = fn.signature;
-      head.appendChild(element("span", "cm-expr-hover-tag", translate("function")));
-      card.appendChild(head);
-      if (fn.description) card.appendChild(element("div", "cm-expr-hover-body", fn.description));
-      if (fn.example) card.appendChild(element("code", "cm-expr-hover-example", fn.example));
+  switch (hovered.kind) {
+    case "function": {
+      const fn = known.callables.get(hovered.name);
+      if (fn) {
+        name.textContent = fn.signature;
+        head.appendChild(tag(translate("function")));
+        card.appendChild(head);
+        card.appendChild(element("div", "cm-expr-hover-body", translateMessage(fn.description)));
+        card.appendChild(element("code", "cm-expr-hover-example", translateMessage(fn.example)));
+        return card;
+      }
+      const disabled = known.disabled.get(hovered.name);
+      unknownBody(
+        card,
+        head,
+        disabled
+          ? translateMessage(disabled.message)
+          : translate("Not a formula function. Pick one from the reference."),
+      );
       return card;
     }
-    if (isKnownFunction(known, hovered.name)) {
-      head.appendChild(element("span", "cm-expr-hover-tag", translate("built-in function")));
+    case "method":
+      head.appendChild(tag(translate("method")));
       card.appendChild(head);
       return card;
+    case "let":
+      head.appendChild(tag(translate("let, this formula's own")));
+      card.appendChild(head);
+      return card;
+    case "pointer": {
+      const words = POINTER_WORDS[hovered.name];
+      card.appendChild(head);
+      if (words) card.appendChild(element("div", "cm-expr-hover-body", words));
+      return card;
     }
-    head.appendChild(
-      element("span", "cm-expr-hover-tag cm-expr-hover-tag-bad", translate("unknown")),
-    );
-    card.appendChild(head);
-    card.appendChild(
-      element(
-        "div",
-        "cm-expr-hover-body",
-        translate("Not a formula function. Pick one from the reference."),
-      ),
-    );
-    return card;
-  }
-
-  if (bindings.has(root)) {
-    head.appendChild(element("span", "cm-expr-hover-tag", translate("let, this formula's own")));
-    card.appendChild(head);
-  } else if (doc) {
-    head.appendChild(element("span", "cm-expr-hover-tag", typeWords(normalizeType(doc.type))));
-    if (doc.custom) head.appendChild(element("span", "cm-expr-hover-tag", translate("input")));
-    if (doc.nullable) {
-      head.appendChild(
-        element("span", "cm-expr-hover-tag cm-expr-hover-tag-warn", translate("can be empty")),
-      );
+    case "field": {
+      const doc = itemFieldDoc(known, hovered.name);
+      if (!doc) return null;
+      variableBody(card, head, doc);
+      return card;
     }
-    card.appendChild(head);
-    if (doc.description) card.appendChild(element("div", "cm-expr-hover-body", doc.description));
-    if (doc.enum && doc.enum.length > 0) {
-      card.appendChild(
-        element("div", "cm-expr-hover-body", translate("One of: {0}", doc.enum.join(", "))),
-      );
-    }
-  } else if (known.variableRoots.has(root)) {
-    head.appendChild(element("span", "cm-expr-hover-tag", translate("record")));
-    card.appendChild(head);
-  } else {
-    head.appendChild(
-      element("span", "cm-expr-hover-tag cm-expr-hover-tag-bad", translate("unknown")),
-    );
-    card.appendChild(head);
-    card.appendChild(
-      element(
-        "div",
-        "cm-expr-hover-body",
+    case "unknown":
+      unknownBody(
+        card,
+        head,
         translate(
           "Not a shipment field or one of this template's inputs. Declare it under Inputs, or pick a field from the reference.",
         ),
-      ),
-    );
-    return card;
+      );
+      return card;
+    default: {
+      const doc = known.variables.find((item) => item.name === hovered.name);
+      if (doc) {
+        variableBody(card, head, doc);
+      } else if (known.ready && known.variableRoots.has(hovered.name.split(".")[0])) {
+        head.appendChild(tag(translate("record")));
+        card.appendChild(head);
+      } else {
+        return null;
+      }
+    }
   }
 
   if (value) {
     const line = element("div", "cm-expr-hover-value");
-    line.appendChild(element("code", "cm-expr-hover-value-text", `= ${formatValue(value.value)}`));
+    line.appendChild(
+      element("code", "cm-expr-hover-value-text", translate("= {0}", formatValue(value.value))),
+    );
     line.appendChild(element("span", "cm-expr-hover-source", SOURCE_WORDS[value.source]));
     card.appendChild(line);
   }
@@ -164,20 +221,16 @@ export function renderHoverCard(
  * the editor's focus, so it never floats over a dialog.
  */
 export function createExprHover(
+  getRules: () => RulesRuntime,
   getValues: () => ReadonlyMap<string, HoverVariable>,
   getKnown: () => KnownIdentifiers,
 ) {
   return hoverTooltip(
     (view, pos): Tooltip | null => {
-      const doc = view.state.doc.toString();
-      const hovered = findHoveredIdentifier(doc, pos);
+      const known = getKnown();
+      const hovered = findHoveredIdentifier(getRules(), view.state.doc.toString(), pos, known);
       if (!hovered) return null;
-      const card = renderHoverCard(
-        hovered,
-        getKnown(),
-        letBindings(doc),
-        getValues().get(hovered.name),
-      );
+      const card = renderHoverCard(hovered, known, getValues().get(hovered.name));
       if (!card) return null;
       return {
         pos: hovered.from,

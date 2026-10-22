@@ -12,11 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -107,11 +105,8 @@ func newGetDetentionOccurrenceTool(
 	}, permissions)
 }
 
-func newGetCarrierIntelEventTool(
-	repo carrierintelports.CarrierIntelEventRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
+func carrierIntelEventGetSpec() getSpec {
+	return getSpec{
 		name:   "carrier_get_intelligence_event",
 		entity: "carrier intelligence event",
 		searchTerms: []string{
@@ -127,18 +122,7 @@ func newGetCarrierIntelEventTool(
 		paramName: "eventId",
 		idSource: "from carrier_list_intelligence_events, the page you are on, this run's subject " +
 			"or a mentioned record",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			events, err := repo.GetByIDs(ctx, tenant, []pulid.ID{id})
-			if err != nil {
-				return nil, err
-			}
-			if len(events) == 0 {
-				return nil, errortypes.NewNotFoundError("Carrier intelligence event not found")
-			}
-
-			return events[0], nil
-		},
-	}, permissions)
+	}
 }
 
 func newGetServiceFailureTool(

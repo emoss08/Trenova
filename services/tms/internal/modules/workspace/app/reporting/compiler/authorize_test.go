@@ -250,3 +250,19 @@ func TestAuthorize_AProtectedMarginIsWithheldOnAgreementsAndVersions(t *testing.
 		requireAuthorizationError(t, err, "in the Margins protected field group")
 	}
 }
+
+func TestAuthorize_EmploymentEventsNeedTheirOwnReadBesideAWorkerRead(t *testing.T) {
+	t.Parallel()
+
+	c := newTestCompiler(withoutGrant(allowAllEngine(), "worker_employment_event"))
+
+	_, err := c.Compile(t.Context(), newRequest(&report.Definition{
+		IRVersion: report.CurrentIRVersion,
+		Entity:    "worker_employment_event",
+		Columns: []report.ColumnSpec{
+			dim("c_kind", "kind"),
+			dim("c_first", "firstName", "worker"),
+		},
+	}))
+	requireAuthorizationError(t, err, "you do not have read access to Employment Events")
+}

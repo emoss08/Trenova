@@ -5,7 +5,7 @@ import {
   tenantInfoSchema,
   versionSchema,
 } from "./helpers";
-import { chargeAllocationSchema, chargeAllocationsRefinement } from "./shipment";
+import { chargeAllocationSchema } from "./shipment";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const orderStatusSchema = z.enum([
@@ -47,19 +47,20 @@ export type Order = z.infer<typeof orderSchema>;
 // Raw form values (before zod transforms) — amounts may still be strings here.
 export type OrderFormValues = z.input<typeof orderSchema>;
 
-export const orderChargeFormSchema = z
-  .object({
-    description: z
-      .string()
-      .trim()
-      .min(1, { error: () => translate("Description is required") }),
-    amount: z
-      .number({ error: () => translate("Amount is required") })
-      .positive({ error: () => translate("Amount must be greater than zero") }),
-    allocations: z.array(chargeAllocationSchema).default([]),
-  })
-  .superRefine((charge, ctx) => {
-    chargeAllocationsRefinement(ctx, charge.allocations, charge.amount, ["allocations"]);
-  });
+/**
+ * An order charge as its dialog edits it. Whether its allocation rows add up is checked by the
+ * rules module (`withChargeAllocations` in `@trenova/shared/rules/allocation-form`), which the
+ * dialog's resolver adds once the module has loaded.
+ */
+export const orderChargeFormSchema = z.object({
+  description: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Description is required") }),
+  amount: z
+    .number({ error: () => translate("Amount is required") })
+    .positive({ error: () => translate("Amount must be greater than zero") }),
+  allocations: z.array(chargeAllocationSchema).default([]),
+});
 
 export type OrderChargeFormValues = z.infer<typeof orderChargeFormSchema>;

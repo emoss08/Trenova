@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-
-	"github.com/shopspring/decimal"
 )
 
 // MaxBandEdges bounds an explicit boundary list. Banding exists to turn a
@@ -128,36 +126,3 @@ func (b *Band) IsLowest(value float64) bool {
 	}
 	return value <= b.Edges[0]
 }
-
-func (b *Band) clone() *Band {
-	if b == nil {
-		return nil
-	}
-	cloned := &Band{Width: b.Width}
-	if len(b.Edges) > 0 {
-		cloned.Edges = append([]float64(nil), b.Edges...)
-	}
-	return cloned
-}
-
-// bandLabel renders a grouped lower bound as the range it covers, formatting
-// both ends through the column's own display contract so a banded currency
-// column reads "$0 – $500" and a banded duration reads "0:00 – 2:00".
-func (r *Resolved) bandLabel(value float64) string {
-	lower, upper, bounded := r.Band.Bounds(value)
-	if !bounded {
-		return r.numeric(decimal.NewFromFloat(lower)) + "+"
-	}
-
-	// A trailing unit covers the whole range, so it is written once: "10,000 –
-	// 15,000 lbs", not "10,000 lbs – 15,000 lbs". A leading symbol leads each
-	// end, which is how money ranges are conventionally written.
-	lead := *r
-	lead.Suffix = ""
-
-	return lead.numeric(decimal.NewFromFloat(lower)) +
-		rangeSeparator +
-		r.numeric(decimal.NewFromFloat(upper))
-}
-
-const rangeSeparator = " – "

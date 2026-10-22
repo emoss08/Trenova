@@ -25,6 +25,7 @@ type JobTemplate struct {
 	Bundles        []string         `json:"bundles"`
 	MaxSensitivity FieldSensitivity `json:"maxSensitivity"`
 	ReadEverything bool             `json:"readEverything,omitempty"`
+	ReadExcept     []Resource       `json:"readExcept,omitempty"`
 }
 
 func Bundles() []Bundle {
@@ -68,6 +69,9 @@ func (r *Registry) TemplateGrants(template JobTemplate) []*ResourcePermission {
 
 	if template.ReadEverything {
 		for _, def := range r.All() {
+			if slices.Contains(template.ReadExcept, Resource(def.Resource)) {
+				continue
+			}
 			if slices.Contains(r.GetOperationsForResource(def.Resource), OpRead) {
 				add(def.Resource, []Operation{OpRead}, DataScopeOrganization)
 			}

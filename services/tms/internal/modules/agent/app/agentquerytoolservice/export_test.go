@@ -20,7 +20,6 @@ var (
 )
 
 var (
-	ErrStaleCursor        = errStaleCursor
 	ErrOffsetOnCursorList = errOffsetOnCursorList
 )
 
@@ -76,6 +75,55 @@ func ConvertedListTool(
 	for idx := range specs {
 		if specs[idx].name == name {
 			return newGraphQLReadTool(&specs[idx], reader, permissions)
+		}
+	}
+
+	return nil, errGraphQLReadUnbound
+}
+
+// ConvertedGetNames are the gets that read through GraphQL.
+func ConvertedGetNames() []string {
+	specs := graphQLGetSpecs()
+	names := make([]string, 0, len(specs))
+	for idx := range specs {
+		names = append(names, specs[idx].name)
+	}
+
+	return names
+}
+
+// ConvertedGetResource is the resource a converted get reads.
+func ConvertedGetResource(name string) permission.Resource {
+	specs := graphQLGetSpecs()
+	for idx := range specs {
+		if specs[idx].name == name {
+			return specs[idx].resource
+		}
+	}
+
+	return ""
+}
+
+// ConvertedGetCall is the call a converted get takes for that id.
+func ConvertedGetCall(tool agentports.AgentQueryTool, id pulid.ID) map[string]any {
+	get, ok := tool.(*graphQLGetTool)
+	if !ok {
+		return nil
+	}
+
+	return map[string]any{get.spec.paramName: id.String()}
+}
+
+// ConvertedGetTool is the registered converted get of that name.
+func ConvertedGetTool(
+	name string,
+	reader agentports.GraphQLReader,
+	permissions permissionports.PermissionEngine,
+) (agentports.AgentQueryTool, error) {
+	specs := graphQLGetSpecs()
+	for idx := range specs {
+		if specs[idx].name == name {
+			return newGraphQLGetTool(&specs[idx], reader, permissions)
 		}
 	}
 

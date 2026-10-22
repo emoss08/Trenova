@@ -1595,6 +1595,26 @@ func init() {
 				FieldMapKey: "platform",
 			},
 			{
+				Name:        "advisorEnabled",
+				FieldMapKey: "advisorEnabled",
+			},
+			{
+				Name:        "advisorModel",
+				FieldMapKey: "advisorModel",
+			},
+			{
+				Name:        "advisorRefusal",
+				FieldMapKey: "advisorRefusal",
+			},
+			{
+				Name:        "scripts",
+				FieldMapKey: "scripts",
+			},
+			{
+				Name:        "scriptWrites",
+				FieldMapKey: "scriptWrites",
+			},
+			{
 				Name:        "platformSettings",
 				FieldMapKey: "platformSettings",
 			},
@@ -29997,6 +30017,13 @@ func init() {
 				FieldMapKey: "workerId",
 			},
 			{
+				Name:        "worker",
+				FieldMapKey: "businessUnitId",
+				Relation: &RelationSpec{
+					Target: &WorkerSpec,
+				},
+			},
+			{
 				Name:        "employerName",
 				FieldMapKey: "employerName",
 			},
@@ -31574,6 +31601,10 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
+			},
+			{
+				Name:    "violations",
+				Special: "violations",
 			},
 		},
 	}

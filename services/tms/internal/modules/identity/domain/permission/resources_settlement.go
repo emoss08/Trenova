@@ -307,14 +307,28 @@ func (r *Registry) registerSettlementResources() {
 		DisplayName: "Driver Portal",
 		Description: "Driver portal (Dash) access management and invitations",
 		Category:    "Payroll",
-		Operations: append(slices.Clone(standardOps),
-			OperationDefinition{
+		// Inviting a driver gives them a sign-in, so it is granted on its own
+		// rather than reached through a worker grant.
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "View",
+				Description: "See whether a driver is on the portal and the invitations sent",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Invite",
+				Description: "Invite a driver to the portal",
+			},
+			{
 				Operation:   OpCancel,
 				DisplayName: "Revoke",
 				Description: "Revoke a driver's portal access",
 			},
-		),
-		ParentResource:     ResourceWorker.String(),
+		},
 		DefaultSensitivity: SensitivityRestricted,
+		Scopes: []ScopeSupport{
+			{Scope: DataScopeTeam, EnforcedBy: ScopeEnforcedByApplication},
+		},
 	})
 }

@@ -226,16 +226,18 @@ func TestConfirmGate_RechecksARecommendedModelOnItsConfiguredCell(t *testing.T) 
 	held := ConfirmGate(gate, run1, codeModeTrials(low, pairs, cheaperScript))
 	require.Len(t, held.CodeMode, 1)
 	assert.True(t, held.CodeMode[0].Holds, held.CodeMode[0].Run2.Reason)
-	assert.Contains(t, held.CodeMode[0].Entry, "model: claude-"+low)
-	assert.Contains(t, held.Render(), "Proposed entries for codemode/models.yaml")
+	assert.Contains(t, held.Render(), "## Recommended settings")
+	assert.Contains(t, held.Render(), "Scripts on",
+		"a model that holds is a recommendation to turn on Scripts for its provider")
+	assert.Contains(t, settingsOf(held.Recommendations(), "Scripts"), "on")
 
 	regressed := ConfirmGate(gate, run1, codeModeTrials(low, pairs, codeModeOutcome{
 		workDiscrete: 4, workScript: 2, workDiscreteCost: "0.40", workScriptCost: "0.10",
 		controlScript: 4,
 	}))
 	assert.False(t, regressed.CodeMode[0].Holds)
-	assert.Empty(t, regressed.CodeMode[0].Entry)
-	assert.Contains(t, regressed.Render(), "No model is proposed")
+	assert.NotContains(t, settingsOf(regressed.Recommendations(), "Scripts"), "on")
+	assert.NotContains(t, regressed.Render(), "Scripts on")
 }
 
 func TestGateSpec_RefusesACodeModeRuleItCannotApply(t *testing.T) {
@@ -300,6 +302,17 @@ func TestConfirmGate_RechecksAModelOnceWhenTwoOfItsCellsAreRecommended(t *testin
 		result.ProviderKind = "AnthropicMessages"
 	}
 	confirmed := ConfirmGate(gate, run1, run2)
-	require.Len(t, confirmed.CodeMode, 1, "one ledger entry per model")
+	require.Len(t, confirmed.CodeMode, 1, "one recommendation per model")
 	assert.Equal(t, low, confirmed.CodeMode[0].Run1, "the first recommended cell")
+}
+
+func settingsOf(recommendations []SettingRecommendation, setting string) []string {
+	values := make([]string, 0, len(recommendations))
+	for idx := range recommendations {
+		if recommendations[idx].Setting == setting {
+			values = append(values, recommendations[idx].Value)
+		}
+	}
+
+	return values
 }

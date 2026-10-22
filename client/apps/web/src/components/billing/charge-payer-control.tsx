@@ -8,6 +8,7 @@ import { selectOptionMetaString } from "@/lib/select-option-meta";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { cn } from "@trenova/shared/lib/utils";
+import type { DecimalInput } from "@trenova/shared/rules/wire";
 import type { ChargeAllocation } from "@trenova/shared/types/shipment";
 import { SplitIcon, User01Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
@@ -16,7 +17,13 @@ import { type FieldValues, useForm, useFormContext, useWatch } from "react-hook-
 export type ChargePayerControlProps = {
   /** Path of the charge's allocation array, e.g. `additionalCharges.2.allocations`. */
   name: string;
-  chargeAmount: number | null;
+  /** What the charge comes to; null when it is not known here. */
+  chargeAmount: DecimalInput;
+  /**
+   * Whether the charge's rows add up to the whole charge, as `allocationRemainders` reports it.
+   * The parent measures every charge it lists in one call and passes each answer down.
+   */
+  complete: boolean;
   percentOnly?: boolean;
   /** The shipment's own payer: who is billed when the charge has no rows. */
   defaultPayer: { id: string; label: string } | null;
@@ -26,11 +33,6 @@ export type ChargePayerControlProps = {
   className?: string;
 };
 
-function isWholeCharge(row: ChargeAllocation, chargeAmount: number | null): boolean {
-  if (row.method === "Percent") return Number(row.percent) === 100;
-  return chargeAmount != null && Math.abs(Number(row.amount) - chargeAmount) < 0.005;
-}
-
 /**
  * Who pays one charge, and the one place to change it. The common case is a
  * single pick: the whole charge goes to that customer. Sharing a charge between
@@ -39,6 +41,7 @@ function isWholeCharge(row: ChargeAllocation, chargeAmount: number | null): bool
 export function ChargePayerControl({
   name,
   chargeAmount,
+  complete,
   percentOnly = false,
   defaultPayer,
   splitTitle,
@@ -54,7 +57,8 @@ export function ChargePayerControl({
   const [open, setOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
 
-  const single = rows.length === 1 && isWholeCharge(rows[0], chargeAmount) ? rows[0] : null;
+  // One row that adds up to the whole charge bills it to that payer; anything else is a split.
+  const single = rows.length === 1 && complete ? rows[0] : null;
   const picker = useForm<{ payerId: string }>({
     values: { payerId: single?.billToCustomerId ?? "" },
   });

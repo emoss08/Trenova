@@ -11,7 +11,9 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { laneDisplayLabel, laneEndDisplay } from "@trenova/shared/lib/rate";
+import { laneKeys } from "@trenova/shared/rules/lane";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
   RateAgreement,
@@ -209,6 +211,9 @@ function AgreementCard({
   const carriers = useRecordNames("CARRIER", refs.carriers).names;
   const users = useRecordNames("USER", refs.users).names;
   const resolvePlace = useLaneScopeLabels(lanes);
+  const rules = useRules();
+  // Every lane read so far is keyed in one call, again only when another page arrives.
+  const keys = useMemo(() => laneKeys(rules, lanes), [rules, lanes]);
 
   const backToAgreement = t("Back to {0}", agreement.name);
   const listedCustomers = useListedRecords({
@@ -400,8 +405,8 @@ function AgreementCard({
                   lane={lane}
                   index={index}
                   currency={lane.currency || currency}
-                  origin={laneEndDisplay(lane, "origin", resolvePlace)}
-                  destination={laneEndDisplay(lane, "destination", resolvePlace)}
+                  origin={laneEndDisplay(lane, "origin", resolvePlace, keys[index])}
+                  destination={laneEndDisplay(lane, "destination", resolvePlace, keys[index])}
                   pricedBy={
                     <LanePrice
                       lane={lane}
