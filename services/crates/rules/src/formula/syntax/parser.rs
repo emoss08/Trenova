@@ -1107,8 +1107,12 @@ impl<'a> Parser<'a> {
             );
             self.recover();
         }
-        let end = self.prev_end(open.span.end).max(open.span.end);
-        (args, Span::new(open.span.start, end))
+        let end = if self.is_eof() {
+            self.current().span.start
+        } else {
+            self.prev_end(open.span.end)
+        };
+        (args, Span::new(open.span.start, end.max(open.span.end)))
     }
 
     fn parse_primary(&mut self) -> Expr {
