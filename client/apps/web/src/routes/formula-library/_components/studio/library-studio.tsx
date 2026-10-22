@@ -12,7 +12,6 @@ import {
   TestsPaneSkeleton,
 } from "@/components/tariff-studio/studio-skeletons";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
-import { archiveRefusal } from "@/lib/archive-refusal";
 import { formulaLibraryRoutes } from "@/lib/formula-library-routes";
 import { invalidateFormulaLibrary } from "@/lib/queries/formula-library";
 import { apiService } from "@/services/api";
@@ -43,6 +42,7 @@ import { Suspense, lazy, useCallback, useMemo, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import "@/components/tariff-studio/tariff-studio.css";
+import { archiveLibraries } from "../archive-libraries";
 import { LibraryDetails } from "./library-details";
 import { LibraryHistoryPane } from "./library-history-pane";
 import type { LibraryDecision } from "./library-review-dialogs";
@@ -281,24 +281,24 @@ function ArchiveDialog({
   // library; the dialog shows it and offers "Archive anyway".
   const archive = async () => {
     setBusy(true);
-    try {
-      const archived = await apiService.formulaLibraryService.archive(libraryId, {
-        confirmInUse: held !== null,
-      });
-      toast.success(t("Library archived"));
-      onArchived(archived);
-      close(false);
-    } catch (error) {
-      const refusal = archiveRefusal(error);
-      if (refusal?.kind === "needsConfirmation") {
-        setHeld(refusal.message);
-      } else {
-        toast.error(refusal?.message ?? t("The library could not be archived"));
-      }
-    } finally {
-      setBusy(false);
-      await invalidateFormulaLibrary(queryClient);
+    const saved: { library: FormulaLibrary | null } = { library: null };
+    const outcome = await archiveLibraries([libraryId], held !== null, async (id, confirmInUse) => {
+      saved.library = await apiService.formulaLibraryService.archive(id, { confirmInUse });
+    });
+    setBusy(false);
+    await invalidateFormulaLibrary(queryClient);
+    const [waiting] = outcome.held;
+    if (waiting) {
+      setHeld(waiting.message);
+      return;
     }
+    if (saved.library) {
+      toast.success(t("Library archived"));
+      onArchived(saved.library);
+      close(false);
+      return;
+    }
+    toast.error(outcome.forbidden[0] ?? t("The library could not be archived"));
   };
 
   return (

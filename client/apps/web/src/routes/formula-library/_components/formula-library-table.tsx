@@ -1,6 +1,5 @@
 "use no memo";
 import { DataTable } from "@/components/data-table/data-table";
-import { archiveRefusal } from "@/lib/archive-refusal";
 import { DEFAULT_CREATE_ACTION_ID } from "@/lib/data-table";
 import { formulaLibraryRoutes } from "@/lib/formula-library-routes";
 import {
@@ -26,10 +25,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { AddRecordAction, DockAction, RowAction } from "@trenova/shared/types/data-table";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
+import { archiveLibraries, type HeldArchive } from "./archive-libraries";
 import { getColumns } from "./formula-library-columns";
-
-/** A library the server would only archive once the person had confirmed it, and why. */
-type HeldArchive = { row: FormulaLibraryRow; message: string };
 
 export default function FormulaLibrariesDataTable() {
   const t = useT();
@@ -38,7 +35,7 @@ export default function FormulaLibrariesDataTable() {
   const columns = useMemo(() => getColumns(t), [t]);
 
   const [pendingArchive, setPendingArchive] = useState<FormulaLibraryRow[]>([]);
-  const [held, setHeld] = useState<HeldArchive[]>([]);
+  const [held, setHeld] = useState<HeldArchive<FormulaLibraryRow>[]>([]);
   const [isArchiving, setIsArchiving] = useState(false);
 
   const duplicate = useCallback(
@@ -73,40 +70,28 @@ export default function FormulaLibrariesDataTable() {
   // confirmation in the server's words; those wait in the dialog for "Archive anyway".
   const archive = useCallback(async () => {
     const confirming = held.length > 0;
-    const rows = confirming ? held.map((item) => item.row) : pendingArchive;
+    const rows = confirming ? held.map((entry) => entry.item) : pendingArchive;
     setIsArchiving(true);
-    const nextHeld: HeldArchive[] = [];
-    let failed = 0;
-    let archived = 0;
-    for (const row of rows) {
-      try {
-        await apiService.formulaLibraryService.archive(row.id, { confirmInUse: confirming });
-        archived += 1;
-      } catch (error) {
-        const refusal = archiveRefusal(error);
-        if (refusal?.kind === "needsConfirmation" && !confirming) {
-          nextHeld.push({ row, message: refusal.message });
-        } else {
-          failed += 1;
-          if (refusal?.kind === "forbidden") toast.error(refusal.message);
-        }
-      }
-    }
+    const outcome = await archiveLibraries(rows, confirming, (row, confirmInUse) =>
+      apiService.formulaLibraryService.archive(row.id, { confirmInUse }),
+    );
     setIsArchiving(false);
     await invalidateFormulaLibrary(queryClient);
-    if (archived > 0) {
+    for (const message of outcome.forbidden) toast.error(message);
+    if (outcome.archived > 0) {
       toast.success(
-        t("{0, plural, one {Archived # library} other {Archived # libraries}}", archived),
+        t("{0, plural, one {Archived # library} other {Archived # libraries}}", outcome.archived),
       );
     }
-    if (failed > 0) {
+    if (outcome.failed > outcome.forbidden.length) {
       toast.error(
         t(
           "{0, plural, one {# library was not archived} other {# libraries were not archived}}",
-          failed,
+          outcome.failed - outcome.forbidden.length,
         ),
       );
     }
+    const nextHeld = outcome.held;
     if (nextHeld.length > 0) {
       setHeld(nextHeld);
       return;
@@ -203,7 +188,7 @@ export default function FormulaLibrariesDataTable() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {held.length > 0
-                ? held.map((item) => item.message).join(" ")
+                ? held.map((entry) => entry.message).join(" ")
                 : t(
                     "New template versions can no longer import an archived library. Template versions that already import it keep the version they pinned.",
                   )}
