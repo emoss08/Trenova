@@ -997,9 +997,9 @@ func (r *QueryResolver) ShipmentAnalytics(ctx context.Context, input gqlmodel.Sh
 	}
 
 	data, err := r.AnalyticsService.GetAnalytics(ctx, &kernelports.AnalyticsRequestOptions{
-		OrgID:      authCtx.OrganizationID,
-		BuID:       authCtx.BusinessUnitID,
-		UserID:     authCtx.UserID,
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
 		Principal: kernelports.PrincipalInfo{
 			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,
