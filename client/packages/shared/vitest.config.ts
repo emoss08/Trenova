@@ -5,6 +5,8 @@ import { defineConfig } from "vitest/config";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  // rules/test-module.ts imports rules.wasm?inline so the setup can load it without node:fs.
+  assetsInclude: ["**/*.wasm"],
   resolve: {
     alias: {
       "@trenova/shared": path.resolve(dirname, "./src"),

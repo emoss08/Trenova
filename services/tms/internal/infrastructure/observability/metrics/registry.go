@@ -38,6 +38,7 @@ type Registry struct {
 	// ProposalPreview measures what people are shown before they approve.
 	ProposalPreview *ProposalPreview
 	Formula         *Formula
+	Rules           *Rules
 }
 
 func graphQLOptions(cfg *config.Config) GraphQLOptions {
@@ -74,6 +75,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 			AIAudit:         NewAIAudit(nil, logger, false),
 			ProposalPreview: NewProposalPreview(nil, logger, false),
 			Formula:         NewFormula(nil, logger, false),
+			Rules:           NewRules(nil, logger, false),
 		}, nil
 	}
 
@@ -102,6 +104,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		AIAudit:         NewAIAudit(registry, logger, true),
 		ProposalPreview: NewProposalPreview(registry, logger, true),
 		Formula:         NewFormula(registry, logger, true),
+		Rules:           NewRules(registry, logger, true),
 	}
 
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)

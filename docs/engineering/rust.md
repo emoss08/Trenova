@@ -51,6 +51,7 @@ services/
     service-kit/          trenova-service-kit: the chassis every service runs on
     sandbox/              trenova-sandbox: a supervised pool of hardened child processes
     imaging-core/         trenova-imaging-core: platform-neutral page imaging (shared with capture)
+    rules/                trenova-rules: the rules engine, one WebAssembly module for the TMS and the browser
   imaging/                trenova-imaging: the imaging worker (a deployable)
   tms/                    the Go service
   postgres/<ext>/         future pgrx extensions; outside the workspace, built by deploy/Dockerfile.postgres
@@ -73,13 +74,13 @@ boundary costs.
 
 | Seam | Use it for | Costs |
 |---|---|---|
-| WebAssembly in the Go process (`wasm32-wasip1`, run by wazero) | Pure computation the TMS calls often: parsers, rule engines, encoders, checks | Slower than native (no SIMD by default, a copy across linear memory); every boundary call costs, so the API must take batches; no threads, no native libraries |
-| WebAssembly in the browser (`wasm32-unknown-unknown`) | Logic the browser and the server must agree on to the cent | Bundle weight against the first-load budget (`client/apps/web/bundle-budget.json`), so load it lazily |
+| WebAssembly in the Go process (`wasm32-unknown-unknown`, run by wazero) | Pure computation the TMS calls often: parsers, rule engines, encoders, checks | Slower than native (no SIMD by default, a copy across linear memory); every boundary call costs, so the API must take batches; no threads, no native libraries |
+| WebAssembly in the browser (the same module) | Logic the browser and the server must agree on to the cent | A download of its own, kept out of the first-load budget (`client/apps/web/bundle-budget.json`) by loading it lazily |
 | A gRPC service | Native libraries (PDFium, codecs), untrusted input that needs process isolation, work that must scale apart from the TMS | Another container to run, size and monitor; a contract to version; plaintext crossing a network link (mutual TLS) |
 | A Postgres extension (pgrx) | Functions on every statement's path where a round trip is the cost | Rules out managed Postgres; native code inside the database's trust boundary; upgrades tied to the Postgres image |
 
 A rule of thumb: if it needs no native library and no isolation from the TMS, it is a library
-compiled to WASM; if it parses files nobody vetted, it is a service, and its parsing runs in
+compiled to WASM (one module for both hosts, below); if it parses files nobody vetted, it is a service, and its parsing runs in
 `trenova-sandbox`.
 
 ## The building blocks every service uses
@@ -145,6 +146,7 @@ and a child forked from tokio's blocking pool was killed ten idle seconds later.
 |---|---|---|
 | `release` | images, benchmarks of record | fat LTO, one codegen unit, `panic = "abort"`, stripped |
 | `service-dev` | a quick local service build (`task rust:build-imaging`) | release without LTO, 16 codegen units, incremental |
+| `wasm` | WebAssembly modules (`task rust:wasm-rules`) | release with `opt-level = "s"`, since the browser downloads the module |
 | `bench` | criterion | thin LTO |
 
 Fat-LTO builds are slow; do not run them over and over. Cap parallelism with
@@ -173,20 +175,55 @@ Fat-LTO builds are slow; do not run them over and over. Cap parallelism with
   (`TRENOVA_PDFIUM_LIBRARY`) and skip without it; the image's `test` stage and CI provide them.
 - `criterion` benchmarks for hot paths, run with the `bench` profile.
 
-## WebAssembly artifacts (when the first WASM crate arrives)
+## WebAssembly modules
 
-No WASM crate exists yet; this is how the first one is built and shipped.
+`trenova-rules` (`services/crates/rules`, [rules-engine.md](rules-engine.md)) is the first
+WebAssembly crate, and the pattern for any later one.
 
-- The crate lives in `services/crates/<name>` and builds for `wasm32-wasip1` (wazero in Go)
-  or `wasm32-unknown-unknown` (the browser), both targets pinned in `rust-toolchain.toml`.
-- The build is reproducible: release profile, `--locked`, `-C strip=symbols`,
-  `--remap-path-prefix` for the workspace path, and `wasm-opt` at a pinned version.
-- The artifact is committed next to its consumer (`services/tms/internal/infrastructure/<name>/<name>.wasm`
-  embedded with `//go:embed`; for the browser, the client package that loads it), with its
-  SHA-256 in a sibling file.
-- A `task rust:wasm-<name>` rebuilds it, and CI rebuilds it and fails when the committed bytes
-  differ, the same way the generated Go contracts are checked.
-- The Go side calls it in batches: one boundary crossing per request, never one per item.
+- **One `wasm32-unknown-unknown` module serves both hosts.** The crate is pure computation
+  with no imports at all (no WASI, no clock, no randomness, no I/O), so the bytes the TMS runs
+  in wazero are the bytes the browser runs. That is why `wasm32-wasip1` is not used: it imports
+  WASI functions a browser does not have, and a second build per host would turn "the same
+  answer to the cent" back into something tests have to keep true. Code that needs the outside
+  world is a service, not a module.
+- **The ABI** is three exports and JSON in and out (`rules_alloc`, `rules_call`,
+  `rules_free`; see "The ABI" in rules-engine.md). Nothing else crosses the boundary.
+- **Two committed copies**, each with a `rules.wasm.sha256` sidecar in `sha256sum` format:
+  - `services/tms/pkg/rules/rules.wasm`, embedded with `//go:embed` by the Go host;
+  - `client/packages/shared/src/rules/rules.wasm`, a content-hashed Vite asset the browser
+    loader fetches.
+
+  Never edit either by hand. The Go and the client tests both check that the bytes match the
+  sidecar, and the Go test that the two copies are identical.
+- **The build** is `services/crates/rules/scripts/build-wasm.sh`, run by `task rust:wasm-rules`:
+  - `cargo build --locked -p trenova-rules --profile wasm --target wasm32-unknown-unknown`, with
+    `--remap-path-prefix` for the services checkout (`/trenova/services`), the cargo target
+    directory (`/trenova/target`) and `CARGO_HOME` (`/cargo`), and `-C strip=symbols`;
+  - then `wasm-opt -Os` from binaryen **version_133**, downloaded once into
+    `services/target/binaryen/` and verified against the SHA-256 pinned in the script for each
+    platform (Linux x86_64 and aarch64, macOS arm64 and x86_64; elsewhere set
+    `TRENOVA_WASM_OPT` to a wasm-opt that reports version 133);
+  - with exactly the features rustc 1.94 enables for the target, so nothing is lowered or
+    rejected: `--mvp-features` plus bulk memory (and its `-opt` subset), overlong
+    `call_indirect`, multi-value, mutable globals, non-trapping float-to-int, reference types
+    and sign extension;
+  - stripping debug info, the producers section and the target-features section.
+
+  The same commit gives the same bytes on any machine and in any checkout path. A toolchain,
+  dependency or binaryen change changes the bytes, so the same commit carries the rebuilt
+  copies. To move binaryen, change `BINARYEN_VERSION` and the four checksums in the script
+  (taken from the release's `.sha256` files and checked against your own download), then run
+  the task.
+- **The check.** `task rust:wasm-rules-check` rebuilds into a temporary directory and fails,
+  naming the file, when a committed copy or its sidecar differs. The `wasm-rules` job in
+  `rust.yml` runs it, and clippy for `--target wasm32-unknown-unknown`, the only build that
+  compiles `abi.rs`. The Go host's tests run with the rest of the TMS in `test-tms.yml`, the
+  loader's with the client in `test-client.yml`.
+- **Calls take batches.** Every call copies its request and its response through linear
+  memory and holds an instance from the pool while it runs. One call per request, never one
+  per item: an operation takes the whole list (every charge line, every lane, every band) and
+  answers for all of it. A loop that calls the module once per row is a review failure, like
+  an N+1 query.
 
 ## Tasks
 
@@ -200,13 +237,16 @@ No WASM crate exists yet; this is how the first one is built and shipped.
 | `task rust:proto-breaking` | buf breaking against `origin/master` |
 | `task rust:build-imaging` | the imaging worker with the `service-dev` profile |
 | `task rust:image-imaging` | the imaging worker's image |
+| `task rust:wasm-rules` | build `trenova-rules` to WebAssembly and install both committed copies with their `.sha256` |
+| `task rust:wasm-rules-check` | rebuild it and fail when a committed copy or its `.sha256` differs |
 
 ## CI
 
 `.github/workflows/rust.yml` runs on changes under `services/` outside `services/tms`, the
-generated Go contracts, the toolchain pins and the imaging Dockerfile: the toolchain-pin check,
-`cargo fmt --check`, clippy with `-D warnings`, `cargo test --workspace` with PDFium and libheif
-installed, `cargo deny check`, buf lint and breaking, the generated-Go check, bounded fuzzing,
-and the imaging image (its test stage, the runtime image, and a start-up check that it refuses
+generated Go contracts, the committed `rules.wasm` copies, the toolchain pins and the imaging
+Dockerfile: the toolchain-pin check, `cargo fmt --check`, clippy with `-D warnings`,
+`cargo test --workspace` with PDFium and libheif installed, the WebAssembly module (clippy for
+`wasm32-unknown-unknown` and `build-wasm.sh check`), `cargo deny check`, buf lint and
+breaking, the generated-Go check, bounded fuzzing, and the imaging image (its test stage, the runtime image, and a start-up check that it refuses
 to run in production without TLS and reports ready in development). `native-capture.yml` also
 runs when `services/crates/imaging-core`, the workspace manifest or the toolchain pin changes.

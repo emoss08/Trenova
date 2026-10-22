@@ -12,6 +12,7 @@ require (
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/ledongthuc/pdf v0.0.0-20260929131644-d0d294e5c96a
 	github.com/pgvector/pgvector-go v0.4.1
+	github.com/tetratelabs/wazero v1.12.0
 	github.com/tidwall/gjson v1.18.0
 	github.com/tidwall/sjson v1.2.5
 	github.com/vikstrous/dataloadgen v0.0.10
