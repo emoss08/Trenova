@@ -1,7 +1,7 @@
-# Tariff: Trenova's rating language (proposal)
+# Tariff: Trenova's rating language
 
-**Status: proposal, for approval before building.** This replaces the expr-flavoured formula
-language that `trenova-rules` implements today. Nothing has launched, so nothing here is held
+This is the language reference for Tariff, the rating language `trenova-rules` implements. It
+replaces the expr-flavoured formula language. Nothing has launched, so nothing here is held
 back by compatibility: every formula, seed, catalog template, corpus case, prompt and doc is
 rewritten.
 
@@ -113,10 +113,85 @@ contract. The standard library (`std`) ships with the module and is versioned wi
   - percent: `18%`;
   - date: `@2026-10-22`; date-time: `@2026-10-22T08:00-05:00`.
 
-## Types
+## Type system
 
-Static, with inference. You annotate inputs, function parameters and `type` fields. Everything
-else is inferred.
+Types are the point of the language. They catch, before anything runs, the mistakes that
+otherwise become wrong invoices:
+
+- a rate per hundredweight multiplied by pounds;
+- money added to a weight;
+- an empty weight used without a fallback;
+- a weight band left uncovered;
+- an enum misspelt;
+- a rate table read with the wrong keys.
+
+The rules:
+
+1. **Every expression has a static type.** The checker runs before anything is evaluated, and
+   the same checker runs in the browser and on the server. A file with a type error doesn't
+   save, doesn't preview and doesn't rate.
+2. **Annotate the boundaries; everything else is inferred.** Annotations are required on:
+   - `input` declarations;
+   - function parameters and return types;
+   - `type` fields;
+   - library-level `const`s.
+
+   Everywhere else the type is inferred, and the editor shows it as an inlay hint. `let x: T =
+   …` is allowed, but never required.
+3. **Optionals narrow by flow.** Inside `if let x = opt`, after `require let x = opt else …`,
+   in the right side of `x != none and …`, and in a `match` arm that excludes `none`, the
+   binding has type `T`, not `T?`. Nowhere else.
+4. **Subtyping is minimal.** `Int` widens to `Number`, and `T` widens to `T?`. Nothing else is
+   a subtype of anything. Records are compared by their declared type. A record literal checks
+   against the type expected where it's written, and must match it exactly: no missing fields,
+   no extra fields.
+5. **Dimensions are types; units are values.** `Weight`, `Money/Weight` and `Duration` are
+   types. `lb`, `kg` and `cwt` are units a value of type `Weight` carries.
+   - In an annotation, a unit names the dimension and the display unit: `Money/cwt` is the type
+     `Money/Weight`, shown per hundredweight.
+   - A value in any weight unit is accepted where a `Weight` is expected, and is converted
+     exactly.
+6. **Built-in generics; no user generics.**
+   - `List<T>` and `T?` are generic.
+   - The list methods are typed by their lambda: `stops.sum(s => s.dwell)` is a `Duration`.
+   - Lambdas exist only as arguments to the built-in list methods. User functions are not
+     values: they can't be passed, stored or returned.
+7. **User-defined types are records and enums.**
+   - `type Break = { from: Weight, rate: Money/cwt, minimum: Money? }` declares a record. Two
+     declared types with the same fields are still different types, and the name is in every
+     error.
+   - `enum Service { Standard, Guaranteed, Expedited }` declares an enum without payloads.
+   - Schema enums (`StopKind`, `ShipmentStatus`, `FreightClass`) are enums of the same kind,
+     generated from the schema.
+8. **Equality and order.** `==` and `!=` take two values of the same type:
+   - money and quantities compare by value across scale and unit (`$426 == $426.00`,
+     `1 cwt == 100 lb`);
+   - records and lists compare field by field and item by item;
+   - enums compare by variant;
+   - comparing different types is an error.
+
+   `<`, `<=`, `>` and `>=` are defined on numbers, money, quantities of one dimension, rates of
+   one dimension, dates, date-times and durations.
+9. **Numbers.**
+   - `Int + - *` gives an `Int`, and `Int / Int` gives a `Number`.
+   - `%` takes `Int`s only.
+   - Overflow past 28 significant digits is an error, never a wrap.
+   - Conversions are explicit: `x.floor()`, `x.ceil()` and `x.round()` give an `Int` from a
+     `Number`; `Number(i)` and `Int.parse(text)` give an `Int?`.
+10. **No escape hatch.** There is no `any`, no cast and no reflection. Every value's type is
+    known at check time.
+
+What the type system leaves out, and why:
+
+| Left out | Why |
+|---|---|
+| Classes, methods on user types, inheritance, traits, interfaces | They bring object-oriented design into pricing rules. Free functions in libraries cover reuse, and they are easier to read and for Nova to write. |
+| User-written generics | `List<T>` and `T?` cover what pricing needs. User generics double the checker for almost no benefit. |
+| User-defined units | The unit set is fixed and the conversions are exact. A hand-written conversion factor is where float-like error creeps back in. |
+| Functions as values | They would make the call graph undecidable, so the acyclicity check that guarantees termination would stop working. |
+| Implicit conversions | Every unit, currency and optional change is visible in the source. |
+
+## Built-in types
 
 | Type | Values | Notes |
 |---|---|---|
@@ -177,8 +252,8 @@ A schema field that can be empty has type `T?` (`shipment.weight: Weight?`). Usi
 
 - `shipment.weight ?? 0 lb`: a fallback;
 - `if let w = shipment.weight { … }`: bind it when present;
-- `require shipment.weight else "This rate needs the shipment's weight"`: refuse to rate without
-  it;
+- `require let w = shipment.weight else "This rate needs the shipment's weight"`: refuse to rate
+  without it, with `w` bound as a `Weight` from there on;
 - `shipment.trailer?.length`: optional chaining.
 
 ## Bindings
@@ -192,6 +267,34 @@ A schema field that can be empty has type `T?` (`shipment.weight: Weight?`). Usi
 
 A name may not shadow a schema root, an input, a function or another name in scope. That last
 rule is today's `let` rule, kept.
+
+## Statements
+
+A tariff's body is a sequence of statements, run top to bottom. A block is `{ … }`, and every
+block is a scope.
+
+| Statement | Meaning |
+|---|---|
+| `let`, `var`, `const` | bindings (above) |
+| `name = expr`, `name += expr`, `name -= expr` | reassign a `var` in scope; the type cannot change |
+| `charge "Label" as CODE (options) = expr` | add a line to the bill (below); tariffs only |
+| `note "Text {interpolated}"` | add a note to the bill: no amount, shown on the rate trace, the receipt and the invoice's notes |
+| `if cond { … } else if cond { … } else { … }` | conditional; as a statement the branches need no value |
+| `if let x = optional { … } else { … }` | bind an optional when present |
+| `match value { pattern => { … } … }` | as a statement, arms are blocks |
+| `for x in list { … }` | iterate a list or a range of `Int`s, in order |
+| `for x in list where cond { … }` | iterate only the items `cond` holds for |
+| `break`, `continue` | leave or skip to the next iteration of the innermost `for` |
+| `require cond else "message"`, `require let x = optional else "message"` | refuse to rate unless it holds |
+| `fail "message"` | refuse to rate |
+| `return expr` | functions only |
+| `minimum`, `maximum`, `round` | total clauses, last in a tariff (below) |
+| `test "name" { … }` | a test (below); file level only |
+
+There is no `while` and no recursion. A `for` walks a list or a range whose length is known
+when the loop starts, so every formula terminates. A function body is the same statement
+language without `charge`, `note`, total clauses or `test`. Functions compute values; tariffs
+bill them.
 
 ## Expressions
 
@@ -453,7 +556,7 @@ so the last TypeScript copy of the lexer goes away.
 - **Rewrites.** The standard catalog, the seeds, the docs, the corpus and every test that writes
   a formula.
 
-## Decided in this proposal (say if you disagree)
+## Decisions
 
 1. **Name.** The language is called Tariff. A freight tariff is the published rate document,
    which is what these files are.
@@ -488,3 +591,108 @@ The work goes in one PR, in this order:
    - the accessorial condition editor.
 5. Seeds, the standard catalog, Nova's prompt, translations and the docs, with this doc becoming
    the language reference.
+
+## Appendix A: grammar
+
+The normative syntax, in EBNF:
+
+- `{ x }` repeats zero or more times, `[ x ]` is optional, and `|` separates alternatives.
+- `NL` is a statement-ending newline.
+- `name` is a camelCase identifier, `TypeName` a PascalCase one and `CODE` an UPPERCASE one.
+- A newline does not end a statement in three cases:
+  - inside `( … )`, `[ … ]` or a record literal's `{ … }`;
+  - after a binary operator, `,`, `=` or `=>`;
+  - before a line that starts with a binary operator, `.`, `?.` or `??`.
+
+  So chains and long sums wrap without a continuation character.
+
+```ebnf
+file        = header NL { doc } { item } ;
+header      = ( "tariff" | "library" | "condition" ) string ;
+doc         = "///" text NL ;
+item        = { doc } ( use | input | const | typeDecl | enumDecl | fnDecl | test | stmt ) ;
+
+use         = "use" modulePath [ "." "{" name { "," name } [ "," ] "}" ] [ "as" name ] NL ;
+modulePath  = ( "std" | "org" ) "." name { "." name } ;
+
+input       = "input" name ":" type [ "=" expr ] NL ;
+const       = [ "private" ] "const" name [ ":" type ] "=" expr NL ;
+typeDecl    = [ "private" ] "type" TypeName "=" recordType NL ;
+enumDecl    = [ "private" ] "enum" TypeName "{" TypeName { "," TypeName } [ "," ] "}" NL ;
+fnDecl      = [ "private" ] "fn" name "(" [ param { "," param } [ "," ] ] ")"
+              [ "->" type ] ( block | "=" expr NL ) ;
+param       = name ":" type [ "=" expr ] ;
+
+type        = baseType [ "?" ] ;
+baseType    = TypeName [ "<" type ">" ]                       (* Bool, Int, List<T>, Weight, … *)
+            | "Money" "/" ( unit | TypeName )                 (* Money/cwt, Money/Weight *)
+            | recordType ;
+recordType  = "{" field { "," field } [ "," ] "}" ;
+field       = name ":" type ;
+
+test        = "test" string block ;
+block       = "{" { stmt } "}" ;
+
+stmt        = letStmt | varStmt | assign | charge | note | ifStmt | matchStmt | forStmt
+            | require | fail | return | "break" NL | "continue" NL | total
+            | given | expect | expr NL ;
+letStmt     = "let" name [ ":" type ] "=" expr NL ;
+varStmt     = "var" name [ ":" type ] "=" expr NL ;
+assign      = name ( "=" | "+=" | "-=" ) expr NL ;
+charge      = "charge" string [ "as" CODE ] [ "(" option { "," option } ")" ] "=" expr NL ;
+option      = name ":" expr ;
+note        = "note" string NL ;
+ifStmt      = "if" condition block { "else" "if" condition block } [ "else" block ] ;
+condition   = expr | "let" name "=" expr ;
+matchStmt   = "match" expr "{" { arm } "}" ;
+arm         = pattern [ "if" expr ] "=>" ( block | expr ) NL ;
+pattern     = alt { "|" alt } ;
+alt         = literal | rangePat | TypeName | "none" | "_" | name | recordPat ;
+rangePat    = [ literal ] ( ".." | "..=" ) [ literal ] ;
+recordPat   = "{" name ":" pattern { "," name ":" pattern } [ "," ] "}" ;
+forStmt     = "for" name "in" expr [ "where" expr ] block ;
+require     = "require" condition "else" string NL ;
+fail        = "fail" string NL ;
+return      = "return" expr NL ;
+total       = ( "minimum" | "maximum" ) expr NL
+            | "round" [ "half" "even" | "up" | "down" ] "to" ( "cents" | money ) NL ;
+given       = "given" lvalue "=" expr NL ;                    (* tests only *)
+expect      = "expect" ( expr | "fails" [ string ] ) NL ;     (* tests only *)
+lvalue      = name { "." name } ;
+
+expr        = coalesce ;
+coalesce    = orExpr { "??" ( orExpr | "fail" string ) } ;
+orExpr      = andExpr { "or" andExpr } ;
+andExpr     = notExpr { "and" notExpr } ;
+notExpr     = "not" notExpr | compare ;
+compare     = range [ ( "==" | "!=" | "<" | "<=" | ">" | ">=" | "in" | "not" "in" ) range ] ;
+range       = [ sum ] ( ".." | "..=" ) [ sum ] | sum ;
+sum         = product { ( "+" | "-" ) product } ;
+product     = unary { ( "*" | "/" | "%" ) unary } ;
+unary       = "-" unary | postfix ;
+postfix     = primary { "." name [ args ] | "?." name [ args ] | "[" expr { "," expr } "]" | args } ;
+args        = "(" [ arg { "," arg } [ "," ] ] ")" ;
+arg         = [ name ":" ] ( expr | lambda ) ;
+lambda      = name "=>" expr | "(" name "," name ")" "=>" expr ;
+primary     = literal | name | TypeName [ "." name ] | "(" expr ")" | list | record
+            | ifExpr | matchExpr ;
+ifExpr      = "if" condition "{" expr "}" { "else" "if" condition "{" expr "}" } "else" "{" expr "}" ;
+matchExpr   = "match" expr "{" { pattern [ "if" expr ] "=>" expr NL } "}" ;
+list        = "[" [ expr { "," expr } [ "," ] ] "]" ;
+record      = "{" name ":" expr { "," name ":" expr } [ "," ] "}" ;
+
+literal     = number [ unit ] | money | percent | string | date | dateTime
+            | "true" | "false" | "none" ;
+money       = ( "$" | CURRENCY ) number [ "/" unit ] ;        (* $450, CAD 450, $2.35/mi *)
+percent     = number "%" ;
+number      = digit { digit | "_" } [ "." digit { digit | "_" } ] ;
+unit        = "lb" | "cwt" | "kg" | "t" | "ton" | "mi" | "km" | "in" | "ft" | "m"
+            | "ft3" | "m3" | "min" | "h" | "d" | "°F" | "°C" | "pallet" | "piece" | "stop"
+            | unit "/" unit ;                                 (* lb/ft3 for density *)
+date        = "@" digit4 "-" digit2 "-" digit2 ;
+dateTime    = date "T" digit2 ":" digit2 [ ":" digit2 ] ( "Z" | ( "+" | "-" ) digit2 ":" digit2 ) ;
+string      = '"' { char | escape | "{" expr "}" | "{{" | "}}" } '"' ;
+```
+
+A keyword is never an identifier. Unit names are contextual: `lb` is a unit only directly after
+a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name.
