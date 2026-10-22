@@ -301,6 +301,10 @@ func (f *fakeContext) Context(
 	}, nil
 }
 
+func (*fakeContext) TableStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}
+
 func (f *fakeContext) LoadTables(
 	context.Context,
 	pagination.TenantInfo,

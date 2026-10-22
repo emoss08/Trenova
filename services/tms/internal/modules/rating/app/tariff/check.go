@@ -96,10 +96,11 @@ type SourceCheckRequest struct {
 }
 
 type SourceCheck struct {
-	Check     *rules.TariffCheck
-	Context   *rules.TariffContext
-	Libraries LibrarySet
-	Imports   []tarifftypes.Import
+	TenantInfo pagination.TenantInfo
+	Check      *rules.TariffCheck
+	Context    *rules.TariffContext
+	Libraries  LibrarySet
+	Imports    []tarifftypes.Import
 }
 
 func (c *SourceCheck) OK() bool {
@@ -128,10 +129,11 @@ func (c *Checker) CheckSource(ctx context.Context, req *SourceCheckRequest) (*So
 	}
 
 	return &SourceCheck{
-		Check:     check,
-		Context:   tariffCtx,
-		Libraries: libraries,
-		Imports:   libraries.Pins(check.Imports),
+		TenantInfo: req.TenantInfo,
+		Check:      check,
+		Context:    tariffCtx,
+		Libraries:  libraries,
+		Imports:    libraries.Pins(check.Imports),
 	}, nil
 }
 
@@ -193,6 +195,13 @@ func (c *Checker) Context(
 	libraries LibrarySet,
 ) (*rules.TariffContext, error) {
 	return c.contextFor(ctx, tenantInfo, libraries.Context())
+}
+
+func (c *Checker) TableStamp(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (string, error) {
+	return c.context.TableStamp(ctx, tenantInfo)
 }
 
 type ContextCheckRequest struct {

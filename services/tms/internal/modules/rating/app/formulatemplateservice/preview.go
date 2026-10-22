@@ -259,8 +259,9 @@ type StudioLibrary struct {
 }
 
 type StudioContext struct {
-	Context   *rules.TariffContext `json:"context"`
-	Libraries []StudioLibrary      `json:"libraries"`
+	Context     *rules.TariffContext `json:"context"`
+	Libraries   []StudioLibrary      `json:"libraries"`
+	TablesStamp string               `json:"tablesStamp"`
 }
 
 func (s *Service) StudioContext(
@@ -275,13 +276,87 @@ func (s *Service) StudioContext(
 		return nil, err
 	}
 
+	stamp, err := s.checker.TableStamp(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	set := tariff.LibrarySet(versions)
 	tariffCtx, err := s.checker.Context(ctx, tenantInfo, set)
 	if err != nil {
 		return nil, err
 	}
 
-	return &StudioContext{Context: tariffCtx, Libraries: studioLibraries(versions)}, nil
+	return &StudioContext{
+		Context:     tariffCtx,
+		Libraries:   studioLibraries(versions),
+		TablesStamp: stamp,
+	}, nil
+}
+
+const (
+	MaxStudioCellNeeds = 200
+	maxNeedKeys        = 4
+	maxNeedTextLength  = 200
+	fieldNeeds         = "needs"
+)
+
+type StudioCellsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Needs      []rules.TariffNeed
+	Whole      bool
+}
+
+func (s *Service) StudioCells(
+	ctx context.Context,
+	req *StudioCellsRequest,
+) (*tariff.TableCells, error) {
+	if err := validateNeeds(req.Needs); err != nil {
+		return nil, err
+	}
+	return s.checker.TableCells(ctx, &tariff.TableCellsRequest{
+		TenantInfo: req.TenantInfo,
+		Needs:      req.Needs,
+		Whole:      req.Whole,
+	})
+}
+
+func validateNeeds(needs []rules.TariffNeed) error {
+	switch {
+	case len(needs) == 0:
+		return errortypes.NewValidationError(
+			fieldNeeds,
+			errortypes.ErrRequired,
+			"Name the rate table cells to load",
+		)
+	case len(needs) > MaxStudioCellNeeds:
+		return errortypes.NewValidationError(
+			fieldNeeds,
+			errortypes.ErrInvalid,
+			"Load at most 200 rate table key combinations at a time",
+		)
+	}
+	for i := range needs {
+		if !validNeed(&needs[i]) {
+			return errortypes.NewValidationError(
+				fieldNeeds,
+				errortypes.ErrInvalid,
+				"Each rate table need names a table and at most four keys",
+			)
+		}
+	}
+	return nil
+}
+
+func validNeed(need *rules.TariffNeed) bool {
+	if need.Table == "" || len(need.Table) > maxNeedTextLength || len(need.Keys) > maxNeedKeys {
+		return false
+	}
+	for _, key := range need.Keys {
+		if len(key) > maxNeedTextLength {
+			return false
+		}
+	}
+	return true
 }
 
 func studioLibraries(versions []*formulalibrary.FormulaLibraryVersion) []StudioLibrary {

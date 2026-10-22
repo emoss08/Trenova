@@ -91,29 +91,29 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 56 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 57 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 49 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1176 writes: 639 GraphQL mutations and 537 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1177 writes: 639 GraphQL mutations and 538 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 459 |
-| Exempt | 717 |
+| Exempt | 718 |
 | — Security | 87 |
 | — Configuration | 276 |
 | — User preference | 40 |
 | — Infrastructure | 56 |
 | — Agent administration | 108 |
 | — Counterparty | 35 |
-| — Read-only | 56 |
+| — Read-only | 57 |
 | — Attestation | 49 |
 | — Duplicate | 10 |
 | **Pending** | **0** |
-| Total | 1176 |
+| Total | 1177 |
 
 Of the 459 writes an agent should be able to make, 459 have a tool (100%).
 
@@ -210,7 +210,7 @@ The writes no tool performs yet, and what the tool would do.
 | fleetcode | 3 | 0 | 3 | 0 |
 | fleetsafety | 3 | 3 | 0 | 0 |
 | formulalibrary | 10 | 0 | 10 | 0 |
-| formulatemplate | 26 | 0 | 26 | 0 |
+| formulatemplate | 27 | 0 | 27 | 0 |
 | fuelpurchase | 13 | 7 | 6 | 0 |
 | fuelsurcharge | 9 | 2 | 7 | 0 |
 | glaccount | 5 | 0 | 5 | 0 |
@@ -1338,6 +1338,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/formula-templates/ai/suggest-tests`<br>formulatemplatehandler.suggestTests | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
 | `POST /api/v1/formula-templates/ai/thread/`<br>formulatemplatehandler.openAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/formula-templates/bulk-update-status`<br>formulatemplatehandler.bulkUpdateStatus | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `POST /api/v1/formula-templates/context/cells`<br>formulatemplatehandler.getContextCells | Exempt, read-only: Reads the rate table cells a formula's tests need in the browser; nothing is saved. |
 | `POST /api/v1/formula-templates/duplicate`<br>formulatemplatehandler.duplicate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/import`<br>formulatemplatehandler.importTemplates | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/install-standards`<br>formulatemplatehandler.installStandards | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |

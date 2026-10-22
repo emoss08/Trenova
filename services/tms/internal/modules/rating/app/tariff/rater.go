@@ -17,17 +17,12 @@ const (
 	ProgramTariff   = "tariff"
 	conditionPrefix = "condition:"
 
-	cellPasses = 4
-
 	errorCodeInput = "input"
 )
 
 var (
 	_ tariffports.Rater = (*Rater)(nil)
 
-	ErrUnresolvedNeeds = errors.New(
-		"tariff: the module still needs table cells after loading whole tables",
-	)
 	errMissingResult = errors.New("tariff: the module answered without a program's result")
 )
 
@@ -147,33 +142,20 @@ func (r *Rater) evaluateWithCells(
 	req *tariffports.RateRequest,
 	evalReq *rules.TariffEvaluateRequest,
 ) (*rules.TariffEvaluation, error) {
-	for pass := 0; ; pass++ {
-		evaluation, err := r.evaluate(ctx, evalReq)
-		if err != nil {
-			return nil, err
+	loads := &cellLoad{contexts: r.contexts, tenant: req.TenantInfo, tariffCtx: evalReq.Context}
+	var evaluation *rules.TariffEvaluation
+	err := loads.until(ctx, func() ([]rules.TariffNeed, error) {
+		var evalErr error
+		evaluation, evalErr = r.evaluate(ctx, evalReq)
+		if evalErr != nil {
+			return nil, evalErr
 		}
-		needs := collectNeeds(evaluation)
-		if len(needs) == 0 {
-			return evaluation, nil
-		}
-		switch {
-		case pass < cellPasses-1:
-			if err = r.contexts.LoadCells(ctx, req.TenantInfo, evalReq.Context, needs); err != nil {
-				return nil, err
-			}
-		case pass == cellPasses-1:
-			if err = r.contexts.LoadTables(
-				ctx,
-				req.TenantInfo,
-				evalReq.Context,
-				neededTables(needs),
-			); err != nil {
-				return nil, err
-			}
-		default:
-			return nil, ErrUnresolvedNeeds
-		}
+		return collectNeeds(evaluation), nil
+	})
+	if err != nil {
+		return nil, err
 	}
+	return evaluation, nil
 }
 
 func collectNeeds(evaluation *rules.TariffEvaluation) []rules.TariffNeed {
@@ -184,19 +166,6 @@ func collectNeeds(evaluation *rules.TariffEvaluation) []rules.TariffNeed {
 		}
 	}
 	return needs
-}
-
-func neededTables(needs []rules.TariffNeed) []string {
-	seen := make(map[string]struct{}, len(needs))
-	tables := make([]string, 0, len(needs))
-	for _, need := range needs {
-		if _, ok := seen[need.Table]; ok {
-			continue
-		}
-		seen[need.Table] = struct{}{}
-		tables = append(tables, need.Table)
-	}
-	return tables
 }
 
 func (r *Rater) result(

@@ -48,6 +48,7 @@ type ContextRequest struct {
 
 type ContextSource interface {
 	Context(ctx context.Context, req *ContextRequest) (*rules.TariffContext, error)
+	TableStamp(ctx context.Context, tenant pagination.TenantInfo) (string, error)
 	LoadCells(
 		ctx context.Context,
 		tenant pagination.TenantInfo,

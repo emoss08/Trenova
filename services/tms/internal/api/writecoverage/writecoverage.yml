@@ -1699,6 +1699,9 @@ writes:
   "POST /api/v1/formula-templates/bulk-update-status":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/context/cells":
+    exempt: read-only
+    reason: "Reads the rate table cells a formula's tests need in the browser; nothing is saved."
   "POST /api/v1/formula-templates/duplicate":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."

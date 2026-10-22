@@ -124,6 +124,10 @@ func (s *StaticContext) Context(
 	return &copied, nil
 }
 
+func (s *StaticContext) TableStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return "", nil
+}
+
 func (s *StaticContext) LoadCells(
 	context.Context,
 	pagination.TenantInfo,

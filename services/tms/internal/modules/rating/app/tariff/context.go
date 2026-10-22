@@ -54,6 +54,10 @@ func (c *Contexts) Context(
 	}, nil
 }
 
+func (c *Contexts) TableStamp(ctx context.Context, tenant pagination.TenantInfo) (string, error) {
+	return c.tables.Stamp(ctx, tenant)
+}
+
 func (c *Contexts) LoadCells(
 	ctx context.Context,
 	tenant pagination.TenantInfo,

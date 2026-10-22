@@ -228,6 +228,46 @@ func TestContext_ServesTheOrganisationsTariffContext(t *testing.T) {
 	assert.NotNil(t, resp["libraries"])
 }
 
+func TestContextCells_AnswersTheStampAndTheNeededTables(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, fixtureOptions{granted: map[string]bool{"formula_template:read": true}})
+	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/context/cells", map[string]any{
+		"needs": []map[string]any{{"table": "Missing", "keys": []string{"A"}}},
+	})
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), ginCtx.Recorder.Body.String())
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Contains(t, resp, "stamp")
+	assert.Equal(t, []any{}, resp["tables"])
+}
+
+func TestContextCells_RefusesARequestWithoutNeeds(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, fixtureOptions{granted: map[string]bool{"formula_template:read": true}})
+	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/context/cells", map[string]any{
+		"needs": []any{},
+	})
+	require.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+
+	var resp problem
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	require.NotEmpty(t, resp.Errors)
+	assert.Equal(t, "needs", resp.Errors[0].Field)
+}
+
+func TestContextCells_NeedsFormulaTemplateRead(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, fixtureOptions{granted: map[string]bool{}})
+	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/context/cells", map[string]any{
+		"needs": []map[string]any{{"table": "Grid", "keys": []string{"A"}}},
+	})
+	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+}
+
 func TestStandards_ListsTariffSources(t *testing.T) {
 	t.Parallel()
 

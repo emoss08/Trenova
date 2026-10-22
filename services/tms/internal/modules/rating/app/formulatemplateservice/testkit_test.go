@@ -104,6 +104,10 @@ func (emptyContext) Context(
 	}, nil
 }
 
+func (emptyContext) TableStamp(context.Context, pagination.TenantInfo) (string, error) {
+	return testTablesStamp, nil
+}
+
 func (emptyContext) LoadTables(
 	context.Context,
 	pagination.TenantInfo,
