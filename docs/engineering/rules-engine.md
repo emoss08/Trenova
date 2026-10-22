@@ -126,8 +126,10 @@ anywhere; the old engine's `float64` paths are gone.
 
 - `Integer` is a static fact about a number, not a second runtime type. A number is `Integer`
   when it is an integer literal (decimal, hex `0x`, octal `0o` or binary `0b`, `_` separators),
-  a field or input declared `integer`, the result of `+`, `-` or `*` on integers, or the result
-  of `int`, `len`, `count`, `findIndex`, `findLastIndex` or `indexOf`.
+  a field declared `integer`, `#index`, the result of `+`, `-`, `*` or `%` on integers, of a
+  unary `-` or `+` on one, of a conditional whose branches are both integers, or the result of
+  `int`, `len`, `count`, `findIndex`, `findLastIndex`, `indexOf`, `lastIndexOf`, a bit function
+  or a date method. An input is declared `Number`, so it is never `Integer`.
 - `%`, the bit functions, `..` bounds and `take` need `Integer` operands. The checker refuses
   others, and the evaluator also refuses a fractional value it meets at run time.
 - `/` divides exactly, to 28 significant digits. Division by zero is an error: a warning when
@@ -186,10 +188,15 @@ More of the grammar:
 - `not` may prefix `in`, `matches`, `contains`, `startsWith` and `endsWith`.
 - **Chained comparisons:** `0 < x <= 5000` means `0 < x and x <= 5000`. A parenthesised
   comparison does not chain.
-- **Conditionals:** the ternary `a ? b : c`, and `if a { b } else { c }`, which must be
-  parenthesised when used as an operand.
-- **Lists:** literals `[1, 2]` and maps `{a: 1, "b c": 2}`. Trailing commas are allowed in
-  lists, maps and calls.
+- **Conditionals:** the ternary `a ? b : c`, its short form `a ?: c` (`a ? a : c`), and
+  `if a { b } else { c }`, which must be parenthesised when used as an operand. A block may not
+  be empty.
+- **Lists:** literals `[1, 2]` and maps `{a: 1, "b c": 2}` (a key is a name, a string or a
+  number). Trailing commas are allowed in lists, maps and calls.
+- **Calls:** a function by name, `round(x, 2)`, or a method on a date or a duration,
+  `pickupDate.Year()`; nothing else is called.
+- `??` binds tighter than every other operator, so mixing it with one needs parentheses:
+  `(a ?? 0) * 2`.
 - **Access:** members `a.b`, optional members `a?.b`, `a?.[i]`, indexes (negative indexes count
   from the end), slices `a[i:j]` and the range `1..3`.
 - **Predicates:** `{ ... }` or a bare expression in a predicate argument. Inside one, `#` is the
@@ -250,9 +257,11 @@ CPU:
 - every byte of text built counts against a text budget;
 - every list element created counts against an items budget.
 
-The defaults are in `eval` and may be lowered per request. The parser caps the source length,
-the node count and the nesting depth. On the server, wazero also closes an instance when its
-call's context ends: a deadline kills the work instead of abandoning it.
+The defaults are in `eval` and may be lowered per request. The parser caps the source length
+(32,768 UTF-16 code units), the node count (1,000) and the nesting depth (128), so no tree is
+deeper than 128 nodes (see "Limits" under the static operations). On the server, wazero also
+closes an instance when its call's context ends: a deadline kills the work instead of
+abandoning it.
 
 ### Errors
 
@@ -277,7 +286,241 @@ A run-time problem is an evaluation error. It has:
 Each area documents its operations here: the input and output, with an example, and the
 `testdata/` file that pins them.
 
-<!-- formula.catalog, formula.check, formula.format, formula.signature, formula.identifier -->
+### The static formula operations
+
+`formula.catalog`, `formula.check`, `formula.format`, `formula.signature` and
+`formula.identifier` are the language service: the Formula Studio's editor runs them as you
+type, and the server runs `formula.check` before it saves a formula. Their code is in
+`src/formula/syntax/` (lexer, parser, tree, formatter, statements), `src/formula/catalog.rs` and
+`src/formula/check/` (checker, schema knowledge, cursor lookups); `src/formula/ops.rs` holds the
+handlers. `testdata/conformance.json` pins what the checker accepts and where it reports what it
+refuses (`tests/formula_conformance.rs`); `tests/formula_*.rs` hold the rest, including every case
+the old TypeScript language service was tested with.
+
+Every position is UTF-16 code units, half-open, on the wire, and a byte span inside the crate.
+Every user-facing text is a `Message` (`{"message": "...", "args": [...]}`); a diagnostic carries
+its message flattened into it (`"message"` and `"args"` are the diagnostic's own keys).
+
+#### `formula.catalog`
+
+Every function, builtin, disabled and reserved name. The Go schema endpoint
+(`GET /formula-templates/schema`) republishes `functions`, `builtins` and `disabled` unchanged
+next to the record's variables.
+
+Input: `{}`. Output:
+
+```json
+{
+  "functions": [
+    {
+      "name": "round", "signature": "round(x, decimals?)",
+      "description": {"message": "Rounds a number to the given decimal places (default 0, between -12 and 12)."},
+      "example": {"message": "round(3.14159, 2) // 3.14"},
+      "category": "rounding", "operator": false,
+      "minArgs": 1, "maxArgs": 2, "returns": "Number", "numericArgs": true, "predicate": false
+    }
+  ],
+  "builtins": [
+    {
+      "name": "filter", "signature": "filter(list, predicate)",
+      "description": {"message": "The items the predicate holds for, in order."},
+      "example": {"message": "len(filter(stops, .type == \"Delivery\"))"},
+      "category": "predicate", "operator": false,
+      "minArgs": 2, "maxArgs": 2, "returns": "Array", "numericArgs": false, "predicate": true
+    }
+  ],
+  "disabled": [
+    {
+      "name": "now", "reason": "nondeterministic", "replacement": "ratingTime",
+      "message": {"message": "{0} isn't available in formulas: a formula must price a shipment the same way every time it runs. Use {1}, the date the contract terms are read at", "args": ["`now()`", "`ratingTime`"]}
+    }
+  ],
+  "reserved": ["abs", "all", "and", "..."]
+}
+```
+
+- `functions` are the 41 entries the reference pane lists (rounding, aggregates, rate tables,
+  text, and the word operators and slice with `operator: true`); `builtins` the 43 list,
+  predicate, bit and date functions. Both have the same shape, and every entry has a
+  description and an example now.
+- `maxArgs` is `-1` for any number of arguments. `returns` is `Number`, `Integer`, `String`,
+  `Boolean`, `Date`, `Duration`, `Array`, `Object` or `Any`. `category` is one of `math`,
+  `rounding`, `aggregate`, `conditional`, `rateTable`, `string`, `list`, `predicate`, `bits` and
+  `date`.
+- `disabled` reasons are `nondeterministic`, `serialization` and `textBuilding`; `replacement` is
+  left out when there is none. `message` is what the checker reports when a formula calls it.
+- `reserved` (sorted) is every name a template input may not take: the keywords and every
+  function, builtin and word operator.
+
+#### `formula.check`
+
+Input:
+
+```json
+{
+  "source": "let linehaul = baseRate * totalDistance;\nlinehaul + weight * lookup(\"fuel\", 1) + extra",
+  "expect": "amount",
+  "schema": {
+    "variables": [
+      {"name": "weight", "type": "number", "description": "Total weight", "category": "shipment", "nullable": true, "computed": false},
+      {"name": "totalDistance", "type": "number", "nullable": false},
+      {"name": "stops", "type": "array"},
+      {"name": "stops[].type", "type": "string"}
+    ],
+    "inputs": [{"name": "baseRate", "type": "Number"}],
+    "operators": []
+  },
+  "tables": [{"name": "fuel", "axes": 1, "banded": false}]
+}
+```
+
+- `expect`: `amount` (the default; the formula must come to a number) or `predicate` (a yes/no
+  rule: true/false or a number).
+- `schema.variables` is `DescribeSchema`'s variable list as published; extra keys are ignored.
+  A field of a list's items is named `list[].field` (`stops[].weight`); those type `.weight`,
+  `#.weight`, `stops[0].weight` and `first(stops).weight`, and without them an item's fields
+  are not known (and not checked). `schema.inputs` are the template's inputs
+  (`Number`/`String`/`Boolean`, any case). `schema.operators` are word operators beyond
+  `startsWith`, `endsWith`, `contains` and `matches`.
+- `schema: null` (or left out) means the schema has not loaded: the output says
+  `pending: true` and leaves out `unknown-variable` and `unknown-field`. Functions come from
+  the catalog, which is compiled in, so calls, arity, types and `let` rules are still checked.
+- `tables` (optional): the rate tables the formula may read. With it, an unknown table name, a
+  one-axis function on a two-axis table (or the reverse), and `lookupInterp` or `deficitWeight`
+  on a table without bands are errors on the name's literal.
+
+Output:
+
+```json
+{
+  "empty": false,
+  "pending": false,
+  "diagnostics": [
+    {
+      "from": 52, "to": 58, "severity": "warning", "code": "nullable",
+      "message": "{0} is empty on some shipments, and the formula would fail to rate them. Give it a fallback: {1}",
+      "args": ["`weight`", "coalesce(weight, 0)"],
+      "name": "weight",
+      "fixes": [{"kind": "replace", "label": {"message": "Use {0}", "args": ["coalesce(weight, 0)"]}, "changes": [{"from": 52, "to": 58, "insert": "coalesce(weight, 0)"}]}]
+    },
+    {
+      "from": 81, "to": 86, "severity": "error", "code": "unknown-variable",
+      "message": "{0} isn't a shipment field or one of this template's inputs. Declare it as an input, or pick a field from the reference.",
+      "args": ["`extra`"],
+      "name": "extra",
+      "fixes": [{"kind": "declare", "label": {"message": "Declare {0} as a {1} input", "args": ["extra", "Number"]}, "name": "extra", "type": "Number"}]
+    }
+  ],
+  "resultType": "Number",
+  "reads": ["baseRate", "totalDistance", "weight"],
+  "schemaReads": ["totalDistance", "weight"],
+  "inputReads": ["baseRate"],
+  "functionCalls": ["lookup"],
+  "bindings": [{"name": "linehaul", "type": "Number", "reads": 1, "from": 0, "to": 39, "nameFrom": 4, "nameTo": 12}],
+  "statements": [
+    {"index": 0, "kind": "let", "name": "linehaul", "code": "let linehaul = baseRate * totalDistance", "from": 0, "to": 39},
+    {"index": 1, "kind": "result", "code": "linehaul + weight * lookup(\"fuel\", 1) + extra", "from": 41, "to": 86}
+  ],
+  "lookupTables": [{"name": "fuel", "function": "lookup", "from": 68, "to": 74}]
+}
+```
+
+- **Acceptance.** A formula is accepted iff it has no diagnostic with `severity: "error"`. The
+  browser and the server read the same answer; the server refuses anything else.
+- `diagnostics` are sorted by `from`, then `to`, with duplicates (same range, code and message)
+  removed. `name` is the identifier a finding is about, when it is about one. A `replace` fix's
+  `changes` never overlap; a `declare` fix asks the Studio to add an input of that `type`
+  (`Boolean` for a name such as `isWeekend`, `hasLiftgate`, `requiresEscort`; `Number`
+  otherwise).
+- `empty` is true for a formula of spaces and comments only; it then has one `empty` error.
+- `resultType` is the static type of the last statement (`Integer` is a whole `Number`).
+- `reads` lists every field and input read, inputs first, each in the order it first appears;
+  `schemaReads` and `inputReads` split it; `functionCalls` lists the functions called (not
+  methods). `bindings` are the top-level `let` lines.
+- `statements` replace the old engine's `SplitStatements`: each `let` line and each value, its
+  code from its first token to the last token of its value (no `;`, spaces or comments), with
+  its range. They are listed for a formula that does not parse too, and a value line in the
+  middle is its own statement.
+- `lookupTables` replaces `ExtractLookupTableRefs`: every rate table read by a string literal,
+  in source order, with the function that reads it and the literal's range (one entry per
+  call: a caller that wants one per table and axis count dedupes by `name` and `function`).
+
+The codes:
+
+| Code | Severity | What |
+|---|---|---|
+| `syntax` | error | the text does not follow the grammar (message as the editor always worded it, often with a one-line fix: `;` after a `let`, `==` for `=`, `()` after a piped function), an escape the language does not know, a number that does not fit, or a pointer outside a predicate |
+| `limit` | error | past a parser limit (below) |
+| `empty` | error | nothing but spaces and comments |
+| `unknown-variable` | error | a name that is no field, input or `let`; a "did you mean" replace fix within two edits, and a declare fix |
+| `unknown-field` | error | a field a record or a list's items do not have, at the first unknown part |
+| `unknown-function` | error | a function the catalog does not have (`toBase64`, `fromBase64` and `timezone` are gone), a method a date or duration does not have, or a value called |
+| `disabled-function` | error | `now`, `toJSON`, `fromJSON`, `repeat`; `now()` has a fix to `ratingTime` |
+| `arity` | error | too few or too many arguments, on the parentheses |
+| `type` | error | an operand or argument of the wrong kind, `%`/bits/`..`/`take` on a number that can hold a fraction (fix: `int(x)`), comparing different kinds, a field read from text, a method on a value that has none, a predicate given to a function that takes values (fix: `sum(map(list, .field))`) |
+| `nullable` | warning | a field that can be empty read without a guard (`??`, `coalesce`, `?.`, a `nil` test that guards it, including `x != nil && x ...`), once per field, with the guard as a fix: `coalesce(weight, 0)`, `(shipmentType?.code ?? "")` for a field under an object, `(.weight ?? 0)` for an item's field; dates fall back to `ratingTime`, text to `""`, flags to `false` |
+| `let-unused` | warning | a `let` nothing reads |
+| `let-duplicate` | error | a name already bound in scope |
+| `let-before-definition` | error | a `let` read above the line that defines it |
+| `let-shadows` | error | a `let` named after a field, an input or a function |
+| `let-last` | error | the formula ends on a `let`; a fix returns its name |
+| `result-type` | error | the formula does not come to what `expect` asks |
+| `discarded` | warning | a value line before the last, worked out and thrown away |
+| `divide-by-zero` | warning | a divisor that is a literal zero |
+| `rate-table` | error | a table name that is not a string literal, or (with `tables`) an unknown table or one of the wrong shape |
+
+Messages reuse the TypeScript language service's English templates wherever a check carried
+over, so their translations in `i18n/messages.*.json` still apply. An inner phrase that the old
+service translated separately (a value's description such as ``"`x` is a number"``, a type's
+name) is passed as an English argument, because `Arg` has no nested message yet.
+
+#### `formula.format`
+
+Input `{"source": "a+b", "width": 80, "operators": []}` (`width` defaults to 80, `operators` to
+none). Output `{"ok": true, "text": "a + b", "changed": true}`, or
+`{"ok": false, "reason": "empty" | "syntax" | "comments"}` when the formula is left alone: it is
+empty, it has a syntax diagnostic (so a part would be lost), or it holds a comment (which the tree
+does not keep). One statement per line, a single space around every operator, a blank line
+between statements kept, a long line broken where it reads best (a sum one term per line with the
+operator leading, a call one argument per line, a ternary one case per line, a `let` after its `=`
+when the value then fits); the author's parentheses, literals and operator spellings are kept.
+Widths count UTF-16 code units. Formatting its own output changes nothing.
+
+#### `formula.signature`
+
+Input `{"source": "round(totalWeight, 2)", "position": 19, "operators": []}`. Output
+`{"name": "round", "active": 1, "from": 5, "to": 21}`: the innermost call around the cursor whose
+function the catalog has (builtins included; not methods or operators), which argument the cursor
+is in (from 0; for a pipe the piped value is argument 0), and the call's parentheses (an unclosed
+call runs to the end of the text). `null` when the cursor is in no such call, on its `(`, or past
+its `)`. The editor reads the signature and description from `formula.catalog` by `name`.
+
+#### `formula.identifier`
+
+Input `{"source": "customer.name + 1", "position": 3, "schema": {...}}` (`schema` optional).
+Output `{"name": "customer.name", "kind": "variable", "from": 0, "to": 13}`, or `null` when the
+cursor is on no name. Dotted paths are one name; strings and comments never count. `kind` is
+`function` (a call), `method` (a call on a value, `pickupDate.Year()`), `field` (after a `.` that
+joins it to no name: an item's `.weight`, or `stops[0].weight`), `let` (bound by a `let` anywhere
+in the formula), `pointer` (`#`, `#acc`, `#index`), and with a schema `input`, `variable` or
+`unknown`; without one every other name is a `variable`.
+
+#### Limits
+
+| Limit | Value | Past it |
+|---|---|---|
+| Source length | 32,768 UTF-16 code units | one `limit` error from that point; nothing is parsed |
+| Nodes | 1,000 (as the old engine allowed) | one `limit` error; the rest reads as the end of the text |
+| Nesting depth | 128 levels (brackets, operands, calls, `else if` chains, the left spine of a long chain) | one `limit` error; the rest reads as the end of the text |
+
+Every tree is therefore at most 128 nodes deep, which is what lets the checker, the formatter and
+the evaluator recurse within WebAssembly's 1 MiB stack (`tests/formula_properties.rs` checks the
+deepest inputs on a 1 MiB thread). A suggestion is never sought for a name longer than 64
+characters, so no step is quadratic in the length of the text: checking a 1,000-node formula
+takes under 2 ms in an unoptimised test build, and a small fraction of that optimised.
+
+`fuzz/` holds cargo-fuzz targets for `formula.check` (with the signature and identifier lookups)
+and `formula.format` (which must give text that parses and formats to itself).
 
 <!-- formula.evaluate and the rate table format -->
 
