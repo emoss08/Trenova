@@ -1,0 +1,3037 @@
+[
+  {
+    "name": "an exact axis normalises keys to upper case",
+    "expr": "tables.Zones[\" zone_1 \"] ?? $0/cwt",
+    "display": "$18.50/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an exact miss is none",
+    "expr": "tables.Zones[\"ZONE_9\"] ?? $0/cwt",
+    "display": "$0.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a miss with fail refuses",
+    "expr": "tables.Zones[\"ZONE_9\"] ?? fail \"No rate for zone 9\"",
+    "refusal": "No rate for zone 9",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "zip3 normalisation cuts keys to three characters",
+    "expr": "tables.Zip[\"752 \"] ?? $0",
+    "display": "$100.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zip3",
+              "normalization": "Zip3"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "75201"
+                }
+              ],
+              "value": "100"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "zip3 normalisation applies to the key looked up",
+    "expr": "tables.Zip[\"75299\"] ?? $0",
+    "display": "$100.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Zip",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zip3",
+              "normalization": "Zip3"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "75201"
+                }
+              ],
+              "value": "100"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "trim normalisation",
+    "expr": "tables.Trim[\"a\"] ?? 0",
+    "display": "1",
+    "context": {
+      "tables": [
+        {
+          "code": "Trim",
+          "valueType": "Number",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Custom",
+              "normalization": "Trim"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": " a "
+                }
+              ],
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "no normalisation compares as written",
+    "expr": "tables.Raw[\"a\"] ?? 0",
+    "display": "0",
+    "context": {
+      "tables": [
+        {
+          "code": "Raw",
+          "valueType": "Number",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Custom"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": " a "
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "no normalisation matches the exact text",
+    "expr": "tables.Raw[\" a \"] ?? 0",
+    "display": "2",
+    "context": {
+      "tables": [
+        {
+          "code": "Raw",
+          "valueType": "Number",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Custom"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": " a "
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a freight class axis reads the enum",
+    "expr": "tables.Class[Class85] ?? 0%",
+    "display": "12.5%",
+    "context": {
+      "tables": [
+        {
+          "code": "Class",
+          "valueType": "Percent",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "FreightClass"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "85"
+                }
+              ],
+              "value": "12.5"
+            },
+            {
+              "at": [
+                {
+                  "key": "Class77_5"
+                }
+              ],
+              "value": "10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a freight class axis reads numbers",
+    "expr": "tables.Class[\"77.5\"] ?? 0%",
+    "display": "10%",
+    "context": {
+      "tables": [
+        {
+          "code": "Class",
+          "valueType": "Percent",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "FreightClass"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "85"
+                }
+              ],
+              "value": "12.5"
+            },
+            {
+              "at": [
+                {
+                  "key": "Class77_5"
+                }
+              ],
+              "value": "10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a freight class axis reads spellings",
+    "expr": "tables.Class[\"class 85\"] ?? 0%",
+    "display": "12.5%",
+    "context": {
+      "tables": [
+        {
+          "code": "Class",
+          "valueType": "Percent",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "FreightClass"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "85"
+                }
+              ],
+              "value": "12.5"
+            },
+            {
+              "at": [
+                {
+                  "key": "Class77_5"
+                }
+              ],
+              "value": "10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a range axis finds its band",
+    "expr": "tables.Breaks[1_240 lb] ?? $0/cwt",
+    "display": "$35.50/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "Error"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a range key converts into the axis unit",
+    "expr": "tables.Breaks[12.4 cwt] ?? $0/cwt",
+    "display": "$35.50/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "Error"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a range key in kilograms converts",
+    "expr": "tables.Breaks[1000 kg] ?? $0/cwt",
+    "display": "$28.10/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "Error"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "bands are half-open",
+    "expr": "tables.Breaks[500 lb] ?? $0/cwt",
+    "display": "$35.50/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "Error"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overflow Error misses past the top",
+    "expr": "tables.Breaks[6_000 lb] ?? $0/cwt",
+    "display": "$0.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "Error"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overflow ClampToTopBand prices past the top at the top",
+    "expr": "tables.Breaks[6_000 lb] ?? $0/cwt",
+    "display": "$28.10/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overflow ClampToTopBand does not reach below the first band",
+    "expr": "tables.Breaks[-1 lb] ?? $0/cwt",
+    "display": "$0.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overflow Nearest takes the bottom band below",
+    "expr": "tables.Gappy[50 mi] ?? $0",
+    "display": "$1.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Gappy",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi",
+              "overflow": "Nearest"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "200"
+                }
+              ],
+              "value": "1"
+            },
+            {
+              "at": [
+                {
+                  "min": "300",
+                  "max": "400"
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overflow Nearest takes the top band above",
+    "expr": "tables.Gappy[500 mi] ?? $0",
+    "display": "$2.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Gappy",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi",
+              "overflow": "Nearest"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "200"
+                }
+              ],
+              "value": "1"
+            },
+            {
+              "at": [
+                {
+                  "min": "300",
+                  "max": "400"
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overflow Nearest takes the closest band in a gap",
+    "expr": "tables.Gappy[280 mi] ?? $0",
+    "display": "$2.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Gappy",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi",
+              "overflow": "Nearest"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "200"
+                }
+              ],
+              "value": "1"
+            },
+            {
+              "at": [
+                {
+                  "min": "300",
+                  "max": "400"
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overflow Nearest prefers the lower band on a tie",
+    "expr": "tables.Gappy[250 mi] ?? $0",
+    "display": "$1.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Gappy",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi",
+              "overflow": "Nearest"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "200"
+                }
+              ],
+              "value": "1"
+            },
+            {
+              "at": [
+                {
+                  "min": "300",
+                  "max": "400"
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an open-ended band",
+    "expr": "tables.Open[1_000 mi] ?? $0",
+    "display": "$90.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Open",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "50"
+            },
+            {
+              "at": [
+                {
+                  "min": "100"
+                }
+              ],
+              "value": "90"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a range axis without overflow misses below",
+    "expr": "tables.Open[-5 mi] ?? $0",
+    "display": "$0.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Open",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "50"
+            },
+            {
+              "at": [
+                {
+                  "min": "100"
+                }
+              ],
+              "value": "90"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "two axes, exact then range",
+    "expr": "tables.Grid[\"a\", 1_500 lb] ?? $0/cwt",
+    "display": "$15.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            },
+            {
+              "at": [
+                {
+                  "key": "B"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "25"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "two axes clamp the range axis",
+    "expr": "tables.Grid[\"A\", 9_000 lb] ?? $0/cwt",
+    "display": "$15.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            },
+            {
+              "at": [
+                {
+                  "key": "B"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "25"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "two axes miss on the exact axis",
+    "expr": "tables.Grid[\"C\", 500 lb] ?? $0/cwt",
+    "display": "$0.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            },
+            {
+              "at": [
+                {
+                  "key": "B"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "25"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "two axes clamp within the exact key's own bands",
+    "expr": "tables.Grid[\"B\", 9_000 lb] ?? $0/cwt",
+    "display": "$25.00/cwt",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            },
+            {
+              "at": [
+                {
+                  "key": "B"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "25"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "four axes",
+    "expr": "tables.Four[\"TX\", \"OK\", \"van\", 12] ?? $0",
+    "display": "$180.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Four",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "EquipmentType",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "PieceCount"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "1",
+                  "max": "10"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "10"
+                }
+              ],
+              "value": "180"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "REEFER"
+                },
+                {
+                  "min": "1"
+                }
+              ],
+              "value": "150"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "four axes, the first band",
+    "expr": "tables.Four[\"TX\", \"OK\", \"VAN\", 3] ?? $0",
+    "display": "$100.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Four",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "EquipmentType",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "PieceCount"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "1",
+                  "max": "10"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "10"
+                }
+              ],
+              "value": "180"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "REEFER"
+                },
+                {
+                  "min": "1"
+                }
+              ],
+              "value": "150"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "four axes, another equipment",
+    "expr": "tables.Four[\"TX\", \"OK\", \"REEFER\", 3] ?? $0",
+    "display": "$150.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Four",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "EquipmentType",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "PieceCount"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "1",
+                  "max": "10"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "10"
+                }
+              ],
+              "value": "180"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "REEFER"
+                },
+                {
+                  "min": "1"
+                }
+              ],
+              "value": "150"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "four axes miss",
+    "expr": "tables.Four[\"TX\", \"KS\", \"VAN\", 3] ?? $0",
+    "display": "$0.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Four",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "State"
+            },
+            {
+              "match": "Exact",
+              "kind": "EquipmentType",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "PieceCount"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "1",
+                  "max": "10"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "VAN"
+                },
+                {
+                  "min": "10"
+                }
+              ],
+              "value": "180"
+            },
+            {
+              "at": [
+                {
+                  "key": "TX"
+                },
+                {
+                  "key": "OK"
+                },
+                {
+                  "key": "REEFER"
+                },
+                {
+                  "min": "1"
+                }
+              ],
+              "value": "150"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "overlapping bands take the lowest floor",
+    "expr": "tables.Overlap[15] ?? 0",
+    "display": "1",
+    "context": {
+      "tables": [
+        {
+          "code": "Overlap",
+          "valueType": "Number",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Quantity"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "10",
+                  "max": "20"
+                }
+              ],
+              "value": "2"
+            },
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "cell gives the value, minimum and deficit",
+    "expr": "tables.Zones.cell(\"ZONE_2\")",
+    "display": "{ value: $21.00/cwt, minimum: $75.00, deficit: true }",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "cell without a minimum",
+    "expr": "tables.Zones.cell(\"ZONE_1\")",
+    "display": "{ value: $18.50/cwt, minimum: none, deficit: false }",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "cell miss is none",
+    "expr": "tables.Zones.cell(\"ZONE_7\") == none",
+    "display": "true",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "band gives its bounds and value",
+    "expr": "tables.Breaks.band(700 lb)",
+    "display": "{ min: 500 lb, max: 2000 lb, value: $35.50/cwt }",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "Error"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an open band has no maximum",
+    "expr": "tables.Open.band(200 mi)",
+    "display": "{ min: 100 mi, max: none, value: $90.00 }",
+    "context": {
+      "tables": [
+        {
+          "code": "Open",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "50"
+            },
+            {
+              "at": [
+                {
+                  "min": "100"
+                }
+              ],
+              "value": "90"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "band miss is none",
+    "expr": "tables.Breaks.band(9_000 lb) == none",
+    "display": "true",
+    "context": {
+      "tables": [
+        {
+          "code": "Breaks",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "Error"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "500"
+                }
+              ],
+              "value": "42"
+            },
+            {
+              "at": [
+                {
+                  "min": "500",
+                  "max": "2000"
+                }
+              ],
+              "value": "35.50"
+            },
+            {
+              "at": [
+                {
+                  "min": "2000",
+                  "max": "5000"
+                }
+              ],
+              "value": "28.10"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "interpolate between floors",
+    "expr": "tables.Curve.interpolate(200 mi) ?? $0",
+    "display": "$350.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Curve",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "300"
+                }
+              ],
+              "value": "200"
+            },
+            {
+              "at": [
+                {
+                  "min": "300"
+                }
+              ],
+              "value": "500"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "interpolate at a floor",
+    "expr": "tables.Curve.interpolate(100 mi) ?? $0",
+    "display": "$200.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Curve",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "300"
+                }
+              ],
+              "value": "200"
+            },
+            {
+              "at": [
+                {
+                  "min": "300"
+                }
+              ],
+              "value": "500"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "interpolate below the first floor",
+    "expr": "tables.Curve.interpolate(-10 mi) ?? $0",
+    "display": "$100.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Curve",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "300"
+                }
+              ],
+              "value": "200"
+            },
+            {
+              "at": [
+                {
+                  "min": "300"
+                }
+              ],
+              "value": "500"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "interpolate past the last floor",
+    "expr": "tables.Curve.interpolate(900 mi) ?? $0",
+    "display": "$500.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Curve",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "100"
+                }
+              ],
+              "value": "100"
+            },
+            {
+              "at": [
+                {
+                  "min": "100",
+                  "max": "300"
+                }
+              ],
+              "value": "200"
+            },
+            {
+              "at": [
+                {
+                  "min": "300"
+                }
+              ],
+              "value": "500"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "band on an exact table is internal",
+    "expr": "tables.Zones.band(\"A\")",
+    "error": "internal",
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "piece counts key a count table",
+    "expr": "tables.Counts[12] ?? 0",
+    "display": "2",
+    "context": {
+      "tables": [
+        {
+          "code": "Counts",
+          "valueType": "Int",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "PieceCount"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "10"
+                }
+              ],
+              "value": "1"
+            },
+            {
+              "at": [
+                {
+                  "min": "10"
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an int table gives whole numbers",
+    "expr": "(tables.Counts[3] ?? 0) + 1",
+    "display": "2",
+    "context": {
+      "tables": [
+        {
+          "code": "Counts",
+          "valueType": "Int",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "PieceCount"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "min": "0",
+                  "max": "10"
+                }
+              ],
+              "value": "1"
+            },
+            {
+              "at": [
+                {
+                  "min": "10"
+                }
+              ],
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a table the request did not send",
+    "expr": "tables.Missing[\"A\"]",
+    "error": "table",
+    "context": {
+      "tables": []
+    }
+  },
+  {
+    "name": "a cell without a position per axis",
+    "expr": "tables.Broken[\"A\"]",
+    "error": "table",
+    "context": {
+      "tables": [
+        {
+          "code": "Broken",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "key": "B"
+                }
+              ],
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a cell whose value does not fit the value type",
+    "expr": "tables.BadValue[\"A\"]",
+    "error": "table",
+    "context": {
+      "tables": [
+        {
+          "code": "BadValue",
+          "valueType": "Int",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                }
+              ],
+              "value": "1.5"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a list key tries each combination in order",
+    "expr": "tables.Lanes[[\"Z1\", \"Z2\"], [\"Z9\", \"Z8\"]] ?? $0",
+    "display": "$100.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            },
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "Z2"
+                },
+                {
+                  "key": "Z9"
+                }
+              ],
+              "value": "300"
+            },
+            {
+              "at": [
+                {
+                  "key": "Z1"
+                },
+                {
+                  "key": "Z8"
+                }
+              ],
+              "value": "100"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a list key takes the first combination that matches",
+    "expr": "tables.Lanes[[\"Z2\", \"Z1\"], [\"Z8\", \"Z9\"]] ?? $0",
+    "display": "$300.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            },
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "Z2"
+                },
+                {
+                  "key": "Z9"
+                }
+              ],
+              "value": "300"
+            },
+            {
+              "at": [
+                {
+                  "key": "Z1"
+                },
+                {
+                  "key": "Z8"
+                }
+              ],
+              "value": "100"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an empty list key misses",
+    "expr": "tables.Lanes[[], \"Z8\"] ?? $0",
+    "display": "$0.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            },
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "Z2"
+                },
+                {
+                  "key": "Z9"
+                }
+              ],
+              "value": "300"
+            },
+            {
+              "at": [
+                {
+                  "key": "Z1"
+                },
+                {
+                  "key": "Z8"
+                }
+              ],
+              "value": "100"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "lane zones key a table",
+    "expr": "tables.Lanes[lane.origin.zones, lane.destination.zones] ?? $0",
+    "display": "$100.00",
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            },
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "Z2"
+                },
+                {
+                  "key": "Z9"
+                }
+              ],
+              "value": "300"
+            },
+            {
+              "at": [
+                {
+                  "key": "Z1"
+                },
+                {
+                  "key": "Z8"
+                }
+              ],
+              "value": "100"
+            }
+          ]
+        }
+      ]
+    },
+    "facts": {
+      "lane": {
+        "origin": {
+          "zones": [
+            "Z0",
+            "Z1"
+          ]
+        },
+        "destination": {
+          "zones": [
+            "Z8"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a table sent without cells is a need",
+    "source": "tariff \"t\"\nlet rate = tables.Grid[\"a\", 1_500 lb] ?? fail \"No rate\"\ncharge \"X\" = $1",
+    "expect": {
+      "status": "needs",
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "A"
+          ]
+        }
+      ],
+      "refusal": null,
+      "bill": null
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "needs are deduplicated and collected in one pass",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"A\", 1 lb]\nlet b = tables.Grid[\"a\", 2_000 lb]\nlet c = tables.Grid[\"B\", 1 lb]",
+    "expect": {
+      "status": "needs",
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "A"
+          ]
+        },
+        {
+          "table": "Grid",
+          "keys": [
+            "B"
+          ]
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "loaded combinations answer, others are needs",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"A\", 1 lb] ?? $0/cwt\nlet b = tables.Grid[\"B\", 1 lb]\nnote \"{a}\"",
+    "expect": {
+      "status": "needs",
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "B"
+          ]
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            }
+          ],
+          "loaded": [
+            [
+              "A"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "every loaded combination rates",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"A\", 1 lb] ?? $0/cwt\nnote \"{a}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$20.00/cwt"
+          }
+        ]
+      }
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            }
+          ],
+          "loaded": [
+            [
+              "A"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a loaded combination with no cells is a real miss",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"B\", 1 lb] ?? $0/cwt\nnote \"{a}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$0.00/cwt"
+          }
+        ]
+      }
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [],
+          "loaded": [
+            [
+              "B"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a list key needs each uncovered combination before the first match",
+    "source": "tariff \"t\"\nlet a = tables.Lanes[[\"Z1\", \"Z2\"], [\"Z8\"]]",
+    "expect": {
+      "status": "needs",
+      "needs": [
+        {
+          "table": "Lanes",
+          "keys": [
+            "Z1",
+            "Z8"
+          ]
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Lanes",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            },
+            {
+              "match": "Exact",
+              "kind": "Zone"
+            }
+          ],
+          "cells": [],
+          "loaded": [
+            [
+              "Z2",
+              "Z8"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "needs win over a refusal the provisional miss caused",
+    "source": "tariff \"t\"\nlet a = tables.Zones[\"ZONE_1\"] ?? fail \"No rate\"",
+    "expect": {
+      "status": "needs",
+      "needs": [
+        {
+          "table": "Zones",
+          "keys": [
+            "ZONE_1"
+          ]
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a range-only table sent without cells needs the whole table",
+    "source": "tariff \"t\"\nlet a = tables.Curve.interpolate(5 mi)",
+    "expect": {
+      "status": "needs",
+      "needs": [
+        {
+          "table": "Curve",
+          "keys": []
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Curve",
+          "valueType": "Money",
+          "axes": [
+            {
+              "match": "Range",
+              "kind": "Distance",
+              "unit": "mi"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "lookups are recorded",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"a\", 1_500 lb]\nlet b = tables.Grid[\"Q\", 1 lb]",
+    "expect": {
+      "status": "rated",
+      "lookups": [
+        {
+          "table": "Grid",
+          "op": "index",
+          "keys": [
+            "a",
+            {
+              "$q": "1500",
+              "u": "lb"
+            }
+          ],
+          "match": [
+            {
+              "key": "A"
+            },
+            {
+              "min": "1000",
+              "max": "5000"
+            }
+          ],
+          "adjusted": false,
+          "value": {
+            "$q": "15",
+            "u": "$/cwt"
+          },
+          "display": "$15.00/cwt"
+        },
+        {
+          "table": "Grid",
+          "op": "index",
+          "match": null,
+          "value": null
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            },
+            {
+              "at": [
+                {
+                  "key": "B"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "25"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an overflow move is recorded as adjusted",
+    "source": "tariff \"t\"\nlet a = tables.Grid[\"A\", 9_000 lb]",
+    "expect": {
+      "status": "rated",
+      "lookups": [
+        {
+          "adjusted": true,
+          "match": [
+            {
+              "key": "A"
+            },
+            {
+              "min": "1000",
+              "max": "5000"
+            }
+          ]
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "20"
+            },
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "1000",
+                  "max": "5000"
+                }
+              ],
+              "value": "15"
+            },
+            {
+              "at": [
+                {
+                  "key": "B"
+                },
+                {
+                  "min": "0",
+                  "max": "1000"
+                }
+              ],
+              "value": "25"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "lookups show on the trace",
+    "source": "tariff \"t\"\nlet a = tables.Zones[\"ZONE_1\"]",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "lookup",
+          "lookup": 0
+        },
+        {
+          "kind": "bind",
+          "name": "a"
+        }
+      ]
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Zones",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "ZONE_1"
+                }
+              ],
+              "value": "18.50"
+            },
+            {
+              "at": [
+                {
+                  "key": "ZONE_2"
+                }
+              ],
+              "value": "21.00",
+              "minimum": "75",
+              "deficit": true
+            }
+          ]
+        }
+      ]
+    },
+    "trace": true
+  }
+]

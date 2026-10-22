@@ -316,6 +316,10 @@ pub enum StmtKind {
     Expect(Expect),
     /// An expression on its own: a condition's final value, or a call whose result is unused.
     Expr(Expr),
+    /// A file-level declaration (`fn`, `const`, `use`, …) written inside a block, where it is
+    /// misplaced. The parser reports it; the tree keeps it so later phases and the editor can
+    /// still see it.
+    Item(Box<Item>),
 }
 
 /// The name, annotation and value of a `let` or `var`.
@@ -498,7 +502,8 @@ impl Text {
 /// One part of a text literal.
 #[derive(Debug, Clone, PartialEq)]
 pub enum TextPart {
-    /// Characters, escapes decoded, with where they are written.
+    /// Characters, escapes decoded, with where they are written: the span covers the raw text
+    /// (escapes as written, quotes excluded).
     Literal(String, Span),
     /// `{expr}`.
     Expr(Expr),
@@ -822,6 +827,8 @@ pub enum PatternKind {
     Record(Vec<(Name, Pattern)>),
     /// `A | B`.
     Or(Vec<Pattern>),
+    /// A pattern the author has not written yet.
+    Missing,
 }
 
 /// A type as written.

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/shopspring/decimal"
 )
 
@@ -248,8 +250,38 @@ type TariffBill struct {
 }
 
 type TariffRefusal struct {
-	Message string       `json:"message"`
-	Range   *TariffRange `json:"range"`
+	Text    string
+	Message *Message
+	Range   *TariffRange
+}
+
+type wireTariffRefusal struct {
+	Message sonic.NoCopyRawMessage `json:"message"`
+	Range   *TariffRange           `json:"range"`
+}
+
+func (r *TariffRefusal) UnmarshalJSON(data []byte) error {
+	var wire wireTariffRefusal
+	if err := sonic.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	r.Range = wire.Range
+	if len(wire.Message) > 0 && wire.Message[0] == '"' {
+		return sonic.Unmarshal(wire.Message, &r.Text)
+	}
+	var message Message
+	if err := message.UnmarshalJSON(wire.Message); err != nil {
+		return err
+	}
+	r.Message = &message
+	return nil
+}
+
+func (r *TariffRefusal) Localize(locale i18n.Locale) string {
+	if r.Message != nil {
+		return r.Message.Localize(locale)
+	}
+	return r.Text
 }
 
 type TariffEvalError struct {
@@ -311,13 +343,18 @@ type TariffTestResult struct {
 	Status   TariffTestStatus    `json:"status"`
 	Failures []TariffTestFailure `json:"failures,omitempty"`
 	Bill     RawJSON             `json:"bill,omitempty"`
+	Error    *TariffEvalError    `json:"error,omitempty"`
 }
 
 type TariffTestRun struct {
 	Tests []TariffTestResult `json:"tests"`
+	Error *TariffEvalError   `json:"error,omitempty"`
 }
 
 func (r *TariffTestRun) Passed() bool {
+	if r.Error != nil {
+		return false
+	}
 	for i := range r.Tests {
 		if r.Tests[i].Status != TariffTestPassed {
 			return false
@@ -344,7 +381,10 @@ type TariffScaffoldRequest struct {
 }
 
 type TariffScaffold struct {
-	Test string `json:"test"`
+	Test   *string          `json:"test"`
+	Error  *TariffEvalError `json:"error,omitempty"`
+	Status TariffStatus     `json:"status,omitempty"`
+	Needs  []TariffNeed     `json:"needs,omitempty"`
 }
 
 func (r *Runtime) CheckTariff(ctx context.Context, req *TariffCheckRequest) (*TariffCheck, error) {
