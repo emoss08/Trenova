@@ -17,6 +17,7 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "aianalytics",
 	Objects: []*gqlexec.Object{
+		{Name: "AIAnalyticsAdvisor", Implementors: []string{"AIAnalyticsAdvisor"}},
 		{Name: "AIAnalyticsAgentSuggestions", Implementors: []string{"AIAnalyticsAgentSuggestions"}},
 		{Name: "AIAnalyticsCauseCount", Implementors: []string{"AIAnalyticsCauseCount"}},
 		{Name: "AIAnalyticsErrorCount", Implementors: []string{"AIAnalyticsErrorCount"}},
@@ -41,11 +42,53 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentAnalyticsToolFailures", Implementors: []string{"AgentAnalyticsToolFailures"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "AIAnalyticsAdvisor", Fields: []*gqlexec.Field{
+			{
+				Name:     "calls",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsAdvisor)
+					return obj.Calls, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "promptTokens",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsAdvisor)
+					return obj.PromptTokens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "outputTokens",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsAdvisor)
+					return obj.OutputTokens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "costUsd",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsAdvisor)
+					return obj.CostUsd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+		}},
 		{Object: "AIAnalyticsAgentSuggestions", Fields: []*gqlexec.Field{
 			{
 				Name:     "agentDefinitionId",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.AgentDefinitionID, nil
@@ -55,7 +98,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.Name, nil
@@ -65,7 +108,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "suggested",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.Suggested, nil
@@ -75,7 +118,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "switched",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.Switched, nil
@@ -85,7 +128,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sentThrough",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.SentThrough, nil
@@ -95,7 +138,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoSwitched",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.AutoSwitched, nil
@@ -105,7 +148,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kept",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.Kept, nil
@@ -115,7 +158,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "passedOver",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.PassedOver, nil
@@ -124,7 +167,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "takenRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsAgentSuggestions)
 					return obj.TakenRate, nil
@@ -136,7 +179,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cause",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsCauseCount)
 					return obj.Cause, nil
@@ -146,7 +189,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "blame",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsCauseCount)
 					return obj.Blame, nil
@@ -156,7 +199,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsCauseCount)
 					return obj.Calls, nil
@@ -168,7 +211,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsErrorCount)
 					return obj.Kind, nil
@@ -178,7 +221,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsErrorCount)
 					return obj.Calls, nil
@@ -190,7 +233,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "at",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsEvent)
 					return obj.At, nil
@@ -200,7 +243,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsEvent)
 					return obj.Kind, nil
@@ -210,7 +253,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsEvent)
 					return obj.Label, nil
@@ -233,7 +276,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unitId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsFailureExample)
 					return obj.UnitID, nil
@@ -243,7 +286,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsFailureExample)
 					return obj.Source, nil
@@ -253,7 +296,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolName",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsFailureExample)
 					return obj.ToolName, nil
@@ -263,7 +306,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "message",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsFailureExample)
 					return obj.Message, nil
@@ -272,7 +315,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "agentId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsFailureExample)
 					return obj.AgentID, nil
@@ -281,7 +324,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "agentName",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsFailureExample)
 					return obj.AgentName, nil
@@ -291,7 +334,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "at",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsFailureExample)
 					return obj.At, nil
@@ -302,7 +345,7 @@ var Shard = &gqlexec.Shard{
 		{Object: "AIAnalyticsProvider", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProvider)
 					return obj.ID, nil
@@ -312,7 +355,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProvider)
 					return obj.Name, nil
@@ -322,7 +365,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shortName",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProvider)
 					return obj.ShortName, nil
@@ -331,7 +374,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "kind",
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProvider)
 					return obj.Kind, nil
@@ -341,7 +384,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "baseUrl",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProvider)
 					return obj.BaseURL, nil
@@ -351,7 +394,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "enabled",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProvider)
 					return obj.Enabled, nil
@@ -361,7 +404,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "removed",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProvider)
 					return obj.Removed, nil
@@ -373,7 +416,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "key",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.Key, nil
@@ -394,7 +437,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "modelKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.ModelKey, nil
@@ -404,7 +447,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "model",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.Model, nil
@@ -413,7 +456,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastCalledAt",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.LastCalledAt, nil
@@ -423,7 +466,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "quiet",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.Quiet, nil
@@ -433,7 +476,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.Calls, nil
@@ -443,7 +486,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "errors",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.Errors, nil
@@ -452,7 +495,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "errorRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.ErrorRate, nil
@@ -462,7 +505,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "errorAlarm",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.ErrorAlarm, nil
@@ -472,7 +515,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fellToNext",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.FellToNext, nil
@@ -482,7 +525,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fellToNextAlarm",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.FellToNextAlarm, nil
@@ -491,7 +534,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "firstTokenMedianMs",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsProviderHealth)
 					return obj.FirstTokenMedianMs, nil
@@ -525,7 +568,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "seriesKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRouteSuggestion)
 					return obj.SeriesKey, nil
@@ -535,7 +578,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "gainPoints",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRouteSuggestion)
 					return obj.GainPoints, nil
@@ -547,7 +590,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRunTime)
 					return obj.Outcome, nil
@@ -557,7 +600,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runs",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRunTime)
 					return obj.Runs, nil
@@ -567,7 +610,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "p25Ms",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRunTime)
 					return obj.P25Ms, nil
@@ -577,7 +620,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "medianMs",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRunTime)
 					return obj.MedianMs, nil
@@ -587,7 +630,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "p75Ms",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRunTime)
 					return obj.P75Ms, nil
@@ -597,7 +640,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "p95Ms",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsRunTime)
 					return obj.P95Ms, nil
@@ -609,7 +652,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "modelKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSameModel)
 					return obj.ModelKey, nil
@@ -619,7 +662,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "betterKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSameModel)
 					return obj.BetterKey, nil
@@ -629,7 +672,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "worseKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSameModel)
 					return obj.WorseKey, nil
@@ -641,7 +684,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "text",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSegment)
 					return obj.Text, nil
@@ -651,7 +694,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "strong",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSegment)
 					return obj.Strong, nil
@@ -660,7 +703,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "tone",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSegment)
 					return obj.Tone, nil
@@ -669,7 +712,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "target",
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSegment)
 					return obj.Target, nil
@@ -678,7 +721,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "seriesKey",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSegment)
 					return obj.SeriesKey, nil
@@ -687,7 +730,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "providerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSegment)
 					return obj.ProviderID, nil
@@ -699,7 +742,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "key",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Key, nil
@@ -709,7 +752,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Label, nil
@@ -719,7 +762,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shortLabel",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ShortLabel, nil
@@ -728,7 +771,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "modelKey",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ModelKey, nil
@@ -737,7 +780,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "providerId",
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ProviderID, nil
@@ -747,7 +790,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "few",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Few, nil
@@ -757,7 +800,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "colorSlot",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ColorSlot, nil
@@ -767,7 +810,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "models",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Models, nil
@@ -788,7 +831,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runs",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Runs, nil
@@ -798,7 +841,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "completed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Completed, nil
@@ -808,7 +851,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "handedOff",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.HandedOff, nil
@@ -818,7 +861,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopped",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Stopped, nil
@@ -828,7 +871,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Failed, nil
@@ -837,7 +880,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "completedRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.CompletedRate, nil
@@ -846,7 +889,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "medianRunMs",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.MedianRunMs, nil
@@ -855,7 +898,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "p95RunMs",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.P95RunMs, nil
@@ -865,7 +908,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "modelCalls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ModelCalls, nil
@@ -875,7 +918,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolCalls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ToolCalls, nil
@@ -885,7 +928,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolCallsFailed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ToolCallsFailed, nil
@@ -895,7 +938,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolFailuresModel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ToolFailuresModel, nil
@@ -904,7 +947,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "toolFailureRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ToolFailureRate, nil
@@ -913,7 +956,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "modelMistakeRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ModelMistakeRate, nil
@@ -934,7 +977,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "costUsd",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.CostUsd, nil
@@ -944,7 +987,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pricedRuns",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.PricedRuns, nil
@@ -953,7 +996,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "costPerCompletedRun",
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.CostPerCompletedRun, nil
@@ -972,8 +1015,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAIAnalyticsTokens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsTokens),
 			},
 			{
+				Name:      "advisor",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AIAnalyticsAdvisor",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsSeries)
+					return obj.Advisor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIAnalyticsAdvisor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsAdvisor),
+			},
+			{
 				Name:     "firstTokenMedianMs",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.FirstTokenMedianMs, nil
@@ -982,7 +1036,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastRanAt",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.LastRanAt, nil
@@ -992,7 +1046,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "quiet",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Quiet, nil
@@ -1013,7 +1067,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decided",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Decided, nil
@@ -1023,7 +1077,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accepted",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Accepted, nil
@@ -1033,7 +1087,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "modified",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Modified, nil
@@ -1043,7 +1097,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rejected",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Rejected, nil
@@ -1052,7 +1106,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "approvalRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.ApprovalRate, nil
@@ -1062,7 +1116,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rated",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Rated, nil
@@ -1072,7 +1126,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "helpful",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.Helpful, nil
@@ -1081,7 +1135,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "helpfulRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSeries)
 					return obj.HelpfulRate, nil
@@ -1093,7 +1147,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "suggested",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSuggestions)
 					return obj.Suggested, nil
@@ -1103,7 +1157,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "switched",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSuggestions)
 					return obj.Switched, nil
@@ -1113,7 +1167,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sentThrough",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSuggestions)
 					return obj.SentThrough, nil
@@ -1123,7 +1177,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoSwitched",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSuggestions)
 					return obj.AutoSwitched, nil
@@ -1133,7 +1187,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kept",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSuggestions)
 					return obj.Kept, nil
@@ -1143,7 +1197,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "passedOver",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSuggestions)
 					return obj.PassedOver, nil
@@ -1152,7 +1206,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "takenRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsSuggestions)
 					return obj.TakenRate, nil
@@ -1194,7 +1248,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "currentSeriesKey",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTask)
 					return obj.CurrentSeriesKey, nil
@@ -1203,7 +1257,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "bestSeriesKey",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTask)
 					return obj.BestSeriesKey, nil
@@ -1236,7 +1290,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "seriesKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTaskCell)
 					return obj.SeriesKey, nil
@@ -1246,7 +1300,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "few",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTaskCell)
 					return obj.Few, nil
@@ -1256,7 +1310,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runs",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTaskCell)
 					return obj.Runs, nil
@@ -1266,7 +1320,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "completed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTaskCell)
 					return obj.Completed, nil
@@ -1275,7 +1329,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "completedRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTaskCell)
 					return obj.CompletedRate, nil
@@ -1287,7 +1341,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "uncachedInput",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTokens)
 					return obj.UncachedInput, nil
@@ -1297,7 +1351,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cacheRead",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTokens)
 					return obj.CacheRead, nil
@@ -1307,7 +1361,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cacheWrite",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTokens)
 					return obj.CacheWrite, nil
@@ -1317,7 +1371,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "output",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTokens)
 					return obj.Output, nil
@@ -1326,7 +1380,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "cacheReadShare",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTokens)
 					return obj.CacheReadShare, nil
@@ -1338,7 +1392,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTool)
 					return obj.Name, nil
@@ -1348,7 +1402,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTool)
 					return obj.Calls, nil
@@ -1358,7 +1412,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTool)
 					return obj.Failed, nil
@@ -1367,7 +1421,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "failureRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTool)
 					return obj.FailureRate, nil
@@ -1390,7 +1444,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "seriesKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsToolCell)
 					return obj.SeriesKey, nil
@@ -1400,7 +1454,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "few",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsToolCell)
 					return obj.Few, nil
@@ -1410,7 +1464,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsToolCell)
 					return obj.Calls, nil
@@ -1420,7 +1474,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsToolCell)
 					return obj.Failed, nil
@@ -1429,7 +1483,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "failureRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsToolCell)
 					return obj.FailureRate, nil
@@ -1441,7 +1495,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runs",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.Runs, nil
@@ -1451,7 +1505,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "modelCalls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.ModelCalls, nil
@@ -1461,7 +1515,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "completed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.Completed, nil
@@ -1471,7 +1525,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "handedOff",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.HandedOff, nil
@@ -1481,7 +1535,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "stopped",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.Stopped, nil
@@ -1491,7 +1545,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.Failed, nil
@@ -1500,7 +1554,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "completedRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.CompletedRate, nil
@@ -1509,7 +1563,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "medianRunMs",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.MedianRunMs, nil
@@ -1518,7 +1572,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "p95RunMs",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.P95RunMs, nil
@@ -1528,7 +1582,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolCalls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.ToolCalls, nil
@@ -1538,7 +1592,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolCallsFailed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.ToolCallsFailed, nil
@@ -1548,7 +1602,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolFailuresModel",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.ToolFailuresModel, nil
@@ -1557,7 +1611,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "toolFailureRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.ToolFailureRate, nil
@@ -1566,7 +1620,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "modelShareOfToolFailures",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.ModelShareOfToolFailures, nil
@@ -1576,7 +1630,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "costUsd",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.CostUsd, nil
@@ -1586,7 +1640,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "pricedRuns",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.PricedRuns, nil
@@ -1595,7 +1649,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "costPerCompletedRun",
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.CostPerCompletedRun, nil
@@ -1614,9 +1668,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAIAnalyticsTokens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsTokens),
 			},
 			{
+				Name:      "advisor",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AIAnalyticsAdvisor",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIAnalyticsTotals)
+					return obj.Advisor, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIAnalyticsAdvisor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsAdvisor),
+			},
+			{
 				Name:     "toolFailureAlarm",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTotals)
 					return obj.ToolFailureAlarm, nil
@@ -1628,7 +1693,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "seriesKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTrendPoint)
 					return obj.SeriesKey, nil
@@ -1638,7 +1703,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "bucketStart",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTrendPoint)
 					return obj.BucketStart, nil
@@ -1648,7 +1713,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runs",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTrendPoint)
 					return obj.Runs, nil
@@ -1657,7 +1722,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "completedRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTrendPoint)
 					return obj.CompletedRate, nil
@@ -1666,7 +1731,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "toolFailureRate",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTrendPoint)
 					return obj.ToolFailureRate, nil
@@ -1675,7 +1740,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "medianRunMs",
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AIAnalyticsTrendPoint)
 					return obj.MedianRunMs, nil
@@ -1707,7 +1772,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "since",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalytics)
 					return obj.Since, nil
@@ -1717,7 +1782,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "until",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalytics)
 					return obj.Until, nil
@@ -1727,7 +1792,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "bucketSeconds",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalytics)
 					return obj.BucketSeconds, nil
@@ -1737,7 +1802,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "trendBuckets",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalytics)
 					return obj.TrendBuckets, nil
@@ -1746,7 +1811,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "refreshedAt",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalytics)
 					return obj.RefreshedAt, nil
@@ -1888,7 +1953,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "seriesKey",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalyticsToolFailures)
 					return obj.SeriesKey, nil
@@ -1898,7 +1963,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toolName",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalyticsToolFailures)
 					return obj.ToolName, nil
@@ -1908,7 +1973,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "calls",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalyticsToolFailures)
 					return obj.Calls, nil
@@ -1918,7 +1983,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "failed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentAnalyticsToolFailures)
 					return obj.Failed, nil
@@ -2004,21 +2069,21 @@ type resolverQuery interface {
 }
 
 var (
-	errNoChild0  = errors.New("field of type ID does not have child fields")
-	errNoChild1  = errors.New("field of type String does not have child fields")
-	errNoChild2  = errors.New("field of type Int does not have child fields")
-	errNoChild3  = errors.New("field of type Float does not have child fields")
-	errNoChild4  = errors.New("field of type AIToolFailureCause does not have child fields")
-	errNoChild5  = errors.New("field of type AIToolFailureBlame does not have child fields")
-	errNoChild6  = errors.New("field of type AIProviderErrorKind does not have child fields")
-	errNoChild7  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild8  = errors.New("field of type AIAnalyticsEventKind does not have child fields")
-	errNoChild9  = errors.New("field of type AIWorkSource does not have child fields")
-	errNoChild10 = errors.New("field of type AIProviderKind does not have child fields")
-	errNoChild11 = errors.New("field of type Boolean does not have child fields")
-	errNoChild12 = errors.New("field of type AIWorkOutcome does not have child fields")
-	errNoChild13 = errors.New("field of type AIAnalyticsTarget does not have child fields")
-	errNoChild14 = errors.New("field of type Decimal does not have child fields")
+	errNoChild0  = errors.New("field of type Decimal does not have child fields")
+	errNoChild1  = errors.New("field of type ID does not have child fields")
+	errNoChild2  = errors.New("field of type String does not have child fields")
+	errNoChild3  = errors.New("field of type Int does not have child fields")
+	errNoChild4  = errors.New("field of type Float does not have child fields")
+	errNoChild5  = errors.New("field of type AIToolFailureCause does not have child fields")
+	errNoChild6  = errors.New("field of type AIToolFailureBlame does not have child fields")
+	errNoChild7  = errors.New("field of type AIProviderErrorKind does not have child fields")
+	errNoChild8  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild9  = errors.New("field of type AIAnalyticsEventKind does not have child fields")
+	errNoChild10 = errors.New("field of type AIWorkSource does not have child fields")
+	errNoChild11 = errors.New("field of type AIProviderKind does not have child fields")
+	errNoChild12 = errors.New("field of type Boolean does not have child fields")
+	errNoChild13 = errors.New("field of type AIWorkOutcome does not have child fields")
+	errNoChild14 = errors.New("field of type AIAnalyticsTarget does not have child fields")
 	errNoChild15 = errors.New("field of type AITask does not have child fields")
 	errNoChild16 = errors.New("field of type AIAnalyticsWindow does not have child fields")
 	errNoChild17 = errors.New("field of type AIAnalyticsCompareBy does not have child fields")
@@ -2169,6 +2234,14 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	}
 	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAIAnalyticsAdvisor2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsAdvisor(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIAnalyticsAdvisor) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AIAnalyticsAdvisor", v)
 }
 
 func marshalNAIAnalyticsAgentSuggestions2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIAnalyticsAgentSuggestionsᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AIAnalyticsAgentSuggestions) graphql.Marshaler {

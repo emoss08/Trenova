@@ -164,6 +164,33 @@ function amount(value: string | null | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/** What consulting Anthropic's advisor came to, read as numbers. */
+export type AdvisorFigures = {
+  calls: number;
+  promptTokens: number;
+  outputTokens: number;
+  costUsd: number;
+};
+
+/**
+ * The advisor's calls, tokens and cost, or null where it was never consulted,
+ * so a scope with no advisor shows nothing about it. Its cost is already part
+ * of the runs' cost; this is its share.
+ */
+export function advisorFigures(advisor: AIAnalyticsSeries["advisor"]): AdvisorFigures | null {
+  const calls = amount(advisor.calls) ?? 0;
+  if (calls <= 0) {
+    return null;
+  }
+
+  return {
+    calls,
+    promptTokens: amount(advisor.promptTokens) ?? 0,
+    outputTokens: amount(advisor.outputTokens) ?? 0,
+    costUsd: amount(advisor.costUsd) ?? 0,
+  };
+}
+
 /** A series nothing it served carried a charge for runs on hardware the organization owns. */
 export function isLocal(series: AIAnalyticsSeries): boolean {
   return series.runs > 0 && series.pricedRuns === 0;

@@ -49,6 +49,12 @@ fragment AIAnalyticsSeriesFields on AIAnalyticsSeries {
     calls
   }
   costUsd
+  advisor {
+    calls
+    promptTokens
+    outputTokens
+    costUsd
+  }
   pricedRuns
   costPerCompletedRun
   firstTokenMedianMs
@@ -103,6 +109,12 @@ query AgentAnalytics($input: AIAnalyticsInput!) {
       toolFailureRate
       modelShareOfToolFailures
       costUsd
+      advisor {
+        calls
+        promptTokens
+        outputTokens
+        costUsd
+      }
       pricedRuns
       costPerCompletedRun
       toolFailureAlarm

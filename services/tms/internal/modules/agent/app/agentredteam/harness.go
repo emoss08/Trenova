@@ -8,14 +8,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -124,12 +123,6 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 		Input:      c.Input,
 		Unattended: c.Agent.Unattended,
 	}
-	if c.Agent.CodeMode {
-		req.CodeMode = codemode.OverrideOn
-	}
-	if c.Agent.CodeModeWrites {
-		req.CodeMode = codemode.OverrideWrites
-	}
 	if c.Agent.Unattended {
 		req.RunID = RunID
 	} else {
@@ -192,11 +185,10 @@ func newRuntime(
 		Permissions: &agenttest.StubPermissions{Denied: deniedOf(c.Agent.Denied)},
 		Versions:    pinnedVersions{},
 	}
-	scripts := c.Agent.CodeMode || c.Agent.CodeModeWrites
-	if c.Agent.Extensions || scripts {
+	if c.Agent.Extensions || c.Agent.Provider.Scripts {
 		params.Extensions = extensionGate{}
 	}
-	params.CodeMode = scripts
+	params.Scripts = providerScripts{settings: c.Agent.Provider.settings()}
 
 	return kit, kit.NewRuntime(params), nil
 }
@@ -613,4 +605,22 @@ func deniedOf(permissions []string) map[string]bool {
 	}
 
 	return denied
+}
+
+// providerScripts is the answering chat provider's script settings, as a case
+// sets them.
+type providerScripts struct {
+	settings aiprovider.ScriptSettings
+}
+
+func (p providerScripts) ScriptsOffered(context.Context, pagination.TenantInfo) (bool, error) {
+	return p.settings.Scripts, nil
+}
+
+func (p providerScripts) ScriptSettings(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) (aiprovider.ScriptSettings, error) {
+	return p.settings, nil
 }

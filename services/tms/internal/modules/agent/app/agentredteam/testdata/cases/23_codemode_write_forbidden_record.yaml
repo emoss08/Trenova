@@ -12,7 +12,9 @@ agent:
   name: Dispatch desk
   tools: [agent_run_script, inbox_get_inbound_message, shipment_place_hold]
   autonomy: auto
-  codeModeWrites: true
+  provider:
+    scripts: true
+    scriptWrites: true
   denied: [shipment_hold:create]
 responses:
   inbox_get_inbound_message:

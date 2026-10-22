@@ -181,6 +181,9 @@ func (s *Service) Create(
 
 	multiErr := errortypes.NewMultiError()
 	provider.Validate(multiErr)
+	if !multiErr.HasErrors() {
+		s.confirmAdvisor(ctx, &advisorCheck{after: provider, req: req}, multiErr)
+	}
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
@@ -238,8 +241,14 @@ func (s *Service) Update(
 		)
 	}
 	updated.Validate(multiErr)
+	if !multiErr.HasErrors() {
+		s.confirmAdvisor(ctx, &advisorCheck{before: existing, after: &updated, req: req}, multiErr)
+	}
 	if multiErr.HasErrors() {
 		return nil, multiErr
+	}
+	if aiprovider.AdvisorSettingsChanged(existing, &updated) {
+		updated.AdvisorRefusal = nil
 	}
 
 	saved, err := s.save(ctx, func(txCtx context.Context) (*aiprovider.Provider, error) {
@@ -423,6 +432,10 @@ func (s *Service) apply(
 	if provider.ThinkingStyle == "" {
 		provider.ThinkingStyle = aiprovider.ThinkingStyleAuto
 	}
+	provider.AdvisorEnabled = req.AdvisorEnabled
+	provider.AdvisorModel = strings.TrimSpace(req.AdvisorModel)
+	provider.Scripts = req.Scripts
+	provider.ScriptWrites = req.ScriptWrites
 	provider.ExtraBody = req.ExtraBody
 	provider.EmbeddingDimensions = req.EmbeddingDimensions
 	provider.EmbeddingInputStyle = req.EmbeddingInputStyle

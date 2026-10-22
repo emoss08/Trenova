@@ -97,6 +97,31 @@ Keywords: rotate key, new API key, key rotation, expired key, leaked key
 3. Leave **Keep the old key working for 24 hours** on so calls fall back to the old key while
    other systems switch over, then select **Save changes**.
 
+### Let a chat provider consult an advisor
+Keywords: advisor, advisor tool, Claude advisor, stronger model, Opus advisor, second opinion, hard steps, advisor cost, advisor refused
+1. Open an Anthropic provider that handles assistant chat in **Providers** and select
+   **Edit connection**. The advisor is served only on the Claude API (**Platform** Direct) and on
+   Claude Platform on AWS; on any other platform, or on a provider that does not handle assistant
+   chat, the switch is shown off with the reason.
+2. Under **Advisor**, turn on **Advisor**. On hard steps the model then consults a stronger model
+   mid-reply, on Anthropic's side, and carries on with its answer.
+3. Leave **Advisor model** empty to consult claude-opus-5-5, or type another model. It must be on
+   the endpoint's own model list, or the save is refused.
+4. Select **Save changes**. It is off by default.
+
+### Let a chat provider answer with a script
+Keywords: scripts, code mode, python script, read-only script, fan-out questions, reconciliation, many tool calls, scripts propose writes, batch of changes
+1. In [AI control](/admin/agent-control), select **Extensions**, open Data analysis from E2B and
+   turn on its read-only scripts setting. People whose role holds the code_mode permission can
+   then be answered with scripts.
+2. Open a provider that handles assistant chat in **Providers** and select **Edit connection**.
+3. Under **Scripts**, turn on **Scripts**. The provider's model may then answer fan-out,
+   reconciliation and report questions with one short read-only Python script instead of many
+   tool calls.
+4. To let those scripts prepare changes, also turn on **Scripts may propose writes**. It can be
+   turned on only while **Scripts** is on, and turning **Scripts** off turns it off too.
+5. Select **Save changes**. Both are off by default.
+
 ### Set up an embedding provider
 Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
 1. Open [AI control](/admin/agent-control) and select **Providers**.
@@ -293,7 +318,8 @@ Keywords: AI analytics, model comparison, leaderboard, which model is best, comp
    **Model** or **Provider**, and narrow to one **Agent** or one **Task** with **Every agent** and
    **Every task**.
 3. Read **The scope in figures**: **Runs**, **Completed**, **Median run**, **Tool calls failed** and
-   **Spend**. The chips under them name every model or provider being compared; select one to
+   **Spend**, and **Advisor** (its calls, prompt and output tokens and cost) when a provider
+   consulted the advisor. The chips under them name every model or provider being compared; select one to
    take it out of the charts (**Hide from charts**) and again to bring it back
    (**Show in charts**). Each keeps its colour under every filter.
 4. **Leaderboard** ranks them on **Completed**, **Median run time**, **Tool calls that failed**,
@@ -696,6 +722,23 @@ agent when you ask about that shipment's arrival, but is not counted as used unl
 that. A procedure the agent learned is brought in only for the kind of task it describes. When the organization keeps close to 5,000
 active memories, the Memory section warns that fewer of them reach each prompt; retire what no
 longer holds.
+
+A provider's **Advisor** costs extra: each consultation is billed at the advisor model's price on
+top of the provider's own, and is already part of a run's cost in **Analytics**, which also shows
+the advisor's calls, tokens and cost for the scope and for each model or provider. Whether the
+advisor is strong enough for the provider's model is Anthropic's call: when the API refuses it,
+the refusal is recorded on the provider, the editor shows it under **Advisor** with the API's
+message, the advisor, the model and when it happened, and calls go out without the advisor until
+the advisor, the model or the platform changes.
+
+A script runs in the organization's E2B sandbox with no network access, and the rows it reads
+are sent to E2B, as data analysis does. Every read a script makes goes through the same
+permissions as a normal tool call, and its sandbox time counts against the extension's daily
+limit. A provider's **Scripts** setting is only the provider's half: scripts also need the plan to
+include them, the E2B extension's read-only scripts setting and the code_mode permission. With
+**Scripts may propose writes**, nothing a script prepares is ever done on its own: the changes are
+proposed as one batch a person approves, each change is checked again against the record when it
+is approved, and a script that read outside text cannot run anything.
 
 A provider on a cloud platform keeps its credential for the region, project, workspace and
 identity it was entered for. Change any of them, or the platform, and the editor asks for the
