@@ -53,6 +53,7 @@ import { FiscalPeriodService } from "./fiscal-period";
 import { FiscalYearService } from "./fiscal-year";
 import { FleetCodeService } from "./fleet-code";
 import { FormulaTemplateService } from "./formula-template";
+import { FormulaLibraryService } from "./formula-library";
 import { GlobalSearchService } from "./global-search";
 import { GoogleMapsService } from "./google-maps";
 import { HazardousMaterialService } from "./hazardous-material";
@@ -99,6 +100,7 @@ class APIService {
   public pageFavoriteService: PageFavoriteService;
   public tableConfigurationService: TableConfigurationService;
   public formulaTemplateService: FormulaTemplateService;
+  public formulaLibraryService: FormulaLibraryService;
   public equipmentTypeService: EquipmentTypeService;
   public equipmentManufacturerService: EquipmentManufacturerService;
   public fleetCodeService: FleetCodeService;
@@ -196,6 +198,7 @@ class APIService {
     this.tableConfigurationService = new TableConfigurationService();
     this.userService = userService;
     this.formulaTemplateService = new FormulaTemplateService();
+    this.formulaLibraryService = new FormulaLibraryService();
     this.equipmentTypeService = new EquipmentTypeService();
     this.equipmentManufacturerService = new EquipmentManufacturerService();
     this.trailerService = new TrailerService();
