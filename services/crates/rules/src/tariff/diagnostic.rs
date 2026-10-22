@@ -162,3 +162,86 @@ pub fn nearest<'a>(name: &str, candidates: impl IntoIterator<Item = &'a str>) ->
     }
     best
 }
+
+/// One replacement on the wire.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct WireChange {
+    /// What it replaces, in UTF-16 code units.
+    pub range: crate::span::Range,
+    /// The text that goes there.
+    pub insert: String,
+}
+
+/// A fix on the wire.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct WireFix {
+    /// What the fix does.
+    pub label: Message,
+    /// Its replacements.
+    pub changes: Vec<WireChange>,
+}
+
+/// A related place on the wire.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct WireRelated {
+    /// Where it is, in UTF-16 code units.
+    pub range: crate::span::Range,
+    /// What it is.
+    pub message: Message,
+}
+
+/// A finding as every `tariff.*` operation sends it:
+/// `{"range":{"from","to"},"severity","code","message":{"message","args"},"fixes":[…],"related":[…]}`,
+/// every position in UTF-16 code units of the source it is about.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct WireDiagnostic {
+    /// Where it is.
+    pub range: crate::span::Range,
+    /// `error`, `warning` or `info`.
+    pub severity: &'static str,
+    /// The stable kebab-case code.
+    pub code: &'static str,
+    /// What is wrong.
+    pub message: Message,
+    /// The fixes that resolve it.
+    pub fixes: Vec<WireFix>,
+    /// The other places it refers to.
+    pub related: Vec<WireRelated>,
+}
+
+impl WireDiagnostic {
+    /// `diagnostic` on the wire, its byte spans converted with `index` (built from the source
+    /// the diagnostic is about).
+    #[must_use]
+    pub fn new(diagnostic: &Diagnostic, index: &crate::span::Utf16Index) -> Self {
+        Self {
+            range: index.range(diagnostic.span),
+            severity: diagnostic.severity.as_str(),
+            code: diagnostic.code,
+            message: diagnostic.message.clone(),
+            fixes: diagnostic
+                .fixes
+                .iter()
+                .map(|fix| WireFix {
+                    label: fix.label.clone(),
+                    changes: fix
+                        .changes
+                        .iter()
+                        .map(|change| WireChange {
+                            range: index.range(change.span),
+                            insert: change.insert.clone(),
+                        })
+                        .collect(),
+                })
+                .collect(),
+            related: diagnostic
+                .related
+                .iter()
+                .map(|(span, message)| WireRelated {
+                    range: index.range(*span),
+                    message: message.clone(),
+                })
+                .collect(),
+        }
+    }
+}
