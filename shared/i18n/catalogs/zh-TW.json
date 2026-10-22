@@ -47,7 +47,6 @@
   "'{0}' works on numbers, but {1}": "'{0}' 用於數字，但{1}",
   "'{0}' works on numbers, but {1}.": "'{0}' 只能用於數字，但{1}。",
   "'{0}' works on numbers, but {1}. {2}": "'{0}' 只能用於數字，但{1}。{2}",
-  "'{0}' works on numbers, but {1}.{2}": "'{0}' 用於數字，但{1}。{2}",
   "'{0}' works on text, but {1}": "'{0}' 用於文字，但{1}",
   "'|' pipes into a function: value | round(2)": "'|' 把值傳給函式：值 | round(2)",
   "1 to 30 days past due.": "逾期 1 至 30 天。",

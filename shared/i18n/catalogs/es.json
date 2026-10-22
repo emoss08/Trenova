@@ -47,7 +47,6 @@
   "'{0}' works on numbers, but {1}": "'{0}' opera con números, pero {1}",
   "'{0}' works on numbers, but {1}.": "'{0}' opera con números, pero {1}.",
   "'{0}' works on numbers, but {1}. {2}": "'{0}' opera con números, pero {1}. {2}",
-  "'{0}' works on numbers, but {1}.{2}": "'{0}' opera con números, pero {1}.{2}",
   "'{0}' works on text, but {1}": "'{0}' opera con texto, pero {1}",
   "'|' pipes into a function: value | round(2)": "'|' pasa el valor a una función: valor | round(2)",
   "1 to 30 days past due.": "De 1 a 30 días de atraso.",
