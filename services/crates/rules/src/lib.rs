@@ -24,4 +24,5 @@ pub mod message;
 pub mod ops;
 pub mod report;
 pub mod span;
+pub mod tariff;
 pub mod wire;

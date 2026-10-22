@@ -82,6 +82,18 @@ const OPERATIONS: &[(&str, Handler)] = &[
     ("lane.coverage", crate::lane::ops::coverage),
     ("matrix.select", crate::matrix::ops::select),
     ("matrix.coverage", crate::matrix::ops::coverage),
+    ("tariff.check", crate::tariff::check::ops::check),
+    ("tariff.evaluate", crate::tariff::eval::ops::evaluate),
+    ("tariff.test", crate::tariff::eval::ops::test),
+    ("tariff.format", crate::tariff::syntax::ops::format),
+    ("tariff.tokens", crate::tariff::syntax::ops::tokens),
+    ("tariff.complete", crate::tariff::editor::ops::complete),
+    ("tariff.hover", crate::tariff::editor::ops::hover),
+    ("tariff.signature", crate::tariff::editor::ops::signature),
+    ("tariff.definition", crate::tariff::editor::ops::definition),
+    ("tariff.rename", crate::tariff::editor::ops::rename),
+    ("tariff.inlays", crate::tariff::editor::ops::inlays),
+    ("tariff.catalog", crate::tariff::check::ops::catalog),
 ];
 
 /// Runs one request and returns the response bytes. Never panics on any input.
