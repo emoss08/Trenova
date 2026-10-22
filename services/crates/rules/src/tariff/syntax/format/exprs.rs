@@ -17,6 +17,29 @@ use crate::tariff::syntax::ast::TypeExprKind;
 use crate::tariff::syntax::ast::UnaryOp;
 use crate::tariff::syntax::ast::UnitExpr;
 
+/// The unit of `.in(lb/ft3)`, written as a unit is (`lb/ft3`, `$/cwt`), not as a division.
+fn written_unit(callee: &Expr, args: &[Arg]) -> Option<String> {
+    fn names(expr: &Expr) -> Option<String> {
+        match &expr.kind {
+            ExprKind::Name(name) if expr.parens == 0 => Some(name.text.clone()),
+            ExprKind::Binary {
+                op: BinaryOp::Div,
+                left,
+                right,
+                ..
+            } if expr.parens == 0 => Some(format!("{}/{}", names(left)?, names(right)?)),
+            _ => None,
+        }
+    }
+    let ExprKind::Field { name, .. } = &callee.kind else {
+        return None;
+    };
+    match args {
+        [arg] if name.text == "in" && arg.name.is_none() => names(&arg.value),
+        _ => None,
+    }
+}
+
 /// The operators whose chains break one operand per line, grouped by precedence.
 fn chain_class(op: BinaryOp) -> Option<u8> {
     match op {
@@ -186,8 +209,12 @@ impl Formatter<'_> {
                 Doc::Concat(vec![target, Doc::text(format!("{dot}{}", name.text))])
             }
             ExprKind::Call { callee, args } => {
+                let unit = written_unit(callee, args);
                 let callee = self.expr(callee);
-                let args = self.arguments(args, expr.span.end);
+                let args = match unit {
+                    Some(unit) => Doc::text(format!("({unit})")),
+                    None => self.arguments(args, expr.span.end),
+                };
                 Doc::Concat(vec![callee, args])
             }
             ExprKind::Index { target, keys } => {

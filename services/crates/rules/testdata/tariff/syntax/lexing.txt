@@ -137,6 +137,20 @@ money "$10"
 punct "/"
 name "rate"
 
+=== a dollar sign before a unit is the money unit
+$/cwt $/mi $/rate
+---
+unit "$"
+punct "/"
+unit "cwt"
+unit "$"
+punct "/"
+unit "mi"
+error "$"
+punct "/"
+name "rate"
+! syntax 11..12 Write money as `$` followed by the amount, like `$450`
+
 === dollar without an amount
 $ 5
 ---

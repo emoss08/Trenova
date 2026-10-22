@@ -176,6 +176,21 @@ match pieces
     charge (text "Bulk") = $10
   arm _ =>
 
+=== match statement arm with a guard that ends in a name
+tariff "t"
+match pieces {
+  n if bulk => {
+    charge "Bulk" = $10
+  }
+  _ => {}
+}
+---
+tariff "t"
+match pieces
+  arm (bind n) if bulk =>
+    charge (text "Bulk") = $10
+  arm _ =>
+
 === for loop
 tariff "t"
 for stop in shipment.stops {

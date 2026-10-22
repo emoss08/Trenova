@@ -11,7 +11,9 @@
 //! - A unit is a [`TokenKind::Unit`] directly after a number (`500 lb`, `-5 °C`, `30 lb/ft3`) or
 //!   after `$x/` (`$2.35/mi`). `in` after a number is the unit inches unless what follows on the
 //!   line starts a value (`48 in` against `5 in [5, 6]`). `°F` and `°C` are units wherever they
-//!   are written. The parser marks the units of a type or of `.in(…)`.
+//!   are written. `$` directly followed by `/` and a unit is the money unit (`.in($/cwt)`), a
+//!   unit token followed by the denominators. The parser marks the units of a type or of
+//!   `.in(…)`.
 //! - Text is split into literal runs ([`TokenKind::Text`], the first holding the opening quote and
 //!   the last the closing one), escapes and interpolations, whose expressions are lexed like any
 //!   other code between two [`TokenKind::Interpolation`] braces. Text ends at the end of its line.
@@ -483,6 +485,14 @@ impl Lexer<'_> {
     }
 
     fn money(&mut self, start: usize) {
+        if self.peek_at(1) == Some('/')
+            && unit_word(self.source.get(start + 2..).unwrap_or_default()).is_some()
+        {
+            self.position += 1;
+            self.push(TokenKind::Unit, start);
+            self.unit_denominators();
+            return;
+        }
         if !self.peek_at(1).is_some_and(|c| c.is_ascii_digit()) {
             self.position += 1;
             self.error(

@@ -332,6 +332,30 @@ match x {
   _ => {}
 }
 
+=== a conversion's unit is written as a unit
+tariff "t"
+let a = shipment.density?.in(lb / ft3)
+let b = rate.in( $/cwt )
+let c = rate.in(cwt)
+---
+tariff "t"
+let a = shipment.density?.in(lb/ft3)
+let b = rate.in($/cwt)
+let c = rate.in(cwt)
+
+=== a guard that ends in a name keeps its arrow
+tariff "t"
+let a = match flag {
+  x if x => 1
+  _ => 0
+}
+---
+tariff "t"
+let a = match flag {
+  x if x => 1
+  _ => 0
+}
+
 === if expression stays on one line
 tariff "t"
 let a = if x>1 {$10} else {$20}
