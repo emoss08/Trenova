@@ -46,6 +46,9 @@ fn interpolatable(ty: &Type) -> bool {
 impl Checker<'_> {
     /// The type of an expression, checked with the type expected where it is written.
     pub fn expr(&mut self, expr: &Expr, expected: Option<&Type>) -> Type {
+        if let Some(expected) = expected.filter(|ty| !matches!(ty, Type::Error | Type::Never)) {
+            self.out.expected.insert(expr.id, expected.clone());
+        }
         let ty = self.expr_kind(expr, expected);
         self.record(expr, ty)
     }
@@ -216,6 +219,17 @@ impl Checker<'_> {
                 let code = format!("{} ?? {fallback}", self.text(expr.span));
                 replace(
                     Message::with(message!("Fall back to {0}"), [quote(&code)]),
+                    expr.span,
+                    code,
+                )
+            }),
+            Type::List(item) if item.is_optional() => zero(item.unwrapped()).map(|fallback| {
+                let code = format!("{}.map(item => item ?? {fallback})", self.text(expr.span));
+                replace(
+                    Message::with(
+                        message!("Fill its empty items with {0}"),
+                        [quote(&fallback)],
+                    ),
                     expr.span,
                     code,
                 )
@@ -1244,7 +1258,7 @@ impl Checker<'_> {
                 && !value_ty.is_optional()
                 && !matches!(value_ty, Type::Error | Type::Never)
             {
-                self.report(Diagnostic::error(
+                self.report(Diagnostic::warning(
                     "never-none",
                     whole,
                     Message::with(

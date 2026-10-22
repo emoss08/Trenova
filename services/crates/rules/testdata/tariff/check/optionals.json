@@ -795,8 +795,8 @@
      "code": "interpolation",
      "fixes": [
       {
-       "label": "Write its length, `shipment.stops.map(s => s.weight).len`",
-       "result": "tariff \"t\"\ncharge \"x\" = $1\nnote \"{shipment.stops.map(s => s.weight).len}\""
+       "label": "Fill its empty items with `0 lb`",
+       "result": "tariff \"t\"\ncharge \"x\" = $1\nnote \"{shipment.stops.map(s => s.weight).map(item => item ?? 0 lb)}\""
       }
      ],
      "message": "`shipment.stops.map(s => s.weight)` is a list (`List<Weight?>`), which can't be written into text"
