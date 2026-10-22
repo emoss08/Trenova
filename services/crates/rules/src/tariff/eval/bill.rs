@@ -1,0 +1,471 @@
+//! The bill: charge lines in order, notes, and the total clauses that finish it.
+//!
+//! A `charge` adds a [`Line`] with its label, code, exact amount, and the quantity and rate when
+//! they were given. Uncoded lines are freight; coded lines are accessorials. A line whose amount
+//! is exactly zero is dropped (the trace records it). A coded line with a negative amount is an
+//! error naming the code; an uncoded line may be negative (a discount).
+//!
+//! [`Bill::finish`] applies the total clauses, in the order the language fixes:
+//!
+//! 1. `minimum m`: when the total falls short of `m`, a positive [`LineKind::Minimum`] line
+//!    makes up the difference;
+//! 2. `maximum m`: when the total exceeds `m`, a negative [`LineKind::Maximum`] line brings it
+//!    down;
+//! 3. `round`: every line is rounded to cents with the clause's mode (half up when no `round`
+//!    is written), the total is rounded to the clause's increment (cents or `$X`) with the same
+//!    mode, and any difference between the rounded total and the rounded lines' sum is a
+//!    [`LineKind::Rounding`] line, so the lines always add up to the total. A line that rounds
+//!    to zero is dropped like a zero charge.
+//!
+//! Adjustment lines carry their kind and no label: the hosts label them in the reader's
+//! language. They are uncoded, so they count as freight. A bill whose freight lines sum below
+//! zero, or whose total is below zero, is a rating error.
+
+use super::error::{Code, EvalError};
+use super::value::{Value, money_digits};
+use crate::message::{Arg, Message};
+use crate::span::Span;
+use crate::tariff::syntax::ast::RoundMode;
+use rust_decimal::{Decimal, RoundingStrategy};
+
+/// What a line is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum LineKind {
+    /// A `charge` the tariff billed.
+    Charge,
+    /// The `minimum` clause's adjustment.
+    Minimum,
+    /// The `maximum` clause's adjustment.
+    Maximum,
+    /// The rounding remainder.
+    Rounding,
+}
+
+impl LineKind {
+    /// The kind's wire name.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Charge => "charge",
+            Self::Minimum => "minimum",
+            Self::Maximum => "maximum",
+            Self::Rounding => "rounding",
+        }
+    }
+
+    /// The `LineKind` enum variant tests read through `lines`.
+    #[must_use]
+    pub const fn variant(self) -> &'static str {
+        match self {
+            Self::Charge => "Charge",
+            Self::Minimum => "Minimum",
+            Self::Maximum => "Maximum",
+            Self::Rounding => "Rounding",
+        }
+    }
+}
+
+/// One line of the bill.
+#[derive(Debug, Clone)]
+pub struct Line {
+    /// What it is.
+    pub kind: LineKind,
+    /// The interpolated label; `None` for adjustments.
+    pub label: Option<String>,
+    /// The accessorial code; `None` for freight and adjustments.
+    pub code: Option<String>,
+    /// The amount in the rating currency: exact while charges are added, rounded by
+    /// [`Bill::finish`].
+    pub amount: Decimal,
+    /// The `quantity:` option, when given.
+    pub quantity: Option<Value>,
+    /// The `rate:` option, when given.
+    pub rate: Option<Value>,
+    /// The `charge` statement, in the root file; `None` for adjustments.
+    pub span: Option<Span>,
+}
+
+impl Line {
+    /// Whether the line is freight (uncoded).
+    #[must_use]
+    pub const fn freight(&self) -> bool {
+        self.code.is_none()
+    }
+}
+
+/// A `note`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Note {
+    /// The interpolated text.
+    pub text: String,
+    /// The statement.
+    pub span: Span,
+}
+
+/// The total clauses a tariff wrote.
+#[derive(Debug, Clone, Default)]
+pub struct Clauses {
+    /// `minimum m`, in the rating currency.
+    pub minimum: Option<Decimal>,
+    /// `maximum m`.
+    pub maximum: Option<Decimal>,
+    /// `round …`: the mode and the increment the total rounds to (`0.01` for cents).
+    pub round: Option<(RoundMode, Decimal)>,
+}
+
+/// A bill being built.
+#[derive(Debug, Clone, Default)]
+pub struct Bill {
+    /// The lines, in the order they were billed.
+    pub lines: Vec<Line>,
+    /// The notes, in order.
+    pub notes: Vec<Note>,
+}
+
+/// A finished bill.
+#[derive(Debug, Clone)]
+pub struct Finished {
+    /// The lines, rounded, adjustments last.
+    pub lines: Vec<Line>,
+    /// The notes.
+    pub notes: Vec<Note>,
+    /// Lines that came out zero and were dropped, for the trace.
+    pub dropped: Vec<Line>,
+    /// The uncoded lines' sum.
+    pub freight_total: Decimal,
+    /// The coded lines' sum.
+    pub accessorial_total: Decimal,
+    /// Every line's sum.
+    pub total: Decimal,
+}
+
+/// What became of a charge.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Billed {
+    /// It was added.
+    Added,
+    /// Its amount was zero, so it was dropped.
+    Dropped,
+}
+
+/// One cent.
+#[must_use]
+pub fn cents() -> Decimal {
+    Decimal::new(1, 2)
+}
+
+/// `amount` rounded to a multiple of `increment` with `mode`.
+///
+/// # Errors
+///
+/// When the increment is not positive, or the result overflows.
+pub fn round_to(
+    amount: Decimal,
+    increment: Decimal,
+    mode: RoundMode,
+) -> Result<Decimal, EvalError> {
+    if increment <= Decimal::ZERO {
+        return Err(EvalError::with(
+            Code::Argument,
+            crate::message!("A rounding increment must be more than zero, not {0}"),
+            [Arg::from(format!("${}", money_digits(increment)))],
+        ));
+    }
+    let strategy = match mode {
+        RoundMode::HalfUp => RoundingStrategy::MidpointAwayFromZero,
+        RoundMode::HalfEven => RoundingStrategy::MidpointNearestEven,
+        RoundMode::Up => RoundingStrategy::AwayFromZero,
+        RoundMode::Down => RoundingStrategy::ToZero,
+    };
+    let steps = amount
+        .checked_div(increment)
+        .ok_or_else(EvalError::overflow)?
+        .round_dp_with_strategy(0, strategy);
+    steps
+        .checked_mul(increment)
+        .map(|value| value.normalize())
+        .ok_or_else(EvalError::overflow)
+}
+
+fn sum<'a>(mut lines: impl Iterator<Item = &'a Line>) -> Result<Decimal, EvalError> {
+    lines.try_fold(Decimal::ZERO, |total, line| {
+        total
+            .checked_add(line.amount)
+            .ok_or_else(EvalError::overflow)
+    })
+}
+
+fn adjustment(kind: LineKind, amount: Decimal) -> Line {
+    Line {
+        kind,
+        label: None,
+        code: None,
+        amount,
+        quantity: None,
+        rate: None,
+        span: None,
+    }
+}
+
+impl Bill {
+    /// Adds a charge line.
+    ///
+    /// # Errors
+    ///
+    /// When a coded charge is negative.
+    pub fn charge(&mut self, line: Line) -> Result<Billed, EvalError> {
+        if line.amount.is_zero() {
+            return Ok(Billed::Dropped);
+        }
+        if let Some(code) = &line.code
+            && line.amount.is_sign_negative()
+        {
+            return Err(EvalError::new(
+                Code::NegativeCharge,
+                Message::with(
+                    crate::message!(
+                        "The {0} charge came out at {1}: a coded charge must be more than zero"
+                    ),
+                    [
+                        Arg::from(code.clone()),
+                        Arg::from(Value::money(line.amount).display()),
+                    ],
+                ),
+            ));
+        }
+        self.lines.push(line);
+        Ok(Billed::Added)
+    }
+
+    /// Adds a note.
+    pub fn note(&mut self, note: Note) {
+        self.notes.push(note);
+    }
+
+    /// Applies the total clauses and checks the result.
+    ///
+    /// # Errors
+    ///
+    /// When the freight lines or the total come out below zero, a rounding increment is not
+    /// positive, or a sum overflows.
+    pub fn finish(self, clauses: &Clauses) -> Result<Finished, EvalError> {
+        let mut lines = self.lines;
+        let mut total = sum(lines.iter())?;
+        if let Some(minimum) = clauses.minimum
+            && total < minimum
+        {
+            let difference = minimum.checked_sub(total).ok_or_else(EvalError::overflow)?;
+            lines.push(adjustment(LineKind::Minimum, difference));
+            total = minimum;
+        }
+        if let Some(maximum) = clauses.maximum
+            && total > maximum
+        {
+            let difference = maximum.checked_sub(total).ok_or_else(EvalError::overflow)?;
+            lines.push(adjustment(LineKind::Maximum, difference));
+            total = maximum;
+        }
+        let (mode, increment) = clauses.round.unwrap_or((RoundMode::HalfUp, cents()));
+        let mut kept = Vec::with_capacity(lines.len() + 1);
+        let mut dropped = Vec::new();
+        for mut line in lines {
+            line.amount = round_to(line.amount, cents(), mode)?;
+            if line.amount.is_zero() {
+                dropped.push(line);
+            } else {
+                kept.push(line);
+            }
+        }
+        let rounded_total = round_to(total, increment, mode)?;
+        let remainder = rounded_total
+            .checked_sub(sum(kept.iter())?)
+            .ok_or_else(EvalError::overflow)?;
+        if !remainder.is_zero() {
+            kept.push(adjustment(LineKind::Rounding, remainder));
+        }
+        let freight_total = sum(kept.iter().filter(|line| line.freight()))?;
+        let accessorial_total = sum(kept.iter().filter(|line| !line.freight()))?;
+        if freight_total.is_sign_negative() && !freight_total.is_zero() {
+            return Err(below_zero(
+                crate::message!("The freight lines add up to {0}: freight cannot be below zero"),
+                freight_total,
+            ));
+        }
+        if rounded_total.is_sign_negative() && !rounded_total.is_zero() {
+            return Err(below_zero(
+                crate::message!("The bill's total is {0}: a total cannot be below zero"),
+                rounded_total,
+            ));
+        }
+        Ok(Finished {
+            lines: kept,
+            notes: self.notes,
+            dropped,
+            freight_total,
+            accessorial_total,
+            total: rounded_total,
+        })
+    }
+}
+
+/// A finished bill in the billing currency: each line multiplied by the exchange rate exactly
+/// and rounded to cents with the bill's round mode, the total multiplied and rounded with the
+/// bill's mode and increment, and any difference between the two added to the rounding line's
+/// converted amount, or appended as one more entry when the bill has no rounding line, so the
+/// converted lines always add up to the converted total.
+#[derive(Debug, Clone)]
+pub struct Converted {
+    /// The converted amount of each line, in the bill's order, plus a trailing rounding entry
+    /// when the bill had no rounding line and conversion needed one.
+    pub lines: Vec<Decimal>,
+    /// The converted total.
+    pub total: Decimal,
+}
+
+impl Finished {
+    /// The bill in another currency at `rate` (units of that currency per unit of the rating
+    /// currency).
+    ///
+    /// # Errors
+    ///
+    /// When the rate is not above zero or a product overflows.
+    pub fn convert(&self, rate: Decimal, clauses: &Clauses) -> Result<Converted, EvalError> {
+        if rate <= Decimal::ZERO {
+            return Err(EvalError::with(
+                Code::Argument,
+                crate::message!("An exchange rate must be more than zero, not {0}"),
+                [Arg::from(super::value::format_decimal(rate))],
+            ));
+        }
+        let (mode, increment) = clauses.round.unwrap_or((RoundMode::HalfUp, cents()));
+        let mut lines = Vec::with_capacity(self.lines.len() + 1);
+        for line in &self.lines {
+            let exact = line
+                .amount
+                .checked_mul(rate)
+                .ok_or_else(EvalError::overflow)?;
+            lines.push(round_to(exact, cents(), mode)?);
+        }
+        let exact_total = self
+            .total
+            .checked_mul(rate)
+            .ok_or_else(EvalError::overflow)?;
+        let total = round_to(exact_total, increment, mode)?;
+        let sum = lines.iter().try_fold(Decimal::ZERO, |sum, amount| {
+            sum.checked_add(*amount).ok_or_else(EvalError::overflow)
+        })?;
+        let difference = total.checked_sub(sum).ok_or_else(EvalError::overflow)?;
+        if !difference.is_zero() {
+            let rounding = self
+                .lines
+                .iter()
+                .position(|line| line.kind == LineKind::Rounding)
+                .and_then(|index| lines.get_mut(index));
+            match rounding {
+                Some(amount) => {
+                    *amount = amount
+                        .checked_add(difference)
+                        .ok_or_else(EvalError::overflow)?;
+                }
+                None => lines.push(difference),
+            }
+        }
+        Ok(Converted { lines, total })
+    }
+}
+
+fn below_zero(template: &'static str, amount: Decimal) -> EvalError {
+    EvalError::with(
+        Code::NegativeTotal,
+        template,
+        [Arg::from(Value::money(amount).display())],
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Bill, Billed, Clauses, Line, LineKind, cents, round_to};
+    use crate::tariff::syntax::ast::RoundMode;
+    use rust_decimal::Decimal;
+    use std::str::FromStr;
+
+    fn d(text: &str) -> Decimal {
+        Decimal::from_str(text).expect("a decimal")
+    }
+
+    fn line(amount: &str, code: Option<&str>) -> Line {
+        Line {
+            kind: LineKind::Charge,
+            label: Some(String::from("x")),
+            code: code.map(str::to_owned),
+            amount: d(amount),
+            quantity: None,
+            rate: None,
+            span: None,
+        }
+    }
+
+    #[test]
+    fn rounding_modes_round_to_increments() {
+        assert_eq!(
+            round_to(d("2.345"), cents(), RoundMode::HalfUp).ok(),
+            Some(d("2.35"))
+        );
+        assert_eq!(
+            round_to(d("2.345"), cents(), RoundMode::HalfEven).ok(),
+            Some(d("2.34"))
+        );
+        assert_eq!(
+            round_to(d("2.341"), cents(), RoundMode::Up).ok(),
+            Some(d("2.35"))
+        );
+        assert_eq!(
+            round_to(d("2.349"), cents(), RoundMode::Down).ok(),
+            Some(d("2.34"))
+        );
+        assert_eq!(
+            round_to(d("451"), d("5"), RoundMode::Up).ok(),
+            Some(d("455"))
+        );
+        assert!(round_to(d("1"), d("0"), RoundMode::Up).is_err());
+    }
+
+    #[test]
+    fn the_rounding_line_makes_the_lines_add_up() {
+        let mut bill = Bill::default();
+        for _ in 0..3 {
+            assert_eq!(bill.charge(line("0.335", None)).ok(), Some(Billed::Added));
+        }
+        let finished = bill.finish(&Clauses::default()).expect("a bill");
+        assert_eq!(finished.total, d("1.01"));
+        let kinds: Vec<LineKind> = finished.lines.iter().map(|line| line.kind).collect();
+        assert_eq!(kinds.last(), Some(&LineKind::Rounding));
+        let sum: Decimal = finished.lines.iter().map(|line| line.amount).sum();
+        assert_eq!(sum, finished.total);
+    }
+
+    #[test]
+    fn converted_lines_add_up_to_the_converted_total() {
+        let mut bill = Bill::default();
+        for amount in ["10.01", "20.02", "30.03"] {
+            assert!(bill.charge(line(amount, None)).is_ok());
+        }
+        let clauses = Clauses::default();
+        let finished = bill.finish(&clauses).expect("a bill");
+        let converted = finished.convert(d("1.3333"), &clauses).expect("converted");
+        let sum: Decimal = converted.lines.iter().copied().sum();
+        assert_eq!(sum, converted.total);
+        assert_eq!(converted.total, d("80.08"));
+    }
+
+    #[test]
+    fn coded_charges_must_be_positive() {
+        let mut bill = Bill::default();
+        assert!(bill.charge(line("-1", Some("FSC"))).is_err());
+        assert_eq!(
+            bill.charge(line("0", Some("FSC"))).ok(),
+            Some(Billed::Dropped)
+        );
+        assert_eq!(bill.charge(line("-1", None)).ok(), Some(Billed::Added));
+    }
+}

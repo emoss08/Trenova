@@ -1,1 +1,49 @@
 library "std.fuel"
+
+/// Fuel surcharges computed in the language, for contracts that price fuel themselves.
+
+/// A stepped fuel surcharge: `perStep` for every whole `step` the price is above `peg`, and
+/// nothing at or below the peg. Refuses to rate when `step` is not above zero.
+fn stepPercent(price: Money/gal, peg: Money/gal, step: Money/gal, perStep: Percent) -> Percent {
+  require step > $0/gal else "A fuel step must be more than zero, not {step}"
+  if price <= peg {
+    return 0%
+  }
+  let steps = ((price - peg) / step).floor()
+  return perStep * steps
+}
+
+/// A per-mile fuel surcharge: what the price above `peg` costs per mile at `mpg` miles per
+/// gallon, and never below zero. Refuses to rate when `mpg` is not above zero.
+fn perMile(price: Money/gal, peg: Money/gal, mpg: Number) -> Money/mi {
+  require mpg > 0 else "Fuel economy must be more than zero miles per gallon, not {mpg}"
+  let above = (price - peg).max($0/gal)
+  return above / (mpg * 1 mi/gal)
+}
+
+test "a step surcharge counts whole steps above the peg" {
+  expect stepPercent($3.20/gal, peg: $1.20/gal, step: $0.05/gal, perStep: 0.5%) == 20%
+  expect stepPercent($1.24/gal, peg: $1.20/gal, step: $0.05/gal, perStep: 0.5%) == 0%
+  expect stepPercent($1.25/gal, peg: $1.20/gal, step: $0.05/gal, perStep: 0.5%) == 0.5%
+}
+
+test "no step surcharge at or below the peg" {
+  expect stepPercent($1.20/gal, peg: $1.20/gal, step: $0.05/gal, perStep: 0.5%) == 0%
+  expect stepPercent($0.90/gal, peg: $1.20/gal, step: $0.05/gal, perStep: 0.5%) == 0%
+}
+
+test "a step of zero refuses to rate" {
+  let percent = stepPercent($3.20/gal, peg: $1.20/gal, step: $0/gal, perStep: 0.5%)
+  expect fails "A fuel step must be more than zero, not $0.00/gal"
+}
+
+test "a per-mile surcharge divides the price above the peg by the fuel economy" {
+  expect perMile($3.70/gal, peg: $1.20/gal, mpg: 6.25) == $0.40/mi
+  expect perMile($1.00/gal, peg: $1.20/gal, mpg: 6.25) == $0/mi
+  expect perMile($3.70/gal, peg: $1.20/gal, mpg: 6.25) * 100 mi == $40
+}
+
+test "a per-mile surcharge needs a fuel economy" {
+  let rate = perMile($3.70/gal, peg: $1.20/gal, mpg: 0)
+  expect fails
+}

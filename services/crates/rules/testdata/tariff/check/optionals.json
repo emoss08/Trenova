@@ -1,0 +1,836 @@
+{
+ "cases": [
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `shipment.weight ?? 0 lb`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/cwt = $18.50/cwt",
+        "charge \"Linehaul\" = rate * (shipment.weight ?? 0 lb)"
+       ]
+      },
+      {
+       "label": "Bind it with `if let weight = shipment.weight`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/cwt = $18.50/cwt",
+        "if let weight = shipment.weight {",
+        "  charge \"Linehaul\" = rate * weight",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let weight = shipment.weight`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/cwt = $18.50/cwt",
+        "require let weight = shipment.weight else \"This rate needs shipment.weight\"",
+        "charge \"Linehaul\" = rate * weight"
+       ]
+      }
+     ],
+     "message": "`shipment.weight` may be empty, so it can't be used as a weight here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    }
+   ],
+   "name": "an optional weight used as a weight offers three fixes",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/cwt = $18.50/cwt",
+    "charge \"Linehaul\" = rate * shipment.weight"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `shipment.weight ?? 0 lb`",
+       "result": [
+        "tariff \"t\"",
+        "fn billed(w: Weight) -> Money = $1/lb * w",
+        "charge \"x\" = billed(shipment.weight ?? 0 lb)"
+       ]
+      },
+      {
+       "label": "Bind it with `if let weight = shipment.weight`",
+       "result": [
+        "tariff \"t\"",
+        "fn billed(w: Weight) -> Money = $1/lb * w",
+        "if let weight = shipment.weight {",
+        "  charge \"x\" = billed(weight)",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let weight = shipment.weight`",
+       "result": [
+        "tariff \"t\"",
+        "fn billed(w: Weight) -> Money = $1/lb * w",
+        "require let weight = shipment.weight else \"This rate needs shipment.weight\"",
+        "charge \"x\" = billed(weight)"
+       ]
+      }
+     ],
+     "message": "`shipment.weight` may be empty, so it can't be used as a weight here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    }
+   ],
+   "name": "an optional as an argument offers fixes without parentheses",
+   "source": [
+    "tariff \"t\"",
+    "fn billed(w: Weight) -> Money = $1/lb * w",
+    "charge \"x\" = billed(shipment.weight)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.pickup",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Read it with `?.`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1 * shipment.pickup?.sequence"
+       ]
+      },
+      {
+       "label": "Bind it with `if let pickup = shipment.pickup`",
+       "result": [
+        "tariff \"t\"",
+        "if let pickup = shipment.pickup {",
+        "  charge \"x\" = $1 * pickup.sequence",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let pickup = shipment.pickup`",
+       "result": [
+        "tariff \"t\"",
+        "require let pickup = shipment.pickup else \"This rate needs shipment.pickup\"",
+        "charge \"x\" = $1 * pickup.sequence"
+       ]
+      }
+     ],
+     "message": "`shipment.pickup` may be empty, so it can't be used as a record of type `Stop` here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    }
+   ],
+   "name": "an optional read with . offers ?.",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * shipment.pickup.sequence"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "?. gives an optional",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.trailerType?.code == \"R\" {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "types": {
+    "shipment.trailerType?.code": "Text?"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "?.",
+     "code": "needless-optional-chain",
+     "fixes": [
+      {
+       "label": "Use `.`",
+       "result": [
+        "tariff \"t\"",
+        "if shipment.serviceType.code == \"R\" {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`shipment.serviceType` is never empty, so `?.` isn't needed"
+    }
+   ],
+   "name": "?. on a value that is never empty is a warning",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.serviceType?.code == \"R\" {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "?? gives the value",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/lb * (shipment.weight ?? 0 lb)"
+   ],
+   "types": {
+    "shipment.weight ?? 0 lb": "Weight"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "?? fail refuses to rate",
+   "source": [
+    "tariff \"t\"",
+    "let price = fuel.price ?? fail \"No fuel price\"",
+    "charge \"x\" = $1 * (price / $1/gal)"
+   ],
+   "types": {
+    "fuel.price ?? fail \"No fuel price\"": "Money/gal"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "0 mi",
+     "code": "type-mismatch",
+     "message": "`0 mi` is a distance, but a weight is needed here"
+    }
+   ],
+   "name": "?? with a fallback of the wrong type",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/lb * (shipment.weight ?? 0 mi)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "0 mi",
+     "code": "needless-fallback",
+     "fixes": [
+      {
+       "label": "Remove the fallback",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1/mi * (shipment.distance)"
+       ]
+      }
+     ],
+     "message": "`shipment.distance` is never empty, so this fallback is never used"
+    }
+   ],
+   "name": "?? on a value that is never empty is a warning with a fix",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/mi * (shipment.distance ?? 0 mi)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "?? chains through optionals",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/lb * (shipment.pickup?.weight ?? shipment.weight ?? 0 lb)"
+   ],
+   "types": {
+    "shipment.pickup?.weight ?? shipment.weight ?? 0 lb": "Weight"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "?? with an optional fallback stays optional",
+   "source": [
+    "tariff \"t\"",
+    "if let w = shipment.pickup?.weight ?? shipment.weight {",
+    "  charge \"x\" = $1/lb * w",
+    "}"
+   ],
+   "types": {
+    "shipment.pickup?.weight ?? shipment.weight": "Weight?"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "narrowing on the right of != none and",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.weight != none and shipment.weight > 500 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "narrowing on the right of == none or",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.weight == none or shipment.weight < 500 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "none != on the left also narrows",
+   "source": [
+    "tariff \"t\"",
+    "if none != shipment.weight and shipment.weight > 500 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `shipment.weight ?? 0 lb`",
+       "result": [
+        "tariff \"t\"",
+        "if shipment.weight != none {",
+        "  charge \"x\" = $1/lb * (shipment.weight ?? 0 lb)",
+        "}"
+       ]
+      },
+      {
+       "label": "Bind it with `if let weight = shipment.weight`",
+       "result": [
+        "tariff \"t\"",
+        "if shipment.weight != none {",
+        "  if let weight = shipment.weight {",
+        "    charge \"x\" = $1/lb * weight",
+        "  }",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let weight = shipment.weight`",
+       "result": [
+        "tariff \"t\"",
+        "if shipment.weight != none {",
+        "  require let weight = shipment.weight else \"This rate needs shipment.weight\"",
+        "  charge \"x\" = $1/lb * weight",
+        "}"
+       ]
+      }
+     ],
+     "message": "`shipment.weight` may be empty, so it can't be used as a weight here. Give it a fallback, bind it with `if let`, or refuse to rate without it",
+     "nth": 2
+    }
+   ],
+   "name": "narrowing does not reach the block",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.weight != none {",
+    "  charge \"x\" = $1/lb * shipment.weight",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "narrowing a nested path",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.pickup != none and shipment.pickup.sequence > 1 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "narrowing applies to loop variables' fields",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  if stop.dwell != none and stop.dwell > 2 h {",
+    "    charge \"x\" = $1",
+    "  }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "w",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `w ?? 0 lb`",
+       "result": [
+        "tariff \"t\"",
+        "var w: Weight? = shipment.weight",
+        "w = none",
+        "if w != none and (w ?? 0 lb) > 5 lb {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      },
+      {
+       "label": "Bind it with `if let wValue = w`",
+       "result": [
+        "tariff \"t\"",
+        "var w: Weight? = shipment.weight",
+        "w = none",
+        "if let wValue = w {",
+        "  if w != none and wValue > 5 lb {",
+        "  charge \"x\" = $1",
+        "}",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let wValue = w`",
+       "result": [
+        "tariff \"t\"",
+        "var w: Weight? = shipment.weight",
+        "w = none",
+        "require let wValue = w else \"This rate needs w\"",
+        "if w != none and wValue > 5 lb {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`w` may be empty, so it can't be used as a weight here. Give it a fallback, bind it with `if let`, or refuse to rate without it",
+     "nth": 5
+    }
+   ],
+   "name": "narrowing never applies to a var",
+   "source": [
+    "tariff \"t\"",
+    "var w: Weight? = shipment.weight",
+    "w = none",
+    "if w != none and w > 5 lb {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "if let binds the value",
+   "source": [
+    "tariff \"t\"",
+    "if let w = shipment.weight {",
+    "  charge \"x\" = $1/lb * w",
+    "}"
+   ],
+   "types": {
+    "w": "Weight"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "needless-let",
+     "message": "`shipment.distance` is never empty, so `let` always binds it: use `let` on its own line instead"
+    }
+   ],
+   "name": "if let on a value that is never empty is a warning",
+   "source": [
+    "tariff \"t\"",
+    "if let d = shipment.distance {",
+    "  charge \"x\" = $1/mi * d",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "needless-let",
+     "message": "`shipment.distance` is never empty, so `let` always binds it: use `let` on its own line instead"
+    }
+   ],
+   "name": "require let on a value that is never empty is a warning",
+   "source": [
+    "tariff \"t\"",
+    "require let d = shipment.distance else \"No distance\"",
+    "charge \"x\" = $1/mi * d"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.pickup?.appointment",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `shipment.pickup?.appointment ?? false`",
+       "result": [
+        "tariff \"t\"",
+        "if shipment.pickup?.appointment ?? false {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      },
+      {
+       "label": "Bind it with `if let appointment = shipment.pickup?.appointme…`",
+       "result": [
+        "tariff \"t\"",
+        "if let appointment = shipment.pickup?.appointment {",
+        "  if appointment {",
+        "  charge \"x\" = $1",
+        "}",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let appointment = shipment.pickup?.appo…`",
+       "result": [
+        "tariff \"t\"",
+        "require let appointment = shipment.pickup?.appointment else \"This rate needs shipment.pickup?.appointment\"",
+        "if appointment {",
+        "  charge \"x\" = $1",
+        "}"
+       ]
+      }
+     ],
+     "message": "`shipment.pickup?.appointment` may be empty, so it can't be used as true or false here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    }
+   ],
+   "name": "an optional condition is refused",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.pickup?.appointment {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "x",
+     "code": "unused",
+     "message": "`x` is never used"
+    },
+    {
+     "at": "none",
+     "code": "annotation-needed",
+     "message": "`none` doesn't say what `x` holds: write its type, as in `let x: Weight? = none`"
+    }
+   ],
+   "name": "none needs a type to bind",
+   "source": [
+    "tariff \"t\"",
+    "let x = none",
+    "charge \"y\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "xs",
+     "code": "unused",
+     "message": "`xs` is never used"
+    },
+    {
+     "at": "[]",
+     "code": "annotation-needed",
+     "message": "`[]` doesn't say what `xs` holds: write its type, as in `let xs: List<Text> = []`"
+    }
+   ],
+   "name": "an empty list needs a type to bind",
+   "source": [
+    "tariff \"t\"",
+    "let xs = []",
+    "charge \"y\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "an annotated none is fine",
+   "source": [
+    "tariff \"t\"",
+    "let x: Weight? = none",
+    "charge \"y\" = $1/lb * (x ?? 0 lb)"
+   ],
+   "types": {
+    "x": "Weight?"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Fall back to `shipment.weight ?? 0 lb`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1",
+        "note \"Weight {shipment.weight ?? 0 lb}\""
+       ]
+      }
+     ],
+     "message": "`shipment.weight` is a weight that may be empty, which can't be written into text"
+    }
+   ],
+   "name": "an optional in an interpolation offers a fallback",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "note \"Weight {shipment.weight}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.stops",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Write its length, `shipment.stops.len`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1",
+        "note \"Stops {shipment.stops.len}\""
+       ]
+      }
+     ],
+     "message": "`shipment.stops` is a list (`List<Stop>`), which can't be written into text"
+    }
+   ],
+   "name": "a list in an interpolation offers its length",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "note \"Stops {shipment.stops}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a record of text interpolates",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "note \"Service {shipment.serviceType}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "scalars interpolate",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "note \"{shipment.proNumber} {shipment.distance} {rating.date} {shipment.status} {shipment.hazmat} {18%} {$5} {3}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "an optional field of an optional stop",
+   "source": [
+    "tariff \"t\"",
+    "if let at = shipment.pickup?.arrival {",
+    "  charge \"x\" = $1",
+    "  note \"{at}\"",
+    "}"
+   ],
+   "types": {
+    "shipment.pickup?.arrival": "DateTime?"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.pickup",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Read it with `?.`",
+       "result": [
+        "tariff \"t\"",
+        "let late = shipment.pickup?.arrival > rating.date",
+        "charge \"x\" = $1",
+        "note \"{late}\""
+       ]
+      },
+      {
+       "label": "Require it with `require let pickup = shipment.pickup`",
+       "result": [
+        "tariff \"t\"",
+        "require let pickup = shipment.pickup else \"This rate needs shipment.pickup\"",
+        "let late = pickup.arrival > rating.date",
+        "charge \"x\" = $1",
+        "note \"{late}\""
+       ]
+      }
+     ],
+     "message": "`shipment.pickup` may be empty, so it can't be used as a record of type `Stop` here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    },
+    {
+     "at": "shipment.pickup.arrival",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Require it with `require let arrival = shipment.pickup.arrival`",
+       "result": [
+        "tariff \"t\"",
+        "require let arrival = shipment.pickup.arrival else \"This rate needs shipment.pickup.arrival\"",
+        "let late = arrival > rating.date",
+        "charge \"x\" = $1",
+        "note \"{late}\""
+       ]
+      }
+     ],
+     "message": "`shipment.pickup.arrival` may be empty, so it can't be used as a date and time here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    }
+   ],
+   "name": "an optional with no zero offers only the bindings",
+   "source": [
+    "tariff \"t\"",
+    "let late = shipment.pickup.arrival > rating.date",
+    "charge \"x\" = $1",
+    "note \"{late}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "stop.dwell",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `stop.dwell ?? 0 h`",
+       "result": [
+        "tariff \"t\"",
+        "for stop in shipment.stops {",
+        "  charge \"x\" = $1/h * (stop.dwell ?? 0 h)",
+        "}"
+       ]
+      },
+      {
+       "label": "Bind it with `if let dwell = stop.dwell`",
+       "result": [
+        "tariff \"t\"",
+        "for stop in shipment.stops {",
+        "  if let dwell = stop.dwell {",
+        "    charge \"x\" = $1/h * dwell",
+        "  }",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let dwell = stop.dwell`",
+       "result": [
+        "tariff \"t\"",
+        "for stop in shipment.stops {",
+        "  require let dwell = stop.dwell else \"This rate needs stop.dwell\"",
+        "  charge \"x\" = $1/h * dwell",
+        "}"
+       ]
+      }
+     ],
+     "message": "`stop.dwell` may be empty, so it can't be used as a duration here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    }
+   ],
+   "name": "the if let fix wraps the statement",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  charge \"x\" = $1/h * stop.dwell",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.stops.sum(s => s.dwell)",
+     "code": "not-summable",
+     "message": "`sum` needs a value for every item, but the values are a duration that may be empty: give each a fallback, as in `x => … ?? 0 h`"
+    }
+   ],
+   "name": "summing optional values asks for a fallback per item",
+   "source": [
+    "tariff \"t\"",
+    "let total = shipment.stops.sum(s => s.dwell)",
+    "charge \"x\" = $1/h * total"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "s.dwell",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `s.dwell ?? 0 h`",
+       "result": [
+        "tariff \"t\"",
+        "let n = shipment.stops.count(s => (s.dwell ?? 0 h) > 2 h)",
+        "charge \"x\" = $1 * n"
+       ]
+      }
+     ],
+     "message": "`s.dwell` may be empty, so it can't be used as a duration here. Give it a fallback, bind it with `if let`, or refuse to rate without it"
+    }
+   ],
+   "name": "an optional inside a lambda offers only the fallback",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.count(s => s.dwell > 2 h)",
+    "charge \"x\" = $1 * n"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a list or a record interpolates as the evaluator prints it",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "let r = { name: \"x\", weight: 5 lb }",
+    "note \"{[1, 2]} {r} {shipment.stops.map(s => s.sequence)} {[r]}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.stops.map(s => s.weight)",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Write its length, `shipment.stops.map(s => s.weight).len`",
+       "result": "tariff \"t\"\ncharge \"x\" = $1\nnote \"{shipment.stops.map(s => s.weight).len}\""
+      }
+     ],
+     "message": "`shipment.stops.map(s => s.weight)` is a list (`List<Weight?>`), which can't be written into text"
+    }
+   ],
+   "name": "a list of optionals is not interpolated",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "note \"{shipment.stops.map(s => s.weight)}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "r",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Write its field `r.name`",
+       "result": "tariff \"t\"\ncharge \"x\" = $1\nlet r = { name: \"x\", weight: shipment.weight }\nnote \"{r.name}\""
+      }
+     ],
+     "message": "`r` is a record (`{ name: Text, weight: Weight? }`), which can't be written into text",
+     "nth": 4
+    }
+   ],
+   "name": "a record with an optional field is not interpolated",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "let r = { name: \"x\", weight: shipment.weight }",
+    "note \"{r}\""
+   ]
+  }
+ ]
+}
