@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
@@ -50,7 +51,10 @@ func (s *Service) resolve(
 		zap.String("partyType", string(rateCtx.PartyType)),
 	)
 
-	laneKeys := rateCtx.LaneKeys()
+	laneKeys, err := rateCtx.LaneKeys(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	// No party means no contract, and querying for one would be a scan across
 	// every rule in the tenant to find nothing.
@@ -284,11 +288,16 @@ func agreementPriorityOf(rule *rateagreement.RateAgreementRule) int16 {
 // itself, and it has to be settled before the candidate query runs because the
 // zone ids become lane keys.
 func (s *Service) resolveZones(ctx context.Context, rateCtx *RateContext) error {
+	lane, err := rategeo.MatchLane(ctx, &rateCtx.Origin, &rateCtx.Destination)
+	if err != nil {
+		return err
+	}
+
 	origin, err := s.zoneRepo.ResolveMembership(
 		ctx,
 		&ratezoneports.ResolveZoneMembershipRequest{
 			TenantInfo: rateCtx.TenantInfo,
-			MatchKeys:  rateCtx.Origin.MatchKeys(),
+			MatchKeys:  lane.OriginKeys,
 		},
 	)
 	if err != nil {
@@ -299,7 +308,7 @@ func (s *Service) resolveZones(ctx context.Context, rateCtx *RateContext) error 
 		ctx,
 		&ratezoneports.ResolveZoneMembershipRequest{
 			TenantInfo: rateCtx.TenantInfo,
-			MatchKeys:  rateCtx.Destination.MatchKeys(),
+			MatchKeys:  lane.DestinationKeys,
 		},
 	)
 	if err != nil {

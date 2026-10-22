@@ -8,8 +8,10 @@ package ratezone
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -112,7 +114,9 @@ func (rz *RateZone) Validate(multiErr *errortypes.MultiError) {
 // A caller sends members as the places they describe, not as rows — nothing in
 // a payload should be trusted to say which zone or which organization a member
 // belongs to, and the key is derived, never sent.
-func (rz *RateZone) StampMembers() {
+func (rz *RateZone) StampMembers(ctx context.Context) error {
+	members := make([]*RateZoneMember, 0, len(rz.Members))
+	scopes := make([]rategeo.Scope, 0, len(rz.Members))
 	for _, member := range rz.Members {
 		if member == nil {
 			continue
@@ -121,8 +125,20 @@ func (rz *RateZone) StampMembers() {
 		member.RateZoneID = rz.ID
 		member.OrganizationID = rz.OrganizationID
 		member.BusinessUnitID = rz.BusinessUnitID
-		member.ApplyMatchKey()
+		members = append(members, member)
+		scopes = append(scopes, member.Scope())
 	}
+
+	keys, err := rategeo.ScopeKeys(ctx, scopes)
+	if err != nil {
+		return fmt.Errorf("key rate zone members: %w", err)
+	}
+	for i, member := range members {
+		member.MatchKey = keys[i]
+		member.keyApplied = true
+	}
+
+	return nil
 }
 
 // validateMembers checks each member on its own, then rejects duplicates across
@@ -130,8 +146,6 @@ func (rz *RateZone) StampMembers() {
 // candidate lookup, which shows up later as the same rate rule appearing more
 // than once in a rating trace.
 func (rz *RateZone) validateMembers(multiErr *errortypes.MultiError) {
-	rz.StampMembers()
-
 	seen := make(map[string]struct{}, len(rz.Members))
 
 	for i, member := range rz.Members {
@@ -142,7 +156,6 @@ func (rz *RateZone) validateMembers(multiErr *errortypes.MultiError) {
 		memberErr := multiErr.WithIndex("members", i)
 		member.Validate(memberErr)
 
-		member.ApplyMatchKey()
 		if member.MatchKey == "" {
 			continue
 		}
