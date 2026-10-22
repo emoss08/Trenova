@@ -4,7 +4,7 @@
    "name": "a user function's first parameter",
    "source": [
     "tariff \"t\"",
-    "/// Time past `free`, billed at `rate`.",
+    "/// Waiting time billed by the hour. `free` is the time not billed. Then `rate` per hour.",
     "fn wait(free: Duration, rate: Money/h) -> Money = rate * free",
     "charge \"x\" = wait(|)"
    ],
@@ -12,14 +12,14 @@
     "signatures": [
      {
       "label": "wait(free: Duration, rate: Money/h) -> Money",
-      "doc": "Time past `free`, billed at `rate`.",
+      "doc": "Waiting time billed by the hour. `free` is the time not billed. Then `rate` per hour.",
       "parameters": [
        {
         "label": [
          5,
          19
         ],
-        "doc": "Time past `free`, billed at `rate`."
+        "doc": "`free` is the time not billed."
        },
        {
         "label": [
@@ -400,7 +400,7 @@
    }
   },
   {
-   "name": "an imported function's parameter docs",
+   "name": "an imported function's doc is not repeated for each parameter",
    "source": [
     "tariff \"t\"",
     "use org.accessorials.{ liftgate }",
@@ -412,10 +412,10 @@
       "label": "liftgate(stops: Int, fee: Money = $75) -> Money",
       "parameters": [
        {
-        "doc": "A liftgate at `stops` stops, `fee` each."
+        "doc": null
        },
        {
-        "doc": "A liftgate at `stops` stops, `fee` each."
+        "doc": null
        }
       ]
      }
@@ -441,14 +441,10 @@
         "doc": null
        },
        {
-        "doc": {
-         "message": "Extra stops: `fee` for every stop beyond the first `included`."
-        }
+        "doc": null
        },
        {
-        "doc": {
-         "message": "Extra stops: `fee` for every stop beyond the first `included`."
-        }
+        "doc": null
        }
       ]
      }

@@ -19,7 +19,7 @@ use super::session::Session;
 use crate::message;
 use crate::message::Message;
 use crate::tariff::check::{CONSTRUCTORS, Callee, TABLE_METHODS};
-use crate::tariff::docs::Doc;
+use crate::tariff::docs::{Doc, collapse};
 use crate::tariff::syntax::token::TokenKind;
 
 /// The most brackets signature help looks out through to find a call.
@@ -181,7 +181,11 @@ fn callee_help(
             let params = decl
                 .params
                 .iter()
-                .map(|param| doc.as_ref().and_then(|doc| doc.param(&param.name.text)))
+                .map(|param| {
+                    let doc = doc.as_ref()?;
+                    doc.param(&param.name.text)
+                        .filter(|own| own.text() != collapse(doc.text()))
+                })
                 .collect();
             Some(Help {
                 signature: function_signature(session, *module, decl),
