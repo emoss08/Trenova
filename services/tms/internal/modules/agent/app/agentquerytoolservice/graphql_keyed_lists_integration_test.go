@@ -60,8 +60,10 @@ type keyedCase struct {
 	allArgs     map[string]any
 	defaultOpen bool
 	// orgWide marks a list that reads every worker's records when it names
-	// no worker.
-	orgWide bool
+	// no worker, and openByDefaultUnscoped one that then reads only the open
+	// ones unless asked for every one.
+	orgWide               bool
+	openByDefaultUnscoped bool
 	// restricted are fields a record carries that an agent at the default
 	// data access (Internal) is never shown.
 	restricted []string
@@ -293,9 +295,10 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			},
 		},
 		{
-			tool: "worker_list_safety_events", orgWide: true, nested: "violations",
+			tool: "worker_list_safety_events", orgWide: true, openByDefaultUnscoped: true,
+			nested: "violations",
 			key: "recognitions", keyed: true,
-			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{},
+			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{"openOnly": false},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				status, closedAt := worker.SafetyEventStatusOpen, (*int64)(nil)
@@ -575,6 +578,12 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 						assert.NotContains(t, page, c.key, "a read keyed by the worker needs one")
 					}
 				})
+				if c.openByDefaultUnscoped {
+					t.Run("no worker reads only the open records by default", func(t *testing.T) {
+						page := call(map[string]any{})
+						assert.ElementsMatch(t, ours.open, itemIDs(page))
+					})
+				}
 			}
 
 			if c.templates != nil {

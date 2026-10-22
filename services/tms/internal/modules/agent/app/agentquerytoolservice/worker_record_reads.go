@@ -56,10 +56,12 @@ const (
 	opDeskWorkerRecognitions = "DeskWorkerRecognitions"
 
 	workerSafetyEventsSummary = "List safety events, newest first: one worker's with their " +
-		"roadside violations and recognitions, or every worker's across the fleet, each with " +
-		"its driver. Events are accidents, inspections, citations, complaints and near misses " +
-		"with their points and status; openOnly keeps the ones still open or under review. " +
-		"It yields the safetyEventId, violationId and recognitionId the safety tools take."
+		"roadside violations and recognitions, or, leaving out the worker, those still open " +
+		"across the fleet, each with its driver. Events are accidents, inspections, " +
+		"citations, complaints and near misses with their points and status. It yields the " +
+		"safetyEventId, violationId and recognitionId the safety tools take."
+	noteOpenAcrossTheFleet = "Defaults to true when no worker is named, and to false for one " +
+		"worker's; set it to false for the fleet's closed events too."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"
 	fieldWorker      = "worker"
@@ -160,8 +162,12 @@ func workerRecordReadSpecs() []graphQLListSpec {
 			summary:      workerSafetyEventsSummary,
 			resource:     permission.ResourceWorkerSafetyEvent,
 			references:   theWorker,
-			notes:        map[string]string{paramWorkerID: noteEveryWorker},
-			defaults:     listDefaults,
+			notes: map[string]string{
+				paramWorkerID:   noteEveryWorker,
+				wfParamOpenOnly: noteOpenAcrossTheFleet,
+			},
+			defaults: listDefaults,
+			unscoped: map[string]any{wfParamOpenOnly: true},
 			alongside: []alongsideSpec{{
 				key:       "recognitions",
 				operation: opDeskWorkerRecognitions,

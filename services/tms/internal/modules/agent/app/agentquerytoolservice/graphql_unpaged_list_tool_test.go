@@ -367,3 +367,43 @@ func TestUnpagedList_AKeyedReadAlongsideTakesNoTableInput(t *testing.T) {
 	_, err := newGraphQLUnpagedListTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
 	require.ErrorContains(t, err, "takes no table input")
 }
+
+func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_").String()
+	cases := map[string]struct {
+		params map[string]any
+		want   map[string]any
+	}{
+		"no worker reads what is still open across the fleet": {
+			params: map[string]any{},
+			want:   map[string]any{"openOnly": true, "limit": graphQLListLimit},
+		},
+		"no worker, and the closed ones asked for too": {
+			params: map[string]any{wfParamOpenOnly: false},
+			want:   map[string]any{"openOnly": false, "limit": graphQLListLimit},
+		},
+		"one worker's record is read whole": {
+			params: map[string]any{paramWorkerID: workerID},
+			want:   map[string]any{"workerId": workerID, "limit": graphQLListLimit},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reader := &keyedReader{answers: safetyAnswers()}
+			tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolListWorkerSafetyEvents), reader,
+				&mocks.DenyResourcesPermissionEngine{})
+			require.NoError(t, err)
+
+			_, err = tool.Query(t.Context(), keyedCall(tc.params))
+			require.NoError(t, err)
+
+			sent := reader.sent("DeskWorkerSafetyEvents")
+			require.NotNil(t, sent)
+			assert.Equal(t, tc.want, sent.Variables)
+		})
+	}
+}

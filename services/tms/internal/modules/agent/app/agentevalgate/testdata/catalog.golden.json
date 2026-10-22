@@ -43758,7 +43758,7 @@
     },
     {
       "name": "worker_list_safety_events",
-      "description": "List safety events, newest first: one worker's with their roadside violations and recognitions, or every worker's across the fleet, each with its driver. Events are accidents, inspections, citations, complaints and near misses with their points and status; openOnly keeps the ones still open or under review. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
+      "description": "List safety events, newest first: one worker's with their roadside violations and recognitions, or, leaving out the worker, those still open across the fleet, each with its driver. Events are accidents, inspections, citations, complaints and near misses with their points and status. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -43770,7 +43770,7 @@
             "x-clamp": true
           },
           "openOnly": {
-            "description": "Only the events still open or under review.",
+            "description": "Only the events still open or under review. Defaults to true when no worker is named, and to false for one worker's; set it to false for the fleet's closed events too.",
             "type": "boolean"
           },
           "workerId": {
