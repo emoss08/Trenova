@@ -1,0 +1,792 @@
+[
+  {
+    "name": "let binds a value",
+    "source": "tariff \"t\"\nlet x = 2\nnote \"{x}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "2"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "let with an annotation",
+    "source": "tariff \"t\"\nlet x: Number = 2\nnote \"{x}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "2"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "var accumulates",
+    "source": "tariff \"t\"\nvar total = $0\nfor x in [1, 2, 3] {\n  total += $10 * x\n}\nnote \"{total}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$60.00"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "var subtracts",
+    "source": "tariff \"t\"\nvar left = 10\nleft -= 3\nnote \"{left}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "7"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "var is reassigned",
+    "source": "tariff \"t\"\nvar x = 1\nx = 5\nnote \"{x}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "assigning a let is internal",
+    "source": "tariff \"t\"\nlet x = 1\nx = 2",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "a var declared in a block stays in it",
+    "source": "tariff \"t\"\nif true {\n  var y = 1\n  y += 1\n  note \"{y}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "2"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "blocks are scopes",
+    "source": "tariff \"t\"\nlet x = 1\nif true {\n  let y = x + 1\n  note \"{y}\"\n}\nnote \"{x}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "2"
+          },
+          {
+            "text": "1"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "if runs the true branch",
+    "source": "tariff \"t\"\nif 1 < 2 {\n  note \"yes\"\n} else {\n  note \"no\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "yes"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "else runs when nothing holds",
+    "source": "tariff \"t\"\nif 1 > 2 {\n  note \"yes\"\n} else {\n  note \"no\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "no"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "else if chains",
+    "source": "tariff \"t\"\nlet w = 1_500 lb\nif w < 500 lb {\n  note \"light\"\n} else if w < 2_000 lb {\n  note \"medium\"\n} else {\n  note \"heavy\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "medium"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "if without else may run nothing",
+    "source": "tariff \"t\"\nif false {\n  note \"x\"\n}\nnote \"done\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "done"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "if let binds when present",
+    "source": "tariff \"t\"\nif let p = shipment.pickup {\n  note \"{p.sequence}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "if let runs else when none",
+    "source": "tariff \"t\"\nif let w = shipment.weight {\n  note \"{w}\"\n} else {\n  note \"no weight\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "no weight"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "for walks a list in order",
+    "source": "tariff \"t\"\nfor x in [\"a\", \"b\"] {\n  note \"{x}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "a"
+          },
+          {
+            "text": "b"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "for walks a half-open int range",
+    "source": "tariff \"t\"\nfor i in 1..4 {\n  note \"{i}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1"
+          },
+          {
+            "text": "2"
+          },
+          {
+            "text": "3"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "for walks a closed int range",
+    "source": "tariff \"t\"\nfor i in 1..=2 {\n  note \"{i}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1"
+          },
+          {
+            "text": "2"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "for over an empty range",
+    "source": "tariff \"t\"\nfor i in 3..3 {\n  note \"{i}\"\n}\nnote \"end\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "end"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "for with where",
+    "source": "tariff \"t\"\nfor i in 1..=6 where i % 2 == 0 {\n  note \"{i}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "2"
+          },
+          {
+            "text": "4"
+          },
+          {
+            "text": "6"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "break leaves the loop",
+    "source": "tariff \"t\"\nfor i in 1..10 {\n  if i == 3 {\n    break\n  }\n  note \"{i}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1"
+          },
+          {
+            "text": "2"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "continue skips to the next",
+    "source": "tariff \"t\"\nfor i in 1..=4 {\n  if i == 2 {\n    continue\n  }\n  note \"{i}\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1"
+          },
+          {
+            "text": "3"
+          },
+          {
+            "text": "4"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "break leaves only the innermost loop",
+    "source": "tariff \"t\"\nfor i in 1..=2 {\n  for j in 1..=5 {\n    if j > 1 {\n      break\n    }\n    note \"{i}.{j}\"\n  }\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1.1"
+          },
+          {
+            "text": "2.1"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "require passes",
+    "source": "tariff \"t\"\nrequire 1 < 2 else \"never\"\nnote \"ok\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "ok"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "require refuses with the author's text",
+    "source": "tariff \"t\"\nrequire shipment.hazmat else \"Only hazmat loads, not {shipment.proNumber}\"",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "Only hazmat loads, not SAMPLE"
+      }
+    }
+  },
+  {
+    "name": "require let binds for the rest of the block",
+    "source": "tariff \"t\"\nrequire let p = shipment.pickup else \"no pickup\"\nnote \"{p.kind}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "Pickup"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "require let refuses on none",
+    "source": "tariff \"t\"\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "This rate needs the shipment's weight"
+      }
+    }
+  },
+  {
+    "name": "fail refuses",
+    "source": "tariff \"t\"\nnote \"before\"\nfail \"No rate for {lane.origin.city}x\"",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "No rate for x"
+      }
+    }
+  },
+  {
+    "name": "fail inside a loop",
+    "source": "tariff \"t\"\nfor s in shipment.stops {\n  if s.kind == Delivery {\n    fail \"stop {s.sequence}\"\n  }\n}",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "stop 2"
+      }
+    }
+  },
+  {
+    "name": "refusal ranges point at the statement",
+    "source": "tariff \"t\"\nlet a = 1\nfail \"no\"",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "no",
+        "range": {
+          "from": 21,
+          "to": 30
+        }
+      }
+    }
+  },
+  {
+    "name": "a function with a block body",
+    "source": "tariff \"t\"\nfn twice(x: Int) -> Int {\n  return x * 2\n}\nnote \"{twice(4)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "8"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a function with an expression body",
+    "source": "tariff \"t\"\nfn twice(x: Int) -> Int = x * 2\nnote \"{twice(4)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "8"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a function default",
+    "source": "tariff \"t\"\nfn fee(amount: Money = $95) -> Money = amount\nnote \"{fee()} {fee($10)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$95.00 $10.00"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "named arguments in any order",
+    "source": "tariff \"t\"\nfn deadhead(empty: Distance, rate: Money/mi) -> Money {\n  let paid = (empty - 50 mi).max(0 mi)\n  return rate * paid\n}\nnote \"{deadhead(rate: $2/mi, empty: 80 mi)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$60.00"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a default may read an earlier parameter",
+    "source": "tariff \"t\"\nfn pad(x: Int, y: Int = x + 1) -> Int = x + y\nnote \"{pad(2)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "5"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "functions call functions",
+    "source": "tariff \"t\"\nfn a(x: Int) -> Int = b(x) + 1\nfn b(x: Int) -> Int = x * 10\nnote \"{a(2)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "21"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "return leaves a function early",
+    "source": "tariff \"t\"\nfn sign(x: Int) -> Text {\n  if x < 0 {\n    return \"negative\"\n  }\n  return \"positive\"\n}\nnote \"{sign(-1)} {sign(1)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "negative positive"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "return from inside a loop",
+    "source": "tariff \"t\"\nfn firstBig(xs: List<Int>) -> Int {\n  for x in xs {\n    if x > 10 {\n      return x\n    }\n  }\n  return 0\n}\nnote \"{firstBig([1, 20, 30])}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "20"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "functions are closed over the record",
+    "source": "tariff \"t\"\nfn peek() -> Text = shipment.proNumber\nnote \"{peek()}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "functions cannot see file-level lets",
+    "source": "tariff \"t\"\nlet secret = 1\nfn peek() -> Int = secret\nnote \"{peek()}\"",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "functions see constants",
+    "source": "tariff \"t\"\nconst BASE: Money = $3.50\nfn base() -> Money = BASE\nnote \"{base()}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$3.50"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "constants are evaluated from other constants",
+    "source": "tariff \"t\"\nconst BASE_A = 2\nconst DOUBLE = BASE_A * 21\nnote \"{DOUBLE}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "42"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a refusal inside a function points at the call",
+    "source": "tariff \"t\"\nfn need(x: Int?) -> Int {\n  require let v = x else \"missing\"\n  return v\n}\nlet y = need(none)",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "missing"
+      }
+    }
+  },
+  {
+    "name": "an error inside a library function is moved to the call",
+    "source": "tariff \"t\"\nuse std.accessorials.{ detention }\nlet owed = detention(5 h, rate: $60/h, increment: 0 min)",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "argument",
+        "range": {
+          "from": 57,
+          "to": 102
+        }
+      }
+    }
+  },
+  {
+    "name": "module aliases call module functions",
+    "source": "tariff \"t\"\nuse std.fuel\nnote \"{fuel.stepPercent($3.20/gal, peg: $1.20/gal, step: $0.05/gal, perStep: 0.5%)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "20%"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "module aliases may be renamed",
+    "source": "tariff \"t\"\nuse std.ltl as l\nnote \"{l.billed(1_240 lb)}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "1300 lb"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "imported types build records",
+    "source": "tariff \"t\"\nuse std.ltl.{ deficit, Break }\nlet breaks: List<Break> = [{ from: 0 lb, rate: $10/cwt, minimum: none }]\nnote \"{deficit(breaks, actual: 120 lb).rate}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$10.00/cwt"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "user enums compare by variant",
+    "source": "tariff \"t\"\nenum Zone { A, B }\nlet z = Zone.B\nif z == B {\n  note \"b\"\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "b"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "user record types",
+    "source": "tariff \"t\"\ntype Fee = { code: Text, amount: Money }\nlet f: Fee = { code: \"X\", amount: $5 }\nnote \"{f.code} {f.amount}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "X $5.00"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "an expression statement runs",
+    "source": "tariff \"t\"\n[1, 2].map(x => x)\nnote \"ran\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "ran"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a condition gives true",
+    "source": "condition \"c\"\nlane.origin.zip3 in [\"\"] and (shipment.weight ?? 0 lb) < 10_000 lb",
+    "expect": {
+      "status": "rated",
+      "value": true
+    }
+  },
+  {
+    "name": "a condition gives false",
+    "source": "condition \"c\"\nshipment.hazmat",
+    "expect": {
+      "status": "rated",
+      "value": false
+    }
+  },
+  {
+    "name": "a condition with inputs and bindings",
+    "source": "condition \"Residential delivery\"\n/// The zip3s this contract treats as residential.\ninput residentialZip3s: List<Text> = [\"752\"]\nlet zip = lane.destination.zip3\nzip in residentialZip3s",
+    "expect": {
+      "status": "rated",
+      "value": true
+    },
+    "facts": {
+      "lane": {
+        "destination": {
+          "zip3": "752"
+        }
+      }
+    }
+  },
+  {
+    "name": "a condition can refuse",
+    "source": "condition \"c\"\nfail \"no\"\ntrue",
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "no"
+      }
+    }
+  },
+  {
+    "name": "a library cannot be evaluated",
+    "source": "library \"org.x\"\nfn x() -> Int = 1",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "a syntax error is a syntax error",
+    "source": "tariff \"t\"\nlet = ",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "syntax"
+      }
+    }
+  },
+  {
+    "name": "an unknown import is a syntax error",
+    "source": "tariff \"t\"\nuse std.nope",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "syntax"
+      }
+    }
+  },
+  {
+    "name": "the wrong file kind is a syntax error",
+    "source": "condition \"c\"\ntrue",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "syntax"
+      }
+    },
+    "kind": "tariff"
+  },
+  {
+    "name": "notes interpolate and keep order",
+    "source": "tariff \"t\"\nnote \"one {1 + 1}\"\nnote \"two\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "one 2",
+            "range": {
+              "from": 11,
+              "to": 29
+            }
+          },
+          {
+            "text": "two"
+          }
+        ]
+      }
+    }
+  }
+]

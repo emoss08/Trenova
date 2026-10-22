@@ -1,0 +1,337 @@
+[
+  {
+    "name": "a range arm matches below the first break",
+    "source": "tariff \"t\"\nlet w = 499 lb\nlet perCwt = match w {\n  ..500 lb          => $42.00/cwt\n  500 lb..2_000 lb  => $35.50/cwt\n  2_000 lb..5_000 lb => $28.10/cwt\n  _                 => $22.75/cwt\n}\nnote \"{perCwt}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$42.00/cwt"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a range arm's lower bound is inclusive",
+    "source": "tariff \"t\"\nlet w = 500 lb\nlet perCwt = match w {\n  ..500 lb          => $42.00/cwt\n  500 lb..2_000 lb  => $35.50/cwt\n  2_000 lb..5_000 lb => $28.10/cwt\n  _                 => $22.75/cwt\n}\nnote \"{perCwt}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$35.50/cwt"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "range arms convert units",
+    "source": "tariff \"t\"\nlet w = 30 cwt\nlet perCwt = match w {\n  ..500 lb          => $42.00/cwt\n  500 lb..2_000 lb  => $35.50/cwt\n  2_000 lb..5_000 lb => $28.10/cwt\n  _                 => $22.75/cwt\n}\nnote \"{perCwt}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$28.10/cwt"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "the wildcard arm catches the rest",
+    "source": "tariff \"t\"\nlet w = 5_000 lb\nlet perCwt = match w {\n  ..500 lb          => $42.00/cwt\n  500 lb..2_000 lb  => $35.50/cwt\n  2_000 lb..5_000 lb => $28.10/cwt\n  _                 => $22.75/cwt\n}\nnote \"{perCwt}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "$22.75/cwt"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a closed range includes its end",
+    "source": "tariff \"t\"\nlet x = 5\nlet label = match x {\n  1..=5 => \"low\"\n  _ => \"high\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "low"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "variants match",
+    "source": "tariff \"t\"\nlet k = Delivery\nlet label = match k {\n  Pickup => \"p\"\n  Delivery => \"d\"\n  SplitPickup | SplitDelivery => \"split\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "d"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "alternatives match either",
+    "source": "tariff \"t\"\nlet k = SplitDelivery\nlet label = match k {\n  Pickup => \"p\"\n  Delivery => \"d\"\n  SplitPickup | SplitDelivery => \"split\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "split"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "qualified variants match",
+    "source": "tariff \"t\"\nlet s = StopStatus.Completed\nlet label = match s {\n  StopStatus.Completed => \"done\"\n  _ => \"open\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "done"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "none matches none",
+    "source": "tariff \"t\"\nlet w = shipment.weight\nlet label = match w {\n  none => \"none\"\n  _ => \"some\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "none"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a binding matches anything and binds it",
+    "source": "tariff \"t\"\nlet n = 7\nlet label = match n {\n  0 => \"zero\"\n  other => \"{other}\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "7"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a guard filters an arm",
+    "source": "tariff \"t\"\nlet n = 7\nlet label = match n {\n  x if x > 5 => \"big\"\n  _ => \"small\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "big"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a failing guard falls through",
+    "source": "tariff \"t\"\nlet n = 3\nlet label = match n {\n  x if x > 5 => \"big\"\n  _ => \"small\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "small"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "record patterns match fields",
+    "source": "tariff \"t\"\nlet s = { kind: Delivery, appointment: true }\nlet label = match s {\n  { kind: Delivery, appointment: true } => \"appointed delivery\"\n  _ => \"other\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "appointed delivery"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "record patterns reject a field",
+    "source": "tariff \"t\"\nlet s = { kind: Delivery, appointment: false }\nlet label = match s {\n  { kind: Delivery, appointment: true } => \"appointed delivery\"\n  _ => \"other\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "other"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "literal patterns compare across scales",
+    "source": "tariff \"t\"\nlet a = $426.00\nlet label = match a {\n  $426 => \"exact\"\n  _ => \"other\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "exact"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "text literal patterns",
+    "source": "tariff \"t\"\nlet c = \"TX\"\nlet label = match c {\n  \"TX\" | \"OK\" => \"south\"\n  _ => \"elsewhere\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "south"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "bool patterns",
+    "source": "tariff \"t\"\nlet b = false\nlet label = match b {\n  true => \"yes\"\n  false => \"no\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "no"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "negative literal patterns",
+    "source": "tariff \"t\"\nlet n = -1\nlet label = match n {\n  -1 => \"minus one\"\n  _ => \"other\"\n}\nnote \"{label}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "minus one"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a match statement runs its arm's block",
+    "source": "tariff \"t\"\nlet n = 2\nmatch n {\n  1 => {\n    note \"one\"\n  }\n  2 => {\n    note \"two\"\n    note \"still two\"\n  }\n  _ => {\n    note \"many\"\n  }\n}",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "two"
+          },
+          {
+            "text": "still two"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a match statement arm may be an expression",
+    "source": "tariff \"t\"\nlet n = 1\nmatch n {\n  1 => [1].len\n  _ => 0\n}\nnote \"after\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "after"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "match arm bindings stay in the arm",
+    "source": "tariff \"t\"\nlet n = 4\nlet doubled = match n {\n  x => x * 2\n}\nnote \"{doubled}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "8"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "no arm covering a value is internal",
+    "source": "tariff \"t\"\nlet n = 9\nlet label = match n {\n  1 => \"one\"\n}",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "internal"
+      }
+    }
+  },
+  {
+    "name": "date range patterns",
+    "source": "tariff \"t\"\nlet d = @2026-07-04\nlet season = match d {\n  @2026-06-01..@2026-09-01 => \"summer\"\n  _ => \"other\"\n}\nnote \"{season}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "summer"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "percent range patterns",
+    "source": "tariff \"t\"\nlet p = 18%\nlet tier = match p {\n  ..10% => \"low\"\n  10%..=20% => \"mid\"\n  _ => \"high\"\n}\nnote \"{tier}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "mid"
+          }
+        ]
+      }
+    }
+  }
+]

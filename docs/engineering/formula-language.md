@@ -77,6 +77,7 @@ minimum minimumCharge
 round to cents
 
 test "a two-drop load bills one extra drop" {
+  given fuel.price = $3.20/gal
   given shipment.stops = [pickup(), delivery(), delivery()]
   expect charge(XDROP) == $75
 }
@@ -108,10 +109,10 @@ contract. The standard library (`std`) ships with the module and is versioned wi
   - charge codes are UPPERCASE (`FSC`), matching the accessorial charge catalog's 10-character
     codes.
 - **Keywords:** `tariff library condition use input let var const fn type enum private charge
-  note if else match for in where break continue return minimum maximum round to up down half
-  even require fail fails test given expect and or not true false none`. `cents`, `total`,
-  `lines` and the unit names are contextual (they mean something only where the grammar expects
-  them).
+  note if else match for in where break continue return minimum maximum round require fail fails
+  test given expect and or not true false none`. `as`, `to`, `up`, `down`, `half`, `even`,
+  `cents`, `total`, `lines` and the unit names are contextual: they mean something only where the
+  grammar expects them, and are ordinary names elsewhere (`fn billed(weight: Weight, to: Weight)`).
 - **Text:** `"double quoted"`, with `{expr}` interpolation, `{{` for a literal brace and the usual
   escapes. There are no raw strings and no single quotes.
 - **Numbers:**
@@ -238,6 +239,9 @@ The arithmetic rules:
 
 - `+`, `-` and comparison take the same dimension: `500 lb + 2 cwt` is `700 lb`.
 - `Money × Number`, `Money × Percent` and `Money / Number` give `Money`.
+- A percent scaled by a number is a percent, in either order: `0.5% × 3` is `1.5%`, and
+  `Percent / Number` is a `Percent`. `Percent ± Percent` is a `Percent`; `Percent × Percent` is
+  an error.
 - `Money/unit × quantity` gives `Money` (`$2.35/mi × 812 mi`), converting units as needed
   (`$18.50/cwt × 1_200 lb = $222`).
 - `Money / quantity` gives a rate; `quantity / quantity` of one dimension gives a `Number`.
@@ -833,4 +837,6 @@ string      = '"' { char | escape | "{" expr "}" | "{{" | "}}" } '"' ;
 ```
 
 A keyword is never an identifier. Unit names are contextual: `lb` is a unit only directly after
-a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name.
+a number, or after `/` in a money literal or a type. Elsewhere it is an ordinary name. `in` directly
+after a number is inches unless what follows starts a value: `48 in` is a length, and in
+`5 in [5, 6]` it is the membership keyword.

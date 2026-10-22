@@ -91,6 +91,14 @@ pub struct Axis {
     /// and for counts.
     #[serde(default)]
     pub unit: Option<String>,
+    /// How an exact axis normalises keys, as Go's `ratematrix.KeyNormalization`: `None`,
+    /// `Trim`, `Upper` or `Zip3`; empty is `None`.
+    #[serde(default)]
+    pub normalization: String,
+    /// What a range axis does with a key no band covers, as Go's `ratematrix.RangeOverflow`:
+    /// `Error`, `ClampToTopBand` or `Nearest`; empty is `Error`.
+    #[serde(default)]
+    pub overflow: String,
 }
 
 impl Axis {
@@ -126,6 +134,15 @@ pub struct TableShape {
     /// What a cell holds, as a Tariff type: `Money`, `Money/cwt`, `Money/mi`, `Percent`,
     /// `Number`.
     pub value_type: String,
+    /// The cells, which the evaluator reads; the checker needs only the shape, so a host may
+    /// leave them out for `tariff.check` and the editor.
+    #[serde(default)]
+    pub cells: Option<Vec<super::eval::tables::CellWire>>,
+    /// The exact-axis key combinations whose cells `cells` holds, one normalised key per exact
+    /// axis in axis order; absent when `cells` is the whole table. A lookup outside them is a
+    /// need the host answers by loading those cells and evaluating again.
+    #[serde(default)]
+    pub loaded: Option<Vec<Vec<String>>>,
 }
 
 impl TableShape {
