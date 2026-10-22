@@ -60,26 +60,42 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaLibraryRow>[] {
       maxSize: 150,
     },
     {
-      accessorKey: "approvedVersionNumber",
+      accessorKey: "currentVersionNumber",
+      header: t("Version"),
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{t("v{0}", row.original.currentVersionNumber)}</span>
+      ),
+      meta: {
+        label: t("Version"),
+        apiField: "currentVersionNumber",
+        filterable: false,
+        sortable: true,
+        filterType: "number",
+      },
+      size: 90,
+      minSize: 70,
+      maxSize: 110,
+    },
+    {
+      accessorKey: "approvedAt",
       header: t("Approved"),
       cell: ({ row }) =>
-        row.original.approvedVersionNumber ? (
-          <Badge variant="neutral" appearance="outline" className="font-mono">
-            {t("v{0}", row.original.approvedVersionNumber)}
-          </Badge>
+        row.original.approvedAt ? (
+          <HoverCardTimestamp timestamp={row.original.approvedAt} />
         ) : (
           <span className="text-muted-foreground text-xs">{t("Never")}</span>
         ),
       meta: {
         label: t("Approved"),
-        apiField: "approvedVersionNumber",
-        filterable: false,
+        apiField: "approvedAt",
+        filterable: true,
         sortable: true,
-        filterType: "number",
+        filterType: "date",
+        defaultFilterOperator: "gt",
       },
-      size: 100,
-      minSize: 80,
-      maxSize: 120,
+      size: 160,
+      minSize: 140,
+      maxSize: 200,
     },
     {
       accessorKey: "testCount",
@@ -104,26 +120,35 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaLibraryRow>[] {
       maxSize: 110,
     },
     {
-      accessorKey: "usageCount",
-      header: t("Imported by"),
+      id: "imports",
+      header: t("Imports"),
       cell: ({ row }) =>
-        row.original.usageCount > 0 ? (
-          <Badge variant="info" className="font-mono">
-            {t("{0, plural, one {# template version} other {# template versions}}", row.original.usageCount)}
-          </Badge>
+        row.original.imports.length > 0 ? (
+          <span className="flex flex-wrap gap-1">
+            {row.original.imports.map((library) => (
+              <Badge
+                key={library.path}
+                variant="neutral"
+                appearance="outline"
+                className="font-mono"
+                title={t("Pinned to v{0}", library.versionNumber)}
+              >
+                {library.path}
+              </Badge>
+            ))}
+          </span>
         ) : (
-          <span className="text-muted-foreground text-xs">{t("Not imported")}</span>
+          <span className="text-muted-foreground text-xs">{t("None")}</span>
         ),
       meta: {
-        label: t("Imported by"),
-        apiField: "usageCount",
+        label: t("Imports"),
+        apiField: "imports",
         filterable: false,
         sortable: false,
-        filterType: "number",
       },
-      size: 170,
+      size: 180,
       minSize: 120,
-      maxSize: 220,
+      maxSize: 280,
     },
     {
       accessorKey: "updatedAt",

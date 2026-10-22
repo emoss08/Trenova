@@ -119,7 +119,6 @@ export function libraryEntries(
       key: `org:${library.path}`,
       group: t("Your libraries"),
       label: library.path,
-      meta: library.version ? t("pinned to {0}", library.version) : undefined,
       doc: t("Import it with use {0}", library.path),
       insert: `use ${library.path}\n`,
     }),

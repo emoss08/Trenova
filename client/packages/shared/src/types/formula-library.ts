@@ -9,9 +9,9 @@ import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import {
   fieldChangeSchema,
+  formulaImportsSchema,
   formulaReviewDecisionSchema,
   formulaTemplateStatusSchema,
-  versionTagSchema,
 } from "./formula-template";
 import { userSchema } from "./user";
 
@@ -40,10 +40,14 @@ export const formulaLibrarySchema = z.object({
           "A library name starts with a lowercase letter and holds only letters and digits, like accessorials",
         ),
     }),
+  /** The module path templates import: `org.<name>`. */
+  path: z.string().optional(),
   description: z.string().default(""),
   source: z.string().refine((value) => value.trim().length > 0, {
     error: () => translate("The library's source is required"),
   }),
+  /** The other organisation libraries the source imports, as the last check pinned them. */
+  imports: formulaImportsSchema,
   status: formulaLibraryStatusSchema.default("Draft"),
   testCount: z.number().int().default(0),
   submittedById: z.string().nullish(),
@@ -52,11 +56,9 @@ export const formulaLibrarySchema = z.object({
   approvedAt: z.number().nullish(),
   reviewComment: z.string().nullish(),
   version: z.number().optional(),
+  sourceLibraryId: z.string().nullish(),
+  sourceVersionNumber: z.number().nullish(),
   currentVersionNumber: z.number().optional(),
-  /** The latest approved version, the one a new template version would pin. */
-  approvedVersionNumber: z.number().nullish(),
-  /** How many template versions import this library. */
-  usageCount: z.number().optional(),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
 });
@@ -75,16 +77,14 @@ export const formulaLibraryVersionSchema = z.object({
   businessUnitId: z.string(),
   versionNumber: z.number(),
   name: z.string(),
+  path: z.string().optional(),
   description: z.string().optional(),
   source: z.string(),
+  imports: formulaImportsSchema,
   status: formulaLibraryStatusSchema,
   testCount: z.number().int().default(0),
   changeMessage: z.string().optional(),
   changeSummary: z.record(z.string(), fieldChangeSchema).nullish(),
-  tags: z
-    .array(versionTagSchema)
-    .nullish()
-    .transform((v) => v ?? []),
   createdById: z.string(),
   createdAt: z.number(),
   createdBy: linkedRecordSchema("user", userSchema).nullish(),

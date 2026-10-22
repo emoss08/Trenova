@@ -1,8 +1,8 @@
 import type {
+  FormulaImport,
   FormulaTemplate,
   FormulaTemplateVersion,
 } from "@trenova/shared/types/formula-template";
-import type { TariffImport } from "@trenova/shared/types/tariff";
 import { downloadJsonFile, slugify } from "@trenova/shared/lib/utils";
 
 /** The export file's format: a template is its Tariff source, tests included. */
@@ -15,7 +15,7 @@ export type FormulaTemplateExportPayload = {
   source: string;
   status: FormulaTemplate["status"];
   /** The libraries the exported version pinned; an import re-pins against the importing org. */
-  imports: TariffImport[];
+  imports: FormulaImport[];
   sourceTemplateId: string | null | undefined;
   sourceVersionNumber: number | null | undefined;
 };
@@ -30,7 +30,7 @@ export type FormulaTemplateExport = {
     description?: string;
     source: string;
     status: FormulaTemplate["status"];
-    imports: TariffImport[];
+    imports: FormulaImport[];
     changeMessage?: string;
     tags: string[];
     createdAt: number;

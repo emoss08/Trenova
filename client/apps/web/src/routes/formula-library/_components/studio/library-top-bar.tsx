@@ -122,7 +122,7 @@ export function LibraryTopBar({
             {library.approvedVersionNumber &&
               library.approvedVersionNumber !== library.currentVersionNumber && (
                 <span className="text-foreground-subtle text-xs @max-[1100px]:hidden">
-                  {t("templates pin up to v{0}", library.approvedVersionNumber)}
+                  {t("approved v{0}", library.approvedVersionNumber)}
                 </span>
               )}
           </span>

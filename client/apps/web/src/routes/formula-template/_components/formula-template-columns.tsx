@@ -69,7 +69,13 @@ export function getColumns(t: TranslateFn): ColumnDef<FormulaTemplateRow>[] {
         row.original.imports.length > 0 ? (
           <span className="flex flex-wrap gap-1">
             {row.original.imports.map((library) => (
-              <Badge key={library.path} variant="neutral" appearance="outline" className="font-mono">
+              <Badge
+                key={library.path}
+                variant="neutral"
+                appearance="outline"
+                className="font-mono"
+                title={t("Pinned to v{0}", library.versionNumber)}
+              >
                 {library.path}
               </Badge>
             ))}

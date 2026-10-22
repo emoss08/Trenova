@@ -10,7 +10,6 @@ import {
   tariffBillSchema,
   tariffDiagnosticsSchema,
   tariffEvalErrorSchema,
-  tariffImportSchema,
   tariffInputDeclarationsSchema,
   tariffLookupSchema,
   tariffRangeSchema,
@@ -45,10 +44,23 @@ export const billingVersionSchema = z.object({
 });
 export type BillingVersion = z.output<typeof billingVersionSchema>;
 
-const importsSchema = z
-  .array(tariffImportSchema)
+/**
+ * An organisation library a saved version imports, pinned to the library version it was checked
+ * against (approval pins each to the version approved at that moment).
+ */
+export const formulaImportSchema = z.object({
+  /** The module path the source imports: `org.<name>`. */
+  path: z.string(),
+  libraryId: z.string(),
+  versionNumber: z.number().int(),
+});
+export type FormulaImport = z.output<typeof formulaImportSchema>;
+
+export const formulaImportsSchema = z
+  .array(formulaImportSchema)
   .nullish()
   .transform((value) => value ?? []);
+const importsSchema = formulaImportsSchema;
 
 /**
  * A formula template as the API sends it and the Studio edits it. `source` is the whole tariff;

@@ -23,16 +23,24 @@ describe("formula library list columns", () => {
     expect(cellFor("name", { name: "accessorials", description: "" })).toBe("org.accessorials");
   });
 
-  it("shows the approved version, or that none was ever approved", () => {
-    expect(cellFor("approvedVersionNumber", { approvedVersionNumber: 4 })).toBe("v4");
-    expect(cellFor("approvedVersionNumber", { approvedVersionNumber: null })).toBe("Never");
+  it("shows the current version, and when it was approved or that it never was", () => {
+    expect(cellFor("currentVersionNumber", { currentVersionNumber: 4 })).toBe("v4");
+    expect(cellFor("approvedAt", { approvedAt: null })).toBe("Never");
+    expect(cellFor("approvedAt", { approvedAt: 1_700_000_000 })).not.toContain("Never");
   });
 
-  it("counts tests and the template versions that import it", () => {
+  it("counts the tests its source holds", () => {
     expect(cellFor("testCount", { testCount: 3 })).toBe("3");
     expect(cellFor("testCount", { testCount: 0 })).toBe("None");
-    expect(cellFor("usageCount", { usageCount: 1 })).toBe("1 template version");
-    expect(cellFor("usageCount", { usageCount: 5 })).toBe("5 template versions");
-    expect(cellFor("usageCount", { usageCount: 0 })).toBe("Not imported");
+  });
+
+  it("lists the libraries it imports, or none", () => {
+    const column = getColumns(translate).find((c) => c.id === "imports");
+    if (!column || typeof column.cell !== "function") throw new Error("no imports column");
+    const cell = column.cell;
+    const text = (imports: FormulaLibraryRow["imports"]) =>
+      render(<>{cell({ row: { original: { imports } } } as never)}</>).container.textContent;
+    expect(text([{ path: "org.zones", libraryId: "fl_2", versionNumber: 2 }])).toBe("org.zones");
+    expect(text([])).toBe("None");
   });
 });

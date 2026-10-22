@@ -156,8 +156,7 @@ export function FormulaLibraryEditPage() {
                     "Saving makes a new version and cancels the review in progress. Templates keep the version they pinned.",
                   )
                 : t(
-                    "Saving makes a new version as a draft. {0, plural, one {# template version keeps} other {# template versions keep}} the version they pinned until a new template version pins this one.",
-                    library.usageCount,
+                    "Saving makes a new version as a draft. Template versions that import the library keep the version they pinned until a new template version pins another.",
                   )}
             </AlertDialogDescription>
           </AlertDialogHeader>

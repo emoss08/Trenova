@@ -3,14 +3,18 @@ fragment FormulaLibraryTableRowFields on FormulaLibrary {
   businessUnitId
   organizationId
   name
+  path
   description
   status
   testCount
+  imports {
+    path
+    libraryId
+    versionNumber
+  }
   version
   currentVersionNumber
-  approvedVersionNumber
   approvedAt
-  usageCount
   createdAt
   updatedAt
 }

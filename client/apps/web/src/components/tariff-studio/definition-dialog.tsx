@@ -46,9 +46,7 @@ export function DefinitionDialog({
           <DialogTitle className="font-mono">{target?.module}</DialogTitle>
           <DialogDescription>
             {library
-              ? library.version
-                ? t("The library as this tariff imports it, pinned to {0}.", library.version)
-                : t("The library as this tariff imports it.")
+              ? t("The library as this file imports it: the version its check was given.")
               : t("Part of Tariff's standard library.")}
           </DialogDescription>
         </DialogHeader>

@@ -271,11 +271,6 @@ export function LibraryHistoryPane({
                         {t("Approved")}
                       </Badge>
                     )}
-                    {version.tags.map((tag) => (
-                      <Badge key={tag} variant="neutral" className="text-2xs">
-                        {tag}
-                      </Badge>
-                    ))}
                   </div>
                   {version.changeMessage && (
                     <p className="text-foreground-muted line-clamp-2 text-xs">

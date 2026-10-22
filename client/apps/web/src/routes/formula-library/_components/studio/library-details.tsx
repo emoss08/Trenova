@@ -8,6 +8,8 @@ import {
   FORMULA_LIBRARY_NAME_MAX,
   type FormulaLibraryFormValues,
 } from "@trenova/shared/types/formula-library";
+import { formulaLibrary } from "@/lib/queries/formula-library";
+import { useQuery } from "@tanstack/react-query";
 import { Controller, useFormContext, useFormState } from "react-hook-form";
 import { useLibraryStudio } from "./library-studio-context";
 import { libraryPath } from "./starter";
@@ -22,7 +24,12 @@ export function LibraryDetails() {
   const { control } = useFormContext<FormulaLibraryFormValues>();
   const { errors } = useFormState({ control, name: ["name", "description"] });
   const { library, renamed } = useLibraryStudio();
-  const importers = library?.usageCount ?? 0;
+  const usages = useQuery({
+    ...formulaLibrary.usages(library?.id ?? ""),
+    enabled: renamed && !!library,
+    staleTime: 60_000,
+  });
+  const importers = usages.data?.length ?? 0;
 
   return (
     <section className="flex flex-col gap-2 pb-2">

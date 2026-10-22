@@ -41,7 +41,7 @@ describe("the libraries column", () => {
     const cell = column.cell;
     const render_ = (imports: FormulaTemplateRow["imports"]) =>
       render(<>{cell({ row: { original: { imports } } } as never)}</>).container.textContent;
-    expect(render_([{ path: "org.accessorials", version: "flv_1" }])).toBe("org.accessorials");
+    expect(render_([{ path: "org.accessorials", libraryId: "fl_1", versionNumber: 3 }])).toBe("org.accessorials");
     expect(render_([])).toBe("None");
   });
 });

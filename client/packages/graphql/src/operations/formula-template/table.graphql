@@ -8,7 +8,8 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   testCount
   imports {
     path
-    version
+    libraryId
+    versionNumber
   }
   sourceTemplateId
   sourceVersionNumber
