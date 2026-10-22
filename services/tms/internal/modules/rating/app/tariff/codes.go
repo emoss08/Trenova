@@ -21,7 +21,6 @@ type Codes struct {
 	accessorials accessorialchargeports.AccessorialChargeRepository
 }
 
-//nolint:gocritic // fx param structs are passed by value
 func NewCodes(p CodesParams) *Codes {
 	return &Codes{accessorials: p.Accessorials}
 }

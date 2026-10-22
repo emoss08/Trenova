@@ -17,7 +17,7 @@ func (s *Service) exchangeFor(
 	trace *ratetypes.Trace,
 ) (*rules.TariffExchange, error) {
 	if currency == "" || currency == rateCtx.BillingCurrency {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a rating in the billing currency needs no exchange
 	}
 
 	result, err := s.exchange.Convert(

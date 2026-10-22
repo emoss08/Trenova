@@ -187,7 +187,8 @@ func compareInputs(moved *[]FieldChange, before, after tarifftypes.Inputs) {
 	for _, name := range names {
 		prior, hadPrior := before[name]
 		next, hasNext := after[name]
-		if hadPrior && hasNext && (tarifftypes.Inputs{name: prior}).Equal(tarifftypes.Inputs{name: next}) {
+		if hadPrior && hasNext &&
+			(tarifftypes.Inputs{name: prior}).Equal(tarifftypes.Inputs{name: next}) {
 			continue
 		}
 		*moved = append(*moved, FieldChange{

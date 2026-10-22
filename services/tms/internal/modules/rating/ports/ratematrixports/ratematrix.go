@@ -78,7 +78,10 @@ type RateMatrixRepository interface {
 	Delete(ctx context.Context, req *GetRateMatrixByIDRequest) error
 
 	GetLookupStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
-	ListTables(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*ratematrix.RateMatrix, error)
+	ListTables(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*ratematrix.RateMatrix, error)
 	LoadTableCells(
 		ctx context.Context,
 		req *LoadTableCellsRequest,

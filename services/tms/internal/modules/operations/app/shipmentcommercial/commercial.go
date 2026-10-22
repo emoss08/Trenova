@@ -270,7 +270,7 @@ func (c *Calculator) rateOwn(
 	rated *ratequoteports.RatedShipment,
 ) (*ratequoteports.RatedShipment, error) {
 	if entity.RatedByHand() {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a shipment rated by hand has no tariff rating
 	}
 	if rated != nil {
 		return rated, nil

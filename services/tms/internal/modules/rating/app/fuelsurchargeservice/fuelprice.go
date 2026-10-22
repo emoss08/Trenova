@@ -32,16 +32,20 @@ func (s *Service) applicableProgram(
 	ctx context.Context,
 	req *fuelsurchargeports.FuelPriceAsOfRequest,
 ) (pulid.ID, error) {
-	if override := req.Override; override != nil && !override.Waived && override.ProgramID.IsNotNil() {
+	if override := req.Override; override != nil && !override.Waived &&
+		override.ProgramID.IsNotNil() {
 		return override.ProgramID, nil
 	}
 	if req.CustomerID.IsNil() {
 		return pulid.Nil, nil
 	}
-	profile, err := s.customerRepo.GetBillingProfile(ctx, customerports.GetCustomerBillingProfileRequest{
-		CustomerID: req.CustomerID,
-		TenantInfo: req.TenantInfo,
-	})
+	profile, err := s.customerRepo.GetBillingProfile(
+		ctx,
+		customerports.GetCustomerBillingProfileRequest{
+			CustomerID: req.CustomerID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return pulid.Nil, nil
@@ -59,28 +63,34 @@ func (s *Service) programPriceAsOf(
 	req *fuelsurchargeports.FuelPriceAsOfRequest,
 	programID pulid.ID,
 ) (*fuelsurchargeports.FuelPriceAsOf, error) {
-	program, err := s.programRepo.GetByID(ctx, &fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
-		ProgramID:    programID,
-		TenantInfo:   req.TenantInfo,
-		IncludeIndex: true,
-	})
+	program, err := s.programRepo.GetByID(
+		ctx,
+		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
+			ProgramID:    programID,
+			TenantInfo:   req.TenantInfo,
+			IncludeIndex: true,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // a program that is gone has no price
 		}
 		return nil, err
 	}
-	prices, err := s.priceRepo.GetLatestOnOrBefore(ctx, &fuelsurchargeports.GetLatestFuelPricesRequest{
-		FuelIndexID: program.FuelIndexID,
-		TenantInfo:  req.TenantInfo,
-		Date:        req.Date,
-		Limit:       1,
-	})
+	prices, err := s.priceRepo.GetLatestOnOrBefore(
+		ctx,
+		&fuelsurchargeports.GetLatestFuelPricesRequest{
+			FuelIndexID: program.FuelIndexID,
+			TenantInfo:  req.TenantInfo,
+			Date:        req.Date,
+			Limit:       1,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if len(prices) == 0 || prices[0] == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // no published price is an answer, not an error
 	}
 	code := ""
 	if program.FuelIndex != nil {
@@ -101,11 +111,14 @@ func (s *Service) defaultPriceAsOf(
 	if err != nil || len(indices) == 0 {
 		return nil, err
 	}
-	pricesByIndex, err := s.priceRepo.LatestPerIndex(ctx, &fuelsurchargeports.LatestPricesPerIndexRequest{
-		TenantInfo: req.TenantInfo,
-		PerIndex:   1,
-		OnOrBefore: req.Date,
-	})
+	pricesByIndex, err := s.priceRepo.LatestPerIndex(
+		ctx,
+		&fuelsurchargeports.LatestPricesPerIndexRequest{
+			TenantInfo: req.TenantInfo,
+			PerIndex:   1,
+			OnOrBefore: req.Date,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +145,7 @@ func (s *Service) defaultPriceAsOf(
 		}
 	}
 	if chosenPrice == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // no published price is an answer, not an error
 	}
 	return &fuelsurchargeports.FuelPriceAsOf{
 		Price:     chosenPrice.Price,

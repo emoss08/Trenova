@@ -10,6 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const jsonNull = "null"
+
 var exactJSON = sonic.Config{UseNumber: true, SortMapKeys: true}.Froze()
 
 var ErrNotScalarInput = errors.New("tarifftypes: the input does not take a single number")
@@ -90,7 +92,7 @@ func (i Inputs) ScaleMoney(
 	round func(decimal.Decimal) decimal.Decimal,
 ) (Inputs, error) {
 	if i == nil {
-		return nil, nil
+		return Inputs{}, nil
 	}
 	out := make(Inputs, len(i))
 	for name, raw := range i {
@@ -133,7 +135,7 @@ func scaleTree(
 	node any,
 	factor decimal.Decimal,
 	round func(decimal.Decimal) decimal.Decimal,
-) (any, bool, error) {
+) (scaledNode any, scaledAny bool, scaleErr error) {
 	switch typed := node.(type) {
 	case map[string]any:
 		if amount, ok := typed[wireQuantityKey].(string); ok {
@@ -145,7 +147,10 @@ func scaleTree(
 			if err != nil {
 				return nil, false, err
 			}
-			return map[string]any{wireQuantityKey: round(value.Mul(factor)).String(), "u": unit}, true, nil
+			return map[string]any{
+				wireQuantityKey: round(value.Mul(factor)).String(),
+				"u":             unit,
+			}, true, nil
 		}
 		changed := false
 		out := make(map[string]any, len(typed))
@@ -176,7 +181,7 @@ func scaleTree(
 }
 
 func DisplayValue(raw rules.RawJSON) string {
-	if len(raw) == 0 || string(raw) == "null" {
+	if len(raw) == 0 || string(raw) == jsonNull {
 		return ""
 	}
 	if quantity, err := rules.DecodeQuantity(raw); err == nil {
@@ -218,7 +223,7 @@ func (i Inputs) Values() (map[string]any, error) {
 
 func InputsFromValues(values map[string]any) (Inputs, error) {
 	if values == nil {
-		return nil, nil
+		return Inputs{}, nil
 	}
 	out := make(Inputs, len(values))
 	for name, value := range values {

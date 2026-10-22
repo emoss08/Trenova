@@ -355,7 +355,10 @@ func (sp *Shipment) DwellHours() []decimal.Decimal {
 	dwells := make([]decimal.Decimal, 0, len(stops))
 	for _, stop := range stops {
 		if seconds, ok := stop.DwellSeconds(); ok {
-			dwells = append(dwells, decimal.NewFromInt(seconds).Div(decimal.NewFromInt(secondsPerHour)))
+			dwells = append(
+				dwells,
+				decimal.NewFromInt(seconds).Div(decimal.NewFromInt(secondsPerHour)),
+			)
 		}
 	}
 	return dwells
@@ -365,10 +368,12 @@ func (sp *Shipment) ServiceDays() decimal.Decimal {
 	var start, end int64
 	var started, ended bool
 	for _, stop := range sp.RatedStops() {
-		if stop.IsOriginStop() && stop.ActualArrival != nil && (!started || *stop.ActualArrival < start) {
+		if stop.IsOriginStop() && stop.ActualArrival != nil &&
+			(!started || *stop.ActualArrival < start) {
 			start, started = *stop.ActualArrival, true
 		}
-		if stop.IsDestinationStop() && stop.ActualDeparture != nil && (!ended || *stop.ActualDeparture > end) {
+		if stop.IsDestinationStop() && stop.ActualDeparture != nil &&
+			(!ended || *stop.ActualDeparture > end) {
 			end, ended = *stop.ActualDeparture, true
 		}
 	}

@@ -54,11 +54,10 @@ func PriceAgreementAccessorials(
 			charge.Quantity = decimal.NewNullDecimal(quantity)
 			charge.Rate = decimal.NewNullDecimal(accessorial.Amount)
 			charge.RateUnit = accessorial.TariffRateUnit()
+		case accessorialcharge.MethodFlat:
+			pricedFlat(charge, accessorial)
 		default:
-			amount, _ := accessorial.Cap(accessorial.PricedAmount())
-			charge.Method = accessorialcharge.MethodFlat
-			charge.Amount = amount
-			charge.Quantity = decimal.NewNullDecimal(decimal.NewFromInt(1))
+			pricedFlat(charge, accessorial)
 		}
 		out = append(out, PricedAgreementAccessorial{Accessorial: accessorial, Charge: charge})
 	}
@@ -103,4 +102,11 @@ func capPercentages(
 		entry.Charge.Amount = capped
 	}
 	return nil
+}
+
+func pricedFlat(charge *AdditionalCharge, accessorial *rateagreement.RateAgreementAccessorial) {
+	amount, _ := accessorial.Cap(accessorial.PricedAmount())
+	charge.Method = accessorialcharge.MethodFlat
+	charge.Amount = amount
+	charge.Quantity = decimal.NewNullDecimal(decimal.NewFromInt(1))
 }

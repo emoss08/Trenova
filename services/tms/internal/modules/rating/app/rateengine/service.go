@@ -343,7 +343,7 @@ func (s *Service) loadAgreement(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // an agreement removed since its rule was resolved prices nothing
 		}
 		return nil, err
 	}

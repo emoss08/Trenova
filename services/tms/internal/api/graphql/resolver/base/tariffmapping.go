@@ -29,7 +29,7 @@ var exactTrace = sonic.Config{UseNumber: true}.Froze()
 
 func TariffTraceToModel(trace rules.RawJSON) (map[string]any, error) {
 	if len(trace) == 0 {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a rating with no trace maps to null
 	}
 	var out map[string]any
 	if err := exactTrace.Unmarshal(trace, &out); err != nil {

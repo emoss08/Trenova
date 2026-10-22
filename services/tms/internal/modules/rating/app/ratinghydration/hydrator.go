@@ -33,12 +33,14 @@ import (
 	"go.uber.org/fx"
 )
 
+const relationCustomer = "Customer"
+
 var ratingRelations = []string{
 	"Moves",
 	"Moves.Stops",
 	"Commodities",
 	"AdditionalCharges",
-	"Customer",
+	relationCustomer,
 	"ServiceType",
 	"ShipmentType",
 	"TractorType",
@@ -201,7 +203,7 @@ func relationLoaders(p *Params) map[string]func(context.Context, *hydration) err
 		"Moves.Stops":                nil,
 		"Commodities":                nil,
 		"AdditionalCharges":          nil,
-		"Customer":                   loadCustomers(p.CustomerRepo),
+		relationCustomer:             loadCustomers(p.CustomerRepo),
 		"ServiceType":                loadServiceTypes(p.ServiceTypeRepo),
 		"ShipmentType":               loadShipmentTypes(p.ShipmentTypeRepo),
 		"TractorType":                loadTractorTypes(p.EquipmentTypeRepo),

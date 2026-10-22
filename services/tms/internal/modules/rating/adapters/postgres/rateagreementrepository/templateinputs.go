@@ -60,7 +60,10 @@ func (r *repository) ListInputsByTemplate(
 				out = append(out, inputSet(rateagreementports.TemplateInputsRule, &rules[i]))
 			}
 			for i := range shipments {
-				out = append(out, inputSet(rateagreementports.TemplateInputsShipment, &shipments[i]))
+				out = append(
+					out,
+					inputSet(rateagreementports.TemplateInputsShipment, &shipments[i]),
+				)
 			}
 			return out, nil
 		},

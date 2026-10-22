@@ -46,7 +46,6 @@ type Rater struct {
 	evaluate evaluator
 }
 
-//nolint:gocritic // fx param structs are passed by value
 func NewRater(p RaterParams) *Rater {
 	return &Rater{
 		l:        p.Logger.Named("tariff.rater"),
@@ -163,7 +162,12 @@ func (r *Rater) evaluateWithCells(
 				return nil, err
 			}
 		case pass == cellPasses-1:
-			if err = r.contexts.LoadTables(ctx, req.TenantInfo, evalReq.Context, neededTables(needs)); err != nil {
+			if err = r.contexts.LoadTables(
+				ctx,
+				req.TenantInfo,
+				evalReq.Context,
+				neededTables(needs),
+			); err != nil {
 				return nil, err
 			}
 		default:
@@ -240,6 +244,8 @@ func (r *Rater) result(
 		return out, nil
 	case rules.TariffError:
 		return nil, evaluationError(result.Error)
+	case rules.TariffNeeds:
+		return nil, fmt.Errorf("%w: status %q", errMissingResult, result.Status)
 	default:
 		return nil, fmt.Errorf("%w: status %q", errMissingResult, result.Status)
 	}

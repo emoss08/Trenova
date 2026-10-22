@@ -23,7 +23,6 @@ type Settings struct {
 	distanceControls distancecontrolports.DistanceControlRepository
 }
 
-//nolint:gocritic // fx param structs are passed by value
 func NewSettings(p SettingsParams) *Settings {
 	return &Settings{distanceControls: p.DistanceControls}
 }

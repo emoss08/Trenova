@@ -185,11 +185,11 @@ func itemized(
 	quantity, rate *decimal.Decimal,
 	amount decimal.Decimal,
 	partial bool,
-) (decimal.Decimal, decimal.Decimal, bool) {
+) (unitQuantity, unitPrice decimal.Decimal, ok bool) {
 	if partial || quantity == nil || !quantity.IsPositive() {
 		return decimal.Decimal{}, decimal.Decimal{}, false
 	}
-	unitPrice := amount.Div(*quantity)
+	unitPrice = amount.Div(*quantity)
 	if rate != nil && rate.Mul(*quantity).Round(shipment.SharePlaces).Equal(amount.Abs()) {
 		unitPrice = *rate
 		if amount.IsNegative() {

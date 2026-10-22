@@ -25,7 +25,6 @@ type Contexts struct {
 	settings *Settings
 }
 
-//nolint:gocritic // fx param structs are passed by value
 func NewContexts(p ContextsParams) *Contexts {
 	return &Contexts{tables: p.Tables, codes: p.Codes, settings: p.Settings}
 }

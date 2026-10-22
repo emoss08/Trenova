@@ -97,7 +97,7 @@ func (r *repository) ListAxisKeys(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*ratematrix.RateMatrixCell)(nil)).
-			ColumnExpr("DISTINCT " + columns.key.Qualified()).
+			ColumnExpr("DISTINCT "+columns.key.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
 					Where(cols.RateMatrixID.Eq(), req.RateMatrixID)

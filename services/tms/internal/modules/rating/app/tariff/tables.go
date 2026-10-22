@@ -348,7 +348,8 @@ func forward(axis *ratetablecache.Axis, stored string) string {
 		}
 		return stored
 	}
-	switch ratematrix.DimensionKind(axis.Kind) { //nolint:exhaustive // other keys are stored as read
+	kind := ratematrix.DimensionKind(axis.Kind)
+	switch kind { //nolint:exhaustive // other keys are stored as read
 	case ratematrix.DimensionKindZip5:
 		return strings.TrimPrefix(stored, prefixZip5)
 	case ratematrix.DimensionKindZip3:
@@ -367,7 +368,8 @@ func reverse(axis *ratetablecache.Axis, key string) []string {
 	if axis.Reverse != nil {
 		return axis.Reverse[key]
 	}
-	switch ratematrix.DimensionKind(axis.Kind) { //nolint:exhaustive // other keys are stored as read
+	kind := ratematrix.DimensionKind(axis.Kind)
+	switch kind { //nolint:exhaustive // other keys are stored as read
 	case ratematrix.DimensionKindZip5:
 		return []string{key, prefixZip5 + key}
 	case ratematrix.DimensionKindZip3:
@@ -451,10 +453,12 @@ func (t *Tables) LoadCells(
 		target := &tariffCtx.Tables[at]
 		merged := make([]rules.TariffCell, 0, len(target.Cells)+len(cells))
 		merged = append(merged, target.Cells...)
-		target.Cells = append(merged, cells...)
+		merged = append(merged, cells...)
+		target.Cells = merged
 		loaded := make([][]string, 0, len(target.Loaded)+len(combos))
 		loaded = append(loaded, target.Loaded...)
-		target.Loaded = append(loaded, combos...)
+		loaded = append(loaded, combos...)
+		target.Loaded = loaded
 	}
 	return nil
 }
@@ -518,7 +522,13 @@ func (t *Tables) cellsFor(
 	out := make([]rules.TariffCell, 0, len(combos))
 	missing := make([][]string, 0, len(combos))
 	for _, combo := range combos {
-		if cached, ok := ratetablecache.Cells(tenant.OrgID, tenant.BuID, stamp, index.Code, combo); ok {
+		if cached, ok := ratetablecache.Cells(
+			tenant.OrgID,
+			tenant.BuID,
+			stamp,
+			index.Code,
+			combo,
+		); ok {
 			out = append(out, cached...)
 			continue
 		}
