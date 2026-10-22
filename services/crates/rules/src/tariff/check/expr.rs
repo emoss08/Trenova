@@ -223,6 +223,17 @@ impl Checker<'_> {
                     code,
                 )
             }),
+            Type::List(item) if item.is_optional() => zero(item.unwrapped()).map(|fallback| {
+                let code = format!("{}.map(item => item ?? {fallback})", self.text(expr.span));
+                replace(
+                    Message::with(
+                        message!("Fill its empty items with {0}"),
+                        [quote(&fallback)],
+                    ),
+                    expr.span,
+                    code,
+                )
+            }),
             Type::List(_) => {
                 let code = format!("{}.len", self.text(expr.span));
                 Some(replace(
@@ -1247,7 +1258,7 @@ impl Checker<'_> {
                 && !value_ty.is_optional()
                 && !matches!(value_ty, Type::Error | Type::Never)
             {
-                self.report(Diagnostic::error(
+                self.report(Diagnostic::warning(
                     "never-none",
                     whole,
                     Message::with(

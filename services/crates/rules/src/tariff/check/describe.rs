@@ -54,6 +54,7 @@ pub fn words(ty: &Type) -> Message {
         Type::DateTime => Message::new(message!("a date and time")),
         Type::Quantity(quantity) => quantity_words(quantity),
         Type::List(_) => Message::with(message!("a list ({0})"), [quote(&ty.to_string())]),
+        Type::Optional(inner) if matches!(**inner, Type::Never) => Message::new(message!("`none`")),
         Type::Optional(inner) => {
             Message::with(message!("{0} that may be empty"), [Arg::from(words(inner))])
         }
