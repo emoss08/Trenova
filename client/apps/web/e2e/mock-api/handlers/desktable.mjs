@@ -1,9 +1,10 @@
-// A Desk conversation in which Nova listed Acme Foods' shipments in transit or
-// delayed: 128 of them, of which it read the first page of 25 and then the
-// next, so the table holds 50 and pages on through the rest with the
-// person's own access. The `deskTable` scenario field picks how the list
-// answers when the person pages it: "paged" (every page reads), "slow" (a
-// page past Nova's is left open, so the rows shimmer), "failing" (pages past
+// A Desk conversation in which its agent, Dispatch Desk, listed Acme Foods'
+// shipments in transit or delayed: 128 of them, of which it read the first
+// page of 25 and then the next, so the table holds 50 and pages on through the
+// rest with the person's own access. The `deskTable` scenario field picks how
+// the list answers when the person pages it: "paged" (every page reads),
+// "unnamed" (paged, but the table does not say which agent read it), "slow" (a
+// page past the agent's is left open, so the rows shimmer), "failing" (pages past
 // the first one read fail), "locked" (the person may no longer read
 // shipments), "withheld" (revenue is withheld at their access), "cut" (the
 // table was cut to fit and keeps no place to go on from), "whole" (the list
@@ -14,10 +15,21 @@ const THREAD = "athr_desk_table";
 const ARTIFACT_ID = "aart_acme_in_transit";
 const SLUG = "acme-shipments-in-transit";
 const TITLE = "Shipments";
+const AGENT = { id: "agd_mock_dispatch_desk", name: "Dispatch Desk", icon: "", accent: "teal" };
 const QUESTION = "Which Acme Foods shipments are in transit or delayed right now?";
-const STAGES = ["paged", "slow", "failing", "locked", "withheld", "cut", "whole", "short"];
-const NOVA_PAGE = 25;
-const NOVA_PAGES = 2;
+const STAGES = [
+  "paged",
+  "unnamed",
+  "slow",
+  "failing",
+  "locked",
+  "withheld",
+  "cut",
+  "whole",
+  "short",
+];
+const AGENT_PAGE = 25;
+const AGENT_PAGES = 2;
 
 const CUSTOMERS = ["Acme Foods", "Acme Foods", "Acme Foods · Frozen", "Acme Foods"];
 const LANES = [
@@ -83,7 +95,7 @@ function held(stage, rows) {
   if (stage === "whole" || stage === "short") {
     return { rows, hasMore: false };
   }
-  const kept = rows.slice(0, NOVA_PAGE * NOVA_PAGES);
+  const kept = rows.slice(0, AGENT_PAGE * AGENT_PAGES);
   if (stage === "cut") {
     return { rows: kept, hasMore: true, truncated: true };
   }
@@ -111,10 +123,11 @@ function artifact(state) {
       recordEntity: "shipment",
       columns: DESK_TABLE_COLUMNS,
       rows,
-      rowCount: stage === "cut" ? NOVA_PAGE * NOVA_PAGES + 12 : rows.length,
+      rowCount: stage === "cut" ? AGENT_PAGE * AGENT_PAGES + 12 : rows.length,
       searchedFor: ["status is In transit or Delayed", "customer is Acme Foods"],
-      pages: stage === "short" ? 1 : NOVA_PAGES,
+      pages: stage === "short" ? 1 : AGENT_PAGES,
       ...paging,
+      ...(stage === "unnamed" ? {} : { readBy: AGENT }),
     },
     sourceToolCallId: "call_acme_in_transit",
     pinned: false,
@@ -218,7 +231,7 @@ function rows(state, query) {
     };
   }
   const after = query.get("after") ?? "";
-  if (stage === "failing" && after !== `c-${NOVA_PAGE * NOVA_PAGES}`) {
+  if (stage === "failing" && after !== `c-${AGENT_PAGE * AGENT_PAGES}`) {
     return {
       __status: 504,
       body: {
@@ -230,7 +243,7 @@ function rows(state, query) {
     };
   }
   const start = after.startsWith("c-") ? Number(after.slice(2)) : Number(query.get("offset") ?? 0);
-  if (stage === "slow" && start > NOVA_PAGE * NOVA_PAGES) {
+  if (stage === "slow" && start > AGENT_PAGE * AGENT_PAGES) {
     return { __hold: true };
   }
   const limit = Math.min(Math.max(Number(query.get("limit") ?? 25), 1), 100);
@@ -269,7 +282,7 @@ function rows(state, query) {
 function budget(state) {
   const tomorrow = Math.floor(state.anchor / 86400) * 86400 + 86400;
   return {
-    agentName: "Nova",
+    agentName: AGENT.name,
     spentUsd: "0.40",
     limitUsd: "100.00",
     share: 0.004,

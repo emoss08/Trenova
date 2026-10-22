@@ -10441,7 +10441,7 @@
   "This table cannot find rows by its filters": "此表格无法按其筛选条件查找行",
   "This table could not be authorized": "无法授权此表格",
   "This table does not filter with {0}": "此表格不支持以 {0} 筛选",
-  "This table does not say how it was read, so it cannot be read again. Ask Nova to read it again": "此表格未记录其读取方式，因此无法再次读取。请让 Nova 重新读取",
+  "This table does not say how it was read, so it cannot be read again. Ask for the list again in the conversation": "此表格未记录其读取方式，因此无法再次读取。请在对话中重新请求此列表",
   "This table has no bulk edit": "此表格不支持批量编辑",
   "This table has no counts": "此表格不支持计数",
   "This table has no totals": "此表格不支持合计",

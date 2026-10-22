@@ -1026,14 +1026,14 @@
 .dk-tv-sp {
   flex: 1;
 }
-.dk-tv-nova,
+.dk-tv-agent,
 .dk-tv-live,
 .dk-tv-wh {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
-.dk-tv-nova,
+.dk-tv-agent,
 .dk-tv-live {
   color: var(--dsk-fg2);
   white-space: nowrap;
@@ -1132,6 +1132,7 @@
   white-space: nowrap;
 }
 .dk-tv-rail {
+  --dk-tv-agent: oklch(0.62 0.13 var(--dk-ah));
   display: flex;
   gap: 3px;
   margin: 0 auto;
@@ -1151,6 +1152,9 @@
 .dk-tv-rail button:disabled {
   cursor: default;
 }
+.dk-tv-rail.dk-slate {
+  --dk-tv-agent: var(--dsk-muted);
+}
 .dk-tv-rail i {
   width: 18px;
   height: 4px;
@@ -1160,8 +1164,8 @@
 .dk-tv-rail .dk-seen i {
   background: var(--dsk-b-strong);
 }
-.dk-tv-rail .dk-nova i {
-  background: linear-gradient(90deg, var(--dsk-gem-1), var(--dsk-gem-2), var(--dsk-gem-3));
+.dk-tv-rail .dk-agent i {
+  background: var(--dk-tv-agent);
   opacity: 0.55;
 }
 .dk-tv-rail .dk-on i {
@@ -1169,8 +1173,8 @@
   opacity: 1;
   background: var(--dsk-fg);
 }
-.dk-tv-rail .dk-on.dk-nova i {
-  background: linear-gradient(90deg, var(--dsk-gem-1), var(--dsk-gem-2), var(--dsk-gem-3));
+.dk-tv-rail .dk-on.dk-agent i {
+  background: var(--dk-tv-agent);
 }
 .dk-tv-rail .dk-locked i {
   background: repeating-linear-gradient(90deg, var(--dsk-b) 0 2px, transparent 2px 4px);

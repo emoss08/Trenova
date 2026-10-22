@@ -113,6 +113,7 @@ type artifactRecorder struct {
 	reader    *permissionports.RequestActor
 	emit      kernelports.AssistantStreamEmitter
 	recorded  []*assistantartifact.Artifact
+	readBy    *agentIdentity
 	// svc reads what an artifact needs beyond the tool's result: the agent
 	// a document is credited to, the pages an extraction was read from.
 	svc *Service
@@ -206,6 +207,7 @@ func (r *artifactRecorder) observe(
 		observation.Call.Arguments,
 	)
 	noteReadWith(artifact, observation.RanWith)
+	r.noteReader(artifact)
 	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
 		return r.bunch(&observation, artifact)
 	}

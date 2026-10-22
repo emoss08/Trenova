@@ -27,6 +27,7 @@ const (
 	payloadDisplay  = "display"
 	payloadRowCount = "rowCount"
 	payloadReadWith = "readWith"
+	payloadReadBy   = "readBy"
 	maxBunchColumns = 8
 )
 
@@ -68,6 +69,7 @@ func (r *artifactRecorder) bunch(
 	}
 
 	table := bunchTable(observation.Call.Name, parts, card)
+	r.noteReader(table)
 	saved, err := r.save(table)
 	if err != nil {
 		return nil, err

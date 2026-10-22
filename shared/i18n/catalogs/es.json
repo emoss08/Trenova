@@ -10441,7 +10441,7 @@
   "This table cannot find rows by its filters": "Esta tabla no puede buscar filas por sus filtros",
   "This table could not be authorized": "No se pudo autorizar esta tabla",
   "This table does not filter with {0}": "Esta tabla no filtra con {0}",
-  "This table does not say how it was read, so it cannot be read again. Ask Nova to read it again": "Esta tabla no indica cómo se leyó, por lo que no se puede volver a leer. Pida a Nova que la lea de nuevo",
+  "This table does not say how it was read, so it cannot be read again. Ask for the list again in the conversation": "Esta tabla no indica cómo se leyó, por lo que no se puede volver a leer. Vuelva a pedir la lista en la conversación",
   "This table has no bulk edit": "Esta tabla no admite edición masiva",
   "This table has no counts": "Esta tabla no tiene conteos",
   "This table has no totals": "Esta tabla no tiene totales",

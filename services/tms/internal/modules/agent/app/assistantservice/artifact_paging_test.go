@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -330,4 +331,67 @@ func TestArtifactRecorder_ATableKeepsTheArgumentsItsListRanWith(t *testing.T) {
 		repo.upserts[0].Payload[payloadReadWith],
 		"the table keeps its own copy",
 	)
+}
+
+func newReaderRecorder(
+	t *testing.T,
+	repo *stubArtifactRepo,
+	agents *delegateDefinitions,
+	agentID pulid.ID,
+) *artifactRecorder {
+	t.Helper()
+
+	svc := &Service{logger: zap.NewNop(), artifacts: repo, definitions: agents}
+
+	return svc.newArtifactRecorder(
+		t.Context(),
+		&conversation.Thread{ID: pulid.MustNew("athr_"), AgentDefinitionID: agentID},
+		pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		testActor(),
+		nil,
+	)
+}
+
+func TestArtifactRecorder_ATableNamesTheAgentThatReadIt(t *testing.T) {
+	t.Parallel()
+
+	agentID := pulid.MustNew("agdef_")
+	agents := &delegateDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
+		agentID: {ID: agentID, Name: "Dispatch Desk", Accent: "teal"},
+	}}
+	repo := &stubArtifactRepo{}
+	recorder := newReaderRecorder(t, repo, agents, agentID)
+
+	for at, call := range []string{"call_1", "call_2"} {
+		_, err := recorder.observe(pageRead(
+			call,
+			map[string]any{"status": call},
+			queuePage(at*2, 2, map[string]any{"hasMore": true, "nextCursor": call}),
+		))
+		require.NoError(t, err)
+	}
+
+	require.Len(t, repo.upserts, 2)
+	want := tableReader{ID: agentID.String(), Name: "Dispatch Desk", Accent: "teal"}
+	assert.Equal(t, want, repo.upserts[0].Payload[payloadReadBy])
+	assert.Equal(t, want, repo.upserts[1].Payload[payloadReadBy])
+	assert.Equal(t, 1, agents.listed, "the agent is read once for the turn")
+}
+
+func TestArtifactRecorder_ATableDoesNotNameAnAgentItCannotRead(t *testing.T) {
+	t.Parallel()
+
+	agents := &delegateDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{}}
+	repo := &stubArtifactRepo{}
+	recorder := newReaderRecorder(t, repo, agents, pulid.MustNew("agdef_"))
+
+	_, err := recorder.observe(pageRead(
+		"call_1",
+		map[string]any{},
+		queuePage(0, 2, map[string]any{"hasMore": true, "nextCursor": "c-2"}),
+	))
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 1)
+	assert.NotContains(t, repo.upserts[0].Payload, payloadReadBy)
 }
