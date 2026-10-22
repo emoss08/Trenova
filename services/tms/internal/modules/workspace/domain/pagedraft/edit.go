@@ -174,8 +174,6 @@ func requiredFieldName(field RequiredField) string {
 		return "the service type"
 	case RequiredShipmentType:
 		return "the shipment type"
-	case RequiredFormulaTemplate:
-		return "the rating method"
 	default:
 		return "a required field"
 	}

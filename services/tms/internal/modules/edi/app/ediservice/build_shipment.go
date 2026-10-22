@@ -119,7 +119,7 @@ func (s *Service) buildTargetShipment(
 		),
 		CustomerID:          customerID,
 		EnteredByID:         approverID,
-		FormulaTemplateID:   formulaTemplateID,
+		FormulaTemplateID:   tenderedTemplate(&payload, formulaTemplateID),
 		Status:              shipment.StatusNew,
 		TenderStatus:        new(shipment.TenderStatusAccepted),
 		EntryMethod:         shipment.EntryMethodEDI,
@@ -131,7 +131,6 @@ func (s *Service) buildTargetShipment(
 		TemperatureMax:      payload.TemperatureMax,
 		FreightChargeAmount: payload.FreightChargeAmount,
 		OtherChargeAmount:   payload.OtherChargeAmount,
-		BaseRate:            payload.BaseRate,
 		TotalChargeAmount:   payload.TotalChargeAmount,
 		Moves:               make([]*shipment.ShipmentMove, 0, len(payload.Moves)),
 		Commodities:         make([]*shipment.ShipmentCommodity, 0, len(payload.Commodities)),
@@ -225,4 +224,11 @@ func externalShipmentReference(ratingDetail map[string]any) string {
 		strings.TrimSpace(reference),
 		shipment.MaxExternalReferenceLength,
 	)
+}
+
+func tenderedTemplate(payload *edi.LoadTenderPayload, mapped pulid.ID) pulid.ID {
+	if payload.FreightChargeAmount.Valid {
+		return pulid.Nil
+	}
+	return mapped
 }

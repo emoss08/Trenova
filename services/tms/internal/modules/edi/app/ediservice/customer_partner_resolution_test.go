@@ -139,7 +139,6 @@ func TestService_SubmitLoadTenderResolvesPartnerFromShipmentCustomer(t *testing.
 			ServiceTypeID:     pulid.MustNew("st_"),
 			CustomerID:        customerID,
 			FormulaTemplateID: pulid.MustNew("ft_"),
-			RatingUnit:        1,
 		}, nil)
 
 	service := &Service{

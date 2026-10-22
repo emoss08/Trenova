@@ -594,11 +594,11 @@ func applyTenderPayloadToShipment(
 		payload.ShipmentTypeID,
 	)
 	target.CustomerID = mustMappedID(mappings, edi.MappingEntityTypeCustomer, payload.CustomerID)
-	target.FormulaTemplateID = mustMappedID(
+	target.FormulaTemplateID = tenderedTemplate(payload, mustMappedID(
 		mappings,
 		edi.MappingEntityTypeFormulaTemplate,
 		payload.FormulaTemplateID,
-	)
+	))
 	target.TenderStatus = new(shipment.TenderStatusAccepted)
 	target.BOL = payload.BOL
 	target.Pieces = payload.Pieces
@@ -607,7 +607,6 @@ func applyTenderPayloadToShipment(
 	target.TemperatureMax = payload.TemperatureMax
 	target.FreightChargeAmount = payload.FreightChargeAmount
 	target.OtherChargeAmount = payload.OtherChargeAmount
-	target.BaseRate = payload.BaseRate
 	target.TotalChargeAmount = payload.TotalChargeAmount
 	target.Moves = mappedTenderMoves(target, payload, transfer, mappings)
 	target.Commodities = mappedTenderCommodities(target, payload, transfer, mappings)

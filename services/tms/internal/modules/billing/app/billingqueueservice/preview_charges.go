@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
+	"go.uber.org/zap"
 )
 
 func (s *service) PreviewUpdateCharges(
@@ -54,7 +55,7 @@ func (s *service) planChargeUpdateFrom(
 	}
 
 	repricing := (req.FormulaTemplateID != nil && !req.FormulaTemplateID.IsNil()) ||
-		req.BaseRate != nil
+		req.TariffInputs != nil
 	if repricing && !rerate {
 		return nil, errortypes.NewBusinessError(
 			"A rate or formula change reprices the shipment and cannot be previewed",
@@ -139,27 +140,31 @@ func (s *service) applyRateChange(
 	req *billingqueueports.UpdateChargesRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	switch {
-	case req.FormulaTemplateID != nil && !req.FormulaTemplateID.IsNil():
+	templateChanged := req.FormulaTemplateID != nil && !req.FormulaTemplateID.IsNil()
+	if !templateChanged && req.TariffInputs == nil {
+		return nil
+	}
+	if templateChanged {
 		shp.FormulaTemplateID = *req.FormulaTemplateID
+	}
+	if req.TariffInputs != nil {
+		shp.TariffInputs = req.TariffInputs.Clone()
+	}
 
-		if err := s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
-			return errortypes.NewValidationError(
-				"formulaTemplateId",
-				errortypes.ErrInvalid,
-				"Failed to recalculate charges with the selected formula template",
-			)
+	if err := s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
+		if errortypes.IsError(err) || errortypes.IsBusinessError(err) {
+			return err
 		}
-	case req.BaseRate != nil:
-		shp.BaseRate = decimal.NewNullDecimal(*req.BaseRate)
-
-		if err := s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
-			return errortypes.NewValidationError(
-				"baseRate",
-				errortypes.ErrInvalid,
-				"Failed to recalculate charges with updated base rate",
-			)
+		s.l.Error("failed to re-rate a shipment from billing", zap.Error(err))
+		field := "tariffInputs"
+		if templateChanged {
+			field = "formulaTemplateId"
 		}
+		return errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"Failed to recalculate charges with the selected tariff and inputs",
+		)
 	}
 
 	return nil

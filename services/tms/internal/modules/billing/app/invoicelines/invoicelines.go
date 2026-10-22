@@ -59,14 +59,17 @@ func ForShipmentShare(
 		return nil
 	}
 
-	lines := make([]*invoice.InvoiceLine, 0, len(share.Charges))
+	lines := make([]*invoice.InvoiceLine, 0, len(share.Charges)+len(shp.FreightLines))
 	freight := shp.FreightChargeAmount.Decimal
 	lineNumber := startLineNumber
 
 	for _, charge := range share.Charges {
 		switch charge.Kind {
 		case shipment.ChargeAllocationKindFreight:
-			lines = append(lines, freightLine(billType, shp, charge, lineNumber))
+			freightLines := freightLines(billType, shp, charge, lineNumber)
+			lines = append(lines, freightLines...)
+			lineNumber += len(freightLines)
+			continue
 		case shipment.ChargeAllocationKindAccessorial:
 			if charge.Charge == nil {
 				continue
@@ -128,32 +131,72 @@ func stampShare(line *invoice.InvoiceLine, charge shipment.AllocatedCharge) {
 	line.ChargeAllocationID = charge.AllocationID
 }
 
-func freightLine(
+func freightLines(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
 	charge shipment.AllocatedCharge,
-	lineNumber int,
-) *invoice.InvoiceLine {
-	freightAmount := SignedAmount(billType, charge.Amount)
+	startLineNumber int,
+) []*invoice.InvoiceLine {
+	billed := shp.BilledFreightLines(FreightDescription)
+	amounts := shipment.SplitFreightShare(billed, charge.Amount)
+	templateID, templateName := ratedWith(shp)
 
-	line := &invoice.InvoiceLine{
-		ShipmentID:        shp.ID,
-		ShipmentProNumber: shp.ProNumber,
-		ShipmentBOL:       shp.BOL,
-		LineNumber:        lineNumber,
-		Type:              invoice.InvoiceLineTypeFreight,
-		Description:       ShareDescription(FreightDescription, charge),
-		Quantity:          decimal.NewFromInt(1),
-		UnitPrice:         freightAmount,
-		Amount:            freightAmount,
+	out := make([]*invoice.InvoiceLine, 0, len(billed))
+	for i := range billed {
+		freight := &billed[i]
+		amount := SignedAmount(billType, amounts[i])
+		label := strings.TrimSpace(freight.Label)
+		if label == "" {
+			label = FreightDescription
+		}
+		line := &invoice.InvoiceLine{
+			ShipmentID:          shp.ID,
+			ShipmentProNumber:   shp.ProNumber,
+			ShipmentBOL:         shp.BOL,
+			LineNumber:          startLineNumber + i,
+			Type:                invoice.InvoiceLineTypeFreight,
+			Description:         ShareDescription(label, charge),
+			Quantity:            decimal.NewFromInt(1),
+			UnitPrice:           amount,
+			Amount:              amount,
+			FormulaTemplateID:   templateID,
+			FormulaTemplateName: templateName,
+			RateUnit:            freight.RateUnit,
+		}
+		if freight.Rate != nil {
+			line.Rate = decimal.NewNullDecimal(*freight.Rate)
+		}
+		if quantity, unitPrice, ok := itemized(
+			freight.Quantity,
+			freight.Rate,
+			amount,
+			charge.Partial,
+		); ok {
+			line.Quantity, line.UnitPrice = quantity, unitPrice
+		}
+		stampShare(line, charge)
+		out = append(out, line)
 	}
-	line.FormulaTemplateID, line.FormulaTemplateName = ratedWith(shp)
-	if shp.BaseRate.Valid && !shp.BaseRate.Decimal.IsZero() {
-		line.Rate = decimal.NewNullDecimal(shp.BaseRate.Decimal)
-	}
-	stampShare(line, charge)
 
-	return line
+	return out
+}
+
+func itemized(
+	quantity, rate *decimal.Decimal,
+	amount decimal.Decimal,
+	partial bool,
+) (decimal.Decimal, decimal.Decimal, bool) {
+	if partial || quantity == nil || !quantity.IsPositive() {
+		return decimal.Decimal{}, decimal.Decimal{}, false
+	}
+	unitPrice := amount.Div(*quantity)
+	if rate != nil && rate.Mul(*quantity).Round(shipment.SharePlaces).Equal(amount.Abs()) {
+		unitPrice = *rate
+		if amount.IsNegative() {
+			unitPrice = unitPrice.Neg()
+		}
+	}
+	return *quantity, unitPrice, true
 }
 
 func accessorialLine(
@@ -170,7 +213,6 @@ func accessorialLine(
 	}
 
 	amount := SignedAmount(billType, allocated.Amount)
-	unitPrice := amount.Div(quantity)
 
 	line := &invoice.InvoiceLine{
 		ShipmentID:          shp.ID,
@@ -180,12 +222,24 @@ func accessorialLine(
 		Type:                invoice.InvoiceLineTypeAccessorial,
 		Description:         AccessorialDescription,
 		Quantity:            quantity,
-		UnitPrice:           unitPrice,
+		UnitPrice:           amount.Div(quantity),
 		Amount:              amount,
 		AccessorialChargeID: charge.AccessorialChargeID,
 		AdditionalChargeID:  charge.ID,
 		ChargeMethod:        charge.Method,
 		Rate:                decimal.NewNullDecimal(charge.Amount),
+		RateUnit:            charge.RateUnit,
+	}
+	if charge.Rate.Valid {
+		line.Rate = charge.Rate
+	}
+	if itemQuantity, unitPrice, ok := itemized(
+		nullable(charge.Quantity),
+		nullable(charge.Rate),
+		amount,
+		allocated.Partial,
+	); ok {
+		line.Quantity, line.UnitPrice = itemQuantity, unitPrice
 	}
 
 	if charge.Method == accessorialcharge.MethodPercentage {
@@ -199,15 +253,47 @@ func accessorialLine(
 		} else if line.ChargeCode != "" {
 			line.Description = line.ChargeCode
 		}
-		if charge.Method == accessorialcharge.MethodPerUnit {
-			line.RateUnit = definition.RateUnit
+		if line.RateUnit == "" && charge.Method == accessorialcharge.MethodPerUnit {
+			line.RateUnit = definition.RateUnit.TariffRateUnit()
 		}
+	}
+	if label := strings.TrimSpace(charge.Label); label != "" {
+		line.Description = label
 	}
 
 	line.Description = ShareDescription(line.Description, allocated)
 	stampShare(line, allocated)
 
 	return line
+}
+
+func nullable(value decimal.NullDecimal) *decimal.Decimal {
+	if !value.Valid {
+		return nil
+	}
+	return &value.Decimal
+}
+
+func RatingNotes(shipments ...*shipment.Shipment) []string {
+	var notes []string
+	seen := make(map[string]struct{})
+	for _, shp := range shipments {
+		if shp == nil || shp.RatingDetail == nil || shp.RatingDetail.Bill == nil {
+			continue
+		}
+		for _, note := range shp.RatingDetail.Bill.Notes {
+			text := strings.TrimSpace(note.Text)
+			if text == "" {
+				continue
+			}
+			if _, ok := seen[text]; ok {
+				continue
+			}
+			seen[text] = struct{}{}
+			notes = append(notes, text)
+		}
+	}
+	return notes
 }
 
 func matchingAccessorial(charge *shipment.AdditionalCharge) *accessorialcharge.AccessorialCharge {
