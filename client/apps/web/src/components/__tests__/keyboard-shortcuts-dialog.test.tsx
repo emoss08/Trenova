@@ -8,11 +8,12 @@ const allowed = vi.fn<(resource: string) => boolean>();
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: (resource: string) => ({ allowed: allowed(resource), isLoading: false }),
+  usePageAccessOffered: () => allowed(Resource.Role),
 }));
 
 beforeEach(() => {
   vi.stubEnv("DEV", false);
-  useAppDialogsStore.setState({ active: "shortcuts" });
+  useAppDialogsStore.setState({ active: "shortcuts", prepared: [] });
 });
 
 afterEach(() => {
@@ -22,14 +23,14 @@ afterEach(() => {
 });
 
 describe("KeyboardShortcutsDialog", () => {
-  it("lists the page access shortcut for whoever may read roles", async () => {
+  it("lists the page access shortcut, from its keybind entry, where the panel is offered", async () => {
     allowed.mockImplementation((resource) => resource === Resource.Role);
     render(<KeyboardShortcutsDialog />);
 
     expect(await screen.findByText("Page access")).toBeInTheDocument();
   });
 
-  it("leaves the page access shortcut out for everyone else", async () => {
+  it("leaves the page access shortcut out where the panel is not offered", async () => {
     allowed.mockReturnValue(false);
     render(<KeyboardShortcutsDialog />);
 

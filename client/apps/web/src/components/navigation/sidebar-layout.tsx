@@ -1,7 +1,12 @@
+import { hotkeyOf } from "@/config/keybinds.config";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { getPageTitle } from "@/lib/route-utils";
+import { usePageAccessOffered } from "@/hooks/use-permission";
+import { lazyComponent } from "@/lib/lazy-component";
+import { useAppDialogPrepared, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { useHotkey } from "@tanstack/react-hotkeys";
 import { recordAtLocation } from "@/config/record-links";
 import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useRecentPagesStore } from "@/stores/recent-pages-store";
@@ -9,12 +14,11 @@ import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import { useUpdateStore } from "@/stores/update-store";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useLocation } from "react-router";
 import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
-import { PageAccessMount } from "../page-access/page-access-mount";
 import { PageHeader, type PageHeaderProps } from "../page-header";
 import {
   ShellFrameContext,
@@ -27,6 +31,15 @@ import { useSidebarFold } from "./sidebar-fold";
 import { findModuleForPath } from "./sidebar-model";
 import { useSettingsShortcut } from "./use-settings-shortcut";
 import { RailShell } from "./rail-shell";
+
+// The page access panel is read once it is asked for (its user menu entry
+// pointed at, or its keybind); the shell holds nothing of it but this import.
+const PageAccessSheet = lazyComponent(
+  () => import("../page-access/page-access-sheet"),
+  (module) => module.PageAccessSheet,
+);
+
+const togglePageAccess = () => useAppDialogsStore.getState().toggleDialog("page-access");
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -113,6 +126,10 @@ function useLayoutEffects(railStands: boolean) {
   useRecordRecentPages();
   useTouchRecentRecords();
   useSettingsShortcut();
+
+  useHotkey(hotkeyOf("general", "page-access"), togglePageAccess, {
+    enabled: usePageAccessOffered(),
+  });
 }
 
 export function SidebarLayout({ children }: SidebarLayoutProps) {
@@ -121,12 +138,17 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   const roomRail = useRouteRoomRail();
   const railStands = frame === "room" && roomRail === "stands";
   useLayoutEffects(railStands);
+  const pageAccessPrepared = useAppDialogPrepared("page-access");
 
   return (
     <>
       <CommandPaletteMount />
       <KeyboardShortcutsDialog />
-      <PageAccessMount />
+      {pageAccessPrepared ? (
+        <Suspense fallback={null}>
+          <PageAccessSheet.Component />
+        </Suspense>
+      ) : null}
       <AssistantWidget />
       {/* With the assistant docked down one side, the page moves over for it
           rather than sitting under it. */}

@@ -1,6 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FavoriteToggle, HistoryNavigation, SidebarToggle } from "@/components/header";
-import { PageAccessTrigger } from "@/components/page-access/page-access-mount";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { cn } from "@trenova/shared/lib/utils";
 import { Link, useNavigation } from "react-router";
@@ -74,10 +73,5 @@ export function PageBarLeading({ title }: { title: string }) {
 }
 
 export function PageBarTrailing() {
-  return (
-    <>
-      <PageAccessTrigger />
-      <FavoriteToggle />
-    </>
-  );
+  return <FavoriteToggle />;
 }

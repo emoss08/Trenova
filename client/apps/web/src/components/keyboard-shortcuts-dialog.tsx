@@ -11,7 +11,7 @@ import { keybindGroups } from "@/config/keybinds.config";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAssistantEnabled } from "./assistant/use-assistant-enabled";
-import { usePageAccessShown } from "./page-access/page-access-mount";
+import { usePageAccessOffered } from "@/hooks/use-permission";
 
 const ASSISTANT_KEYBIND_ID = "assistant";
 const PAGE_ACCESS_KEYBIND_ID = "page-access";
@@ -19,7 +19,7 @@ const PAGE_ACCESS_KEYBIND_ID = "page-access";
 export function KeyboardShortcutsDialog() {
   const t = useT();
   const assistantEnabled = useAssistantEnabled();
-  const pageAccessShown = usePageAccessShown();
+  const pageAccessOffered = usePageAccessOffered();
 
   const open = useAppDialogOpen("shortcuts");
   const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
@@ -53,7 +53,7 @@ export function KeyboardShortcutsDialog() {
                 <div className="flex flex-col">
                   {group.keybinds
                     .filter((keybind) => assistantEnabled || keybind.id !== ASSISTANT_KEYBIND_ID)
-                    .filter((keybind) => pageAccessShown || keybind.id !== PAGE_ACCESS_KEYBIND_ID)
+                    .filter((keybind) => pageAccessOffered || keybind.id !== PAGE_ACCESS_KEYBIND_ID)
                     .map((keybind) => (
                       <div
                         key={keybind.id}

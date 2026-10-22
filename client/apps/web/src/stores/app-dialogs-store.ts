@@ -9,24 +9,50 @@ export type AppDialog = "shortcuts" | "notifications" | "page-access";
 
 interface AppDialogsState {
   active: AppDialog | null;
+  /**
+   * The dialogs asked for so far: opened once, or about to be (a pointer on
+   * the item that opens one). A dialog whose code is read on demand is
+   * mounted from then on, so its code arrives before the click and it closes
+   * in place.
+   */
+  prepared: readonly AppDialog[];
+  prepareDialog: (dialog: AppDialog) => void;
   openDialog: (dialog: AppDialog) => void;
   setDialogOpen: (dialog: AppDialog, open: boolean) => void;
   toggleDialog: (dialog: AppDialog) => void;
 }
 
+function opened(state: AppDialogsState, dialog: AppDialog) {
+  return {
+    active: dialog,
+    prepared: state.prepared.includes(dialog) ? state.prepared : [...state.prepared, dialog],
+  };
+}
+
 export const useAppDialogsStore = create<AppDialogsState>()((set) => ({
   active: null,
-  openDialog: (dialog) => set({ active: dialog }),
+  prepared: [],
+  prepareDialog: (dialog) =>
+    set((state) =>
+      state.prepared.includes(dialog) ? state : { prepared: [...state.prepared, dialog] },
+    ),
+  openDialog: (dialog) => set((state) => opened(state, dialog)),
   setDialogOpen: (dialog, open) =>
     set((state) => {
       if (open) {
-        return { active: dialog };
+        return opened(state, dialog);
       }
       return state.active === dialog ? { active: null } : state;
     }),
-  toggleDialog: (dialog) => set((state) => ({ active: state.active === dialog ? null : dialog })),
+  toggleDialog: (dialog) =>
+    set((state) => (state.active === dialog ? { active: null } : opened(state, dialog))),
 }));
 
 export function useAppDialogOpen(dialog: AppDialog): boolean {
   return useAppDialogsStore((state) => state.active === dialog);
+}
+
+/** Whether a dialog has been asked for, so its code is read and it stays mounted. */
+export function useAppDialogPrepared(dialog: AppDialog): boolean {
+  return useAppDialogsStore((state) => state.prepared.includes(dialog));
 }

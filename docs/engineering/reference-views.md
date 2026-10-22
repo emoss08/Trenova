@@ -190,9 +190,9 @@ adds no kind to `reads`; its linked fields are listed like any other.
 
 ## Page access panel and viewing a screen as a role
 
-Every page bar carries a **Page access** button (and `Ctrl+Alt+P`) for administrators, who hold
-role read, and on every screen of a development build. It opens a lazy sheet
-(`components/page-access/`) that is not in the first visit's download. It shows what the screen
+The user menu carries a **Page access** item (and the keybinds config binds `Ctrl+Alt+P`) for
+administrators, who hold role read, and on every screen of a development build. It opens a lazy
+sheet (`components/page-access/`) that is not in the first visit's download. It shows what the screen
 needs, which kinds the reader holds read on, and which linked fields come back as reference view
 only, from:
 

@@ -74,7 +74,7 @@ Keywords: test a role, try a role before saving, role preview, what would this r
 
 ### See what a screen needs and what you see on it
 Keywords: page access, why can't I see this, missing permission, screen permissions, access panel
-1. On any page, select the **Page access** button in the page bar, or press Ctrl+Alt+P. The
+1. On any page, open your account menu and select **Page access**, or press Ctrl+Alt+P. The
    **Page access** panel opens for the screen you are on.
 2. **What this screen needs** lists each permission the screen's route and endpoints check, marked
    **Held** or **Missing** for you.
@@ -84,7 +84,8 @@ Keywords: page access, why can't I see this, missing permission, screen permissi
 
 ### View a screen as another role
 Keywords: view as role, impersonate role, check a role's access, see what a role sees
-1. Open the **Page access** panel on the screen (the page bar button, or Ctrl+Alt+P).
+1. Open the **Page access** panel on the screen (**Page access** in your account menu, or
+   Ctrl+Alt+P).
 2. Under **View as**, pick a role. The panel shows what a person holding only that role, and the
    roles it inherits, would need and see on this screen.
 3. Clear the role to go back to **You, with your own roles**.
@@ -120,7 +121,7 @@ included for every role automatically and need not be added; one that is granted
 **Open to everyone**, and the grant applies once it is limited to specific roles. System agents
 cannot be granted to a role. Changing a role's agents needs update access to roles.
 
-The **Page access** button and Ctrl+Alt+P are offered to people with read access to roles, and
+The **Page access** menu item and Ctrl+Alt+P are offered to people with read access to roles, and
 **View as** and **Preview a screen** need it too. Neither reads any record: they work out access
 from the role's grants alone. Organization access policies, data scopes and row-level security can
 narrow what a person holding the role reads, never widen it, so the real screen may show less.

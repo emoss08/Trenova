@@ -55,6 +55,7 @@ export const keybindGroups: KeybindGroup[] = [
         label: "Page access",
         keys: ["Ctrl", "Alt", "P"],
         description: "See what this screen needs and what each role sees on it",
+        hotkey: "Mod+Alt+P",
       },
     ],
   },
