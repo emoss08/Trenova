@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -12,10 +13,11 @@ type contextKey struct{}
 
 type Load func(ctx context.Context) ([]*formulatemplate.FormulaTemplateVersion, error)
 
-// LoadOne fetches a single snapshot. It may return nil, nil for "no such
-// version"; that answer is memoized too, so a batch of shipments that all
-// predate any snapshot asks the database once.
 type LoadOne func(ctx context.Context) (*formulatemplate.FormulaTemplateVersion, error)
+
+type LoadTemplate func(ctx context.Context) (*formulatemplate.FormulaTemplate, error)
+
+type LoadLibraries func(ctx context.Context) ([]*formulalibrary.FormulaLibraryVersion, error)
 
 type singleKey struct {
 	templateID    pulid.ID
@@ -23,9 +25,11 @@ type singleKey struct {
 }
 
 type cache struct {
-	mu      sync.Mutex
-	entries map[pulid.ID][]*formulatemplate.FormulaTemplateVersion
-	singles map[singleKey]*formulatemplate.FormulaTemplateVersion
+	mu        sync.Mutex
+	entries   map[pulid.ID][]*formulatemplate.FormulaTemplateVersion
+	singles   map[singleKey]*formulatemplate.FormulaTemplateVersion
+	templates map[pulid.ID]*formulatemplate.FormulaTemplate
+	libraries map[string][]*formulalibrary.FormulaLibraryVersion
 }
 
 func With(ctx context.Context) context.Context {
@@ -34,14 +38,13 @@ func With(ctx context.Context) context.Context {
 	}
 
 	return context.WithValue(ctx, contextKey{}, &cache{
-		entries: make(map[pulid.ID][]*formulatemplate.FormulaTemplateVersion, 1),
-		singles: make(map[singleKey]*formulatemplate.FormulaTemplateVersion, 4),
+		entries:   make(map[pulid.ID][]*formulatemplate.FormulaTemplateVersion, 1),
+		singles:   make(map[singleKey]*formulatemplate.FormulaTemplateVersion, 4),
+		templates: make(map[pulid.ID]*formulatemplate.FormulaTemplate, 1),
+		libraries: make(map[string][]*formulalibrary.FormulaLibraryVersion, 1),
 	})
 }
 
-// GetVersion returns one numbered snapshot of a template, loading it once per
-// context. A backtest over hundreds of shipments rated by the same handful of
-// versions resolves each version a single time.
 func GetVersion(
 	ctx context.Context,
 	templateID pulid.ID,
@@ -103,6 +106,60 @@ func GetVersions(
 	c.entries[templateID] = versions
 
 	return versions, nil
+}
+
+func GetTemplate(
+	ctx context.Context,
+	templateID pulid.ID,
+	load LoadTemplate,
+) (*formulatemplate.FormulaTemplate, error) {
+	c := from(ctx)
+	if c == nil {
+		return load(ctx)
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if template, ok := c.templates[templateID]; ok {
+		return template, nil
+	}
+
+	template, err := load(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c.templates[templateID] = template
+
+	return template, nil
+}
+
+func GetLibraries(
+	ctx context.Context,
+	key string,
+	load LoadLibraries,
+) ([]*formulalibrary.FormulaLibraryVersion, error) {
+	c := from(ctx)
+	if c == nil {
+		return load(ctx)
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if libraries, ok := c.libraries[key]; ok {
+		return libraries, nil
+	}
+
+	libraries, err := load(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	c.libraries[key] = libraries
+
+	return libraries, nil
 }
 
 func EffectiveAsOf(
