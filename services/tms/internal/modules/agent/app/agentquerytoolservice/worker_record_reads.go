@@ -228,7 +228,7 @@ func workerRecordReadSpecs() []graphQLListSpec {
 // (29 CFR 1904.29(b)(6)), whose name the log itself withholds, as the
 // repository tool did; the case keeps its workerId for the tools that act on
 // it.
-func withholdPrivacyCaseNames(row map[string]any, _ map[string]struct{}) {
+func withholdPrivacyCaseNames(row map[string]any, _ map[string]struct{}, _ clock) {
 	if private, _ := row[fieldPrivacyCase].(bool); private {
 		delete(row, fieldWorker)
 	}

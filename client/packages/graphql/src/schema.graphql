@@ -24783,7 +24783,13 @@ type Query {
   One tractor's latest reported position, however old; null when the tractor has never reported one.
   """
   vehiclePosition(tractorId: ID!): VehiclePosition
-  vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  """Each tractor's latest reported position."""
+  vehiclePositions(
+    """Only readings at most this many seconds old. An hour when left out."""
+    maxAgeSeconds: Int
+    """Only these tractors. Every tractor that reported when left out."""
+    tractorIds: [ID!]
+  ): [VehiclePosition!]!
   """
   How many items this reader resolved or snoozed since an instant, of the kinds they may see.
   """

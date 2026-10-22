@@ -12160,7 +12160,7 @@
     },
     {
       "name": "equipment_get_tractor",
-      "description": "Retrieve one tractor by id, with its equipment details, fleet and assigned workers. Use equipment_list_tractors first when you have a unit code.",
+      "description": "Retrieve one tractor by id, with its equipment details, fleet, lease and assigned drivers. Use equipment_list_tractors first when you have a unit code.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12199,7 +12199,7 @@
     },
     {
       "name": "equipment_get_trailer",
-      "description": "Retrieve one trailer by id, with its equipment details and fleet. Use equipment_list_trailers first when you have a unit code.",
+      "description": "Retrieve one trailer by id, with its equipment details, fleet and lease. Use equipment_list_trailers first when you have a unit code.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12358,20 +12358,22 @@
     },
     {
       "name": "equipment_list_positions",
-      "description": "Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is. Use it for \"where is truck 104\" or \"which trucks are near Dallas\". A reading older than an hour is where the truck was, not where it is. Drivers have no position of their own; a driver is where the tractor they are logged into is.",
+      "description": "Where every tractor is right now, from the telematics feed: its last known position, nearest place, speed and engine state. Each reading names the driver and how many minutes old it is. Use it for \"where is truck 104\" or \"which trucks are near Dallas\". A reading older than an hour is where the truck was, not where it is. Drivers have no position of their own; a driver is where the tractor they are logged into is.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "maxAgeMinutes": {
-            "description": "Ignore readings older than this. Default 240, at most 1440.",
+          "maxAgeSeconds": {
+            "description": "Only readings at most this many seconds old. An hour when left out. Four hours (14400) when left out.",
             "type": "integer"
           },
           "tractorIds": {
-            "description": "Optional: only these tractors, by id from equipment_list_tractors.",
+            "description": "The tractors, from equipment_list_tractors. Never guess one.",
             "items": {
               "type": "string",
               "x-recordOf": "tractor"
             },
+            "maxItems": 100,
+            "minItems": 1,
             "type": "array"
           }
         },

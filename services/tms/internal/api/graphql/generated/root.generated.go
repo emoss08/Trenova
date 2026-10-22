@@ -3228,7 +3228,7 @@ type QueryResolver interface {
 	TelematicsFormMappings(ctx context.Context) ([]*gqlmodel.TelematicsFormMapping, error)
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
 	ShipmentDriverFeasibility(ctx context.Context, shipmentID string) ([]*gqlmodel.DriverFeasibility, error)
-	VehiclePositions(ctx context.Context, maxAgeSeconds *int) ([]*gqlmodel.VehiclePosition, error)
+	VehiclePositions(ctx context.Context, maxAgeSeconds *int, tractorIds []string) ([]*gqlmodel.VehiclePosition, error)
 	VehiclePosition(ctx context.Context, tractorID string) (*gqlmodel.VehiclePosition, error)
 	WorkerHosStates(ctx context.Context, workerIds []string, limit *int) ([]*gqlmodel.WorkerHosState, error)
 	WorkerHosState(ctx context.Context, workerID string) (*gqlmodel.WorkerHosState, error)
