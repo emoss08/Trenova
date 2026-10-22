@@ -8,6 +8,7 @@ use crate::message::{Arg, Message};
 use crate::tariff::check::describe::{base_noun, snippet, unit_noun};
 use crate::tariff::check::methods::Method;
 use crate::tariff::check::{SymbolId, SymbolKind};
+use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::{FnDecl, Item, ItemKind};
 use crate::tariff::syntax::program::{Decl, ModuleId};
 use crate::tariff::types::Type;
@@ -195,7 +196,7 @@ pub fn symbol_signature(session: &Session<'_>, id: SymbolId) -> String {
         | SymbolKind::LambdaParam
         | SymbolKind::Binding => typed(""),
         SymbolKind::Module => {
-            let path = symbol.doc.clone().unwrap_or_default();
+            let path = alias_path(session, id).unwrap_or_default();
             if path.rsplit('.').next() == Some(symbol.name.as_str()) {
                 format!("use {path}")
             } else {
@@ -290,26 +291,30 @@ fn declaration(session: &Session<'_>, id: SymbolId) -> Option<String> {
     Some(text)
 }
 
-/// The sentences of a function's doc comment that name a parameter in backticks, as that
-/// parameter's doc.
+/// The doc comment of a function's declaration, translated when the module is the standard
+/// library's.
 #[must_use]
-pub fn param_doc(doc: &str, param: &str) -> Option<String> {
-    let needle = format!("`{param}`");
-    let flat_doc = flat(doc);
-    let sentences: Vec<&str> = flat_doc
-        .split_inclusive(". ")
-        .map(str::trim)
-        .filter(|sentence| sentence.contains(&needle))
-        .collect();
-    (!sentences.is_empty()).then(|| sentences.join(" "))
+pub fn function_doc(session: &Session<'_>, module: ModuleId, name: &str) -> Option<Doc> {
+    let std = session.program.module(module)?.std;
+    Doc::of(std, declaring_item(session, module, name)?.docs.as_ref())
 }
 
-/// The doc comment of a function's declaration.
-#[must_use]
-pub fn function_doc(session: &Session<'_>, module: ModuleId, name: &str) -> Option<String> {
-    declaring_item(session, module, name)
-        .and_then(|item| item.docs.as_ref())
-        .map(|doc| doc.text.clone())
+/// The module path a module alias names: `std.fuel` for `use std.fuel as f`.
+fn alias_path(session: &Session<'_>, id: SymbolId) -> Option<String> {
+    let symbol = session.symbol(id)?;
+    let span = symbol.span?;
+    let module = session.program.module(symbol.module?)?;
+    module.file.items.iter().find_map(|item| match &item.kind {
+        ItemKind::Use(using)
+            if using.alias.as_ref().map_or_else(
+                || using.path.last().is_some_and(|last| last.span == span),
+                |alias| alias.span == span,
+            ) =>
+        {
+            Some(using.dotted())
+        }
+        _ => None,
+    })
 }
 
 /// A built-in method's signature, `Self` and `T` replaced by the receiver's type and its items'
@@ -618,7 +623,7 @@ pub fn keyword_doc(word: &str) -> Option<&'static str> {
 
 #[cfg(test)]
 mod tests {
-    use super::{param_doc, signature};
+    use super::signature;
 
     #[test]
     fn a_signature_knows_where_each_parameter_is() {
@@ -637,12 +642,5 @@ mod tests {
         assert_eq!(found.label, "f(a: °F, b: Int = 1) -> Int");
         assert_eq!(found.params[0].range, (2, 7));
         assert_eq!(found.params[1].range, (9, 19));
-    }
-
-    #[test]
-    fn a_parameter_doc_is_the_sentences_naming_it() {
-        let doc = "Time past `free`, rounded up to `increment`. Billed at `rate`.";
-        assert_eq!(param_doc(doc, "rate").as_deref(), Some("Billed at `rate`."));
-        assert_eq!(param_doc(doc, "dwell"), None);
     }
 }

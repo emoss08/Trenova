@@ -557,10 +557,8 @@ fn the_analysis_resolves_symbols_references_hints_and_callees() {
         .find(|symbol| symbol.name == "fee" && symbol.kind == super::SymbolKind::Function)
         .cloned();
     assert_eq!(
-        fee.as_ref()
-            .and_then(|symbol| symbol.doc.clone())
-            .as_deref(),
-        Some("The fee.")
+        fee.as_ref().and_then(|symbol| symbol.doc.clone()),
+        Some(crate::tariff::docs::Doc::Text(String::from("The fee.")))
     );
     assert_ne!(fee.and_then(|symbol| symbol.module), Some(ModuleId::ROOT));
     assert!(

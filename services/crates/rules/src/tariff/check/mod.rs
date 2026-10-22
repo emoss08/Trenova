@@ -80,6 +80,7 @@ pub use tables::TABLE_METHODS;
 
 use crate::span::Span;
 use crate::tariff::diagnostic::{Diagnostic, Severity};
+use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::{EnumType, Type};
 use std::collections::BTreeMap;
@@ -253,8 +254,8 @@ pub struct Symbol {
     pub span: Option<Span>,
     /// Its type, for values; a record or enum type for types.
     pub ty: Option<Type>,
-    /// Its doc comment.
-    pub doc: Option<String>,
+    /// Its doc: its doc comment; a schema root's doc; for a module alias, the module's doc.
+    pub doc: Option<Doc>,
 }
 
 /// A use of a symbol.

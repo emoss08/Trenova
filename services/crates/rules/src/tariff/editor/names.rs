@@ -6,17 +6,17 @@
 //! a file's top level and in tests, inputs only at the top level, file-level bindings nowhere
 //! but the top level, and only constants in a constant's value or a default.
 
-use super::complete::{
-    CompletionItem, Doc, Items, Kind, Rank, Site, Then, callee_of, fill_call, units,
-};
+use super::complete::{CompletionItem, Items, Kind, Rank, Site, Then, callee_of, fill_call, units};
 use super::cursor::{Body, Bracket};
-use super::describe::{param_doc, symbol_signature, type_text};
+use super::describe::{symbol_signature, type_text};
 use super::session::Session;
 use crate::message;
 use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::check::methods::ParamKind;
 use crate::tariff::check::{CONSTRUCTORS, Callee, SymbolKind};
+use crate::tariff::docs::Doc;
+use crate::tariff::schema::TABLES_DOC;
 use crate::tariff::syntax::ast::{Expr, ExprKind, FileKind, ItemKind, StmtKind};
 use crate::tariff::syntax::program::{Decl, ModuleId};
 use crate::tariff::types::{EnumType, Type};
@@ -95,7 +95,7 @@ fn describe(site: &Site<'_, '_>, item: &mut CompletionItem, id: crate::tariff::c
         .as_ref()
         .filter(|ty| !matches!(ty, Type::Error))
         .map(type_text);
-    item.doc = symbol.doc.clone().map(Doc::Text);
+    item.doc.clone_from(&symbol.doc);
 }
 
 /// Whether a value of type `ty` fits what is expected.
@@ -265,13 +265,11 @@ fn roots(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type>) {
         };
         if let Some(item) = items.add(rank, Kind::Name, root) {
             item.detail = Some(type_text(ty));
-            item.doc = Some(Doc::Text((*doc).to_owned()));
+            item.doc = Some(doc.clone());
         }
     }
     if let Some(item) = items.add(Rank::Root, Kind::Name, "tables") {
-        item.doc = Some(Doc::Text(String::from(
-            "The organisation's active rate matrices, by code.",
-        )));
+        item.doc = Some(Doc::message(TABLES_DOC));
     }
 }
 
@@ -321,7 +319,7 @@ fn variants(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type>) {
         for (variant, doc) in &wanted.variants {
             if let Some(item) = items.add(Rank::Expected, Kind::Variant, variant) {
                 item.detail = Some(type_text(&Type::Enum(Arc::clone(wanted))));
-                item.doc = doc.clone().map(Doc::Text);
+                item.doc.clone_from(doc);
             }
         }
         return;
@@ -350,7 +348,7 @@ fn variants(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type>) {
             };
             if let Some(item) = items.add(Rank::Variant, Kind::Variant, &label) {
                 item.detail = Some(written.clone());
-                item.doc = doc.clone().map(Doc::Text);
+                item.doc.clone_from(doc);
             }
         }
     }
@@ -602,7 +600,7 @@ pub fn arguments(
             {
                 item.insert = format!("{}: ", param.name);
                 item.detail = param.ty.as_ref().map(type_text);
-                item.doc = param.doc.clone().map(Doc::Text);
+                item.doc.clone_from(&param.doc);
             }
         }
     }
@@ -626,7 +624,7 @@ pub struct Parameter {
     /// Its type, when known.
     pub ty: Option<Type>,
     /// Its doc.
-    pub doc: Option<String>,
+    pub doc: Option<Doc>,
 }
 
 /// The parameters of what a call calls.
@@ -636,7 +634,7 @@ pub fn parameters(session: &Session<'_>, call: &Expr, callee: &Callee) -> Vec<Pa
             let Some(decl) = super::describe::function_decl(session, *module, name) else {
                 return Vec::new();
             };
-            let doc = super::describe::function_doc(session, *module, name).unwrap_or_default();
+            let doc = super::describe::function_doc(session, *module, name);
             decl.params
                 .iter()
                 .map(|param| Parameter {
@@ -645,7 +643,7 @@ pub fn parameters(session: &Session<'_>, call: &Expr, callee: &Callee) -> Vec<Pa
                         .declared_at(*module, param.name.span)
                         .and_then(|id| session.symbol(id))
                         .and_then(|symbol| symbol.ty.clone()),
-                    doc: param_doc(&doc, &param.name.text),
+                    doc: doc.as_ref().and_then(|doc| doc.param(&param.name.text)),
                 })
                 .collect()
         }

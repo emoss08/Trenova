@@ -1,7 +1,8 @@
 //! `tariff.catalog`: everything an author can name before declaring anything, with its docs:
 //! the standard library's modules and declarations, the built-in types, every property and
 //! method, the units, the keywords, rate table methods and the schema. The editor's
-//! completion and hover and Nova's prompt read it; it is static data, built per call.
+//! completion and hover and Nova's prompt read it; it is static data, built per call. Every doc
+//! in it is a `Message` the hosts translate ([`crate::tariff::docs`]).
 
 use super::describe::{default_unit, words};
 use super::inputs::descriptor;
@@ -10,7 +11,8 @@ use super::methods::METHODS;
 use super::tables::TABLE_METHODS;
 use super::{Analysis, SymbolKind};
 use crate::tariff::context::Context;
-use crate::tariff::schema::{Schema, Settings};
+use crate::tariff::docs::Doc;
+use crate::tariff::schema::{Schema, Settings, TABLES_DOC};
 use crate::tariff::stdlib;
 use crate::tariff::syntax::ast::{FileKind, ItemKind};
 use crate::tariff::syntax::program::load;
@@ -74,7 +76,7 @@ pub fn catalog() -> Json {
     let schema = Schema::new(&Settings::default());
     json!({
         "modules": stdlib::MODULES.iter().map(|(path, source)| module(path, source)).collect::<Vec<_>>(),
-        "types": BUILTIN_TYPES.iter().map(|(name, doc)| json!({ "name": name, "doc": {"message": doc} })).collect::<Vec<_>>(),
+        "types": BUILTIN_TYPES.iter().map(|(name, doc)| json!({ "name": name, "doc": Doc::message(doc) })).collect::<Vec<_>>(),
         "methods": METHODS.iter().map(|method| json!({
             "receiver": method.receiver.as_str(),
             "name": method.name,
@@ -86,9 +88,9 @@ pub fn catalog() -> Json {
                 "default": param.default,
             })).collect::<Vec<_>>(),
             "returns": method.returns,
-            "doc": {"message": method.doc},
+            "doc": Doc::message(method.doc),
         })).collect::<Vec<_>>(),
-        "tableMethods": TABLE_METHODS.iter().map(|(name, doc)| json!({ "name": name, "doc": {"message": doc} })).collect::<Vec<_>>(),
+        "tableMethods": TABLE_METHODS.iter().map(|(name, doc)| json!({ "name": name, "doc": Doc::message(doc) })).collect::<Vec<_>>(),
         "units": SIMPLE_UNITS.iter().filter(|unit| unit.symbol != "$").map(|unit| json!({
             "unit": unit.symbol,
             "dimension": unit.base.map_or("Count", |base| if unit.symbol == "%" { "Percent" } else { base.name() }),
@@ -116,7 +118,7 @@ fn schema_json(schema: &Schema) -> Json {
             "fields": fields(ty),
         })).chain(std::iter::once(json!({
             "name": "tables",
-            "doc": "The organisation's active rate matrices, by code.",
+            "doc": Doc::message(TABLES_DOC),
             "type": "tables",
             "fields": [],
         }))).collect::<Vec<_>>(),
@@ -172,7 +174,7 @@ fn module(path: &str, source: &str) -> Json {
         if item.private.is_some() {
             continue;
         }
-        let doc = item.docs.as_ref().map(|doc| doc.text.clone());
+        let doc = Doc::of(root.std, item.docs.as_ref());
         let entry = match &item.kind {
             ItemKind::Fn(decl) => {
                 let symbol = find(&analysis, &decl.name.text, SymbolKind::Function);
@@ -227,7 +229,7 @@ fn module(path: &str, source: &str) -> Json {
     }
     json!({
         "path": path,
-        "doc": root.file.docs.as_ref().map(|doc| doc.text.clone()),
+        "doc": Doc::of(root.std, root.file.docs.as_ref()),
         "declarations": declarations,
     })
 }
@@ -313,6 +315,54 @@ mod tests {
         );
         let types = out.get("types").cloned().unwrap_or(Json::Null);
         assert!(find(&types, "name", "Money").is_some());
+    }
+
+    /// Every `doc` under `value`, with its JSON path.
+    fn docs(value: &Json, path: &str, out: &mut Vec<(String, Json)>) {
+        match value {
+            Json::Object(map) => {
+                for (key, inner) in map {
+                    let at = format!("{path}.{key}");
+                    if key == "doc" {
+                        out.push((at.clone(), inner.clone()));
+                    }
+                    docs(inner, &at, out);
+                }
+            }
+            Json::Array(list) => {
+                for (index, inner) in list.iter().enumerate() {
+                    docs(inner, &format!("{path}[{index}]"), out);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn every_standard_library_and_schema_doc_is_a_message() {
+        let out = catalog();
+        let mut found = Vec::new();
+        for part in ["modules", "schema", "types", "methods", "tableMethods"] {
+            docs(out.get(part).unwrap_or(&Json::Null), part, &mut found);
+        }
+        let strings: Vec<&String> = found
+            .iter()
+            .filter(|(_, doc)| {
+                !doc.is_null() && doc.get("message").and_then(Json::as_str).is_none()
+            })
+            .map(|(path, _)| path)
+            .collect();
+        assert!(strings.is_empty(), "docs sent as text: {strings:?}");
+        assert!(found.len() > 150, "{} docs", found.len());
+        let ltl = find(out.get("modules").unwrap_or(&Json::Null), "path", "std.ltl")
+            .cloned()
+            .unwrap_or(Json::Null);
+        assert_eq!(
+            ltl.pointer("/doc/message").and_then(Json::as_str),
+            Some(
+                "Less-than-truckload pricing: weight breaks, deficit weight rating, billed weight and the NMFC density scale."
+            )
+        );
     }
 
     #[test]

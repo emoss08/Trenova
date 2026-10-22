@@ -12,6 +12,7 @@ use crate::message;
 use crate::message::Message;
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::Diagnostic;
+use crate::tariff::docs::Doc;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{
     Const, EnumDecl, Expr, ExprKind, FnBody, FnDecl, Input, Item, ItemKind, TypeDecl, TypeExpr,
@@ -110,6 +111,11 @@ impl Declarer<'_> {
         self.module.file.items.get(decl.item())
     }
 
+    /// A doc comment written in this module, as the hosts receive it.
+    fn doc(&self, doc: Option<&crate::tariff::syntax::ast::Doc>) -> Option<Doc> {
+        Doc::of(self.module.std, doc)
+    }
+
     fn symbol(
         &self,
         state: &mut State,
@@ -117,7 +123,7 @@ impl Declarer<'_> {
         kind: SymbolKind,
         span: crate::span::Span,
         ty: Option<Type>,
-        doc: Option<String>,
+        doc: Option<Doc>,
     ) -> SymbolId {
         let id = SymbolId(u32::try_from(state.symbols.len()).unwrap_or(u32::MAX));
         state.symbols.push(Symbol {
@@ -162,10 +168,7 @@ impl Declarer<'_> {
         self.inputs(state, &mut globals, out);
         self.infer_returns(state, &mut globals, out);
         for (name, symbol) in &self.module.tests {
-            let doc = self
-                .item(symbol.decl)
-                .and_then(|item| item.docs.as_ref())
-                .map(|doc| doc.text.clone());
+            let doc = self.doc(self.item(symbol.decl).and_then(|item| item.docs.as_ref()));
             self.symbol(state, name, SymbolKind::Test, symbol.span, None, doc);
         }
         if let Some(slot) = state.globals.get_mut(index) {
@@ -217,19 +220,11 @@ impl Declarer<'_> {
             }
         }
         for (alias, target) in &self.module.aliases {
-            let path = self
+            let doc = self
                 .program
                 .module(target.module)
-                .and_then(|module| module.path.clone())
-                .unwrap_or_default();
-            let symbol = self.symbol(
-                state,
-                alias,
-                SymbolKind::Module,
-                target.span,
-                None,
-                Some(path),
-            );
+                .and_then(|module| Doc::of(module.std, module.file.docs.as_ref()));
+            let symbol = self.symbol(state, alias, SymbolKind::Module, target.span, None, doc);
             globals.values.insert(
                 alias.clone(),
                 Global::Module {
@@ -251,8 +246,7 @@ impl Declarer<'_> {
             else {
                 continue;
             };
-            let enumeration =
-                Arc::new(self.enum_type(decl, docs.as_ref().map(|doc| doc.text.clone())));
+            let enumeration = Arc::new(self.enum_type(decl, self.doc(docs.as_ref())));
             let ty = Type::Enum(Arc::clone(&enumeration));
             let id = self.symbol(
                 state,
@@ -270,14 +264,11 @@ impl Declarer<'_> {
         }
     }
 
-    fn enum_type(&self, decl: &EnumDecl, doc: Option<String>) -> EnumType {
-        let mut variants: Vec<(String, Option<String>)> = Vec::new();
+    fn enum_type(&self, decl: &EnumDecl, doc: Option<Doc>) -> EnumType {
+        let mut variants: Vec<(String, Option<Doc>)> = Vec::new();
         for variant in &decl.variants {
             if !variants.iter().any(|(name, _)| *name == variant.name.text) {
-                variants.push((
-                    variant.name.text.clone(),
-                    variant.docs.as_ref().map(|d| d.text.clone()),
-                ));
+                variants.push((variant.name.text.clone(), self.doc(variant.docs.as_ref())));
             }
         }
         EnumType {
@@ -290,7 +281,7 @@ impl Declarer<'_> {
     /// Lowers the module's record types, each once every type it names is known; the ones left
     /// refer to each other in a cycle.
     fn records(&self, state: &mut State, globals: &mut Globals, out: &mut ModuleAnalysis) {
-        let mut pending: Vec<(&String, &TypeDecl, Option<String>, crate::span::Span)> = Vec::new();
+        let mut pending: Vec<(&String, &TypeDecl, Option<Doc>, crate::span::Span)> = Vec::new();
         for (name, symbol) in &self.module.symbols {
             if let (
                 Decl::Type(_),
@@ -301,12 +292,7 @@ impl Declarer<'_> {
                 }),
             ) = (symbol.decl, self.item(symbol.decl))
             {
-                pending.push((
-                    name,
-                    decl,
-                    docs.as_ref().map(|doc| doc.text.clone()),
-                    symbol.span,
-                ));
+                pending.push((name, decl, self.doc(docs.as_ref()), symbol.span));
             }
         }
         let local: BTreeSet<String> = pending.iter().map(|(name, ..)| (*name).clone()).collect();
@@ -325,6 +311,7 @@ impl Declarer<'_> {
             let mut diagnostics = Vec::new();
             let fields = Lowerer {
                 scope: globals,
+                std: self.module.std,
                 diagnostics: &mut diagnostics,
             }
             .fields(&decl.fields);
@@ -353,10 +340,11 @@ impl Declarer<'_> {
         }
     }
 
-    fn lower(globals: &Globals, ty: &TypeExpr, out: &mut ModuleAnalysis) -> Type {
+    fn lower(&self, globals: &Globals, ty: &TypeExpr, out: &mut ModuleAnalysis) -> Type {
         let mut diagnostics = Vec::new();
         let lowered = Lowerer {
             scope: globals,
+            std: self.module.std,
             diagnostics: &mut diagnostics,
         }
         .lower(ty);
@@ -381,12 +369,12 @@ impl Declarer<'_> {
                 .iter()
                 .map(|param| ParamInfo {
                     name: param.name.text.clone(),
-                    ty: Self::lower(globals, &param.ty, out),
+                    ty: self.lower(globals, &param.ty, out),
                     default: param.default.is_some(),
                 })
                 .collect();
             let ret = if let Some(ret) = &decl.ret {
-                Self::lower(globals, ret, out)
+                self.lower(globals, ret, out)
             } else {
                 if matches!(decl.body, FnBody::Block(_)) {
                     out.diagnostics.push(Diagnostic::error(
@@ -402,7 +390,7 @@ impl Declarer<'_> {
                 }
                 Type::Error
             };
-            let doc = docs.as_ref().map(|doc| doc.text.clone());
+            let doc = self.doc(docs.as_ref());
             let id = self.symbol(
                 state,
                 name,
@@ -525,8 +513,7 @@ impl Declarer<'_> {
     }
 
     fn constants(&self, state: &mut State, globals: &mut Globals, out: &mut ModuleAnalysis) {
-        let mut consts: Vec<(&String, &Const, Option<String>, bool, crate::span::Span)> =
-            Vec::new();
+        let mut consts: Vec<(&String, &Const, Option<Doc>, bool, crate::span::Span)> = Vec::new();
         for (name, symbol) in &self.module.symbols {
             if let (
                 Decl::Const(_),
@@ -541,7 +528,7 @@ impl Declarer<'_> {
                 consts.push((
                     name,
                     decl,
-                    docs.as_ref().map(|doc| doc.text.clone()),
+                    self.doc(docs.as_ref()),
                     private.is_some(),
                     symbol.span,
                 ));
@@ -574,7 +561,7 @@ impl Declarer<'_> {
                     ),
                 ));
             }
-            let declared = decl.ty.as_ref().map(|ty| Self::lower(globals, ty, out));
+            let declared = decl.ty.as_ref().map(|ty| self.lower(globals, ty, out));
             let want = Want::Annotation { name: name.clone() };
             let (ty, folded) =
                 self.constant_value(state, globals, out, &decl.value, declared.as_ref(), &want);
@@ -620,7 +607,7 @@ impl Declarer<'_> {
     }
 
     fn inputs(&self, state: &mut State, globals: &mut Globals, out: &mut ModuleAnalysis) {
-        let mut inputs: Vec<(&String, &Input, Option<String>, crate::span::Span)> = Vec::new();
+        let mut inputs: Vec<(&String, &Input, Option<Doc>, crate::span::Span)> = Vec::new();
         for (name, symbol) in &self.module.symbols {
             if let (
                 Decl::Input(_),
@@ -631,17 +618,12 @@ impl Declarer<'_> {
                 }),
             ) = (symbol.decl, self.item(symbol.decl))
             {
-                inputs.push((
-                    name,
-                    decl,
-                    docs.as_ref().map(|doc| doc.text.clone()),
-                    symbol.span,
-                ));
+                inputs.push((name, decl, self.doc(docs.as_ref()), symbol.span));
             }
         }
         inputs.sort_by_key(|(_, _, _, span)| span.start);
         for (name, decl, doc, span) in inputs {
-            let ty = Self::lower(globals, &decl.ty, out);
+            let ty = self.lower(globals, &decl.ty, out);
             if let Some(default) = &decl.default {
                 let want = Want::Annotation { name: name.clone() };
                 let before = out.diagnostics.len();
@@ -737,6 +719,7 @@ impl Declarer<'_> {
         let mut checker = Checker {
             source: &self.module.source,
             module: self.id(),
+            std: self.module.std,
             kind: self
                 .module
                 .file
@@ -813,6 +796,7 @@ impl Checker<'_> {
         let mut diagnostics = Vec::new();
         let lowered = Lowerer {
             scope: self.globals,
+            std: self.std,
             diagnostics: &mut diagnostics,
         }
         .lower(ty);

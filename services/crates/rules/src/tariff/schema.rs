@@ -9,10 +9,15 @@
 //! The Go host builds the record it sends from these same names; `tariff.catalog` publishes the
 //! schema with its docs for the editor and for Nova.
 
+use super::docs::Doc;
 use super::types::{EnumType, FieldDef, RecordType, Type};
 use super::units::{Base, Dim, Unit};
+use crate::message;
 use serde::Deserialize;
 use std::sync::Arc;
+
+/// The doc of `tables`, the root that holds the organisation's active rate matrices.
+pub const TABLES_DOC: &str = message!("The organisation's active rate matrices, by code.");
 
 /// The schema enums, by name, with their variants in order.
 pub const ENUMS: &[(&str, &[&str])] = &[
@@ -186,7 +191,7 @@ pub struct ChargeCode {
 #[derive(Debug, Clone)]
 pub struct Schema {
     /// The roots, by name, with their types and docs.
-    pub roots: Vec<(&'static str, Type, &'static str)>,
+    pub roots: Vec<(&'static str, Type, Doc)>,
     /// The named record types: `Stop`, `Commodity`.
     pub records: Vec<Arc<RecordType>>,
     /// The enums.
@@ -205,12 +210,28 @@ impl Schema {
                 (
                     "shipment",
                     builder.shipment(&stop, &commodity),
-                    "The shipment being rated.",
+                    Doc::message(message!("The shipment being rated.")),
                 ),
-                ("lane", Builder::lane(), "Where it goes."),
-                ("customer", Builder::customer(), "Who is billed."),
-                ("fuel", Builder::fuel(), "The fuel index."),
-                ("rating", builder.rating(), "The rating itself."),
+                (
+                    "lane",
+                    Builder::lane(),
+                    Doc::message(message!("Where it goes.")),
+                ),
+                (
+                    "customer",
+                    Builder::customer(),
+                    Doc::message(message!("Who is billed.")),
+                ),
+                (
+                    "fuel",
+                    Builder::fuel(),
+                    Doc::message(message!("The fuel index.")),
+                ),
+                (
+                    "rating",
+                    builder.rating(),
+                    Doc::message(message!("The rating itself.")),
+                ),
             ],
             records: vec![stop, commodity],
             enums: builder.enums,
@@ -293,20 +314,28 @@ impl Builder {
 
     fn stop(&self) -> Arc<RecordType> {
         let location = record(&[
-            ("city", Type::Text, "The city."),
-            ("state", Type::Text, "The state or province code."),
-            ("zip", Type::Text, "The postal code."),
+            ("city", Type::Text, message!("The city.")),
+            ("state", Type::Text, message!("The state or province code.")),
+            ("zip", Type::Text, message!("The postal code.")),
             (
                 "zip3",
                 Type::Text,
-                "The first three characters of the postal code.",
+                message!("The first three characters of the postal code."),
             ),
-            ("country", Type::Text, "The ISO country code."),
-            ("timezone", Type::Text, "The IANA time zone."),
+            ("country", Type::Text, message!("The ISO country code.")),
+            ("timezone", Type::Text, message!("The IANA time zone.")),
         ]);
         let window = record(&[
-            ("start", opt(Type::DateTime), "When the window opens."),
-            ("end", opt(Type::DateTime), "When the window closes."),
+            (
+                "start",
+                opt(Type::DateTime),
+                message!("When the window opens."),
+            ),
+            (
+                "end",
+                opt(Type::DateTime),
+                message!("When the window closes."),
+            ),
         ]);
         Arc::new(RecordType {
             name: Some(String::from("Stop")),
@@ -314,76 +343,100 @@ impl Builder {
                 (
                     "sequence",
                     Type::Int,
-                    "The stop's place in the route, from 1.",
+                    message!("The stop's place in the route, from 1."),
                 ),
                 (
                     "kind",
                     self.enumeration("StopKind"),
-                    "Pickup, delivery or a split.",
+                    message!("Pickup, delivery or a split."),
                 ),
                 (
                     "status",
                     self.enumeration("StopStatus"),
-                    "Where the stop is in its life.",
+                    message!("Where the stop is in its life."),
                 ),
                 (
                     "appointment",
                     Type::Bool,
-                    "Whether the stop is by appointment.",
+                    message!("Whether the stop is by appointment."),
                 ),
-                ("window", window, "The scheduled window."),
+                ("window", window, message!("The scheduled window.")),
                 (
                     "arrival",
                     opt(Type::DateTime),
-                    "When the equipment arrived.",
+                    message!("When the equipment arrived."),
                 ),
-                ("departure", opt(Type::DateTime), "When the equipment left."),
+                (
+                    "departure",
+                    opt(Type::DateTime),
+                    message!("When the equipment left."),
+                ),
                 (
                     "dwell",
                     opt(self.duration.clone()),
-                    "Departure minus arrival, when both are recorded.",
+                    message!("Departure minus arrival, when both are recorded."),
                 ),
-                ("pieces", opt(Type::Int), "Pieces handled at the stop."),
+                (
+                    "pieces",
+                    opt(Type::Int),
+                    message!("Pieces handled at the stop."),
+                ),
                 (
                     "weight",
                     opt(self.weight.clone()),
-                    "Weight handled at the stop.",
+                    message!("Weight handled at the stop."),
                 ),
-                ("location", location, "Where the stop is."),
+                ("location", location, message!("Where the stop is.")),
             ]),
         })
     }
 
     fn commodity(&self) -> Arc<RecordType> {
         let dimensions = record(&[
-            ("length", opt(self.length.clone()), "The length."),
-            ("width", opt(self.length.clone()), "The width."),
-            ("height", opt(self.length.clone()), "The height."),
+            ("length", opt(self.length.clone()), message!("The length.")),
+            ("width", opt(self.length.clone()), message!("The width.")),
+            ("height", opt(self.length.clone()), message!("The height.")),
         ]);
         Arc::new(RecordType {
             name: Some(String::from("Commodity")),
             fields: fields(&[
-                ("name", Type::Text, "The commodity's name."),
+                ("name", Type::Text, message!("The commodity's name.")),
                 (
                     "freightClass",
                     opt(self.enumeration("FreightClass")),
-                    "Its NMFC class.",
+                    message!("Its NMFC class."),
                 ),
-                ("weight", self.weight.clone(), "The line's weight."),
-                ("pieces", Type::Int, "The line's pieces."),
-                ("dimensions", dimensions, "Its dimensions, when recorded."),
+                (
+                    "weight",
+                    self.weight.clone(),
+                    message!("The line's weight."),
+                ),
+                ("pieces", Type::Int, message!("The line's pieces.")),
+                (
+                    "dimensions",
+                    dimensions,
+                    message!("Its dimensions, when recorded."),
+                ),
                 (
                     "volume",
                     opt(self.volume.clone()),
-                    "Its volume, from the dimensions.",
+                    message!("Its volume, from the dimensions."),
                 ),
                 (
                     "density",
                     opt(self.density.clone()),
-                    "Its density, from weight and volume.",
+                    message!("Its density, from weight and volume."),
                 ),
-                ("hazmat", Type::Bool, "Whether it is hazardous material."),
-                ("stackable", Type::Bool, "Whether it can be stacked."),
+                (
+                    "hazmat",
+                    Type::Bool,
+                    message!("Whether it is hazardous material."),
+                ),
+                (
+                    "stackable",
+                    Type::Bool,
+                    message!("Whether it can be stacked."),
+                ),
             ]),
         })
     }
@@ -402,52 +455,64 @@ impl Builder {
         commodity: &Arc<RecordType>,
     ) -> Vec<(&'static str, Type, &'static str)> {
         let reference = record(&[
-            ("code", Type::Text, "The code."),
-            ("description", Type::Text, "The description."),
+            ("code", Type::Text, message!("The code.")),
+            ("description", Type::Text, message!("The description.")),
         ]);
         let entered = record(&[
             (
                 "freight",
                 Type::money(),
-                "The freight charge typed on the shipment.",
+                message!("The freight charge typed on the shipment."),
             ),
             (
                 "other",
                 Type::money(),
-                "The other charges typed on the shipment.",
+                message!("The other charges typed on the shipment."),
             ),
         ]);
         let stop = Type::Record(Arc::clone(stop));
         vec![
-            ("serviceType", reference.clone(), "The service type."),
-            ("shipmentType", opt(reference.clone()), "The shipment type."),
+            (
+                "serviceType",
+                reference.clone(),
+                message!("The service type."),
+            ),
+            (
+                "shipmentType",
+                opt(reference.clone()),
+                message!("The shipment type."),
+            ),
             (
                 "tractorType",
                 opt(reference.clone()),
-                "The tractor's equipment type.",
+                message!("The tractor's equipment type."),
             ),
             (
                 "trailerType",
                 opt(reference),
-                "The trailer's equipment type.",
+                message!("The trailer's equipment type."),
             ),
             (
                 "entered",
                 entered,
-                "Amounts typed on the shipment, for tariffs that bill what was entered.",
+                message!("Amounts typed on the shipment, for tariffs that bill what was entered."),
             ),
             (
                 "stops",
                 Type::list(stop.clone()),
-                "Every stop, in route order.",
+                message!("Every stop, in route order."),
             ),
             (
                 "commodities",
                 Type::list(Type::Record(Arc::clone(commodity))),
-                "Every commodity line.",
+                message!("Every commodity line."),
             ),
-            ("pickup", opt(stop.clone()), "The first pickup stop."),
-            ("delivery", opt(stop), "The last delivery stop."),
+            (
+                "pickup",
+                opt(stop.clone()),
+                message!("The first pickup stop."),
+            ),
+            ("delivery", opt(stop), message!("The last delivery stop.")),
         ]
     }
 
@@ -456,113 +521,129 @@ impl Builder {
             (
                 "min",
                 opt(self.temperature.clone()),
-                "The lowest allowed temperature.",
+                message!("The lowest allowed temperature."),
             ),
             (
                 "max",
                 opt(self.temperature.clone()),
-                "The highest allowed temperature.",
+                message!("The highest allowed temperature."),
             ),
         ]);
         vec![
-            ("proNumber", Type::Text, "The shipment's PRO number."),
+            (
+                "proNumber",
+                Type::Text,
+                message!("The shipment's PRO number."),
+            ),
             (
                 "status",
                 self.enumeration("ShipmentStatus"),
-                "Where the shipment is in its life.",
+                message!("Where the shipment is in its life."),
             ),
             (
                 "weight",
                 opt(self.weight.clone()),
-                "The commodity lines' weight, else the weight entered on the shipment.",
+                message!("The commodity lines' weight, else the weight entered on the shipment."),
             ),
-            ("pieces", opt(Type::Int), "The pieces, when recorded."),
+            (
+                "pieces",
+                opt(Type::Int),
+                message!("The pieces, when recorded."),
+            ),
             (
                 "distance",
                 self.distance.clone(),
-                "The route's distance, in the organisation's unit.",
+                message!("The route's distance, in the organisation's unit."),
             ),
             (
                 "duration",
                 self.duration.clone(),
-                "The route's planned driving time.",
+                message!("The route's planned driving time."),
             ),
             (
                 "linearFeet",
                 self.length.clone(),
-                "The trailer length the freight takes.",
+                message!("The trailer length the freight takes."),
             ),
-            ("volume", self.volume.clone(), "The freight's volume."),
+            (
+                "volume",
+                self.volume.clone(),
+                message!("The freight's volume."),
+            ),
             (
                 "density",
                 opt(self.density.clone()),
-                "The freight's density, when it has weight and volume.",
+                message!("The freight's density, when it has weight and volume."),
             ),
             (
                 "hazmat",
                 Type::Bool,
-                "Whether any commodity is hazardous material.",
+                message!("Whether any commodity is hazardous material."),
             ),
             (
                 "reefer",
                 Type::Bool,
-                "Whether the shipment is temperature controlled.",
+                message!("Whether the shipment is temperature controlled."),
             ),
             (
                 "temperature",
                 temperature,
-                "The temperature range, for reefer loads.",
+                message!("The temperature range, for reefer loads."),
             ),
             (
                 "freightClass",
                 opt(self.enumeration("FreightClass")),
-                "The class of the heaviest commodity line.",
+                message!("The class of the heaviest commodity line."),
             ),
             (
                 "highestClass",
                 opt(self.enumeration("FreightClass")),
-                "The highest class of any commodity line.",
+                message!("The highest class of any commodity line."),
             ),
         ]
     }
 
     fn lane() -> Type {
         let place = record(&[
-            ("city", Type::Text, "The city."),
-            ("state", Type::Text, "The state or province code."),
-            ("zip", Type::Text, "The postal code."),
+            ("city", Type::Text, message!("The city.")),
+            ("state", Type::Text, message!("The state or province code.")),
+            ("zip", Type::Text, message!("The postal code.")),
             (
                 "zip3",
                 Type::Text,
-                "The first three characters of the postal code.",
+                message!("The first three characters of the postal code."),
             ),
-            ("country", Type::Text, "The ISO country code."),
+            ("country", Type::Text, message!("The ISO country code.")),
             (
                 "zones",
                 Type::list(Type::Text),
-                "The rating zones the place is in.",
+                message!("The rating zones the place is in."),
             ),
         ]);
         record(&[
-            ("origin", place.clone(), "Where the shipment is picked up."),
-            ("destination", place, "Where it is delivered."),
+            (
+                "origin",
+                place.clone(),
+                message!("Where the shipment is picked up."),
+            ),
+            ("destination", place, message!("Where it is delivered.")),
             (
                 "interstate",
                 Type::Bool,
-                "Whether origin and destination states differ.",
+                message!("Whether origin and destination states differ."),
             ),
             (
                 "crossBorder",
                 Type::Bool,
-                "Whether origin and destination countries differ.",
+                message!("Whether origin and destination countries differ."),
             ),
         ])
     }
 
     fn customer() -> Type {
         record(&[
-            ("name", Type::Text, "The customer's name."),
-            ("code", Type::Text, "The customer's code."),
+            ("name", Type::Text, message!("The customer's name.")),
+            ("code", Type::Text, message!("The customer's code.")),
         ])
     }
 
@@ -571,27 +652,43 @@ impl Builder {
             (
                 "price",
                 opt(Type::quantity_in(&unit("$/gal"))),
-                "The fuel index price as of the rating date.",
+                message!("The fuel index price as of the rating date."),
             ),
-            ("priceDate", opt(Type::Date), "The date of that price."),
-            ("index", opt(Type::Text), "The index the price comes from."),
+            (
+                "priceDate",
+                opt(Type::Date),
+                message!("The date of that price."),
+            ),
+            (
+                "index",
+                opt(Type::Text),
+                message!("The index the price comes from."),
+            ),
         ])
     }
 
     fn rating(&self) -> Type {
         record(&[
-            ("date", Type::DateTime, "When the shipment is rated as of."),
+            (
+                "date",
+                Type::DateTime,
+                message!("When the shipment is rated as of."),
+            ),
             (
                 "mode",
                 self.enumeration("RatingMode"),
-                "Sell to the customer or buy from the carrier.",
+                message!("Sell to the customer or buy from the carrier."),
             ),
             (
                 "sellTotal",
                 opt(Type::money()),
-                "The sell side's total, when rating the buy side.",
+                message!("The sell side's total, when rating the buy side."),
             ),
-            ("currency", Type::Text, "The rating currency's ISO code."),
+            (
+                "currency",
+                Type::Text,
+                message!("The rating currency's ISO code."),
+            ),
         ])
     }
 }
@@ -604,17 +701,17 @@ fn unit(text: &str) -> Unit {
     Unit::parse(text).unwrap_or_default()
 }
 
-fn fields(list: &[(&str, Type, &str)]) -> Vec<FieldDef> {
+fn fields(list: &[(&str, Type, &'static str)]) -> Vec<FieldDef> {
     list.iter()
         .map(|(name, ty, doc)| FieldDef {
             name: (*name).to_owned(),
             ty: ty.clone(),
-            doc: Some((*doc).to_owned()),
+            doc: Some(Doc::message(doc)),
         })
         .collect()
 }
 
-fn record(list: &[(&str, Type, &str)]) -> Type {
+fn record(list: &[(&str, Type, &'static str)]) -> Type {
     Type::Record(Arc::new(RecordType {
         name: None,
         fields: fields(list),
