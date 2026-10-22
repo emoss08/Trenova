@@ -68,8 +68,11 @@ type TenderOffer {
   counterRate: Decimal
   counterNote: String!
   counteredAt: Timestamp
-  "The margin the counter leaves, as a percentage of the sell price. Null when the load has no sell price."
-  counterMarginPercent: Decimal
+  """
+  The margin the counter leaves, as a percentage of the sell price. Null when the
+  load has no sell price, or to a reader without the margins field group.
+  """
+  counterMarginPercent: Decimal @protected(group: Margins)
   "True when the counter is below the margin floor, so taking it needs the tender approve permission."
   counterNeedsApproval: Boolean!
   counterDecidedAt: Timestamp

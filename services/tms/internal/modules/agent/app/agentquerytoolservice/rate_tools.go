@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -55,13 +56,19 @@ type shipmentRatingReader interface {
 type explainRateTool struct {
 	quotes    quoteReader
 	shipments shipmentRatingReader
+	access    fieldAccess
 }
 
 func newExplainRateTool(
 	quotes ratequoteports.RateQuoteRepository,
 	shipments shipmentports.ShipmentRepository,
+	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return &explainRateTool{quotes: quotes, shipments: shipments}
+	return &explainRateTool{
+		quotes:    quotes,
+		shipments: shipments,
+		access:    newFieldAccess(permissions),
+	}
 }
 
 func (t *explainRateTool) Name() string { return "rate_explain" }
@@ -256,6 +263,8 @@ func (t *explainRateTool) Query(
 
 		return explanation, nil
 	}
+
+	quote.WithholdFields(t.access.groups(ctx, params))
 
 	return withShipmentCharges(explainTrace(explanation, quote.Trace), record, quote.ID), nil
 }

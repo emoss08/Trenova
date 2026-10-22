@@ -247,3 +247,30 @@ func TestAuthorize_AProtectedMarginIsWithheldOnAgreementsAndVersions(t *testing.
 		requireAuthorizationError(t, err, "protected_margins")
 	}
 }
+
+func TestAuthorize_ARateQuotesMarginAndCostNeedTheMarginsGroup(t *testing.T) {
+	t.Parallel()
+
+	withheld := newTestCompilerWithGroups(allowAllEngine(),
+		permission.FieldGroupSet(0).With(permission.FieldGroupPersonal))
+	granted := newTestCompilerWithGroups(allowAllEngine(), permission.AllFieldGroups())
+	for _, field := range []string{"marginAmount", "marginPercent", "costAmount"} {
+		def := &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    "rate_quote",
+			Columns:   []report.ColumnSpec{dim("c_total", "totalAmount"), dim("c_m", field)},
+		}
+		_, err := withheld.ValidateAndAuthorize(t.Context(), newRequest(def))
+		requireAuthorizationError(t, err, "protected_margins")
+
+		_, err = granted.ValidateAndAuthorize(t.Context(), newRequest(def))
+		require.NoErrorf(t, err, "%s is shown to a reader with the margins group", field)
+	}
+
+	_, err := withheld.ValidateAndAuthorize(t.Context(), newRequest(&report.Definition{
+		IRVersion: report.CurrentIRVersion,
+		Entity:    "rate_quote",
+		Columns:   []report.ColumnSpec{dim("c_total", "totalAmount")},
+	}))
+	require.NoError(t, err, "a quote's total is not a margin")
+}

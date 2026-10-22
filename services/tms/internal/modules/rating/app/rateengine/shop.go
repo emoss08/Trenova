@@ -255,15 +255,16 @@ func (s *Service) priceCandidate(
 		return option
 	}
 
-	option.Margin = ratetypes.EvaluateMargin(&ratetypes.MarginInputs{
+	verdict := ratetypes.EvaluateMargin(&ratetypes.MarginInputs{
 		Sell:      sellTotalOf(req),
 		Buy:       rated.Amount,
 		Floor:     marginFloorOf(rated),
 		MaxPayPct: maxPayPercentOf(rated),
 	})
 
-	if option.Margin.Breached() {
-		option.Note = option.Margin.Explanation
+	option.Margin = &verdict
+	if verdict.Breached() {
+		option.Note = verdict.Explanation
 	}
 
 	return option
@@ -342,11 +343,19 @@ func rankOptions(options []*ratequoteports.ShopOption, strategy ratequoteports.S
 	}
 }
 
+func marginOf(option *ratequoteports.ShopOption) decimal.Decimal {
+	if option.Margin == nil {
+		return decimal.Zero
+	}
+
+	return option.Margin.Amount
+}
+
 func compareByStrategy(a, b *ratequoteports.ShopOption, strategy ratequoteports.ShopStrategy) int {
 	switch strategy {
 	case ratequoteports.ShopStrategyBestMargin:
 		// Reversed: the most margin comes first.
-		return b.Margin.Amount.Cmp(a.Margin.Amount)
+		return marginOf(b).Cmp(marginOf(a))
 
 	case ratequoteports.ShopStrategyGuideRank:
 		return compareGuideRank(a, b)

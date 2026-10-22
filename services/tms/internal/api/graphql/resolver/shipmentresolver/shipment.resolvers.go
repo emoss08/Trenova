@@ -672,6 +672,13 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 	if err != nil {
 		return nil, err
 	}
+	quickFilters := base.QuickFilterSpecsFromGraphQL(input.QuickFilters)
+	if err = shipmentdomain.AuthorizeQuickFilters(
+		quickFilters,
+		r.VisibleFieldGroups(ctx, authCtx).Has(permission.FieldGroupMargins),
+	); err != nil {
+		return nil, err
+	}
 
 	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
@@ -729,7 +736,7 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 			ActivityWindowEnd:       base.Int64Value(input.ActivityWindowEnd),
 			BillingTransferEligible: base.BoolValue(input.BillingTransferEligible),
 			IncludeCustomer:         base.BoolValue(input.IncludeCustomer),
-			QuickFilters:            base.QuickFilterSpecsFromGraphQL(input.QuickFilters),
+			QuickFilters:            quickFilters,
 			Timezone:                base.StringValue(input.Timezone),
 		},
 	})

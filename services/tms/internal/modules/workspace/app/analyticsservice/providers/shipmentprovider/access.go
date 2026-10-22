@@ -120,6 +120,7 @@ func (a *cardAccess) gate(ctx context.Context, data map[string]any) {
 		case *ProfitabilityCard:
 			if card != nil && !a.showsMargins() {
 				card.AvgMarginPct = nil
+				card.UnprofitableCount = nil
 			}
 		}
 	}

@@ -190,7 +190,7 @@ func (r *QueryResolver) ShipmentStageSummary(
 
 	rows, err := r.BoardStageSummaries.StageSummary(
 		ctx,
-		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
+		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx), r.showsMargins(ctx, authCtx)),
 	)
 	if err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func (r *QueryResolver) ShipmentQuickFilterCounts(
 
 	rows, err := r.BoardQuickFilterCounts.QuickFilterCounts(
 		ctx,
-		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
+		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx), r.showsMargins(ctx, authCtx)),
 	)
 	if err != nil {
 		return nil, err
@@ -379,7 +379,11 @@ func (r *QueryResolver) ShipmentBoardGroups(
 	groups, err := r.BoardGroups.GroupSummary(
 		ctx,
 		&shipmentports.SummarizeShipmentBoardGroupsRequest{
-			Scope:   scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
+			Scope: scopeRequestFromGraphQL(
+				&input,
+				base.TenantInfo(authCtx),
+				r.showsMargins(ctx, authCtx),
+			),
 			GroupBy: groupBy,
 		},
 	)

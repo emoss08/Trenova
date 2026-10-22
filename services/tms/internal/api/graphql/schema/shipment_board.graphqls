@@ -270,8 +270,10 @@ type CapacityMatch {
   pickupAt: Timestamp
   revenue: Decimal!
   deadheadMiles: Float
-  quote: Decimal
-  marginPercent: Float
+  "What the carrier would cost. Null to a reader without the margins field group, since beside the revenue it gives the margin."
+  quote: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  marginPercent: Float @protected(group: Margins)
   fitPercent: Float
 }
 

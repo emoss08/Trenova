@@ -84,6 +84,9 @@ func (r *Registry) registerAccountingResources() {
 		Category:           "Accounting",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"targetMarginPercent": SensitivityConfidential,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

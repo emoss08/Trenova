@@ -124,7 +124,7 @@ type DispatchControl struct {
 	ExceptionMissedStopGraceMinutes      int16                      `json:"exceptionMissedStopGraceMinutes"      bun:"exception_missed_stop_grace_minutes,type:SMALLINT,notnull,default:30"`
 	ExceptionPODGraceHours               int16                      `json:"exceptionPodGraceHours"               bun:"exception_pod_grace_hours,type:SMALLINT,notnull,default:24"`
 	TenderCounterOffersEnabled           bool                       `json:"tenderCounterOffersEnabled"           bun:"tender_counter_offers_enabled,type:BOOLEAN,notnull"`
-	TenderCounterMarginFloorPercent      decimal.Decimal            `json:"tenderCounterMarginFloorPercent"      bun:"tender_counter_margin_floor_percent,type:NUMERIC(7,4),notnull"`
+	TenderCounterMarginFloorPercent      decimal.NullDecimal        `json:"tenderCounterMarginFloorPercent"      bun:"tender_counter_margin_floor_percent,type:NUMERIC(7,4),notnull"`
 	TenderAutoAcceptCounters             bool                       `json:"tenderAutoAcceptCounters"             bun:"tender_auto_accept_counters,type:BOOLEAN,notnull"`
 	TenderCounterDecisionMinutes         int32                      `json:"tenderCounterDecisionMinutes"         bun:"tender_counter_decision_minutes,type:INTEGER,notnull,default:60"`
 	TenderExhaustedAction                TenderExhaustedAction      `json:"tenderExhaustedAction"                bun:"tender_exhausted_action,type:VARCHAR(50),notnull,default:'Notify'"`
@@ -308,8 +308,9 @@ func (dc *DispatchControl) TenderPolicy() TenderPolicy {
 	}
 	policy.CountersEnabled = dc.TenderCounterOffersEnabled
 	policy.AutoAcceptCounters = dc.TenderAutoAcceptCounters
-	if validTenderMarginFloor(dc.TenderCounterMarginFloorPercent) {
-		policy.CounterMarginFloor = dc.TenderCounterMarginFloorPercent
+	if floor := dc.TenderCounterMarginFloorPercent; floor.Valid &&
+		validTenderMarginFloor(floor.Decimal) {
+		policy.CounterMarginFloor = floor.Decimal
 	}
 	if validTenderCounterDecision(dc.TenderCounterDecisionMinutes) {
 		policy.CounterDecisionSeconds = int64(dc.TenderCounterDecisionMinutes) * 60
@@ -338,6 +339,11 @@ func (dc *DispatchControl) NormalizeTenderSettings() {
 	}
 	if dc.TenderExhaustedAction == "" {
 		dc.TenderExhaustedAction = TenderExhaustedActionNotify
+	}
+	if !dc.TenderCounterMarginFloorPercent.Valid {
+		dc.TenderCounterMarginFloorPercent = decimal.NewNullDecimal(
+			DefaultTenderCounterMarginFloor,
+		)
 	}
 }
 
@@ -615,7 +621,7 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&dc.TenderCounterMarginFloorPercent,
 			validation.By(func(_ any) error {
-				if !validTenderMarginFloor(dc.TenderCounterMarginFloorPercent) {
+				if !validTenderMarginFloor(dc.TenderCounterMarginFloorPercent.Decimal) {
 					return errors.New("Counter-offer margin floor must be between -100% and 100%")
 				}
 				return nil
@@ -758,5 +764,8 @@ func NewDefaultDispatchControl(orgID, buID pulid.ID) *DispatchControl {
 		ExceptionMaxEscalations:              DefaultExceptionMaxEscalations,
 		ExceptionMissedStopGraceMinutes:      DefaultExceptionMissedStopGraceMinutes,
 		ExceptionPODGraceHours:               DefaultExceptionPODGraceHours,
+		TenderCounterMarginFloorPercent: decimal.NewNullDecimal(
+			DefaultTenderCounterMarginFloor,
+		),
 	}
 }

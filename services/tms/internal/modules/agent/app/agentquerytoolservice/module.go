@@ -312,8 +312,9 @@ func provideQuoteShipmentTool(
 func provideShopCarriersTool(
 	quotes *ratequoteservice.Service,
 	carriers carrierports.CarrierRepository,
+	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return newShopCarriersTool(quotes, carriers)
+	return newShopCarriersTool(quotes, carriers, permissions)
 }
 
 func provideRankMoveCandidatesTool(

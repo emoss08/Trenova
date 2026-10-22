@@ -198,7 +198,7 @@ func setupCounter(t *testing.T, policy func(*dispatchcontrol.DispatchControl)) *
 	entity := sentWaterfall(tenantInfo)
 	control := &dispatchcontrol.DispatchControl{
 		TenderCounterOffersEnabled:      true,
-		TenderCounterMarginFloorPercent: decimal.NewFromInt(10),
+		TenderCounterMarginFloorPercent: decimal.NewNullDecimal(decimal.NewFromInt(10)),
 		TenderCounterDecisionMinutes:    60,
 		TenderExhaustedAction:           dispatchcontrol.TenderExhaustedActionNotify,
 	}
@@ -305,7 +305,10 @@ func TestACounterBelowTheFloorNeedsApprovalEvenWithAutoAccept(t *testing.T) {
 	countered := deps.events.eventsOfType(shipmentevent.TypeTenderCountered)
 	require.Len(t, countered, 1)
 	assert.Equal(t, true, countered[0].Metadata["needsApproval"])
-	assert.Equal(t, "5", countered[0].Metadata["marginPercent"])
+	assert.NotContains(t, countered[0].Metadata, "marginPercent",
+		"every reader of the shipment reads its activity, so the event states no margin")
+	assert.True(t, decimal.NewFromInt(5).Equal(deps.offer.CounterMargin.Decimal),
+		"the offer keeps the margin for the margins field group")
 }
 
 func TestACounterThatArrivesAfterTheOfferMovedOnIsLate(t *testing.T) {

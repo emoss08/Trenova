@@ -77,7 +77,6 @@ type Facts struct {
 	Uncovered       int    `json:"uncovered"`
 	Detention       int    `json:"detention"`
 	ReadyToBill     int    `json:"readyToBill"`
-	LowMargin       int    `json:"lowMargin"`
 	LateReason      string `json:"lateReason,omitempty"`
 	OpenSuggestions int    `json:"openSuggestions"`
 	Timezone        string `json:"timezone"`

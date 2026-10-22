@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -621,6 +622,7 @@ func quoteViewOf(rated *ratequoteports.RatedShipment, lane []string) *quoteView 
 type shopCarriersTool struct {
 	shopper  carrierShopper
 	carriers shopCarrierReader
+	access   fieldAccess
 }
 
 // shopCarrierReader reads the shopped carriers' standing, so "the cheapest
@@ -636,8 +638,13 @@ type shopCarrierReader interface {
 func newShopCarriersTool(
 	shopper carrierShopper,
 	carriers shopCarrierReader,
+	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return &shopCarriersTool{shopper: shopper, carriers: carriers}
+	return &shopCarriersTool{
+		shopper:  shopper,
+		carriers: carriers,
+		access:   newFieldAccess(permissions),
+	}
 }
 
 func (t *shopCarriersTool) Name() string { return "carrier_shop" }
@@ -681,21 +688,21 @@ func (t *shopCarriersTool) Policy() agentports.ToolPolicy {
 }
 
 type shopOptionView struct {
-	Rank            int             `json:"rank"`
-	CarrierID       string          `json:"carrierId"`
-	CarrierName     string          `json:"carrierName"`
-	Outcome         string          `json:"outcome"`
-	Priced          bool            `json:"priced"`
-	Cost            decimal.Decimal `json:"cost"`
-	Currency        string          `json:"currency"`
-	MarginAmount    decimal.Decimal `json:"marginAmount"`
-	MarginPercent   decimal.Decimal `json:"marginPercent"`
-	BelowFloor      bool            `json:"belowFloor"`
-	Status          string          `json:"status,omitempty"`
-	Compliance      string          `json:"compliance,omitempty"`
-	GuideRank       int16           `json:"guideRank,omitempty"`
-	OfferTTLSeconds int32           `json:"offerTtlSeconds,omitempty"`
-	Note            string          `json:"note,omitempty"`
+	Rank            int              `json:"rank"`
+	CarrierID       string           `json:"carrierId"`
+	CarrierName     string           `json:"carrierName"`
+	Outcome         string           `json:"outcome"`
+	Priced          bool             `json:"priced"`
+	Cost            decimal.Decimal  `json:"cost"`
+	Currency        string           `json:"currency"`
+	MarginAmount    *decimal.Decimal `json:"marginAmount,omitempty"`
+	MarginPercent   *decimal.Decimal `json:"marginPercent,omitempty"`
+	BelowFloor      *bool            `json:"belowFloor,omitempty"`
+	Status          string           `json:"status,omitempty"`
+	Compliance      string           `json:"compliance,omitempty"`
+	GuideRank       int16            `json:"guideRank,omitempty"`
+	OfferTTLSeconds int32            `json:"offerTtlSeconds,omitempty"`
+	Note            string           `json:"note,omitempty"`
 }
 
 type shopView struct {
@@ -746,10 +753,16 @@ func (t *shopCarriersTool) Query(
 		}
 	}
 
+	visible := t.access.groups(ctx, params)
+	if err = ratequoteports.AuthorizeShopStrategy(req.Strategy, visible); err != nil {
+		return nil, err
+	}
+
 	result, err := t.shopper.Shop(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+	result.WithholdFields(visible)
 
 	view := shopViewOf(result)
 	t.standing(ctx, req.TenantInfo, view)
@@ -811,7 +824,7 @@ func shopViewOf(result *ratequoteports.ShopResult) *shopView {
 		if option == nil {
 			continue
 		}
-		view.Options = append(view.Options, shopOptionView{
+		row := shopOptionView{
 			Rank:            option.Rank,
 			CarrierID:       option.CarrierID.String(),
 			CarrierName:     option.CarrierName,
@@ -819,13 +832,16 @@ func shopViewOf(result *ratequoteports.ShopResult) *shopView {
 			Priced:          option.Priced(),
 			Cost:            option.Cost,
 			Currency:        option.Currency,
-			MarginAmount:    option.Margin.Amount,
-			MarginPercent:   option.Margin.Percent,
-			BelowFloor:      option.Margin.BelowFloor,
 			GuideRank:       option.GuideRank,
 			OfferTTLSeconds: option.OfferTTLSeconds,
 			Note:            option.Note,
-		})
+		}
+		if margin := option.Margin; margin != nil {
+			row.MarginAmount = &margin.Amount
+			row.MarginPercent = &margin.Percent
+			row.BelowFloor = &margin.BelowFloor
+		}
+		view.Options = append(view.Options, row)
 	}
 	switch {
 	case len(view.Options) == 0:

@@ -60,14 +60,9 @@ func EvaluateCounter(terms CounterTerms) CounterVerdict {
 	}
 	if margin.BelowFloor {
 		verdict.NeedsApproval = true
-		verdict.Explanation = "the counter leaves a margin of " + percentLabel(margin.Percent) +
-			", below the " + percentLabel(terms.Floor) + " floor"
+		verdict.Explanation = "the counter is below the margin floor"
 		return verdict
 	}
 	verdict.AutoAccept = terms.AutoAccept
 	return verdict
-}
-
-func percentLabel(value decimal.Decimal) string {
-	return value.Round(2).String() + "%"
 }

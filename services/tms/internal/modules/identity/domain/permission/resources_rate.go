@@ -284,15 +284,15 @@ func (r *Registry) registerRateResources() {
 			"status":                 SensitivityInternal,
 			"accessorialAmount":      SensitivityRestricted,
 			"billingAmount":          SensitivityRestricted,
-			"costAmount":             SensitivityRestricted,
 			"foregoneAmount":         SensitivityRestricted,
 			"fuelAmount":             SensitivityRestricted,
 			"fxRate":                 SensitivityRestricted,
 			"linehaulAmount":         SensitivityRestricted,
-			"marginAmount":           SensitivityRestricted,
-			"marginPercent":          SensitivityRestricted,
 			"overrideReason":         SensitivityRestricted,
 			"totalAmount":            SensitivityRestricted,
+			"costAmount":             SensitivityConfidential,
+			"marginAmount":           SensitivityConfidential,
+			"marginPercent":          SensitivityConfidential,
 		},
 	})
 }
