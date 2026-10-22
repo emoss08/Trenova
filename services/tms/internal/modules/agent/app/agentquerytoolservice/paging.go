@@ -174,11 +174,11 @@ func readOffsetWindow(
 	if after := optionalString(params, paramAfter); after != "" {
 		key, decodeErr := pagination.DecodeKeyCursor(scope, after)
 		if decodeErr != nil {
-			return offsetWindow{}, errStaleCursor
+			return offsetWindow{}, ErrStaleCursor
 		}
 		offset, parseErr := strconv.Atoi(key)
 		if parseErr != nil || offset < 0 {
-			return offsetWindow{}, errStaleCursor
+			return offsetWindow{}, ErrStaleCursor
 		}
 		window.offset = offset
 	}

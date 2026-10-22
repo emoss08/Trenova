@@ -548,7 +548,7 @@ func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
 	_, err = tool.Query(t.Context(), keyedCall(map[string]any{
 		"expiringWithinDays": float64(60), paramLimit: float64(2), paramAfter: cursor,
 	}))
-	require.ErrorIs(t, err, errStaleCursor, "a cursor is bound to the call's other arguments")
+	require.ErrorIs(t, err, ErrStaleCursor, "a cursor is bound to the call's other arguments")
 	_, err = tool.Query(t.Context(), keyedCall(map[string]any{paramOffset: float64(2)}))
 	require.ErrorIs(t, err, errOffsetOnCursorList)
 }
