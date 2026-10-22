@@ -27,10 +27,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"go.uber.org/fx"
 )
 
@@ -47,7 +49,6 @@ func SharedOptions() fx.Option {
 			ratematrixrepository.New,
 			ratesimulationrepository.New,
 			rateimportrepository.New,
-			ratematrixrepository.NewDensityScaleRepository,
 			ratequoterepository.New,
 			fuelsurchargerepository.NewIndexRepository,
 			fuelsurchargerepository.NewPriceRepository,
@@ -70,6 +71,15 @@ func SharedOptions() fx.Option {
 			func(s *fuelsurchargeservice.Service) fuelsurchargeports.FuelSurchargeResolver { return s },
 			ratinghydration.New,
 			func(h *ratinghydration.Hydrator) ratequoteports.ShipmentRatingHydrator { return h },
+			tariff.NewTables,
+			tariff.NewCodes,
+			tariff.NewSettings,
+			tariff.NewContexts,
+			func(c *tariff.Contexts) tariffports.ContextSource { return c },
+			tariff.NewRater,
+			func(r *tariff.Rater) tariffports.Rater { return r },
+			tariff.NewRecordSource,
+			func(r *tariff.RecordSource) tariffports.RecordBuilder { return r },
 		),
 		formula.Module,
 		formulatemplateservice.Module,

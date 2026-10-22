@@ -54,6 +54,12 @@ type ContextSource interface {
 		tariffCtx *rules.TariffContext,
 		needs []rules.TariffNeed,
 	) error
+	LoadTables(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		tariffCtx *rules.TariffContext,
+		tables []string,
+	) error
 }
 
 type Condition struct {
@@ -83,4 +89,15 @@ type RateResult struct {
 
 type Rater interface {
 	Rate(ctx context.Context, req *RateRequest) (*RateResult, error)
+}
+
+type ShipmentRecordRequest struct {
+	TenantInfo pagination.TenantInfo
+	ShipmentID pulid.ID
+	Mode       string
+	AsOf       int64
+}
+
+type RecordBuilder interface {
+	ShipmentRecord(ctx context.Context, req *ShipmentRecordRequest) (rules.RawJSON, error)
 }

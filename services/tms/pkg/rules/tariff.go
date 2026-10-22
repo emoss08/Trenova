@@ -93,8 +93,8 @@ type TariffTable struct {
 	Name      string       `json:"name,omitempty"`
 	Axes      []TariffAxis `json:"axes"`
 	ValueType string       `json:"valueType"`
-	Cells     []TariffCell `json:"cells,omitempty"`
-	Loaded    [][]string   `json:"loaded,omitempty"`
+	Cells     []TariffCell `json:"cells"`
+	Loaded    [][]string   `json:"loaded"`
 }
 
 type TariffChargeCode struct {

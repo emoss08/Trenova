@@ -175,6 +175,11 @@ func (r *priceRepository) LatestPerIndex(
 				perIndex = 2
 			}
 
+			ceiling := "9999-12-31"
+			if req.OnOrBefore != "" {
+				ceiling = req.OnOrBefore
+			}
+
 			entities := make([]*fuelsurcharge.FuelIndexPrice, 0)
 			err := r.db.DBForContext(ctx).
 				NewSelect().
@@ -182,6 +187,7 @@ func (r *priceRepository) LatestPerIndex(
 				ColumnExpr("fip.*").
 				Where("fip.organization_id = ?", req.TenantInfo.OrgID).
 				Where("fip.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("fip.price_date <= ?", ceiling).
 				Where(`(
 			SELECT COUNT(*)
 			FROM fuel_index_prices newer
@@ -189,7 +195,8 @@ func (r *priceRepository) LatestPerIndex(
 			  AND newer.organization_id = fip.organization_id
 			  AND newer.business_unit_id = fip.business_unit_id
 			  AND newer.price_date > fip.price_date
-		) < ?`, perIndex).
+			  AND newer.price_date <= ?
+		) < ?`, ceiling, perIndex).
 				Order("fip.fuel_index_id ASC", "fip.price_date DESC").
 				Scan(ctx)
 			if err != nil {

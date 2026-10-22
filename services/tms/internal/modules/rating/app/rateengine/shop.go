@@ -243,7 +243,7 @@ func (s *Service) priceCandidate(
 	}
 
 	option.Outcome = rated.Outcome
-	option.Cost = rated.Amount
+	option.Cost = rated.Total
 	option.Currency = rated.Currency
 	option.Quote = rated.Quote
 	option.AgreementID = rated.AgreementID
@@ -257,7 +257,7 @@ func (s *Service) priceCandidate(
 
 	option.Margin = ratetypes.EvaluateMargin(&ratetypes.MarginInputs{
 		Sell:      sellTotalOf(req),
-		Buy:       rated.Amount,
+		Buy:       rated.Total,
 		Floor:     marginFloorOf(rated),
 		MaxPayPct: maxPayPercentOf(rated),
 	})

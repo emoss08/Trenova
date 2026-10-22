@@ -22,7 +22,36 @@ type contextKey struct{}
 
 type Stamp func(ctx context.Context) (string, error)
 
-type Build func(ctx context.Context, stamp string) ([]rules.TariffTable, error)
+type Axis struct {
+	Position      int16
+	Kind          string
+	Exact         bool
+	Normalization string
+	Forward       map[string]string
+	Reverse       map[string][]string
+}
+
+type Table struct {
+	MatrixID pulid.ID
+	Code     string
+	Axes     []Axis
+}
+
+type Entry struct {
+	Tables []rules.TariffTable
+	Index  []Table
+}
+
+func (e *Entry) Table(code string) (*Table, int, bool) {
+	for i := range e.Index {
+		if e.Index[i].Code == code {
+			return &e.Index[i], i, true
+		}
+	}
+	return nil, -1, false
+}
+
+type Build func(ctx context.Context, stamp string) (*Entry, error)
 
 type tenantKey struct {
 	orgID pulid.ID
@@ -30,8 +59,8 @@ type tenantKey struct {
 }
 
 type shapes struct {
-	stamp  string
-	tables []rules.TariffTable
+	stamp string
+	entry *Entry
 }
 
 type memo struct {
@@ -86,7 +115,7 @@ func Tables(
 	orgID, buID pulid.ID,
 	stamp Stamp,
 	build Build,
-) (string, []rules.TariffTable, error) {
+) (string, *Entry, error) {
 	key := tenantKey{orgID: orgID, buID: buID}
 	m := from(ctx)
 	if m != nil {
@@ -94,7 +123,7 @@ func Tables(
 		entry, ok := m.entries[key]
 		m.mu.Unlock()
 		if ok {
-			return entry.stamp, entry.tables, nil
+			return entry.stamp, entry.entry, nil
 		}
 	}
 
@@ -107,11 +136,11 @@ func Tables(
 	entry, ok := process.shapes.Get(key)
 	process.mu.Unlock()
 	if !ok || entry.stamp != current || current == "" {
-		tables, buildErr := build(ctx, current)
+		built, buildErr := build(ctx, current)
 		if buildErr != nil {
 			return "", nil, buildErr
 		}
-		entry = shapes{stamp: current, tables: tables}
+		entry = shapes{stamp: current, entry: built}
 		if current != "" {
 			process.mu.Lock()
 			process.shapes.Add(key, entry)
@@ -125,7 +154,7 @@ func Tables(
 		m.mu.Unlock()
 	}
 
-	return entry.stamp, entry.tables, nil
+	return entry.stamp, entry.entry, nil
 }
 
 func Cells(orgID, buID pulid.ID, stamp, table string, keys []string) ([]rules.TariffCell, bool) {

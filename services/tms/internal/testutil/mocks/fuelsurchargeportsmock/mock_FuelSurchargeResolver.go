@@ -8,6 +8,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -36,6 +38,142 @@ type MockFuelSurchargeResolver_Expecter struct {
 
 func (_m *MockFuelSurchargeResolver) EXPECT() *MockFuelSurchargeResolver_Expecter {
 	return &MockFuelSurchargeResolver_Expecter{mock: &_m.Mock}
+}
+
+// FuelChargeIDs provides a mock function for the type MockFuelSurchargeResolver
+func (_mock *MockFuelSurchargeResolver) FuelChargeIDs(ctx context.Context, tenantInfo pagination.TenantInfo) ([]pulid.ID, error) {
+	ret := _mock.Called(ctx, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FuelChargeIDs")
+	}
+
+	var r0 []pulid.ID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]pulid.ID, error)); ok {
+		return returnFunc(ctx, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []pulid.ID); ok {
+		r0 = returnFunc(ctx, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pulid.ID)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFuelSurchargeResolver_FuelChargeIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FuelChargeIDs'
+type MockFuelSurchargeResolver_FuelChargeIDs_Call struct {
+	*mock.Call
+}
+
+// FuelChargeIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockFuelSurchargeResolver_Expecter) FuelChargeIDs(ctx interface{}, tenantInfo interface{}) *MockFuelSurchargeResolver_FuelChargeIDs_Call {
+	return &MockFuelSurchargeResolver_FuelChargeIDs_Call{Call: _e.mock.On("FuelChargeIDs", ctx, tenantInfo)}
+}
+
+func (_c *MockFuelSurchargeResolver_FuelChargeIDs_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockFuelSurchargeResolver_FuelChargeIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFuelSurchargeResolver_FuelChargeIDs_Call) Return(iDs []pulid.ID, err error) *MockFuelSurchargeResolver_FuelChargeIDs_Call {
+	_c.Call.Return(iDs, err)
+	return _c
+}
+
+func (_c *MockFuelSurchargeResolver_FuelChargeIDs_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]pulid.ID, error)) *MockFuelSurchargeResolver_FuelChargeIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FuelPriceAsOf provides a mock function for the type MockFuelSurchargeResolver
+func (_mock *MockFuelSurchargeResolver) FuelPriceAsOf(ctx context.Context, req *fuelsurchargeports.FuelPriceAsOfRequest) (*fuelsurchargeports.FuelPriceAsOf, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FuelPriceAsOf")
+	}
+
+	var r0 *fuelsurchargeports.FuelPriceAsOf
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *fuelsurchargeports.FuelPriceAsOfRequest) (*fuelsurchargeports.FuelPriceAsOf, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *fuelsurchargeports.FuelPriceAsOfRequest) *fuelsurchargeports.FuelPriceAsOf); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*fuelsurchargeports.FuelPriceAsOf)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *fuelsurchargeports.FuelPriceAsOfRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFuelSurchargeResolver_FuelPriceAsOf_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FuelPriceAsOf'
+type MockFuelSurchargeResolver_FuelPriceAsOf_Call struct {
+	*mock.Call
+}
+
+// FuelPriceAsOf is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *fuelsurchargeports.FuelPriceAsOfRequest
+func (_e *MockFuelSurchargeResolver_Expecter) FuelPriceAsOf(ctx interface{}, req interface{}) *MockFuelSurchargeResolver_FuelPriceAsOf_Call {
+	return &MockFuelSurchargeResolver_FuelPriceAsOf_Call{Call: _e.mock.On("FuelPriceAsOf", ctx, req)}
+}
+
+func (_c *MockFuelSurchargeResolver_FuelPriceAsOf_Call) Run(run func(ctx context.Context, req *fuelsurchargeports.FuelPriceAsOfRequest)) *MockFuelSurchargeResolver_FuelPriceAsOf_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *fuelsurchargeports.FuelPriceAsOfRequest
+		if args[1] != nil {
+			arg1 = args[1].(*fuelsurchargeports.FuelPriceAsOfRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFuelSurchargeResolver_FuelPriceAsOf_Call) Return(fuelPriceAsOf *fuelsurchargeports.FuelPriceAsOf, err error) *MockFuelSurchargeResolver_FuelPriceAsOf_Call {
+	_c.Call.Return(fuelPriceAsOf, err)
+	return _c
+}
+
+func (_c *MockFuelSurchargeResolver_FuelPriceAsOf_Call) RunAndReturn(run func(ctx context.Context, req *fuelsurchargeports.FuelPriceAsOfRequest) (*fuelsurchargeports.FuelPriceAsOf, error)) *MockFuelSurchargeResolver_FuelPriceAsOf_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ResolveShipmentCharge provides a mock function for the type MockFuelSurchargeResolver
@@ -73,8 +211,8 @@ type MockFuelSurchargeResolver_ResolveShipmentCharge_Call struct {
 
 // ResolveShipmentCharge is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *services.ResolveShipmentChargeRequest
-func (_e *MockFuelSurchargeResolver_Expecter) ResolveShipmentCharge(ctx any, req any) *MockFuelSurchargeResolver_ResolveShipmentCharge_Call {
+//   - req *fuelsurchargeports.ResolveShipmentChargeRequest
+func (_e *MockFuelSurchargeResolver_Expecter) ResolveShipmentCharge(ctx interface{}, req interface{}) *MockFuelSurchargeResolver_ResolveShipmentCharge_Call {
 	return &MockFuelSurchargeResolver_ResolveShipmentCharge_Call{Call: _e.mock.On("ResolveShipmentCharge", ctx, req)}
 }
 

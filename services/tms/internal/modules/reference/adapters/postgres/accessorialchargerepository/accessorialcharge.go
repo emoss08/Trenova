@@ -290,6 +290,46 @@ func (r *repository) GetByID(
 	)
 }
 
+func (r *repository) ListCatalog(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*accessorialcharge.AccessorialCharge, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accessorialcharge.AccessorialCharge, error) {
+			cols := accessorialchargecol.AccessorialChargeColumns
+			entities := make([]*accessorialcharge.AccessorialCharge, 0, 32)
+			err := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(&entities).
+				Column(
+					cols.ID.Bare(),
+					cols.OrganizationID.Bare(),
+					cols.BusinessUnitID.Bare(),
+					cols.Code.Bare(),
+					cols.Description.Bare(),
+					cols.Status.Bare(),
+					cols.Method.Bare(),
+					cols.RateUnit.Bare(),
+					cols.Amount.Bare(),
+				).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return accessorialchargecol.AccessorialChargeScopeTenant(sq, tenantInfo)
+				}).
+				Order(cols.Code.OrderAsc()).
+				Scan(ctx)
+			if err != nil {
+				r.l.With(zap.String("operation", "ListCatalog")).
+					Error("failed to list the accessorial charge catalog", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,

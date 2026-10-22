@@ -377,3 +377,25 @@ func (sp *Shipment) ServiceDays() decimal.Decimal {
 	}
 	return decimal.NewFromInt((end - start + secondsPerDay - 1) / secondsPerDay)
 }
+
+const distanceKilometers = "Kilometers"
+
+var kilometresPerMile = decimal.RequireFromString("1.609344")
+
+func (sp *Shipment) RatingMiles() decimal.Decimal {
+	total := decimal.Zero
+	if sp == nil {
+		return total
+	}
+	for _, move := range sp.Moves {
+		if move == nil || move.IsCanceled() || move.Distance == nil {
+			continue
+		}
+		distance := decimal.NewFromFloat(*move.Distance)
+		if move.DistanceUnits == distanceKilometers {
+			distance = distance.Div(kilometresPerMile)
+		}
+		total = total.Add(distance)
+	}
+	return total
+}

@@ -4,13 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -282,51 +280,17 @@ func agreementPriorityOf(rule *rateagreement.RateAgreementRule) int16 {
 	return rule.Agreement.Priority
 }
 
-// resolveZones fills in the zones each end of the lane belongs to.
-//
-// Zone membership is the one part of the lane a shipment cannot work out for
-// itself, and it has to be settled before the candidate query runs because the
-// zone ids become lane keys.
 func (s *Service) resolveZones(ctx context.Context, rateCtx *RateContext) error {
-	lane, err := rategeo.MatchLane(ctx, &rateCtx.Origin, &rateCtx.Destination)
+	lane, err := s.records.LaneZones(ctx, rateCtx.TenantInfo, rateCtx.Entity)
 	if err != nil {
 		return err
 	}
 
-	origin, err := s.zoneRepo.ResolveMembership(
-		ctx,
-		&ratezoneports.ResolveZoneMembershipRequest{
-			TenantInfo: rateCtx.TenantInfo,
-			MatchKeys:  lane.OriginKeys,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	destination, err := s.zoneRepo.ResolveMembership(
-		ctx,
-		&ratezoneports.ResolveZoneMembershipRequest{
-			TenantInfo: rateCtx.TenantInfo,
-			MatchKeys:  lane.DestinationKeys,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	rateCtx.Origin.ZoneIDs = origin
-	rateCtx.Destination.ZoneIDs = destination
+	rateCtx.Origin.ZoneIDs = ratezoneports.ZoneIDs(lane.Origin)
+	rateCtx.Destination.ZoneIDs = ratezoneports.ZoneIDs(lane.Destination)
+	rateCtx.OriginZoneCodes = ratezoneports.ZoneCodes(lane.Origin)
+	rateCtx.DestinationZoneCodes = ratezoneports.ZoneCodes(lane.Destination)
+	rateCtx.ZonesResolved = true
 
 	return nil
-}
-
-// totalsFor splits a linehaul into the shape an invoice reads. Fuel and
-// accessorials are added by the caller that owns them; the engine only ever
-// produces the linehaul.
-func totalsFor(linehaul decimal.Decimal) ratetypes.Totals {
-	return ratetypes.Totals{
-		Linehaul: linehaul,
-		Total:    linehaul,
-	}
 }

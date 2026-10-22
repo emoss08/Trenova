@@ -73,7 +73,6 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 		func(g seqgen.Generator) invoiceadjustmentports.InvoiceAdjustGenerator { return g },
 	),
 	fx.Annotate(
-		func(s *fuelsurchargeservice.Service) formulatemplatetypes.ContextVariableProvider { return s },
 		fx.ResultTags(`group:"formula_context_variables"`),
 	),
 ), fx.Invoke(
