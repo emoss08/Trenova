@@ -3,10 +3,10 @@ package rateagreement_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,126 +33,6 @@ func formulaRule(
 		Rate:                  nullDec("2.15"),
 		EffectiveFrom:         1,
 	}
-}
-
-func TestApplyLaneKeyIsSetOnValidate(t *testing.T) {
-	t.Parallel()
-
-	rule := formulaRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeState, "60601", "ust_ga")
-
-	multiErr := errortypes.NewMultiError()
-	rule.Validate(multiErr)
-
-	require.False(t, multiErr.HasErrors(), "%v", multiErr)
-	assert.Equal(t, "Z3:606>ST:ust_ga", rule.LaneKey)
-}
-
-// A rule stores one lane key and a shipment produces the handful it could have
-// stored. If the two ever computed the key differently the rule would simply
-// stop matching, so they share one implementation and this pins the agreement
-// between them.
-func TestStoredLaneKeyIsReachableFromTheShipmentsCandidates(t *testing.T) {
-	t.Parallel()
-
-	stateID := pulid.MustNew("ust_")
-	rule := formulaRule(
-		rategeo.ScopeTypeZip3,
-		rategeo.ScopeTypeState,
-		"60601",
-		stateID.String(),
-	)
-	rule.ApplyLaneKey()
-
-	origin := rategeo.Place{PostalCode: "60601", City: "Chicago", CountryISO3: "USA"}
-	destination := rategeo.Place{StateID: stateID, City: "Atlanta", CountryISO3: "USA"}
-
-	candidates := rategeo.LaneKeyCandidates(origin.MatchKeys(), destination.MatchKeys())
-
-	assert.Contains(t, candidates, rule.LaneKey)
-}
-
-func TestBidirectionalRuleIsReachableFromEitherEnd(t *testing.T) {
-	t.Parallel()
-
-	rule := formulaRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeZip3, "606", "303")
-	rule.Direction = rateagreement.DirectionBidirectional
-	rule.ApplyLaneKey()
-
-	reverse, ok := rule.ReverseLaneKey()
-
-	require.True(t, ok)
-	assert.Equal(t, "Z3:606>Z3:303", rule.LaneKey)
-	assert.Equal(t, "Z3:303>Z3:606", reverse)
-}
-
-func TestDirectionalRuleHasNoReverseKey(t *testing.T) {
-	t.Parallel()
-
-	rule := formulaRule(rategeo.ScopeTypeZip3, rategeo.ScopeTypeZip3, "606", "303")
-
-	_, ok := rule.ReverseLaneKey()
-
-	assert.False(t, ok)
-}
-
-// Geography has to outrank every condition. A state-wide rule that also names
-// the commodity, the equipment and the service type must still lose to a plain
-// postal-code lane, because that is what a pricing analyst means by writing the
-// narrower lane.
-func TestGeographyOutranksEveryConditionCombined(t *testing.T) {
-	t.Parallel()
-
-	narrowLane := formulaRule(rategeo.ScopeTypeZip5, rategeo.ScopeTypeZip5, "60601", "30301")
-
-	loadedStateRule := formulaRule(
-		rategeo.ScopeTypeState,
-		rategeo.ScopeTypeState,
-		"ust_il",
-		"ust_ga",
-	)
-	loadedStateRule.CommodityIDs = []pulid.ID{pulid.MustNew("com_")}
-	loadedStateRule.FreightClasses = []commodity.FreightClass{commodity.FreightClass70}
-	loadedStateRule.TractorTypeIDs = []pulid.ID{pulid.MustNew("eqt_")}
-	loadedStateRule.ServiceTypeIDs = []pulid.ID{pulid.MustNew("svt_")}
-	loadedStateRule.ShipmentTypeIDs = []pulid.ID{pulid.MustNew("sht_")}
-	loadedStateRule.MinWeight = nullDec("1000")
-	loadedStateRule.MinDistance = nullDec("100")
-	loadedStateRule.ServiceModels = []modeprofile.ServiceModel{modeprofile.ServiceModelTruckload}
-	loadedStateRule.HazmatOnly = true
-	loadedStateRule.TempControlOnly = true
-
-	assert.Greater(t,
-		narrowLane.ComputeSpecificity(),
-		loadedStateRule.ComputeSpecificity(),
-		"a narrower lane must win regardless of how many conditions the broader rule names",
-	)
-}
-
-// The guard the comment in specificity.go relies on: every condition weight
-// summed must still be less than one step of geographic granularity.
-func TestConditionsCanNeverOutweighOneStepOfGeography(t *testing.T) {
-	t.Parallel()
-
-	assert.Less(t,
-		rateagreement.MaxConditionScore,
-		rateagreement.GeographyScale,
-		"condition weights have grown past the scale that keeps geography dominant",
-	)
-}
-
-func TestConditionsBreakATieBetweenEquallyNarrowLanes(t *testing.T) {
-	t.Parallel()
-
-	plain := formulaRule(rategeo.ScopeTypeState, rategeo.ScopeTypeState, "ust_il", "ust_ga")
-	withCommodity := formulaRule(
-		rategeo.ScopeTypeState,
-		rategeo.ScopeTypeState,
-		"ust_il",
-		"ust_ga",
-	)
-	withCommodity.CommodityIDs = []pulid.ID{pulid.MustNew("com_")}
-
-	assert.Greater(t, withCommodity.ComputeSpecificity(), plain.ComputeSpecificity())
 }
 
 // Effective windows are half open so an amendment can begin at the instant its
@@ -546,6 +426,7 @@ func TestRadiusLaneNeedsACentreAndADistance(t *testing.T) {
 	rule.OriginLatitude = &latitude
 	rule.OriginLongitude = &longitude
 
+	require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))
 	multiErr = errortypes.NewMultiError()
 	rule.Validate(multiErr)
 
@@ -569,39 +450,4 @@ func TestWeightBreaksMustBeContiguous(t *testing.T) {
 	rule.Validate(multiErr)
 
 	assert.True(t, multiErr.HasErrors(), "a gap between breaks must be rejected")
-}
-
-// The lane editor scores lanes as they are typed, before anything is saved, so
-// it carries its own copy of these weights in
-// client/packages/shared/src/lib/rate.ts. A drift between the two shows up as
-// the editor predicting one winner and the engine picking another, which is
-// worse than showing no prediction at all.
-//
-// Pinning the exact values here means changing one without the other fails
-// loudly, at the point of the change, rather than quietly on somebody's invoice.
-func TestSpecificityWeightsAreMirroredByTheLaneEditor(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, int32(1024), rateagreement.GeographyScale)
-
-	assert.Equal(t, int32(512), rateagreement.ConditionWeightCommodity)
-	assert.Equal(t, int32(256), rateagreement.ConditionWeightFreightClass)
-	assert.Equal(t, int32(128), rateagreement.ConditionWeightEquipmentType)
-	assert.Equal(t, int32(64), rateagreement.ConditionWeightServiceType)
-	assert.Equal(t, int32(32), rateagreement.ConditionWeightShipmentType)
-	assert.Equal(t, int32(16), rateagreement.ConditionWeightWeightRange)
-	assert.Equal(t, int32(8), rateagreement.ConditionWeightDistanceRange)
-	assert.Equal(t, int32(4), rateagreement.ConditionWeightServiceModel)
-	assert.Equal(t, int32(2), rateagreement.ConditionWeightHazmat)
-	assert.Equal(t, int32(1), rateagreement.ConditionWeightTempControl)
-
-	assert.Equal(t, int32(0), rategeo.ScopeTypeAny.Weight())
-	assert.Equal(t, int32(300), rategeo.ScopeTypeCountry.Weight())
-	assert.Equal(t, int32(500), rategeo.ScopeTypeState.Weight())
-	assert.Equal(t, int32(600), rategeo.ScopeTypeZone.Weight())
-	assert.Equal(t, int32(650), rategeo.ScopeTypeRadius.Weight())
-	assert.Equal(t, int32(700), rategeo.ScopeTypeCityState.Weight())
-	assert.Equal(t, int32(800), rategeo.ScopeTypeZip3.Weight())
-	assert.Equal(t, int32(900), rategeo.ScopeTypeZip5.Weight())
-	assert.Equal(t, int32(1000), rategeo.ScopeTypeLocation.Weight())
 }

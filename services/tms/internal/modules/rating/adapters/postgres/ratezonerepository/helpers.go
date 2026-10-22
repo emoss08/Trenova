@@ -23,6 +23,5 @@ func stampMembers(entity *ratezone.RateZone, resetIDs bool) {
 		member.RateZoneID = entity.ID
 		member.OrganizationID = entity.OrganizationID
 		member.BusinessUnitID = entity.BusinessUnitID
-		member.ApplyMatchKey()
 	}
 }

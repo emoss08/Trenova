@@ -121,6 +121,10 @@ func (m *manufacturerRows) ListConnection(
 		}
 	}
 	end := min(start+req.Cursor.Limit+1, len(rows))
+	if req.Cursor.IncludeTotalCount {
+		total := len(rows)
+		return pagination.NewCursorListResultWithTotalCount(rows[start:end], req.Cursor.Limit, &total), nil
+	}
 
 	return pagination.NewCursorListResult(rows[start:end], req.Cursor.Limit), nil
 }
@@ -179,6 +183,17 @@ func (h *harness) query(
 ) (map[string]any, error) {
 	t.Helper()
 
+	return h.read(t, actor, args, false)
+}
+
+func (h *harness) read(
+	t *testing.T,
+	actor *permissionports.RequestActor,
+	args map[string]any,
+	includeTotal bool,
+) (map[string]any, error) {
+	t.Helper()
+
 	data, err := h.tool.Query(readscope.With(t.Context(), nil), &agentports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
@@ -186,6 +201,7 @@ func (h *harness) query(
 		Timezone:       "America/Chicago",
 		Params:         args,
 		RunID:          pulid.MustNew("ar_"),
+		IncludeTotal:   includeTotal,
 	})
 	if err != nil {
 		return nil, err
@@ -267,6 +283,25 @@ func TestGraphQLListTool_TwoPagesNeverRepeatARow(t *testing.T) {
 	}
 	assert.Equal(t, false, second["hasMore"])
 	assert.NotContains(t, second, "nextCursor")
+}
+
+func TestGraphQLListTool_CountsTheListOnlyWhenAPersonsTableAsks(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, &mocks.DenyResourcesPermissionEngine{})
+	person := agentreadtest.Person()
+	active := map[string]any{"status": []any{"Active"}, "limit": 2}
+
+	counted, err := h.read(t, person, active, true)
+	require.NoError(t, err)
+	assert.True(t, h.repo.lastConnection().Cursor.IncludeTotalCount)
+	assert.Equal(t, float64(5), counted["total"])
+	assert.Len(t, itemIDs(counted), 2)
+
+	uncounted, err := h.query(t, person, active)
+	require.NoError(t, err)
+	assert.False(t, h.repo.lastConnection().Cursor.IncludeTotalCount)
+	assert.NotContains(t, uncounted, "total")
 }
 
 // A cursor is bound to the tool and the arguments that produced it: changed

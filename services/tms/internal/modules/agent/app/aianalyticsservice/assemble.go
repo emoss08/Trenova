@@ -226,6 +226,7 @@ func buildTotals(row *aianalyticsports.TotalsRow) aianalyticsports.Totals {
 		PricedRuns:               row.PricedRuns,
 		CostPerCompletedRun:      costPerCompleted(row.CostUSD, row.PricedRuns, row.Completed),
 		Tokens:                   row.Tokens,
+		Advisor:                  row.Advisor,
 	}
 	if row.Completion.HasAny {
 		totals.MedianRunMs = ptr(row.Completion.P50Ms)
@@ -289,6 +290,7 @@ func addCounts(into *aianalyticsports.Counts, from *aianalyticsports.Counts) {
 	into.PricedRuns += from.PricedRuns
 	into.LastRanAt = max(into.LastRanAt, from.LastRanAt)
 	into.Tokens = into.Tokens.Add(from.Tokens)
+	into.Advisor = into.Advisor.Add(from.Advisor)
 }
 
 func tallyBy(data *readings, keyOf keyFunc) *tallies {
@@ -431,6 +433,7 @@ func seriesFromTally(item *tally, times []aianalyticsports.RunTime) aianalyticsp
 		PricedRuns:          counts.PricedRuns,
 		CostPerCompletedRun: costPerCompleted(counts.CostUSD, counts.PricedRuns, counts.Completed),
 		Tokens:              counts.Tokens,
+		Advisor:             counts.Advisor,
 		RunTimes:            times,
 		Providers:           []aianalyticsports.ProviderRef{},
 		Models:              []string{},

@@ -1,6 +1,8 @@
 package base
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -94,15 +96,20 @@ func ChargeAllocationsFromInput(
 // with its charges. A shipment read without them returns nothing rather than a
 // freight-only figure that would understate every payer.
 func billingSplitSummaryToModel(
+	ctx context.Context,
 	entity *shipmentdomain.Shipment,
-) []*gqlmodel.ShipmentBillingSplitSummary {
+) ([]*gqlmodel.ShipmentBillingSplitSummary, error) {
 	if entity == nil || entity.AdditionalCharges == nil {
-		return []*gqlmodel.ShipmentBillingSplitSummary{}
+		return []*gqlmodel.ShipmentBillingSplitSummary{}, nil
 	}
 
-	resolution, err := shipmentdomain.ResolveShares(entity, entity.ChargeAllocations)
-	if err != nil || resolution == nil {
-		return []*gqlmodel.ShipmentBillingSplitSummary{}
+	resolution, err := shipmentdomain.ResolveShares(ctx, entity, entity.ChargeAllocations)
+	var refused *errortypes.Error
+	switch {
+	case errors.As(err, &refused):
+		return []*gqlmodel.ShipmentBillingSplitSummary{}, nil
+	case err != nil:
+		return nil, err
 	}
 
 	names := payerNames(entity)
@@ -124,7 +131,7 @@ func billingSplitSummaryToModel(
 		})
 	}
 
-	return rows
+	return rows, nil
 }
 
 type payerLabel struct {

@@ -114,12 +114,12 @@ func (s *Service) formulaCharge(
 
 		boundRate = decimal.NewNullDecimal(result.UsedBreak.Rate)
 		breakMinCharge = result.UsedBreak.MinCharge
-		overrides["totalWeight"] = result.RatedWeight.InexactFloat64()
+		overrides["totalWeight"] = result.RatedWeight
 		recordBreakSelection(result, detail, trace)
 	}
 
 	if boundRate.Valid {
-		overrides["baseRate"] = boundRate.Decimal.InexactFloat64()
+		overrides["baseRate"] = boundRate.Decimal
 	}
 
 	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
@@ -461,7 +461,7 @@ const (
 
 func bindSellTotal(rateCtx *RateContext, overrides map[string]any) map[string]string {
 	if rateCtx.SellTotal.Valid {
-		overrides[sellTotalInput] = rateCtx.SellTotal.Decimal.InexactFloat64()
+		overrides[sellTotalInput] = rateCtx.SellTotal.Decimal
 		return nil
 	}
 

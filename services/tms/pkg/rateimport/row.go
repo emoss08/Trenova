@@ -102,18 +102,6 @@ func ParseRow(
 		return nil, fmt.Errorf("destination: %w", err)
 	}
 
-	originKey, ok := origin.Key()
-	if !ok {
-		return nil, fmt.Errorf("origin: %q cannot be read as a %s", origin.Value, origin.Type)
-	}
-
-	destinationKey, ok := destination.Key()
-	if !ok {
-		return nil, fmt.Errorf(
-			"destination: %q cannot be read as a %s", destination.Value, destination.Type,
-		)
-	}
-
 	templateName, err := parseBasis(mapping.Value(row, FieldRatingBasis))
 	if err != nil {
 		return nil, err
@@ -145,7 +133,6 @@ func ParseRow(
 		DestinationScopeType:  destination.Type,
 		DestinationScopeValue: destination.Value,
 		DestinationCity:       destination.City,
-		LaneKey:               rategeo.LaneKey(originKey, destinationKey),
 		Direction:             rateagreement.DirectionDirectional,
 		AllowDeficitRating:    true,
 		FormulaTemplateID:     &templateID,
@@ -232,6 +219,24 @@ func parseScope(
 }
 
 var errHalfALane = errors.New("this row does not say where the lane runs")
+
+func UnkeyedEnd(rule *rateagreement.RateAgreementRule) error {
+	origin, destination := rule.KeyedEnds()
+	switch {
+	case !origin:
+		return fmt.Errorf(
+			"origin: %q cannot be read as a %s", rule.OriginScopeValue, rule.OriginScopeType,
+		)
+	case !destination:
+		return fmt.Errorf(
+			"destination: %q cannot be read as a %s",
+			rule.DestinationScopeValue,
+			rule.DestinationScopeType,
+		)
+	default:
+		return nil
+	}
+}
 
 func parseBasis(raw string) (string, error) {
 	// A sheet with no basis column is a flat rate sheet, which most are.

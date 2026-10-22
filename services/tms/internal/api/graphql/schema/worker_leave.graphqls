@@ -107,7 +107,7 @@ type WorkerLeaveEntry {
 One qualifying reason for leave. Entitlement is drawn down by the days recorded
 against a case, so a case open for months has used nothing until days are.
 """
-type WorkerLeaveCase {
+type WorkerLeaveCase @kind(resource: "worker_leave") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -224,7 +224,20 @@ input UpdateLeaveControlInput {
 
 extend type Query {
   leaveControl: LeaveControl!
-  workerLeaveCases(workerId: ID!): [WorkerLeaveCase!]!
+  """
+  Leave cases, newest first: one worker's, or every worker's when no worker
+  is named.
+  """
+  workerLeaveCases(
+    "The worker whose cases are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the cases still pending or approved."
+    openOnly: Boolean
+    "Only the cases still waiting on the certification the worker owes."
+    certificationOutstandingOnly: Boolean
+    "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerLeaveCase!]!
   workerLeaveCase(id: ID!): WorkerLeaveCase!
   """
   A worker's FMLA balance. Leave asOf empty for today.

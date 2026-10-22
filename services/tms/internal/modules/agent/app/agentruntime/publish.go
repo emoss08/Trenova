@@ -283,6 +283,16 @@ func shownNote(shown *agentports.ShownArtifact) string {
 			"the others. Work from the fields it already has instead of looking up each row "+
 			"again.%s]", shown.Title, artifactRefNote(shown))
 	}
+	if shown.Tabular() && shown.Paged {
+		return fmt.Sprintf("\n\n[This result is kept as a table titled %q beside the "+
+			"conversation, and the list has more rows than it holds: the person pages through "+
+			"all of them there. Point to it in the sentence that mentions it, however few rows "+
+			"this page has, and do not write its rows out as a markdown table. Read the next page "+
+			"only when your answer needs rows from it; a page you read joins this table rather "+
+			"than making a new one. Answer with the count and the rows that need attention, and "+
+			"work from the fields it already has instead of looking up each row again.%s]",
+			shown.Title, artifactRefNote(shown))
+	}
 	if shown.Tabular() && shown.Rows > 0 && shown.Rows <= InlineRows {
 		return fmt.Sprintf("\n\n[This result has %d rows, few enough to answer in your reply "+
 			"when the answer is a fact or a few of its rows: give them with only the columns the "+

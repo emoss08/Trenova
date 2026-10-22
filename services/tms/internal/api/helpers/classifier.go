@@ -94,27 +94,25 @@ func classifyValidation(err error) (ProblemType, bool) {
 	return "", false
 }
 
-// classifyFormula treats a formula that will not compile, resolve, or compute
+// classifyFormula treats a formula that will not check, resolve, or evaluate
 // as a validation problem. The expression is tenant-authored data; a fault in
 // it is something the author fixes in the Studio, and a 500 would hide the
 // message that tells them what to fix.
 func classifyFormula(err error) (ProblemType, bool) {
 	var (
-		schemaErr    *formulaerrors.SchemaError
-		computeErr   *formulaerrors.ComputeError
-		transformErr *formulaerrors.TransformError
-		variableErr  *formulaerrors.VariableError
-		resolveErr   *formulaerrors.ResolveError
-		missingErr   *formulaerrors.MissingFieldError
-		unresolved   *formulaerrors.UnresolvedFieldError
+		schemaErr     *formulaerrors.SchemaError
+		computeErr    *formulaerrors.ComputeError
+		transformErr  *formulaerrors.TransformError
+		resolveErr    *formulaerrors.ResolveError
+		evaluationErr *formulaerrors.EvaluationError
+		unresolved    *formulaerrors.UnresolvedFieldError
 	)
 
 	if errors.As(err, &schemaErr) ||
 		errors.As(err, &computeErr) ||
 		errors.As(err, &transformErr) ||
-		errors.As(err, &variableErr) ||
 		errors.As(err, &resolveErr) ||
-		errors.As(err, &missingErr) ||
+		errors.As(err, &evaluationErr) ||
 		errors.As(err, &unresolved) {
 		return ProblemTypeValidation, true
 	}

@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -41,7 +41,7 @@ func (r *MutationResolver) UpdateBillingQueueStatus(ctx context.Context, id stri
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(item)
+	return base.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error) {
@@ -69,7 +69,7 @@ func (r *MutationResolver) AssignBillingQueueBiller(ctx context.Context, id stri
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(item)
+	return base.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error) {
@@ -91,7 +91,7 @@ func (r *MutationResolver) PostBillingQueueItem(ctx context.Context, id string) 
 		return nil, err
 	}
 
-	item, err := base.RequiredBillingQueueItemToModel(result.Item)
+	item, err := base.RequiredBillingQueueItemToModel(ctx, result.Item)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (r *MutationResolver) ReleaseBillingQueueItem(ctx context.Context, id strin
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(item)
+	return base.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) ResolveBillingQueueIssue(ctx context.Context, id string, issueID string, optionKey string) (*gqlmodel.BillingQueueItem, error) {
@@ -156,7 +156,7 @@ func (r *MutationResolver) ResolveBillingQueueIssue(ctx context.Context, id stri
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(item)
+	return base.RequiredBillingQueueItemToModel(ctx, item)
 }
 
 func (r *MutationResolver) UndoBillingQueueIssue(ctx context.Context, id string, issueID string) (*gqlmodel.BillingQueueItem, error) {
@@ -183,5 +183,5 @@ func (r *MutationResolver) UndoBillingQueueIssue(ctx context.Context, id string,
 		return nil, err
 	}
 
-	return base.RequiredBillingQueueItemToModel(item)
+	return base.RequiredBillingQueueItemToModel(ctx, item)
 }

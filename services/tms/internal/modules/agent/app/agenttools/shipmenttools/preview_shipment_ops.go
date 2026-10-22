@@ -72,9 +72,14 @@ func renderOwnershipTransfer(
 	), change), nil
 }
 
+type reratePlan struct {
+	*shipmentports.ShipmentAutoRatePreview
+	money *agent.MoneyPreview
+}
+
 func renderRerate(
 	_ *shipmentports.AutoRateShipmentRequest,
-	plan *shipmentports.ShipmentAutoRatePreview,
+	plan *reratePlan,
 ) (*agent.ToolPreview, error) {
 	application := plan.Application
 	if application == nil || !application.Applied {
@@ -102,7 +107,7 @@ func renderRerate(
 	}
 	toolpreview.AttachMoney(
 		change,
-		common.ChargeEditMoney(plan.Before, plan.After),
+		plan.money,
 		toolpreview.SensitiveAs("totalChargeAmount", "otherChargeAmount"),
 	)
 

@@ -2,6 +2,7 @@ package ratezone
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -13,6 +14,10 @@ import (
 )
 
 var _ bun.BeforeAppendModelHook = (*RateZoneMember)(nil)
+
+var ErrMatchKeyNotApplied = errors.New(
+	"a rate zone member is written before its match key was applied",
+)
 
 // RateZoneMember is one place that belongs to a zone.
 //
@@ -37,6 +42,8 @@ type RateZoneMember struct {
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	RateZone *RateZone `json:"-" bun:"rel:belongs-to,join:rate_zone_id=id"`
+
+	keyApplied bool
 }
 
 // Scope reads the member back as the geography value object the key helpers
@@ -46,14 +53,6 @@ func (rzm *RateZoneMember) Scope() rategeo.Scope {
 		Type:  rzm.ScopeType,
 		Value: rzm.ScopeValue,
 		City:  rzm.City,
-	}
-}
-
-// ApplyMatchKey recomputes the stored key from the member's scope. It runs on
-// every write so the key can never drift from the fields it was derived from.
-func (rzm *RateZoneMember) ApplyMatchKey() {
-	if key, ok := rzm.Scope().Key(); ok {
-		rzm.MatchKey = key
 	}
 }
 
@@ -118,7 +117,7 @@ func (rzm *RateZoneMember) validateScope(multiErr *errortypes.MultiError) {
 	// matched, which reads to the user as a zone that silently ignores part of
 	// its own definition. The commonest cause is a postal code too short to
 	// yield a three digit prefix.
-	if _, ok := rzm.Scope().Key(); !ok {
+	if rzm.keyApplied && rzm.MatchKey == "" {
 		multiErr.Add(
 			"scopeValue",
 			errortypes.ErrInvalid,
@@ -128,7 +127,9 @@ func (rzm *RateZoneMember) validateScope(multiErr *errortypes.MultiError) {
 }
 
 func (rzm *RateZoneMember) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	rzm.ApplyMatchKey()
+	if rzm.MatchKey == "" {
+		return ErrMatchKeyNotApplied
+	}
 
 	now := timeutils.NowUnix()
 

@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -229,7 +228,7 @@ func createMinimalShipment() *shipment.Shipment {
 }
 
 func TestComplex_PerMileWithMinimumAndFuelSurcharge(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -259,7 +258,7 @@ func TestComplex_PerMileWithMinimumAndFuelSurcharge(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -273,7 +272,7 @@ func TestComplex_PerMileWithMinimumAndFuelSurcharge(t *testing.T) {
 }
 
 func TestComplex_TieredWeightPricing(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -295,7 +294,7 @@ func TestComplex_TieredWeightPricing(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -309,7 +308,7 @@ func TestComplex_TieredWeightPricing(t *testing.T) {
 }
 
 func TestComplex_CWTWithAccessorials(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -338,7 +337,7 @@ func TestComplex_CWTWithAccessorials(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -356,7 +355,7 @@ func TestComplex_CWTWithAccessorials(t *testing.T) {
 }
 
 func TestComplex_FullFreightBillCalculation(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -413,7 +412,7 @@ func TestComplex_FullFreightBillCalculation(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -431,7 +430,7 @@ func TestComplex_FullFreightBillCalculation(t *testing.T) {
 }
 
 func TestComplex_DistanceBasedTiers(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -460,7 +459,7 @@ func TestComplex_DistanceBasedTiers(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -474,7 +473,7 @@ func TestComplex_DistanceBasedTiers(t *testing.T) {
 }
 
 func TestComplex_MinimalShipmentHandling(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -503,7 +502,7 @@ func TestComplex_MinimalShipmentHandling(t *testing.T) {
 
 	entity := createMinimalShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -517,7 +516,7 @@ func TestComplex_MinimalShipmentHandling(t *testing.T) {
 }
 
 func TestComplex_RuntimeVariableOverrides(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -545,7 +544,7 @@ func TestComplex_RuntimeVariableOverrides(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template: template,
 		Entity:   entity,
 		Variables: map[string]any{
@@ -562,7 +561,7 @@ func TestComplex_RuntimeVariableOverrides(t *testing.T) {
 }
 
 func TestComplex_NestedConditionals(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -610,7 +609,7 @@ func TestComplex_NestedConditionals(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -624,7 +623,7 @@ func TestComplex_NestedConditionals(t *testing.T) {
 }
 
 func TestComplex_MathFunctionChaining(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -645,7 +644,7 @@ func TestComplex_MathFunctionChaining(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -658,7 +657,7 @@ func TestComplex_MathFunctionChaining(t *testing.T) {
 }
 
 func TestComplex_AverageAndSum(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -692,7 +691,7 @@ func TestComplex_AverageAndSum(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -708,7 +707,7 @@ func TestComplex_AverageAndSum(t *testing.T) {
 }
 
 func TestComplex_CoalesceForDefaults(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -725,7 +724,7 @@ func TestComplex_CoalesceForDefaults(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template: template,
 		Entity:   entity,
 		Variables: map[string]any{
@@ -741,7 +740,7 @@ func TestComplex_CoalesceForDefaults(t *testing.T) {
 }
 
 func TestComplex_AbsoluteValueCalculation(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -769,7 +768,7 @@ func TestComplex_AbsoluteValueCalculation(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -785,7 +784,7 @@ func TestComplex_AbsoluteValueCalculation(t *testing.T) {
 }
 
 func TestComplex_FloorCeilRounding(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -809,7 +808,7 @@ func TestComplex_FloorCeilRounding(t *testing.T) {
 
 	entity := createRealisticShipment()
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -825,7 +824,7 @@ func TestComplex_FloorCeilRounding(t *testing.T) {
 }
 
 func TestComplex_NilShipmentFieldsGracefulHandling(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:       pulid.MustNew("FT"),
@@ -859,7 +858,7 @@ func TestComplex_NilShipmentFieldsGracefulHandling(t *testing.T) {
 		Commodities:    nil,
 	}
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},

@@ -1,4 +1,3 @@
-import { allocationRemainder, allocationsValid, chargeLineTotal } from "../lib/charge-split";
 import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
 import { accessorialChargeMethodSchema, type AccessorialCharge } from "./accessorial-charge";
@@ -508,6 +507,11 @@ export type ChargeAllocationMethod = z.infer<typeof chargeAllocationMethodSchema
  * One payer's share of one charge. `billToCustomer` is a client-side snapshot
  * of the picked customer, kept so the summary can name payers without a
  * lookup; it is stripped on submit.
+ *
+ * These schemas parse server data and payloads too, so whether a charge's rows add up is not
+ * checked here: the rules module does it for a form (`withShipmentAllocations` and
+ * `withChargeAllocations` in `@trenova/shared/rules/allocation-form`), and the server checks
+ * every save.
  */
 export const chargeAllocationSchema = z.object({
   id: optionalStringSchema,
@@ -539,34 +543,6 @@ export const billingSplitSummaryRowSchema = z.object({
 });
 export type BillingSplitSummaryRow = z.infer<typeof billingSplitSummaryRowSchema>;
 
-/**
- * Flags a split that does not add up, at the list so the row error tooltip
- * shows it. `lineTotal` is null when the total is not known here, in which case
- * only percent rows can be checked.
- */
-export function chargeAllocationsRefinement(
-  ctx: z.RefinementCtx,
-  allocations: ChargeAllocation[],
-  lineTotal: number | null,
-  path: (string | number)[],
-) {
-  if (allocations.length === 0) return;
-  const state = allocationRemainder(allocations, lineTotal);
-  let message: string | null = null;
-  if (state.mixedMethods) message = "Split every row by percent or every row by amount";
-  else if (state.duplicatePayers) message = "Each payer may appear only once";
-  else if (state.missingPayers) message = "Every row needs a payer";
-  else if (!allocationsValid(allocations, lineTotal)) {
-    message =
-      state.method === "Amount"
-        ? "Amounts must add up to the charge"
-        : "Percents must add up to 100";
-  }
-  if (message) {
-    ctx.addIssue({ code: "custom", message, path });
-  }
-}
-
 const additionalChargeBaseSchema = z.object({
   accessorialChargeId: z
     .string()
@@ -580,14 +556,6 @@ const additionalChargeBaseSchema = z.object({
     .default(1),
   allocations: z.array(chargeAllocationSchema).default([]),
 });
-
-export function additionalChargeLineTotal(charge: {
-  method: string;
-  amount: number | null | undefined;
-  unit: number;
-}): number | null {
-  return charge.method === "Percentage" ? null : chargeLineTotal(charge);
-}
 
 export const fuelSurchargeDetailSchema = z.object({
   programId: z.string().optional(),
@@ -629,33 +597,23 @@ export const fuelSurchargeDetailSchema = z.object({
 });
 export type FuelSurchargeDetail = z.infer<typeof fuelSurchargeDetailSchema>;
 
-export const additionalChargeSchema = z
-  .object({
-    ...tenantInfoSchema.shape,
-    id: optionalStringSchema,
-    isSystemGenerated: z.boolean().optional().default(false),
-    ...additionalChargeBaseSchema.shape,
-    accessorialCharge: z.custom<AccessorialCharge>().nullish(),
-    fuelSurchargeProgramId: z.string().nullish(),
-    fuelSurchargeDetail: fuelSurchargeDetailSchema.nullish(),
-    isDetention: z.boolean().nullish(),
-  })
-  .superRefine((charge, ctx) => {
-    chargeAllocationsRefinement(ctx, charge.allocations, additionalChargeLineTotal(charge), [
-      "allocations",
-    ]);
-  });
+export const additionalChargeSchema = z.object({
+  ...tenantInfoSchema.shape,
+  id: optionalStringSchema,
+  isSystemGenerated: z.boolean().optional().default(false),
+  ...additionalChargeBaseSchema.shape,
+  accessorialCharge: z.custom<AccessorialCharge>().nullish(),
+  fuelSurchargeProgramId: z.string().nullish(),
+  fuelSurchargeDetail: fuelSurchargeDetailSchema.nullish(),
+  isDetention: z.boolean().nullish(),
+});
+
 export type AdditionalCharge = z.infer<typeof additionalChargeSchema>;
 
-export const additionalChargeCreateSchema = additionalChargeBaseSchema
-  .extend({
-    isSystemGenerated: z.boolean().optional().default(false),
-  })
-  .superRefine((charge, ctx) => {
-    chargeAllocationsRefinement(ctx, charge.allocations, additionalChargeLineTotal(charge), [
-      "allocations",
-    ]);
-  });
+export const additionalChargeCreateSchema = additionalChargeBaseSchema.extend({
+  isSystemGenerated: z.boolean().optional().default(false),
+});
+
 export type AdditionalChargeCreateInput = z.infer<typeof additionalChargeCreateSchema>;
 
 const shipmentCommodityBaseSchema = z.object({
@@ -848,53 +806,38 @@ export const shipmentProfitabilityEstimateSchema = z.object({
 });
 export type ShipmentProfitabilityEstimate = z.infer<typeof shipmentProfitabilityEstimateSchema>;
 
-function refineFreightAllocations(
-  shipment: { freightAllocations: ChargeAllocation[]; freightChargeAmount?: number | null },
-  ctx: z.RefinementCtx,
-) {
-  chargeAllocationsRefinement(ctx, shipment.freightAllocations, shipment.freightChargeAmount ?? 0, [
-    "freightAllocations",
-  ]);
-}
-
-export const shipmentSchema = z
-  .object({
-    ...tenantInfoSchema.shape,
-    ...shipmentBaseSchema.shape,
-    profitabilityEstimate: shipmentProfitabilityEstimateSchema.nullish(),
-    moves: z.array(shipmentMoveSchema).default([]),
-    additionalCharges: z.array(additionalChargeSchema).default([]),
-    commodities: z.array(shipmentCommoditySchema).default([]),
-    /** Every allocation as stored, across freight and accessorials. */
-    chargeAllocations: z.array(chargeAllocationSchema).default([]),
-    billingSplitSummary: z.array(billingSplitSummaryRowSchema).default([]),
-    customer: linkedRecordSchema("customer", customerSchema).nullish(),
-    billToCustomer: customerReferenceSchema.nullish(),
-    owner: userReferenceSchema.nullish(),
-    formulaTemplate: linkedRecordSchema("formula_template", formulaTemplateSchema).nullish(),
-  })
-  .superRefine(refineFreightAllocations);
+export const shipmentSchema = z.object({
+  ...tenantInfoSchema.shape,
+  ...shipmentBaseSchema.shape,
+  profitabilityEstimate: shipmentProfitabilityEstimateSchema.nullish(),
+  moves: z.array(shipmentMoveSchema).default([]),
+  additionalCharges: z.array(additionalChargeSchema).default([]),
+  commodities: z.array(shipmentCommoditySchema).default([]),
+  /** Every allocation as stored, across freight and accessorials. */
+  chargeAllocations: z.array(chargeAllocationSchema).default([]),
+  billingSplitSummary: z.array(billingSplitSummaryRowSchema).default([]),
+  customer: linkedRecordSchema("customer", customerSchema).nullish(),
+  billToCustomer: customerReferenceSchema.nullish(),
+  owner: userReferenceSchema.nullish(),
+  formulaTemplate: linkedRecordSchema("formula_template", formulaTemplateSchema).nullish(),
+});
 
 export type Shipment = z.infer<typeof shipmentSchema>;
 
-export const shipmentCreateSchema = shipmentBaseSchema
-  .extend({
-    moves: z.array(shipmentMoveCreateSchema).default([]),
-    additionalCharges: z.array(additionalChargeCreateSchema).default([]),
-    commodities: z.array(shipmentCommodityCreateSchema).default([]),
-  })
-  .superRefine(refineFreightAllocations);
+export const shipmentCreateSchema = shipmentBaseSchema.extend({
+  moves: z.array(shipmentMoveCreateSchema).default([]),
+  additionalCharges: z.array(additionalChargeCreateSchema).default([]),
+  commodities: z.array(shipmentCommodityCreateSchema).default([]),
+});
 export type ShipmentCreateInput = z.infer<typeof shipmentCreateSchema>;
 
-export const shipmentUpdateSchema = z
-  .object({
-    ...tenantInfoSchema.shape,
-    ...shipmentBaseSchema.shape,
-    moves: z.array(shipmentMoveUpdateSchema).default([]),
-    additionalCharges: z.array(additionalChargeSchema).default([]),
-    commodities: z.array(shipmentCommoditySchema).default([]),
-  })
-  .superRefine(refineFreightAllocations);
+export const shipmentUpdateSchema = z.object({
+  ...tenantInfoSchema.shape,
+  ...shipmentBaseSchema.shape,
+  moves: z.array(shipmentMoveUpdateSchema).default([]),
+  additionalCharges: z.array(additionalChargeSchema).default([]),
+  commodities: z.array(shipmentCommoditySchema).default([]),
+});
 export type ShipmentUpdateInput = z.infer<typeof shipmentUpdateSchema>;
 
 export const duplicateShipmentRequestSchema = z.object({

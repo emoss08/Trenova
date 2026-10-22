@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -72,7 +71,7 @@ func shipmentWith(configure func(*shipment.Shipment)) *shipment.Shipment {
 }
 
 func TestIntegration_FlatRateBilling(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -94,7 +93,7 @@ func TestIntegration_FlatRateBilling(t *testing.T) {
 		s.Weight = &weight
 	})
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -106,7 +105,7 @@ func TestIntegration_FlatRateBilling(t *testing.T) {
 }
 
 func TestIntegration_PerMileBilling(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -127,7 +126,7 @@ func TestIntegration_PerMileBilling(t *testing.T) {
 		s.Moves = []*shipment.ShipmentMove{loadedMove(0, 100.0), loadedMove(1, 150.0)}
 	})
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -139,7 +138,7 @@ func TestIntegration_PerMileBilling(t *testing.T) {
 }
 
 func TestIntegration_PerStopBilling(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -175,7 +174,7 @@ func TestIntegration_PerStopBilling(t *testing.T) {
 		}
 	})
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -187,7 +186,7 @@ func TestIntegration_PerStopBilling(t *testing.T) {
 }
 
 func TestIntegration_CWTBilling(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -209,7 +208,7 @@ func TestIntegration_CWTBilling(t *testing.T) {
 		s.Weight = &weight
 	})
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -221,7 +220,7 @@ func TestIntegration_CWTBilling(t *testing.T) {
 }
 
 func TestIntegration_HazmatSurcharge(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -262,7 +261,7 @@ func TestIntegration_HazmatSurcharge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+			result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 				Template:  template,
 				Entity:    tt.entity,
 				Variables: map[string]any{},
@@ -276,7 +275,7 @@ func TestIntegration_HazmatSurcharge(t *testing.T) {
 }
 
 func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -320,7 +319,7 @@ func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+			result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 				Template:  template,
 				Entity:    tt.entity,
 				Variables: map[string]any{},
@@ -334,7 +333,7 @@ func TestIntegration_TemperatureControlSurcharge(t *testing.T) {
 }
 
 func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -378,7 +377,7 @@ func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+			result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 				Template:  template,
 				Entity:    tt.entity,
 				Variables: map[string]any{},
@@ -392,7 +391,7 @@ func TestIntegration_ComplexFormula_MinimumCharge(t *testing.T) {
 }
 
 func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:   pulid.MustNew("FT"),
@@ -443,7 +442,7 @@ func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
 		}
 	})
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template:  template,
 		Entity:    entity,
 		Variables: map[string]any{},
@@ -457,7 +456,7 @@ func TestIntegration_ComplexFormula_CombinedCharges(t *testing.T) {
 }
 
 func TestIntegration_RuntimeVariableOverride(t *testing.T) {
-	eng := newTestEngine(t)
+	eng := newRawRating(t)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:         pulid.MustNew("FT"),
@@ -477,7 +476,7 @@ func TestIntegration_RuntimeVariableOverride(t *testing.T) {
 		s.Moves = []*shipment.ShipmentMove{loadedMove(0, 100.0)}
 	})
 
-	result, err := eng.Evaluate(t.Context(), &formulatemplatetypes.EvaluationRequest{
+	result, err := eng.Evaluate(t.Context(), &evaluationRequest{
 		Template: template,
 		Entity:   entity,
 		Variables: map[string]any{

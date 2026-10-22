@@ -1,4 +1,6 @@
-import { resolveReportDisplay, type ReportColumnDisplay } from "@trenova/shared/lib/report-format";
+import type { ReportColumnDisplay } from "@trenova/shared/lib/report-format";
+import { resolveReportDisplays, type ResolvedReportDisplay } from "@trenova/shared/rules/report";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type { ReportColumnSpec, ReportDisplaySpec } from "@/types/report";
 
 const BUCKET_DATE_STYLES: Record<string, ReportColumnDisplay["dateStyle"]> = {
@@ -9,21 +11,25 @@ const BUCKET_DATE_STYLES: Record<string, ReportColumnDisplay["dateStyle"]> = {
   year: "year",
 };
 
-/** The display contract the server will resolve for this column. */
+/** The display contract the server will resolve for this column, resolved by the rules module. */
 export function resolvePreviewDisplay(
+  rules: RulesRuntime,
   valueType: string,
   formatHint: string | undefined,
   column: ReportColumnSpec,
   overrides: ReportDisplaySpec,
-): ReportColumnDisplay {
+): ResolvedReportDisplay {
   const countingMeasure = column.agg === "count" || column.agg === "count_distinct";
 
-  return resolveReportDisplay({
-    type: valueType,
-    hint: countingMeasure ? "count" : formatHint,
-    dateStyle: column.bucket ? BUCKET_DATE_STYLES[column.bucket] : undefined,
-    overrides,
-  });
+  const [display] = resolveReportDisplays(rules, [
+    {
+      type: valueType,
+      hint: countingMeasure ? "count" : formatHint,
+      dateStyle: column.bucket ? BUCKET_DATE_STYLES[column.bucket] : undefined,
+      spec: overrides,
+    },
+  ]);
+  return display;
 }
 
 /** A representative value so the editor can show a live sample. */

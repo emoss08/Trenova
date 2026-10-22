@@ -1,5 +1,6 @@
 import { pageDraftSchema, type FormulaProposal } from "@/types/page-draft";
 import type { VariableDefinition } from "@trenova/shared/types/formula-template";
+import { rulesSync } from "@trenova/shared/rules/runtime";
 import { describe, expect, it } from "vitest";
 import {
   applyProposal,
@@ -8,6 +9,8 @@ import {
   proposalForEditor,
   type ProposalTarget,
 } from "../formula-draft";
+
+const rules = rulesSync();
 
 /*
  * pagedraft.Formula on the server: a schema id and template type of key
@@ -156,7 +159,7 @@ describe("proposalForEditor", () => {
       scenarios: [],
     };
 
-    expect(proposalForEditor(proposal)).toEqual({
+    expect(proposalForEditor(rules, proposal)).toEqual({
       expression: "max(totalDistance * perMile, minimum)",
       variableDefinitions: [
         {
@@ -222,10 +225,11 @@ const editor: ProposalTarget = {
 
 describe("applyProposal", () => {
   it("keeps the editor's charge policy unless the proposal sets one", () => {
-    const kept = applyProposal(editor, proposalWith({}));
+    const kept = applyProposal(rules, editor, proposalWith({}));
     expect([kept.minCharge, kept.maxCharge, kept.roundingMode]).toEqual([250, null, "HalfUp"]);
 
     const moved = applyProposal(
+      rules,
       editor,
       proposalWith({ policy: { minCharge: "300", maxCharge: "2500", roundingMode: "Up" } }),
     );
@@ -233,13 +237,14 @@ describe("applyProposal", () => {
       [300, 2500, "Up", 2],
     );
 
-    const cleared = applyProposal(editor, proposalWith({ policy: { minCharge: null } }));
+    const cleared = applyProposal(rules, editor, proposalWith({ policy: { minCharge: null } }));
     expect(cleared.minCharge).toBeNull();
     expect(cleared.maxCharge).toBeNull();
   });
 
   it("keeps the editor's own variables and adds only the ones it lacks", () => {
     const next = applyProposal(
+      rules,
       editor,
       proposalWith({
         expression: "baseRate * totalDistance + weekendFee + stopFee",
@@ -266,12 +271,14 @@ describe("applyProposal", () => {
 
   it("lets go of an input the new formula and breakdown no longer read", () => {
     const next = applyProposal(
+      rules,
       editor,
       proposalWith({ expression: "baseRate * totalDistance", variables: [] }),
     );
     expect(next.variableDefinitions).toEqual([]);
 
     const stillRead = applyProposal(
+      rules,
       editor,
       proposalWith({
         expression: "baseRate * totalDistance",
@@ -282,17 +289,30 @@ describe("applyProposal", () => {
     expect(stillRead.variableDefinitions.map((variable) => variable.name)).toEqual(["stopFee"]);
   });
 
+  it("does not count an input's name in a string, a comment or a let of its own as a read", () => {
+    const next = applyProposal(
+      rules,
+      editor,
+      proposalWith({
+        expression:
+          'let stopFee = 40;\n// weekendFee is charged separately\nstopFee + (proNumber == "weekendFee" ? 1 : 0)',
+        variables: [],
+      }),
+    );
+    expect(next.variableDefinitions).toEqual([]);
+  });
+
   it("keeps the editor's breakdown unless the proposal itemizes, then takes its lines", () => {
-    expect(applyProposal(editor, proposalWith({})).breakdownDefinitions).toEqual(
+    expect(applyProposal(rules, editor, proposalWith({})).breakdownDefinitions).toEqual(
       editor.breakdownDefinitions,
     );
     const lines = [
       { name: "linehaul", label: "Linehaul", expression: "baseRate * totalDistance" },
       { name: "weekend", label: "Weekend pickup", expression: "weekendFee" },
     ];
-    expect(applyProposal(editor, proposalWith({ breakdown: lines })).breakdownDefinitions).toEqual(
-      lines,
-    );
+    expect(
+      applyProposal(rules, editor, proposalWith({ breakdown: lines })).breakdownDefinitions,
+    ).toEqual(lines);
   });
 
   it("fills name, description and type only where the editor has none", () => {
@@ -302,7 +322,7 @@ describe("applyProposal", () => {
       templateType: "AccessorialCharge",
     });
 
-    const kept = applyProposal(editor, proposal);
+    const kept = applyProposal(rules, editor, proposal);
     expect([kept.name, kept.description, kept.type]).toEqual([
       "Linehaul",
       "Per mile linehaul",
@@ -310,7 +330,7 @@ describe("applyProposal", () => {
     ]);
 
     const empty: ProposalTarget = { ...editor, name: "", description: "  " };
-    const filled = applyProposal(empty, proposal);
+    const filled = applyProposal(rules, empty, proposal);
     expect([filled.name, filled.description, filled.type]).toEqual([
       "Weekend linehaul",
       "Linehaul with a weekend fee",
@@ -334,6 +354,7 @@ describe("applyProposal", () => {
 describe("applyProposal formatting", () => {
   it("lands a proposal in the editor formatted, one statement per line", () => {
     const next = applyProposal(
+      rules,
       editor,
       proposalWith({
         expression:
@@ -353,7 +374,11 @@ describe("applyProposal formatting", () => {
   });
 
   it("keeps a proposal's expression as written when it does not parse", () => {
-    const next = applyProposal(editor, proposalWith({ expression: "baseRate * (", variables: [] }));
+    const next = applyProposal(
+      rules,
+      editor,
+      proposalWith({ expression: "baseRate * (", variables: [] }),
+    );
     expect(next.expression).toBe("baseRate * (");
   });
 });

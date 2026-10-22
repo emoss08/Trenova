@@ -6,7 +6,6 @@ import {
   bucketKeyOf,
   cellBoundsAt,
   coordinateKey,
-  findMatrixCoverageIssues,
   sliceBuckets,
   type MatrixAxisPosition,
 } from "../rate-matrix";
@@ -221,106 +220,5 @@ describe("sliceBuckets", () => {
     ]);
 
     expect(buckets.map((bucket) => bucket.min)).toEqual([0, 1000]);
-  });
-});
-
-describe("findMatrixCoverageIssues", () => {
-  const weight = dimension(0, { matchMode: "Range", kind: "WeightBreak", label: "Weight" });
-
-  it("says so when a matrix declares no axes", () => {
-    const issues = findMatrixCoverageIssues([], [cell()]);
-
-    expect(issues).toHaveLength(1);
-    expect(issues[0]?.kind).toBe("empty");
-  });
-
-  it("says so when a matrix has axes but no rates", () => {
-    const issues = findMatrixCoverageIssues([weight], []);
-
-    expect(issues[0]?.kind).toBe("empty");
-  });
-
-  // Bands are half open, so one ending exactly where the next begins is
-  // contiguous. Treating that as an overlap would flag every correctly written
-  // tariff in the product.
-  it("accepts bands that meet exactly", () => {
-    const issues = findMatrixCoverageIssues(
-      [weight],
-      [cell({ d0Min: 0, d0Max: 1000 }), cell({ d0Min: 1000 })],
-    );
-
-    expect(issues).toEqual([]);
-  });
-
-  it("finds the hole between two bands", () => {
-    const issues = findMatrixCoverageIssues(
-      [weight],
-      [cell({ d0Min: 0, d0Max: 1000 }), cell({ d0Min: 5000 })],
-    );
-
-    expect(issues.map((issue) => issue.kind)).toContain("gap");
-    expect(issues[0]?.message).toContain("1,000");
-    expect(issues[0]?.message).toContain("5,000");
-  });
-
-  it("finds two bands claiming the same weight", () => {
-    const issues = findMatrixCoverageIssues(
-      [weight],
-      [cell({ d0Min: 0, d0Max: 2000 }), cell({ d0Min: 1000 })],
-    );
-
-    expect(issues.map((issue) => issue.kind)).toContain("overlap");
-  });
-
-  // A top band with a ceiling is the classic tariff mistake: the sheet looks
-  // complete, and the one shipment heavier than anybody planned for rates at
-  // nothing.
-  it("finds a top band that leaves everything above it unpriced", () => {
-    const issues = findMatrixCoverageIssues(
-      [weight],
-      [cell({ d0Min: 0, d0Max: 1000 }), cell({ d0Min: 1000, d0Max: 20000 })],
-    );
-
-    expect(issues.map((issue) => issue.kind)).toContain("unbounded");
-  });
-
-  it("finds a bottom band that leaves light freight unpriced", () => {
-    const issues = findMatrixCoverageIssues([weight], [cell({ d0Min: 500 })]);
-
-    expect(issues.map((issue) => issue.kind)).toContain("gap");
-  });
-
-  it("finds two rates at the same coordinate", () => {
-    const zone = dimension(0);
-
-    const issues = findMatrixCoverageIssues(
-      [zone],
-      [cell({ d0Key: "SE", value: 2.1 }), cell({ d0Key: "SE", value: 9.99 })],
-    );
-
-    expect(issues.map((issue) => issue.kind)).toEqual(["duplicate"]);
-  });
-
-  it("reports a repeated coordinate once, however many times it repeats", () => {
-    const zone = dimension(0);
-
-    const issues = findMatrixCoverageIssues(
-      [zone],
-      [cell({ d0Key: "SE" }), cell({ d0Key: "SE" }), cell({ d0Key: "SE" })],
-    );
-
-    expect(issues).toHaveLength(1);
-  });
-
-  it("passes a complete exact grid", () => {
-    const origin = dimension(0);
-    const destination = dimension(1);
-
-    const issues = findMatrixCoverageIssues(
-      [origin, destination],
-      [cell({ d0Key: "SE", d1Key: "MW" }), cell({ d0Key: "SE", d1Key: "NE" })],
-    );
-
-    expect(issues).toEqual([]);
   });
 });

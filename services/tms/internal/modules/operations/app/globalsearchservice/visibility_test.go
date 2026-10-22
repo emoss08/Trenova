@@ -243,6 +243,10 @@ func TestSearch_HidesDocumentsAttachedToRecordsThePersonCannotRead(t *testing.T)
 	hiddenShipment := pulid.MustNew("shp_")
 	invoice := pulid.MustNew("inv_")
 	customer := pulid.MustNew("cus_")
+	visibility := &fakeVisibility{visible: map[string][]pulid.ID{
+		"shipment": {visibleShipment},
+		"invoice":  {invoice},
+	}}
 	documents := page(
 		map[string]any{
 			"id": "doc_visible", "original_name": "bol-visible.pdf",
@@ -268,10 +272,7 @@ func TestSearch_HidesDocumentsAttachedToRecordsThePersonCannotRead(t *testing.T)
 			permission.ResourceShipment: {scope: permission.DataScopeOwn},
 			permission.ResourceInvoice:  {denied: true},
 		}),
-		&fakeVisibility{visible: map[string][]pulid.ID{
-			"shipment": {visibleShipment},
-			"invoice":  {invoice},
-		}},
+		visibility,
 	)
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -284,6 +285,11 @@ func TestSearch_HidesDocumentsAttachedToRecordsThePersonCannotRead(t *testing.T)
 	require.NotNil(t, group)
 	assert.ElementsMatch(t, []string{"doc_visible", "doc_customer"}, hitIDsOf(group))
 	assert.Equal(t, 2, group.Total)
+	for _, req := range visibility.requests {
+		assert.NotEqual(t, "invoice", req.Kind,
+			"the database shows every invoice to a person who cannot read invoices, so the "+
+				"service refuses them before asking it")
+	}
 }
 
 func TestSearch_HidesScopedHitsWhenTheirVisibilityCannotBeChecked(t *testing.T) {

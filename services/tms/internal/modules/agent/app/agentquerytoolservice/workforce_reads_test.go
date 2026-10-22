@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -206,33 +205,6 @@ func TestGetDOTRandomDraw_ListsEverySelection(t *testing.T) {
 	assert.Equal(t, "Alcohol", detail.Selections[0].Substance)
 }
 
-func TestListWorkerLeaveCases_CarriesTheDaysTaken(t *testing.T) {
-	t.Parallel()
-
-	reads := &fakeWorkforceReads{cases: []*worker.WorkerLeaveCase{{
-		ID:        pulid.MustNew("wlc_"),
-		WorkerID:  pulid.MustNew("wrk_"),
-		LeaveType: worker.LeaveTypeFMLA,
-		Status:    worker.LeaveCaseApproved,
-		StartsAt:  1_788_000_000,
-		Entries: []*worker.WorkerLeaveEntry{{
-			ID:     pulid.MustNew("wle_"),
-			UsedOn: 1_788_048_000,
-			Hours:  decimal.NewFromInt(8),
-		}},
-	}}}
-	tool := newListWorkerLeaveCasesTool(reads, &fakePermissions{allowed: true}, nil)
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{wfParamOpenOnly: true}))
-	require.NoError(t, err)
-	list := result.(*receivableList[leaveCaseRow])
-	require.Len(t, list.Items, 1)
-	require.Len(t, list.Items[0].Days, 1)
-	assert.Equal(t, "8", list.Items[0].Days[0].Hours)
-	assert.True(t, reads.casesReq.IncludeEntries)
-	assert.True(t, reads.casesReq.OpenOnly)
-}
-
 func TestListDriverExpenses_MarksTheDriversWordsOnlyWhenShown(t *testing.T) {
 	t.Parallel()
 
@@ -317,7 +289,6 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 		newListWorkerSafetyEventsTool(reads, nil),
 		newListDOTRandomDrawsTool(reads, nil),
 		newGetDOTRandomDrawTool(reads, nil),
-		newListWorkerLeaveCasesTool(reads, nil, nil),
 		newListDriverExpensesTool(reads, nil),
 		newListShipmentPermitsTool(reads, nil),
 	} {

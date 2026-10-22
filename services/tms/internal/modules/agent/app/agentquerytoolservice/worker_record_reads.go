@@ -40,6 +40,17 @@ const (
 		"collection still open across the organization. Each row has the test type, why it " +
 		"was ordered, its status and dates; the substance and result are shown only where " +
 		"access reaches Restricted. It yields the testId worker_cancel_dot_test takes."
+	toolListWorkerLeaveCases        = "worker_list_leave_cases"
+	toolListEmploymentVerifications = "worker_list_employment_verifications"
+
+	workerLeaveCasesSummary = "List FMLA, medical, military, parental and personal leave cases. " +
+		"Cases for one worker or the whole organization come with their status, " +
+		"certification and each day taken against them. It yields the leaveCaseId and " +
+		"leaveDayId the leave tools take."
+	employmentVerificationsSummary = "List the previous employers on drivers' qualification " +
+		"files. Each shows where its safety performance history request stands: asked when, " +
+		"followed up how often, and what came back. It yields the verificationId the " +
+		"verification tools take."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"
 	fieldWorker      = "worker"
@@ -121,6 +132,24 @@ func workerRecordReadSpecs() []graphQLListSpec {
 			entityPlural: "drug and alcohol tests",
 			summary:      workerDOTTestsSummary,
 			resource:     permission.ResourceWorkerDOTTest,
+			references:   theWorker,
+			notes:        map[string]string{paramWorkerID: noteEveryWorker},
+			defaults:     listDefaults,
+		},
+		{
+			name:         toolListWorkerLeaveCases,
+			entityPlural: "leave cases",
+			summary:      workerLeaveCasesSummary,
+			resource:     permission.ResourceWorkerLeave,
+			references:   theWorker,
+			notes:        map[string]string{paramWorkerID: noteEveryWorker},
+			defaults:     listDefaults,
+		},
+		{
+			name:         toolListEmploymentVerifications,
+			entityPlural: "previous employers",
+			summary:      employmentVerificationsSummary,
+			resource:     permission.ResourceQualification,
 			references:   theWorker,
 			notes:        map[string]string{paramWorkerID: noteEveryWorker},
 			defaults:     listDefaults,

@@ -25,6 +25,37 @@ after(async () => {
 });
 
 describe("findFragments", () => {
+  it("reports a message from the rules module spelled out by hand", async () => {
+    const found = await scan(`
+      t(issue.message.message, ...(issue.message.args ?? []));
+      translate(state.problem?.message, ...args);
+    `);
+    assert.deepEqual(
+      found.map((f) => [f.kind, f.detail]),
+      [
+        ["spread-message", "t"],
+        ["spread-message", "translate"],
+      ],
+    );
+  });
+
+  it("accepts translateMessage, and a message key passed without spread arguments", async () => {
+    const found = await scan(`
+      translateMessage(issue.message, t);
+      translateMessage(state.problem);
+      translate(issue.message);
+    `);
+    assert.deepEqual(found, []);
+  });
+
+  it("reports a literal handed to translateMessage, which no catalog collects", async () => {
+    const found = await scan(`translateMessage({ message: "Saved", args: [] }, t);`);
+    assert.deepEqual(
+      found.map((f) => [f.kind, f.detail]),
+      [["literal-message", "Saved"]],
+    );
+  });
+
   it("reports a sentence split by markup", async () => {
     const found = await scan(`const A = () => <p>{t("You've used")} <b>{pct}</b> {t("of this month's allowance")}</p>;`);
     assert.deepEqual(found.map((f) => f.kind), ["split-sentence"]);

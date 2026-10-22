@@ -9,12 +9,14 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -22,15 +24,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -45,6 +50,8 @@ type dispatchedLoad struct {
 	businessUnitID pulid.ID
 	userID         pulid.ID
 	workerFirst    string
+	admin          *bun.DB
+	dsn            string
 }
 
 // seedDispatchedLoad finds a seeded shipment move, assigns it a seeded driver
@@ -52,7 +59,7 @@ type dispatchedLoad struct {
 func seedDispatchedLoad(t *testing.T) (context.Context, *postgres.Connection, dispatchedLoad) {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
 	registry := seeder.NewRegistry()
@@ -111,6 +118,8 @@ func seedDispatchedLoad(t *testing.T) (context.Context, *postgres.Connection, di
 		businessUnitID: move.BusinessUnitID,
 		userID:         pulid.MustNew("usr_"),
 		workerFirst:    driver.FirstName,
+		admin:          db,
+		dsn:            dsn,
 	}
 }
 
@@ -126,6 +135,23 @@ func getExpandedShipment(
 	guarded bool,
 ) (map[string]any, http.Header) {
 	t.Helper()
+
+	return serveExpandedShipment(t, ctx, conn, load, engine, guarded, nil)
+}
+
+// serveExpandedShipment is getExpandedShipment with the request's own
+// context, and so its tenant and read scope, when scopes is set: the
+// shipment is read as the request reads it.
+func serveExpandedShipment(
+	t *testing.T,
+	ctx context.Context,
+	conn *postgres.Connection,
+	load dispatchedLoad,
+	engine permissionports.PermissionEngine,
+	guarded bool,
+	scopes permissionports.ReadScopes,
+) (map[string]any, http.Header) {
+	t.Helper()
 	gin.SetMode(gin.TestMode)
 
 	repo := shipmentrepository.New(shipmentrepository.Params{
@@ -136,8 +162,11 @@ func getExpandedShipment(
 	service := shipmentportsmock.NewMockShipmentService(t)
 	service.EXPECT().
 		Get(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
+		RunAndReturn(func(requestCtx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			require.True(t, req.ExpandShipmentDetails)
+			if scopes != nil {
+				return repo.GetByID(requestCtx, req)
+			}
 			return repo.GetByID(ctx, req)
 		})
 
@@ -148,8 +177,20 @@ func getExpandedShipment(
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		authctx.SetAuthContext(c, load.userID, load.businessUnitID, load.organizationID)
+		if scopes != nil {
+			c.Request = c.Request.WithContext(dbscope.WithTenant(c.Request.Context(), dbscope.Tenant{
+				OrganizationID: load.organizationID,
+				BusinessUnitID: load.businessUnitID,
+				UserID:         load.userID,
+			}))
+		}
 		c.Next()
 	})
+	if scopes != nil {
+		router.Use(middleware.NewReadScopeMiddleware(middleware.ReadScopeMiddlewareParams{
+			Scopes: scopes,
+		}).Install())
+	}
 	if guarded {
 		router.Use(responseguard.NewGuard(responseguard.GuardParams{
 			PermissionEngine: engine,
@@ -222,5 +263,46 @@ func TestGetShipment_ShowsTheWholeDriverToAWorkerReader(t *testing.T) {
 
 	assert.Equal(t, driverHomeAddress, driver["addressLine1"])
 	assert.Equal(t, driverEmergencyPhone, driver["emergencyContactPhone"])
+	assert.NotContains(t, header.Get(responseguard.WithheldHeader), "primaryWorker")
+}
+
+// With row-level security enforced the driver a shipment links to is still
+// read from the database for a person who cannot read workers, and the
+// response guard shows its reference view, exactly as with row-level security
+// off. The read scope the person is sent narrows no kind they cannot read.
+func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testing.T) {
+	ctx, _, load := seedDispatchedLoad(t)
+	shipmentOnly := &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceWorker.String()},
+	}
+	enforced := &config.Config{}
+	enforced.Database.RLS.Mode = config.RLSModeEnforce
+	scopes := readscopeservice.New(readscopeservice.Params{
+		Config:   enforced,
+		Engine:   shipmentOnly,
+		Registry: permission.NewRegistry(),
+	})
+	rls := dbtest.NewRLSConnection(t, load.admin, load.dsn)
+
+	body, header := serveExpandedShipment(t, ctx, rls, load, shipmentOnly, true, scopes)
+	driver := primaryWorkerOf(t, body)
+	assert.Equal(t, load.workerFirst, driver["firstName"], "the driver's name is in the view")
+	assert.NotEmpty(t, driver["id"])
+	for _, field := range []string{
+		"addressLine1", "city", "postalCode", "phoneNumber",
+		"emergencyContactName", "emergencyContactPhone",
+	} {
+		assert.Nilf(t, driver[field], "%s of a driver reached through a shipment", field)
+	}
+	assert.Contains(t, header.Get(responseguard.WithheldHeader), "moves.assignment.primaryWorker")
+	assert.NotEmpty(t, body["proNumber"])
+
+	whole, header := serveExpandedShipment(t, ctx, rls, load, &mocks.DenyResourcesPermissionEngine{}, true,
+		readscopeservice.New(readscopeservice.Params{
+			Config:   enforced,
+			Engine:   &mocks.DenyResourcesPermissionEngine{},
+			Registry: permission.NewRegistry(),
+		}))
+	assert.Equal(t, driverHomeAddress, primaryWorkerOf(t, whole)["addressLine1"])
 	assert.NotContains(t, header.Get(responseguard.WithheldHeader), "primaryWorker")
 }

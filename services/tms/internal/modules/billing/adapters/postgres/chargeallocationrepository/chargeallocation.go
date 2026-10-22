@@ -630,7 +630,7 @@ func (r *repository) RefreshQueueSnapshots(
 		return fmt.Errorf("load shipment for allocation snapshot: %w", err)
 	}
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return err
 	}

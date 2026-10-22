@@ -1,15 +1,19 @@
 import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
-import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/test-data-editor";
+import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/default-test-values";
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePermission } from "@/hooks/use-permission";
 import { describeApiError } from "@/lib/api-error-message";
+import { previewFailure, previewWarnings } from "@/lib/formula-preview";
 import { formulaTestRequest } from "@/lib/formula-test-request";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { translateMessage } from "@trenova/shared/i18n/message";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formulaCatalog } from "@trenova/shared/rules/formula";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type {
@@ -173,6 +177,9 @@ function FormulaCard({
 }: Required<Pick<FormulaTemplateCardProps, "order">> &
   Omit<FormulaTemplateCardProps, "order"> & { template: FormulaTemplate }) {
   const t = useT();
+  // The card colours the formula by the rules module's catalog (keywords,
+  // operators, functions); it suspends behind the card's skeleton until loaded.
+  const rules = useRules();
   const userId = useAuthStore((state) => state.user?.id);
   const { allowed: canCreate } = usePermission(Resource.FormulaTemplate, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.FormulaTemplate, Operation.Update);
@@ -212,7 +219,10 @@ function FormulaCard({
     enabled: stage === "draft" || stage === "review",
   });
 
-  const known = useMemo(() => buildKnownIdentifiers(schema, definitions), [schema, definitions]);
+  const known = useMemo(
+    () => buildKnownIdentifiers(formulaCatalog(rules), schema, definitions),
+    [rules, schema, definitions],
+  );
   const names = useMemo(
     () => new Set(definitions.map((definition) => definition.name)),
     [definitions],
@@ -581,6 +591,12 @@ function VariableRow({
   );
 }
 
+/** Why the sample load did not price, in the engine's words when it gave any. */
+function failureText(result: TestExpressionResponse, t: TranslateFn): string {
+  const failure = previewFailure(result);
+  return failure ? translateMessage(failure, t) : t("Does not price");
+}
+
 /** The sample price at the head of the card, moving as the variables do. */
 function SamplePriceFigure({
   result,
@@ -651,7 +667,7 @@ function SamplePrice({
     return (
       <div className="dk-ax-warn">
         <CardIcon name="warn" size={13} />
-        <span>{result.error || result.message}</span>
+        <span>{failureText(result, t)}</span>
       </div>
     );
   }
@@ -686,13 +702,13 @@ function SamplePrice({
           {note}
         </p>
       ))}
-      {(result.warnings ?? []).map((warning) => (
-        <div key={`${warning.scope}:${warning.field}`} className="dk-ax-warn">
+      {previewWarnings(result).map((warning) => (
+        <div
+          key={`${warning.scope}:${warning.code}:${warning.from}:${warning.to}`}
+          className="dk-ax-warn"
+        >
           <CardIcon name="warn" size={13} />
-          <span>
-            {warning.message}
-            {warning.suggestion ? ` ${warning.suggestion}` : ""}
-          </span>
+          <span>{translateMessage(warning, t)}</span>
         </div>
       ))}
     </>

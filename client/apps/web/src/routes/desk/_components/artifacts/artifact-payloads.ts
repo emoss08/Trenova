@@ -109,6 +109,22 @@ export type TableViewRow = {
   recordId?: string;
 };
 
+/**
+ * Where a table's list goes on from the rows it holds. The agent's pages are
+ * kept with the next cursor or offset after them; a table cut to fit has rows
+ * past what it holds and no place to go on from, so the person's pages read
+ * the list from its start.
+ */
+export type TablePaging = {
+  hasMore: boolean;
+  nextCursor: string;
+  nextOffset: number | null;
+  /** How many rows the list holds in all, when the agent's read counted them. */
+  total: number | null;
+  /** How many pages of the list the agent read into the table. */
+  pages: number;
+};
+
 export type TableViewArtifact = {
   tool: string;
   entity: string;
@@ -121,7 +137,56 @@ export type TableViewArtifact = {
   truncated: boolean;
   /** How many tool calls the server read this table together from; zero for one search's result. */
   calls: number;
+  paging: TablePaging;
 };
+
+/** Whether the person's pages go on from the agent's rows, or read the list from its start. */
+export function resumesAfterAgent(paging: TablePaging): boolean {
+  return paging.nextCursor !== "" || paging.nextOffset !== null;
+}
+
+function tablePagingOf(payload: Record<string, unknown>): TablePaging {
+  const nextOffset = payload.nextOffset;
+  const total = payload.total;
+
+  return {
+    hasMore: payload.hasMore === true,
+    nextCursor: stringOf(payload.nextCursor),
+    nextOffset: typeof nextOffset === "number" && Number.isInteger(nextOffset) ? nextOffset : null,
+    total: typeof total === "number" && Number.isInteger(total) ? total : null,
+    pages: numberOf(payload.pages) || 1,
+  };
+}
+
+/**
+ * Rows of a list as the table reads them: each value projected against its
+ * column, and the record's page built from the registry. Keys start at
+ * `from`, so rows read on later pages never take a key the agent's rows hold.
+ */
+export function tableRowsFrom(
+  raw: readonly Record<string, unknown>[],
+  columns: readonly DisplayColumn[],
+  entity: RecordEntityType | null,
+  from = 0,
+): TableViewRow[] {
+  return raw.map((row, index) => {
+    const values: Record<string, unknown> = {};
+    for (const column of columns) {
+      const value = projectValue(column.type, row[column.key]);
+      if (value !== undefined) {
+        values[column.key] = value;
+      }
+    }
+    const id = stringOf(row[RECORD_ID_KEY]);
+
+    return {
+      key: String(from + index),
+      values,
+      path: entity !== null && id !== "" ? recordPath(entity, id) : "",
+      recordId: id,
+    };
+  });
+}
 
 function singular(plural: string): string {
   if (plural.endsWith("ices")) return `${plural.slice(0, -4)}ix`;
@@ -136,7 +201,7 @@ function singular(plural: string): string {
  * projected payload says so itself, and says nothing when they have none; one
  * stored before the projection is read from the list it came from.
  */
-function tableRecordEntity(payload: Record<string, unknown>): RecordEntityType | null {
+export function tableRecordEntity(payload: Record<string, unknown>): RecordEntityType | null {
   const declared = stringOf(payload.recordEntity);
   if (declared !== "" || payload.display !== undefined) {
     return isRecordEntityType(declared) ? declared : null;
@@ -176,23 +241,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
       raw,
     );
   const entity = tableRecordEntity(payload);
-  const rows = raw.map((row, index) => {
-    const values: Record<string, unknown> = {};
-    for (const column of columns) {
-      const value = projectValue(column.type, row[column.key]);
-      if (value !== undefined) {
-        values[column.key] = value;
-      }
-    }
-    const id = stringOf(row[RECORD_ID_KEY]);
-
-    return {
-      key: String(index),
-      values,
-      path: entity !== null && id !== "" ? recordPath(entity, id) : "",
-      recordId: id,
-    };
-  });
+  const rows = tableRowsFrom(raw, columns, entity);
   const rowCount = numberOf(payload.rowCount) || rows.length;
 
   return {
@@ -209,6 +258,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
     // payload. A table that says 400 above 200 rows has to say why.
     truncated: rowCount > rows.length,
     calls: bunchedCallCount(payload),
+    paging: tablePagingOf(payload),
   };
 }
 

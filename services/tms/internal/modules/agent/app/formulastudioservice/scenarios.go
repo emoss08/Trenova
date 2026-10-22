@@ -84,6 +84,7 @@ func (s *Service) SuggestScenarios(
 			Amount:      price.Amount,
 			Valid:       price.Valid,
 			Error:       price.Error,
+			Code:        price.Code,
 		})
 	}
 

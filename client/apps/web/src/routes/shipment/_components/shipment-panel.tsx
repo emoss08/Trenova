@@ -2,6 +2,7 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
 import { apiService } from "@/services/api";
+import { rulesResolver } from "@/lib/rules-resolver";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -9,6 +10,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getTodayDate } from "@trenova/shared/lib/date";
+import { withShipmentAllocations } from "@trenova/shared/rules/allocation-form";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import {
   shipmentCreateSchema,
@@ -28,7 +30,7 @@ import {
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { NEW_SHIPMENT_CUSTOMER_PARAM } from "@/lib/shipment-links";
 import { lazy } from "react";
-import { useForm } from "react-hook-form";
+import { type Resolver, useForm } from "react-hook-form";
 import { ShipmentBillingActionsMenu } from "./shipment-billing-actions-menu";
 import { ShipmentForm } from "./shipment-form";
 
@@ -134,13 +136,23 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
   const defaultValues = getDefaultValues(mode === "create" ? customerId : null);
   const withIdempotencyKey = useIdempotencyKey();
   const createForm = useForm({
-    resolver: zodResolver(shipmentCreateSchema),
+    resolver: rulesResolver(
+      (rules) =>
+        zodResolver(
+          withShipmentAllocations(shipmentCreateSchema, rules),
+        ) as Resolver<ShipmentCreateInput>,
+    ),
     defaultValues,
     mode: "onChange",
   });
 
   const editForm = useForm({
-    resolver: zodResolver(shipmentUpdateSchema),
+    resolver: rulesResolver(
+      (rules) =>
+        zodResolver(
+          withShipmentAllocations(shipmentUpdateSchema, rules),
+        ) as Resolver<ShipmentUpdateInput>,
+    ),
     defaultValues: row as ShipmentUpdateInput | undefined,
     mode: "onChange",
   });

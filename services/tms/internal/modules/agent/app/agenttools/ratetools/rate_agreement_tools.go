@@ -508,7 +508,6 @@ func (r laneReader) lane(
 	if err = r.applyTerms(rule, fields); err != nil {
 		return nil, err
 	}
-	rule.ApplyLaneKey()
 
 	return rule, nil
 }

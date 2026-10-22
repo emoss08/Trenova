@@ -2,9 +2,7 @@ package render
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -159,36 +157,38 @@ func (r *XLSXRenderer) writeDataSheets(
 	rowsOnSheet := 0
 
 	cells := make([]any, len(schema))
-	for {
-		row, nextErr := req.Dataset.Next(ctx)
-		if errors.Is(nextErr, io.EOF) {
-			break
-		}
-		if nextErr != nil {
-			return nextErr
-		}
-
+	if err = streamFormatted(ctx, req.Dataset, loc, func(row *reportfmt.Row) error {
 		if rowsOnSheet >= excelSheetRowLimit {
-			if err = writer.Flush(); err != nil {
-				return err
+			if flushErr := writer.Flush(); flushErr != nil {
+				return flushErr
 			}
 			sheetIndex++
-			writer, err = r.newDataSheet(
+			var sheetErr error
+			writer, sheetErr = r.newDataSheet(
 				file, fmt.Sprintf("Data (%d)", sheetIndex), schema, styles.header,
 			)
-			if err != nil {
-				return err
+			if sheetErr != nil {
+				return sheetErr
 			}
 			rowsOnSheet = 0
 		}
 
 		for i := range schema {
-			cells[i] = xlsxCell(&schema[i], row[i], loc, styles.styleFor(i, &schema[i], row[i]))
+			cells[i] = xlsxCell(
+				&schema[i],
+				cellAt(row.Values, i),
+				row.Cells[i],
+				loc,
+				styles.styleFor(i, row.Cells[i].Tone),
+			)
 		}
-		if err = r.writeRow(writer, rowsOnSheet+2, cells); err != nil {
-			return err
+		if rowErr := r.writeRow(writer, rowsOnSheet+2, cells); rowErr != nil {
+			return rowErr
 		}
 		rowsOnSheet++
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	written, err := r.writeTotalsRow(ctx, writer, req, styles, loc, rowsOnSheet+2)
@@ -222,12 +222,17 @@ func (r *XLSXRenderer) writeTotalsRow(
 	}
 
 	schema := req.Dataset.Schema()
+	formatted, err := reportfmt.FormatRow(ctx, formatColumns(schema), row, loc)
+	if err != nil {
+		return 0, err
+	}
+
 	cells := make([]any, len(schema))
 	for i := range schema {
 		if i >= len(row) || row[i] == nil {
 			continue
 		}
-		cells[i] = xlsxCell(&schema[i], row[i], loc, styles.totals[i])
+		cells[i] = xlsxCell(&schema[i], row[i], formatted[i], loc, styles.totals[i])
 	}
 	if len(cells) > 0 && row[0] == nil {
 		cells[0] = excelize.Cell{StyleID: styles.header, Value: totalsLabel}
@@ -239,21 +244,22 @@ func (r *XLSXRenderer) writeTotalsRow(
 	return 1, nil
 }
 
-// styleFor picks the banded style when a rule matches this cell, falling back
+// styleFor picks the banded style when a rule matched this cell, falling back
 // to the column's own number format.
-func (s *sheetStyles) styleFor(
-	index int,
-	column *reportports.ReportResultColumn,
-	value any,
-) int {
-	if index < len(s.tones) && s.tones[index] != nil {
-		if tone := column.Display.ToneFor(value); tone != reportfmt.ToneNone {
-			if styleID, ok := s.tones[index][tone]; ok {
-				return styleID
-			}
+func (s *sheetStyles) styleFor(index int, tone reportfmt.Tone) int {
+	if tone != reportfmt.ToneNone && index < len(s.tones) && s.tones[index] != nil {
+		if styleID, ok := s.tones[index][tone]; ok {
+			return styleID
 		}
 	}
 	return s.columns[index]
+}
+
+func cellAt(row []any, index int) any {
+	if index < len(row) {
+		return row[index]
+	}
+	return nil
 }
 
 func (r *XLSXRenderer) writeRow(writer *excelize.StreamWriter, rowNum int, cells []any) error {
@@ -364,6 +370,7 @@ func newColumnStyles(
 func xlsxCell(
 	column *reportports.ReportResultColumn,
 	value any,
+	formatted reportfmt.Cell,
 	loc *time.Location,
 	styleID int,
 ) any {
@@ -373,7 +380,7 @@ func xlsxCell(
 
 	_, native := column.Display.ExcelFormat()
 	if !native {
-		return column.Display.String(value, loc)
+		return formatted.Text
 	}
 
 	return excelize.Cell{StyleID: styleID, Value: xlsxNativeValue(column, value, loc)}

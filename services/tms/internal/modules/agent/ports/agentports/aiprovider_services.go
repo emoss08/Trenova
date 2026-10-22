@@ -27,6 +27,13 @@ type SaveAIProviderRequest struct {
 	StructuredOutputMode aiprovider.StructuredOutputMode
 	ReasoningEffort      aiprovider.ReasoningEffort
 	ThinkingStyle        aiprovider.ThinkingStyle
+	// AdvisorEnabled and AdvisorModel declare Anthropic's advisor on every
+	// chat call routed to the provider; Scripts and ScriptWrites let its
+	// model answer with code mode.
+	AdvisorEnabled bool
+	AdvisorModel   string
+	Scripts        bool
+	ScriptWrites   bool
 	// Platform and PlatformSettings say where an Anthropic Messages provider
 	// reaches Claude and how it signs in there.
 	Platform         aiprovider.Platform

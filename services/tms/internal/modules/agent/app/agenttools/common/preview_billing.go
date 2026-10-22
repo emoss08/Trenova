@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -14,9 +15,20 @@ import (
 // every additional charge as it was and as the edit leaves it, a removed one
 // with nothing after and an added one with nothing before. The totals are the
 // shipment's total charge on either side.
-func ChargeEditMoney(before, after *shipment.Shipment) *agent.MoneyPreview {
+func ChargeEditMoney(
+	ctx context.Context,
+	before, after *shipment.Shipment,
+) (*agent.MoneyPreview, error) {
 	freightBefore := before.FreightChargeAmount.Decimal
 	freightAfter := after.FreightChargeAmount.Decimal
+	totalsBefore, err := shipment.ChargeTotalsByCharge(ctx, before)
+	if err != nil {
+		return nil, err
+	}
+	totalsAfter, err := shipment.ChargeTotalsByCharge(ctx, after)
+	if err != nil {
+		return nil, err
+	}
 	names := accessorialLabels(before.AdditionalCharges, after.AdditionalCharges)
 
 	lines := make(
@@ -43,11 +55,11 @@ func ChargeEditMoney(before, after *shipment.Shipment) *agent.MoneyPreview {
 		}
 		line := agent.MoneyLine{
 			Label:  names[charge.AccessorialChargeID],
-			Before: KnownAmount(charge.Total(freightBefore)),
+			Before: KnownAmount(totalsBefore[charge]),
 		}
 		if edited, ok := kept[charge.ID]; ok {
 			line.Label = names[edited.AccessorialChargeID]
-			line.After = KnownAmount(edited.Total(freightAfter))
+			line.After = KnownAmount(totalsAfter[edited])
 		}
 		lines = append(lines, line)
 	}
@@ -67,7 +79,7 @@ func ChargeEditMoney(before, after *shipment.Shipment) *agent.MoneyPreview {
 		}
 		lines = append(lines, agent.MoneyLine{
 			Label: names[charge.AccessorialChargeID],
-			After: KnownAmount(charge.Total(freightAfter)),
+			After: KnownAmount(totalsAfter[charge]),
 		})
 	}
 
@@ -76,7 +88,7 @@ func ChargeEditMoney(before, after *shipment.Shipment) *agent.MoneyPreview {
 	block.TotalAfter = after.TotalChargeAmount
 	block.Delta = toolpreview.MoneyDelta(block.TotalBefore, block.TotalAfter)
 
-	return block
+	return block, nil
 }
 
 // accessorialLabels names each accessorial by the description the shipment's

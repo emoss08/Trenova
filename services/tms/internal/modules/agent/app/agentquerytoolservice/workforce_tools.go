@@ -149,8 +149,6 @@ func workforceQueryToolProviders() []any {
 		provideListWorkerSafetyEventsTool,
 		provideListDOTRandomDrawsTool,
 		provideGetDOTRandomDrawTool,
-		provideListWorkerLeaveCasesTool,
-		provideListEmploymentVerificationsTool,
 		provideListWorkerCredentialsTool,
 		provideListShipmentPermitsTool,
 		provideListDriverExpensesTool,

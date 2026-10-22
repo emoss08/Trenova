@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["imaging", "crates/*"]
-exclude = ["tms", "postgres", "imaging/fuzz", "crates/sandbox/fuzz"]
+exclude = ["tms", "postgres", "imaging/fuzz", "crates/sandbox/fuzz", "crates/rules/fuzz"]
 
 [workspace.package]
 version = "0.1.0"
@@ -14,6 +14,7 @@ repository = "https://github.com/emoss08/trenova"
 [workspace.dependencies]
 trenova-imaging-core = { path = "crates/imaging-core" }
 trenova-proto = { path = "crates/proto" }
+trenova-rules = { path = "crates/rules" }
 trenova-sandbox = { path = "crates/sandbox" }
 trenova-service-kit = { path = "crates/service-kit" }
 
@@ -43,8 +44,10 @@ pdfium-render = { version = "0.9.4", default-features = false, features = ["pdfi
 prometheus-client = "0.25.1"
 prost = { version = "0.14.4", default-features = false, features = ["std", "derive"] }
 rcgen = { version = "0.14", default-features = false, features = ["crypto", "pem", "ring"] }
+regex-lite = { version = "0.1.9", default-features = false, features = ["std", "string"] }
 prost-types = { version = "0.14.4", default-features = false, features = ["std"] }
 protox = "0.10"
+rust_decimal = { version = "1.43", default-features = false, features = ["std", "maths"] }
 rustix = { version = "1.1", default-features = false, features = ["std", "fs", "process", "net", "pipe", "thread", "mm", "param"] }
 rustls = { version = "0.23.46", default-features = false, features = ["std", "ring", "tls12", "logging"] }
 rxing = { version = "0.9.3", default-features = false, features = ["decoders", "multi_barcode_readers", "qrcode", "oned", "pdf417", "datamatrix", "aztec", "encoding_rs"] }
@@ -106,6 +109,12 @@ codegen-units = 16
 incremental = true
 strip = "none"
 debug = "line-tables-only"
+
+# The trenova-rules WebAssembly module (`task rust:wasm-rules`): release, tuned for size,
+# since the browser downloads it and the server runs it in wazero.
+[profile.wasm]
+inherits = "release"
+opt-level = "s"
 
 [profile.bench]
 lto = "thin"

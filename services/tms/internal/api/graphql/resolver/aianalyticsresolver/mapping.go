@@ -132,6 +132,7 @@ func totalsModel(totals *aianalyticsports.Totals) *gqlmodel.AIAnalyticsTotals {
 		PricedRuns:               totals.PricedRuns,
 		CostPerCompletedRun:      optionalDecimal(totals.CostPerCompletedRun),
 		Tokens:                   tokensModel(totals.Tokens),
+		Advisor:                  advisorModel(totals.Advisor),
 		ToolFailureAlarm:         totals.ToolFailureAlarm,
 	}
 }
@@ -143,6 +144,15 @@ func tokensModel(tokens aianalyticsports.TokenTotals) *gqlmodel.AIAnalyticsToken
 		CacheWrite:     strconv.FormatInt(tokens.CacheWrite, 10),
 		Output:         strconv.FormatInt(tokens.Output, 10),
 		CacheReadShare: tokens.CacheReadShare(),
+	}
+}
+
+func advisorModel(advisor aianalyticsports.AdvisorTotals) *gqlmodel.AIAnalyticsAdvisor {
+	return &gqlmodel.AIAnalyticsAdvisor{
+		Calls:        strconv.FormatInt(advisor.Calls, 10),
+		PromptTokens: strconv.FormatInt(advisor.PromptTokens, 10),
+		OutputTokens: strconv.FormatInt(advisor.OutputTokens, 10),
+		CostUsd:      advisor.CostUSD.String(),
 	}
 }
 
@@ -193,6 +203,7 @@ func seriesModel(series *aianalyticsports.Series) *gqlmodel.AIAnalyticsSeries {
 		PricedRuns:          series.PricedRuns,
 		CostPerCompletedRun: optionalDecimal(series.CostPerCompletedRun),
 		Tokens:              tokensModel(series.Tokens),
+		Advisor:             advisorModel(series.Advisor),
 		FirstTokenMedianMs:  optionalInt(series.FirstTokenMedianMs),
 		LastRanAt:           optionalInt(series.LastRanAt),
 		Quiet:               series.Quiet,

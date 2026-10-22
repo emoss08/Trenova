@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -200,20 +200,20 @@ func (r storeHazmats) GetByIDs(
 	return fetchFrom(r.s, "hazmat", req.TenantInfo, req.HazardousMaterialIDs, r.s.Hazmats), nil
 }
 
-func NewEnvironmentBuilder(t *testing.T) *engine.EnvironmentBuilder {
+func NewEnvironmentBuilder(t *testing.T) *environment.Builder {
 	t.Helper()
 
 	registry, err := formula.NewSchemaRegistry()
 	require.NoError(t, err)
 
-	return engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
+	return environment.NewBuilder(environment.Params{
 		Registry: registry,
 		Resolver: resolver.NewResolver(),
 	})
 }
 
 func HydratorParams(
-	env *engine.EnvironmentBuilder,
+	env *environment.Builder,
 	store *RelationStore,
 ) ratinghydration.Params {
 	return ratinghydration.Params{
@@ -298,16 +298,10 @@ func NewFormulaService(
 	require.NoError(t, err)
 
 	res := resolver.NewResolver()
-	env := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
+	env := environment.NewBuilder(environment.Params{
 		Registry: registry,
 		Resolver: res,
 	})
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: env,
-	})
-	require.NoError(t, err)
 
 	byID := make(map[pulid.ID]*formulatemplate.FormulaTemplate, len(templates))
 	for _, template := range templates {
@@ -317,7 +311,7 @@ func NewFormulaService(
 	return formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Engine:         eng,
+		Environment:    env,
 		Resolver:       res,
 		Repo:           templateStore{templates: byID},
 		VersionRepo:    noScheduledVersions{},

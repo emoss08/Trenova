@@ -69,9 +69,8 @@ var noMessage = map[string]struct{}{
 	"NewResolveError":                   {},
 	"NewTransformError":                 {},
 	"NewComputeError":                   {},
-	"NewVariableError":                  {},
 	"NewSchemaError":                    {},
-	"NewMissingFieldError":              {},
+	"NewEvaluationError":                {},
 	"NewUnresolvedFieldError":           {},
 	"NewPanicError":                     {},
 	"NewSeedError":                      {},
@@ -197,6 +196,11 @@ func (e *extractor) parseFile(path string) error {
 
 		if kv, isKV := n.(*ast.KeyValueExpr); isKV {
 			e.recordStructField(kv, rel)
+			return true
+		}
+
+		if lit, isLit := n.(*ast.CompositeLit); isLit {
+			e.recordRulesMessage(lit, rel)
 			return true
 		}
 
@@ -344,6 +348,37 @@ func (e *extractor) recordStructField(kv *ast.KeyValueExpr, rel string) {
 		Line:    e.fset.Position(kv.Pos()).Line,
 		Callee:  "field:" + key.Name,
 	})
+}
+
+func (e *extractor) recordRulesMessage(lit *ast.CompositeLit, rel string) {
+	sel, ok := lit.Type.(*ast.SelectorExpr)
+	if !ok || sel.Sel.Name != "Message" {
+		return
+	}
+	if pkg, isIdent := sel.X.(*ast.Ident); !isIdent || pkg.Name != "rules" {
+		return
+	}
+
+	for _, elt := range lit.Elts {
+		kv, isKV := elt.(*ast.KeyValueExpr)
+		if !isKV {
+			continue
+		}
+		key, isIdent := kv.Key.(*ast.Ident)
+		if !isIdent || key.Name != "Template" {
+			continue
+		}
+		msg, isLiteral := stringLiteral(kv.Value)
+		if !isLiteral || strings.TrimSpace(msg) == "" {
+			continue
+		}
+		e.entries = append(e.entries, entry{
+			Message: msg,
+			File:    filepath.ToSlash(rel),
+			Line:    e.fset.Position(kv.Pos()).Line,
+			Callee:  "rules.Message",
+		})
+	}
 }
 
 func calleeName(fun ast.Expr) string {

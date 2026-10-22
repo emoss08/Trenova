@@ -494,7 +494,7 @@ func (s *Service) computeRerate( //nolint:gocritic // stable API shape
 			return nil, decimal.Zero, decimal.Zero, legErr
 		}
 
-		resolution, legErr := shipment.ResolveShares(shp, shp.ChargeAllocations)
+		resolution, legErr := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
 		if legErr != nil {
 			return nil, decimal.Zero, decimal.Zero, legErr
 		}
