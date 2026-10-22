@@ -43603,7 +43603,7 @@
       "routes/agent-control"
     ]
   },
-  "Can read every record and change nothing.": {
+  "Can read every record except leave cases, and change nothing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -134318,6 +134318,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "Leave and FMLA": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Leave begins": {
     "sites": 1,
     "scope": [
@@ -175810,6 +175819,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Open and decide leave cases, record leave days and keep medical certification.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Open approvals": {

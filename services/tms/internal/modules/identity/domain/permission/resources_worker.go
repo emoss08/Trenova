@@ -413,16 +413,18 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceWorkerLeave.String(),
-		DisplayName:    "Leave & FMLA",
-		Description:    "Leave cases, the FMLA entitlement drawn against them, and medical certification",
-		Category:       "Human resources",
-		ParentResource: ResourceWorker.String(),
+		Resource:    ResourceWorkerLeave.String(),
+		DisplayName: "Leave & FMLA",
+		Description: "Leave cases, the FMLA entitlement drawn against them, and medical certification",
+		Category:    "Human resources",
 		// A leave case carries the reason somebody is off work and the medical
-		// certification behind it. It is granted separately for the same reason
-		// the injury log is. That a worker is on leave, of what kind, when, and
-		// where the certification stands is Internal, as are the days taken;
-		// the reason, the certificate and the notes stay Restricted.
+		// certification behind it (29 CFR 825.500(g)), so it has no parent:
+		// reading a worker never reaches their leave, and only a worker_leave
+		// grant does. A leave case is its own record wherever it is carried,
+		// and nothing links to one, so it has no reference view. That a worker
+		// is on leave, of what kind, when, and where the certification stands
+		// is Internal, as are the days taken; the reason, the certificate and
+		// the notes stay Restricted.
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
 			"id":                       SensitivityInternal,
