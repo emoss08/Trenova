@@ -52,6 +52,17 @@ describe("units", () => {
     expect(parseTariffUnit("°F")?.numerator?.dimension).toBe("Temperature");
   });
 
+  it("folds a count label into the value, as the checker does", () => {
+    const dimension = (text: string) => {
+      const unit = parseTariffUnit(text);
+      return unit && tariffUnitDimension(unit);
+    };
+    expect(["$/pallet", "$/piece", "$/stop"].map(dimension)).toEqual(["Money", "Money", "Money"]);
+    expect(dimension("lb/pallet")).toBe("Weight");
+    expect(dimension("pallet")).toBe("Number");
+    expect(dimension("$/mi")).toBe("Money/Distance");
+  });
+
   it("refuses a unit the language does not know", () => {
     expect(parseTariffUnit("furlong")).toBeNull();
     expect(parseTariffUnit("$/")).toBeNull();
@@ -169,6 +180,17 @@ describe("tariffValueProblems", () => {
       { path: "[0].rate", problem: "missing" },
       { path: "[0]", problem: "unknown-field", detail: "cost" },
     ]);
+  });
+
+  it("takes money per pallet, piece or stop as money, and no other rate", () => {
+    for (const u of ["$", "$/pallet", "$/piece", "$/stop"]) {
+      expect(tariffValueProblems({ kind: "money" }, { $q: "45", u })).toEqual([]);
+    }
+    for (const u of ["$/mi", "lb", "%"]) {
+      expect(tariffValueProblems({ kind: "money" }, { $q: "45", u })).toEqual([
+        { path: "", problem: "not-money" },
+      ]);
+    }
   });
 
   it("takes none only for an optional, and whole numbers only for an Int", () => {

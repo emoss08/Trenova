@@ -96,11 +96,17 @@ export function formatTariffUnit(unit: TariffUnit): string {
   return [top, ...unit.denominator.map((part) => part.symbol)].join("/");
 }
 
-/** A unit's dimension as the checker names it: `Weight`, `Money/Distance`, `Weight/Volume`. */
+/**
+ * A unit's dimension as the checker names it: `Weight`, `Money/Distance`, `Weight/Volume`. A count
+ * label (`pallet`, `piece`, `stop`) folds into the value as it does in the crate, so `$/pallet`
+ * is `Money` and `pallet` alone is a `Number`.
+ */
 export function tariffUnitDimension(unit: TariffUnit): string {
-  const top = unit.numerator?.dimension ?? "Number";
-  if (unit.denominator.length === 0) return top;
-  return [top, ...unit.denominator.map((part) => part.dimension)].join("/");
+  const counted = (part: TariffSimpleUnit | null) => part?.dimension === "Count";
+  const top = unit.numerator && !counted(unit.numerator) ? unit.numerator.dimension : "Number";
+  const under = unit.denominator.filter((part) => !counted(part));
+  if (under.length === 0) return top;
+  return [top, ...under.map((part) => part.dimension)].join("/");
 }
 
 /** Whether a unit is money or money per something: shown with the currency in front. */
@@ -371,10 +377,15 @@ export function tariffValueProblems(
       return isTariffNumber(wire) && /^-?\d+$/.test(normalizeDecimal(wire.$n))
         ? []
         : [{ path, problem: "not-int" }];
-    case "money":
-      return isTariffQuantity(wire) && wire.u === "$" && TARIFF_DECIMAL_PATTERN.test(wire.$q)
+    case "money": {
+      const unit = isTariffQuantity(wire) ? parseTariffUnit(wire.u) : null;
+      return unit !== null &&
+        isTariffQuantity(wire) &&
+        TARIFF_DECIMAL_PATTERN.test(wire.$q) &&
+        tariffUnitDimension(unit) === "Money"
         ? []
         : [{ path, problem: "not-money" }];
+    }
     case "percent":
       return isTariffQuantity(wire) && wire.u === "%" && TARIFF_DECIMAL_PATTERN.test(wire.$q)
         ? []

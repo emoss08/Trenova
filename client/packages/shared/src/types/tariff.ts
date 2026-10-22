@@ -91,8 +91,15 @@ export const tariffWireValueSchema: z.ZodType<TariffWireValue> = z.lazy(() =>
   ]),
 );
 
-/** A record field of a record type descriptor. */
-export type TariffTypeField = { name: string; doc: string | null; type: TariffType };
+/**
+ * A record field of a record type descriptor. Its doc is a catalog message when the standard library wrote it (shown with
+ * `translateMessage`) and plain text, shown as written, when an organisation library did.
+ */
+export type TariffTypeField = {
+  name: string;
+  doc: string | TariffMessage | null;
+  type: TariffType;
+};
 
 /**
  * A type as `tariff.check` describes an input's, for building its form: the scalar kinds,
@@ -147,7 +154,7 @@ export const tariffTypeSchema: z.ZodType<TariffType> = z.lazy(() =>
         z.object({
           name: z.string(),
           doc: z
-            .string()
+            .union([z.string(), tariffMessageSchema])
             .nullish()
             .transform((value) => value ?? null),
           type: tariffTypeSchema,
@@ -353,7 +360,7 @@ export type TariffOutlineItem = z.output<typeof tariffOutlineItemSchema>;
 
 export const tariffFoldSchema = z.object({
   range: tariffRangeSchema,
-  kind: z.enum(["block", "record", "list", "doc"]),
+  kind: z.enum(["block", "record", "list", "doc", "comment", "imports"]),
 });
 export type TariffFold = z.output<typeof tariffFoldSchema>;
 
@@ -615,6 +622,34 @@ export const tariffContextSchema = z.object({
     .transform((value) => value ?? {}),
 });
 export type TariffContext = z.output<typeof tariffContextSchema>;
+
+/** An approved organisation library the context holds, as the Studio names it. */
+export const tariffStudioLibrarySchema = z.object({
+  /** The module path a file imports: `org.<name>`. */
+  path: z.string(),
+  libraryId: z.string(),
+  name: z.string(),
+  description: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  /** The approved version the context holds, the one a new template version would pin. */
+  versionNumber: z.number().int(),
+});
+export type TariffStudioLibrary = z.output<typeof tariffStudioLibrarySchema>;
+
+/**
+ * What `GET /formula-templates/context` answers: the context every check is given, and each
+ * library in it with its name, description and approved version number.
+ */
+export const tariffStudioContextSchema = z.object({
+  context: tariffContextSchema,
+  libraries: z
+    .array(tariffStudioLibrarySchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+export type TariffStudioContext = z.output<typeof tariffStudioContextSchema>;
 
 /** The context of a file checked before the organisation's context has loaded. */
 export const EMPTY_TARIFF_CONTEXT: TariffContext = {
