@@ -4,7 +4,7 @@ import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatPercent } from "@trenova/shared/lib/utils";
 import { Figs } from "../kit/layout";
-import { formatCost, formatRunTime, formatSpend, percent } from "./analytics-model";
+import { advisorFigures, formatCost, formatRunTime, formatSpend, percent } from "./analytics-model";
 
 function CountUp({ value, format }: { value: number; format: (value: number) => string }) {
   return <>{format(useCountUp(value))}</>;
@@ -16,6 +16,7 @@ export function AnalyticsFigures({ totals }: { totals: AIAnalyticsTotals }) {
   const failureRate = totals.toolFailureRate ?? 0;
   const spend = Number(totals.costUsd) || 0;
   const perRun = totals.costPerCompletedRun === null ? null : Number(totals.costPerCompletedRun);
+  const advisor = advisorFigures(totals.advisor);
 
   return (
     <Figs
@@ -79,6 +80,20 @@ export function AnalyticsFigures({ totals }: { totals: AIAnalyticsTotals }) {
                 : t("Nothing completed")
               : t("{0} per completed run", formatCost(perRun)),
         },
+        ...(advisor
+          ? [
+              {
+                label: t("Advisor"),
+                value: <CountUp value={advisor.costUsd} format={formatSpend} />,
+                sub: t(
+                  "{0, plural, one {# call} other {# calls}} · {1} prompt / {2} output tokens",
+                  advisor.calls,
+                  formatNumber(advisor.promptTokens),
+                  formatNumber(advisor.outputTokens),
+                ),
+              },
+            ]
+          : []),
       ]}
     />
   );

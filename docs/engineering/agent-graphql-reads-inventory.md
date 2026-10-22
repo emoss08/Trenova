@@ -311,11 +311,7 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `worker_get_dot_random_draw` | op | dotRandomDraw | DotRandomDraw | n/a | id | Same GetDraw; entries are selected by DotRandomDraw. |
 | `worker_get_hos` | op | workerHosState | DeskWorkerHos (alt WorkerHosState) | n/a | workerId | Same TelematicsService.GetWorkerHOSState (telematics read). |
 | `worker_get_schedule` | op | workerShiftAssignments (+ workerAvailabilityPreferences, shiftSwapRequests) | WorkerShiftAssignments (+ WorkerAvailabilityPreferences, ShiftSwapRequests) | unpaged lists | workerId | Same SchedulingService ListAssignments/ListPreferences/ListSwaps; tool's team-scope guard is server-side. |
-| `worker_list_credentials` | partial | workerCredentials (+ credentialExpiryForecast) | WorkerCredentials (+ CredentialExpiryForecast) | unpaged / limit | workerId, includeArchived / days, limit | Tool uses WorkerCredentialService.ListExpiring with credentialTypeCode, requiredOnly, includeExpired grace, offset; neither root takes those. Per-worker list and org-wide forecast cover the records. |
 | `worker_list_dot_random_draws` | op | dotRandomDraws (+ dotRandomPools) | DotRandomDraws (+ DotRandomPools) | unpaged / cursor | poolId / DOTRandomPoolsInput | Same ListDraws/ListPools. |
-| `worker_list_employment_verifications` | partial | workerEmploymentVerifications (+ outstandingEmploymentVerifications) | OutstandingEmploymentVerifications (workerEmploymentVerifications has no op) | unpaged list | workerId (required) / none | Same ListVerifications. outstandingOnly only org-wide; per-worker list has no op and no outstandingOnly. WorkerEmploymentVerification has no kind (it is not named for `qualification` and declares no `@kind`), so the field guard would not gate it: converting needs `@kind(resource: "qualification")`, `ParentResource: worker` on qualification and field sensitivities, after reference views #868. |
-| `worker_list_leave_cases` | partial | workerLeaveCases (+ leaveCertificationsOutstanding) | WorkerLeaveFile (leaveCertificationsOutstanding has no op) | unpaged list | workerId (required) / none | Same ListCases. openOnly, limit and an org-wide list missing; certificationOutstandingOnly only org-wide. WorkerLeaveCase has no kind (it is not named for `worker_leave` and declares no `@kind`), so the field guard would not gate its reason, notes or certificate: converting needs `@kind(resource: "worker_leave")` and field sensitivities, after reference views #868. |
-| `worker_list_safety_events` | partial | workerSafetyEvents (+ workerSafetyViolations, workerRecognitions) | WorkerSafetyEvents (+ WorkerSafetyViolations, WorkerRecognitions) | unpaged list | workerId (required) | Per-worker read matches. Without workerId the tool lists open events fleet-wide (ListOpenEvents); fleetSafety only returns an openEvents count. |
 | `worker_list_shift_templates` | op | shiftTemplates | ShiftTemplates | limit only | activeOnly, limit | Same ListTemplates. |
 
 ## Counts per class
@@ -325,8 +321,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | op, not yet converted | 97 |
 | op, converted (rows removed) | 22 |
 | field-no-op | 6 |
-| partial, not yet converted | 28 |
-| partial, converted (rows removed) | 2 |
+| partial, not yet converted | 24 |
+| partial, converted (rows removed) | 6 |
 | none | 21 |
 | **total** | **176** |
 

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -55,17 +56,6 @@ type completedScript struct{ completed bool }
 
 func (c completedScript) ScriptCompleted() bool { return c.completed }
 
-func writesLedger(t *testing.T) codemode.Ledger {
-	t.Helper()
-
-	ledger, err := codemode.ParseLedger([]byte("models:\n  - provider: AnthropicMessages\n" +
-		"    model: " + scriptModel + "\n    run: test\n    decided: test\n" +
-		"    writes: true\n    writesRun: test\n"))
-	require.NoError(t, err)
-
-	return ledger
-}
-
 func newWritingHarness(
 	t *testing.T,
 	reads []agentports.AgentQueryTool,
@@ -74,7 +64,7 @@ func newWritingHarness(
 	t.Helper()
 
 	h := newScriptHarness(t, reads, writes, nil)
-	h.rt.codeMode = codemode.Gate{Ledger: writesLedger(t)}
+	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true})
 	h.req.Definition.AutonomyCeiling = agent.TierAutoExecute
 	h.req.Definition.ToolTiers = map[string]agent.AutonomyTier{}
 	for _, tool := range writes {
@@ -156,7 +146,7 @@ func TestScriptWrites_AModelThatMayNotWriteIsRefusedTheWrite(t *testing.T) {
 
 	holdTool := newPreparable("shipment_place_hold", agent.EgressInternal)
 	h := newWritingHarness(t, nil, holdTool)
-	h.rt.codeMode = codemode.Gate{Ledger: enabledLedger(t)}
+	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 
 	outcome := h.run(t.Context(), hold(1, "shipment_place_hold", "shp_1"))
 
@@ -189,7 +179,7 @@ func TestScriptWrites_AWriteThePersonMayNotMakeIsNeverPrepared(t *testing.T) {
 	h := newScriptHarness(t, nil, []agentports.AgentTool{holdTool}, &stubPermissions{
 		Denied: map[string]bool{permission.ResourceShipment.String() + ":" + string(permission.OpUpdate): true},
 	})
-	h.rt.codeMode = codemode.Gate{Ledger: writesLedger(t)}
+	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true})
 	h.script.data = completedScript{completed: true}
 
 	outcome := h.run(t.Context(), hold(1, "shipment_place_hold", "shp_other"))

@@ -71,3 +71,24 @@ func TestPartOfFollowsTheParentChain(t *testing.T) {
 		"a family's root is never part of its own child")
 	assert.False(t, registry.PartOf(permission.ResourceWorker.String(), permission.ResourceTractor.String()))
 }
+
+func TestALeaveCaseIsNotPartOfItsWorker(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	leave := permission.ResourceWorkerLeave.String()
+	worker := permission.ResourceWorker.String()
+
+	assert.Equal(t, leave, registry.Family(leave), "a leave case is a family of its own")
+	assert.Equal(t, leave, registry.GetEffectiveResource(leave),
+		"no grant on the worker reaches a leave case")
+	assert.NotContains(t, registry.GetChildren(worker), leave)
+	assert.False(t, registry.PartOf(leave, worker),
+		"a leave case a worker carries is a linked record, gated by worker_leave read")
+	assert.False(t, registry.PartOf(worker, leave))
+	assert.False(t, registry.InReferenceView(leave, "reason"),
+		"nothing links to a leave case, so it shows nothing but its id without worker_leave read")
+	assert.False(t, registry.InReferenceView(leave, "leaveType"))
+	assert.True(t, registry.PartOf(permission.ResourceWorkerCredential.String(), worker),
+		"the rest of the worker's family is unchanged")
+}

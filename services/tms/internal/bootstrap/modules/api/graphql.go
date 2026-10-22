@@ -35,6 +35,7 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewRoutingGuideWithEntriesByIDLoaderFactory,
 	loaders.NewWorkerDQFVerificationsByWorkerIDLoaderFactory,
 	loaders.NewWorkerLeaveEntriesByCaseIDLoaderFactory,
+	loaders.NewWorkerSafetyViolationsByEventIDLoaderFactory,
 	loaders.NewFiscalPeriodsByFiscalYearIDLoaderFactory,
 	loaders.NewAgentDecisionsByProposalIDLoaderFactory,
 	loaders.NewAgentPlanStepsByPlanIDLoaderFactory,

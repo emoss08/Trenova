@@ -99,3 +99,31 @@ func TestPlanAdminGrants_KeepsOperationsTheRegistryNoLongerDeclares(t *testing.T
 		assert.Empty(t, plan.extend, "a grant beyond the registry is left for a person to review")
 	}
 }
+
+func TestPlanAdminGrants_GrantsLeaveToAnAdministratorWhoHoldsOnlyWorkers(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	roleID := pulid.MustNew("rol_")
+	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
+	for _, rp := range fullGrants(registry, roleID) {
+		if rp.Resource != permission.ResourceWorkerLeave.String() {
+			held = append(held, rp)
+		}
+	}
+
+	plan := planAdminGrants(registry, roleID, held, 100)
+
+	require.Len(t, plan.add, 1, "worker_leave is its own grant, so a worker grant does not cover it")
+	assert.Equal(t, permission.ResourceWorkerLeave.String(), plan.add[0].Resource)
+	assert.ElementsMatch(t, []permission.Operation{
+		permission.OpRead,
+		permission.OpCreate,
+		permission.OpUpdate,
+		permission.OpApprove,
+		permission.OpManage,
+		permission.OpExport,
+	}, plan.add[0].Operations)
+	assert.Equal(t, permission.DataScopeOrganization, plan.add[0].DataScope)
+	assert.Empty(t, plan.extend)
+}

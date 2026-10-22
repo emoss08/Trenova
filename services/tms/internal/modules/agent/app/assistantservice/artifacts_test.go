@@ -29,7 +29,6 @@ type stubArtifactRepo struct {
 	inserted  []*assistantartifact.Artifact
 	paged     []assistantartifactports.ListArtifactsRequest
 	questions map[pulid.ID]string
-	arguments map[string]map[string]any
 }
 
 func (r *stubArtifactRepo) GetByID(
@@ -155,15 +154,6 @@ func (r *stubArtifactRepo) TurnQuestions(
 	}
 
 	return out, nil
-}
-
-func (r *stubArtifactRepo) ToolCallArguments(
-	_ context.Context,
-	_ pulid.ID,
-	_ pagination.TenantInfo,
-	callID string,
-) (map[string]any, error) {
-	return r.arguments[callID], nil
 }
 
 func observation(name string, data any) agentports.ToolObservation {

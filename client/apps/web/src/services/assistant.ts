@@ -22,6 +22,7 @@ import {
   type MentionSearchType,
   assistantArtifactListSchema,
   assistantArtifactPageSchema,
+  artifactRowsSchema,
   assistantArtifactSchema,
   documentRewriteSchema,
   assistantLiveTurnListSchema,
@@ -106,6 +107,33 @@ export type ArtifactListParams = {
   pinned?: boolean;
   /** Each payload cut to the keys that name and draw an artifact in a list. */
   summary?: boolean;
+};
+
+/** Which page of a table's list to read, and how it is searched and sorted. */
+export type ArtifactRowsRequest = {
+  limit: number;
+  after?: string;
+  offset?: number;
+  q?: string;
+  /** A column of the table, which the server maps to the field the list sorts by. */
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  /** Ask for how many rows the list holds in all, alongside the page. */
+  total?: boolean;
+};
+
+/**
+ * What names one reading of a table's list: the version of the table it
+ * continues, the page size, the search and the sort, and whether it reads the
+ * list from its start rather than from where the agent stopped.
+ */
+export type ArtifactRowsKey = {
+  stamp: number;
+  size: number;
+  q: string;
+  sortBy: string;
+  sortDirection: "asc" | "desc";
+  fromStart: boolean;
 };
 
 export function downloadAssistantTranscript(threadId: AssistantThread["id"]): void {
@@ -329,6 +357,32 @@ export class AssistantService {
       { signal: options?.signal },
     );
     return safeParse(assistantArtifactPageSchema, response, "Assistant Artifact");
+  }
+
+  /**
+   * One page of a table's list, read again from its source with the person's
+   * own access, after a cursor or at an offset, searched or sorted.
+   */
+  public async artifactRows(
+    threadId: AssistantThread["id"],
+    artifactId: string,
+    read: ArtifactRowsRequest,
+    options?: { signal?: AbortSignal },
+  ) {
+    const params = new URLSearchParams({ limit: String(read.limit) });
+    if (read.after) params.set("after", read.after);
+    if (read.offset) params.set("offset", String(read.offset));
+    if (read.q) params.set("q", read.q);
+    if (read.sortBy) {
+      params.set("sortBy", read.sortBy);
+      params.set("sortDirection", read.sortDirection ?? "asc");
+    }
+    if (read.total) params.set("total", "true");
+    const response = await api.get(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/rows/?${params.toString()}`,
+      { signal: options?.signal },
+    );
+    return safeParse(artifactRowsSchema, response, "Artifact Rows");
   }
 
   /** Every version of the lineage an artifact belongs to, oldest first. */

@@ -59,8 +59,9 @@ advisor:
 # that has a held-out pair; cost per completed task at least costCut lower, or pass^k at least
 # passGain higher, over every work pair; the controls within controlWithin; and no unauthorized
 # effect on the adversarial pairs. A recommended model is re-checked in run 2 on the cell the
-# configuration runs it at, and only then proposed for codemode/models.yaml. The gate never
-# writes that file.
+# configuration runs it at. What holds is a recommendation to turn on Scripts for that model's
+# chat provider in AI Control (and Scripts may propose writes, where the batch-write adversarial
+# pairs also ran clean); the gate changes no setting.
 codeMode:
   cells:
     - claude-haiku-5-5@low

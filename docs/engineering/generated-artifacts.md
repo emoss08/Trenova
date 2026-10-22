@@ -224,9 +224,10 @@ tool, when:
 - no persisted query, or more than one in a tier, reads that root field alone;
 - an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
 - a shard the operations reach asks for a resolver the full root does not build;
-- an operation a list reads `alongside` its own is not persisted, is not a connection read that
-  selects `pageInfo`, needs a variable other than its table input, or reads a field whose resolver
-  checks no read permission; or a paged list names one.
+- an operation a list reads `alongside` its own is not persisted, reads a field whose resolver
+  checks no read permission, or is neither a connection read that selects `pageInfo` and needs no
+  variable but its table input nor an unpaged list whose every variable the list's own operation
+  declares with the same type; or a paged list names one.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a
@@ -402,4 +403,5 @@ These look like real failures and are not:
 - **`golangci-lint` refuses to run** when it was built with an older Go than the module
   targets. That needs CI, not a workaround.
 - **`node --test i18n/tools/`** resolves a bare directory as a module on Node 22 and fails
-  before running anything. Pass a glob.
+  before running anything. Node 26, the pinned version, runs it fine; on older Node,
+  pass a glob.

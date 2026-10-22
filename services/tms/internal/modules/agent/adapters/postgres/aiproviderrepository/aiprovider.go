@@ -395,6 +395,11 @@ func (r *repository) Update(
 			Set(cols.StructuredOutputMode.Set(), entity.StructuredOutputMode).
 			Set(cols.ReasoningEffort.Set(), entity.ReasoningEffort).
 			Set(cols.ThinkingStyle.Set(), entity.ThinkingStyle).
+			Set(cols.AdvisorEnabled.Set(), entity.AdvisorEnabled).
+			Set(cols.AdvisorModel.Set(), entity.AdvisorModel).
+			Set(cols.AdvisorRefusal.Set(), entity.AdvisorRefusal).
+			Set(cols.Scripts.Set(), entity.Scripts).
+			Set(cols.ScriptWrites.Set(), entity.ScriptWrites).
 			Set(cols.Platform.Set(), entity.Platform).
 			Set(cols.PlatformSettings.Set(), entity.PlatformSettings).
 			Set(cols.ExtraBody.Set(), entity.ExtraBody).

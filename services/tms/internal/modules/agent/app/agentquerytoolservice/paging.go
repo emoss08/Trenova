@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,7 +19,7 @@ var errOffsetOnCursorList = errors.New(
 		"it again without offset, passing that nextCursor as after for the next page",
 )
 
-var errStaleCursor = errors.New(
+var ErrStaleCursor = errors.New(
 	"after is not a nextCursor this tool returned for these same arguments: the query, " +
 		"filters, status or sort changed since that page, or the cursor was altered. Call " +
 		"it again without after to start from the first page",
@@ -136,15 +137,70 @@ func readCursorWindow(
 	key := ""
 	if window.after != "" {
 		if key, err = pagination.DecodeKeyCursor(scope, window.after); err != nil {
-			return cursorWindow{}, errStaleCursor
+			return cursorWindow{}, ErrStaleCursor
 		}
 	}
 	if window.info, err = pagination.NewCursorInfo(window.limit, key); err != nil {
-		return cursorWindow{}, errStaleCursor
+		return cursorWindow{}, ErrStaleCursor
 	}
 	window.info.IncludeTotalCount = false
 
 	return window, nil
+}
+
+// offsetWindow is a window of a list that pages by offset under the cursor
+// contract: the offset never reaches the model, only a nextCursor bound to
+// the call's other arguments, so it learns one convention for every list.
+type offsetWindow struct {
+	limit  int
+	offset int
+	scope  string
+}
+
+func readOffsetWindow(
+	tool string,
+	params map[string]any,
+	fallback, most int,
+) (offsetWindow, error) {
+	if optionalInt(params, paramOffset, 0) != 0 {
+		return offsetWindow{}, errOffsetOnCursorList
+	}
+	scope, err := cursorScope(tool, params)
+	if err != nil {
+		return offsetWindow{}, err
+	}
+
+	window := offsetWindow{limit: readLimit(params, fallback, most), scope: scope}
+	if after := optionalString(params, paramAfter); after != "" {
+		key, decodeErr := pagination.DecodeKeyCursor(scope, after)
+		if decodeErr != nil {
+			return offsetWindow{}, ErrStaleCursor
+		}
+		offset, parseErr := strconv.Atoi(key)
+		if parseErr != nil || offset < 0 {
+			return offsetWindow{}, ErrStaleCursor
+		}
+		window.offset = offset
+	}
+
+	return window, nil
+}
+
+// fetch is how many rows to ask for: one more than the page, so the answer
+// knows whether another page exists, within the server's page bound.
+func (w offsetWindow) fetch(most int) int {
+	return min(w.limit+1, most)
+}
+
+// more reports whether rows remain past the page, given what a fetch
+// returned. A fetch the server's bound held to the page itself cannot tell,
+// and says there may be more when it came back full.
+func (w offsetWindow) more(fetched, most int) bool {
+	return fetched > w.limit || (w.fetch(most) == w.limit && fetched == w.limit)
+}
+
+func (w offsetWindow) next() string {
+	return pagination.EncodeKeyCursor(w.scope, strconv.Itoa(w.offset+w.limit))
 }
 
 func firstCursorWindow(limit int) cursorWindow {
@@ -183,7 +239,7 @@ func (w *cursorWindow) next(cursor string) string {
 func refuseStaleCursor(err error) error {
 	var invalid *errortypes.Error
 	if errors.As(err, &invalid) && invalid.Field == paramAfter {
-		return errStaleCursor
+		return ErrStaleCursor
 	}
 
 	return err

@@ -158,6 +158,16 @@ type AIAgentRosterStat struct {
 	ApprovalRate *float64 `json:"approvalRate,omitempty"`
 }
 
+// Anthropic's advisor over a set of runs: how often the model consulted it, the
+// advisor's own tokens and its share of the cost. costUsd on the runs already
+// includes it.
+type AIAnalyticsAdvisor struct {
+	Calls        string `json:"calls"`
+	PromptTokens string `json:"promptTokens"`
+	OutputTokens string `json:"outputTokens"`
+	CostUsd      string `json:"costUsd"`
+}
+
 type AIAnalyticsAgentSuggestions struct {
 	AgentDefinitionID string   `json:"agentDefinitionId"`
 	Name              string   `json:"name"`
@@ -329,9 +339,11 @@ type AIAnalyticsSeries struct {
 	// Cost over completed runs; absent when nothing was priced or completed.
 	CostPerCompletedRun *string `json:"costPerCompletedRun,omitempty"`
 	// Prompt and output tokens, with the prompt split by what the provider's cache served.
-	Tokens             *AIAnalyticsTokens `json:"tokens"`
-	FirstTokenMedianMs *int               `json:"firstTokenMedianMs,omitempty"`
-	LastRanAt          *int               `json:"lastRanAt,omitempty"`
+	Tokens *AIAnalyticsTokens `json:"tokens"`
+	// What consulting Anthropic's advisor came to; zero where no provider turned it on.
+	Advisor            *AIAnalyticsAdvisor `json:"advisor"`
+	FirstTokenMedianMs *int                `json:"firstTokenMedianMs,omitempty"`
+	LastRanAt          *int                `json:"lastRanAt,omitempty"`
 	// Nothing ran for longer than a day before the end of the window.
 	Quiet    bool                  `json:"quiet"`
 	RunTimes []*AIAnalyticsRunTime `json:"runTimes"`
@@ -432,6 +444,8 @@ type AIAnalyticsTotals struct {
 	PricedRuns               int                `json:"pricedRuns"`
 	CostPerCompletedRun      *string            `json:"costPerCompletedRun,omitempty"`
 	Tokens                   *AIAnalyticsTokens `json:"tokens"`
+	// What consulting Anthropic's advisor came to; zero where no provider turned it on.
+	Advisor *AIAnalyticsAdvisor `json:"advisor"`
 	// Tool calls fail often enough to call out.
 	ToolFailureAlarm bool `json:"toolFailureAlarm"`
 }

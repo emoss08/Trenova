@@ -72,6 +72,25 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    operation already carries the action, say so in its description rather than adding a
    verb no role holds.
 
+## Parent resources
+
+A resource with a `ParentResource` is part of its parent's family, and that does two
+things. The engine lets a grant on the parent satisfy a check on the child
+(`Registry.GetEffectiveResource`, `engine.resolveResourcePermission`), so worker read is
+also read on a worker's credentials and timesheets. And `Registry.PartOf` treats a record
+of the child carried by one of its family as part of it rather than a linked record, so the
+GraphQL field guard, the REST response guard and the report catalog's `withinRecord` show
+it whole to whoever may read the carrier.
+
+Give a resource a parent only when everyone who may read the parent may read all of it.
+Data most readers of the parent have no business seeing (medical, leave, disciplinary,
+compensation) is a resource with no parent, granted on its own through the bundles for the
+jobs that need it. `worker_leave` is one: worker read reaches no leave case, a leave case a
+worker carries is a linked record gated by `worker_leave` read, and only the `hr.leave`
+and `hr.team` bundles grant it. Taking a parent away moves no stored grant: administrators
+already hold every registry resource, and other roles lose what they reached only through
+the parent until a bundle or a person grants it.
+
 ## Saved table views
 
 Anyone may keep private views of a table they can read. Sharing a view with the
@@ -91,7 +110,15 @@ Billing clerk, Accountant, Driver manager, Read-only and others) is a list of bu
 a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant with the
 scope it will actually apply in this deployment (a scope the deployment does not enforce
 comes back as organization), and each template already composed (`Registry.TemplateGrants`:
-operations merged, the widest scope kept).
+operations merged, the widest scope kept). The Read-only template reads every readable
+kind except those its `ReadExcept` names (`worker_leave`), so it never reaches data that is
+granted on its own.
+
+Leave is held to Human resources: `hr.leave` grants `worker_leave` read, create, update and
+approve, and `hr.team` read and approve, so the Human resources and Driver manager
+templates are the only ones that reach it (`TestJobTemplates_OnlyHumanResourcesReachLeave`
+lists every template's leave operations). Configuring leave (`worker_leave:manage`) and
+exporting it stay with administrators.
 
 Bundles are a way of choosing grants, not a second kind of grant: choosing one writes its
 grants into the role's ordinary `resource_permissions`, so evaluation, delegation and the
@@ -138,27 +165,55 @@ applies it to every read: lists, lookups, loaders, search, insights and reports 
 The value only narrows what the signed tenant scope allows, so it is not signed; work
 with no holder (jobs, unattended agents) reads its whole tenant.
 
-A kind the principal cannot read at all is sent as `<kind>:none`, so a relation, loader,
-join or index check that reaches it finds nothing rather than the whole organization.
-Under `none` a person still sees what is their own: the worker linked to their user
-(`workers.user_id`) and the shipments a move assigns them to drive, which is what the
-driver portal and the `My…` self-service reads stand on; orders and invoices are hidden
-entirely. Because the policies are `FOR SELECT`, an update whose `WHERE` reads a row the
-person cannot see changes nothing, so a role that writes a kind needs read on it too. Policies are
+Only `own` and `team` grants are sent. A kind the principal cannot read at all is left
+out of the setting, so the database shows its rows to whatever reaches them from a record
+the person can read (a tractor's driver, a shipment's order, a document's shipment), and
+the application shows each as its kind's reference view: the GraphQL field guard, the
+REST response guard, search, reports and analytics all decide it through `refview`, so a
+linked record reads the same with row-level security on or off. (Until
+`20261231010190_read_scope_linked_rows` such a kind was sent as `<kind>:none`, and the
+four policies hid every row of it but the person's own worker and the shipments a move
+assigned them to drive, which made a linked driver or order come back null under RLS.)
+
+A root read of a kind the person cannot read is refused in the application before it
+queries, and CI holds every path to it:
+
+- GraphQL: every root field that returns a shipment, order, invoice or worker, directly
+  or through a connection, checks read (or an operation implying it) on the kind in its
+  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). One that such a mutation's
+  payload carries rather than returns (a training record's worker) is the root record only
+  for a caller who reads its kind or when the mutation declares `@authorizes`; otherwise
+  the field guard shows it as linked, and `TestEveryLinkedFieldIsDeclared` holds client
+  operations to that (`applyCreditMemo` and `unapplyCreditMemoApplication` check invoice
+  read for it).
+- REST: only the kind's own handler, whose every route requires an operation on the kind
+  or marks its records `responseguard.References()`, writes one as a response's own
+  record (`TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler`).
+- Search: global search drops the index of a kind the person cannot read and a document
+  attached to one before it asks `RecordVisibility`, which answers only the narrowing.
+- Agents, reports, insights and analytics check the kind's read (the tool's policy, the
+  report compiler, each detector's `Resources()`, the analytics page) before they read.
+
+The driver portal and the `My…` self-service reads never relied on the database here:
+they read the worker linked to the caller's user and the assignments naming that worker
+in SQL (`driverportalrepository`), so a driver still sees only their own records.
+Every write operation implies read, so a role that writes a kind reads it. Policies are
 `FOR SELECT`, so an update or a `RETURNING` on a row outside the scope finds nothing.
 
 A cache cannot apply them either. The synced Redis caches (`cache:shipments`,
 `cache:workers`, `cache:customers`, `cache:documents`) hold the tenant's rows, so each one
 asks `readscope.Narrows` for the kind it holds and answers only a request its kind is not
-narrowed for (or one whose scope could not be resolved); anything else reads through the
-database.
+narrowed for (an own or team grant); a request whose scope could not be resolved, or one
+the kind is narrowed for, reads through the database.
 
 A search index cannot apply them: Meilisearch holds every record of the tenant. Global
 search therefore passes each shipment, order, invoice and worker hit, and each document
 attached to one, through `kernelports.RecordVisibility`, which asks the database which of
 those ids the request may read under its read scope; a hit it does not return, or a check
-that fails, is not shown, a kind the person cannot read at all hides the documents attached
-to it, and a narrowed group reports only the hits it shows as its total. Every index query
+that fails, is not shown, and a narrowed group reports only the hits it shows as its total.
+A kind the person cannot read at all is refused by the service itself (its index is not
+searched and the documents attached to it are hidden without asking), because the
+database would return every one of its rows. Every index query
 names the fields it returns (`SearchRequest.Attributes`, the id alone when none are named)
 and builds its filter with `shared/searchfilter`, which quotes each value.
 
@@ -270,8 +325,9 @@ record's **reference view** to everyone who can read the record that links to it
 linking screen needs to identify and use it (a customer's name, code and billing address, a
 driver's name). Every other field of the linked record needs that kind's own read; without it a
 nullable field is answered null and named in `extensions.withheldByAccess`, and a non-null one is
-refused. The record a root resolver returns, records that are part of it (`ParentResource`), and
-everything under a self-scoped resolver are not gated this way.
+refused. The record a root resolver returns, records that are part of it (its `ParentResource`
+family, see [Parent resources](#parent-resources)), and everything under a self-scoped resolver
+are not gated this way.
 
 Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
 one package, `refview`, which the GraphQL field guard asks for people and agents alike, and the

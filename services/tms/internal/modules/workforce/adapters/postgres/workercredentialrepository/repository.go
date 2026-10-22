@@ -444,7 +444,8 @@ func (r *repository) ListForWorker(
 				return sq
 			}).
 			Order(cols.Status.OrderAsc()).
-			Order(cols.CreatedAt.OrderDesc())
+			Order(cols.CreatedAt.OrderDesc()).
+			Order(cols.ID.OrderAsc())
 		if req.IncludeType {
 			q = q.Relation(workercol.WorkerCredentialRelations.CredentialType)
 		}

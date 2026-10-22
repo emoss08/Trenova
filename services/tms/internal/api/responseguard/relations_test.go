@@ -570,3 +570,73 @@ func TestNamedKindsAreRegisteredResources(t *testing.T) {
 			"%s is spelled as its resource; it needs no entry", typ)
 	}
 }
+
+// rootKindsOf is every kind a response written as typ returns as its own
+// record: the value itself, each item of a list, or each item of a page.
+func rootKindsOf(registry *permission.Registry, typ types.Type, depth int) []permission.Resource {
+	if depth > maxDepth {
+		return nil
+	}
+	switch t := typ.(type) {
+	case *types.Pointer:
+		return rootKindsOf(registry, t.Elem(), depth+1)
+	case *types.Slice:
+		return rootKindsOf(registry, t.Elem(), depth+1)
+	case *types.Array:
+		return rootKindsOf(registry, t.Elem(), depth+1)
+	case *types.Map:
+		return rootKindsOf(registry, t.Elem(), depth+1)
+	case *types.Named:
+		obj := t.Obj()
+		if obj.Pkg() == nil {
+			return nil
+		}
+		if kind := kindOfName(registry, obj.Pkg().Path(), obj.Name()); kind != "" {
+			return []permission.Resource{kind}
+		}
+		if obj.Pkg().Path() != paginationPackage {
+			return nil
+		}
+		st, ok := t.Underlying().(*types.Struct)
+		if !ok {
+			return nil
+		}
+		var out []permission.Resource
+		for i := range st.NumFields() {
+			out = append(out, rootKindsOf(registry, st.Field(i).Type(), depth+1)...)
+		}
+		return out
+	}
+	return nil
+}
+
+// Row-level security does not hide a shipment, order, invoice or worker the
+// person cannot read, because a record that links to one shows its reference
+// view. A route returns its records whole, so only the kind's own handler,
+// whose every route requires an operation on the kind (or marks its records
+// as references), may write one as the response's own record.
+func TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler(t *testing.T) {
+	registry := permission.NewRegistry()
+	scoped := registry.DatabaseScopedResources()
+
+	var outside []string
+	reached := 0
+	for position, typ := range responseTypes(t) {
+		for _, kind := range rootKindsOf(registry, typ, 0) {
+			if !slices.Contains(scoped, kind.String()) {
+				continue
+			}
+			reached++
+			own := "internal/api/handlers/" + strings.ReplaceAll(kind.String(), "_", "") + "handler/"
+			if !strings.Contains(position, own) {
+				outside = append(outside, fmt.Sprintf("%s writes %s", shortPosition(position), kind))
+			}
+		}
+	}
+	require.Positive(t, reached)
+	slices.Sort(outside)
+	require.Empty(t, outside,
+		"these responses return records of a database-scoped kind outside its own handler; "+
+			"return them inside another record (they are then linked) or move the route:\n"+
+			strings.Join(outside, "\n"))
+}

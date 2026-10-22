@@ -2,14 +2,12 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,33 +18,9 @@ import (
 const (
 	paramDrawID     = "drawId"
 	maxDrawsShown   = 24
-	maxOpenEvents   = 50
 	maxPoolsShown   = 20
 	defaultDOTTests = 25
 )
-
-type wfSafetyReader interface {
-	ListEvents(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		workerID pulid.ID,
-	) ([]*worker.WorkerSafetyEvent, error)
-	ListOpenEvents(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		limit int,
-	) ([]*worker.WorkerSafetyEvent, error)
-	ListViolations(
-		ctx context.Context,
-		req *workerports.ListWorkerSafetyViolationsRequest,
-	) ([]*worker.WorkerSafetyViolation, error)
-	ListRecognitions(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		workerID pulid.ID,
-		visibleOnly bool,
-	) ([]*worker.WorkerRecognition, error)
-}
 
 type wfDrugAlcoholReader interface {
 	ListPools(
@@ -68,163 +42,7 @@ type wfDrugAlcoholReader interface {
 	) ([]*worker.DOTRandomDrawEntry, error)
 }
 
-var (
-	_ wfSafetyReader      = (*workersafetyservice.Service)(nil)
-	_ wfDrugAlcoholReader = (*workerdrugalcoholservice.Service)(nil)
-)
-
-type safetyViolationRow struct {
-	ID             string `json:"id"`
-	Basic          string `json:"basic"`
-	Code           string `json:"code"`
-	Description    string `json:"description,omitempty"`
-	SeverityWeight int16  `json:"severityWeight"`
-	OutOfService   bool   `json:"outOfService"`
-}
-
-type safetyEventRow struct {
-	ID               string               `json:"id"`
-	WorkerID         string               `json:"workerId,omitempty"`
-	Worker           string               `json:"worker,omitempty"`
-	Kind             string               `json:"kind"`
-	Severity         string               `json:"severity"`
-	Status           string               `json:"status"`
-	OccurredAt       optionalDate         `json:"occurredAt"`
-	Location         string               `json:"location,omitempty"`
-	Description      string               `json:"description,omitempty"`
-	Preventable      bool                 `json:"preventable"`
-	Points           int32                `json:"points"`
-	PointsExpireAt   optionalDate         `json:"pointsExpireAt"`
-	InspectionResult string               `json:"inspectionResult,omitempty"`
-	OutOfService     bool                 `json:"outOfService"`
-	ShipmentID       string               `json:"shipmentId,omitempty"`
-	Resolution       string               `json:"resolution,omitempty"`
-	ClosedAt         optionalDate         `json:"closedAt"`
-	Violations       []safetyViolationRow `json:"violations,omitempty"`
-}
-
-type recognitionRow struct {
-	ID              string       `json:"id"`
-	Kind            string       `json:"kind"`
-	Title           string       `json:"title"`
-	OccurredAt      optionalDate `json:"occurredAt"`
-	VisibleToWorker bool         `json:"visibleToWorker"`
-}
-
-type workerSafetyRecord struct {
-	WorkerID     string           `json:"workerId,omitempty"`
-	Note         string           `json:"note,omitempty"`
-	Events       []safetyEventRow `json:"events"`
-	Recognitions []recognitionRow `json:"recognitions,omitempty"`
-	Withheld     []string         `json:"withheldByAccess,omitempty"`
-}
-
-func newListWorkerSafetyEventsTool(
-	safety wfSafetyReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	access := newFieldAccess(permissions)
-	return &workforceRead{
-		name: "worker_list_safety_events",
-		description: "List safety events still open across the fleet, or one worker's with " +
-			"their roadside violations and recognitions. Leave out the worker for the fleet: " +
-			"each open event comes with its driver. Events are accidents, inspections, citations, " +
-			"complaints and near misses with their points and status. It yields the " +
-			"safetyEventId, violationId and recognitionId the safety tools take.",
-		resource: permission.ResourceWorkerSafetyEvent,
-		properties: map[string]any{
-			paramWorkerID: wfWorkerProperty("The worker; leave it out for every open event " +
-				"across the fleet"),
-		},
-		access: access,
-		run: func(
-			ctx context.Context,
-			params *agentports.QueryToolParams,
-			gate *fieldGate,
-		) (any, error) {
-			workerID, given, err := optionalPulid(params.Params, paramWorkerID)
-			if err != nil {
-				return nil, err
-			}
-			tenant := tenantOf(params)
-			if !given {
-				return openSafetyEvents(ctx, safety, tenant, gate)
-			}
-			events, err := safety.ListEvents(ctx, tenant, workerID)
-			if err != nil {
-				return nil, err
-			}
-			violations, err := safety.ListViolations(ctx,
-				&workerports.ListWorkerSafetyViolationsRequest{
-					TenantInfo: tenant,
-					WorkerID:   workerID,
-				})
-			if err != nil {
-				return nil, err
-			}
-			byEvent := make(map[pulid.ID][]safetyViolationRow, len(violations))
-			for _, violation := range violations {
-				byEvent[violation.SafetyEventID] = append(byEvent[violation.SafetyEventID],
-					safetyViolationRow{
-						ID:             violation.ID.String(),
-						Basic:          string(violation.Basic),
-						Code:           violation.Code,
-						Description:    gatedText(gate, wfFieldDescription, violation.Description),
-						SeverityWeight: violation.SeverityWeight,
-						OutOfService:   violation.OutOfService,
-					})
-			}
-			record := &workerSafetyRecord{
-				WorkerID: workerID.String(),
-				Events:   make([]safetyEventRow, 0, len(events)),
-			}
-			for _, event := range events {
-				record.Events = append(record.Events, safetyEventRow{
-					ID:          event.ID.String(),
-					Kind:        string(event.Kind),
-					Severity:    string(event.Severity),
-					Status:      string(event.Status),
-					OccurredAt:  recordedDate(event.OccurredAt),
-					Location:    event.Location,
-					Description: gatedText(gate, wfFieldDescription, event.Description),
-					Preventable: event.Preventable,
-					Points:      event.Points,
-					PointsExpireAt: expectedDate(
-						typeutils.ValueOrZero(event.PointsExpireAt),
-						absentNotExpiring,
-					),
-					InspectionResult: string(event.InspectionResult),
-					OutOfService:     event.OutOfService,
-					ShipmentID:       pulidString(event.ShipmentID),
-					Resolution:       gatedText(gate, wfFieldResolution, event.Resolution),
-					ClosedAt: expectedDate(
-						typeutils.ValueOrZero(event.ClosedAt),
-						absentNotClosed,
-					),
-					Violations: byEvent[event.ID],
-				})
-			}
-			if access.mayRead(ctx, params, permission.ResourceWorkerRecognition) {
-				recognitions, recErr := safety.ListRecognitions(ctx, tenant, workerID, false)
-				if recErr != nil {
-					return nil, recErr
-				}
-				record.Recognitions = make([]recognitionRow, 0, len(recognitions))
-				for _, recognition := range recognitions {
-					record.Recognitions = append(record.Recognitions, recognitionRow{
-						ID:              recognition.ID.String(),
-						Kind:            string(recognition.Kind),
-						Title:           recognition.Title,
-						OccurredAt:      recordedDate(recognition.OccurredAt),
-						VisibleToWorker: recognition.VisibleToWorker,
-					})
-				}
-			}
-			record.Withheld = gate.Withheld()
-			return record, nil
-		},
-	}
-}
+var _ wfDrugAlcoholReader = (*workerdrugalcoholservice.Service)(nil)
 
 type randomPoolRow struct {
 	ID                 string `json:"id"`
@@ -429,13 +247,6 @@ func newGetDOTRandomDrawTool(
 	}
 }
 
-func provideListWorkerSafetyEventsTool(
-	safety *workersafetyservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListWorkerSafetyEventsTool(safety, permissions)
-}
-
 func provideListDOTRandomDrawsTool(
 	draws *workerdrugalcoholservice.Service,
 	permissions permissionports.PermissionEngine,
@@ -448,54 +259,4 @@ func provideGetDOTRandomDrawTool(
 	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newGetDOTRandomDrawTool(draws, permissions)
-}
-
-// openSafetyEvents answers "what safety work is still open" across the fleet:
-// every event open or under review, newest first, each with its driver. A read
-// by one worker could not, and agents reported the question as unanswerable.
-func openSafetyEvents(
-	ctx context.Context,
-	safety wfSafetyReader,
-	tenant pagination.TenantInfo,
-	gate *fieldGate,
-) (any, error) {
-	events, err := safety.ListOpenEvents(ctx, tenant, maxOpenEvents+1)
-	if err != nil {
-		return nil, err
-	}
-
-	record := &workerSafetyRecord{
-		Events: make([]safetyEventRow, 0, min(len(events), maxOpenEvents)),
-	}
-	for idx, event := range events {
-		if idx == maxOpenEvents {
-			record.Note = fmt.Sprintf("Only the %d newest open events are listed; there are "+
-				"more. Name a worker to see all of theirs.", maxOpenEvents)
-			break
-		}
-		record.Events = append(record.Events, safetyEventRow{
-			ID:          event.ID.String(),
-			WorkerID:    event.WorkerID.String(),
-			Worker:      workerName(event.Worker),
-			Kind:        string(event.Kind),
-			Severity:    string(event.Severity),
-			Status:      string(event.Status),
-			OccurredAt:  recordedDate(event.OccurredAt),
-			Location:    event.Location,
-			Description: gatedText(gate, wfFieldDescription, event.Description),
-			Points:      event.Points,
-			PointsExpireAt: expectedDate(
-				typeutils.ValueOrZero(event.PointsExpireAt),
-				absentNotExpiring,
-			),
-			OutOfService: event.OutOfService,
-			ShipmentID:   pulidString(event.ShipmentID),
-		})
-	}
-	if len(record.Events) == 0 {
-		record.Note = "No safety event is open or under review across the fleet."
-	}
-	record.Withheld = gate.Withheld()
-
-	return record, nil
 }

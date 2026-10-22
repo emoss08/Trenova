@@ -20,7 +20,7 @@ train = [
   "bitsandbytes>=0.45; platform_system == 'Linux'",
 ]
 predict = [
-  "vllm>=0.30,<1",
+  "vllm>=0.32,<1",
 ]
 quantize = [
   "llmcompressor>=0.14,<0.15",
@@ -31,6 +31,11 @@ dev = [
 ]
 
 [tool.uv]
+# Pillow 12.x carries open CVEs fixed in 13. llmcompressor 0.14.0, its latest stable, caps
+# pillow<13; its nightlies lift the cap with no change to the code that uses Pillow, which
+# is only its Kimi-K3 vision model, never reached quantizing a text model. Drop this once a
+# stable llmcompressor allows pillow 13.
+override-dependencies = ["pillow>=13"]
 conflicts = [
   [{ extra = "predict" }, { extra = "quantize" }],
 ]

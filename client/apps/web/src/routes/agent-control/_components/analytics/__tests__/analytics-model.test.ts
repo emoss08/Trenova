@@ -1,6 +1,7 @@
 import type { AgentAnalytics, AIAnalyticsSeries } from "@/lib/graphql/ai-analytics";
 import { describe, expect, it } from "vitest";
 import {
+  advisorFigures,
   analyticsCsv,
   board,
   boardSentence,
@@ -59,6 +60,7 @@ function series(overrides: Partial<AIAnalyticsSeries> & { key: string }): AIAnal
     modelMistakeRate: 0.75,
     toolFailuresByCause: [],
     costUsd: "4.5",
+    advisor: { calls: "0", promptTokens: "0", outputTokens: "0", costUsd: "0" },
     pricedRuns: 100,
     costPerCompletedRun: "0.05",
     firstTokenMedianMs: 420,
@@ -526,5 +528,34 @@ describe("scope", () => {
     expect(emptyScopeMessage(t, { window, agent: false, task: false })).toBe(
       "Nothing ran in the last 7 days.",
     );
+  });
+});
+
+/**
+ * The contract (aianalytics.graphqls AIAnalyticsAdvisor): every figure is a
+ * Decimal string, and all are zero where no provider consulted the advisor.
+ */
+describe("advisorFigures", () => {
+  it("reads every figure as a number when the advisor was consulted", () => {
+    expect(
+      advisorFigures({
+        calls: "12",
+        promptTokens: "48210",
+        outputTokens: "3905",
+        costUsd: "0.412375",
+      }),
+    ).toEqual({ calls: 12, promptTokens: 48210, outputTokens: 3905, costUsd: 0.412375 });
+  });
+
+  it("is null where the advisor was never consulted", () => {
+    expect(
+      advisorFigures({ calls: "0", promptTokens: "0", outputTokens: "0", costUsd: "0" }),
+    ).toBeNull();
+  });
+
+  it("is null for a figure the server sent that is not a number", () => {
+    expect(
+      advisorFigures({ calls: "n/a", promptTokens: "0", outputTokens: "0", costUsd: "0" }),
+    ).toBeNull();
   });
 });

@@ -403,6 +403,18 @@ var capabilityBundles = []Bundle{
 		},
 	},
 	{
+		ID:          "hr.leave",
+		Module:      "Workforce",
+		Label:       "Leave and FMLA",
+		Description: "Open and decide leave cases, record leave days and keep medical certification.",
+		Grants: []BundleGrant{
+			{
+				Resource:   ResourceWorkerLeave,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpApprove},
+			},
+		},
+	},
+	{
 		ID:          "hr.team",
 		Module:      "Workforce",
 		Label:       "Manage a team",
@@ -714,14 +726,15 @@ var jobTemplates = []JobTemplate{
 		ID:             "hr",
 		Label:          "Human resources",
 		Description:    "Keeps worker records and approves time off for everyone.",
-		Bundles:        []string{"hr.workers", "hr.team", "platform.assistant"},
+		Bundles:        []string{"hr.workers", "hr.leave", "hr.team", "platform.assistant"},
 		MaxSensitivity: SensitivityConfidential,
 	},
 	{
 		ID:             "read_only",
 		Label:          "Read-only",
-		Description:    "Can read every record and change nothing.",
+		Description:    "Can read every record except leave cases, and change nothing.",
 		MaxSensitivity: SensitivityInternal,
 		ReadEverything: true,
+		ReadExcept:     []Resource{ResourceWorkerLeave},
 	},
 }

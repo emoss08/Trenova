@@ -29,6 +29,33 @@ func TestMedicalRecordsKeepWhatHappenedToThePersonRestricted(t *testing.T) {
 				"notes", "documentId",
 			},
 		},
+		ResourceWorkerLeave: {
+			internal: []string{
+				"leaveType", "status", "frequency", "fmlaDesignated", "startsAt", "endsAt",
+				"certificationStatus", "certificationDueAt", "usedOn", "hours",
+				"countsAgainstEntitlement",
+			},
+			restricted: []string{
+				"reason", "notes", "militaryCaregiver", "eligibilityHoursWorked", "documentId",
+			},
+		},
+		ResourceQualification: {
+			internal: []string{
+				"employerName", "employerDotNumber", "employedFrom", "employedTo", "status",
+				"method", "requestedAt", "followUpCount", "hadAccidents", "accidentCount",
+			},
+			restricted: []string{
+				"contactName", "contactPhone", "contactEmail", "hadDrugAlcoholViolations",
+				"findings", "notes", "documentId",
+			},
+		},
+		ResourceWorkerCredential: {
+			internal: []string{
+				"workerId", "credentialTypeId", "status", "issuingAuthority", "issuedAt",
+				"expiresAt", "health", "daysUntilExpiry", "documentId", "verifiedAt",
+			},
+			restricted: []string{"notes", "archiveReason"},
+		},
 		ResourceWorkerInjury: {
 			internal: []string{
 				"caseNumber", "caseYear", "classification", "illnessType", "status",

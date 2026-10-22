@@ -40,6 +40,44 @@ const (
 		"collection still open across the organization. Each row has the test type, why it " +
 		"was ordered, its status and dates; the substance and result are shown only where " +
 		"access reaches Restricted. It yields the testId worker_cancel_dot_test takes."
+	toolListWorkerLeaveCases        = "worker_list_leave_cases"
+	toolListEmploymentVerifications = "worker_list_employment_verifications"
+
+	workerLeaveCasesSummary = "List FMLA, medical, military, parental and personal leave cases. " +
+		"Cases for one worker or the whole organization come with their status, " +
+		"certification and each day taken against them. It yields the leaveCaseId and " +
+		"leaveDayId the leave tools take."
+	employmentVerificationsSummary = "List the previous employers on drivers' qualification " +
+		"files. Each shows where its safety performance history request stands: asked when, " +
+		"followed up how often, and what came back. It yields the verificationId the " +
+		"verification tools take."
+	toolListWorkerSafetyEvents = "worker_list_safety_events"
+	toolWorkerListCredentials  = "worker_list_credentials"
+	credentialEntity           = "credentials"
+
+	opDeskWorkerRecognitions = "DeskWorkerRecognitions"
+
+	workerSafetyEventsSummary = "List safety events newest first: one worker's, or, leaving " +
+		"out the worker, those still open across the fleet. One worker's come with their " +
+		"roadside violations and recognitions; the fleet's each name the driver. Events are " +
+		"accidents, inspections, citations, complaints and near misses with their points and " +
+		"status. It yields the safetyEventId, violationId and recognitionId the safety tools take."
+	noteOpenAcrossTheFleet = "Defaults to true when no worker is named, and to false for one " +
+		"worker's; set it to false for the fleet's closed events too."
+	opDeskCredentialTypes = "DeskWorkerCredentialTypes"
+
+	workerCredentialsSummary = "List worker credentials: one worker's licences, medical " +
+		"cards and endorsements, or those falling due across the organization. With a worker " +
+		"and no expiry window it returns every credential the worker holds, with its dates " +
+		"and whether it is verified, and the credential types the organization tracks; a " +
+		"required type with nothing on file was never recorded, which is worse than expiring " +
+		"soon. Without a worker, or with expiringWithinDays or includeExpired, it lists " +
+		"active credentials expiring within that many days from now, soonest first, a page " +
+		"at a time: the tool for any " +
+		"question about who is expiring, lapsed or out of compliance by a date. Narrow to one " +
+		"kind with credentialTypeCode, such as MED_CARD for a medical card or CDL for a " +
+		"licence. It yields the credentialId and credentialTypeId the credential tools take."
+	noteFallingDue   = "Leave it out for the credentials falling due across the organization."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"
 	fieldWorker      = "worker"
@@ -121,6 +159,64 @@ func workerRecordReadSpecs() []graphQLListSpec {
 			entityPlural: "drug and alcohol tests",
 			summary:      workerDOTTestsSummary,
 			resource:     permission.ResourceWorkerDOTTest,
+			references:   theWorker,
+			notes:        map[string]string{paramWorkerID: noteEveryWorker},
+			defaults:     listDefaults,
+		},
+		{
+			name:         toolListWorkerLeaveCases,
+			entityPlural: "leave cases",
+			summary:      workerLeaveCasesSummary,
+			resource:     permission.ResourceWorkerLeave,
+			references:   theWorker,
+			notes:        map[string]string{paramWorkerID: noteEveryWorker},
+			defaults:     listDefaults,
+		},
+		{
+			name:         toolListWorkerSafetyEvents,
+			entityPlural: "safety events",
+			summary:      workerSafetyEventsSummary,
+			resource:     permission.ResourceWorkerSafetyEvent,
+			references:   theWorker,
+			notes: map[string]string{
+				paramWorkerID:   noteEveryWorker,
+				wfParamOpenOnly: noteOpenAcrossTheFleet,
+			},
+			defaults: listDefaults,
+			unscoped: map[string]any{wfParamOpenOnly: true},
+			alongside: []alongsideSpec{{
+				key:       "recognitions",
+				operation: opDeskWorkerRecognitions,
+				what:      "recognitions",
+			}},
+		},
+		{
+			name:         toolWorkerListCredentials,
+			entityPlural: credentialEntity,
+			summary:      workerCredentialsSummary,
+			searchTerms: []string{
+				"expiring licenses", "credentials due", "about to lapse", "lapsed",
+			},
+			resource:   permission.ResourceWorkerCredential,
+			references: theWorker,
+			notes:      map[string]string{paramWorkerID: noteFallingDue},
+			defaults: map[string]any{
+				paramLimit:           graphQLListLimit,
+				paramIncludeArchived: false,
+			},
+			alongside: []alongsideSpec{{
+				key:       "credentialTypes",
+				operation: opDeskCredentialTypes,
+				what:      "credential types",
+				inputs:    map[string]any{inputStatus: activeStatus},
+				scoped:    true,
+			}},
+		},
+		{
+			name:         toolListEmploymentVerifications,
+			entityPlural: "previous employers",
+			summary:      employmentVerificationsSummary,
+			resource:     permission.ResourceQualification,
 			references:   theWorker,
 			notes:        map[string]string{paramWorkerID: noteEveryWorker},
 			defaults:     listDefaults,

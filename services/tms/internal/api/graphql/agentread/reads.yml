@@ -42,3 +42,17 @@ reads:
   - tool: worker_list_injuries
     operation: DeskWorkerInjuries
     reason: Injury cases are read by workerInjuries, one worker's or the whole log.
+  - tool: worker_list_employment_verifications
+    operation: DeskWorkerEmploymentVerifications
+    reason: Previous employers are read by workerEmploymentVerifications, one driver's or every driver's.
+  - tool: worker_list_leave_cases
+    operation: DeskWorkerLeaveCases
+    reason: Leave cases are read by workerLeaveCases, one worker's or every worker's.
+  - tool: worker_list_safety_events
+    operation: DeskWorkerSafetyEvents
+    reason: Safety events are read by workerSafetyEvents, one worker's or every worker's.
+    alongside: [DeskWorkerRecognitions]
+  - tool: worker_list_credentials
+    operation: DeskWorkerCredentialList
+    reason: Credentials are read by workerCredentials, one worker's or those falling due across the organization.
+    alongside: [DeskWorkerCredentialTypes]

@@ -41,6 +41,9 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
       queryKey: ["assistant", "proposals", threadId],
       queryFn: () => ({ results: [] }),
     }),
+    artifactRows: (threadId: string, artifactId: string, read: unknown) => ({
+      queryKey: ["assistant-artifact-rows", threadId, artifactId, read],
+    }),
   },
 }));
 

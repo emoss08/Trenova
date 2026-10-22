@@ -9,10 +9,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -174,17 +176,25 @@ func (r *MutationResolver) AcknowledgeMyDisciplinaryAction(ctx context.Context, 
 	return r.DriverPortalService.AcknowledgeMyDisciplinaryAction(ctx, base.TenantInfo(authCtx), actionID, base.StringValue(comment))
 }
 
-func (r *QueryResolver) WorkerSafetyEvents(ctx context.Context, workerID string) ([]*worker.WorkerSafetyEvent, error) {
+func (r *QueryResolver) WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerSafetyEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	wid, err := pulid.MustParse(workerID)
+	id, err := base.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerSafetyService.ListEvents(ctx, base.TenantInfo(authCtx), wid)
+	return r.WorkerSafetyService.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
+		TenantInfo:      base.TenantInfo(authCtx),
+		WorkerID:        id,
+		OpenOnly:        base.BoolValue(openOnly),
+		IncludeDocument: true,
+		IncludeActors:   true,
+		IncludeWorker:   true,
+		Limit:           base.RecordListLimit(limit, id.IsNotNil()),
+	})
 }
 
 func (r *QueryResolver) WorkerSafetyEvent(ctx context.Context, id string) (*worker.WorkerSafetyEvent, error) {
@@ -365,4 +375,20 @@ func (r *WorkerSafetyEventResolver) RecordedByID(ctx context.Context, obj *worke
 
 func (r *WorkerSafetyEventResolver) ClosedByID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error) {
 	return base.IDPtr(obj.ClosedByID), nil
+}
+
+func (r *WorkerSafetyEventResolver) Violations(ctx context.Context, obj *worker.WorkerSafetyEvent) ([]*worker.WorkerSafetyViolation, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerSafetyEvent, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	if loaders.Available(ctx) {
+		return loaders.WorkerSafetyViolationsByEventID(ctx, obj.ID.String())
+	}
+
+	return r.WorkerSafetyService.ListViolations(ctx, &workerports.ListWorkerSafetyViolationsRequest{
+		TenantInfo:     base.TenantInfo(authCtx),
+		SafetyEventIDs: []pulid.ID{obj.ID},
+	})
 }

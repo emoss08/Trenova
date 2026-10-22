@@ -10050,6 +10050,15 @@
       "go/other"
     ]
   },
+  "A script runs in your organization's E2B sandbox with no network access, and the rows it reads are sent to E2B, as data analysis does. It also needs Read-only scripts turned on in the E2B extension and the code_mode permission. Every read goes through the same permissions as a normal tool call, and sandbox time counts against the extension's daily limit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A sealed attachment must reference a stored object, not carry content": {
     "sites": 1,
     "scope": [
@@ -10879,6 +10888,15 @@
     ]
   },
   "A streak of {0} clean approvals on {1}. Earned autonomy is off for the organization, so it changes nothing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A stronger model the model may consult mid-reply.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -20664,6 +20682,35 @@
       "go/other"
     ]
   },
+  "Advisor": {
+    "sites": 6,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/agent-control"
+    ]
+  },
+  "Advisor model": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Advisor model cannot be longer than 200 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Advisory": {
     "sites": 4,
     "scope": [
@@ -26266,6 +26313,15 @@
     ]
   },
   "An item about an agent's own work stays on the feed for a person to clear": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An offset cannot be negative": {
     "sites": 1,
     "scope": [
       "go"
@@ -43922,7 +43978,7 @@
       "routes/agent-control"
     ]
   },
-  "Can read every record and change nothing.": {
+  "Can read every record except leave cases, and change nothing.": {
     "sites": 1,
     "scope": [
       "go"
@@ -54807,7 +54863,7 @@
     ]
   },
   "Clear the search": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -54815,6 +54871,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
+      "routes/desk",
       "routes/inbox",
       "routes/intake"
     ]
@@ -67562,6 +67619,15 @@
       "go/other",
       "routes/desk",
       "routes/worker"
+    ]
+  },
+  "Credentials are listed within one organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Credentials coming due": {
@@ -87508,6 +87574,15 @@
       "go/other"
     ]
   },
+  "Each consultation is billed at the advisor model's price on top of this provider's; AI Analytics shows advisor calls, tokens and cost. If the API refuses the advisor for this model, the refusal shows here and calls go out without it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Each course's own default": {
     "sites": 1,
     "scope": [
@@ -90931,6 +91006,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Empty consults {0}. It must be on this endpoint's model list.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Empty if none": {
@@ -100364,6 +100448,15 @@
       "go/other"
     ]
   },
+  "Expiring within must be from 1 to 365 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Expiry": {
     "sites": 1,
     "scope": [
@@ -108130,6 +108223,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "First page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "First read": {
@@ -135408,6 +135510,15 @@
       "routes/worker-credential-type"
     ]
   },
+  "Leave and FMLA": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Leave begins": {
     "sites": 1,
     "scope": [
@@ -136560,6 +136671,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Lets this provider's model answer fan-out, reconciliation and report questions with one short read-only Python script instead of many tool calls. Off by default.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Letters, digits, dashes and underscores only": {
@@ -156365,7 +156485,7 @@
     ]
   },
   "Next page": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -163259,6 +163379,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "No rows": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "No rows in this view.": {
     "sites": 1,
     "scope": [
@@ -167274,6 +167403,15 @@
       "apps/web/components"
     ]
   },
+  "Not shown at your access: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not stackable": {
     "sites": 1,
     "scope": [
@@ -171082,6 +171220,15 @@
       "routes/agent-control"
     ]
   },
+  "Nova read every row · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nova read it": {
     "sites": 1,
     "scope": [
@@ -171163,6 +171310,15 @@
       "routes/inbox"
     ]
   },
+  "Nova read part of this page · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nova read this as {0}. It's actually…": {
     "sites": 1,
     "scope": [
@@ -171170,6 +171326,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Nova read this page · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nova reads the backlog": {
@@ -172530,6 +172695,15 @@
       "apps/web/lib"
     ]
   },
+  "Offset cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Offset is not supported for cursor pagination": {
     "sites": 1,
     "scope": [
@@ -172979,6 +173153,15 @@
     ]
   },
   "On for your agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "On hard steps the model consults a stronger model mid-reply, on Anthropic's side.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174956,6 +175139,24 @@
       "go/other"
     ]
   },
+  "Only a provider that handles {0} consults an advisor.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Only a provider that handles {0} may answer with a script.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Only a rated reply in a conversation can become an evaluation case": {
     "sites": 1,
     "scope": [
@@ -175121,6 +175322,15 @@
     ]
   },
   "Only a table or a report preview can be downloaded as CSV": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only a table read from a list can be paged": {
     "sites": 1,
     "scope": [
       "go"
@@ -177420,6 +177630,15 @@
     ],
     "areas": [
       "routes/accounting-sync"
+    ]
+  },
+  "Open and decide leave cases, record leave days and keep medical certification.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Open approvals": {
@@ -184457,6 +184676,15 @@
       "go/other"
     ]
   },
+  "Page by a cursor or an offset, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Page count cannot be negative": {
     "sites": 1,
     "scope": [
@@ -184584,7 +184812,7 @@
     ]
   },
   "Page {0}": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -184623,6 +184851,15 @@
       "routes/desk"
     ]
   },
+  "Page {0} couldn't be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Page {0} is missing": {
     "sites": 1,
     "scope": [
@@ -184633,7 +184870,7 @@
     ]
   },
   "Page {0} of {1}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -184643,7 +184880,25 @@
       "routes/insights"
     ]
   },
+  "Page {0} of {1}+": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Page {0} of {1}. Page Up and Page Down turn pages.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Page {0}, read by Nova": {
     "sites": 1,
     "scope": [
       "ts"
@@ -184671,7 +184926,7 @@
     ]
   },
   "Pages": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -196061,7 +196316,7 @@
     ]
   },
   "Previous page": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -204572,6 +204827,15 @@
       "rules/tariff"
     ]
   },
+  "Read just now, with your access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Read on {0}.": {
     "sites": 1,
     "scope": [
@@ -205091,6 +205355,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Reading page {0}…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Reading the PDF": {
@@ -222626,6 +222899,15 @@
       "go/other"
     ]
   },
+  "Rows a page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Rows are ready for review; nothing is imported until you commit.": {
     "sites": 1,
     "scope": [
@@ -228746,12 +229028,51 @@
     ]
   },
   "Scripts": {
+    "sites": 5,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/agent-control",
+      "routes/edi"
+    ]
+  },
+  "Scripts apply only to a provider that handles assistant chat": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Scripts may prepare changes, which are never made automatically: they're proposed as one batch a person approves, each change is checked again against the record when it's approved, and a script that read outside text cannot run anything.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/agent-control"
+    ]
+  },
+  "Scripts may propose writes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Scripts may propose writes only when scripts are turned on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Scroll for more": {
@@ -229729,6 +230050,15 @@
       "routes/detention-desk"
     ]
   },
+  "Search the list": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Search the list on the current tab": {
     "sites": 1,
     "scope": [
@@ -229928,6 +230258,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Searched just now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Searched records": {
@@ -241739,15 +242078,6 @@
       "routes/billing-queue"
     ]
   },
-  "Showing {0} of {1}. Ask for the rest, or open it as a view.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Showing {0} only": {
     "sites": 1,
     "scope": [
@@ -242908,6 +243238,15 @@
       "routes/inbox",
       "routes/my-team",
       "routes/time-attendance"
+    ]
+  },
+  "Since {0}, calls go out without the advisor. Change the advisor, the model or the platform to try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Since {0}{1}": {
@@ -244463,6 +244802,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Sort ascending or descending": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Sort by": {
@@ -256517,6 +256865,15 @@
       "routes/carrier-settlement-control"
     ]
   },
+  "The API refused {0} as the advisor for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The API this endpoint speaks.": {
     "sites": 1,
     "scope": [
@@ -257200,6 +257557,24 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "The advisor applies only to a provider that handles assistant chat": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The advisor is served only on Anthropic Messages providers that call the Claude API or Claude Platform on AWS": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The agent": {
@@ -265215,6 +265590,15 @@
     ],
     "areas": [
       "routes/carrier-invoice-matching"
+    ]
+  },
+  "The list did not answer. The pages read so far are still here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The list this table came from is no longer available": {
@@ -279167,6 +279551,24 @@
       "go/other"
     ]
   },
+  "This page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This page can no longer be read. Read the list from its start": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This page can't use the microphone.": {
     "sites": 1,
     "scope": [
@@ -280722,6 +281124,24 @@
       "api/graphql"
     ]
   },
+  "This table cannot be searched": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This table cannot be sorted by that column": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This table cannot be sorted by {0}": {
     "sites": 1,
     "scope": [
@@ -280756,6 +281176,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "This table does not say how it was read, so it cannot be read again. Ask Nova to read it again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This table has no bulk edit": {
@@ -288279,7 +288708,7 @@
     ]
   },
   "Try again": {
-    "sites": 69,
+    "sites": 70,
     "scope": [
       "ts"
     ],
@@ -288702,6 +289131,15 @@
     ]
   },
   "Turn on Private network": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Turn on Scripts first.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -301716,6 +302154,15 @@
       "go/other"
     ]
   },
+  "What Nova asked for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What Nova read": {
     "sites": 3,
     "scope": [
@@ -306309,6 +306756,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Whether the model may answer with a short read-only script.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Whether the pool is in use; an inactive pool stays on record with its past rounds.": {
     "sites": 1,
     "scope": [
@@ -309580,7 +310036,7 @@
     ]
   },
   "Worker is invalid": {
-    "sites": 28,
+    "sites": 26,
     "scope": [
       "go"
     ],
@@ -311882,6 +312338,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "You can no longer read this list, so only the rows Nova read are shown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "You can only cancel your own requests": {
@@ -324975,6 +325440,24 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# call} other {# calls}} · {1} prompt / {2} output tokens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# call} other {# calls}} · {1} prompt / {2} output tokens · {3}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# candidate} other {# candidates}}": {
     "sites": 1,
     "scope": [
@@ -329437,6 +329920,15 @@
       "routes/intake"
     ]
   },
+  "{0, plural, one {Filter the # row read} other {Filter the # rows read}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {Found # record} other {Found # records}}": {
     "sites": 1,
     "scope": [
@@ -330021,6 +330513,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Search # row} other {Search all # rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {Searched the web # time} other {Searched the web # times}}": {
@@ -330771,6 +331272,15 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {of # row read} other {of # rows read}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {on # confirmed document} other {on # confirmed documents}}": {
     "sites": 1,
     "scope": [
@@ -330823,6 +331333,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {row matches} other {rows match}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {row} other {rows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {· a carrier backed out once} other {· carriers backed out # times}}": {
@@ -333496,6 +334024,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} does not serve the advisor; only the Claude API and Claude Platform on AWS do.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} does not support carrier monitoring": {
@@ -344347,12 +344884,22 @@
     ]
   },
   "{0}–{1} of {2}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "{0}–{1} of {2}+": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/desk"
     ]
   },
   "{0}–{1} °F": {

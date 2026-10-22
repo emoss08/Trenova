@@ -455,6 +455,24 @@ refused as a conflict. It shoots every stage on the artifact's page in light and
 the conversation, in a narrow window, a folded step opened, the decline dialog and the skeleton,
 and writes to `e2e/mock-api/screenshots/desk-plan` by default.
 
+A table that pages, a list the agent read in part and the person pages through with their own
+access, has its own walkthrough:
+
+```bash
+node e2e/mock-api/desk-table-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens `/desk/c/athr_desk_table/a/acme-shipments-in-transit` (`handlers/desktable.mjs`): Acme
+Foods' 128 shipments in transit, of which Nova read two pages of 25. The rows endpoint
+(`…/artifacts/:id/rows/`) pages, searches, sorts and counts them as the server does, as the
+`deskTable` scenario field says: `paged`, `slow` (a page past Nova's is left open, so its rows
+shimmer), `failing` (pages past the first one read fail), `locked` (403: the person may no longer
+read shipments), `withheld` (revenue withheld at their access), `cut` (cut to fit, with no place
+to go on from), `whole` (30 rows, all held) or `short` (12 rows). It shoots each on the
+artifact's page, after paging, searching and sorting where the state needs it, beside the
+conversation and in a narrow window, and writes to `e2e/mock-api/screenshots/desk-table` by
+default.
+
 The Desk's extraction artifact, what document intelligence read off a file, has its own
 walkthrough:
 

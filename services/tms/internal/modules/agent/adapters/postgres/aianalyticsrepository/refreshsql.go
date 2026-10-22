@@ -129,6 +129,11 @@ func callAggregates() string {
 			COALESCE(SUM(u.cache_read_tokens), 0) AS cache_read_tokens,
 			COALESCE(SUM(u.cache_write_tokens), 0) AS cache_write_tokens,
 			SUM(u.cost_usd) AS cost_usd,
+			COALESCE(SUM(u.advisor_calls), 0) AS advisor_calls,
+			COALESCE(SUM(u.advisor_input_tokens + u.advisor_cache_read_tokens +
+				u.advisor_cache_write_tokens), 0) AS advisor_prompt_tokens,
+			COALESCE(SUM(u.advisor_output_tokens), 0) AS advisor_output_tokens,
+			SUM(u.advisor_cost_usd) AS advisor_cost_usd,
 			MIN(%[1]s - u.latency_ms) AS first_start_ms,
 			MAX(%[1]s) AS last_end_ms,
 			(ARRAY_AGG(u.first_token_ms ORDER BY %[1]s - u.latency_ms)
@@ -145,7 +150,9 @@ func callAggregates() string {
 const unitColumns = `id, business_unit_id, organization_id, source, agent_definition_id, provider_id,
 	model, model_key, task, outcome, decision_run_id, started_at_ms, finished_at, duration_ms,
 	first_token_ms, model_calls, failed_calls, failovers, input_tokens, output_tokens,
-	cache_read_tokens, cache_write_tokens, cost_usd, tool_calls, tool_failures_model, tool_failures_tool, refresh_stamp`
+	cache_read_tokens, cache_write_tokens, cost_usd, advisor_calls, advisor_prompt_tokens,
+	advisor_output_tokens, advisor_cost_usd, tool_calls, tool_failures_model, tool_failures_tool,
+	refresh_stamp`
 
 const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPDATE SET
 	source = EXCLUDED.source,
@@ -168,6 +175,10 @@ const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPD
 	cache_read_tokens = EXCLUDED.cache_read_tokens,
 	cache_write_tokens = EXCLUDED.cache_write_tokens,
 	cost_usd = EXCLUDED.cost_usd,
+	advisor_calls = EXCLUDED.advisor_calls,
+	advisor_prompt_tokens = EXCLUDED.advisor_prompt_tokens,
+	advisor_output_tokens = EXCLUDED.advisor_output_tokens,
+	advisor_cost_usd = EXCLUDED.advisor_cost_usd,
 	tool_calls = EXCLUDED.tool_calls,
 	tool_failures_model = EXCLUDED.tool_failures_model,
 	tool_failures_tool = EXCLUDED.tool_failures_tool,
@@ -179,7 +190,9 @@ const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPD
 		ai_work_units.duration_ms, ai_work_units.first_token_ms, ai_work_units.model_calls,
 		ai_work_units.failed_calls, ai_work_units.failovers, ai_work_units.input_tokens,
 		ai_work_units.output_tokens, ai_work_units.cache_read_tokens,
-		ai_work_units.cache_write_tokens, ai_work_units.cost_usd, ai_work_units.tool_calls,
+		ai_work_units.cache_write_tokens, ai_work_units.cost_usd, ai_work_units.advisor_calls,
+		ai_work_units.advisor_prompt_tokens, ai_work_units.advisor_output_tokens,
+		ai_work_units.advisor_cost_usd, ai_work_units.tool_calls,
 		ai_work_units.tool_failures_model, ai_work_units.tool_failures_tool
 	) IS DISTINCT FROM (
 		EXCLUDED.source, EXCLUDED.agent_definition_id, EXCLUDED.provider_id, EXCLUDED.model,
@@ -187,7 +200,8 @@ const unitConflict = `ON CONFLICT (id, business_unit_id, organization_id) DO UPD
 		EXCLUDED.finished_at, EXCLUDED.duration_ms, EXCLUDED.first_token_ms,
 		EXCLUDED.model_calls, EXCLUDED.failed_calls, EXCLUDED.failovers, EXCLUDED.input_tokens,
 		EXCLUDED.output_tokens, EXCLUDED.cache_read_tokens, EXCLUDED.cache_write_tokens,
-		EXCLUDED.cost_usd, EXCLUDED.tool_calls,
+		EXCLUDED.cost_usd, EXCLUDED.advisor_calls, EXCLUDED.advisor_prompt_tokens,
+		EXCLUDED.advisor_output_tokens, EXCLUDED.advisor_cost_usd, EXCLUDED.tool_calls,
 		EXCLUDED.tool_failures_model, EXCLUDED.tool_failures_tool
 	)`
 
@@ -246,6 +260,10 @@ func ownedUnitsSQL(src ownedSource) string {
 			COALESCE(c.cache_read_tokens, 0) AS cache_read_tokens,
 			COALESCE(c.cache_write_tokens, 0) AS cache_write_tokens,
 			c.cost_usd,
+			COALESCE(c.advisor_calls, 0) AS advisor_calls,
+			COALESCE(c.advisor_prompt_tokens, 0) AS advisor_prompt_tokens,
+			COALESCE(c.advisor_output_tokens, 0) AS advisor_output_tokens,
+			c.advisor_cost_usd,
 			COALESCE(st.tool_calls, 0) AS tool_calls,
 			COALESCE(st.tool_failures_model, 0) AS tool_failures_model,
 			COALESCE(st.tool_failures_tool, 0) AS tool_failures_tool
@@ -266,7 +284,9 @@ func ownedUnitsSQL(src ownedSource) string {
 		) - units.started_at_ms),
 		units.first_token_ms, units.model_calls, units.failed_calls, units.failovers,
 		units.input_tokens, units.output_tokens, units.cache_read_tokens,
-		units.cache_write_tokens, units.cost_usd, units.tool_calls,
+		units.cache_write_tokens, units.cost_usd, units.advisor_calls,
+		units.advisor_prompt_tokens, units.advisor_output_tokens, units.advisor_cost_usd,
+		units.tool_calls,
 		units.tool_failures_model, units.tool_failures_tool, ?stamp
 	FROM units
 	WHERE units.model IS NOT NULL
@@ -396,7 +416,9 @@ var (
 		c.last_call_at,
 		GREATEST(0, c.last_end_ms - c.first_start_ms),
 		c.first_token_ms, c.model_calls, c.failed_calls, c.failovers, c.input_tokens,
-		c.output_tokens, c.cache_read_tokens, c.cache_write_tokens, c.cost_usd, 0, 0, 0, ?stamp
+		c.output_tokens, c.cache_read_tokens, c.cache_write_tokens, c.cost_usd,
+		c.advisor_calls, c.advisor_prompt_tokens, c.advisor_output_tokens, c.advisor_cost_usd,
+		0, 0, 0, ?stamp
 	FROM calls AS c
 	WHERE c.model IS NOT NULL
 	%[9]s`,

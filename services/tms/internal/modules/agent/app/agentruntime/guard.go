@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
@@ -61,9 +62,10 @@ type guardedDispatchParams struct {
 // scriptGate is what decides whether a call may run a script: the model that
 // asked for it and how many scripts the turn asked for up to it.
 type scriptGate struct {
-	model    string
-	provider aiprovider.Kind
-	position int
+	model      string
+	provider   aiprovider.Kind
+	providerID pulid.ID
+	position   int
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a
@@ -211,6 +213,7 @@ func (s *Service) claimAndDispatch(
 	}
 	if !outcome.failed && showsResults(req) {
 		step.Outcome.Data = stepData(outcome.data)
+		step.Outcome.RanWith = outcome.ranWith
 	}
 	// The settle rides a context that cancellation cannot reach. The failures
 	// this ledger exists for — an activity timing out, a person pressing Stop —
@@ -262,6 +265,7 @@ func replayedOutcome(recorded agentports.RunStepOutcome) toolOutcome {
 	// reading one would take the call for a query that returned something.
 	if len(recorded.Data) > 0 {
 		outcome.data = recorded.Data
+		outcome.ranWith = recorded.RanWith
 	}
 
 	return outcome

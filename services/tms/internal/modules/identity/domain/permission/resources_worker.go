@@ -171,9 +171,32 @@ func (r *Registry) registerWorkerResources() {
 				Description: "Archive worker credentials",
 			},
 		},
+		// What a credential is, whose, when it was issued and expires, by whom,
+		// and whether it is verified and has a scan on file is what dispatch
+		// and compliance work from, so it is Internal. The notes and why it
+		// was archived stay Restricted, and the number Confidential.
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
-			"number": SensitivityConfidential,
+			"id":               SensitivityInternal,
+			"businessUnitId":   SensitivityInternal,
+			"organizationId":   SensitivityInternal,
+			"workerId":         SensitivityInternal,
+			"credentialTypeId": SensitivityInternal,
+			"status":           SensitivityInternal,
+			"issuingAuthority": SensitivityInternal,
+			"issuedAt":         SensitivityInternal,
+			"expiresAt":        SensitivityInternal,
+			"health":           SensitivityInternal,
+			"daysUntilExpiry":  SensitivityInternal,
+			"documentId":       SensitivityInternal,
+			"verifiedById":     SensitivityInternal,
+			"verifiedAt":       SensitivityInternal,
+			"archivedById":     SensitivityInternal,
+			"archivedAt":       SensitivityInternal,
+			"version":          SensitivityInternal,
+			"createdAt":        SensitivityInternal,
+			"updatedAt":        SensitivityInternal,
+			"number":           SensitivityConfidential,
 		},
 	})
 
@@ -413,15 +436,48 @@ func (r *Registry) registerWorkerResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:       ResourceWorkerLeave.String(),
-		DisplayName:    "Leave & FMLA",
-		Description:    "Leave cases, the FMLA entitlement drawn against them, and medical certification",
-		Category:       "Human resources",
-		ParentResource: ResourceWorker.String(),
+		Resource:    ResourceWorkerLeave.String(),
+		DisplayName: "Leave & FMLA",
+		Description: "Leave cases, the FMLA entitlement drawn against them, and medical certification",
+		Category:    "Human resources",
 		// A leave case carries the reason somebody is off work and the medical
-		// certification behind it. It is granted separately for the same reason
-		// the injury log is.
+		// certification behind it (29 CFR 825.500(g)), so it has no parent:
+		// reading a worker never reaches their leave, and only a worker_leave
+		// grant does. A leave case is its own record wherever it is carried,
+		// and nothing links to one, so it has no reference view. That a worker
+		// is on leave, of what kind, when, and where the certification stands
+		// is Internal, as are the days taken; the reason, the certificate and
+		// the notes stay Restricted.
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":                       SensitivityInternal,
+			"businessUnitId":           SensitivityInternal,
+			"organizationId":           SensitivityInternal,
+			"workerId":                 SensitivityInternal,
+			"leaveType":                SensitivityInternal,
+			"status":                   SensitivityInternal,
+			"frequency":                SensitivityInternal,
+			"fmlaDesignated":           SensitivityInternal,
+			"requestedAt":              SensitivityInternal,
+			"startsAt":                 SensitivityInternal,
+			"endsAt":                   SensitivityInternal,
+			"decidedAt":                SensitivityInternal,
+			"closedAt":                 SensitivityInternal,
+			"certificationStatus":      SensitivityInternal,
+			"certificationRequestedAt": SensitivityInternal,
+			"certificationDueAt":       SensitivityInternal,
+			"certificationReceivedAt":  SensitivityInternal,
+			"recertificationDueAt":     SensitivityInternal,
+			"certificationLate":        SensitivityInternal,
+			"leaveCaseId":              SensitivityInternal,
+			"usedOn":                   SensitivityInternal,
+			"hours":                    SensitivityInternal,
+			"countsAgainstEntitlement": SensitivityInternal,
+			"ptoId":                    SensitivityInternal,
+			"version":                  SensitivityInternal,
+			"createdAt":                SensitivityInternal,
+			"updatedAt":                SensitivityInternal,
+		},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View leave cases and balances"},
 			{

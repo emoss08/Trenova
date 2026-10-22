@@ -163,6 +163,8 @@ type AIAnalyticsSeries {
   costPerCompletedRun: Decimal
   "Prompt and output tokens, with the prompt split by what the provider's cache served."
   tokens: AIAnalyticsTokens!
+  "What consulting Anthropic's advisor came to; zero where no provider turned it on."
+  advisor: AIAnalyticsAdvisor!
   firstTokenMedianMs: Int
   lastRanAt: Timestamp
   "Nothing ran for longer than a day before the end of the window."
@@ -199,6 +201,8 @@ type AIAnalyticsTotals {
   pricedRuns: Int!
   costPerCompletedRun: Decimal
   tokens: AIAnalyticsTokens!
+  "What consulting Anthropic's advisor came to; zero where no provider turned it on."
+  advisor: AIAnalyticsAdvisor!
   "Tool calls fail often enough to call out."
   toolFailureAlarm: Boolean!
 }
@@ -215,6 +219,18 @@ type AIAnalyticsTokens {
   output: Decimal!
   "Cache reads over every prompt token; absent when nothing was sent."
   cacheReadShare: Float
+}
+
+"""
+Anthropic's advisor over a set of runs: how often the model consulted it, the
+advisor's own tokens and its share of the cost. costUsd on the runs already
+includes it.
+"""
+type AIAnalyticsAdvisor {
+  calls: Decimal!
+  promptTokens: Decimal!
+  outputTokens: Decimal!
+  costUsd: Decimal!
 }
 
 "One series in one hour or day."

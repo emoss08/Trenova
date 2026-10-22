@@ -133,14 +133,6 @@ type AssistantArtifactRepository interface {
 		ctx context.Context,
 		artifact *assistantartifact.Artifact,
 	) (*assistantartifact.Artifact, error)
-	// ToolCallArguments is what a tool call in the thread was asked with, read
-	// from the assistant message that made it; nil when no message holds it.
-	ToolCallArguments(
-		ctx context.Context,
-		threadID pulid.ID,
-		tenant pagination.TenantInfo,
-		callID string,
-	) (map[string]any, error)
 	// TurnQuestions is, for each assistant message, the question the person
 	// asked in the turn that wrote it.
 	TurnQuestions(

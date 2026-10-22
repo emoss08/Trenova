@@ -5095,6 +5095,8 @@ type AIAnalyticsSeries {
   costPerCompletedRun: Decimal
   "Prompt and output tokens, with the prompt split by what the provider's cache served."
   tokens: AIAnalyticsTokens!
+  "What consulting Anthropic's advisor came to; zero where no provider turned it on."
+  advisor: AIAnalyticsAdvisor!
   firstTokenMedianMs: Int
   lastRanAt: Timestamp
   "Nothing ran for longer than a day before the end of the window."
@@ -5131,6 +5133,8 @@ type AIAnalyticsTotals {
   pricedRuns: Int!
   costPerCompletedRun: Decimal
   tokens: AIAnalyticsTokens!
+  "What consulting Anthropic's advisor came to; zero where no provider turned it on."
+  advisor: AIAnalyticsAdvisor!
   "Tool calls fail often enough to call out."
   toolFailureAlarm: Boolean!
 }
@@ -5147,6 +5151,18 @@ type AIAnalyticsTokens {
   output: Decimal!
   "Cache reads over every prompt token; absent when nothing was sent."
   cacheReadShare: Float
+}
+
+"""
+Anthropic's advisor over a set of runs: how often the model consulted it, the
+advisor's own tokens and its share of the cost. costUsd on the runs already
+includes it.
+"""
+type AIAnalyticsAdvisor {
+  calls: Decimal!
+  promptTokens: Decimal!
+  outputTokens: Decimal!
+  costUsd: Decimal!
 }
 
 "One series in one hour or day."
@@ -6248,6 +6264,28 @@ type AIProvider {
   thinkingStyle: AIThinkingStyle!
   "Where an Anthropic Messages provider reaches Claude."
   platform: AIProviderPlatform!
+  """
+  Every chat call routed to this provider declares Anthropic's advisor tool,
+  so the model can consult advisorModel mid-reply. Off by default; each
+  consultation is billed at the advisor's price.
+  """
+  advisorEnabled: Boolean!
+  "The model the advisor runs on. Empty consults the default advisor, claude-opus-5-5."
+  advisorModel: String!
+  """
+  The API's refusal of that advisor for the provider's model, from the first
+  call it refused. Calls go out without the advisor until the advisor, the
+  model or the platform changes. Null when nothing was refused.
+  """
+  advisorRefusal: AIProviderAdvisorRefusal
+  """
+  The provider's model may answer a fan-out question with one read-only
+  script (code mode). The organization must also turn on read-only scripts
+  in its E2B extension and grant code_mode.
+  """
+  scripts: Boolean!
+  "The provider's scripts may prepare writes, proposed as one batch a person approves. Needs scripts."
+  scriptWrites: Boolean!
   "What the platform needs besides the credential. Null for a provider called directly."
   platformSettings: AIProviderPlatformSettings
   """
@@ -6296,6 +6334,16 @@ type AIProvider {
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"The API refusing the advisor a provider declared, in its own words."
+type AIProviderAdvisorRefusal {
+  "The advisor the refused call declared."
+  advisor: String!
+  "The provider's model it was asked to advise."
+  model: String!
+  message: String!
+  refusedAt: Timestamp!
 }
 
 "What a provider does with a task once its monthly cap is reached."
@@ -18129,7 +18177,7 @@ One violation cited on a safety event. A roadside inspection routinely produces
 several, in different BASICs, so they are rows rather than a column on the
 event.
 """
-type WorkerSafetyViolation {
+type WorkerSafetyViolation @kind(resource: "worker_safety_event") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -31288,7 +31336,29 @@ extend type Query {
   system catalog for an organisation that has none.
   """
   activeWorkerCredentialTypes: [WorkerCredentialType!]!
-  workerCredentials(workerId: ID!, includeArchived: Boolean = true): [WorkerCredential!]!
+  """
+  One worker's credentials, or those falling due: active credentials expiring
+  within a number of days, soonest first, for the worker named or across the
+  organization when none is.
+  """
+  workerCredentials(
+    "The worker whose credentials are read. Leave it out for those falling due across the organization."
+    workerId: ID
+    "With a worker and no expiry window, also read their archived credentials."
+    includeArchived: Boolean = true
+    "Only active credentials expiring within this many days from now, from 1 to 365. 30 when no worker is named."
+    expiringWithinDays: Int
+    "With an expiry window, also those that lapsed in the last 90 days."
+    includeExpired: Boolean
+    "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case."
+    credentialTypeCode: String
+    "Only credential types the organization marks required."
+    requiredOnly: Boolean
+    "At most this many credentials, from 1 to 100. Every credential of a named worker when left out; 20 across the organization."
+    limit: Int
+    "Skip this many credentials of the same list, for the page after them."
+    offset: Int
+  ): [WorkerCredential!]!
   workerCredential(id: ID!): WorkerCredential!
   workerCredentialSummary(workerId: ID!): WorkerCredentialSummary! @authorizes(resource: "worker_credential")
   """
@@ -31351,11 +31421,13 @@ One previous employer's safety performance history investigation
 (49 CFR 391.23). The drug and alcohol half is tracked separately because
 49 CFR 382.413 asks for it specifically and employers often answer without it.
 """
-type WorkerEmploymentVerification {
+type WorkerEmploymentVerification @kind(resource: "qualification") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
   workerId: ID!
+  "The driver whose previous employer this is."
+  worker: Worker
   employerName: String!
   employerDotNumber: String
   employerMcNumber: String
@@ -31488,8 +31560,19 @@ input UpdateEmploymentVerificationInput {
 }
 
 extend type Query {
-  driverQualificationFile(workerId: ID!): DQFFile!
-  workerEmploymentVerifications(workerId: ID!): [WorkerEmploymentVerification!]!
+  driverQualificationFile(workerId: ID!): DQFFile! @authorizes(resource: "qualification")
+  """
+  Previous employers on drivers' qualification files: one driver's, or every
+  driver's when no worker is named.
+  """
+  workerEmploymentVerifications(
+    "The driver whose previous employers are read. Leave it out for every driver's."
+    workerId: ID
+    "Only the employers who have not answered yet."
+    outstandingOnly: Boolean
+    "At most this many employers, from 1 to 100. Every one of a named driver when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerEmploymentVerification!]!
   """
   Investigations across the organisation that are still owed a request or a
   chase.
@@ -32530,7 +32613,7 @@ type WorkerLeaveEntry {
 One qualifying reason for leave. Entitlement is drawn down by the days recorded
 against a case, so a case open for months has used nothing until days are.
 """
-type WorkerLeaveCase {
+type WorkerLeaveCase @kind(resource: "worker_leave") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -32647,7 +32730,20 @@ input UpdateLeaveControlInput {
 
 extend type Query {
   leaveControl: LeaveControl!
-  workerLeaveCases(workerId: ID!): [WorkerLeaveCase!]!
+  """
+  Leave cases, newest first: one worker's, or every worker's when no worker
+  is named.
+  """
+  workerLeaveCases(
+    "The worker whose cases are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the cases still pending or approved."
+    openOnly: Boolean
+    "Only the cases still waiting on the certification the worker owes."
+    certificationOutstandingOnly: Boolean
+    "At most this many cases, from 1 to 100. Every case of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerLeaveCase!]!
   workerLeaveCase(id: ID!): WorkerLeaveCase!
   """
   A worker's FMLA balance. Leave asOf empty for today.
@@ -32867,6 +32963,11 @@ type WorkerSafetyEvent {
   createdAt: Timestamp!
   updatedAt: Timestamp!
   worker: Worker
+  """
+  The roadside violations cited on the event, by BASIC and then the heaviest
+  first.
+  """
+  violations: [WorkerSafetyViolation!]!
 }
 
 """
@@ -33042,7 +33143,18 @@ input WorkerRecognitionInput {
 }
 
 extend type Query {
-  workerSafetyEvents(workerId: ID!): [WorkerSafetyEvent!]!
+  """
+  Safety events, newest first: one worker's record, or every worker's across
+  the organization when no worker is named.
+  """
+  workerSafetyEvents(
+    "The worker whose events are read. Leave it out for every worker's."
+    workerId: ID
+    "Only the events still open or under review."
+    openOnly: Boolean
+    "At most this many events, from 1 to 100. Every event of a named worker when left out; 20 across the organization."
+    limit: Int
+  ): [WorkerSafetyEvent!]!
   workerSafetyEvent(id: ID!): WorkerSafetyEvent!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
   workerDisciplinaryActions(workerId: ID!): [WorkerDisciplinaryAction!]!

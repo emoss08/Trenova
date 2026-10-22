@@ -26,7 +26,7 @@ the sentence that says what it shows. The Desk draws it there as a link in the b
 | The words of a link | The artifact's title, always. `FinishTurn` rewrites every link in the turn's replies with `agentruntime.NameArtifactLinks` before saving, so the transcript, search, exports and the next turn's context read the same name. A link to an id the thread does not hold is saved as its words. |
 | The link | `DeskInlineArtifact` draws `artifact.title`, never the reply's words, so a reply still streaming already shows the right name. |
 | Where a link may stand | Inside a sentence (`agentruntime/placement.go`); see "Reply passes" in [agent-runtime.md](agent-runtime.md). |
-| Which artifacts a reply must name | `ShownArtifact.MustBeLinked`: a published document, an EDI connection draft, a written record, and a table that is long, ranked, worked from or opens the live view. Only the newest version is held to it: a call that shows the next version of an artifact the turn already showed (a second draft of the same guide, whichever partner the agent named, a table read again, a revised document; `ShownArtifact.Lineage`, from `assistantartifact.LineageKeyFor`) takes the earlier one's place in `Turn.keepShown`, so the reply is never asked for the version it replaced. The note the model reads with the result (`shownNote`) says so for each of them: one that must be named is never told that pointing to it is optional. A reply that still leaves one out ends with a sentence naming it ("The full table is in …"); it is not asked again for that alone. |
+| Which artifacts a reply must name | `ShownArtifact.MustBeLinked`: a published document, an EDI connection draft, a written record, and a table that is long, ranked, worked from, pages (`Paged`: its list has more rows than it holds, or the agent read more than one page into it) or opens the live view. Only the newest version is held to it: a call that shows the next version of an artifact the turn already showed (a second draft of the same guide, whichever partner the agent named, a table read again, a revised document; `ShownArtifact.Lineage`, from `assistantartifact.LineageKeyFor`) takes the earlier one's place in `Turn.keepShown`, so the reply is never asked for the version it replaced. The note the model reads with the result (`shownNote`) says so for each of them: one that must be named is never told that pointing to it is optional. A reply that still leaves one out ends with a sentence naming it ("The full table is in …"); it is not asked again for that alone. |
 
 The client never moves, adds or renames a link: what the server saved is what is drawn.
 Approval drafts and plans are made after the reply and open from their approval cards, not
@@ -85,7 +85,7 @@ is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-pln-*` for the plan, `dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card, `dk-tv-*` for a table that pages; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
 `dk-ecd-*` for the EDI connection draft.
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
@@ -540,6 +540,58 @@ is the same size: three one-line rows and the review on the preview. It is for
 looking; managing documents stays on the record's page. The shipment card shows the
 shipment's documents, and so does the billing queue item's card: a billing item
 has none of its own, and bills from the ones filed on its shipment.
+
+## A table that pages
+
+A list is read a page at a time, and the table it makes is the whole list paged, not the page
+the agent read. `tableArtifact` keeps the agent's rows with where the list goes on from them
+(`hasMore`, `nextCursor` or `nextOffset`, `pages`, and `total` when the read counted), in
+`assistantservice/artifact_paging.go`.
+
+- **The agent's later pages join the table.** A list call that starts after a cursor or at an
+  offset the conversation's newest table of that lineage handed out (`continueTable`) adds its
+  rows to that table, in the table's own columns, and moves its position on; it is never a new
+  version (the "v2" that held only page 2) nor, when the first page had been dropped, a new
+  artifact. A page that would push the payload past `MaxPayloadBytes` leaves the table as it is,
+  and the person reads the rest from where it ends. A cursor the table never handed out is kept as
+  before, as the lineage's next version.
+- **A paged table is always kept.** `ShownArtifact.Paged` makes it `MustBeLinked`, and `shownNote`
+  tells the model the person pages through every row beside the conversation, so it reads another
+  page only when its answer needs one.
+- **The person's pages are read again with their own access.** `GET
+  /assistant/threads/:id/artifacts/:artifactId/rows/` (`ArtifactRows`) runs the tool the table came
+  from with the arguments it ran with, as `UserActor` under the conversation agent's data
+  access ceiling, exactly as the CSV export does (`listOf` serves both): `after` or `offset`,
+  `limit` (at most 100), `q` when the list takes a free-text search the agent's call did not
+  already use, `sortBy` (a column key, mapped to the list's sort field) and `sortDirection`, and
+  `total=true` to count. It answers the rows projected into the table's columns, where the list
+  goes on, the total when asked, the columns the person may not see, and whether the list
+  searches and which columns it sorts by. A person who may no longer read the list gets a 403.
+- **A table keeps the arguments its list ran with** (`readWith` on the payload, from
+  `ToolObservation.RanWith`), not the model's call as the thread records it. The runtime repairs a
+  call before the tool runs (aliases, coercion, relative dates resolved against the day), and a
+  list's cursor is bound to the arguments it ran with, so replaying the model's raw call is refused
+  as a stale cursor, and replaying it a day later reads another range. A step replayed from the
+  ledger keeps them too (`RunStepOutcome.RanWith`). A table or report preview without `readWith`
+  is not read again (`errNotReread`); a cursor the list no longer takes is a 400 on `after`
+  (`errStalePage`), and the client then reads the list from its start.
+- **The client reads a buffer, not pages.** `useTablePages` (`kinds/table/use-table-pages.ts`)
+  starts with the agent's rows and reads on from their position with `useInfiniteQuery`, a page
+  as soon as the table opens (so Next is instant, and the total arrives) and the next whenever the
+  page shown needs rows not yet read; a page is a slice of the buffer at the person's size (25 or
+  50, kept per browser). Searching or sorting reads the list from its start; a list the server
+  does not search is filtered over the rows read, and a column it does not sort by stays fixed. A
+  table cut to fit has no position, so paging past its rows reads the list from its start. A
+  table that holds its whole list pages where it is and reads nothing.
+- **Whose read a page is** is shown: the Nova badge on rows the agent read (a part page says
+  so), "Read just now, with your access" on the rest, and the strip of pages under the table
+  marks the agent's pages, the ones read and the one open. A failed page keeps the pages read
+  and offers Try again; a 403 stops the table at the agent's rows with a lock note; withheld
+  columns are named.
+
+The mock API's `athr_desk_table` conversation serves it (`handlers/desktable.mjs`, the
+`deskTable` scenario: paged, slow, failing, locked, withheld, cut, whole, short), and
+`e2e/mock-api/desk-table-screenshots.mjs` shoots each state.
 
 ## How a row opens in place
 

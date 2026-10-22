@@ -125,7 +125,8 @@ next run would otherwise replay this one's history.
 
 ### Cells: `+advisor`
 
-`+advisor` gives the cell's model Anthropic's advisor tool: `claude-haiku-5-5@low+advisor` is
+`+advisor` gives the cell's model Anthropic's advisor tool, overriding the provider's own
+advisor setting (AI Control → Providers, [agent-runtime.md](agent-runtime.md), "The advisor"): `claude-haiku-5-5@low+advisor` is
 Haiku 5.5 at low effort that may consult Claude Opus 5.5 up to twice per model call.
 `+advisor=<model>` names another advisor model; the API refuses a pair whose advisor is less
 capable than the executor, with a 400 on the first call. The suffix is refused on the default
@@ -134,8 +135,10 @@ carries it (`Haiku 5.5 (claude-haiku-5-5) @low +advisor`), so it is its own row 
 
 The suffix rides on the cell's pin, as the effort does: every chat call of the case's thread gets
 `ChatCompletionRequest.Advisor`, and the Anthropic adapter declares `advisor_20260301` (beta
-`advisor-tool-2026-03-01`) after the agent's own tools. There is no provider setting or product
-switch; the bench is the only thing that turns it on. A call's advisor consultations are counted
+`advisor-tool-2026-03-01`) after the agent's own tools. A cell without the suffix runs with
+whatever advisor its provider's setting declares. Unlike the provider setting, a cell's advisor
+that the API refuses is not retried without it: the call fails, so a cell never runs quietly
+without what it asked for. A call's advisor consultations are counted
 apart from the executor's tokens (`advisor` on each call in `calls/`, `advisorCalls`,
 `advisorPromptTokens` and `advisorOutputTokens` in `usage`) and priced at the advisor model's list
 price, inside the call's cost. A call whose advisor model has no list price is left unpriced
@@ -285,18 +288,22 @@ trials leave pass^4 unreported, and the threshold reads the pass rate), and `swe
 
 ## The gate
 
-`trenova desk gate` (`task desk-gate`) runs `deskbench/gate.yaml` as one run and decides from it,
-by rules the spec fixes before the run, which models code mode should be enabled for, which
-effort each route runs at, and whether the advisor is offered on it; a second run confirms the
-decisions on the held-out split. The plan, the rules and why they are what they are, are in
+`trenova desk gate` (`task desk-gate`) runs `deskbench/gate.yaml` as one run and measures from
+it, by rules the spec fixes before the run, which models' providers scripts help, which effort
+each route runs best at, and whether the advisor helps on it; a second run confirms the findings
+on the held-out split. Its output is a list of recommended provider settings; it changes no
+setting, and an organization decides from its own use. The plan, the rules and why they are what they are, are in
 [desk-bench-gate.md](desk-bench-gate.md).
 
 Code mode is judged per cell of the spec's `codeMode` rule on Phase 5a's paired scenarios
-(`mode` and `pair`), by that phase's rule: on the held-out pairs, no pass^k loss in script mode
+(`mode` and `pair`; a scenario's `mode`, `discrete`, `script` or `script_writes`, overrides the
+provider's Scripts settings for its case, in development and test only), by that phase's rule: on the held-out pairs, no pass^k loss in script mode
 for any work kind; cost per completed task `costCut` lower or pass^k `passGain` higher; the
 controls within `controlWithin`; and no unauthorized effect on the adversarial pairs. Script
 halves are left out of every other figure the gate reads, because the product runs no script
-until a model is in `codemode/models.yaml`. The gate recommends; it never writes that file.
+until an organization turns Scripts on for a provider. Where the rule holds, the gate recommends
+"Scripts on" for that model's provider, and "Scripts may propose writes on" only where the
+batch-write adversarial pairs ran and showed no unauthorized effect.
 
 A route is one of the runtime's profile modes: `unattended` for a scenario that fires a run,
 `delegated` for one tagged `delegation` or expecting `delegate_task`, `chat` for the rest. A group
@@ -321,9 +328,10 @@ the advisor rule's reference by its `gap`.
    on the held-out scenarios of each route, and writes `confirm.md` and `confirm.json`: whether
    each route's choice holds, the description check on the scenarios both runs hold, and the
    before and after figures. Each model run 1 recommended for code mode is judged again on the
-   cell the configuration runs it at (its held-out pairs, and its adversarial pairs again); one
-   that holds is listed with the `codemode/models.yaml` entry a pull request would add. Its own
-   run sits under `sealed/` in its directory.
+   cell the configuration runs it at (its held-out pairs, and its adversarial pairs again). Both
+   `gate.md` and `confirm.md` end with "Recommended settings": per route, the reasoning effort
+   and the advisor, and per model whose code-mode rule held, Scripts (and, where the write
+   safety held, Scripts may propose writes). Its own run sits under `sealed/` in its directory.
 
 ## Agents
 

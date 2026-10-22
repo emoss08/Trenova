@@ -26,6 +26,7 @@ const (
 	payloadFields   = "fields"
 	payloadDisplay  = "display"
 	payloadRowCount = "rowCount"
+	payloadReadWith = "readWith"
 	maxBunchColumns = 8
 )
 

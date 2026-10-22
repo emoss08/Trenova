@@ -175,6 +175,27 @@ export const aiProviderTestOutcomeSchema = z.object({
   testedAt: z.number(),
 });
 
+/** The default advisor the server consults when a provider names none. */
+export const DEFAULT_ADVISOR_MODEL = "claude-opus-5-5";
+
+/** The platforms that serve Anthropic's advisor tool. */
+export const ADVISOR_PLATFORMS = [
+  "Direct",
+  "ClaudePlatformAWS",
+] as const satisfies readonly z.infer<typeof aiProviderPlatformSchema>[];
+
+/**
+ * The API refusing the advisor a provider declared, recorded on the first call
+ * it refused. Calls go out without the advisor until the advisor, the model or
+ * the platform changes.
+ */
+export const aiProviderAdvisorRefusalSchema = z.object({
+  advisor: z.string(),
+  model: z.string(),
+  message: z.string(),
+  refusedAt: z.number(),
+});
+
 export const aiProviderSchema = z.object({
   id: z.string(),
   businessUnitId: z.string(),
@@ -192,6 +213,14 @@ export const aiProviderSchema = z.object({
   thinkingStyle: thinkingStyleSchema.default("Auto"),
   platform: aiProviderPlatformSchema.default("Direct"),
   platformSettings: aiProviderPlatformSettingsSchema.nullable().optional().default(null),
+  advisorEnabled: z.boolean().default(false),
+  advisorModel: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  advisorRefusal: aiProviderAdvisorRefusalSchema.nullable().optional().default(null),
+  scripts: z.boolean().default(false),
+  scriptWrites: z.boolean().default(false),
   extraBody: extraBodySchema,
   inputCostPerMillion: pricePerMillionSchema,
   outputCostPerMillion: pricePerMillionSchema,
@@ -239,6 +268,10 @@ export const saveAIProviderRequestSchema = z.object({
   thinkingStyle: thinkingStyleSchema.default("Auto"),
   platform: aiProviderPlatformSchema.default("Direct"),
   platformSettings: aiProviderPlatformSettingsSchema.nullable().default(null),
+  advisorEnabled: z.boolean().default(false),
+  advisorModel: z.string().trim().default(""),
+  scripts: z.boolean().default(false),
+  scriptWrites: z.boolean().default(false),
   extraBody: extraBodySchema,
   inputCostPerMillion: z.number().min(0).nullable().default(null),
   outputCostPerMillion: z.number().min(0).nullable().default(null),
@@ -369,6 +402,7 @@ export const aiProviderCatalogSchema = z.object({
 });
 
 export type AIProvider = z.infer<typeof aiProviderSchema>;
+export type AIProviderAdvisorRefusal = z.infer<typeof aiProviderAdvisorRefusalSchema>;
 export type AIProviderTestOutcome = z.infer<typeof aiProviderTestOutcomeSchema>;
 export type AIProviderKind = z.infer<typeof aiProviderKindSchema>;
 export type AITask = z.infer<typeof aiTaskSchema>;

@@ -10,8 +10,8 @@ import (
 
 type ListWorkerSafetyEventsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	// WorkerID narrows to one worker; nil lists every worker's, which only an
-	// OpenOnly read does, so the list stays bounded by what is unresolved.
+	// WorkerID narrows to one worker; nil lists every worker's, which a
+	// caller bounds with Limit.
 	WorkerID pulid.ID `json:"workerId"`
 	OpenOnly bool     `json:"openOnly"`
 	Limit    int      `json:"limit"`
@@ -54,12 +54,12 @@ type GetWorkerRecognitionByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
-// ListWorkerSafetyViolationsRequest lists the violations cited on an event, or
+// ListWorkerSafetyViolationsRequest lists the violations cited on events, or
 // every violation a worker has collected.
 type ListWorkerSafetyViolationsRequest struct {
-	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
-	SafetyEventID pulid.ID              `json:"safetyEventId"`
-	WorkerID      pulid.ID              `json:"workerId"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	SafetyEventIDs []pulid.ID            `json:"safetyEventIds"`
+	WorkerID       pulid.ID              `json:"workerId"`
 	// Since limits to violations whose event happened on or after this
 	// instant; zero means all.
 	Since        int64 `json:"since"`
