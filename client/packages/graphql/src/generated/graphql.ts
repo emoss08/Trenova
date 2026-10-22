@@ -6092,6 +6092,16 @@ export type ProposeShiftSwapInput = {
   shiftDate: number;
 };
 
+/**
+ * A set of fields a role must be granted to see, wherever they appear. A reader
+ * without the grant receives null for every field in the set.
+ */
+export type ProtectedFieldGroup =
+  /** The margin floor and pay ceiling a rate agreement sets against the sell price. */
+  | 'Margins'
+  /** A worker's date of birth, licence, TWIC and credential numbers, and drug test dates. */
+  | 'Personal';
+
 export type RandomDrawStatus =
   | 'Cancelled'
   | 'Draft'
@@ -6554,6 +6564,24 @@ export type ReportDrillValueInput = {
   columnId: string;
   value?: unknown;
 };
+
+/**
+ * Whether a caller may use a catalog field or edge in a report, decided by the
+ * rule the report compiler applies, so a field marked Available compiles and
+ * any other is refused.
+ */
+export type ReportFieldAccess =
+  /** The caller may use it. */
+  | 'Available'
+  /** It is in a protected field group the caller's role does not grant. */
+  | 'NeedsFieldGroup'
+  /**
+   * It is outside its kind's reference view, and the caller cannot read the
+   * kind. Through a join, only the kind's reference-view fields can be used.
+   */
+  | 'NeedsKindRead'
+  /** It is ranked above the caller's sensitivity ceiling. */
+  | 'WithheldByCeiling';
 
 export type ReportFieldRefInput = {
   field: string;
@@ -16501,7 +16529,7 @@ export type CannedReportsQuery = { cannedReports: Array<{ key: string, version: 
 export type ReportCatalogQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ReportCatalogQuery = { reportCatalog: { version: string, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, nullable: boolean, aggregations: Array<string>, filterable: boolean, groupable: boolean, accessible: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }> }>, edges: Array<{ name: string, label: string, target: string, cardinality: string, traversable: boolean }> }> } };
+export type ReportCatalogQuery = { reportCatalog: { version: string, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, readable: boolean, exportable: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, nullable: boolean, aggregations: Array<string>, filterable: boolean, groupable: boolean, access: ReportFieldAccess, inReferenceView: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }>, protection: { group: ProtectedFieldGroup, held: boolean } | null }>, edges: Array<{ name: string, label: string, target: string, cardinality: string, traversable: boolean, access: ReportFieldAccess, inReferenceView: boolean, needsReadOf: string | null }> }> } };
 
 export type ReportDashboardFieldsFragment = { id: string, name: string, description: string, category: string, tags: Array<string>, ownerId: string, visibility: string, layout: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportDashboardFieldsFragment' };
 

@@ -9,6 +9,8 @@ query ReportCatalog {
       description
       category
       ownScopeSupported
+      readable
+      exportable
       fields {
         key
         label
@@ -23,7 +25,12 @@ query ReportCatalog {
         aggregations
         filterable
         groupable
-        accessible
+        access
+        inReferenceView
+        protection {
+          group
+          held
+        }
         sensitivity
       }
       edges {
@@ -32,6 +39,9 @@ query ReportCatalog {
         target
         cardinality
         traversable
+        access
+        inReferenceView
+        needsReadOf
       }
     }
   }

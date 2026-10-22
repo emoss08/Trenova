@@ -1,14 +1,15 @@
 package reporting
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,11 +68,14 @@ func TestDetailColumns_LeavesOutProtectedFieldsTheReaderCannotSee(t *testing.T) 
 		Definition: &report.Definition{IRVersion: report.CurrentIRVersion, Entity: entity.Key},
 	}
 	keys := func(visible permission.FieldGroupSet) []string {
+		engine := &confidentialReader{}
 		svc := &Service{
-			l:            zap.NewNop(),
-			perms:        &confidentialReader{},
-			fieldAccess:  groupAccess{visible: visible},
-			permRegistry: permission.NewRegistry(),
+			l:     zap.NewNop(),
+			perms: engine,
+			access: reportaccess.New(reportaccess.Params{
+				Engine: engine,
+				Fields: groupAccess{visible: visible},
+			}),
 		}
 		columns, err := svc.detailColumns(t.Context(), req, entity)
 		require.NoError(t, err)

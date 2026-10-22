@@ -203,16 +203,12 @@ func provideDescribeReportTool(reports *reporting.Service) agentports.AgentQuery
 	return newDescribeReportTool(reports)
 }
 
-func provideListReportDatasetsTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListReportDatasetsTool(permissions)
+func provideListReportDatasetsTool(reports *reporting.Service) agentports.AgentQueryTool {
+	return newListReportDatasetsTool(reports.CatalogAccess())
 }
 
-func provideDescribeReportDatasetTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newDescribeReportDatasetTool(permissions)
+func provideDescribeReportDatasetTool(reports *reporting.Service) agentports.AgentQueryTool {
+	return newDescribeReportDatasetTool(reports.CatalogAccess())
 }
 
 func providePreviewReportTool(reports *reporting.Service) agentports.AgentQueryTool {
