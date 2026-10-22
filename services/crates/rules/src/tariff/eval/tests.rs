@@ -19,6 +19,13 @@
 //!
 //! A failing `expect` reports the values of the operands in it, so the author sees what the
 //! tariff computed. An evaluation error makes the test's status `error`.
+//!
+//! Tests read rate tables under the same on-demand protocol as a rating
+//! ([`super::tables`]): a lookup of cells the request did not carry is a provisional miss and
+//! the test keeps running, so one pass finds every need it can, from its `given`s, the rating
+//! and its `expect`s alike. A test that recorded needs ends with status `needs` whatever else
+//! happened, since the provisional miss may have caused it; the host loads the cells and runs
+//! the tests again.
 
 use super::StaticTypes;
 use super::bill::Finished;
@@ -28,7 +35,7 @@ use super::interp::link::Linked;
 use super::interp::{Env, Interp, Setup, TestView};
 use super::record::{sample, settle};
 use super::run::{Supplied, bind_inputs};
-use super::tables::Tables;
+use super::tables::{Need, Tables};
 use super::value::{Record, Value};
 use crate::message::{Arg, Message};
 use crate::span::Span;
@@ -74,6 +81,8 @@ pub enum Status {
     Failed,
     /// The test could not be evaluated.
     Error,
+    /// The test read table cells the request did not carry, so its result is not final.
+    Needs,
 }
 
 impl Status {
@@ -84,6 +93,7 @@ impl Status {
             Self::Passed => "passed",
             Self::Failed => "failed",
             Self::Error => "error",
+            Self::Needs => "needs",
         }
     }
 }
@@ -115,6 +125,8 @@ pub struct TestResult {
     pub error: Option<EvalError>,
     /// The bill the rating produced, for a tariff that rated.
     pub bill: Option<Finished>,
+    /// The table cells the test needs, for status `needs`.
+    pub needs: Vec<Need>,
 }
 
 /// Runs the root file's tests.
@@ -139,6 +151,7 @@ pub fn run_tests(request: &TestRequest<'_>) -> Vec<TestResult> {
                 request,
                 linked: &linked,
                 failures: Vec::new(),
+                needs: Vec::new(),
             };
             let ended = if kind == Some(FileKind::Library) {
                 runner.library(test).map(|()| None)
@@ -146,6 +159,10 @@ pub fn run_tests(request: &TestRequest<'_>) -> Vec<TestResult> {
                 runner.rating(test)
             };
             let (status, error, bill) = match ended {
+                _ if !runner.needs.is_empty() => {
+                    runner.failures.clear();
+                    (Status::Needs, None, None)
+                }
                 Ok(bill) if runner.failures.is_empty() => (Status::Passed, None, bill),
                 Ok(bill) => (Status::Failed, None, bill),
                 Err(error) => (Status::Error, Some(error), None),
@@ -157,6 +174,7 @@ pub fn run_tests(request: &TestRequest<'_>) -> Vec<TestResult> {
                 failures: runner.failures,
                 error,
                 bill,
+                needs: runner.needs,
             }
         })
         .collect()
@@ -166,6 +184,19 @@ struct Runner<'r, 'p, 'a> {
     request: &'r TestRequest<'p>,
     linked: &'r Linked<'a>,
     failures: Vec<Failure>,
+    needs: Vec<Need>,
+}
+
+/// Every table need of a set of results, each once, in the order first met.
+#[must_use]
+pub fn needs_of(results: &[TestResult]) -> Vec<Need> {
+    let mut needs: Vec<Need> = Vec::new();
+    for need in results.iter().flat_map(|result| &result.needs) {
+        if !needs.contains(need) {
+            needs.push(need.clone());
+        }
+    }
+    needs
 }
 
 /// How the tested rating ended.
@@ -188,6 +219,15 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
         interp
     }
 
+    /// Moves the needs an interpreter recorded onto the test.
+    fn gather(&mut self, interp: &mut Interp<'_, '_>) {
+        for need in std::mem::take(&mut interp.needs) {
+            if !self.needs.contains(&need) {
+                self.needs.push(need);
+            }
+        }
+    }
+
     /// A test of a tariff or condition.
     fn rating(&mut self, test: &'a Test) -> Result<Option<Finished>, EvalError> {
         let (record, inputs) = self.givens(test)?;
@@ -195,11 +235,7 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
         let mut env = Env::new(0, false);
         let ran = bind_inputs(&mut interp, &mut env, &Supplied::Values(&inputs))
             .and_then(|()| interp.run_file(&mut env));
-        if !interp.needs.is_empty() {
-            return Err(EvalError::internal(Message::new(crate::message!(
-                "The test reads rate table cells the request did not carry"
-            ))));
-        }
+        self.gather(&mut interp);
         let rating = match ran {
             Err(Stop::Failed(error)) => return Err(error),
             Err(Stop::Refused(refusal)) => Rating::Refused(refusal),
@@ -215,6 +251,22 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
                 total: bill.total,
             });
         }
+        let outcome = self.expectations(&mut checker, test, &rating);
+        self.gather(&mut checker);
+        outcome?;
+        Ok(match rating {
+            Rating::Rated(bill) => Some(bill),
+            Rating::Refused(_) => None,
+        })
+    }
+
+    /// A rating test's body after the rating: its `expect`s and the statements between them.
+    fn expectations(
+        &mut self,
+        checker: &mut Interp<'r, 'a>,
+        test: &'a Test,
+        rating: &Rating,
+    ) -> Result<(), EvalError> {
         let mut scope = Env::new(0, false);
         for stmt in &test.body.stmts {
             match &stmt.kind {
@@ -228,14 +280,14 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
                         ),
                         None => None,
                     };
-                    let refusal = match &rating {
+                    let refusal = match rating {
                         Rating::Refused(refusal) => Some(refusal),
                         Rating::Rated(_) => None,
                     };
                     self.expect_refused(stmt.span, refusal, wanted.as_deref());
                 }
                 StmtKind::Expect(Expect::Holds(expr)) => {
-                    if let Rating::Refused(refusal) = &rating {
+                    if let Rating::Refused(refusal) = rating {
                         self.failures.push(Failure {
                             span: stmt.span,
                             message: Message::with(
@@ -246,42 +298,22 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
                         });
                         continue;
                     }
-                    self.expect_holds(&mut checker, &mut scope, stmt, expr)?;
+                    self.expect_holds(checker, &mut scope, stmt, expr)?;
                 }
                 _ => {
                     checker.exec(&mut scope, stmt).map_err(stopped)?;
                 }
             }
         }
-        Ok(match rating {
-            Rating::Rated(bill) => Some(bill),
-            Rating::Refused(_) => None,
-        })
+        Ok(())
     }
 
     /// The record and input values after a test's `given`s.
-    fn givens(&self, test: &'a Test) -> Result<(Value, BTreeMap<String, Value>), EvalError> {
+    fn givens(&mut self, test: &'a Test) -> Result<(Value, BTreeMap<String, Value>), EvalError> {
         let mut interp = self.interp(sample(self.request.settings));
-        let mut inputs = BTreeMap::new();
-        let (mut pickup, mut delivery) = (false, false);
-        for stmt in &test.body.stmts {
-            let StmtKind::Given { target, value } = &stmt.kind else {
-                continue;
-            };
-            let mut scope = Env::new(0, false);
-            let value = interp.eval_in(&mut scope, value).map_err(stopped)?;
-            match target.as_slice() {
-                [head, name] if head.text == "input" => {
-                    inputs.insert(name.text.clone(), value);
-                }
-                path => {
-                    pickup |= matches!(path, [root, field] if root.text == "shipment" && field.text == "pickup");
-                    delivery |= matches!(path, [root, field] if root.text == "shipment" && field.text == "delivery");
-                    interp.record = set_path(&interp.record, path, value)
-                        .map_err(|error| error.at(stmt.span))?;
-                }
-            }
-        }
+        let applied = apply_givens(&mut interp, test);
+        self.gather(&mut interp);
+        let (inputs, pickup, delivery) = applied?;
         Ok((settle(&interp.record, pickup, delivery), inputs))
     }
 
@@ -341,6 +373,16 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
     /// A test of a library: its body, in order.
     fn library(&mut self, test: &'a Test) -> Result<(), EvalError> {
         let mut interp = self.interp(sample(self.request.settings));
+        let ran = self.library_body(&mut interp, test);
+        self.gather(&mut interp);
+        ran
+    }
+
+    fn library_body(
+        &mut self,
+        interp: &mut Interp<'r, 'a>,
+        test: &'a Test,
+    ) -> Result<(), EvalError> {
         let mut scope = Env::new(0, false);
         let mut refused: Option<Refusal> = None;
         for stmt in &test.body.stmts {
@@ -359,7 +401,7 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
                 }
                 _ if refused.is_some() => {}
                 StmtKind::Expect(Expect::Holds(expr)) => {
-                    self.expect_holds(&mut interp, &mut scope, stmt, expr)?;
+                    self.expect_holds(interp, &mut scope, stmt, expr)?;
                 }
                 StmtKind::Given { .. } => {
                     return Err(EvalError::internal(Message::new(crate::message!(
@@ -386,6 +428,35 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
         }
         Ok(())
     }
+}
+
+/// Applies a test's `given`s to the interpreter's record: the input values they set, and
+/// whether they set `shipment.pickup` and `shipment.delivery`.
+fn apply_givens<'a>(
+    interp: &mut Interp<'_, 'a>,
+    test: &'a Test,
+) -> Result<(BTreeMap<String, Value>, bool, bool), EvalError> {
+    let mut inputs = BTreeMap::new();
+    let (mut pickup, mut delivery) = (false, false);
+    for stmt in &test.body.stmts {
+        let StmtKind::Given { target, value } = &stmt.kind else {
+            continue;
+        };
+        let mut scope = Env::new(0, false);
+        let value = interp.eval_in(&mut scope, value).map_err(stopped)?;
+        match target.as_slice() {
+            [head, name] if head.text == "input" => {
+                inputs.insert(name.text.clone(), value);
+            }
+            path => {
+                pickup |= matches!(path, [root, field] if root.text == "shipment" && field.text == "pickup");
+                delivery |= matches!(path, [root, field] if root.text == "shipment" && field.text == "delivery");
+                interp.record =
+                    set_path(&interp.record, path, value).map_err(|error| error.at(stmt.span))?;
+            }
+        }
+    }
+    Ok((inputs, pickup, delivery))
 }
 
 fn stopped(stop: Stop) -> EvalError {

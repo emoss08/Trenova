@@ -20,7 +20,7 @@ use super::budget::Limits;
 use super::error::{Code, EvalError};
 use super::interp::link::Linked;
 use super::interp::{Env, Interp, Setup};
-use super::ops::{error_json, gate};
+use super::ops::{error_json, gate, needs_json};
 use super::record::{decode_record, sample, settle, stop, with_dwell};
 use super::run::{Outcome, Request, run_program};
 use super::tables::Tables;
@@ -122,15 +122,7 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
         }
         Outcome::Needs(needs) => {
             output.insert(String::from("status"), Json::String(String::from("needs")));
-            output.insert(
-                String::from("needs"),
-                Json::Array(
-                    needs
-                        .iter()
-                        .map(|need| serde_json::json!({"table": need.table, "keys": need.keys}))
-                        .collect(),
-                ),
-            );
+            output.insert(String::from("needs"), needs_json(&needs));
             return encode(&Json::Object(output));
         }
         Outcome::Condition(_) => {
