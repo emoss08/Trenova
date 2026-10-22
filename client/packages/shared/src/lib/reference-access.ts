@@ -41,6 +41,36 @@ export function referenceKindAccessLabel(kind: ReferenceKind): string {
 }
 
 /**
+ * A group of protected fields a role grants on its own (`@protected(group:)` on the server).
+ * A field of the group is null to a reader without it, wherever it appears.
+ */
+export type ProtectedFieldGroup = "Personal" | "Margins";
+
+const PROTECTED_GROUP_ACCESS_LABELS = defineLabels({
+  Personal: "personal details",
+  Margins: "margins",
+} satisfies Record<ProtectedFieldGroup, string>);
+
+/** The protected field group in words, as it reads in the withheld-field tooltip. */
+export function protectedGroupAccessLabel(group: ProtectedFieldGroup): string {
+  return PROTECTED_GROUP_ACCESS_LABELS[group];
+}
+
+/**
+ * What a withheld value needs: read on a kind of record, or a protected field group.
+ */
+export type WithheldAccess =
+  | { kind: ReferenceKind; group?: never }
+  | { group: ProtectedFieldGroup; kind?: never };
+
+/** The access a withheld value needs, in words, for "You don't have access to {0}". */
+export function withheldAccessLabel(access: WithheldAccess): string {
+  return access.group
+    ? protectedGroupAccessLabel(access.group)
+    : referenceKindAccessLabel(access.kind as ReferenceKind);
+}
+
+/**
  * A field of a record an operation reads as its root, or as the caller's own under a
  * self-scoped `my*` field (selected without `@requiresRead`).
  *
