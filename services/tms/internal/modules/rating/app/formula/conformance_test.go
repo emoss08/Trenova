@@ -2,26 +2,28 @@ package formula_test
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+const conformanceCorpusPath = "../../../../../../crates/rules/testdata/conformance.json"
+
 type conformanceCase struct {
-	ID          string `json:"id"`
-	Expression  string `json:"expression"`
-	Accepted    bool   `json:"accepted"`
-	Value       string `json:"value"`
-	ServerError string `json:"serverError"`
-	ErrorFrom   *int   `json:"errorFrom"`
-	Note        string `json:"note"`
+	ID         string `json:"id"`
+	Expression string `json:"expression"`
+	Accepted   bool   `json:"accepted"`
+	Value      string `json:"value"`
+	Code       string `json:"code"`
+	From       *int   `json:"from"`
+	Note       string `json:"note"`
 }
 
 type conformanceCorpus struct {
@@ -32,7 +34,7 @@ type conformanceCorpus struct {
 func loadConformanceCorpus(t *testing.T) conformanceCorpus {
 	t.Helper()
 
-	raw, err := os.ReadFile("testdata/conformance.json")
+	raw, err := os.ReadFile(conformanceCorpusPath)
 	require.NoError(t, err)
 
 	var corpus conformanceCorpus
@@ -54,7 +56,7 @@ func conformanceShipment() *shipment.Shipment {
 	return entity
 }
 
-func TestConformance_TheEngineSavesExactlyWhatTheCorpusSays(t *testing.T) {
+func TestConformance_EveryCorpusCaseThroughTheGoEnvironmentAndTheModule(t *testing.T) {
 	t.Parallel()
 
 	corpus := loadConformanceCorpus(t)
@@ -74,50 +76,51 @@ func TestConformance_TheEngineSavesExactlyWhatTheCorpusSays(t *testing.T) {
 		t.Run(tc.ID, func(t *testing.T) {
 			t.Parallel()
 
-			env, err := svc.BuildValidationEnvironment("shipment", inputs)
+			checked, err := svc.Check(t.Context(), &formula.CheckRequest{
+				SchemaID: "shipment",
+				Inputs:   formula.TemplateInputs(corpus.Inputs),
+				Expect:   rules.ExpectAmount,
+				Sources:  []formula.CheckSource{{Scope: formula.MainScope, Source: tc.Expression}},
+			})
 			require.NoError(t, err)
+			check := checked[0].Check
 
-			err = svc.ValidateExpressionWithEnv(t.Context(), tc.Expression, env)
 			if !tc.Accepted {
-				require.Error(t, err, "the engine saves %q", tc.Expression)
-				if tc.ServerError != "" {
-					assert.Contains(t, err.Error(), tc.ServerError)
+				require.NotEmpty(t, tc.Code, "a refused case names its code")
+				require.NotNil(t, tc.From, "a refused case names where")
+				found := false
+				for _, diagnostic := range check.Diagnostics {
+					if diagnostic.IsError() && diagnostic.Code == tc.Code &&
+						diagnostic.From == *tc.From {
+						found = true
+					}
 				}
+				assert.True(t, found, "%q: want %s at %d, got %+v",
+					tc.Expression, tc.Code, *tc.From, check.Diagnostics)
 				return
 			}
-			require.NoError(t, err, "the engine refuses %q", tc.Expression)
+			require.True(t, check.Accepted(), "%q is refused: %+v", tc.Expression, check.Diagnostics)
 
 			if tc.Value == "" {
 				return
 			}
-			resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
-				Expression: tc.Expression,
-				Entity:     conformanceShipment(),
+			preview, err := svc.Preview(t.Context(), &formula.PreviewRequest{
 				SchemaID:   "shipment",
+				Expression: tc.Expression,
 				Variables:  inputs,
+				Entity:     conformanceShipment(),
 				TenantInfo: testTenant(),
 			})
 			require.NoError(t, err)
+			require.True(t, preview.Valid(), "%q: %+v %v", tc.Expression, preview.Diagnostics, preview.Error)
 			assert.True(
 				t,
-				decimal.RequireFromString(tc.Value).Equal(resp.Amount),
+				decimal.RequireFromString(tc.Value).Equal(preview.Evaluated.Amount),
 				"%q: want %s, got %s",
 				tc.Expression,
 				tc.Value,
-				resp.Amount,
+				preview.Evaluated.Amount,
 			)
 		})
-	}
-}
-
-func TestConformance_ErrorPositionsAreGivenWithTheMessage(t *testing.T) {
-	t.Parallel()
-
-	for _, tc := range loadConformanceCorpus(t).Cases {
-		if tc.ServerError == "" {
-			continue
-		}
-		assert.NotNil(t, tc.ErrorFrom, "%s says where the engine points", tc.ID)
-		assert.True(t, strings.Contains(tc.ServerError, "("), "%s carries a position", tc.ID)
 	}
 }

@@ -2,16 +2,14 @@ package formula
 
 import (
 	"context"
-	goErrors "errors"
 	"fmt"
 	"maps"
-	"slices"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
@@ -20,21 +18,22 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const RatingTimeVariable = "ratingTime"
 
 type ServiceParams struct {
 	fx.In
 
 	Logger         *zap.Logger
 	Registry       *schema.Registry
-	Engine         *engine.Engine
+	Environment    *environment.Builder
 	Resolver       *resolver.Resolver
 	Repo           formulatemplateports.FormulaTemplateRepository
 	VersionRepo    formulatemplateports.FormulaTemplateVersionRepository
@@ -46,35 +45,37 @@ type ServiceParams struct {
 type Service struct {
 	l                *zap.Logger
 	registry         *schema.Registry
-	engine           *engine.Engine
-	resolver         *resolver.Resolver
+	env              *environment.Builder
 	repo             formulatemplateports.FormulaTemplateRepository
 	versionRepo      formulatemplateports.FormulaTemplateVersionRepository
 	rateMatrixRepo   ratematrixports.RateMatrixRepository
 	contextProviders []formulatemplatetypes.ContextVariableProvider
+	schemas          map[string][]rules.FormulaVariable
 }
 
 //nolint:gocritic // fx param structs are passed by value
 func NewService(p ServiceParams) *Service {
 	resolver.RegisterDefaultComputed(p.Resolver)
 
+	schemas := make(map[string][]rules.FormulaVariable, 1)
+	for _, schemaID := range p.Registry.IDs() {
+		if definition, ok := p.Registry.Get(schemaID); ok {
+			schemas[schemaID] = schemaVariables(definition, schemaID)
+		}
+	}
+
 	return &Service{
 		l:                p.Logger.Named("service.formula"),
 		registry:         p.Registry,
-		engine:           p.Engine,
-		resolver:         p.Resolver,
+		env:              p.Environment,
 		repo:             p.Repo,
 		versionRepo:      p.VersionRepo,
 		rateMatrixRepo:   p.RateMatrixRepo,
 		contextProviders: p.ContextProviders,
+		schemas:          schemas,
 	}
 }
 
-// ContextVariables gathers tenant-level values from every registered feed. A
-// feed that fails costs only its own variables: the formula still prices with
-// the schema's nullable placeholder in their place, and the failure is logged.
-// The result is memoized per context when a caller installed
-// contextvariablecache.With, so a batch asks each feed once.
 func (s *Service) ContextVariables(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -110,7 +111,7 @@ func (s *Service) providedValues(
 	contextual := s.ContextVariables(ctx, tenantInfo)
 	provided := make(map[string]any, len(contextual)+1)
 	maps.Copy(provided, contextual)
-	provided[engine.RatingTimeVariable] = time.Unix(ratingAsOf(entity, ratingDate), 0).UTC()
+	provided[RatingTimeVariable] = time.Unix(ratingAsOf(entity, ratingDate), 0).UTC()
 	return provided
 }
 
@@ -153,19 +154,16 @@ func (s *Service) Calculate(
 		return nil, err
 	}
 
-	if err = refuseUnavailableInputs(resolved, req); err != nil {
-		return nil, err
-	}
-
 	resp, err := s.Rate(ctx, &RateRequest{
-		Template:   resolved,
-		Entity:     req.Entity,
-		Variables:  req.Variables,
-		Overrides:  req.Overrides,
-		RatingDate: asOf,
+		Template:    resolved,
+		Entity:      req.Entity,
+		Variables:   req.Variables,
+		Overrides:   req.Overrides,
+		RatingDate:  asOf,
+		Unavailable: req.UnavailableInputs,
 	})
 	if err != nil {
-		log.Error(
+		log.Warn(
 			"failed to evaluate formula",
 			append(formulaerrors.LogFields(err), zap.Error(err))...)
 		return nil, err
@@ -184,47 +182,6 @@ func (s *Service) Calculate(
 	}
 
 	return resp, nil
-}
-
-func refuseUnavailableInputs(
-	template *formulatemplate.FormulaTemplate,
-	req *formulatemplatetypes.CalculateRequest,
-) error {
-	if len(req.UnavailableInputs) == 0 {
-		return nil
-	}
-
-	names := slices.Sorted(maps.Keys(req.UnavailableInputs))
-	for _, name := range names {
-		if _, supplied := req.Overrides[name]; supplied {
-			continue
-		}
-		if _, supplied := req.Variables[name]; supplied {
-			continue
-		}
-		if !templateReads(template, name) {
-			continue
-		}
-		return errortypes.NewValidationError(
-			"formulaTemplateId",
-			errortypes.ErrInvalid,
-			req.UnavailableInputs[name],
-		)
-	}
-
-	return nil
-}
-
-func templateReads(template *formulatemplate.FormulaTemplate, name string) bool {
-	if engine.ReferencesPath(template.Expression, name) {
-		return true
-	}
-	for _, def := range template.BreakdownDefinitions {
-		if def != nil && engine.ReferencesPath(def.Expression, name) {
-			return true
-		}
-	}
-	return false
 }
 
 type BillingResolution struct {
@@ -293,107 +250,10 @@ func (s *Service) ResolveBillingVersion(
 	return BillingResolution{InForce: inForce, Scheduled: scheduled}, nil
 }
 
-type RateRequest struct {
-	Template   *formulatemplate.FormulaTemplate
-	Entity     any
-	Variables  map[string]any
-	Overrides  map[string]any
-	RatingDate int64
-}
-
-func (s *Service) Rate(
-	ctx context.Context,
-	req *RateRequest,
-) (*formulatemplatetypes.CalculateResponse, error) {
-	started := time.Now()
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: req.Template.OrganizationID,
-		BuID:  req.Template.BusinessUnitID,
-	}
-	lookup, err := s.BuildLookup(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := s.engine.Evaluate(ctx, &formulatemplatetypes.EvaluationRequest{
-		Template:  req.Template,
-		Entity:    req.Entity,
-		Variables: req.Variables,
-		Provided:  s.providedValues(ctx, tenantInfo, req.Entity, req.RatingDate),
-		Overrides: req.Overrides,
-		Lookup:    lookup,
-	})
-	if err != nil {
-		return nil, s.asRatingValidationError(err)
-	}
-
-	policy := req.Template.ChargePolicy()
-	amount, guardrail, rounding, err := ApplyChargePolicy(policy, result.Value)
-	if err != nil {
-		return nil, err
-	}
-
-	receipt := result.Receipt
-	if receipt != nil {
-		receipt.VersionNumber = req.Template.CurrentVersionNumber
-		receipt.DurationMicros = time.Since(started).Microseconds()
-	}
-
-	return &formulatemplatetypes.CalculateResponse{
-		Amount:              amount,
-		Variables:           result.Variables,
-		FormulaTemplateID:   req.Template.ID.String(),
-		FormulaTemplateName: req.Template.Name,
-		Expression:          req.Template.Expression,
-		Breakdown:           RoundBreakdown(policy, result.Breakdown, result.Value),
-		Guardrail:           guardrail,
-		Rounding:            rounding,
-		VersionNumber:       req.Template.CurrentVersionNumber,
-		Receipt:             receipt,
-	}, nil
-}
-
-func (s *Service) asRatingValidationError(err error) error {
-	var missing *formulaerrors.MissingFieldError
-	if goErrors.As(err, &missing) {
-		return errortypes.NewValidationError("expression", errortypes.ErrInvalid, missing.Error())
-	}
-
-	var unresolved *formulaerrors.UnresolvedFieldError
-	if goErrors.As(err, &unresolved) {
-		for field, cause := range unresolved.Causes {
-			s.l.Warn("formula reads a field the record could not supply",
-				append(
-					formulaerrors.LogFields(cause),
-					zap.String("field", field),
-					zap.Error(cause),
-				)...,
-			)
-		}
-		return errortypes.NewValidationError(
-			"expression",
-			errortypes.ErrInvalid,
-			unresolved.Error(),
-		)
-	}
-
-	return err
-}
-
-// BuildLookup reads the tenant's lookup tables, once per unit of work.
-//
-// A lookup table is a single-axis rate matrix: the expression language calls
-// them tables and the storage calls them matrices, and this is where the two
-// vocabularies meet. Reading them is expensive — every one-axis matrix with
-// every cell — and rating now happens on every shipment write and in batches.
-// The memo is only present when a caller installed one; without it this
-// behaves exactly as it always did, which is what keeps a formula evaluated
-// outside a request working.
-func (s *Service) BuildLookup(
+func (s *Service) RateTables(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (formulatemplatetypes.RateTableLookup, error) {
+) (*formulatemplatetypes.RateTables, error) {
 	return ratetablecache.GetStamped(
 		ctx,
 		tenantInfo.OrgID,
@@ -401,7 +261,7 @@ func (s *Service) BuildLookup(
 		func(ctx context.Context) (string, error) {
 			return s.rateMatrixRepo.GetLookupStamp(ctx, tenantInfo)
 		},
-		func(ctx context.Context, stamp string) (formulatemplatetypes.RateTableLookup, error) {
+		func(ctx context.Context, stamp string) (*formulatemplatetypes.RateTables, error) {
 			data, err := s.rateMatrixRepo.GetLookupData(
 				ctx,
 				&ratematrixports.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
@@ -410,384 +270,35 @@ func (s *Service) BuildLookup(
 				return nil, err
 			}
 
-			return NewStampedMatrixLookup(data, stamp), nil
+			return NewRateTables(data, stamp)
 		},
 	)
 }
 
-// ApplyChargePolicy turns a raw evaluation into the billable amount: clamp to
-// the guardrails, then round. Guardrails go first so a floor of $250.00 is
-// the exact floor, not $250.00 rounded to whatever the policy says. Every
-// surface that shows an amount — production rating, the Studio preview, a
-// saved scenario, a backtest — comes through here, which is what makes the
-// number on the screen the number on the invoice.
-func ApplyChargePolicy(
-	policy formulatypes.ChargePolicy,
-	rawAmount decimal.Decimal,
-) (decimal.Decimal, *formulatemplatetypes.GuardrailResult, *formulatemplatetypes.RoundingResult, error) {
-	policy = policy.Normalized()
-
-	clamped, guardrail := ApplyGuardrailBounds(policy.MinCharge, policy.MaxCharge, rawAmount)
-	rounded := policy.RoundingMode.Round(clamped, policy.RoundingPrecision)
-
-	rounding := &formulatemplatetypes.RoundingResult{
-		Mode:            policy.RoundingMode.String(),
-		Precision:       policy.RoundingPrecision,
-		Applied:         !rounded.Equal(clamped),
-		UnroundedAmount: clamped,
-	}
-
-	if rounded.IsNegative() {
-		return rounded, guardrail, rounding, errortypes.NewValidationError(
-			"expression",
-			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"The formula came to %s, and a charge cannot be negative. "+
-					"Keep it at zero or above with max(..., 0), or set a minimum charge",
-				rounded.StringFixed(policy.RoundingPrecision),
-			),
-		)
-	}
-
-	return rounded, guardrail, rounding, nil
-}
-
-func ApplyGuardrailBounds(
-	minCharge, maxCharge decimal.NullDecimal,
-	rawAmount decimal.Decimal,
-) (decimal.Decimal, *formulatemplatetypes.GuardrailResult) {
-	if !minCharge.Valid && !maxCharge.Valid {
-		return rawAmount, nil
-	}
-
-	guardrail := &formulatemplatetypes.GuardrailResult{RawAmount: rawAmount}
-	if minCharge.Valid {
-		lowerBound := minCharge.Decimal
-		guardrail.MinCharge = &lowerBound
-	}
-	if maxCharge.Valid {
-		upperBound := maxCharge.Decimal
-		guardrail.MaxCharge = &upperBound
-	}
-
-	amount := rawAmount
-	switch {
-	case minCharge.Valid && rawAmount.LessThan(minCharge.Decimal):
-		amount = minCharge.Decimal
-		guardrail.Applied = true
-		guardrail.Bound = "min"
-	case maxCharge.Valid && rawAmount.GreaterThan(maxCharge.Decimal):
-		amount = maxCharge.Decimal
-		guardrail.Applied = true
-		guardrail.Bound = "max"
-	}
-
-	return amount, guardrail
-}
-
-type EvaluateExpressionRequest struct {
-	Expression string
-	Entity     any
-	SchemaID   string
-	Variables  map[string]any
-	Breakdowns []*formulatypes.BreakdownDefinition
-	TenantInfo pagination.TenantInfo
-}
-
-func (s *Service) EvaluateExpression(
+func (s *Service) tablesFor(
 	ctx context.Context,
-	req *EvaluateExpressionRequest,
-) (*formulatemplatetypes.CalculateResponse, error) {
-	log := s.l.With(
-		zap.String("operation", "EvaluateExpression"),
-		zap.String("schemaID", req.SchemaID),
-	)
-
-	var lookup formulatemplatetypes.RateTableLookup
-	if !req.TenantInfo.OrgID.IsNil() {
-		builtLookup, err := s.BuildLookup(ctx, req.TenantInfo)
-		if err != nil {
-			log.Error("failed to build rate table lookup", zap.Error(err))
-			return nil, err
-		}
-		lookup = builtLookup
+	tenantInfo pagination.TenantInfo,
+	sources ...string,
+) (*formulatemplatetypes.TableSelection, error) {
+	if tenantInfo.OrgID.IsNil() {
+		return nil, nil //nolint:nilnil // no tenant means no tables were loaded
+	}
+	if !formulatemplatetypes.ReadsTables(sources...) {
+		empty := &formulatemplatetypes.RateTables{}
+		return empty.Select(sources...), nil
 	}
 
-	result, err := s.engine.EvaluateExpression(
-		ctx,
-		&formulatemplatetypes.ExpressionEvaluationRequest{
-			Expression: req.Expression,
-			Entity:     req.Entity,
-			SchemaID:   req.SchemaID,
-			Variables:  req.Variables,
-			Provided:   s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
-			Breakdowns: req.Breakdowns,
-			Lookup:     lookup,
-		},
-	)
-	if err != nil {
-		log.Error(
-			"failed to evaluate expression",
-			append(formulaerrors.LogFields(err), zap.Error(err))...)
-		return nil, s.asRatingValidationError(err)
-	}
-
-	return &formulatemplatetypes.CalculateResponse{
-		Amount:    result.Value,
-		Variables: result.Variables,
-		Breakdown: result.Breakdown,
-		Receipt:   result.Receipt,
-	}, nil
-}
-
-type TraceStatementsRequest struct {
-	Expression string
-	SchemaID   string
-	Entity     any
-	Variables  map[string]any
-	Env        map[string]any
-	Lookup     formulatemplatetypes.RateTableLookup
-	TenantInfo pagination.TenantInfo
-}
-
-func (s *Service) TraceStatements(
-	ctx context.Context,
-	req *TraceStatementsRequest,
-) ([]formulatemplatetypes.Statement, error) {
-	if req.Env != nil {
-		return s.engine.TraceStatements(ctx, &engine.TraceRequest{
-			Expression: req.Expression,
-			Env:        req.Env,
-			Lookup:     req.Lookup,
-		})
-	}
-
-	env, resolveFailures, err := s.engine.GetEnvironmentBuilder().BuildWithProvided(
-		req.Entity,
-		req.SchemaID,
-		s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
-		req.Variables,
-	)
-	if err != nil {
-		return nil, formulaerrors.NewSchemaError(req.SchemaID, "build environment", err)
-	}
-
-	lookup := req.Lookup
-	if lookup == nil && !req.TenantInfo.OrgID.IsNil() {
-		lookup, err = s.BuildLookup(ctx, req.TenantInfo)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return s.engine.TraceStatements(ctx, &engine.TraceRequest{
-		Expression:      req.Expression,
-		Env:             env,
-		SchemaID:        req.SchemaID,
-		Lookup:          lookup,
-		ResolveFailures: resolveFailures,
-	})
-}
-
-func SplitStatements(expression string) ([]formulatemplatetypes.Statement, error) {
-	return engine.SplitStatements(expression)
-}
-
-// EvaluatePredicate answers a yes-or-no question about an entity.
-//
-// The expression language has no boolean result type of its own — every
-// evaluation lands on a decimal, with true and false arriving as one and zero —
-// so the truth test is "not zero". That also makes a numeric condition like
-// `totalStops - 2` behave the way somebody writing it would expect.
-//
-// No rate-table lookup is built. A condition that reaches for a rate table is
-// asking the wrong question, and building one would put a full tenant table
-// load on the save path of every shipment. The stub is named here on purpose:
-// a table reference in a predicate reads as zero, which is documented, rather
-// than as an error that would block the save.
-func (s *Service) EvaluatePredicate(
-	ctx context.Context,
-	req *formulatemplateports.EvaluatePredicateRequest,
-) (bool, error) {
-	result, err := s.engine.EvaluateExpression(
-		ctx,
-		&formulatemplatetypes.ExpressionEvaluationRequest{
-			Expression:   req.Expression,
-			Entity:       req.Entity,
-			SchemaID:     req.SchemaID,
-			Provided:     s.providedValues(ctx, req.TenantInfo, req.Entity, 0),
-			Lookup:       engine.StubLookup{},
-			AllowBoolean: true,
-		},
-	)
-	if err != nil {
-		s.l.Warn("failed to evaluate predicate",
-			zap.String("operation", "EvaluatePredicate"),
-			zap.String("schemaId", req.SchemaID),
-			zap.Error(err),
-		)
-
-		return false, err
-	}
-
-	return !result.Value.IsZero(), nil
-}
-
-func (s *Service) ValidateExpression(ctx context.Context, expression, schemaID string) error {
-	return s.engine.ValidateExpression(ctx, expression, schemaID)
-}
-
-func (s *Service) EvaluateWithEnv(
-	ctx context.Context,
-	req *formulatemplatetypes.EnvEvaluationRequest,
-) (*formulatemplatetypes.CalculateResponse, error) {
-	result, err := s.engine.EvaluateWithEnv(ctx, req)
+	tables, err := s.RateTables(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-
-	return &formulatemplatetypes.CalculateResponse{
-		Amount:    result.Value,
-		Variables: result.Variables,
-		Receipt:   result.Receipt,
-	}, nil
+	return tables.Select(sources...), nil
 }
 
-func (s *Service) ValidateExpressionWithEnv(
-	ctx context.Context,
-	expression string,
-	env map[string]any,
-) error {
-	return s.engine.ValidateExpressionWithEnv(ctx, expression, env)
+func (s *Service) RequiredPreloads(schemaID string) []string {
+	return s.env.RequiredPreloads(schemaID)
 }
 
-func (s *Service) ReferencesField(expression, field string) bool {
-	return engine.ReferencesPath(expression, field)
-}
-
-// UnguardedNullableFields lists the nullable schema fields an expression uses
-// without a guard, so an author hears about it while typing rather than from
-// the first shipment that fails to rate.
-func (s *Service) UnguardedNullableFields(
-	ctx context.Context,
-	expression string,
-	schemaID string,
-	variables map[string]any,
-) ([]engine.NullableFieldWarning, error) {
-	return s.engine.UnguardedNullableFields(ctx, expression, schemaID, variables)
-}
-
-func (s *Service) ValidateExpressionDetailed(
-	ctx context.Context,
-	expression string,
-	env map[string]any,
-) engine.ValidationOutcome {
-	return s.engine.ValidateExpressionDetailed(ctx, expression, env)
-}
-
-func (s *Service) ValidateLookupTables(
-	ctx context.Context,
-	expression string,
-	tenantInfo pagination.TenantInfo,
-) error {
-	refs, err := engine.ExtractLookupTableRefs(expression)
-	if err != nil || (len(refs.Single) == 0 && len(refs.Multi) == 0) {
-		return nil //nolint:nilerr // unparseable expressions are rejected by compile validation
-	}
-
-	lookup, err := s.BuildLookup(ctx, tenantInfo)
-	if err != nil {
-		return err
-	}
-
-	multiErr := errortypes.NewMultiError()
-	for _, table := range refs.Single {
-		if lookup.Has(table) {
-			continue
-		}
-		if lookup.Has2(table) {
-			multiErr.Add(
-				"expression",
-				errortypes.ErrInvalid,
-				"Rate table {0} has two axes — address it with lookup2(table, rowKey, colKey)",
-				table,
-			)
-			continue
-		}
-		multiErr.Add(
-			"expression",
-			errortypes.ErrInvalid,
-			"Unknown rate table: {0} — a lookup table is an active rate matrix with a single axis",
-			table,
-		)
-	}
-
-	for _, table := range refs.Multi {
-		if lookup.Has2(table) {
-			continue
-		}
-		if lookup.Has(table) {
-			multiErr.Add(
-				"expression",
-				errortypes.ErrInvalid,
-				"Rate table {0} has a single axis — address it with lookup(table, key)", table,
-			)
-			continue
-		}
-		multiErr.Add(
-			"expression",
-			errortypes.ErrInvalid,
-			"Unknown rate table: {0} — lookup2 addresses an active rate matrix with exactly two axes",
-			table,
-		)
-	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
-}
-
-func (s *Service) BuildValidationEnvironment(
-	schemaID string,
-	variables map[string]any,
-) (map[string]any, error) {
-	env, _, err := s.engine.GetEnvironmentBuilder().
-		BuildValidationEnvironment(schemaID, variables)
-	return env, err
-}
-
-// BuildValidationEnvironmentForTenant is the synthetic environment a preview
-// runs against, with the tenant's provided values from external feeds in
-// place, so a fuel-surcharge formula previews at today's price.
-func (s *Service) BuildValidationEnvironmentForTenant(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	schemaID string,
-	variables map[string]any,
-) (map[string]any, error) {
-	env, _, err := s.engine.GetEnvironmentBuilder().
-		BuildValidationEnvironmentWithProvided(
-			schemaID,
-			s.providedValues(ctx, tenantInfo, nil, 0),
-			variables,
-		)
-	return env, err
-}
-
-func (s *Service) GetAvailableVariables(schemaID string) []*formulatypes.FieldSource {
-	return s.engine.GetEnvironmentBuilder().GetAvailableVariables(schemaID)
-}
-
-func (s *Service) GetRequiredPreloads(schemaID string) []string {
-	return s.engine.GetEnvironmentBuilder().GetRequiredPreloads(schemaID)
-}
-
-func (s *Service) GetEngine() *engine.Engine {
-	return s.engine
-}
-
-func (s *Service) GetResolver() *resolver.Resolver {
-	return s.resolver
+func (s *Service) FieldRoots(schemaID string) map[string]struct{} {
+	return s.env.FieldRoots(schemaID)
 }

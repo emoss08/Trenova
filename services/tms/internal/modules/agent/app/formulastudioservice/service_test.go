@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -95,9 +96,9 @@ func (s *stubEngine) GetByID(
 func (s *stubEngine) TestExpression(
 	_ context.Context,
 	req *formulatemplateservice.TestExpressionRequest,
-) *formulatemplateservice.TestExpressionResponse {
+) (*formulatemplateservice.TestExpressionResponse, error) {
 	s.tested = append(s.tested, req)
-	return s.evaluation
+	return s.evaluation, nil
 }
 
 func (s *stubEngine) PriceScenario(
@@ -159,27 +160,27 @@ func newFixture(t *testing.T, reply any) *fixture {
 	engine := &stubEngine{
 		evaluation: &formulatemplateservice.TestExpressionResponse{
 			Valid:  true,
-			Result: decimal.NewFromInt(250),
+			Result: new(decimal.NewFromInt(250)),
 			Statements: []formulatemplatetypes.Statement{
 				{
 					Index: 0,
 					Kind:  formulatemplatetypes.StatementLet,
 					Name:  "base",
 					Code:  "let base = totalDistance * rate",
-					Value: "200",
+					Value: rules.RawJSON(`"200"`),
 				},
 				{
 					Index: 1,
 					Kind:  formulatemplatetypes.StatementLet,
 					Name:  "fuel",
 					Code:  "let fuel = base * 0.25",
-					Value: "50",
+					Value: rules.RawJSON(`"50"`),
 				},
 				{
 					Index: 2,
 					Kind:  formulatemplatetypes.StatementResult,
 					Code:  "base + fuel",
-					Value: "250",
+					Value: rules.RawJSON(`"250"`),
 				},
 			},
 		},

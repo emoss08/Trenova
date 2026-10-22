@@ -218,8 +218,8 @@ func TestShop_BindsTheSellTotalIntoTheCarriersTemplate(t *testing.T) {
 
 	req := d.calcRequests[0]
 	assert.Equal(t, flatTemplateID, req.TemplateID)
-	assert.Equal(t, 1400.0, req.Overrides["baseRate"])
-	assert.Equal(t, 2000.0, req.Overrides["sellTotal"])
+	assertBound(t, "1400", req.Overrides["baseRate"])
+	assertBound(t, "2000", req.Overrides["sellTotal"])
 }
 
 // A carrier no contract covers is not an error and must not take the shopping

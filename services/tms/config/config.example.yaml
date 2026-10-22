@@ -400,12 +400,6 @@ imaging:
         normalizeImage: 60s
     prerenderPages: 20 # Page views rendered ahead after an upload; later pages render on first view
 
-# Rating formulas. Each evaluation runs on its own goroutine under a deadline, and one that
-# outlives it keeps running until it finishes, so the bound counts those too: a burst of
-# runaway formulas queues new evaluations rather than piling up goroutines.
-formula:
-    maxConcurrentEvaluations: 64 # Evaluations running at once per process; excess callers wait
-
 # EDI transports (AS2 and SFTP). A partner endpoint that resolves to a loopback, private or
 # reserved address is refused, so a communication profile cannot reach into this network.
 # Turn this on only for partners reached over a private link; link-local and cloud metadata

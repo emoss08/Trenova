@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -67,34 +67,32 @@ func TestDataContract_TemperatureDifferentialIsZeroOnADryVan(t *testing.T) {
 	assertAmount(t, "12", evaluate(t, svc, reefer, expression), "reefer")
 }
 
-const builtinOverrideExpression = `sum(lookup("fsc", fuelPrice) * linehaul, stopFee, 25)`
-
-func TestValidateLookupTables_SeesTablesInsideTheEnginesOwnFunctions(t *testing.T) {
+func TestCheck_PassesTheTenantsReferencedTablesSoAnUnknownTableIsRefused(t *testing.T) {
 	t.Parallel()
 
-	svc := setupService(t)
+	svc := setupServiceWithMatrixData(t, append(freightClassMatrix(), zoneWeightMatrix()))
 
-	err := svc.ValidateLookupTables(t.Context(), builtinOverrideExpression, testTenant())
-	require.Error(t, err)
-	assert.True(t, errortypes.IsError(err))
-	assert.Contains(t, err.Error(), "fsc")
+	check := func(expression string) *rules.FormulaCheck {
+		checked, err := svc.Check(t.Context(), &formula.CheckRequest{
+			SchemaID:   "shipment",
+			TenantInfo: testTenant(),
+			Expect:     rules.ExpectAmount,
+			Sources:    []formula.CheckSource{{Scope: formula.MainScope, Source: expression}},
+		})
+		require.NoError(t, err)
+		return checked[0].Check
+	}
 
-	known := setupServiceWithMatrixData(t, freightClassMatrix())
-	err = known.ValidateLookupTables(
-		t.Context(),
-		`sum(lookup("class_rates", "85"), 25)`,
-		testTenant(),
-	)
-	require.NoError(t, err)
-}
+	assert.True(t, check(`sum(lookup("class_rates", "85"), 25)`).Accepted())
 
-func TestSplitStatements_ParsesTheEnginesOwnFunctions(t *testing.T) {
-	t.Parallel()
+	unknown := check(`sum(lookup("fsc", 1), 25)`).FirstError()
+	require.NotNil(t, unknown)
+	assert.Equal(t, "rate-table", unknown.Code)
+	assert.Contains(t, unknown.Message.String(), "fsc")
 
-	statements, err := formula.SplitStatements(
-		"let fuel = sum(fuelPrice, stopFee, 25);\nfuel * 2",
-	)
-	require.NoError(t, err)
-	require.Len(t, statements, 2)
-	assert.Equal(t, "fuel", statements[0].Name)
+	wrongShape := check(`lookup("zone_weight", "Z1")`).FirstError()
+	require.NotNil(t, wrongShape, "a two-axis table read by lookup is refused")
+	assert.Equal(t, "rate-table", wrongShape.Code)
+
+	assert.True(t, check(`lookup2("zone_weight", "Z1", 1200)`).Accepted())
 }

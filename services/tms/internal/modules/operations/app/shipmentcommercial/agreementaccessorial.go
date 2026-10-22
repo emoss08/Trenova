@@ -131,17 +131,12 @@ func (c *Calculator) applicableAccessorials(
 	})
 
 	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
-	conditionsReadable := c.hydrateForConditions(ctx, entity, scoped)
+	holds := c.conditionsHold(ctx, scoped, entity, c.hydrateForConditions(ctx, entity, scoped))
 
-	for _, accessorial := range scoped {
-		if accessorial.ApplyCondition != "" && !conditionsReadable {
-			continue
+	for index, accessorial := range scoped {
+		if holds[index] {
+			applicable = append(applicable, accessorial)
 		}
-		if !c.conditionHolds(ctx, accessorial, entity) {
-			continue
-		}
-
-		applicable = append(applicable, accessorial)
 	}
 
 	return applicable
@@ -174,43 +169,69 @@ func (c *Calculator) hydrateForConditions(
 	return true
 }
 
-// conditionHolds evaluates the accessorial's own applicability expression.
+// conditionsHold evaluates every accessorial's applicability expression in
+// one call into the rules module, against one environment for the shipment.
 //
 // A condition that will not evaluate withholds the charge rather than applying
 // it. Billing a customer for something the contract may not entitle us to is
 // the more expensive mistake of the two, and the warning names the row so the
 // contract can be corrected.
-func (c *Calculator) conditionHolds(
+func (c *Calculator) conditionsHold(
 	ctx context.Context,
-	accessorial *rateagreement.RateAgreementAccessorial,
+	scoped []*rateagreement.RateAgreementAccessorial,
 	entity *shipment.Shipment,
-) bool {
-	if accessorial.ApplyCondition == "" {
-		return true
+	readable bool,
+) []bool {
+	holds := make([]bool, len(scoped))
+	expressions := make([]string, 0, len(scoped))
+	positions := make([]int, 0, len(scoped))
+	for index, accessorial := range scoped {
+		if accessorial.ApplyCondition == "" {
+			holds[index] = true
+			continue
+		}
+		if readable && c.predicate != nil {
+			expressions = append(expressions, accessorial.ApplyCondition)
+			positions = append(positions, index)
+		}
+	}
+	if len(expressions) == 0 {
+		return holds
 	}
 
-	if c.predicate == nil {
-		return false
-	}
-
-	holds, err := c.predicate.EvaluatePredicate(ctx, &formulatemplateports.EvaluatePredicateRequest{
-		Expression: accessorial.ApplyCondition,
-		SchemaID:   shipmentSchemaID,
-		Entity:     entity,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	outcomes, err := c.predicate.EvaluatePredicates(
+		ctx,
+		&formulatemplateports.EvaluatePredicatesRequest{
+			Expressions: expressions,
+			SchemaID:    shipmentSchemaID,
+			Entity:      entity,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil {
-		c.logger.Warn("rate agreement accessorial condition could not be evaluated",
+		c.logger.Warn("rate agreement accessorial conditions could not be evaluated",
 			zap.String("shipmentId", entity.ID.String()),
-			zap.String("accessorialId", accessorial.ID.String()),
-			zap.String("condition", accessorial.ApplyCondition),
+			zap.Int("conditions", len(expressions)),
 			zap.Error(err),
 		)
+		return holds
+	}
 
-		return false
+	for position, outcome := range outcomes {
+		accessorial := scoped[positions[position]]
+		if outcome.Err != nil {
+			c.logger.Warn("rate agreement accessorial condition could not be evaluated",
+				zap.String("shipmentId", entity.ID.String()),
+				zap.String("accessorialId", accessorial.ID.String()),
+				zap.String("condition", accessorial.ApplyCondition),
+				zap.Error(outcome.Err),
+			)
+			continue
+		}
+		holds[positions[position]] = outcome.Holds
 	}
 
 	return holds

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"maps"
+	"slices"
 	"sync"
 
 	"github.com/bytedance/sonic"
@@ -86,6 +87,13 @@ func (r *Registry) ValidateData(schemaID string, data any) error {
 	}
 
 	return nil
+}
+
+func (r *Registry) IDs() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return slices.Sorted(maps.Keys(r.schemas))
 }
 
 func (r *Registry) ListSchemas() []*formulatypes.Definition {

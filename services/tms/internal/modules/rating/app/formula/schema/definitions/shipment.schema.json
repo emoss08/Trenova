@@ -71,7 +71,7 @@
                 "field": "weight",
                 "path": "Weight",
                 "nullable": true,
-                "transform": "int64ToFloat64"
+                "transform": "integer"
             }
         },
         "pieces": {
@@ -97,7 +97,7 @@
                 "field": "temperature_min",
                 "path": "TemperatureMin",
                 "nullable": true,
-                "transform": "int16ToFloat64"
+                "transform": "integer"
             }
         },
         "temperatureMax": {
@@ -110,7 +110,7 @@
                 "field": "temperature_max",
                 "path": "TemperatureMax",
                 "nullable": true,
-                "transform": "int16ToFloat64"
+                "transform": "integer"
             }
         },
         "baseRate": {
@@ -120,7 +120,7 @@
             "x-source": {
                 "field": "base_rate",
                 "path": "BaseRate",
-                "transform": "decimalToFloat64"
+                "transform": "decimal"
             }
         },
         "freightChargeAmount": {
@@ -130,7 +130,7 @@
             "x-source": {
                 "field": "freight_charge_amount",
                 "path": "FreightChargeAmount",
-                "transform": "decimalToFloat64"
+                "transform": "decimal"
             }
         },
         "otherChargeAmount": {
@@ -140,7 +140,7 @@
             "x-source": {
                 "field": "other_charge_amount",
                 "path": "OtherChargeAmount",
-                "transform": "decimalToFloat64"
+                "transform": "decimal"
             }
         },
         "currentTotalCharge": {

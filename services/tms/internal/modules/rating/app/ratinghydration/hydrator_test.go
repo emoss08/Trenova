@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
@@ -35,13 +35,13 @@ func realSchema(t *testing.T) []byte {
 	return raw
 }
 
-func environmentFor(t *testing.T, schemaJSON []byte) *engine.EnvironmentBuilder {
+func environmentFor(t *testing.T, schemaJSON []byte) *environment.Builder {
 	t.Helper()
 
 	registry := schema.NewRegistry()
 	require.NoError(t, registry.Register("shipment", schemaJSON))
 
-	return engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
+	return environment.NewBuilder(environment.Params{
 		Registry: registry,
 		Resolver: resolver.NewResolver(),
 	})
@@ -64,7 +64,7 @@ func TestNew_CoversEveryRelationTheShipmentSchemaReads(t *testing.T) {
 		"Moves": true, "Moves.Stops": true, "Commodities": true, "AdditionalCharges": true,
 	}
 	loaded := hydrator.Relations()
-	for _, relation := range env.GetRequiredPreloads("shipment") {
+	for _, relation := range env.RequiredPreloads("shipment") {
 		if inline[relation] {
 			continue
 		}

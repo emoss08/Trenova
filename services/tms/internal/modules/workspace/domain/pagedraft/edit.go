@@ -76,6 +76,7 @@ type FormulaCheck struct {
 	Valid  bool   `json:"valid"`
 	Result string `json:"result,omitempty"`
 	Error  string `json:"error,omitempty"`
+	Code   string `json:"code,omitempty"`
 }
 
 type PricedScenario struct {
@@ -85,6 +86,7 @@ type PricedScenario struct {
 	Amount      string         `json:"amount,omitempty"`
 	Valid       bool           `json:"valid"`
 	Error       string         `json:"error,omitempty"`
+	Code        string         `json:"code,omitempty"`
 }
 
 type BreakdownLine struct {

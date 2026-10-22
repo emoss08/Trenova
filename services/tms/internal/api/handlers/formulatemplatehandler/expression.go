@@ -110,7 +110,11 @@ func (h *Handler) testExpression(c *gin.Context) {
 		serviceReq.ShipmentID = &shipmentID
 	}
 
-	result := h.service.TestExpression(c.Request.Context(), serviceReq)
+	result, err := h.service.TestExpression(c.Request.Context(), serviceReq)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
 
 	helpers.JSON(c, http.StatusOK, result)
 }

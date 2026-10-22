@@ -3,13 +3,13 @@ package resolver
 import (
 	goErrors "errors"
 	"fmt"
-	"math"
 	"reflect"
 	"strings"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/shopspring/decimal"
 )
 
 var (
@@ -107,13 +107,9 @@ func plainScalar(value any) any {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return v.Int()
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		unsigned := v.Uint()
-		if unsigned > math.MaxInt64 {
-			return float64(unsigned)
-		}
-		return int64(unsigned)
+		return v.Uint()
 	case reflect.Float32, reflect.Float64:
-		return v.Float()
+		return decimal.NewFromFloat(v.Float())
 	default:
 		return value
 	}

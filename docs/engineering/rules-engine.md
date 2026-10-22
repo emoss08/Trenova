@@ -216,8 +216,10 @@ More of the grammar:
 
 ### Functions
 
-`formula.catalog` lists every function. The Go schema endpoint (`GET /formula-templates/schema`)
-republishes that list next to the record's variables. The set:
+`formula.catalog` lists every function. The browser reads it from its own copy of the module;
+server-side Go code (the formula assistant, input-name validation) reads it through
+`rules.Catalog`, which caches it for the life of the process. No HTTP endpoint republishes it.
+The set:
 
 - **Rounding:**
   - `round(x, d?)`: half away from zero;
@@ -305,9 +307,8 @@ its message flattened into it (`"message"` and `"args"` are the diagnostic's own
 
 #### `formula.catalog`
 
-Every function, builtin, disabled and reserved name. The Go schema endpoint
-(`GET /formula-templates/schema`) republishes `functions`, `builtins` and `disabled` unchanged
-next to the record's variables.
+Every function, builtin, disabled and reserved name. The schema endpoint does not republish
+them: each side reads the catalog from its own copy of the module (Go through `rules.Catalog`).
 
 Input: `{}`. Output:
 
@@ -1253,12 +1254,25 @@ only formula facts that cross HTTP:
   - `error` is the first evaluation error, with its scope.
   - `valid` is true when no diagnostic is an error and nothing failed to evaluate.
   - A statement's `error` is an evaluation error without a scope.
+  - A preview with any error diagnostic is not evaluated: `result`, `breakdown` and `receipt`
+    are null and `statements` come from `formula.check`.
+  - Besides the module's evaluation codes, `error.code` may be one the server adds:
+    `unresolvedField` (the formula reads a field the shipment could not supply, with `fields`),
+    `negativeCharge` (the policy refused a negative amount) and `timeout` (the preview's two
+    seconds ran out).
+  - `breakdown[].error` is plain translated text, not an error object.
+  - `receipt.lookups[]` is `{scope, function, table, keys, value, match?, error?}` from the
+    evaluation's `trace.lookups`; `value` is a JSON number.
+  - A request outside the bounds (expression or variable count, length) is a 400 validation
+    problem, and a shipment that does not exist or cannot be loaded is the usual 404 or 500,
+    not a preview answer.
   - All positions are UTF-16.
   - The old fields are gone: `error` as text, `message`, `warnings` (nullable warnings are now
     `nullable` diagnostics), and `start`/`end`.
 - **Saving a template** validates every expression with `formula.check`. It refuses one with an
   error-severity diagnostic through the usual validation error on that expression's field path,
-  carrying the translated message of the first error.
+  carrying the translated message of the first error. Each breakdown line is refused on its own
+path (`breakdownDefinitions[i].expression`); warnings never refuse a save.
 
 ## Hosts
 
@@ -1395,6 +1409,86 @@ legal. The lane editor runs it and shows each issue on its lane.
 symbols Excel number formats need, `Spec.Validate`, `Band.Validate`, and `Band.Bounds`,
 `IsLowest` and `IsWhole`, which the query compiler and drill-through use to filter rows rather
 than to label them.
+
+### Go callers: formulas
+
+The formula engine of the TMS is `rating/app/formula`, and its only language is the module. Go
+owns six things: the schema (`formula/schema`), building each record's environment
+(`formula/environment`), encoding the tenant's rate tables (`formula/tables.go`), the charge
+policy (minimum, maximum, rounding, the breakdown remainder: `formula/policy.go`), the receipt,
+and turning the module's errors into `errortypes` at the API edge. The typed calls are in
+`pkg/rules/formula.go` (`CheckFormula`, `EvaluateFormulas`, `Catalog`) and the value encoder
+in `pkg/rules/formula_value.go`.
+
+**The environment** is encoded exactly, by `rules.EncodeValue`, never by a generic JSON
+marshaller:
+
+- `decimal.Decimal` is its exact text as a JSON number; Go integers are numbers;
+- `time.Time` is `{"$date": RFC 3339 with the value's own offset}`, so a stop's appointment keeps
+  its stop's zone; `time.Duration` is `{"$duration": "<nanoseconds>"}`;
+- a nullable value that is empty is `null`; a non-nullable schema field the record leaves empty
+  reads as its type's zero;
+- a `float32` or `float64` anywhere in the tree is refused with its path
+  (`rules.ErrInexactNumber`). The resolver's transforms (`decimal`, `integer`) and the computed
+  fields produce exact values, and `environment.Merge` turns the floats a JSON request body
+  carries (template defaults, overrides) into decimals before they reach the tree;
+- map keys are sorted, and a key starting with `$` is refused (`rules.ErrReservedKey`).
+
+The environment is built once per rating and not copied per evaluation. A preview without a
+shipment uses `environment.Zero`, the schema's zero values marked as samples; a preview with a
+shipment builds the real one.
+
+**Rate tables** are encoded once per tenant stamp. `formula.NewRateTables` turns the tenant's
+rate matrices into the wire shape (`{name, axes, cells}`, axes in position order), and
+`ratetablecache` keeps the encoded bytes of each table beside its shape under the stamp, per
+request and per process. A call splices the bytes it needs (`EvaluateRequest.Tables` is
+`rules.RawJSON`), so a rating never re-encodes a table. `RateTables.Select` picks them:
+
+- a source that names no table function (no `lookup` or `deficitWeight`) sends `[]` and the
+  tables are not even loaded;
+- otherwise only the tables whose name appears quoted in a source are sent;
+- a source with a backslash (an escaped name the selector cannot read) sends every table.
+
+The same selection gives `formula.check` the table shapes, so a save that names a missing
+table is refused.
+
+**One call per rating.** `Service.Rate` makes one `formula.evaluate` call for the main
+expression and every breakdown line (program ids `expression` and the line index), with lookup
+tracing on for the receipt and statement tracing on when the preview asks for it. A failing
+line fails only that line. Accessorial conditions are one call per shipment
+(`EvaluatePredicates`, `expect: "predicate"`, one program per condition). The normal path makes
+no `formula.check` call; only when a record field failed to resolve does the rating check its
+sources to learn whether they read it.
+
+**Checks.** Saving a template, readiness, the standard catalog test and the preview check every
+expression with `formula.check`, passing the template's inputs and the table shapes.
+`formula.Refusal` turns the first error of each scope into a validation error on that field
+path. Input names are refused when the catalog reserves them or when they shadow a schema root.
+
+**Errors.**
+
+| Module or host outcome | Becomes |
+|---|---|
+| an evaluation error (`FormulaError`) on the main expression | validation on `expression`, with the translated message and `formulaerrors.EvaluationError` as the cause |
+| `missingField` on a field the record could not supply, or a check that the formula reads one | validation on `expression` caused by `formulaerrors.UnresolvedFieldError` (code `unresolvedField` in the preview) |
+| `missingField` on an input the caller marked unavailable (`RateRequest.Unavailable`) | validation on `formulaTemplateId` with that input's message |
+| a negative charge after the policy | validation (code `negativeCharge` in the preview) |
+| an error-severity check diagnostic on save | validation per field path |
+| `ErrRequest`, `ErrTrap`, `ErrUnavailable` | 500, logged; the detail is never shown |
+| `ErrContextDone` | the context's own error, or `timeout` when the preview's deadline ran out |
+
+Every validation row is an `errortypes` validation error, which the REST edge answers as a
+`validation-error` problem (HTTP 400) and GraphQL as a field error, with the message translated
+in the reader's locale.
+
+**Deadlines.** Go adds no timeout around a call beyond the caller's context. The preview
+(`POST /formula-templates/test`) and each backtested shipment run under a two-second
+`context.WithTimeout`, the whole backtest under sixty seconds; the module's budgets bound a
+formula inside that.
+
+**Receipts** come from `trace.lookups` (each with its scope: `expression` or the line's name)
+and statements from `trace.statements`. Messages translate through `shared/i18n`, nested
+arguments included; agent tools and the assistant carry the translated message and the code.
 
 ### The browser loader (`client/packages/shared/src/rules`)
 

@@ -178,12 +178,12 @@ func stubTemplateResponse(
 }
 
 func overrideDecimal(overrides map[string]any, key string) decimal.Decimal {
-	value, ok := overrides[key].(float64)
+	value, ok := overrides[key].(decimal.Decimal)
 	if !ok {
 		return decimal.Zero
 	}
 
-	return decimal.NewFromFloat(value)
+	return value
 }
 
 func tenantInfo() pagination.TenantInfo {
@@ -577,7 +577,7 @@ func TestRuleRateBindsIntoTheTemplateAsItsBaseRate(t *testing.T) {
 
 	req := d.calcRequests[0]
 	assert.Equal(t, perMileTemplateID, req.TemplateID)
-	assert.Equal(t, 2.15, req.Overrides["baseRate"])
+	assertBound(t, "2.15", req.Overrides["baseRate"])
 	assert.NotContains(t, req.Overrides, "totalWeight")
 	assert.NotContains(t, req.Overrides, "sellTotal")
 
@@ -654,8 +654,8 @@ func TestWeightBreaksBindTheBandRateAndRatedWeight(t *testing.T) {
 	require.Len(t, d.calcRequests, 1)
 	req := d.calcRequests[0]
 	assert.Equal(t, perCwtTemplateID, req.TemplateID)
-	assert.Equal(t, 8.0, req.Overrides["baseRate"])
-	assert.Equal(t, 40000.0, req.Overrides["totalWeight"])
+	assertBound(t, "8", req.Overrides["baseRate"])
+	assertBound(t, "40000", req.Overrides["totalWeight"])
 
 	linehaul := result.Quote.Trace.Components[0]
 	assert.Equal(t, "Per CWT @ 8", linehaul.Basis)
@@ -686,8 +686,8 @@ func TestDeficitRatingBumpsToTheCheaperBand(t *testing.T) {
 
 	require.Len(t, d.calcRequests, 1)
 	req := d.calcRequests[0]
-	assert.Equal(t, 6.0, req.Overrides["baseRate"])
-	assert.Equal(t, 45000.0, req.Overrides["totalWeight"])
+	assertBound(t, "6", req.Overrides["baseRate"])
+	assertBound(t, "45000", req.Overrides["totalWeight"])
 
 	trace := result.Quote.Trace
 	require.NotEmpty(t, trace.Warnings)
@@ -813,7 +813,7 @@ func TestMatrixCellValueBindsIntoTheMatrixTemplate(t *testing.T) {
 	require.Len(t, d.calcRequests, 1)
 	req := d.calcRequests[0]
 	assert.Equal(t, perMileTemplateID, req.TemplateID)
-	assert.Equal(t, map[string]any{"baseRate": 2.15}, req.Overrides)
+	assert.Equal(t, map[string]any{"baseRate": decimal.RequireFromString("2.15")}, req.Overrides)
 
 	linehaul := result.Quote.Trace.Components[0]
 	assert.Equal(t, ratetypes.ComponentSourceRateMatrix, linehaul.Source)
@@ -873,4 +873,12 @@ func TestRuleWithNoRatingMethodRecordsTheError(t *testing.T) {
 	require.NotNil(t, result.Quote)
 	require.NotNil(t, result.Quote.Trace)
 	assert.Equal(t, ErrMissingRate.Error(), result.Quote.Trace.Error)
+}
+
+func assertBound(t *testing.T, want string, got any) {
+	t.Helper()
+
+	value, ok := got.(decimal.Decimal)
+	require.True(t, ok, "a bound value is an exact decimal, got %T", got)
+	assert.True(t, decimal.RequireFromString(want).Equal(value), "want %s, got %s", want, value)
 }

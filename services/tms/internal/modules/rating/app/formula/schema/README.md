@@ -61,7 +61,7 @@ Defines how to extract field values:
   "field": "pro_number",           // Database column
   "path": "ProNumber",             // Go struct field path
   "nullable": true,                // Can be null
-  "transform": "int64ToFloat64",   // Transform function
+  "transform": "integer",          // Transform function
   "computed": true,                // Computed field
   "function": "computeTotal",      // Compute function
   "requires": ["field1", "field2"] // Dependencies
@@ -91,7 +91,7 @@ Defines how to extract field values:
   "x-source": {
     "path": "Weight",
     "nullable": true,
-    "transform": "int64ToFloat64"
+    "transform": "integer"
   }
 }
 ```
@@ -155,9 +155,14 @@ Defines how to extract field values:
 
 ## Available Transform Functions
 
-- `decimalToFloat64` - Convert decimal.Decimal to float64
-- `int64ToFloat64` - Convert *int64 to float64  
-- `int16ToFloat64` - Convert *int16 to float64
+Every value reaches the formula exactly: the environment is a value tree the rules module
+reads from its JSON text (`docs/engineering/rules-engine.md`), so no transform produces a
+float.
+
+- `decimal` - `decimal.Decimal`, `*decimal.Decimal` or `decimal.NullDecimal` as the exact
+  decimal; an empty one is nil (a field the schema does not mark nullable then reads as zero)
+- `integer` - `int`, `int16`, `int32`, `int64` or a pointer to one as an `int64`; a nil
+  pointer is nil
 - `stringToUpper` - Convert to uppercase
 - `stringToLower` - Convert to lowercase
 - `unixToISO8601` - Convert unix timestamp to ISO8601
