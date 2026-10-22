@@ -3,6 +3,7 @@ package tariff
 import (
 	"strings"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -10,15 +11,50 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPositionOf_CountsLinesAndCharacters(t *testing.T) {
+func utf16Offset(source, text string) int {
+	return len(utf16.Encode([]rune(source[:strings.Index(source, text)])))
+}
+
+func TestPositionOf_CountsLinesAndCharactersFromUTF16Offsets(t *testing.T) {
 	t.Parallel()
 
-	source := "tariff \"Süd\"\n\ninput rate: Money/mi\n"
+	source := "tariff \"Süd 🚚\"\n\ninput rate: Money/mi\n"
 	assert.Equal(t, SourcePosition{Line: 1, Column: 1}, PositionOf(source, 0))
-	assert.Equal(t, SourcePosition{Line: 1, Column: 12}, PositionOf(source, 12))
-	assert.Equal(t, SourcePosition{Line: 3, Column: 7}, PositionOf(source, strings.Index(source, "rate")))
+	assert.Equal(t, SourcePosition{Line: 1, Column: 12}, PositionOf(source, 11))
+	assert.Equal(t, SourcePosition{Line: 1, Column: 14}, PositionOf(source, 14),
+		"the emoji is two code units and one character")
+	assert.Equal(t, SourcePosition{Line: 3, Column: 7}, PositionOf(source, utf16Offset(source, "rate")))
 	assert.Equal(t, SourcePosition{Line: 4, Column: 1}, PositionOf(source, len(source)+10))
 	assert.Equal(t, SourcePosition{Line: 1, Column: 1}, PositionOf(source, -3))
+}
+
+func TestFindings_ReadRangesAsUTF16AfterNonASCIIText(t *testing.T) {
+	t.Parallel()
+
+	source := "tariff \"Café 🚚\"\n\nlet t = -5 °F\nlet bad = nope\n"
+	from := utf16Offset(source, "nope")
+	findings := Findings(i18n.Locale("en"), source, []rules.TariffDiagnostic{{
+		Severity: rules.SeverityError,
+		Code:     "unknown-name",
+		Message:  rules.Message{Template: "Nothing is named {0}", Args: []any{"nope"}},
+		Range:    &rules.TariffRange{From: from, To: from + 4},
+	}, {
+		Severity: rules.SeverityWarning,
+		Code:     "unused",
+		Message:  rules.Message{Template: "Unused"},
+		Range:    &rules.TariffRange{From: utf16Offset(source, "°F"), To: utf16Offset(source, "°F") + 2},
+	}, {
+		Severity: rules.SeverityWarning,
+		Code:     "doc",
+		Message:  rules.Message{Template: "The name"},
+		Range:    &rules.TariffRange{From: utf16Offset(source, "Café"), To: utf16Offset(source, "\"\n")},
+	}})
+
+	require.Len(t, findings, 3)
+	assert.Equal(t, "nope", findings[0].Excerpt)
+	assert.Equal(t, &SourcePosition{Line: 4, Column: 11}, findings[0].At)
+	assert.Equal(t, "°F", findings[1].Excerpt)
+	assert.Equal(t, "Café 🚚", findings[2].Excerpt)
 }
 
 func TestFindings_PlaceSourceFindingsAndLeaveLibraryOnesUnplaced(t *testing.T) {
