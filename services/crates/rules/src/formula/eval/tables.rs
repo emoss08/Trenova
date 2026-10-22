@@ -897,23 +897,17 @@ fn unsupported_key(table: &str, kind: &'static str, role: KeyRole) -> EvalError 
     let error = match role {
         KeyRole::Key => EvalError::with(
             Code::LookupKey,
-            crate::message!(
-                "rate table \"{0}\": unsupported lookup key type {1, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-            ),
+            crate::message!("rate table \"{0}\": unsupported lookup key type {1}"),
             args,
         ),
         KeyRole::Row => EvalError::with(
             Code::LookupKey,
-            crate::message!(
-                "rate table \"{0}\" row key: unsupported lookup key type {1, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-            ),
+            crate::message!("rate table \"{0}\" row key: unsupported lookup key type {1}"),
             args,
         ),
         KeyRole::Column => EvalError::with(
             Code::LookupKey,
-            crate::message!(
-                "rate table \"{0}\" column key: unsupported lookup key type {1, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-            ),
+            crate::message!("rate table \"{0}\" column key: unsupported lookup key type {1}"),
             args,
         ),
     };

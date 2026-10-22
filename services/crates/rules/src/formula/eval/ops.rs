@@ -14,6 +14,7 @@
 use super::budget::Limits;
 use super::error::Code;
 use super::error::EvalError;
+use super::error::kind_phrase;
 use super::interp;
 use super::interp::LookupRecord;
 use super::interp::LookupSource;
@@ -342,17 +343,13 @@ fn conclude(expect: Expect, value: &Value) -> Result<Json, EvalError> {
         )),
         (_, Value::Nil) => Err(EvalError::with(
             Code::NullResult,
-            crate::message!(
-                "expression must produce a numeric result, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-            ),
-            [Arg::from("nil")],
+            crate::message!("expression must produce a numeric result, got {0}"),
+            [kind_phrase("nil")],
         )),
         (_, other) => Err(EvalError::with(
             Code::NonNumericResult,
-            crate::message!(
-                "expression must produce a numeric result, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-            ),
-            [Arg::from(other.kind_key())],
+            crate::message!("expression must produce a numeric result, got {0}"),
+            [kind_phrase(other.kind_key())],
         )),
     }
 }

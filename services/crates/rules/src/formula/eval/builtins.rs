@@ -17,6 +17,7 @@ use super::error::expected_number;
 use super::error::expected_text;
 use super::error::expected_whole_kind;
 use super::error::invalid_argument;
+use super::error::kind_phrase;
 use super::number;
 use super::number::Rounding;
 use super::operators::map_key;
@@ -931,10 +932,8 @@ pub fn sort_order(value: Option<&Value>) -> Result<bool, EvalError> {
         )),
         Some(other) => Err(EvalError::with(
             Code::Type,
-            crate::message!(
-                "sort order argument must be a string (got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}})"
-            ),
-            [Arg::from(other.kind_key())],
+            crate::message!("sort order argument must be a string (got {0})"),
+            [kind_phrase(other.kind_key())],
         )),
     }
 }

@@ -2271,7 +2271,7 @@
       },
       "error": {
         "code": "type",
-        "message": "expected a number, got {0, select"
+        "message": "expected a number, got {0}"
       }
     },
     {
@@ -2283,7 +2283,7 @@
       },
       "error": {
         "code": "type",
-        "message": "expected a whole number, got {0, select"
+        "message": "expected a whole number, got {0}"
       }
     },
     {

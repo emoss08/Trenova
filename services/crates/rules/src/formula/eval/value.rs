@@ -106,7 +106,7 @@ pub enum Kind {
 }
 
 impl Kind {
-    /// The `select` key messages use for the kind.
+    /// The key messages name the kind by (see `error::kind_phrase`).
     #[must_use]
     pub const fn key(self) -> &'static str {
         match self {
@@ -193,7 +193,7 @@ impl Value {
         }
     }
 
-    /// The `select` key of the value's kind, for messages.
+    /// The key of the value's kind, for messages.
     #[must_use]
     pub const fn kind_key(&self) -> &'static str {
         self.kind().key()

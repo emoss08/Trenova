@@ -7,8 +7,7 @@
 //! the guards that would keep it pricing.
 //!
 //! A message that names the kind of a value (`expected a number, got text`) carries the kind as
-//! an ICU `select` argument (`nil`, `boolean`, `text`, `number`, `date`, `duration`, `list`,
-//! `map`), so the phrase is translated with the rest of the sentence.
+//! a nested message ([`kind_phrase`]), so the phrase is translated as well as the sentence.
 
 use crate::message::Arg;
 use crate::message::Message;
@@ -172,10 +171,8 @@ impl EvalError {
 pub fn expected_number(kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "expected a number, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(kind)],
+        crate::message!("expected a number, got {0}"),
+        [kind_phrase(kind)],
     )
 }
 
@@ -184,10 +181,8 @@ pub fn expected_number(kind: &'static str) -> EvalError {
 pub fn expected_whole_kind(kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "expected a whole number, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(kind)],
+        crate::message!("expected a whole number, got {0}"),
+        [kind_phrase(kind)],
     )
 }
 
@@ -206,10 +201,8 @@ pub fn expected_whole_value(shown: String) -> EvalError {
 pub fn expected_text(kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "expected text, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(kind)],
+        crate::message!("expected text, got {0}"),
+        [kind_phrase(kind)],
     )
 }
 
@@ -218,10 +211,8 @@ pub fn expected_text(kind: &'static str) -> EvalError {
 pub fn expected_boolean(kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "expected true/false, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(kind)],
+        crate::message!("expected true/false, got {0}"),
+        [kind_phrase(kind)],
     )
 }
 
@@ -230,11 +221,27 @@ pub fn expected_boolean(kind: &'static str) -> EvalError {
 pub fn expected_list(kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "expected a list, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(kind)],
+        crate::message!("expected a list, got {0}"),
+        [kind_phrase(kind)],
     )
+}
+
+/// The phrase naming a kind of value (`a number`, `a list`), as a nested message argument; the
+/// key is [`super::value::Kind::key`].
+#[must_use]
+pub fn kind_phrase(key: &str) -> Arg {
+    let phrase = match key {
+        "nil" => crate::message!("an empty value"),
+        "boolean" => crate::message!("true/false"),
+        "text" => crate::message!("text"),
+        "number" => crate::message!("a number"),
+        "date" => crate::message!("a date"),
+        "duration" => crate::message!("a duration"),
+        "list" => crate::message!("a list"),
+        "map" => crate::message!("a group of fields"),
+        _ => crate::message!("a value"),
+    };
+    Arg::from(Message::new(phrase))
 }
 
 /// An operator applied to operands it is not defined on: `"a" * 2`.
@@ -242,10 +249,8 @@ pub fn expected_list(kind: &'static str) -> EvalError {
 pub fn invalid_operation(operator: &str, left: &'static str, right: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "invalid operation: {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}} {1} {2, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(left), Arg::from(operator), Arg::from(right)],
+        crate::message!("invalid operation: {0} {1} {2}"),
+        [kind_phrase(left), Arg::from(operator), kind_phrase(right)],
     )
 }
 
@@ -254,10 +259,8 @@ pub fn invalid_operation(operator: &str, left: &'static str, right: &'static str
 pub fn invalid_unary(operator: &str, operand: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "invalid operation: {0} {1, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(operator), Arg::from(operand)],
+        crate::message!("invalid operation: {0} {1}"),
+        [Arg::from(operator), kind_phrase(operand)],
     )
 }
 
@@ -266,10 +269,8 @@ pub fn invalid_unary(operator: &str, operand: &'static str) -> EvalError {
 pub fn cannot_compare(left: &'static str, right: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "cannot compare {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}} with {1, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(left), Arg::from(right)],
+        crate::message!("cannot compare {0} with {1}"),
+        [kind_phrase(left), kind_phrase(right)],
     )
 }
 
@@ -278,10 +279,8 @@ pub fn cannot_compare(left: &'static str, right: &'static str) -> EvalError {
 pub fn invalid_argument(function: &str, kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "invalid argument for {0} (type {1, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}})"
-        ),
-        [Arg::from(function), Arg::from(kind)],
+        crate::message!("invalid argument for {0} (type {1})"),
+        [Arg::from(function), kind_phrase(kind)],
     )
 }
 
@@ -316,7 +315,7 @@ pub fn non_finite() -> EvalError {
 
 #[cfg(test)]
 mod tests {
-    use super::{Code, EvalError, expected_number};
+    use super::{Arg, Code, EvalError, Message, expected_number};
 
     #[test]
     fn a_missing_value_names_its_fields_and_guards() {
@@ -332,10 +331,11 @@ mod tests {
     }
 
     #[test]
-    fn kinds_travel_as_select_arguments() {
+    fn kinds_travel_as_nested_phrases() {
         let error = expected_number("text");
-        assert!(error.message.message.contains("select"));
-        assert_eq!(error.message.args.len(), 1);
+        assert_eq!(error.message.message, "expected a number, got {0}");
+        assert_eq!(error.message.args, [Arg::from(Message::new("text"))]);
+        assert_eq!(error.message.english(), "expected a number, got text");
         assert_eq!(error.code.as_str(), "type");
     }
 }

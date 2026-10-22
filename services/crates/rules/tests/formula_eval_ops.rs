@@ -118,10 +118,13 @@ fn an_amount_must_be_a_number() {
     );
     let empty = only("coalesce(a, b)", "amount", &json!({"a": null, "b": null}));
     assert_eq!(empty["error"]["code"], "nullResult");
-    assert_eq!(empty["error"]["args"], json!(["nil"]));
+    assert_eq!(
+        empty["error"]["args"],
+        json!([{"message": "an empty value"}])
+    );
     let text = only("x", "amount", &json!({"x": "hello"}));
     assert_eq!(text["error"]["code"], "nonNumericResult");
-    assert_eq!(text["error"]["args"], json!(["text"]));
+    assert_eq!(text["error"]["args"], json!([{"message": "text"}]));
     assert!(text.get("value").is_none());
     let list = only("[1]", "amount", &json!({}));
     assert_eq!(list["error"]["code"], "nonNumericResult");

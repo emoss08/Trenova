@@ -20,6 +20,7 @@ use super::error::expected_text;
 use super::error::expected_whole_kind;
 use super::error::invalid_operation;
 use super::error::invalid_unary;
+use super::error::kind_phrase;
 use super::number;
 use super::value::Value;
 use super::value::format_number;
@@ -273,10 +274,8 @@ pub fn membership(needle: &Value, haystack: &Value) -> Result<bool, EvalError> {
             .unwrap_or(false)),
         other => Err(EvalError::with(
             Code::Type,
-            crate::message!(
-                "operator \"in\" not defined on {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-            ),
-            [Arg::from(other.kind_key())],
+            crate::message!("operator \"in\" not defined on {0}"),
+            [kind_phrase(other.kind_key())],
         )),
     }
 }
@@ -295,20 +294,16 @@ pub fn map_key(key: &Value, side: usize) -> Result<String, EvalError> {
 fn map_key_error(kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "a map key must be text, got {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(kind)],
+        crate::message!("a map key must be text, got {0}"),
+        [kind_phrase(kind)],
     )
 }
 
 fn cannot_fetch(what: String, kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "cannot fetch {0} from {1, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(what), Arg::from(kind)],
+        crate::message!("cannot fetch {0} from {1}"),
+        [Arg::from(what), kind_phrase(kind)],
     )
 }
 
@@ -421,10 +416,8 @@ pub fn slice(
 fn cannot_slice(kind: &'static str) -> EvalError {
     EvalError::with(
         Code::Type,
-        crate::message!(
-            "cannot slice {0, select, nil {an empty value} boolean {true/false} text {text} number {a number} date {a date} duration {a duration} list {a list} map {a group of fields} other {a value}}"
-        ),
-        [Arg::from(kind)],
+        crate::message!("cannot slice {0}"),
+        [kind_phrase(kind)],
     )
 }
 
