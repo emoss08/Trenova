@@ -425,4 +425,4 @@ let a = "x {} y"
 ---
 tariff "t"
 let a = (text "x " ? " y")
-! syntax 22..24 Expected a value inside the braces; a literal brace is written `'{{'`
+! syntax 22..24 Expected a value inside the braces; a literal brace is written twice, `'{{'` or `'}}'`
