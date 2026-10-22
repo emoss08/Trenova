@@ -113,24 +113,38 @@ pub enum MatchMode {
     Range,
 }
 
-/// What an axis varies by, as Go's `ratematrix.DimensionKind`.
+/// What an axis varies by, as Go's `ratematrix.DimensionKind`. Only `FreightClass` changes how
+/// keys read; the others are accepted so the host can send the matrix as it is stored.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
-#[allow(missing_docs)]
 pub enum DimensionKind {
+    /// A zone code.
     Zone,
+    /// A three-digit ZIP prefix.
     Zip3,
+    /// A five-digit ZIP.
     Zip5,
+    /// A state or province.
     State,
+    /// A country.
     Country,
+    /// A weight break.
     WeightBreak,
+    /// A distance.
     Distance,
+    /// A piece count.
     PieceCount,
+    /// Linear feet.
     LinearFeet,
+    /// An NMFC freight class: keys read as one of the eighteen classes.
     FreightClass,
+    /// An equipment type.
     EquipmentType,
+    /// A service type.
     ServiceType,
+    /// Anything else.
     #[default]
     Custom,
+    /// A bare quantity a formula supplies.
     Quantity,
 }
 

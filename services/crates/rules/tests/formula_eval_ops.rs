@@ -245,6 +245,39 @@ fn a_result_that_is_true_or_false_is_reported_in_the_trace() {
 }
 
 #[test]
+fn semicolons_inside_text_and_parentheses_do_not_split_statements() {
+    let out = results(&json!({
+        "programs": [{
+            "id": "t",
+            "source": "let label = \"a;b\"; let inner = (let x = 2; x * 3); label == \"a;b\" ? inner : 0",
+            "expect": "amount",
+        }],
+        "trace": {"statements": true},
+    }));
+    let statements = out[0]["statements"].as_array().cloned().expect("traced");
+    assert_eq!(statements.len(), 3);
+    assert_eq!(statements[0]["code"], "let label = \"a;b\"");
+    assert_eq!(statements[0]["value"], "a;b");
+    assert_eq!(statements[1]["code"], "let inner = (let x = 2; x * 3)");
+    assert_eq!(statements[1]["value"], "6");
+    assert_eq!(statements[2]["code"], "label == \"a;b\" ? inner : 0");
+    assert_eq!(statements[2]["value"], "6");
+}
+
+#[test]
+fn a_single_expression_is_one_result_statement() {
+    let out = results(&json!({
+        "programs": [{"id": "t", "source": "  totalDistance * 2  ", "expect": "amount"}],
+        "env": {"totalDistance": 21},
+        "trace": {"statements": true},
+    }));
+    assert_eq!(
+        out[0]["statements"],
+        json!([{"index": 0, "kind": "result", "code": "totalDistance * 2", "from": 2, "to": 19, "value": "42"}])
+    );
+}
+
+#[test]
 fn a_spent_budget_stops_the_trace_where_it_is_spent() {
     let out = results(&json!({
         "programs": [{"id": "t", "source": "let a = 1; a; len(1..200000); a + 1", "expect": "amount"}],
@@ -300,7 +333,7 @@ fn trace_values_follow_the_go_trace() {
 
 fn tables() -> Json {
     json!([
-        {"name": "fsc", "axes": [{"match": "Exact"}], "cells": [{"at": [{"key": "DIESEL"}], "value": "0.35"}]},
+        {"name": "fsc", "axes": [{"match": "Exact", "kind": "Custom", "normalization": "", "overflow": ""}], "cells": [{"at": [{"key": "DIESEL"}], "value": "0.35"}]},
         {"name": "miles", "axes": [{"match": "Range", "kind": "Distance", "overflow": "ClampToTopBand"}], "cells": [
             {"at": [{"min": "0", "max": "500"}], "value": "2.5"},
             {"at": [{"min": "500", "max": "1000"}], "value": 2.0},

@@ -410,7 +410,9 @@ predicate, `coalesce(pickupDate, ratingTime)` for a date).
 **Where it differs from the Go engine, deliberately.**
 
 - Numbers are exact: `0.1 + 0.2` is `0.3`; division by zero is `divideByZero`, where float64 gave
-  ±Inf or NaN; an unused `let` that divides by zero fails the formula.
+  ±Inf or NaN; an unused `let` that divides by zero fails the formula. A result keeps 28
+  significant digits: past that its last digit is rounded (`1 / 3 * 3` is
+  `0.9999999999999999999999999999`), and a whole part past 28 digits is `overflow`.
 - A nil reaching an operator is `missingField` naming the one field that caused it; Go named
   every nil field the formula referenced whenever anything failed.
 - `==` between different kinds is an error at run time too; Go answered false.
