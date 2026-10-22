@@ -2,11 +2,13 @@ package invoiceservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
@@ -55,17 +57,22 @@ func reconciliationRelatedEntities(entity *invoice.Invoice) map[string]any {
 // amount. Only a single-shipment invoice has no unattributed lines to add; keying
 // this off a nil order id instead dropped them from every consolidated invoice.
 func reconciliationExpectedTotal(
+	ctx context.Context,
 	entity *invoice.Invoice,
 	legs []*shipment.Shipment,
-) decimal.Decimal {
+) (decimal.Decimal, error) {
 	legTotal := decimal.Zero
 	for _, shp := range legs {
-		legTotal = legTotal.Add(reconciliationLegTotal(entity, shp))
+		total, err := reconciliationLegTotal(ctx, entity, shp)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		legTotal = legTotal.Add(total)
 	}
 
 	expected := invoicelines.SignedAmount(entity.BillType, legTotal)
 	if entity.Scope == invoice.ScopeShipment {
-		return expected
+		return expected, nil
 	}
 
 	for _, line := range entity.Lines {
@@ -75,27 +82,35 @@ func reconciliationExpectedTotal(
 		expected = expected.Add(line.Amount)
 	}
 
-	return expected
+	return expected, nil
 }
 
 // reconciliationLegTotal is what one leg should have contributed: the whole
 // shipment on an ordinary invoice, the payer's share on a split one. Legs are
 // loaded with their allocations, so no second read is needed.
-func reconciliationLegTotal(entity *invoice.Invoice, shp *shipment.Shipment) decimal.Decimal {
+func reconciliationLegTotal(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	shp *shipment.Shipment,
+) (decimal.Decimal, error) {
 	if shp == nil {
-		return decimal.Zero
+		return decimal.Zero, nil
 	}
 	if !entity.IsSplitBill {
-		return shp.TotalChargeAmount.Decimal
+		return shp.TotalChargeAmount.Decimal, nil
 	}
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
-	if err != nil {
-		return shp.TotalChargeAmount.Decimal
+	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	var refused *errortypes.Error
+	switch {
+	case errors.As(err, &refused):
+		return shp.TotalChargeAmount.Decimal, nil
+	case err != nil:
+		return decimal.Zero, err
 	}
 	if share := resolution.ShareFor(entity.CustomerID); share != nil {
-		return share.TotalAmount
+		return share.TotalAmount, nil
 	}
 
-	return decimal.Zero
+	return decimal.Zero, nil
 }

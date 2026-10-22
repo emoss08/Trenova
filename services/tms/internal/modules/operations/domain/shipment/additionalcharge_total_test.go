@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAdditionalChargeTotal(t *testing.T) {
+func TestAdditionalChargeTotals_PricesEachChargeByItsMethod(t *testing.T) {
 	t.Parallel()
 
 	base := decimal.NewFromInt(2450)
@@ -83,24 +84,33 @@ func TestAdditionalChargeTotal(t *testing.T) {
 		},
 	}
 
+	charges := make([]*shipment.AdditionalCharge, 0, len(tests))
+	sum := decimal.Zero
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got := tt.charge.Total(base)
-			assert.True(t, got.Equal(decimal.RequireFromString(tt.expected)), "got %s", got)
-		})
+		charges = append(charges, tt.charge)
+		sum = sum.Add(decimal.RequireFromString(tt.expected))
 	}
+
+	totals, err := shipment.AdditionalChargeTotals(t.Context(), charges, base)
+	require.NoError(t, err)
+	require.Len(t, totals.Each, len(tests))
+
+	for i, tt := range tests {
+		assert.True(
+			t,
+			totals.Each[i].Equal(decimal.RequireFromString(tt.expected)),
+			"%s: got %s", tt.name, totals.Each[i],
+		)
+	}
+	assert.True(t, totals.Sum.Equal(sum), "sum %s", totals.Sum)
 }
 
-func TestAdditionalChargesTotalSumsEveryCharge(t *testing.T) {
+func TestAdditionalChargeTotals_NoChargesSumToZero(t *testing.T) {
 	t.Parallel()
 
-	total := shipment.AdditionalChargesTotal([]*shipment.AdditionalCharge{
-		{Method: accessorialcharge.MethodFlat, Amount: decimal.NewFromInt(150), Unit: 1},
-		nil,
-		{Method: accessorialcharge.MethodPercentage, Amount: decimal.NewFromInt(10), Unit: 1},
-	}, decimal.NewFromInt(2450))
+	totals, err := shipment.AdditionalChargeTotals(t.Context(), nil, decimal.NewFromInt(2450))
+	require.NoError(t, err)
 
-	assert.True(t, total.Equal(decimal.NewFromInt(395)))
-	assert.True(t, shipment.AdditionalChargesTotal(nil, decimal.NewFromInt(2450)).IsZero())
+	assert.Empty(t, totals.Each)
+	assert.True(t, totals.Sum.IsZero())
 }

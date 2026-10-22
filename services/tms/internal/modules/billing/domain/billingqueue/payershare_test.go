@@ -88,7 +88,8 @@ func TestBuildPayerShare_ShowsOnlyWhatThePayerOwes(t *testing.T) {
 
 	f := newSplitFixture()
 
-	share := BuildPayerShare(f.shipment, f.acme, f.names)
+	share, err := BuildPayerShare(t.Context(), f.shipment, f.acme, f.names)
+	require.NoError(t, err)
 
 	require.Empty(t, share.ResolutionError)
 	assert.True(t, share.IsSplit)
@@ -124,7 +125,8 @@ func TestBuildPayerShare_ChargesOwnedByOthersMoveToTheirOwnGroup(t *testing.T) {
 
 	f := newSplitFixture()
 
-	share := BuildPayerShare(f.shipment, f.peak, f.names)
+	share, err := BuildPayerShare(t.Context(), f.shipment, f.peak, f.names)
+	require.NoError(t, err)
 
 	require.Empty(t, share.ResolutionError)
 	assert.True(t, share.TotalAmount.Equal(dec("1500")), "total %s", share.TotalAmount)
@@ -148,7 +150,8 @@ func TestBuildPayerShare_UnsplitShipmentIsOneFullShare(t *testing.T) {
 	f := newSplitFixture()
 	f.shipment.ChargeAllocations = nil
 
-	share := BuildPayerShare(f.shipment, f.acme, f.names)
+	share, err := BuildPayerShare(t.Context(), f.shipment, f.acme, f.names)
+	require.NoError(t, err)
 
 	assert.False(t, share.IsSplit)
 	assert.True(t, share.TotalAmount.Equal(dec("4004.38")))
@@ -162,7 +165,8 @@ func TestBuildPayerShare_ReportsASplitThatNoLongerResolves(t *testing.T) {
 	f := newSplitFixture()
 	f.shipment.FreightChargeAmount = decimal.NewNullDecimal(dec("3000"))
 
-	share := BuildPayerShare(f.shipment, f.peak, f.names)
+	share, err := BuildPayerShare(t.Context(), f.shipment, f.peak, f.names)
+	require.NoError(t, err)
 
 	assert.Contains(t, share.ResolutionError, "must add up to 3000.00")
 	assert.Empty(t, share.Lines)
@@ -176,7 +180,8 @@ func TestBuildPayerShare_FallsBackToTheCustomerRelationForNames(t *testing.T) {
 	f.shipment.Customer = &customer.Customer{ID: f.acme, Name: "Acme From Relation", Code: "ACM"}
 	delete(f.names, f.acme)
 
-	share := BuildPayerShare(f.shipment, f.peak, f.names)
+	share, err := BuildPayerShare(t.Context(), f.shipment, f.peak, f.names)
+	require.NoError(t, err)
 
 	require.Len(t, share.OtherPayerLines, 1)
 	assert.Equal(t, "Acme From Relation", share.OtherPayerLines[0].Payers[0].PayerName)

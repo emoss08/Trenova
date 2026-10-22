@@ -1,7 +1,11 @@
 package billingqueue
 
 import (
+	"context"
+	"errors"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -61,10 +65,11 @@ type PayerShare struct {
 // The shipment must carry its additional charges and charge allocations. Names
 // come from the map first and then from the shipment's customer relations.
 func BuildPayerShare(
+	ctx context.Context,
 	shp *shipment.Shipment,
 	payerID pulid.ID,
 	names map[pulid.ID]PayerRef,
-) *PayerShare {
+) (*PayerShare, error) {
 	result := &PayerShare{
 		PayerID:         payerID,
 		Payers:          []PayerRef{},
@@ -72,14 +77,18 @@ func BuildPayerShare(
 		OtherPayerLines: []*PayerShareLine{},
 	}
 	if shp == nil {
-		return result
+		return result, nil
 	}
 	result.ShipmentTotal = shp.TotalChargeAmount.Decimal
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
-	if err != nil {
-		result.ResolutionError = err.Error()
-		return result
+	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+	var refused *errortypes.Error
+	switch {
+	case errors.As(err, &refused):
+		result.ResolutionError = errortypes.LocalizedText(ctx, refused)
+		return result, nil
+	case err != nil:
+		return nil, err
 	}
 
 	lookup := payerNameLookup(shp, names)
@@ -132,7 +141,7 @@ func BuildPayerShare(
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func newPayerShareLine(charge *shipment.AllocatedCharge) *PayerShareLine {

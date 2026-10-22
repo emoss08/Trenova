@@ -102,7 +102,7 @@ func (r *MutationResolver) CreateShipment(ctx context.Context, input gqlmodel.Sh
 		}
 	}
 
-	return base.ShipmentToModel(created)
+	return base.ShipmentToModel(ctx, created)
 }
 
 func (r *MutationResolver) UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error) {
@@ -124,7 +124,7 @@ func (r *MutationResolver) UpdateShipment(ctx context.Context, id string, input 
 		return nil, err
 	}
 
-	return base.ShipmentToModel(updated)
+	return base.ShipmentToModel(ctx, updated)
 }
 
 func (r *MutationResolver) CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error) {
@@ -150,7 +150,7 @@ func (r *MutationResolver) CancelShipment(ctx context.Context, id string, input 
 		return nil, err
 	}
 
-	return base.ShipmentToModel(entity)
+	return base.ShipmentToModel(ctx, entity)
 }
 
 func (r *MutationResolver) UncancelShipment(ctx context.Context, id string) (*gqlmodel.Shipment, error) {
@@ -171,7 +171,7 @@ func (r *MutationResolver) UncancelShipment(ctx context.Context, id string) (*gq
 		return nil, err
 	}
 
-	return base.ShipmentToModel(entity)
+	return base.ShipmentToModel(ctx, entity)
 }
 
 func (r *MutationResolver) DuplicateShipment(ctx context.Context, input gqlmodel.ShipmentDuplicateInput) (*gqlmodel.ShipmentDuplicateResponse, error) {
@@ -234,7 +234,7 @@ func (r *MutationResolver) TransferShipmentOwnership(ctx context.Context, id str
 		return nil, err
 	}
 
-	return base.ShipmentToModel(entity)
+	return base.ShipmentToModel(ctx, entity)
 }
 
 func (r *MutationResolver) TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error) {
@@ -255,7 +255,7 @@ func (r *MutationResolver) TransferShipmentToBillingItems(ctx context.Context, i
 		return nil, err
 	}
 
-	return transferToBillingResultToModel(transferred)
+	return transferToBillingResultToModel(ctx, transferred)
 }
 
 func (r *MutationResolver) BulkTransferShipmentsToBilling(ctx context.Context, input gqlmodel.ShipmentBulkTransferToBillingInput) (*gqlmodel.ShipmentBulkTransferToBillingResponse, error) {
@@ -341,7 +341,7 @@ func (r *MutationResolver) AutoRateShipment(ctx context.Context, id string) (*gq
 		return nil, err
 	}
 
-	model, err := base.ShipmentToModel(entity)
+	model, err := base.ShipmentToModel(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -737,7 +737,7 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 		return nil, err
 	}
 
-	return shipmentConnectionToModel(result)
+	return shipmentConnectionToModel(ctx, result)
 }
 
 func (r *QueryResolver) Shipment(ctx context.Context, id string, expandShipmentDetails *bool, status *string) (*gqlmodel.Shipment, error) {
@@ -766,7 +766,7 @@ func (r *QueryResolver) Shipment(ctx context.Context, id string, expandShipmentD
 		return nil, err
 	}
 
-	return base.ShipmentToModel(entity)
+	return base.ShipmentToModel(ctx, entity)
 }
 
 func (r *QueryResolver) UnassignedShipments(ctx context.Context, first *int, after *string) (*gqlmodel.ShipmentConnection, error) {
@@ -797,7 +797,7 @@ func (r *QueryResolver) UnassignedShipments(ctx context.Context, first *int, aft
 		return nil, err
 	}
 
-	return shipmentConnectionToModel(result)
+	return shipmentConnectionToModel(ctx, result)
 }
 
 func (r *QueryResolver) ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string, filter *gqlmodel.ShipmentCommentsFilterInput) (*gqlmodel.ShipmentCommentConnection, error) {

@@ -124,7 +124,7 @@ func TestShipmentToModel_MapsTypedRelationFields(t *testing.T) {
 		},
 	}
 
-	model, err := ShipmentToModel(entity)
+	model, err := ShipmentToModel(t.Context(), entity)
 	require.NoError(t, err)
 
 	require.NotNil(t, model.Customer)

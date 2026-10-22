@@ -12,6 +12,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func expectedTotal(
+	t *testing.T,
+	entity *invoice.Invoice,
+	legs []*shipment.Shipment,
+) decimal.Decimal {
+	t.Helper()
+
+	total, err := reconciliationExpectedTotal(t.Context(), entity, legs)
+	require.NoError(t, err)
+
+	return total
+}
+
+func legTotal(t *testing.T, entity *invoice.Invoice, leg *shipment.Shipment) decimal.Decimal {
+	t.Helper()
+
+	total, err := reconciliationLegTotal(t.Context(), entity, leg)
+	require.NoError(t, err)
+
+	return total
+}
+
 func TestReconciliationExpectedTotalUsesThePayersShareOnASplitInvoice(t *testing.T) {
 	t.Parallel()
 
@@ -27,7 +49,7 @@ func TestReconciliationExpectedTotalUsesThePayersShareOnASplitInvoice(t *testing
 		ShipmentID:  leg.ID,
 	}
 
-	expected := reconciliationExpectedTotal(entity, []*shipment.Shipment{leg})
+	expected := expectedTotal(t, entity, []*shipment.Shipment{leg})
 	assert.True(
 		t,
 		expected.Equal(decimal.NewFromInt(400)),
@@ -37,7 +59,7 @@ func TestReconciliationExpectedTotalUsesThePayersShareOnASplitInvoice(t *testing
 	entity.BillType = billingqueue.BillTypeCreditMemo
 	assert.True(
 		t,
-		reconciliationExpectedTotal(
+		expectedTotal(t, 
 			entity,
 			[]*shipment.Shipment{leg},
 		).Equal(decimal.NewFromInt(-400)),
@@ -61,7 +83,7 @@ func TestReconciliationExpectedTotalUsesTheLegTotalOnAnOrdinaryInvoice(t *testin
 	// Not flagged as split, so the whole leg is expected however its rows are allocated.
 	assert.True(
 		t,
-		reconciliationExpectedTotal(
+		expectedTotal(t, 
 			entity,
 			[]*shipment.Shipment{leg},
 		).Equal(decimal.NewFromInt(1000)),
@@ -74,8 +96,8 @@ func TestReconciliationLegTotalFallsBackWhenThePayerHasNoShare(t *testing.T) {
 	leg := builderLeg("PRO-1", 1000)
 	entity := &invoice.Invoice{CustomerID: pulid.MustNew("cus_"), IsSplitBill: true}
 
-	assert.True(t, reconciliationLegTotal(entity, leg).IsZero())
-	assert.True(t, reconciliationLegTotal(entity, nil).IsZero())
+	assert.True(t, legTotal(t, entity, leg).IsZero())
+	assert.True(t, legTotal(t, entity, nil).IsZero())
 }
 
 func TestReconciliationExpectedTotalAddsUnattributedLinesOnWiderScopes(t *testing.T) {
@@ -97,7 +119,7 @@ func TestReconciliationExpectedTotalAddsUnattributedLinesOnWiderScopes(t *testin
 	}
 	require.True(
 		t,
-		reconciliationExpectedTotal(
+		expectedTotal(t, 
 			entity,
 			[]*shipment.Shipment{leg},
 		).Equal(decimal.NewFromInt(425)),

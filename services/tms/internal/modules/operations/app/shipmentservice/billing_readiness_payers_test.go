@@ -42,7 +42,7 @@ func splitReadinessFixture(t *testing.T) (*shipment.Shipment, *shipment.ShareRes
 		},
 	}
 
-	resolution, err := shipment.ResolveShares(entity, entity.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(t.Context(), entity, entity.ChargeAllocations)
 	require.NoError(t, err)
 
 	return entity, resolution, amd
@@ -343,7 +343,7 @@ func TestPreviewForResolutionMapsPositionalAllocationsToPlaceholderIDs(t *testin
 		"the caller's allocation is untouched",
 	)
 
-	resolution, err := shipment.ResolveShares(preview, preview.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(t.Context(), preview, preview.ChargeAllocations)
 	require.NoError(t, err)
 	share := resolution.ShareFor(payer)
 	require.NotNil(t, share)

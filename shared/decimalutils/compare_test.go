@@ -3,8 +3,13 @@ package decimalutils
 import (
 	"testing"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
+
+func dec(s string) decimal.Decimal {
+	return decimal.RequireFromString(s)
+}
 
 func TestMax(t *testing.T) {
 	t.Parallel()

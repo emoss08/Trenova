@@ -166,14 +166,14 @@ func (s *Service) createConsolidatedTx(
 		return nil, txErr
 	}
 
-	shares, isSplit, txErr := payerSharesForLegs(params.Legs, customerID)
+	shares, isSplit, txErr := payerSharesForLegs(txCtx, params.Legs, customerID)
 	if txErr != nil {
 		return nil, txErr
 	}
 
 	periodStart := params.PeriodStart
 	periodEnd := params.PeriodEnd
-	entity := s.buildInvoiceEntity(&buildInvoiceParams{
+	entity, err := s.buildInvoiceEntity(txCtx, &buildInvoiceParams{
 		Anchor:      anchor,
 		Scope:       invoice.ScopeConsolidated,
 		Customer:    cus,
@@ -187,6 +187,9 @@ func (s *Service) createConsolidatedTx(
 		Shares:      shares,
 		IsSplitBill: isSplit,
 	})
+	if err != nil {
+		return nil, err
+	}
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
 			"shipmentIds",
@@ -240,6 +243,7 @@ func (s *Service) createConsolidatedTx(
 // no share of cannot sit on their invoice, so it is refused here rather than
 // silently billed at zero.
 func payerSharesForLegs(
+	ctx context.Context,
 	legs []*shipment.Shipment,
 	payerID pulid.ID,
 ) (map[pulid.ID]*shipment.PayerShare, bool, error) {
@@ -249,7 +253,7 @@ func payerSharesForLegs(
 		if leg == nil {
 			continue
 		}
-		resolution, err := shipment.ResolveShares(leg, leg.ChargeAllocations)
+		resolution, err := shipment.ResolveShares(ctx, leg, leg.ChargeAllocations)
 		if err != nil {
 			return nil, false, err
 		}

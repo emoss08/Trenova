@@ -77,10 +77,7 @@ var (
 		return nullDecimalFloat(s.FreightChargeAmount)
 	})
 	computeOtherChargeAmount = fromShipment(0.0, func(s *shipment.Shipment) any {
-		return shipment.AdditionalChargesTotal(
-			s.AdditionalCharges,
-			s.FreightChargeAmount.Decimal,
-		).InexactFloat64()
+		return nullDecimalFloat(s.OtherChargeAmount)
 	})
 	computeCurrentTotalCharge = fromShipment(0.0, func(s *shipment.Shipment) any {
 		return nullDecimalFloat(s.TotalChargeAmount)

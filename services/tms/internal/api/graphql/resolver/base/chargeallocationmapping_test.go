@@ -14,6 +14,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func splitSummary(
+	t *testing.T,
+	entity *shipmentdomain.Shipment,
+) []*gqlmodel.ShipmentBillingSplitSummary {
+	t.Helper()
+
+	rows, err := billingSplitSummaryToModel(t.Context(), entity)
+	require.NoError(t, err)
+
+	return rows
+}
+
 func TestChargeAllocationsFromInput_RejectsBadValues(t *testing.T) {
 	t.Parallel()
 
@@ -75,8 +87,8 @@ func TestBillingSplitSummaryToModel(t *testing.T) {
 	t.Run("empty when the charges are not loaded", func(t *testing.T) {
 		t.Parallel()
 
-		assert.Empty(t, billingSplitSummaryToModel(nil))
-		assert.Empty(t, billingSplitSummaryToModel(&shipmentdomain.Shipment{
+		assert.Empty(t, splitSummary(t, nil))
+		assert.Empty(t, splitSummary(t, &shipmentdomain.Shipment{
 			CustomerID:          pulid.MustNew("cus_"),
 			FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(500)),
 		}))
@@ -110,7 +122,7 @@ func TestBillingSplitSummaryToModel(t *testing.T) {
 			}},
 		}
 
-		rows := billingSplitSummaryToModel(entity)
+		rows := splitSummary(t, entity)
 		require.Len(t, rows, 2)
 
 		assert.Equal(t, intel.ID.String(), rows[0].PayerID)
@@ -145,6 +157,6 @@ func TestBillingSplitSummaryToModel(t *testing.T) {
 			}},
 		}
 
-		assert.Empty(t, billingSplitSummaryToModel(entity))
+		assert.Empty(t, splitSummary(t, entity))
 	})
 }

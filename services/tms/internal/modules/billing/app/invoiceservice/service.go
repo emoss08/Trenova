@@ -441,7 +441,7 @@ func (s *Service) planDraftFromItem(
 		return nil, err
 	}
 
-	entity := s.buildInvoiceEntity(&buildInvoiceParams{
+	entity, err := s.buildInvoiceEntity(ctx, &buildInvoiceParams{
 		Anchor:         item,
 		Scope:          invoice.ScopeShipment,
 		Customer:       dependencies.Customer,
@@ -453,6 +453,9 @@ func (s *Service) planDraftFromItem(
 		Shares:         sharesForLeg(dependencies.Shipment, dependencies.Share),
 		IsSplitBill:    dependencies.IsSplitBill,
 	})
+	if err != nil {
+		return nil, err
+	}
 	if entity == nil {
 		return nil, errortypes.NewValidationError(
 			"billingQueueItemId",
@@ -676,7 +679,11 @@ func (s *Service) notifyReconciliationWarning(
 		return
 	}
 
-	expectedTotal := reconciliationExpectedTotal(entity, legs)
+	expectedTotal, err := reconciliationExpectedTotal(ctx, entity, legs)
+	if err != nil {
+		s.l.Warn("failed to compute the reconciliation total", zap.Error(err))
+		return
+	}
 	discrepancy := entity.TotalAmount.Sub(expectedTotal).Abs()
 	if !discrepancy.GreaterThan(control.ReconciliationToleranceAmount) {
 		return
@@ -1049,7 +1056,7 @@ func (s *Service) getInvoiceDependencies(
 		return deps, nil
 	}
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}
@@ -1164,24 +1171,32 @@ type buildInvoiceParams struct {
 // One builder, because a single-shipment invoice is the one-leg case of a
 // grouped one and a consolidated invoice is the many-order case. Only the header
 // differs: which identity it carries, and whether it names a period.
-func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
+func (s *Service) buildInvoiceEntity(
+	ctx context.Context,
+	p *buildInvoiceParams,
+) (*invoice.Invoice, error) {
 	if p.Anchor.IsAdjustmentOrigin {
-		if entity := s.buildAdjustmentOriginInvoiceEntity(
+		entity, err := s.buildAdjustmentOriginInvoiceEntity(
+			ctx,
 			p.Anchor,
 			firstLeg(p.Legs),
 			p.Customer,
 			p.Control,
-		); entity != nil {
+		)
+		if err != nil {
+			return nil, err
+		}
+		if entity != nil {
 			if p.Order != nil {
 				entity.OrderID = p.Order.ID
 				entity.OrderNumber = p.Order.OrderNumber
 			}
-			return entity
+			return entity, nil
 		}
 	}
 
 	if len(p.Legs) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	invoiceDate := p.InvoiceDate
@@ -1201,10 +1216,14 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 	lines := make([]*invoice.InvoiceLine, 0, len(p.Legs))
 	nextLineNumber := 1
 	for _, leg := range p.Legs {
+		share, err := legShare(ctx, leg, p.Shares)
+		if err != nil {
+			return nil, err
+		}
 		legLines := invoicelines.ForShipmentShare(
 			p.Anchor.BillType,
 			leg,
-			p.Shares[leg.ID],
+			share,
 			nextLineNumber,
 		)
 		lines = append(lines, legLines...)
@@ -1285,7 +1304,7 @@ func (s *Service) buildInvoiceEntity(p *buildInvoiceParams) *invoice.Invoice {
 	syncInvoiceTotalsFromLines(entity)
 	entity.SyncMinorAmounts()
 
-	return entity
+	return entity, nil
 }
 
 // applyInvoiceScopeHeader stamps the identity fields that belong to this scope,
@@ -1396,26 +1415,27 @@ type adjustmentInvoiceContext struct {
 }
 
 func (s *Service) buildAdjustmentOriginInvoiceEntity(
+	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	shp *shipment.Shipment,
 	cus *customer.Customer,
 	control *tenant.BillingControl,
-) *invoice.Invoice {
+) (*invoice.Invoice, error) {
 	if len(item.AdjustmentContext) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	raw, err := sonic.Marshal(item.AdjustmentContext)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 
-	var ctx adjustmentInvoiceContext
-	if err = sonic.Unmarshal(raw, &ctx); err != nil {
-		return nil
+	var adjustment adjustmentInvoiceContext
+	if err = sonic.Unmarshal(raw, &adjustment); err != nil {
+		return nil, nil
 	}
 
-	invoiceDate := ctx.AccountingDate
+	invoiceDate := adjustment.AccountingDate
 	if invoiceDate == 0 {
 		invoiceDate = timeutils.NowUnix()
 	}
@@ -1423,12 +1443,15 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	if paymentTerm == "" {
 		paymentTerm = invoice.PaymentTermNet30
 	}
-	lines := ctx.ReplacementLines
+	lines := adjustment.ReplacementLines
 	if len(lines) == 0 {
 		if shp == nil {
-			return nil
+			return nil, nil
 		}
-		lines = buildInvoiceLines(item.BillType, shp)
+		lines, err = invoicelines.ForShipment(ctx, item.BillType, shp, 1)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	entity := &invoice.Invoice{
@@ -1453,9 +1476,9 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		AppliedAmount:             decimal.Zero,
 		SettlementStatus:          invoice.SettlementStatusUnpaid,
 		DisputeStatus:             invoice.DisputeStatusNone,
-		CorrectionGroupID:         ctx.CorrectionGroupID,
-		SupersedesInvoiceID:       ctx.SourceInvoiceID,
-		SourceInvoiceAdjustmentID: ctx.SourceAdjustmentID,
+		CorrectionGroupID:         adjustment.CorrectionGroupID,
+		SupersedesInvoiceID:       adjustment.SourceInvoiceID,
+		SourceInvoiceAdjustmentID: adjustment.SourceAdjustmentID,
 		Lines:                     lines,
 	}
 	if shp != nil {
@@ -1479,7 +1502,7 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	}
 	syncInvoiceTotalsFromLines(entity)
 	entity.SyncMinorAmounts()
-	return entity
+	return entity, nil
 }
 
 func syncInvoiceTotalsFromLines(entity *invoice.Invoice) {
@@ -1504,11 +1527,21 @@ func sumLinesByType(
 	return total
 }
 
-func buildInvoiceLines(
-	billType billingqueue.BillType,
-	shp *shipment.Shipment,
-) []*invoice.InvoiceLine {
-	return invoicelines.ForShipment(billType, shp, 1)
+func legShare(
+	ctx context.Context,
+	leg *shipment.Shipment,
+	shares map[pulid.ID]*shipment.PayerShare,
+) (*shipment.PayerShare, error) {
+	if share := shares[leg.ID]; share != nil {
+		return share, nil
+	}
+
+	resolution, err := shipment.ResolveShares(ctx, leg, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return resolution.Primary(), nil
 }
 
 func paymentTermFromCustomer(cus *customer.Customer) invoice.PaymentTerm {
