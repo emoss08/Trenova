@@ -407,3 +407,148 @@ func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *test
 		})
 	}
 }
+
+func credentialAnswers() map[string]*agentports.GraphQLReadResult {
+	return map[string]*agentports.GraphQLReadResult{
+		"DeskWorkerCredentialList": {Data: map[string]any{"workerCredentials": []any{
+			map[string]any{"id": "wcr_1", "status": "Active", "daysUntilExpiry": float64(12)},
+		}}},
+		"DeskWorkerCredentialTypes": {Data: map[string]any{"workerCredentialTypes": map[string]any{
+			"edges": []any{map[string]any{"node": map[string]any{
+				"id": "wct_1", "code": "MED_CARD", "isRequired": true,
+			}}},
+			"pageInfo": map[string]any{"hasNextPage": false},
+		}}},
+	}
+}
+
+func TestUnpagedList_ReadsTheCredentialTypesBesideOneWorkersCredentialsOnly(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_").String()
+	cases := map[string]struct {
+		params map[string]any
+		types  bool
+		sent   map[string]any
+	}{
+		"one worker's credentials come with the types the organization tracks": {
+			params: map[string]any{paramWorkerID: workerID},
+			types:  true,
+			sent: map[string]any{
+				"workerId": workerID, "includeArchived": false,
+				"limit": graphQLListLimit + 1, "offset": 0,
+			},
+		},
+		"what falls due across the organization does not": {
+			params: map[string]any{"expiringWithinDays": float64(14)},
+			sent: map[string]any{
+				"expiringWithinDays": float64(14), "includeArchived": false,
+				"limit": graphQLListLimit + 1, "offset": 0,
+			},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reader := &keyedReader{answers: credentialAnswers()}
+			tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolWorkerListCredentials), reader,
+				&mocks.DenyResourcesPermissionEngine{})
+			require.NoError(t, err)
+
+			data, err := tool.Query(t.Context(), keyedCall(tc.params))
+			require.NoError(t, err)
+
+			sent := reader.sent("DeskWorkerCredentialList")
+			require.NotNil(t, sent)
+			assert.Equal(t, tc.sent, sent.Variables)
+			outcome, _ := data.(map[string]any)
+			if tc.types {
+				types, _ := outcome["credentialTypes"].([]map[string]any)
+				require.Len(t, types, 1)
+				assert.Equal(t, "MED_CARD", types[0]["code"])
+				return
+			}
+			assert.Nil(t, reader.sent("DeskWorkerCredentialTypes"))
+			assert.NotContains(t, outcome, "credentialTypes")
+		})
+	}
+}
+
+// A credential's number is the licence or card number itself. Who needs a
+// new medical card is answered without it, and the operation the tool reads
+// never asks for it.
+func TestCredentialList_NeverSelectsTheCredentialNumber(t *testing.T) {
+	t.Parallel()
+
+	read := graphQLReads[toolWorkerListCredentials]
+	for _, field := range read.Fields {
+		if field.Name == "number" {
+			assert.False(t, field.Selected)
+		}
+	}
+}
+
+func credentialRows(from, count int) []any {
+	rows := make([]any, 0, count)
+	for idx := range count {
+		rows = append(rows, map[string]any{"id": "wcr_" + strconv.Itoa(from+idx)})
+	}
+
+	return rows
+}
+
+// What falls due across a fleet can pass a page; the list pages by cursor,
+// and the offset it pages by never reaches the model.
+func TestUnpagedList_PagesWhatFallsDueByCursor(t *testing.T) {
+	t.Parallel()
+
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskWorkerCredentialList": {Data: map[string]any{
+			"workerCredentials": credentialRows(0, 3),
+		}},
+	}}
+	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolWorkerListCredentials), reader,
+		&mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+	properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
+	assert.Contains(t, properties, paramAfter)
+	assert.NotContains(t, properties, paramOffset)
+
+	args := map[string]any{"expiringWithinDays": float64(30), paramLimit: float64(2)}
+	data, err := tool.Query(t.Context(), keyedCall(args))
+	require.NoError(t, err)
+	first, _ := data.(map[string]any)
+	items, _ := first["items"].([]map[string]any)
+	require.Len(t, items, 2, "the row past the page only says there is more")
+	assert.Equal(t, true, first["hasMore"])
+	cursor, _ := first["nextCursor"].(string)
+	require.NotEmpty(t, cursor)
+	sent := reader.sent("DeskWorkerCredentialList")
+	assert.Equal(t, 3, sent.Variables["limit"])
+	assert.Equal(t, 0, sent.Variables["offset"])
+
+	next := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskWorkerCredentialList": {Data: map[string]any{
+			"workerCredentials": credentialRows(2, 1),
+		}},
+	}}
+	tool, err = newGraphQLUnpagedListTool(keyedSpec(t, toolWorkerListCredentials), next,
+		&mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+	data, err = tool.Query(t.Context(), keyedCall(map[string]any{
+		"expiringWithinDays": float64(30), paramLimit: float64(2), paramAfter: cursor,
+	}))
+	require.NoError(t, err)
+	assert.Equal(t, 2, next.sent("DeskWorkerCredentialList").Variables["offset"])
+	last, _ := data.(map[string]any)
+	assert.NotContains(t, last, "hasMore")
+	assert.NotContains(t, last, "nextCursor")
+
+	_, err = tool.Query(t.Context(), keyedCall(map[string]any{
+		"expiringWithinDays": float64(60), paramLimit: float64(2), paramAfter: cursor,
+	}))
+	require.ErrorIs(t, err, ErrStaleCursor, "a cursor is bound to the call's other arguments")
+	_, err = tool.Query(t.Context(), keyedCall(map[string]any{paramOffset: float64(2)}))
+	require.ErrorIs(t, err, errOffsetOnCursorList)
+}

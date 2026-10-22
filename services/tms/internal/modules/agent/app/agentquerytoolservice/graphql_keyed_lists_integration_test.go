@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
@@ -65,8 +66,9 @@ type keyedCase struct {
 	orgWide               bool
 	openByDefaultUnscoped bool
 	// restricted are fields a record carries that an agent at the default
-	// data access (Internal) is never shown.
+	// data access (Internal) is never shown, and internal those it is.
 	restricted []string
+	internal   []string
 	// nested is a list every record carries rows of (an event's violations).
 	nested string
 	write  func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error)
@@ -78,6 +80,10 @@ type keyedCase struct {
 	key       string
 	keyed     bool
 	templates func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string) (pulid.ID, error)
+	// activeTemplates counts what the read alongside should return, where
+	// the tenant holds more than the test wrote (the system credential
+	// types every organization is seeded with).
+	activeTemplates func(ctx context.Context, tenant pagination.TenantInfo) (int, error)
 }
 
 //nolint:funlen // one entry per keyed list
@@ -297,7 +303,7 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 		{
 			tool: "worker_list_safety_events", orgWide: true, openByDefaultUnscoped: true,
 			nested: "violations",
-			key: "recognitions", keyed: true,
+			key:    "recognitions", keyed: true,
 			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{"openOnly": false},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
@@ -337,6 +343,60 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(row, err)
 			},
 		},
+		{
+			tool: "worker_list_credentials", key: "credentialTypes", openByDefaultUnscoped: true,
+			openArgs: map[string]any{}, allArgs: map[string]any{"includeArchived": true},
+			defaultOpen: true,
+			internal: []string{
+				"workerId", "credentialTypeId", "status", "issuingAuthority", "issuedAt",
+				"expiresAt", "daysUntilExpiry", "health",
+			},
+			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				kind, err := services.credentials.CreateType(ctx, credentialType(bu, org, "K"+label))
+				if err != nil {
+					return pulid.Nil, err
+				}
+				issued, expires := now-86400*300, now+86400*10
+				status, archivedAt := worker.CredentialStatusActive, (*int64)(nil)
+				if closed {
+					status, archivedAt = worker.CredentialStatusArchived, &now
+				}
+				row, err := services.credentials.Create(ctx, &workerports.CreateWorkerCredentialRequest{
+					Entity: &worker.WorkerCredential{
+						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+						CredentialTypeID: kind.ID, Status: status, Number: "D-" + label,
+						IssuingAuthority: "IL", IssuedAt: &issued, ExpiresAt: &expires,
+						ArchivedAt: archivedAt, Notes: "Renewal booked " + label,
+					},
+				})
+				return created(row, err)
+			},
+			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeArchived bool) ([]string, error) {
+				rows, err := services.credentialService.List(ctx, &workercredentialservice.ListRequest{
+					TenantInfo: tenant, WorkerID: workerID, IncludeArchived: includeArchived,
+				})
+				return idsOf(rows, err)
+			},
+			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
+				bu, org := tenantOf(tenant)
+				kind, err := services.credentials.CreateType(ctx, credentialType(bu, org, "T"+label))
+				return created(kind, err)
+			},
+			activeTemplates: func(ctx context.Context, tenant pagination.TenantInfo) (int, error) {
+				types, err := services.credentials.ListActiveTypes(ctx, tenant)
+				return len(types), err
+			},
+		},
+	}
+}
+
+// credentialType is an active, required kind of credential a worker holds.
+func credentialType(bu, org pulid.ID, code string) *worker.WorkerCredentialType {
+	return &worker.WorkerCredentialType{
+		BusinessUnitID: bu, OrganizationID: org, Code: code, Name: "Credential " + code,
+		Category: worker.CredentialCategoryOther, Status: domaintypes.StatusActive,
+		IsRequired: true, RenewalWindowDays: 30,
 	}
 }
 
@@ -371,22 +431,24 @@ func idsOf[T interface{ GetID() pulid.ID }](rows []T, err error) ([]string, erro
 // agentreadServices are the repositories and services the keyed lists read
 // through, and the old tools read.
 type agentreadServices struct {
-	checklists       workerChecklistRepo
-	training         workerTrainingRepo
-	reviews          reviewRepo
-	injuries         injuryRepo
-	tests            dotTestRepo
-	checklistService *workerchecklistservice.Service
-	trainingService  *workertrainingservice.Service
-	reviewService    *performancereviewservice.Service
-	injuryService    *workerinjuryservice.Service
-	testService      *workerdrugalcoholservice.Service
-	leave            leaveRepo
-	dqf              dqfRepo
-	leaveService     *workerleaveservice.Service
-	dqfService       *workerdqfservice.Service
-	safety           workerports.WorkerSafetyRepository
-	safetyService    *workersafetyservice.Service
+	checklists        workerChecklistRepo
+	training          workerTrainingRepo
+	reviews           reviewRepo
+	injuries          injuryRepo
+	tests             dotTestRepo
+	checklistService  *workerchecklistservice.Service
+	trainingService   *workertrainingservice.Service
+	reviewService     *performancereviewservice.Service
+	injuryService     *workerinjuryservice.Service
+	testService       *workerdrugalcoholservice.Service
+	leave             leaveRepo
+	dqf               dqfRepo
+	leaveService      *workerleaveservice.Service
+	dqfService        *workerdqfservice.Service
+	safety            workerports.WorkerSafetyRepository
+	safetyService     *workersafetyservice.Service
+	credentials       workerports.WorkerCredentialRepository
+	credentialService *workercredentialservice.Service
 }
 
 type (
@@ -518,6 +580,12 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 		Logger: logger, Repo: services.safety, WorkerRepo: workers,
 	})
 	resolvers.WorkerSafetyService = services.safetyService
+	services.credentials = workercredentialrepository.New(
+		workercredentialrepository.Params{DB: conn, Logger: logger})
+	services.credentialService = workercredentialservice.New(workercredentialservice.Params{
+		Logger: logger, Repo: services.credentials, WorkerRepo: workers,
+	})
+	resolvers.WorkerCredentialService = services.credentialService
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
@@ -578,12 +646,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 						assert.NotContains(t, page, c.key, "a read keyed by the worker needs one")
 					}
 				})
-				if c.openByDefaultUnscoped {
-					t.Run("no worker reads only the open records by default", func(t *testing.T) {
-						page := call(map[string]any{})
-						assert.ElementsMatch(t, ours.open, itemIDs(page))
-					})
-				}
+
 			}
 
 			if c.templates != nil {
@@ -596,7 +659,40 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 					}
 					assert.Contains(t, ids, ours.template.String())
 					assert.NotContains(t, ids, other.template.String())
-					assert.Len(t, ids, 1+keyedTemplatesFor(c.tool), "only the active ones")
+					want := 1 + keyedTemplatesFor(c.tool)
+					if c.activeTemplates != nil {
+						var countErr error
+						want, countErr = c.activeTemplates(ours.ctx, ours.info)
+						require.NoError(t, countErr)
+					}
+					assert.Len(t, ids, want, "only the active ones")
+				})
+			}
+
+			if c.openByDefaultUnscoped {
+				t.Run("no worker reads only the open records by default, and nothing of another tenant", func(t *testing.T) {
+					page := call(map[string]any{})
+					assert.ElementsMatch(t, ours.open, itemIDs(page))
+					if c.key != "" && !c.keyed {
+						assert.NotContains(t, page, c.key, "what is read beside one worker's needs one")
+					}
+				})
+			}
+
+			if c.tool == "worker_list_credentials" {
+				t.Run("what falls due is walked page by page, with no repeats", func(t *testing.T) {
+					var seen []string
+					args := map[string]any{"limit": float64(1)}
+					for range len(ours.open) + 1 {
+						page := call(args)
+						seen = append(seen, itemIDs(page)...)
+						cursor, _ := page["nextCursor"].(string)
+						if cursor == "" {
+							break
+						}
+						args = map[string]any{"limit": float64(1), "after": cursor}
+					}
+					assert.ElementsMatch(t, ours.open, seen)
 				})
 			}
 
@@ -607,6 +703,28 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 					require.Len(t, items, len(ours.all))
 					for _, item := range items {
 						assert.NotEmpty(t, item.(map[string]any)[c.nested])
+					}
+				})
+			}
+
+			if len(c.internal) > 0 {
+				t.Run("what is Internal reaches an agent at the default data access", func(t *testing.T) {
+					data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
+						OrganizationID:    actor.OrganizationID,
+						BusinessUnitID:    actor.BusinessUnitID,
+						Actor:             actor,
+						Timezone:          "America/Chicago",
+						Params:            withWorker(ours.workerID, c.allArgs),
+						RunID:             pulid.MustNew("ar_"),
+						DataAccessCeiling: permission.SensitivityInternal,
+					})
+					require.NoError(t, queryErr)
+					items, _ := asMap(t, data)["items"].([]any)
+					require.Len(t, items, len(ours.all))
+					for _, item := range items {
+						for _, field := range c.internal {
+							assert.Contains(t, item.(map[string]any), field)
+						}
 					}
 				})
 			}

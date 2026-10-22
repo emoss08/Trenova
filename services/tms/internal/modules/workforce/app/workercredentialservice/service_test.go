@@ -2,6 +2,8 @@ package workercredentialservice_test
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
@@ -32,6 +34,7 @@ type fakeRepo struct {
 	types       map[pulid.ID]*worker.WorkerCredentialType
 	credentials map[pulid.ID]*worker.WorkerCredential
 	createReqs  []*workerports.CreateWorkerCredentialRequest
+	expiring    *workerports.ListExpiringWorkerCredentialsRequest
 	ensured     int
 }
 
@@ -165,6 +168,9 @@ func (f *fakeRepo) ListForWorker(
 		}
 		out = append(out, cred)
 	}
+	slices.SortFunc(out, func(a, b *worker.WorkerCredential) int {
+		return strings.Compare(a.ID.String(), b.ID.String())
+	})
 	return out, nil
 }
 
@@ -222,9 +228,10 @@ func (f *fakeRepo) Update(
 }
 
 func (f *fakeRepo) ListExpiring(
-	context.Context,
-	*workerports.ListExpiringWorkerCredentialsRequest,
+	_ context.Context,
+	req *workerports.ListExpiringWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
+	f.expiring = req
 	return nil, nil
 }
 
