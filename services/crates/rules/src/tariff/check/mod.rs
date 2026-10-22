@@ -74,10 +74,13 @@ mod stmt;
 mod tables;
 mod visit;
 
+pub use calls::CONSTRUCTORS;
 pub use program::check;
+pub use tables::TABLE_METHODS;
 
 use crate::span::Span;
 use crate::tariff::diagnostic::{Diagnostic, Severity};
+use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::{EnumType, Type};
 use std::collections::BTreeMap;
@@ -158,6 +161,10 @@ pub struct ModuleAnalysis {
     pub pattern_variants: BTreeMap<u32, Arc<EnumType>>,
     /// The inferred types of bindings, for inlay hints.
     pub hints: Vec<Hint>,
+    /// The type expected where each expression is written, by node, when the context expects
+    /// one (an annotation, a parameter, the other side of a comparison): what the editor
+    /// completes and offers enum variants for.
+    pub expected: BTreeMap<NodeId, Type>,
 }
 
 impl ModuleAnalysis {
@@ -165,6 +172,12 @@ impl ModuleAnalysis {
     #[must_use]
     pub fn type_of(&self, node: NodeId) -> Option<&Type> {
         self.types.get(usize::try_from(node.0).ok()?)?.as_ref()
+    }
+
+    /// The type expected where an expression node is written, when one is.
+    #[must_use]
+    pub fn expected_at(&self, node: NodeId) -> Option<&Type> {
+        self.expected.get(&node)
     }
 }
 
@@ -241,8 +254,8 @@ pub struct Symbol {
     pub span: Option<Span>,
     /// Its type, for values; a record or enum type for types.
     pub ty: Option<Type>,
-    /// Its doc comment.
-    pub doc: Option<String>,
+    /// Its doc: its doc comment; a schema root's doc; for a module alias, the module's doc.
+    pub doc: Option<Doc>,
 }
 
 /// A use of a symbol.

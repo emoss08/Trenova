@@ -1,9 +1,9 @@
-# cargo-fuzz targets for the formula language service. Outside the services workspace
-# (cargo-fuzz builds with nightly and its own flags); run with
-#   cargo +nightly fuzz run formula_check -- -max_total_time=60
-#   cargo +nightly fuzz run formula_format -- -max_total_time=60
+# cargo-fuzz targets for Tariff. Outside the services workspace (cargo-fuzz builds with nightly
+# and its own flags); run with
 #   cargo +nightly fuzz run tariff_parse -- -max_total_time=60
 #   cargo +nightly fuzz run tariff_format -- -max_total_time=60
+#   cargo +nightly fuzz run tariff_check -- -max_total_time=60
+#   cargo +nightly fuzz run tariff_evaluate -- -max_total_time=60
 [package]
 name = "trenova-rules-fuzz"
 version = "0.0.0"
@@ -22,20 +22,6 @@ trenova-rules = { path = ".." }
 [workspace]
 
 [[bin]]
-name = "formula_check"
-path = "fuzz_targets/formula_check.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
-name = "formula_format"
-path = "fuzz_targets/formula_format.rs"
-test = false
-doc = false
-bench = false
-
-[[bin]]
 name = "tariff_parse"
 path = "fuzz_targets/tariff_parse.rs"
 test = false
@@ -45,6 +31,20 @@ bench = false
 [[bin]]
 name = "tariff_format"
 path = "fuzz_targets/tariff_format.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tariff_check"
+path = "fuzz_targets/tariff_check.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "tariff_evaluate"
+path = "fuzz_targets/tariff_evaluate.rs"
 test = false
 doc = false
 bench = false

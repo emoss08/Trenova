@@ -1135,7 +1135,7 @@ impl Parser<'_> {
                         self.error(
                             token.span.cover(self.peek().span),
                             Message::new(message!(
-                                "Expected a value inside the braces; a literal brace is written `'{{'`"
+                                "Expected a value inside the braces; a literal brace is written twice, `'{{'` or `'}}'`"
                             )),
                         );
                         self.missing()

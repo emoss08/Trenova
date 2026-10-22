@@ -273,7 +273,9 @@ export function ImportRateSheetDialog({ open, onOpenChange }: ImportRateSheetDia
 
             <div className="bg-muted/30 flex items-center justify-between rounded-lg border px-3 py-2">
               <p className="text-muted-foreground text-xs">
-                {t("Not sure how to lay out the sheet? Start from the template.")}
+                {t(
+                  "Each row's method picks a standard tariff (flat, per mile or per hundredweight), and its rate and minimum columns become that tariff's rate and minimum charge. Not sure how to lay out the sheet? Start from the template.",
+                )}
               </p>
               <Button
                 type="button"

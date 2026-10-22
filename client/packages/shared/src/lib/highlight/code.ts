@@ -73,6 +73,41 @@ export function highlightLines(code: string, label?: string): CodeLine[] {
   return lines;
 }
 
+/** A range of code with a role, in UTF-16 code units, as a language's own tokenizer gives it. */
+export type CodeSpan = { readonly from: number; readonly to: number; readonly role?: CodeRole };
+
+/**
+ * highlightSpans splits code into lines coloured by spans another tokenizer produced (the rules
+ * module's `tariff.tokens`), with the text between spans left plain. Spans must be in order and
+ * not overlap; one that runs past the end of the code is cut there.
+ */
+export function highlightSpans(code: string, spans: readonly CodeSpan[]): CodeLine[] {
+  const segments: CodeSegment[] = [];
+  let at = 0;
+  for (const span of spans) {
+    const from = Math.max(span.from, at);
+    const to = Math.min(span.to, code.length);
+    if (to <= from) continue;
+    if (from > at) segments.push({ text: code.slice(at, from) });
+    const text = code.slice(from, to);
+    segments.push(span.role ? { role: span.role, text } : { text });
+    at = to;
+  }
+  if (at < code.length) segments.push({ text: code.slice(at) });
+
+  const lines: CodeSegment[][] = [[]];
+  for (const segment of segments) {
+    const parts = segment.text.split("\n");
+    for (let i = 0; i < parts.length; i += 1) {
+      if (i > 0) lines.push([]);
+      const text = parts[i];
+      if (text === "") continue;
+      lines[lines.length - 1].push(segment.role ? { role: segment.role, text } : { text });
+    }
+  }
+  return lines;
+}
+
 export type MatchRange = readonly [start: number, end: number];
 
 /** createMatcher finds a query anywhere, ignoring case; a blank query finds nothing. */

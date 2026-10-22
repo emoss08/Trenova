@@ -10,7 +10,9 @@ describe("formatMessage — positional", () => {
   });
 
   it("substitutes a single placeholder", () => {
-    expect(formatMessage("en", 'Delete "{0}"?', ["Load 42"])).toBe('Delete "Load 42"?');
+    expect(formatMessage("en", 'Delete "{0}"?', ["Load 42"])).toBe(
+      'Delete "Load 42"?',
+    );
   });
 
   it("substitutes multiple placeholders", () => {
@@ -59,7 +61,9 @@ describe("formatMessage — plurals", () => {
   it("uses the single Chinese form even for a count of one", () => {
     const chinese = "{0, plural, other {# 個運單}}";
     expect(formatMessage("zh-TW", chinese, [1])).toBe("1 個運單");
-    expect(formatMessage("zh-CN", "{0, plural, other {# 个运单}}", [1])).toBe("1 个运单");
+    expect(formatMessage("zh-CN", "{0, plural, other {# 个运单}}", [1])).toBe(
+      "1 个运单",
+    );
   });
 
   it("writes the count the way the locale writes numbers, as format.go does", () => {
@@ -73,16 +77,47 @@ describe("formatMessage — plurals", () => {
   });
 
   it("falls back to the other-form when one is absent", () => {
-    expect(formatMessage("en", "{0, plural, other {# items}}", [1])).toBe("1 items");
+    expect(formatMessage("en", "{0, plural, other {# items}}", [1])).toBe(
+      "1 items",
+    );
   });
 
   it("keeps surrounding text", () => {
-    const sentence = "You have {0, plural, one {# message} other {# messages}} waiting";
-    expect(formatMessage("en", sentence, [1])).toBe("You have 1 message waiting");
-    expect(formatMessage("en", sentence, [3])).toBe("You have 3 messages waiting");
+    const sentence =
+      "You have {0, plural, one {# message} other {# messages}} waiting";
+    expect(formatMessage("en", sentence, [1])).toBe(
+      "You have 1 message waiting",
+    );
+    expect(formatMessage("en", sentence, [3])).toBe(
+      "You have 3 messages waiting",
+    );
   });
 
   it("ignores the plural form when the argument is not a number", () => {
     expect(formatMessage("en", message, ["many"])).toBe("many");
+  });
+});
+
+describe("formatMessage — quoting (TestFormatQuoting)", () => {
+  it.each([
+    ["a quoted brace is literal", "write '{' to open", [], "write { to open"],
+    ["a quoted pair is literal", "write '{{' or '}}'", [], "write {{ or }}"],
+    ["two apostrophes are one", "it''s here", [], "it's here"],
+    [
+      "a lone apostrophe stays",
+      "the shipment's {0}",
+      ["weight"],
+      "the shipment's weight",
+    ],
+    ["quoting next to a placeholder", "'{'{0}'}'", ["x"], "{x}"],
+    [
+      "a quote inside a plural branch",
+      "{0, plural, one {# '{'item'}'} other {# items}}",
+      [1],
+      "1 {item}",
+    ],
+    ["an unclosed quote runs to the end", "a '{ b", [], "a { b"],
+  ] as const)("%s", (_name, message, args, want) => {
+    expect(formatMessage("en", message, [...args])).toBe(want);
   });
 });

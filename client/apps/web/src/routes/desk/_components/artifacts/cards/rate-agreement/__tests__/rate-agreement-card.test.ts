@@ -11,14 +11,13 @@ import {
   accessorialTerms,
   agreementReferences,
   agreementStage,
-  breakLabel,
   decimal,
   fuelTerms,
   guardrails,
-  lanePricing,
   laneTerms,
   lifecycleSteps,
   pricingGroups,
+  tariffTerms,
   termSpan,
   termState,
 } from "../rate-agreement-card";
@@ -48,15 +47,12 @@ function lane(overrides: Partial<RateAgreementRule> = {}): RateAgreementRule {
     destinationCity: "",
     direction: "Directional",
     formulaTemplateId: "ft_mile",
-    rate: 2.1,
-    freightClassSource: "Commodity",
-    allowDeficitRating: true,
+    inputs: { rate: { $q: "2.1", u: "$/mi" } },
     daysOfWeek: 0,
     hazmatOnly: false,
     tempControlOnly: false,
     priority: 0,
     effectiveFrom: NOW - 30 * DAY,
-    breaks: [],
     ...overrides,
   } as RateAgreementRule;
 }
@@ -79,10 +75,7 @@ function agreement(overrides: Partial<RateAgreement> = {}): RateAgreement {
     autoRenew: false,
     renewalNoticeDays: 30,
     currency: "USD",
-    defaultMinCharge: null,
-    defaultMaxCharge: null,
-    roundingMode: "HalfUp",
-    roundingPrecision: 2,
+    inputs: {},
     billToCustomerId: null,
     marginFloorPercent: null,
     maxPayPercentOfSell: null,
@@ -221,76 +214,54 @@ describe("lifecycleSteps", () => {
   });
 });
 
-describe("lanePricing and laneTerms", () => {
-  it("prices a lane by its formula template at its rate, or by its rate table", () => {
-    expect(lanePricing(lane({ rate: 2.1025 }))).toEqual({
-      by: "formula",
-      templateId: "ft_mile",
-      rate: "2.1025",
-    });
-    expect(lanePricing(lane({ rate: null }))).toEqual({
-      by: "formula",
-      templateId: "ft_mile",
-      rate: null,
-    });
+describe("tariffTerms and laneTerms", () => {
+  it("lists the tariff input values a lane sets, named as the form names them and in their unit", () => {
     expect(
-      lanePricing(lane({ formulaTemplateId: null, rateMatrixId: "rm_1", rate: null })),
-    ).toEqual({
-      by: "matrix",
-      matrixId: "rm_1",
-    });
-    expect(lanePricing(lane({ formulaTemplateId: null }))).toEqual({ by: "none" });
+      tariffTerms(
+        {
+          rate: { $q: "2.1025", u: "$/mi" },
+          minimumCharge: { $q: "250", u: "$" },
+          fuelPercent: { $q: "18", u: "%" },
+          breaks: [
+            { from: { $q: "0", u: "lb" }, rate: { $q: "42", u: "$/cwt" }, minimum: null },
+            { from: { $q: "500", u: "lb" }, rate: { $q: "35.5", u: "$/cwt" }, minimum: null },
+          ],
+          hazmat: true,
+          unset: undefined,
+        },
+        "USD",
+        t,
+      ).map((term) => [term.label, term.value]),
+    ).toEqual([
+      ["Rate", "$2.1025/mi"],
+      ["Minimum charge", "$250.00"],
+      ["Fuel percent", "18%"],
+      ["Breaks", "2 items"],
+      ["Hazmat", "Yes"],
+    ]);
+    expect(tariffTerms({}, "USD", t)).toEqual([]);
   });
 
-  it("states what bounds a lane's price and which loads it applies to", () => {
+  it("shows money in the lane's currency", () => {
+    expect(tariffTerms({ minimumCharge: { $q: "250", u: "$" } }, "CAD", t)[0]?.value).toBe(
+      "CA$250.00",
+    );
+  });
+
+  it("states which loads a lane applies to and which way it runs", () => {
     expect(
       laneTerms(
         lane({
-          minCharge: 250,
-          maxCharge: 3000,
-          discountPercent: 5,
           minWeight: 5000,
           maxWeight: 20000,
           maxDistance: 500,
           hazmatOnly: true,
           direction: "Bidirectional",
-          breaks: [
-            {
-              fromWeight: 0,
-              toWeight: 5000,
-              rate: 3.1,
-              minCharge: null,
-              label: "",
-              sortOrder: 0,
-            },
-          ] as RateAgreementRule["breaks"],
         }),
-        "USD",
         t,
       ),
-    ).toEqual([
-      "Min $250.00",
-      "Max $3,000.00",
-      "5% discount",
-      "1 weight breaks",
-      "5,000–20,000 lb",
-      "Up to 500 mi",
-      "Hazmat only",
-      "Both ways",
-    ]);
-    expect(laneTerms(lane(), "USD", t)).toEqual([]);
-  });
-
-  it("names a weight break by its own label or the weights it covers", () => {
-    expect(
-      breakLabel({ fromWeight: 0, toWeight: 5000, label: "" } as RateAgreementRule["breaks"][0], t),
-    ).toBe("0–5,000 lb");
-    expect(
-      breakLabel(
-        { fromWeight: 0, toWeight: 5000, label: " LTL " } as RateAgreementRule["breaks"][0],
-        t,
-      ),
-    ).toBe("LTL");
+    ).toEqual(["5,000–20,000 lb", "Up to 500 mi", "Hazmat only", "Both ways"]);
+    expect(laneTerms(lane(), t)).toEqual([]);
   });
 });
 
@@ -302,7 +273,7 @@ describe("accessorialTerms and fuelTerms", () => {
       amount: 75,
       waived: false,
       autoApply: false,
-      applyCondition: "",
+      condition: null,
       ...overrides,
     }) as RateAgreementAccessorial;
 
@@ -322,6 +293,13 @@ describe("accessorialTerms and fuelTerms", () => {
         t,
       ),
     ).toEqual(["$45.00 per hour", "2 free", "Up to $300.00", "Added automatically"]);
+    expect(
+      accessorialTerms(
+        charge({ autoApply: true, condition: 'condition "Residential"\n\nshipment.hazmat' }),
+        "USD",
+        t,
+      ),
+    ).toEqual(["$75.00", "Added automatically", "When its condition holds"]);
     expect(accessorialTerms(charge({ method: "Percentage", amount: 3 }), "USD", t)).toEqual(["3%"]);
     expect(accessorialTerms(charge({ waived: true }), "USD", t)).toEqual(["Waived"]);
   });
@@ -344,22 +322,17 @@ describe("accessorialTerms and fuelTerms", () => {
 });
 
 describe("guardrails", () => {
-  it("lists the charge limits and rounding, and the margin kept only where one is set", () => {
-    expect(guardrails(agreement(), t).map((row) => [row.label, row.value])).toEqual([
-      ["Minimum charge", "None"],
-      ["Maximum charge", "None"],
-      ["Rounding", "Half up · 2 places"],
-    ]);
+  it("lists only the margin kept, and only where one is set", () => {
+    expect(guardrails(agreement(), t)).toEqual([]);
     expect(
-      guardrails(
-        agreement({
-          defaultMinCharge: 250,
-          marginFloorPercent: 12.5,
-          maxPayPercentOfSell: 85,
-        }),
-        t,
-      ).map((row) => row.value),
-    ).toEqual(["$250.00", "None", "12.5%", "85% of sell", "Half up · 2 places"]);
+      guardrails(agreement({ marginFloorPercent: 12.5, maxPayPercentOfSell: 85 }), t).map((row) => [
+        row.label,
+        row.value,
+      ]),
+    ).toEqual([
+      ["Margin floor", "12.5%"],
+      ["Pays at most", "85% of sell"],
+    ]);
   });
 
   it("says a carrier agreement keeps margins without showing them to a role that withholds them", () => {
@@ -370,15 +343,10 @@ describe("guardrails", () => {
         false,
       ).map((row) => [row.label, row.value]),
     ).toEqual([
-      ["Minimum charge", "None"],
-      ["Maximum charge", "None"],
       ["Margin floor", "Hidden"],
       ["Pays at most", "Hidden"],
-      ["Rounding", "Half up · 2 places"],
     ]);
-    expect(
-      guardrails(agreement({ partyType: "Customer" }), t, false).map((row) => row.label),
-    ).toEqual(["Minimum charge", "Maximum charge", "Rounding"]);
+    expect(guardrails(agreement({ partyType: "Customer" }), t, false)).toEqual([]);
   });
 });
 
@@ -388,18 +356,17 @@ describe("agreementReferences", () => {
       agreement({
         billToCustomerId: "cus_0",
         accessorials: [
-          { accessorialChargeId: "acc_2", formulaTemplateId: "ft_det" },
+          { accessorialChargeId: "acc_2" },
           { accessorialChargeId: "acc_1" },
         ] as RateAgreementAccessorial[],
         fuelBinding: { fuelSurchargeProgramId: "fsp_1" } as RateAgreementFuelBinding,
       }),
-      [lane(), lane({ id: "rule_2", formulaTemplateId: null, rateMatrixId: "rm_1" })],
+      [lane(), lane({ id: "rule_2", formulaTemplateId: "ft_ltl" }), lane({ id: "rule_3" })],
       ["usr_3", null, "usr_1"],
     );
 
     expect(refs).toEqual({
-      templates: ["ft_det", "ft_mile"],
-      matrices: ["rm_1"],
+      templates: ["ft_ltl", "ft_mile"],
       charges: ["acc_1", "acc_2"],
       programs: ["fsp_1"],
       customers: ["cus_0", "cus_1"],
@@ -413,29 +380,18 @@ describe("pricingGroups", () => {
   const group = (overrides: Partial<LanePricingGroup>): LanePricingGroup => ({
     formulaTemplateId: "ft_mile",
     formulaTemplateName: "Per mile",
-    rateMatrixId: null,
-    rateMatrixName: "",
     currency: "USD",
     lanes: 1,
-    minRate: null,
-    maxRate: null,
     ...overrides,
   });
 
-  it("names each way of pricing, with its share of the lanes and the rates they quote", () => {
+  it("names each tariff that prices lanes, with its share of the lanes, most lanes first", () => {
     const groups = pricingGroups(
       {
         count: 8,
         groups: [
-          group({ lanes: 2, minRate: "2.5", maxRate: "2.5" }),
-          group({
-            formulaTemplateId: null,
-            formulaTemplateName: "",
-            rateMatrixId: "rm_1",
-            rateMatrixName: "Zones",
-            lanes: 5,
-          }),
-          group({ formulaTemplateId: null, formulaTemplateName: "", lanes: 1 }),
+          group({ lanes: 3 }),
+          group({ formulaTemplateId: "ft_ltl", formulaTemplateName: "LTL classes", lanes: 5 }),
         ],
       },
       { rows: 5, currency: "USD" },
@@ -443,26 +399,22 @@ describe("pricingGroups", () => {
     );
 
     expect(groups).toEqual([
-      { key: ":rm_1:USD", label: "Rate table Zones", lanes: 5, share: 5 / 8, range: null },
-      { key: "ft_mile::USD", label: "Per mile", lanes: 2, share: 2 / 8, range: "2.5" },
-      { key: "::USD", label: "Not priced", lanes: 1, share: 1 / 8, range: null },
+      { key: "ft_ltl:USD", label: "LTL classes", lanes: 5, share: 5 / 8 },
+      { key: "ft_mile:USD", label: "Per mile", lanes: 3, share: 3 / 8 },
     ]);
   });
 
-  it("writes a range low to high, and says a currency other than the agreement's", () => {
+  it("says a currency other than the agreement's", () => {
     const [mile] = pricingGroups(
-      {
-        count: 3,
-        groups: [group({ lanes: 3, currency: "CAD", minRate: "2.1", maxRate: "3.4525" })],
-      },
+      { count: 3, groups: [group({ lanes: 3, currency: "CAD" })] },
       { rows: 5, currency: "USD" },
       t,
     );
 
-    expect(mile).toMatchObject({ label: "Per mile · CAD", range: "2.1 – 3.4525", share: 1 });
+    expect(mile).toMatchObject({ label: "Per mile · CAD", share: 1 });
   });
 
-  it("folds the ways past its rows into one, keeping the lanes they price", () => {
+  it("folds the tariffs past its rows into one, keeping the lanes they price", () => {
     const groups = pricingGroups(
       {
         count: 10,
@@ -479,12 +431,12 @@ describe("pricingGroups", () => {
       ["T3", 3],
       ["2 other ways", 3],
     ]);
-    expect(groups[2]).toMatchObject({ key: "rest", share: 0.3, range: null });
+    expect(groups[2]).toMatchObject({ key: "rest", share: 0.3 });
   });
 
-  it("draws every way when they fit, and no share of an agreement with no lanes", () => {
+  it("draws every tariff when they fit, and no share of an agreement with no lanes", () => {
     expect(
       pricingGroups({ count: 0, groups: [group({ lanes: 0 })] }, { rows: 1, currency: "USD" }, t),
-    ).toEqual([{ key: "ft_mile::USD", label: "Per mile", lanes: 0, share: 0, range: null }]);
+    ).toEqual([{ key: "ft_mile:USD", label: "Per mile", lanes: 0, share: 0 }]);
   });
 });

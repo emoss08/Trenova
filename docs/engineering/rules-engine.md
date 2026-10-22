@@ -1586,15 +1586,15 @@ Each screen calls once per question for everything it shows, and waits in one of
 | Rate agreement lane editor | `lane.keys`, `lane.specificity`, `lane.coverage` | every lane of the agreement, again only when a field they read changes | `LaneEditorSkeleton` |
 | Lane key labels (`useLaneKeyLabels`: import rate sheet, simulation) | `lane.parse` | every distinct key on screen | `LaneKeyTableSkeleton`, `SimulationPanelSkeleton` |
 | Desk rate agreement card | `lane.keys` | every lane read so far, again when a page arrives | the card's skeleton |
-| Formula Studio editor: linter, hover, signature help, format command (`components/formula-editor`) | `formula.check`, `formula.identifier`, `formula.signature`, `formula.format` | the document at the cursor; one check per text and knowledge, shared by the linter and the Studio's analysis | `StudioSkeleton` (`StudioProvider`), and `ExpressionEditor`'s own `useRules()` for every editor |
-| Formula Studio analysis, reference pane, highlighter and completions | `formula.check`, `formula.catalog` | the main expression; the catalog once per loaded runtime | `StudioSkeleton` |
-| Nova's formula proposal card | `formula.format`, `formula.check` | the proposal's expression and breakdown lines | the Studio's boundary |
-| Desk formula template card | `formula.catalog` | once per loaded runtime, for the highlighter | the card's skeleton |
+| Tariff editor in both Studios (`components/formula-editor`): highlighting, lint, completion, hover, signature help, definition, rename, inlays, folding, format | `tariff.tokens`, `tariff.check`, `tariff.complete`, `tariff.hover`, `tariff.signature`, `tariff.definition`, `tariff.rename`, `tariff.inlays`, `tariff.format` | the document at the cursor or the visible range; one check per text, kind and context (an LRU of four), shared by the linter, the folding and the Studio | `StudioSkeleton` (the Studio's provider), and `TariffEditor`'s own `useRules()` |
+| Template and library Studios: outline, problems, tests panel, readiness, reference pane, "Save as test" on the sample load | `tariff.check`, `tariff.test`, `tariff.catalog`, `tariff.scaffoldTest` | the source once per text (`useTariffWorkbench`); the tests once the source has rested 400 ms; the catalog once per loaded runtime | `StudioSkeleton` |
+| Nova's proposal card | `tariff.check`, `tariff.test`, `tariff.format` | the proposed source | the Studio's boundary |
+| Desk formula template card, every read-only source (`TariffCode`) | `tariff.tokens`, `tariff.check` | the source, once per text | the card's skeleton |
 | Rate matrix grid editor | `matrix.coverage` | the whole matrix, on each change of its cells or axes; each axis labelled as the screen names it | `MatrixGridEditorSkeleton` |
 
 Tests read the corpora through `rules/__tests__/corpus.ts`, so a wrapper or screen test asserts
 the case the crate is pinned to, never what the code returned when the test was written.
 
-The Formula Studio is the language's only browser caller, and no formula is parsed, checked or
-formatted in TypeScript; [formula-language-service.md](formula-language-service.md) has the
+The Studios and the read-only views of a source are Tariff's browser callers, and no Tariff is
+lexed, parsed, checked, evaluated or formatted in TypeScript; [formula-language-service.md](formula-language-service.md) has the
 editor's side.

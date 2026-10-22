@@ -27,12 +27,12 @@ describe("describeVersion", () => {
     const v = version({
       changeSummary: {
         agreementEffectiveFrom: { from: 1, to: 2 },
-        defaultMinCharge: { from: "100", to: "150" },
+        currency: { from: "USD", to: "CAD" },
       },
     });
     const text = describeVersion(v);
     expect(text).toContain("Effective from");
-    expect(text).toContain("Default minimum charge");
+    expect(text).toContain("Currency");
     expect(text).not.toContain("agreementEffectiveFrom");
   });
 
@@ -67,6 +67,27 @@ describe("describeVersion", () => {
     const text = describeVersion(v);
     expect(text).toContain("Removed accessorial");
     expect(text).not.toContain(CHARGE_ID);
+  });
+
+  it("names a contract-wide tariff term by its input, once however deep it changed", () => {
+    const v = version({
+      changeSummary: {
+        "inputs.minimumCharge": { from: { $q: "450", u: "$" }, to: { $q: "500", u: "$" } },
+        "inputs.breaks.2.rate": { from: { $q: "30", u: "$/cwt" }, to: { $q: "31", u: "$/cwt" } },
+        "inputs.breaks.3.rate": { from: { $q: "25", u: "$/cwt" }, to: { $q: "26", u: "$/cwt" } },
+      },
+    });
+    expect(describeVersion(v)).toBe("Minimum charge, Breaks");
+  });
+
+  it("names an accessorial's condition change as its condition", () => {
+    const v = version({
+      changeSummary: {
+        [`accessorialTerms.${CHARGE_ID}.condition`]: { from: null, to: 'condition "Residential"' },
+      },
+      accessorialNames: { [CHARGE_ID]: "RESI" },
+    });
+    expect(describeVersion(v)).toBe("RESI: Condition");
   });
 
   it("collapses fuel binding sub-fields into one phrase", () => {

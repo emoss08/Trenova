@@ -40,7 +40,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { archiveRefusal } from "./archive-refusal";
+import { archiveRefusal } from "@/lib/archive-refusal";
 import { ExportTemplateDialog } from "./export-template-dialog";
 import { ForkLineageDialog } from "./fork-lineage-dialog";
 import { ForkTemplateDialog } from "./fork-template-dialog";
@@ -101,7 +101,9 @@ export default function FormulaTemplatesDataTable() {
                       "{0, plural, one {# already existed and was skipped.} other {# already existed and were skipped.}}",
                       result.skipped.length,
                     )
-                  : t("They are drafts: add scenarios and send each for review before it rates."),
+                  : t(
+                      "They are drafts: check their tests and send each for review before it rates.",
+                    ),
             },
           );
         }
@@ -239,15 +241,10 @@ export default function FormulaTemplatesDataTable() {
   const handleBulkExport = useCallback(
     async (rows: FormulaTemplateRow[]) => {
       try {
-        const [templates, testCaseLists] = await Promise.all([
-          Promise.all(rows.map((row) => apiService.formulaTemplateService.get(row.id))),
-          Promise.all(rows.map((row) => apiService.formulaTemplateService.listTestCases(row.id))),
-        ]);
-        const testCasesByTemplateId = Object.fromEntries(
-          rows.map((row, index) => [row.id, testCaseLists[index]]),
+        const templates = await Promise.all(
+          rows.map((row) => apiService.formulaTemplateService.get(row.id)),
         );
-
-        const exportData = buildBulkExport(templates, testCasesByTemplateId);
+        const exportData = buildBulkExport(templates);
         const filename = getBulkExportFilename();
         downloadJson(exportData, filename);
       } catch {
@@ -365,7 +362,7 @@ export default function FormulaTemplatesDataTable() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as drafts. Each one rates shipments once it has scenarios and someone else approves it. Templates you already have are left untouched.",
+                "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as drafts. Each one carries its own tests and rates shipments once someone else approves it. Templates you already have are left untouched.",
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>

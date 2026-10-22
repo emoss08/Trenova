@@ -6,6 +6,7 @@ import type {
   RateImportSummary,
 } from "../types/rate";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { humanizeTariffName } from "./tariff-inputs";
 
 /**
  * Reading a staged rate import.
@@ -23,7 +24,7 @@ export function canCommit(batch: RateImportBatch | undefined): boolean {
 const KIND_LABEL: Record<RateImportChangeKind, string> = defineLabels({
   Removed: "Stops pricing",
   Added: "New lane",
-  Changed: "Rate changes",
+  Changed: "Terms change",
   Duplicate: "Listed twice",
   Unchanged: "No change",
 });
@@ -77,10 +78,28 @@ export function describeFieldChange(change: {
   before: string;
   after: string;
 }): string {
-  if (!change.before) return translate("{0} set to {1}", change.field, change.after);
-  if (!change.after) return translate("{0} removed (was {1})", change.field, change.before);
+  const field = importFieldLabel(change.field);
+  if (!change.before) return translate("{0} set to {1}", field, change.after);
+  if (!change.after) return translate("{0} removed (was {1})", field, change.before);
 
-  return `${change.field} ${change.before} → ${change.after}`;
+  return translate("{0} {1} → {2}", field, change.before, change.after);
+}
+
+const IMPORT_FIELD_LABELS: Record<string, string> = defineLabels({
+  formulaTemplateId: "Tariff",
+  priority: "Priority",
+  effectiveFrom: "Effective from",
+  effectiveTo: "Effective to",
+  label: "Label",
+});
+
+/**
+ * A term an import changes, in the form's words. A lane's terms are its tariff's inputs, which
+ * the server names `inputs.<name>`: the rate and minimum columns of a sheet land there.
+ */
+export function importFieldLabel(field: string): string {
+  if (field.startsWith("inputs.")) return humanizeTariffName(field.slice("inputs.".length));
+  return IMPORT_FIELD_LABELS[field] ?? field;
 }
 
 /**

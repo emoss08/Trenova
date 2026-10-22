@@ -527,6 +527,7 @@
     {
      "at": "shipment.distance == none",
      "code": "never-none",
+     "severity": "warning",
      "message": "`shipment.distance` is never empty, so comparing it with `none` is always false"
     }
    ],

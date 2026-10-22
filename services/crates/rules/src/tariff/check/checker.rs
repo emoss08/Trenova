@@ -163,6 +163,8 @@ pub struct Checker<'a> {
     pub source: &'a str,
     /// The module.
     pub module: ModuleId,
+    /// Whether the module is the standard library's, whose doc comments are translated.
+    pub std: bool,
     /// The file's kind.
     pub kind: FileKind,
     /// What the module can name.

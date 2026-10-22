@@ -1,7 +1,7 @@
 //! The rules the browser and the server must agree on, written once.
 //!
-//! Trenova prices shipments with a formula language, splits charges between payers, formats
-//! report numbers, ranks rate agreement lanes and picks rate matrix cells. Each of these used to
+//! Trenova prices shipments with Tariff, its rating language, splits charges between payers,
+//! formats report numbers, ranks rate agreement lanes and picks rate matrix cells. Each of these used to
 //! live twice, once in Go and once in TypeScript, and drifted. This crate is the only
 //! implementation: it compiles to one WebAssembly module (`task rust:wasm-rules`) that the TMS
 //! runs in wazero and the web app loads lazily, so the editor's diagnostics, the server's
@@ -17,7 +17,6 @@
 #[cfg(target_arch = "wasm32")]
 pub mod abi;
 pub mod allocation;
-pub mod formula;
 pub mod lane;
 pub mod matrix;
 pub mod message;

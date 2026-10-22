@@ -1,8 +1,8 @@
+import { chargeLineBasis } from "./tariff-lines";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { toMinorUnits } from "@trenova/shared/lib/charge-split";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import type { RateUnit } from "@trenova/shared/types/accessorial-charge";
 import type { InvoiceLine } from "@trenova/shared/types/invoice";
 
 /**
@@ -117,7 +117,13 @@ function formatQuantity(value: number): string {
   return formatNumber(value, { maximumFractionDigits: 4 });
 }
 
-function perUnitQuantity(t: TranslateFn, unit: RateUnit | null, quantity: number): string {
+/** Whether a rate unit is one a tariff wrote (`$/mi`, `$`) rather than an accessorial's unit. */
+export function isTariffRateUnit(unit: string | null | undefined): unit is string {
+  return typeof unit === "string" && unit.startsWith("$");
+}
+
+/** `3 miles`: a quantity counted in an accessorial's rate unit. */
+export function perUnitQuantity(t: TranslateFn, unit: string | null, quantity: number): string {
   switch (unit) {
     case "Mile":
       return t("{0, plural, one {# mile} other {# miles}}", quantity);
@@ -147,6 +153,15 @@ export function describeChargeCalculation(
 ): string | null {
   const quantity = line.quantity ?? 1;
   const rate = line.rate ?? null;
+
+  // A line a tariff billed states its quantity and rate in the tariff's own units.
+  if (isTariffRateUnit(line.rateUnit)) {
+    return chargeLineBasis(
+      { quantity: line.quantity, rate: rate ?? line.unitPrice, rateUnit: line.rateUnit },
+      t,
+      { currency: currencyCode },
+    );
+  }
 
   if (line.type === "Accessorial" && line.chargeMethod && rate !== null) {
     switch (line.chargeMethod) {

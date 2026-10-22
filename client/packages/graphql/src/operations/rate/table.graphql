@@ -17,8 +17,7 @@ fragment RateAgreementRowFields on RateAgreement {
   autoRenew
   renewalNoticeDays
   currency
-  defaultMinCharge
-  defaultMaxCharge
+  inputs
   marginFloorPercent
   maxPayPercentOfSell
   submittedById
@@ -53,9 +52,7 @@ fragment RateMatrixRowFields on RateMatrix {
   name
   description
   status
-  formulaTemplateId
-  formulaTemplateName
-  currency
+  valueType
   version
   createdAt
   updatedAt

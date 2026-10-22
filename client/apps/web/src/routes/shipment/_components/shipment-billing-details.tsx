@@ -5,7 +5,6 @@ import {
   FormulaTemplateAutocompleteField,
   OrderAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { freightTermsChoices } from "@/lib/choices";
@@ -36,18 +35,12 @@ import type {
   GetPreviousRatesRequest,
   Shipment,
 } from "@trenova/shared/types/shipment";
-import {
-  AlertTriangleIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ReceiptTextIcon,
-  Shield01Icon,
-  ShieldAlertIcon,
-} from "@trenova/shared/components/icons";
+import { AlertTriangleIcon, ShieldAlertIcon } from "@trenova/shared/components/icons";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router";
-import { ReceiptView } from "@/components/formula-editor/receipt-view";
+import { BillView } from "@/components/tariff-bill/bill-view";
+import { readStoredTariffBill } from "@trenova/shared/types/tariff-form";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useShipmentDefaultPayer } from "./use-shipment-default-payer";
@@ -56,6 +49,7 @@ import { AutoRateDialog } from "./auto-rate-dialog";
 import { BillingByPayerCard } from "./billing-by-payer-card";
 import { PreviousRatesButton } from "./previous-rates-dialog";
 import { ProfitabilitySummary } from "./profitability/profitability-summary";
+import { ShipmentTariffInputs } from "./shipment-tariff-inputs";
 import { WhyThisRate } from "./why-this-rate";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -411,13 +405,13 @@ function ContractRateAppliedAlert({
       </AlertTitle>
       <AlertDescription>
         <span>
-          {rate.accessorials.length > 0
+          {rate.charges.length > 0
             ? t(
-                "The rating method and base rate below came from the contract, along with {0, plural, one {# automatic charge} other {# automatic charges}}. Change any of them and this shipment is priced by hand instead.",
-                rate.accessorials.length,
+                "The rating method and its input values below came from the contract, along with {0, plural, one {# automatic charge} other {# automatic charges}}. Change any of them and this shipment is priced by hand instead.",
+                rate.charges.length,
               )
             : t(
-                "The rating method and base rate below came from the contract. Change any of them and this shipment is priced by hand instead.",
+                "The rating method and its input values below came from the contract. Change any of them and this shipment is priced by hand instead.",
               )}
         </span>
         <Button
@@ -469,124 +463,77 @@ function RateDepartureReason() {
   );
 }
 
-function RatingBreakdownCard() {
+/**
+ * The bill the shipment was last rated to, line by line: each freight and accessorial charge
+ * with its quantity and rate, the notes and any adjustment, from the tariff version that ran.
+ */
+function RatingBillCard() {
   const t = useT();
 
   const { control } = useFormContext<Shipment>();
-  const [showReceipt, setShowReceipt] = useState(false);
   const ratingDetail = useWatch({ control, name: "ratingDetail" });
   const shipmentId = useWatch({ control, name: "id" });
+  // A shipment read over GraphQL reaches the form unparsed, so the stored bill is read here.
+  const bill = readStoredTariffBill(ratingDetail?.bill);
 
-  const breakdown = ratingDetail?.breakdown ?? [];
-  const guardrail = ratingDetail?.guardrail;
-
-  if (!ratingDetail || (breakdown.length === 0 && !guardrail?.applied)) {
+  if (!ratingDetail || (!bill && !ratingDetail.refusal)) {
     return null;
   }
 
   // The contract that priced the shipment leads, since that is what somebody
-  // reading an invoice recognises. The formula name only appears when a formula
-  // is what actually produced the number.
+  // reading an invoice recognises; the tariff's own name follows it.
   const source = ratingDetail.agreementName || ratingDetail.formulaTemplateName;
 
   return (
     <div className="bg-muted/50 mt-3 rounded-lg border p-2">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex flex-col gap-1 w-full">
-          <div className="flex justify-between items-center">
-            <div className="flex flex-row gap-1">
-              <span className="text-xs font-medium">{t("Rating breakdown")}</span>
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="flex w-full flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-row items-center gap-1">
+              <span className="text-xs font-medium">{t("Bill")}</span>
               <AutoRateDialog />
             </div>
             <WhyThisRate shipmentId={shipmentId} />
           </div>
           <p className="text-2xs text-muted-foreground mt-0.5">
             {ratingDetail.ruleLabel
-              ? `${source} — ${ratingDetail.ruleLabel}`
-              : t("Itemized amounts from {0}", source || t("the rating formula"))}
+              ? t("{0} — {1}", source, ratingDetail.ruleLabel)
+              : t("Billed by {0}", source || t("the tariff"))}
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           {ratingDetail.versionNumber ? (
             <Badge variant="neutral" appearance="outline" className="text-2xs font-mono">
-              {` ${t("v{0}", ratingDetail.versionNumber)}`}
+              {t("v{0}", ratingDetail.versionNumber)}
             </Badge>
           ) : null}
+          {ratingDetail.formulaTemplateId && (
+            <Link
+              to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
+              className="text-2xs text-primary hover:underline"
+            >
+              {t("Open tariff")}
+            </Link>
+          )}
         </div>
       </div>
 
-      {breakdown.length > 0 && (
-        <div className="space-y-2">
-          {breakdown.map((item) => (
-            <div key={item.name} className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground text-sm">{item.label || item.name}</span>
-              {item.error ? (
-                <span className="text-destructive flex items-center gap-1 text-xs">
-                  <AlertTriangleIcon className="size-3" />
-                  {item.error}
-                </span>
-              ) : (
-                <span className="text-muted-foreground text-sm tracking-tight tabular-nums">
-                  {formatCurrency(item.amount)}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {guardrail?.applied && (
-        <div
-          className={cn(
-            "bg-background/50 flex items-start gap-2 rounded-md border px-2 py-1.5",
-            breakdown.length > 0 && "mt-3",
+      {ratingDetail.refusal ? (
+        <Alert variant="destructive" size="sm">
+          <AlertTriangleIcon className="size-4" />
+          <AlertTitle>{t("The tariff refused to rate this shipment")}</AlertTitle>
+          <AlertDescription>{ratingDetail.refusal}</AlertDescription>
+        </Alert>
+      ) : null}
+      {bill ? <BillView bill={bill} currency={bill.currency || undefined} /> : null}
+      {(ratingDetail.skipped ?? []).length > 0 && (
+        <p className="text-2xs text-muted-foreground mt-2">
+          {t(
+            "{0, plural, one {Not added again, since the tariff billed it:} other {Not added again, since the tariff billed them:}} {1}",
+            ratingDetail.skipped?.length ?? 0,
+            (ratingDetail.skipped ?? []).map((skip) => skip.code).join(", "),
           )}
-        >
-          <Shield01Icon className="mt-0.5 size-3.5 shrink-0 text-info-foreground" />
-          <p className="text-2xs text-muted-foreground">
-            {t(
-              "{0} charge guardrail applied. The formula produced {1} and was clamped to {2} .",
-              guardrail.bound === "min" ? t("Minimum") : t("Maximum"),
-              formatCurrency(guardrail.rawResult),
-              formatCurrency(
-                (guardrail.bound === "min" ? guardrail.minCharge : guardrail.maxCharge) ?? 0,
-              ),
-            )}
-          </p>
-        </div>
-      )}
-
-      {ratingDetail.receipt && (
-        <div className="mt-3 border-t pt-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => setShowReceipt((prev) => !prev)}
-              aria-expanded={showReceipt}
-              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs font-medium"
-            >
-              <ReceiptTextIcon className="size-3.5" />
-              {t("Calculation receipt")}
-              {showReceipt ? (
-                <ChevronDownIcon className="size-3" />
-              ) : (
-                <ChevronRightIcon className="size-3" />
-              )}
-            </button>
-            {ratingDetail.formulaTemplateId && (
-              <Link
-                to={formulaTemplateRoutes.edit(ratingDetail.formulaTemplateId)}
-                className="text-2xs text-primary hover:underline"
-              >
-                {t(
-                  "Open template {0}",
-                  ratingDetail.versionNumber ? ` ${t("v{0}", ratingDetail.versionNumber)}` : "",
-                )}
-              </Link>
-            )}
-          </div>
-          {showReceipt && <ReceiptView receipt={ratingDetail.receipt} />}
-        </div>
+        </p>
       )}
     </div>
   );
@@ -699,30 +646,16 @@ export default function ShipmentBillingDetails() {
           label={t("Rating method")}
           placeholder={t("Select rating method")}
           description={t(
-            "Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate).",
+            "The tariff that bills this shipment. Its inputs, below, are the values it rates with.",
           )}
           rules={{ required: true }}
         />
       ),
     },
     {
-      name: "baseRate",
+      name: "tariffInputs",
       cols: "full",
-      render: () => (
-        <NumberField
-          decimalScale={4}
-          thousandSeparator
-          control={control}
-          rules={{ required: true }}
-          name="baseRate"
-          label={t("Base rate")}
-          placeholder={t("Enter base rate")}
-          description={t(
-            "Per-unit rate used by the formula template to calculate freight charges.",
-          )}
-          sideText={t("USD")}
-        />
-      ),
+      render: () => <ShipmentTariffInputs />,
     },
   ];
 
@@ -741,7 +674,7 @@ export default function ShipmentBillingDetails() {
 
       <ChargeSummary isCalculating={isCalculating} error={totalsError} />
       <BillingByPayerCard />
-      <RatingBreakdownCard />
+      <RatingBillCard />
       <RateDepartureReason />
     </Inner>
   );

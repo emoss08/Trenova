@@ -1,30 +1,29 @@
-import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
-import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/default-test-values";
+import { checkTariffSource } from "@/components/formula-editor/tariff-service";
+import { BillView } from "@/components/tariff-bill/bill-view";
+import { refusalText, tariffMessageText } from "@/components/tariff-bill/refusal-text";
+import { TariffCode } from "@/components/tariff-code/tariff-code";
 import { recordPath } from "@/config/record-links";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePermission } from "@/hooks/use-permission";
+import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { describeApiError } from "@/lib/api-error-message";
-import { previewFailure, previewWarnings } from "@/lib/formula-preview";
-import { formulaTestRequest } from "@/lib/formula-test-request";
 import { formulaTemplate } from "@/lib/queries/formula-template";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
-import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { formatList } from "@trenova/shared/i18n/format";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { translateMessage } from "@trenova/shared/i18n/message";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formulaCatalog } from "@trenova/shared/rules/formula";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type {
+  FormulaPreviewResponse,
   FormulaTemplate,
   ReadinessCheck,
-  TestExpressionRequest,
-  TestExpressionResponse,
-  VariableDefinition,
 } from "@trenova/shared/types/formula-template";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router";
 import {
   CardBar,
@@ -43,33 +42,18 @@ import {
   type CardCheckState,
   type CardTone,
 } from "../../record-card/record-card";
-import { cardDay, cardMoment, money, neighborsIn } from "../../record-card/record-card-values";
+import { cardDay, cardMoment, neighborsIn } from "../../record-card/record-card-values";
 import type { RecordArtifactProps } from "../registry";
 import {
   formulaStage,
   formulaStatusLabel,
   formulaStatusNote,
-  formulaTypeLabel,
-  guardrailNote,
-  isEditableVariable,
-  rootOf,
-  roundingLabel,
-  roundingNote,
-  sampleLoadSummary,
-  tokenizeFormula,
+  totalClauseLabel,
   usageLabel,
-  variableDraft,
-  variableDrafts,
-  variableOverrides,
-  variableTypeLabel,
-  variableValue,
   type FormulaStage,
-  type FormulaToken,
 } from "./formula-template-card";
 import { DeskFormulaTemplateSkeleton } from "./formula-template-skeleton";
 
-/** How long a person's typing settles before the engine prices it again. */
-const PRICE_SETTLE_MS = 450;
 /** The versions the card lists; the studio holds the rest. */
 const VERSION_ROWS = 4;
 
@@ -86,24 +70,9 @@ const READINESS_STATE: Record<ReadinessCheck["status"], CardCheckState> = {
   fail: "bad",
 };
 
-const NO_REQUEST: TestExpressionRequest = { expression: "", schemaId: "shipment", variables: {} };
-
 /**
- * One formula template as a biller reads it, opened from a table's row: what
- * it charges for and whether it prices shipments now, the formula with the
- * template's own variables set apart from the shipment's fields, the limits
- * and rounding that hold its price, what it comes to on a sample load with
- * the variables as the person sets them, what stands between a draft and
- * approval, and how it got here. It reads; editing, testing against a saved
- * shipment and approving stay in the Formula Studio, one click away.
- *
- * The card steps through the table's rows in the order the table shows them.
- * A step draws the next template's skeleton until it is read, never the one it left.
- */
-/**
- * What the card is given: the template, and when it was opened from a table,
- * the table's rows in the order shown, how to step to another, and the way
- * back.
+ * What the card is given: the template, and when it was opened from a table, the table's rows
+ * in the order shown, how to step to another, and the way back.
  */
 export type FormulaTemplateCardProps = {
   recordId: string;
@@ -116,6 +85,16 @@ export type FormulaTemplateCardProps = {
 
 const NO_ROWS: readonly string[] = [];
 
+/**
+ * One formula template as a biller reads it, opened from a table's row: whether it prices
+ * shipments now, its tariff source coloured from the rules module's tokens, what it bills (each
+ * charge and total clause the checker outlines), the inputs a contract sets with their
+ * defaults, the bill it gives the sample load, what stands between a draft and approval, and how
+ * it got here. Editing, testing and approving stay in the Formula Studio, one click away.
+ *
+ * The card steps through the table's rows in the order the table shows them. A step draws the
+ * next template's skeleton until it is read, never the one it left.
+ */
 export function DeskFormulaTemplate({
   recordId,
   order = NO_ROWS,
@@ -160,8 +139,8 @@ export function DeskFormulaTemplate({
 }
 
 /**
- * The template as an artifact of its own, when the agent looked it up: the
- * same card, with nothing to step through and nowhere to go back to.
+ * The template as an artifact of its own, when the agent looked it up: the same card, with
+ * nothing to step through and nowhere to go back to.
  */
 export function DeskFormulaTemplateArtifact({ recordId }: RecordArtifactProps) {
   return <DeskFormulaTemplate recordId={recordId} />;
@@ -177,40 +156,31 @@ function FormulaCard({
 }: Required<Pick<FormulaTemplateCardProps, "order">> &
   Omit<FormulaTemplateCardProps, "order"> & { template: FormulaTemplate }) {
   const t = useT();
-  // The card colours the formula by the rules module's catalog (keywords,
-  // operators, functions); it suspends behind the card's skeleton until loaded.
+  // The card reads the tariff's outline with the rules module and colours its source from the
+  // module's tokens; it suspends behind the card's skeleton until the module has loaded.
   const rules = useRules();
+  const { context } = useTariffCheckContext();
   const userId = useAuthStore((state) => state.user?.id);
   const { allowed: canCreate } = usePermission(Resource.FormulaTemplate, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.FormulaTemplate, Operation.Update);
-  // The engine prices for those who may write a formula, as the studio does.
+  // The server rates a sample load for those who may write a template, as the studio does.
   const canPrice = canCreate || canUpdate;
   const stage = formulaStage(template.status);
-  const definitions = template.variableDefinitions;
   const studioPath = recordPath("formula_template", recordId);
 
-  const [drafts, setDrafts] = useState<Record<string, string>>(() => variableDrafts(definitions));
-  const [focus, setFocus] = useState<string | null>(null);
-  const changed = definitions.some(
-    (definition) => drafts[definition.name] !== variableDraft(definition),
+  const check = useMemo(
+    () => checkTariffSource(rules, template.source, "tariff", context),
+    [rules, template.source, context],
   );
-  const overrides = useMemo(() => variableOverrides(definitions, drafts), [definitions, drafts]);
-  const settled = useDebounce(overrides, PRICE_SETTLE_MS);
-  const request = useMemo(
-    () => formulaTestRequest(template, { sampleValues: DEFAULT_TEST_VALUES, overrides: settled }),
-    [template, settled],
-  );
+  const outline = check.outline?.items ?? [];
+  const charges = outline.filter((item) => item.kind === "charge");
+  const totals = outline.filter((item) => item.kind === "total");
 
   const price = useQuery({
-    ...formulaTemplate.price(request ?? NO_REQUEST),
-    enabled: canPrice && request !== null,
-    placeholderData: keepPreviousData,
+    ...formulaTemplate.preview({ source: template.source }),
+    enabled: canPrice && template.source.trim() !== "",
     retry: false,
     staleTime: 5 * 60_000,
-  });
-  const { data: schema } = useQuery({
-    ...formulaTemplate.schema(template.schemaId || "shipment"),
-    staleTime: 10 * 60_000,
   });
   const { data: usage } = useQuery(formulaTemplate.usage(recordId));
   const { data: versions } = useQuery(formulaTemplate.versions(recordId, VERSION_ROWS));
@@ -218,31 +188,12 @@ function FormulaCard({
     ...formulaTemplate.readiness(recordId),
     enabled: stage === "draft" || stage === "review",
   });
-
-  const known = useMemo(
-    () => buildKnownIdentifiers(formulaCatalog(rules), schema, definitions),
-    [rules, schema, definitions],
-  );
-  const names = useMemo(
-    () => new Set(definitions.map((definition) => definition.name)),
-    [definitions],
-  );
-  const tokens = useMemo(
-    () => tokenizeFormula(template.expression, known, names),
-    [template.expression, known, names],
-  );
   const neighbors = neighborsIn(order, recordId);
-  const result = price.data;
   const { copy, isCopied } = useCopyToClipboard();
 
   const usageText = usage
     ? usage.inUse
-      ? t(
-          "Used by {0}",
-          new Intl.ListFormat(undefined, { style: "long", type: "conjunction" }).format(
-            usage.usages.map((entry) => usageLabel(entry, t)),
-          ),
-        )
+      ? t("Used by {0}", formatList(usage.usages.map((entry) => usageLabel(entry, t))))
       : t("Not used yet")
     : "";
 
@@ -252,8 +203,11 @@ function FormulaCard({
         onBack={onBack}
         backLabel={backLabel ?? t("Back to the table")}
         kicker={[
-          formulaTypeLabel(template.type, t),
+          t("Tariff"),
           ...(template.currentVersionNumber ? [t("v{0}", template.currentVersionNumber)] : []),
+          ...(template.imports.length > 0
+            ? [t("{0, plural, one {# library} other {# libraries}}", template.imports.length)]
+            : []),
         ]}
         stepper={
           onSelect &&
@@ -268,7 +222,9 @@ function FormulaCard({
         }
         title={template.name}
         subtitle={template.description || undefined}
-        figure={canPrice ? <SamplePriceFigure result={result} pending={price.isPending} /> : null}
+        figure={
+          canPrice ? <SampleTotalFigure result={price.data} pending={price.isPending} /> : null
+        }
         meta={
           <>
             <CardStatus
@@ -290,130 +246,89 @@ function FormulaCard({
       />
 
       <CardSection
-        title={t("Formula")}
+        title={t("Source")}
         aside={
           <Button
             variant="quiet"
             size="xs"
             className="text-dsk-subtle"
-            onClick={() => void copy(template.expression)}
+            onClick={() => void copy(template.source)}
           >
             <CardIcon name={isCopied ? "check" : "copy"} size={12} />
             {isCopied ? t("Copied") : t("Copy")}
           </Button>
         }
       >
-        <FormulaCode tokens={tokens} focus={focus} onFocus={setFocus} label={t("Formula")} />
-        <div className="dk-ft-legend" aria-hidden>
-          <span className="dk-ft-var">{t("Template variable")}</span>
-          <span className="dk-ft-field">{t("Shipment field")}</span>
-          <span className="dk-ft-fn">{t("Function")}</span>
-        </div>
-        <dl className="dk-ft-rules">
-          <div>
-            <dt>{t("Minimum")}</dt>
-            <dd>{template.minCharge != null ? money(template.minCharge) : t("None")}</dd>
-          </div>
-          <div>
-            <dt>{t("Maximum")}</dt>
-            <dd>{template.maxCharge != null ? money(template.maxCharge) : t("None")}</dd>
-          </div>
-          <div>
-            <dt>{t("Rounding")}</dt>
-            <dd>{roundingLabel(template.roundingMode, template.roundingPrecision, t)}</dd>
-          </div>
-        </dl>
+        <TariffCode code={template.source} className="dk-ft-code" />
       </CardSection>
 
-      {template.breakdownDefinitions.length > 0 && (
-        <CardSection title={t("Itemized as")}>
+      {(charges.length > 0 || totals.length > 0) && (
+        <CardSection
+          title={t("Bills")}
+          aside={<span>{t("{0, plural, one {# charge} other {# charges}}", charges.length)}</span>}
+        >
           <div className="dk-ft-items">
-            {template.breakdownDefinitions.map((item) => {
-              const line = result?.breakdown?.find((entry) => entry.name === item.name);
-              return (
-                <div key={item.name} className="dk-ft-item">
-                  <span>
-                    <b>{item.label || item.name}</b>
-                    <FormulaCode
-                      tokens={tokenizeFormula(item.expression, known, names)}
-                      focus={focus}
-                      onFocus={setFocus}
-                      label={item.label || item.name}
-                      inline
-                    />
-                  </span>
-                  {line && (
-                    <span className={cn("dk-ft-n", line.error && "dk-bad")}>
-                      {line.error ? t("Error") : money(line.amount)}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
+            {charges.map((item) => (
+              <div key={item.range.from} className="dk-ft-item">
+                <span style={{ paddingLeft: `${item.depth * 12}px` }}>
+                  <b>{item.name}</b>
+                  {item.depth > 0 && <em className="dk-ft-when">{t("when it applies")}</em>}
+                </span>
+                {item.code && <code className="dk-ft-n">{item.code}</code>}
+              </div>
+            ))}
+            {totals.map((item) => (
+              <div key={item.range.from} className="dk-ft-item">
+                <span>{totalClauseLabel(item, t)}</span>
+                <code className="dk-ft-n">
+                  {template.source.slice(item.range.from, item.range.to).trim()}
+                </code>
+              </div>
+            ))}
           </div>
         </CardSection>
       )}
 
-      {definitions.length > 0 && (
+      {template.inputs.length > 0 && (
         <CardSection
-          title={t("Variables")}
+          title={t("Inputs")}
           aside={
-            changed ? (
-              <Button
-                variant="quiet"
-                size="xs"
-                className="text-dsk-subtle"
-                onClick={() => setDrafts(variableDrafts(definitions))}
-              >
-                <CardIcon name="reset" size={11} stroke={2.2} />
-                {t("Reset to defaults")}
-              </Button>
-            ) : (
-              <span>
-                {t("{0, plural, one {# variable} other {# variables}}", definitions.length)}
-              </span>
-            )
+            <span>{t("{0, plural, one {# input} other {# inputs}}", template.inputs.length)}</span>
           }
         >
           <div className="dk-ft-vars">
-            {definitions.map((definition) => (
-              <VariableRow
-                key={definition.name}
-                definition={definition}
-                draft={drafts[definition.name] ?? ""}
-                editable={canPrice && isEditableVariable(definition.type)}
-                focused={focus === definition.name}
-                onFocus={setFocus}
-                onChange={(value) =>
-                  setDrafts((current) => ({ ...current, [definition.name]: value }))
-                }
-              />
+            {template.inputs.map((input) => (
+              <div key={input.name} className="dk-ft-v">
+                <div className="dk-ft-vn">
+                  <span>
+                    <code>{input.name}</code>
+                    {input.required && <em>{t("Required")}</em>}
+                  </span>
+                  <span>{[input.type, input.doc].filter(Boolean).join(" · ")}</span>
+                </div>
+                <span className="dk-ft-vd">
+                  {input.required || input.default === undefined
+                    ? t("Set by each contract")
+                    : formatTariffValue(input.default, t)}
+                </span>
+              </div>
             ))}
           </div>
-          {!canPrice && (
-            <p className="dk-ft-note">
-              {t("Pricing a sample load needs permission to write formula templates.")}
-            </p>
-          )}
         </CardSection>
       )}
 
-      {canPrice && (
+      {canPrice ? (
         <CardSection
-          title={t("Sample price")}
-          aside={
-            <span className="dk-ft-load">
-              {price.isFetching && <i className="dk-ft-pulse" aria-hidden />}
-              {sampleLoadSummary(DEFAULT_TEST_VALUES, t).join(" · ")}
-            </span>
-          }
+          title={t("Sample bill")}
+          aside={<span>{t("Sample load, default inputs")}</span>}
         >
-          <SamplePrice
-            result={result}
-            error={price.error}
-            pending={price.isPending && request !== null}
-            empty={request === null}
-          />
+          <SampleBill result={price.data} error={price.error} pending={price.isPending} />
+        </CardSection>
+      ) : (
+        <CardSection title={t("Sample bill")}>
+          <p className="dk-ft-note">
+            {t("Rating a sample load needs permission to write formula templates.")}
+          </p>
         </CardSection>
       )}
 
@@ -421,24 +336,20 @@ function FormulaCard({
         <CardSection
           title={t("Before it can be approved")}
           aside={
-            readiness.scenarioTotal > 0 ? (
-              <span
-                className={
-                  readiness.scenarioPassed === readiness.scenarioTotal ? "dk-ok" : "dk-warn"
-                }
-              >
-                {t("{0} of {1} scenarios pass", readiness.scenarioPassed, readiness.scenarioTotal)}
+            readiness.testTotal > 0 ? (
+              <span className={readiness.testPassed === readiness.testTotal ? "dk-ok" : "dk-warn"}>
+                {t("{0} of {1} tests pass", readiness.testPassed, readiness.testTotal)}
               </span>
             ) : undefined
           }
         >
           <CardChecks>
-            {readiness.checks.map((check) => (
+            {readiness.checks.map((item) => (
               <CardCheck
-                key={check.key}
-                state={READINESS_STATE[check.status]}
-                title={check.label}
-                detail={check.detail ?? ""}
+                key={item.key}
+                state={READINESS_STATE[item.status]}
+                title={item.label}
+                detail={item.detail ?? ""}
               />
             ))}
           </CardChecks>
@@ -480,129 +391,20 @@ function FormulaCard({
   );
 }
 
-/**
- * A formula set as code, the template's variables, the shipment's fields and
- * the functions each in their own colour. Pointing at a variable marks it
- * here and in the list of variables, so a reader finds where each is used.
- */
-function FormulaCode({
-  tokens,
-  focus,
-  onFocus,
-  label,
-  inline = false,
-}: {
-  tokens: readonly FormulaToken[];
-  focus: string | null;
-  onFocus: (name: string | null) => void;
-  label: string;
-  inline?: boolean;
-}) {
-  const Tag = inline ? "code" : "pre";
-  return (
-    <Tag className={cn("dk-ft-code", inline && "dk-ft-code-inline")} aria-label={label}>
-      {tokens.map((token, index) => {
-        const name = token.kind === "var" ? rootOf(token.text) : null;
-        return (
-          <span
-            // oxlint-disable-next-line react/no-array-index-key -- a formula's pieces never reorder
-            key={index}
-            className={cn(`dk-ft-${token.kind}`, name !== null && name === focus && "dk-on")}
-            onMouseEnter={name !== null ? () => onFocus(name) : undefined}
-            onMouseLeave={name !== null ? () => onFocus(null) : undefined}
-          >
-            {token.text}
-          </span>
-        );
-      })}
-    </Tag>
-  );
+/** Why the sample load got no bill: the tariff's refusal, the error, or the check's finding. */
+function failureText(result: FormulaPreviewResponse, t: ReturnType<typeof useT>): string {
+  if (result.refusal) return refusalText(result.refusal, t);
+  if (result.error) return tariffMessageText(result.error.message, t);
+  const problem = result.diagnostics.find((finding) => finding.severity === "error");
+  return problem ? translateMessage(problem.message, t) : t("Does not rate");
 }
 
-function VariableRow({
-  definition,
-  draft,
-  editable,
-  focused,
-  onFocus,
-  onChange,
-}: {
-  definition: VariableDefinition;
-  draft: string;
-  editable: boolean;
-  focused: boolean;
-  onFocus: (name: string | null) => void;
-  onChange: (value: string) => void;
-}) {
-  const t = useT();
-  const invalid =
-    editable && draft.trim() !== "" && variableValue(definition.type, draft) === undefined;
-  return (
-    <div
-      className={cn("dk-ft-v", focused && "dk-on")}
-      onMouseEnter={() => onFocus(definition.name)}
-      onMouseLeave={() => onFocus(null)}
-    >
-      <div className="dk-ft-vn">
-        <span>
-          <code>{definition.name}</code>
-          {definition.required && <em>{t("Required")}</em>}
-        </span>
-        <span>
-          {[variableTypeLabel(definition.type, t), definition.description]
-            .filter(Boolean)
-            .join(" · ")}
-        </span>
-      </div>
-      {editable ? (
-        definition.type === "Boolean" ? (
-          <span className="dk-ft-yn" role="group" aria-label={definition.name}>
-            {(["true", "false"] as const).map((value) => (
-              <Button
-                key={value}
-                variant="bare"
-                size="bare"
-                aria-pressed={draft === value}
-                className={cn(draft === value && "dk-on")}
-                onClick={() => onChange(value)}
-              >
-                {value === "true" ? t("Yes") : t("No")}
-              </Button>
-            ))}
-          </span>
-        ) : (
-          <input
-            className={cn("dk-ft-in", invalid && "dk-bad")}
-            value={draft}
-            inputMode={definition.type === "Number" ? "decimal" : undefined}
-            placeholder={t("Default")}
-            aria-label={definition.name}
-            aria-invalid={invalid || undefined}
-            title={invalid ? t("Not a number; the default is used") : undefined}
-            onFocus={() => onFocus(definition.name)}
-            onBlur={() => onFocus(null)}
-            onChange={(event) => onChange(event.target.value)}
-          />
-        )
-      ) : (
-        <span className="dk-ft-vd">{draft || "—"}</span>
-      )}
-    </div>
-  );
-}
-
-/** Why the sample load did not price, in the engine's words when it gave any. */
-function failureText(result: TestExpressionResponse, t: TranslateFn): string {
-  const failure = previewFailure(result);
-  return failure ? translateMessage(failure, t) : t("Does not price");
-}
-
-/** The sample price at the head of the card, moving as the variables do. */
-function SamplePriceFigure({
+/** The sample total at the head of the card. */
+function SampleTotalFigure({
   result,
   pending,
 }: {
-  result: TestExpressionResponse | undefined;
+  result: FormulaPreviewResponse | undefined;
   pending: boolean;
 }) {
   const t = useT();
@@ -614,44 +416,35 @@ function SamplePriceFigure({
       </>
     );
   }
-  return result.valid ? (
+  return result.bill ? (
     <>
-      <b key={String(result.result)}>{money(result.result)}</b>
+      <b key={result.bill.total.$q}>{formatTariffValue(result.bill.total, t)}</b>
       <span>{t("on a sample load")}</span>
     </>
   ) : (
     <>
       <b className="dk-ft-wait">—</b>
-      <span className="dk-ft-err">{t("Does not price")}</span>
+      <span className="dk-ft-err">{t("Does not rate")}</span>
     </>
   );
 }
 
-/**
- * What the formula comes to on the sample load: each itemized line, the
- * total, and what the limits and rounding did to it; or why it could not be
- * priced, in the engine's words.
- */
-function SamplePrice({
+/** The bill the sample load gets, line by line; or why it got none, in the tariff's words. */
+function SampleBill({
   result,
   error,
   pending,
-  empty,
 }: {
-  result: TestExpressionResponse | undefined;
+  result: FormulaPreviewResponse | undefined;
   error: unknown;
   pending: boolean;
-  empty: boolean;
 }) {
   const t = useT();
-  if (empty) {
-    return <p className="dk-ft-note">{t("This template has no formula to price.")}</p>;
-  }
   if (error && !result) {
     return (
       <div className="dk-ax-warn">
         <CardIcon name="warn" size={13} />
-        <span>{describeApiError(error, t("The sample load could not be priced."))}</span>
+        <span>{describeApiError(error, t("The sample load could not be rated."))}</span>
       </div>
     );
   }
@@ -663,7 +456,7 @@ function SamplePrice({
       </div>
     );
   }
-  if (!result.valid) {
+  if (!result.bill) {
     return (
       <div className="dk-ax-warn">
         <CardIcon name="warn" size={13} />
@@ -671,46 +464,5 @@ function SamplePrice({
       </div>
     );
   }
-
-  const notes = [
-    guardrailNote(result.guardrail, t),
-    result.rounding?.applied ? roundingNote(result.rounding.unroundedAmount, t) : "",
-  ].filter((note) => note !== "");
-
-  return (
-    <>
-      <div className="dk-ft-led">
-        {(result.breakdown ?? []).map((line, index) => (
-          <div
-            key={line.name}
-            className={cn("dk-ft-lr", line.error && "dk-bad")}
-            style={{ animationDelay: `${index * 40}ms` }}
-          >
-            <span>{line.label || line.name}</span>
-            <span className="dk-ft-n">{line.error ? line.error : money(line.amount)}</span>
-          </div>
-        ))}
-        <div className="dk-ft-lt">
-          <span>{t("Total")}</span>
-          <span className="dk-ft-n" key={String(result.result)}>
-            {money(result.result)}
-          </span>
-        </div>
-      </div>
-      {notes.map((note) => (
-        <p key={note} className="dk-ft-note">
-          {note}
-        </p>
-      ))}
-      {previewWarnings(result).map((warning) => (
-        <div
-          key={`${warning.scope}:${warning.code}:${warning.from}:${warning.to}`}
-          className="dk-ax-warn"
-        >
-          <CardIcon name="warn" size={13} />
-          <span>{translateMessage(warning, t)}</span>
-        </div>
-      ))}
-    </>
-  );
+  return <BillView bill={result.bill} />;
 }

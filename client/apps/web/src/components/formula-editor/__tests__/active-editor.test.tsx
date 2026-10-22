@@ -2,8 +2,7 @@ import { fireEvent, render, waitFor } from "@testing-library/react";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { ActiveEditorProvider, useActiveEditorInsert } from "../active-editor";
-import { ExpressionEditor } from "../expression-editor";
-import { knownFor } from "@/components/formula-editor/__tests__/formula-fixtures";
+import { TariffEditorField } from "../tariff-editor";
 
 vi.mock("@trenova/shared/components/theme-provider", () => ({
   useTheme: () => ({ theme: "light", setTheme: vi.fn() }),
@@ -12,7 +11,7 @@ vi.mock("@trenova/shared/components/theme-provider", () => ({
 function InsertButton() {
   const insert = useActiveEditorInsert();
   return (
-    <button type="button" onClick={() => insert("totalDistance")}>
+    <button type="button" onClick={() => insert("shipment.distance")}>
       insert
     </button>
   );
@@ -22,18 +21,17 @@ function Harness() {
   const { control } = useForm<{ main: string; line: string }>({
     defaultValues: { main: "", line: "" },
   });
-  const known = knownFor();
   return (
     <ActiveEditorProvider>
       <div data-testid="main">
-        <ExpressionEditor name="main" control={control} knownIdentifiers={known} lint={false} />
+        <TariffEditorField name="main" control={control} kind="tariff" context={null} primary />
       </div>
       <div data-testid="line">
-        <ExpressionEditor
+        <TariffEditorField
           name="line"
           control={control}
-          knownIdentifiers={known}
-          lint={false}
+          kind="condition"
+          context={null}
           variant="mini"
         />
       </div>
@@ -53,9 +51,9 @@ describe("active editor insert routing", () => {
     fireEvent.click(getByText("insert"));
 
     await waitFor(() => {
-      expect(lineContent.textContent).toContain("totalDistance");
+      expect(lineContent.textContent).toContain("shipment.distance");
     });
     const mainContent = getByTestId("main").querySelector(".cm-content") as HTMLElement;
-    expect(mainContent.textContent).not.toContain("totalDistance");
+    expect(mainContent.textContent).not.toContain("shipment.distance");
   });
 });
