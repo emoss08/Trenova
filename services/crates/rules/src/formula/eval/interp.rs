@@ -40,12 +40,15 @@ use super::tables::Matched;
 use super::tables::Tables;
 use super::value::List;
 use super::value::Value;
+use crate::formula::syntax::ast::Binary;
 use crate::formula::syntax::ast::BinaryOp;
 use crate::formula::syntax::ast::CompareOp;
 use crate::formula::syntax::ast::Expr;
 use crate::formula::syntax::ast::ExprKind;
+use crate::formula::syntax::ast::MapEntry;
 use crate::formula::syntax::ast::Pointer;
 use crate::formula::syntax::ast::Program;
+use crate::formula::syntax::ast::Sequence;
 use crate::formula::syntax::ast::StatementKind;
 use crate::formula::syntax::ast::UnaryOp;
 use crate::message::Arg;
@@ -325,88 +328,99 @@ impl<'a> Interpreter<'a> {
                 .value
                 .map(Value::Number)
                 .ok_or_else(|| syntax_error(expr.span)),
-            ExprKind::String(text) => {
-                Ok(Value::Text(Rc::from(text.as_str())))
-            }
+            ExprKind::String(text) => Ok(Value::Text(Rc::from(text.as_str()))),
             ExprKind::Bool(flag) => Ok(Value::Bool(*flag)),
             ExprKind::Nil => Ok(Value::Nil),
             ExprKind::Pointer(pointer) => self.pointer(pointer),
             ExprKind::Ident(name) => self.identifier(name),
             ExprKind::Member(_) | ExprKind::Index(_) | ExprKind::Slice(_) | ExprKind::Method(_) => {
-                Ok(self.access(expr)?.unwrap_or(Value::Nil))
+                self.access(expr).map(|value| value.unwrap_or(Value::Nil))
             }
             ExprKind::Call(call) => self.call(&call.function.text, &call.args, expr.span),
             ExprKind::Unary(unary) => self.unary(unary.op, &unary.operand),
-            ExprKind::Binary(binary) => {
-                let outcome = self.binary(&binary.op, &binary.left, &binary.right)?;
-                match (binary.not, outcome) {
-                    (Some(_), Value::Bool(flag)) => Ok(Value::Bool(!flag)),
-                    (_, value) => Ok(value),
-                }
-            }
+            ExprKind::Binary(binary) => self.binary_node(binary),
             ExprKind::Chain(chain) => self.chain(&chain.operands, &chain.operators),
             ExprKind::Ternary(ternary) => {
-                if self.condition(&ternary.test)? {
-                    match &ternary.then {
-                        Some(then) => self.eval(then),
-                        None => Ok(Value::Bool(true)),
-                    }
-                } else {
-                    self.eval(&ternary.otherwise)
-                }
+                self.branch(&ternary.test, ternary.then.as_deref(), &ternary.otherwise)
             }
             ExprKind::If(branch) => {
-                if self.condition(&branch.test)? {
-                    self.eval(&branch.then)
-                } else {
-                    self.eval(&branch.otherwise)
-                }
+                self.branch(&branch.test, Some(&branch.then), &branch.otherwise)
             }
-            ExprKind::Array(items) => {
-                let mut values = Vec::with_capacity(items.len());
-                for item in items {
-                    values.push(self.eval(item)?);
-                }
-                self.meter.items(values.len())?;
-                Value::list(values).map_err(|_| too_deep())
-            }
-            ExprKind::Map(entries) => {
-                let mut map: BTreeMap<Rc<str>, Value> = BTreeMap::new();
-                for entry in entries {
-                    let value = self.eval(&entry.value)?;
-                    map.insert(Rc::from(entry.key.text.as_str()), value);
-                }
-                self.meter.items(map.len())?;
-                Value::map(map).map_err(|_| too_deep())
-            }
+            ExprKind::Array(items) => self.array(items),
+            ExprKind::Map(entries) => self.map_literal(entries),
             ExprKind::Predicate(predicate) => self.eval(&predicate.body),
-            ExprKind::Sequence(sequence) => {
-                let mark = self.lets.len();
-                let mut outcome = Ok(Value::Nil);
-                for binding in &sequence.lets {
-                    match self.eval(&binding.value) {
-                        Ok(value) => {
-                            let origin = self.origin(&binding.value);
-                            self.lets.push(Binding {
-                                name: &binding.name.text,
-                                value: Ok(value),
-                                origin,
-                            });
-                        }
-                        Err(error) => {
-                            outcome = Err(error);
-                            break;
-                        }
-                    }
-                }
-                if outcome.is_ok() {
-                    outcome = self.eval(&sequence.body);
-                }
-                self.lets.truncate(mark);
-                outcome
-            }
+            ExprKind::Sequence(sequence) => self.sequence(sequence),
             ExprKind::Missing => Err(syntax_error(expr.span)),
         }
+    }
+
+    #[inline(never)]
+    fn binary_node(&mut self, binary: &'a Binary) -> Outcome {
+        let outcome = self.binary(&binary.op, &binary.left, &binary.right)?;
+        match (binary.not, outcome) {
+            (Some(_), Value::Bool(flag)) => Ok(Value::Bool(!flag)),
+            (_, value) => Ok(value),
+        }
+    }
+
+    #[inline(never)]
+    fn branch(&mut self, test: &'a Expr, then: Option<&'a Expr>, otherwise: &'a Expr) -> Outcome {
+        if self.condition(test)? {
+            match then {
+                Some(then) => self.eval(then),
+                None => Ok(Value::Bool(true)),
+            }
+        } else {
+            self.eval(otherwise)
+        }
+    }
+
+    #[inline(never)]
+    fn array(&mut self, items: &'a [Expr]) -> Outcome {
+        let mut values = Vec::with_capacity(items.len());
+        for item in items {
+            values.push(self.eval(item)?);
+        }
+        self.meter.items(values.len())?;
+        Value::list(values).map_err(|_| too_deep())
+    }
+
+    #[inline(never)]
+    fn map_literal(&mut self, entries: &'a [MapEntry]) -> Outcome {
+        let mut map: BTreeMap<Rc<str>, Value> = BTreeMap::new();
+        for entry in entries {
+            let value = self.eval(&entry.value)?;
+            map.insert(Rc::from(entry.key.text.as_str()), value);
+        }
+        self.meter.items(map.len())?;
+        Value::map(map).map_err(|_| too_deep())
+    }
+
+    #[inline(never)]
+    fn sequence(&mut self, sequence: &'a Sequence) -> Outcome {
+        let mark = self.lets.len();
+        let mut outcome = Ok(Value::Nil);
+        for binding in &sequence.lets {
+            match self.eval(&binding.value) {
+                Ok(value) => {
+                    let origin = self.origin(&binding.value);
+                    self.lets.push(Binding {
+                        name: &binding.name.text,
+                        value: Ok(value),
+                        origin,
+                    });
+                }
+                Err(error) => {
+                    outcome = Err(error);
+                    break;
+                }
+            }
+        }
+        if outcome.is_ok() {
+            outcome = self.eval(&sequence.body);
+        }
+        self.lets.truncate(mark);
+        outcome
     }
 
     fn pointer(&self, pointer: &Pointer) -> Outcome {
@@ -539,12 +553,18 @@ impl<'a> Interpreter<'a> {
         if optional && base.is_nil() {
             return Ok(None);
         }
-        let outcome = match &expr.kind {
-            ExprKind::Member(member) => operators::member(&base, &member.property.text)
+        self.apply_access(expr, object, &base).map(Some)
+    }
+
+    /// The member, index, slice or method of `base`, the object `object` evaluated to.
+    #[inline(never)]
+    fn apply_access(&mut self, expr: &'a Expr, object: &'a Expr, base: &Value) -> Outcome {
+        match &expr.kind {
+            ExprKind::Member(member) => operators::member(base, &member.property.text)
                 .map_err(|error| self.missing_member(error, object, &member.property.text)),
             ExprKind::Index(index) => {
                 let key = self.eval(&index.index)?;
-                operators::index(&base, &key, &mut self.meter)
+                operators::index(base, &key, &mut self.meter)
                     .map_err(|error| self.explain(error, &[object, &index.index], Zero::List))
             }
             ExprKind::Slice(slice) => {
@@ -556,7 +576,7 @@ impl<'a> Interpreter<'a> {
                     Some(end) => Some(self.position(end)?),
                     None => None,
                 };
-                operators::slice(&base, start, end, &mut self.meter)
+                operators::slice(base, start, end, &mut self.meter)
                     .map_err(|error| self.explain(error, &[object], Zero::Text))
             }
             ExprKind::Method(method) => {
@@ -566,20 +586,17 @@ impl<'a> Interpreter<'a> {
                         .err()
                         .unwrap_or_else(|| unknown_name(&method.method.text)));
                 }
-                let zero = if matches!(
-                    method.method.text.as_str(),
-                    "Hours" | "Minutes" | "Seconds"
-                ) {
+                let zero = if matches!(method.method.text.as_str(), "Hours" | "Minutes" | "Seconds")
+                {
                     Zero::Duration
                 } else {
                     Zero::Date
                 };
-                operators::method(&base, &method.method.text)
+                operators::method(base, &method.method.text)
                     .map_err(|error| self.explain(error, &[object], zero))
             }
-            _ => return Ok(None),
-        };
-        outcome.map(Some)
+            _ => Ok(Value::Nil),
+        }
     }
 
     /// Reading `.property` of an empty object names the path that was read: `origin.zip`.
@@ -608,8 +625,9 @@ impl<'a> Interpreter<'a> {
     fn unary(&mut self, op: UnaryOp, operand: &'a Expr) -> Outcome {
         let value = self.eval(operand)?;
         match op {
-            UnaryOp::Not { .. } => operators::not(&value)
-                .map_err(|error| self.explain(error, &[operand], Zero::Bool)),
+            UnaryOp::Not { .. } => {
+                operators::not(&value).map_err(|error| self.explain(error, &[operand], Zero::Bool))
+            }
             UnaryOp::Negate => operators::sign(true, &value)
                 .map_err(|error| self.explain(error, &[operand], Zero::Number)),
             UnaryOp::Plus => operators::sign(false, &value)
@@ -643,9 +661,21 @@ impl<'a> Interpreter<'a> {
         }
         let left_value = self.eval(left)?;
         let right_value = self.eval(right)?;
-        let operands = [left, right];
-        let zero_left = Zero::like(&right_value);
-        let zero_right = Zero::like(&left_value);
+        self.apply_binary(op, [left, right], &left_value, &right_value)
+    }
+
+    /// `left_value op right_value`, the operands `left` and `right` evaluated to.
+    #[inline(never)]
+    fn apply_binary(
+        &mut self,
+        op: &BinaryOp,
+        operands: [&'a Expr; 2],
+        left_value: &Value,
+        right_value: &Value,
+    ) -> Outcome {
+        let [left, right] = operands;
+        let zero_left = Zero::like(right_value);
+        let zero_right = Zero::like(left_value);
         let both_empty = left_value.is_nil() && right_value.is_nil();
         let explain = |interpreter: &Self, error: EvalError| {
             if both_empty
@@ -665,32 +695,35 @@ impl<'a> Interpreter<'a> {
             interpreter.explain(error, &operands, zero)
         };
         let arithmetic = |kind: Arithmetic, interpreter: &mut Self| {
-            operators::arithmetic(kind, &left_value, &right_value, &mut interpreter.meter)
+            operators::arithmetic(kind, left_value, right_value, &mut interpreter.meter)
                 .map_err(|error| explain(interpreter, error))
         };
         match op {
-            BinaryOp::Equal => operators::equal(&left_value, &right_value).map(Value::Bool),
-            BinaryOp::NotEqual => operators::equal(&left_value, &right_value)
-                .map(|equal| Value::Bool(!equal)),
+            BinaryOp::Equal => operators::equal(left_value, right_value).map(Value::Bool),
+            BinaryOp::NotEqual => {
+                operators::equal(left_value, right_value).map(|equal| Value::Bool(!equal))
+            }
             BinaryOp::Compare(compare) => {
-                operators::compare(comparison(*compare), &left_value, &right_value)
+                operators::compare(comparison(*compare), left_value, right_value)
                     .map(Value::Bool)
                     .map_err(|error| explain(self, error))
             }
-            BinaryOp::In => operators::membership(&left_value, &right_value).map(Value::Bool),
+            BinaryOp::In => operators::membership(left_value, right_value).map(Value::Bool),
             BinaryOp::Matches => {
-                let text = text_value(&left_value, 0).map_err(|error| explain(self, error))?;
-                let pattern = text_value(&right_value, 1).map_err(|error| explain(self, error))?;
+                let text = text_value(left_value, 0).map_err(|error| explain(self, error))?;
+                let pattern = text_value(right_value, 1).map_err(|error| explain(self, error))?;
                 self.regexes
                     .matches(text, pattern, &mut self.meter)
                     .map(Value::Bool)
             }
-            BinaryOp::Contains => self.text_test(TextTest::Contains, &left_value, &right_value, explain),
+            BinaryOp::Contains => {
+                self.text_test(TextTest::Contains, left_value, right_value, explain)
+            }
             BinaryOp::StartsWith => {
-                self.text_test(TextTest::StartsWith, &left_value, &right_value, explain)
+                self.text_test(TextTest::StartsWith, left_value, right_value, explain)
             }
             BinaryOp::EndsWith => {
-                self.text_test(TextTest::EndsWith, &left_value, &right_value, explain)
+                self.text_test(TextTest::EndsWith, left_value, right_value, explain)
             }
             BinaryOp::Word(word) => {
                 let args = [left_value.clone(), right_value.clone()];
@@ -702,7 +735,7 @@ impl<'a> Interpreter<'a> {
                     .unwrap_or_else(|| Err(unknown_name(word)))
                     .map_err(|error| explain(self, error))
             }
-            BinaryOp::Range => operators::range(&left_value, &right_value, &mut self.meter)
+            BinaryOp::Range => operators::range(left_value, right_value, &mut self.meter)
                 .map_err(|error| explain(self, error)),
             BinaryOp::Add => arithmetic(Arithmetic::Add, self),
             BinaryOp::Subtract => arithmetic(Arithmetic::Sub, self),
@@ -763,26 +796,31 @@ impl<'a> Interpreter<'a> {
     }
 
     fn call(&mut self, name: &str, args: &'a [Expr], span: Span) -> Outcome {
-        if let Some(outcome) = self.predicate_call(name, args) {
-            return outcome;
+        if PREDICATES.contains(&name) {
+            return self.predicate_call(name, args);
         }
-        if is_lookup(name) {
-            let values = self.arguments(args)?;
-            let nodes: Vec<&Expr> = args.iter().collect();
-            return self
-                .lookup(name, &values)
-                .map_err(|error| self.explain(error, &nodes, Zero::Number));
-        }
-        if !builtins::is_builtin(name) {
+        if !is_lookup(name) && !builtins::is_builtin(name) {
             return Err(unknown_name(name).at(span));
         }
         let values = self.arguments(args)?;
+        self.apply_call(name, args, &values)
+    }
+
+    /// Calls the lookup or built-in `name` with the values its arguments evaluated to.
+    #[inline(never)]
+    fn apply_call(&mut self, name: &str, args: &'a [Expr], values: &[Value]) -> Outcome {
+        if is_lookup(name) {
+            let nodes: Vec<&Expr> = args.iter().collect();
+            return self
+                .lookup(name, values)
+                .map_err(|error| self.explain(error, &nodes, Zero::Number));
+        }
         let mut context = Context {
             meter: &mut self.meter,
             regexes: &mut self.regexes,
         };
-        let outcome = builtins::call(name, &values, &mut context)
-            .unwrap_or_else(|| Err(unknown_name(name)));
+        let outcome =
+            builtins::call(name, values, &mut context).unwrap_or_else(|| Err(unknown_name(name)));
         outcome.map_err(|error| {
             let nodes: Vec<&Expr> = args.iter().collect();
             let zero = argument_zero(name, error.empty_argument);
@@ -799,11 +837,9 @@ impl<'a> Interpreter<'a> {
         };
         match self.eval(list)? {
             Value::List(items) => Ok(items),
-            Value::Nil => Err(self.explain(
-                expected_list("nil").empty_argument(0),
-                &[list],
-                Zero::List,
-            )),
+            Value::Nil => {
+                Err(self.explain(expected_list("nil").empty_argument(0), &[list], Zero::List))
+            }
             other => Err(expected_list(other.kind_key()).at(list.span)),
         }
     }
@@ -832,19 +868,31 @@ impl<'a> Interpreter<'a> {
         self.with_frame(frame, |interpreter| interpreter.condition(body))
     }
 
-    fn predicate_call(&mut self, name: &str, args: &'a [Expr]) -> Option<Outcome> {
+    #[inline(never)]
+    fn predicate_call(&mut self, name: &str, args: &'a [Expr]) -> Outcome {
         let (min, max) = match name {
-            "all" | "none" | "any" | "one" | "filter" | "map" | "find" | "findIndex"
-            | "findLast" | "findLastIndex" | "groupBy" => (2, 2),
             "count" => (1, 2),
             "sortBy" | "reduce" => (2, 3),
-            _ => return None,
+            _ => (2, 2),
         };
         if !(min..=max).contains(&args.len()) {
             let placeholders = vec![Value::Nil; args.len()];
-            return Some(builtins::arity(name, &placeholders, min, max).map(|()| Value::Nil));
+            return builtins::arity(name, &placeholders, min, max).map(|()| Value::Nil);
         }
-        Some(self.predicate(name, args))
+        let list = self.items(name, args)?;
+        let items = list.items();
+        let Some(body) = Self::predicate_body(args, 1) else {
+            return self.count_true(items);
+        };
+        match name {
+            "all" | "none" | "any" | "one" | "count" => self.quantify(name, items, body),
+            "filter" => self.filter(items, body),
+            "map" => self.map_items(items, body),
+            "find" | "findIndex" | "findLast" | "findLastIndex" => self.find(name, items, body),
+            "groupBy" => self.group_by(items, body),
+            "sortBy" => self.sort_by(items, body, args.get(2)),
+            _ => self.reduce(items, body, args.get(2)),
+        }
     }
 
     fn frame(element: &Value, index: usize, accumulator: Value) -> Frame {
@@ -855,153 +903,157 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    fn predicate(&mut self, name: &str, args: &'a [Expr]) -> Outcome {
-        let list = self.items(name, args)?;
-        let items = list.items();
-        let body = Self::predicate_body(args, 1);
-        match (name, body) {
-            ("count", None) => {
-                let mut count = 0i64;
-                for item in items {
-                    self.meter.step()?;
-                    match item {
-                        Value::Bool(true) => count += 1,
-                        Value::Bool(false) => {}
-                        other => return Err(expected_boolean(other.kind_key())),
-                    }
-                }
-                Ok(Value::int(count))
+    /// `count(list)`: how many items are true.
+    fn count_true(&mut self, items: &[Value]) -> Outcome {
+        let mut count = 0i64;
+        for item in items {
+            self.meter.step()?;
+            match item {
+                Value::Bool(true) => count += 1,
+                Value::Bool(false) => {}
+                other => return Err(expected_boolean(other.kind_key())),
             }
-            (_, None) => Err(unknown_name(name)),
-            ("all" | "none" | "any" | "one" | "count", Some(body)) => {
-                let mut count = 0i64;
-                for (index, item) in items.iter().enumerate() {
-                    let holds = self.test(body, Self::frame(item, index, Value::Nil))?;
-                    match (name, holds) {
-                        ("all", false) => return Ok(Value::Bool(false)),
-                        ("none" | "any", true) => return Ok(Value::Bool(name == "any")),
-                        ("one", true) if count == 1 => return Ok(Value::Bool(false)),
-                        (_, true) => count += 1,
-                        _ => {}
-                    }
-                }
-                Ok(match name {
-                    "all" | "none" => Value::Bool(true),
-                    "any" => Value::Bool(false),
-                    "one" => Value::Bool(count == 1),
-                    _ => Value::int(count),
-                })
-            }
-            ("filter", Some(body)) => {
-                let mut kept = Vec::new();
-                for (index, item) in items.iter().enumerate() {
-                    if self.test(body, Self::frame(item, index, Value::Nil))? {
-                        kept.push(item.clone());
-                    }
-                }
-                self.meter.items(kept.len())?;
-                Value::list(kept).map_err(|_| too_deep())
-            }
-            ("map", Some(body)) => {
-                let mut mapped = Vec::with_capacity(items.len());
-                for (index, item) in items.iter().enumerate() {
-                    let frame = Self::frame(item, index, Value::Nil);
-                    mapped.push(self.with_frame(frame, |interpreter| interpreter.eval(body))?);
-                }
-                self.meter.items(mapped.len())?;
-                Value::list(mapped).map_err(|_| too_deep())
-            }
-            ("find" | "findIndex", Some(body)) => {
-                for (index, item) in items.iter().enumerate() {
-                    if self.test(body, Self::frame(item, index, Value::Nil))? {
-                        return Ok(if name == "find" {
-                            item.clone()
-                        } else {
-                            Value::int(i64::try_from(index).unwrap_or(i64::MAX))
-                        });
-                    }
-                }
-                Ok(if name == "find" {
-                    Value::Nil
-                } else {
-                    Value::int(-1)
-                })
-            }
-            ("findLast" | "findLastIndex", Some(body)) => {
-                for (index, item) in items.iter().enumerate().rev() {
-                    if self.test(body, Self::frame(item, index, Value::Nil))? {
-                        return Ok(if name == "findLast" {
-                            item.clone()
-                        } else {
-                            Value::int(i64::try_from(index).unwrap_or(i64::MAX))
-                        });
-                    }
-                }
-                Ok(if name == "findLast" {
-                    Value::Nil
-                } else {
-                    Value::int(-1)
-                })
-            }
-            ("groupBy", Some(body)) => {
-                let mut groups: BTreeMap<Rc<str>, Vec<Value>> = BTreeMap::new();
-                for (index, item) in items.iter().enumerate() {
-                    let frame = Self::frame(item, index, Value::Nil);
-                    let key = self.with_frame(frame, |interpreter| interpreter.eval(body))?;
-                    let key = operators::map_key(&key, 0).map_err(|mut error| {
-                        error.empty_argument = None;
-                        error.at(body.span)
-                    })?;
-                    groups.entry(Rc::from(key)).or_default().push(item.clone());
-                }
-                self.meter.items(items.len() + groups.len())?;
-                let mut entries = BTreeMap::new();
-                for (key, members) in groups {
-                    entries.insert(key, Value::list(members).map_err(|_| too_deep())?);
-                }
-                Value::map(entries).map_err(|_| too_deep())
-            }
-            ("sortBy", Some(body)) => {
-                let order = match args.get(2) {
-                    Some(order) => Some(self.eval(order)?),
-                    None => None,
-                };
-                let descending = builtins::sort_order(order.as_ref())?;
-                let mut keys = Vec::with_capacity(items.len());
-                for (index, item) in items.iter().enumerate() {
-                    let frame = Self::frame(item, index, Value::Nil);
-                    keys.push(self.with_frame(frame, |interpreter| interpreter.eval(body))?);
-                }
-                let mut context = Context {
-                    meter: &mut self.meter,
-                    regexes: &mut self.regexes,
-                };
-                builtins::sort_by_keys(items, &keys, descending, &mut context)
-                    .map_err(|error| error.at(body.span))
-            }
-            ("reduce", Some(body)) => {
-                let (mut accumulator, start) = match args.get(2) {
-                    Some(initial) => (self.eval(initial)?, 0),
-                    None => match items.first() {
-                        Some(first) => (first.clone(), 1),
-                        None => {
-                            return Err(EvalError::new(
-                                Code::Argument,
-                                Message::new(crate::message!(
-                                    "reduce of empty array with no initial value"
-                                )),
-                            ));
-                        }
-                    },
-                };
-                for (index, item) in items.iter().enumerate().skip(start) {
-                    let frame = Self::frame(item, index, accumulator);
-                    accumulator = self.with_frame(frame, |interpreter| interpreter.eval(body))?;
-                }
-                Ok(accumulator)
-            }
-            _ => Err(unknown_name(name)),
         }
+        Ok(Value::int(count))
+    }
+
+    /// The value of `body` for one item.
+    fn per_item(&mut self, body: &'a Expr, frame: Frame) -> Outcome {
+        self.with_frame(frame, |interpreter| interpreter.eval(body))
+    }
+
+    /// `all`, `none`, `any`, `one` and `count` with a predicate, stopping as soon as the
+    /// answer is known.
+    #[inline(never)]
+    fn quantify(&mut self, name: &str, items: &[Value], body: &'a Expr) -> Outcome {
+        let mut count = 0i64;
+        for (index, item) in items.iter().enumerate() {
+            let holds = self.test(body, Self::frame(item, index, Value::Nil))?;
+            match (name, holds) {
+                ("all", false) => return Ok(Value::Bool(false)),
+                ("none" | "any", true) => return Ok(Value::Bool(name == "any")),
+                ("one", true) if count == 1 => return Ok(Value::Bool(false)),
+                (_, true) => count += 1,
+                _ => {}
+            }
+        }
+        Ok(match name {
+            "all" | "none" => Value::Bool(true),
+            "any" => Value::Bool(false),
+            "one" => Value::Bool(count == 1),
+            _ => Value::int(count),
+        })
+    }
+
+    #[inline(never)]
+    fn filter(&mut self, items: &[Value], body: &'a Expr) -> Outcome {
+        let mut kept = Vec::new();
+        for (index, item) in items.iter().enumerate() {
+            if self.test(body, Self::frame(item, index, Value::Nil))? {
+                kept.push(item.clone());
+            }
+        }
+        self.meter.items(kept.len())?;
+        Value::list(kept).map_err(|_| too_deep())
+    }
+
+    #[inline(never)]
+    fn map_items(&mut self, items: &[Value], body: &'a Expr) -> Outcome {
+        let mut mapped = Vec::with_capacity(items.len());
+        for (index, item) in items.iter().enumerate() {
+            mapped.push(self.per_item(body, Self::frame(item, index, Value::Nil))?);
+        }
+        self.meter.items(mapped.len())?;
+        Value::list(mapped).map_err(|_| too_deep())
+    }
+
+    /// `find`, `findIndex`, `findLast` and `findLastIndex`.
+    #[inline(never)]
+    fn find(&mut self, name: &str, items: &[Value], body: &'a Expr) -> Outcome {
+        let backwards = name.starts_with("findLast");
+        let wants_index = name.ends_with("Index");
+        let mut order: Box<dyn Iterator<Item = (usize, &Value)>> = if backwards {
+            Box::new(items.iter().enumerate().rev())
+        } else {
+            Box::new(items.iter().enumerate())
+        };
+        let found = loop {
+            let Some((index, item)) = order.next() else {
+                break None;
+            };
+            if self.test(body, Self::frame(item, index, Value::Nil))? {
+                break Some((index, item));
+            }
+        };
+        Ok(match (found, wants_index) {
+            (Some((index, _)), true) => Value::int(i64::try_from(index).unwrap_or(i64::MAX)),
+            (Some((_, item)), false) => item.clone(),
+            (None, true) => Value::int(-1),
+            (None, false) => Value::Nil,
+        })
+    }
+
+    /// `groupBy`: a map from each key (as text) to the items with it, in order.
+    #[inline(never)]
+    fn group_by(&mut self, items: &[Value], body: &'a Expr) -> Outcome {
+        let mut groups: BTreeMap<Rc<str>, Vec<Value>> = BTreeMap::new();
+        for (index, item) in items.iter().enumerate() {
+            let key = self.per_item(body, Self::frame(item, index, Value::Nil))?;
+            let key = operators::map_key(&key, 0).map_err(|mut error| {
+                error.empty_argument = None;
+                error.at(body.span)
+            })?;
+            groups.entry(Rc::from(key)).or_default().push(item.clone());
+        }
+        self.meter.items(items.len() + groups.len())?;
+        let mut entries = BTreeMap::new();
+        for (key, members) in groups {
+            entries.insert(key, Value::list(members).map_err(|_| too_deep())?);
+        }
+        Value::map(entries).map_err(|_| too_deep())
+    }
+
+    /// `sortBy`: stable, by the key `body` gives each item.
+    #[inline(never)]
+    fn sort_by(&mut self, items: &[Value], body: &'a Expr, order: Option<&'a Expr>) -> Outcome {
+        let order = match order {
+            Some(order) => Some(self.eval(order)?),
+            None => None,
+        };
+        let descending = builtins::sort_order(order.as_ref())?;
+        let mut keys = Vec::with_capacity(items.len());
+        for (index, item) in items.iter().enumerate() {
+            keys.push(self.per_item(body, Self::frame(item, index, Value::Nil))?);
+        }
+        let mut context = Context {
+            meter: &mut self.meter,
+            regexes: &mut self.regexes,
+        };
+        builtins::sort_by_keys(items, &keys, descending, &mut context)
+            .map_err(|error| error.at(body.span))
+    }
+
+    /// `reduce`: without an initial value the first item is the accumulator.
+    #[inline(never)]
+    fn reduce(&mut self, items: &[Value], body: &'a Expr, initial: Option<&'a Expr>) -> Outcome {
+        let (mut accumulator, start) = match initial {
+            Some(initial) => (self.eval(initial)?, 0),
+            None => match items.first() {
+                Some(first) => (first.clone(), 1),
+                None => {
+                    return Err(EvalError::new(
+                        Code::Argument,
+                        Message::new(crate::message!(
+                            "reduce of empty array with no initial value"
+                        )),
+                    ));
+                }
+            },
+        };
+        for (index, item) in items.iter().enumerate().skip(start) {
+            accumulator = self.per_item(body, Self::frame(item, index, accumulator))?;
+        }
+        Ok(accumulator)
     }
 
     fn lookup(&mut self, name: &str, args: &[Value]) -> Outcome {
@@ -1089,6 +1141,30 @@ impl<'a> Interpreter<'a> {
     }
 }
 
+/// The predicate functions: their second argument is worked out per item.
+const PREDICATES: &[&str] = &[
+    "all",
+    "none",
+    "any",
+    "one",
+    "filter",
+    "map",
+    "find",
+    "findIndex",
+    "findLast",
+    "findLastIndex",
+    "count",
+    "groupBy",
+    "sortBy",
+    "reduce",
+];
+
+/// Whether the evaluator can call a function by this name.
+#[must_use]
+pub fn implements(name: &str) -> bool {
+    PREDICATES.contains(&name) || is_lookup(name) || builtins::is_builtin(name)
+}
+
 fn is_lookup(name: &str) -> bool {
     matches!(
         name,
@@ -1130,8 +1206,10 @@ fn argument_zero(function: &str, argument: Option<usize>) -> Zero {
             _,
         )
         | ("join", Some(1)) => Zero::Text,
-        ("first" | "last" | "take" | "reverse" | "uniq" | "concat" | "flatten" | "sort"
-        | "join", _) => Zero::List,
+        (
+            "first" | "last" | "take" | "reverse" | "uniq" | "concat" | "flatten" | "sort" | "join",
+            _,
+        ) => Zero::List,
         ("keys" | "values" | "toPairs", _) => Zero::Map,
         _ => Zero::Number,
     }

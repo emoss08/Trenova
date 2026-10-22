@@ -370,7 +370,10 @@ fn lookup_output(record: &LookupRecord, index: &Utf16Index) -> LookupOutput {
         keys: record.keys.iter().map(trace_value).collect(),
         value: record.value.map(format_number),
         matched: record.matched.as_ref().map(match_output),
-        error: record.error.as_ref().map(|error| error_output(error, index)),
+        error: record
+            .error
+            .as_ref()
+            .map(|error| error_output(error, index)),
     }
 }
 
