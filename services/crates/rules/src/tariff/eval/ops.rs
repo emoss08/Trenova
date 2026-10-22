@@ -41,7 +41,7 @@
 //!
 //! `tariff.test` runs a file's tests: `{"source", "context", "names": […] (optional), "budget"
 //! (optional)}` → `{"tests": [{"name", "range", "status": "passed" | "failed" | "error",
-//! "failures": [{"range", "message", "values": [{"range", "display"}]}], "bill": … | null,
+//! "failures": [{"range", "message", "values": [{"range", "display", "value"?}]}], "bill": … | null,
 //! "error": … | null}]}`, plus `"error"` at the top when the file does not check.
 
 use super::bill::{Converted, Finished, Line};
@@ -545,11 +545,15 @@ fn test_json(result: &TestResult, index: &Utf16Index) -> Json {
                                     failure
                                         .values
                                         .iter()
-                                        .map(|(span, display)| {
-                                            object(vec![
+                                        .map(|(span, display, value)| {
+                                            let mut fields = vec![
                                                 ("range", range(*span, index)),
                                                 ("display", Json::String(display.clone())),
-                                            ])
+                                            ];
+                                            if let Some(value) = value {
+                                                fields.push(("value", value.clone()));
+                                            }
+                                            object(fields)
                                         })
                                         .collect(),
                                 ),

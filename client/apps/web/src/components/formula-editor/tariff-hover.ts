@@ -4,6 +4,7 @@
 
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { formatShownValue } from "@trenova/shared/lib/tariff-value";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import { tariffHover, type TariffHover } from "@trenova/shared/rules/tariff";
 import { appendTariffCode, appendTariffDoc, unlessUnanswered } from "./tariff-doc";
@@ -45,10 +46,10 @@ export function renderTariffHover(
       contents.value.times > 1
         ? translate(
             "In the preview: {0}, the last of {1} times it was bound",
-            contents.value.display,
+            formatShownValue(contents.value, translate),
             contents.value.times,
           )
-        : translate("In the preview: {0}", contents.value.display);
+        : translate("In the preview: {0}", formatShownValue(contents.value, translate));
     dom.appendChild(row);
   }
   return dom;

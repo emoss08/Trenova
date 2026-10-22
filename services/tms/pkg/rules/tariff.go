@@ -329,6 +329,7 @@ type TariffTestRequest struct {
 type TariffTestValue struct {
 	Range   TariffRange `json:"range"`
 	Display string      `json:"display"`
+	Value   RawJSON     `json:"value,omitempty"`
 }
 
 type TariffTestFailure struct {

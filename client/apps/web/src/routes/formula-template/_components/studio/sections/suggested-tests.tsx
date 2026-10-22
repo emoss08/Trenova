@@ -6,6 +6,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatShownValue } from "@trenova/shared/lib/tariff-value";
 import type { SuggestedTestsResponse } from "@trenova/shared/types/formula-template";
 
 export type SuggestedTestsState =
@@ -128,7 +129,7 @@ export function SuggestedTests({
                         {failure.values.length > 0 && (
                           <span className="font-mono">
                             {" "}
-                            ({failure.values.map((value) => value.display).join(", ")})
+                            ({failure.values.map((value) => formatShownValue(value, t)).join(", ")})
                           </span>
                         )}
                       </span>

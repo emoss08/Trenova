@@ -11,6 +11,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatShownValue } from "@trenova/shared/lib/tariff-value";
 import { cn } from "@trenova/shared/lib/utils";
 import type { TariffRange, TariffTestResult } from "@trenova/shared/types/tariff";
 import { useState, type ReactNode } from "react";
@@ -140,7 +141,7 @@ function TestRow({
                         <span className="text-foreground-subtle">
                           {source.slice(value.range.from, value.range.to)}
                         </span>{" "}
-                        = {value.display}
+                        = {formatShownValue(value, t)}
                       </button>
                     </li>
                   ))}

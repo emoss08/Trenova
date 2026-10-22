@@ -106,6 +106,18 @@ export function formatTariffValue(
   }
 }
 
+/**
+ * A value the module showed (in the trace, a test failure or a hover): formatted in the reader's
+ * locale from its wire value when it has one, else the module's English text.
+ */
+export function formatShownValue(
+  shown: { readonly value?: TariffWireValue; readonly display: string },
+  t: TranslateFn,
+  options: TariffValueFormatOptions = {},
+): string {
+  return shown.value === undefined ? shown.display : formatTariffValue(shown.value, t, options);
+}
+
 /** Money from its decimal text, as `formatTariffValue` writes a `$` quantity. */
 export function formatTariffMoney(amount: string, options: TariffValueFormatOptions = {}): string {
   return money(amount, options.currency);

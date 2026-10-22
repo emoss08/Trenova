@@ -1,5 +1,5 @@
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import { formatShownValue, formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import { cn } from "@trenova/shared/lib/utils";
 import type { TariffLookup, TariffRange, TariffTraceEvent } from "@trenova/shared/types/tariff";
 
@@ -11,9 +11,9 @@ export function describeTraceEvent(
 ): string {
   switch (event.kind) {
     case "bind":
-      return t("{0} = {1}", event.name, event.display);
+      return t("{0} = {1}", event.name, formatShownValue(event, t));
     case "assign":
-      return t("{0} becomes {1}", event.name, event.display);
+      return t("{0} becomes {1}", event.name, formatShownValue(event, t));
     case "branch":
       return event.taken === null
         ? t("No branch of the if ran")
@@ -29,11 +29,11 @@ export function describeTraceEvent(
         event.name,
       );
     case "iteration":
-      return t("{0} = {1} (pass {2})", event.name, event.display, event.index + 1);
+      return t("{0} = {1} (pass {2})", event.name, formatShownValue(event, t), event.index + 1);
     case "charge":
       return event.code
-        ? t("Billed {0} ({1}): {2}", event.label, event.code, event.display)
-        : t("Billed {0}: {1}", event.label, event.display);
+        ? t("Billed {0} ({1}): {2}", event.label, event.code, formatShownValue(event, t))
+        : t("Billed {0}: {1}", event.label, formatShownValue(event, t));
     case "dropped":
       return t("Dropped {0}: it came to zero", event.label);
     case "note":
@@ -46,7 +46,7 @@ export function describeTraceEvent(
       const keys = lookup.keys.map((key) => formatTariffValue(key, t)).join(", ");
       return lookup.value === undefined || lookup.value === null
         ? t("tables.{0}[{1}] found no cell", lookup.table, keys)
-        : t("tables.{0}[{1}] = {2}", lookup.table, keys, lookup.display);
+        : t("tables.{0}[{1}] = {2}", lookup.table, keys, formatShownValue(lookup, t));
     }
     case "truncated":
       return t("The trace stops here; the rest of the rating is not recorded.");

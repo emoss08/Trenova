@@ -95,8 +95,9 @@ pub struct Failure {
     pub span: Span,
     /// Why it failed.
     pub message: Message,
-    /// The operands in it and their values.
-    pub values: Vec<(Span, String)>,
+    /// The operands in it: where each is, its value as text, and its value on the wire when it
+    /// has one (an operand that refused or failed has only the text).
+    pub values: Vec<(Span, String, Option<serde_json::Value>)>,
 }
 
 /// One test's result.
@@ -314,12 +315,12 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
             Ok(Value::Bool(false)) => {
                 let mut values = Vec::new();
                 for operand in operands(expr) {
-                    let shown = match interp.eval_in(scope, operand) {
-                        Ok(value) => value.display(),
-                        Err(Stop::Refused(refusal)) => refusal.message.text(),
-                        Err(Stop::Failed(error)) => error.message.english(),
+                    let (shown, wire) = match interp.eval_in(scope, operand) {
+                        Ok(value) => (value.display(), Some(crate::tariff::wire::encode(&value))),
+                        Err(Stop::Refused(refusal)) => (refusal.message.text(), None),
+                        Err(Stop::Failed(error)) => (error.message.english(), None),
                     };
-                    values.push((operand.span, shown));
+                    values.push((operand.span, shown, wire));
                 }
                 self.failures.push(Failure {
                     span: stmt.span,

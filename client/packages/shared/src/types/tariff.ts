@@ -405,6 +405,7 @@ export type TariffCheckResult = z.output<typeof tariffCheckResultSchema>;
 /** A value the trace or a test failure shows: its wire form and the text interpolation writes. */
 export const tariffShownValueSchema = z.object({
   range: tariffRangeSchema,
+  value: tariffWireValueSchema.optional(),
   display: z.string(),
 });
 export type TariffShownValue = z.output<typeof tariffShownValueSchema>;

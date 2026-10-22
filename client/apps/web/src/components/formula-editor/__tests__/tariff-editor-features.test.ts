@@ -207,14 +207,16 @@ describe("signature help", () => {
   });
 
   it("shows a standard library parameter's doc, sent as a catalog message", () => {
-    const source = 'tariff "t"\nuse std.ltl.{ billed }\ncharge "x" = $1/cwt * billed(1_240 lb)\n';
+    const source =
+      'tariff "t"\nuse std.ltl.{ deficit }\nlet rated = deficit([], 1_240 lb, allow: false)\n';
     const help = tariffSignature(rulesSync(), {
       source,
       context: CONTEXT,
       kind: "tariff",
-      offset: source.indexOf("billed(1") + "billed(".length,
+      offset: source.indexOf("1_240"),
     });
-    const parameter = help?.signatures[0]?.parameters[0];
+    expect(help?.activeParameter).toBe(1);
+    const parameter = help?.signatures[0]?.parameters[1];
     expect(parameter?.doc).toEqual({ message: expect.any(String) });
     const dom = renderTariffSignature(help!);
     const message =
@@ -225,6 +227,18 @@ describe("signature help", () => {
     expect(dom?.querySelectorAll(".cm-tariff-signature-body code").length).toBe(
       (message.match(/`/g)?.length ?? 0) / 2,
     );
+  });
+
+  it("does not repeat a function's doc as each parameter's doc", () => {
+    const source = 'tariff "t"\nuse std.ltl.{ billed }\ncharge "x" = $1/cwt * billed(1_240 lb)\n';
+    const help = tariffSignature(rulesSync(), {
+      source,
+      context: CONTEXT,
+      kind: "tariff",
+      offset: source.indexOf("billed(1") + "billed(".length,
+    });
+    expect(help?.signatures[0]?.doc).toEqual({ message: expect.any(String) });
+    expect(help?.signatures[0]?.parameters.map((parameter) => parameter.doc)).toEqual([null, null]);
   });
 
   it("falls back to the first signature when the module names none active", () => {
