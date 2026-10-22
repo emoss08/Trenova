@@ -759,6 +759,14 @@ func TestConvertedLists_ATractorsDriversShowTheirReferenceView(t *testing.T) {
 	for _, path := range withheld {
 		assert.NotContains(t, path, "primaryWorker.wholeName")
 	}
+
+	get, err := agentquerytoolservice.ConvertedGetTool("equipment_get_tractor", reader, engine)
+	require.NoError(t, err)
+	record := callTool(t, ours.ctx, get, tenant.Actor, map[string]any{"tractorId": ours.rows[0]})
+	driver, ok := record["primaryWorker"].(map[string]any)
+	require.True(t, ok, "the card names the driver")
+	assert.Contains(t, driver, "firstName", "a driver's name is in the worker reference view")
+	assert.Contains(t, driver, "lastName")
 }
 
 // testWorker is a driver of the tenant's, inactive when marked, managed by

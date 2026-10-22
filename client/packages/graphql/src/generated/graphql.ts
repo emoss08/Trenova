@@ -17969,6 +17969,14 @@ export type DeskTractorPositionQueryVariables = Exact<{
 
 export type DeskTractorPositionQuery = { vehiclePosition: { latitude: number, longitude: number, headingDegrees: number, speedMph: number, engineState: string | null, fuelPercent: number | null, odometerMeters: number | null, formattedLocation: string | null, recordedAt: number } | null };
 
+export type DeskVehiclePositionsQueryVariables = Exact<{
+  maxAgeSeconds?: number | null | undefined;
+  tractorIds?: Array<string | number> | string | number | null | undefined;
+}>;
+
+
+export type DeskVehiclePositionsQuery = { vehiclePositions: Array<{ tractorId: string, tractorCode: string, latitude: number, longitude: number, formattedLocation: string | null, speedMph: number, engineState: string | null, recordedAt: number, primaryWorkerName: string | null }> };
+
 export type DeskTractorInspectionsQueryVariables = Exact<{
   tractorId: string | number;
   limit: number;
@@ -19321,7 +19329,7 @@ export { MyTableLayoutDocument, SaveMyTableLayoutDocument, ResetMyTableLayoutDoc
 export { VehiclePositionsDocument, WorkerHosStatesDocument, WorkerHosStateDocument, WorkerHosViolationsDocument, TelematicsStatusDocument, WorkerHosLogsDocument, WorkerHosDailyLogsDocument, ShipmentDriverFeasibilityDocument, VehicleInspectionsDocument, WorkerFormSubmissionsDocument, HosCertificationSummaryDocument, ShipmentFormSubmissionsDocument, TelematicsFormMappingsDocument, SaveTelematicsFormMappingDocument, DeleteTelematicsFormMappingDocument } from "./documents/telematics/page";
 export { TendersByShipmentDocument, LiveTenderByMoveDocument } from "./documents/tender/operations";
 export { TimesheetsDocument, TimesheetDocument, OpenTimeClockEntryDocument, OpenTimeClockEntriesDocument, TimeClockEntriesDocument, PayrollExportsDocument, PayrollExportRowsDocument, ClockInDocument, ClockOutDocument, RecordTimeEntryDocument, DeleteTimeEntryDocument, TransitionTimesheetDocument, GeneratePayrollExportDocument, VoidPayrollExportDocument } from "./documents/timesheet/operations";
-export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskTractorInspectionsDocument } from "./documents/tractor/desk";
+export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskVehiclePositionsDocument, DeskTractorInspectionsDocument } from "./documents/tractor/desk";
 export { DeskTrailerCardDocument } from "./documents/trailer/desk";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";

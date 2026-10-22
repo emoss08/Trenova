@@ -19,7 +19,7 @@ func TestShapeWorkerRow(t *testing.T) {
 				"licenseExpiry":     int64(1_800_000_000),
 			},
 		}
-		shapeWorkerRow(row, nil)
+		shapeWorkerRow(row, nil, clock{})
 
 		assert.Equal(t, false, row[workerAssignable])
 		assert.Equal(t, "Credentials are not compliant", row[workerBlockedField])
@@ -33,7 +33,7 @@ func TestShapeWorkerRow(t *testing.T) {
 			workerBlockedField: "On leave",
 			workerProfileField: map[string]any{workerComplianceKey: "NonCompliant"},
 		}
-		shapeWorkerRow(row, nil)
+		shapeWorkerRow(row, nil, clock{})
 
 		assert.Equal(t, "On leave", row[workerBlockedField])
 	})
@@ -43,7 +43,7 @@ func TestShapeWorkerRow(t *testing.T) {
 
 		profile := map[string]any{workerComplianceKey: "Compliant"}
 		row := map[string]any{workerAssignable: true, workerProfileField: profile}
-		shapeWorkerRow(row, map[string]struct{}{"profile.medicalCardExpiry": {}})
+		shapeWorkerRow(row, map[string]struct{}{"profile.medicalCardExpiry": {}}, clock{})
 
 		assert.Equal(t, true, row[workerAssignable])
 		assert.Contains(t, profile, "hazmatExpiry")
