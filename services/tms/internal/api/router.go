@@ -64,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glaccounthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
@@ -181,6 +182,7 @@ type RouterParams struct {
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	FormulaTemplateHandler          *formulatemplatehandler.Handler
+	FormulaLibraryHandler           *formulalibraryhandler.Handler
 	PageFavoriteHandler             *pagefavoritehandler.Handler
 	EquipmentTypeHandler            *equipmenttypehandler.Handler
 	EquipmentManufacturerHandler    *equipmentmanufacturerhandler.Handler
@@ -328,6 +330,7 @@ type Router struct {
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	formulaTemplateHandler          *formulatemplatehandler.Handler
+	formulaLibraryHandler           *formulalibraryhandler.Handler
 	pageFavoriteHandler             *pagefavoritehandler.Handler
 	serviceTypeHandler              *servicetypehandler.Handler
 	orderHandler                    *orderhandler.Handler
@@ -477,6 +480,7 @@ func NewRouter(p RouterParams) *Router {
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
+		formulaLibraryHandler:           p.FormulaLibraryHandler,
 		pageFavoriteHandler:             p.PageFavoriteHandler,
 		serviceTypeHandler:              p.ServiceTypeHandler,
 		orderHandler:                    p.OrderHandler,
@@ -695,6 +699,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.bankReceiptHandler.RegisterRoutes(protected)
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
 	r.formulaTemplateHandler.RegisterRoutes(protected)
+	r.formulaLibraryHandler.RegisterRoutes(protected)
 	r.pageFavoriteHandler.RegisterRoutes(protected)
 	r.equipmentManufacturerHandler.RegisterRoutes(protected)
 	r.equipmentTypeHandler.RegisterRoutes(protected)

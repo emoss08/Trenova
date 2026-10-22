@@ -28,7 +28,7 @@ import (
 
 type visibleShipment struct {
 	FormulaTemplate *struct {
-		Expression string `json:"expression"`
+		Source string `json:"source"`
 	} `json:"formulaTemplate"`
 	RatingDetail struct {
 		FormulaTemplateName string `json:"formulaTemplateName"`
@@ -46,7 +46,7 @@ func ratedItem() *billingqueue.BillingQueueItem {
 		ID: pulid.MustNew("bqi_"),
 		Shipment: &shipment.Shipment{
 			ID:              pulid.MustNew("shp_"),
-			FormulaTemplate: &formulatemplate.FormulaTemplate{Expression: "miles * rate"},
+			FormulaTemplate: &formulatemplate.FormulaTemplate{Source: "tariff \"Per mile\"\n"},
 			RatingDetail: &shipment.RatingDetail{
 				FormulaTemplateName: "Per mile",
 				Expression:          "miles * rate",
@@ -144,7 +144,7 @@ func TestBillingQueueHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			assert.Equal(t, "Per mile", body.Shipment.RatingDetail.FormulaTemplateName)
 			if tt.wantVisible {
 				require.NotNil(t, body.Shipment.FormulaTemplate)
-				assert.Equal(t, "miles * rate", body.Shipment.FormulaTemplate.Expression)
+				assert.Equal(t, "tariff \"Per mile\"\n", body.Shipment.FormulaTemplate.Source)
 				assert.Equal(t, "miles * rate", body.Shipment.RatingDetail.Expression)
 				return
 			}

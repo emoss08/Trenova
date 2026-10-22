@@ -18304,6 +18304,100 @@ extend type Mutation {
   deleteSafetyViolation(id: ID!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/formula_library.graphqls", Input: `enum FormulaReviewDecision {
+  Submitted
+  Approved
+  Rejected
+  ChangesRequested
+  Expired
+}
+
+"An organization library of Tariff functions, constants and types that formula templates import as org.<name>."
+type FormulaLibrary {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  "The module name: templates import the library as org.<name>."
+  name: String!
+  "The module path templates import: org.<name>."
+  path: String!
+  description: String!
+  "The library's Tariff source."
+  source: String!
+  "The other organization libraries this one imports."
+  imports: [FormulaLibraryImport!]!
+  "How many test blocks the source holds."
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  reviewComment: String!
+  version: Int!
+  sourceLibraryId: ID
+  sourceVersionNumber: Int
+  currentVersionNumber: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type FormulaLibraryEdge {
+  node: FormulaLibrary!
+  cursor: String!
+}
+
+type FormulaLibraryConnection {
+  edges: [FormulaLibraryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A snapshot of a library. An Active version is approved, and is what templates pin."
+type FormulaLibraryVersion {
+  id: ID!
+  libraryId: ID!
+  versionNumber: Int!
+  name: String!
+  path: String!
+  description: String!
+  source: String!
+  imports: [FormulaLibraryImport!]!
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  changeMessage: String!
+  "The fields that changed from the previous version, by field path."
+  changeSummary: JSON
+  createdById: ID!
+  createdBy: User
+  createdAt: Timestamp!
+}
+
+"One step of a library's review: who did what, in which round, against which approved version."
+type FormulaLibraryReview {
+  id: ID!
+  libraryId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  formulaLibraries(input: DataTableConnectionInput!): FormulaLibraryConnection!
+  formulaLibrary(id: ID!): FormulaLibrary
+  "A library's versions, newest first."
+  formulaLibraryVersions(libraryId: ID!, first: Int): [FormulaLibraryVersion!]!
+  "A library's review history, newest first."
+  formulaLibraryReviews(libraryId: ID!): [FormulaLibraryReview!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/formula_template.graphqls", Input: `enum FormulaTemplateStatus {
   Active
   Inactive
@@ -18311,34 +18405,27 @@ extend type Mutation {
   InReview
 }
 
-enum FormulaTemplateType {
-  FreightCharge
-  AccessorialCharge
-}
-
-"How a formula's computed charge is reduced to its billable precision."
-enum RateRoundingMode {
-  HalfUp
-  HalfEven
-  Up
-  Down
-  None
-}
-
-type FormulaTemplateVariableDefinition {
+"An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default."
+type FormulaInputDeclaration {
   name: String!
+  "The input's doc comment, which labels it in the inputs form."
+  doc: String!
+  "The type as written in the source, such as Money/mi or List<Break>."
   type: String!
-  description: String!
+  "The type's structure, which the inputs form is built from. Its shape is the module's type descriptor."
+  descriptor: Any
   required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
+  "The default as a wire value, or null when the input has none."
+  default: Any
 }
 
-type FormulaTemplateBreakdownDefinition {
-  name: String!
-  label: String!
-  expression: String!
+"An organization library a formula version imports, pinned to the version it was checked against."
+type FormulaLibraryImport {
+  "The module path the source imports: org.<name>."
+  path: String!
+  libraryId: ID!
+  versionNumber: Int!
+  library: FormulaLibrary
 }
 
 type FormulaTemplate {
@@ -18347,16 +18434,15 @@ type FormulaTemplate {
   organizationId: ID!
   name: String!
   description: String!
-  type: FormulaTemplateType!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
+  "The inputs the source declares, as the last check derived them."
+  inputs: [FormulaInputDeclaration!]!
+  "The organization libraries the source imports. Approval pins each to the version approved at that moment."
+  imports: [FormulaLibraryImport!]!
+  "How many test blocks the source holds."
+  testCount: Int!
   status: FormulaTemplateStatus!
-  schemaId: String!
-  variableDefinitions: [FormulaTemplateVariableDefinition!]!
-  breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
-  minCharge: Decimal
-  maxCharge: Decimal
-  roundingMode: RateRoundingMode!
-  roundingPrecision: Int!
   submittedById: ID
   submittedAt: Timestamp
   approvedById: ID
@@ -18370,10 +18456,8 @@ type FormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-  "How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template."
+  "How many shipments, rate agreement rules and billing fallbacks rate with this template."
   usageCount: Int!
-  "How many saved scenarios gate this template's approval."
-  scenarioCount: Int!
   businessUnit: BusinessUnit
   organization: Organization
 }
@@ -26070,11 +26154,10 @@ type ShipmentFormulaTemplate {
   businessUnitId: ID!
   name: String!
   description: String!
-  type: String!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
   status: String!
-  schemaId: String!
-  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
+  testCount: Int!
   "Formula template metadata is admin-defined and intentionally open-ended."
   metadata: JSON
   version: Int!
@@ -26083,16 +26166,6 @@ type ShipmentFormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-}
-
-type ShipmentFormulaVariableDefinition {
-  name: String!
-  type: String!
-  description: String!
-  required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
 }
 
 enum MoveCoverageType {

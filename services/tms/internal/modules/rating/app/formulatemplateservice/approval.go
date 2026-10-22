@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -19,8 +20,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// ApprovalActionRequest is kept as the package's own name for the shared
-// request so existing callers and handlers read unchanged.
 type ApprovalActionRequest = approvalworkflow.Request
 
 type templateTransition = approvalworkflow.Transition[*formulatemplate.FormulaTemplate, formulatemplate.Status]
@@ -120,6 +119,7 @@ func (s *Service) ApproveFrom(
 	}
 
 	var approved *formulatemplate.FormulaTemplate
+	var pinned *contentCheck
 	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
 			Operation:    "Approve",
@@ -152,11 +152,12 @@ func (s *Service) ApproveFrom(
 					return err
 				}
 
-				if err := s.validateTemplate(vCtx, template); err != nil {
+				content, err := s.approvalContent(vCtx, template)
+				if err != nil {
 					return err
 				}
-
-				return s.requirePassingTestCases(vCtx, template, r.TenantInfo)
+				pinned = content
+				return nil
 			},
 			Apply: func(
 				template *formulatemplate.FormulaTemplate,
@@ -167,6 +168,7 @@ func (s *Service) ApproveFrom(
 				template.ApprovedByID = &userID
 				template.ApprovedAt = &now
 				template.ReviewComment = r.Comment
+				applyContent(template, pinned)
 				template.CurrentVersionNumber++
 			},
 			AfterSave: func(
@@ -207,6 +209,45 @@ func (s *Service) ApproveFrom(
 	})
 
 	return approved, nil
+}
+
+func (s *Service) approvalContent(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+) (*contentCheck, error) {
+	content, err := s.checkContent(ctx, &contentRequest{
+		tenant: templateTenant(template),
+		source: template.Source,
+		mode:   tariff.LibrariesLatest,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if refusal := content.refusal(); refusal != nil {
+		return nil, refusal
+	}
+
+	gate := &submissionGate{
+		details: detailsReadiness(template),
+		source:  sourceReadiness(ctx, content),
+		tests:   testsReadiness(content),
+		content: content,
+	}
+	multiErr := errortypes.NewMultiError()
+	gate.addRefusals(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	dependents, err := s.checkDependents(ctx, template, content)
+	if err != nil {
+		return nil, err
+	}
+	if refusal := dependentsRefusal(dependents); refusal != nil {
+		return nil, refusal
+	}
+
+	return content, nil
 }
 
 func (s *Service) refuseRevisionAuthor(
@@ -325,8 +366,6 @@ func (s *Service) Reject(
 	return rejected, nil
 }
 
-// approvals binds the shared review cycle to this service's repository, status
-// rules and audit log.
 func (s *Service) approvals(
 	ctx context.Context,
 ) approvalworkflow.Engine[*formulatemplate.FormulaTemplate, formulatemplate.Status] {

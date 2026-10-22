@@ -33,6 +33,7 @@ var subjectRecordKinds = map[SubjectType]permission.RecordKind{
 	SubjectAccountingInbound:    "accounting_inbound_change",
 	SubjectAccountingDrift:      "accounting_drift_finding",
 	SubjectFormulaTemplate:      "formula_template",
+	SubjectFormulaLibrary:       "formula_library",
 	SubjectInvoice:              "invoice",
 	SubjectInvoiceDispute:       "invoice_dispute",
 	SubjectFactoringNoa:         "factoring_noa",

@@ -6,8 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/pkg/formulatypes"
-	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 func shipmentCustomerToModel(entity *customer.Customer) *gqlmodel.ShipmentCustomer {
@@ -52,11 +50,9 @@ func shipmentFormulaTemplateToModel(
 		BusinessUnitID:       entity.BusinessUnitID.String(),
 		Name:                 entity.Name,
 		Description:          entity.Description,
-		Type:                 string(entity.Type),
-		Expression:           entity.Expression,
+		Source:               entity.Source,
 		Status:               string(entity.Status),
-		SchemaID:             entity.SchemaID,
-		VariableDefinitions:  formulaVariableDefinitionsToShipmentModel(entity.VariableDefinitions),
+		TestCount:            int(entity.TestCount),
 		Metadata:             entity.Metadata,
 		Version:              int(entity.Version),
 		SourceTemplateID:     IDPtrFromPulidPtr(entity.SourceTemplateID),
@@ -65,26 +61,6 @@ func shipmentFormulaTemplateToModel(
 		CreatedAt:            int(entity.CreatedAt),
 		UpdatedAt:            int(entity.UpdatedAt),
 	}
-}
-
-func formulaVariableDefinitionsToShipmentModel(
-	definitions []*formulatypes.VariableDefinition,
-) []*gqlmodel.ShipmentFormulaVariableDefinition {
-	items := make([]*gqlmodel.ShipmentFormulaVariableDefinition, 0, len(definitions))
-	for _, definition := range definitions {
-		if definition == nil {
-			continue
-		}
-		items = append(items, &gqlmodel.ShipmentFormulaVariableDefinition{
-			Name:         definition.Name,
-			Type:         string(definition.Type),
-			Description:  definition.Description,
-			Required:     definition.Required,
-			DefaultValue: definition.DefaultValue,
-			Source:       sliceutils.StringPtrValue(definition.Source),
-		})
-	}
-	return items
 }
 
 func ShipmentAccessorialChargeToModel(

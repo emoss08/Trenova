@@ -407,11 +407,10 @@ type ShipmentFormulaTemplate {
   businessUnitId: ID!
   name: String!
   description: String!
-  type: String!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
   status: String!
-  schemaId: String!
-  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
+  testCount: Int!
   "Formula template metadata is admin-defined and intentionally open-ended."
   metadata: JSON
   version: Int!
@@ -420,16 +419,6 @@ type ShipmentFormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-}
-
-type ShipmentFormulaVariableDefinition {
-  name: String!
-  type: String!
-  description: String!
-  required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
 }
 
 enum MoveCoverageType {

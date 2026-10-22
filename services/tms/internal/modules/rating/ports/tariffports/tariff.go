@@ -84,3 +84,14 @@ type RateResult struct {
 type Rater interface {
 	Rate(ctx context.Context, req *RateRequest) (*RateResult, error)
 }
+
+type ShipmentRecordRequest struct {
+	TenantInfo pagination.TenantInfo
+	ShipmentID pulid.ID
+	Mode       string
+	AsOf       int64
+}
+
+type RecordBuilder interface {
+	ShipmentRecord(ctx context.Context, req *ShipmentRecordRequest) (rules.RawJSON, error)
+}

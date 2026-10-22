@@ -4,12 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/pkg/formulatypes"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSeedBuild_DefaultsEveryNewTemplateTheSameWay(t *testing.T) {
@@ -19,17 +16,13 @@ func TestSeedBuild_DefaultsEveryNewTemplateTheSameWay(t *testing.T) {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Name:           "Per Mile",
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "baseRate * totalDistance",
+		Source:         "tariff \"Per Mile\"\n",
 	}.Build()
 
 	assert.Equal(t, formulatemplate.StatusDraft, built.Status, "new templates start as drafts")
-	assert.Equal(t, "shipment", built.SchemaID, "the shipment schema is the default")
 	assert.EqualValues(t, 1, built.CurrentVersionNumber)
-	assert.NotNil(t, built.VariableDefinitions, "empty, never nil, so JSON says []")
-	assert.NotNil(t, built.BreakdownDefinitions)
-	assert.Equal(t, ratetypes.RoundingModeHalfUp, built.RoundingMode, "rounding is normalised")
-	assert.EqualValues(t, formulatypes.DefaultRoundingPrecision, built.RoundingPrecision)
+	assert.NotNil(t, built.Inputs, "empty, never nil, so JSON says []")
+	assert.NotNil(t, built.Imports)
 	assert.Nil(t, built.SourceTemplateID)
 	assert.Nil(t, built.SubmittedByID, "a seed never carries review stamps")
 }
@@ -37,73 +30,50 @@ func TestSeedBuild_DefaultsEveryNewTemplateTheSameWay(t *testing.T) {
 func TestSeedFromTemplate_CopiesContentAndPointsAtTheSource(t *testing.T) {
 	t.Parallel()
 
-	sourceID := pulid.MustNew("ft_")
-	approver := pulid.MustNew("usr_")
+	submitter := pulid.MustNew("usr_")
 	source := &formulatemplate.FormulaTemplate{
-		ID:             sourceID,
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		Name:           "Acme Lane",
-		Description:    "Acme's lane rate",
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "lookup('lane', laneCode)",
-		Status:         formulatemplate.StatusActive,
-		SchemaID:       "shipment",
-		BreakdownDefinitions: []*formulatypes.BreakdownDefinition{
-			{Name: "linehaul", Expression: "1"},
-		},
-		MinCharge:            decimal.NewNullDecimal(decimal.NewFromInt(250)),
-		RoundingMode:         ratetypes.RoundingModeUp,
-		RoundingPrecision:    0,
-		Metadata:             map[string]any{"region": "SE"},
-		ApprovedByID:         &approver,
-		CurrentVersionNumber: 7,
+		ID:                   pulid.MustNew("ft_"),
+		OrganizationID:       pulid.MustNew("org_"),
+		BusinessUnitID:       pulid.MustNew("bu_"),
+		Name:                 "Per Mile",
+		Source:               "tariff \"Per Mile\"\n",
+		Inputs:               []tarifftypes.InputDecl{{Name: "rate", Required: true}},
+		Imports:              []tarifftypes.Import{{Path: "org.accessorials", VersionNumber: 2}},
+		TestCount:            3,
+		Status:               formulatemplate.StatusActive,
+		SubmittedByID:        &submitter,
+		CurrentVersionNumber: 4,
+		Metadata:             map[string]any{"owner": "pricing"},
 	}
 
-	seed := formulatemplate.SeedFromTemplate(source)
-	seed.Name = "Acme Lane (Copy)"
-	copied := seed.Build()
+	built := formulatemplate.SeedFromTemplate(source).Build()
+	assert.Equal(t, source.Source, built.Source)
+	assert.Equal(t, source.Inputs, built.Inputs)
+	assert.Equal(t, source.Imports, built.Imports)
+	assert.EqualValues(t, 3, built.TestCount)
+	assert.Equal(t, formulatemplate.StatusDraft, built.Status, "a copy is a draft")
+	assert.Nil(t, built.SubmittedByID)
+	assert.Equal(t, source.ID, *built.SourceTemplateID)
+	assert.EqualValues(t, 4, *built.SourceVersionNumber)
 
-	assert.Equal(t, "Acme Lane (Copy)", copied.Name)
-	assert.Equal(t, source.Expression, copied.Expression)
-	assert.Equal(t, source.BreakdownDefinitions, copied.BreakdownDefinitions)
-	assert.True(t, copied.MinCharge.Valid)
-	assert.Equal(t, ratetypes.RoundingModeUp, copied.RoundingMode)
-	require.NotNil(t, copied.SourceTemplateID)
-	assert.Equal(t, sourceID, *copied.SourceTemplateID)
-	require.NotNil(t, copied.SourceVersionNumber)
-	assert.EqualValues(t, 7, *copied.SourceVersionNumber)
-	assert.Equal(t, formulatemplate.StatusDraft, copied.Status, "a copy is never Active on arrival")
-	assert.Nil(t, copied.ApprovedByID)
-	assert.EqualValues(t, 1, copied.CurrentVersionNumber)
-
-	copied.Metadata["region"] = "NE"
-	assert.Equal(t, "SE", source.Metadata["region"], "metadata is copied, not shared")
+	built.Metadata["owner"] = "billing"
+	built.Imports[0].VersionNumber = 9
+	assert.Equal(t, "pricing", source.Metadata["owner"], "the copy owns its metadata")
+	assert.EqualValues(t, 2, source.Imports[0].VersionNumber, "the copy owns its imports")
 }
 
 func TestSeedFromVersion_UsesTheSnapshotAndNamesItsVersion(t *testing.T) {
 	t.Parallel()
 
-	sourceID := pulid.MustNew("ft_")
-	snapshot := &formulatemplate.FormulaTemplateVersion{
-		TemplateID:    sourceID,
-		VersionNumber: 3,
-		Description:   "as approved in March",
-		Type:          formulatemplate.TemplateTypeAccessorialCharge,
-		Expression:    "75",
-		SchemaID:      "shipment",
-		RoundingMode:  ratetypes.RoundingModeHalfEven,
+	version := &formulatemplate.FormulaTemplateVersion{
+		TemplateID:    pulid.MustNew("ft_"),
+		VersionNumber: 2,
+		Name:          "Per Mile",
+		Source:        "tariff \"Per Mile v2\"\n",
 	}
 
-	seed := formulatemplate.SeedFromVersion(snapshot)
-	seed.Name = "Fork of March"
-	forked := seed.Build()
-
-	assert.Equal(t, formulatemplate.TemplateTypeAccessorialCharge, forked.Type)
-	assert.Equal(t, "75", forked.Expression)
-	assert.Equal(t, ratetypes.RoundingModeHalfEven, forked.RoundingMode)
-	require.NotNil(t, forked.SourceTemplateID)
-	assert.Equal(t, sourceID, *forked.SourceTemplateID)
-	require.NotNil(t, forked.SourceVersionNumber)
-	assert.EqualValues(t, 3, *forked.SourceVersionNumber)
+	built := formulatemplate.SeedFromVersion(version).Build()
+	assert.Equal(t, version.Source, built.Source)
+	assert.Equal(t, version.TemplateID, *built.SourceTemplateID)
+	assert.EqualValues(t, 2, *built.SourceVersionNumber)
 }

@@ -1,4 +1,8 @@
 aliases:
+  FormulaLibrary:
+    path: name
+  FormulaLibraryVersion:
+    path: name
   AgentProposal:
     fromScript: scriptStepKey
   AgentControl:
@@ -407,7 +411,6 @@ virtuals:
     - permissionScope
   FormulaTemplate:
     - usageCount
-    - scenarioCount
   RateMatrix:
     - formulaTemplateName
   VehiclePosition:

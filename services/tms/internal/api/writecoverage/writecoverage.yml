@@ -1606,10 +1606,39 @@ writes:
   "mutation updateSafetyViolation":
     tools: [worker_update_safety_violation]
 
-  # formulatemplate
-  "DELETE /api/v1/formula-templates/:templateID/test-cases/:testCaseID":
+  # formulalibrary
+  "POST /api/v1/formula-libraries/":
     exempt: configuration
-    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "POST /api/v1/formula-libraries/:libraryID/approve":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "POST /api/v1/formula-libraries/:libraryID/archive":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "POST /api/v1/formula-libraries/:libraryID/reject":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "POST /api/v1/formula-libraries/:libraryID/request-changes":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "POST /api/v1/formula-libraries/:libraryID/rollback":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "POST /api/v1/formula-libraries/:libraryID/submit":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "POST /api/v1/formula-libraries/ai/thread/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/formula-libraries/duplicate":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+  "PUT /api/v1/formula-libraries/:libraryID/":
+    exempt: configuration
+    reason: "Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them."
+
+  # formulatemplate
   "PATCH /api/v1/formula-templates/:templateID/":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
@@ -1649,15 +1678,6 @@ writes:
   "POST /api/v1/formula-templates/:templateID/submit":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
-  "POST /api/v1/formula-templates/:templateID/test-cases":
-    exempt: configuration
-    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
-  "POST /api/v1/formula-templates/:templateID/test-cases/:testCaseID/explain":
-    exempt: read-only
-    reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
-  "POST /api/v1/formula-templates/:templateID/test-cases/run":
-    exempt: read-only
-    reason: "Evaluates a pricing formula against samples or past shipments and saves nothing."
   "POST /api/v1/formula-templates/:templateID/versions":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
@@ -1667,7 +1687,10 @@ writes:
   "POST /api/v1/formula-templates/ai/explain":
     exempt: read-only
     reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
-  "POST /api/v1/formula-templates/ai/suggest-scenarios":
+  "POST /api/v1/formula-templates/ai/explain-test":
+    exempt: read-only
+    reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
+  "POST /api/v1/formula-templates/ai/suggest-tests":
     exempt: read-only
     reason: "Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes."
   "POST /api/v1/formula-templates/ai/thread/":
@@ -1685,13 +1708,13 @@ writes:
   "POST /api/v1/formula-templates/install-standards":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
+  "POST /api/v1/formula-templates/scaffold-test":
+    exempt: read-only
+    reason: "Writes a test block from a shipment's facts and returns it for the person to place in the source; nothing is saved."
   "POST /api/v1/formula-templates/test":
     exempt: read-only
     reason: "Evaluates a pricing formula against samples or past shipments and saves nothing."
   "PUT /api/v1/formula-templates/:templateID/":
-    exempt: configuration
-    reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
-  "PUT /api/v1/formula-templates/:templateID/test-cases/:testCaseID":
     exempt: configuration
     reason: "Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them."
 

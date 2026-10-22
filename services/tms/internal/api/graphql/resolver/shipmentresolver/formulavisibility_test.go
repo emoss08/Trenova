@@ -64,8 +64,8 @@ func TestShipmentFormulaFields_NeedFormulaTemplateRead(t *testing.T) {
 
 			template, err := (&ShipmentResolver{deps}).FormulaTemplate(ctx, &gqlmodel.Shipment{
 				FormulaTemplate: &gqlmodel.ShipmentFormulaTemplate{
-					Name:       "Per Mile",
-					Expression: "baseRate * totalDistance",
+					Name:   "Per Mile",
+					Source: "tariff \"Per Mile\"\n",
 				},
 			})
 			require.NoError(t, err)

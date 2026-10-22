@@ -74,6 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalyearexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetsafetyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/formulalibraryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/formulatemplateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelpurchaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelsurchargeexec"
@@ -244,6 +245,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -284,6 +286,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -440,6 +443,8 @@ type ResolverRoot interface {
 	FiscalYear() FiscalYearResolver
 	FleetSafetyRank() FleetSafetyRankResolver
 	FleetSafetyTerminal() FleetSafetyTerminalResolver
+	FormulaLibraryImport() FormulaLibraryImportResolver
+	FormulaLibraryVersion() FormulaLibraryVersionResolver
 	FormulaTemplate() FormulaTemplateResolver
 	FuelCard() FuelCardResolver
 	FuelCardDeskCard() FuelCardDeskCardResolver
@@ -1463,13 +1468,17 @@ type FleetSafetyTerminalResolver interface {
 	FleetCodeID(ctx context.Context, obj *worker.FleetSafetyTerminal) (*string, error)
 }
 
+type FormulaLibraryImportResolver interface {
+	Library(ctx context.Context, obj *tarifftypes.Import) (*formulalibrary.FormulaLibrary, error)
+}
+
+type FormulaLibraryVersionResolver interface {
+	ChangeSummary(ctx context.Context, obj *formulalibrary.FormulaLibraryVersion) (map[string]any, error)
+}
+
 type FormulaTemplateResolver interface {
-	VariableDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateVariableDefinition, error)
-	BreakdownDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateBreakdownDefinition, error)
-	MinCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error)
-	MaxCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error)
+	Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaInputDeclaration, error)
 	UsageCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error)
-	ScenarioCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error)
 }
 
 type FuelCardResolver interface {
@@ -3032,6 +3041,10 @@ type QueryResolver interface {
 	FleetCode(ctx context.Context, id string) (*fleetcode.FleetCode, error)
 	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*worker.FleetSafety, error)
 	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*worker.WorkerSafetyViolation, error)
+	FormulaLibraries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaLibraryConnection, error)
+	FormulaLibrary(ctx context.Context, id string) (*formulalibrary.FormulaLibrary, error)
+	FormulaLibraryVersions(ctx context.Context, libraryID string, first *int) ([]*formulalibrary.FormulaLibraryVersion, error)
+	FormulaLibraryReviews(ctx context.Context, libraryID string) ([]*formulalibrary.FormulaLibraryReview, error)
 	FormulaTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaTemplateConnection, error)
 	FormulaTemplate(ctx context.Context, id string) (*formulatemplate.FormulaTemplate, error)
 	FuelCards(ctx context.Context, input gqlmodel.FuelCardsInput) (*gqlmodel.FuelCardConnection, error)
@@ -3868,6 +3881,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		fiscalyearexec.Shard,
 		fleetcodeexec.Shard,
 		fleetsafetyexec.Shard,
+		formulalibraryexec.Shard,
 		formulatemplateexec.Shard,
 		fuelpurchaseexec.Shard,
 		fuelsurchargeexec.Shard,
@@ -4100,6 +4114,8 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FiscalYear":                         func() any { return r.FiscalYear() },
 			"FleetSafetyRank":                    func() any { return r.FleetSafetyRank() },
 			"FleetSafetyTerminal":                func() any { return r.FleetSafetyTerminal() },
+			"FormulaLibraryImport":               func() any { return r.FormulaLibraryImport() },
+			"FormulaLibraryVersion":              func() any { return r.FormulaLibraryVersion() },
 			"FormulaTemplate":                    func() any { return r.FormulaTemplate() },
 			"FuelCard":                           func() any { return r.FuelCard() },
 			"FuelCardDeskCard":                   func() any { return r.FuelCardDeskCard() },

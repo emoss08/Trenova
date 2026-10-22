@@ -83,6 +83,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -4893,10 +4894,29 @@ type FormSubmissionField struct {
 	Value string `json:"value"`
 }
 
-type FormulaTemplateBreakdownDefinition struct {
-	Name       string `json:"name"`
-	Label      string `json:"label"`
-	Expression string `json:"expression"`
+// An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default.
+type FormulaInputDeclaration struct {
+	Name string `json:"name"`
+	// The input's doc comment, which labels it in the inputs form.
+	Doc string `json:"doc"`
+	// The type as written in the source, such as Money/mi or List<Break>.
+	Type string `json:"type"`
+	// The type's structure, which the inputs form is built from. Its shape is the module's type descriptor.
+	Descriptor any  `json:"descriptor,omitempty"`
+	Required   bool `json:"required"`
+	// The default as a wire value, or null when the input has none.
+	Default any `json:"default,omitempty"`
+}
+
+type FormulaLibraryConnection struct {
+	Edges      []*FormulaLibraryEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+type FormulaLibraryEdge struct {
+	Node   *formulalibrary.FormulaLibrary `json:"node"`
+	Cursor string                         `json:"cursor"`
 }
 
 type FormulaTemplateConnection struct {
@@ -4908,16 +4928,6 @@ type FormulaTemplateConnection struct {
 type FormulaTemplateEdge struct {
 	Node   *formulatemplate.FormulaTemplate `json:"node"`
 	Cursor string                           `json:"cursor"`
-}
-
-type FormulaTemplateVariableDefinition struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
-	// Formula variable defaults can be scalar, array, object, or null by template design.
-	DefaultValue any     `json:"defaultValue,omitempty"`
-	Source       *string `json:"source,omitempty"`
 }
 
 type FuelCardConnection struct {
@@ -8972,16 +8982,15 @@ type ShipmentEventsInput struct {
 }
 
 type ShipmentFormulaTemplate struct {
-	ID                  string                               `json:"id"`
-	OrganizationID      string                               `json:"organizationId"`
-	BusinessUnitID      string                               `json:"businessUnitId"`
-	Name                string                               `json:"name"`
-	Description         string                               `json:"description"`
-	Type                string                               `json:"type"`
-	Expression          string                               `json:"expression"`
-	Status              string                               `json:"status"`
-	SchemaID            string                               `json:"schemaId"`
-	VariableDefinitions []*ShipmentFormulaVariableDefinition `json:"variableDefinitions"`
+	ID             string `json:"id"`
+	OrganizationID string `json:"organizationId"`
+	BusinessUnitID string `json:"businessUnitId"`
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	// The formula's Tariff source.
+	Source    string `json:"source"`
+	Status    string `json:"status"`
+	TestCount int    `json:"testCount"`
 	// Formula template metadata is admin-defined and intentionally open-ended.
 	Metadata             map[string]any `json:"metadata,omitempty"`
 	Version              int            `json:"version"`
@@ -8990,16 +8999,6 @@ type ShipmentFormulaTemplate struct {
 	CurrentVersionNumber int            `json:"currentVersionNumber"`
 	CreatedAt            int            `json:"createdAt"`
 	UpdatedAt            int            `json:"updatedAt"`
-}
-
-type ShipmentFormulaVariableDefinition struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
-	// Formula variable defaults can be scalar, array, object, or null by template design.
-	DefaultValue any     `json:"defaultValue,omitempty"`
-	Source       *string `json:"source,omitempty"`
 }
 
 type ShipmentHazmatInput struct {

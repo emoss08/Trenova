@@ -5,26 +5,22 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
-	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type recordingStudio struct {
 	explained []*agentports.ExplainFormulaRequest
-	scenarios []*agentports.ExplainFormulaScenarioRequest
+	described []*agentports.DescribeFormulaInputsRequest
+	suggested []*agentports.SuggestFormulaTestsRequest
+	tested    []*agentports.ExplainFormulaTestRequest
 	notes     []*agentports.DraftFormulaReviewNoteRequest
 	actors    []*permissionports.RequestActor
 }
@@ -37,35 +33,41 @@ func (s *recordingStudio) ExplainFormula(
 	s.explained = append(s.explained, req)
 	s.actors = append(s.actors, actor)
 	return &agentports.ExplainFormulaResponse{
-		Items: []agentports.FormulaStatementNote{
-			{StatementIndex: 0, Says: "It charges by the mile."},
-		},
+		Items: []agentports.FormulaTraceNote{{Index: 0, Says: "It charges by the mile."}},
 	}, nil
 }
 
 func (s *recordingStudio) DescribeInputs(
-	context.Context,
-	*agentports.DescribeFormulaInputsRequest,
-	*permissionports.RequestActor,
-) (*agentports.DescribeFormulaInputsResponse, error) {
-	return &agentports.DescribeFormulaInputsResponse{Descriptions: map[string]string{}}, nil
-}
-
-func (s *recordingStudio) SuggestScenarios(
-	context.Context,
-	*agentports.SuggestFormulaScenariosRequest,
-	*permissionports.RequestActor,
-) (*agentports.SuggestFormulaScenariosResponse, error) {
-	return &agentports.SuggestFormulaScenariosResponse{}, nil
-}
-
-func (s *recordingStudio) ExplainScenario(
 	_ context.Context,
-	req *agentports.ExplainFormulaScenarioRequest,
+	req *agentports.DescribeFormulaInputsRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.ExplainFormulaScenarioResponse, error) {
-	s.scenarios = append(s.scenarios, req)
-	return &agentports.ExplainFormulaScenarioResponse{Verdict: "unclear"}, nil
+) (*agentports.DescribeFormulaInputsResponse, error) {
+	s.described = append(s.described, req)
+	return &agentports.DescribeFormulaInputsResponse{
+		Descriptions: map[string]string{"rate": "What the contract pays per mile"},
+	}, nil
+}
+
+func (s *recordingStudio) SuggestTests(
+	_ context.Context,
+	req *agentports.SuggestFormulaTestsRequest,
+	_ *permissionports.RequestActor,
+) (*agentports.SuggestFormulaTestsResponse, error) {
+	s.suggested = append(s.suggested, req)
+	return &agentports.SuggestFormulaTestsResponse{Tests: []agentports.SuggestedFormulaTest{{
+		Name:   "Minimum reached",
+		Block:  "test \"Minimum reached\" {\n  expect total >= $0\n}",
+		Status: rules.TariffTestPassed,
+	}}}, nil
+}
+
+func (s *recordingStudio) ExplainTest(
+	_ context.Context,
+	req *agentports.ExplainFormulaTestRequest,
+	_ *permissionports.RequestActor,
+) (*agentports.ExplainFormulaTestResponse, error) {
+	s.tested = append(s.tested, req)
+	return &agentports.ExplainFormulaTestResponse{Verdict: agentports.FormulaTestVerdictUnclear}, nil
 }
 
 func (s *recordingStudio) DraftReviewNote(
@@ -74,117 +76,40 @@ func (s *recordingStudio) DraftReviewNote(
 	_ *permissionports.RequestActor,
 ) (*agentports.DraftFormulaReviewNoteResponse, error) {
 	s.notes = append(s.notes, req)
-	return &agentports.DraftFormulaReviewNoteResponse{
-		Note:      "Raised the rate.",
-		Generated: true,
-	}, nil
+	return &agentports.DraftFormulaReviewNoteResponse{Note: "Raised the rate.", Generated: true}, nil
 }
 
-type studioFixture struct {
-	handler   *formulatemplatehandler.Handler
-	studio    *recordingStudio
-	testCases *stubTestCaseRepo
-}
-
-func newStudioFixture(
-	t *testing.T,
-	granted map[string]bool,
-	repo *mockFormulaTemplateRepo,
-	withStudio bool,
-) *studioFixture {
+func newStudioFixture(t *testing.T, granted map[string]bool, studio *recordingStudio) *fixture {
 	t.Helper()
-
-	logger := zap.NewNop()
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
-	})
-	engine := &grantedEngine{granted: granted}
-	studio := &recordingStudio{}
-	testCases := &stubTestCaseRepo{}
-	params := formulatemplatehandler.Params{
-		Service: formulatemplateservice.New(formulatemplateservice.Params{
-			Logger:         logger,
-			DB:             testDBConnection{},
-			Repo:           repo,
-			VersionRepo:    &mockVersionRepo{},
-			TestCaseRepo:   testCases,
-			ReviewRepo:     &stubReviewRepo{},
-			ShipmentRepo:   &mockShipmentRepo{},
-			FormulaService: newTestFormulaService(t),
-			AuditService:   &mocks.NoopAuditService{},
-		}),
-		ErrorHandler: errorHandler,
-		PermissionMiddleware: middleware.NewPermissionMiddleware(
-			middleware.PermissionMiddlewareParams{
-				PermissionEngine: engine,
-				ErrorHandler:     errorHandler,
-			},
-		),
-		PermissionEngine: engine,
+	opts := fixtureOptions{granted: granted}
+	if studio != nil {
+		opts.studio = studio
 	}
-	if withStudio {
-		params.StudioAssist = studio
-	}
-
-	return &studioFixture{
-		handler:   formulatemplatehandler.New(params),
-		studio:    studio,
-		testCases: testCases,
-	}
+	return newFixture(t, opts)
 }
 
-func (f *studioFixture) serve(method, path string, body any) *testutil.GinTestContext {
-	ginCtx := testutil.NewGinTestContext().
-		WithMethod(method).
-		WithPath(path).
-		WithDefaultAuthContext()
-	if body != nil {
-		ginCtx = ginCtx.WithJSONBody(body)
-	}
-	f.handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
-	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
-
-	return ginCtx
-}
-
-func studioGrants() map[string]bool {
-	return map[string]bool{
-		"formula_template:read":   true,
-		"formula_template:create": true,
-		"formula_template:submit": true,
-		"assistant:create":        true,
-	}
-}
-
-func TestStudioExplain_ParsesTheDraftAndAnswers(t *testing.T) {
+func TestStudioExplain_PassesTheDraftInputsAndShipment(t *testing.T) {
 	t.Parallel()
 
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, true)
+	studio := &recordingStudio{}
+	f := newStudioFixture(t, authorGrants(), studio)
+	shipmentID := pulid.MustNew("shp_")
 	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/ai/explain", map[string]any{
-		"schemaId":          "shipment",
-		"expression":        "totalDistance * rate",
-		"minCharge":         "250",
-		"maxCharge":         nil,
-		"roundingMode":      "Up",
-		"roundingPrecision": 0,
-		"variableDefinitions": []map[string]any{
-			{"name": "rate", "type": "Number", "defaultValue": 2.5},
-		},
-		"sampleValues": map[string]any{"totalDistance": 100},
+		"name":       "Per Mile",
+		"source":     perMileSource,
+		"inputs":     map[string]any{"rate": map[string]any{"$q": "2.85", "u": "$/mi"}},
+		"shipmentId": shipmentID.String(),
 	})
 
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	require.Len(t, f.studio.explained, 1)
-	draft := f.studio.explained[0].Draft
-	assert.Equal(t, "totalDistance * rate", draft.Content.Expression)
-	assert.True(t, draft.Content.MinCharge.Valid)
-	assert.Equal(t, "250", draft.Content.MinCharge.Decimal.String())
-	assert.False(t, draft.Content.MaxCharge.Valid)
-	assert.EqualValues(t, "Up", draft.Content.RoundingMode)
-	assert.EqualValues(t, 0, draft.Content.RoundingPrecision)
-	require.Len(t, f.studio.actors, 1)
-	assert.Equal(t, testutil.TestUserID, f.studio.actors[0].UserID)
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), ginCtx.Recorder.Body.String())
+	require.Len(t, studio.explained, 1)
+	request := studio.explained[0]
+	assert.Equal(t, perMileSource, request.Draft.Source)
+	assert.Equal(t, "Per Mile", request.Draft.Name)
+	assert.Equal(t, shipmentID, request.ShipmentID)
+	assert.Contains(t, request.Inputs, "rate")
+	require.Len(t, studio.actors, 1)
+	assert.Equal(t, testutil.TestUserID, studio.actors[0].UserID)
 
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
@@ -193,293 +118,120 @@ func TestStudioExplain_ParsesTheDraftAndAnswers(t *testing.T) {
 	assert.Len(t, items, 1)
 }
 
-func TestStudioExplain_RefusesABadPolicyAndAMissingAssistant(t *testing.T) {
+func TestStudioExplain_RefusesAnEmptySourceAndAMissingAssistant(t *testing.T) {
 	t.Parallel()
 
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, true)
+	studio := &recordingStudio{}
+	f := newStudioFixture(t, authorGrants(), studio)
 	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/ai/explain", map[string]any{
-		"expression": "1",
-		"minCharge":  "10",
-		"maxCharge":  "5",
+		"source": "",
 	})
-	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), 400)
-	assert.Empty(t, f.studio.explained)
+	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), http.StatusBadRequest)
+	assert.Empty(t, studio.explained)
 
-	missing := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
+	missing := newStudioFixture(t, authorGrants(), nil)
 	ginCtx = missing.serve(http.MethodPost, "/api/v1/formula-templates/ai/explain", map[string]any{
-		"expression": "1",
+		"source": perMileSource,
 	})
-	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), 400)
+	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), http.StatusBadRequest)
 }
 
 func TestStudioRoutes_NeedTheAssistant(t *testing.T) {
 	t.Parallel()
 
-	f := newStudioFixture(
-		t,
-		map[string]bool{"formula_template:read": true},
-		&mockFormulaTemplateRepo{},
-		true,
-	)
-	ginCtx := f.serve(
-		http.MethodPost,
+	studio := &recordingStudio{}
+	f := newStudioFixture(t, map[string]bool{"formula_template:read": true}, studio)
+	for _, path := range []string{
 		"/api/v1/formula-templates/ai/describe-inputs",
-		map[string]any{
-			"expression": "1",
-		},
-	)
-
-	assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode())
+		"/api/v1/formula-templates/ai/suggest-tests",
+		"/api/v1/formula-templates/ai/explain-test",
+	} {
+		ginCtx := f.serve(http.MethodPost, path, map[string]any{"source": perMileSource})
+		assert.Equal(t, http.StatusForbidden, ginCtx.ResponseCode(), path)
+	}
+	assert.Empty(t, studio.described)
+	assert.Empty(t, studio.suggested)
 }
 
-func TestStudioExplainScenario_PassesTheCandidate(t *testing.T) {
+func TestStudioSuggestTests_AnswersRunnableBlocks(t *testing.T) {
 	t.Parallel()
 
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, true)
-	templateID := pulid.MustNew("ft_")
-	testCaseID := pulid.MustNew("ftc_")
-	path := "/api/v1/formula-templates/" + templateID.String() + "/test-cases/" +
-		testCaseID.String() + "/explain"
-
-	ginCtx := f.serve(http.MethodPost, path, map[string]any{})
-	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), 400, "the candidate is required")
-
-	ginCtx = f.serve(http.MethodPost, path, map[string]any{
-		"candidate": map[string]any{"expression": "totalDistance * 3", "minCharge": "100"},
+	studio := &recordingStudio{}
+	f := newStudioFixture(t, authorGrants(), studio)
+	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/ai/suggest-tests", map[string]any{
+		"source": perMileSource,
 	})
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	require.Len(t, f.studio.scenarios, 1)
-	assert.Equal(t, templateID, f.studio.scenarios[0].TemplateID)
-	assert.Equal(t, testCaseID, f.studio.scenarios[0].TestCaseID)
-	assert.Equal(t, "totalDistance * 3", f.studio.scenarios[0].Candidate.Expression)
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), ginCtx.Recorder.Body.String())
+	require.Len(t, studio.suggested, 1)
+	assert.Equal(t, perMileSource, studio.suggested[0].Draft.Source)
+
+	var resp map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	tests := resp["tests"].([]any)
+	require.Len(t, tests, 1)
+	assert.Equal(t, "passed", tests[0].(map[string]any)["status"])
+}
+
+func TestStudioExplainTest_NeedsTheTestsName(t *testing.T) {
+	t.Parallel()
+
+	studio := &recordingStudio{}
+	f := newStudioFixture(t, authorGrants(), studio)
+	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/ai/explain-test", map[string]any{
+		"source": perMileSource,
+	})
+	assert.GreaterOrEqual(t, ginCtx.ResponseCode(), http.StatusBadRequest)
+	assert.Empty(t, studio.tested)
+
+	ginCtx = f.serve(http.MethodPost, "/api/v1/formula-templates/ai/explain-test", map[string]any{
+		"source":   perMileSource,
+		"testName": "a short haul bills its miles",
+	})
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), ginCtx.Recorder.Body.String())
+	require.Len(t, studio.tested, 1)
+	assert.Equal(t, "a short haul bills its miles", studio.tested[0].TestName)
 }
 
 func TestStudioReviewNote_IncludesTheBacktestOnlyForShipmentReaders(t *testing.T) {
 	t.Parallel()
 
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, true)
+	grants := authorGrants()
+	delete(grants, "shipment:read")
+	studio := &recordingStudio{}
+	f := newStudioFixture(t, grants, studio)
 	path := "/api/v1/formula-templates/" + pulid.MustNew("ft_").String() + "/review-note"
 	ginCtx := f.serve(http.MethodPost, path, map[string]any{})
 	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	require.Len(t, f.studio.notes, 1)
-	assert.False(t, f.studio.notes[0].IncludeBacktest)
+	require.Len(t, studio.notes, 1)
+	assert.False(t, studio.notes[0].IncludeBacktest)
 
-	grants := studioGrants()
-	grants["shipment:read"] = true
-	f = newStudioFixture(t, grants, &mockFormulaTemplateRepo{}, true)
+	studio = &recordingStudio{}
+	f = newStudioFixture(t, authorGrants(), studio)
 	ginCtx = f.serve(http.MethodPost, path, nil)
 	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	assert.True(t, f.studio.notes[0].IncludeBacktest)
-}
-
-func TestCreate_SavesHeldScenariosWithTheTemplate(t *testing.T) {
-	t.Parallel()
-
-	repo := &mockFormulaTemplateRepo{
-		createFunc: func(_ context.Context, entity *formulatemplate.FormulaTemplate) (*formulatemplate.FormulaTemplate, error) {
-			entity.ID = pulid.MustNew("ft_")
-			return entity, nil
-		},
-	}
-	f := newStudioFixture(t, studioGrants(), repo, true)
-
-	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/", map[string]any{
-		"name":        "Per mile",
-		"description": "Prices a load by the mile",
-		"type":        "FreightCharge",
-		"schemaId":    "shipment",
-		"expression":  "totalDistance * 2.5",
-		"testCases": []map[string]any{
-			{
-				"name":           "Hundred miles",
-				"variables":      map[string]any{"totalDistance": 100},
-				"expectedAmount": "250",
-				"candidate":      map[string]any{"expression": "totalDistance * 2.5"},
-			},
-		},
-	})
-
-	require.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
-	require.Len(t, f.testCases.created, 1)
-	created := f.testCases.created[0]
-	assert.Equal(t, "Hundred miles", created.Name)
-	assert.Equal(t, testutil.TestOrgID, created.OrganizationID)
-	require.NotNil(t, created.RecordedOnVersion)
-	assert.EqualValues(t, 0, *created.RecordedOnVersion)
-	require.NotNil(t, created.RecordedByID)
-	assert.Equal(t, testutil.TestUserID, *created.RecordedByID)
+	require.Len(t, studio.notes, 1)
+	assert.True(t, studio.notes[0].IncludeBacktest)
 }
 
 func TestSubmit_RefusesAMalformedReviewer(t *testing.T) {
 	t.Parallel()
 
-	repo, ftID := newApprovalTemplateRepo(formulatemplate.StatusDraft)
-	f := newStudioFixture(t, studioGrants(), repo, true)
+	f := newStudioFixture(t, authorGrants(), &recordingStudio{})
+	templateID := pulid.MustNew("ft_")
+	f.repo.On("GetByID", mock.Anything, mock.Anything).
+		Return(&formulatemplate.FormulaTemplate{
+			ID:     templateID,
+			Name:   "Per Mile",
+			Source: perMileSource,
+			Status: formulatemplate.StatusDraft,
+		}, nil).Maybe()
 
 	ginCtx := f.serve(
 		http.MethodPost,
-		"/api/v1/formula-templates/"+ftID.String()+"/submit",
+		"/api/v1/formula-templates/"+templateID.String()+"/submit",
 		map[string]any{"reviewerId": "not-an-id"},
 	)
 
 	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 	assert.Contains(t, ginCtx.Recorder.Body.String(), "reviewerId")
-}
-
-var _ formulatemplateports.FormulaTemplateTestCaseRepository = (*stubTestCaseRepo)(nil)
-
-func TestTestExpression_TracesStatementsWhenAsked(t *testing.T) {
-	t.Parallel()
-
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
-	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/test", map[string]any{
-		"expression":      "let base = totalDistance * 2; base + 10",
-		"schemaId":        "shipment",
-		"variables":       map[string]any{"totalDistance": 100},
-		"traceStatements": true,
-	})
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	statements, ok := resp["statements"].([]any)
-	require.True(t, ok, "statements are returned when traced")
-	require.Len(t, statements, 2)
-
-	first := statements[0].(map[string]any)
-	assert.Equal(t, "let", first["kind"])
-	assert.Equal(t, "base", first["name"])
-	assert.Equal(t, "let base = totalDistance * 2", first["code"])
-	assert.EqualValues(t, 0, first["from"])
-	assert.EqualValues(t, 28, first["to"])
-	assert.Equal(t, "200", first["value"])
-
-	result := statements[1].(map[string]any)
-	assert.Equal(t, "result", result["kind"])
-	assert.NotContains(t, result, "name")
-	assert.Equal(t, "210", result["value"])
-
-	ginCtx = f.serve(http.MethodPost, "/api/v1/formula-templates/test", map[string]any{
-		"expression": "let base = totalDistance * 2; base + 10",
-		"schemaId":   "shipment",
-		"variables":  map[string]any{"totalDistance": 100},
-	})
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-	var untraced map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&untraced))
-	assert.Nil(t, untraced["statements"], "statements are traced only when asked")
-}
-
-func TestTestExpression_AnswersTheDocumentedShapeFieldForField(t *testing.T) {
-	t.Parallel()
-
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
-	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/test", map[string]any{
-		"expression": "let rate = 2;\nrate * coalesce(weight, 0) + totalDistance",
-		"schemaId":   "shipment",
-		"variables":  map[string]any{"totalDistance": 100, "weight": 10},
-		"breakdowns": []map[string]any{
-			{"name": "linehaul", "label": "Linehaul", "expression": "totalDistance"},
-			{"name": "perPound", "label": "Per pound", "expression": "weight / (totalDistance - 100)"},
-		},
-		"traceStatements": true,
-	})
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	for _, key := range []string{
-		"valid", "result", "diagnostics", "error", "statements", "breakdown",
-		"resolvedVariables", "guardrail", "rounding", "receipt",
-	} {
-		assert.Contains(t, resp, key)
-	}
-	for _, gone := range []string{"message", "warnings"} {
-		assert.NotContains(t, resp, gone)
-	}
-
-	assert.Equal(t, false, resp["valid"], "a line that fails to evaluate makes the preview invalid")
-	assert.Equal(t, "120", resp["result"], "an amount is a decimal string")
-
-	diagnostics := resp["diagnostics"].([]any)
-	require.Len(t, diagnostics, 1)
-	nullable := diagnostics[0].(map[string]any)
-	assert.Equal(t, "breakdowns[1].expression", nullable["scope"])
-	assert.Equal(t, "nullable", nullable["code"])
-	assert.Equal(t, "warning", nullable["severity"])
-	assert.Equal(t, "weight", nullable["name"])
-	assert.IsType(t, "", nullable["message"])
-	assert.IsType(t, []any{}, nullable["args"])
-
-	failure := resp["error"].(map[string]any)
-	assert.Equal(t, "breakdowns[1].expression", failure["scope"])
-	assert.Equal(t, "divideByZero", failure["code"])
-	assert.IsType(t, "", failure["message"])
-	assert.Contains(t, failure, "from")
-	assert.Contains(t, failure, "to")
-
-	statements := resp["statements"].([]any)
-	require.Len(t, statements, 2)
-	let := statements[0].(map[string]any)
-	assert.Equal(t, "let", let["kind"])
-	assert.Equal(t, "rate", let["name"])
-	assert.Equal(t, "2", let["value"])
-	assert.EqualValues(t, 0, let["from"])
-	assert.EqualValues(t, 12, let["to"])
-	assert.Nil(t, let["error"])
-
-	breakdown := resp["breakdown"].([]any)
-	require.Len(t, breakdown, 2)
-	assert.Equal(t, "100", breakdown[0].(map[string]any)["amount"])
-	assert.IsType(t, "", breakdown[1].(map[string]any)["error"], "a line's error is plain text")
-
-	assert.Equal(t, "100", resp["resolvedVariables"].(map[string]any)["totalDistance"])
-	receipt := resp["receipt"].(map[string]any)
-	assert.Equal(t, "120", receipt["rawAmount"])
-}
-
-func TestTestExpression_ARunawayFormulaIsStoppedAtThePreviewDeadline(t *testing.T) {
-	t.Parallel()
-
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
-	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/test", map[string]any{
-		"expression": "sum(map(1..9999, sum(map(1..9999, sum(map(1..99, # * 2)))))) * 0",
-		"schemaId":   "shipment",
-		"variables":  map[string]any{},
-	})
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, false, resp["valid"])
-	failure, ok := resp["error"].(map[string]any)
-	require.True(t, ok, "%v", resp)
-	assert.Contains(t, []any{"timeout", "budget"}, failure["code"],
-		"either the deadline or the step budget stops it, and it says which")
-}
-
-func TestGetSchema_PublishesTheRecordsFieldsAndEachListsItemFields(t *testing.T) {
-	t.Parallel()
-
-	f := newStudioFixture(t, studioGrants(), &mockFormulaTemplateRepo{}, false)
-	ginCtx := f.serve(http.MethodGet, "/api/v1/formula-templates/schema", nil)
-	require.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Len(t, resp, 2, "only schemaId and variables cross HTTP")
-	assert.Equal(t, "shipment", resp["schemaId"])
-
-	byName := make(map[string]map[string]any)
-	for _, raw := range resp["variables"].([]any) {
-		variable := raw.(map[string]any)
-		byName[variable["name"].(string)] = variable
-	}
-	require.Contains(t, byName, "stops[].type")
-	require.Contains(t, byName, "commodities[].freightClass")
-	weight := byName["weight"]
-	for _, key := range []string{"name", "type", "description", "category", "nullable", "computed"} {
-		assert.Contains(t, weight, key)
-	}
-	assert.Equal(t, true, weight["nullable"])
 }
