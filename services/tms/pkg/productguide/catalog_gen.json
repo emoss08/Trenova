@@ -1,5 +1,5 @@
 {
-  "version": "sha256:07df242d43f41f0a41bfa1b93d7ab569f1ad3eee251d168a40b7abb09ecffc4f",
+  "version": "sha256:2df8ff573cbb5d1e72fa050bc04667cbc3e24e717aa572a1132ff4014416a983",
   "modules": [
     {
       "id": "home",
@@ -16946,7 +16946,10 @@
         "custom report designer",
         "query builder",
         "pivot table",
-        "report editor"
+        "report editor",
+        "locked field",
+        "unavailable field",
+        "report access"
       ],
       "tasks": [
         {
@@ -17004,9 +17007,43 @@
             "Make the changes and select **Save**, then **Save report** to keep them. Saving creates a new revision.",
             "Select **Run** to run the saved report."
           ]
+        },
+        {
+          "title": "Understand locked and reference-only fields",
+          "keywords": [
+            "locked field",
+            "greyed out field",
+            "field unavailable",
+            "why can't I add this field",
+            "reference only",
+            "field group",
+            "sensitivity level"
+          ],
+          "steps": [
+            "Open the report in the [report builder](/reports/builder) and look at the field catalog on the left. A field with a lock that you can still add belongs to a protected field group; its badge names the group, such as **Personal** or **Margins**.",
+            "A field you cannot add is greyed out, with a lock and its reason beside it: \"Needs the Personal field group\" when your role does not hold that group, \"Unavailable at your role's sensitivity level\" when it ranks above your role's sensitivity level, or \"Needs Customers read\" (with that kind of record named) when it needs read on that kind.",
+            "A related record you can join to but cannot read is marked **Reference only**. Expanding it lists only the fields other records show of it, under a note such as \"Reference only — the rest needs Customers read\".",
+            "A related record you cannot join to at all is listed with a lock and \"Needs Customers read\" (naming the kind it needs) and cannot be expanded.",
+            "To use a locked field, ask an administrator to grant the read, field group or sensitivity level on your role in [Roles](/admin/roles)."
+          ]
+        },
+        {
+          "title": "Fix a report that uses fields you can no longer use",
+          "keywords": [
+            "report unavailable fields",
+            "report refused",
+            "cannot run report",
+            "lost access",
+            "remove fields"
+          ],
+          "steps": [
+            "Open the report in the [report builder](/reports/builder). When it uses fields your role cannot reach, a warning at the top lists each one and why, and says the preview and runs are refused until they are removed or your access changes.",
+            "Select **Remove unavailable fields** to take those columns, filters and the pivot out of the report, then select **Save** and **Save report**. Or ask an administrator for the access instead.",
+            "When the report is built on a kind of record your role cannot read at all, the builder shows **You cannot open this report's data** instead of the report. Ask an administrator for read access to that kind, or select **New report** to start a different one."
+          ]
         }
       ],
-      "notes": "Needs create permission for reports. **Save** stays disabled until the report has at least one column, and **Run** works only for a report whose status is **Active**. A report flagged **Needs attention** has a problem (for example a field that no longer exists) described at the top of the builder.",
+      "notes": "Needs create permission for reports. **Save** stays disabled until the report has at least one column, and **Run** works only for a report whose status is **Active**. A report flagged **Needs attention** has a problem (for example a field that no longer exists) described at the top of the builder.\n\nThe entity picker lists only the kinds of record your role can read. The field catalog decides each field by the same rule as the preview and runs, so a field you can add always compiles, and a saved report someone with a wider role built may name fields that are locked for you.",
       "related": [
         "/reports",
         "/reports/explore",
