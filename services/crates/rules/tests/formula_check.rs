@@ -36,6 +36,26 @@ fn default_schema() -> Schema {
     schema(&[("fuelPct", "Number"), ("hazmatFee", "Number")])
 }
 
+/// The shipment schema as it would be published without item fields, so list elements are
+/// untyped.
+fn untyped_items_codes(source: &str) -> Vec<String> {
+    let mut schema = default_schema();
+    schema
+        .variables
+        .retain(|variable| !variable.name.contains("[]"));
+    check::check(source, Expect::Amount, Some(&schema), None)
+        .diagnostics
+        .iter()
+        .map(|diagnostic| {
+            format!(
+                "{}:{}",
+                diagnostic.severity.as_str(),
+                diagnostic.code.as_str()
+            )
+        })
+        .collect()
+}
+
 fn analyse(source: &str) -> Analysis {
     check::check(source, Expect::Amount, Some(&default_schema()), None)
 }
@@ -498,7 +518,7 @@ fn a_predicate_given_to_a_sum_maps_the_list() {
     );
     assert_eq!(codes("sum([1, 2], # * 2)"), ["error:type"]);
     assert!(codes("sum(map([1, 2], # * 2))").is_empty());
-    assert!(codes("count(stops, max(.a, .b) > 1) * 2").is_empty());
+    assert!(untyped_items_codes("count(stops, max(.a, .b) > 1) * 2").is_empty());
 }
 
 #[test]
@@ -825,7 +845,12 @@ fn item_fields_type_predicates_when_the_schema_publishes_them() {
     assert!(item("sum(map(stops, .weight ?? 0))").is_empty());
     assert!(item("sum(map(filter(stops, .type == \"Pickup\"), #.weight ?? 0))").is_empty());
     assert_eq!(item("first(stops).wieght ?? 0").len(), 1);
-    assert!(codes("count(stops, .anything == 1)").is_empty());
+    assert!(untyped_items_codes("count(stops, .anything == 1)").is_empty());
+    assert_eq!(
+        codes("count(stops, .anything == 1)"),
+        ["error:unknown-field"],
+        "the published shipment schema types stop fields"
+    );
 }
 
 #[test]
