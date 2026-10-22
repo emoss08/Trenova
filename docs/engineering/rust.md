@@ -32,7 +32,7 @@ Why one workspace rather than one per service: shared crates (`service-kit`, `sa
 `proto`, `imaging-core`) are edited together with their users, a dependency is audited and
 upgraded once, and two services cannot quietly drift onto different majors of `tonic` or
 `rustls`. Why services stay separate processes: the imaging worker is sized by CPU and memory
-per document, a future rules engine by request rate; one container cannot be sized for both,
+per document, a request-serving service by request rate; one container cannot be sized for both,
 and a crash in a PDF parser must never stop anything else.
 
 ## Layout
@@ -207,7 +207,11 @@ WebAssembly crate, and the pattern for any later one.
     rejected: `--mvp-features` plus bulk memory (and its `-opt` subset), overlong
     `call_indirect`, multi-value, mutable globals, non-trapping float-to-int, reference types
     and sign extension;
-  - stripping debug info, the producers section and the target-features section.
+  - stripping debug info, the producers section and the target-features section;
+  - then the browser's unit table, `client/packages/shared/src/rules/tariff-units.generated.ts`,
+    written from the crate's `SIMPLE_UNITS` by `tests/client_units.rs` run with
+    `TRENOVA_WRITE_GENERATED=1` (the web app formats wire values before the module loads, so it
+    cannot read `tariff.catalog`'s `units`; generated, it cannot drift).
 
   The same commit gives the same bytes on any machine and in any checkout path. A toolchain,
   dependency or binaryen change changes the bytes, so the same commit carries the rebuilt
@@ -215,15 +219,16 @@ WebAssembly crate, and the pattern for any later one.
   (taken from the release's `.sha256` files and checked against your own download), then run
   the task.
 - **The check.** `task rust:wasm-rules-check` rebuilds into a temporary directory and fails,
-  naming the file, when a committed copy or its sidecar differs. The `wasm-rules` job in
+  naming the file, when a committed copy or its sidecar differs, or the unit table is not the
+  crate's (that test also runs in `cargo test`). The `wasm-rules` job in
   `rust.yml` runs it, and clippy for `--target wasm32-unknown-unknown`, the only build that
   compiles `abi.rs`. The Go host's tests run with the rest of the TMS in `test-tms.yml`, the
   loader's with the client in `test-client.yml`.
-- **Calls take batches.** Every call copies its request and its response through linear
-  memory and holds an instance from the pool while it runs. One call per request, never one
-  per item: an operation takes the whole list (every charge line, every lane, every band) and
-  answers for all of it. A loop that calls the module once per row is a review failure, like
-  an N+1 query.
+- **Calls take batches.** Every call copies its request and its response through linear memory
+  and holds an instance from the pool while it runs. One call per request, never one per item:
+  an operation takes the whole list (every charge line, every lane, every band, every program of
+  a rating) and answers for all of it. A loop that calls the module once per row is a review
+  failure, like an N+1 query.
 
 ## Tasks
 

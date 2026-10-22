@@ -5,15 +5,15 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -136,59 +136,47 @@ func TestAdoptContractRate_RemovesAgreementChargeWhenNoLongerApplicable(t *testi
 	assert.Empty(t, entity.AdditionalCharges)
 }
 
+const (
+	multiStop = "condition \"Multi stop\"\n\nshipment.stops.count() > 2\n"
+	hazmat    = "condition \"Hazmat\"\n\nshipment.hazmat\n"
+)
+
 func TestAdoptContractRate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
-	agreement.Accessorials[0].ApplyCondition = "totalStops > 2"
+	agreement.Accessorials[0].Condition = multiStop
 	entity := ratedShipment(agreement.ID)
 
-	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
-	predicate.EXPECT().
-		EvaluatePredicates(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicatesRequest")).
-		Return([]formulatemplateports.PredicateOutcome{{Holds: false}}, nil).
-		Once()
-
-	calculator := agreementCalculator(t, agreement, predicate)
+	calculator := agreementCalculator(t, agreement, map[pulid.ID]bool{
+		agreement.Accessorials[0].ID: false,
+	})
 
 	adoptContract(t, calculator, entity)
 
 	assert.Empty(t, entity.AdditionalCharges)
 }
 
-func TestAdoptContractRate_EvaluatesEveryConditionInOneCall(t *testing.T) {
+func TestAdoptContractRate_AppliesTheConditionsTheTariffCallHeld(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
-	agreement.Accessorials[0].ApplyCondition = "totalStops > 2"
+	agreement.Accessorials[0].Condition = multiStop
 	second := *agreement.Accessorials[0]
 	second.ID = pulid.MustNew("raga_")
 	second.AccessorialChargeID = pulid.MustNew("acc_")
-	second.ApplyCondition = "hasHazmat"
+	second.Condition = hazmat
 	unconditional := *agreement.Accessorials[0]
 	unconditional.ID = pulid.MustNew("raga_")
 	unconditional.AccessorialChargeID = pulid.MustNew("acc_")
-	unconditional.ApplyCondition = ""
+	unconditional.Condition = ""
 	agreement.Accessorials = append(agreement.Accessorials, &second, &unconditional)
 	entity := ratedShipment(agreement.ID)
 
-	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
-	predicate.EXPECT().
-		EvaluatePredicates(mock.Anything, mock.MatchedBy(
-			func(req *formulatemplateports.EvaluatePredicatesRequest) bool {
-				return assert.ObjectsAreEqual(
-					[]string{"totalStops > 2", "hasHazmat"},
-					req.Expressions,
-				) && req.SchemaID == shipmentSchemaID
-			},
-		)).
-		Return([]formulatemplateports.PredicateOutcome{
-			{Holds: false},
-			{Holds: true},
-		}, nil).
-		Once()
-
-	calculator := agreementCalculator(t, agreement, predicate)
+	calculator := agreementCalculator(t, agreement, map[pulid.ID]bool{
+		agreement.Accessorials[0].ID: false,
+		second.ID:                    true,
+	})
 
 	adoptContract(t, calculator, entity)
 
@@ -199,23 +187,14 @@ func TestAdoptContractRate_EvaluatesEveryConditionInOneCall(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{second.ID, unconditional.ID}, applied)
 }
 
-// Charging a customer for something the contract may not entitle us to is the
-// more expensive of the two mistakes, so an unevaluable condition withholds the
-// charge rather than applying it.
-func TestAdoptContractRate_WithholdsAccessorialWhenConditionErrors(t *testing.T) {
+func TestAdoptContractRate_WithholdsAccessorialWhoseConditionHasNoAnswer(t *testing.T) {
 	t.Parallel()
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
-	agreement.Accessorials[0].ApplyCondition = "nonsense("
+	agreement.Accessorials[0].Condition = multiStop
 	entity := ratedShipment(agreement.ID)
 
-	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
-	predicate.EXPECT().
-		EvaluatePredicates(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicatesRequest")).
-		Return([]formulatemplateports.PredicateOutcome{{Err: errors.New("does not evaluate")}}, nil).
-		Once()
-
-	calculator := agreementCalculator(t, agreement, predicate)
+	calculator := agreementCalculator(t, agreement, nil)
 
 	adoptContract(t, calculator, entity)
 
@@ -285,10 +264,40 @@ func TestFuelOverride_IsNilWithoutABinding(t *testing.T) {
 func adoptContract(t *testing.T, calculator *Calculator, entity *shipment.Shipment) {
 	t.Helper()
 
-	rated, err := calculator.RateAgainstContract(t.Context(), entity, pulid.MustNew("usr_"), false)
+	userID := pulid.MustNew("usr_")
+	rated, err := calculator.RateAgainstContract(t.Context(), entity, userID, false)
 	require.NoError(t, err)
 
-	calculator.AdoptContractRate(t.Context(), entity, rated)
+	require.NoError(t, calculator.AdoptAndRecalculateContractRate(
+		t.Context(),
+		entity,
+		rated,
+		&tenant.ShipmentControl{},
+		userID,
+	))
+}
+
+func agreementRepoFor(
+	t *testing.T,
+	agreement *rateagreement.RateAgreement,
+) *rateagreementportsmock.MockRateAgreementRepository {
+	t.Helper()
+
+	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*rateagreementports.GetRateAgreementByIDRequest")).
+		RunAndReturn(func(
+			_ context.Context,
+			req *rateagreementports.GetRateAgreementByIDRequest,
+		) (*rateagreement.RateAgreement, error) {
+			if req.RateAgreementID != agreement.ID {
+				return nil, errors.New("unexpected agreement id")
+			}
+			return agreement, nil
+		}).
+		Maybe()
+
+	return repo
 }
 
 func agreementWithAccessorial(t *testing.T, amount decimal.Decimal) *rateagreement.RateAgreement {
@@ -322,14 +331,18 @@ func ratedShipment(agreementID pulid.ID) *shipment.Shipment {
 func agreementCalculator(
 	t *testing.T,
 	agreement *rateagreement.RateAgreement,
-	predicate formulatemplateports.FormulaPredicateEvaluator,
+	conditions map[pulid.ID]bool,
 ) *Calculator {
 	t.Helper()
 
 	calculator := New(Params{
-		Logger:        zap.NewNop(),
-		RateEngine:    shipmentcommercialtest.StubRateEngineForAgreement(t, 100, &agreement.ID),
-		Predicate:     predicate,
+		Logger: zap.NewNop(),
+		RateEngine: shipmentcommercialtest.StubRateEngineForContract(
+			t,
+			100,
+			agreement,
+			conditions,
+		),
 		AgreementRepo: agreementRepoFor(t, agreement),
 	})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }

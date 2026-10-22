@@ -188,8 +188,63 @@ describe("chargeComposition", () => {
 });
 
 describe("describeChargeCalculation", () => {
+  it("states a tariff freight line's quantity and rate in the tariff's units", () => {
+    expect(
+      describeChargeCalculation(
+        line({
+          id: "f",
+          lineNumber: 1,
+          description: "Linehaul",
+          quantity: 812,
+          unitPrice: 2.35,
+          amount: 1908.2,
+          rate: 2.35,
+          rateUnit: "$/mi",
+        }),
+        "USD",
+        translate,
+      ),
+    ).toBe("812 mi × $2.35/mi");
+  });
+
+  it("states a tariff freight line billed per hundredweight in the invoice's currency", () => {
+    expect(
+      describeChargeCalculation(
+        line({
+          id: "f",
+          lineNumber: 1,
+          description: "Deficit weight",
+          quantity: 2.6,
+          unitPrice: 28.1,
+          amount: 73.06,
+          rateUnit: "$/cwt",
+        }),
+        "CAD",
+        translate,
+      ),
+    ).toBe("2.6 cwt × CA$28.10/cwt");
+  });
+
   const accessorial = (overrides: Partial<InvoiceLine>) =>
     line({ id: "a", lineNumber: 2, type: "Accessorial", description: "Detention", ...overrides });
+
+  it("states an accessorial a tariff billed by its rate as the tariff wrote it", () => {
+    expect(
+      describeChargeCalculation(
+        accessorial({
+          description: "Extra drops",
+          chargeMethod: "Flat",
+          quantity: 2,
+          unitPrice: 50,
+          amount: 100,
+          rate: 50,
+          rateUnit: "$/stop",
+        }),
+        "USD",
+        translate,
+      ),
+    ).toBe("2 × $50.00/stop");
+  });
 
   it("states a per-unit charge's rate and the units it was billed for", () => {
     expect(

@@ -4,13 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/postgis"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -102,26 +101,9 @@ type RateAgreementRule struct {
 	HazmatOnly      bool  `json:"hazmatOnly"      bun:"hazmat_only,type:BOOLEAN,notnull,default:false"`
 	TempControlOnly bool  `json:"tempControlOnly" bun:"temp_control_only,type:BOOLEAN,notnull,default:false"`
 
-	// A rule prices through exactly one of these two: a formula template, with
-	// the rule's own rate bound as the template's base rate, or a rate
-	// matrix, whose cells carry the rates and whose own template says what they
-	// mean.
-	FormulaTemplateID *pulid.ID           `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),nullzero"`
-	RateMatrixID      *pulid.ID           `json:"rateMatrixId"      bun:"rate_matrix_id,type:VARCHAR(100),nullzero"`
-	Rate              decimal.NullDecimal `json:"rate"              bun:"rate,type:NUMERIC(19,6),nullzero"`
-	Currency          string              `json:"currency"          bun:"currency,type:VARCHAR(3),nullzero"`
-
-	FreightClassSource FreightClassSource     `json:"freightClassSource" bun:"freight_class_source,type:rate_freight_class_source_enum,notnull,default:'Commodity'"`
-	FixedFreightClass  commodity.FreightClass `json:"fixedFreightClass"  bun:"fixed_freight_class,type:freight_class_enum,nullzero"`
-	DensityScaleID     *pulid.ID              `json:"densityScaleId"     bun:"density_scale_id,type:VARCHAR(100),nullzero"`
-	DiscountPercent    decimal.NullDecimal    `json:"discountPercent"    bun:"discount_percent,type:NUMERIC(9,4),nullzero"`
-	AbsoluteMinCharge  decimal.NullDecimal    `json:"absoluteMinCharge"  bun:"absolute_min_charge,type:NUMERIC(19,4),nullzero"`
-	AllowDeficitRating bool                   `json:"allowDeficitRating" bun:"allow_deficit_rating,type:BOOLEAN,notnull"`
-
-	MinCharge           decimal.NullDecimal    `json:"minCharge"           bun:"min_charge,type:NUMERIC(19,4),nullzero"`
-	MaxCharge           decimal.NullDecimal    `json:"maxCharge"           bun:"max_charge,type:NUMERIC(19,4),nullzero"`
-	MinBillableDistance decimal.NullDecimal    `json:"minBillableDistance" bun:"min_billable_distance,type:NUMERIC(12,2),nullzero"`
-	RoundingMode        ratetypes.RoundingMode `json:"roundingMode"        bun:"rounding_mode,type:rate_rounding_mode_enum,nullzero"`
+	FormulaTemplateID pulid.ID           `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),notnull"`
+	Inputs            tarifftypes.Inputs `json:"inputs"            bun:"inputs,type:JSONB,notnull,default:'{}'"`
+	Currency          string             `json:"currency"          bun:"currency,type:VARCHAR(3),nullzero"`
 
 	Priority         int16 `json:"priority"         bun:"priority,type:SMALLINT,notnull,default:0"`
 	SpecificityScore int32 `json:"specificityScore" bun:"specificity_score,type:INTEGER,notnull,default:0"`
@@ -135,9 +117,7 @@ type RateAgreementRule struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	Agreement  *RateAgreement            `json:"-"                    bun:"rel:belongs-to,join:rate_agreement_id=id"`
-	RateMatrix *ratematrix.RateMatrix    `json:"rateMatrix,omitempty" bun:"rel:belongs-to,join:rate_matrix_id=id"`
-	Breaks     []*RateAgreementRuleBreak `json:"breaks,omitempty"     bun:"rel:has-many,join:id=rate_agreement_rule_id"`
+	Agreement *RateAgreement `json:"-" bun:"rel:belongs-to,join:rate_agreement_id=id"`
 
 	lane laneState
 }
@@ -193,22 +173,6 @@ func (rar *RateAgreementRule) MatchesDayOfWeek(weekday int) bool {
 	return rar.DaysOfWeek&(1<<uint(weekday)) != 0
 }
 
-// EffectiveRoundingMode falls back to the agreement's mode when the rule does
-// not override it.
-func (rar *RateAgreementRule) EffectiveRoundingMode(
-	agreement *RateAgreement,
-) ratetypes.RoundingMode {
-	if rar.RoundingMode != "" {
-		return rar.RoundingMode
-	}
-
-	if agreement != nil && agreement.RoundingMode != "" {
-		return agreement.RoundingMode
-	}
-
-	return ratetypes.RoundingModeHalfUp
-}
-
 // EffectiveCurrency falls back to the agreement's currency, which is the usual
 // case: a rule only names one when a single lane is priced in another currency.
 func (rar *RateAgreementRule) EffectiveCurrency(agreement *RateAgreement) string {
@@ -230,9 +194,7 @@ func (rar *RateAgreementRule) applyDefaults() {
 	if rar.Direction == "" {
 		rar.Direction = DirectionDirectional
 	}
-	if rar.FreightClassSource == "" {
-		rar.FreightClassSource = FreightClassSourceCommodity
-	}
+	rar.Inputs = rar.Inputs.OrEmpty()
 	if rar.OriginScopeType == "" {
 		rar.OriginScopeType = rategeo.ScopeTypeAny
 	}
@@ -298,12 +260,8 @@ func (rar *RateAgreementRule) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Destination scope type is required"),
 			domainvalidation.ValidEnum[rategeo.ScopeType]("Destination scope type is invalid"),
 		),
-		validation.Field(&rar.FreightClassSource,
-			validation.Required.Error("Freight class source is required"),
-			domainvalidation.ValidEnum[FreightClassSource]("Freight class source is invalid"),
-		),
-		validation.Field(&rar.FixedFreightClass,
-			domainvalidation.ValidEnum[commodity.FreightClass]("Fixed freight class is invalid"),
+		validation.Field(&rar.FormulaTemplateID,
+			validation.Required.Error("A rule prices through a formula template"),
 		),
 		validation.Field(&rar.FreightClasses,
 			validation.Each(
@@ -335,10 +293,7 @@ func (rar *RateAgreementRule) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	rar.validateScopes(multiErr)
-	rar.validatePricing(multiErr)
-	rar.validateFreightClass(multiErr)
 	rar.validateRanges(multiErr)
-	rar.validateBreaks(multiErr)
 }
 
 func (rar *RateAgreementRule) validateScopes(multiErr *errortypes.MultiError) {
@@ -423,105 +378,6 @@ func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 	}
 }
 
-// HasFormulaTemplate and HasRateMatrix name the rule's two pricing methods.
-func (rar *RateAgreementRule) HasFormulaTemplate() bool {
-	return rar.FormulaTemplateID != nil && !rar.FormulaTemplateID.IsNil()
-}
-
-func (rar *RateAgreementRule) HasRateMatrix() bool {
-	return rar.RateMatrixID != nil && !rar.RateMatrixID.IsNil()
-}
-
-// validatePricing insists on exactly one pricing method. A rule naming both a
-// formula template and a matrix leaves the engine to guess, and a rule naming
-// neither prices at nothing. A matrix rated rule's rates live in the cells, so
-// a rate or breaks written on it would sit there looking as though they
-// applied.
-func (rar *RateAgreementRule) validatePricing(multiErr *errortypes.MultiError) {
-	hasFormula := rar.HasFormulaTemplate()
-	hasMatrix := rar.HasRateMatrix()
-
-	switch {
-	case !hasFormula && !hasMatrix:
-		multiErr.Add(
-			"formulaTemplateId",
-			errortypes.ErrRequired,
-			"A rule prices by a formula template or a rate matrix",
-		)
-	case hasFormula && hasMatrix:
-		multiErr.Add(
-			"formulaTemplateId",
-			errortypes.ErrInvalid,
-			"A rule prices by a formula template or a rate matrix, not both",
-		)
-	case hasMatrix:
-		if rar.Rate.Valid {
-			multiErr.Add(
-				"rate",
-				errortypes.ErrInvalid,
-				"A matrix rated rule reads its rates from the matrix cells",
-			)
-		}
-		if len(rar.Breaks) > 0 {
-			multiErr.Add(
-				"breaks",
-				errortypes.ErrInvalid,
-				"Weight breaks only apply to a formula rated rule",
-			)
-		}
-	}
-
-	if rar.Rate.Valid && rar.Rate.Decimal.IsNegative() {
-		multiErr.Add("rate", errortypes.ErrInvalid, "Rate cannot be negative")
-	}
-}
-
-func (rar *RateAgreementRule) validateFreightClass(multiErr *errortypes.MultiError) {
-	switch rar.FreightClassSource {
-	case FreightClassSourceFixed:
-		if rar.FixedFreightClass == "" {
-			multiErr.Add(
-				"fixedFreightClass",
-				errortypes.ErrRequired,
-				"A fixed class rule needs a freight class",
-			)
-		}
-	case FreightClassSourceDensity:
-		if rar.FixedFreightClass != "" {
-			multiErr.Add(
-				"fixedFreightClass",
-				errortypes.ErrInvalid,
-				"A density rated rule derives its class rather than fixing it",
-			)
-		}
-	case FreightClassSourceCommodity:
-		if rar.FixedFreightClass != "" {
-			multiErr.Add(
-				"fixedFreightClass",
-				errortypes.ErrInvalid,
-				"A commodity rated rule reads its class from the commodity",
-			)
-		}
-	}
-
-	if rar.DiscountPercent.Valid {
-		if rar.DiscountPercent.Decimal.IsNegative() {
-			multiErr.Add(
-				"discountPercent",
-				errortypes.ErrInvalid,
-				"Discount cannot be negative",
-			)
-		}
-		if rar.DiscountPercent.Decimal.GreaterThan(decimal.NewFromInt(hundredPercent)) {
-			multiErr.Add(
-				"discountPercent",
-				errortypes.ErrInvalid,
-				"Discount cannot exceed one hundred percent",
-			)
-		}
-	}
-}
-
 func (rar *RateAgreementRule) validateRanges(multiErr *errortypes.MultiError) {
 	validateDecimalRange(multiErr, "maxWeight", rar.MinWeight, rar.MaxWeight, "weight")
 	validateDecimalRange(multiErr, "maxDistance", rar.MinDistance, rar.MaxDistance, "distance")
@@ -531,15 +387,6 @@ func (rar *RateAgreementRule) validateRanges(multiErr *errortypes.MultiError) {
 			"maxStops",
 			errortypes.ErrInvalid,
 			"Maximum stops cannot be less than minimum stops",
-		)
-	}
-
-	if rar.MinCharge.Valid && rar.MaxCharge.Valid &&
-		rar.MaxCharge.Decimal.LessThan(rar.MinCharge.Decimal) {
-		multiErr.Add(
-			"maxCharge",
-			errortypes.ErrInvalid,
-			"Maximum charge cannot be less than the minimum charge",
 		)
 	}
 

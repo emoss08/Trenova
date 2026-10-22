@@ -1,12 +1,16 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { rateGuardrailKindChoices, rateQuoteOutcomeChoices } from "@/lib/choices";
+import { BillView } from "@/components/tariff-bill/bill-view";
+import { rateQuoteOutcomeChoices } from "@/lib/choices";
 import { rateQuote } from "@/lib/queries/rate-quote";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import type { RateQuote, RateTraceCandidate, RateTraceGuardrail } from "@trenova/shared/types/rate";
+import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
+import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import type { RateQuote, RateTraceCandidate } from "@trenova/shared/types/rate";
+import type { TariffWireValue } from "@trenova/shared/types/tariff";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 
 type WhyThisRateProps = {
@@ -17,7 +21,8 @@ type WhyThisRateProps = {
  * The answer to "why did I get this rate", which is the complaint every
  * carrier and broker has about the system they are leaving.
  *
- * It shows the contract and lane that won, what each term contributed, and —
+ * It shows the contract and lane that won, its tariff's bill line by line (charge labels as
+ * the tariff wrote them, adjustments in the reader's words), and —
  * the part that actually settles arguments — every rate that was considered and
  * the reason it lost.
  */
@@ -85,42 +90,41 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
         )}
       </div>
 
-      {(trace?.components?.length ?? 0) > 0 && (
+      {trace?.refusal ? (
         <div className="border-b p-3">
-          <p className="text-xs text-muted-foreground mb-2 font-medium">
-            {t("What made up the rate")}
+          <p className="text-muted-foreground mb-1 text-xs font-medium">
+            {t("The tariff refused to rate")}
           </p>
-          <div className="space-y-1.5">
-            {trace?.components?.map((component) => (
-              <div
-                key={`${component.sequence}-${component.label}`}
-                className="flex items-baseline justify-between gap-3"
-              >
-                <div className="flex flex-col">
-                  <span className="text-xs">{t(component.label)}</span>
-                  {component.basis && (
-                    <span className="text-2xs text-muted-foreground">{component.basis}</span>
-                  )}
-                </div>
-                <span className="text-xs tabular-nums">
-                  {formatCurrency(Number(component.amount ?? 0), quote.currency)}
-                </span>
-              </div>
-            ))}
-          </div>
+          <p className="text-2xs">{trace.refusal}</p>
+        </div>
+      ) : null}
+
+      {trace?.bill && (
+        <div className="border-b p-3">
+          <p className="text-muted-foreground mb-2 text-xs font-medium">
+            {trace.templateName
+              ? t("What made up the rate · {0}", trace.templateName)
+              : t("What made up the rate")}
+          </p>
+          <BillView bill={trace.bill} currency={trace.bill.currency || quote.currency} />
         </div>
       )}
 
-      {(trace?.guardrails?.length ?? 0) > 0 && (
+      {Object.keys(trace?.tariffInputs ?? {}).length > 0 && (
         <div className="border-b p-3">
-          <p className="text-xs text-muted-foreground mb-2 font-medium">{t("Guardrails")}</p>
-          {trace?.guardrails?.map((guardrail, index) => (
-            <GuardrailRow
-              key={`${guardrail.kind}-${index}`}
-              guardrail={guardrail}
-              currency={quote.currency}
-            />
-          ))}
+          <p className="text-muted-foreground mb-1 text-xs font-medium">{t("Terms it read")}</p>
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs">
+            {Object.entries(trace?.tariffInputs ?? {}).map(([name, value]) => (
+              <div key={name} className="contents">
+                <dt className="text-muted-foreground">{humanizeTariffName(name)}</dt>
+                <dd className="font-mono tabular-nums">
+                  {formatTariffValue(value as TariffWireValue, t, {
+                    currency: trace?.bill?.currency || quote.currency,
+                  })}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       )}
 
@@ -163,32 +167,6 @@ function QuoteExplanation({ quote }: { quote: RateQuote }) {
         </div>
       )}
     </div>
-  );
-}
-
-function GuardrailRow({
-  guardrail,
-  currency,
-}: {
-  guardrail: RateTraceGuardrail;
-  currency: string;
-}) {
-  const t = useT();
-
-  const kind = rateGuardrailKindChoices.find((option) => option.value === guardrail.kind);
-  const label = kind ? t(kind.label) : guardrail.kind;
-
-  return (
-    <p className="text-2xs text-muted-foreground">
-      {label}{" "}
-      {guardrail.applied
-        ? t(
-            "applied — {0} became {1}.",
-            formatCurrency(Number(guardrail.raw ?? 0), currency),
-            formatCurrency(Number(guardrail.result ?? 0), currency),
-          )
-        : t("did not apply.")}
-    </p>
   );
 }
 

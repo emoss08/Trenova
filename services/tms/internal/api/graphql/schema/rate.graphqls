@@ -60,8 +60,8 @@ type RateAgreement {
   autoRenew: Boolean!
   renewalNoticeDays: Int!
   currency: String!
-  defaultMinCharge: Decimal
-  defaultMaxCharge: Decimal
+  "Values every rule's tariff prices with unless the rule sets its own, by input name. Each value is a Tariff wire value."
+  inputs: JSON!
   marginFloorPercent: Decimal @protected(group: Margins)
   maxPayPercentOfSell: Decimal @protected(group: Margins)
   submittedById: ID
@@ -116,8 +116,8 @@ type RateZoneConnection {
 }
 
 """
-A multi-dimensional rate table — origin zone by destination zone by weight break
-by class, and any subset of that.
+A rate table a tariff looks values up in: one to four axes, such as origin zone
+by destination zone, and a value of one Tariff type in every cell.
 """
 type RateMatrix {
   id: ID!
@@ -127,14 +127,8 @@ type RateMatrix {
   name: String!
   description: String!
   status: String!
-  """
-  The formula template that says what a cell's number means. The same grid is a
-  per-mile tariff or a flat table depending on which template prices it, so the
-  list has to show it — the numbers alone do not say.
-  """
-  formulaTemplateId: ID!
-  formulaTemplateName: String!
-  currency: String!
+  "What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int."
+  valueType: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

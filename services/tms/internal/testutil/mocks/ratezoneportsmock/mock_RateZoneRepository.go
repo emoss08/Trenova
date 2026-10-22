@@ -133,7 +133,7 @@ type MockRateZoneRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetRateZoneByIDRequest
+//   - req *ratezoneports.GetRateZoneByIDRequest
 func (_e *MockRateZoneRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockRateZoneRepository_Delete_Call {
 	return &MockRateZoneRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
@@ -201,7 +201,7 @@ type MockRateZoneRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetRateZoneByIDRequest
+//   - req *ratezoneports.GetRateZoneByIDRequest
 func (_e *MockRateZoneRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockRateZoneRepository_GetByID_Call {
 	return &MockRateZoneRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -230,6 +230,80 @@ func (_c *MockRateZoneRepository_GetByID_Call) Return(rateZone *ratezone.RateZon
 }
 
 func (_c *MockRateZoneRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *ratezoneports.GetRateZoneByIDRequest) (*ratezone.RateZone, error)) *MockRateZoneRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCodesByIDs provides a mock function for the type MockRateZoneRepository
+func (_mock *MockRateZoneRepository) GetCodesByIDs(ctx context.Context, tenantInfo pagination.TenantInfo, ids []pulid.ID) (map[pulid.ID]string, error) {
+	ret := _mock.Called(ctx, tenantInfo, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCodesByIDs")
+	}
+
+	var r0 map[pulid.ID]string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, []pulid.ID) (map[pulid.ID]string, error)); ok {
+		return returnFunc(ctx, tenantInfo, ids)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, []pulid.ID) map[pulid.ID]string); ok {
+		r0 = returnFunc(ctx, tenantInfo, ids)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, []pulid.ID) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, ids)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRateZoneRepository_GetCodesByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCodesByIDs'
+type MockRateZoneRepository_GetCodesByIDs_Call struct {
+	*mock.Call
+}
+
+// GetCodesByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - ids []pulid.ID
+func (_e *MockRateZoneRepository_Expecter) GetCodesByIDs(ctx interface{}, tenantInfo interface{}, ids interface{}) *MockRateZoneRepository_GetCodesByIDs_Call {
+	return &MockRateZoneRepository_GetCodesByIDs_Call{Call: _e.mock.On("GetCodesByIDs", ctx, tenantInfo, ids)}
+}
+
+func (_c *MockRateZoneRepository_GetCodesByIDs_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, ids []pulid.ID)) *MockRateZoneRepository_GetCodesByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 []pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].([]pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRateZoneRepository_GetCodesByIDs_Call) Return(iDToString map[pulid.ID]string, err error) *MockRateZoneRepository_GetCodesByIDs_Call {
+	_c.Call.Return(iDToString, err)
+	return _c
+}
+
+func (_c *MockRateZoneRepository_GetCodesByIDs_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, ids []pulid.ID) (map[pulid.ID]string, error)) *MockRateZoneRepository_GetCodesByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -269,7 +343,7 @@ type MockRateZoneRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListRateZoneRequest
+//   - req *ratezoneports.ListRateZoneRequest
 func (_e *MockRateZoneRepository_Expecter) List(ctx interface{}, req interface{}) *MockRateZoneRepository_List_Call {
 	return &MockRateZoneRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -337,7 +411,7 @@ type MockRateZoneRepository_ListConnection_Call struct {
 
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListRateZoneConnectionRequest
+//   - req *ratezoneports.ListRateZoneConnectionRequest
 func (_e *MockRateZoneRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockRateZoneRepository_ListConnection_Call {
 	return &MockRateZoneRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
@@ -370,27 +444,27 @@ func (_c *MockRateZoneRepository_ListConnection_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
-// ResolveMembership provides a mock function for the type MockRateZoneRepository
-func (_mock *MockRateZoneRepository) ResolveMembership(ctx context.Context, req *ratezoneports.ResolveZoneMembershipRequest) ([]pulid.ID, error) {
+// ResolveLaneZones provides a mock function for the type MockRateZoneRepository
+func (_mock *MockRateZoneRepository) ResolveLaneZones(ctx context.Context, req *ratezoneports.ResolveLaneZonesRequest) (*ratezoneports.LaneZones, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ResolveMembership")
+		panic("no return value specified for ResolveLaneZones")
 	}
 
-	var r0 []pulid.ID
+	var r0 *ratezoneports.LaneZones
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratezoneports.ResolveZoneMembershipRequest) ([]pulid.ID, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratezoneports.ResolveLaneZonesRequest) (*ratezoneports.LaneZones, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratezoneports.ResolveZoneMembershipRequest) []pulid.ID); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratezoneports.ResolveLaneZonesRequest) *ratezoneports.LaneZones); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]pulid.ID)
+			r0 = ret.Get(0).(*ratezoneports.LaneZones)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratezoneports.ResolveZoneMembershipRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratezoneports.ResolveLaneZonesRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -398,27 +472,27 @@ func (_mock *MockRateZoneRepository) ResolveMembership(ctx context.Context, req 
 	return r0, r1
 }
 
-// MockRateZoneRepository_ResolveMembership_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResolveMembership'
-type MockRateZoneRepository_ResolveMembership_Call struct {
+// MockRateZoneRepository_ResolveLaneZones_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResolveLaneZones'
+type MockRateZoneRepository_ResolveLaneZones_Call struct {
 	*mock.Call
 }
 
-// ResolveMembership is a helper method to define mock.On call
+// ResolveLaneZones is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ResolveZoneMembershipRequest
-func (_e *MockRateZoneRepository_Expecter) ResolveMembership(ctx interface{}, req interface{}) *MockRateZoneRepository_ResolveMembership_Call {
-	return &MockRateZoneRepository_ResolveMembership_Call{Call: _e.mock.On("ResolveMembership", ctx, req)}
+//   - req *ratezoneports.ResolveLaneZonesRequest
+func (_e *MockRateZoneRepository_Expecter) ResolveLaneZones(ctx interface{}, req interface{}) *MockRateZoneRepository_ResolveLaneZones_Call {
+	return &MockRateZoneRepository_ResolveLaneZones_Call{Call: _e.mock.On("ResolveLaneZones", ctx, req)}
 }
 
-func (_c *MockRateZoneRepository_ResolveMembership_Call) Run(run func(ctx context.Context, req *ratezoneports.ResolveZoneMembershipRequest)) *MockRateZoneRepository_ResolveMembership_Call {
+func (_c *MockRateZoneRepository_ResolveLaneZones_Call) Run(run func(ctx context.Context, req *ratezoneports.ResolveLaneZonesRequest)) *MockRateZoneRepository_ResolveLaneZones_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *ratezoneports.ResolveZoneMembershipRequest
+		var arg1 *ratezoneports.ResolveLaneZonesRequest
 		if args[1] != nil {
-			arg1 = args[1].(*ratezoneports.ResolveZoneMembershipRequest)
+			arg1 = args[1].(*ratezoneports.ResolveLaneZonesRequest)
 		}
 		run(
 			arg0,
@@ -428,12 +502,12 @@ func (_c *MockRateZoneRepository_ResolveMembership_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockRateZoneRepository_ResolveMembership_Call) Return(iDs []pulid.ID, err error) *MockRateZoneRepository_ResolveMembership_Call {
-	_c.Call.Return(iDs, err)
+func (_c *MockRateZoneRepository_ResolveLaneZones_Call) Return(laneZones *ratezoneports.LaneZones, err error) *MockRateZoneRepository_ResolveLaneZones_Call {
+	_c.Call.Return(laneZones, err)
 	return _c
 }
 
-func (_c *MockRateZoneRepository_ResolveMembership_Call) RunAndReturn(run func(ctx context.Context, req *ratezoneports.ResolveZoneMembershipRequest) ([]pulid.ID, error)) *MockRateZoneRepository_ResolveMembership_Call {
+func (_c *MockRateZoneRepository_ResolveLaneZones_Call) RunAndReturn(run func(ctx context.Context, req *ratezoneports.ResolveLaneZonesRequest) (*ratezoneports.LaneZones, error)) *MockRateZoneRepository_ResolveLaneZones_Call {
 	_c.Call.Return(run)
 	return _c
 }

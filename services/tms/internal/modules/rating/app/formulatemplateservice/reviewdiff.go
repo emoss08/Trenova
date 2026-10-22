@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -16,18 +17,17 @@ type ReviewDiffRequest struct {
 	TemplateID pulid.ID
 }
 
-// ReviewDiffResponse is what a reviewer needs beside the Approve button: the
-// content last approved, the content now proposed, and the difference. A
-// template that was never approved has no base, and everything in it is new.
 type ReviewDiffResponse struct {
-	HasApprovedBase   bool                             `json:"hasApprovedBase"`
-	BaseVersion       int64                            `json:"baseVersion"`
-	CurrentVersion    int64                            `json:"currentVersion"`
-	BaseExpression    string                           `json:"baseExpression"`
-	CurrentExpression string                           `json:"currentExpression"`
-	Changes           map[string]jsonutils.FieldChange `json:"changes"`
-	ChangeCount       int                              `json:"changeCount"`
-	PendingSchedules  []ScheduledWindow                `json:"pendingSchedules"`
+	HasApprovedBase  bool                             `json:"hasApprovedBase"`
+	BaseVersion      int64                            `json:"baseVersion"`
+	CurrentVersion   int64                            `json:"currentVersion"`
+	BaseSource       string                           `json:"baseSource"`
+	CurrentSource    string                           `json:"currentSource"`
+	BaseImports      []tarifftypes.Import             `json:"baseImports"`
+	CurrentImports   []tarifftypes.Import             `json:"currentImports"`
+	Changes          map[string]jsonutils.FieldChange `json:"changes"`
+	ChangeCount      int                              `json:"changeCount"`
+	PendingSchedules []ScheduledWindow                `json:"pendingSchedules"`
 }
 
 type ScheduledWindow struct {
@@ -35,10 +35,6 @@ type ScheduledWindow struct {
 	EffectiveFrom int64 `json:"effectiveFrom"`
 }
 
-// ReviewDiff compares the newest Active snapshot with the template's current
-// content. CompareVersions answers "what changed between v3 and v5"; this
-// answers the review question, "what am I approving that production does not
-// already do", which needs the approved base rather than any numbered pair.
 func (s *Service) ReviewDiff(
 	ctx context.Context,
 	req *ReviewDiffRequest,
@@ -76,8 +72,10 @@ func (s *Service) ReviewDiff(
 	)
 
 	resp := &ReviewDiffResponse{
-		CurrentVersion:    template.CurrentVersionNumber,
-		CurrentExpression: template.Expression,
+		CurrentVersion: template.CurrentVersionNumber,
+		CurrentSource:  template.Source,
+		CurrentImports: nonNilImports(template.Imports),
+		BaseImports:    []tarifftypes.Import{},
 	}
 
 	base := &formulatemplate.FormulaTemplateVersion{}
@@ -85,7 +83,8 @@ func (s *Service) ReviewDiff(
 		base = approved
 		resp.HasApprovedBase = true
 		resp.BaseVersion = approved.VersionNumber
-		resp.BaseExpression = approved.Expression
+		resp.BaseSource = approved.Source
+		resp.BaseImports = nonNilImports(approved.Imports)
 	}
 
 	changes, err := jsonutils.JSONDiff(base, current, &jsonutils.DiffOptions{
@@ -136,4 +135,11 @@ func (s *Service) pendingSchedules(
 	}
 
 	return windows, nil
+}
+
+func nonNilImports(imports []tarifftypes.Import) []tarifftypes.Import {
+	if imports == nil {
+		return []tarifftypes.Import{}
+	}
+	return imports
 }

@@ -16,9 +16,9 @@ import (
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
-	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -367,7 +367,7 @@ func (h *Handler) assign(c *gin.Context) {
 
 type updateChargesRequest struct {
 	FormulaTemplateID *string                      `json:"formulaTemplateId"`
-	BaseRate          *string                      `json:"baseRate"`
+	TariffInputs      tarifftypes.Inputs           `json:"tariffInputs"`
 	AdditionalCharges []*shipment.AdditionalCharge `json:"additionalCharges"`
 	// ConvertAmountSplitsToPercent retries an edit that was refused because it
 	// left an amount split that no longer adds up.
@@ -406,16 +406,6 @@ func (h *Handler) updateCharges(c *gin.Context) {
 		return
 	}
 
-	var baseRate *decimal.Decimal
-	if req.BaseRate != nil {
-		d, dErr := decimal.NewFromString(*req.BaseRate)
-		if dErr != nil {
-			h.eh.HandleError(c, dErr)
-			return
-		}
-		baseRate = &d
-	}
-
 	var formulaTemplateID *pulid.ID
 	if req.FormulaTemplateID != nil {
 		id, idErr := pulid.MustParse(*req.FormulaTemplateID)
@@ -431,7 +421,7 @@ func (h *Handler) updateCharges(c *gin.Context) {
 		&billingqueueports.UpdateChargesRequest{
 			ItemID:            itemID,
 			FormulaTemplateID: formulaTemplateID,
-			BaseRate:          baseRate,
+			TariffInputs:      req.TariffInputs,
 			AdditionalCharges: req.AdditionalCharges,
 
 			ConvertAmountSplitsToPercent: req.ConvertAmountSplitsToPercent,

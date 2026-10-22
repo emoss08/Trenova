@@ -1,17 +1,18 @@
 package shipmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"

@@ -9,6 +9,7 @@ import {
   optionalStringSchema,
 } from "./helpers";
 import { customerReferenceSchema } from "./customer";
+import { tariffFormInputValuesSchema } from "./tariff-form";
 import { billingHoldReasonSchema } from "./detention";
 import {
   chargeAllocationKindSchema,
@@ -461,7 +462,8 @@ export type BillingQueueStats = z.infer<typeof billingQueueStatsSchema>;
 
 export const billingQueueUpdateChargesSchema = z.object({
   formulaTemplateId: z.string().optional(),
-  baseRate: z.string().optional(),
+  /** The tariff's input values for the shipment, replacing what it carries. */
+  tariffInputs: tariffFormInputValuesSchema.optional(),
   additionalCharges: z
     .array(
       z.object({

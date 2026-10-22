@@ -445,6 +445,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "ratingNotes",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoice.Invoice)
+					return obj.RatingNotes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
 				Name:       "relatedInvoices",
 				NonNull:    true,
 				IsResolver: true,
@@ -907,12 +917,12 @@ var Shard = &gqlexec.Shard{
 				Name:       "rateUnit",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild20,
+				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*invoice.ChargeGroup)
 					return gqlexec.Resolver[resolverInvoiceChargeGroup](ec, "InvoiceChargeGroup").RateUnit(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalORateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐRateUnit),
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
 			},
 			{
 				Name:       "rate",
@@ -1394,6 +1404,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
+				Name:     "rateUnit",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoice.InvoiceLine)
+					return obj.RateUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
 				Name:       "allocationPercent",
 				IsResolver: true,
 				Concurrent: true,
@@ -1629,7 +1648,7 @@ type resolverInvoice interface {
 type resolverInvoiceChargeGroup interface {
 	ChargeCode(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	ChargeMethod(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.Method, error)
-	RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.RateUnit, error)
+	RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	Rate(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	RateBasisAmount(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
 	Quantity(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
@@ -1681,7 +1700,6 @@ var (
 	errNoChild17 = errors.New("field of type InvoiceEDISendStatus does not have child fields")
 	errNoChild18 = errors.New("field of type InvoiceLineType does not have child fields")
 	errNoChild19 = errors.New("field of type AccessorialMethod does not have child fields")
-	errNoChild20 = errors.New("field of type RateUnit does not have child fields")
 )
 
 func field_Mutation_createInvoicesFromShipments_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2473,14 +2491,6 @@ func marshalOOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋop
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Order", v)
-}
-
-func marshalORateUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐRateUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accessorialcharge.RateUnit) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(string(*v))
-	return res
 }
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

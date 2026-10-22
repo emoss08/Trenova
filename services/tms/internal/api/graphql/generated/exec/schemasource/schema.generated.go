@@ -1802,6 +1802,7 @@ enum AgentSubjectType {
   AccountingInboundChange
   AccountingDriftFinding
   FormulaTemplate
+  FormulaLibrary
   Invoice
   InvoiceDispute
   FactoringNoa
@@ -18352,6 +18353,100 @@ extend type Mutation {
   deleteSafetyViolation(id: ID!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/formula_library.graphqls", Input: `enum FormulaReviewDecision {
+  Submitted
+  Approved
+  Rejected
+  ChangesRequested
+  Expired
+}
+
+"An organization library of Tariff functions, constants and types that formula templates import as org.<name>."
+type FormulaLibrary {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  "The module name: templates import the library as org.<name>."
+  name: String!
+  "The module path templates import: org.<name>."
+  path: String!
+  description: String!
+  "The library's Tariff source."
+  source: String!
+  "The other organization libraries this one imports."
+  imports: [FormulaLibraryImport!]!
+  "How many test blocks the source holds."
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  reviewComment: String!
+  version: Int!
+  sourceLibraryId: ID
+  sourceVersionNumber: Int
+  currentVersionNumber: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type FormulaLibraryEdge {
+  node: FormulaLibrary!
+  cursor: String!
+}
+
+type FormulaLibraryConnection {
+  edges: [FormulaLibraryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"A snapshot of a library. An Active version is approved, and is what templates pin."
+type FormulaLibraryVersion {
+  id: ID!
+  libraryId: ID!
+  versionNumber: Int!
+  name: String!
+  path: String!
+  description: String!
+  source: String!
+  imports: [FormulaLibraryImport!]!
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  changeMessage: String!
+  "The fields that changed from the previous version, by field path."
+  changeSummary: JSON
+  createdById: ID!
+  createdBy: User
+  createdAt: Timestamp!
+}
+
+"One step of a library's review: who did what, in which round, against which approved version."
+type FormulaLibraryReview {
+  id: ID!
+  libraryId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  formulaLibraries(input: DataTableConnectionInput!): FormulaLibraryConnection!
+  formulaLibrary(id: ID!): FormulaLibrary
+  "A library's versions, newest first."
+  formulaLibraryVersions(libraryId: ID!, first: Int): [FormulaLibraryVersion!]!
+  "A library's review history, newest first."
+  formulaLibraryReviews(libraryId: ID!): [FormulaLibraryReview!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/formula_template.graphqls", Input: `enum FormulaTemplateStatus {
   Active
   Inactive
@@ -18359,34 +18454,27 @@ extend type Mutation {
   InReview
 }
 
-enum FormulaTemplateType {
-  FreightCharge
-  AccessorialCharge
-}
-
-"How a formula's computed charge is reduced to its billable precision."
-enum RateRoundingMode {
-  HalfUp
-  HalfEven
-  Up
-  Down
-  None
-}
-
-type FormulaTemplateVariableDefinition {
+"An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default."
+type FormulaInputDeclaration {
   name: String!
+  "The input's doc comment, which labels it in the inputs form."
+  doc: String!
+  "The type as written in the source, such as Money/mi or List<Break>."
   type: String!
-  description: String!
+  "The type's structure, which the inputs form is built from. Its shape is the module's type descriptor."
+  descriptor: Any
   required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
+  "The default as a wire value, or null when the input has none."
+  default: Any
 }
 
-type FormulaTemplateBreakdownDefinition {
-  name: String!
-  label: String!
-  expression: String!
+"An organization library a formula version imports, pinned to the version it was checked against."
+type FormulaLibraryImport {
+  "The module path the source imports: org.<name>."
+  path: String!
+  libraryId: ID!
+  versionNumber: Int!
+  library: FormulaLibrary
 }
 
 type FormulaTemplate {
@@ -18395,16 +18483,15 @@ type FormulaTemplate {
   organizationId: ID!
   name: String!
   description: String!
-  type: FormulaTemplateType!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
+  "The inputs the source declares, as the last check derived them."
+  inputs: [FormulaInputDeclaration!]!
+  "The organization libraries the source imports. Approval pins each to the version approved at that moment."
+  imports: [FormulaLibraryImport!]!
+  "How many test blocks the source holds."
+  testCount: Int!
   status: FormulaTemplateStatus!
-  schemaId: String!
-  variableDefinitions: [FormulaTemplateVariableDefinition!]!
-  breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
-  minCharge: Decimal
-  maxCharge: Decimal
-  roundingMode: RateRoundingMode!
-  roundingPrecision: Int!
   submittedById: ID
   submittedAt: Timestamp
   approvedById: ID
@@ -18418,10 +18505,8 @@ type FormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-  "How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template."
+  "How many shipments, rate agreement rules and billing fallbacks rate with this template."
   usageCount: Int!
-  "How many saved scenarios gate this template's approval."
-  scenarioCount: Int!
   businessUnit: BusinessUnit
   organization: Organization
 }
@@ -21425,6 +21510,8 @@ type Invoice {
   shipperCustomer: Customer
   "Whether this invoice bills only part of what its shipments charged."
   isSplitBill: Boolean!
+  "Notes the tariffs that rated the invoice's shipments put on their bills."
+  ratingNotes: [String!]!
   "Other invoices that bill any shipment on this one, split-bill siblings first."
   relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
@@ -21494,12 +21581,11 @@ type InvoiceChargeGroup {
   chargeCode: String
   "How an accessorial was charged; null on freight and memo lines."
   chargeMethod: AccessorialMethod
-  "What a per-unit charge was counted in."
-  rateUnit: RateUnit
+  "The unit the rate is written in, such as $/mi."
+  rateUnit: String
   """
-  The rate every line in the group was billed at: a freight load's base rate,
-  an accessorial's amount per unit or its percentage. Null when the lines
-  differ.
+  The rate every line in the group was billed at: a freight line's rate, an
+  accessorial's amount per unit or its percentage. Null when the lines differ.
   """
   rate: Decimal
   "The amount a percentage was taken of, when the group is one line."
@@ -21541,6 +21627,8 @@ type InvoiceLine {
   chargeCode: String
   chargeMethod: String
   rate: Decimal
+  "The unit the rate is written in, such as $/mi."
+  rateUnit: String
   "The share of the charge this line bills, when it is less than all of it."
   allocationPercent: Decimal
   "The formula template that rated a freight line, when the line kept it."
@@ -23741,8 +23829,8 @@ type RateAgreement {
   autoRenew: Boolean!
   renewalNoticeDays: Int!
   currency: String!
-  defaultMinCharge: Decimal
-  defaultMaxCharge: Decimal
+  "Values every rule's tariff prices with unless the rule sets its own, by input name. Each value is a Tariff wire value."
+  inputs: JSON!
   marginFloorPercent: Decimal @protected(group: Margins)
   maxPayPercentOfSell: Decimal @protected(group: Margins)
   submittedById: ID
@@ -23797,8 +23885,8 @@ type RateZoneConnection {
 }
 
 """
-A multi-dimensional rate table — origin zone by destination zone by weight break
-by class, and any subset of that.
+A rate table a tariff looks values up in: one to four axes, such as origin zone
+by destination zone, and a value of one Tariff type in every cell.
 """
 type RateMatrix {
   id: ID!
@@ -23808,14 +23896,8 @@ type RateMatrix {
   name: String!
   description: String!
   status: String!
-  """
-  The formula template that says what a cell's number means. The same grid is a
-  per-mile tariff or a flat table depending on which template prices it, so the
-  list has to show it — the numbers alone do not say.
-  """
-  formulaTemplateId: ID!
-  formulaTemplateName: String!
-  currency: String!
+  "What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int."
+  valueType: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -25925,7 +26007,8 @@ type Shipment {
   ownerId: ID
   enteredById: ID
   canceledById: ID
-  formulaTemplateId: ID!
+  "The tariff that rates the shipment. Null when it is rated by hand."
+  formulaTemplateId: ID
   consolidationGroupId: ID
   orderId: ID
   orderNumber: String
@@ -25940,8 +26023,12 @@ type Shipment {
   externalReference: String
   cancelReason: String!
   otherChargeAmount: Decimal!
+  "The sum of the freight lines."
   freightChargeAmount: Decimal!
-  baseRate: Decimal!
+  "The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value."
+  tariffInputs: JSON!
+  "The freight the shipment bills, line by line, as its last rating produced it."
+  freightLines: [ShipmentFreightLine!]!
   totalChargeAmount: Decimal!
   pieces: Int
   weight: Int
@@ -25954,12 +26041,11 @@ type Shipment {
   transferredToBillingAt: Timestamp
   markedReadyToBillAt: Timestamp
   billedAt: Timestamp
-  ratingUnit: Int!
   fuelSurchargeLocked: Boolean!
   ratingDetail: ShipmentRatingDetail
   """
   Whether this shipment still carries the rate its contract applied. It goes
-  false the moment somebody edits the rating method, the base rate, or one of
+  false the moment somebody edits the tariff, its inputs, or one of
   the contract's own accessorial charges.
   """
   autoRated: Boolean!
@@ -25993,22 +26079,53 @@ type Shipment {
   billingSplitSummary: [ShipmentBillingSplitSummary!]!
 }
 
-"One line of the arithmetic that produced the rate, in the order it was applied."
-type ShipmentRatingBreakdownItem {
-  name: String!
+"One freight line of a shipment's bill."
+type ShipmentFreightLine {
   label: String!
-  amount: Float!
-  "Set when the line could not be evaluated, in which case the amount is zero."
-  error: String!
+  quantity: Decimal
+  "The quantity's unit, such as mi or cwt."
+  quantityUnit: String!
+  rate: Decimal
+  "The rate's unit, such as $/mi."
+  rateUnit: String!
+  amount: Decimal!
 }
 
-"A bound that changed the answer — a minimum or maximum charge that took over from the computed rate."
-type ShipmentRatingGuardrail {
-  applied: Boolean!
-  bound: String!
-  rawResult: Float!
-  minCharge: Float
-  maxCharge: Float
+"One line of a bill a tariff produced. Freight lines have no code; accessorial lines carry their catalog code."
+type TariffBillLine {
+  "Charge, Minimum, Maximum or Rounding."
+  kind: String!
+  label: String!
+  code: String!
+  quantity: Decimal
+  quantityUnit: String!
+  rate: Decimal
+  rateUnit: String!
+  amount: Decimal!
+}
+
+"The conversion a bill was priced through when the tariff's currency differs from the billing currency."
+type TariffBillExchange {
+  currency: String!
+  rate: Decimal!
+}
+
+"The bill a tariff produced for a shipment."
+type TariffBill {
+  currency: String!
+  lines: [TariffBillLine!]!
+  notes: [String!]!
+  freightTotal: Decimal!
+  accessorialTotal: Decimal!
+  total: Decimal!
+  exchange: TariffBillExchange
+}
+
+"A charge the shipment's other engines left out because the tariff already billed its code."
+type ShipmentRatingSkip {
+  code: String!
+  "RateAgreement, Detention or FuelSurcharge."
+  source: String!
 }
 
 """
@@ -26021,15 +26138,21 @@ and copying it here would let the two drift.
 type ShipmentRatingDetail {
   formulaTemplateId: String!
   formulaTemplateName: String!
-  expression: String!
-  "Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended."
-  resolvedVariables: JSON!
-  result: Float!
   ratedAt: Timestamp!
-  "Zero when the rate did not come from a versioned formula template."
+  "The template version that rated the shipment. Zero when it was rated by hand."
   versionNumber: Int!
-  breakdown: [ShipmentRatingBreakdownItem!]!
-  guardrail: ShipmentRatingGuardrail
+  "The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand."
+  bill: TariffBill
+  "The tariff's reason for refusing to rate the shipment."
+  refusal: String!
+  "The inputs the tariff priced with, by name. Each value is a Tariff wire value."
+  inputs: JSON!
+  skipped: [ShipmentRatingSkip!]!
+  """
+  The values each statement of the tariff took and the table lookups it made, for the
+  people who may read formula templates. Null for everyone else and for a hand rate.
+  """
+  trace: JSON
   rateQuoteId: String!
   agreementId: String!
   agreementName: String!
@@ -26053,27 +26176,37 @@ type ShipmentContractRate {
   agreementName: String!
   ruleId: ID
   ruleLabel: String!
-  "The rating method the contract seats on the shipment."
+  "The tariff the contract seats on the shipment."
   formulaTemplateId: ID
   formulaTemplateName: String!
-  "The rate that method prices with. Null when the rule defers to the shipment."
-  baseRate: Decimal
-  linehaulAmount: Decimal!
+  templateVersion: Int!
+  "The inputs the contract prices with, by name. Each value is a Tariff wire value."
+  inputs: JSON!
+  "The tariff's reason for refusing to rate the shipment."
+  refusal: String!
+  freightLines: [ShipmentFreightLine!]!
+  freightAmount: Decimal!
   otherChargeAmount: Decimal!
   totalChargeAmount: Decimal!
-  "What the shipment charged before, so a dialog can state the change."
-  previousLinehaulAmount: Decimal!
-  accessorials: [ShipmentContractRateAccessorial!]!
+  "What the shipment charged for freight before, so a dialog can state the change."
+  previousFreightAmount: Decimal!
+  "The accessorials the contract bills: the tariff's own coded lines and the agreement's schedule."
+  charges: [ShipmentContractRateCharge!]!
   explanation: String!
 }
 
-"One charge a contract applies automatically to every shipment it prices."
-type ShipmentContractRateAccessorial {
+"One accessorial a contract bills on a shipment it prices."
+type ShipmentContractRateCharge {
   accessorialChargeId: ID!
+  code: String!
   description: String!
-  method: AccessorialMethod!
+  "Tariff when the tariff billed it, RateAgreement when the agreement's schedule did."
+  owner: String!
+  label: String!
   amount: Decimal!
-  unit: Int!
+  quantity: Decimal
+  rate: Decimal
+  rateUnit: String!
 }
 
 "The result of re-rating a saved shipment from its contract."
@@ -26118,11 +26251,10 @@ type ShipmentFormulaTemplate {
   businessUnitId: ID!
   name: String!
   description: String!
-  type: String!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
   status: String!
-  schemaId: String!
-  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
+  testCount: Int!
   "Formula template metadata is admin-defined and intentionally open-ended."
   metadata: JSON
   version: Int!
@@ -26131,16 +26263,6 @@ type ShipmentFormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-}
-
-type ShipmentFormulaVariableDefinition {
-  name: String!
-  type: String!
-  description: String!
-  required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
 }
 
 enum MoveCoverageType {
@@ -26331,6 +26453,14 @@ type ShipmentAdditionalCharge {
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
   isDetention: Boolean!
+  "Whether the shipment's tariff billed this charge."
+  isTariff: Boolean!
+  "The tariff's label for the charge."
+  label: String!
+  quantity: Decimal
+  rate: Decimal
+  "The rate's unit, such as $/mi."
+  rateUnit: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -26541,11 +26671,10 @@ type ShipmentPreviousRateSummary {
   customerId: ID!
   serviceTypeId: ID!
   shipmentTypeId: ID!
-  formulaTemplateId: ID!
+  formulaTemplateId: ID
   freightChargeAmount: Decimal!
   otherChargeAmount: Decimal!
   totalChargeAmount: Decimal!
-  ratingUnit: Int!
   pieces: Int
   weight: Int
   createdAt: Timestamp!
@@ -27325,7 +27454,8 @@ input ShipmentInput {
   ownerId: ID
   enteredById: ID
   canceledById: ID
-  formulaTemplateId: ID!
+  "Null rates the shipment by hand at its freight charge amount."
+  formulaTemplateId: ID
   consolidationGroupId: ID
   orderId: ID
   status: ShipmentStatus = New
@@ -27338,7 +27468,8 @@ input ShipmentInput {
   cancelReason: String
   otherChargeAmount: Decimal = "0"
   freightChargeAmount: Decimal = "0"
-  baseRate: Decimal = "0"
+  "The values the tariff prices with, by input name, as Tariff wire values. Omitted inputs take the template's defaults."
+  tariffInputs: JSON
   totalChargeAmount: Decimal = "0"
   pieces: Int
   weight: Int
@@ -27351,7 +27482,6 @@ input ShipmentInput {
   transferredToBillingAt: Timestamp
   markedReadyToBillAt: Timestamp
   billedAt: Timestamp
-  ratingUnit: Int = 1
   fuelSurchargeLocked: Boolean = false
   """
   Why this shipment is billed at something other than its contract rate. It is

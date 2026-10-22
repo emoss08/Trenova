@@ -164,15 +164,16 @@ type shipmentPartySummary struct {
 }
 
 type shipmentRatingSummary struct {
-	FormulaTemplateID string `json:"formulaTemplateId,omitempty"`
-	FormulaTemplate   string `json:"formulaTemplate,omitempty"`
-	RatingMethod      string `json:"ratingMethod,omitempty"`
-	Agreement         string `json:"agreement,omitempty"`
-	BaseRate          string `json:"baseRate,omitempty"`
-	FreightCharge     string `json:"freightChargeAmount,omitempty"`
-	OtherCharge       string `json:"otherChargeAmount,omitempty"`
-	TotalCharge       string `json:"totalChargeAmount,omitempty"`
-	RateLocked        bool   `json:"rateLocked"`
+	FormulaTemplateID string            `json:"formulaTemplateId,omitempty"`
+	FormulaTemplate   string            `json:"formulaTemplate,omitempty"`
+	RatingMethod      string            `json:"ratingMethod,omitempty"`
+	Agreement         string            `json:"agreement,omitempty"`
+	Inputs            map[string]string `json:"inputs,omitempty"`
+	FreightLines      []string          `json:"freightLines,omitempty"`
+	FreightCharge     string            `json:"freightChargeAmount,omitempty"`
+	OtherCharge       string            `json:"otherChargeAmount,omitempty"`
+	TotalCharge       string            `json:"totalChargeAmount,omitempty"`
+	RateLocked        bool              `json:"rateLocked"`
 }
 
 type shipmentMoveSummary struct {
@@ -306,7 +307,8 @@ func partySummary(id pulid.ID, party *customer.Customer) *shipmentPartySummary {
 func ratingSummary(entity *shipment.Shipment) shipmentRatingSummary {
 	rating := shipmentRatingSummary{
 		FormulaTemplateID: pulidString(entity.FormulaTemplateID),
-		BaseRate:          nullDecimalText(entity.BaseRate),
+		Inputs:            inputTexts(entity.TariffInputs),
+		FreightLines:      freightLineTexts(entity.FreightLines),
 		FreightCharge:     nullDecimalMoney(entity.FreightChargeAmount),
 		OtherCharge:       nullDecimalMoney(entity.OtherChargeAmount),
 		TotalCharge:       nullDecimalMoney(entity.TotalChargeAmount),
@@ -462,3 +464,14 @@ func chargeSummary(charge *shipment.AdditionalCharge) shipmentChargeSummary {
 func moveSequence(move *shipment.ShipmentMove) int64 { return move.Sequence }
 
 func stopSequence(stop *shipment.Stop) int64 { return stop.Sequence }
+
+func freightLineTexts(lines []shipment.FreightLine) []string {
+	if len(lines) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(lines))
+	for i := range lines {
+		out = append(out, lines[i].Label+": "+lines[i].Amount.StringFixed(2))
+	}
+	return out
+}

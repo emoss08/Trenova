@@ -1,6 +1,6 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { NovaPaneSkeleton } from "@/routes/formula-template/_components/studio/studio-skeletons";
+import { NovaPaneSkeleton } from "@/components/tariff-studio/studio-skeletons";
 
 /**
  * The import assistant while its code is read: the page assistant's header (the agent's name

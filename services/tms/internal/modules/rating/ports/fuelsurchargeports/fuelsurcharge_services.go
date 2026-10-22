@@ -3,6 +3,8 @@ package fuelsurchargeports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/pagination"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -53,9 +55,24 @@ type ResolveShipmentChargeRequest struct {
 	Override *FuelProgramOverride
 }
 
+type FuelPriceAsOfRequest struct {
+	TenantInfo pagination.TenantInfo
+	CustomerID pulid.ID
+	Override   *FuelProgramOverride
+	Date       string
+}
+
+type FuelPriceAsOf struct {
+	Price     decimal.Decimal
+	PriceDate string
+	IndexCode string
+}
+
 type FuelSurchargeResolver interface {
 	ResolveShipmentCharge(
 		ctx context.Context,
 		req *ResolveShipmentChargeRequest,
 	) (*ResolvedFuelSurcharge, error)
+	FuelPriceAsOf(ctx context.Context, req *FuelPriceAsOfRequest) (*FuelPriceAsOf, error)
+	FuelChargeIDs(ctx context.Context, tenantInfo pagination.TenantInfo) ([]pulid.ID, error)
 }

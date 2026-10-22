@@ -1,0 +1,449 @@
+=== names by case
+extraDropFee Money FSC DIESEL_BASE Class77_5 ft3x A
+---
+name "extraDropFee"
+type "Money"
+code "FSC"
+code "DIESEL_BASE"
+type "Class77_5"
+name "ft3x"
+type "A"
+
+=== keywords and contextual words
+let var const if else match for in where and or not true false none as cents to up down half even
+---
+keyword "let"
+keyword "var"
+keyword "const"
+keyword "if"
+keyword "else"
+keyword "match"
+keyword "for"
+keyword "in"
+keyword "where"
+keyword "and"
+keyword "or"
+keyword "not"
+keyword "true"
+keyword "false"
+keyword "none"
+name "as"
+name "cents"
+name "to"
+name "up"
+name "down"
+name "half"
+name "even"
+
+=== numbers with separators and fractions
+1200 1_200 2.35 0.5 1..3 2.x
+---
+number "1200"
+number "1_200"
+number "2.35"
+number "0.5"
+number "1"
+punct ".."
+number "3"
+number "2"
+punct "."
+name "x"
+
+=== units directly after numbers
+500 lb 2.5 mi 4 h 30 min 48 ft 3 pallet 1 stop 12 m3
+---
+number "500"
+unit "lb"
+number "2.5"
+unit "mi"
+number "4"
+unit "h"
+number "30"
+unit "min"
+number "48"
+unit "ft"
+number "3"
+unit "pallet"
+number "1"
+unit "stop"
+number "12"
+unit "m3"
+
+=== unit words that are not after a number are names
+lb + mi
+---
+name "lb"
+punct "+"
+name "mi"
+
+=== density units after a number
+30 lb/ft3 + 8 mi/gal
+---
+number "30"
+unit "lb"
+punct "/"
+unit "ft3"
+punct "+"
+number "8"
+unit "mi"
+punct "/"
+unit "gal"
+
+=== temperatures
+-5 °C 40 °F x.in(°C)
+---
+punct "-"
+number "5"
+unit "°C"
+number "40"
+unit "°F"
+name "x"
+punct "."
+keyword "in"
+punct "("
+unit "°C"
+punct ")"
+
+=== a degree sign alone
+5 °X
+---
+number "5"
+error "°"
+type "X"
+! syntax 2..4 Write a temperature unit as `°F` or `°C`
+
+=== money and rates
+$450 $2.35/mi $18.50/cwt $1_000.00 $0.05/gal
+---
+money "$450"
+money "$2.35"
+punct "/"
+unit "mi"
+money "$18.50"
+punct "/"
+unit "cwt"
+money "$1_000.00"
+money "$0.05"
+punct "/"
+unit "gal"
+
+=== money divided by a name is division
+$10 / mi $10/rate
+---
+money "$10"
+punct "/"
+name "mi"
+money "$10"
+punct "/"
+name "rate"
+
+=== a dollar sign before a unit is the money unit
+$/cwt $/mi $/rate
+---
+unit "$"
+punct "/"
+unit "cwt"
+unit "$"
+punct "/"
+unit "mi"
+error "$"
+punct "/"
+name "rate"
+! syntax 11..12 Write money as `$` followed by the amount, like `$450`
+
+=== dollar without an amount
+$ 5
+---
+error "$"
+number "5"
+! syntax 0..1 Write money as `$` followed by the amount, like `$450`
+
+=== percents and remainder
+18% 0.5% x % 3
+---
+percent "18%"
+percent "0.5%"
+name "x"
+punct "%"
+number "3"
+
+=== dates and date-times
+@2026-10-22 @2026-10-22T08:00-05:00 @2026-10-22T08:00:30Z @2024-02-29
+---
+date "@2026-10-22"
+date "@2026-10-22T08:00-05:00"
+date "@2026-10-22T08:00:30Z"
+date "@2024-02-29"
+
+=== invalid calendar dates
+@2026-02-29 @2026-13-01 @2026-10-22T24:00Z @2026-10-22T08:00+18:30
+---
+error "@2026-02-29"
+error "@2026-13-01"
+error "@2026-10-22T24:00Z"
+error "@2026-10-22T08:00+18:30"
+! syntax 0..11 @2026-02-29 is not a real date and time
+! syntax 12..23 @2026-13-01 is not a real date and time
+! syntax 24..42 @2026-10-22T24:00Z is not a real date and time
+! syntax 43..66 @2026-10-22T08:00+18:30 is not a real date and time
+
+=== a malformed date
+@2026-1-1
+---
+error "@2026-1-1"
+! syntax 0..9 Write a date as `@2026-10-22`, or a date and time as `@2026-10-22T08:00-05:00`
+
+=== in after a number before a value is the keyword
+5 in [5, 6]
+x in 1..3
+---
+number "5"
+keyword "in"
+punct "["
+number "5"
+punct ","
+number "6"
+punct "]"
+name "x"
+keyword "in"
+number "1"
+punct ".."
+number "3"
+
+=== in after a number at the end is inches
+48 in
+48 in + 1 ft
+---
+number "48"
+unit "in"
+number "48"
+unit "in"
+punct "+"
+number "1"
+unit "ft"
+
+=== text with interpolation
+"Detention, stop {stop.sequence}"
+---
+text "\"Detention, stop "
+interpolation "{"
+name "stop"
+punct "."
+name "sequence"
+interpolation "}"
+text "\""
+
+=== text escapes
+"a \"b\" \\ \n \t \u{1F600} {{ }}"
+---
+text "\"a "
+escape "\\\""
+text "b"
+escape "\\\""
+text " "
+escape "\\\\"
+text " "
+escape "\\n"
+text " "
+escape "\\t"
+text " "
+escape "\\u{1F600}"
+text " "
+escape "{{"
+text " "
+escape "}}"
+text "\""
+
+=== invalid escapes
+"\q \u{110000} \u{}"
+---
+text "\""
+error "\\q"
+text " "
+error "\\u{110000}"
+text " "
+error "\\u{}"
+text "\""
+! syntax 1..3 `\q` is not an escape; text knows `\"`, `\\`, `\n`, `\t` and `\u`
+! syntax 4..14 Write a character code as `\u` and up to six hexadecimal digits in braces
+! syntax 15..19 Write a character code as `\u` and up to six hexadecimal digits in braces
+
+=== nested interpolation
+"outer {"inner {x}"} end"
+---
+text "\"outer "
+interpolation "{"
+text "\"inner "
+interpolation "{"
+name "x"
+interpolation "}"
+text "\""
+interpolation "}"
+text " end\""
+
+=== record braces inside an interpolation
+"{ { a: 1 }.a }"
+---
+text "\""
+interpolation "{"
+punct "{"
+name "a"
+punct ":"
+number "1"
+punct "}"
+punct "."
+name "a"
+interpolation "}"
+text "\""
+
+=== unterminated text ends at the line
+"abc
+let x = 1
+---
+text "\"abc"
+keyword "let"
+name "x"
+punct "="
+number "1"
+! syntax 0..4 This text is missing its closing quote
+
+=== unterminated interpolation ends at the line
+"abc {x + 1
+let y = 2
+---
+text "\"abc "
+interpolation "{"
+name "x"
+punct "+"
+number "1"
+keyword "let"
+name "y"
+punct "="
+number "2"
+! syntax 11..11 This interpolation is missing its closing brace
+
+=== comments and doc comments
+// a comment
+/// a doc
+let x = 1 /// not a doc after code
+//// four slashes is a comment
+---
+comment "// a comment"
+doc "/// a doc"
+keyword "let"
+name "x"
+punct "="
+number "1"
+comment "/// not a doc after code"
+comment "//// four slashes is a comment"
+
+=== every operator
+?? ?. => -> .. ..= == != <= >= += -= + - * / % < > = . , : ( ) [ ] { } | ? _
+---
+punct "??"
+punct "?."
+punct "=>"
+punct "->"
+punct ".."
+punct "..="
+punct "=="
+punct "!="
+punct "<="
+punct ">"
+punct "="
+punct "+="
+punct "-="
+punct "+"
+punct "-"
+punct "*"
+punct "/"
+punct "%"
+punct "<"
+punct ">"
+punct "="
+punct "."
+punct ","
+punct ":"
+punct "("
+punct ")"
+punct "["
+punct "]"
+punct "{"
+punct "}"
+punct "|"
+punct "?"
+punct "_"
+
+=== operators from other languages
+a && b ! c ; 'x'
+---
+name "a"
+error "&&"
+name "b"
+error "!"
+name "c"
+error ";"
+error "'x'"
+! syntax 2..4 Write `and` instead of `&&`
+! syntax 7..8 Write `not` instead of `!`
+! syntax 11..12 A statement ends at the end of its line, so `;` is not needed
+! syntax 13..16 Text is written in double quotes
+
+=== unknown characters
+x # y ~ z
+---
+name "x"
+error "#"
+name "y"
+error "~"
+name "z"
+! syntax 2..3 `#` can't be used in a tariff
+! syntax 6..7 `~` can't be used in a tariff
+
+=== names starting with an underscore
+_x _ _1
+---
+error "_x"
+punct "_"
+error "_1"
+! syntax 0..2 A name starts with a letter, not `_`
+! syntax 5..7 A name starts with a letter, not `_`
+
+=== a number too large to hold
+123456789012345678901234567890123
+---
+error "123456789012345678901234567890123"
+! syntax 0..33 This number has more digits than a number can hold (28)
+
+=== non-ascii text keeps its characters
+"café 🚚 °F"
+---
+text "\"café 🚚 °F\""
+
+=== a name with a non-ascii letter
+tarifa_año
+---
+error "tarifa_año"
+! syntax 0..11 `tarifa_año` can't be a name: names use the letters a to z, digits and `_`
+
+=== text nested deeper than the limit
+"{"{"{"{"{"{"{"{"x"}"}"}"}"}"}"}"}"
+---
+text "\""
+interpolation "{"
+text "\""
+interpolation "{"
+text "\""
+interpolation "{"
+text "\""
+interpolation "{"
+text "\""
+interpolation "{"
+text "\""
+interpolation "{"
+text "\""
+interpolation "{"
+text "\""
+interpolation "{"
+error "\"x\"}\"}\"}\"}\"}\"}\"}\"}\""
+! limit 16..35 Text is interpolated more than 8 levels deep

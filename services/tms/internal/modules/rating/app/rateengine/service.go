@@ -6,19 +6,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -26,16 +30,26 @@ import (
 	"go.uber.org/zap"
 )
 
+type Records interface {
+	Build(ctx context.Context, req *tariff.RecordRequest) (rules.RawJSON, error)
+	LaneZones(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		entity *shipment.Shipment,
+	) (*ratezoneports.LaneZones, error)
+}
+
 type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
 	AgreementRepo rateagreementports.RateAgreementRepository
-	ZoneRepo      ratezoneports.RateZoneRepository
-	MatrixRepo    ratematrixports.RateMatrixRepository
-	DensityRepo   ratematrixports.DensityScaleRepository
 	QuoteRepo     ratequoteports.RateQuoteRepository
-	Formula       formulatemplateports.FormulaCalculator
+	Resolver      tariffports.Resolver
+	Rater         tariffports.Rater
+	Records       Records
+	Fuel          fuelsurchargeports.FuelSurchargeResolver
+	Accessorials  accessorialchargeports.AccessorialChargeRepository
 	Exchange      exchangerateports.ExchangeRateService
 	ModeProfile   modeprofileports.ModeProfileService
 	RoutingGuides tenderports.RoutingGuideRepository
@@ -45,11 +59,12 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	agreementRepo rateagreementports.RateAgreementRepository
-	zoneRepo      ratezoneports.RateZoneRepository
-	matrixRepo    ratematrixports.RateMatrixRepository
-	densityRepo   ratematrixports.DensityScaleRepository
 	quoteRepo     ratequoteports.RateQuoteRepository
-	formula       formulatemplateports.FormulaCalculator
+	resolver      tariffports.Resolver
+	rater         tariffports.Rater
+	records       Records
+	fuel          fuelsurchargeports.FuelSurchargeResolver
+	accessorials  accessorialchargeports.AccessorialChargeRepository
 	exchange      exchangerateports.ExchangeRateService
 	modeProfile   modeprofileports.ModeProfileService
 	routingGuides tenderports.RoutingGuideRepository
@@ -62,11 +77,12 @@ func New(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.rateengine"),
 		agreementRepo: p.AgreementRepo,
-		zoneRepo:      p.ZoneRepo,
-		matrixRepo:    p.MatrixRepo,
-		densityRepo:   p.DensityRepo,
 		quoteRepo:     p.QuoteRepo,
-		formula:       p.Formula,
+		resolver:      p.Resolver,
+		rater:         p.Rater,
+		records:       p.Records,
+		fuel:          p.Fuel,
+		accessorials:  p.Accessorials,
 		exchange:      p.Exchange,
 		modeProfile:   p.ModeProfile,
 		routingGuides: p.RoutingGuides,
@@ -75,12 +91,6 @@ func New(p Params) *Service {
 	}
 }
 
-// RateShipment prices one side of a shipment and records why.
-//
-// A quote is written whatever happens — including when the lane fell through to
-// a formula template and when nothing covered it at all. The cases worth
-// explaining are exactly the ones nobody predicted, and a record that only
-// exists on the happy path explains nothing.
 func (s *Service) RateShipment(
 	ctx context.Context,
 	req *ratequoteports.RateShipmentRequest,
@@ -94,31 +104,18 @@ func (s *Service) RateShipment(
 		return nil, err
 	}
 
-	log := s.l.With(
-		zap.String("operation", "RateShipment"),
-		zap.String("partyType", string(rateCtx.PartyType)),
-		zap.String("partyId", rateCtx.PartyID.String()),
-	)
+	if err = s.resolveZones(ctx, rateCtx); err != nil {
+		return nil, err
+	}
 
 	trace := &ratetypes.Trace{
 		EngineVersion: EngineVersion,
 		Inputs:        rateCtx.Inputs(),
 	}
 
-	// A formula-only rating never looks at a contract, so it never needs the
-	// zone membership or the lane candidates a contract is found by.
 	if req.FormulaOnly {
-		return s.rateFromFallbackTemplate(ctx, req, rateCtx, trace)
+		return s.rateOwnTariff(ctx, req, rateCtx, trace)
 	}
-
-	if err = s.resolveZones(ctx, rateCtx); err != nil {
-		log.Error("failed to resolve zone membership", zap.Error(err))
-		return nil, err
-	}
-
-	// The inputs are re-read after zones are known, so the trace records the
-	// zones the lane was actually looked up under rather than an empty list.
-	trace.Inputs = rateCtx.Inputs()
 
 	resolution, err := s.resolve(ctx, rateCtx)
 	if err != nil {
@@ -141,82 +138,116 @@ func (s *Service) RateShipment(
 		return s.rateWithoutAgreement(ctx, req, rateCtx, trace)
 	}
 
-	return s.rateFromAgreement(ctx, req, rateCtx, resolution, trace)
+	return s.rateFromAgreement(ctx, req, rateCtx, resolution.Winner, trace)
 }
 
 func (s *Service) rateFromAgreement(
 	ctx context.Context,
 	req *ratequoteports.RateShipmentRequest,
 	rateCtx *RateContext,
-	resolution *Resolution,
+	winner *rateagreement.RateAgreementRule,
 	trace *ratetypes.Trace,
 ) (*ratequoteports.RatedShipment, error) {
-	winner := resolution.Winner
-
-	priced, err := s.price(ctx, rateCtx, winner, trace)
+	agreement, err := s.loadAgreement(ctx, rateCtx.TenantInfo, winner.RateAgreementID)
 	if err != nil {
-		// A rule that cannot be priced is worth recording rather than throwing
-		// away: it is nearly always a contract that needs fixing, and the quote
-		// is where somebody will look for it.
-		trace.Error = err.Error()
-
-		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
-			Outcome:     ratequote.OutcomeError,
-			Amount:      decimal.Zero,
-			Currency:    rateCtx.BillingCurrency,
-			AgreementID: &winner.RateAgreementID,
-			RuleID:      &winner.ID,
-			Specificity: winner.SpecificityScore,
-			Agreement:   winner.Agreement,
-		})
+		return nil, err
 	}
-
-	converted := s.convert(ctx, rateCtx, priced, trace)
-
-	trace.Totals = totalsFor(converted)
+	if agreement == nil {
+		agreement = winner.Agreement
+	}
 
 	fields := &quoteFields{
-		Outcome:     ratequote.OutcomeRated,
-		Amount:      converted,
-		Currency:    priced.Currency,
-		AgreementID: &winner.RateAgreementID,
-		RuleID:      &winner.ID,
-		Specificity: winner.SpecificityScore,
-		Agreement:   winner.Agreement,
+		Currency:          winner.EffectiveCurrency(agreement),
+		AgreementID:       &winner.RateAgreementID,
+		RuleID:            &winner.ID,
+		Specificity:       winner.SpecificityScore,
+		Agreement:         agreement,
+		FormulaTemplateID: &winner.FormulaTemplateID,
 	}
 
-	fields.FormulaTemplateID = winner.FormulaTemplateID
+	result, err := s.price(ctx, rateCtx, &pricing{
+		templateID: winner.FormulaTemplateID,
+		inputs:     resolvedInputs(winner, agreement),
+		currency:   fields.Currency,
+		agreement:  agreement,
+		rule:       winner,
+	}, trace)
+	if err != nil {
+		trace.Error = err.Error()
+		fields.Outcome = ratequote.OutcomeError
+		return s.finish(ctx, req, rateCtx, trace, fields)
+	}
 
+	fields.apply(result)
+	if result.refusal != "" {
+		trace.Error = result.refusal
+		fields.Outcome = ratequote.OutcomeError
+		return s.finish(ctx, req, rateCtx, trace, fields)
+	}
+
+	fields.Outcome = ratequote.OutcomeRated
 	return s.finish(ctx, req, rateCtx, trace, fields)
 }
 
-// rateWithoutAgreement handles a lane no contract covers.
-//
-// What happens is the organization's decision, and the default is the one that
-// changes nothing: fall back to the formula template the shipment already
-// carried. That is what makes adopting rate agreements safe — until a contract
-// exists, every shipment rates exactly as it did before.
+func (s *Service) rateOwnTariff(
+	ctx context.Context,
+	req *ratequoteports.RateShipmentRequest,
+	rateCtx *RateContext,
+	trace *ratetypes.Trace,
+) (*ratequoteports.RatedShipment, error) {
+	entity := req.Shipment
+	if !entity.AutoRated || entity.RateAgreementID == nil || entity.RateAgreementID.IsNil() {
+		return s.rateFromFallbackTemplate(ctx, req, rateCtx, trace)
+	}
+
+	agreement, err := s.loadAgreement(ctx, rateCtx.TenantInfo, *entity.RateAgreementID)
+	if err != nil {
+		return nil, err
+	}
+	rule := s.loadRule(ctx, rateCtx.TenantInfo, entity.RateAgreementRuleID)
+
+	templateID := fallbackTemplateID(req)
+	fields := &quoteFields{
+		Currency:          currencyOf(rule, agreement),
+		AgreementID:       entity.RateAgreementID,
+		RuleID:            entity.RateAgreementRuleID,
+		Agreement:         agreement,
+		FormulaTemplateID: &templateID,
+	}
+	result, err := s.price(ctx, rateCtx, &pricing{
+		templateID: templateID,
+		inputs:     entity.TariffInputs,
+		currency:   fields.Currency,
+		agreement:  agreement,
+		rule:       rule,
+	}, trace)
+	if err != nil {
+		return nil, err
+	}
+	if result.refusal != "" {
+		return nil, refusalError(result.refusal, rule)
+	}
+
+	fields.apply(result)
+	fields.Outcome = ratequote.OutcomeRated
+	return s.finish(ctx, req, rateCtx, trace, fields)
+}
+
 func (s *Service) rateWithoutAgreement(
 	ctx context.Context,
 	req *ratequoteports.RateShipmentRequest,
 	rateCtx *RateContext,
 	trace *ratetypes.Trace,
 ) (*ratequoteports.RatedShipment, error) {
-	// The buy side never falls back to a formula template. The one a shipment
-	// carries is the customer's rating method, so falling back to it would pay
-	// the carrier whatever the customer is charged: a load sold at $2,000 would
-	// settle at $2,000 and the margin would be exactly nothing. A carrier with
-	// no contract has no rate, and saying so is what makes somebody go and
-	// write the contract.
 	if rateCtx.PartyType == rateagreement.PartyTypeCarrier {
 		trace.Warn("No carrier agreement covers this lane")
-		trace.Totals = totalsFor(decimal.Zero)
-
-		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
-			Outcome:  ratequote.OutcomeNoRateFound,
-			Amount:   decimal.Zero,
-			Currency: rateCtx.BillingCurrency,
-		})
+		return s.finish(
+			ctx,
+			req,
+			rateCtx,
+			trace,
+			&quoteFields{Outcome: ratequote.OutcomeNoRateFound},
+		)
 	}
 
 	disposition := tenant.UnratedShipmentDispositionFallbackFormulaTemplate
@@ -226,19 +257,17 @@ func (s *Service) rateWithoutAgreement(
 
 	switch disposition { //nolint:exhaustive // the fallback disposition is the default arm
 	case tenant.UnratedShipmentDispositionBlock:
-		return nil, errortypes.NewBusinessError(
-			"No rate agreement covers this lane",
-		)
+		return nil, errortypes.NewBusinessError("No rate agreement covers this lane")
 
 	case tenant.UnratedShipmentDispositionZeroAndFlag:
 		trace.Warn("No rate agreement covers this lane")
-		trace.Totals = totalsFor(decimal.Zero)
-
-		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
-			Outcome:  ratequote.OutcomeNoRateFound,
-			Amount:   decimal.Zero,
-			Currency: rateCtx.BillingCurrency,
-		})
+		return s.finish(
+			ctx,
+			req,
+			rateCtx,
+			trace,
+			&quoteFields{Outcome: ratequote.OutcomeNoRateFound},
+		)
 
 	default:
 		return s.rateFromFallbackTemplate(ctx, req, rateCtx, trace)
@@ -252,61 +281,43 @@ func (s *Service) rateFromFallbackTemplate(
 	trace *ratetypes.Trace,
 ) (*ratequoteports.RatedShipment, error) {
 	templateID := fallbackTemplateID(req)
-
 	if templateID.IsNil() {
 		trace.Warn("No rate agreement covers this lane and no formula template was set")
-		trace.Totals = totalsFor(decimal.Zero)
-
-		return s.finish(ctx, req, rateCtx, trace, &quoteFields{
-			Outcome:  ratequote.OutcomeNoRateFound,
-			Amount:   decimal.Zero,
-			Currency: rateCtx.BillingCurrency,
-		})
+		return s.finish(
+			ctx,
+			req,
+			rateCtx,
+			trace,
+			&quoteFields{Outcome: ratequote.OutcomeNoRateFound},
+		)
 	}
 
-	overrides := make(map[string]any, 1)
-	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
-		TemplateID:        templateID,
-		Entity:            rateCtx.Entity,
-		Overrides:         overrides,
-		TenantInfo:        rateCtx.TenantInfo,
-		RatingDate:        rateCtx.AsOf,
-		UnavailableInputs: bindSellTotal(rateCtx, overrides),
-	})
+	var inputs tarifftypes.Inputs
+	if req.Shipment != nil && req.Shipment.FormulaTemplateID == templateID {
+		inputs = req.Shipment.TariffInputs
+	}
+
+	result, err := s.price(ctx, rateCtx, &pricing{
+		templateID: templateID,
+		inputs:     inputs,
+		currency:   rateCtx.BillingCurrency,
+	}, trace)
 	if err != nil {
-		// A template that will not evaluate has always failed the save, and it
-		// keeps failing it. This is the path an organization with no contracts
-		// takes for every shipment, and quietly turning a broken formula into a
-		// zero-dollar load would be a change in behaviour nobody asked for.
-		// A rule inside a contract is treated differently — see rateFromAgreement
-		// — because there a failure is recorded and flagged rather than allowed
-		// to block every shipment on the lane.
 		return nil, err
 	}
+	if result.refusal != "" {
+		return nil, refusalError(result.refusal, nil)
+	}
 
-	trace.AddComponent(&ratetypes.Component{
-		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      linehaulLabel,
-		Basis:      resp.FormulaTemplateName,
-		Amount:     resp.Amount,
-		Source:     ratetypes.ComponentSourceFormulaTemplate,
-		SourceID:   resp.FormulaTemplateID,
-		SourceName: resp.FormulaTemplateName,
-		Detail:     formulaLinehaulDetail(resp),
-	})
-	trace.Totals = totalsFor(resp.Amount)
-
-	return s.finish(ctx, req, rateCtx, trace, &quoteFields{
+	fields := &quoteFields{
 		Outcome:           ratequote.OutcomeFormulaFallback,
-		Amount:            resp.Amount,
 		Currency:          rateCtx.BillingCurrency,
 		FormulaTemplateID: &templateID,
-	})
+	}
+	fields.apply(result)
+	return s.finish(ctx, req, rateCtx, trace, fields)
 }
 
-// fallbackTemplateID prefers the template on the shipment over the
-// organization's, because a template chosen for this load is a more specific
-// statement of intent than a default chosen for all of them.
 func fallbackTemplateID(req *ratequoteports.RateShipmentRequest) pulid.ID {
 	if req.Shipment != nil && !req.Shipment.FormulaTemplateID.IsNil() {
 		return req.Shipment.FormulaTemplateID
@@ -319,22 +330,92 @@ func fallbackTemplateID(req *ratequoteports.RateShipmentRequest) pulid.ID {
 	return pulid.Nil
 }
 
-// quoteFields is what varies between the outcomes; everything else on a quote
-// is assembled the same way whatever happened.
+func (s *Service) loadAgreement(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	agreementID pulid.ID,
+) (*rateagreement.RateAgreement, error) {
+	agreement, err := s.agreementRepo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
+		RateAgreementID: agreementID,
+		TenantInfo:      tenantInfo,
+		IncludeChildren: true,
+		OmitRules:       true,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // an agreement removed since its rule was resolved prices nothing
+		}
+		return nil, err
+	}
+	return agreement, nil
+}
+
+func (s *Service) loadRule(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ruleID *pulid.ID,
+) *rateagreement.RateAgreementRule {
+	if ruleID == nil || ruleID.IsNil() {
+		return nil
+	}
+	rule, err := s.agreementRepo.GetRuleByID(
+		ctx,
+		&rateagreementports.GetRateAgreementRuleByIDRequest{
+			RuleID:     *ruleID,
+			TenantInfo: tenantInfo,
+		},
+	)
+	if err != nil {
+		s.l.Warn(
+			"failed to load the rule a shipment adopted",
+			zap.String("ruleId", ruleID.String()),
+			zap.Error(err),
+		)
+		return nil
+	}
+	return rule
+}
+
+func currencyOf(
+	rule *rateagreement.RateAgreementRule,
+	agreement *rateagreement.RateAgreement,
+) string {
+	if rule != nil {
+		return rule.EffectiveCurrency(agreement)
+	}
+	if agreement != nil {
+		return agreement.Currency
+	}
+	return ""
+}
+
 type quoteFields struct {
 	Outcome           ratequote.Outcome
-	Amount            decimal.Decimal
+	Bill              *tarifftypes.Bill
+	Refusal           string
 	Currency          string
 	AgreementID       *pulid.ID
 	RuleID            *pulid.ID
 	FormulaTemplateID *pulid.ID
+	TemplateName      string
+	TemplateVersion   int64
 	Specificity       int32
+	Inputs            tarifftypes.Inputs
+	Conditions        map[pulid.ID]bool
+	Agreement         *rateagreement.RateAgreement
+}
 
-	// Agreement is the contract that priced this, carried so a fresh quote
-	// exposes the same relation one read back from the database does. A caller
-	// reading a negotiated term off the quote should not get nothing merely
-	// because the quote has not been round tripped yet.
-	Agreement *rateagreement.RateAgreement
+func (f *quoteFields) apply(result *priced) {
+	f.Bill = result.bill
+	f.Refusal = result.refusal
+	f.Inputs = result.inputs
+	f.Conditions = result.conditions
+	if result.template != nil {
+		id := result.template.TemplateID
+		f.FormulaTemplateID = &id
+		f.TemplateName = result.template.Name
+		f.TemplateVersion = result.template.VersionNumber
+	}
 }
 
 func (s *Service) finish(
@@ -344,70 +425,95 @@ func (s *Service) finish(
 	trace *ratetypes.Trace,
 	fields *quoteFields,
 ) (*ratequoteports.RatedShipment, error) {
+	totals, err := s.totals(ctx, rateCtx.TenantInfo, fields.Bill)
+	if err != nil {
+		return nil, err
+	}
+	trace.Totals = totals
+
 	quote := s.buildQuote(req, rateCtx, trace, fields)
 
 	if req.Persist {
-		recorded, err := s.quoteRepo.Record(ctx, quote)
-		if err != nil {
-			return nil, err
+		recorded, recordErr := s.quoteRepo.Record(ctx, quote)
+		if recordErr != nil {
+			return nil, recordErr
 		}
-
-		// The stored row comes back without its relations loaded, and the
-		// contract is what a caller reads negotiated terms from.
 		if recorded != nil && recorded.Agreement == nil {
 			recorded.Agreement = quote.Agreement
 		}
-
 		quote = recorded
 	}
 
-	rated := &ratequoteports.RatedShipment{
-		Amount:            fields.Amount,
-		Currency:          rateCtx.BillingCurrency,
-		Outcome:           fields.Outcome,
-		Quote:             quote,
-		AgreementID:       fields.AgreementID,
-		RuleID:            fields.RuleID,
-		FormulaTemplateID: fields.FormulaTemplateID,
-		BillToCustomerID:  agreementBillTo(fields.Agreement),
-	}
-
-	applyLinehaulPricing(rated, trace)
-
-	return rated, nil
+	return &ratequoteports.RatedShipment{
+		Amount:              totals.Linehaul,
+		Total:               totals.Total,
+		Currency:            rateCtx.BillingCurrency,
+		Outcome:             fields.Outcome,
+		Quote:               quote,
+		AgreementID:         fields.AgreementID,
+		RuleID:              fields.RuleID,
+		BillToCustomerID:    agreementBillTo(fields.Agreement),
+		FormulaTemplateID:   fields.FormulaTemplateID,
+		FormulaTemplateName: fields.TemplateName,
+		TemplateVersion:     fields.TemplateVersion,
+		TariffInputs:        fields.Inputs,
+		Bill:                fields.Bill,
+		Refusal:             fields.Refusal,
+		Agreement:           fields.Agreement,
+		Conditions:          fields.Conditions,
+	}, nil
 }
 
-// applyLinehaulPricing lifts the template and the rate that produced the
-// linehaul off the trace.
-//
-// The rule states neither directly in every case: a rule pricing through a
-// matrix names the matrix, and the template that gives its cells meaning
-// belongs to the matrix. The trace is where the two meet, because it records
-// what was actually evaluated rather than what was configured.
-func applyLinehaulPricing(rated *ratequoteports.RatedShipment, trace *ratetypes.Trace) {
-	if trace == nil {
-		return
+func (s *Service) totals(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	bill *tarifftypes.Bill,
+) (ratetypes.Totals, error) {
+	if bill == nil {
+		return ratetypes.Totals{}, nil
 	}
-
-	for i := range trace.Components {
-		component := &trace.Components[i]
-		if component.Kind != ratetypes.ComponentKindLinehaul {
+	totals := ratetypes.Totals{Linehaul: bill.FreightTotal, Total: bill.Total}
+	coded := bill.CodedLines()
+	if len(coded) == 0 {
+		return totals, nil
+	}
+	fuelCodes, err := s.fuelCodes(ctx, tenantInfo)
+	if err != nil {
+		return ratetypes.Totals{}, err
+	}
+	for i := range coded {
+		if _, ok := fuelCodes[accessorialcharge.NormalizeCode(coded[i].Code)]; ok {
+			totals.Fuel = totals.Fuel.Add(coded[i].Amount)
 			continue
 		}
-
-		rated.BaseRate = component.Rate
-
-		if rated.FormulaTemplateID == nil || rated.FormulaTemplateID.IsNil() {
-			if id, ok := component.Detail["formulaTemplateId"].(string); ok && id != "" {
-				parsed, err := pulid.Parse(id)
-				if err == nil {
-					rated.FormulaTemplateID = &parsed
-				}
-			}
-		}
-
-		return
+		totals.Accessorial = totals.Accessorial.Add(coded[i].Amount)
 	}
+	return totals, nil
+}
+
+func (s *Service) fuelCodes(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (map[string]struct{}, error) {
+	ids, err := s.fuel.FuelChargeIDs(ctx, tenantInfo)
+	if err != nil || len(ids) == 0 {
+		return map[string]struct{}{}, err
+	}
+	catalog, err := s.accessorials.ListCatalog(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	wanted := make(map[pulid.ID]struct{}, len(ids))
+	for _, id := range ids {
+		wanted[id] = struct{}{}
+	}
+	codes := make(map[string]struct{}, len(ids))
+	for _, charge := range catalog {
+		if _, ok := wanted[charge.ID]; ok {
+			codes[accessorialcharge.NormalizeCode(charge.Code)] = struct{}{}
+		}
+	}
+	return codes, nil
 }
 
 func (s *Service) buildQuote(
@@ -440,19 +546,24 @@ func (s *Service) buildQuote(
 		SpecificityScore:    fields.Specificity,
 		Agreement:           fields.Agreement,
 		Currency:            defaultString(fields.Currency, rateCtx.BillingCurrency),
-		LinehaulAmount:      fields.Amount,
-		TotalAmount:         fields.Amount,
+		LinehaulAmount:      trace.Totals.Linehaul,
+		FuelAmount:          trace.Totals.Fuel,
+		AccessorialAmount:   trace.Totals.Accessorial,
+		TotalAmount:         trace.Totals.Total,
 		BillingCurrency:     rateCtx.BillingCurrency,
-		BillingAmount:       fields.Amount,
+		BillingAmount:       trace.Totals.Total,
 		AsOf:                rateCtx.AsOf,
 		RatedAt:             s.now(),
 		EngineVersion:       EngineVersion,
 		ContextHash:         rateCtx.Hash(),
 		Trace:               trace,
 	}
-	quote.FormulaTemplateVersionNumber = linehaulTemplateVersion(trace)
+	if fields.TemplateVersion > 0 {
+		version := fields.TemplateVersion
+		quote.FormulaTemplateVersionNumber = &version
+	}
 
-	if req.Shipment != nil {
+	if req.Shipment != nil && req.Shipment.ID.IsNotNil() {
 		shipmentID := req.Shipment.ID
 		quote.ShipmentID = &shipmentID
 	}
@@ -499,29 +610,4 @@ func (s *Service) hydrate(
 		Shipment:   entity,
 		TenantInfo: tenantInfo,
 	})
-}
-
-func formulaLinehaulDetail(resp *formulatemplatetypes.CalculateResponse) map[string]any {
-	detail := map[string]any{"expression": resp.Expression}
-	if resp.VersionNumber > 0 {
-		detail["versionNumber"] = resp.VersionNumber
-	}
-	return detail
-}
-
-func linehaulTemplateVersion(trace *ratetypes.Trace) *int64 {
-	if trace == nil {
-		return nil
-	}
-	for i := range trace.Components {
-		component := &trace.Components[i]
-		if component.Kind != ratetypes.ComponentKindLinehaul {
-			continue
-		}
-		if version, ok := component.Detail["versionNumber"].(int64); ok && version > 0 {
-			return &version
-		}
-		return nil
-	}
-	return nil
 }

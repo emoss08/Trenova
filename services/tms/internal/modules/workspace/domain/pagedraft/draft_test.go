@@ -43,16 +43,31 @@ func TestDraft_AcceptsWhatAPageShows(t *testing.T) {
 	formulaDraft := &pagedraft.Draft{
 		Surface: pagedraft.SurfaceFormula,
 		Formula: &pagedraft.Formula{
-			SchemaID:   "shipment",
-			Expression: "totalDistance * 2",
-			Variables: []pagedraft.FormulaVariable{
-				{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2.0},
-				{Name: "hazmat", Type: pagedraft.VariableBoolean, DefaultValue: true},
-			},
+			TemplateID: pulid.MustNew("ft_").String(),
+			Name:       "Per Mile",
+			Source:     perMileSource,
 		},
 	}
 	assert.Empty(t, fieldsOf(t, formulaDraft))
+
+	libraryDraft := &pagedraft.Draft{
+		Surface: pagedraft.SurfaceFormulaLibrary,
+		FormulaLibrary: &pagedraft.FormulaLibrary{
+			Name:   "accessorials",
+			Source: "library \"org.accessorials\"\n",
+		},
+	}
+	assert.Empty(t, fieldsOf(t, libraryDraft))
 }
+
+const perMileSource = `tariff "Per Mile"
+
+input rate: Money/mi
+input minimumCharge: Money = $0
+
+charge "Per Mile" (quantity: shipment.distance, rate: rate)
+minimum minimumCharge
+`
 
 func TestDraft_RefusesAPayloadThatIsNotItsSurfaces(t *testing.T) {
 	t.Parallel()
@@ -60,8 +75,18 @@ func TestDraft_RefusesAPayloadThatIsNotItsSurfaces(t *testing.T) {
 	assert.ElementsMatch(t, []string{"context.draft.shipmentImport", "context.draft.formula"},
 		fieldsOf(t, &pagedraft.Draft{
 			Surface: pagedraft.SurfaceShipmentImport,
-			Formula: &pagedraft.Formula{SchemaID: "shipment"},
+			Formula: &pagedraft.Formula{Source: perMileSource},
 		}))
+	assert.ElementsMatch(t, []string{"context.draft.formulaLibrary"},
+		fieldsOf(t, &pagedraft.Draft{
+			Surface: pagedraft.SurfaceFormula,
+			Formula: &pagedraft.Formula{Source: perMileSource},
+			FormulaLibrary: &pagedraft.FormulaLibrary{
+				Source: "library \"org.accessorials\"\n",
+			},
+		}))
+	assert.ElementsMatch(t, []string{"context.draft.formulaLibrary"},
+		fieldsOf(t, &pagedraft.Draft{Surface: pagedraft.SurfaceFormulaLibrary}))
 	assert.Contains(t, fieldsOf(t, &pagedraft.Draft{Surface: "spreadsheet"}),
 		"context.draft.surface")
 }
@@ -105,140 +130,53 @@ func TestDraft_BoundsEveryText(t *testing.T) {
 	got = fieldsOf(t, &pagedraft.Draft{
 		Surface: pagedraft.SurfaceFormula,
 		Formula: &pagedraft.Formula{
-			SchemaID:   "",
-			Expression: strings.Repeat("1", pagedraft.MaxExpressionLength+1),
-			Variables: []pagedraft.FormulaVariable{
-				{Name: "2fast", Type: pagedraft.VariableNumber},
-				{Name: "rate", Type: "Money", DefaultValue: map[string]any{"a": 1}},
-			},
-		},
-	})
-	assert.ElementsMatch(t, []string{
-		"context.draft.formula.schemaId",
-		"context.draft.formula.expression",
-		"context.draft.formula.variables[0].name",
-		"context.draft.formula.variables[1].type",
-		"context.draft.formula.variables[1].defaultValue",
-	}, got)
-}
-
-func TestFormulaPolicy_IsCheckedOnTheDraftAndTheProposal(t *testing.T) {
-	t.Parallel()
-
-	minCharge, maxCharge, badAmount := "250", "1000", "two fifty"
-	negative, precision, tooPrecise := "-5", 2, 5
-
-	sound := &pagedraft.FormulaPolicy{
-		MinCharge:         &minCharge,
-		MaxCharge:         &maxCharge,
-		RoundingMode:      "HalfEven",
-		RoundingPrecision: &precision,
-	}
-	assert.Empty(t, fieldsOf(t, &pagedraft.Draft{
-		Surface: pagedraft.SurfaceFormula,
-		Formula: &pagedraft.Formula{
-			SchemaID:    "shipment",
-			Name:        "Per mile",
-			Description: "Linehaul by the mile.",
-			Expression:  "totalDistance * perMile",
-			Breakdown: []pagedraft.BreakdownLine{
-				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
-			},
-			Policy: sound,
-		},
-	}))
-
-	got := fieldsOf(t, &pagedraft.Draft{
-		Surface: pagedraft.SurfaceFormula,
-		Formula: &pagedraft.Formula{
-			SchemaID:    "shipment",
+			TemplateID:  "not an id",
 			Name:        strings.Repeat("n", pagedraft.MaxTemplateNameLength+1),
-			Description: strings.Repeat("d", pagedraft.MaxVariableTextLength+1),
-			Breakdown: []pagedraft.BreakdownLine{
-				{Name: "_hidden", Label: "", Expression: "1"},
-				{Name: "line", Label: "Line", Expression: ""},
-				{Name: "line", Label: "Again", Expression: "2"},
-			},
-			Policy: &pagedraft.FormulaPolicy{
-				MinCharge:         &badAmount,
-				MaxCharge:         &negative,
-				RoundingMode:      "Nearest",
-				RoundingPrecision: &tooPrecise,
-			},
+			Description: strings.Repeat("d", pagedraft.MaxDescriptionLength+1),
+			Source:      strings.Repeat("x", pagedraft.MaxSourceLength+1),
 		},
 	})
 	assert.ElementsMatch(t, []string{
+		"context.draft.formula.templateId",
 		"context.draft.formula.name",
 		"context.draft.formula.description",
-		"context.draft.formula.breakdown[0].name",
-		"context.draft.formula.breakdown[0].label",
-		"context.draft.formula.breakdown[1].expression",
-		"context.draft.formula.breakdown[2].name",
-		"context.draft.formula.policy.minCharge",
-		"context.draft.formula.policy.maxCharge",
-		"context.draft.formula.policy.roundingMode",
-		"context.draft.formula.policy.roundingPrecision",
+		"context.draft.formula.source",
 	}, got)
 
-	multiErr := errortypes.NewMultiError()
-	(&pagedraft.FormulaDetails{Policy: &pagedraft.FormulaPolicy{
-		MinCharge: &maxCharge,
-		MaxCharge: &minCharge,
-	}}).Validate("", multiErr)
-	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "policy.minCharge", multiErr.Errors[0].Field,
-		"a minimum above the maximum is refused once, on the minimum")
-
-	multiErr = errortypes.NewMultiError()
-	(&pagedraft.FormulaDetails{Policy: &pagedraft.FormulaPolicy{RoundingMode: "None"}}).
-		Validate("", multiErr)
-	assert.False(t, multiErr.HasErrors(), "every rounding mode the engine knows is accepted")
+	got = fieldsOf(t, &pagedraft.Draft{
+		Surface: pagedraft.SurfaceFormulaLibrary,
+		FormulaLibrary: &pagedraft.FormulaLibrary{
+			LibraryID: "nope",
+			Name:      strings.Repeat("n", pagedraft.MaxLibraryNameLength+1),
+			Source:    strings.Repeat("x", pagedraft.MaxSourceLength+1),
+		},
+	})
+	assert.ElementsMatch(t, []string{
+		"context.draft.formulaLibrary.libraryId",
+		"context.draft.formulaLibrary.name",
+		"context.draft.formulaLibrary.source",
+	}, got)
 }
 
-func TestFormulaPolicy_ResolvesToWhatTheEngineApplies(t *testing.T) {
+func TestDraft_NormalizesNamesAndKeepsSourceAsWritten(t *testing.T) {
 	t.Parallel()
 
-	var none *pagedraft.FormulaPolicy
-	two := 2
-	assert.Equal(t, &pagedraft.FormulaPolicy{RoundingMode: "HalfUp", RoundingPrecision: &two},
-		none.Resolved(), "no policy is the default rounding and no bounds")
-
-	minCharge, zero := " 250.00 ", 0
-	resolved := (&pagedraft.FormulaPolicy{
-		MinCharge:         &minCharge,
-		RoundingMode:      "Up",
-		RoundingPrecision: &zero,
-	}).Resolved()
-	require.NotNil(t, resolved.MinCharge)
-	assert.Equal(t, "250", *resolved.MinCharge)
-	assert.Nil(t, resolved.MaxCharge)
-	assert.Equal(t, "Up", resolved.RoundingMode)
-	require.NotNil(t, resolved.RoundingPrecision)
-	assert.Equal(t, 0, *resolved.RoundingPrecision, "zero places next to a chosen mode is kept")
-
-	charge := (&pagedraft.FormulaPolicy{MaxCharge: &minCharge}).ChargePolicy()
-	assert.False(t, charge.MinCharge.Valid)
-	assert.True(t, charge.MaxCharge.Valid)
-	assert.Equal(t, "250", charge.MaxCharge.Decimal.String())
-	assert.Equal(t, "HalfUp", charge.RoundingMode.String())
-	assert.Equal(t, int32(2), charge.RoundingPrecision)
-
+	source := "  " + perMileSource + "\n\n"
 	normalized := (&pagedraft.Draft{
-		Surface: pagedraft.SurfaceFormula,
-		Formula: &pagedraft.Formula{
-			SchemaID: "shipment",
-			Name:     " Per mile ",
-			Breakdown: []pagedraft.BreakdownLine{
-				{Name: " linehaul ", Label: " Linehaul ", Expression: " totalDistance "},
-			},
-			Policy: &pagedraft.FormulaPolicy{MinCharge: &minCharge, RoundingMode: " Down "},
-		},
+		Surface: " formula ",
+		Formula: &pagedraft.Formula{Name: " Per Mile ", Source: source},
 	}).Normalized()
-	assert.Equal(t, "Per mile", normalized.Formula.Name)
-	assert.Equal(t, "linehaul", normalized.Formula.Breakdown[0].Name)
-	assert.Equal(t, "250.00", *normalized.Formula.Policy.MinCharge)
-	assert.Equal(t, "Down", normalized.Formula.Policy.RoundingMode)
-	assert.Nil(t, normalized.Formula.Policy.RoundingPrecision)
+
+	assert.Equal(t, pagedraft.SurfaceFormula, normalized.Surface)
+	assert.Equal(t, "Per Mile", normalized.Formula.Name)
+	assert.Equal(t, source, normalized.Formula.Source)
+
+	library := (&pagedraft.Draft{
+		Surface:        pagedraft.SurfaceFormulaLibrary,
+		FormulaLibrary: &pagedraft.FormulaLibrary{Name: " accessorials ", Source: source},
+	}).Normalized()
+	assert.Equal(t, "accessorials", library.FormulaLibrary.Name)
+	assert.Equal(t, source, library.FormulaLibrary.Source)
 }
 
 func TestImportStop_HasSchedule(t *testing.T) {
@@ -278,6 +216,7 @@ func TestEditTitles(t *testing.T) {
 		},
 		"Accepted every confident field": {Action: pagedraft.ActionAcceptAllConfident},
 		"Proposed formula":               {Action: pagedraft.ActionProposeFormula},
+		"Proposed library":               {Action: pagedraft.ActionProposeLibrary},
 	}
 	for want, edit := range cases {
 		assert.Equal(t, want, edit.Title())
@@ -286,5 +225,6 @@ func TestEditTitles(t *testing.T) {
 	require.True(t, pagedraft.IsEditTool("intake_set_stop_location"))
 	require.False(t, pagedraft.IsEditTool("location_create"))
 	assert.Equal(t, pagedraft.SurfaceFormula, pagedraft.ActionProposeFormula.Surface())
+	assert.Equal(t, pagedraft.SurfaceFormulaLibrary, pagedraft.ActionProposeLibrary.Surface())
 	assert.Equal(t, pagedraft.SurfaceShipmentImport, pagedraft.ActionAcceptField.Surface())
 }

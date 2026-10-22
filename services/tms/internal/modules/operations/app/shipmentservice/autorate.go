@@ -8,13 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/ratetypes"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -57,7 +52,7 @@ func (s *service) PreviewContractRate(
 		return nil, err
 	}
 
-	return s.describeContractRate(ctx, entity, rated, entity.FreightChargeAmount), nil
+	return s.describeContractRate(ctx, entity, rated, entity.FreightChargeAmount)
 }
 
 // AutoRate prices a saved shipment from its contract again.
@@ -84,9 +79,13 @@ func (s *service) AutoRate(
 	}
 
 	if !plan.rated.Outcome.Priced() {
-		return plan.original, s.describeContractRate(
-			ctx, plan.entity, plan.rated, plan.previousLinehaul,
-		), nil
+		application, describeErr := s.describeContractRate(
+			ctx, plan.entity, plan.rated, plan.previousFreight,
+		)
+		if describeErr != nil {
+			return nil, nil, describeErr
+		}
+		return plan.original, application, nil
 	}
 
 	if err = s.commercial.RecordContractQuote(ctx, plan.entity, plan.rated); err != nil {
@@ -123,9 +122,13 @@ func (s *service) AutoRate(
 		),
 	)
 
-	return updatedEntity, s.describeContractRate(
-		ctx, updatedEntity, plan.rated, plan.previousLinehaul,
-	), nil
+	application, err := s.describeContractRate(
+		ctx, updatedEntity, plan.rated, plan.previousFreight,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return updatedEntity, application, nil
 }
 
 func (s *service) PreviewAutoRate(
@@ -138,20 +141,25 @@ func (s *service) PreviewAutoRate(
 		return nil, err
 	}
 
+	application, err := s.describeContractRate(
+		ctx, plan.entity, plan.rated, plan.previousFreight,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &shipmentports.ShipmentAutoRatePreview{
-		Before: plan.original,
-		After:  plan.entity,
-		Application: s.describeContractRate(
-			ctx, plan.entity, plan.rated, plan.previousLinehaul,
-		),
+		Before:      plan.original,
+		After:       plan.entity,
+		Application: application,
 	}, nil
 }
 
 type autoRatePlan struct {
-	original         *shipment.Shipment
-	entity           *shipment.Shipment
-	rated            *ratequoteports.RatedShipment
-	previousLinehaul decimal.NullDecimal
+	original        *shipment.Shipment
+	entity          *shipment.Shipment
+	rated           *ratequoteports.RatedShipment
+	previousFreight decimal.NullDecimal
 }
 
 func (s *service) planAutoRate(
@@ -191,9 +199,9 @@ func (s *service) planAutoRate(
 	}
 
 	plan := &autoRatePlan{
-		original:         original,
-		entity:           entity,
-		previousLinehaul: entity.FreightChargeAmount,
+		original:        original,
+		entity:          entity,
+		previousFreight: entity.FreightChargeAmount,
 	}
 
 	control, err := s.getShipmentControl(ctx, req.TenantInfo)
@@ -238,36 +246,32 @@ func validateShipmentRateNotLocked(entity *shipment.Shipment) *errortypes.MultiE
 	return multiErr
 }
 
-// describeContractRate turns a rating decision into the account of it the
-// dialog reads out.
-//
-// It reports the contract's own accessorials and not the shipment's other
-// charges: a rater accepting a re-rate is agreeing to what the contract adds,
-// and listing a fuel surcharge or a detention charge they had already accepted
-// would bury that.
 func (s *service) describeContractRate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	rated *ratequoteports.RatedShipment,
-	previousLinehaul decimal.NullDecimal,
-) *shipmentports.ContractRateApplication {
+	previousFreight decimal.NullDecimal,
+) (*shipmentports.ContractRateApplication, error) {
 	application := &shipmentports.ContractRateApplication{
-		Applied:           rated.Outcome.Priced(),
-		Outcome:           rated.Outcome,
-		AgreementID:       rated.AgreementID,
-		RuleID:            rated.RuleID,
-		FormulaTemplateID: rated.FormulaTemplateID,
-		BaseRate:          rated.BaseRate,
-		LinehaulAmount:    rated.Amount,
+		Applied:             rated.Outcome.Priced(),
+		Outcome:             rated.Outcome,
+		AgreementID:         rated.AgreementID,
+		RuleID:              rated.RuleID,
+		FormulaTemplateID:   rated.FormulaTemplateID,
+		FormulaTemplateName: rated.FormulaTemplateName,
+		TemplateVersion:     rated.TemplateVersion,
+		Inputs:              rated.TariffInputs,
+		FreightAmount:       rated.Amount,
+		FreightLines:        []shipment.FreightLine{},
+		Charges:             []shipmentports.ContractRateCharge{},
+		Refusal:             rated.Refusal,
 	}
-
-	if previousLinehaul.Valid {
-		application.PreviousLinehaulAmount = previousLinehaul.Decimal
+	if previousFreight.Valid {
+		application.PreviousFreightAmount = previousFreight.Decimal
 	}
 
 	if quote := rated.Quote; quote != nil {
 		application.Explanation = quote.Explanation()
-
 		if trace := quote.Trace; trace != nil {
 			if winner := trace.Winner(); winner != nil {
 				application.AgreementName = winner.AgreementName
@@ -276,98 +280,36 @@ func (s *service) describeContractRate(
 		}
 	}
 
-	application.FormulaTemplateName = linehaulTemplateName(rated)
-	application.Accessorials = s.describeContractAccessorials(ctx, entity, rated)
+	charges, err := s.commercial.ContractCharges(ctx, entity, rated)
+	if err != nil {
+		return nil, err
+	}
+	application.FreightLines = charges.FreightLines
 
-	// The totals are the contract's own: its linehaul plus the charges its
-	// schedule applies. Fuel and detention are priced by their own engines and
-	// are not what somebody accepting a contract rate is agreeing to.
 	other := decimal.Zero
-	for _, accessorial := range application.Accessorials {
-		other = other.Add(accessorial.Amount)
+	for _, charge := range charges.Charges {
+		application.Charges = append(application.Charges, contractRateCharge(charge))
+		other = other.Add(charge.Amount)
 	}
-
 	application.OtherChargeAmount = other
-	application.TotalChargeAmount = application.LinehaulAmount.Add(other)
+	application.TotalChargeAmount = application.FreightAmount.Add(other)
 
-	return application
+	return application, nil
 }
 
-// linehaulTemplateName reads the formula that produced the linehaul off the
-// trace, which is where it is recorded whether the rule named the template
-// itself or reached it through a rate matrix.
-func linehaulTemplateName(rated *ratequoteports.RatedShipment) string {
-	if rated.Quote == nil || rated.Quote.Trace == nil {
-		return ""
+func contractRateCharge(charge *shipment.AdditionalCharge) shipmentports.ContractRateCharge {
+	out := shipmentports.ContractRateCharge{
+		AccessorialChargeID: charge.AccessorialChargeID,
+		Owner:               charge.Owner(),
+		Label:               charge.Label,
+		Amount:              charge.Amount,
+		Quantity:            charge.Quantity,
+		Rate:                charge.Rate,
+		RateUnit:            charge.RateUnit,
 	}
-
-	for i := range rated.Quote.Trace.Components {
-		component := &rated.Quote.Trace.Components[i]
-		if component.Kind == ratetypes.ComponentKindLinehaul {
-			return component.SourceName
-		}
+	if definition := charge.AccessorialCharge; definition != nil {
+		out.Code = definition.Code
+		out.Description = definition.Description
 	}
-
-	return ""
-}
-
-func (s *service) describeContractAccessorials(
-	ctx context.Context,
-	entity *shipment.Shipment,
-	rated *ratequoteports.RatedShipment,
-) []shipmentports.ContractRateAccessorial {
-	accessorials := s.commercial.ContractAccessorials(ctx, entity, rated)
-	applied := make([]shipmentports.ContractRateAccessorial, 0, len(accessorials))
-
-	for _, accessorial := range accessorials {
-		if accessorial == nil {
-			continue
-		}
-
-		applied = append(applied, shipmentports.ContractRateAccessorial{
-			AccessorialChargeID: accessorial.AccessorialChargeID,
-			Description: s.accessorialDescription(
-				ctx, entity, accessorial.AccessorialChargeID, accessorial.AccessorialCharge,
-			),
-			Method: accessorial.Method,
-			Amount: accessorial.PricedAmount(),
-			Unit:   1,
-		})
-	}
-
-	return applied
-}
-
-// accessorialDescription names a charge for the dialog, reading it from the
-// relation when the charge was loaded with one and looking it up when it was
-// not, since a charge the contract has just placed carries no relation yet.
-func (s *service) accessorialDescription(
-	ctx context.Context,
-	entity *shipment.Shipment,
-	chargeID pulid.ID,
-	loaded *accessorialcharge.AccessorialCharge,
-) string {
-	if loaded != nil && loaded.Description != "" {
-		return loaded.Description
-	}
-
-	if s.accessorialRepo == nil || chargeID.IsNil() {
-		return ""
-	}
-
-	charge, err := s.accessorialRepo.GetByID(
-		ctx,
-		accessorialchargeports.GetAccessorialChargeByIDRequest{
-			ID: chargeID,
-			TenantInfo: &pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		},
-	)
-	if err != nil || charge == nil {
-		return ""
-	}
-
-	return charge.Description
+	return out
 }

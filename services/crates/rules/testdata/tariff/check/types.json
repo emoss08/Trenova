@@ -1,0 +1,400 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "inputs": [],
+   "name": "built-in types lower to their descriptors",
+   "source": [
+    "library \"t\"",
+    "fn f(a: Bool, b: Int, c: Number, d: Percent, e: Money, t: Text, g: Date, h: DateTime) -> Bool = a",
+    "fn q(i: Weight, j: Distance, k: Length, l: Volume, m: Duration, n: Temperature, o: Count) -> Count = o"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "quotient types are rates and densities",
+   "source": [
+    "library \"t\"",
+    "fn f(a: Money/cwt, b: Money/Weight, c: lb/ft3, d: Weight/Volume, e: Money/pallet) -> Bool = a == a and b == b and c == d and e == e"
+   ],
+   "types": {
+    "a": "Money/cwt",
+    "b": "Money/Weight",
+    "c": "Weight/Volume",
+    "d": "Weight/Volume",
+    "e": "Money/pallet"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "List and optional types",
+   "source": [
+    "library \"t\"",
+    "fn f(a: List<Stop>, b: Weight?, c: List<Money?>?) -> Bool = a.isEmpty and b == none and c == none"
+   ],
+   "types": {
+    "a": "List<Stop>",
+    "b": "Weight?",
+    "c": "List<Money?>?"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "inline record types are structural",
+   "source": [
+    "library \"t\"",
+    "fn f(a: { min: Weight, max: Weight? }) -> Weight = a.min"
+   ],
+   "types": {
+    "a": "{ min: Weight, max: Weight? }"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "b",
+     "code": "type-mismatch",
+     "message": "`b` is a record of type `Break`, but `f` returns a record of type `Other`",
+     "nth": 3
+    }
+   ],
+   "name": "a declared record type is nominal",
+   "source": [
+    "library \"t\"",
+    "type Break = { from: Weight, rate: Money/cwt }",
+    "type Other = { from: Weight, rate: Money/cwt }",
+    "fn f(b: Break) -> Other = b"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Wieght",
+     "code": "unknown-type",
+     "fixes": [
+      {
+       "label": "Change to `Weight`",
+       "result": [
+        "library \"t\"",
+        "fn f(w: Weight) -> Money = $1"
+       ]
+      }
+     ],
+     "message": "`Wieght` isn't a type. Did you mean `Weight`?"
+    }
+   ],
+   "name": "a misspelt type name suggests the closest",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Wieght) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Flurble",
+     "code": "unknown-type",
+     "message": "`Flurble` isn't a type"
+    }
+   ],
+   "name": "an unknown type with nothing close",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Flurble) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "lb",
+     "code": "unit-type",
+     "fixes": [
+      {
+       "label": "Change to `Weight`",
+       "result": [
+        "library \"t\"",
+        "fn f(w: Weight) -> Money = $1"
+       ]
+      }
+     ],
+     "message": "`lb` is a unit, not a type. A value in `lb` is a weight: write `Weight`"
+    }
+   ],
+   "name": "a unit is not a type",
+   "source": [
+    "library \"t\"",
+    "fn f(w: lb) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "pallet",
+     "code": "unit-type",
+     "fixes": [
+      {
+       "label": "Change to `Int`",
+       "result": [
+        "library \"t\"",
+        "fn f(w: Int) -> Money = $1"
+       ]
+      }
+     ],
+     "message": "`pallet` is a unit, not a type. A value in `pallet` is a whole number: write `Int`"
+    }
+   ],
+   "name": "a count unit is not a type either",
+   "source": [
+    "library \"t\"",
+    "fn f(w: pallet) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "List",
+     "code": "type-arguments",
+     "message": "A list type names what it holds: write `List<Text>`"
+    }
+   ],
+   "name": "List needs its item type",
+   "source": [
+    "library \"t\"",
+    "fn f(w: List) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "List<Text, Int>",
+     "code": "type-arguments",
+     "message": "A list holds one type of value: `List<T>`"
+    }
+   ],
+   "name": "List takes one type argument",
+   "source": [
+    "library \"t\"",
+    "fn f(w: List<Text, Int>) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Money<Text>",
+     "code": "type-arguments",
+     "message": "`Money` takes no type arguments"
+    }
+   ],
+   "name": "only List takes type arguments",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Money<Text>) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Weight/Weight",
+     "code": "quotient",
+     "fixes": [
+      {
+       "label": "Change to `Number`",
+       "result": [
+        "library \"t\"",
+        "fn f(w: Number) -> Money = $1"
+       ]
+      }
+     ],
+     "message": "`Weight/Weight` isn't a rate: a rate is money or a quantity per a unit or a dimension, such as `Money/cwt`"
+    }
+   ],
+   "name": "a dimension over itself is a Number",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight/Weight) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Money/Money",
+     "code": "quotient",
+     "fixes": [
+      {
+       "label": "Change to `Number`",
+       "result": [
+        "library \"t\"",
+        "fn f(w: Number) -> Money = $1"
+       ]
+      }
+     ],
+     "message": "`Money/Money` isn't a rate: a rate is money or a quantity per a unit or a dimension, such as `Money/cwt`"
+    }
+   ],
+   "name": "money over money is a Number",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Money/Money) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Money/Temperature",
+     "code": "quotient",
+     "message": "A temperature can only be compared or subtracted, so it can't be part of a rate"
+    }
+   ],
+   "name": "temperatures cannot be in a rate",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Money/Temperature) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Int",
+     "code": "quotient",
+     "message": "`Int` can't be part of a rate: only money, a dimension such as `Weight`, or a unit such as `cwt` can"
+    }
+   ],
+   "name": "a plain type cannot be in a quotient",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Money/Int) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "cwtt",
+     "code": "unknown-type",
+     "fixes": [
+      {
+       "label": "Change to `cwt`",
+       "result": [
+        "library \"t\"",
+        "fn f(w: Money/cwt) -> Money = $1"
+       ]
+      }
+     ],
+     "message": "`cwtt` isn't a type. Did you mean `cwt`?"
+    }
+   ],
+   "name": "a misspelt unit in a quotient",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Money/cwtt) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "pallet/mi",
+     "code": "quotient",
+     "message": "`pallet/mi` isn't a rate: a rate is money or a quantity per a unit or a dimension, such as `Money/cwt`"
+    }
+   ],
+   "name": "a count over a quantity is not a rate",
+   "source": [
+    "library \"t\"",
+    "fn f(w: pallet/mi) -> Money = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "schema enums and records are types",
+   "source": [
+    "library \"t\"",
+    "fn f(s: Stop, c: Commodity, k: StopKind, fc: FreightClass?) -> Bool = s.kind == k and c.freightClass == fc"
+   ],
+   "types": {
+    "c": "Commodity",
+    "fc": "FreightClass?",
+    "k": "StopKind",
+    "s": "Stop"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a declared enum is a type",
+   "source": [
+    "library \"t\"",
+    "enum Zone { A, B, C }",
+    "fn f(z: Zone) -> Bool = z == A"
+   ],
+   "types": {
+    "z": "Zone"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Node",
+     "code": "recursive-type",
+     "message": "`Node` contains itself through its fields, so no value of it could ever be written"
+    }
+   ],
+   "name": "a record type that contains itself is refused",
+   "source": [
+    "library \"t\"",
+    "type Node = { next: Node? }"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "record types may refer to each other in any order",
+   "source": [
+    "library \"t\"",
+    "type Lane = { from: Place, to: Place }",
+    "type Place = { zip: Text }",
+    "fn f(l: Lane) -> Text = l.from.zip"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "from",
+     "code": "duplicate",
+     "message": "The record already has a field `from`",
+     "nth": 2,
+     "related": [
+      {
+       "at": "from",
+       "line": 2,
+       "message": "The first one is here"
+      }
+     ]
+    }
+   ],
+   "name": "a field written twice in a record type",
+   "source": [
+    "library \"t\"",
+    "type Break = { from: Weight, from: Weight }"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a Money/count rate is money",
+   "source": [
+    "library \"t\"",
+    "fn f(r: Money/stop) -> Money = r * 3"
+   ],
+   "types": {
+    "r * 3": "Money"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "Count is Int",
+   "source": [
+    "library \"t\"",
+    "fn f(c: Count) -> Int = c + 1"
+   ],
+   "types": {
+    "c + 1": "Int"
+   }
+  }
+ ]
+}

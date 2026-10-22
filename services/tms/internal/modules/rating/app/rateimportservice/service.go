@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,6 +44,7 @@ type Params struct {
 	Repo          rateimportports.RateImportRepository
 	AgreementRepo rateagreementports.RateAgreementRepository
 	TemplateRepo  formulatemplateports.FormulaTemplateRepository
+	Resolver      tariffports.Resolver
 	AuditService  auditports.AuditService
 	SheetLimits   pkgrateimport.Limits `optional:"true"`
 	ContentGate   contentscanports.Gate
@@ -53,6 +55,7 @@ type Service struct {
 	repo          rateimportports.RateImportRepository
 	agreementRepo rateagreementports.RateAgreementRepository
 	templateRepo  formulatemplateports.FormulaTemplateRepository
+	resolver      tariffports.Resolver
 	audit         auditports.AuditService
 	sheetLimits   pkgrateimport.Limits
 	contentGate   contentscanports.Gate
@@ -65,6 +68,7 @@ func New(p Params) *Service {
 		repo:          p.Repo,
 		agreementRepo: p.AgreementRepo,
 		templateRepo:  p.TemplateRepo,
+		resolver:      p.Resolver,
 		audit:         p.AuditService,
 		sheetLimits:   p.SheetLimits,
 		contentGate:   p.ContentGate,
@@ -295,7 +299,6 @@ func (s *Service) templateResolver(
 				TenantInfo: tenantInfo,
 				Pagination: pagination.Info{Limit: pageSize, Offset: offset},
 			},
-			Type:   string(formulatemplate.TemplateTypeFreightCharge),
 			Status: string(formulatemplate.StatusActive),
 		})
 		if err != nil {
@@ -314,9 +317,30 @@ func (s *Service) templateResolver(
 		}
 	}
 
-	return func(name string) (pulid.ID, bool) {
-		id, ok := byName[strings.ToLower(strings.TrimSpace(name))]
-		return id, ok
+	templates := make(map[string]*pkgrateimport.Template, len(byName))
+	for _, name := range pkgrateimport.RateTypeTemplateNames() {
+		key := strings.ToLower(strings.TrimSpace(name))
+		id, ok := byName[key]
+		if !ok {
+			continue
+		}
+		resolved, err := s.resolver.ResolveBilling(ctx, &tariffports.ResolveRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: id,
+			AsOf:       s.now(),
+		})
+		if err != nil {
+			if errortypes.IsNotFoundError(err) {
+				continue
+			}
+			return nil, err
+		}
+		templates[key] = &pkgrateimport.Template{ID: id, Inputs: resolved.Inputs}
+	}
+
+	return func(name string) (*pkgrateimport.Template, bool) {
+		template, ok := templates[strings.ToLower(strings.TrimSpace(name))]
+		return template, ok
 	}, nil
 }
 

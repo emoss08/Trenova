@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -65,12 +67,10 @@ func TestPreviewUpdateCharges_RefusesARepricing(t *testing.T) {
 
 	h := newReassignHarness(t)
 	f := h.f
-	rate := decimal.NewFromInt(2000)
-
 	_, err := h.svc.PreviewUpdateCharges(t.Context(), &billingqueueports.UpdateChargesRequest{
-		ItemID:     f.acmeItem.ID,
-		TenantInfo: f.tenantInfo,
-		BaseRate:   &rate,
+		ItemID:       f.acmeItem.ID,
+		TenantInfo:   f.tenantInfo,
+		TariffInputs: tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.NewFromInt(2000))},
 	}, testActor(f.tenantInfo))
 
 	require.Error(t, err)

@@ -6,8 +6,11 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
+import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import { cn } from "@trenova/shared/lib/utils";
 import type { RateAgreementRule } from "@trenova/shared/types/rate";
+import type { TariffWireValue } from "@trenova/shared/types/tariff";
 import { ClockRewindIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 
@@ -58,7 +61,7 @@ export function LaneHistoryPopover({
       />
       <PopoverContent align="end" className="w-96 p-0">
         <div className="border-b p-3">
-          <p className="text-xs font-medium">{t("Rate history")}</p>
+          <p className="text-xs font-medium">{t("Lane history")}</p>
           <p className="text-2xs text-muted-foreground mt-0.5 font-mono">
             {displayLaneKey ?? laneKey}
           </p>
@@ -73,8 +76,14 @@ export function LaneHistoryPopover({
             </p>
           )}
           <div className="flex flex-col gap-2">
-            {(history ?? []).map((entry) => (
-              <HistoryEntry key={entry.id ?? entry.effectiveFrom} entry={entry} />
+            {(history ?? []).map((entry, index, all) => (
+              <HistoryEntry
+                key={entry.id ?? entry.effectiveFrom}
+                entry={entry}
+                previous={all.find(
+                  (other, at) => at !== index && other.id && other.id === entry.supersedesRuleId,
+                )}
+              />
             ))}
           </div>
         </ScrollArea>
@@ -83,24 +92,71 @@ export function LaneHistoryPopover({
   );
 }
 
-function HistoryEntry({ entry }: { readonly entry: RateAgreementRule }) {
+/** The names of the inputs whose value differs between two versions of a lane. */
+function changedInputs(
+  entry: RateAgreementRule,
+  previous: RateAgreementRule | undefined,
+): Set<string> {
+  if (!previous) return new Set();
+  const names = new Set([
+    ...Object.keys(entry.inputs ?? {}),
+    ...Object.keys(previous.inputs ?? {}),
+  ]);
+  return new Set(
+    [...names].filter(
+      (name) => JSON.stringify(entry.inputs?.[name]) !== JSON.stringify(previous.inputs?.[name]),
+    ),
+  );
+}
+
+function HistoryEntry({
+  entry,
+  previous,
+}: {
+  readonly entry: RateAgreementRule;
+  /** The version this one replaced, to mark which terms it changed. */
+  readonly previous?: RateAgreementRule;
+}) {
+  const t = useT();
   const isCurrent = !entry.effectiveTo;
+  const inputs = Object.entries(entry.inputs ?? {});
+  const changed = changedInputs(entry, previous);
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border px-2.5 py-1.5">
-      <div>
-        <p className="font-mono text-xs tabular-nums">
-          {entry.rate != null ? formatCurrency(Number(entry.rate)) : "matrix-priced"}
-        </p>
+    <div className="flex items-start justify-between gap-3 rounded-md border px-2.5 py-1.5">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        {inputs.length === 0 ? (
+          <p className="text-muted-foreground text-xs">{t("The tariff's defaults")}</p>
+        ) : (
+          <ul className="flex flex-col gap-0.5">
+            {inputs.map(([name, value]) => (
+              <li key={name} className="flex items-baseline gap-1.5 text-xs">
+                <span className="text-muted-foreground">{humanizeTariffName(name)}</span>
+                <span className={cn("font-mono tabular-nums", changed.has(name) && "font-medium")}>
+                  {formatTariffValue(value as TariffWireValue, t, { currency: entry.currency })}
+                </span>
+                {changed.has(name) && (
+                  <Badge variant="info" className="text-2xs">
+                    {t("Changed")}
+                  </Badge>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
         <p className="text-2xs text-muted-foreground">
-          {formatUnixDateMedium(entry.effectiveFrom)}
-          {" — "}
-          {entry.effectiveTo ? formatUnixDateMedium(entry.effectiveTo) : "current"}
+          {entry.effectiveTo
+            ? t(
+                "{0} — {1}",
+                formatUnixDateMedium(entry.effectiveFrom),
+                formatUnixDateMedium(entry.effectiveTo),
+              )
+            : t("{0} — current", formatUnixDateMedium(entry.effectiveFrom))}
         </p>
       </div>
       {isCurrent && (
         <Badge variant="neutral" className="text-2xs">
-          current
+          {t("Current")}
         </Badge>
       )}
     </div>

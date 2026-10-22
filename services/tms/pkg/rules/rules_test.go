@@ -123,7 +123,7 @@ func TestVersionReportsTheCrateVersionAndItsOperations(t *testing.T) {
 
 	assert.Equal(t, string(match[1]), info.Version)
 	assert.Contains(t, info.Operations, OpVersion)
-	assert.Contains(t, info.Operations, "formula.evaluate")
+	assert.Contains(t, info.Operations, "tariff.evaluate")
 	assert.Equal(t, map[string]int{"rules.version ok": 1}, observer.snapshot().calls)
 }
 
@@ -382,13 +382,13 @@ func TestOperationLabelsAreBounded(t *testing.T) {
 	t.Parallel()
 
 	for op, want := range map[string]string{
-		"formula.check":                "formula.check",
+		"tariff.check":                 "tariff.check",
 		"allocation.chargeTotal":       "allocation.chargeTotal",
 		"":                             unknownOpLabel,
-		"formula":                      unknownOpLabel,
+		"tariff":                       unknownOpLabel,
 		".check":                       unknownOpLabel,
-		"formula.check.extra":          unknownOpLabel,
-		"formula.check; drop":          unknownOpLabel,
+		"tariff.check.extra":           unknownOpLabel,
+		"tariff.check; drop":           unknownOpLabel,
 		strings.Repeat("a", 70):        unknownOpLabel,
 		"a." + strings.Repeat("b", 70): unknownOpLabel,
 	} {

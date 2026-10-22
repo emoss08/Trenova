@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +31,7 @@ func NewShipmentSeed() *ShipmentSeed {
 	seed := &ShipmentSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"Shipment",
-		"1.1.0",
+		"1.2.0",
 		"Creates sample shipments with moves, stops, commodities, and charges for development",
 		[]common.Environment{
 			common.EnvDevelopment,
@@ -514,10 +514,6 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-001", BOL: "BOL-2026-0001",
 			Pieces: new(int64(24)), Weight: new(int64(42000)),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(3200.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(3200.00),
 				Valid:   true,
@@ -526,7 +522,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(3200.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp2ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -534,10 +529,6 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-002", BOL: "BOL-2026-0002",
 			Pieces: new(int64(8)), Weight: new(int64(12000)),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(1850.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(1850.00),
 				Valid:   true,
@@ -550,7 +541,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(1900.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp3ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -558,10 +548,6 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-003", BOL: "BOL-2026-0003",
 			Pieces: new(int64(30)), Weight: new(int64(44000)),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(4500.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(4500.00),
 				Valid:   true,
@@ -574,7 +560,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(5062.50),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp4ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -583,10 +568,6 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-004", BOL: "BOL-2026-0004",
 			Pieces: new(int64(20)), Weight: new(int64(38000)),
 			TemperatureMin: new(int16(34)), TemperatureMax: new(int16(38)),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(4100.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(4100.00),
 				Valid:   true,
@@ -595,7 +576,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(4100.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp5ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -604,10 +584,6 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-005", BOL: "BOL-2026-0005",
 			Pieces: new(int64(26)), Weight: new(int64(40000)),
 			ActualShipDate: new(now - 5*day), ActualDeliveryDate: new(now - 3*day),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(2800.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(2800.00),
 				Valid:   true,
@@ -620,7 +596,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(2950.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp6ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -628,10 +603,6 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-006", BOL: "BOL-2026-0006",
 			Pieces: new(int64(40)), Weight: new(int64(43000)),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(6200.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(6200.00),
 				Valid:   true,
@@ -644,7 +615,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(6975.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp7ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -652,10 +622,6 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-007", BOL: "BOL-2026-0007",
 			Pieces: new(int64(10)), Weight: new(int64(22000)),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(3800.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(3800.00),
 				Valid:   true,
@@ -668,7 +634,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(4150.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp8ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -677,10 +642,6 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-008", BOL: "BOL-2026-0008",
 			Pieces: new(int64(14)), Weight: new(int64(18000)),
 			ActualShipDate: new(now - 1*day),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(2400.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(2400.00),
 				Valid:   true,
@@ -689,7 +650,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(2400.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp9ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -698,10 +658,6 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-009", BOL: "BOL-2026-0009",
 			Pieces: new(int64(32)), Weight: new(int64(44000)),
 			ActualShipDate: new(now - 7*day), ActualDeliveryDate: new(now - 4*day),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(3500.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(3500.00),
 				Valid:   true,
@@ -714,7 +670,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(3700.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 		{
 			ID: shp10ID, BusinessUnitID: buID, OrganizationID: orgID,
@@ -724,10 +679,6 @@ func (s *ShipmentSeed) createShipments(
 			Pieces: new(int64(18)), Weight: new(int64(36000)),
 			TemperatureMin: new(int16(0)), TemperatureMax: new(int16(10)),
 			ActualShipDate: new(now - 2*day),
-			BaseRate: decimal.NullDecimal{
-				Decimal: decimal.NewFromFloat(4800.00),
-				Valid:   true,
-			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(4800.00),
 				Valid:   true,
@@ -740,7 +691,6 @@ func (s *ShipmentSeed) createShipments(
 				Decimal: decimal.NewFromFloat(4925.00),
 				Valid:   true,
 			},
-			RatingUnit: 1,
 		},
 	}
 
@@ -758,6 +708,11 @@ func (s *ShipmentSeed) createShipments(
 				allShipments[i].ProNumber,
 			)
 		}
+		allShipments[i].TariffInputs = seededTariffInputs(
+			template.Name,
+			seededRate(template.Name, allShipments[i].FreightChargeAmount.Decimal),
+		)
+		allShipments[i].FreightLines = seededFreightLines(&allShipments[i])
 		allShipments[i].RatingDetail = seededRatingDetail(&allShipments[i], template, now)
 	}
 

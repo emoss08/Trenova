@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -44,16 +45,8 @@ func (c *Calculator) RateAgainstContract(
 	})
 }
 
-// AdoptContractRate writes what the contract charged into the shipment's own
-// rating fields.
-//
-// This is the whole of "auto-rating". The contract does not stay in the loop
-// afterwards: it hands over a rating method, a base rate and a set of
-// accessorial charges, all of them ordinary editable fields from that moment
-// on, and the shipment is marked as still carrying them. Every later
-// recalculation prices from those fields alone.
 func (c *Calculator) AdoptContractRate(
-	ctx context.Context,
+	_ context.Context,
 	entity *shipment.Shipment,
 	rated *ratequoteports.RatedShipment,
 ) {
@@ -61,20 +54,7 @@ func (c *Calculator) AdoptContractRate(
 		return
 	}
 
-	if rated.FormulaTemplateID != nil && !rated.FormulaTemplateID.IsNil() {
-		entity.FormulaTemplateID = *rated.FormulaTemplateID
-	}
-
-	// A rule that binds no rate of its own prices through whatever the shipment
-	// already carries, so there is nothing to seat and overwriting would erase
-	// a figure the contract deliberately deferred to.
-	if rated.BaseRate.Valid {
-		entity.BaseRate = rated.BaseRate
-	}
-
 	c.applyQuote(entity, rated)
-	c.syncAgreementAccessorials(ctx, entity, c.loadAgreement(ctx, entity))
-
 	entity.MarkAutoRated(c.now())
 	clearRateDeparture(entity)
 }
@@ -129,28 +109,17 @@ func clearRateDeparture(entity *shipment.Shipment) {
 	entity.RateOverrideAt = nil
 }
 
-// ContractRateMatches reports whether the shipment is priced exactly the way
-// the contract said to price it.
-//
-// It compares the two things a contract seats — the rating method and the base
-// rate — rather than the resulting money, because the money follows from them
-// and from the mileage, and a rounding difference in the total is not somebody
-// having renegotiated the rate.
 func ContractRateMatches(entity *shipment.Shipment, rated *ratequoteports.RatedShipment) bool {
 	if entity == nil || rated == nil || !rated.Outcome.Priced() {
 		return false
 	}
 
-	if rated.FormulaTemplateID != nil && !rated.FormulaTemplateID.IsNil() &&
+	if rated.FormulaTemplateID == nil || rated.FormulaTemplateID.IsNil() ||
 		entity.FormulaTemplateID != *rated.FormulaTemplateID {
 		return false
 	}
 
-	if !rated.BaseRate.Valid {
-		return true
-	}
-
-	return entity.BaseRate.Valid && entity.BaseRate.Decimal.Equal(rated.BaseRate.Decimal)
+	return entity.TariffInputs.Equal(rated.TariffInputs)
 }
 
 // ContractRating is a rating decision that has been made but not yet written
@@ -191,28 +160,21 @@ func (c *Calculator) RateAndAdoptContract(
 
 	adopted := ContractRateMatches(entity, rated)
 
+	sync := chargeSyncOptions{detention: true, fuel: true}
 	switch {
 	case adopted:
 		c.AdoptContractRate(ctx, entity, rated)
-
+		sync.rated = rated
+		sync.contract = rated
 	case rated.Outcome.Priced():
-		// Charging something other than the contract's rate is a departure from
-		// the rate, not from the schedule. The agreement still covers the lane,
-		// so the charges it applies automatically are still owed, and dropping
-		// them would under-bill a load whose linehaul was merely negotiated.
-		// They are placed from the contract the engine just resolved rather
-		// than from the shipment's stamp, which a departure does not set.
-		c.syncAgreementAccessorials(
-			ctx, entity, c.loadAgreementByID(ctx, entity, rated.AgreementID),
-		)
+		sync.contract = rated
 	}
 
-	// The recalculation has to run here: adopting changes the rating method and
-	// the base rate it prices from, and a departure is measured against the
-	// freight charge it produces.
-	if err = c.Recalculate(ctx, entity, control, userID); err != nil {
+	totals, err := c.recalculate(ctx, entity, control, userID, sync)
+	if err != nil {
 		return nil, err
 	}
+	skipped(rated, totals)
 
 	if !adopted && rated.Outcome.Priced() {
 		c.recordDeparture(entity, rated.Amount, rated.Quote, userID)
@@ -437,7 +399,30 @@ func (c *Calculator) AdoptAndRecalculateContractRate(
 ) error {
 	c.AdoptContractRate(ctx, entity, rated)
 
-	return c.Recalculate(ctx, entity, control, userID)
+	sync := chargeSyncOptions{detention: true, fuel: true}
+	if rated != nil && rated.Outcome.Priced() {
+		sync.rated = rated
+		sync.contract = rated
+	}
+	totals, err := c.recalculate(ctx, entity, control, userID, sync)
+	if err != nil {
+		return err
+	}
+	skipped(rated, totals)
+	return nil
+}
+
+func skipped(rated *ratequoteports.RatedShipment, totals *commercialTotals) {
+	if rated == nil || rated.Quote == nil || rated.Quote.Trace == nil || totals == nil ||
+		totals.pass == nil {
+		return
+	}
+	for _, skip := range totals.pass.skipped {
+		rated.Quote.Trace.Skipped = append(rated.Quote.Trace.Skipped, ratetypes.Skip{
+			Code:   skip.Code,
+			Source: skip.Source,
+		})
+	}
 }
 
 func (c *Calculator) RecordContractQuote(
@@ -450,27 +435,4 @@ func (c *Calculator) RecordContractQuote(
 	}
 
 	return c.recordQuote(ctx, entity, rated.Quote)
-}
-
-// ContractAccessorials lists the charges a contract would apply to a shipment,
-// without applying them.
-//
-// A preview has to name each one — a rater accepting a contract rate is
-// agreeing to every charge that comes with it, and a count hides which — but it
-// must not put them on the shipment, because nobody has accepted anything yet.
-func (c *Calculator) ContractAccessorials(
-	ctx context.Context,
-	entity *shipment.Shipment,
-	rated *ratequoteports.RatedShipment,
-) []*rateagreement.RateAgreementAccessorial {
-	if rated == nil || !rated.Outcome.Priced() {
-		return nil
-	}
-
-	agreement := c.loadAgreementByID(ctx, entity, rated.AgreementID)
-	if agreement == nil {
-		return nil
-	}
-
-	return c.applicableAccessorials(ctx, agreement, entity, ratingDate(entity, c.now))
 }

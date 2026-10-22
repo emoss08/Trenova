@@ -1,17 +1,19 @@
 package shipmentservice
 
 import (
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/commodityportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/hazmatsegregationruleportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"testing"
+	"github.com/shopspring/decimal"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -33,6 +35,8 @@ func TestRateCoverageAdvisory(t *testing.T) {
 		{
 			name: "a shipment the contract priced is fine",
 			entity: &shipment.Shipment{
+				FormulaTemplateID: pulid.MustNew("ft_"),
+				RateAgreementID:   &agreementID,
 				RatingDetail: &shipment.RatingDetail{
 					Source: string(ratequote.OutcomeRated),
 				},
@@ -42,6 +46,7 @@ func TestRateCoverageAdvisory(t *testing.T) {
 		{
 			name: "a shipment its formula template priced is fine",
 			entity: &shipment.Shipment{
+				FormulaTemplateID: pulid.MustNew("ft_"),
 				RatingDetail: &shipment.RatingDetail{
 					Source: string(ratequote.OutcomeFormulaFallback),
 				},
@@ -51,11 +56,21 @@ func TestRateCoverageAdvisory(t *testing.T) {
 		{
 			name: "a hand-set rate needs no contract",
 			entity: &shipment.Shipment{
+				FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(900)),
 				RatingDetail: &shipment.RatingDetail{
-					Source: string(ratequote.OutcomeManualOverride),
+					Source: shipment.RatingSourceManual,
 				},
 			},
 			wantNil: true,
+		},
+		{
+			name: "a hand rate of nothing is priced at zero",
+			entity: &shipment.Shipment{
+				RatingDetail: &shipment.RatingDetail{
+					Source: shipment.RatingSourceManual,
+				},
+			},
+			contains: "priced at zero",
 		},
 		{
 			name: "nothing covered the lane and nothing else could price it",
@@ -79,6 +94,7 @@ func TestRateCoverageAdvisory(t *testing.T) {
 		{
 			name: "a rate that blew up is surfaced with its reason",
 			entity: &shipment.Shipment{
+				FormulaTemplateID: pulid.MustNew("ft_"),
 				RatingDetail: &shipment.RatingDetail{
 					Source:      string(ratequote.OutcomeError),
 					Explanation: "division by zero",

@@ -309,7 +309,7 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := accessorials.Create(ctx, &accessorialcharge.AccessorialCharge{
-					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked), Code: label,
+					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked), Code: "ACC" + label,
 					Method: accessorialcharge.MethodFlat, RateUnit: accessorialcharge.RateUnitMile,
 					Amount: decimal.NewFromInt(75),
 				})

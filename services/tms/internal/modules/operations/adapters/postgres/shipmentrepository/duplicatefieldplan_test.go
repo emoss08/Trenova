@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +80,8 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"Weight":         {copiedFromSource, "freight description carries over"},
 	"TemperatureMin": {copiedFromSource, "handling requirements carry over"},
 	"TemperatureMax": {copiedFromSource, "handling requirements carry over"},
-	"RatingUnit":     {copiedFromSource, "the rating basis carries over"},
+	"TariffInputs":   {copiedFromSource, "the rating basis carries over"},
+	"FreightLines":   {copiedFromSource, "quoted freight lines carry over until the copy is re-rated"},
 
 	"OwnerID":      {intentionallyDropped, "ownership is assigned by dispatch, never inherited"},
 	"CanceledByID": {intentionallyDropped, "cancellation state belongs to the original"},
@@ -91,7 +94,6 @@ var shipmentCopyPlan = map[string]fieldPlan{
 	"OrderID":      {intentionallyDropped, "the copy receives its own order from BuildAutoOrder"},
 	"TenderStatus": {intentionallyDropped, "a copy has never been tendered"},
 	"EntryMethod":  {intentionallyDropped, "left zero so the column default applies"},
-	"BaseRate":     {intentionallyDropped, "recomputed when the copy is rated"},
 	"EnvelopeLengthFeet": {
 		intentionallyDropped,
 		"dimensional envelope is recomputed from the copy's own stops",
@@ -308,8 +310,20 @@ func fillNonZero(t *testing.T, target reflect.Value, seed int) {
 	case reflect.TypeOf(&shipment.RatingDetail{}):
 		target.Set(reflect.ValueOf(&shipment.RatingDetail{
 			FormulaTemplateName: "fixture",
-			Result:              float64(seed),
+			Source:              fmt.Sprintf("fixture-%d", seed),
 			RatedAt:             int64(seed),
+		}))
+
+		return
+	case reflect.TypeOf(tarifftypes.Inputs{}):
+		target.Set(reflect.ValueOf(tarifftypes.Inputs{
+			"rate": rules.MoneyValue(decimal.NewFromInt(int64(seed))),
+		}))
+
+		return
+	case reflect.TypeOf([]shipment.FreightLine{}):
+		target.Set(reflect.ValueOf([]shipment.FreightLine{
+			{Label: fmt.Sprintf("fixture-%d", seed), Amount: decimal.NewFromInt(int64(seed))},
 		}))
 
 		return

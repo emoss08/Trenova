@@ -1,0 +1,692 @@
+[
+  {
+    "name": "a passing test",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"a 1,240 lb load bills at the next hundred pounds\" {\n  given shipment.weight = 1_240 lb\n  expect charge(\"Linehaul\") == $325\n  expect charge(FSC) == $10\n  expect total == $335\n}",
+    "expect": [
+      {
+        "name": "a 1,240 lb load bills at the next hundred pounds",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a failing expect reports its operands",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"wrong\" {\n  given shipment.weight = 1_240 lb\n  expect charge(\"Linehaul\") == $300\n}",
+    "expect": [
+      {
+        "name": "wrong",
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "This expectation does not hold"
+            },
+            "values": [
+              {
+                "display": "$325.00",
+                "value": {
+                  "$q": "325",
+                  "u": "$"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "a failing and expression reports both sides",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"both\" {\n  given shipment.weight = 1_240 lb\n  expect total > $1000 and charge(FSC) == $10\n}",
+    "expect": [
+      {
+        "status": "failed",
+        "failures": [
+          {
+            "values": [
+              {
+                "display": "$335.00"
+              },
+              {
+                "display": "$10.00"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "expect fails passes on a refusal",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"a load with no weight refuses to rate\" {\n  given shipment.weight = none\n  expect fails \"This rate needs the shipment's weight\"\n}",
+    "expect": [
+      {
+        "name": "a load with no weight refuses to rate",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "expect fails without a message",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"refuses\" {\n  expect fails\n}",
+    "expect": [
+      {
+        "name": "refuses",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "expect fails with the wrong message fails",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"refuses differently\" {\n  expect fails \"something else\"\n}",
+    "expect": [
+      {
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "Expected the rating to be refused with \"{0}\", but it was refused with \"{1}\"",
+              "args": [
+                "something else",
+                "This rate needs the shipment's weight"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "expect fails when it rated fails",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"rates\" {\n  given shipment.weight = 100 lb\n  expect fails\n}",
+    "expect": [
+      {
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "Expected a refusal, but nothing refused"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "an expect after a refusal fails",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"refused\" {\n  expect total == $1\n}",
+    "expect": [
+      {
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "The rating was refused: {0}",
+              "args": [
+                "This rate needs the shipment's weight"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "given input overrides an input",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"a higher rate\" {\n  given shipment.weight = 1_000 lb\n  given input.rate = $30/cwt\n  expect charge(\"Linehaul\") == $300\n}",
+    "expect": [
+      {
+        "name": "a higher rate",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "the minimum shows in lines",
+    "tests": "tariff \"LTL\"\n\nuse std.ltl.{ billed }\n\ninput rate: Money/cwt = $25/cwt\n\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\nlet weight = billed(w)\ncharge \"Linehaul\" (quantity: weight, rate: rate)\ncharge \"Fuel\" as FSC = $10\nminimum $90\n\ntest \"minimum\" {\n  given shipment.weight = 100 lb\n  expect lines.len == 3\n  expect lines.any(l => l.kind == Minimum and l.amount == $55)\n  expect lines.first(l => l.code == \"FSC\")?.amount == $10\n  expect charge(XYZ) == none\n}",
+    "expect": [
+      {
+        "name": "minimum",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "tests see the sample record",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"sample\" {\n  expect shipment.proNumber == \"SAMPLE\"\n  expect shipment.stops.len == 2\n  expect shipment.pickup?.kind == Pickup\n  expect shipment.delivery?.sequence == 2\n  expect rating.date == @2026-01-05T12:00Z\n  expect rating.mode == Sell\n  expect customer.name == \"Sample customer\"\n  expect shipment.serviceType.code == \"STD\"\n  expect shipment.distance == 0 mi\n  expect fuel.price == none\n  expect lane.origin.zip == \"\"\n  expect shipment.commodities.isEmpty\n}",
+    "expect": [
+      {
+        "name": "sample",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "constructors fill sequences, dwell, pickup and delivery",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"stops\" {\n  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T11:30Z), delivery(), splitDelivery(sequence: 9)]\n  expect shipment.stops[0]?.sequence == 1\n  expect shipment.stops[1]?.sequence == 2\n  expect shipment.stops[2]?.sequence == 9\n  expect shipment.stops[0]?.dwell == 3.5 h\n  expect shipment.stops[1]?.dwell == none\n  expect shipment.pickup?.sequence == 1\n  expect shipment.delivery?.kind == SplitDelivery\n}",
+    "expect": [
+      {
+        "name": "stops",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a given pickup is kept",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"pickup\" {\n  given shipment.pickup = pickup(sequence: 7)\n  given shipment.stops = [delivery()]\n  expect shipment.pickup?.sequence == 7\n  expect shipment.delivery?.sequence == 1\n}",
+    "expect": [
+      {
+        "name": "pickup",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a given dwell is kept",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"dwell\" {\n  given shipment.stops = [pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T11:30Z, dwell: 1 h)]\n  expect shipment.stops[0]?.dwell == 1 h\n}",
+    "expect": [
+      {
+        "name": "dwell",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "commodities are built from defaults",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"commodities\" {\n  given shipment.commodities = [commodity(weight: 500 lb, freightClass: Class85), commodity(name: \"b\")]\n  expect shipment.commodities.sum(c => c.weight) == 500 lb\n  expect shipment.commodities[1]?.name == \"b\"\n  expect shipment.commodities[0]?.freightClass == Class85\n}",
+    "expect": [
+      {
+        "name": "commodities",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "nested givens",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"nested\" {\n  given lane.origin.zip3 = \"752\"\n  given shipment.temperature.min = 34 °F\n  expect lane.origin.zip3 == \"752\"\n  expect shipment.temperature.min == 34 °F\n}",
+    "expect": [
+      {
+        "name": "nested",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "an evaluation error makes the test an error",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1 / 0\ntest \"boom\" {\n  expect total == $1\n}",
+    "expect": [
+      {
+        "status": "error",
+        "error": {
+          "code": "divideByZero"
+        },
+        "bill": null
+      }
+    ]
+  },
+  {
+    "name": "let inside a test",
+    "tests": "tariff \"s\"\ncharge \"x\" = $2\ntest \"lets\" {\n  let expected = $1 + $1\n  expect total == expected\n}",
+    "expect": [
+      {
+        "name": "lets",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "tests carry the bill",
+    "tests": "tariff \"s\"\ncharge \"x\" = $2\ntest \"bill\" {\n  expect true\n}",
+    "expect": [
+      {
+        "status": "passed",
+        "bill": {
+          "total": {
+            "$q": "2",
+            "u": "$"
+          },
+          "lines": [
+            {
+              "label": "x"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "tests are filtered by name",
+    "tests": "tariff \"s\"\ncharge \"x\" = $2\ntest \"one\" {\n  expect true\n}\ntest \"two\" {\n  expect false\n}",
+    "expect": [
+      {
+        "name": "one",
+        "status": "passed"
+      }
+    ],
+    "names": [
+      "one"
+    ]
+  },
+  {
+    "name": "each test starts from the sample",
+    "tests": "tariff \"s\"\ncharge \"x\" = $1\ntest \"first\" {\n  given shipment.hazmat = true\n  expect shipment.hazmat\n}\ntest \"second\" {\n  expect not shipment.hazmat\n}",
+    "expect": [
+      {
+        "name": "first",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "second",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "library tests call functions",
+    "tests": "library \"org.math\"\nfn twice(x: Int) -> Int = x * 2\ntest \"twice\" {\n  expect twice(2) == 4\n  expect twice(-1) == -2\n}",
+    "expect": [
+      {
+        "name": "twice",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "library expect fails after a refusal",
+    "tests": "library \"org.math\"\nfn positive(x: Int) -> Int {\n  require x > 0 else \"{x} is not positive\"\n  return x\n}\ntest \"refuses\" {\n  let y = positive(-3)\n  expect fails \"-3 is not positive\"\n}",
+    "expect": [
+      {
+        "name": "refuses",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a library refusal nobody expected fails the test",
+    "tests": "library \"org.math\"\nfn positive(x: Int) -> Int {\n  require x > 0 else \"{x} is not positive\"\n  return x\n}\ntest \"surprise\" {\n  let y = positive(-3)\n}",
+    "expect": [
+      {
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "The test was refused: {0}",
+              "args": [
+                "-3 is not positive"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "a library test expecting a refusal that did not come fails",
+    "tests": "library \"org.math\"\nfn one() -> Int = 1\ntest \"no refusal\" {\n  let y = one()\n  expect fails\n}",
+    "expect": [
+      {
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "Expected a refusal, but nothing refused"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "a file that does not load reports why",
+    "tests": "tariff \"s\"\nlet = 1\ntest \"x\" {\n  expect true\n}",
+    "expect": {
+      "tests": [],
+      "error": {
+        "code": "check",
+        "message": {
+          "message": "Expected a name after `{0}`"
+        }
+      }
+    }
+  },
+  {
+    "name": "test ranges are UTF-16",
+    "tests": "tariff \"s\"\nnote \"é\"\ntest \"ü\" {\n  expect true\n}",
+    "expect": [
+      {
+        "name": "ü",
+        "range": {
+          "from": 25,
+          "to": 28
+        }
+      }
+    ]
+  },
+  {
+    "name": "a condition's tests",
+    "tests": "condition \"c\"\nshipment.hazmat\ntest \"hazmat\" {\n  given shipment.hazmat = true\n  expect shipment.hazmat\n}",
+    "expect": [
+      {
+        "name": "hazmat",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a required input in a test with no given refuses",
+    "tests": "tariff \"s\"\ninput fee: Money\ncharge \"x\" = fee\ntest \"needs a fee\" {\n  expect fails \"The input fee has no value and no default\"\n}\ntest \"given a fee\" {\n  given input.fee = $5\n  expect total == $5\n}",
+    "expect": [
+      {
+        "name": "needs a fee",
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "name": "given a fee",
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  },
+  {
+    "name": "a test that reads cells the request did not carry needs them, deduplicated across tests",
+    "tests": "tariff \"Grid\"\n\nrequire let w = shipment.weight else \"No weight\"\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\ncharge \"Linehaul\" (quantity: w, rate: rate)\n\ntest \"to A\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"a\"\n  expect total == $200\n}\n\ntest \"to A again\" {\n  given shipment.weight = 500 lb\n  given lane.destination.zip3 = \"A\"\n  expect total == $100\n}\n\ntest \"to B\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"B\"\n  expect fails \"No rate\"\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "to A",
+          "status": "needs",
+          "failures": [],
+          "error": null,
+          "bill": null
+        },
+        {
+          "name": "to A again",
+          "status": "needs"
+        },
+        {
+          "name": "to B",
+          "status": "needs"
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "A"
+          ]
+        },
+        {
+          "table": "Grid",
+          "keys": [
+            "B"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "once the needed cells are loaded the tests rate, and a loaded combination with no cells is a real miss",
+    "tests": "tariff \"Grid\"\n\nrequire let w = shipment.weight else \"No weight\"\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\ncharge \"Linehaul\" (quantity: w, rate: rate)\n\ntest \"to A\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"a\"\n  expect total == $200\n}\n\ntest \"to A again\" {\n  given shipment.weight = 500 lb\n  given lane.destination.zip3 = \"A\"\n  expect total == $100\n}\n\ntest \"to B\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"B\"\n  expect fails \"No rate\"\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0"
+                }
+              ],
+              "value": "20"
+            }
+          ],
+          "loaded": [
+            [
+              "A"
+            ],
+            [
+              "B"
+            ]
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "to A",
+          "status": "passed"
+        },
+        {
+          "name": "to A again",
+          "status": "passed"
+        },
+        {
+          "name": "to B",
+          "status": "passed"
+        }
+      ],
+      "needs": []
+    }
+  },
+  {
+    "name": "only the tests that read uncarried cells need them",
+    "tests": "tariff \"Grid\"\n\nrequire let w = shipment.weight else \"No weight\"\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\ncharge \"Linehaul\" (quantity: w, rate: rate)\n\ntest \"to A\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"a\"\n  expect total == $200\n}\n\ntest \"to A again\" {\n  given shipment.weight = 500 lb\n  given lane.destination.zip3 = \"A\"\n  expect total == $100\n}\n\ntest \"to B\" {\n  given shipment.weight = 1_000 lb\n  given lane.destination.zip3 = \"B\"\n  expect fails \"No rate\"\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0"
+                }
+              ],
+              "value": "20"
+            }
+          ],
+          "loaded": [
+            [
+              "A"
+            ]
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "to A",
+          "status": "passed"
+        },
+        {
+          "name": "to A again",
+          "status": "passed"
+        },
+        {
+          "name": "to B",
+          "status": "needs"
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "B"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a provisional miss hides a failure it may have caused",
+    "tests": "tariff \"Grid\"\n\nlet rate = tables.Grid[\"C\", 1 lb] ?? $0/cwt\ncharge \"Linehaul\" (quantity: 100 lb, rate: rate)\n\ntest \"bills\" {\n  expect total == $5\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "bills",
+          "status": "needs",
+          "failures": []
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "C"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "an expectation that reads a table records its needs too",
+    "tests": "tariff \"Grid\"\n\ncharge \"Flat\" = $5\n\ntest \"matches the grid\" {\n  expect total == (tables.Grid[\"D\", 1 lb] ?? $0/cwt) * 1 cwt\n}\n",
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zone",
+              "normalization": "Upper"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak",
+              "unit": "lb",
+              "overflow": "ClampToTopBand"
+            }
+          ]
+        }
+      ]
+    },
+    "expect": {
+      "tests": [
+        {
+          "name": "matches the grid",
+          "status": "needs"
+        }
+      ],
+      "needs": [
+        {
+          "table": "Grid",
+          "keys": [
+            "D"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a file that passes reads no tables and needs nothing",
+    "tests": "tariff \"Flat\"\n\ncharge \"Flat\" = $5\n\ntest \"bills\" {\n  expect total == $5\n}\n",
+    "expect": {
+      "tests": [
+        {
+          "name": "bills",
+          "status": "passed"
+        }
+      ],
+      "needs": []
+    }
+  }
+]

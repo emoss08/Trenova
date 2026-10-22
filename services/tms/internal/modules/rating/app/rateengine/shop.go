@@ -8,8 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -73,7 +72,6 @@ func (s *Service) Shop(
 	// Every candidate reads the same tenant's rate tables, so the run pays for
 	// them once rather than once per carrier.
 	ctx = ratetablecache.With(ctx)
-	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
 
 	for _, candidate := range candidates {
@@ -243,7 +241,7 @@ func (s *Service) priceCandidate(
 	}
 
 	option.Outcome = rated.Outcome
-	option.Cost = rated.Amount
+	option.Cost = rated.Total
 	option.Currency = rated.Currency
 	option.Quote = rated.Quote
 	option.AgreementID = rated.AgreementID
@@ -257,7 +255,7 @@ func (s *Service) priceCandidate(
 
 	option.Margin = ratetypes.EvaluateMargin(&ratetypes.MarginInputs{
 		Sell:      sellTotalOf(req),
-		Buy:       rated.Amount,
+		Buy:       rated.Total,
 		Floor:     marginFloorOf(rated),
 		MaxPayPct: maxPayPercentOf(rated),
 	})
@@ -301,7 +299,13 @@ func maxPayPercentOf(rated *ratequoteports.RatedShipment) decimal.NullDecimal {
 }
 
 func agreementOf(rated *ratequoteports.RatedShipment) *rateagreement.RateAgreement {
-	if rated == nil || rated.Quote == nil {
+	if rated == nil {
+		return nil
+	}
+	if rated.Agreement != nil {
+		return rated.Agreement
+	}
+	if rated.Quote == nil {
 		return nil
 	}
 

@@ -8,12 +8,15 @@ import {
 } from "@trenova/shared/types/decimal";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { ChevronDownIcon, ChevronUpIcon } from "@trenova/shared/components/icons";
+import { useState } from "react";
 import { Controller, type FieldPathValue, type FieldValues, type Path } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
 import { FieldWrapper } from "./field-components";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseNumberFieldProps = {
+  /** Maps a value that is not a plain number or decimal text in and out of the field. */
+  codec?: NumberFieldCodec;
   label?: React.ReactNode;
   description?: string;
   className?: string;
@@ -46,6 +49,17 @@ type BaseNumberFieldProps = {
  * float that has already lost them.
  */
 export type NumberFieldValueType = "number" | "string";
+
+/**
+ * How a field bound to a value that is neither a number nor decimal text (a
+ * Tariff wire quantity, `{"$q": "2.35", "u": "$/mi"}`) reads its digits out of
+ * the value and writes typed digits back into one. `encode` is given the value
+ * it replaces, so whatever else the value carries (its unit) survives an edit.
+ */
+export type NumberFieldCodec = {
+  decode: (value: unknown) => string;
+  encode: (text: string, previous: unknown) => unknown;
+};
 
 /**
  * Fields whose value can only be a string must say so; the choice is optional
@@ -110,9 +124,14 @@ function NumberFieldImpl<T extends FieldValues>({
   max,
   step = 1,
   valueType,
+  codec,
   ...props
 }: NumberFieldImplProps<T>) {
   const t = useT();
+  // What was typed into a codec field and the value it wrote. The value holds the
+  // number so far (`2.` is still 2), so the text is shown back for as long as the
+  // value is the one it wrote; a value set from outside replaces it.
+  const [draft, setDraft] = useState<{ text: string; written: string } | null>(null);
 
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
@@ -126,13 +145,29 @@ function NumberFieldImpl<T extends FieldValues>({
       render={({ field, fieldState }) => {
         // An untyped control (custom fields, dynamic rows) declares nothing, so
         // fall back to the kind the value already has and keep it that kind.
-        const asString = valueType ? valueType === "string" : typeof field.value === "string";
+        const asString =
+          codec !== undefined ||
+          (valueType ? valueType === "string" : typeof field.value === "string");
+        const decoded = codec ? codec.decode(field.value) : textOf(field.value);
+        const text =
+          codec && draft && draft.written === JSON.stringify(field.value ?? null)
+            ? draft.text
+            : decoded;
+        const write = (next: string) => {
+          if (!codec) {
+            field.onChange(next);
+            return;
+          }
+          const encoded = codec.encode(next, field.value);
+          setDraft({ text: next, written: JSON.stringify(encoded ?? null) });
+          field.onChange(encoded);
+        };
         const currentValue = typeof field.value === "number" ? field.value : 0;
 
         const stepBy = (delta: number, bound: number | undefined, direction: "min" | "max") => {
           if (asString) {
-            const next = stepDecimalString(textOf(field.value), delta, decimalScale);
-            field.onChange(
+            const next = stepDecimalString(text, delta, decimalScale);
+            write(
               bound === undefined ? next : clampDecimalString(next, bound, direction, decimalScale),
             );
             return;
@@ -157,8 +192,14 @@ function NumberFieldImpl<T extends FieldValues>({
           >
             <div className="relative overflow-hidden">
               <NumericFormat
-                value={field.value ?? ""}
-                onValueChange={(values) => {
+                value={codec ? text : (field.value ?? "")}
+                onValueChange={(values, source) => {
+                  if (codec) {
+                    // A value set from outside (a reset) re-renders the digits it
+                    // already holds; writing them back would only churn the form.
+                    if (source.source === "event") write(values.value);
+                    return;
+                  }
                   field.onChange(asString ? values.value : (values.floatValue ?? null));
                 }}
                 onBlur={field.onBlur}

@@ -124,14 +124,14 @@ func TestAutoApplyAccessorials_KeepsRowsScopedToThisShipmentType(t *testing.T) {
 	assert.Len(t, agreement.AutoApplyAccessorials(facts), 1)
 }
 
-// A row carrying a condition is returned rather than dropped, because only the
-// caller has a formula engine to answer it with. Dropping it here would silently
-// disable every conditional accessorial in the product.
+// A row carrying a condition is returned rather than dropped, because the
+// condition is answered in the rating's own module call. Dropping it here would
+// silently disable every conditional accessorial in the product.
 func TestAutoApplyAccessorials_ReturnsConditionalRowsForTheCallerToTest(t *testing.T) {
 	t.Parallel()
 
 	row := autoRow(pulid.MustNew("raga_"))
-	row.ApplyCondition = "totalStops > 2"
+	row.Condition = "condition \"Multi-stop\"\n\nshipment.stops.count() > 2\n"
 
 	agreement := &rateagreement.RateAgreement{
 		Accessorials: []*rateagreement.RateAgreementAccessorial{row},
@@ -140,7 +140,7 @@ func TestAutoApplyAccessorials_ReturnsConditionalRowsForTheCallerToTest(t *testi
 	got := agreement.AutoApplyAccessorials(selectFacts())
 
 	require.Len(t, got, 1)
-	assert.Equal(t, "totalStops > 2", got[0].ApplyCondition)
+	assert.Equal(t, row.Condition, got[0].Condition)
 }
 
 func TestAutoApplyAccessorials_NilAgreementHasNothingToApply(t *testing.T) {

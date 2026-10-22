@@ -1,5 +1,10 @@
 import { translate } from "@trenova/shared/i18n/runtime";
-import type { RateMatrixCell, RateMatrixDimension, RateMatrixDimensionKind } from "../types/rate";
+import type {
+  RateMatrixCell,
+  RateMatrixDimension,
+  RateMatrixDimensionKind,
+  RateMatrixValueType,
+} from "../types/rate";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
@@ -14,6 +19,23 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
  * (`matrixCoverage` in `@trenova/shared/rules/matrix`) with the same half-open
  * bands, `[min, max)`, the engine prices with.
  */
+
+/**
+ * The unit a matrix's cells are written in, the way a Tariff literal writes it
+ * (`$`, `$/cwt`, `%`), so a cell reads as the value a tariff will get. A plain
+ * number has none.
+ */
+export function matrixValueUnit(valueType: RateMatrixValueType): string {
+  switch (valueType) {
+    case "Number":
+    case "Int":
+      return "";
+    case "Percent":
+      return "%";
+    default:
+      return `$${valueType.slice("Money".length)}`;
+  }
+}
 
 /** How many axes a matrix can declare, mirroring `ratematrix.MaxDimensions`. */
 export const MAX_MATRIX_DIMENSIONS = 4;

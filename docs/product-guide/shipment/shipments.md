@@ -22,7 +22,7 @@ Keywords: new load, enter a load, book a shipment, add shipment
 1. Open [Shipments](/shipment-management/shipments) and select **New shipment**.
 2. Under **General information**, enter the **BOL** and other reference details.
 3. Under **Service & classification**, choose the **Service type** and **Shipment type**, and the **Tractor type** and **Trailer type** if needed.
-4. Under **Billing & rating**, choose the **Customer**, check **Bill To**, and set the **Rating method** and **Base rate**.
+4. Under **Billing & rating**, choose the **Customer** and check **Bill To**. When a rate agreement covers the lane, its tariff and input values fill in on their own; otherwise set the **Rating method** and fill in the inputs its tariff declares (each labelled, with its unit and its default as the placeholder).
 5. Under **Move details**, select **Add first move** and add at least one pickup and one delivery stop.
 6. Select **Save** (or **Save & close**).
 
@@ -85,4 +85,6 @@ Keywords: 204, tender to partner, EDI tender
 ## Notes
 Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited. Scanning needs Trenova Capture paired from [My scanners](/capture/devices) and scanning turned on for the organization.
 
-To create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import).
+A rated shipment shows its **Bill** under **Billing & rating**: every charge its tariff billed, with its quantity and rate, any notes, and any minimum, maximum or rounding adjustment. **Re-apply rate** asks the contract again and replaces the tariff, its input values and the contract's own charges.
+
+To create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import). A tendered rate is a manual rate: the shipment bills that one freight amount and runs no tariff.
