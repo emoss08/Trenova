@@ -510,6 +510,42 @@ function writtenWords(template) {
   return text.replaceAll("\u0000", "{…}").replace(/\s+/g, " ").trim();
 }
 
+// The one place a message that arrived as data ({ message, args }, from the rules module) is
+// handed to a translator by its template; everywhere else goes through translateMessage, which
+// translates a nested message argument first. Spreading `x.args` into a translator by hand
+// would pass a nested message through as an object, so the sentence would read
+// "[object Object]" where its phrase belongs.
+const CATALOG_MESSAGE_HELPER = join("client", "packages", "shared", "src", "i18n", "message.ts");
+
+function memberNamed(node, property) {
+  return (
+    node?.type === "MemberExpression" &&
+    !node.computed &&
+    node.property.type === "Identifier" &&
+    node.property.name === property
+  );
+}
+
+/**
+ * catalogMessage reports a translator handed a message object by hand: its template read off
+ * `x.message` and its arguments off `x.args` (spread or not). `t(error.message)` alone is an
+ * ordinary lookup of a text message and is not reported.
+ */
+function catalogMessage(call) {
+  const [template, ...rest] = call.arguments;
+  if (!memberNamed(template, "message")) return false;
+  return rest.some((arg) => memberNamed(argsOperand(arg), "args"));
+}
+
+/** The expression an argument reads its value from: `...x`, `x ?? []` and `x!` read `x`. */
+function argsOperand(node) {
+  if (node?.type === "SpreadElement" || node?.type === "TSNonNullExpression") {
+    return argsOperand(node.argument ?? node.expression);
+  }
+  if (node?.type === "LogicalExpression") return argsOperand(node.left);
+  return node;
+}
+
 function ignored(node, lines) {
   const line = node.loc.start.line;
   return IGNORE.test(lines[line - 1] ?? "") || IGNORE.test(lines[line - 2] ?? "");
@@ -581,6 +617,9 @@ export async function findFragments(repoRoot, roots = SOURCE_ROOTS) {
         }
         const name = translatorName(node);
         if (!TRANSLATORS.has(name)) return;
+        if (catalogMessage(node) && rel !== CATALOG_MESSAGE_HELPER && !ignored(node, lines)) {
+          findings.push({ file: rel, line: node.loc.start.line, kind: "catalog-message", detail: name });
+        }
         const skip = name === "rt" || name === "translateRich" ? 2 : 1;
         for (const arg of node.arguments.slice(skip)) {
           const english = englishArgument(arg);
@@ -606,6 +645,8 @@ export function formatFinding({ file, line, kind, detail }) {
       return `${file}:${line}  ${detail} is a label map the catalog never sees; declare it with defineLabels()`;
     case "english-template":
       return `${file}:${line}  \`${detail}\` builds English in a template; use t()/translate() with placeholders, or mark it i18n-ignore: <reason>`;
+    case "catalog-message":
+      return `${file}:${line}  ${detail}(x.message, ...x.args) shows a message from the rules module without translating its nested arguments; use translateMessage(x, t) from @trenova/shared/i18n/message`;
     case "untranslated-template":
       return `${file}:${line}  ${detail} builds English outside the catalog; use t()/translate() with placeholders`;
     default:

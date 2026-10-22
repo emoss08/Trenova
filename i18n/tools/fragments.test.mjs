@@ -180,6 +180,24 @@ toast.success({ submit: "Submitted", post: t("Posted") }[action] ?? "Updated");
     ]);
   });
 
+  it("reports a rules message handed to a translator by hand, not an ordinary message lookup", async () => {
+    const found = await scan(`
+const a = t(diagnostic.message, ...diagnostic.args);
+const b = translate(failure.message, ...(failure.args ?? []));
+const c = t(fix.label.message, fix.label.args);
+const d = t(fieldState.error.message);
+const e = translateMessage(diagnostic, t);
+`);
+    assert.deepEqual(
+      found.map((f) => [f.kind, f.detail, f.line]),
+      [
+        ["catalog-message", "t", 2],
+        ["catalog-message", "translate", 3],
+        ["catalog-message", "t", 4],
+      ],
+    );
+  });
+
   it("reports English a template builds anywhere, not only where it is shown", async () => {
     const found = await scan(`
 function editLabel(col) { return \`Edit \${col}\`; }
