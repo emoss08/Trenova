@@ -5,6 +5,7 @@ package resolver
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
@@ -24,7 +26,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
@@ -71,10 +75,11 @@ const withheldDriverProfile = "tractors.edges.node.primaryWorker.profile"
 // A person whose role reads tractors but not workers opens the tractor list.
 // The driver is a worker the tractor links to, so the screen shows the
 // worker's reference view (the driver's name) and withholds the rest (the
-// driver's profile), naming it in extensions.withheldByAccess. With
-// row-level security enforced the read_scope policy hides a worker the
-// person cannot read from every read, so the driver comes back null: never
-// more than the reference view.
+// driver's profile), naming it in extensions.withheldByAccess. Row-level
+// security gives the same answer: the read scope the person is sent narrows
+// no kind they cannot read, so the database returns the driver and the field
+// guard decides what of it shows. A root read of workers is still refused
+// before it reaches the database.
 func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
@@ -87,9 +92,21 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 	noWorkerRead := &mocks.DenyResourcesPermissionEngine{
 		Denied: []string{permission.ResourceWorker.String()},
 	}
-	workerScopeNone := func(context.Context) (readscope.Grants, error) {
-		return readscope.Grants{"worker": {Scope: readscope.ScopeNone}}, nil
+	enforced := &config.Config{}
+	enforced.Database.RLS.Mode = config.RLSModeEnforce
+	scopes := readscopeservice.New(readscopeservice.Params{
+		Config:   enforced,
+		Engine:   noWorkerRead,
+		Registry: permission.NewRegistry(),
+	})
+	principal := &permissionports.PermissionCheckRequest{
+		PrincipalType:  permissionports.PrincipalTypeUser,
+		PrincipalID:    tenant.Actor.UserID,
+		UserID:         tenant.Actor.UserID,
+		OrganizationID: tenant.Actor.OrganizationID,
+		BusinessUnitID: tenant.Actor.BusinessUnitID,
 	}
+	rlsCtx := readscope.With(tenantCtx, scopes.Resolver(principal))
 
 	t.Run("row-level security off shows the reference view", func(t *testing.T) {
 		var response tractorDriversResponse
@@ -116,16 +133,38 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 		assert.NotContains(t, withheldOf(raw), withheldDriverProfile)
 	})
 
-	t.Run("row-level security enforced hides the driver", func(t *testing.T) {
+	t.Run("row-level security enforced shows the reference view", func(t *testing.T) {
+		encoded, err := readscope.Encode(rlsCtx)
+		require.NoError(t, err)
+		assert.Empty(t, encoded, "a kind the person cannot read narrows nothing in the database")
+
 		rls := dbtest.NewRLSConnection(t, admin, dsn)
 		var response tractorDriversResponse
-		screenPost(t, screenClient(t, readscope.With(tenantCtx, workerScopeNone), rls, noWorkerRead, tenant),
+		raw := screenPost(t, screenClient(t, rlsCtx, rls, noWorkerRead, tenant),
 			tractorDriversQuery, &response)
 
 		require.Len(t, response.Tractors.Edges, 1)
 		node := response.Tractors.Edges[0].Node
-		assert.Equal(t, driverID.String(), node.PrimaryWorkerID, "the tractor still names its driver's id")
-		assert.Nil(t, node.PrimaryWorker)
+		assert.Equal(t, driverID.String(), node.PrimaryWorkerID)
+		require.NotNil(t, node.PrimaryWorker, "the database returns the driver the tractor links to")
+		assert.Equal(t, driverID.String(), node.PrimaryWorker.ID)
+		assert.Equal(t, "Hidden Driver", node.PrimaryWorker.WholeName,
+			"a driver's name is in the worker reference view")
+		assert.Contains(t, withheldOf(raw), withheldDriverProfile,
+			"the driver's profile needs worker read, as with row-level security off")
+	})
+
+	t.Run("row-level security enforced still refuses a root read of workers", func(t *testing.T) {
+		rls := dbtest.NewRLSConnection(t, admin, dsn)
+		for _, query := range []string{
+			`query { workers(input: { first: 10 }) { edges { node { id } } } }`,
+			`query { worker(id: "` + driverID.String() + `") { id } }`,
+		} {
+			var response map[string]any
+			err := screenClient(t, rlsCtx, rls, noWorkerRead, tenant).Post(query, &response)
+			require.Error(t, err, query)
+			assert.Contains(t, strings.ToLower(err.Error()), "permission", query)
+		}
 	})
 
 	t.Run("a linked field outside the view that is non-null is refused", func(t *testing.T) {

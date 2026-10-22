@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
+	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -220,6 +221,32 @@ func TestEveryAuthorizesDeclarationIsCheckedByItsResolver(t *testing.T) {
 	t.Parallel()
 
 	schema := loadSchema(t)
+	checks := resolverReadChecks(t)
+
+	var unchecked []string
+	for _, root := range []*ast.Definition{schema.Query, schema.Mutation} {
+		for _, field := range root.Fields {
+			for _, directive := range field.Directives.ForNames(authorizesDirective) {
+				resource := directive.Arguments.ForName(kindResourceArgument).Value.Raw
+				if !slices.Contains(checks[strings.ToLower(root.Name+"."+field.Name)], resource) {
+					unchecked = append(unchecked, fmt.Sprintf("%s.%s @authorizes(resource: %q)",
+						root.Name, field.Name, resource))
+				}
+			}
+		}
+	}
+	slices.Sort(unchecked)
+	assert.Empty(t, unchecked,
+		"root fields that declare @authorizes for a kind their resolver does not check with read "+
+			"(or an operation implying it). Check it in the resolver, or remove the declaration so "+
+			"the records are gated as linked ones:\n  %s", strings.Join(unchecked, "\n  "))
+}
+
+// resolverReadChecks is, for each root resolver ("query.shipments"), the
+// kinds its body checks with read or an operation implying it.
+func resolverReadChecks(t *testing.T) map[string][]string {
+	t.Helper()
+
 	constants := make(map[string]string)
 	raw, err := os.ReadFile("../../../modules/identity/domain/permission/resource_gen.go")
 	require.NoError(t, err)
@@ -255,21 +282,73 @@ func TestEveryAuthorizesDeclarationIsCheckedByItsResolver(t *testing.T) {
 		}
 	}
 
+	return checks
+}
+
+// rootKinds is every kind a root field returns as its own record: the type
+// it returns, or the node of the connection it returns.
+func rootKinds(
+	schema *ast.Schema,
+	kinds map[string]permission.Resource,
+	def *ast.Definition,
+	seen map[string]bool,
+) []permission.Resource {
+	if def == nil || seen[def.Name] {
+		return nil
+	}
+	seen[def.Name] = true
+	if kind, ok := kinds[def.Name]; ok {
+		return []permission.Resource{kind}
+	}
+	if !strings.HasSuffix(def.Name, "Connection") && !strings.HasSuffix(def.Name, "Edge") {
+		return nil
+	}
+	var out []permission.Resource
+	for _, field := range def.Fields {
+		out = append(out, rootKinds(schema, kinds, schema.Types[field.Type.Name()], seen)...)
+	}
+	return out
+}
+
+// Row-level security does not hide a shipment, order, invoice or worker the
+// person cannot read: a record that links to one shows its reference view,
+// so the database must return it. A root field returns its records whole, so
+// its resolver must check read on the kind (or an operation implying it)
+// before it reads; nothing else would stop it.
+func TestEveryRootOfADatabaseScopedKindChecksItsRead(t *testing.T) {
+	t.Parallel()
+
+	schema := loadSchema(t)
+	registry := permission.NewRegistry()
+	kinds, err := KindTypes(schema, registry)
+	require.NoError(t, err)
+	scoped := registry.DatabaseScopedResources()
+	checks := resolverReadChecks(t)
+
 	var unchecked []string
-	for _, root := range []*ast.Definition{schema.Query, schema.Mutation} {
+	reached := 0
+	for _, root := range []*ast.Definition{schema.Query, schema.Mutation, schema.Subscription} {
+		if root == nil {
+			continue
+		}
 		for _, field := range root.Fields {
-			for _, directive := range field.Directives.ForNames(authorizesDirective) {
-				resource := directive.Arguments.ForName(kindResourceArgument).Value.Raw
-				if !slices.Contains(checks[strings.ToLower(root.Name+"."+field.Name)], resource) {
-					unchecked = append(unchecked, fmt.Sprintf("%s.%s @authorizes(resource: %q)",
-						root.Name, field.Name, resource))
+			if selfscoped.Root(root.Name, field.Name) {
+				continue
+			}
+			for _, kind := range rootKinds(schema, kinds, schema.Types[field.Type.Name()], map[string]bool{}) {
+				if !slices.Contains(scoped, kind.String()) {
+					continue
+				}
+				reached++
+				if !slices.Contains(checks[strings.ToLower(root.Name+"."+field.Name)], kind.String()) {
+					unchecked = append(unchecked, fmt.Sprintf("%s.%s returns %s", root.Name, field.Name, kind))
 				}
 			}
 		}
 	}
+	require.Positive(t, reached)
 	slices.Sort(unchecked)
 	assert.Empty(t, unchecked,
-		"root fields that declare @authorizes for a kind their resolver does not check with read "+
-			"(or an operation implying it). Check it in the resolver, or remove the declaration so "+
-			"the records are gated as linked ones:\n  %s", strings.Join(unchecked, "\n  "))
+		"root fields that return records of a database-scoped kind without checking read on it "+
+			"(or an operation implying it) in the resolver:\n  %s", strings.Join(unchecked, "\n  "))
 }
