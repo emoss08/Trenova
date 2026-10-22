@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 export const RAIL_OPEN_STORAGE_KEY = "trenova.formula-studio.rail-open";
 
 /**
- * Whether the studio's floating panel is open. Beside the form it stays as the
+ * Whether a Studio's floating panel is open (templates and libraries share the choice). Beside the form it stays as the
  * person last left it, from one visit to the next. Over the form, on a narrow
  * screen, it starts closed every time, and opening or closing it there leaves
  * the wide screen's choice alone.

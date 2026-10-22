@@ -40,7 +40,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { archiveRefusal } from "./archive-refusal";
+import { archiveRefusal } from "@/lib/archive-refusal";
 import { ExportTemplateDialog } from "./export-template-dialog";
 import { ForkLineageDialog } from "./fork-lineage-dialog";
 import { ForkTemplateDialog } from "./fork-template-dialog";

@@ -113,20 +113,24 @@ export const formulaLibraryReviewSchema = z.object({
 });
 export type FormulaLibraryReview = z.output<typeof formulaLibraryReviewSchema>;
 
-/** A template version that imports the library, for "who uses this". */
+/**
+ * A template version that imports the library, and the library version it pinned, for "who
+ * uses this".
+ */
 export const formulaLibraryUsageSchema = z.object({
   templateId: z.string(),
   templateName: z.string(),
-  versionNumber: z.number().int(),
-  /** The library version that template version pinned. */
+  templateStatus: formulaTemplateStatusSchema,
+  templateVersion: z.number().int(),
+  versionStatus: formulaTemplateStatusSchema,
   libraryVersionNumber: z.number().int(),
 });
 export type FormulaLibraryUsage = z.output<typeof formulaLibraryUsageSchema>;
 
-export const formulaLibraryUsageResponseSchema = z.object({
-  usages: z
-    .array(formulaLibraryUsageSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-});
-export type FormulaLibraryUsageResponse = z.output<typeof formulaLibraryUsageResponseSchema>;
+export const formulaLibraryUsagesSchema = z
+  .array(formulaLibraryUsageSchema)
+  .nullish()
+  .transform((v) => v ?? []);
+
+/** Archiving a library templates import needs the person to confirm it. */
+export type ArchiveFormulaLibraryRequest = { confirmInUse: boolean };

@@ -1,8 +1,8 @@
 import { ApiRequestError } from "@trenova/shared/lib/api";
 
 /**
- * Why the server would not archive templates: the person has to confirm, having
- * seen what the templates still price, or is not allowed to (archiving one in
+ * Why the server would not archive templates or libraries: the person has to confirm, having
+ * seen what still prices with them, or is not allowed to (archiving one in
  * use needs approve permission), in the server's words either way.
  */
 export type ArchiveRefusal =

@@ -20,13 +20,15 @@ export type TariffReadinessInput = {
   warnings: number;
   tests: TariffTestsState;
   dirty: boolean;
+  /** A file with no tests is refused, not warned about: true for a library. */
+  testsRequired?: boolean;
 };
 
 /**
  * The Studio's live copy of the server's readiness, checked against what is in the editor
  * rather than what is saved: a name and description, a source the checker accepts and every
- * test passing block; warnings and a file with no tests only warn. Edit mode adds "Changes
- * saved", because review always covers what is saved.
+ * test passing block; warnings only warn, and so does a tariff with no tests (a library must
+ * have one). Edit mode adds "Changes saved", because review always covers what is saved.
  */
 export function tariffReadiness(input: TariffReadinessInput, t: TranslateFn): ReadinessCheck[] {
   const checks: ReadinessCheck[] = [];
@@ -77,8 +79,10 @@ export function tariffReadiness(input: TariffReadinessInput, t: TranslateFn): Re
         ? {
             key: READINESS_KEYS.tests,
             label: t("Tests pass"),
-            status: "warn",
-            detail: t("Add a test so a reviewer can see what it bills"),
+            status: input.testsRequired ? "fail" : "warn",
+            detail: input.testsRequired
+              ? t("Add at least one test")
+              : t("Add a test so a reviewer can see what it bills"),
           }
         : {
             key: READINESS_KEYS.tests,

@@ -12,11 +12,6 @@ export const formulaLibrary = createQueryKeys("formulaLibrary", {
     queryKey: [libraryId],
     queryFn: async ({ signal }: Signal) => fetchFormulaLibrary(libraryId, { signal }),
   }),
-  version: (libraryId: string, versionNumber: number) => ({
-    queryKey: [libraryId, versionNumber],
-    queryFn: async ({ signal }: Signal) =>
-      apiService.formulaLibraryService.getVersion(libraryId, versionNumber, { signal }),
-  }),
   versionDiff: (libraryId: string, fromVersion: number, toVersion: number) => ({
     queryKey: [libraryId, fromVersion, toVersion],
     queryFn: async ({ signal }: Signal) =>
@@ -39,10 +34,10 @@ export const formulaLibrary = createQueryKeys("formulaLibrary", {
     queryFn: async ({ signal }: Signal) =>
       apiService.formulaLibraryService.listReviewers(libraryId, { signal }),
   }),
-  usage: (libraryId: string) => ({
+  usages: (libraryId: string) => ({
     queryKey: [libraryId],
     queryFn: async ({ signal }: Signal) =>
-      apiService.formulaLibraryService.usage(libraryId, { signal }),
+      apiService.formulaLibraryService.usages(libraryId, { signal }),
   }),
 });
 

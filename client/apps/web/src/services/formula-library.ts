@@ -1,12 +1,12 @@
+import { pageThreadSchema, type PageThread } from "@/types/assistant";
 import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
   formulaLibrarySchema,
-  formulaLibraryUsageResponseSchema,
-  formulaLibraryVersionSchema,
+  formulaLibraryUsagesSchema,
+  type ArchiveFormulaLibraryRequest,
   type FormulaLibrary,
-  type FormulaLibraryUsageResponse,
-  type FormulaLibraryVersion,
+  type FormulaLibraryUsage,
   type FormulaLibraryWrite,
 } from "@trenova/shared/types/formula-library";
 import {
@@ -14,7 +14,6 @@ import {
   readinessResponseSchema,
   reviewDiffResponseSchema,
   versionDiffSchema,
-  type CreateVersionRequest,
   type FormulaReviewer,
   type ReadinessResponse,
   type ReviewDiffResponse,
@@ -30,8 +29,8 @@ const BASE = "/formula-libraries";
 
 /**
  * Writes to formula libraries, and the reads that answer a question rather than show a record
- * (readiness, review diff, usages, reviewers). Lists and records are read through GraphQL
- * (`lib/graphql/formula-library.ts`).
+ * (readiness, review diff, usages, reviewers, a version comparison). Lists, records and their
+ * versions are read through GraphQL (`lib/graphql/formula-library.ts`).
  */
 export class FormulaLibraryService {
   public async create(request: FormulaLibraryWrite): Promise<FormulaLibrary> {
@@ -39,27 +38,24 @@ export class FormulaLibraryService {
     return safeParse(formulaLibrarySchema, response, "Formula Library");
   }
 
+  /** A change to the source or the name saves a new version and returns the library to draft. */
   public async update(libraryId: string, request: FormulaLibraryWrite): Promise<FormulaLibrary> {
     const response = await api.put<unknown>(`${BASE}/${libraryId}/`, request);
     return safeParse(formulaLibrarySchema, response, "Formula Library");
   }
 
-  public async duplicate(libraryId: string, name: string): Promise<FormulaLibrary> {
-    const response = await api.post<unknown>(`${BASE}/${libraryId}/duplicate`, { name });
-    return safeParse(formulaLibrarySchema, response, "Formula Library");
+  /** Copies each library as a draft under a free name; returns the copies. */
+  public async duplicate(libraryIds: string[]): Promise<FormulaLibrary[]> {
+    const response = await api.post<unknown>(`${BASE}/duplicate`, { libraryIds });
+    return safeParse(z.array(formulaLibrarySchema), response, "Formula Libraries");
   }
 
-  public async archive(libraryId: string): Promise<FormulaLibrary> {
-    const response = await api.post<unknown>(`${BASE}/${libraryId}/archive`, {});
-    return safeParse(formulaLibrarySchema, response, "Formula Library");
-  }
-
-  public async createVersion(
+  public async archive(
     libraryId: string,
-    data: CreateVersionRequest,
-  ): Promise<FormulaLibraryVersion> {
-    const response = await api.post<unknown>(`${BASE}/${libraryId}/versions`, data);
-    return safeParse(formulaLibraryVersionSchema, response, "Formula Library Version");
+    request: ArchiveFormulaLibraryRequest,
+  ): Promise<FormulaLibrary> {
+    const response = await api.post<unknown>(`${BASE}/${libraryId}/archive`, request);
+    return safeParse(formulaLibrarySchema, response, "Formula Library");
   }
 
   public async rollback(libraryId: string, data: RollbackRequest): Promise<FormulaLibrary> {
@@ -78,27 +74,6 @@ export class FormulaLibraryService {
       { signal: options?.signal },
     );
     return safeParse(versionDiffSchema, response, "Version Diff");
-  }
-
-  public async getVersion(
-    libraryId: string,
-    versionNumber: number,
-    options?: RequestOptions,
-  ): Promise<FormulaLibraryVersion> {
-    const response = await api.get<unknown>(`${BASE}/${libraryId}/versions/${versionNumber}`, {
-      signal: options?.signal,
-    });
-    return safeParse(formulaLibraryVersionSchema, response, "Formula Library Version");
-  }
-
-  public async listVersions(
-    libraryId: string,
-    options?: RequestOptions,
-  ): Promise<FormulaLibraryVersion[]> {
-    const response = await api.get<unknown>(`${BASE}/${libraryId}/versions`, {
-      signal: options?.signal,
-    });
-    return safeParse(z.array(formulaLibraryVersionSchema), response, "Formula Library Versions");
   }
 
   public async submit(libraryId: string, request: SubmitForReviewRequest): Promise<FormulaLibrary> {
@@ -146,13 +121,21 @@ export class FormulaLibraryService {
   }
 
   /** The template versions that import the library, and the library version each pinned. */
-  public async usage(
-    libraryId: string,
-    options?: RequestOptions,
-  ): Promise<FormulaLibraryUsageResponse> {
-    const response = await api.get<unknown>(`${BASE}/${libraryId}/usage`, {
+  public async usages(libraryId: string, options?: RequestOptions): Promise<FormulaLibraryUsage[]> {
+    const response = await api.get<unknown>(`${BASE}/${libraryId}/usages`, {
       signal: options?.signal,
     });
-    return safeParse(formulaLibraryUsageResponseSchema, response, "Formula Library Usage");
+    return safeParse(formulaLibraryUsagesSchema, response, "Formula Library Usages");
+  }
+
+  /**
+   * Opens the person's conversation with the formula assistant about a saved library, or a
+   * fresh one while the library is unsaved.
+   */
+  public async openAssistantThread(libraryId: string | null): Promise<PageThread> {
+    const response = await api.post<unknown>(`${BASE}/ai/thread/`, {
+      libraryId: libraryId ?? "",
+    });
+    return safeParse(pageThreadSchema, response, "Formula Assistant Conversation");
   }
 }

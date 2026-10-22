@@ -1,26 +1,21 @@
 import { TariffEditor } from "@/components/formula-editor/tariff-editor";
 import { formatTariffDocument } from "@/components/formula-editor/tariff-format";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
+import {
+  reportFormat,
+  sourceStatus,
+  SourceStatusBar,
+} from "@/components/tariff-studio/source-status";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { apiService } from "@/services/api";
 import { useMutation } from "@tanstack/react-query";
-import {
-  AlignLeftIcon,
-  BookOpen01Icon,
-  Code01Icon,
-  InfoCircleIcon,
-} from "@trenova/shared/components/icons";
+import { BookOpen01Icon, Code01Icon, InfoCircleIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
-import { toast } from "@trenova/shared/components/ui/toast";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatAltShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
-import type { TariffFormatResult } from "@trenova/shared/rules/tariff";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
 import type { TariffInputValues } from "@trenova/shared/types/tariff";
 import type { EditorView } from "@codemirror/view";
@@ -32,21 +27,6 @@ import { presentInputs } from "../use-live-preview";
 import { ExplainPanel, type ExplainState } from "./explain-panel";
 import { SectionHead } from "./section-head";
 import { StartCard } from "./start-card";
-
-function StatusDot({ tone }: { tone: "ok" | "bad" | "warn" | "idle" }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "size-1.5 rounded-full",
-        tone === "ok" && "bg-success",
-        tone === "bad" && "bg-danger",
-        tone === "warn" && "bg-warning",
-        tone === "idle" && "bg-foreground-subtle",
-      )}
-    />
-  );
-}
 
 function MaterialBanner() {
   const rt = useRichT();
@@ -74,15 +54,6 @@ function MaterialBanner() {
       </AlertDescription>
     </Alert>
   );
-}
-
-/** Says why a format was refused; a file with syntax errors is never reformatted. */
-export function reportFormat(result: TariffFormatResult, t: ReturnType<typeof useT>) {
-  if (result.formatted !== null) return;
-  const first = result.diagnostics[0];
-  toast.warning(t("Fix the syntax first, then format"), {
-    description: first ? translateMessage(first.message, t) : undefined,
-  });
 }
 
 /**
@@ -131,16 +102,7 @@ export function SourceSection() {
     onError: (error) => setExplain({ status: "error", error }),
   });
 
-  const status = empty
-    ? { tone: "idle" as const, label: t("Empty") }
-    : errors > 0
-      ? { tone: "bad" as const, label: t("{0, plural, one {# error} other {# errors}}", errors) }
-      : warnings > 0
-        ? {
-            tone: "warn" as const,
-            label: t("Checks clean · {0, plural, one {# warning} other {# warnings}}", warnings),
-          }
-        : { tone: "ok" as const, label: t("Checks clean") };
+  const status = sourceStatus({ empty, errors, warnings }, t);
 
   const outline = check.outline?.items ?? [];
   const charges = outline.filter((item) => item.kind === "charge").length;
@@ -234,68 +196,18 @@ export function SourceSection() {
             />
           )}
         />
-        <div className="bg-sunken text-foreground-muted flex flex-wrap items-center gap-x-3 gap-y-1 border-t px-3 py-1 text-xs">
-          <span
-            className={cn(
-              "flex items-center gap-1.5 font-medium",
-              status.tone === "ok" && "text-success",
-              status.tone === "warn" && "text-warning",
-              status.tone === "bad" && "text-danger",
-            )}
-          >
-            <StatusDot tone={status.tone} />
-            {status.label}
-          </span>
-          <span>
-            {t(
-              "{0, plural, one {# input} other {# inputs}} · {1, plural, one {# charge} other {# charges}} · {2, plural, one {# test} other {# tests}}",
-              check.inputs.length,
-              charges,
-              testCount,
-            )}
-          </span>
-          {tests.status === "ran" && tests.failed > 0 && (
-            <span className="text-danger">
-              {t("{0, plural, one {# test fails} other {# tests fail}}", tests.failed)}
-            </span>
+        <SourceStatusBar
+          status={status}
+          summary={t(
+            "{0, plural, one {# input} other {# inputs}} · {1, plural, one {# charge} other {# charges}} · {2, plural, one {# test} other {# tests}}",
+            check.inputs.length,
+            charges,
+            testCount,
           )}
-          <span className="flex-1" />
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-label={t("Format the source")}
-                  disabled={empty}
-                  onClick={format}
-                  className="text-foreground-muted"
-                />
-              }
-            >
-              <AlignLeftIcon className="size-3.5" />
-            </TooltipTrigger>
-            <TooltipContent>
-              {t("Format")} <Kbd className="ml-1">{formatAltShortcut("⇧F")}</Kbd>
-            </TooltipContent>
-          </Tooltip>
-          <span className="flex items-center gap-1 max-[700px]:hidden">
-            <KbdGroup>
-              <Kbd>Ctrl</Kbd>
-              <Kbd>Space</Kbd>
-            </KbdGroup>
-            {t("suggest")}
-          </span>
-          <span className="flex items-center gap-1 max-[700px]:hidden">
-            <Kbd>F12</Kbd>
-            {t("definition")}
-          </span>
-          <span className="flex items-center gap-1 max-[700px]:hidden">
-            <Kbd>F2</Kbd>
-            {t("rename")}
-          </span>
-        </div>
+          tests={tests}
+          onFormat={format}
+          formatDisabled={empty}
+        />
         <ProblemsList
           diagnostics={check.diagnostics}
           source={source}

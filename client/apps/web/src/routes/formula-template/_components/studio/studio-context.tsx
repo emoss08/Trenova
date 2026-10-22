@@ -1,13 +1,11 @@
 import type { PageRequest } from "@/components/assistant/use-thread-model";
-import { applyTariffFix } from "@/components/formula-editor/tariff-lint";
-import { revealRange } from "@/components/formula-editor/tariff-navigate";
-import {
-  checkTariffSource,
-  type TariffDefinitionTarget,
-} from "@/components/formula-editor/tariff-service";
+import type { TariffDefinitionTarget } from "@/components/formula-editor/tariff-service";
 import { tariffReadiness } from "@/components/tariff-studio/readiness";
-import { appendBlock } from "@/components/tariff-studio/source-edits";
-import { useTariffTests, type TariffTestsState } from "@/components/tariff-studio/use-tariff-tests";
+import type { TariffTestsState } from "@/components/tariff-studio/use-tariff-tests";
+import {
+  useTariffEditorBinding,
+  useTariffWorkbench,
+} from "@/components/tariff-studio/use-tariff-workbench";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { formulaTemplate } from "@/lib/queries/formula-template";
@@ -50,7 +48,7 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { useLivePreview, type LivePreviewState } from "./use-live-preview";
-import { useStudioRail } from "./use-studio-rail";
+import { useStudioRail } from "@/components/tariff-studio/use-studio-rail";
 
 export type StudioMode = "create" | "edit";
 export type StudioTab = "preview" | "tests" | "reference" | "nova";
@@ -189,21 +187,12 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const text = source ?? "";
 
   const { context, isError: contextError } = useTariffCheckContext();
-  const check = useMemo(
-    () => checkTariffSource(rules, text, "tariff", context),
-    [rules, text, context],
-  );
-  const errors = check.diagnostics.filter((finding) => finding.severity === "error").length;
-  const warnings = check.diagnostics.filter((finding) => finding.severity === "warning").length;
-  const testCount = check.outline?.items.filter((item) => item.kind === "test").length ?? 0;
-  const tests = useTariffTests({ rules, source: text, context, errors, testCount });
-  const testStatus = useMemo(
-    () =>
-      new Map(
-        tests.status === "ran" ? tests.run.tests.map((test) => [test.name, test.status]) : [],
-      ),
-    [tests],
-  );
+  const { check, errors, warnings, tests, testStatus } = useTariffWorkbench({
+    rules,
+    source: text,
+    kind: "tariff",
+    context,
+  });
 
   const previewInputs = useForm<PreviewInputsForm>({ defaultValues: { inputs: {} } });
   const sampleInputs = useWatch({ control: previewInputs.control, name: "inputs" });
@@ -268,7 +257,6 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   const [highlight, setHighlight] = useState<TariffRange | null>(null);
   const [definition, setDefinition] = useState<TariffDefinitionTarget | null>(null);
   const formViewport = useRef<HTMLDivElement | null>(null);
-  const editorView = useRef<EditorView | null>(null);
 
   const jumpTo = useCallback((section: StudioSection) => {
     const viewport = formViewport.current;
@@ -282,53 +270,10 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     }
   }, []);
 
-  const setEditorView = useCallback((view: EditorView | null) => {
-    editorView.current = view;
-  }, []);
-
-  const reveal = useCallback((range: TariffRange) => {
-    const view = editorView.current;
-    if (!view) return;
-    view.dom.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    revealRange(view, range);
-  }, []);
-
-  const applyFix = useCallback(
-    (fix: TariffFix) => {
-      const view = editorView.current;
-      if (view) {
-        applyTariffFix(view, fix);
-        return;
-      }
-      let next = form.getValues("source") ?? "";
-      for (const change of [...fix.changes].sort((a, b) => b.range.from - a.range.from)) {
-        next = next.slice(0, change.range.from) + change.insert + next.slice(change.range.to);
-      }
-      form.setValue("source", next, { shouldDirty: true, shouldValidate: true });
-    },
-    [form],
-  );
-
-  const appendToSource = useCallback(
-    (block: string) => {
-      const view = editorView.current;
-      const current = view ? view.state.doc.toString() : (form.getValues("source") ?? "");
-      const edit = appendBlock(current, block);
-      if (view) {
-        view.dispatch({
-          changes: edit,
-          selection: { anchor: edit.from + edit.insert.length },
-          userEvent: "input",
-          scrollIntoView: true,
-        });
-        view.focus();
-        return;
-      }
-      const next = current.slice(0, edit.from) + edit.insert;
-      form.setValue("source", next, { shouldDirty: true, shouldValidate: true });
-    },
-    [form],
-  );
+  const { setEditorView, reveal, applyFix, appendToSource } = useTariffEditorBinding({
+    read: () => form.getValues("source") ?? "",
+    write: (next) => form.setValue("source", next, { shouldDirty: true, shouldValidate: true }),
+  });
 
   const openDefinition = useCallback((target: TariffDefinitionTarget) => setDefinition(target), []);
   const closeDefinition = useCallback(() => setDefinition(null), []);
