@@ -32,7 +32,7 @@ func (r *Resolved) excelNumberCode() string {
 
 	sb.WriteString(excelLiteral(r.Prefix))
 	if r.Style == StyleCurrency {
-		sb.WriteString(excelLiteral(currencySymbol(r.Currency)))
+		sb.WriteString(excelLiteral(excelCurrencySymbol(r.Currency)))
 	}
 
 	if r.Grouping {
@@ -85,4 +85,24 @@ func excelLiteral(text string) string {
 		return ""
 	}
 	return `"` + strings.ReplaceAll(text, `"`, "") + `"`
+}
+
+var excelCurrencySymbols = map[string]string{
+	"USD": "$",
+	"CAD": "C$",
+	"MXN": "MX$",
+	"EUR": "€",
+	"GBP": "£",
+	"AUD": "A$",
+	"JPY": "¥",
+}
+
+func excelCurrencySymbol(code string) string {
+	if symbol, ok := excelCurrencySymbols[code]; ok {
+		return symbol
+	}
+	if code == "" {
+		return "$"
+	}
+	return code + " "
 }

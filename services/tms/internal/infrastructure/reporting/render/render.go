@@ -2,11 +2,14 @@ package render
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"go.uber.org/fx"
 )
 
@@ -70,12 +73,74 @@ func metaLocation(meta *reportports.ReportRunMeta) *time.Location {
 	return loc
 }
 
-func formatCell(
-	column *reportports.ReportResultColumn,
-	value any,
+func formatColumns(schema []reportports.ReportResultColumn) []reportfmt.Column {
+	columns := make([]reportfmt.Column, len(schema))
+	for i := range schema {
+		columns[i] = reportfmt.Column{Display: &schema[i].Display, Type: schema[i].Type}
+	}
+	return columns
+}
+
+func formatRows(
+	ctx context.Context,
+	schema []reportports.ReportResultColumn,
+	rows []reportports.ReportRow,
 	loc *time.Location,
-) string {
-	return column.Display.String(value, loc)
+) ([]reportfmt.Row, error) {
+	batch := reportfmt.NewBatch(formatColumns(schema), loc)
+	out := make([]reportfmt.Row, 0, len(rows))
+	for i, row := range rows {
+		batch.Add(row)
+		if !batch.Full() && i < len(rows)-1 {
+			continue
+		}
+		formatted, err := batch.Format(ctx)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, formatted...)
+	}
+	return out, nil
+}
+
+func streamFormatted(
+	ctx context.Context,
+	dataset reportports.ReportDatasetReader,
+	loc *time.Location,
+	write func(row *reportfmt.Row) error,
+) error {
+	batch := reportfmt.NewBatch(formatColumns(dataset.Schema()), loc)
+	flush := func() error {
+		rows, err := batch.Format(ctx)
+		if err != nil {
+			return err
+		}
+		for i := range rows {
+			if err = write(&rows[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	for {
+		row, err := dataset.Next(ctx)
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		batch.Add(row)
+		if batch.Full() {
+			if err = flush(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return flush()
 }
 
 const truncationNotice = "Results were truncated at the row limit; narrow your filters or use a larger export format."
@@ -97,12 +162,17 @@ func totalsCells(
 	}
 
 	schema := dataset.Schema()
+	formatted, err := reportfmt.FormatRow(ctx, formatColumns(schema), row, loc)
+	if err != nil {
+		return nil, err
+	}
+
 	cells := make([]string, len(schema))
 	for i := range schema {
 		if i >= len(row) || row[i] == nil {
 			continue
 		}
-		cells[i] = formatCell(&schema[i], row[i], loc)
+		cells[i] = formatted[i].Text
 	}
 	if len(cells) > 0 && row[0] == nil {
 		cells[0] = totalsLabel
