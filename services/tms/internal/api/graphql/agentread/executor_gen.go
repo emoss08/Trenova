@@ -194,9 +194,24 @@ var shards = []*gqlexec.Shard{
 // byte for byte as the client sends it.
 var operations = []Operation{
 	{
+		Name:     "DeskCarrierCard",
+		Hash:     "sha256:e2c9ecb82adffabead4f5fa05fffda23b2d62edf912f359397b420922b8dda63",
+		Document: "query DeskCarrierCard($id: ID!) { carrier(id: $id) { addressLine1 addressLine2 carrierType city code complianceStatus contacts { email id isPrimary name phone receivesRateConfirmations title } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { coverageAmount effectiveDate expirationDate id isVerified policyNumber policyType providerName } intelReviewRequired intelRiskLevel mcNumber name notes paymentMethod paymentTermDays phone postalCode qualifiedAt remitToName safetyRating scac state { abbreviation } status w9OnFile } }",
+	},
+	{
+		Name:     "CarrierIntelEvent",
+		Hash:     "sha256:42ae95e6d384999e3870f9d88e87c2f6b573d8b87fa6f17119c14a1bd6b33f2b",
+		Document: "fragment CarrierIntelEventFields on CarrierIntelEvent { acknowledgedAt acknowledgedBy { id name } acknowledgedById action carrierId category createdAt currentValue detectedAt dotNumber fieldLabel fieldPath id priorValue provider resolution resolutionNote resolvedAt resolvedBy { id name } resolvedById ruleCode ruleLabel severity snapshotId source status subjectId subjectName subjectType summary updatedAt vendorChangedAt version } query CarrierIntelEvent($id: ID!) { carrierIntelEvent(id: $id) { ...CarrierIntelEventFields } }",
+	},
+	{
 		Name:     "CarrierTable",
 		Hash:     "sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78",
 		Document: "fragment CarrierContactFields on CarrierContact { businessUnitId carrierId createdAt email id isPrimary name organizationId phone receivesRateConfirmations title updatedAt version } fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy { businessUnitId carrierId coverageAmount createdAt effectiveDate expirationDate id isVerified organizationId policyNumber policyType providerName updatedAt version } fragment CarrierTableRowFields on Carrier { addressLine1 addressLine2 businessUnitId carrierType city code complianceStatus contacts { ...CarrierContactFields } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { ...CarrierInsurancePolicyFields } intelBlockingCount intelReviewRequired intelRiskLevel is1099Eligible mcNumber name notes organizationId paymentMethod paymentTermDays phone postalCode qualifiedAt remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitStateId remitToName safetyRating scac stateId status taxId taxIdType updatedAt version w9OnFile } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carriers(input: $input) { edges { node { ...CarrierTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskCustomerCard",
+		Hash:     "sha256:f9392e6e7b40d6562977857131ff16dbaf3bfcbc0d21b2512c1acec7fbd6176f",
+		Document: "query DeskCustomerCard($id: ID!) { customer(id: $id) { addressLine1 addressLine2 billingProfile { applyLateCharges autoBill billingCurrency billingCycle billingNotes creditBalance creditHoldReason creditLimit creditStatus documentTypes { id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit fuelSurchargeMode gracePeriodDays invoiceDelivery lateChargeRate paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber taxExempt } city code createdAt dotNumber id mcNumber name postalCode state { abbreviation } status updatedAt } }",
 	},
 	{
 		Name:     "CustomerTable",
@@ -227,6 +242,11 @@ var operations = []Operation{
 		Name:     "EquipmentTypeTable",
 		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskLocationCard",
+		Hash:     "sha256:96442eed7e05096d9be1d795184641bc75d03abef45e83c5d7e8664bd14193db",
+		Document: "query DeskLocationCard($id: ID!) @requiresRead(kind: \"location_category\") { location(id: $id) { addressLine1 addressLine2 city code createdAt description geofenceRadiusMeters geofenceType geofenceVertices { latitude longitude } id isGeocoded latitude locationCategory { allowsOvernight facilityType hasRestroom hasSecureParking id name requiresAppointment type } longitude name postalCode state { abbreviation } status timezone } }",
 	},
 	{
 		Name:     "LocationTable",

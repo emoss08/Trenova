@@ -1473,6 +1473,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: leave and previous employers | `worker_list_leave_cases`, `worker_list_employment_verifications` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: safety events | `worker_list_safety_events` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the

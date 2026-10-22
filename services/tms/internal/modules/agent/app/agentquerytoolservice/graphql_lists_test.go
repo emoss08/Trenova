@@ -55,6 +55,45 @@ func TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 	}
 }
 
+// A converted get refused its resource is refused through GraphQL, for a
+// person and for an unattended agent, as a converted list is.
+func TestConvertedGets_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
+	t.Parallel()
+
+	person := agentreadtest.Person()
+	actors := map[string]*permissionports.RequestActor{
+		"a person":            person,
+		"an unattended agent": agentreadtest.Agent(person),
+	}
+	for _, name := range agentquerytoolservice.ConvertedGetNames() {
+		resource := agentquerytoolservice.ConvertedGetResource(name)
+		engine := &mocks.DenyResourcesPermissionEngine{Denied: []string{resource.String()}}
+		reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine})
+		tool, err := agentquerytoolservice.ConvertedGetTool(name, reader, engine)
+		require.NoError(t, err, name)
+
+		for actorName, actor := range actors {
+			t.Run(name+"/"+actorName, func(t *testing.T) {
+				t.Parallel()
+
+				_, readErr := tool.Query(readscope.With(t.Context(), nil),
+					&agentports.QueryToolParams{
+						OrganizationID: actor.OrganizationID,
+						BusinessUnitID: actor.BusinessUnitID,
+						Actor:          actor,
+						Timezone:       "America/Chicago",
+						Params:         agentquerytoolservice.ConvertedGetCall(tool, pulid.MustNew("x_")),
+						RunID:          pulid.MustNew("ar_"),
+					})
+
+				var refused *agentports.ReadRefusedError
+				require.True(t, errors.As(readErr, &refused), "got %v", readErr)
+				assert.Equal(t, resource, refused.Resource)
+			})
+		}
+	}
+}
+
 // Every converted list names, in its description, every typed parameter an
 // agent at the default data access can use, so a model choosing among tools
 // sees what each narrows by.

@@ -6666,7 +6666,7 @@
     },
     {
       "name": "customer_get",
-      "description": "Retrieve one customer by id, with their billing and email profiles. Use customer_list first when you have a name or a code rather than an id.",
+      "description": "Retrieve one customer by id, with their address, authority numbers and billing profile: terms, cycle, delivery, credit and the documents each invoice needs. Use customer_list first when you have a name or a code rather than an id.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
