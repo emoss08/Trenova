@@ -43,7 +43,7 @@ pub fn file(file: &File) -> String {
         );
     }
     if let Some(doc) = &file.docs {
-        out.line(0, &format!("doc {:?}", doc.text));
+        out.line(0, &format!("file doc {:?}", doc.text));
     }
     for item in &file.items {
         out.item(0, item);

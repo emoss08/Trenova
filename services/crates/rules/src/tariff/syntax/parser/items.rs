@@ -205,7 +205,7 @@ impl Parser<'_> {
 
     /// A quoted name with no interpolation (a header's or a test's). Its span covers the quotes.
     pub(super) fn literal_name(&mut self, message: Message) -> Name {
-        if self.kind() != TokenKind::Text {
+        if self.kind() != TokenKind::Text || self.newline_before() {
             self.expected(message);
             return self.missing_name();
         }
@@ -252,11 +252,13 @@ impl Parser<'_> {
                 )),
             );
         }
+        let outer = std::mem::replace(&mut self.statement_failed, false);
         let kind = if let Some(kind) = self.declaration() {
             kind
         } else {
             ItemKind::Stmt(self.statement(block))
         };
+        self.skip_rest_if_failed(outer);
         let end = self.previous_span().end.max(start.start);
         Item {
             docs,
@@ -288,7 +290,7 @@ impl Parser<'_> {
         let mut path = Vec::new();
         let mut names = None;
         loop {
-            if let Some(name) = self.any_name() {
+            if let Some(name) = self.same_line_name() {
                 path.push(name);
             } else {
                 self.expected(Message::new(message!(
@@ -330,7 +332,7 @@ impl Parser<'_> {
                 self.recover_in_list("}");
                 continue;
             }
-            if self.eat(",").is_none() && !self.at("}") {
+            if self.eat(",").is_none() && !self.at_list_end("}") {
                 self.expected(Message::new(message!(
                     "Expected `,` between the names, or a closing brace"
                 )));
@@ -346,9 +348,12 @@ impl Parser<'_> {
         names
     }
 
-    /// Skips to the next `,` (consumed) or `close` (not consumed) at the current nesting.
+    /// Skips to the next `,` (consumed) or `close` (not consumed) at the current nesting. A
+    /// closing bracket that is not `close` ends the skip too, and is consumed when it is the
+    /// first token, so the list always moves on.
     pub(super) fn recover_in_list(&mut self, close: &str) {
         let mut depth = 0usize;
+        let start = self.pos;
         while !self.at_eof() && !self.at_statement_line() {
             let token = self.peek();
             if token.kind == TokenKind::Punct {
@@ -359,7 +364,12 @@ impl Parser<'_> {
                         self.bump();
                         return;
                     }
-                    ")" | "]" | "}" if depth == 0 => return,
+                    ")" | "]" | "}" if depth == 0 => {
+                        if self.pos == start {
+                            self.bump();
+                        }
+                        return;
+                    }
                     ")" | "]" | "}" => depth -= 1,
                     _ => {}
                 }
@@ -388,8 +398,14 @@ impl Parser<'_> {
 
     fn const_item(&mut self) -> Const {
         self.bump();
+        let capitals = !self.text().chars().any(|c| c.is_ascii_lowercase());
         let name = match self.kind() {
-            TokenKind::Code | TokenKind::Name => {
+            TokenKind::Code | TokenKind::Name if !self.newline_before() => {
+                let token = self.bump();
+                self.name_of(&token)
+            }
+            TokenKind::TypeName if capitals && !self.newline_before() => {
+                self.mark(TokenKind::Code);
                 let token = self.bump();
                 self.name_of(&token)
             }
@@ -410,8 +426,17 @@ impl Parser<'_> {
         Const { name, ty, value }
     }
 
-    /// A `PascalCase` name for a declared type or enum.
+    /// A `PascalCase` name for a declared type or enum, on the same line.
     fn type_name(&mut self, what: Message) -> Name {
+        if self.newline_before() {
+            self.expected(what);
+            return self.missing_name();
+        }
+        self.pascal_name(what)
+    }
+
+    /// A `PascalCase` name.
+    fn pascal_name(&mut self, what: Message) -> Name {
         match self.kind() {
             TokenKind::TypeName | TokenKind::Code => {
                 let token = self.bump();
@@ -449,7 +474,7 @@ impl Parser<'_> {
         )));
         if self.eat("=").is_none() {
             self.expected(Message::new(message!(
-                "Expected `=` and the type's fields in braces, like `type Break = { from: Weight }`"
+                "Expected `=` and the type's fields in braces, like `type Break = '{' from: Weight '}'`"
             )));
             if !self.at("{") {
                 return TypeDecl {
@@ -466,7 +491,7 @@ impl Parser<'_> {
                 self.error(
                     ty.span,
                     Message::new(message!(
-                        "A type declaration lists its fields in braces, like `type Break = { from: Weight }`"
+                        "A type declaration lists its fields in braces, like `type Break = '{' from: Weight '}'`"
                     )),
                 );
                 Vec::new()
@@ -483,7 +508,7 @@ impl Parser<'_> {
         let mut variants = Vec::new();
         let Some(open) = self.eat("{") else {
             self.expected(Message::new(message!(
-                "Expected the enum's variants in braces, like `enum Zone { A, B }`"
+                "Expected the enum's variants in braces, like `enum Zone '{' A, B '}'`"
             )));
             return EnumDecl { name, variants };
         };
@@ -499,12 +524,12 @@ impl Parser<'_> {
                 self.recover_in_list("}");
                 continue;
             }
-            let variant = self.type_name(Message::new(message!("Expected a variant's name")));
+            let variant = self.pascal_name(Message::new(message!("Expected a variant's name")));
             variants.push(Variant {
                 docs,
                 name: variant,
             });
-            if self.eat(",").is_none() && !self.at("}") {
+            if self.eat(",").is_none() && !self.at_list_end("}") {
                 let at = self.previous_span().end;
                 self.report(
                     Diagnostic::error(
@@ -601,7 +626,7 @@ impl Parser<'_> {
                 default,
                 span: Span::new(start, end),
             });
-            if self.eat(",").is_none() && !self.at(")") {
+            if self.eat(",").is_none() && !self.at_list_end(")") {
                 self.expected(Message::new(message!(
                     "Expected `,` between the parameters, or `)`"
                 )));

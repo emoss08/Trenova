@@ -249,7 +249,7 @@ impl Parser<'_> {
             let (pattern, pattern_height) = self.pattern();
             height = height.max(pattern_height);
             fields.push((name, pattern));
-            if self.eat(",").is_none() && !self.at("}") {
+            if self.eat(",").is_none() && !self.at_list_end("}") {
                 self.expected(Message::new(message!(
                     "Expected `,` between the fields, or a closing brace"
                 )));
@@ -265,7 +265,12 @@ impl Parser<'_> {
             );
             self.previous_span()
         };
-        if fields.is_empty() {
+        if fields.is_empty()
+            && self
+                .slice(Span::new(open.end, close.start))
+                .trim()
+                .is_empty()
+        {
             self.error(
                 open.cover(close),
                 Message::new(message!("A record pattern needs at least one field")),

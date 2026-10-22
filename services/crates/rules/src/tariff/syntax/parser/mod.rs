@@ -48,6 +48,16 @@ pub const MAX_DEPTH: usize = 128;
 #[must_use]
 pub fn parse(source: &str) -> ast::File {
     let lexed = lexer::lex(source);
+    if source.len() > lexer::MAX_SOURCE_BYTES {
+        return ast::File {
+            header: None,
+            docs: None,
+            items: Vec::new(),
+            diagnostics: lexed.diagnostics,
+            tokens: lexed.tokens,
+            node_count: 0,
+        };
+    }
     let mut parser = Parser::new(source, lexed.tokens);
     parser.diagnostics = lexed.diagnostics;
     let mut file = parser.file();
@@ -120,6 +130,14 @@ pub(crate) struct Parser<'a> {
     heights: Vec<u8>,
     nest: usize,
     stopped: bool,
+    /// Whether the statement being read has reported an error, after which what it is still
+    /// missing is not reported again: one typo, one diagnostic.
+    statement_failed: bool,
+    /// The nesting at which a `match` arm's value is read: there, a line starting with `-`
+    /// begins the next arm (a negative pattern) instead of continuing the value.
+    arm_nest: Option<usize>,
+    /// The token the statement being read starts at.
+    statement_start: usize,
     docs: DocTable,
 }
 
@@ -151,6 +169,9 @@ impl<'a> Parser<'a> {
             heights: Vec::new(),
             nest: 0,
             stopped: false,
+            statement_failed: false,
+            arm_nest: None,
+            statement_start: 0,
             docs,
         }
     }
@@ -307,10 +328,13 @@ impl<'a> Parser<'a> {
             return;
         }
         let at = diagnostic.span.start;
-        let duplicate = self
-            .diagnostics
-            .iter()
-            .any(|existing| existing.span.start == at && existing.severity == diagnostic.severity);
+        let duplicate =
+            self.diagnostics.iter().rev().take(4).any(|existing| {
+                existing.span.start == at && existing.severity == diagnostic.severity
+            });
+        if diagnostic.severity == crate::tariff::diagnostic::Severity::Error {
+            self.statement_failed = true;
+        }
         if !duplicate {
             self.diagnostics.push(diagnostic);
         }
@@ -324,7 +348,7 @@ impl<'a> Parser<'a> {
     /// reported that token.
     fn expected(&mut self, message: Message) {
         let token = self.peek();
-        if token.kind == TokenKind::Error {
+        if token.kind == TokenKind::Error || self.statement_failed {
             return;
         }
         let span = self.here();
@@ -409,12 +433,28 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Ends a statement that reported an error: what is left of its line is skipped without
+    /// another diagnostic. Restores the enclosing statement's state.
+    fn skip_rest_if_failed(&mut self, outer: bool) {
+        let failed = std::mem::replace(&mut self.statement_failed, outer);
+        if failed && !(self.newline_before() || self.at("}") || self.at_eof()) {
+            self.recover();
+        }
+    }
+
+    /// Whether a list closed by `close` ends here: at `close`, at the end of the file, or at a
+    /// statement that shows the list was left open.
+    fn at_list_end(&self, close: &str) -> bool {
+        self.at(close) || self.at_eof() || self.at_statement_line()
+    }
+
     /// Whether the current token starts a line with a statement keyword, so a list left open
     /// before it was never closed.
     fn at_statement_line(&self) -> bool {
         self.newline_before()
             && self.kind() == TokenKind::Keyword
             && STATEMENT_KEYWORDS.contains(&self.text())
+            && !self.peek_is(1, ":")
     }
 
     /// Whether the current token is a file-level keyword written at the start of a line, in
@@ -462,7 +502,7 @@ impl<'a> Parser<'a> {
             "limit",
             Span::new(span.start, span.start),
             Message::with(
-                message!("This file nests more than {0} levels deep, the most a file can"),
+                message!("This file nests deeper than {0} levels, the most a file can"),
                 [Arg::from(MAX_DEPTH)],
             ),
         ));
@@ -536,8 +576,21 @@ impl<'a> Parser<'a> {
         Some(self.name_of(&token))
     }
 
-    /// Reads a camelCase name (or a contextual word), reporting `message` when absent.
+    /// Reads a word as a name when it is on the same line as what precedes it.
+    fn same_line_name(&mut self) -> Option<Name> {
+        if self.newline_before() {
+            return None;
+        }
+        self.any_name()
+    }
+
+    /// Reads a camelCase name (or a contextual word) on the same line, reporting `message`
+    /// when absent.
     fn value_name(&mut self, message: Message) -> Name {
+        if self.newline_before() {
+            self.expected(message);
+            return self.missing_name();
+        }
         match self.kind() {
             TokenKind::Name => {
                 let token = self.bump();

@@ -138,6 +138,13 @@ impl Parser<'_> {
     fn comparison_here(&self) -> Option<(BinaryOp, usize)> {
         let token = self.peek();
         if token.kind == TokenKind::Punct {
+            let next = self.peek_nth(1);
+            if self.slice(token.span) == ">"
+                && self.peek_is(1, "=")
+                && next.span.start == token.span.end
+            {
+                return Some((BinaryOp::Ge, 2));
+            }
             return comparison(self.slice(token.span)).map(|op| (op, 1));
         }
         if self.at_word("in") {
@@ -202,7 +209,7 @@ impl Parser<'_> {
 
     /// Whether the current token, on the same line, can start a range's end.
     fn starts_range_end(&self) -> bool {
-        !self.newline_before() && self.starts_operand() && !self.at("{")
+        !self.newline_before() && self.starts_operand() && !self.at("{") && !self.at_range()
     }
 
     /// Whether the current token can start a value.
@@ -218,11 +225,15 @@ impl Parser<'_> {
             | TokenKind::TypeName
             | TokenKind::Code
             | TokenKind::Unit => true,
-            TokenKind::Keyword => matches!(
-                self.slice(token.span),
-                "true" | "false" | "none" | "if" | "match" | "not" | "fail" | "charge"
-            ),
-            TokenKind::Punct => matches!(self.slice(token.span), "(" | "[" | "{" | "-"),
+            TokenKind::Keyword => {
+                matches!(
+                    self.slice(token.span),
+                    "true" | "false" | "none" | "if" | "match" | "not" | "fail"
+                ) || (self.at_word("charge") && self.peek_is(1, "("))
+            }
+            TokenKind::Punct => {
+                matches!(self.slice(token.span), "(" | "[" | "{" | "-" | ".." | "..=")
+            }
             _ => false,
         }
     }
@@ -268,6 +279,9 @@ impl Parser<'_> {
             let op = if self.at("+") {
                 BinaryOp::Add
             } else if self.at("-") {
+                if self.newline_before() && self.arm_nest == Some(self.nest) {
+                    break;
+                }
                 BinaryOp::Sub
             } else {
                 break;
@@ -323,7 +337,7 @@ impl Parser<'_> {
             let optional = self.at("?.");
             if self.at(".") || optional {
                 let dot = self.bump().span;
-                let name = self.any_name().unwrap_or_else(|| {
+                let name = self.same_line_name().unwrap_or_else(|| {
                     let end = dot.end;
                     Name {
                         text: String::new(),
@@ -429,7 +443,7 @@ impl Parser<'_> {
             };
             let span = Span::new(start, value.span.end.max(start));
             args.push(CallArg { name, value, span });
-            if self.eat(",").is_none() && !self.at(")") {
+            if self.eat(",").is_none() && !self.at_list_end(")") {
                 self.missing_comma(")");
             }
         }
@@ -541,7 +555,7 @@ impl Parser<'_> {
                     continue;
                 }
                 keys.push(self.expr());
-                if self.eat(",").is_none() && !self.at("]") {
+                if self.eat(",").is_none() && !self.at_list_end("]") {
                     self.missing_comma("]");
                 }
             }
@@ -629,6 +643,21 @@ impl Parser<'_> {
     }
 
     fn expected_value(&mut self) -> Expr {
+        if self.pos == self.statement_start && !self.at_eof() {
+            let token = self.peek();
+            if token.kind != TokenKind::Error && !self.statement_failed {
+                let found = self.slice(token.span).to_owned();
+                self.error(
+                    token.span,
+                    Message::with(
+                        message!("A line can't start with `{0}`"),
+                        [Arg::from(found)],
+                    ),
+                );
+            }
+            self.bump();
+            return self.leaf(ExprKind::Missing, token.span);
+        }
         let previous = self.previous_span();
         let before = self.slice(previous).to_owned();
         let message = if self.pos == 0 || before.is_empty() || before.len() > 12 {
@@ -644,7 +673,7 @@ impl Parser<'_> {
         } else {
             self.peek().span
         };
-        if self.kind() != TokenKind::Error {
+        if self.kind() != TokenKind::Error && !self.statement_failed {
             self.error(span, message);
         }
         self.missing()
@@ -737,7 +766,7 @@ impl Parser<'_> {
                     continue;
                 }
                 items.push(self.expr());
-                if self.eat(",").is_none() && !self.at("]") {
+                if self.eat(",").is_none() && !self.at_list_end("]") {
                     self.missing_comma("]");
                 }
             }
@@ -772,7 +801,7 @@ impl Parser<'_> {
                     "syntax",
                     span,
                     Message::new(message!(
-                        "A record needs at least one field, like `{ name: value }`; an empty list is `[]`"
+                        "A record needs at least one field, like `'{' name: value '}'`; an empty list is `[]`"
                     )),
                 )
                 .with_fix(Fix {
@@ -811,7 +840,7 @@ impl Parser<'_> {
         self.error(
             span,
             Message::new(message!(
-                "A block of statements can't be used as a value here; a record is written `{ name: value }`"
+                "A block of statements can't be used as a value here; a record is written `'{' name: value '}'`"
             )),
         );
         self.leaf(ExprKind::Missing, span)
@@ -832,7 +861,7 @@ impl Parser<'_> {
                 self.bump();
                 let value = self.expr();
                 fields.push(FieldInit { name, value });
-                if self.eat(",").is_none() && !self.at("}") {
+                if self.eat(",").is_none() && !self.at_list_end("}") {
                     self.missing_comma("}");
                 }
             }
@@ -864,7 +893,7 @@ impl Parser<'_> {
     fn value_body(&mut self) -> Expr {
         let Some(open) = self.eat("{") else {
             self.expected(Message::new(message!(
-                "Expected the branch's value in braces, like `{ $10 }`"
+                "Expected the branch's value in braces, like `'{' $10 '}'`"
             )));
             return self.missing();
         };
@@ -959,7 +988,10 @@ impl Parser<'_> {
         if self.at("{") && !self.starts_record() {
             return self.block_as_value();
         }
-        self.expr()
+        let outer = self.arm_nest.replace(self.nest + 1);
+        let value = self.expr();
+        self.arm_nest = outer;
+        value
     }
 
     fn number(&mut self) -> Expr {
@@ -1094,7 +1126,7 @@ impl Parser<'_> {
                         self.error(
                             token.span.cover(self.peek().span),
                             Message::new(message!(
-                                "Expected a value inside the braces; a literal brace is written `{{`"
+                                "Expected a value inside the braces; a literal brace is written `'{{'`"
                             )),
                         );
                         self.missing()

@@ -21,8 +21,8 @@ struct Block {
     /// The index (into all tokens) of the first significant token after the block, when it is
     /// on the very next line.
     attaches_to: Option<usize>,
-    /// The index (into all tokens) of the first token after the block.
-    next: usize,
+    /// The index (into all tokens) of its first `///` line.
+    first: usize,
     used: bool,
 }
 
@@ -30,6 +30,8 @@ struct Block {
 #[derive(Debug, Clone, Default)]
 pub(super) struct DocTable {
     blocks: Vec<Block>,
+    /// Each block that is attached, by the token it is attached to.
+    by_token: std::collections::BTreeMap<usize, usize>,
 }
 
 /// The text of one `///` line: the slashes and one following space removed, trailing spaces
@@ -101,12 +103,17 @@ impl DocTable {
                 lines,
                 text,
                 attaches_to,
-                next,
+                first: index,
                 used: false,
             });
             index = next;
         }
-        Self { blocks }
+        let by_token = blocks
+            .iter()
+            .enumerate()
+            .filter_map(|(index, block)| block.attaches_to.map(|token| (token, index)))
+            .collect();
+        Self { blocks, by_token }
     }
 
     fn doc(block: &Block) -> Doc {
@@ -123,33 +130,35 @@ impl Parser<'_> {
     /// The doc comment attached to the current token, taken so it is attached once.
     pub(super) fn take_doc(&mut self) -> Option<Doc> {
         let token = self.sig.get(self.pos).copied()?;
+        let index = self.docs.by_token.get(&token).copied()?;
         let block = self
             .docs
             .blocks
-            .iter_mut()
-            .find(|block| !block.used && block.attaches_to == Some(token))?;
+            .get_mut(index)
+            .filter(|block| !block.used)?;
         block.used = true;
         Some(DocTable::doc(block))
     }
 
-    /// The file's doc: the first block after the header when nothing else took it.
+    /// The file's doc: the block right after the header, unless it is written directly above
+    /// the first item (then it is that item's).
     pub(super) fn take_file_doc(&mut self, header_end: u32) -> Option<Doc> {
         let first_after = self
             .tokens
             .iter()
             .position(|t| t.span.start >= header_end)?;
         let only_newlines = |from: usize, to: usize, tokens: &[Token]| {
-            tokens
-                .get(from..to)
-                .is_some_and(|between| between.iter().all(|t| t.kind == TokenKind::Newline))
+            tokens.get(from..to).is_some_and(|between| {
+                between
+                    .iter()
+                    .all(|t| matches!(t.kind, TokenKind::Newline | TokenKind::Comment))
+            })
         };
         let tokens = &self.tokens;
         let block = self.docs.blocks.iter_mut().find(|block| {
-            let start = tokens
-                .iter()
-                .position(|t| block.lines.first() == Some(&t.span))
-                .unwrap_or(0);
-            !block.used && only_newlines(first_after, start, tokens)
+            !block.used
+                && block.attaches_to.is_none()
+                && only_newlines(first_after, block.first, tokens)
         })?;
         block.used = true;
         Some(DocTable::doc(block))
@@ -174,13 +183,9 @@ impl Parser<'_> {
                     insert: String::from("//"),
                 })
                 .collect();
-            let message = if block.next < self.tokens.len() && block.attaches_to.is_none() {
-                message!(
-                    "This doc comment is not attached to anything; write it on the line right above what it describes, or make it a plain `//` comment"
-                )
-            } else {
-                message!("This doc comment is not attached to anything")
-            };
+            let message = message!(
+                "This doc comment is not attached to anything; write it on the line right above what it describes, or make it a plain `//` comment"
+            );
             self.diagnostics.push(
                 Diagnostic::warning("doc", doc.span, Message::new(message)).with_fix(Fix {
                     label: Message::new(message!("Make it a plain comment")),

@@ -322,7 +322,7 @@ impl Lexer<'_> {
             '@' => self.date(start),
             '"' => self.open_text(start),
             '°' => self.degrees(start),
-            c if c.is_ascii_alphabetic() || c == '_' => self.word(start),
+            c if c.is_alphabetic() || c == '_' => self.word(start),
             '{' if interpolation.is_some() => {
                 self.set_depth(interpolation.unwrap_or(0) + 1);
                 self.position += 1;
@@ -364,8 +364,20 @@ impl Lexer<'_> {
     }
 
     fn word(&mut self, start: usize) {
-        self.eat_while(|c| c.is_ascii_alphanumeric() || c == '_');
+        self.eat_while(|c| c.is_alphanumeric() || c == '_');
         let word = self.source.get(start..self.position).unwrap_or_default();
+        if !word.is_ascii() {
+            self.error(
+                start,
+                self.position,
+                Message::with(
+                    message!("`{0}` can't be a name: names use the letters a to z, digits and `_`"),
+                    [Arg::from(word)],
+                ),
+            );
+            self.push(TokenKind::Error, start);
+            return;
+        }
         if word == "_" {
             self.push(TokenKind::Punct, start);
             return;
@@ -406,15 +418,13 @@ impl Lexer<'_> {
         }
     }
 
-    /// Reads digits with `_` and an optional fraction; returns whether the digits are a valid
-    /// decimal.
-    fn digits(&mut self) -> bool {
+    /// Reads digits with `_` and an optional fraction.
+    fn digits(&mut self) {
         self.eat_while(|c| c.is_ascii_digit() || c == '_');
         if self.peek() == Some('.') && self.peek_at(1).is_some_and(|c| c.is_ascii_digit()) {
             self.position += 1;
             self.eat_while(|c| c.is_ascii_digit() || c == '_');
         }
-        true
     }
 
     fn number_literal(&mut self, start: usize) {
@@ -538,7 +548,7 @@ impl Lexer<'_> {
 
     fn punct(&mut self, start: usize) {
         const LONG: &[&str] = &[
-            "..=", "??", "?.", "=>", "->", "..", "==", "!=", "<=", ">=", "+=", "-=",
+            "..=", "??", "?.", "=>", "->", "..", "==", "!=", "<=", "+=", "-=",
         ];
         const SHORT: &str = "+-*/%<>=.,:()[]{}|?";
         let rest = self.rest();
@@ -553,6 +563,10 @@ impl Lexer<'_> {
         if SHORT.contains(character) {
             self.position += 1;
             self.push(TokenKind::Punct, start);
+            return;
+        }
+        if character == '\'' {
+            self.single_quoted(start);
             return;
         }
         let (length, message, replacement) = match character {
@@ -572,11 +586,6 @@ impl Lexer<'_> {
                     "A statement ends at the end of its line, so `;` is not needed"
                 )),
                 Some(""),
-            ),
-            '\'' => (
-                1,
-                Message::new(message!("Text is written in double quotes")),
-                Some("\""),
             ),
             _ => (
                 character.len_utf8(),
@@ -605,6 +614,37 @@ impl Lexer<'_> {
         self.push(TokenKind::Error, start);
     }
 
+    /// `'text'`: one error, with a fix writing it in double quotes.
+    fn single_quoted(&mut self, start: usize) {
+        let line = self.rest().split('\n').next().unwrap_or_default();
+        let close = line.get(1..).and_then(|after| after.find('\''));
+        let length = close.map_or(1, |close| close + 2);
+        self.position += length;
+        let mut diagnostic = Diagnostic::error(
+            "syntax",
+            span(start, self.position),
+            Message::new(message!("Text is written in double quotes")),
+        );
+        if close.is_some() {
+            let end = self.position;
+            diagnostic = diagnostic.with_fix(Fix {
+                label: Message::new(message!("Use double quotes")),
+                changes: vec![
+                    Change {
+                        span: span(start, start + 1),
+                        insert: String::from("\""),
+                    },
+                    Change {
+                        span: span(end - 1, end),
+                        insert: String::from("\""),
+                    },
+                ],
+            });
+        }
+        self.diagnostics.push(diagnostic);
+        self.push(TokenKind::Error, start);
+    }
+
     fn open_text(&mut self, start: usize) {
         let nesting = self
             .modes
@@ -622,7 +662,7 @@ impl Lexer<'_> {
                 ),
             ));
             self.push(TokenKind::Error, start);
-            self.close_open_text();
+            self.modes.clear();
             return;
         }
         self.position += 1;

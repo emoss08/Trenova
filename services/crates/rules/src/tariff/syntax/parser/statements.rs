@@ -90,7 +90,9 @@ impl Parser<'_> {
                 kind: StmtKind::Break,
             };
         }
+        let outer = std::mem::replace(&mut self.statement_failed, false);
         let kind = self.statement_kind(block);
+        self.skip_rest_if_failed(outer);
         self.leave();
         let end = self.previous_span().end.max(start);
         Stmt {
@@ -100,6 +102,7 @@ impl Parser<'_> {
     }
 
     fn statement_kind(&mut self, block: BlockKind) -> StmtKind {
+        self.statement_start = self.pos;
         if self.kind() == TokenKind::Keyword {
             let word = self.text();
             if DECLARATION_KEYWORDS.contains(&word) {
@@ -245,7 +248,7 @@ impl Parser<'_> {
 
     /// Text in quotes, reporting `message` when there is none.
     pub(super) fn required_text(&mut self, message: Message) -> Text {
-        if self.kind() == TokenKind::Text {
+        if self.kind() == TokenKind::Text && !self.newline_before() {
             return self.text_literal();
         }
         self.expected(message);
@@ -298,7 +301,12 @@ impl Parser<'_> {
     }
 
     fn charge_code(&mut self) -> Name {
-        match self.kind() {
+        let kind = if self.newline_before() {
+            TokenKind::Eof
+        } else {
+            self.kind()
+        };
+        match kind {
             TokenKind::Code => {
                 let token = self.bump();
                 self.name_of(&token)
@@ -449,6 +457,12 @@ impl Parser<'_> {
         let body = if self.eat("=>").is_some() {
             if statement && self.at("{") {
                 ArmBody::Block(self.block(BlockKind::Nested))
+            } else if statement && self.at_statement_keyword() {
+                let stmt = self.statement(BlockKind::Nested);
+                ArmBody::Block(Block {
+                    span: stmt.span,
+                    stmts: vec![stmt],
+                })
             } else {
                 ArmBody::Expr(self.arm_value())
             }
@@ -465,6 +479,34 @@ impl Parser<'_> {
             body,
             span: Span::new(start, end),
         }
+    }
+
+    /// Whether the cursor starts a statement that is not an expression: the body of a `match`
+    /// statement's arm may be one, read as a block holding it.
+    fn at_statement_keyword(&self) -> bool {
+        self.kind() == TokenKind::Keyword
+            && match self.text() {
+                "charge" => !self.peek_is(1, "("),
+                word => matches!(
+                    word,
+                    "let"
+                        | "var"
+                        | "note"
+                        | "if"
+                        | "match"
+                        | "for"
+                        | "require"
+                        | "fail"
+                        | "return"
+                        | "break"
+                        | "continue"
+                        | "minimum"
+                        | "maximum"
+                        | "round"
+                        | "given"
+                        | "expect"
+                ),
+            }
     }
 
     fn for_statement(&mut self) -> ForStmt {
@@ -551,7 +593,7 @@ impl Parser<'_> {
         let keyword = self.bump().span;
         self.position_rule(block, keyword, "given");
         let mut target = Vec::new();
-        if self.at_word("input") {
+        if self.at_word("input") && !self.newline_before() {
             self.mark(TokenKind::Keyword);
             let token = self.bump();
             target.push(self.name_of(&token));
@@ -560,9 +602,9 @@ impl Parser<'_> {
                 "Expected what to set after `given`, like `given shipment.weight = 1_240 lb`"
             ))));
         }
-        while self.at(".") {
+        while self.at(".") && !self.newline_before() {
             self.bump();
-            if let Some(name) = self.any_name() {
+            if let Some(name) = self.same_line_name() {
                 target.push(name);
             } else {
                 self.expected(Message::new(message!("Expected a field's name after `.`")));

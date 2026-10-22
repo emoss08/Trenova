@@ -23,7 +23,19 @@ impl Parser<'_> {
             };
         }
         let mut ty = self.base_type();
-        while self.at("?") && !self.newline_before() && !self.stopped {
+        while (self.at("?") || self.at("??")) && !self.newline_before() && !self.stopped {
+            if self.at("??") {
+                let mark = self.bump().span;
+                self.error(
+                    mark,
+                    Message::new(message!("A type is optional once; one `?` is enough")),
+                );
+                ty = TypeExpr {
+                    span: ty.span.cover(mark),
+                    kind: TypeExprKind::Optional(Box::new(ty)),
+                };
+                continue;
+            }
             let mark = self.bump().span;
             let span = ty.span.cover(mark);
             if matches!(ty.kind, TypeExprKind::Optional(_)) {
@@ -120,9 +132,7 @@ impl Parser<'_> {
         let mut args = Vec::new();
         while !self.at(">") && !self.at_eof() && !self.at_statement_line() && !self.stopped {
             args.push(self.type_expr());
-            if self.eat(",").is_none() && !self.at(">") {
-                self.expected(Message::new(message!("Expected `>` after the type")));
-                self.recover_in_list(">");
+            if self.eat(",").is_none() {
                 break;
             }
         }
@@ -156,7 +166,7 @@ impl Parser<'_> {
             self.bump();
             let ty = self.type_expr();
             fields.push(FieldType { docs, name, ty });
-            if self.eat(",").is_none() && !self.at("}") {
+            if self.eat(",").is_none() && !self.at_list_end("}") {
                 self.expected(Message::new(message!(
                     "Expected `,` between the fields, or a closing brace"
                 )));
@@ -172,7 +182,12 @@ impl Parser<'_> {
             );
             self.previous_span()
         };
-        if fields.is_empty() {
+        if fields.is_empty()
+            && self
+                .slice(Span::new(open.end, close.start))
+                .trim()
+                .is_empty()
+        {
             self.error(
                 open.cover(close),
                 Message::new(message!("A record type needs at least one field")),
