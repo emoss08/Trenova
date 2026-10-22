@@ -276,7 +276,27 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateName
   ratedAt
   versionNumber
-  bill
+  bill {
+    currency
+    lines {
+      kind
+      label
+      code
+      quantity
+      quantityUnit
+      rate
+      rateUnit
+      amount
+    }
+    notes
+    freightTotal
+    accessorialTotal
+    total
+    exchange {
+      currency
+      rate
+    }
+  }
   refusal
   inputs
   skipped {

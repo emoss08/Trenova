@@ -76,7 +76,7 @@ const storedLineSchema = z.object({
   kind: z.enum(["Charge", "Minimum", "Maximum", "Rounding"]),
   label: z.string().nullish(),
   code: z.string().nullish(),
-  freight: z.boolean().default(false),
+  freight: z.boolean().optional(),
   amount: storedDecimalSchema,
   quantity: storedDecimalSchema.nullish(),
   quantityUnit: z.string().nullish(),
@@ -104,7 +104,7 @@ function storedLine(line: z.output<typeof storedLineSchema>): StoredTariffBillLi
     kind: line.kind.toLowerCase() as TariffBillLine["kind"],
     label: line.label || null,
     code: line.code || null,
-    freight: line.freight,
+    freight: line.freight ?? !line.code,
     amount: { $q: line.amount, u: "$" },
     quantity: measured
       ? quantityUnit
@@ -145,15 +145,21 @@ const readBillSchema = z.object({
   exchange: z.object({ currency: z.string(), rate: z.string() }).nullable(),
 }) satisfies z.ZodType<StoredTariffBill>;
 
-/** Reads a stored bill (`tarifftypes.Bill`) into the wire form the bill views draw. */
+/**
+ * Reads a stored bill into the wire form the bill views draw: as REST stores it
+ * (`tarifftypes.Bill`, notes as `{ text }`, each line flagged `freight`) or as GraphQL reads it
+ * (`TariffBill`, notes as text, a line freight when it has no code).
+ */
 const rawStoredBillSchema = z
   .object({
     currency: z.string().default(""),
     lines: z.array(storedLineSchema).default([]),
     notes: z
-      .array(z.object({ text: z.string() }))
+      .array(z.union([z.string(), z.object({ text: z.string() })]))
       .nullish()
-      .transform((value) => value ?? []),
+      .transform((value) =>
+        (value ?? []).map((note) => (typeof note === "string" ? note : note.text)),
+      ),
     freightTotal: storedDecimalSchema,
     accessorialTotal: storedDecimalSchema,
     total: storedDecimalSchema,
@@ -165,7 +171,7 @@ const rawStoredBillSchema = z
   .transform((bill): StoredTariffBill => ({
     currency: bill.currency,
     lines: bill.lines.map(storedLine),
-    notes: bill.notes.map((note) => ({ text: note.text, range: null })),
+    notes: bill.notes.map((text) => ({ text, range: null })),
     freightTotal: { $q: bill.freightTotal, u: "$" },
     accessorialTotal: { $q: bill.accessorialTotal, u: "$" },
     total: { $q: bill.total, u: "$" },
