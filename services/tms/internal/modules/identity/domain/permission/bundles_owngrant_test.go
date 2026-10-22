@@ -38,6 +38,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 		ResourceTimesheet,
 		ResourceProfileChangeRequest,
 		ResourceDriverPortal,
+		ResourceWorkerLeave,
 	}
 	none := map[Resource]string{}
 	expected := map[string]map[Resource]string{
@@ -56,6 +57,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 			ResourceTimesheet:            "approve,read,reject,update@team",
 			ResourceProfileChangeRequest: "approve,read,reject@team",
 			ResourceDriverPortal:         "read@team",
+			ResourceWorkerLeave:          "approve,read,update@team",
 		},
 		"hr": {
 			ResourceBenefitPlan:              "assign,create,read,update@organization",
@@ -65,6 +67,7 @@ func TestJobTemplates_KindsGrantedOnTheirOwn(t *testing.T) {
 			ResourceTimesheet:                "approve,read,reject,update@team",
 			ResourceProfileChangeRequest:     "approve,read,reject@team",
 			ResourceDriverPortal:             "create,read@organization",
+			ResourceWorkerLeave:              "approve,create,read,update@organization",
 		},
 		"read_only": {
 			ResourceDriverPortal: "read@organization",

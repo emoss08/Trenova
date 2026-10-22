@@ -34094,7 +34094,7 @@
     ]
   },
   "Authentication required": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -306782,7 +306782,7 @@
     ]
   },
   "You don't have permission to perform this action: {0} {1}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go"
     ],
@@ -307326,7 +307326,7 @@
     ]
   },
   "Your access is limited to your own team, which cannot be checked right now": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],

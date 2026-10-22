@@ -221,7 +221,7 @@ func TestListWorkerLeaveCases_CarriesTheDaysTaken(t *testing.T) {
 			Hours:  decimal.NewFromInt(8),
 		}},
 	}}}
-	tool := newListWorkerLeaveCasesTool(reads, &fakePermissions{})
+	tool := newListWorkerLeaveCasesTool(reads, &fakePermissions{allowed: true}, nil)
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{wfParamOpenOnly: true}))
 	require.NoError(t, err)
@@ -317,7 +317,7 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 		newListWorkerSafetyEventsTool(reads, nil),
 		newListDOTRandomDrawsTool(reads, nil),
 		newGetDOTRandomDrawTool(reads, nil),
-		newListWorkerLeaveCasesTool(reads, nil),
+		newListWorkerLeaveCasesTool(reads, nil, nil),
 		newListDriverExpensesTool(reads, nil),
 		newListShipmentPermitsTool(reads, nil),
 	} {

@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/teamscope"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
@@ -89,10 +91,21 @@ type leaveCaseRow struct {
 	Days                []leaveDayRow `json:"days,omitempty"`
 }
 
+type leaveTeams interface {
+	teamscope.Teams
+	teamscope.Managers
+}
+
 func newListWorkerLeaveCasesTool(
 	cases wfLeaveReader,
 	permissions permissionports.PermissionEngine,
+	teams leaveTeams,
 ) agentports.AgentQueryTool {
+	one := teamscope.Guard{Permissions: permissions}
+	many := teamscope.ListGuard{Permissions: permissions}
+	if teams != nil {
+		one.Teams, many.Managers = teams, teams
+	}
 	return &workforceRead{
 		name: "worker_list_leave_cases",
 		description: "List FMLA, medical, military, parental and personal leave cases. " +
@@ -117,6 +130,23 @@ func newListWorkerLeaveCasesTool(
 			if err != nil {
 				return nil, err
 			}
+			scope := &teamscope.Request{
+				Actor:         params.Actor,
+				TenantInfo:    tenantOf(params),
+				Resource:      permission.ResourceWorkerLeave,
+				Operation:     permission.OpRead,
+				WorkerID:      workerID,
+				ApprovalScope: worker.ApprovalScopeTimeOff,
+			}
+			var managerIDs []pulid.ID
+			if workerID.IsNil() {
+				managerIDs, err = many.Narrow(ctx, scope)
+			} else {
+				err = one.Require(ctx, scope)
+			}
+			if err != nil {
+				return nil, err
+			}
 			found, err := cases.ListCases(ctx, &workerports.ListLeaveCasesRequest{
 				TenantInfo:                   tenantOf(params),
 				WorkerID:                     workerID,
@@ -125,6 +155,7 @@ func newListWorkerLeaveCasesTool(
 				IncludeWorker:                true,
 				IncludeEntries:               true,
 				Limit:                        receivableLimit(params.Params),
+				ManagerIDs:                   managerIDs,
 			})
 			if err != nil {
 				return nil, err
@@ -262,8 +293,12 @@ func newListEmploymentVerificationsTool(
 func provideListWorkerLeaveCasesTool(
 	s *workerleaveservice.Service,
 	permissions permissionports.PermissionEngine,
+	teams *orgstructureservice.Service,
 ) agentports.AgentQueryTool {
-	return newListWorkerLeaveCasesTool(s, permissions)
+	if teams == nil {
+		return newListWorkerLeaveCasesTool(s, permissions, nil)
+	}
+	return newListWorkerLeaveCasesTool(s, permissions, teams)
 }
 
 func provideListEmploymentVerificationsTool(

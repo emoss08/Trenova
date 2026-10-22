@@ -445,7 +445,11 @@ var capabilityBundles = []Bundle{
 		Grants: []BundleGrant{
 			{Resource: ResourceWorker, Operations: []Operation{OpRead}, Scope: DataScopeTeam},
 			{Resource: ResourceWorkerPTO, Operations: []Operation{OpRead, OpApprove, OpReject}},
-			{Resource: ResourceWorkerLeave, Operations: []Operation{OpRead, OpApprove}},
+			{
+				Resource:   ResourceWorkerLeave,
+				Operations: []Operation{OpRead, OpApprove},
+				Scope:      DataScopeTeam,
+			},
 			{
 				Resource:   ResourceTimesheet,
 				Operations: []Operation{OpRead, OpApprove, OpReject},

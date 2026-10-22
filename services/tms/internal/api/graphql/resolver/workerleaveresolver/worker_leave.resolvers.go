@@ -66,6 +66,9 @@ func (r *MutationResolver) OpenLeaveCase(ctx context.Context, input gqlmodel.Ope
 	if err != nil {
 		return nil, err
 	}
+	if err = r.requireLeaveTeam(ctx, permission.OpCreate, entity.WorkerID); err != nil {
+		return nil, err
+	}
 	return r.WorkerLeaveService.OpenCase(ctx, entity, authCtx.UserID)
 }
 
@@ -77,6 +80,9 @@ func (r *MutationResolver) UpdateLeaveCase(ctx context.Context, input gqlmodel.U
 
 	req, err := leaveCaseUpdateRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
+		return nil, err
+	}
+	if err = r.requireCaseTeam(ctx, authCtx, permission.OpUpdate, req.CaseID); err != nil {
 		return nil, err
 	}
 	return r.WorkerLeaveService.UpdateCase(ctx, req)
@@ -91,6 +97,9 @@ func (r *MutationResolver) DecideLeaveCase(ctx context.Context, input gqlmodel.D
 	caseID, err := pulid.MustParse(input.CaseID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("caseId", errortypes.ErrInvalid, "Case is invalid")
+	}
+	if err = r.requireCaseTeam(ctx, authCtx, permission.OpApprove, caseID); err != nil {
+		return nil, err
 	}
 	return r.WorkerLeaveService.DecideCase(ctx, &workerleaveservice.DecideCaseRequest{
 		TenantInfo: base.TenantInfo(authCtx),
@@ -112,6 +121,9 @@ func (r *MutationResolver) CloseLeaveCase(ctx context.Context, id string) (*work
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Case is invalid")
 	}
+	if err = r.requireCaseTeam(ctx, authCtx, permission.OpApprove, caseID); err != nil {
+		return nil, err
+	}
 	return r.WorkerLeaveService.CloseCase(ctx, base.TenantInfo(authCtx), caseID, authCtx.UserID)
 }
 
@@ -124,6 +136,9 @@ func (r *MutationResolver) RequestLeaveCertification(ctx context.Context, caseID
 	id, err := pulid.MustParse(caseID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("caseId", errortypes.ErrInvalid, "Case is invalid")
+	}
+	if err = r.requireCaseTeam(ctx, authCtx, permission.OpUpdate, id); err != nil {
+		return nil, err
 	}
 	return r.WorkerLeaveService.RequestCertification(
 		ctx,
@@ -146,6 +161,9 @@ func (r *MutationResolver) RecordLeaveCertification(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
+	if err = r.requireCaseTeam(ctx, authCtx, permission.OpUpdate, req.CaseID); err != nil {
+		return nil, err
+	}
 	return r.WorkerLeaveService.RecordCertification(ctx, req)
 }
 
@@ -157,6 +175,9 @@ func (r *MutationResolver) RecordLeaveDay(ctx context.Context, input gqlmodel.Re
 
 	req, err := leaveDayRequest(&input, base.TenantInfo(authCtx), authCtx.UserID)
 	if err != nil {
+		return nil, err
+	}
+	if err = r.requireCaseTeam(ctx, authCtx, permission.OpCreate, req.CaseID); err != nil {
 		return nil, err
 	}
 	return r.WorkerLeaveService.RecordDay(ctx, req)
@@ -172,6 +193,9 @@ func (r *MutationResolver) UpdateLeaveDay(ctx context.Context, input gqlmodel.Up
 	if err != nil {
 		return nil, err
 	}
+	if err = r.requireEntryTeam(ctx, authCtx, permission.OpUpdate, req.EntryID); err != nil {
+		return nil, err
+	}
 	return r.WorkerLeaveService.UpdateDay(ctx, req)
 }
 
@@ -184,6 +208,9 @@ func (r *MutationResolver) DeleteLeaveDay(ctx context.Context, id string) (bool,
 	entryID, err := pulid.MustParse(id)
 	if err != nil {
 		return false, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Day is invalid")
+	}
+	if err = r.requireEntryTeam(ctx, authCtx, permission.OpUpdate, entryID); err != nil {
+		return false, err
 	}
 	if err = r.WorkerLeaveService.DeleteDay(
 		ctx,
@@ -232,6 +259,9 @@ func (r *QueryResolver) WorkerLeaveCases(ctx context.Context, workerID string) (
 			"Worker is invalid",
 		)
 	}
+	if err = r.requireLeaveTeam(ctx, permission.OpRead, id); err != nil {
+		return nil, err
+	}
 	return r.WorkerLeaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
 		TenantInfo:      base.TenantInfo(authCtx),
 		WorkerID:        id,
@@ -249,7 +279,14 @@ func (r *QueryResolver) WorkerLeaveCase(ctx context.Context, id string) (*worker
 	if err != nil {
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Case is invalid")
 	}
-	return r.WorkerLeaveService.GetCase(ctx, base.TenantInfo(authCtx), caseID)
+	found, err := r.WorkerLeaveService.GetCase(ctx, base.TenantInfo(authCtx), caseID)
+	if err != nil {
+		return nil, err
+	}
+	if err = r.requireLeaveTeam(ctx, permission.OpRead, found.WorkerID); err != nil {
+		return nil, err
+	}
+	return found, nil
 }
 
 func (r *QueryResolver) WorkerLeaveEntitlement(ctx context.Context, workerID string, asOf *int) (*worker.LeaveEntitlement, error) {
@@ -266,6 +303,9 @@ func (r *QueryResolver) WorkerLeaveEntitlement(ctx context.Context, workerID str
 			"Worker is invalid",
 		)
 	}
+	if err = r.requireLeaveTeam(ctx, permission.OpRead, id); err != nil {
+		return nil, err
+	}
 
 	entitlement, err := r.WorkerLeaveService.Entitlement(
 		ctx,
@@ -280,7 +320,12 @@ func (r *QueryResolver) WorkerLeaveEntitlement(ctx context.Context, workerID str
 }
 
 func (r *QueryResolver) LeaveCertificationsOutstanding(ctx context.Context) ([]*worker.WorkerLeaveCase, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerLeave, permission.OpRead)
+	authCtx, managerIDs, err := r.RequireListTeamScope(
+		ctx,
+		permission.ResourceWorkerLeave,
+		permission.OpRead,
+		worker.ApprovalScopeTimeOff,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -289,6 +334,7 @@ func (r *QueryResolver) LeaveCertificationsOutstanding(ctx context.Context) ([]*
 		TenantInfo:                   base.TenantInfo(authCtx),
 		CertificationOutstandingOnly: true,
 		IncludeWorker:                true,
+		ManagerIDs:                   managerIDs,
 	})
 }
 
