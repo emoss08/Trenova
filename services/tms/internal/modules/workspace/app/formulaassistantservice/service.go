@@ -12,11 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
@@ -57,11 +57,27 @@ type RateTable struct {
 	Functions string `json:"functions"`
 }
 
+type FunctionReference struct {
+	Name        string `json:"name"`
+	Signature   string `json:"signature"`
+	Description string `json:"description"`
+	Example     string `json:"example"`
+	Category    string `json:"category"`
+	Operator    bool   `json:"operator,omitempty"`
+	Predicate   bool   `json:"predicate,omitempty"`
+}
+
+type DisabledReference struct {
+	Name    string `json:"name"`
+	Message string `json:"message"`
+}
+
 type Reference struct {
-	SchemaID   string                                    `json:"schemaId"`
-	Variables  []formulatemplatetypes.SchemaVariableInfo `json:"variables"`
-	Functions  []formulatemplatetypes.SchemaFunctionInfo `json:"functions"`
-	RateTables []RateTable                               `json:"rateTables"`
+	SchemaID   string                  `json:"schemaId"`
+	Variables  []rules.FormulaVariable `json:"variables"`
+	Functions  []FunctionReference     `json:"functions"`
+	Disabled   []DisabledReference     `json:"disabled"`
+	RateTables []RateTable             `json:"rateTables"`
 }
 
 type Scenario struct {
@@ -129,10 +145,40 @@ func (s *Service) Reference(
 		return nil, err
 	}
 
+	catalog, err := rules.Catalog(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	locale := i18n.FromContext(ctx)
+	functions := make([]FunctionReference, 0, len(catalog.Functions)+len(catalog.Builtins))
+	for _, group := range [][]rules.FormulaFunction{catalog.Functions, catalog.Builtins} {
+		for index := range group {
+			function := &group[index]
+			functions = append(functions, FunctionReference{
+				Name:        function.Name,
+				Signature:   function.Signature,
+				Description: function.Description.Localize(locale),
+				Example:     function.Example.Localize(locale),
+				Category:    function.Category,
+				Operator:    function.Operator,
+				Predicate:   function.Predicate,
+			})
+		}
+	}
+	disabled := make([]DisabledReference, 0, len(catalog.Disabled))
+	for index := range catalog.Disabled {
+		disabled = append(disabled, DisabledReference{
+			Name:    catalog.Disabled[index].Name,
+			Message: catalog.Disabled[index].Message.Localize(locale),
+		})
+	}
+
 	return &Reference{
 		SchemaID:   schemaID,
 		Variables:  description.Variables,
-		Functions:  description.Functions,
+		Functions:  functions,
+		Disabled:   disabled,
 		RateTables: tables,
 	}, nil
 }
@@ -190,15 +236,22 @@ func (s *Service) Test(ctx context.Context, req *TestRequest) (*TestOutcome, err
 		check.ShipmentID = &shipmentID
 	}
 
-	result := s.templateService.TestExpression(ctx, check)
+	result, err := s.templateService.TestExpression(ctx, check)
+	if err != nil {
+		return nil, err
+	}
+	locale := i18n.FromContext(ctx)
 	outcome := &TestOutcome{
 		SchemaID: schemaID,
-		Check:    checkOf(result),
+		Check:    checkOf(locale, result),
 		Policy:   req.Policy.Resolved(),
 		Resolved: result.ResolvedVariables,
 	}
-	for _, warning := range result.Warnings {
-		outcome.Warnings = append(outcome.Warnings, warning.Message)
+	for index := range result.Diagnostics {
+		diagnostic := &result.Diagnostics[index]
+		if diagnostic.Severity == rules.SeverityWarning {
+			outcome.Warnings = append(outcome.Warnings, diagnostic.Message.Localize(locale))
+		}
 	}
 	if outcome.Check.Valid {
 		outcome.Scenarios = s.price(ctx, &pricing{
@@ -312,7 +365,7 @@ func (s *Service) checkBreakdown(
 		})
 	}
 
-	result := s.templateService.TestExpression(ctx, policedRequest(
+	result, err := s.templateService.TestExpression(ctx, policedRequest(
 		&formulatemplateservice.TestExpressionRequest{
 			Expression: req.Expression,
 			SchemaID:   schemaID,
@@ -320,26 +373,24 @@ func (s *Service) checkBreakdown(
 			TenantInfo: req.TenantInfo,
 			Breakdowns: definitions,
 		}, req.Details.Policy))
-	if !result.Valid {
-		return checkOf(result)
+	if err != nil {
+		return pagedraft.FormulaCheck{Error: errortypes.LocalizedText(ctx, err)}
 	}
-
-	for index, item := range result.Breakdown {
-		if item.Error == "" {
-			continue
+	locale := i18n.FromContext(ctx)
+	for index, line := range lines {
+		scope := formula.PreviewScope(index)
+		for position := range result.Diagnostics {
+			diagnostic := &result.Diagnostics[position]
+			if diagnostic.Scope == scope && diagnostic.IsError() {
+				return lineFailure(line, diagnostic.Message.Localize(locale), diagnostic.Code)
+			}
 		}
-		label := item.Label
-		if index < len(lines) {
-			label = lines[index].Label
+		if result.Error != nil && result.Error.Scope == scope {
+			return lineFailure(line, result.Error.Err.Localize(locale), result.Error.Err.Code)
 		}
-		return pagedraft.FormulaCheck{
-			Error: fmt.Sprintf(
-				"Breakdown line %q (%s) does not run: %s",
-				label,
-				item.Name,
-				strings.TrimSpace(item.Error),
-			),
-		}
+	}
+	if result.FirstErrorDiagnostic() != nil || result.Result == nil {
+		return checkOf(locale, result)
 	}
 
 	return check
@@ -368,14 +419,17 @@ func (s *Service) price(
 			}
 		}
 
-		result := s.templateService.TestExpression(ctx, policedRequest(
+		result, err := s.templateService.TestExpression(ctx, policedRequest(
 			&formulatemplateservice.TestExpressionRequest{
 				Expression: run.expression,
 				SchemaID:   run.schemaID,
 				Variables:  variables,
 				TenantInfo: run.tenant,
 			}, run.policy))
-		check := checkOf(result)
+		check := pagedraft.FormulaCheck{Error: errortypes.LocalizedText(ctx, err)}
+		if err == nil {
+			check = checkOf(i18n.FromContext(ctx), result)
+		}
 		priced = append(priced, pagedraft.PricedScenario{
 			Name:        strings.TrimSpace(scenario.Name),
 			Description: strings.TrimSpace(scenario.Description),
@@ -383,58 +437,53 @@ func (s *Service) price(
 			Amount:      check.Result,
 			Valid:       check.Valid,
 			Error:       check.Error,
+			Code:        check.Code,
 		})
 	}
 
 	return priced
 }
 
-func checkOf(result *formulatemplateservice.TestExpressionResponse) pagedraft.FormulaCheck {
-	if result == nil {
-		return pagedraft.FormulaCheck{Error: "The expression could not be tested"}
+func lineFailure(line pagedraft.BreakdownLine, message, code string) pagedraft.FormulaCheck {
+	return pagedraft.FormulaCheck{
+		Error: fmt.Sprintf(
+			"Breakdown line %q (%s) does not run: %s",
+			line.Label,
+			line.Name,
+			strings.TrimSpace(message),
+		),
+		Code: code,
 	}
-	if !result.Valid {
-		message := strings.TrimSpace(result.Error)
-		if message == "" {
-			message = strings.TrimSpace(result.Message)
-		}
-
-		return pagedraft.FormulaCheck{Error: message}
-	}
-
-	amount, ok := AmountOf(result.Result)
-	if !ok {
-		return pagedraft.FormulaCheck{
-			Error: "The expression evaluated to something other than an amount",
-		}
-	}
-
-	return pagedraft.FormulaCheck{Valid: true, Result: amount}
 }
 
-func AmountOf(value any) (string, bool) {
-	switch v := value.(type) {
-	case decimal.Decimal:
-		return v.String(), true
-	case *decimal.Decimal:
-		if v == nil {
-			return "", false
+func checkOf(
+	locale i18n.Locale,
+	result *formulatemplateservice.TestExpressionResponse,
+) pagedraft.FormulaCheck {
+	if result == nil {
+		return pagedraft.FormulaCheck{
+			Error: i18n.Translate(locale, "The expression could not be tested"),
 		}
-
-		return v.String(), true
-	case float64:
-		return decimal.NewFromFloat(v).String(), true
-	case float32:
-		return decimal.NewFromFloat32(v).String(), true
-	case int:
-		return decimal.NewFromInt(int64(v)).String(), true
-	case int32:
-		return decimal.NewFromInt32(v).String(), true
-	case int64:
-		return decimal.NewFromInt(v).String(), true
-	default:
-		return "", false
 	}
+	if diagnostic := result.FirstErrorDiagnostic(); diagnostic != nil {
+		return pagedraft.FormulaCheck{
+			Error: diagnostic.Message.Localize(locale),
+			Code:  diagnostic.Code,
+		}
+	}
+	if result.Error != nil {
+		return pagedraft.FormulaCheck{
+			Error: result.Error.Err.Localize(locale),
+			Code:  result.Error.Err.Code,
+		}
+	}
+	if !result.Valid || result.Result == nil {
+		return pagedraft.FormulaCheck{
+			Error: i18n.Translate(locale, "The expression could not be tested"),
+		}
+	}
+
+	return pagedraft.FormulaCheck{Valid: true, Result: result.Result.String()}
 }
 
 func validateTest(req *TestRequest) error {

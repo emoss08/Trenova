@@ -224,9 +224,10 @@ tool, when:
 - no persisted query, or more than one in a tier, reads that root field alone;
 - an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
 - a shard the operations reach asks for a resolver the full root does not build;
-- an operation a list reads `alongside` its own is not persisted, is not a connection read that
-  selects `pageInfo`, needs a variable other than its table input, or reads a field whose resolver
-  checks no read permission; or a paged list names one.
+- an operation a list reads `alongside` its own is not persisted, reads a field whose resolver
+  checks no read permission, or is neither a connection read that selects `pageInfo` and needs no
+  variable but its table input nor an unpaged list whose every variable the list's own operation
+  declares with the same type; or a paged list names one.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a
@@ -371,6 +372,12 @@ it. See [product-guide.md](product-guide.md).
   getters that call `translate()`. A caption computed at runtime from a key or an enum value
   (`humanizeKey`) goes through `translateLabel()`, which reads the catalog and leaves an
   unknown caption in English.
+- A message that arrives as data — a rules module `{ message, args }`, whose template the
+  extractor took from the crate's `message!` — is shown with `translateMessage(message, t)`
+  (`@trenova/shared/i18n/message`). An argument may itself be a message (a band label inside a
+  coverage warning), which it translates first; spelling it `t(x.message, ...x.args)` would
+  substitute the nested message untranslated, and the check reports that spelling. A literal
+  is never handed to it: write `t("…")`, which the extractor collects.
 - Validation messages are read when the form validates, not when the module loads: a zod
   check takes `{ error: () => translate("Name is required") }`, `ctx.addIssue` takes
   `message: translate(…)`, and a react-hook-form rule takes `required: translate(…)`. A toast
@@ -379,7 +386,7 @@ it. See [product-guide.md](product-guide.md).
 - `task i18n-check` fails on all of these shapes (`i18n/tools/fragments.mjs`: split
   sentences, English arguments, templates that write words anywhere outside CSS, keys,
   paths, logs and thrown errors — module-level label maps, literal validation messages and
-  literal toast text), and
+  literal toast text, and messages from the rules module spelled out by hand), and
   `i18n.mjs merge` refuses a translation whose placeholders, plurals or tags differ from
   its source (`i18n/tools/validate.mjs`).
 - `i18n/locales.json` is the only place a language is added; `task i18n` regenerates the
@@ -396,4 +403,5 @@ These look like real failures and are not:
 - **`golangci-lint` refuses to run** when it was built with an older Go than the module
   targets. That needs CI, not a workaround.
 - **`node --test i18n/tools/`** resolves a bare directory as a module on Node 22 and fails
-  before running anything. Pass a glob.
+  before running anything. Node 26, the pinned version, runs it fine; on older Node,
+  pass a glob.

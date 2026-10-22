@@ -359,6 +359,7 @@ virtuals:
     - health
   WorkerSafetyEvent:
     - activePoints
+    - violations
   WorkerPTOPolicyAssignment:
     - ptoPolicy
   WorkerPTOLedgerEntry:

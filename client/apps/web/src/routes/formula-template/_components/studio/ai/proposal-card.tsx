@@ -1,6 +1,10 @@
 import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
+import { previewFailure } from "@/lib/formula-preview";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { translateMessage } from "@trenova/shared/i18n/message";
+import { formulaCatalog } from "@trenova/shared/rules/formula";
 import { useFormulaSchema } from "@/hooks/use-formula-schema";
-import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/test-data-editor";
+import { DEFAULT_TEST_VALUES } from "@/components/formula-editor/default-test-values";
 import { formulaTestRequest } from "@/lib/formula-test-request";
 import { fetchGraphQLSelectOptions } from "@/lib/graphql/select-options";
 import { apiService } from "@/services/api";
@@ -12,6 +16,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import {
   DEFAULT_ROUNDING_MODE,
   DEFAULT_ROUNDING_PRECISION,
+  type FormulaMessage,
   type FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import {
@@ -129,6 +134,8 @@ export function ProposalCard({
   onDismiss: () => void;
 }) {
   const t = useT();
+  // The card formats and checks the proposal with the rules module as it renders.
+  const rules = useRules();
   const { control } = useFormContext<FormulaTemplateFormValues>();
   // Only the fields a proposal can change are watched, so a card does not
   // redo its diff and its check on every keystroke elsewhere in the form.
@@ -188,7 +195,7 @@ export function ProposalCard({
     ],
   );
   const base = state === "applied" && before ? before : current;
-  const next = useMemo(() => applyProposal(base, proposal), [base, proposal]);
+  const next = useMemo(() => applyProposal(rules, base, proposal), [rules, base, proposal]);
   const diff = useMemo(
     () => lineDiff(base.expression, next.expression),
     [base.expression, next.expression],
@@ -198,15 +205,19 @@ export function ProposalCard({
 
   const { data: schema } = useFormulaSchema(schemaId || "shipment");
   const analysis = useMemo(() => {
-    const nextKnown = buildKnownIdentifiers(schema, next.variableDefinitions);
-    return analyzeExpression(next.expression, nextKnown);
-  }, [next.expression, next.variableDefinitions, schema]);
+    const nextKnown = buildKnownIdentifiers(
+      formulaCatalog(rules),
+      schema,
+      next.variableDefinitions,
+    );
+    return analyzeExpression(rules, next.expression, nextKnown);
+  }, [rules, next.expression, next.variableDefinitions, schema]);
   const verdict = proposalCheck(proposal.check, analysis);
   const check =
     verdict.kind === "engine"
       ? { tone: "bad" as const, text: verdict.message || t("The engine could not run it.") }
       : verdict.kind === "problem"
-        ? { tone: "warn" as const, text: verdict.message }
+        ? { tone: "warn" as const, text: translateMessage(verdict.problem, t) }
         : verdict.kind === "pending"
           ? {
               tone: "pending" as const,
@@ -392,12 +403,7 @@ export function ProposalCard({
                 ) : amount !== null ? (
                   <span className="font-mono tabular-nums">{formatMoney(amount)}</span>
                 ) : (
-                  <span
-                    className="text-danger max-w-36 truncate"
-                    title={query?.data?.error ?? undefined}
-                  >
-                    {query?.data?.error ?? t("Could not be priced")}
-                  </span>
+                  <PriceFailure failure={previewFailure(query?.data)} />
                 )}
               </div>
             );
@@ -445,5 +451,16 @@ export function ProposalCard({
         )}
       </div>
     </div>
+  );
+}
+
+/** Why a load could not be priced, in the engine's words when it gave any. */
+function PriceFailure({ failure }: { failure: FormulaMessage | null }) {
+  const t = useT();
+  const text = failure ? translateMessage(failure, t) : t("Could not be priced");
+  return (
+    <span className="text-danger max-w-36 truncate" title={text}>
+      {text}
+    </span>
   );
 }

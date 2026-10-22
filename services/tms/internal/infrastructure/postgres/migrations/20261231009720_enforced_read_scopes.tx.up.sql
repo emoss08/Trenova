@@ -117,11 +117,11 @@ UPDATE "resource_permissions"
 SET "data_scope" = 'organization',
     "updated_at" = EXTRACT(EPOCH FROM current_timestamp)::bigint
 WHERE ("data_scope" = 'own' AND "resource" NOT IN ('shipment', 'order', 'invoice', 'capture_batch', 'report'))
-    OR ("data_scope" = 'team' AND "resource" NOT IN ('worker', 'worker_schedule', 'timesheet', 'profile_change_request'));
+    OR ("data_scope" = 'team' AND "resource" NOT IN ('worker', 'worker_schedule', 'timesheet', 'profile_change_request', 'worker_leave', 'driver_portal'));
 
 --bun:split
 UPDATE "api_key_permissions"
 SET "data_scope" = 'organization',
     "updated_at" = EXTRACT(EPOCH FROM current_timestamp)::bigint
 WHERE ("data_scope" = 'own' AND "resource" NOT IN ('shipment', 'order', 'invoice', 'capture_batch', 'report'))
-    OR ("data_scope" = 'team' AND "resource" NOT IN ('worker', 'worker_schedule', 'timesheet', 'profile_change_request'));
+    OR ("data_scope" = 'team' AND "resource" NOT IN ('worker', 'worker_schedule', 'timesheet', 'profile_change_request', 'worker_leave', 'driver_portal'));

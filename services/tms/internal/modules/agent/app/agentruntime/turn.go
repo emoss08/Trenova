@@ -177,11 +177,13 @@ type DispatchCall struct {
 	// and the delegating turn's, have moved and not yet recorded.
 	MoneySpent agent.MoneyUse     `json:"moneySpent,omitzero"`
 	Beyond     agent.AutonomyTier `json:"beyond,omitempty"`
-	// Model and Provider are what answered the completion that asked for the
-	// call, and ScriptPosition is how many scripts the turn has asked for up
-	// to and including this one; the code-mode gate reads all three.
+	// Model, Provider and ProviderID are what answered the completion that
+	// asked for the call, and ScriptPosition is how many scripts the turn has
+	// asked for up to and including this one; the code-mode gate reads the
+	// answering provider's settings and the count.
 	Model          string          `json:"model,omitempty"`
 	Provider       aiprovider.Kind `json:"provider,omitempty"`
+	ProviderID     pulid.ID        `json:"providerId,omitempty"`
 	ScriptPosition int             `json:"scriptPosition,omitempty"`
 }
 
@@ -213,7 +215,8 @@ type ToolOutcome struct {
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
-	Data any `json:"-"`
+	Data    any            `json:"-"`
+	RanWith map[string]any `json:"-"`
 }
 
 func (o toolOutcome) exported() ToolOutcome {
@@ -233,6 +236,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		SavedMemory:    o.saved,
 		Shown:          o.shown,
 		Data:           o.data,
+		RanWith:        o.ranWith,
 	}
 }
 
@@ -253,6 +257,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		saved:          o.SavedMemory,
 		shown:          o.Shown,
 		data:           o.Data,
+		ranWith:        o.RanWith,
 	}
 }
 
@@ -531,7 +536,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentports.RunRequest) *Tur
 
 	job := s.profileFor(ctx, req, granted)
 	held := job.held
-	if !s.codeMode.Offered(req.CodeMode) {
+	if !s.codeMode.Offered(req.CodeMode, s.scriptsOffered(ctx, req)) {
 		held, job.beyond = s.withoutScripts(definition, held, job.beyond)
 	}
 	var delegates []agentdefinition.RuntimeDelegate
@@ -1042,9 +1047,10 @@ func (s *Service) DispatchStep(
 		taint:          call.Taint,
 		afterExternal:  call.AfterExternalContent,
 		gate: scriptGate{
-			model:    call.Model,
-			provider: call.Provider,
-			position: call.ScriptPosition,
+			model:      call.Model,
+			provider:   call.Provider,
+			providerID: call.ProviderID,
+			position:   call.ScriptPosition,
 		},
 	})
 	outcome.summary = summarizeOutcome(call.Call, outcome)

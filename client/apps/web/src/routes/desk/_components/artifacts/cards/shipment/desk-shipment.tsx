@@ -3,6 +3,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { useQuery } from "@tanstack/react-query";
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -165,7 +166,8 @@ function ShipmentCard({
   const reading = nowReading(shipment, stops, t);
   const coverage = useMemo(() => coverageOf(moves), [moves]);
   const freight = freightOf(shipment);
-  const charges = chargesOf(shipment, t);
+  const rules = useRules();
+  const charges = chargesOf(rules, shipment, t);
   const margin = marginOf(shipment);
   const marginsVisible = useProtectedFieldAccess("Margins");
   const miles = totalMiles(moves);

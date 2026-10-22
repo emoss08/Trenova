@@ -3,6 +3,7 @@ package rateimport_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +30,7 @@ func TestTemplateCSV_ImportsCleanly(t *testing.T) {
 		rule, parseErr := rateimport.ParseRow(mapping, row, templates)
 		require.NoErrorf(t, parseErr, "template example row %d must parse", index+1)
 		require.NotNil(t, rule)
-		assert.NotEmpty(t, rule.LaneKey)
+		require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))
+		assert.NotEqual(t, rateagreement.RadiusLaneKey, rule.LaneKey)
 	}
 }

@@ -171,26 +171,25 @@ func (r *QueryResolver) DriverQualificationFile(ctx context.Context, workerID st
 	return r.WorkerDQFService.File(ctx, base.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) WorkerEmploymentVerifications(ctx context.Context, workerID string) ([]*worker.WorkerEmploymentVerification, error) {
+func (r *QueryResolver) WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*worker.WorkerEmploymentVerification, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceQualification, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	id, err := pulid.MustParse(workerID)
+	id, err := base.ParseOptionalIDField("workerId", workerID)
 	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"workerId",
-			errortypes.ErrInvalid,
-			"Worker is invalid",
-		)
+		return nil, err
 	}
 	return r.WorkerDQFService.ListVerifications(
 		ctx,
 		&workerports.ListEmploymentVerificationsRequest{
 			TenantInfo:      base.TenantInfo(authCtx),
 			WorkerID:        id,
+			OutstandingOnly: base.BoolValue(outstandingOnly),
+			IncludeWorker:   true,
 			IncludeDocument: true,
+			Limit:           base.RecordListLimit(limit, id.IsNotNil()),
 		},
 	)
 }

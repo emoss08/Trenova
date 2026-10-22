@@ -14,7 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -28,22 +31,34 @@ const domainPackagePrefix = "github.com/emoss08/trenova/internal/modules/"
 // with no entry here; a type named for none is part of the record that carries
 // it. The relation test fails on a relation whose type is neither.
 var namedKinds = map[reflect.Type]permission.Resource{
-	reflect.TypeFor[shipment.Stop]():                      permission.ResourceShipmentStop,
-	reflect.TypeFor[customerpayment.Payment]():            permission.ResourceCustomerPayment,
-	reflect.TypeFor[billingqueue.BillingQueueItem]():      permission.ResourceBillingQueue,
-	reflect.TypeFor[factoring.Agreement]():                permission.ResourceFactoringAgreement,
-	reflect.TypeFor[factoring.Noa]():                      permission.ResourceFactoringNoa,
-	reflect.TypeFor[factoring.Submission]():               permission.ResourceFactoringSubmission,
-	reflect.TypeFor[factoring.ReserveEntry]():             permission.ResourceFactoringReserve,
-	reflect.TypeFor[factoring.Remittance]():               permission.ResourceFactoringRemittance,
-	reflect.TypeFor[rateagreement.RateAgreementVersion](): permission.ResourceRateAgreement,
-	reflect.TypeFor[report.ReportDefinition]():            permission.ResourceReport,
-	reflect.TypeFor[servicefailure.ReasonCode]():          permission.ResourceServiceFailureReasonCode,
-	reflect.TypeFor[edi.EDIPartner]():                     permission.ResourceEDI,
-	reflect.TypeFor[email.Profile]():                      permission.ResourceEmailProfile,
-	reflect.TypeFor[email.Message]():                      permission.ResourceEmailLog,
-	reflect.TypeFor[glaccount.GLAccount]():                permission.ResourceGeneralLedgerAccount,
-	reflect.TypeFor[documentparsingrule.RuleSet]():        permission.ResourceDocumentParsingRule,
+	reflect.TypeFor[shipment.Stop]():                       permission.ResourceShipmentStop,
+	reflect.TypeFor[customerpayment.Payment]():             permission.ResourceCustomerPayment,
+	reflect.TypeFor[billingqueue.BillingQueueItem]():       permission.ResourceBillingQueue,
+	reflect.TypeFor[factoring.Agreement]():                 permission.ResourceFactoringAgreement,
+	reflect.TypeFor[factoring.Noa]():                       permission.ResourceFactoringNoa,
+	reflect.TypeFor[factoring.Submission]():                permission.ResourceFactoringSubmission,
+	reflect.TypeFor[factoring.ReserveEntry]():              permission.ResourceFactoringReserve,
+	reflect.TypeFor[factoring.Remittance]():                permission.ResourceFactoringRemittance,
+	reflect.TypeFor[rateagreement.RateAgreementVersion]():  permission.ResourceRateAgreement,
+	reflect.TypeFor[report.ReportDefinition]():             permission.ResourceReport,
+	reflect.TypeFor[servicefailure.ReasonCode]():           permission.ResourceServiceFailureReasonCode,
+	reflect.TypeFor[edi.EDIPartner]():                      permission.ResourceEDI,
+	reflect.TypeFor[email.Profile]():                       permission.ResourceEmailProfile,
+	reflect.TypeFor[email.Message]():                       permission.ResourceEmailLog,
+	reflect.TypeFor[glaccount.GLAccount]():                 permission.ResourceGeneralLedgerAccount,
+	reflect.TypeFor[documentparsingrule.RuleSet]():         permission.ResourceDocumentParsingRule,
+	reflect.TypeFor[worker.WorkerLeaveCase]():              permission.ResourceWorkerLeave,
+	reflect.TypeFor[worker.WorkerLeaveEntry]():             permission.ResourceWorkerLeave,
+	reflect.TypeFor[worker.WorkerDOTViolation]():           permission.ResourceWorkerDOTTest,
+	reflect.TypeFor[worker.WorkerClearinghouseQuery]():     permission.ResourceWorkerDOTTest,
+	reflect.TypeFor[worker.OSHAAnnualSummary]():            permission.ResourceWorkerInjury,
+	reflect.TypeFor[worker.TimeClockEntry]():               permission.ResourceTimesheet,
+	reflect.TypeFor[worker.PayrollExport]():                permission.ResourceTimesheet,
+	reflect.TypeFor[worker.WorkerProfileChangeRequest]():   permission.ResourceProfileChangeRequest,
+	reflect.TypeFor[driverpay.WorkerBenefitEnrollment]():   permission.ResourceBenefitPlan,
+	reflect.TypeFor[worker.WorkerEmploymentVerification](): permission.ResourceQualification,
+	reflect.TypeFor[worker.WorkerSafetyViolation]():        permission.ResourceWorkerSafetyEvent,
+	reflect.TypeFor[carrierintel.CarrierIntelEvent]():      permission.ResourceCarrierIntelligence,
 }
 
 // kindTable maps a Go type to the kind of record it holds.

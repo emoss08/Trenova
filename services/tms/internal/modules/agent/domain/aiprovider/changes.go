@@ -39,6 +39,17 @@ var ChangeRules = []editchange.Rule[Provider]{
 		},
 	},
 	{
+		Field: "advisorEnabled", Label: "Advisor",
+		Same: func(a, b *Provider) bool {
+			return a.AdvisorEnabled == b.AdvisorEnabled &&
+				(!a.AdvisorEnabled || a.namedAdvisorModel() == b.namedAdvisorModel())
+		},
+	},
+	{
+		Field: "scripts", Label: "Scripts",
+		Same: func(a, b *Provider) bool { return a.ScriptSettings() == b.ScriptSettings() },
+	},
+	{
 		Field: "embeddingDimensions", Label: "Embeddings",
 		Same: func(a, b *Provider) bool {
 			return typeutils.EqualPtr(a.EmbeddingDimensions, b.EmbeddingDimensions) &&

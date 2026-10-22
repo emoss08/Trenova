@@ -84,6 +84,8 @@
   "Largest increases first — the shipment that will produce the phone call is what this list is for.": "上调幅度最大者优先 — 此列表的用意，就是找出最可能引来客诉电话的运单。",
   "Leave empty to run until somebody ends it": "留空即持续有效，直到有人终止为止",
   "Limits on what this carrier may be paid relative to what the load sells for.": "相对于货载售价，此承运商可获支付金额的上限。",
+  "Loading the lanes…": "正在加载路线…",
+  "Loading the simulation…": "正在加载模拟…",
   "Margin guardrails": "利润防护机制",
   "Matrix": "矩阵",
   "Maximum pay": "最高薪酬",

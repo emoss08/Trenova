@@ -132,6 +132,10 @@ type saveProviderRequest struct {
 	StructuredOutputMode     aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
 	ReasoningEffort          aiprovider.ReasoningEffort      `json:"reasoningEffort"`
 	ThinkingStyle            aiprovider.ThinkingStyle        `json:"thinkingStyle"`
+	AdvisorEnabled           bool                            `json:"advisorEnabled"`
+	AdvisorModel             string                          `json:"advisorModel"`
+	Scripts                  bool                            `json:"scripts"`
+	ScriptWrites             bool                            `json:"scriptWrites"`
 	Platform                 aiprovider.Platform             `json:"platform"`
 	PlatformSettings         *aiprovider.PlatformSettings    `json:"platformSettings"`
 	ExtraBody                map[string]any                  `json:"extraBody"`
@@ -171,6 +175,10 @@ func (r *saveProviderRequest) toServiceRequest(
 		StructuredOutputMode:     r.StructuredOutputMode,
 		ReasoningEffort:          r.ReasoningEffort,
 		ThinkingStyle:            r.ThinkingStyle,
+		AdvisorEnabled:           r.AdvisorEnabled,
+		AdvisorModel:             r.AdvisorModel,
+		Scripts:                  r.Scripts,
+		ScriptWrites:             r.ScriptWrites,
 		Platform:                 r.Platform,
 		PlatformSettings:         r.PlatformSettings,
 		ExtraBody:                r.ExtraBody,

@@ -1,0 +1,57 @@
+query DeskWorkerCredentialList(
+  $workerId: ID
+  $includeArchived: Boolean
+  $expiringWithinDays: Int
+  $includeExpired: Boolean
+  $credentialTypeCode: String
+  $requiredOnly: Boolean
+  $limit: Int
+  $offset: Int
+) {
+  workerCredentials(
+    workerId: $workerId
+    includeArchived: $includeArchived
+    expiringWithinDays: $expiringWithinDays
+    includeExpired: $includeExpired
+    credentialTypeCode: $credentialTypeCode
+    requiredOnly: $requiredOnly
+    limit: $limit
+    offset: $offset
+  ) {
+    id
+    workerId
+    credentialTypeId
+    status
+    issuingAuthority
+    issuedAt
+    expiresAt
+    daysUntilExpiry
+    health
+    verifiedAt
+    documentId
+    credentialType {
+      ...WorkerCredentialTypeReference
+    }
+    worker {
+      ...WorkerReference
+    }
+  }
+}
+
+query DeskWorkerCredentialTypes($input: WorkerCredentialTypesInput!) {
+  workerCredentialTypes(input: $input) {
+    edges {
+      node {
+        id
+        code
+        name
+        category
+        isRequired
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

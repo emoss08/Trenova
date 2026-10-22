@@ -64,37 +64,40 @@ func TestTestExpression_TracesStatementsOnRequest(t *testing.T) {
 		MinCharge:  decimal.NewNullDecimal(decimal.NewFromInt(500)),
 	}
 
-	untraced := deps.svc.TestExpression(t.Context(), request)
-	require.True(t, untraced.Valid, untraced.Error)
+	untraced := must(t)(deps.svc.TestExpression(t.Context(), request))
+	require.True(t, untraced.Valid, failureOf(untraced))
 	assert.Empty(t, untraced.Statements, "the live preview leaves tracing off")
 
 	request.TraceStatements = true
-	traced := deps.svc.TestExpression(t.Context(), request)
-	require.True(t, traced.Valid, traced.Error)
+	traced := must(t)(deps.svc.TestExpression(t.Context(), request))
+	require.True(t, traced.Valid, failureOf(traced))
 	require.Len(t, traced.Statements, 3)
-	assert.Equal(t, "200", traced.Statements[0].Value)
-	assert.Equal(t, "20", traced.Statements[1].Value)
+	assert.Equal(t, "200", *TraceValueText(traced.Statements[0].Value))
+	assert.Equal(t, "20", *TraceValueText(traced.Statements[1].Value))
 	assert.Equal(t, formulatemplatetypes.StatementResult, traced.Statements[2].Kind)
-	assert.Equal(t, "220", traced.Statements[2].Value, "the result is the raw amount")
-	assert.True(t, traced.Result.(decimal.Decimal).Equal(decimal.NewFromInt(500)))
+	assert.Equal(t, "220", *TraceValueText(traced.Statements[2].Value), "the result is the raw amount")
+	assert.True(t, traced.Result.Equal(decimal.NewFromInt(500)))
 }
 
 func TestTestExpression_TraceSurvivesARuntimeFailure(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
-		Expression:      "let fine = totalDistance * 2; fine > 1",
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+		Expression:      "let fine = totalDistance * 2; fine / (totalDistance - 100)",
 		SchemaID:        "shipment",
 		Variables:       map[string]any{"totalDistance": 100.0},
 		TenantInfo:      newTenantInfo(),
 		TraceStatements: true,
-	})
+	}))
 
 	assert.False(t, result.Valid)
+	require.NotNil(t, result.Error)
+	assert.Equal(t, "divideByZero", result.Error.Err.Code)
 	require.Len(t, result.Statements, 2)
-	assert.Equal(t, "200", result.Statements[0].Value)
-	assert.NotEmpty(t, result.Statements[1].Error)
+	assert.Equal(t, "200", *TraceValueText(result.Statements[0].Value))
+	require.NotNil(t, result.Statements[1].Error)
+	assert.Equal(t, "divideByZero", result.Statements[1].Error.Code)
 }
 
 func TestCreateTestCase_RecordsTheCandidateItWasPricedOn(t *testing.T) {

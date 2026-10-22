@@ -424,3 +424,28 @@ func TestRLS_ReadScopePoliciesAreRestrictive(t *testing.T) {
 		"workers:r:false",
 	}, policies)
 }
+
+// A kind the principal cannot read is left out of the read scope, so no
+// read_scope policy narrows by anything but "own" or "team": a row of a kind
+// the person cannot read stays visible to the record that links to it, and
+// the application shows its reference view.
+func TestRLS_ReadScopePoliciesNarrowOnlyByOwnOrTeam(t *testing.T) {
+	f := newRLSFixture(t, config.RLSModeEnforce)
+
+	var policies []struct {
+		Table string `bun:"relname"`
+		Qual  string `bun:"qual"`
+	}
+	require.NoError(t, f.admin.NewRaw(`
+		SELECT c.relname, pg_get_expr(p.polqual, p.polrelid) AS qual
+		FROM pg_policy p
+		JOIN pg_class c ON c.oid = p.polrelid
+		WHERE p.polname = 'read_scope'
+		ORDER BY c.relname`).Scan(t.Context(), &policies))
+
+	require.Len(t, policies, 4)
+	for _, policy := range policies {
+		assert.NotContains(t, policy.Qual, "'none'", policy.Table)
+		assert.Regexp(t, `'(own|team)'`, policy.Qual, policy.Table)
+	}
+}

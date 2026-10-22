@@ -19,6 +19,10 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     structuredOutputMode: "Prompted",
     reasoningEffort: "Off",
     thinkingStyle: "Auto",
+    advisorEnabled: false,
+    advisorModel: "",
+    scripts: false,
+    scriptWrites: false,
     extraBodyText: "",
     inputCostPerMillion: null,
     outputCostPerMillion: null,
@@ -238,5 +242,136 @@ describe("buildSavePayload cache prices", () => {
 
     expect(payload.cacheReadCostPerMillion).toBe(0.2);
     expect(payload.cacheWriteCostPerMillion).toBeNull();
+  });
+});
+
+/**
+ * The server contract (aiprovider.Provider validation): the advisor is taken
+ * only by an Anthropic Messages provider on the Claude API or Claude Platform
+ * on AWS that handles AssistantChat; scripts only by a provider that handles
+ * AssistantChat; script writes only with scripts. A setting the provider
+ * cannot take is saved off rather than refused.
+ */
+describe("buildSavePayload advisor and scripts", () => {
+  const claudeChat = {
+    kind: "AnthropicMessages",
+    platform: "Direct",
+    tasks: ["AssistantChat"],
+  } satisfies Partial<ProviderFormValues>;
+
+  it("sends all four settings for a Claude API chat provider", () => {
+    const payload = buildSavePayload(
+      formValues({
+        ...claudeChat,
+        advisorEnabled: true,
+        advisorModel: "  claude-opus-5-5  ",
+        scripts: true,
+        scriptWrites: true,
+      }),
+      true,
+    );
+
+    expect({
+      advisorEnabled: payload.advisorEnabled,
+      advisorModel: payload.advisorModel,
+      scripts: payload.scripts,
+      scriptWrites: payload.scriptWrites,
+    }).toEqual({
+      advisorEnabled: true,
+      advisorModel: "claude-opus-5-5",
+      scripts: true,
+      scriptWrites: true,
+    });
+  });
+
+  it("keeps the advisor on Claude Platform on AWS", () => {
+    const payload = buildSavePayload(
+      formValues({
+        ...claudeChat,
+        platform: "ClaudePlatformAWS",
+        platformSettings: {
+          auth: "AccessKey",
+          region: "us-east-1",
+          projectId: "",
+          workspaceId: "wrkspc_1",
+          accessKeyId: "AKIA",
+          resource: "",
+          tenantId: "",
+          clientId: "",
+        },
+        advisorEnabled: true,
+      }),
+      true,
+    );
+
+    expect(payload.advisorEnabled).toBe(true);
+  });
+
+  it.each(["Bedrock", "VertexAI", "ClaudePlatformGoogleCloud", "Foundry"] as const)(
+    "turns the advisor off on %s, which does not serve it",
+    (platform) => {
+      const payload = buildSavePayload(
+        formValues({ ...claudeChat, platform, advisorEnabled: true, advisorModel: "claude-x" }),
+        true,
+      );
+
+      expect(payload.advisorEnabled).toBe(false);
+      expect(payload.advisorModel).toBe("claude-x");
+    },
+  );
+
+  it.each(["OpenAIChat", "OpenAIResponses"] as const)(
+    "sends no advisor for %s, which is not Anthropic's protocol",
+    (kind) => {
+      const payload = buildSavePayload(
+        formValues({
+          kind,
+          tasks: ["AssistantChat"],
+          advisorEnabled: true,
+          advisorModel: "claude-opus-5-5",
+        }),
+        true,
+      );
+
+      expect(payload.advisorEnabled).toBe(false);
+      expect(payload.advisorModel).toBe("");
+    },
+  );
+
+  it("turns the advisor and scripts off for a provider that does not handle chat", () => {
+    const payload = buildSavePayload(
+      formValues({
+        ...claudeChat,
+        tasks: ["DocumentExtraction"],
+        advisorEnabled: true,
+        scripts: true,
+        scriptWrites: true,
+      }),
+      true,
+    );
+
+    expect(payload.advisorEnabled).toBe(false);
+    expect(payload.scripts).toBe(false);
+    expect(payload.scriptWrites).toBe(false);
+  });
+
+  it("sends script writes off when scripts are off", () => {
+    const payload = buildSavePayload(
+      formValues({ ...claudeChat, scripts: false, scriptWrites: true }),
+      true,
+    );
+
+    expect(payload.scripts).toBe(false);
+    expect(payload.scriptWrites).toBe(false);
+  });
+
+  it("keeps scripts for a chat provider of any protocol", () => {
+    const payload = buildSavePayload(
+      formValues({ kind: "OpenAIChat", tasks: ["AssistantChat"], scripts: true }),
+      false,
+    );
+
+    expect(payload.scripts).toBe(true);
+    expect(payload.scriptWrites).toBe(false);
   });
 });

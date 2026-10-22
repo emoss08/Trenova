@@ -21,9 +21,9 @@ type Attention = {
   trainingOverdue: number;
   atRisk: number;
   expiringSoon: number;
-  reviewsAwaitingSignOff: number;
+  reviewsAwaitingSignOff: number | null;
   ptoLiabilityDays: string;
-  leaveCertificationsOutstanding: number;
+  leaveCertificationsOutstanding: number | null;
 };
 
 function attention(overrides: Partial<Attention> = {}): Attention {
@@ -121,5 +121,19 @@ describe("WorkerAttentionWidget", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("18 days")).toBeInTheDocument();
+  });
+
+  // Reviews and leave are granted on their own. The server sends null to a
+  // reader who may not read them, and a hidden count is not a zero.
+  it("leaves out the figures the reader may not see", async () => {
+    mocks.fetchWorkerRosterAttention.mockResolvedValue(
+      attention({ reviewsAwaitingSignOff: null, leaveCertificationsOutstanding: null }),
+    );
+
+    await renderWidget();
+
+    expect(screen.queryByText("Reviews to sign")).not.toBeInTheDocument();
+    expect(screen.queryByText("Certifications owed")).not.toBeInTheDocument();
+    expect(screen.getByText("PTO liability")).toBeInTheDocument();
   });
 });

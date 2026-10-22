@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
@@ -137,6 +138,11 @@ func renderValue(value any) string {
 		return stringutils.OneLine(typed, maxRenderedValueRunes)
 	case decimal.Decimal:
 		return typed.String()
+	case rules.RawJSON:
+		if text := formulatemplateservice.TraceValueText(typed); text != nil {
+			return stringutils.OneLine(*text, maxRenderedValueRunes)
+		}
+		return "empty"
 	case float64:
 		return decimal.NewFromFloat(typed).String()
 	case bool, int, int32, int64:

@@ -16,10 +16,20 @@ A record is reached in one of four ways, and the way decides what is checked:
 
 | Reached as | Example | Checked |
 |---|---|---|
-| Root | what `shipment(id:)` returns, through a connection's edges or a mutation's payload | the root resolver's own permission check; the fields are the record's own |
+| Root | what `shipment(id:)` returns, through a connection's edges or a mutation's payload | the root resolver's own permission check; the fields are the record's own. A shipment, order, invoice or worker a payload carries is linked for a caller who cannot read its kind, unless the mutation declares `@authorizes` |
 | Self-scoped | anything under `mySettlements` | nothing more: every record there is the caller's own (`selfscoped.Resolvers`) |
 | Part of another | a shipment's moves and stops | the record it is part of: a kind whose `ParentResource` family is the carrier's |
 | Linked | a shipment's customer, a tractor's driver | the reference view always; every other field needs the kind's read |
+
+A kind is part of another only through its `ParentResource` chain. A kind granted on its own
+has no parent, so wherever it is carried it is a linked record: a worker's leave case
+(`worker_leave`) or drug test (`worker_dot_test`) under its worker needs that kind's read, and
+since nothing links to either it has no view, so without that read it shows its id alone. An
+injury case, a disciplinary action, a performance review or a benefit plan carried by a worker
+shows its reference view and nothing more. The reverse holds too: a worker's safety event
+carried by a disciplinary action is a linked record of the worker's family, so the discipline
+operations select `...WorkerSafetyEventReference`. See "Parent resources" in
+[permissions.md](permissions.md#parent-resources) for when a kind should have a parent.
 
 A linked record's fields outside its view, read without the kind's read:
 
@@ -60,7 +70,8 @@ Internal.
   request's guard (`internal/api/responseguard`, installed on every signed-in route group). The
   guard walks the value by reflection with a plan cached per Go type: a domain struct named for a
   resource is that kind (`customer.Customer`, `worker.Worker`), `namedKinds` holds the few whose
-  name does not spell theirs (`shipment.Stop`, `billingqueue.BillingQueueItem`), and any other
+  name does not spell theirs (`shipment.Stop`, `billingqueue.BillingQueueItem`,
+  `worker.WorkerLeaveCase`, `worker.TimeClockEntry`, `worker.WorkerDOTViolation`), and any other
   struct is part of the record that carries it. The value a route returns (each item of a list or
   page) is the root record; a record of a kind reached through it is linked, unless it is part of
   the root's family (a shipment's moves and stops), and so on down. A linked record of a kind the
@@ -84,10 +95,13 @@ Internal.
   by `refview` through `permissionports.ReferenceViews`, so the role's ceiling applies inside the
   view. Table exports and dashboard exports compile through the same check. Protected fields are
   declared in the catalog (`protected: Personal|Margins`) and refused without the group.
-- **Row-level security.** For shipments, orders, invoices and workers the `read_scope` policy
-  still hides a row of a kind the reader cannot read at all, wherever it is reached. Under RLS a
-  linked record of those four kinds therefore comes back null, not as its reference view: never
-  more than the view, sometimes less.
+- **Row-level security.** The `read_scope` policies on shipments, orders, invoices and workers
+  narrow only by an `own` or `team` grant. A kind the reader cannot read at all is not narrowed in
+  the database, so a linked record of those four kinds is returned and shows its reference view,
+  the same with RLS on or off. A root read of one of them is refused by its resolver, route, tool
+  or report before it queries, and a record of one that a mutation's payload carries (a training
+  record's worker) is linked for a caller who cannot read its kind unless the mutation declares
+  `@authorizes` for it. See "Data scopes" in [permissions.md](permissions.md#data-scopes).
 
 ## Search, analytics and insights
 
@@ -164,6 +178,8 @@ Each failure says what to add.
 | `TestEveryLinkedFieldIsDeclared` (gqlext) | a client operation selects a field outside a linked record's view without `@requiresRead` for its kind |
 | `TestEveryDeclaredLinkedFieldIsNullable` (gqlext) | a field selected under `@requiresRead` is non-null |
 | `TestEveryAuthorizesDeclarationIsCheckedByItsResolver` (gqlext) | a root field declares `@authorizes` for a kind its resolver does not check |
+| `TestEveryRootOfADatabaseScopedKindChecksItsRead` (gqlext) | a root field returns shipments, orders, invoices or workers, directly or through a connection, without its resolver checking the kind's read |
+| `TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler` (responseguard) | a REST response returns a shipment, order, invoice or worker as its own record outside that kind's handler |
 | `TestReferenceFragmentsAreGenerated` (gqlext) | the generated fragments or views are out of date |
 | `TestEveryFieldAndEdgeIsClassifiedByItsReferenceView` (reportcatalog) | a report catalog field or edge is unclassified, or its class disagrees with the registry's view |
 | `TestEveryProtectedFieldIsGatedInTheReportCatalog` (gqlext) | a schema `@protected` field is not marked `protected` in the report catalog, or the reverse |

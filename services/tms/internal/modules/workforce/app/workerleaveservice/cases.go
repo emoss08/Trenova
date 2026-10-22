@@ -528,3 +528,36 @@ func (s *Service) DeleteDay(
 
 	return nil
 }
+
+// CaseWorker is the worker a leave case belongs to, which is what a team-scoped
+// grant is checked against.
+func (s *Service) CaseWorker(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	caseID pulid.ID,
+) (pulid.ID, error) {
+	found, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+		ID:         caseID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return pulid.Nil, err
+	}
+	return found.WorkerID, nil
+}
+
+// EntryWorker is the worker a day of leave belongs to.
+func (s *Service) EntryWorker(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entryID pulid.ID,
+) (pulid.ID, error) {
+	found, err := s.repo.GetEntryByID(ctx, &workerports.GetLeaveEntryByIDRequest{
+		ID:         entryID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return pulid.Nil, err
+	}
+	return found.WorkerID, nil
+}

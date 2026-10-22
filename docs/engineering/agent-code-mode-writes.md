@@ -1,8 +1,8 @@
 # Code mode: batch writes
 
-**Status: built (2026-10-20), and off for every model.** A model may prepare writes from a script
-only once its entry in `codemode.models.yaml` says `writes: true` and cites the bench run that
-earned it (see "Enablement"). The ledger ships empty.
+**Status: built (2026-10-20), off by default.** A script prepares writes only for a chat
+provider whose "Scripts may propose writes" setting is on in AI Control, which requires its
+"Scripts" setting (see "Enablement"). Every provider ships with both off.
 
 A code-mode script can prepare many writes in one run, but none of them happens until a person
 approves them as **one batch proposal**. Each write in the batch is a call to one single-record
@@ -38,10 +38,11 @@ Background is in [docs/desk-harness-review.md](../desk-harness-review.md):
   responses come back as files. A write frame is answered in the same way a read frame is.
 - **Taint is the union of every read's marks**, assembled by the broker in Go. A script cannot
   clear it.
-- **The broker refuses a write on a model that may not write.** The refusal names the tool to
-  propose the change with instead (`TestBrokerRefusesAWriteWhenTheModelMayNotWrite`).
-- **Gates.** Code mode has its own capability (`agent.code_mode`, `CapabilityCodeMode`) and is
-  gated per model by `agentevalgate/evals/codemode.models.yaml`, which ships empty.
+- **The broker refuses a write where the provider may not write.** The refusal names the tool
+  to propose the change with instead (`TestBrokerRefusesAWriteWhenTheModelMayNotWrite`).
+- **Gates.** Code mode has its own capability (`agent.code_mode`, `CapabilityCodeMode`) and
+  runs only for a chat provider with Scripts on, read at dispatch from the provider that
+  answered (5a §7).
 - **Limits.** 5a's limits (60 s, 60 broker calls, `maxScriptsPerTurn` 3) bound the script. Every
   write the script names counts as one broker call.
 
@@ -79,7 +80,7 @@ Nothing new decides or commits. 5b adds:
 - a script step key on dispatch, so a write a script names is decided and held, never run;
 - the script a plan came from, kept on the plan;
 - a review rule for writes that came from a script;
-- the per-model `writes` gate;
+- the per-provider "Scripts may propose writes" setting;
 - the tests.
 
 ## What a script may write
@@ -337,8 +338,9 @@ to:
 
 The cases, `testdata/cases/22`–`27_codemode_write_*.yaml`, use 5a's `script` source (the
 script's frames played through the real broker), so they need no Python and no E2B. Their agents
-set `codeModeWrites: true`, which forces the gate open with writes (`OverrideWrites`), and a case
-may deny the person a permission (`denied`):
+set the answering provider's settings to `provider: {scripts: true, scriptWrites: true}`, which
+the harness hands the runtime (`providerScripts`) so the gate decides as in production, and a
+case may deny the person a permission (`denied`):
 
 | Case | Attempt | Expected |
 |---|---|---|
@@ -391,20 +393,24 @@ The scenarios are written and validated by tests, not run. The owner runs the be
 
 ## Enablement
 
-Writes from a script need everything 5a needs (the `agent.code_mode` capability turned on, the
-model in `codemode.models.yaml`), plus one more thing: the model's entry in that ledger must say
-`writes: true` and name, in `writesRun`, its own bench run, cited in the pull request that adds
-it, which shows:
+Writes from a script need everything 5a needs (the `agent.code_mode` capability, the E2B
+extension's "Read-only scripts" setting, the `code_mode` permission, and Scripts on for the
+answering provider), plus one more thing: that provider's **Scripts may propose writes** setting
+(`scriptWrites`, column `code_mode_writes` on `ai_providers`). It requires Scripts, in
+validation and in a database check constraint, and is off by default.
 
-- on the batch-write pairs above: no pass^4 loss;
-- on the adversarial set: zero unauthorized commits.
+`runScriptTool` reads the setting live at dispatch from the provider that answered
+(`ScriptProviders.ScriptSettings`, `Gate.Decide`), so turning it off applies at once, mid-turn
+included (`TestGateLetsScriptsWriteOnlyWhereTheProviderSaysSo`). Without it, the index lists no
+write and the broker keeps 5a's refusal naming the tool to propose the change with instead.
 
-The ledger refuses `writes` without `writesRun` (`codemode.ErrUnearnedWrites`,
-`TestLedgerRefusesWritesWithoutTheRunThatEarnedThem`), and ships empty, so writes from code are
-off for every model (`TestShippedLedgerLetsNoModelWrite`). Without `writes: true`, the index
-lists no write and the broker keeps 5a's refusal naming the tool to propose the change with
-instead. The bench and red-team override has three settings: `OverrideOff`, `OverrideOn` (reads
-only) and `OverrideWrites` (reads and writes), and applies in development and test only.
+The desk bench gate measures the batch-write pairs above (no pass^4 loss) and the adversarial
+set (zero unauthorized commits), and recommends turning the setting on only where both held
+([desk-bench-gate.md](desk-bench-gate.md)). The recommendation changes no setting.
+
+The bench override has three settings: `OverrideOff`, `OverrideOn` (reads only) and
+`OverrideWrites` (reads and writes), and applies in development and test only. The red-team
+cases do not use it; they set the provider.
 
 ## Client
 
@@ -455,3 +461,7 @@ decisions:
    records `tainted` and the marks.
 8. **Duplicates are folded or refused, never chosen between.** Identical intents fold into one
    step. Two different intents for the same tool and record refuse the whole batch, naming both.
+
+2026-10-21, the owner: no feature is hidden behind the desk bench. Writes from a script are a
+provider setting, "Scripts may propose writes", off by default; the per-model ledger and its
+`writes: true` entries are gone, and the bench recommends the setting.

@@ -106,6 +106,7 @@ type FieldGuardExtension struct {
 	registry  *permission.Registry
 	views     *refview.Views
 	resources map[string]permission.Resource
+	scoped    []string
 }
 
 // recordIDField is how a read names its rows. It is never withheld: the
@@ -126,6 +127,7 @@ func NewFieldGuardExtension(p FieldGuardParams) *FieldGuardExtension {
 		engine:   p.PermissionEngine,
 		registry: registry,
 		views:    refview.New(registry),
+		scoped:   registry.DatabaseScopedResources(),
 	}
 }
 
@@ -366,6 +368,10 @@ type recordContext struct {
 	kind  permission.Resource
 	reach refview.Reach
 	part  bool
+	// carried is a root record of a database-scoped kind that a mutation's
+	// payload carries rather than returns, which is linked for a caller who
+	// cannot read its kind.
+	carried bool
 	// through is the record's own field a deeper field is reached through,
 	// such as a location's state for the state's abbreviation.
 	through string
@@ -377,6 +383,9 @@ func (e *FieldGuardExtension) decide(
 	record recordContext,
 	field string,
 ) refview.Decision {
+	if record.carried && record.reach == refview.Root && !access.Reads(ctx, record.kind) {
+		record.reach = refview.Nested
+	}
 	if record.part && record.reach == refview.Nested && !access.Reads(ctx, record.kind) {
 		return refview.WithheldKind
 	}
@@ -408,31 +417,46 @@ func (e *FieldGuardExtension) record(fc *graphql.FieldContext) (recordContext, b
 
 // reachOf is how the record a field returned was reached: from its root
 // resolver, through a connection, its edges or a mutation's payload; under
-// a self-scoped root; or carried by another record.
+// a self-scoped root; or carried by another record. A shipment, order,
+// invoice or worker a mutation's payload carries is marked carried: the
+// mutation authorized what it wrote, which need not be that kind (a training
+// record carries its worker), and row-level security does not hide a row of
+// those kinds the caller cannot read, so it is the root record only for a
+// caller who reads its kind or when the mutation declares @authorizes for it.
 func (e *FieldGuardExtension) reachOf(
 	returned *graphql.FieldContext,
 	kind permission.Resource,
 ) recordContext {
-	nested, throughRecord := false, false
+	nested, throughRecord, carried := false, false, false
 	for f := returned; f != nil; f = f.Parent {
 		if isRoot(f.Object) {
 			if selfscoped.Root(f.Object, f.Field.Name) {
 				return recordContext{kind: kind, reach: refview.SelfScoped}
 			}
 			if !throughRecord && Authorizes(f.Field.Definition, kind) {
-				nested = false
+				nested, carried = false, false
 			}
 			break
 		}
 		if _, record := e.resources[f.Object]; record {
 			throughRecord = true
 		}
-		if !nested && !e.wrapper(f) {
+		if nested {
+			continue
+		}
+		switch {
+		case e.payload(f):
+			carried = true
+		case !wrapper(f):
 			nested = true
 		}
 	}
 	if !nested {
-		return recordContext{kind: kind, reach: refview.Root}
+		return recordContext{
+			kind:    kind,
+			reach:   refview.Root,
+			carried: carried && slices.Contains(e.scoped, kind.String()),
+		}
 	}
 	if carrier, ok := e.record(returned); ok && e.views.PartOf(kind, carrier.kind) {
 		carrier.part = carrier.part || carrier.kind != kind
@@ -444,11 +468,14 @@ func (e *FieldGuardExtension) reachOf(
 }
 
 // wrapper reports whether a field's parent type only carries what its root
-// field returned: a connection, an edge, or the payload a mutation returns.
-func (e *FieldGuardExtension) wrapper(fc *graphql.FieldContext) bool {
-	if strings.HasSuffix(fc.Object, "Connection") || strings.HasSuffix(fc.Object, "Edge") {
-		return true
-	}
+// field returned: a connection or an edge.
+func wrapper(fc *graphql.FieldContext) bool {
+	return strings.HasSuffix(fc.Object, "Connection") || strings.HasSuffix(fc.Object, "Edge")
+}
+
+// payload reports whether a field belongs to the type a mutation returns
+// when that type is not itself a record of a kind.
+func (e *FieldGuardExtension) payload(fc *graphql.FieldContext) bool {
 	if fc.Parent == nil || fc.Parent.Object != rootMutation {
 		return false
 	}

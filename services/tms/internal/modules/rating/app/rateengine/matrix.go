@@ -46,7 +46,10 @@ func (s *Service) matrixCharge(
 		return decimal.Zero, ErrMatrixNotFound
 	}
 
-	values, axes := s.buildAxes(ctx, rateCtx, rule, dimensions, trace)
+	values, axes, err := s.buildAxes(ctx, rateCtx, rule, dimensions, trace)
+	if err != nil {
+		return decimal.Zero, err
+	}
 
 	cells, err := s.matrixRepo.LookupCells(ctx, &ratematrixports.LookupRateMatrixCellsRequest{
 		TenantInfo:   rateCtx.TenantInfo,
@@ -57,7 +60,7 @@ func (s *Service) matrixCharge(
 		return decimal.Zero, err
 	}
 
-	match, err := ratematrix.SelectCell(dimensions, cells, &values)
+	match, err := ratematrix.LookupCell(ctx, dimensions, cells, &values)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -69,16 +72,22 @@ func (s *Service) matrixCharge(
 //
 // Exact axes get the candidate keys in preference order, because a place can
 // belong to several zones and the narrower one has to win. Banded axes get the
-// quantity, and the band is settled after the fetch.
+// quantity, and the band is settled after the fetch. Geographic axes are keyed
+// by the rules module in one call for the whole matrix.
 func (s *Service) buildAxes(
 	ctx context.Context,
 	rateCtx *RateContext,
 	rule *rateagreement.RateAgreementRule,
 	dimensions []*ratematrix.RateMatrixDimension,
 	trace *ratetypes.Trace,
-) (ratematrix.LookupValues, []ratematrixports.MatrixAxisQuery) {
+) (ratematrix.LookupValues, []ratematrixports.MatrixAxisQuery, error) {
 	var values ratematrix.LookupValues
 	axes := make([]ratematrixports.MatrixAxisQuery, 0, len(dimensions))
+
+	places, err := placeKeys(ctx, rateCtx, dimensions)
+	if err != nil {
+		return values, nil, err
+	}
 
 	for _, dimension := range dimensions {
 		if dimension == nil {
@@ -86,6 +95,9 @@ func (s *Service) buildAxes(
 		}
 
 		value := s.axisValue(ctx, rateCtx, rule, dimension, trace)
+		if keys, geographic := places[dimension.Position]; geographic {
+			value = ratematrix.DimensionValue{Keys: keys}
+		}
 		values[dimension.Position] = value
 
 		axes = append(axes, ratematrixports.MatrixAxisQuery{
@@ -95,7 +107,7 @@ func (s *Service) buildAxes(
 		})
 	}
 
-	return values, axes
+	return values, axes, nil
 }
 
 func (s *Service) axisValue(
@@ -110,9 +122,7 @@ func (s *Service) axisValue(
 		return ratematrix.DimensionValue{Keys: zoneKeys(rateCtx, dimension.Position)}
 	case ratematrix.DimensionKindZip3, ratematrix.DimensionKindZip5,
 		ratematrix.DimensionKindState, ratematrix.DimensionKindCountry:
-		return ratematrix.DimensionValue{
-			Keys: placeKeys(rateCtx, dimension),
-		}
+		return ratematrix.DimensionValue{}
 	case ratematrix.DimensionKindWeightBreak:
 		return ratematrix.DimensionValue{
 			Quantity: decimal.NewNullDecimal(rateCtx.Weight),
@@ -168,35 +178,53 @@ func zoneKeys(rateCtx *RateContext, position int16) []string {
 }
 
 func placeKeys(
+	ctx context.Context,
 	rateCtx *RateContext,
-	dimension *ratematrix.RateMatrixDimension,
-) []string {
-	place := rateCtx.Origin
-	if dimension.Position > 0 {
-		place = rateCtx.Destination
+	dimensions []*ratematrix.RateMatrixDimension,
+) (map[int16][]string, error) {
+	positions := make([]int16, 0, len(dimensions))
+	scopes := make([]rategeo.Scope, 0, len(dimensions))
+	for _, dimension := range dimensions {
+		if dimension == nil {
+			continue
+		}
+		place := rateCtx.Origin
+		if dimension.Position > 0 {
+			place = rateCtx.Destination
+		}
+
+		var scope rategeo.Scope
+		switch dimension.Kind { //nolint:exhaustive // the other kinds are not geographic
+		case ratematrix.DimensionKindZip5:
+			scope = rategeo.Scope{Type: rategeo.ScopeTypeZip5, Value: place.PostalCode}
+		case ratematrix.DimensionKindZip3:
+			scope = rategeo.Scope{Type: rategeo.ScopeTypeZip3, Value: place.PostalCode}
+		case ratematrix.DimensionKindState:
+			scope = rategeo.Scope{Type: rategeo.ScopeTypeState, Value: place.StateID.String()}
+		case ratematrix.DimensionKindCountry:
+			scope = rategeo.Scope{Type: rategeo.ScopeTypeCountry, Value: place.CountryISO3}
+		default:
+			continue
+		}
+		positions = append(positions, dimension.Position)
+		scopes = append(scopes, scope)
 	}
 
-	scope := rategeo.Scope{Value: place.PostalCode}
-
-	switch dimension.Kind { //nolint:exhaustive // the other kinds are not geographic
-	case ratematrix.DimensionKindZip5:
-		scope.Type = rategeo.ScopeTypeZip5
-	case ratematrix.DimensionKindZip3:
-		scope.Type = rategeo.ScopeTypeZip3
-	case ratematrix.DimensionKindState:
-		scope = rategeo.Scope{Type: rategeo.ScopeTypeState, Value: place.StateID.String()}
-	case ratematrix.DimensionKindCountry:
-		scope = rategeo.Scope{Type: rategeo.ScopeTypeCountry, Value: place.CountryISO3}
-	default:
-		return nil
+	keys, err := rategeo.ScopeKeys(ctx, scopes)
+	if err != nil {
+		return nil, err
 	}
 
-	key, ok := scope.Key()
-	if !ok {
-		return nil
+	byPosition := make(map[int16][]string, len(positions))
+	for i, position := range positions {
+		if keys[i] == "" {
+			byPosition[position] = nil
+			continue
+		}
+		byPosition[position] = []string{keys[i]}
 	}
 
-	return []string{key}
+	return byPosition, nil
 }
 
 // equipmentKeys offers the trailer before the tractor. A tariff that varies by
@@ -227,7 +255,7 @@ func (s *Service) applyCellValue(
 ) (decimal.Decimal, error) {
 	cell := match.Cell
 
-	overrides := map[string]any{"baseRate": cell.Value.InexactFloat64()}
+	overrides := map[string]any{"baseRate": cell.Value}
 	resp, err := s.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
 		TemplateID:        matrix.FormulaTemplateID,
 		Entity:            rateCtx.Entity,

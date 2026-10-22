@@ -78,7 +78,9 @@ func (s *Service) Create(
 		zap.String("userId", userID.String()),
 	)
 
-	entity.StampMembers()
+	if err := entity.StampMembers(ctx); err != nil {
+		return nil, err
+	}
 
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
@@ -105,7 +107,9 @@ func (s *Service) Update(
 		zap.String("userId", userID.String()),
 	)
 
-	entity.StampMembers()
+	if err := entity.StampMembers(ctx); err != nil {
+		return nil, err
+	}
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr

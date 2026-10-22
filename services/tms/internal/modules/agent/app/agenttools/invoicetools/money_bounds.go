@@ -224,16 +224,29 @@ func (t *CorrectChargeCodeTool) withinBounds(
 	}
 	payer := customer.Customer{BillingProfile: profile}
 
-	return agentports.WithinMoneyBound(
-		money.MinorUnits(grossChargeChange(plan.Before, plan.After)),
-		payer.BillingCurrencyCode(),
-	)
+	gross, err := grossChargeChange(ctx, plan.Before, plan.After)
+	if err != nil {
+		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	}
+
+	return agentports.WithinMoneyBound(money.MinorUnits(gross), payer.BillingCurrencyCode())
 }
 
-func grossChargeChange(before, after *shipment.Shipment) decimal.Decimal {
+func grossChargeChange(
+	ctx context.Context,
+	before, after *shipment.Shipment,
+) (decimal.Decimal, error) {
 	beforeFreight := before.FreightChargeAmount.Decimal
 	afterFreight := after.FreightChargeAmount.Decimal
 	gross := afterFreight.Sub(beforeFreight).Abs()
+	totalsBefore, err := shipment.ChargeTotalsByCharge(ctx, before)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	totalsAfter, err := shipment.ChargeTotalsByCharge(ctx, after)
+	if err != nil {
+		return decimal.Zero, err
+	}
 
 	kept := make(map[pulid.ID]*shipment.AdditionalCharge, len(before.AdditionalCharges))
 	for _, charge := range before.AdditionalCharges {
@@ -245,25 +258,25 @@ func grossChargeChange(before, after *shipment.Shipment) decimal.Decimal {
 		if charge == nil {
 			continue
 		}
-		total := charge.Total(afterFreight)
+		total := totalsAfter[charge]
 		previous, found := kept[charge.ID]
 		if !found || charge.ID.IsNil() {
 			gross = gross.Add(total.Abs())
 			continue
 		}
 		delete(kept, charge.ID)
-		gross = gross.Add(total.Sub(previous.Total(beforeFreight)).Abs())
+		gross = gross.Add(total.Sub(totalsBefore[previous]).Abs())
 	}
 	for _, charge := range before.AdditionalCharges {
 		if charge == nil {
 			continue
 		}
 		if _, removed := kept[charge.ID]; removed || charge.ID.IsNil() {
-			gross = gross.Add(charge.Total(beforeFreight).Abs())
+			gross = gross.Add(totalsBefore[charge].Abs())
 		}
 	}
 
-	return gross
+	return gross, nil
 }
 
 func uninvoiced(item *billingqueue.BillingQueueItem) bool {

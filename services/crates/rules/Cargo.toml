@@ -1,0 +1,24 @@
+[package]
+name = "trenova-rules"
+description = "The rules the browser and the server must agree on: the formula language (grammar, checker, formatter, metered evaluator), charge allocation, report number formatting, lane specificity and rate matrix bands. Compiled to one WebAssembly module that both run."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+regex-lite.workspace = true
+rust_decimal.workspace = true
+serde.workspace = true
+serde_json = { workspace = true, features = ["raw_value"] }
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

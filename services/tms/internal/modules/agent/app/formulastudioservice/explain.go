@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -44,17 +45,18 @@ func (s *Service) ExplainFormula(
 		shipmentID := req.ShipmentID
 		test.ShipmentID = &shipmentID
 	}
-	evaluation := s.engine.TestExpression(ctx, test)
+	evaluation, err := s.engine.TestExpression(ctx, test)
+	if err != nil {
+		return nil, err
+	}
 	if len(evaluation.Statements) == 0 {
-		message := strings.TrimSpace(evaluation.Error)
-		if message == "" {
-			message = "The expression must parse before it can be explained"
+		if failure := evaluation.Failure(); failure != nil {
+			return nil, failure.ValidationError("expression", errortypes.ErrInvalid)
 		}
 		return nil, errortypes.NewValidationError(
 			"expression",
 			errortypes.ErrInvalid,
-			"{0}",
-			message,
+			"The expression must parse before it can be explained",
 		)
 	}
 
@@ -62,11 +64,9 @@ func (s *Service) ExplainFormula(
 		Statements: evaluation.Statements,
 		Guardrail:  evaluation.Guardrail,
 	}
-	if evaluation.Valid {
-		if billed, ok := evaluation.Result.(decimal.Decimal); ok {
-			resp.BilledAmount = decimalPointer(billed)
-			resp.RawAmount = decimalPointer(evaluation.RawAmount())
-		}
+	if evaluation.Valid && evaluation.Result != nil {
+		resp.BilledAmount = decimalPointer(*evaluation.Result)
+		resp.RawAmount = decimalPointer(evaluation.RawAmount())
 	}
 
 	var reply explainReply
@@ -77,7 +77,7 @@ func (s *Service) ExplainFormula(
 		system:     explainSystem,
 		sections: append(draftSections(&req.Draft), agentports.ContextSection{
 			Title:   "Engine trace",
-			Content: traceText(evaluation, resp),
+			Content: traceText(i18n.FromContext(ctx), evaluation, resp),
 		}),
 		schema:     explainSchema(),
 		schemaName: "formula_explanation",
@@ -87,7 +87,7 @@ func (s *Service) ExplainFormula(
 		return nil, modelFailure(definition, err)
 	}
 
-	resp.Items = boundExplainItems(reply.Items, evaluation.Statements)
+	resp.Items = boundExplainItems(i18n.FromContext(ctx), reply.Items, evaluation.Statements)
 	return resp, nil
 }
 
@@ -124,6 +124,7 @@ func explainSchema() map[string]any {
 }
 
 func traceText(
+	locale i18n.Locale,
 	evaluation *formulatemplateservice.TestExpressionResponse,
 	resp *agentports.ExplainFormulaResponse,
 ) string {
@@ -136,9 +137,12 @@ func traceText(
 			builder.WriteString("result: ")
 		}
 		builder.WriteString(stringutils.OneLine(statement.Code, 2*maxRenderedValueRunes))
-		if statement.Error != "" {
-			builder.WriteString(" => fails: ")
-			builder.WriteString(stringutils.OneLine(statement.Error, maxStatementErrors))
+		if statement.Error != nil {
+			builder.WriteString(" => fails (" + statement.Error.Code + "): ")
+			builder.WriteString(stringutils.OneLine(
+				statement.Error.Localize(locale),
+				maxStatementErrors,
+			))
 		} else {
 			builder.WriteString(" => ")
 			builder.WriteString(renderValue(statement.Value))
@@ -155,15 +159,21 @@ func traceText(
 		builder.WriteString(boundName(resp.Guardrail.Bound))
 		builder.WriteString(" replaced the formula's amount")
 	}
-	if !evaluation.Valid && evaluation.Error != "" {
-		builder.WriteString("\nThe formula fails on this load: ")
-		builder.WriteString(stringutils.OneLine(evaluation.Error, maxStatementErrors))
+	if !evaluation.Valid && evaluation.Error != nil {
+		builder.WriteString(
+			"\nThe formula fails on this load (" + evaluation.Error.Err.Code + "): ",
+		)
+		builder.WriteString(stringutils.OneLine(
+			evaluation.Error.Err.Localize(locale),
+			maxStatementErrors,
+		))
 	}
 
 	return builder.String()
 }
 
 func boundExplainItems(
+	locale i18n.Locale,
 	items []agentports.FormulaStatementNote,
 	statements []formulatemplatetypes.Statement,
 ) []agentports.FormulaStatementNote {
@@ -186,7 +196,7 @@ func boundExplainItems(
 	for index := range statements {
 		text, ok := says[index]
 		if !ok {
-			text = fallbackSays(&statements[index])
+			text = fallbackSays(locale, &statements[index])
 		}
 		bounded = append(bounded, agentports.FormulaStatementNote{
 			StatementIndex: index,
@@ -197,22 +207,22 @@ func boundExplainItems(
 	return bounded
 }
 
-func fallbackSays(statement *formulatemplatetypes.Statement) string {
+func fallbackSays(locale i18n.Locale, statement *formulatemplatetypes.Statement) string {
 	if statement.Kind == formulatemplatetypes.StatementLet {
-		if statement.Error != "" {
+		if statement.Error != nil {
 			return fmt.Sprintf("`%s` fails on this load: %s", statement.Name,
-				stringutils.OneLine(statement.Error, maxStatementErrors))
+				stringutils.OneLine(statement.Error.Localize(locale), maxStatementErrors))
 		}
 		return fmt.Sprintf("`%s` comes to %s on this load.", statement.Name,
 			renderValue(statement.Value))
 	}
 
-	if statement.Error != "" {
+	if statement.Error != nil {
 		return "The formula fails on this load: " +
-			stringutils.OneLine(statement.Error, maxStatementErrors)
+			stringutils.OneLine(statement.Error.Localize(locale), maxStatementErrors)
 	}
-	if amount, ok := statement.Value.(string); ok {
-		if parsed, err := decimal.NewFromString(amount); err == nil {
+	if amount := formulatemplateservice.TraceValueText(statement.Value); amount != nil {
+		if parsed, err := decimal.NewFromString(*amount); err == nil {
 			return fmt.Sprintf(
 				"The formula comes to %s before the charge policy.",
 				money.FormatDollars(parsed),

@@ -1,8 +1,9 @@
 name: Rust services
 
 # The services Cargo workspace (services/Cargo.toml): every backend Rust crate, the
-# contracts in services/proto, and the imaging worker's image. desktop/capture has its own
-# workflow (native-capture.yml).
+# contracts in services/proto, the trenova-rules WebAssembly module and its committed
+# copies, and the imaging worker's image. desktop/capture has its own workflow
+# (native-capture.yml).
 
 on:
   push:
@@ -16,6 +17,12 @@ on:
       - "services/**"
       - "!services/tms/**"
       - "services/tms/internal/infrastructure/imaging/imagingpb/**"
+      # The trenova-rules WebAssembly module: the crate, the workspace manifest and lock and
+      # the toolchain pin are under services/** above; these are its two committed copies.
+      - "services/tms/pkg/rules/rules.wasm"
+      - "services/tms/pkg/rules/rules.wasm.sha256"
+      - "client/packages/shared/src/rules/rules.wasm"
+      - "client/packages/shared/src/rules/rules.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -29,6 +36,12 @@ on:
       - "services/**"
       - "!services/tms/**"
       - "services/tms/internal/infrastructure/imaging/imagingpb/**"
+      # The trenova-rules WebAssembly module: the crate, the workspace manifest and lock and
+      # the toolchain pin are under services/** above; these are its two committed copies.
+      - "services/tms/pkg/rules/rules.wasm"
+      - "services/tms/pkg/rules/rules.wasm.sha256"
+      - "client/packages/shared/src/rules/rules.wasm"
+      - "client/packages/shared/src/rules/rules.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
@@ -100,6 +113,36 @@ jobs:
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo test --workspace --locked
 
+  wasm-rules:
+    name: Rules WebAssembly module
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.94"
+          targets: wasm32-unknown-unknown
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services
+          key: wasm-rules
+      # The pinned binaryen release build-wasm.sh downloads and verifies; keyed on the script,
+      # which holds the version and checksums.
+      - uses: actions/cache@v4
+        with:
+          path: services/target/binaryen
+          key: binaryen-${{ runner.os }}-${{ hashFiles('services/crates/rules/scripts/build-wasm.sh') }}
+      - name: Clippy for wasm32-unknown-unknown
+        run: cargo clippy -p trenova-rules --target wasm32-unknown-unknown --locked -- -D warnings
+      - name: The committed rules.wasm copies match a fresh build
+        working-directory: .
+        run: |
+          if ! services/crates/rules/scripts/build-wasm.sh check; then
+            echo "::error::Run 'task rust:wasm-rules' and commit services/tms/pkg/rules and client/packages/shared/src/rules."
+            exit 1
+          fi
+
   deny:
     name: cargo-deny
     runs-on: ubuntu-latest
@@ -154,6 +197,7 @@ jobs:
           workspaces: |
             services/crates/sandbox/fuzz
             services/imaging/fuzz
+            services/crates/rules/fuzz
       - run: cargo install cargo-fuzz --locked --version 0.13.2
       - name: Sandbox frame protocol
         working-directory: services/crates/sandbox/fuzz
@@ -166,6 +210,11 @@ jobs:
           cargo +nightly fuzz run image_decode -- -max_total_time=90 -rss_limit_mb=2048
           cargo +nightly fuzz run exif_orientation -- -max_total_time=30 -rss_limit_mb=1024
           cargo +nightly fuzz run worker_job -- -max_total_time=30 -rss_limit_mb=1024
+      - name: Formula language
+        working-directory: services/crates/rules/fuzz
+        run: |
+          cargo +nightly fuzz run formula_check -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run formula_format -- -max_total_time=30 -rss_limit_mb=1024
 
   image:
     name: Imaging image

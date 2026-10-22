@@ -1429,6 +1429,8 @@ models:
         resolver: true
       closedById:
         resolver: true
+      violations:
+        resolver: true
   SafetyScorecard:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyScorecard
@@ -2647,6 +2649,9 @@ models:
   AIProviderTestOutcome:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.TestOutcome
+  AIProviderAdvisorRefusal:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.AdvisorRefusal
   AIProviderCapAction:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.CapAction

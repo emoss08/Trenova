@@ -27,6 +27,7 @@
   "Rates save on their own, separately from the rest of this form.": "Las tarifas se guardan por su cuenta, aparte del resto de este formulario.",
   "Save rates": "Guardar las tarifas",
   "Save the matrix first. Rates need something to belong to, and the axes above decide what shape the grid takes.": "Guarde primero la matriz. Las tarifas necesitan algo a lo que pertenecer, y los ejes de arriba deciden la forma de la cuadrícula.",
+  "Seen in {0}": "Aparece en {0}",
   "Select dimension": "Seleccione la dimensión",
   "Select key normalization": "Seleccione la normalización de claves",
   "Select match mode": "Seleccione el modo de coincidencia",

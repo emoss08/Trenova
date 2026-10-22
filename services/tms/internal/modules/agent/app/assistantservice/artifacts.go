@@ -113,6 +113,7 @@ type artifactRecorder struct {
 	reader    *permissionports.RequestActor
 	emit      kernelports.AssistantStreamEmitter
 	recorded  []*assistantartifact.Artifact
+	readBy    *agentIdentity
 	// svc reads what an artifact needs beyond the tool's result: the agent
 	// a document is credited to, the pages an extraction was read from.
 	svc *Service
@@ -188,6 +189,10 @@ func (r *artifactRecorder) observe(
 		}
 	}
 
+	if shown, continued := r.continueTable(&observation); continued {
+		return shown, nil
+	}
+
 	artifact := artifactFromObservation(observation)
 	if artifact == nil {
 		return nil, nil
@@ -201,6 +206,8 @@ func (r *artifactRecorder) observe(
 		observation.Call.Name,
 		observation.Call.Arguments,
 	)
+	noteReadWith(artifact, observation.RanWith)
+	r.noteReader(artifact)
 	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
 		return r.bunch(&observation, artifact)
 	}
@@ -571,6 +578,12 @@ func (r *artifactRecorder) save(
 	}
 	r.assignSlug(artifact, previous)
 
+	return r.store(artifact)
+}
+
+func (r *artifactRecorder) store(
+	artifact *assistantartifact.Artifact,
+) (*assistantartifact.Artifact, error) {
 	saved, err := r.repo.Upsert(r.ctx, artifact)
 	if err != nil {
 		r.logger.Error("artifact could not be kept",
@@ -636,6 +649,7 @@ func shownArtifact(artifact *assistantartifact.Artifact) *agentports.ShownArtifa
 		Opens:        opensView(artifact),
 		OpensRecords: opensRecords(artifact),
 		Ranked:       rankedTable(artifact),
+		Paged:        pagedTable(artifact),
 		Written:      writtenPhrase(artifact),
 		Lineage:      lineageRoot(artifact),
 	}
@@ -1069,6 +1083,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		payload["recordEntity"] = projection.recordEntity
 	}
 	fitRows(payload, "rows")
+	notePaging(payload, result)
 
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindTableView,
@@ -1216,6 +1231,7 @@ func candidateRankingArtifact(callID string, result map[string]any) *assistantar
 		payload["recordEntity"] = projection.recordEntity
 	}
 	fitRows(payload, "rows")
+	notePaging(payload, result)
 
 	return &assistantartifact.Artifact{
 		Kind:             assistantartifact.KindTableView,

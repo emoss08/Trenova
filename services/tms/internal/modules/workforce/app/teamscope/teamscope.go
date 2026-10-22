@@ -51,6 +51,15 @@ type Request struct {
 	Resource   permission.Resource
 	Operation  permission.Operation
 	WorkerID   pulid.ID
+	// ApprovalScope is which delegations count toward the team; empty is all.
+	ApprovalScope worker.ApprovalScope
+}
+
+func (r *Request) approvalScope() worker.ApprovalScope {
+	if r.ApprovalScope == "" {
+		return worker.ApprovalScopeAll
+	}
+	return r.ApprovalScope
 }
 
 func (g Guard) Require(ctx context.Context, req *Request) error {
@@ -76,7 +85,7 @@ func (g Guard) Require(ctx context.Context, req *Request) error {
 		TenantInfo: req.TenantInfo,
 		UserID:     req.Actor.UserID,
 		WorkerID:   req.WorkerID,
-		Scope:      worker.ApprovalScopeAll,
+		Scope:      req.approvalScope(),
 	})
 	if err != nil {
 		return fmt.Errorf("check the person's team: %w", err)
@@ -86,4 +95,55 @@ func (g Guard) Require(ctx context.Context, req *Request) error {
 	}
 
 	return nil
+}
+
+type Managers interface {
+	ManagerIDs(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		userID pulid.ID,
+		scope worker.ApprovalScope,
+		asOf int64,
+	) ([]pulid.ID, map[pulid.ID]pulid.ID, error)
+}
+
+// ListGuard is Guard for a list that spans workers: rather than answer for one
+// worker, it names the managers a team-scoped grant narrows the list to.
+type ListGuard struct {
+	Permissions Permissions
+	Managers    Managers
+}
+
+// Narrow returns the managers whose team the list is held to, or none when the
+// grant reaches the whole organization. WorkerID is ignored.
+func (g ListGuard) Narrow(ctx context.Context, req *Request) ([]pulid.ID, error) {
+	if g.Permissions == nil || req.Actor == nil {
+		return nil, ErrUnchecked
+	}
+	result, err := g.Permissions.Check(ctx, req.Actor.PermissionCheck(req.Resource, req.Operation))
+	if err != nil {
+		return nil, fmt.Errorf("authorize %s on %s: %w", req.Operation, req.Resource, err)
+	}
+	if !result.Allowed {
+		return nil, fmt.Errorf("the person you act for may not %s %s records",
+			req.Operation, req.Resource)
+	}
+	if result.DataScope != permission.DataScopeTeam {
+		return nil, nil
+	}
+	if g.Managers == nil {
+		return nil, ErrOutsideTeam
+	}
+
+	ids, _, err := g.Managers.ManagerIDs(
+		ctx, req.TenantInfo, req.Actor.UserID, req.approvalScope(), 0,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("find the person's team: %w", err)
+	}
+	if len(ids) == 0 {
+		return nil, ErrOutsideTeam
+	}
+
+	return ids, nil
 }

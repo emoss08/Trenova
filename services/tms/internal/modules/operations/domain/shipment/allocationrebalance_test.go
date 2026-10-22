@@ -8,7 +8,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestFindStaleAmountSplits_FreightAmountsNoLongerAddUp(t *testing.T) {
+func findStale(t *testing.T, shp *Shipment, allocations []*ChargeAllocation) []StaleAmountSplit {
+	t.Helper()
+
+	rebalance, err := RebalanceAmountSplits(t.Context(), shp, allocations)
+	require.NoError(t, err)
+
+	return rebalance.Stale
+}
+
+func convertSplits(t *testing.T, shp *Shipment, allocations []*ChargeAllocation) int {
+	t.Helper()
+
+	rebalance, err := RebalanceAmountSplits(t.Context(), shp, allocations)
+	require.NoError(t, err)
+
+	return rebalance.ConvertToPercent()
+}
+
+func TestRebalanceAmountSplits_FindsFreightAmountsNoLongerAddUp(t *testing.T) {
 	t.Parallel()
 
 	shp := allocationShipment("3000")
@@ -18,7 +36,7 @@ func TestFindStaleAmountSplits_FreightAmountsNoLongerAddUp(t *testing.T) {
 		amountAllocation(ChargeAllocationKindFreight, acme, "1350", 1),
 	}
 
-	stale := FindStaleAmountSplits(shp, allocations)
+	stale := findStale(t, shp, allocations)
 
 	require.Len(t, stale, 1)
 	assert.Equal(t, ChargeAllocationKindFreight, stale[0].Kind)
@@ -27,7 +45,7 @@ func TestFindStaleAmountSplits_FreightAmountsNoLongerAddUp(t *testing.T) {
 	assert.True(t, stale[0].ChargeTotal.Equal(allocDec("3000")))
 }
 
-func TestFindStaleAmountSplits_IgnoresPercentSplitsAndBalancedAmounts(t *testing.T) {
+func TestRebalanceAmountSplits_FindsIgnoresPercentSplitsAndBalancedAmounts(t *testing.T) {
 	t.Parallel()
 
 	detention := flatCharge("100", 1)
@@ -40,10 +58,10 @@ func TestFindStaleAmountSplits_IgnoresPercentSplitsAndBalancedAmounts(t *testing
 		forCharge(percentAllocation(ChargeAllocationKindAccessorial, acme, "40", 1), detention),
 	}
 
-	assert.Empty(t, FindStaleAmountSplits(shp, allocations))
+	assert.Empty(t, findStale(t, shp, allocations))
 }
 
-func TestFindStaleAmountSplits_AccessorialIsNamedByItsIndex(t *testing.T) {
+func TestRebalanceAmountSplits_FindsAccessorialIsNamedByItsIndex(t *testing.T) {
 	t.Parallel()
 
 	fuel := flatCharge("50", 1)
@@ -54,7 +72,7 @@ func TestFindStaleAmountSplits_AccessorialIsNamedByItsIndex(t *testing.T) {
 		forCharge(amountAllocation(ChargeAllocationKindAccessorial, peak, "150", 0), detention),
 	}
 
-	stale := FindStaleAmountSplits(shp, allocations)
+	stale := findStale(t, shp, allocations)
 
 	require.Len(t, stale, 1)
 	assert.Equal(t, 1, stale[0].ChargeIndex)
@@ -62,7 +80,7 @@ func TestFindStaleAmountSplits_AccessorialIsNamedByItsIndex(t *testing.T) {
 	assert.True(t, stale[0].ChargeTotal.Equal(allocDec("200")))
 }
 
-func TestConvertAmountSplitsToPercent_KeepsEachPayersProportion(t *testing.T) {
+func TestRebalanceAmountSplits_ConvertsKeepsEachPayersProportion(t *testing.T) {
 	t.Parallel()
 
 	shp := allocationShipment("3000")
@@ -72,7 +90,7 @@ func TestConvertAmountSplitsToPercent_KeepsEachPayersProportion(t *testing.T) {
 		amountAllocation(ChargeAllocationKindFreight, acme, "1350", 1),
 	}
 
-	converted := ConvertAmountSplitsToPercent(shp, allocations)
+	converted := convertSplits(t, shp, allocations)
 
 	assert.Equal(t, 1, converted)
 	for _, row := range allocations {
@@ -82,14 +100,14 @@ func TestConvertAmountSplitsToPercent_KeepsEachPayersProportion(t *testing.T) {
 	assert.Equal(t, "52.631579", allocations[0].Percent.Decimal.StringFixed(6))
 	assert.Equal(t, "47.368421", allocations[1].Percent.Decimal.StringFixed(6))
 
-	resolution, err := ResolveShares(shp, allocations)
+	resolution, err := ResolveShares(t.Context(), shp, allocations)
 	require.NoError(t, err)
 	assert.True(t, resolution.ShareFor(peak).TotalAmount.Add(resolution.ShareFor(acme).TotalAmount).
 		Equal(allocDec("3000")))
-	assert.Empty(t, FindStaleAmountSplits(shp, allocations))
+	assert.Empty(t, findStale(t, shp, allocations))
 }
 
-func TestConvertAmountSplitsToPercent_LeavesBalancedSplitsAlone(t *testing.T) {
+func TestRebalanceAmountSplits_ConvertsLeavesBalancedSplitsAlone(t *testing.T) {
 	t.Parallel()
 
 	shp := allocationShipment("2850")
@@ -99,11 +117,11 @@ func TestConvertAmountSplitsToPercent_LeavesBalancedSplitsAlone(t *testing.T) {
 		amountAllocation(ChargeAllocationKindFreight, acme, "1350", 1),
 	}
 
-	assert.Zero(t, ConvertAmountSplitsToPercent(shp, allocations))
+	assert.Zero(t, convertSplits(t, shp, allocations))
 	assert.Equal(t, ChargeAllocationMethodAmount, allocations[0].Method)
 }
 
-func TestConvertAmountSplitsToPercent_ThreeWaySplitTotalsExactlyOneHundred(t *testing.T) {
+func TestRebalanceAmountSplits_ConvertsThreeWaySplitTotalsExactlyOneHundred(t *testing.T) {
 	t.Parallel()
 
 	shp := allocationShipment("1000")
@@ -114,7 +132,7 @@ func TestConvertAmountSplitsToPercent_ThreeWaySplitTotalsExactlyOneHundred(t *te
 		amountAllocation(ChargeAllocationKindFreight, c, "100", 2),
 	}
 
-	require.Equal(t, 1, ConvertAmountSplitsToPercent(shp, allocations))
+	require.Equal(t, 1, convertSplits(t, shp, allocations))
 
 	total := allocDec("0")
 	for _, row := range allocations {
@@ -134,7 +152,7 @@ func TestResolveShares_RecordsTheSplitMethodOnEachShare(t *testing.T) {
 		amountAllocation(ChargeAllocationKindFreight, shp.CustomerID, "1350", 1),
 	}
 
-	resolution, err := ResolveShares(shp, allocations)
+	resolution, err := ResolveShares(t.Context(), shp, allocations)
 	require.NoError(t, err)
 
 	for _, charge := range resolution.ShareFor(peak).Charges {

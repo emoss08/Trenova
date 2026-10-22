@@ -1,6 +1,8 @@
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
 import { ReceiptView } from "@/components/formula-editor/receipt-view";
 import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
+import { previewFailure } from "@/lib/formula-preview";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import {
   Alert,
   AlertAction,
@@ -101,6 +103,7 @@ export function PreviewPane() {
   const [pinnedKey, setPinnedKey] = useState<string | null>(null);
 
   const result = preview.result;
+  const failure = previewFailure(result);
   const amounts = previewAmounts(result);
   const usingShipment = preview.source === "shipment" && preview.shipmentId !== "";
   const durationMicros = result?.receipt?.durationMicros;
@@ -389,7 +392,7 @@ export function PreviewPane() {
                       "The formula returned {0}. It needs to return a number.",
                       formatStudioValue(result.result),
                     )
-                  : (result.error ?? result.message)}
+                  : failure && translateMessage(failure, t)}
               </p>
             </div>
           </div>

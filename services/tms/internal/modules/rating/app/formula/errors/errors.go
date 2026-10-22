@@ -3,6 +3,8 @@ package errors
 import (
 	"fmt"
 	"strings"
+
+	"github.com/emoss08/trenova/pkg/rules"
 )
 
 type ResolveError struct {
@@ -25,16 +27,6 @@ func NewResolveError(path, entityType string, cause error) *ResolveError {
 		EntityType: entityType,
 		Cause:      cause,
 	}
-}
-
-type ValidationError struct {
-	Field   string
-	Value   any
-	Message string
-}
-
-func (e *ValidationError) Error() string {
-	return fmt.Sprintf("validation failed for field %s: %s", e.Field, e.Message)
 }
 
 type TransformError struct {
@@ -84,29 +76,6 @@ func NewComputeError(function, entityType string, cause error) *ComputeError {
 	}
 }
 
-type VariableError struct {
-	VariableName string
-	Context      string
-	Cause        error
-}
-
-func (e *VariableError) Error() string {
-	return fmt.Sprintf("failed to resolve variable '%s' in context %s: %v",
-		e.VariableName, e.Context, e.Cause)
-}
-
-func (e *VariableError) Unwrap() error {
-	return e.Cause
-}
-
-func NewVariableError(variableName, context string, cause error) *VariableError {
-	return &VariableError{
-		VariableName: variableName,
-		Context:      context,
-		Cause:        cause,
-	}
-}
-
 type SchemaError struct {
 	SchemaID string
 	Action   string
@@ -130,32 +99,6 @@ func NewSchemaError(schemaID, action string, cause error) *SchemaError {
 	}
 }
 
-// MissingFieldError explains a compile failure that happened because a record
-// arrived without a value for a nullable field the expression relies on. It is
-// the author's problem to fix, not the system's, so it names the field and the
-// guard that fixes it.
-type MissingFieldError struct {
-	Expression  string
-	Fields      []string
-	Suggestions []string
-}
-
-func (e *MissingFieldError) Error() string {
-	return fmt.Sprintf(
-		"no value for %s on this record; write %s so the formula still prices when it is missing",
-		strings.Join(e.Fields, ", "),
-		strings.Join(e.Suggestions, ", "),
-	)
-}
-
-func NewMissingFieldError(expression string, fields, suggestions []string) *MissingFieldError {
-	return &MissingFieldError{
-		Expression:  expression,
-		Fields:      fields,
-		Suggestions: suggestions,
-	}
-}
-
 type UnresolvedFieldError struct {
 	Fields []string
 	Causes map[string]error
@@ -169,9 +112,46 @@ func (e *UnresolvedFieldError) Error() string {
 	)
 }
 
+func (e *UnresolvedFieldError) LocalizedMessage() (message string, args []any) {
+	return e.Text().LocalizedMessage()
+}
+
+func (e *UnresolvedFieldError) Text() rules.Message {
+	return rules.Message{
+		Template: "the formula reads {0}, which could not be read from this record; " +
+			"it cannot be priced until the field has a value",
+		Args: []any{strings.Join(e.Fields, ", ")},
+	}
+}
+
 func NewUnresolvedFieldError(fields []string, causes map[string]error) *UnresolvedFieldError {
 	return &UnresolvedFieldError{
 		Fields: fields,
 		Causes: causes,
 	}
+}
+
+type EvaluationError struct {
+	Scope string
+	Err   *rules.FormulaError
+}
+
+func (e *EvaluationError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *EvaluationError) Unwrap() error {
+	return e.Err
+}
+
+func (e *EvaluationError) LocalizedMessage() (message string, args []any) {
+	return e.Err.LocalizedMessage()
+}
+
+func (e *EvaluationError) MarshalJSON() ([]byte, error) {
+	return e.Err.AppendJSON(make([]byte, 0, 256), e.Scope)
+}
+
+func NewEvaluationError(scope string, err *rules.FormulaError) *EvaluationError {
+	return &EvaluationError{Scope: scope, Err: err}
 }

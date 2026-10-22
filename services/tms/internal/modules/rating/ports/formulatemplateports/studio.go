@@ -70,6 +70,7 @@ type ScenarioTrace struct {
 	RecordedOnVersion *int64             `json:"recordedOnVersion"`
 	RecordedBy        *ScenarioRecorder  `json:"recordedBy"`
 	Error             string             `json:"error,omitempty"`
+	ErrorCode         string             `json:"errorCode,omitempty"`
 	Rows              []ScenarioTraceRow `json:"rows"`
 
 	ScenarioName        string          `json:"-"`

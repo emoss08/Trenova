@@ -47,14 +47,17 @@ type graphQLVariable struct {
 	Description string
 }
 
-// graphQLAlongside is a connection read a list makes beside its own,
-// checked by its own resolver for its own resource.
+// graphQLAlongside is a read a list makes beside its own, checked by its own
+// resolver for its own resource: a connection read through its table input,
+// or an unpaged list keyed by the list's own arguments.
 type graphQLAlongside struct {
 	Operation string
 	RootField string
 	Resource  string
-	// Input is the variable the operation takes its table input in.
+	// Input is the variable a connection read takes its table input in.
 	Input string
+	// Keys are the variables an unpaged read takes from the list's own call.
+	Keys []string
 }
 
 type graphQLField struct {

@@ -227,6 +227,21 @@ function groupBy(items, key) {
 const money = (value) => Number(value.toFixed(6)).toString();
 const failuresOf = (units) => units.flatMap((unit) => unit.tools.flatMap((tool) => tool.failures));
 
+/**
+ * What consulting the advisor came to over these units; its cost is already in
+ * theirs. The fixture's only Claude routes run on Bedrock, which does not serve
+ * the advisor, so a unit carries one only when a fixture gives it one.
+ */
+function advisorOf(units) {
+  const consulted = units.filter((unit) => unit.advisor);
+  return {
+    calls: String(sum(consulted, (unit) => unit.advisor.calls)),
+    promptTokens: String(sum(consulted, (unit) => unit.advisor.promptTokens)),
+    outputTokens: String(sum(consulted, (unit) => unit.advisor.outputTokens)),
+    costUsd: money(sum(consulted, (unit) => unit.advisor.cost)),
+  };
+}
+
 function totalsOf(units) {
   const count = (outcome) => units.filter((unit) => unit.outcome === outcome).length;
   const completed = count("Completed");
@@ -252,6 +267,7 @@ function totalsOf(units) {
     toolFailureRate: rate(failures.length, toolCalls),
     modelShareOfToolFailures: rate(modelFailures, failures.length),
     costUsd: money(cost),
+    advisor: advisorOf(units),
     pricedRuns: priced.length,
     costPerCompletedRun: priced.length > 0 && completed > 0 ? money(cost / completed) : null,
     toolFailureAlarm: (rate(failures.length, toolCalls) ?? 0) > TOOL_FAILURE_ALARM_RATE,
@@ -309,6 +325,7 @@ function seriesFrom(key, members, identity) {
       calls: failures.filter((item) => item === cause).length,
     })).filter((item) => item.calls > 0),
     costUsd: totals.costUsd,
+    advisor: totals.advisor,
     pricedRuns: totals.pricedRuns,
     costPerCompletedRun: totals.costPerCompletedRun,
     firstTokenMedianMs: percentile(firstTokens, 0.5),
@@ -893,12 +910,15 @@ function suggestionsOf(state, input, since, now) {
   const scale = input.window === "Day" ? 1 / 30 : input.window === "Week" ? 7 / 30 : 1;
   for (const seeded of SEEDED_SUGGESTIONS) {
     seeded.counts.forEach((count, index) =>
-      add(seeded.agentDefinitionId, seeded.name, SUGGESTION_OUTCOMES[index], Math.round(count * scale)),
+      add(
+        seeded.agentDefinitionId,
+        seeded.name,
+        SUGGESTION_OUTCOMES[index],
+        Math.round(count * scale),
+      ),
     );
   }
-  const names = new Map(
-    (state.ai?.agents ?? []).map((edge) => [edge.node.id, edge.node.name]),
-  );
+  const names = new Map((state.ai?.agents ?? []).map((edge) => [edge.node.id, edge.node.name]));
   for (const row of state.agentSuggestions ?? []) {
     if (row.createdAt < since) continue;
     if (row.outcome === "Shown" && now - row.createdAt < SUGGESTION_SETTLE_SECONDS) continue;
@@ -908,7 +928,8 @@ function suggestionsOf(state, input, since, now) {
 
   const agents = [...byAgent.values()]
     .map((row) => {
-      const suggested = row.switched + row.sentThrough + row.autoSwitched + row.kept + row.passedOver;
+      const suggested =
+        row.switched + row.sentThrough + row.autoSwitched + row.kept + row.passedOver;
       const taken = row.switched + row.sentThrough + row.autoSwitched;
       return { ...row, suggested, takenRate: suggested === 0 ? null : taken / suggested };
     })

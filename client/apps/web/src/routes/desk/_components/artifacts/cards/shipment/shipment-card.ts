@@ -1,9 +1,11 @@
 import { formatList } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { reportNumericValue } from "@trenova/shared/lib/report-format";
+import { chargeTotals } from "@trenova/shared/rules/allocation";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
+import type { DecimalString } from "@trenova/shared/rules/wire";
 import { clampUnit, formatPercent, getNameInitials } from "@trenova/shared/lib/utils";
 import {
-  additionalChargeLineTotal,
   isActiveCarrierAssignment,
   type AssignmentStatus,
   type CarrierAssignmentStatus,
@@ -668,7 +670,13 @@ export function temperatureLabel(
   return "";
 }
 
-export type ChargeLine = { key: string; label: string; detail: string; amount: number | null };
+export type ChargeLine = {
+  key: string;
+  label: string;
+  detail: string;
+  /** The linehaul as the shipment holds it, or a charge's exact total from the rules module. */
+  amount: number | DecimalString | null;
+};
 
 export type Charges = {
   lines: ChargeLine[];
@@ -698,11 +706,20 @@ function formulaName(shipment: Shipment): string {
  * Linehaul first (label "Linehaul", detail the rating method: ratingDetail.agreementName ·
  * ruleLabel, else formulaTemplateName / formulaTemplate.name), then each additional charge
  * (label accessorialCharge.description || code, detail "2 × $45.00" when unit > 1 or
- * "12% of linehaul" for Percentage, amount additionalChargeLineTotal), total from
- * totalChargeAmount. `ratedBy` names the contract or formula alone, and says when it was
+ * "12% of linehaul" for Percentage, amount its exact total from the rules module, every charge in
+ * one call and a percentage one priced against the linehaul), total from totalChargeAmount. `ratedBy` names the contract or formula alone, and says when it was
  * applied automatically.
  */
-export function chargesOf(shipment: Shipment, t: TranslateFn): Charges {
+export function chargesOf(rules: RulesRuntime, shipment: Shipment, t: TranslateFn): Charges {
+  const additional = shipment.additionalCharges ?? [];
+  const { totals } = chargeTotals(rules, {
+    base: shipment.freightChargeAmount,
+    charges: additional.map((charge) => ({
+      method: charge.method,
+      amount: charge.amount,
+      unit: charge.unit,
+    })),
+  });
   const lines: ChargeLine[] = [
     {
       key: "linehaul",
@@ -712,7 +729,7 @@ export function chargesOf(shipment: Shipment, t: TranslateFn): Charges {
     },
   ];
 
-  (shipment.additionalCharges ?? []).forEach((charge, index) => {
+  additional.forEach((charge, index) => {
     const accessorial = charge.accessorialCharge;
     const label = (accessorial?.description || accessorial?.code || "").trim() || t("Charge");
     const unit = typeof charge.unit === "number" && Number.isFinite(charge.unit) ? charge.unit : 1;
@@ -727,11 +744,7 @@ export function chargesOf(shipment: Shipment, t: TranslateFn): Charges {
       key: charge.id || `charge-${index}`,
       label,
       detail,
-      amount: additionalChargeLineTotal({
-        method: charge.method,
-        amount: reportNumericValue(charge.amount),
-        unit,
-      }),
+      amount: totals[index] ?? null,
     });
   });
 

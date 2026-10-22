@@ -490,9 +490,12 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindCreditMemoApplication: mint(
 		func(e *customerpayment.CreditMemoApplication) pulid.ID { return e.ID },
 	),
-	permission.KindRateAgreementLane: mint(
-		func(e *rateagreement.RateAgreementRule) pulid.ID { return e.ID },
-	),
+	permission.KindRateAgreementLane: func(ctx context.Context) (pulid.ID, error) {
+		rule := &rateagreement.RateAgreementRule{LaneKey: rateagreement.RadiusLaneKey}
+		err := rule.BeforeAppendModel(ctx, &bun.InsertQuery{})
+
+		return rule.ID, err
+	},
 	permission.KindRateImport: mint(
 		func(e *rateimport.RateImportBatch) pulid.ID { return e.ID },
 	),

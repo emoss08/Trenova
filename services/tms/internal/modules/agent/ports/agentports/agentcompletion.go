@@ -195,7 +195,7 @@ type ChatCompletionResult struct {
 }
 
 const (
-	DefaultAdvisorModel   = "claude-opus-5-5"
+	DefaultAdvisorModel   = aiprovider.DefaultAdvisorModel
 	DefaultAdvisorMaxUses = 2
 )
 
@@ -318,6 +318,21 @@ type StructuredCompleter interface {
 
 type ProviderAvailability interface {
 	CanServe(ctx context.Context, task aiprovider.Task, tenant pagination.TenantInfo) (bool, error)
+}
+
+// ScriptProviders reads the code-mode settings of the chat providers, which
+// is what decides whether an agent may answer with a script.
+type ScriptProviders interface {
+	// ScriptsOffered reports whether any provider that may answer the
+	// tenant's assistant chat has scripts turned on.
+	ScriptsOffered(ctx context.Context, tenant pagination.TenantInfo) (bool, error)
+	// ScriptSettings is what one provider holds now, read at the moment a
+	// script is asked for so a setting turned off applies at once.
+	ScriptSettings(
+		ctx context.Context,
+		providerID pulid.ID,
+		tenant pagination.TenantInfo,
+	) (aiprovider.ScriptSettings, error)
 }
 
 type CompletionService interface {

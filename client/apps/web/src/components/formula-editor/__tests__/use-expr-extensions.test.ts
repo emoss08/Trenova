@@ -1,19 +1,19 @@
-import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
+import { rulesSync } from "@trenova/shared/rules/runtime";
 import { renderHook } from "@testing-library/react";
 import type { EditorView } from "@codemirror/view";
 import { describe, expect, it, vi } from "vitest";
 import { useExprExtensions } from "../use-expr-extensions";
-import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
+import { knownFor } from "@/components/formula-editor/__tests__/formula-fixtures";
 
 describe("useExprExtensions", () => {
   it("keeps the extension array stable and reconfigures the live view when identifiers change", () => {
     const dispatch = vi.fn();
     const viewRef = { current: { dispatch } as unknown as EditorView };
-    const first = buildKnownIdentifiers(describedShipment, []);
-    const second = buildKnownIdentifiers(describedShipment, [{ name: "fuelPct", type: "Number" }]);
+    const first = knownFor();
+    const second = knownFor([{ name: "fuelPct", type: "Number" }]);
 
     const { result, rerender } = renderHook(
-      ({ known }) => useExprExtensions(known, true, viewRef),
+      ({ known }) => useExprExtensions(rulesSync(), known, true, viewRef),
       { initialProps: { known: first } },
     );
     const initial = result.current;

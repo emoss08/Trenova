@@ -3,10 +3,12 @@ package shipment
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -94,6 +96,71 @@ func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, q bun.Query) err
 	return nil
 }
 
+type ChargeTotals struct {
+	Each []decimal.Decimal
+	Sum  decimal.Decimal
+}
+
+func AdditionalChargeTotals(
+	ctx context.Context,
+	charges []*AdditionalCharge,
+	baseCharge decimal.Decimal,
+) (*ChargeTotals, error) {
+	if len(charges) == 0 {
+		return &ChargeTotals{Sum: decimal.Zero}, nil
+	}
+
+	req := &rules.AllocationChargesRequest{
+		Base:    baseCharge,
+		Charges: make([]rules.AllocationCharge, 0, len(charges)),
+	}
+	for _, charge := range charges {
+		req.Charges = append(req.Charges, accessorialCharge(charge, nil))
+	}
+
+	totals, err := rules.ChargeTotals(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("price additional charges: %w", err)
+	}
+	if len(totals.Totals) != len(charges) {
+		return nil, fmt.Errorf(
+			"%w: %d totals came back for %d charges",
+			errSplitShape,
+			len(totals.Totals),
+			len(charges),
+		)
+	}
+
+	return &ChargeTotals{Each: totals.Totals, Sum: totals.Sum}, nil
+}
+
+func ChargeTotalsByCharge(
+	ctx context.Context,
+	shp *Shipment,
+) (map[*AdditionalCharge]decimal.Decimal, error) {
+	if shp == nil {
+		return map[*AdditionalCharge]decimal.Decimal{}, nil
+	}
+
+	totals, err := AdditionalChargeTotals(
+		ctx,
+		shp.AdditionalCharges,
+		shp.FreightChargeAmount.Decimal,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	byCharge := make(map[*AdditionalCharge]decimal.Decimal, len(shp.AdditionalCharges))
+	for i, charge := range shp.AdditionalCharges {
+		if charge != nil {
+			byCharge[charge] = totals.Each[i]
+		}
+	}
+
+	return byCharge, nil
+}
+
 // RestoreSystemOwnedCharges re-seats the fields of an inbound charge set that
 // the rating engines own rather than the caller: whether a charge was machine
 // generated, and which engine owns it.
@@ -108,38 +175,6 @@ func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, q bun.Query) err
 // Exactly one owner column is set on any system charge, which the database
 // enforces. That is what keeps three engines writing charges from ever billing
 // the same thing twice.
-func (c *AdditionalCharge) Total(baseCharge decimal.Decimal) decimal.Decimal {
-	if c == nil {
-		return decimal.Zero
-	}
-
-	switch c.Method {
-	case accessorialcharge.MethodFlat:
-		return c.Amount.Mul(decimal.NewFromInt32(int32(max(c.Unit, 1))))
-	case accessorialcharge.MethodPerUnit:
-		if c.Unit < 1 {
-			return decimal.Zero
-		}
-		return c.Amount.Mul(decimal.NewFromInt32(int32(c.Unit)))
-	case accessorialcharge.MethodPercentage:
-		return baseCharge.Mul(c.Amount.Div(decimal.NewFromInt(100)))
-	default:
-		return decimal.Zero
-	}
-}
-
-func AdditionalChargesTotal(
-	charges []*AdditionalCharge,
-	baseCharge decimal.Decimal,
-) decimal.Decimal {
-	total := decimal.Zero
-	for _, charge := range charges {
-		total = total.Add(charge.Total(baseCharge))
-	}
-
-	return total
-}
-
 func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 	originals := make(map[pulid.ID]*AdditionalCharge, len(original))
 	for _, charge := range original {

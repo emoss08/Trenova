@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router";
 import { installChunkRecovery } from "@/lib/chunk-recovery";
 import { registerServiceWorker } from "@/lib/service-worker";
+import { preloadRulesWhenIdle } from "@trenova/shared/rules/preload";
 import { Providers } from "./providers";
 import { router } from "./router";
 
@@ -24,3 +25,7 @@ createRoot(document.getElementById("root")!).render(
 );
 
 registerServiceWorker(router);
+
+// After the page has loaded and the browser is idle, so the formula editor and the rate
+// screens find the rules module ready; never before first paint.
+preloadRulesWhenIdle();

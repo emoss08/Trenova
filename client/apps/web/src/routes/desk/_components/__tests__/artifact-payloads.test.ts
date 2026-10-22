@@ -9,6 +9,8 @@ import {
   reportRunFrom,
   savedEmailWording,
   sortTableRows,
+  resumesAfterAgent,
+  tableRowsFrom,
   tableViewFrom,
 } from "../artifacts/artifact-payloads";
 
@@ -165,7 +167,12 @@ describe("planFrom", () => {
         stepCount: 2,
         steps: [
           { step: 2, proposalId: "ap_2", toolName: "customer_send_email", rationale: "" },
-          { step: 1, proposalId: "ap_1", toolName: "dispatch_assign_move", rationale: "Closest driver" },
+          {
+            step: 1,
+            proposalId: "ap_1",
+            toolName: "dispatch_assign_move",
+            rationale: "Closest driver",
+          },
         ],
       }),
     );
@@ -302,6 +309,86 @@ describe("tableViewFrom", () => {
 
     expect(table.columns.map((column) => column.key)).toEqual(["proNumber"]);
     expect(table.rows[0].path).toContain("panelEntityId=shp_01M37R101VKZTB7TSKR30FJ0AT");
+  });
+
+  it("reads where the list goes on from the rows the agent read", () => {
+    const columns = [{ key: "name", label: "Name", type: "text" }];
+
+    expect(
+      view({
+        display: 1,
+        columns,
+        rows: [],
+        hasMore: true,
+        nextCursor: "c-25",
+        total: 128,
+        pages: 2,
+      }).paging,
+    ).toEqual({ hasMore: true, nextCursor: "c-25", nextOffset: null, total: 128, pages: 2 });
+    expect(view({ display: 1, columns, rows: [], hasMore: true, nextOffset: 50 }).paging).toEqual({
+      hasMore: true,
+      nextCursor: "",
+      nextOffset: 50,
+      total: null,
+      pages: 1,
+    });
+  });
+
+  it("reads a table stored before it kept where its list goes on as all there is", () => {
+    const paging = view({
+      display: 1,
+      columns: [{ key: "name", label: "Name", type: "text" }],
+      rows: [{ name: "Steel" }],
+    }).paging;
+
+    expect(paging).toEqual({
+      hasMore: false,
+      nextCursor: "",
+      nextOffset: null,
+      total: null,
+      pages: 1,
+    });
+    expect(resumesAfterAgent(paging)).toBe(false);
+  });
+
+  it("reads the agent that read the rows, and no agent from a table that does not say", () => {
+    const columns = [{ key: "name", label: "Name", type: "text" }];
+
+    expect(
+      view({
+        display: 1,
+        columns,
+        rows: [],
+        readBy: { id: "agd_1", name: "Dispatch Desk", icon: "truck", accent: "teal" },
+      }).readBy,
+    ).toEqual({ id: "agd_1", name: "Dispatch Desk", icon: "truck", accent: "teal" });
+    expect(
+      view({ display: 1, columns, rows: [], readBy: { id: "agd_1", name: "  " } }).readBy,
+    ).toBeNull();
+    expect(view({ display: 1, columns, rows: [], readBy: "Dispatch Desk" }).readBy).toBeNull();
+    expect(view({ display: 1, columns, rows: [] }).readBy).toBeNull();
+  });
+
+  it("goes on after the agent's rows only from a cursor or an offset", () => {
+    const base = { hasMore: true, nextCursor: "", nextOffset: null, total: null, pages: 1 };
+
+    expect(resumesAfterAgent({ ...base, nextCursor: "c-25" })).toBe(true);
+    expect(resumesAfterAgent({ ...base, nextOffset: 0 })).toBe(true);
+    expect(resumesAfterAgent(base)).toBe(false);
+  });
+
+  it("keys the rows of a later page after the ones before them", () => {
+    const rows = tableRowsFrom(
+      [{ id: "shp_9", proNumber: "S-9" }, { proNumber: "S-10" }],
+      [{ key: "proNumber", label: "Pro number", type: "text" }],
+      "shipment",
+      25,
+    );
+
+    expect(rows.map((row) => row.key)).toEqual(["25", "26"]);
+    expect(rows[0].recordId).toBe("shp_9");
+    expect(rows[0].path).toContain("panelEntityId=shp_9");
+    expect(rows[1].path).toBe("");
   });
 
   it("leaves a hole where a row has no value for a column", () => {

@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationrepository"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
@@ -110,6 +111,17 @@ type referenceCase struct {
 	marked               map[string]any
 	oldMarked            map[string]any
 	old                  agentports.AgentQueryTool
+}
+
+// customerCacheMiss is a customer cache that holds nothing, so every get
+// reads the repository.
+type customerCacheMiss struct{}
+
+func (customerCacheMiss) GetByID(
+	context.Context,
+	customerports.GetCustomerByIDRequest,
+) (*customer.Customer, error) {
+	return nil, customerports.ErrCacheMiss
 }
 
 func statusOf(marked bool) domaintypes.Status {
@@ -190,9 +202,11 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 		LocationCategoryService: locationcategoryservice.New(
 			locationcategoryservice.Params{Logger: logger, Repo: categories}),
 		HoldReasonService: holdreasonservice.New(holdreasonservice.Params{Logger: logger, Repo: holdReasons}),
-		CustomerService:   customerservice.New(customerservice.Params{Logger: logger, Repo: customers}),
-		LocationService:   locationservice.New(locationservice.Params{Logger: logger, Repo: locations}),
-		CarrierService:    carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
+		CustomerService: customerservice.New(customerservice.Params{
+			Logger: logger, Repo: customers, CacheRepo: customerCacheMiss{},
+		}),
+		LocationService: locationservice.New(locationservice.Params{Logger: logger, Repo: locations}),
+		CarrierService:  carrierservice.New(carrierservice.Params{Logger: logger, Repo: carriers}),
 		TractorService: tractorservice.New(tractorservice.Params{
 			Logger: logger, Repo: tractors, CustomFieldsValuesService: customFields,
 		}),

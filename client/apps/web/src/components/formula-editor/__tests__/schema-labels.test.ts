@@ -1,25 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  categoryLabel,
-  CATEGORY_LABELS,
-  FUNCTION_CATEGORY_LABELS,
-  sampleInputKind,
-} from "../schema-labels";
-
-describe("sampleInputKind", () => {
-  it("maps server and fallback type spellings to the same control", () => {
-    expect(sampleInputKind("number")).toBe("number");
-    expect(sampleInputKind("Number")).toBe("number");
-    expect(sampleInputKind("integer")).toBe("number");
-    expect(sampleInputKind("Boolean")).toBe("boolean");
-    expect(sampleInputKind("string")).toBe("text");
-  });
-
-  it("prefers an enum select when values are known", () => {
-    expect(sampleInputKind("string", ["New", "InTransit"])).toBe("enum");
-    expect(sampleInputKind("string", [])).toBe("text");
-  });
-});
+import { categoryLabel, CATEGORY_LABELS, FUNCTION_CATEGORY_LABELS } from "../schema-labels";
 
 describe("categoryLabel", () => {
   it("falls back to the raw category or Other", () => {

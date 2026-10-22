@@ -1,8 +1,9 @@
 import { fetchGraphQLSelectOptions, type SelectOption } from "@/lib/graphql/select-options";
 import { useQueries } from "@tanstack/react-query";
 import type { SelectOptionResource } from "@trenova/graphql/generated/graphql";
-import { laneKeyScopeIds, laneKeyStringDisplay } from "@trenova/shared/lib/rate";
-import type { LaneScopeLabelResolver } from "@trenova/shared/lib/rate";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { laneSegmentsDisplay, type LaneScopeLabelResolver } from "@trenova/shared/lib/rate";
+import { parseLaneKeys, type LaneSegment } from "@trenova/shared/rules/lane";
 import type { RateAgreementRule, RateScopeType } from "@trenova/shared/types/rate";
 import { useCallback, useMemo } from "react";
 
@@ -140,27 +141,44 @@ export function useLaneScopeLabels(rules: readonly RateAgreementRule[]): LaneSco
   return useScopeIdLabels(sortedByResource(collected));
 }
 
+// Lane keys never hold a NUL, so it can join them into one memo key.
+const KEY_JOINER = "\u0000";
+
 /**
  * Resolves the ids inside stored lane keys — the strings import diffs and
  * simulation rows arrive with, where there is no rule object to read from —
  * and returns each key ready to show: names in place of ids, everything
- * literal left exactly as stored.
+ * literal left exactly as stored. Every key is read back into its ends by the
+ * rules module in one call, repeated only when the set of keys changes; the
+ * component using it must sit under a Suspense boundary, as it waits for the
+ * module.
  */
 export function useLaneKeyLabels(keys: Array<string | null | undefined>): (key: string) => string {
+  const rules = useRules();
+  const signature = [...new Set(keys.filter((key): key is string => Boolean(key)))].join(
+    KEY_JOINER,
+  );
+  const segmentsByKey = useMemo(() => {
+    const unique = signature === "" ? [] : signature.split(KEY_JOINER);
+    const parsed = parseLaneKeys(rules, unique);
+    return new Map<string, readonly LaneSegment[]>(unique.map((key, i) => [key, parsed[i]]));
+  }, [rules, signature]);
+
   const collected = new Map<SelectOptionResource, Set<string>>();
-  for (const key of keys) {
-    if (!key) {
-      continue;
-    }
-    for (const ref of laneKeyScopeIds(key)) {
-      addScopeId(collected, ref.type, ref.id);
+  for (const segments of segmentsByKey.values()) {
+    for (const segment of segments) {
+      if (segment.scope && segment.id) addScopeId(collected, segment.scope, segment.id);
     }
   }
 
   const resolveScopeValue = useScopeIdLabels(sortedByResource(collected));
 
   return useCallback(
-    (key: string) => laneKeyStringDisplay(key, resolveScopeValue),
-    [resolveScopeValue],
+    (key: string) =>
+      laneSegmentsDisplay(
+        segmentsByKey.get(key) ?? parseLaneKeys(rules, [key])[0],
+        resolveScopeValue,
+      ),
+    [rules, segmentsByKey, resolveScopeValue],
   );
 }

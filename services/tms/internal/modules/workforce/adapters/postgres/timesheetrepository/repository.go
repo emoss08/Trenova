@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -79,16 +80,12 @@ func (r *repository) ListEntries(
 				if req.OpenOnly {
 					sq = sq.Where(cols.ClockedOutAt.IsNull())
 				}
-				if len(req.ManagerIDs) > 0 {
-					sq = sq.Where(
-						"tce.worker_id IN (SELECT id FROM workers"+
-							" WHERE organization_id = tce.organization_id"+
-							" AND business_unit_id = tce.business_unit_id"+
-							" AND manager_id IN (?))",
-						bun.List(req.ManagerIDs),
-					)
-				}
-				return sq
+				return workerteam.Where(r.db.DBForContext(ctx), &workerteam.Scope{
+					WorkerID:       cols.WorkerID,
+					OrganizationID: cols.OrganizationID,
+					BusinessUnitID: cols.BusinessUnitID,
+					ManagerIDs:     req.ManagerIDs,
+				})(sq)
 			}).
 			Order(cols.ClockedInAt.OrderAsc()).
 			Limit(int64(limitOr(req.Limit, defaultEntryPageSize)))
@@ -266,16 +263,12 @@ func (r *repository) ListTimesheets(
 				if req.UnexportedOnly {
 					sq = sq.Where(cols.PayrollExportID.IsNull())
 				}
-				if len(req.ManagerIDs) > 0 {
-					sq = sq.Where(
-						"tsh.worker_id IN (SELECT id FROM workers"+
-							" WHERE organization_id = tsh.organization_id"+
-							" AND business_unit_id = tsh.business_unit_id"+
-							" AND manager_id IN (?))",
-						bun.List(req.ManagerIDs),
-					)
-				}
-				return sq
+				return workerteam.Where(r.db.DBForContext(ctx), &workerteam.Scope{
+					WorkerID:       cols.WorkerID,
+					OrganizationID: cols.OrganizationID,
+					BusinessUnitID: cols.BusinessUnitID,
+					ManagerIDs:     req.ManagerIDs,
+				})(sq)
 			}).
 			Order(cols.PeriodStart.OrderDesc()).
 			Limit(int64(limitOr(req.Limit, defaultTimesheetPageSize)))

@@ -444,7 +444,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_workerLeaveCases_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveCases(ctx, fc.Args["workerId"].(string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerLeaveCases(ctx, fc.Args["workerId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["certificationOutstandingOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNWorkerLeaveCase2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerLeaveCaseᚄ),
 			},
@@ -958,7 +958,7 @@ type resolverMutation interface {
 
 type resolverQuery interface {
 	LeaveControl(ctx context.Context) (*worker.LeaveControl, error)
-	WorkerLeaveCases(ctx context.Context, workerID string) ([]*worker.WorkerLeaveCase, error)
+	WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*worker.WorkerLeaveCase, error)
 	WorkerLeaveCase(ctx context.Context, id string) (*worker.WorkerLeaveCase, error)
 	WorkerLeaveEntitlement(ctx context.Context, workerID string, asOf *int) (*worker.LeaveEntitlement, error)
 	LeaveCertificationsOutstanding(ctx context.Context) ([]*worker.WorkerLeaveCase, error)
@@ -1137,15 +1137,39 @@ func field_Mutation_updateLeaveControl_args(ctx context.Context, ec *gqlexec.Exe
 }
 
 func field_Query_workerLeaveCases_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 4)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "workerId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
 	}
 	args["workerId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "openOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["openOnly"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "certificationOutstandingOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["certificationOutstandingOnly"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg3
 	return args, nil
 }
 

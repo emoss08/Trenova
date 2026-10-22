@@ -1,6 +1,7 @@
 package resolver_test
 
 import (
+	"github.com/shopspring/decimal"
 	"errors"
 	"testing"
 
@@ -62,11 +63,11 @@ func TestResolver_ResolveField(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "resolve float field",
+			name: "resolve float field as its shortest exact decimal",
 			source: &formulatypes.FieldSource{
 				Path: "Weight",
 			},
-			want:    75.5,
+			want:    decimal.RequireFromString("75.5"),
 			wantErr: false,
 		},
 		{
@@ -236,12 +237,12 @@ func TestResolver_ResolveField_WithTransform(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "transform int64 to float64",
+			name: "transform a whole number to int64",
 			source: &formulatypes.FieldSource{
 				Path:      "Age",
-				Transform: "int64ToFloat64",
+				Transform: "integer",
 			},
-			want:    float64(30),
+			want:    int64(30),
 			wantErr: false,
 		},
 		{
@@ -373,7 +374,7 @@ func TestResolver_ResolveAllFields(t *testing.T) {
 		},
 		"age": {
 			Path:      "Age",
-			Transform: "int64ToFloat64",
+			Transform: "integer",
 		},
 		"sum": {
 			Computed: true,
@@ -390,7 +391,7 @@ func TestResolver_ResolveAllFields(t *testing.T) {
 	require.NotNil(t, result)
 
 	assert.Equal(t, "John", result["name"])
-	assert.Equal(t, float64(30), result["age"])
+	assert.Equal(t, int64(30), result["age"])
 	assert.Equal(t, 40.5, result["sum"])
 	assert.Nil(t, result["missing"])
 }

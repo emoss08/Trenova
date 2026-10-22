@@ -104,7 +104,7 @@ func assertCursorPaging(t *testing.T, c cursorPagingCase) {
 	assert.Equal(t, len(c.ids), seen, "the pages together hold every row once")
 
 	_, err = c.call(map[string]any{paramAfter: first.NextCursor}, c.changed)
-	require.ErrorIs(t, err, errStaleCursor, "a cursor is refused under changed arguments")
+	require.ErrorIs(t, err, ErrStaleCursor, "a cursor is refused under changed arguments")
 
 	_, err = c.call(map[string]any{paramOffset: float64(c.limit)}, c.args)
 	require.ErrorIs(t, err, errOffsetOnCursorList, "an offset is refused, never ignored")
@@ -117,7 +117,7 @@ func assertCursorPaging(t *testing.T, c cursorPagingCase) {
 		first.NextCursor + "x",
 	} {
 		_, err = c.call(map[string]any{paramAfter: malformed}, c.args)
-		require.ErrorIs(t, err, errStaleCursor, "malformed cursor %q", malformed)
+		require.ErrorIs(t, err, ErrStaleCursor, "malformed cursor %q", malformed)
 	}
 }
 
@@ -158,5 +158,5 @@ func TestReadCursorWindow_DecodesTheRepositoryCursor(t *testing.T) {
 	assert.False(t, window.first())
 
 	_, err = readCursorWindow("tractor_list", params, defaultListLimit, maxListLimit)
-	require.ErrorIs(t, err, errStaleCursor)
+	require.ErrorIs(t, err, ErrStaleCursor)
 }

@@ -1,4 +1,5 @@
 import { DisplayValue } from "@/components/assistant/display-value";
+import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import {
   formatDisplayValue,
   isDetailType,
@@ -12,15 +13,25 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueSummary } from "@trenova/shared/types/billing-queue";
+import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { Link, useNavigate } from "react-router";
-import { reportPreviewFrom, tableViewFrom } from "../../artifact-payloads";
+import {
+  reportPreviewFrom,
+  tableViewFrom,
+  type TablePaging,
+  type TableReader,
+} from "../../artifact-payloads";
 import {
   selectionState,
   toggleAll,
   toggleOne,
 } from "../../cards/billing-queue-item/billing-item-checks";
 import { ArtIcon } from "../../desk-art-kinds";
+import { cardTime } from "../../record-card/record-card-values";
+import { agentShare } from "./table-pages";
+import { TablePager } from "./table-pager";
+import { useTablePages, type TablePages, type TableSort } from "./use-table-pages";
 import {
   BillingBulkBar,
   BillingCheckbox,
@@ -51,6 +62,12 @@ export type Grid = {
   truncated: boolean;
   /** The row each total sits under, when the source sent one. */
   totals: Record<string, unknown> | null;
+  /** What the agent asked the list for, as it was read back. */
+  searchedFor: string[];
+  /** Where the list goes on from the rows held; null for a table that is all there is. */
+  paging: TablePaging | null;
+  /** The agent that read the rows the table holds; null when the table does not say. */
+  readBy: TableReader | null;
 };
 
 const REPORT_TYPES: Record<string, DisplayType> = {
@@ -88,6 +105,9 @@ export function gridOf(artifact: AssistantArtifact): Grid {
       totals: preview.totals
         ? Object.fromEntries(columns.map((column, at) => [column.key, preview.totals?.[at]]))
         : null,
+      searchedFor: [],
+      paging: null,
+      readBy: null,
     };
   }
   const view = tableViewFrom(artifact);
@@ -98,6 +118,9 @@ export function gridOf(artifact: AssistantArtifact): Grid {
     rowCount: view.rowCount,
     truncated: view.truncated,
     totals: null,
+    searchedFor: view.searchedFor,
+    paging: view.paging.hasMore ? view.paging : null,
+    readBy: view.readBy,
   };
 }
 
@@ -235,27 +258,79 @@ export function versionNote(
   return parts.length > 0 ? parts.join(" · ") : t("Nothing changed");
 }
 
-type Sort = { key: string; direction: 1 | -1 };
+/** Rows filtered and sorted where they are: the whole table, or the rows read of a list. */
+function arrangeRows(
+  columns: readonly DisplayColumn[],
+  rows: readonly GridRow[],
+  needle: string,
+  sort: TableSort | null,
+  t: TranslateFn,
+): GridRow[] {
+  const lowered = needle.trim().toLowerCase();
+  let shown = lowered
+    ? rows.filter((row) =>
+        columns.some((column) =>
+          `${cellText(column, row.values[column.key], t)} ${rawText(row.values[column.key])}`
+            .toLowerCase()
+            .includes(lowered),
+        ),
+      )
+    : [...rows];
+  const column = sort ? columns.find((candidate) => candidate.key === sort.key) : undefined;
+  if (sort && column) {
+    shown = shown.sort((a, b) => {
+      const x = sortKey(column.type, a.values[column.key]);
+      const y = sortKey(column.type, b.values[column.key]);
+      if (x === null) return 1;
+      if (y === null) return -1;
+      return (
+        (typeof x === "number" && typeof y === "number"
+          ? x - y
+          : String(x).localeCompare(String(y))) * sort.direction
+      );
+    });
+  }
+  return shown;
+}
 
 /**
- * A table read whole: a filter over every cell as it reads, sortable columns,
- * figures on the right, statuses as coloured dots, and each row opening its
- * record — in place, as the record itself, for the kinds that have a card
- * here, and on its page otherwise. A cell that changed since the version
- * before is marked.
+ * A table beside the conversation: how many rows its list holds and what the
+ * agent asked it for, a search, columns that sort, figures on the right,
+ * statuses as coloured dots, each row opening its record — in place, as the
+ * record itself, for the kinds that have a card here, and on its page
+ * otherwise — and, when the list is longer than a page, a pager.
+ *
+ * A list the agent read in part pages on past its rows, read again with the
+ * person's own access; the rows the agent read are marked as its, and a cell
+ * that changed since the version before is marked too.
  */
 export function DeskTableBody(props: TableBodyProps) {
-  const listed = props.artifact.kind === "table_view" && !("path" in props.artifact.payload);
-  const entity = listed ? tableViewFrom(props.artifact).recordEntity : "";
+  const t = useT();
+  const { artifact } = props;
+  const grid = useMemo(() => gridOf(artifact), [artifact]);
+  const pages = useTablePages({
+    threadId: artifact.threadId,
+    artifactId: artifact.id,
+    stamp: artifact.updatedAt,
+    rows: grid.rows,
+    columns: grid.columns,
+    entity: grid.entity ?? "",
+    paging: grid.paging,
+    arrange: (rows, needle, sort) => arrangeRows(grid.columns, rows, needle, sort, t),
+  });
+  const listed = artifact.kind === "table_view" && !("path" in artifact.payload);
+  const entity = listed ? (grid.entity ?? "") : "";
   const card = recordCardFor(entity);
+  const body = { ...props, grid, pages };
+
   if (card && entity === "billing_queue_item") {
-    return <BillingTableBody {...props} card={card} />;
+    return <BillingTableBody {...body} card={card} />;
   }
 
   return card ? (
-    <InPlaceTableBody {...props} card={card} />
+    <InPlaceTableBody {...body} card={card} />
   ) : (
-    <TableBodyView {...props} kit={null} records={null} />
+    <TableBodyView {...body} kit={null} records={null} />
   );
 }
 
@@ -266,6 +341,8 @@ type TableBodyProps = {
   /** The versions picker, when the table has more than one. */
   versions?: ReactNode;
 };
+
+type PagedBodyProps = TableBodyProps & { grid: Grid; pages: TablePages };
 
 /** What a billing queue table adds: live row state, picked rows, and an item opened in place. */
 type BillingKit = {
@@ -285,10 +362,11 @@ type RecordKit = {
   card: RecordCardEntry;
 };
 
-// A table whose rows open in place keeps the open row beside its own filter
-// and sort, so going back finds the table as it was left. The card's code is
-// read while the browser is idle, so the first row opened draws at once.
-function InPlaceTableBody({ card, ...props }: TableBodyProps & { card: RecordCardEntry }) {
+// A table whose rows open in place keeps the open row beside its own page,
+// search and sort, so going back finds the table as it was left. The card's
+// code is read while the browser is idle, so the first row opened draws at
+// once.
+function InPlaceTableBody({ card, ...props }: PagedBodyProps & { card: RecordCardEntry }) {
   const [inline, setInline] = useState<string | null>(null);
   usePreloadRecordCard(card);
 
@@ -296,13 +374,12 @@ function InPlaceTableBody({ card, ...props }: TableBodyProps & { card: RecordCar
 }
 
 // A table of billing queue items is worked from: rows are picked, opened and
-// approved in bulk, and their status is read live rather than as the agent
-// saw it.
-function BillingTableBody({ card, ...props }: TableBodyProps & { card: RecordCardEntry }) {
-  const grid = useMemo(() => gridOf(props.artifact), [props.artifact]);
+// approved in bulk, and the status of the rows on the page is read live
+// rather than as the agent saw it.
+function BillingTableBody({ card, ...props }: PagedBodyProps & { card: RecordCardEntry }) {
   const rowIds = useMemo(
-    () => grid.rows.map((row) => row.recordId ?? "").filter((id) => id !== ""),
-    [grid],
+    () => props.pages.rows.map((row) => row.recordId ?? "").filter((id) => id !== ""),
+    [props.pages.rows],
   );
   const summaries = useBillingSummaries(rowIds, true);
   const [selected, setSelected] = useState<string[]>([]);
@@ -323,66 +400,39 @@ function TableBodyView({
   artifact,
   previous,
   versions,
+  grid,
+  pages,
   kit,
   records,
-}: TableBodyProps & { kit: BillingKit | null; records: RecordKit | null }) {
+}: PagedBodyProps & { kit: BillingKit | null; records: RecordKit | null }) {
   const t = useT();
   const navigate = useNavigate();
-  const grid = useMemo(() => gridOf(artifact), [artifact]);
   const changed = useMemo(
     () => changedCells(grid, previous ? gridOf(previous) : null),
     [grid, previous],
   );
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<Sort | null>(null);
-
-  const rows = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    let shown = needle
-      ? grid.rows.filter((row) =>
-          grid.columns.some((column) =>
-            `${cellText(column, row.values[column.key], t)} ${rawText(row.values[column.key])}`
-              .toLowerCase()
-              .includes(needle),
-          ),
-        )
-      : grid.rows;
-    if (sort) {
-      const column = grid.columns.find((candidate) => candidate.key === sort.key);
-      if (column) {
-        shown = [...shown].sort((a, b) => {
-          const x = sortKey(column.type, a.values[column.key]);
-          const y = sortKey(column.type, b.values[column.key]);
-          if (x === null) return 1;
-          if (y === null) return -1;
-          return (
-            (typeof x === "number" && typeof y === "number"
-              ? x - y
-              : String(x).localeCompare(String(y))) * sort.direction
-          );
-        });
-      }
-    }
-    return shown;
-  }, [grid, query, sort, t]);
-
+  const rows = pages.rows;
   const totals = useMemo(() => footTotals(grid, rows), [grid, rows]);
-
   const billing = kit !== null;
   const opensRecords = billing || records !== null;
   const shownIds = useMemo(
     () => (opensRecords ? rows.map((row) => row.recordId ?? "").filter((id) => id !== "") : []),
     [opensRecords, rows],
   );
+  const showsPager = pages.pages > 1;
+  const withheld = grid.columns.filter((column) => pages.withheld.includes(column.key));
+  const hidden = new Set(withheld.map((column) => column.key));
 
-  const cycle = (key: string) =>
-    setSort((current) =>
+  const cycle = (key: string) => {
+    const current = pages.sort;
+    pages.setSort(
       current?.key === key
         ? current.direction === 1
           ? { key, direction: -1 }
           : null
         : { key, direction: 1 },
     );
+  };
 
   if (kit?.inline) {
     return (
@@ -408,21 +458,73 @@ function TableBodyView({
   }
 
   return (
-    <div className="dk-ax-tbl">
-      <div className="dk-ax-tools">
-        <label className="dk-ax-q">
+    <div className="dk-ax-tbl dk-tv">
+      <TableHead grid={grid} pages={pages} />
+      <div className="dk-tv-tools">
+        <label className="dk-ax-q dk-tv-q">
           <ArtIcon name="search" size={13} />
           <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("Filter {0, plural, one {# row} other {# rows}}", rows.length)}
-            aria-label={t("Filter rows")}
+            value={pages.search}
+            onChange={(event) => pages.setSearch(event.target.value)}
+            placeholder={searchPlaceholder(pages, t)}
+            aria-label={pages.searchesList ? t("Search the list") : t("Filter rows")}
           />
+          {pages.search !== "" && (
+            <button
+              type="button"
+              className="dk-tv-clr"
+              aria-label={t("Clear the search")}
+              onClick={() => pages.setSearch("")}
+            >
+              <ArtIcon name="x" size={10} stroke={2.6} />
+            </button>
+          )}
         </label>
+        <span className="dk-tv-sp" />
+        <ReadMark artifact={artifact} reader={grid.readBy} pages={pages} />
         {versions}
       </div>
+      {withheld.length > 0 && (
+        <div className="dk-tv-note">
+          <span className="dk-tv-wh">
+            <ArtIcon name="lock" size={11} stroke={2} />
+            {t("Not shown at your access: {0}", withheld.map((column) => column.label).join(", "))}
+          </span>
+        </div>
+      )}
+      {pages.locked && (
+        <div className="dk-tv-note">
+          <span className="dk-tv-wh">
+            <ArtIcon name="lock" size={11} stroke={2} />
+            {grid.readBy
+              ? t(
+                  "You can no longer read this list, so only the rows {0} read are shown",
+                  grid.readBy.name,
+                )
+              : t(
+                  "You can no longer read this list, so only the rows read in this conversation are shown",
+                )}
+          </span>
+        </div>
+      )}
+      {pages.failure !== null && (
+        <div className="dk-tv-fail" role="alert">
+          <ArtIcon name="warn" size={13} stroke={2} />
+          <div>
+            <b>{t("Page {0} couldn't be read", pages.page + 1)}</b>
+            <span>
+              {describeError(pages.failure).detail ??
+                t("The list did not answer. The pages read so far are still here.")}
+            </span>
+          </div>
+          <button type="button" className="dk-ax-btn" onClick={pages.retry}>
+            <ArtIcon name="retry" size={12} stroke={2} />
+            {t("Try again")}
+          </button>
+        </div>
+      )}
       <div className="dk-ax-scroll">
-        <table className={billing ? "dk-sel" : undefined}>
+        <table className={billing ? "dk-sel" : undefined} aria-busy={pages.loading || undefined}>
           <thead>
             <tr>
               {kit && (
@@ -434,102 +536,133 @@ function TableBodyView({
                   />
                 </th>
               )}
-              {grid.columns.map((column) => (
-                <th
-                  key={column.key}
-                  className={isFigureType(column.type) ? "dk-ar" : undefined}
-                  onClick={() => cycle(column.key)}
-                  aria-sort={
-                    sort?.key === column.key
-                      ? sort.direction === 1
-                        ? "ascending"
-                        : "descending"
-                      : undefined
-                  }
-                >
-                  <span>
-                    {column.label}
-                    {sort?.key === column.key && (
-                      <ArtIcon name={sort.direction === 1 ? "up" : "down"} size={10} stroke={2.4} />
-                    )}
-                  </span>
-                </th>
-              ))}
+              {grid.columns.map((column) => {
+                const sortable = pages.sortable(column.key);
+                const sorted = pages.sort?.key === column.key ? pages.sort : null;
+                return (
+                  <th
+                    key={column.key}
+                    className={cn(isFigureType(column.type) && "dk-ar", !sortable && "dk-tv-fixed")}
+                    onClick={sortable ? () => cycle(column.key) : undefined}
+                    aria-sort={
+                      sorted ? (sorted.direction === 1 ? "ascending" : "descending") : undefined
+                    }
+                  >
+                    <span>
+                      {hidden.has(column.key) && <ArtIcon name="lock" size={10} stroke={2.2} />}
+                      {column.label}
+                      {sorted && (
+                        <ArtIcon
+                          name={sorted.direction === 1 ? "up" : "down"}
+                          size={10}
+                          stroke={2.4}
+                        />
+                      )}
+                    </span>
+                  </th>
+                );
+              })}
               <th className="dk-go" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, index) => {
-              const id = opensRecords ? (row.recordId ?? "") : "";
-              const summary = id ? kit?.summaries.get(id) : undefined;
-              const picked = id !== "" && Boolean(kit?.selected.includes(id));
-              return (
-                <tr
-                  key={`${row.key}:${artifact.id}`}
-                  className={cn(picked && "dk-on")}
-                  style={{
-                    animationDelay: `${Math.min(index, 14) * 18}ms`,
-                    cursor: id || row.path !== "" ? "pointer" : undefined,
-                  }}
-                  onClick={
-                    id && kit
-                      ? () => kit.openItem(id)
-                      : id && records
-                        ? () => records.setInline(id)
-                        : row.path !== ""
-                          ? () => void navigate(row.path)
-                          : undefined
-                  }
-                >
-                  {kit && (
-                    <td
-                      className="dk-cb"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        if (id) kit.setSelected((current) => toggleOne(current, id));
-                      }}
-                    >
-                      <BillingCheckbox state={picked} label={t("Select")} />
-                    </td>
-                  )}
-                  {grid.columns.map((column, at) => (
-                    <td
-                      key={column.key}
-                      className={cn(
-                        isFigureType(column.type) && "dk-ar",
-                        changed.has(`${row.key}:${column.key}`) && "dk-chg",
-                      )}
-                    >
-                      {summary && column.type === "status" ? (
-                        <BillingRowPill summary={summary} />
-                      ) : (
-                        <Cell column={column} value={row.values[column.key]} first={at === 0} />
-                      )}
-                    </td>
-                  ))}
-                  <td className="dk-go">
-                    {row.path !== "" && (
-                      <Link
-                        to={row.path}
-                        aria-label={t("Open this record")}
-                        onClick={(event) => event.stopPropagation()}
+            {pages.loading
+              ? Array.from({ length: loadingRows(pages) }, (_, index) => (
+                  // oxlint-disable-next-line react/no-array-index-key -- placeholders for rows not read yet
+                  <tr key={index} className="dk-tv-skel" aria-hidden>
+                    {kit && <td className="dk-cb" />}
+                    {grid.columns.map((column, at) => (
+                      <td
+                        key={column.key}
+                        className={isFigureType(column.type) ? "dk-ar" : undefined}
                       >
-                        <ArtIcon name="ext" size={12} />
-                      </Link>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+                        <i
+                          className="ui-shimmer"
+                          style={{
+                            width: `${SKELETON_WIDTHS[(at + index) % SKELETON_WIDTHS.length]}%`,
+                          }}
+                        />
+                      </td>
+                    ))}
+                    <td className="dk-go" />
+                  </tr>
+                ))
+              : rows.map((row, index) => {
+                  const id = opensRecords ? (row.recordId ?? "") : "";
+                  const summary = id ? kit?.summaries.get(id) : undefined;
+                  const picked = id !== "" && Boolean(kit?.selected.includes(id));
+                  return (
+                    <tr
+                      key={`${row.key}:${artifact.id}`}
+                      className={cn(picked && "dk-on")}
+                      style={{
+                        animationDelay: `${Math.min(index, 14) * 18}ms`,
+                        cursor: id || row.path !== "" ? "pointer" : undefined,
+                      }}
+                      onClick={
+                        id && kit
+                          ? () => kit.openItem(id)
+                          : id && records
+                            ? () => records.setInline(id)
+                            : row.path !== ""
+                              ? () => void navigate(row.path)
+                              : undefined
+                      }
+                    >
+                      {kit && (
+                        <td
+                          className="dk-cb"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            if (id) kit.setSelected((current) => toggleOne(current, id));
+                          }}
+                        >
+                          <BillingCheckbox state={picked} label={t("Select")} />
+                        </td>
+                      )}
+                      {grid.columns.map((column, at) => (
+                        <td
+                          key={column.key}
+                          className={cn(
+                            isFigureType(column.type) && "dk-ar",
+                            changed.has(`${row.key}:${column.key}`) && "dk-chg",
+                            hidden.has(column.key) && "dk-tv-hidden",
+                          )}
+                        >
+                          {summary && column.type === "status" ? (
+                            <BillingRowPill summary={summary} />
+                          ) : (
+                            <Cell column={column} value={row.values[column.key]} first={at === 0} />
+                          )}
+                        </td>
+                      ))}
+                      <td className="dk-go">
+                        {row.path !== "" && (
+                          <Link
+                            to={row.path}
+                            aria-label={t("Open this record")}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <ArtIcon name="ext" size={12} />
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
           </tbody>
-          {totals && (
+          {totals && !pages.loading && rows.length > 0 && (
             <tfoot>
               <tr>
                 {billing && <td />}
                 {grid.columns.map((column, at) => (
                   <td key={column.key} className={isFigureType(column.type) ? "dk-ar" : undefined}>
                     {at === 0 ? (
-                      t("{0, plural, one {# item} other {# items}}", rows.length)
+                      showsPager ? (
+                        t("This page")
+                      ) : (
+                        t("{0, plural, one {# item} other {# items}}", rows.length)
+                      )
                     ) : totals[column.key] != null && isFigureType(column.type) ? (
                       <span className="dk-ax-num">
                         {formatDisplayValue(column.type, totals[column.key], t)}
@@ -542,17 +675,15 @@ function TableBodyView({
             </tfoot>
           )}
         </table>
-        {grid.truncated && query === "" && (
+        {!pages.loading && pages.failure === null && rows.length === 0 && (
           <div className="dk-ax-trunc">
-            {t(
-              "Showing {0} of {1}. Ask for the rest, or open it as a view.",
-              grid.rows.length,
-              grid.rowCount,
-            )}
+            {pages.search.trim() !== ""
+              ? t("No rows match “{0}”", pages.search.trim())
+              : t("No rows")}
           </div>
         )}
-        {rows.length === 0 && <div className="dk-ax-trunc">{t("No rows match “{0}”", query)}</div>}
       </div>
+      {showsPager && <TablePager pages={pages} reader={grid.readBy} />}
       {kit && (
         <BillingBulkBar
           selected={kit.selected}
@@ -562,5 +693,131 @@ function TableBodyView({
         />
       )}
     </div>
+  );
+}
+
+const SKELETON_WIDTHS = [62, 78, 54, 70, 46, 66] as const;
+
+/** How many placeholder rows stand in for a page while it is read. */
+function loadingRows(pages: TablePages): number {
+  if (pages.total === null) {
+    return pages.size;
+  }
+  return Math.max(1, Math.min(pages.size, pages.total - pages.page * pages.size));
+}
+
+function searchPlaceholder(pages: TablePages, t: TranslateFn): string {
+  if (pages.searchesList) {
+    return pages.total !== null
+      ? t("{0, plural, one {Search # row} other {Search all # rows}}", pages.total)
+      : t("Search the list");
+  }
+  return pages.remote
+    ? t("{0, plural, one {Filter the # row read} other {Filter the # rows read}}", pages.readRows)
+    : t("Filter {0, plural, one {# row} other {# rows}}", pages.readRows);
+}
+
+/** How many rows the list holds, and what the agent asked it for. */
+function TableHead({ grid, pages }: { grid: Grid; pages: TablePages }) {
+  const t = useT();
+  const unknown = pages.total === null;
+  const figure = unknown ? pages.shownRows : (pages.total ?? 0);
+
+  return (
+    <header className="dk-tv-head">
+      <div className="dk-tv-fig">
+        <b>{unknown && pages.remote ? t("{0}+", figure) : figure}</b>
+        <span>
+          {pages.filtering
+            ? t("{0, plural, one {of # row read} other {of # rows read}}", pages.readRows)
+            : pages.searching
+              ? t("{0, plural, one {row matches} other {rows match}}", figure)
+              : t("{0, plural, one {row} other {rows}}", figure)}
+        </span>
+      </div>
+      {grid.searchedFor.length > 0 && (
+        <span
+          className="dk-tv-terms"
+          aria-label={
+            grid.readBy ? t("What {0} asked for", grid.readBy.name) : t("What was asked for")
+          }
+        >
+          {grid.searchedFor.map((term) => (
+            <span key={term}>{term}</span>
+          ))}
+        </span>
+      )}
+    </header>
+  );
+}
+
+function readShare(
+  t: TranslateFn,
+  whole: boolean,
+  reader: TableReader | null,
+  when: string,
+): string {
+  if (reader) {
+    return whole
+      ? t("{0} read this page · {1}", reader.name, when)
+      : t("{0} read part of this page · {1}", reader.name, when);
+  }
+
+  return whole
+    ? t("Read in this conversation · {0}", when)
+    : t("Partly read in this conversation · {0}", when);
+}
+
+/**
+ * Whose read the page is: rows the conversation's agent read, wearing its
+ * mark, or the list read just now with the person's access.
+ */
+function ReadMark({
+  artifact,
+  reader,
+  pages,
+}: {
+  artifact: AssistantArtifact;
+  reader: TableReader | null;
+  pages: TablePages;
+}) {
+  const t = useT();
+  const when = cardTime(artifact.updatedAt);
+  if (!pages.remote) {
+    return artifact.kind === "table_view" ? (
+      <span className="dk-tv-agent">
+        {reader && <DeskAgentTile agent={reader} size="xs" />}
+        {reader
+          ? t("{0} read every row · {1}", reader.name, when)
+          : t("Every row read in this conversation · {0}", when)}
+      </span>
+    ) : null;
+  }
+  if (pages.failure !== null && pages.rows.length === 0) {
+    return null;
+  }
+  if (pages.loading) {
+    return (
+      <span className="dk-tv-live">
+        <i />
+        {t("Reading page {0}…", pages.page + 1)}
+      </span>
+    );
+  }
+  const share = agentShare(pages.page, pages.size, pages.agentRows, pages.rows.length);
+  if (share !== "none") {
+    return (
+      <span className="dk-tv-agent">
+        {reader && <DeskAgentTile agent={reader} size="xs" />}
+        {readShare(t, share === "all", reader, when)}
+      </span>
+    );
+  }
+
+  return (
+    <span className="dk-tv-live">
+      <i />
+      {pages.searching ? t("Searched just now") : t("Read just now, with your access")}
+    </span>
   );
 }

@@ -57,7 +57,8 @@ function servable(node, task) {
     node.enabled &&
     node.tasks.includes(task) &&
     (!TRUSTED_TASKS.has(task) || node.trusted) &&
-    (task !== "Embedding" || (node.kind !== "AnthropicMessages" && [768, 1024, 1536].includes(node.embeddingDimensions)))
+    (task !== "Embedding" ||
+      (node.kind !== "AnthropicMessages" && [768, 1024, 1536].includes(node.embeddingDimensions)))
   );
 }
 
@@ -80,7 +81,9 @@ function routePreview(state, draft) {
   };
   const after = [...nodes.filter((node) => node.id !== draftNode.id), draftNode];
   const choice = (node, isDraft) =>
-    node ? { providerId: isDraft && !draft.id ? null : node.id, name: node.name, draft: isDraft } : null;
+    node
+      ? { providerId: isDraft && !draft.id ? null : node.id, name: node.name, draft: isDraft }
+      : null;
   return ALL_TASKS.map((task) => {
     const before = routeFor(nodes, task);
     const next = routeFor(after, task);
@@ -102,8 +105,24 @@ function providerDays(state, provider) {
   const random = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   const base = provider.week.calls / 7;
   const failures = provider.failing
-    ? [0, 0, 0, 0, 0, Math.round(provider.week.failed * 0.66), provider.week.failed - Math.round(provider.week.failed * 0.66)]
-    : [0, 0, 0, 0, Math.ceil(provider.week.failed * 0.6), Math.floor(provider.week.failed * 0.4), 0];
+    ? [
+        0,
+        0,
+        0,
+        0,
+        0,
+        Math.round(provider.week.failed * 0.66),
+        provider.week.failed - Math.round(provider.week.failed * 0.66),
+      ]
+    : [
+        0,
+        0,
+        0,
+        0,
+        Math.ceil(provider.week.failed * 0.6),
+        Math.floor(provider.week.failed * 0.4),
+        0,
+      ];
   return Array.from({ length: 7 }, (_, index) => ({
     day: new Date((today - (6 - index) * DAY) * 1000).toISOString().slice(0, 10),
     calls: Math.round(base * (0.6 + random() * 0.8)),
@@ -183,9 +202,14 @@ function saveRequestToNode(state, body, existing) {
     structuredOutputMode: body.structuredOutputMode,
     reasoningEffort: body.reasoningEffort ?? "Off",
     thinkingStyle: body.thinkingStyle ?? "Auto",
+    advisorEnabled: !!body.advisorEnabled,
+    advisorModel: body.advisorModel ?? "",
+    scripts: !!body.scripts,
+    scriptWrites: !!body.scripts && !!body.scriptWrites,
     extraBody: body.extraBody ?? null,
     inputCostPerMillion: body.inputCostPerMillion == null ? null : String(body.inputCostPerMillion),
-    outputCostPerMillion: body.outputCostPerMillion == null ? null : String(body.outputCostPerMillion),
+    outputCostPerMillion:
+      body.outputCostPerMillion == null ? null : String(body.outputCostPerMillion),
     maxTokens: body.maxTokens ?? 8192,
     tasks: body.tasks ?? [],
     priority: body.priority ?? 100,
@@ -222,7 +246,11 @@ export const PROVIDER_HANDLERS = {
     })),
   }),
   AIProviderUsageDaily: (state, v) => ({
-    aiUsageDaily: providerDays(state, state.ai.providers.find((provider) => provider.node.id === v.providerId)) ?? [],
+    aiUsageDaily:
+      providerDays(
+        state,
+        state.ai.providers.find((provider) => provider.node.id === v.providerId),
+      ) ?? [],
   }),
   TestAIProviderDraft: (state, v) => ({ testAIProviderDraft: draftTest(state, v.input) }),
   ReorderAIProviders: (state, v) => {
@@ -295,7 +323,10 @@ export const PROVIDER_ROUTES = [
     (state, path, body) => {
       const provider = nodeOf(state, path.split("/")[4]);
       if (body.version !== provider.node.version) {
-        return { __status: 409, body: { type: "version_mismatch", message: "Someone else saved this provider" } };
+        return {
+          __status: 409,
+          body: { type: "version_mismatch", message: "Someone else saved this provider" },
+        };
       }
       saveRequestToNode(state, body, provider.node);
       return provider.node;
