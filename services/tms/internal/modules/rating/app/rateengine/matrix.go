@@ -57,7 +57,7 @@ func (s *Service) matrixCharge(
 		return decimal.Zero, err
 	}
 
-	match, err := ratematrix.SelectCell(dimensions, cells, &values)
+	match, err := ratematrix.LookupCell(ctx, dimensions, cells, &values)
 	if err != nil {
 		return decimal.Zero, err
 	}
