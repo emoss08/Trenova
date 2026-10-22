@@ -104,3 +104,61 @@ impl Diagnostic {
         self
     }
 }
+
+/// Names longer than this get no suggestion, so a suggestion never costs more than a bounded
+/// comparison per candidate, however long the text.
+const LONGEST_SUGGESTED: usize = 64;
+
+/// The edit distance between two names, or `usize::MAX` when their lengths differ by more than
+/// three (no suggestion would be close enough).
+fn edit_distance(a: &[char], b: &[char]) -> usize {
+    if a.len().abs_diff(b.len()) > 3 {
+        return usize::MAX;
+    }
+    let mut previous: Vec<usize> = (0..=b.len()).collect();
+    let mut current = vec![0; b.len() + 1];
+    for (i, left) in a.iter().enumerate() {
+        if let Some(first) = current.first_mut() {
+            *first = i + 1;
+        }
+        for (j, right) in b.iter().enumerate() {
+            let cost = usize::from(left != right);
+            let above = previous.get(j + 1).copied().unwrap_or(usize::MAX - 1) + 1;
+            let before = current.get(j).copied().unwrap_or(usize::MAX - 1) + 1;
+            let diagonal = previous.get(j).copied().unwrap_or(usize::MAX - 1) + cost;
+            if let Some(cell) = current.get_mut(j + 1) {
+                *cell = above.min(before).min(diagonal);
+            }
+        }
+        std::mem::swap(&mut previous, &mut current);
+    }
+    previous.get(b.len()).copied().unwrap_or(usize::MAX)
+}
+
+/// The closest of `candidates` to `name`, for a "did you mean" suggestion: within two edits, or
+/// the same but for case. Ties go to the first candidate; `name` itself is never suggested.
+#[must_use]
+pub fn nearest<'a>(name: &str, candidates: impl IntoIterator<Item = &'a str>) -> Option<&'a str> {
+    let lower: Vec<char> = name.to_lowercase().chars().collect();
+    if lower.is_empty() || lower.len() > LONGEST_SUGGESTED {
+        return None;
+    }
+    let mut best = None;
+    let mut best_distance = 3;
+    for candidate in candidates {
+        if candidate == name || candidate.chars().count() > LONGEST_SUGGESTED + 3 {
+            continue;
+        }
+        let other: Vec<char> = candidate.to_lowercase().chars().collect();
+        let distance = if other == lower {
+            0
+        } else {
+            edit_distance(&lower, &other)
+        };
+        if distance < best_distance {
+            best = Some(candidate);
+            best_distance = distance;
+        }
+    }
+    best
+}
