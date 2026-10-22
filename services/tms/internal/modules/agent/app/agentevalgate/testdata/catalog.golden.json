@@ -43571,18 +43571,18 @@
         "additionalProperties": false,
         "properties": {
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
           },
           "outstandingOnly": {
-            "description": "Only employers who have not answered yet.",
+            "description": "Only the employers who have not answered yet.",
             "type": "boolean"
           },
           "workerId": {
-            "description": "Narrow to one driver, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one. Leave it out for every worker's.",
             "type": "string",
             "x-recordOf": "worker"
           }
@@ -43673,22 +43673,22 @@
         "additionalProperties": false,
         "properties": {
           "certificationOutstandingOnly": {
-            "description": "Only cases still waiting on the certification the worker owes.",
+            "description": "Only the cases still waiting on the certification the worker owes.",
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
           },
           "openOnly": {
-            "description": "Only cases still pending or approved.",
+            "description": "Only the cases still pending or approved.",
             "type": "boolean"
           },
           "workerId": {
-            "description": "Narrow to one worker, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one. Leave it out for every worker's.",
             "type": "string",
             "x-recordOf": "worker"
           }

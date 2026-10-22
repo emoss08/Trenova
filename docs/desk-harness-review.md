@@ -1470,6 +1470,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: time off | `worker_list_time_off` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: one worker's records | `worker_list_checklists`, `worker_list_training`, `worker_list_performance_reviews` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: injuries and drug tests | `worker_list_injuries`, `worker_list_dot_tests` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: leave and previous employers | `worker_list_leave_cases`, `worker_list_employment_verifications` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1604,6 +1605,18 @@ would not gate them, and they convert with `@kind` and field sensitivities after
 The drug test description now says the result can be withheld, so the embedding fixture is
 re-recorded; held-out ranking is unchanged (keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82
 over 165).
+
+The leave and previous employers row converts the last two of those reads. Their GraphQL types had
+no kind, so the field guard would have shown a leave reason or a previous employer's findings at
+any ceiling; `WorkerLeaveCase` now declares `@kind(resource: "worker_leave")` and
+`WorkerEmploymentVerification` `@kind(resource: "qualification")`, the qualification file declares
+that it authorizes the verifications it carries, both kinds declare which fields are Internal, and
+the REST response guard names both structs. `qualification` was not given worker as its parent:
+the permission engine reads a child through its parent's grant, so worker read would have granted
+every qualification record. A Postgres test reads each list for one worker and for the
+organization, against the repository tool's service read, and checks that an agent at Internal is
+never shown a leave reason, a finding or a drug and alcohol answer. Held-out ranking is unchanged
+(keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82 over 165).
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
