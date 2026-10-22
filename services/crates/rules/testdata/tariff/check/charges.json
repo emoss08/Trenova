@@ -1,0 +1,731 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "a charge with an amount",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $450"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a charge with quantity and rate bills their product",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a count times a fee",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Extra drops\" (quantity: shipment.stops.len - 1, rate: $75)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "quantity: shipment.distance, rate: $2/cwt",
+     "code": "charge-option",
+     "message": "The rate `$2/cwt` is money per hundredweight and the quantity `shipment.distance` is a distance, so they don't multiply to money: a rate is priced per the quantity's unit, as in `(quantity: miles, rate: $2.35/mi)`"
+    }
+   ],
+   "name": "options whose product is not money",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: $2/cwt)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "quantity: 5 lb, rate: 5 lb",
+     "code": "charge-option",
+     "message": "The rate `5 lb` is a weight and the quantity `5 lb` is a weight, so they don't multiply to money: a rate is priced per the quantity's unit, as in `(quantity: miles, rate: $2.35/mi)`"
+    }
+   ],
+   "name": "options that do not multiply",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" (quantity: 5 lb, rate: 5 lb)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "options with an amount",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: $2/mi) = $500"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge \"Linehaul\" (quantity: shipment.distance)",
+     "code": "charge-amount",
+     "message": "A charge needs an amount: write `= amount`, or give both `quantity:` and `rate:` to bill their product"
+    }
+   ],
+   "name": "a charge without an amount or both options",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" (quantity: shipment.distance)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge \"Linehaul\"",
+     "code": "charge-amount",
+     "message": "A charge needs an amount: write `= amount`, or give both `quantity:` and `rate:` to bill their product"
+    }
+   ],
+   "name": "a charge with no amount at all",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "quantty",
+     "code": "charge-option",
+     "fixes": [
+      {
+       "label": "Change to `quantity`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Linehaul\" (quantity: shipment.distance, rate: $2/mi)"
+       ]
+      }
+     ],
+     "message": "A charge has no option `quantty`. Did you mean `quantity`?"
+    }
+   ],
+   "name": "an unknown charge option",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" (quantty: shipment.distance, rate: $2/mi)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate: $2/mi",
+     "code": "duplicate-argument",
+     "message": "`rate` is given twice"
+    }
+   ],
+   "name": "an option given twice",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" (rate: $1/mi, rate: $2/mi, quantity: shipment.distance)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "A charge's amount must be money, but `5 lb` is a weight"
+    }
+   ],
+   "name": "an amount that is not money",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = 5 lb"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "type-mismatch",
+     "message": "A charge's amount must be money, but `rate` is money per mile",
+     "nth": 2
+    }
+   ],
+   "name": "a rate as an amount",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi",
+    "charge \"Linehaul\" = rate"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "450",
+     "code": "type-mismatch",
+     "fixes": [
+      {
+       "label": "Write it as `$450`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Linehaul\" = $450"
+       ]
+      }
+     ],
+     "message": "A charge's amount must be money, but `450` is a whole number"
+    }
+   ],
+   "name": "a plain number amount gets a fix",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = 450"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "labels interpolate",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  charge \"Stop {stop.sequence}\" = $10",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.stops",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Write its length, `shipment.stops.len`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Stops {shipment.stops.len}\" = $10"
+       ]
+      }
+     ],
+     "message": "`shipment.stops` is a list (`List<Stop>`), which can't be written into text"
+    }
+   ],
+   "name": "a label interpolating a list",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Stops {shipment.stops}\" = $10"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "FSC"
+     },
+     {
+      "active": true,
+      "code": "DET"
+     },
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": false,
+      "code": "OLD"
+     },
+     {
+      "active": true,
+      "code": "HAZ"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a known active code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as FSC = $10"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "FSC"
+     },
+     {
+      "active": true,
+      "code": "DET"
+     },
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": false,
+      "code": "OLD"
+     },
+     {
+      "active": true,
+      "code": "HAZ"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "FCS",
+     "code": "unknown-code",
+     "fixes": [
+      {
+       "label": "Change to `FSC`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Fuel\" as FSC = $10"
+       ]
+      }
+     ],
+     "message": "`FCS` isn't in the accessorial charge catalog. Did you mean `FSC`?"
+    }
+   ],
+   "name": "an unknown code suggests the closest",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as FCS = $10"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "FSC"
+     },
+     {
+      "active": true,
+      "code": "DET"
+     },
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": false,
+      "code": "OLD"
+     },
+     {
+      "active": true,
+      "code": "HAZ"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "ZZZZZZ",
+     "code": "unknown-code",
+     "message": "`ZZZZZZ` isn't in the accessorial charge catalog"
+    }
+   ],
+   "name": "an unknown code with nothing close",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as ZZZZZZ = $10"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "FSC"
+     },
+     {
+      "active": true,
+      "code": "DET"
+     },
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": false,
+      "code": "OLD"
+     },
+     {
+      "active": true,
+      "code": "HAZ"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "OLD",
+     "code": "inactive-code",
+     "message": "`OLD` is inactive in the accessorial charge catalog, so it can't be billed"
+    }
+   ],
+   "name": "an inactive code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Old\" as OLD = $10"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "codes are not checked before the catalog loads",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as ANYTHING = $10"
+   ]
+  },
+  {
+   "context": {
+    "codes": []
+   },
+   "diagnostics": [
+    {
+     "at": "FSC",
+     "code": "unknown-code",
+     "message": "`FSC` isn't in the accessorial charge catalog"
+    }
+   ],
+   "name": "an empty catalog refuses every code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as FSC = $10"
+   ]
+  },
+  {
+   "context": {
+    "codes": [
+     {
+      "active": true,
+      "code": "FSC"
+     },
+     {
+      "active": true,
+      "code": "DET"
+     },
+     {
+      "active": true,
+      "code": "XDROP"
+     },
+     {
+      "active": false,
+      "code": "OLD"
+     },
+     {
+      "active": true,
+      "code": "HAZ"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "charges inside if, match and for",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  charge \"Hazmat\" as HAZ = $50",
+    "}",
+    "match shipment.status {",
+    "  New => { charge \"New\" = $1 }",
+    "  _ => {}",
+    "}",
+    "for stop in shipment.stops {",
+    "  charge \"Stop\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge \"x\" = $1",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a function computes values; only a tariff bills them"
+    }
+   ],
+   "name": "a charge in a function is refused",
+   "source": [
+    "tariff \"t\"",
+    "fn f() -> Money {",
+    "  charge \"x\" = $1",
+    "  return $1",
+    "}",
+    "charge \"y\" = f()"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge \"x\" = $1",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a condition decides true or false and bills nothing"
+    }
+   ],
+   "name": "a charge in a condition is refused",
+   "source": [
+    "condition \"c\"",
+    "charge \"x\" = $1",
+    "true"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge \"y\" = $1",
+     "code": "misplaced",
+     "message": "A charge can't be written here: a test checks the bill the tariff makes"
+    }
+   ],
+   "name": "a charge in a test is refused",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  charge \"y\" = $1",
+    "  expect total > $0",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "total clauses at the end",
+   "source": [
+    "tariff \"t\"",
+    "input minimumCharge: Money = $450",
+    "charge \"x\" = $1",
+    "minimum minimumCharge",
+    "maximum $5_000",
+    "round up to $5"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "every round form",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "round half even to cents"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5",
+     "code": "type-mismatch",
+     "fixes": [
+      {
+       "label": "Write it as `$5`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1",
+        "round to $5"
+       ]
+      }
+     ],
+     "message": "A total clause takes money, but `5` is a whole number"
+    }
+   ],
+   "name": "round to an amount that is not money",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "round to 5"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$0",
+     "code": "round-step",
+     "message": "The bill rounds to a multiple of this amount, so it must be more than `$0`"
+    }
+   ],
+   "name": "round to zero dollars",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "round down to $0"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "A total clause takes money, but `5 lb` is a weight"
+    }
+   ],
+   "name": "a minimum that is not money",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "minimum 5 lb"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge \"y\" = $1",
+     "code": "total-order",
+     "message": "Total clauses come last: move this above `minimum`, `maximum` and `round`",
+     "related": [
+      {
+       "at": "minimum $5",
+       "line": 3,
+       "message": "The first total clause"
+      }
+     ]
+    }
+   ],
+   "name": "a statement after a total clause",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "minimum $5",
+    "charge \"y\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "minimum $5",
+     "code": "total-order",
+     "message": "Total clauses go in the order `minimum`, `maximum`, `round`",
+     "related": [
+      {
+       "at": "round to cents",
+       "line": 3,
+       "message": "This one should come after it"
+      }
+     ]
+    }
+   ],
+   "name": "total clauses out of order",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "round to cents",
+    "minimum $5"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "minimum $6",
+     "code": "total-order",
+     "message": "Each total clause can be written once",
+     "related": [
+      {
+       "at": "minimum $5",
+       "line": 3,
+       "message": "It is already written here"
+      }
+     ]
+    }
+   ],
+   "name": "a total clause written twice",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "minimum $5",
+    "minimum $6"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "minimum $5",
+     "code": "misplaced",
+     "message": "Total clauses (`minimum`, `maximum`, `round`) apply to the whole bill, so they go at a tariff's top level, after its charges"
+    }
+   ],
+   "name": "a total clause inside an if",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "if shipment.hazmat {",
+    "  minimum $5",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "minimum $5",
+     "code": "misplaced",
+     "message": "Total clauses (`minimum`, `maximum`, `round`) apply to the whole bill, so they go at a tariff's top level, after its charges"
+    }
+   ],
+   "name": "a total clause in a library function",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Money {",
+    "  minimum $5",
+    "  return $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "minimum $500",
+     "code": "total-order",
+     "message": "The minimum is above the maximum, so no total satisfies both",
+     "related": [
+      {
+       "at": "maximum $100",
+       "line": 4,
+       "message": "The maximum"
+      }
+     ]
+    }
+   ],
+   "name": "a minimum above the maximum",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "minimum $500",
+    "maximum $100"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "declarations may follow total clauses",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "minimum $5",
+    "test \"it bills\" {",
+    "  expect total >= $5",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "tariff \"t\"",
+     "code": "no-charge",
+     "message": "This tariff bills no charge, so its bill is always empty"
+    }
+   ],
+   "name": "a tariff that bills nothing is a warning",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1",
+    "note \"{a}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "quantity: 2, rate: $1/mi",
+     "code": "charge-option",
+     "message": "The rate `$1/mi` is money per mile and the quantity `2` is a whole number, so together they are money per mile, not money"
+    }
+   ],
+   "name": "options whose product is a rate",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" (quantity: 2, rate: $1/mi)"
+   ]
+  }
+ ]
+}

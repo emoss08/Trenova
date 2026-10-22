@@ -1,0 +1,746 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "number rounding gives Int without places",
+   "source": [
+    "library \"t\"",
+    "fn f(x: Number) -> Number = x.round() + x.round(places: 2) + x.floor() + x.ceil() + x.roundHalfEven(2)"
+   ],
+   "types": {
+    "x.ceil()": "Int",
+    "x.floor()": "Int",
+    "x.round()": "Int",
+    "x.round(places: 2)": "Number",
+    "x.roundHalfEven(2)": "Number"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "number methods keep the type",
+   "source": [
+    "library \"t\"",
+    "fn f(x: Number, i: Int) -> Number = x.abs() + x.min(1) + x.max(2.5) + x.clamp(0, 10) + x.pow(2) + x.sqrt() + i.abs() + i.max(3) + i.max(3.5)"
+   ],
+   "types": {
+    "i.abs()": "Int",
+    "i.max(3)": "Int",
+    "i.max(3.5)": "Number",
+    "x.abs()": "Number",
+    "x.clamp(0, 10)": "Number",
+    "x.max(2.5)": "Number",
+    "x.min(1)": "Number",
+    "x.pow(2)": "Number",
+    "x.sqrt()": "Number"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "money methods",
+   "source": [
+    "library \"t\"",
+    "fn f(m: Money) -> Money = m.round() + m.roundUp(to: $5) + m.roundDown(to: $1) + m.max($0) + m.clamp($1, $9) + m.roundHalfEven() + m.abs() + m.min($1)"
+   ],
+   "types": {
+    "m.abs()": "Money",
+    "m.clamp($1, $9)": "Money",
+    "m.max($0)": "Money",
+    "m.min($1)": "Money",
+    "m.round()": "Money",
+    "m.roundDown(to: $1)": "Money",
+    "m.roundHalfEven()": "Money",
+    "m.roundUp(to: $5)": "Money"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5",
+     "code": "type-mismatch",
+     "fixes": [
+      {
+       "label": "Write it as `$5`",
+       "result": [
+        "library \"t\"",
+        "fn f(m: Money) -> Money = m.roundUp(to: $5)"
+       ]
+      }
+     ],
+     "message": "`5` is a whole number, but `to` of `roundUp` takes money"
+    }
+   ],
+   "name": "money rounding takes money",
+   "source": [
+    "library \"t\"",
+    "fn f(m: Money) -> Money = m.roundUp(to: 5)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "quantity methods",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight, d: Weight/Volume) -> Bool = w.value > 0 and w.in(cwt) > w.roundUp(to: 100 lb) and w.round(to: 1 lb) < w.roundDown(to: 1 kg) and w.max(0 lb) > 0 lb and d.in(lb/ft3) > 0 lb/ft3"
+   ],
+   "types": {
+    "d.in(lb/ft3)": "Weight/Volume",
+    "w.in(cwt)": "Weight",
+    "w.max(0 lb)": "Weight",
+    "w.round(to: 1 lb)": "Weight",
+    "w.roundDown(to: 1 kg)": "Weight",
+    "w.roundUp(to: 100 lb)": "Weight",
+    "w.value": "Number"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "mi",
+     "code": "unit-mismatch",
+     "message": "`mi` measures a distance, but this value is a weight, so it can't be converted to it"
+    }
+   ],
+   "name": "in converts only within a dimension",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight) -> Weight = w.in(mi)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "pounds",
+     "code": "unknown-unit",
+     "message": "`pounds` isn't a unit; the units are lb, cwt, kg, t, ton, mi, km, in, ft, m, ft3, m3, gal, l, min, h, d, °F, °C, pallet, piece and stop"
+    }
+   ],
+   "name": "in names a unit",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight) -> Weight = w.in(pounds)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"lb\"",
+     "code": "unknown-unit",
+     "message": "Write the unit by name, as in `.in(cwt)` or `.in(lb/ft3)`"
+    }
+   ],
+   "name": "in takes a unit by name",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight) -> Weight = w.in(\"lb\")"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "100 mi",
+     "code": "type-mismatch",
+     "message": "`100 mi` is a distance, but `to` of `roundUp` takes a weight"
+    }
+   ],
+   "name": "quantity rounding takes the same dimension",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight) -> Weight = w.roundUp(to: 100 mi)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "text properties and methods",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Bool = t.len > 0 and t.isEmpty and t.upper() == t.lower().trim() and t.startsWith(\"A\") and t.endsWith(\"Z\") and t.contains(\"x\") and t.split(\",\").len > 1 and t.matches(\"^A\") and t.replace(\"a\", \"b\") == \"\""
+   ],
+   "types": {
+    "t.isEmpty": "Bool",
+    "t.len": "Int",
+    "t.matches(\"^A\")": "Bool",
+    "t.replace(\"a\", \"b\")": "Text",
+    "t.split(\",\")": "List<Text>",
+    "t.upper()": "Text"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"(\"",
+     "code": "pattern",
+     "message": "`(` isn't a valid regular expression"
+    }
+   ],
+   "name": "an invalid regular expression literal",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Bool = t.matches(\"(\")"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "date properties",
+   "source": [
+    "library \"t\"",
+    "fn f(d: Date) -> Bool = d.year > 2000 and d.month < 13 and d.day > 0 and d.weekday == Sat and d.addDays(1) > d and d.weekend"
+   ],
+   "types": {
+    "d.addDays(1)": "Date",
+    "d.weekday": "Weekday",
+    "d.weekend": "Bool",
+    "d.year": "Int"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "date-time properties",
+   "source": [
+    "library \"t\"",
+    "fn f(t: DateTime) -> Bool = t.date.year > 0 and t.hour > 8 and t.minute == 0 and t.addHours(2) > t and t.addDays(1) > t and t.weekend"
+   ],
+   "types": {
+    "t.addDays(1)": "DateTime",
+    "t.addHours(2)": "DateTime",
+    "t.date": "Date",
+    "t.hour": "Int"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "hour",
+     "code": "unknown-field",
+     "message": "`d` is a date, which has no property or method `hour`"
+    }
+   ],
+   "name": "a date has no hour",
+   "source": [
+    "library \"t\"",
+    "fn f(d: Date) -> Int = d.hour"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "()",
+     "code": "property-call",
+     "fixes": [
+      {
+       "label": "Remove the parentheses",
+       "result": [
+        "library \"t\"",
+        "fn f(t: Text) -> Int = t.len"
+       ]
+      }
+     ],
+     "message": "`len` is a property: write it without parentheses"
+    }
+   ],
+   "name": "a property is written without parentheses",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Int = t.len()"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "upper",
+     "code": "method-call",
+     "fixes": [
+      {
+       "label": "Call it: `upper()`",
+       "result": [
+        "library \"t\"",
+        "fn f(t: Text) -> Text = t.upper()"
+       ]
+      }
+     ],
+     "message": "`upper` is a method: call it with parentheses (`upper() -> Text`)"
+    }
+   ],
+   "name": "a method needs parentheses",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Text = t.upper"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "startsWith",
+     "code": "method-call",
+     "message": "`startsWith` is a method: call it with parentheses (`startsWith(t: Text) -> Bool`)"
+    }
+   ],
+   "name": "a method with required parameters needs them",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Bool = t.startsWith"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rond",
+     "code": "unknown-field",
+     "fixes": [
+      {
+       "label": "Change to `round`",
+       "result": [
+        "library \"t\"",
+        "fn f(m: Money) -> Money = m.round()"
+       ]
+      }
+     ],
+     "message": "`m` is money, which has no property or method `rond`. Did you mean `round`?"
+    }
+   ],
+   "name": "an unknown method suggests the closest",
+   "source": [
+    "library \"t\"",
+    "fn f(m: Money) -> Money = m.rond()"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "(\"a\")",
+     "code": "arity",
+     "message": "`replace` needs the argument `b`"
+    }
+   ],
+   "name": "a method with a missing argument",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Text = t.replace(\"a\")"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "1",
+     "code": "arity",
+     "message": "`upper` takes 0 arguments"
+    }
+   ],
+   "name": "a method with too many arguments",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Text = t.upper(1)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "step",
+     "code": "unknown-argument",
+     "message": "`roundUp` has no parameter `step`"
+    }
+   ],
+   "name": "a method with an unknown named argument",
+   "source": [
+    "library \"t\"",
+    "fn f(m: Money) -> Money = m.roundUp(step: $5)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "abs",
+     "code": "unknown-field",
+     "message": "`p` is a percent, which has no property or method `abs`"
+    }
+   ],
+   "name": "percent has no methods",
+   "source": [
+    "library \"t\"",
+    "fn f(p: Percent) -> Percent = p.abs()"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "list properties",
+   "source": [
+    "library \"t\"",
+    "fn f(xs: List<Stop>) -> Bool = xs.len > 1 and xs.isEmpty"
+   ],
+   "types": {
+    "xs.isEmpty": "Bool",
+    "xs.len": "Int"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "where keeps the items",
+   "source": [
+    "tariff \"t\"",
+    "let deliveries = shipment.stops.where(s => s.kind == Delivery)",
+    "charge \"x\" = $1 * deliveries.len"
+   ],
+   "types": {
+    "s": "Stop",
+    "shipment.stops.where(s => s.kind == Delivery)": "List<Stop>"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "map gives the lambda's values",
+   "source": [
+    "tariff \"t\"",
+    "let seqs = shipment.stops.map(s => s.sequence)",
+    "charge \"x\" = $1 * seqs.len"
+   ],
+   "types": {
+    "shipment.stops.map(s => s.sequence)": "List<Int>"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "count with and without a lambda",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (shipment.stops.count() + shipment.stops.count(s => s.appointment))"
+   ],
+   "types": {
+    "shipment.stops.count()": "Int",
+    "shipment.stops.count(s => s.appointment)": "Int"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "sum of money is money",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/lb * shipment.commodities.sum(c => c.weight) + [$1, $2].sum() + $1/h * shipment.stops.sum(s => s.dwell ?? 0 h)"
+   ],
+   "types": {
+    "[$1, $2].sum()": "Money",
+    "shipment.commodities.sum(c => c.weight)": "Weight",
+    "shipment.stops.sum(s => s.dwell ?? 0 h)": "Duration"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "sum of whole numbers is Int",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * shipment.commodities.sum(c => c.pieces)"
+   ],
+   "types": {
+    "shipment.commodities.sum(c => c.pieces)": "Int"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.commodities.sum(c => c.name)",
+     "code": "not-summable",
+     "message": "`sum` works on numbers, money and quantities, but the values are text"
+    }
+   ],
+   "name": "sum of text is refused",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * shipment.commodities.sum(c => c.name).len"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "min and max give optional values",
+   "source": [
+    "tariff \"t\"",
+    "let heaviest = shipment.commodities.max(c => c.weight)",
+    "charge \"x\" = $1/lb * (heaviest ?? 0 lb) + $1 * ([1, 2].min() ?? 0)"
+   ],
+   "types": {
+    "[1, 2].min()": "Int?",
+    "shipment.commodities.max(c => c.weight)": "Weight?"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.commodities.max(c => c.name)",
+     "code": "unordered",
+     "message": "`max` compares values, and text can't be ordered"
+    }
+   ],
+   "name": "max by an unordered key is refused",
+   "source": [
+    "tariff \"t\"",
+    "let m = shipment.commodities.max(c => c.name)",
+    "charge \"x\" = $1 * (m?.len ?? 0)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "avg of whole numbers is a Number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * shipment.commodities.avg(c => c.pieces) + $1/lb * shipment.commodities.avg(c => c.weight)"
+   ],
+   "types": {
+    "shipment.commodities.avg(c => c.pieces)": "Number",
+    "shipment.commodities.avg(c => c.weight)": "Weight"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "any and all take predicates",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.commodities.any(c => c.hazmat) and shipment.stops.all(s => s.appointment) {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "c.weight",
+     "code": "type-mismatch",
+     "message": "`c.weight` is a weight, but a condition must be true or false"
+    }
+   ],
+   "name": "a predicate must be Bool",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.commodities.any(c => c.weight) {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "first, last and find give optional items",
+   "source": [
+    "tariff \"t\"",
+    "let a = shipment.stops.first()",
+    "let b = shipment.stops.last(s => s.kind == Delivery)",
+    "let c = shipment.stops.find(s => s.appointment)",
+    "charge \"x\" = $1 * ((a?.sequence ?? 0) + (b?.sequence ?? 0) + (c?.sequence ?? 0))"
+   ],
+   "types": {
+    "shipment.stops.find(s => s.appointment)": "Stop?",
+    "shipment.stops.first()": "Stop?",
+    "shipment.stops.last(s => s.kind == Delivery)": "Stop?"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "sortBy, take, skip, reverse and distinct keep the list",
+   "source": [
+    "tariff \"t\"",
+    "let a = shipment.stops.sortBy(s => s.sequence).take(2).skip(1)",
+    "let b = [1, 2].reverse().distinct()",
+    "charge \"x\" = $1 * (a.len + b.len)"
+   ],
+   "types": {
+    "[1, 2].reverse()": "List<Int>",
+    "shipment.stops.sortBy(s => s.sequence)": "List<Stop>"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "s.kind",
+     "code": "unordered",
+     "message": "`sortBy` compares values, and a value of type `StopKind` can't be ordered"
+    }
+   ],
+   "name": "sortBy needs an ordered key",
+   "source": [
+    "tariff \"t\"",
+    "let a = shipment.stops.sortBy(s => s.kind)",
+    "charge \"x\" = $1 * a.len"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "groupBy gives keys and items",
+   "source": [
+    "tariff \"t\"",
+    "let groups = shipment.stops.groupBy(s => s.kind)",
+    "charge \"x\" = $1 * groups.len"
+   ],
+   "types": {
+    "shipment.stops.groupBy(s => s.kind)": "List<{ key: StopKind, items: List<Stop> }>"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a lambda may take the item's index",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.count((s, i) => i > 0 and s.appointment)",
+    "charge \"x\" = $1 * n"
+   ],
+   "types": {
+    "i": "Int"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "true",
+     "code": "lambda",
+     "message": "`where` takes a lambda, as in `where(s => …)`"
+    }
+   ],
+   "name": "a list method needs a lambda",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.where(true)",
+    "charge \"x\" = $1 * n.len"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "s => 1",
+     "code": "lambda",
+     "message": "A lambda can only be passed to a list method, such as `where`, `map` or `sum`"
+    }
+   ],
+   "name": "a lambda passed to a function is refused",
+   "source": [
+    "tariff \"t\"",
+    "fn f(n: Int) -> Int = n",
+    "charge \"x\" = $1 * f(s => 1)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "1.5",
+     "code": "type-mismatch",
+     "message": "`1.5` is a number, but `n` of `take` takes a whole number"
+    }
+   ],
+   "name": "take needs a whole number",
+   "source": [
+    "tariff \"t\"",
+    "let a = shipment.stops.take(1.5)",
+    "charge \"x\" = $1 * a.len"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a list item read by index is optional",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (shipment.stops[0]?.sequence ?? 0)"
+   ],
+   "types": {
+    "shipment.stops[0]": "Stop?"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"a\"",
+     "code": "type-mismatch",
+     "message": "`\"a\"` is text, but a whole number is needed here"
+    }
+   ],
+   "name": "a list index must be a whole number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (shipment.stops[\"a\"]?.sequence ?? 0)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "not-indexable",
+     "message": "`shipment.distance` is a distance, which can't be indexed with `[…]`"
+    }
+   ],
+   "name": "a number cannot be indexed",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * shipment.distance[0]"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "Number and Int.parse convert",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * Number(3) + $1 * (Int.parse(\"12\") ?? 0)"
+   ],
+   "types": {
+    "Int.parse(\"12\")": "Int?",
+    "Number(3)": "Number"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "12",
+     "code": "type-mismatch",
+     "message": "`12` is a whole number, but `text` of `Int.parse` takes text"
+    }
+   ],
+   "name": "Int.parse takes text",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (Int.parse(12) ?? 0)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Text",
+     "code": "not-callable",
+     "message": "`Text` can't be called; the conversions are `Number(i)` and `Int.parse(text)`"
+    }
+   ],
+   "name": "other types cannot be called",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * Text(3)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "wieght",
+     "code": "unknown-field",
+     "fixes": [
+      {
+       "label": "Change to `weight`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1/lb * (shipment.weight ?? 0 lb)"
+       ]
+      }
+     ],
+     "message": "`shipment` has no field `wieght`. Did you mean `weight`?"
+    }
+   ],
+   "name": "a field of a record that is not there",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/lb * (shipment.wieght ?? 0 lb)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "miles",
+     "code": "unknown-field",
+     "message": "`shipment.distance` is a distance, which has no property or method `miles`"
+    }
+   ],
+   "name": "a field read from a number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * shipment.distance.miles"
+   ]
+  }
+ ]
+}
