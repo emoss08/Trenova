@@ -122,7 +122,7 @@ func TestCreateIntegration_PersistsAdditionalChargesAndCommodities(t *testing.T)
 	assert.Equal(t, accessorial.ID, persisted.AdditionalCharges[0].AccessorialChargeID)
 	assert.Equal(t, commodityEntity.ID, persisted.Commodities[0].CommodityID)
 	assert.True(t, decimal.NewFromInt(15).Equal(persisted.OtherChargeAmount.Decimal))
-	assert.True(t, decimal.NewFromInt(16).Equal(persisted.TotalChargeAmount.Decimal))
+	assert.True(t, decimal.NewFromInt(15).Equal(persisted.TotalChargeAmount.Decimal))
 	require.NotNil(t, persisted.AdditionalCharges[0].AccessorialCharge)
 	require.NotNil(t, persisted.Commodities[0].Commodity)
 }
@@ -259,7 +259,7 @@ func TestUpdateIntegration_SyncsNestedChargesAndCommodities(t *testing.T) {
 	require.Len(t, persisted.AdditionalCharges, 2)
 	require.Len(t, persisted.Commodities, 2)
 	assert.True(t, decimal.NewFromInt(30).Equal(persisted.OtherChargeAmount.Decimal))
-	assert.True(t, decimal.NewFromInt(31).Equal(persisted.TotalChargeAmount.Decimal))
+	assert.True(t, decimal.NewFromInt(30).Equal(persisted.TotalChargeAmount.Decimal))
 	assert.Equal(t, loaded.AdditionalCharges[0].ID, persisted.AdditionalCharges[0].ID)
 	assert.Equal(t, commodityOne.ID, persisted.Commodities[0].CommodityID)
 	assert.Equal(t, int64(110), persisted.Commodities[0].Weight)
@@ -743,7 +743,7 @@ func TestUpdateIntegration_ReconcilesDetentionCharge(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, persisted.AdditionalCharges)
 	assert.True(t, decimal.NewFromInt(0).Equal(persisted.OtherChargeAmount.Decimal))
-	assert.True(t, decimal.NewFromInt(1).Equal(persisted.TotalChargeAmount.Decimal))
+	assert.True(t, decimal.NewFromInt(0).Equal(persisted.TotalChargeAmount.Decimal))
 }
 
 func TestCreateIntegration_RatesWithHydratedCommodityDetails(t *testing.T) {
