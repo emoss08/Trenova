@@ -1,0 +1,525 @@
+=== missing value after an operator
+tariff "t"
+let a = 1 +
+let b = 2
+---
+tariff "t"
+let a = (+ 1 ?)
+let b = 2
+! syntax 21..22 Expected a value after `+`
+
+=== missing value at the end of the file
+tariff "t"
+let a =
+---
+tariff "t"
+let a = ?
+! syntax 17..18 Expected a value after `=`
+
+=== two statements on one line
+tariff "t"
+let a = 1 let b = 2
+let c = 3
+---
+tariff "t"
+let a = 1
+let c = 3
+! syntax 21..24 Each statement goes on its own line; start a new line before `let`
+
+=== unknown character mid statement
+tariff "t"
+let a = 1 # 2
+let b = 2
+---
+tariff "t"
+let a = 1
+let b = 2
+! syntax 21..22 `#` can't be used in a tariff
+
+=== unclosed call before the next statement
+tariff "t"
+let a = f(1, 2
+let b = 2
+---
+tariff "t"
+let a = (call f 1 2)
+let b = 2
+! syntax 20..21 This call is missing its closing `)`
+
+=== unclosed list before the next statement
+tariff "t"
+let a = [1, 2
+charge "x" = $1
+---
+tariff "t"
+let a = (list 1 2)
+charge (text "x") = $1
+! syntax 19..20 This list is missing its closing `]`
+
+=== unclosed block before the next item
+tariff "t"
+if a {
+  note "x"
+fn f() = 1
+test "t" {
+  expect true
+}
+---
+tariff "t"
+if a
+  note (text "x")
+fn f() = 1
+test "t"
+  expect true
+! syntax 16..17 This block is missing its closing brace
+
+=== unclosed block at the end of the file
+tariff "t"
+for x in xs {
+  note "x"
+---
+tariff "t"
+for x in xs
+  note (text "x")
+! syntax 23..24 This block is missing its closing brace
+
+=== stray closing brace
+tariff "t"
+let a = 1
+}
+let b = 2
+---
+tariff "t"
+let a = 1
+expr ?
+let b = 2
+! syntax 21..22 This closing brace has no opening brace
+
+=== dangling else
+tariff "t"
+else {
+  note "x"
+}
+let b = 2
+---
+tariff "t"
+expr ?
+let b = 2
+! syntax 11..15 This `else` has no `if` before it
+
+=== half-written let
+tariff "t"
+let
+let b = 2
+---
+tariff "t"
+let  = ?
+let b = 2
+! syntax 14..14 Expected a name after `let`
+
+=== half-written charge
+tariff "t"
+charge
+charge "x" as
+charge "y" = $1
+---
+tariff "t"
+charge (text)
+charge (text "x") as 
+charge (text "y") = $1
+! syntax 17..17 Expected the charge's label in quotes after `charge`, like `charge "Linehaul"`
+! syntax 31..31 Expected a charge code after `as`, like `FSC`
+
+=== charge code in lower case
+tariff "t"
+charge "x" as fsc = $1
+---
+tariff "t"
+charge (text "x") as fsc = $1
+! syntax 25..28 A charge code is written in capitals: `FSC`
+
+=== charge with positional options
+tariff "t"
+charge "x" (miles, rate)
+---
+tariff "t"
+charge (text "x") (miles rate)
+! syntax 23..28 A charge's options are named: `quantity: …` and `rate: …`
+! syntax 30..34 A charge's options are named: `quantity: …` and `rate: …`
+
+=== half-written for
+tariff "t"
+for
+for x
+for x in
+note "ok"
+---
+tariff "t"
+for  in ?
+for x in ?
+for x in ?
+note (text "ok")
+! syntax 14..14 Expected the loop variable's name after `for`
+! syntax 20..20 Expected `in` and the list to walk, like `for stop in shipment.stops`
+! syntax 27..29 Expected a value after `in`
+
+=== half-written require
+tariff "t"
+require x
+require x else
+note "ok"
+---
+tariff "t"
+require x else (text)
+require x else (text)
+note (text "ok")
+! syntax 20..20 Expected `else` and the reason to refuse, like `else "This rate needs a weight"`
+! syntax 35..35 Expected the reason in quotes after `else`
+
+=== half-written match
+tariff "t"
+match x {
+  A =>
+}
+note "ok"
+---
+tariff "t"
+match x
+  arm A => ?
+note (text "ok")
+! syntax 25..27 Expected a value after `=>`
+
+=== half-written if
+tariff "t"
+if
+note "ok"
+---
+tariff "t"
+if ?
+note (text "ok")
+! syntax 11..13 Expected a value after `if`
+
+=== half-written member access
+tariff "t"
+let a = shipment.
+let b = 2
+---
+tariff "t"
+let a = (. shipment )
+let b = 2
+! syntax 28..28 Expected a name after `.`
+
+=== half-written function
+library "l"
+fn
+fn g(a: ) = 1
+fn h(a: Int = 1
+fn k() -> = 1
+fn m() = 2
+---
+library "l"
+fn () = ?
+fn g(a: ?) = 1
+fn h(a: Int = 1) = ?
+fn k() -> ? = 1
+fn m() = 2
+! syntax 14..14 Expected the function's name after `fn`
+! syntax 23..24 Expected a type, like `Money`, `Weight` or `List<Stop>`
+! syntax 33..34 These parameters are missing their closing `)`
+! syntax 55..56 Expected a type, like `Money`, `Weight` or `List<Stop>`
+
+=== half-written use
+tariff "t"
+use
+use std.
+use std.ltl.{ deficit
+let a = 1
+---
+tariff "t"
+use 
+use std.
+use std.ltl.{deficit}
+let a = 1
+! syntax 14..14 Expected a module path after `use`, like `std.fuel`
+! syntax 23..23 Expected a module path after `use`, like `std.fuel`
+! syntax 36..37 This list of names is missing its closing brace
+
+=== half-written enum
+library "l"
+enum E { A B }
+enum F {
+enum G { A, }
+---
+library "l"
+enum E
+  A
+  B
+enum F
+enum G
+  A
+! syntax 23..24 Expected `,` between the variants
+! syntax 34..35 This enum is missing its closing brace
+
+=== half-written type
+library "l"
+type T = { a: Int, b }
+type U
+type V = { a Int }
+---
+library "l"
+type T =
+  a: Int
+type U =
+type V =
+! syntax 31..32 Expected a field, written `name: Type`, or a closing brace
+! syntax 41..41 Expected `=` and the type's fields in braces, like `type Break = '{' from: Weight '}'`
+! syntax 53..54 Expected a field, written `name: Type`, or a closing brace
+
+=== half-written test
+tariff "t"
+test {
+}
+test "x"
+let a = 1
+---
+tariff "t"
+test ""
+test "x"
+let a = 1
+! syntax 16..17 Expected the test's name in quotes after `test`
+! syntax 28..28 Expected the test's body in braces
+
+=== half-written given
+tariff "t"
+test "x" {
+  given
+  given shipment.
+  given shipment.weight
+  expect
+}
+---
+tariff "t"
+test "x"
+  given  = ?
+  given shipment. = ?
+  given shipment.weight = ?
+  expect ?
+! syntax 29..29 Expected what to set after `given`, like `given shipment.weight = 1_240 lb`
+! syntax 47..47 Expected a field's name after `.`
+! syntax 71..71 Expected `=` and the value to give
+! syntax 74..80 Expected a value after `expect`
+
+=== assignment to a field
+tariff "t"
+var a = 1
+a.b = 2
+---
+tariff "t"
+var a = 1
+expr (. a b)
+! syntax 25..26 Only a `var` can be assigned, by its name
+
+=== given outside a test
+tariff "t"
+given shipment.weight = 1 lb
+---
+tariff "t"
+given shipment.weight = 1[lb]
+! misplaced 11..16 `given` can only be used inside a `test` block
+
+=== expect nested in an if inside a test
+tariff "t"
+test "t" {
+  if true {
+    expect true
+  }
+}
+---
+tariff "t"
+test "t"
+  if true
+    expect true
+! misplaced 38..44 `expect` can only be used inside a `test` block
+
+=== declarations inside a block
+tariff "t"
+if true {
+  fn f() = 1
+  const X = 1
+  input i: Int
+  use std.fuel
+  type T = { a: Int }
+  enum E { A }
+  test "t" {}
+  private const Y = 1
+}
+---
+tariff "t"
+if true
+  item
+    fn f() = 1
+  item
+    const X = 1
+  item
+    input i: Int
+  item
+    use std.fuel
+  item
+    type T =
+      a: Int
+  item
+    enum E
+      A
+  item
+    test "t"
+  item
+    private const Y = 1
+! misplaced 23..25 `fn` can only be used at the top level of a file, not inside a block
+! misplaced 36..41 `const` can only be used at the top level of a file, not inside a block
+! misplaced 50..55 `input` can only be used at the top level of a file, not inside a block
+! misplaced 65..68 `use` can only be used at the top level of a file, not inside a block
+! misplaced 80..84 `type` can only be used at the top level of a file, not inside a block
+! misplaced 102..106 `enum` can only be used at the top level of a file, not inside a block
+! misplaced 117..121 A `test` can only be written at the top level of a file, not inside a block
+! misplaced 131..138 `private` can only be used at the top level of a file, not inside a block
+
+=== let named with a keyword
+tariff "t"
+let for = 1
+let b = 2
+---
+tariff "t"
+let for = 1
+let b = 2
+! syntax 15..18 `for` is a keyword, so it can't be used as a name
+
+=== unterminated text then more items
+tariff "t"
+note "abc
+let b = 2
+---
+tariff "t"
+note (text "abc")
+let b = 2
+! syntax 16..20 This text is missing its closing quote
+
+=== a deeply nested expression stops at the limit
+tariff "t"
+let a = ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+let b = 2
+---
+tariff "t"
+let a = (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren (paren ?)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+! limit 146..146 This file nests deeper than 128 levels, the most a file can
+
+=== a long chain stops at the limit
+tariff "t"
+let a = 1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
+---
+tariff "t"
+let a = ?
+! limit 272..272 This file nests deeper than 128 levels, the most a file can
+
+=== deeply nested blocks stop at the limit
+tariff "t"
+if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a { if a {
+---
+tariff "t"
+if a
+  if a
+    if a
+      if a
+        if a
+          if a
+            if a
+              if a
+                if a
+                  if a
+                    if a
+                      if a
+                        if a
+                          if a
+                            if a
+                              if a
+                                if a
+                                  if a
+                                    if a
+                                      if a
+                                        if a
+                                          if a
+                                            if a
+                                              if a
+                                                if a
+                                                  if a
+                                                    if a
+                                                      if a
+                                                        if a
+                                                          if a
+                                                            if a
+                                                              if a
+                                                                if a
+                                                                  if a
+                                                                    if a
+                                                                      if a
+                                                                        if a
+                                                                          if a
+                                                                            if a
+                                                                              if a
+                                                                                if a
+                                                                                  if a
+                                                                                    if a
+                                                                                      if a
+                                                                                        if a
+                                                                                          if a
+                                                                                            if a
+                                                                                              if a
+                                                                                                if a
+                                                                                                  if a
+                                                                                                    if a
+                                                                                                      if a
+                                                                                                        if a
+                                                                                                          if a
+                                                                                                            if a
+                                                                                                              if a
+                                                                                                                if a
+                                                                                                                  if a
+                                                                                                                    if a
+                                                                                                                      if a
+                                                                                                                        if a
+                                                                                                                          if a
+                                                                                                                            if a
+                                                                                                                              if a
+                                                                                                                                break
+! limit 459..459 This file nests deeper than 128 levels, the most a file can
+
+=== the first error does not hide later items
+tariff "t"
+let a = * 2
+input rate: Money/mi = $2.35/mi
+fn f() = 1
+test "x" {
+  expect true
+}
+---
+tariff "t"
+let a = (* ? 2)
+input rate: Money/mi = $2.35/[mi]
+fn f() = 1
+test "x"
+  expect true
+! syntax 19..20 Expected a value after `=`
+
+=== a typo in the middle of a block
+tariff "t"
+for s in shipment.stops {
+  let x = s.dwell ?? 
+  charge "Detention" as DET = $1
+}
+minimum $1
+---
+tariff "t"
+for s in (. shipment stops)
+  let x = (?? (. s dwell) ?)
+  charge (text "Detention") as DET = $1
+minimum $1
+! syntax 55..57 Expected a value after `??`
