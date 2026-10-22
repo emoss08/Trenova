@@ -56,7 +56,11 @@ export function LibrarySubmitDialog({
   const [reviewerId, setReviewerId] = useState<string | null>(null);
   const [note, setNote] = useState("");
 
-  const readiness = useQuery({ ...formulaLibrary.readiness(library.id), enabled: open, staleTime: 0 });
+  const readiness = useQuery({
+    ...formulaLibrary.readiness(library.id),
+    enabled: open,
+    staleTime: 0,
+  });
   const diff = useQuery({ ...formulaLibrary.reviewDiff(library.id), enabled: open, staleTime: 0 });
   const reviewers = useQuery({ ...formulaLibrary.reviewers(library.id), enabled: open });
 
@@ -92,7 +96,10 @@ export function LibrarySubmitDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="xl" className="max-h-[88vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 p-0">
+      <DialogContent
+        size="xl"
+        className="max-h-[88vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 p-0"
+      >
         <DialogHeader className="border-b px-5 pt-5 pb-4">
           <DialogTitle>{t("Submit {0} for review", libraryPath(library.name))}</DialogTitle>
           <DialogDescription>
@@ -317,7 +324,10 @@ export function LibraryDecisionDialog({
         }
       }}
     >
-      <DialogContent size="xl" className="max-h-[88vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 p-0">
+      <DialogContent
+        size="xl"
+        className="max-h-[88vh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 p-0"
+      >
         <DialogHeader className="border-b px-5 pt-5 pb-4">
           <DialogTitle>{config?.copy.title}</DialogTitle>
           <DialogDescription>{config?.copy.description}</DialogDescription>

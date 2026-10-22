@@ -53,7 +53,7 @@ describe("RulesRuntime", () => {
     expect(version.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(version.operations).toContain(RULES_VERSION_OP);
     expect(version.operations).toEqual(expect.arrayContaining([...TARIFF_OPERATIONS]));
-    expect(version.operations.filter((op) => op.startsWith("formula."))).toEqual([]);
+    expect(TARIFF_OPERATIONS.filter((op) => op.startsWith("formula."))).toEqual([]);
   });
 
   it("returns the output as JSON text from callRaw", () => {

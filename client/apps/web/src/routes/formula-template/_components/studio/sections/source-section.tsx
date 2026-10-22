@@ -218,12 +218,7 @@ export function SourceSection() {
               <NovaButton
                 size="xs"
                 onClick={() =>
-                  askNova(
-                    t(
-                      "How do I fix this: {0}",
-                      translateMessage(diagnostic.message, t),
-                    ),
-                  )
+                  askNova(t("How do I fix this: {0}", translateMessage(diagnostic.message, t)))
                 }
               >
                 {t("Ask Nova")}

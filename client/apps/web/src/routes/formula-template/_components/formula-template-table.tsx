@@ -101,7 +101,9 @@ export default function FormulaTemplatesDataTable() {
                       "{0, plural, one {# already existed and was skipped.} other {# already existed and were skipped.}}",
                       result.skipped.length,
                     )
-                  : t("They are drafts: check their tests and send each for review before it rates."),
+                  : t(
+                      "They are drafts: check their tests and send each for review before it rates.",
+                    ),
             },
           );
         }

@@ -16,8 +16,6 @@ const STATUS_STYLES: Record<
 };
 
 function CheckRow({ check }: { check: ReadinessCheck }) {
-  const t = useT();
-
   const { icon: Icon, className } = STATUS_STYLES[check.status];
   return (
     <li className="flex items-start gap-2 px-3 py-1.5 text-xs">

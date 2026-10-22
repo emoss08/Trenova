@@ -95,7 +95,11 @@ function CompareDialog({
           </DialogDescription>
         </DialogHeader>
         {older.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={t("Compare against")}>
+          <div
+            className="flex flex-wrap items-center gap-1.5"
+            role="group"
+            aria-label={t("Compare against")}
+          >
             <span className="text-foreground-muted text-xs">{t("Against")}</span>
             {older.map((version) => (
               <Button
@@ -217,7 +221,11 @@ function RollbackDialog({
  * The library's versions, newest first, and its review conversation. Any version compares
  * with another; an earlier one can be restored as a new draft version.
  */
-export function LibraryHistoryPane({ onRestored }: { onRestored: (library: FormulaLibrary) => void }) {
+export function LibraryHistoryPane({
+  onRestored,
+}: {
+  onRestored: (library: FormulaLibrary) => void;
+}) {
   const t = useT();
   const { library, dirty } = useLibraryStudio();
   const { allowed: canUpdate } = usePermission(Resource.FormulaLibrary, Operation.Update);

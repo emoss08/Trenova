@@ -113,7 +113,10 @@ export class FormulaLibraryService {
     return safeParse(readinessResponseSchema, response, "Formula Library Readiness");
   }
 
-  public async reviewDiff(libraryId: string, options?: RequestOptions): Promise<ReviewDiffResponse> {
+  public async reviewDiff(
+    libraryId: string,
+    options?: RequestOptions,
+  ): Promise<ReviewDiffResponse> {
     const response = await api.get<unknown>(`${BASE}/${libraryId}/review-diff`, {
       signal: options?.signal,
     });

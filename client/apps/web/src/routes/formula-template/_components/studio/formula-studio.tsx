@@ -33,7 +33,7 @@ import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type { ApprovalAction } from "../approval-action-dialog";
-import "./formula-studio.css";
+import "@/components/tariff-studio/tariff-studio.css";
 import { DetailsHero } from "./sections/details-hero";
 import { InputsSection } from "./sections/inputs-section";
 import {
@@ -202,7 +202,7 @@ function RailTabs() {
             {item.value === "tests" && tests.status === "ran" && total > 0 && (
               <span
                 className={cn(
-                  "rounded-badge px-1.5 font-mono text-2xs tabular-nums",
+                  "rounded-badge text-2xs px-1.5 font-mono tabular-nums",
                   allPass
                     ? "bg-success-subtle text-success-subtle-foreground"
                     : "bg-danger-subtle text-danger-subtle-foreground",
@@ -255,7 +255,9 @@ function RailBody() {
     appendToSource(
       newTestBlock(
         "tariff",
-        (check.outline?.items ?? []).filter((item) => item.kind === "test").map((item) => item.name),
+        (check.outline?.items ?? [])
+          .filter((item) => item.kind === "test")
+          .map((item) => item.name),
         t("a new test"),
       ),
     );

@@ -101,7 +101,10 @@ export default function FormulaLibrariesDataTable() {
     }
     if (failed > 0) {
       toast.error(
-        t("{0, plural, one {# library was not archived} other {# libraries were not archived}}", failed),
+        t(
+          "{0, plural, one {# library was not archived} other {# libraries were not archived}}",
+          failed,
+        ),
       );
     }
     if (nextHeld.length > 0) {
