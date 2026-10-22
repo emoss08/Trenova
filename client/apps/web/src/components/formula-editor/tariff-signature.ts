@@ -10,7 +10,8 @@ import { appendTariffDoc, unlessUnanswered } from "./tariff-doc";
 import type { TariffLanguageService } from "./tariff-service";
 
 export function renderTariffSignature(help: NonNullable<TariffSignatureHelp>): HTMLElement | null {
-  const signature = help.signatures[help.active] ?? help.signatures[0];
+  const signature =
+    (help.active === null ? undefined : help.signatures[help.active]) ?? help.signatures[0];
   if (!signature) return null;
   const dom = document.createElement("div");
   dom.className = "cm-tariff-signature";
@@ -45,6 +46,7 @@ function signatureTooltip(service: TariffLanguageService, state: EditorState): T
         source: state.doc.toString(),
         offset: selection.head,
         context: service.context(),
+        kind: service.kind(),
       }),
     null,
   );

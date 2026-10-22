@@ -4,12 +4,16 @@
 
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
 import { translate } from "@trenova/shared/i18n/runtime";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import { tariffHover, type TariffHover } from "@trenova/shared/rules/tariff";
-import { appendTariffDoc, unlessUnanswered } from "./tariff-doc";
+import { appendTariffCode, appendTariffDoc, unlessUnanswered } from "./tariff-doc";
 import type { TariffLanguageService } from "./tariff-service";
 
 /** The hover card's element. */
-export function renderTariffHover(hover: NonNullable<TariffHover>): HTMLElement {
+export function renderTariffHover(
+  hover: NonNullable<TariffHover>,
+  rules: RulesRuntime,
+): HTMLElement {
   const { contents } = hover;
   const dom = document.createElement("div");
   dom.className = "cm-tariff-hover";
@@ -19,7 +23,7 @@ export function renderTariffHover(hover: NonNullable<TariffHover>): HTMLElement 
     if (contents.signature) {
       const signature = document.createElement("code");
       signature.className = "cm-tariff-hover-title";
-      signature.textContent = contents.signature;
+      appendTariffCode(signature, contents.signature, rules);
       head.appendChild(signature);
     }
     const type = [contents.type, contents.unit].filter(Boolean).join(" · ");
@@ -37,7 +41,14 @@ export function renderTariffHover(hover: NonNullable<TariffHover>): HTMLElement 
   if (contents.value) {
     const row = document.createElement("div");
     row.className = "cm-tariff-hover-value";
-    row.textContent = translate("In the preview: {0}", contents.value);
+    row.textContent =
+      contents.value.times > 1
+        ? translate(
+            "In the preview: {0}, the last of {1} times it was bound",
+            contents.value.display,
+            contents.value.times,
+          )
+        : translate("In the preview: {0}", contents.value.display);
     dom.appendChild(row);
   }
   return dom;
@@ -51,6 +62,7 @@ export function tariffHoverCard(service: TariffLanguageService) {
           source: view.state.doc.toString(),
           offset: position,
           context: service.context(),
+          kind: service.kind(),
           values: service.trace(),
         }),
       null,
@@ -60,7 +72,7 @@ export function tariffHoverCard(service: TariffLanguageService) {
       pos: hover.range.from,
       end: hover.range.to,
       above: true,
-      create: () => ({ dom: renderTariffHover(hover) }),
+      create: () => ({ dom: renderTariffHover(hover, service.rules()) }),
     };
   });
 }

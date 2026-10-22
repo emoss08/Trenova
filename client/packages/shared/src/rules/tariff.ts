@@ -17,6 +17,7 @@ import {
   tariffRangeSchema,
   tariffTestRunSchema,
   tariffTypeSchema,
+  tariffWireValueSchema,
   type TariffCheckResult,
   type TariffContext,
   type TariffEvaluation,
@@ -338,6 +339,8 @@ export function tariffScaffoldTest(
 export type TariffCursorRequest = {
   source: string;
   context: TariffContext;
+  /** The file's kind; the module reads it from the header when it is left out. */
+  kind?: TariffFileKind;
   offset: number;
 };
 
@@ -345,6 +348,7 @@ function cursorInput(request: TariffCursorRequest) {
   return {
     source: request.source,
     context: wireContext(request.context),
+    ...(request.kind ? { kind: request.kind } : {}),
     offset: request.offset,
   };
 }
@@ -366,6 +370,7 @@ export const tariffCompletionKindSchema = z.enum([
   "table",
   "module",
   "snippet",
+  "value",
 ]);
 export type TariffCompletionKind = z.output<typeof tariffCompletionKindSchema>;
 
@@ -385,6 +390,8 @@ const completionSchema = z.object({
   snippet: z.boolean().default(false),
   /** The module's order, as text that sorts. */
   sort: nullableText,
+  /** Replaces the outer range for this item alone, such as `.` rewritten to `?.`. */
+  range: tariffRangeSchema.nullish().transform((value) => value ?? null),
 });
 export type TariffCompletion = z.output<typeof completionSchema>;
 
@@ -415,8 +422,19 @@ const hoverSchema = z
       unit: nullableText,
       /** Markdown. */
       doc: docSchema,
-      /** What the binding came to in the last preview. */
-      value: nullableText,
+      /** What the binding came to in the last preview, and how many times it was bound. */
+      value: z
+        .object({
+          value: tariffWireValueSchema.nullish().transform((value) => value ?? null),
+          display: z.string(),
+          times: z
+            .number()
+            .int()
+            .nullish()
+            .transform((value) => value ?? 1),
+        })
+        .nullish()
+        .transform((value) => value ?? null),
     }),
   })
   .nullable();
@@ -450,8 +468,16 @@ const signatureSchema = z
         ),
       }),
     ),
-    active: z.number().int(),
-    activeParameter: z.number().int().nullable(),
+    active: z
+      .number()
+      .int()
+      .nullish()
+      .transform((value) => value ?? null),
+    activeParameter: z
+      .number()
+      .int()
+      .nullish()
+      .transform((value) => value ?? null),
   })
   .nullable();
 export type TariffSignatureHelp = z.output<typeof signatureSchema>;
@@ -536,6 +562,7 @@ export function tariffInlays(
   request: {
     source: string;
     context: TariffContext;
+    kind?: TariffFileKind;
     from: number;
     to: number;
     values?: TariffPreviewValues;
@@ -545,6 +572,7 @@ export function tariffInlays(
     rules.call(TARIFF_INLAYS_OP, {
       source: request.source,
       context: wireContext(request.context),
+      ...(request.kind ? { kind: request.kind } : {}),
       range: { from: request.from, to: request.to },
       ...(request.values && request.values.length > 0 ? { values: request.values } : {}),
     }),

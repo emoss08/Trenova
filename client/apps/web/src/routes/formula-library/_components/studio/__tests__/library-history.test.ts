@@ -7,7 +7,7 @@ function review(id: string, decision: string, round = 1): FormulaLibraryRecord["
     id,
     libraryId: "fl_1",
     round,
-    decision,
+    decision: decision as FormulaLibraryRecord["reviews"][number]["decision"],
     actorId: "usr_1",
     comment: "",
     baseVersionNumber: 0,

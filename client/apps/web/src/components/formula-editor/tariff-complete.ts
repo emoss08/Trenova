@@ -6,13 +6,19 @@
 
 import {
   autocompletion,
+  insertCompletionText,
+  pickedCompletion,
   snippet,
   type Completion,
   type CompletionContext,
   type CompletionResult,
 } from "@codemirror/autocomplete";
 import type { Extension } from "@codemirror/state";
-import { tariffComplete, type TariffCompletionKind } from "@trenova/shared/rules/tariff";
+import {
+  tariffComplete,
+  type TariffCompletion,
+  type TariffCompletionKind,
+} from "@trenova/shared/rules/tariff";
 import { appendTariffDoc, unlessUnanswered } from "./tariff-doc";
 import type { TariffLanguageService } from "./tariff-service";
 
@@ -33,7 +39,26 @@ const COMPLETION_TYPE: Record<TariffCompletionKind, string> = {
   table: "class",
   code: "constant",
   snippet: "text",
+  value: "constant",
 };
+
+/**
+ * What a pick writes: the item's text, or its snippet with tab stops. An item with its own
+ * range (`.` rewritten to `?.` on an optional) replaces that range instead of the list's.
+ */
+function applyItem(item: TariffCompletion): Completion["apply"] {
+  const range = item.range;
+  if (item.snippet) {
+    const fill = snippet(item.insert);
+    return range ? (view, completion) => fill(view, completion, range.from, range.to) : fill;
+  }
+  if (!range) return item.insert;
+  return (view, completion) =>
+    view.dispatch({
+      ...insertCompletionText(view.state, item.insert, range.from, range.to),
+      annotations: pickedCompletion.of(completion),
+    });
+}
 
 /** What the module offers at the cursor, as CodeMirror completions. */
 export function tariffCompletions(
@@ -47,6 +72,7 @@ export function tariffCompletions(
         source,
         offset: position,
         context: service.context(),
+        kind: service.kind(),
       }),
     null,
   );
@@ -54,7 +80,7 @@ export function tariffCompletions(
   const count = answer.items.length;
   const options: Completion[] = answer.items.map((item, index) => ({
     label: item.label,
-    apply: item.snippet ? snippet(item.insert) : item.insert,
+    apply: applyItem(item),
     type: COMPLETION_TYPE[item.kind],
     boost: Math.round(((count - index) / count) * 99) - 99,
     ...(item.detail ? { detail: item.detail } : {}),

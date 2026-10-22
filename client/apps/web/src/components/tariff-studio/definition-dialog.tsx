@@ -14,6 +14,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { tariffCatalog } from "@trenova/shared/rules/tariff";
 import type { TariffContext } from "@trenova/shared/types/tariff";
 import { tariffDocText } from "@/components/formula-editor/tariff-doc";
+import { cn } from "@trenova/shared/lib/utils";
 
 /**
  * Go to definition into an imported library: the library's source, read-only, with the
@@ -35,9 +36,10 @@ export function DefinitionDialog({
   const library = target
     ? (context?.libraries ?? []).find((candidate) => candidate.path === target.module)
     : undefined;
-  const std = target && !library
-    ? tariffCatalog(rules).modules.find((module) => module.path === target.module)
-    : undefined;
+  const std =
+    target && !library
+      ? tariffCatalog(rules).modules.find((module) => module.path === target.module)
+      : undefined;
 
   return (
     <Dialog open={target !== null} onOpenChange={(open) => !open && onClose()}>
@@ -68,16 +70,24 @@ export function DefinitionDialog({
           />
         ) : std ? (
           <ul className="flex max-h-[60vh] flex-col gap-2 overflow-auto">
-            {std.declarations.map((declaration) => (
-              <li key={declaration.name} className="flex flex-col gap-0.5">
-                <code className="font-mono text-xs">{declaration.signature}</code>
-                {declaration.doc && (
-                  <span className="text-foreground-muted text-xs">
-                    {tariffDocText(declaration.doc)}
-                  </span>
-                )}
-              </li>
-            ))}
+            {[...std.declarations]
+              .sort((a, b) => Number(b.name === target?.name) - Number(a.name === target?.name))
+              .map((declaration) => (
+                <li
+                  key={declaration.name}
+                  className={cn(
+                    "flex flex-col gap-0.5 rounded-md px-2 py-1",
+                    declaration.name === target?.name && "bg-surface-selected",
+                  )}
+                >
+                  <code className="font-mono text-xs">{declaration.signature}</code>
+                  {declaration.doc && (
+                    <span className="text-foreground-muted text-xs">
+                      {tariffDocText(declaration.doc)}
+                    </span>
+                  )}
+                </li>
+              ))}
           </ul>
         ) : (
           <p className="text-foreground-muted text-sm">

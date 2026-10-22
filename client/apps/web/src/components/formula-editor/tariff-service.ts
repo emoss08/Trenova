@@ -16,7 +16,12 @@ import {
 } from "@trenova/shared/types/tariff";
 
 /** Where a name is declared outside this file: an imported library and the range in its source. */
-export type TariffDefinitionTarget = { module: string; range: TariffRange };
+/**
+ * A declaration in an imported library: the module it is in, its range in that library's
+ * source, and the name that was followed (a standard library's source is not shipped to the
+ * client, so its declaration is found by name in the catalog).
+ */
+export type TariffDefinitionTarget = { module: string; range: TariffRange; name: string };
 
 export type TariffLanguageService = {
   rules: () => RulesRuntime;

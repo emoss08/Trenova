@@ -4,20 +4,10 @@
 // why the name cannot be renamed.
 
 import { Facet, StateEffect, StateField, type Extension } from "@codemirror/state";
-import {
-  EditorView,
-  keymap,
-  showPanel,
-  type Command,
-  type Panel,
-} from "@codemirror/view";
+import { EditorView, keymap, showPanel, type Command, type Panel } from "@codemirror/view";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import { translate } from "@trenova/shared/i18n/runtime";
-import {
-  tariffDefinition,
-  tariffPrepareRename,
-  tariffRename,
-} from "@trenova/shared/rules/tariff";
+import { tariffDefinition, tariffPrepareRename, tariffRename } from "@trenova/shared/rules/tariff";
 import { unlessUnanswered } from "./tariff-doc";
 import type { TariffLanguageService } from "./tariff-service";
 
@@ -45,13 +35,19 @@ export function goToDefinition(
         source: view.state.doc.toString(),
         offset: position,
         context: service.context(),
+        kind: service.kind(),
       }),
     [],
   );
   const target = targets[0];
   if (!target) return false;
   if (target.module) {
-    service.openDefinition({ module: target.module, range: target.selectionRange });
+    const word = view.state.wordAt(position);
+    service.openDefinition({
+      module: target.module,
+      range: target.selectionRange,
+      name: word ? view.state.sliceDoc(word.from, word.to) : "",
+    });
   } else {
     revealRange(view, target.selectionRange);
   }
@@ -120,6 +116,7 @@ function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
           offset: state.offset,
           newName: name,
           context: service.context(),
+          kind: service.kind(),
         }),
       null,
     );
@@ -168,6 +165,7 @@ export function startRename(view: EditorView): boolean {
         source: view.state.doc.toString(),
         offset,
         context: service.context(),
+        kind: service.kind(),
       }),
     null,
   );

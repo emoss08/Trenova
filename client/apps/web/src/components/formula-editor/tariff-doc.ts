@@ -2,8 +2,9 @@
 // comment (their words, shown as written), with `backticked` spans set as code.
 
 import { translateMessage } from "@trenova/shared/i18n/message";
-import { RulesRequestError } from "@trenova/shared/rules/runtime";
-import type { TariffDoc } from "@trenova/shared/rules/tariff";
+import { TARIFF_TOKEN_ROLES } from "@trenova/shared/lib/highlight/tariff";
+import { RulesRequestError, type RulesRuntime } from "@trenova/shared/rules/runtime";
+import { tariffTokens, type TariffDoc } from "@trenova/shared/rules/tariff";
 
 /** A doc as text in the reader's language, or null for none. */
 export function tariffDocText(doc: TariffDoc): string | null {
@@ -26,6 +27,30 @@ export function appendTariffDoc(parent: HTMLElement, doc: TariffDoc): boolean {
     }
   });
   return true;
+}
+
+/**
+ * Appends a piece of Tariff (a signature, a declaration) to an element, coloured from the
+ * module's tokens in the editor's syntax classes. A text the lexer refuses is shown plain.
+ */
+export function appendTariffCode(parent: HTMLElement, code: string, rules: RulesRuntime): void {
+  const tokens = unlessUnanswered(() => tariffTokens(rules, code), []);
+  let at = 0;
+  for (const token of tokens) {
+    if (token.from > at) parent.appendChild(document.createTextNode(code.slice(at, token.from)));
+    const role = TARIFF_TOKEN_ROLES[token.kind];
+    const text = code.slice(token.from, token.to);
+    if (role) {
+      const span = document.createElement("span");
+      span.className = `cm-syntax-${role}`;
+      span.textContent = text;
+      parent.appendChild(span);
+    } else {
+      parent.appendChild(document.createTextNode(text));
+    }
+    at = token.to;
+  }
+  if (at < code.length) parent.appendChild(document.createTextNode(code.slice(at)));
 }
 
 const reported = new Set<string>();

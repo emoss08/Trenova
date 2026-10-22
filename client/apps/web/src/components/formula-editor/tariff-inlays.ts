@@ -73,6 +73,7 @@ function visibleInlays(service: TariffLanguageService, view: EditorView): Tariff
       tariffInlays(service.rules(), {
         source: view.state.doc.toString(),
         context: service.context(),
+        kind: service.kind(),
         from,
         to,
         values: service.trace(),

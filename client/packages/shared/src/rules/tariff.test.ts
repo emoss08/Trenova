@@ -4,9 +4,16 @@ import { rulesSync } from "./runtime";
 import {
   tariffCatalog,
   tariffCheck,
+  tariffComplete,
+  tariffDefinition,
   tariffEvaluate,
   tariffFormat,
+  tariffHover,
+  tariffInlays,
+  tariffPrepareRename,
+  tariffRename,
   tariffScaffoldTest,
+  tariffSignature,
   tariffTest,
   tariffTokens,
 } from "./tariff";
@@ -93,7 +100,9 @@ describe("tariffCheck", () => {
   it("outlines inputs, charges with their nesting, total clauses and tests", () => {
     const check = tariffCheck(rules, { source: SOURCE, context });
 
-    expect(check.outline?.items.map(({ kind, name, code, depth }) => [kind, name, code, depth])).toEqual([
+    expect(
+      check.outline?.items.map(({ kind, name, code, depth }) => [kind, name, code, depth]),
+    ).toEqual([
       ["header", "Dry van TL", null, 0],
       ["input", "rate", null, 0],
       ["input", "minimumCharge", null, 0],
@@ -154,7 +163,9 @@ describe("tariffTest", () => {
       {
         range: { from: at("expect total"), to: at("expect total") + "expect total == $1".length },
         message: { message: "This expectation does not hold" },
-        values: [{ range: { from: at("total == $1"), to: at("total == $1") + 5 }, display: "$450.00" }],
+        values: [
+          { range: { from: at("total == $1"), to: at("total == $1") + 5 }, display: "$450.00" },
+        ],
       },
     ]);
     expect(failed?.bill?.total).toEqual({ $q: "450", u: "$" });
@@ -167,7 +178,9 @@ describe("tariffEvaluate", () => {
       context,
       record: null,
       trace: true,
-      programs: [{ id: "preview", source: SOURCE, inputs: { minimumCharge: { $q: "500", u: "$" } } }],
+      programs: [
+        { id: "preview", source: SOURCE, inputs: { minimumCharge: { $q: "500", u: "$" } } },
+      ],
     });
     const [result] = evaluation.results;
 
@@ -189,7 +202,10 @@ describe("tariffEvaluate", () => {
       name: "miles",
       value: { $q: "0", u: "mi" },
       display: "0 mi",
-      range: { from: at("let miles"), to: at("let miles") + "let miles = shipment.distance".length },
+      range: {
+        from: at("let miles"),
+        to: at("let miles") + "let miles = shipment.distance".length,
+      },
     });
   });
 });
@@ -231,7 +247,9 @@ describe("tariffCatalog", () => {
     expect(catalog.modules.map((module) => module.path)).toEqual(
       expect.arrayContaining(["std.ltl", "std.fuel", "std.time", "std.accessorials"]),
     );
-    expect(catalog.units).toContainEqual(expect.objectContaining({ unit: "cwt", dimension: "Weight" }));
+    expect(catalog.units).toContainEqual(
+      expect.objectContaining({ unit: "cwt", dimension: "Weight" }),
+    );
     expect(catalog.schema.roots.map((root) => root.name)).toEqual(
       expect.arrayContaining(["shipment", "lane", "customer", "fuel", "rating", "tables"]),
     );
@@ -254,6 +272,90 @@ describe("tariffScaffoldTest", () => {
       error: null,
       status: null,
       needs: [],
+    });
+  });
+});
+
+describe("the editor operations", () => {
+  const cursor = (offset: number) => ({ source: SOURCE, context, kind: "tariff" as const, offset });
+
+  it("completes a record's fields after a dot, sorted by the module", () => {
+    const offset = at("shipment.distance") + "shipment.".length;
+    const answer = tariffComplete(rules, cursor(offset));
+    expect(answer.range).toEqual({ from: offset, to: offset });
+    const distance = answer.items.find((item) => item.label === "distance");
+    expect(distance).toMatchObject({
+      kind: "field",
+      insert: "distance",
+      snippet: false,
+      range: null,
+    });
+    const sorts = answer.items.map((item) => item.sort ?? "");
+    expect([...sorts].sort()).toEqual(sorts);
+  });
+
+  it("hovers a binding with its declaration, type and unit", () => {
+    expect(tariffHover(rules, cursor(at("miles =") + 1))).toEqual({
+      range: { from: at("miles ="), to: at("miles =") + "miles".length },
+      contents: {
+        signature: "let miles: Distance",
+        type: "Distance",
+        unit: "mi",
+        doc: null,
+        value: null,
+      },
+    });
+  });
+
+  it("hovers nothing on blank space", () => {
+    expect(tariffHover(rules, cursor(at("\n\nlet miles") + 1))).toBeNull();
+  });
+
+  it("helps with a call's signature, naming the active parameter", () => {
+    const help = tariffSignature(rules, cursor(at("count(s") + "count(".length));
+    expect(help?.signatures.length).toBeGreaterThan(0);
+    expect(help?.active).toBe(0);
+    expect(help?.activeParameter).toBe(0);
+  });
+
+  it("finds a binding's declaration in this file", () => {
+    const use = SOURCE.indexOf("miles,");
+    expect(tariffDefinition(rules, cursor(use + 1))).toEqual([
+      {
+        module: null,
+        range: expect.objectContaining({ from: at("let miles") }),
+        selectionRange: { from: at("miles ="), to: at("miles =") + "miles".length },
+      },
+    ]);
+  });
+
+  it("prepares and applies a rename to every reference", () => {
+    const offset = at("drops =") + 1;
+    expect(tariffPrepareRename(rules, cursor(offset))).toEqual({
+      range: { from: at("drops ="), to: at("drops =") + "drops".length },
+      placeholder: "drops",
+    });
+    const renamed = tariffRename(rules, { ...cursor(offset), newName: "deliveries" });
+    expect("edits" in renamed && renamed.edits.length).toBe(3);
+  });
+
+  it("refuses to rename a schema root", () => {
+    const answer = tariffPrepareRename(rules, cursor(at("shipment.distance") + 2));
+    expect("error" in answer).toBe(true);
+  });
+
+  it("gives inlay hints with their punctuation", () => {
+    const hints = tariffInlays(rules, {
+      source: SOURCE,
+      context,
+      kind: "tariff",
+      from: 0,
+      to: SOURCE.length,
+    });
+    expect(hints).toContainEqual({
+      offset: at("miles =") + "miles".length,
+      label: ": Distance",
+      kind: "type",
     });
   });
 });
