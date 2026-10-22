@@ -486,6 +486,7 @@ func (s *Service) attemptChat(
 		maxTokens = provider.ResolvedMaxTokens()
 	}
 
+	advisor, advisorFromSetting := advisorFor(provider, req.Advisor)
 	call := &modeladapter.Call{
 		Provider:                 provider,
 		Client:                   s.clientFor(provider),
@@ -502,7 +503,7 @@ func (s *Service) attemptChat(
 			Tools:          req.Tools,
 			ToolChoiceNone: req.ToolChoiceNone,
 			Reasoning:      req.Reasoning,
-			Advisor:        req.Advisor,
+			Advisor:        advisor,
 			MaxTokens:      maxTokens,
 			// A chat turn drives tools, so it is sampled for exactness: the
 			// model has to name a tool that exists and fill its arguments
@@ -586,6 +587,11 @@ func (s *Service) attemptChat(
 			zap.Error(err),
 		)
 		call.Request.ToolChoiceNone = false
+		err = execute()
+	}
+	if message, refused := refusedAdvisor(call.Request, err); refused && advisorFromSetting {
+		s.recordAdvisorRefusal(ctx, provider, req.TenantInfo, call.Request.Advisor.Model, message)
+		call.Request.Advisor = nil
 		err = execute()
 	}
 	err = limited.finish(err)

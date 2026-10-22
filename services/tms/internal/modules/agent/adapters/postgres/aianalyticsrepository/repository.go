@@ -411,12 +411,20 @@ type countsScan struct {
 	OutputTokens      int64  `bun:"output_tokens"`
 	CacheReadTokens   int64  `bun:"cache_read_tokens"`
 	CacheWriteTokens  int64  `bun:"cache_write_tokens"`
+	AdvisorCalls      int64  `bun:"advisor_calls"`
+	AdvisorPrompt     int64  `bun:"advisor_prompt_tokens"`
+	AdvisorOutput     int64  `bun:"advisor_output_tokens"`
+	AdvisorCostUSD    string `bun:"advisor_cost_usd"`
 }
 
 func (s *countsScan) counts() aianalyticsports.Counts {
 	cost, err := decimal.NewFromString(s.CostUSD)
 	if err != nil {
 		cost = decimal.Zero
+	}
+	advice, err := decimal.NewFromString(s.AdvisorCostUSD)
+	if err != nil {
+		advice = decimal.Zero
 	}
 
 	return aianalyticsports.Counts{
@@ -438,6 +446,12 @@ func (s *countsScan) counts() aianalyticsports.Counts {
 			Output:     s.OutputTokens,
 			CacheRead:  s.CacheReadTokens,
 			CacheWrite: s.CacheWriteTokens,
+		},
+		Advisor: aianalyticsports.AdvisorTotals{
+			Calls:        s.AdvisorCalls,
+			PromptTokens: s.AdvisorPrompt,
+			OutputTokens: s.AdvisorOutput,
+			CostUSD:      advice,
 		},
 	}
 }
