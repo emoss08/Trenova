@@ -1,83 +1,92 @@
-import { formulaSchemaResponseSchema } from "@trenova/shared/types/formula-template";
+import { formulaCatalog } from "@trenova/shared/rules/formula";
+import { rulesSync } from "@trenova/shared/rules/runtime";
 import { describe, expect, it } from "vitest";
 import {
   buildKnownIdentifiers,
   functionInsertion,
+  isKeyword,
   isKnownFunction,
   isKnownVariable,
+  isOperatorWord,
+  itemFieldDoc,
 } from "../known-identifiers";
-import { describedShipment } from "./described-shipment";
+import { knownFor, shipmentSchema } from "./formula-fixtures";
+
+const catalog = formulaCatalog(rulesSync());
 
 describe("buildKnownIdentifiers", () => {
-  it("knows only the template's inputs until the engine's schema has loaded", () => {
-    const known = buildKnownIdentifiers(undefined, [{ name: "fuelPct", type: "Number" }]);
+  it("knows the catalog and the inputs, but no field, until the schema has loaded", () => {
+    const known = buildKnownIdentifiers(catalog, undefined, [{ name: "fuelPct", type: "Number" }]);
+
     expect(known.ready).toBe(false);
+    expect(known.schema).toBeNull();
     expect([...known.variablePaths]).toEqual(["fuelPct"]);
-    expect(known.functionNames.size).toBe(0);
-    expect(known.disabled.size).toBe(0);
+    expect(known.callables.has("round")).toBe(true);
+    expect(known.disabled.get("now")?.replacement).toBe("ratingTime");
   });
 
-  it("takes functions, builtins and the disabled list from the engine", () => {
-    const known = buildKnownIdentifiers(describedShipment);
+  it("hands the checker the schema's fields, item fields included, and the inputs", () => {
+    const known = knownFor([{ name: "fuelPct", type: "Number", description: "", required: false }]);
+
     expect(known.ready).toBe(true);
-    expect(known.variablePaths.has("totalDistance")).toBe(true);
-    expect(known.shapes.get("round")).toMatchObject({ minArgs: 1, maxArgs: 2, returns: "Number" });
-    expect(known.shapes.get("min")?.maxArgs).toBe(Number.POSITIVE_INFINITY);
-    expect(known.shapes.get("filter")?.predicate).toBe(true);
-    expect(known.shapes.get("sum")?.predicate).toBe(false);
-    for (const builtin of ["reverse", "toPairs", "fromPairs", "bitnot"]) {
-      expect(known.functionNames.has(builtin), builtin).toBe(true);
-    }
-    expect(known.functions.some((fn) => fn.name === "reverse")).toBe(false);
-    expect(known.disabled.get("now")).toEqual({
-      name: "now",
-      reason: "nondeterministic",
-      replacement: "ratingTime",
+    expect(known.schema).toEqual({
+      variables: shipmentSchema.variables,
+      inputs: [{ name: "fuelPct", type: "Number" }],
     });
   });
 
-  it("uses the server schema when it has variables", () => {
-    const known = buildKnownIdentifiers(
-      formulaSchemaResponseSchema.parse({
-        schemaId: "shipment",
-        variables: [
-          {
-            name: "newServerVariable",
-            type: "number",
-            description: "",
-            category: "shipment",
-            nullable: false,
-            computed: false,
-            enum: undefined,
-          },
-        ],
-        functions: [
-          {
-            name: "lookup",
-            signature: "lookup(t, k)",
-            description: "",
-            example: "",
-            category: "",
-            operator: false,
-          },
-        ],
-      }),
-    );
-    expect(known.variablePaths.has("newServerVariable")).toBe(true);
-    expect(known.variablePaths.has("totalDistance")).toBe(false);
+  it("lists item fields apart from the record's fields", () => {
+    const known = knownFor();
+
+    expect(known.variables.some((variable) => variable.name.includes("[]"))).toBe(false);
+    expect(known.itemFields.map((field) => field.name)).toEqual(["stops[].type", "stops[].weight"]);
+    expect(known.variableRoots.has("stops[]")).toBe(false);
   });
 
-  it("adds custom variables with a custom category", () => {
-    const known = buildKnownIdentifiers(describedShipment, [
-      { name: "fuelPct", type: "Number", description: "", required: false },
+  it("adds inputs as custom variables after the schema's", () => {
+    const known = knownFor([{ name: "fuelPct", type: "Number", description: "", required: false }]);
+
+    expect(known.variables.at(-1)).toEqual({
+      name: "fuelPct",
+      type: "Number",
+      description: "Custom variable",
+      category: "custom",
+      custom: true,
+    });
+  });
+
+  it("calls built-ins by name but lists only the documented functions", () => {
+    const known = knownFor();
+
+    expect(isKnownFunction(known, "filter")).toBe(true);
+    expect(known.functions.some((fn) => fn.name === "filter")).toBe(false);
+    expect(isKnownFunction(known, "startsWith")).toBe(false);
+    expect(isKnownFunction(known, "bogusFn")).toBe(false);
+  });
+
+  it("takes keywords and operator words from the catalog", () => {
+    const known = knownFor();
+
+    for (const word of ["let", "if", "else", "nil", "true", "and", "in"]) {
+      expect(isKeyword(known, word), word).toBe(true);
+    }
+    expect(isKeyword(known, "round")).toBe(false);
+    expect([...known.operatorNames].sort()).toEqual([
+      "contains",
+      "endsWith",
+      "matches",
+      "startsWith",
     ]);
-    expect(known.variablePaths.has("fuelPct")).toBe(true);
-    expect(known.variables.find((v) => v.name === "fuelPct")?.custom).toBe(true);
+    expect(isOperatorWord(known, "startsWith")).toBe(true);
+  });
+
+  it("builds the catalog's part once per catalog", () => {
+    expect(knownFor().callables).toBe(knownFor([{ name: "x", type: "Number" }]).callables);
   });
 });
 
 describe("isKnownVariable", () => {
-  const known = buildKnownIdentifiers(describedShipment);
+  const known = knownFor();
 
   it("recognizes exact paths and dotted-root matches", () => {
     expect(isKnownVariable(known, "customer.name")).toBe(true);
@@ -86,43 +95,56 @@ describe("isKnownVariable", () => {
   });
 });
 
-describe("isKnownFunction", () => {
-  const known = buildKnownIdentifiers(describedShipment);
+describe("itemFieldDoc", () => {
+  it("describes an item's field from the list that has it", () => {
+    expect(itemFieldDoc(knownFor(), "weight")).toEqual({
+      name: "weight",
+      type: "number",
+      description: "Weight at the stop",
+      category: "shipment",
+      nullable: true,
+      enum: null,
+    });
+  });
 
-  it("recognizes Trenova functions and expr builtins", () => {
-    expect(isKnownFunction(known, "round")).toBe(true);
-    expect(isKnownFunction(known, "len")).toBe(true);
-    expect(isKnownFunction(known, "bogusFn")).toBe(false);
+  it("says nothing when lists disagree about the field, or none has it", () => {
+    const known = buildKnownIdentifiers(catalog, {
+      variables: [
+        ...shipmentSchema.variables,
+        {
+          name: "commodities[].weight",
+          type: "string",
+          description: "",
+          category: "",
+          nullable: false,
+          computed: false,
+        },
+      ],
+    });
+    expect(itemFieldDoc(known, "weight")).toBeNull();
+    expect(itemFieldDoc(known, "bogus")).toBeNull();
   });
 });
 
 describe("functionInsertion", () => {
   it("inserts a call with the cursor between the parentheses", () => {
-    expect(functionInsertion({ name: "round", signature: "round(x)", description: "" })).toEqual({
+    expect(functionInsertion({ name: "round", operator: false })).toEqual({
       text: "round()",
       cursor: 6,
     });
   });
 
   it("inserts an infix operator with a string placeholder selected for typing", () => {
-    expect(
-      functionInsertion({
-        name: "startsWith",
-        signature: 'text startsWith "prefix"',
-        description: "",
-        operator: true,
-      }),
-    ).toEqual({ text: ' startsWith ""', cursor: 13 });
+    expect(functionInsertion({ name: "startsWith", operator: true })).toEqual({
+      text: ' startsWith ""',
+      cursor: 13,
+    });
   });
 
   it("inserts a slice with the cursor on the start index", () => {
-    expect(
-      functionInsertion({
-        name: "[start:end]",
-        signature: "text[start:end]",
-        description: "",
-        operator: true,
-      }),
-    ).toEqual({ text: "[0:3]", cursor: 1 });
+    expect(functionInsertion({ name: "[start:end]", operator: true })).toEqual({
+      text: "[0:3]",
+      cursor: 1,
+    });
   });
 });

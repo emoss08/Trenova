@@ -1,81 +1,29 @@
 import { linter, type Action, type Diagnostic } from "@codemirror/lint";
 import type { Extension } from "@codemirror/state";
-import { checkExpression, type ExprDiagnostic, type ExprFix } from "./expr-check";
-import { tokenize } from "./expr-parser";
+import { translateMessage } from "@trenova/shared/i18n/message";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
+import type {
+  FormulaDiagnostic,
+  FormulaFix,
+  FormulaInputType,
+} from "@trenova/shared/types/formula-template";
+import { checkExpression } from "./formula-check";
 import type { KnownIdentifiers } from "./known-identifiers";
 
-export type { ExprDiagnostic, ExprFix } from "./expr-check";
-
-export type IdentifierToken = {
-  name: string;
-  from: number;
-  to: number;
-  isCall: boolean;
-};
+export type DeclareInput = (name: string, type: FormulaInputType) => void;
 
 /**
- * The identifiers an expression reads, dotted paths joined, with whether each
- * is called. Built on the language's own tokenizer, so strings and comments
- * never count.
+ * What the editor underlines: every finding of `formula.check` but the one that
+ * says the formula is empty, which an empty editor shows by being empty.
  */
-export function collectIdentifierTokens(expression: string): IdentifierToken[] {
-  const { tokens } = tokenize(expression);
-  const out: IdentifierToken[] = [];
-  let index = 0;
-  while (index < tokens.length) {
-    const token = tokens[index];
-    if (token.kind !== "ident") {
-      index += 1;
-      continue;
-    }
-    let name = token.text;
-    let to = token.to;
-    let cursor = index + 1;
-    while (
-      tokens[cursor]?.kind === "punct" &&
-      tokens[cursor].text === "." &&
-      tokens[cursor].to === tokens[cursor + 1]?.from &&
-      (tokens[cursor + 1]?.kind === "ident" || tokens[cursor + 1]?.kind === "keyword")
-    ) {
-      name += `.${tokens[cursor + 1].text}`;
-      to = tokens[cursor + 1].to;
-      cursor += 2;
-    }
-    const next = tokens[cursor];
-    out.push({
-      name,
-      from: token.from,
-      to,
-      isCall: next?.kind === "punct" && next.text === "(",
-    });
-    index = cursor;
-  }
-  return out;
+export function lintFindings(diagnostics: readonly FormulaDiagnostic[]): FormulaDiagnostic[] {
+  return diagnostics.filter((diagnostic) => diagnostic.code !== "empty");
 }
 
-const LET_BINDING = /\blet\s+([A-Za-z_][A-Za-z0-9_]*)\s*=/g;
-
-/** Names the expression binds itself with `let`; they are known wherever they are read. */
-export function letBindings(expression: string): Set<string> {
-  const names = new Set<string>();
-  for (const match of expression.matchAll(LET_BINDING)) {
-    names.add(match[1]);
-  }
-  return names;
-}
-
-/** Everything the language service finds wrong with the expression. */
-export function lintExpression(expression: string, known: KnownIdentifiers): ExprDiagnostic[] {
-  if (expression.trim() === "") return [];
-  return checkExpression(expression, known).diagnostics;
-}
-
-export type DeclareInput = (name: string, type: "Number" | "String" | "Boolean") => void;
-
-function toAction(fix: ExprFix, declare: DeclareInput | undefined): Action | null {
+function toAction(fix: FormulaFix, declare: DeclareInput | undefined): Action | null {
   if (fix.kind === "replace") {
     return {
-      name: fix.label,
+      name: translateMessage(fix.label),
       apply: (view) => {
         view.dispatch({ changes: fix.changes, userEvent: "fix" });
         view.focus();
@@ -84,14 +32,14 @@ function toAction(fix: ExprFix, declare: DeclareInput | undefined): Action | nul
   }
   if (!declare) return null;
   return {
-    name: fix.label,
+    name: translateMessage(fix.label),
     apply: () => declare(fix.name, fix.type),
   };
 }
 
 /** Turns a finding into what CodeMirror draws: the underline, its message and its fixes. */
 export function toCodeMirrorDiagnostic(
-  diagnostic: ExprDiagnostic,
+  diagnostic: FormulaDiagnostic,
   declare?: DeclareInput,
 ): Diagnostic {
   const actions = diagnostic.fixes
@@ -100,22 +48,29 @@ export function toCodeMirrorDiagnostic(
   return {
     from: diagnostic.from,
     to: Math.max(diagnostic.to, diagnostic.from),
-    severity: diagnostic.severity === "info" ? "info" : diagnostic.severity,
-    message: diagnostic.message,
+    severity: diagnostic.severity,
+    message: translateMessage(diagnostic),
     source: diagnostic.code,
     ...(actions.length > 0 ? { actions } : {}),
   };
 }
 
+/**
+ * The linter: the rules module checks the document 300 ms after the last edit,
+ * on the main thread, against what the editor knows at that moment.
+ */
 export function createExprLinter(
+  getRules: () => RulesRuntime,
   getKnown: () => KnownIdentifiers,
   getDeclare?: () => DeclareInput | undefined,
 ): Extension {
   return linter(
-    (view): Diagnostic[] =>
-      lintExpression(view.state.doc.toString(), getKnown()).map((diagnostic) =>
+    (view): Diagnostic[] => {
+      const check = checkExpression(getRules(), view.state.doc.toString(), getKnown());
+      return lintFindings(check.diagnostics).map((diagnostic) =>
         toCodeMirrorDiagnostic(diagnostic, getDeclare?.()),
-      ),
+      );
+    },
     { delay: 300 },
   );
 }

@@ -7,13 +7,23 @@ import type {
   FormulaTestCase,
   FormulaTestCaseInput,
   TestCaseCandidate,
+  TestExpressionResponse,
 } from "@trenova/shared/types/formula-template";
+import { translateMessage } from "@trenova/shared/i18n/message";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { previewFailure } from "@/lib/formula-preview";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 const SCENARIO_DEBOUNCE_MS = 600;
+
+/** Why a scenario's load did not price, in the engine's words, in the language on screen. */
+function failureText(response: TestExpressionResponse): string {
+  const failure = previewFailure(response);
+  return failure ? translateMessage(failure) : translate("Could not be priced");
+}
 /** A cent: what a scenario the engine priced should match exactly. */
 export const SCENARIO_TOLERANCE = 0.01;
 
@@ -176,7 +186,7 @@ export function useStudioScenarios({
                 actual !== null &&
                 Math.abs(actual - scenario.expectedAmount) <= scenario.tolerance + 1e-9,
               actualAmount: actual,
-              error: response.valid ? null : (response.error ?? response.message),
+              error: response.valid ? null : failureText(response),
             },
           ] as const;
         }),

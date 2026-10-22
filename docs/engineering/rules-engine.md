@@ -472,9 +472,10 @@ The codes:
 | `rate-table` | error | a table name that is not a string literal, or (with `tables`) an unknown table or one of the wrong shape |
 
 Messages reuse the TypeScript language service's English templates wherever a check carried
-over, so their translations in `i18n/messages.*.json` still apply. An inner phrase that the old
-service translated separately (a value's description such as ``"`x` is a number"``, a type's
-name) is passed as an English argument, because `Arg` has no nested message yet.
+over, so their translations in `i18n/messages.*.json` still apply. An inner phrase (a value's
+description such as ``"`x` is a number"``, a type's name, a hint sentence) is a nested
+`Message` argument, translated on its own; a template never starts or ends with a space to join
+one, because the template is its catalog key exactly as written.
 
 #### `formula.format`
 
@@ -1403,8 +1404,8 @@ fetch. The file must be served as `application/wasm`:
 
 ### Browser callers
 
-The typed wrappers beside the loader are `allocation.ts` (with `allocation-form.ts` for zod),
-`report.ts`, `lane.ts` and `matrix.ts`; `wire.ts` shapes form values for them, sending a value
+The typed wrappers beside the loader are `formula.ts`, `allocation.ts` (with
+`allocation-form.ts` for zod), `report.ts`, `lane.ts` and `matrix.ts`; `wire.ts` shapes form values for them, sending a value
 that is not a decimal yet ("abc", `NaN`, "1.") as "not filled in" so a half-typed form never
 refuses the request. Decimal outputs stay strings in every client type and become numbers only
 where a formatter or a chart needs one. Messages are shown with `translateMessage(message, t)`
@@ -1436,7 +1437,15 @@ Each screen calls once per question for everything it shows, and waits in one of
 | Rate agreement lane editor | `lane.keys`, `lane.specificity`, `lane.coverage` | every lane of the agreement, again only when a field they read changes | `LaneEditorSkeleton` |
 | Lane key labels (`useLaneKeyLabels`: import rate sheet, simulation) | `lane.parse` | every distinct key on screen | `LaneKeyTableSkeleton`, `SimulationPanelSkeleton` |
 | Desk rate agreement card | `lane.keys` | every lane read so far, again when a page arrives | the card's skeleton |
+| Formula Studio editor: linter, hover, signature help, format command (`components/formula-editor`) | `formula.check`, `formula.identifier`, `formula.signature`, `formula.format` | the document at the cursor; one check per text and knowledge, shared by the linter and the Studio's analysis | `StudioSkeleton` (`StudioProvider`), and `ExpressionEditor`'s own `useRules()` for every editor |
+| Formula Studio analysis, reference pane, highlighter and completions | `formula.check`, `formula.catalog` | the main expression; the catalog once per loaded runtime | `StudioSkeleton` |
+| Nova's formula proposal card | `formula.format`, `formula.check` | the proposal's expression and breakdown lines | the Studio's boundary |
+| Desk formula template card | `formula.catalog` | once per loaded runtime, for the highlighter | the card's skeleton |
 | Rate matrix grid editor | `matrix.coverage` | the whole matrix, on each change of its cells or axes; each axis labelled as the screen names it | `MatrixGridEditorSkeleton` |
 
 Tests read the corpora through `rules/__tests__/corpus.ts`, so a wrapper or screen test asserts
 the case the crate is pinned to, never what the code returned when the test was written.
+
+The Formula Studio is the language's only browser caller, and no formula is parsed, checked or
+formatted in TypeScript; [formula-language-service.md](formula-language-service.md) has the
+editor's side.

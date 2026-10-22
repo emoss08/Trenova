@@ -1,66 +1,38 @@
 import { StateEffect, StateField, type EditorState, type Extension } from "@codemirror/state";
 import { EditorView, showTooltip, type Tooltip } from "@codemirror/view";
-import { nodePath, parseExpression, memberPath, type Node } from "./expr-parser";
+import { translateMessage } from "@trenova/shared/i18n/message";
+import { formulaSignature } from "@trenova/shared/rules/formula";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type { FunctionDoc, KnownIdentifiers } from "./known-identifiers";
 
 /*
  * Signature help: while the cursor sits inside a call's parentheses, the
  * function's signature floats above it with the argument being typed in
- * bold, the way an IDE does it.
+ * bold, the way an IDE does it. The rules module finds the call and the
+ * argument (`formula.signature`); the signature and its description are the
+ * catalog's.
  */
 
 export type SignatureHelp = {
   fn: FunctionDoc;
-  /** Which argument the cursor is in, from 0. */
+  /** Which argument the cursor is in, from 0; for a pipe the piped value is argument 0. */
   active: number;
   /** Where the tooltip anchors: the opening parenthesis. */
   at: number;
 };
 
-/** The call the cursor is inside, innermost first, and which argument it is on. */
+/** The catalogued call the cursor is inside, innermost first, and which argument it is on. */
 export function signatureAt(
+  rules: RulesRuntime,
   expression: string,
   position: number,
   known: KnownIdentifiers,
 ): SignatureHelp | null {
-  const program = parseExpression(expression, known.operatorNames);
-  const path = nodePath(program, position);
-  for (let index = path.length - 1; index >= 0; index -= 1) {
-    const node = path[index];
-    if (node.kind !== "call") continue;
-    if (
-      position <= node.parens.from ||
-      position >
-        node.parens.to -
-          (node.parens.to > node.parens.from && expression[node.parens.to - 1] === ")" ? 1 : 0)
-    ) {
-      continue;
-    }
-    const name = memberPath(node.callee);
-    const fn = name ? known.functions.find((item) => item.name === name) : undefined;
-    if (!fn || fn.operator) continue;
-    return { fn, active: activeArgument(node, position, expression), at: node.parens.from };
-  }
-  return null;
-}
-
-function activeArgument(
-  call: Node & { kind: "call" },
-  position: number,
-  expression: string,
-): number {
-  let active = 0;
-  for (let index = 0; index < call.args.length; index += 1) {
-    const arg = call.args[index];
-    if (position > arg.to) {
-      const between = expression.slice(arg.to, Math.min(position, call.parens.to));
-      if (between.includes(",")) active = index + 1;
-      else active = index;
-    } else {
-      return index;
-    }
-  }
-  return Math.max(active, 0);
+  const found = formulaSignature(rules, { source: expression, position });
+  if (!found) return null;
+  const fn = known.callables.get(found.name);
+  if (!fn) return null;
+  return { fn, active: found.active, at: found.from };
 }
 
 /** The signature split into its parameters, so one can be drawn bold. */
@@ -98,19 +70,21 @@ function render(help: SignatureHelp): HTMLElement {
   });
   code.appendChild(document.createTextNode(")"));
   dom.appendChild(code);
-  if (help.fn.description) {
-    const body = document.createElement("div");
-    body.className = "cm-expr-signature-body";
-    body.textContent = help.fn.description;
-    dom.appendChild(body);
-  }
+  const body = document.createElement("div");
+  body.className = "cm-expr-signature-body";
+  body.textContent = translateMessage(help.fn.description);
+  dom.appendChild(body);
   return dom;
 }
 
-function tooltipFor(state: EditorState, getKnown: () => KnownIdentifiers): Tooltip | null {
+function tooltipFor(
+  state: EditorState,
+  getRules: () => RulesRuntime,
+  getKnown: () => KnownIdentifiers,
+): Tooltip | null {
   const selection = state.selection.main;
   if (!selection.empty) return null;
-  const help = signatureAt(state.doc.toString(), selection.head, getKnown());
+  const help = signatureAt(getRules(), state.doc.toString(), selection.head, getKnown());
   if (!help) return null;
   return {
     pos: help.at,
@@ -140,8 +114,13 @@ type SignatureState = { focused: boolean; tooltip: Tooltip | null };
  * Signature help, kept in step with the cursor and the document, and shown
  * only while the editor has focus: a dialog opening over the editor takes
  * the focus with it, and the help must not stay on screen above the dialog.
+ * The field's update calls the module synchronously; an editor mounts only
+ * once `useRules()` has the module loaded.
  */
-export function createSignatureHelp(getKnown: () => KnownIdentifiers): Extension {
+export function createSignatureHelp(
+  getRules: () => RulesRuntime,
+  getKnown: () => KnownIdentifiers,
+): Extension {
   const field = StateField.define<SignatureState>({
     create: () => ({ focused: false, tooltip: null }),
     update: (value, transaction) => {
@@ -157,7 +136,7 @@ export function createSignatureHelp(getKnown: () => KnownIdentifiers): Extension
       if (!transaction.docChanged && !transaction.selection && focused === value.focused) {
         return value;
       }
-      return { focused, tooltip: tooltipFor(transaction.state, getKnown) };
+      return { focused, tooltip: tooltipFor(transaction.state, getRules, getKnown) };
     },
     provide: (field) => showTooltip.from(field, (value) => value.tooltip),
   });

@@ -44,6 +44,7 @@ import {
   PreviewPaneSkeleton,
   ReferencePaneSkeleton,
   ScenariosPaneSkeleton,
+  StudioSkeleton,
 } from "./studio-skeletons";
 import { StudioTopBar } from "./studio-top-bar";
 
@@ -143,11 +144,15 @@ function warmStudioModules(): () => void {
  * Nova that sits beside the form, or over it on a narrow screen.
  */
 export function FormulaStudio(props: StudioProps) {
+  // The provider suspends until the rules module has loaded (useRules), so
+  // the studio's own outline holds the page meanwhile.
   return (
     <ActiveEditorProvider>
-      <StudioProvider {...props}>
-        <StudioLayout />
-      </StudioProvider>
+      <Suspense fallback={<StudioSkeleton />}>
+        <StudioProvider {...props}>
+          <StudioLayout />
+        </StudioProvider>
+      </Suspense>
     </ActiveEditorProvider>
   );
 }

@@ -12,9 +12,10 @@ import { useCallback, useEffect, useMemo, useRef, type Ref } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
 import { darkTheme, languageServiceTheme, lightTheme } from "./editor-theme";
-import type { FormatResult } from "./expr-format";
+import { formulaCatalog, type FormulaFormatResult } from "@trenova/shared/rules/formula";
+import { useRules } from "@trenova/shared/hooks/use-rules";
 import { inlineValuesExtension, setInlineValues, type InlineValue } from "./expr-inline-values";
-import { buildKnownIdentifiers, type KnownIdentifiers } from "./expr-language";
+import { buildKnownIdentifiers, type KnownIdentifiers } from "./known-identifiers";
 import type { DeclareInput } from "./expr-lint";
 import { highlightRangeExtension, setHighlightRange, type EditorRange } from "./highlight-range";
 import { usePreviewValues } from "./preview-values";
@@ -42,7 +43,7 @@ type ExpressionEditorProps<T extends FieldValues> = FormControlProps<T> &
     /** What each statement came to on the preview load, drawn at the end of its line. */
     inlineValues?: readonly InlineValue[] | null;
     /** Told what formatting from the keyboard did. */
-    onFormat?: (result: FormatResult) => void;
+    onFormat?: (result: FormulaFormatResult) => void;
   };
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
@@ -90,14 +91,19 @@ export function ExpressionEditor<T extends FieldValues>({
   const { setActive, setPrimary } = useActiveEditorRegistration();
   const isMini = variant === "mini";
 
+  // The editor calls the rules module synchronously (lint, hover, signature
+  // help, format), so it renders only once the module has loaded.
+  const runtime = useRules();
   const known = useMemo(
-    () => knownIdentifiers ?? buildKnownIdentifiers(undefined, customVariables),
-    [knownIdentifiers, customVariables],
+    () =>
+      knownIdentifiers ??
+      buildKnownIdentifiers(formulaCatalog(runtime), undefined, customVariables),
+    [knownIdentifiers, runtime, customVariables],
   );
 
   const viewRef = useRef<EditorView | null>(null);
   const previewValues = usePreviewValues();
-  const exprExtensions = useExprExtensions(known, lint, viewRef, {
+  const exprExtensions = useExprExtensions(runtime, known, lint, viewRef, {
     hoverValues: previewValues,
     declareInput,
     gutter: !isMini,

@@ -1771,31 +1771,36 @@ impl Checker<'_> {
                         operand.span,
                         format!("({name} ? 1 : 0)"),
                     ));
-                    Arg::from(Message::with(
-                        message!(" Write ({0} ? amount : 0) to charge when it is true."),
+                    Some(Message::with(
+                        message!("Write ({0} ? amount : 0) to charge when it is true."),
                         [Arg::from(name.as_str())],
                     ))
                 }
-                (Type::Boolean, None) => Arg::from(Message::new(message!(
-                    " Write (test ? amount : 0) to charge when a test holds."
+                (Type::Boolean, None) => Some(Message::new(message!(
+                    "Write (test ? amount : 0) to charge when a test holds."
                 ))),
-                (Type::String, _) => Arg::from(Message::new(message!(
-                    " Compare text with ==, or look its rate up with lookup()."
+                (Type::String, _) => Some(Message::new(message!(
+                    "Compare text with ==, or look its rate up with lookup()."
                 ))),
-                _ => Arg::from(String::new()),
+                _ => None,
+            };
+            let op = Arg::from(binary.op.text());
+            let described = phrase(&self.describe(operand, ty));
+            let message = match hint {
+                Some(hint) => Message::with(
+                    message!("'{0}' works on numbers, but {1}. {2}"),
+                    [op, described, Arg::from(hint)],
+                ),
+                None => Message::with(
+                    message!("'{0}' works on numbers, but {1}."),
+                    [op, described],
+                ),
             };
             self.report(
                 operand.span,
                 Severity::Error,
                 Code::Type,
-                Message::with(
-                    message!("'{0}' works on numbers, but {1}.{2}"),
-                    [
-                        Arg::from(binary.op.text()),
-                        phrase(&self.describe(operand, ty)),
-                        hint,
-                    ],
-                ),
+                message,
                 None,
                 fixes,
             );

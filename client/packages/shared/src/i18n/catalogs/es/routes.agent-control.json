@@ -2015,6 +2015,7 @@
   "{0, plural, one {# agent regressed} other {# agents regressed}}": "{0, plural, one {# agente empeoró} other {# agentes empeoraron}}",
   "{0, plural, one {# agent scored} other {# agents scored}}": "{0, plural, one {# agente puntuado} other {# agentes puntuados}}",
   "{0, plural, one {# agent still regressed} other {# agents still regressed}}": "{0, plural, one {# agente sigue en retroceso} other {# agentes siguen en retroceso}}",
+  "{0, plural, one {# argument} other {# arguments}}": "{0, plural, one {# argumento} other {# argumentos}}",
   "{0, plural, one {# awaiting decision} other {# awaiting decision}}": "{0, plural, one {# esperando decisión} other {# esperando decisión}}",
   "{0, plural, one {# call had no price} other {# calls had no price}}": "{0, plural, one {# llamada no tenía precio} other {# llamadas no tenían precio}}",
   "{0, plural, one {# call} other {# calls}}": "{0, plural, one {# llamada} other {# llamadas}}",
