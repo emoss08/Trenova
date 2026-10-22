@@ -4,6 +4,13 @@ import { formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
 import type { CapacityMatch, CapacityUnit } from "@/lib/graphql/shipment-board";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
+/** What a match's detail line needs beside the match: its pickup time and what the reader may see. */
+export type MatchDetailContext = {
+  pickup: string;
+  /** Whether the reader holds the Margins group; without it a carrier match's quote and margin are withheld. */
+  marginsVisible: boolean;
+};
+
 /**
  * What differs between covering a load with a driver and with a carrier.
  * The strip, its popover and the dock render any unit through one of these,
@@ -19,7 +26,7 @@ export type CapacityProvider = {
   caption: (unit: CapacityUnit, t: TranslateFn, formatTime: (unix: number) => string) => string;
   popoverMeta: (unit: CapacityUnit, t: TranslateFn, hos: boolean) => string;
   matchesTitle: (unit: CapacityUnit, t: TranslateFn) => string;
-  matchDetail: (match: CapacityMatch, t: TranslateFn, pickup: string) => string;
+  matchDetail: (match: CapacityMatch, t: TranslateFn, context: MatchDetailContext) => string;
   commitLabel: (t: TranslateFn) => string;
   ringHint: (t: TranslateFn, hos: boolean) => string;
   /** The summary beside the big figure: how many units are available for how many open loads. */
@@ -49,7 +56,7 @@ export const driverCapacityProvider: CapacityProvider = {
       .filter(Boolean)
       .join(" · "),
   matchesTitle: (unit, t) => t("Best load for {0}", firstName(unit.name)),
-  matchDetail: (match, t, pickup) =>
+  matchDetail: (match, t, { pickup }) =>
     [
       t("pickup {0}", pickup),
       match.deadheadMiles != null ? t("{0} mi out", Math.round(match.deadheadMiles)) : null,
@@ -89,11 +96,15 @@ export const carrierCapacityProvider: CapacityProvider = {
       .filter(Boolean)
       .join(" · "),
   matchesTitle: (_unit, t) => t("Best loads to tender"),
-  matchDetail: (match, t, pickup) =>
+  matchDetail: (match, t, { pickup, marginsVisible }) =>
     [
       t("pickup {0}", pickup),
-      match.quote ? t("quote {0}", formatCurrency(Number(match.quote))) : null,
-      match.marginPercent != null ? t("margin {0}%", Math.round(match.marginPercent)) : null,
+      ...(marginsVisible
+        ? [
+            match.quote ? t("quote {0}", formatCurrency(Number(match.quote))) : null,
+            match.marginPercent != null ? t("margin {0}%", Math.round(match.marginPercent)) : null,
+          ]
+        : [t("quote {0}", t("Hidden")), t("margin {0}", t("Hidden"))]),
     ]
       .filter(Boolean)
       .join(" · "),

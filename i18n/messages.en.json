@@ -116287,11 +116287,12 @@
     ]
   },
   "Hidden": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/components",
       "routes/agent-control",
       "routes/cost-control",
@@ -313876,6 +313877,15 @@
       "go/other"
     ]
   },
+  "margin {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "margin {0}%": {
     "sites": 1,
     "scope": [
@@ -315358,7 +315368,7 @@
     ]
   },
   "quote {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
