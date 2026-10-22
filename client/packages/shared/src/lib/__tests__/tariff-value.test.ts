@@ -1,6 +1,6 @@
-import { translate } from "@trenova/shared/i18n/runtime";
+import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18n/runtime";
 import { formatTariffMoney, formatTariffValue } from "@trenova/shared/lib/tariff-value";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const t = translate;
 
@@ -50,5 +50,22 @@ describe("formatTariffValue", () => {
 
   it("shows a value that is not a wire value as its JSON instead of failing the render", () => {
     expect(formatTariffValue({ $q: "x", u: "lb" }, t)).toBe('{"$q":"x","u":"lb"}');
+  });
+});
+
+describe("formatTariffValue in the reader's language", () => {
+  beforeAll(async () => {
+    await registerCatalogSource({ es: async () => ({ "{0} UTC{1}": "{0} (UTC{1})" }) });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("lets a translation place a date-time's offset", () => {
+    const shown = formatTariffValue({ $date: "2026-10-22T08:00:00-05:00" }, translate);
+    expect(shown).toMatch(/^\S.* \(UTC-05:00\)$/);
+    expect(shown).not.toContain(" UTC-05:00");
   });
 });

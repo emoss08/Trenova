@@ -10,6 +10,7 @@
 // decimals with their unit text beside them); `storedTariffBillSchema` reads it into the wire
 // form every bill view draws.
 
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import {
   TARIFF_DECIMAL_PATTERN,
@@ -70,7 +71,9 @@ export type StoredTariffBill = {
 const storedDecimalSchema = z
   .union([z.string(), z.number()])
   .transform((value) => String(value))
-  .refine((text) => TARIFF_DECIMAL_PATTERN.test(text), { error: "Must be a decimal" });
+  .refine((text) => TARIFF_DECIMAL_PATTERN.test(text), {
+    error: () => translate("Must be a decimal"),
+  });
 
 const storedLineSchema = z.object({
   kind: z.enum(["Charge", "Minimum", "Maximum", "Rounding"]),

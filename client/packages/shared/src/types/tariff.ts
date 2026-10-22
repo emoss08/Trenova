@@ -9,6 +9,7 @@
 // strings and are never read through a float.
 
 import type { CatalogMessage, CatalogMessageArg } from "@trenova/shared/i18n/message";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 
 /** User-facing text the module wrote: an English ICU template (the catalog key) and its args. */
@@ -74,7 +75,7 @@ const tariffWireRecordSchema: z.ZodType<TariffWireRecord> = z.lazy(() =>
   z
     .record(z.string(), tariffWireValueSchema)
     .refine((record) => Object.keys(record).every((key) => !key.startsWith("$")), {
-      error: "A record field name cannot start with $",
+      error: () => translate("A record field name cannot start with $"),
     }),
 );
 

@@ -38,6 +38,7 @@ export function newTestBlock(
     kind === "tariff"
       ? "  given shipment.distance = 100 mi\n  expect total > $0\n"
       : "  expect 1 + 1 == 2\n";
+  // i18n-ignore: Tariff source, a test block written into the file
   return `test "${quoted}" {\n${body}}\n`;
 }
 
