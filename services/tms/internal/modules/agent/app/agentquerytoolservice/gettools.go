@@ -11,9 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
-	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -125,58 +122,6 @@ func (t *getTool) Query(
 	return t.access.redactor(ctx, params).withhold(entity)
 }
 
-func newGetCustomerTool(
-	repo customerports.CustomerRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
-		name:        "customer_get",
-		entity:      labelCustomer,
-		searchTerms: []string{"customer details", "customer profile"},
-		resource:    permission.ResourceCustomer,
-		summary: "Retrieve one customer by id, with their billing and email profiles. " +
-			"Use customer_list first when you have a name or a code rather than an id.",
-		paramName: "customerId",
-		idSource:  "from customer_list",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
-				ID:         id,
-				TenantInfo: tenant,
-				CustomerFilterOptions: customerports.CustomerFilterOptions{
-					IncludeState:          true,
-					IncludeBillingProfile: true,
-				},
-			})
-		},
-	}, permissions)
-}
-
-func newGetCarrierTool(
-	repo carrierports.CarrierRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
-		name:     "carrier_get",
-		entity:   "carrier",
-		resource: permission.ResourceCarrier,
-		summary: "Retrieve one carrier by id, including its authority, insurance and " +
-			"compliance state. Use carrier_list first when you have a name or a code.",
-		paramName: "carrierId",
-		idSource:  "from carrier_list",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, carrierports.GetCarrierByIDRequest{
-				ID:         id,
-				TenantInfo: tenant,
-				CarrierFilterOptions: carrierports.CarrierFilterOptions{
-					IncludeState:             true,
-					IncludeContacts:          true,
-					IncludeInsurancePolicies: true,
-				},
-			})
-		},
-	}, permissions)
-}
-
 func newGetTractorTool(
 	repo tractorports.TractorRepository,
 	permissions permissionports.PermissionEngine,
@@ -225,11 +170,37 @@ const (
 	locationIDParam = "locationId"
 )
 
-func newGetLocationTool(
-	repo locationports.LocationRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
+// customerGetSpec reads one customer through the Desk's customer card.
+func customerGetSpec() getSpec {
+	return getSpec{
+		name:        "customer_get",
+		entity:      labelCustomer,
+		searchTerms: []string{"customer details", "customer profile"},
+		resource:    permission.ResourceCustomer,
+		summary: "Retrieve one customer by id, with their address, authority numbers and " +
+			"billing profile: terms, cycle, delivery, credit and the documents each invoice " +
+			"needs. Use customer_list first when you have a name or a code rather than an id.",
+		paramName: paramCustomerID,
+		idSource:  "from customer_list",
+	}
+}
+
+// carrierGetSpec reads one carrier through the Desk's carrier card.
+func carrierGetSpec() getSpec {
+	return getSpec{
+		name:     "carrier_get",
+		entity:   labelCarrier,
+		resource: permission.ResourceCarrier,
+		summary: "Retrieve one carrier by id, including its authority, insurance and " +
+			"compliance state. Use carrier_list first when you have a name or a code.",
+		paramName: paramCarrierID,
+		idSource:  "from carrier_list",
+	}
+}
+
+// locationGetSpec reads one location through the Desk's location card.
+func locationGetSpec() getSpec {
+	return getSpec{
 		name:     "location_get",
 		entity:   locationEntity,
 		resource: permission.ResourceLocation,
@@ -238,22 +209,44 @@ func newGetLocationTool(
 			"first when you have a name, a code or a city.",
 		paramName: locationIDParam,
 		idSource:  "from location_list",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, locationports.GetLocationByIDRequest{
-				ID:         id,
-				TenantInfo: tenant,
-			})
-		},
-	}, permissions)
+	}
+}
+
+// graphQLGetSpecs are every get tool that reads through GraphQL by a spec
+// alone.
+func graphQLGetSpecs() []getSpec {
+	return []getSpec{
+		customerGetSpec(),
+		carrierGetSpec(),
+		locationGetSpec(),
+		carrierIntelEventGetSpec(),
+	}
+}
+
+// graphQLGetProviders registers each spec as its own get tool.
+func graphQLGetProviders() []any {
+	specs := graphQLGetSpecs()
+	providers := make([]any, 0, len(specs))
+	for idx := range specs {
+		spec := &specs[idx]
+		providers = append(providers, func(
+			reader agentports.GraphQLReader,
+			permissions permissionports.PermissionEngine,
+		) (agentports.AgentQueryTool, error) {
+			return newGraphQLGetTool(spec, reader, permissions)
+		})
+	}
+
+	return providers
 }
 
 func getCatalogSpecs() []getSpec {
 	return []getSpec{
-		specOfGet(newGetCustomerTool(nil, nil)),
-		specOfGet(newGetCarrierTool(nil, nil)),
+		customerGetSpec(),
+		carrierGetSpec(),
 		specOfGet(newGetTractorTool(nil, nil)),
 		specOfGet(newGetTrailerTool(nil, nil)),
-		specOfGet(newGetLocationTool(nil, nil)),
+		locationGetSpec(),
 		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
 		specOfGet(newGetServiceFailureTool(nil, nil)),
 		specOfGet(newGetFormulaTemplateTool(nil, nil)),

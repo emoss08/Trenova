@@ -131,6 +131,14 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  carrier_intelligence: [
+    "businessUnitId",
+    "createdAt",
+    "id",
+    "organizationId",
+    "updatedAt",
+    "version",
+  ],
   carrier_invoice_match: [
     "businessUnitId",
     "createdAt",
@@ -1033,6 +1041,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   CaptureProfile: "capture_profile",
   Carrier: "carrier",
   CarrierCapacityPosting: "carrier_capacity_posting",
+  CarrierIntelEvent: "carrier_intelligence",
   CarrierInvoiceMatch: "carrier_invoice_match",
   CarrierSettlement: "carrier_settlement",
   CarrierSettlementControl: "carrier_settlement_control",

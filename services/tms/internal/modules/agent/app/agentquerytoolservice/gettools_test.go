@@ -151,11 +151,15 @@ func TestGetTools_EveryRegisteredGetToolWithholdsNestedPeople(t *testing.T) {
 		),
 	}
 
-	gets := 0
+	gets, graphQLGets := 0, 0
 	for _, provider := range ToolProviders() {
 		built, err := reflectutils.Construct(provider, supplied)
 		require.NoError(t, err)
 
+		if _, ok := built.(*graphQLGetTool); ok {
+			graphQLGets++
+			continue
+		}
 		tool, ok := built.(*getTool)
 		if !ok {
 			continue
@@ -187,8 +191,17 @@ func TestGetTools_EveryRegisteredGetToolWithholdsNestedPeople(t *testing.T) {
 			document["createdBy"], "%s returned a nested user whole", tool.Name())
 	}
 
-	assert.GreaterOrEqual(t, gets, len(getCatalogSpecs()),
-		"every catalogued get tool is registered through newGetTool")
+	repositoryGets := 0
+	for _, spec := range getCatalogSpecs() {
+		if _, ok := graphQLReads[spec.name]; !ok {
+			repositoryGets++
+		}
+	}
+	assert.GreaterOrEqual(t, gets, repositoryGets,
+		"every catalogued get tool that reads a repository is registered through newGetTool")
+	assert.Equal(t, len(graphQLGetSpecs()), graphQLGets,
+		"every get tool that reads through GraphQL is registered, its nested people "+
+			"withheld by the field guard")
 }
 
 type stubTractors struct {

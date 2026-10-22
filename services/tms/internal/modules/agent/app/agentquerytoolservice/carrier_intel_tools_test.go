@@ -285,7 +285,9 @@ func TestListCarrierIntelEvents_RefusesACallerOutsideTheTenant(t *testing.T) {
 func TestGetCarrierIntelEvent_NamesTheListThatHandsOutItsID(t *testing.T) {
 	t.Parallel()
 
-	tool := newGetCarrierIntelEventTool(nil, nil)
+	spec := carrierIntelEventGetSpec()
+	tool, err := newGraphQLGetTool(&spec, &keyedReader{}, nil)
+	require.NoError(t, err)
 	assert.Contains(t, tool.Description(), "carrier_list_intelligence_events")
 	assert.NotContains(t, tool.Description(), "No tool lists")
 

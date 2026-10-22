@@ -8911,7 +8911,7 @@ type CarrierIntelSnapshot {
   createdAt: Timestamp!
 }
 
-type CarrierIntelEvent {
+type CarrierIntelEvent @kind(resource: "carrier_intelligence") {
   id: ID!
   subjectType: CarrierIntelSubjectType!
   subjectId: String!
