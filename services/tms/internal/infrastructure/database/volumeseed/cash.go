@@ -138,7 +138,19 @@ type cashReversal struct {
 	Reason     string   `bun:"reversal_reason"`
 }
 
+// cashSending is the organization's own setting for each feature that emails
+// customers, kept so the seed can put them back once their history is written.
+type cashSending struct {
+	lateCharges     tenant.LateChargeAssessmentMode
+	reminders       bool
+	statements      bool
+	lateChanged     bool
+	remindersChange bool
+	statementChange bool
+}
+
 type cashState struct {
+	sending    cashSending
 	billing    *tenant.BillingControl
 	accounting *tenant.AccountingControl
 	setup      *bilSetup
@@ -151,7 +163,7 @@ type cashState struct {
 	contacts   map[pulid.ID]string
 }
 
-func (g *generator) seedCash(ctx context.Context) error {
+func (g *generator) seedCash(ctx context.Context) (err error) {
 	if len(g.customers) == 0 {
 		return nil
 	}
@@ -160,6 +172,11 @@ func (g *generator) seedCash(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if restoreErr := g.cashRestoreSending(context.WithoutCancel(ctx), st); restoreErr != nil {
+			err = errors.Join(err, restoreErr)
+		}
+	}()
 	if err = g.cashEnableFeatures(ctx, st); err != nil {
 		return err
 	}
@@ -181,10 +198,35 @@ func (g *generator) seedCash(ctx context.Context) error {
 			return fmt.Errorf("%s: %w", step.name, err)
 		}
 	}
-	g.opts.Logf(
-		"  • factoring: no seeded customer has a factoring company on its billing profile, so no invoice is factored",
-	)
+	return nil
+}
 
+// cashRestoreSending puts back the late-charge, reminder and statement settings
+// the seed switched on to write their history. Left on, the worker's next run
+// would act on every seeded invoice and email the seeded billing addresses.
+func (g *generator) cashRestoreSending(ctx context.Context, st *cashState) error {
+	sending := st.sending
+	if !sending.lateChanged && !sending.remindersChange && !sending.statementChange {
+		return nil
+	}
+	q := g.db.NewUpdate().Model((*tenant.BillingControl)(nil)).
+		Where("organization_id = ?", g.refs.orgID)
+	if sending.lateChanged {
+		q = q.Set("late_charge_assessment_mode = ?", sending.lateCharges)
+	}
+	if sending.remindersChange {
+		q = q.Set("payment_reminders_enabled = ?", sending.reminders)
+	}
+	if sending.statementChange {
+		q = q.Set("monthly_statements_enabled = ?", sending.statements)
+	}
+	if _, err := q.Exec(ctx); err != nil {
+		return fmt.Errorf("restore late charge, reminder and statement settings: %w", err)
+	}
+	g.opts.Logf(
+		"  • restored the organization's late charge, reminder and statement settings; " +
+			"their seeded history stays, and the worker will not act on seeded invoices",
+	)
 	return nil
 }
 
@@ -413,7 +455,8 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 
 // cashEnableFeatures switches on the organization features these pages show,
 // when they are off: the app writes nothing for a disabled feature, so the
-// pages would stay empty no matter how much receivable history exists.
+// pages would stay empty no matter how much receivable history exists. The
+// features that email customers are switched back by cashRestoreSending.
 func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error {
 	if st.accounting != nil && st.accounting.ReconciliationMode == tenant.ReconciliationModeDisabled {
 		if _, err := g.db.NewUpdate().Model((*tenant.AccountingControl)(nil)).
@@ -435,12 +478,17 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 		Where("organization_id = ?", g.refs.orgID)
 	changed := false
 	if b.LateChargeAssessmentMode == tenant.LateChargeAssessmentModeDisabled || b.LateChargeAssessmentMode == "" {
+		st.sending.lateCharges, st.sending.lateChanged = b.LateChargeAssessmentMode, true
+		if st.sending.lateCharges == "" {
+			st.sending.lateCharges = tenant.LateChargeAssessmentModeDisabled
+		}
 		b.LateChargeAssessmentMode = tenant.LateChargeAssessmentModeAutomatic
 		q = q.Set("late_charge_assessment_mode = ?", b.LateChargeAssessmentMode)
 		changed = true
 		g.opts.Logf("  • set late charge assessment to Automatic")
 	}
 	if !b.PaymentRemindersEnabled || len(b.PaymentReminderDays) == 0 {
+		st.sending.reminders, st.sending.remindersChange = b.PaymentRemindersEnabled, true
 		b.PaymentRemindersEnabled = true
 		if len(b.PaymentReminderDays) == 0 {
 			b.PaymentReminderDays = slices.Clone(tenant.DefaultPaymentReminderDays)
@@ -451,6 +499,7 @@ func (g *generator) cashEnableFeatures(ctx context.Context, st *cashState) error
 		g.opts.Logf("  • enabled payment reminders")
 	}
 	if !b.MonthlyStatementsEnabled || b.MonthlyStatementDay < 1 {
+		st.sending.statements, st.sending.statementChange = b.MonthlyStatementsEnabled, true
 		b.MonthlyStatementsEnabled = true
 		if b.MonthlyStatementDay < 1 {
 			b.MonthlyStatementDay = 1
