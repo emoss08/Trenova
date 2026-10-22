@@ -832,8 +832,9 @@ to percents that keep each payer's proportion (`ConvertAmountSplitsToPercent`). 
 | Amount complete | `RoundBank(sum) == RoundBank(total)` | `Math.round` cents | cents of each share (see the fix below) |
 | Duplicate payers | allowed, merged into one share | refused by the editor | refused by `allocation.remainder` only; `allocation.split` merges them as Go does |
 
-Two Go rules were wrong and are fixed here; `decimalutils.AllocatePercent` and the resolver's
-amount check should follow when the Go callers move to the module:
+Two Go rules were wrong and are fixed here. The Go callers now run the module, so the server
+follows the fixed rules too (`decimalutils.AllocatePercent` and the resolver's amount check are
+deleted):
 
 - **The last percent share** was `total − others` before rounding, then rounded half to even.
   With a sub-cent total that loses a cent: 50/50 of `0.015` gave `0.01 + 0.00`, but the payer
@@ -853,9 +854,11 @@ would move cents between payers on existing invoices, so Go's "remainder on the 
 `summarizeBillingByPayer`'s sums → `allocation.split`; `allocationRemainder` and
 `allocationsValid` (and the messages of `chargeAllocationsRefinement`) →
 `allocation.remainder`; `AdditionalCharge.Total`/`AdditionalChargesTotal`,
-`ResolveShares`/`ResolveOrderChargeShares`/`AllocatePercent`/`SumEquals` → `allocation.chargeTotal`
-and `allocation.split`; `FindStaleAmountSplits`/`ConvertAmountSplitsToPercent` →
-`allocation.rebalance`. They stay native: `toMinorUnits` (money in cents for the credit memo
+the share builders behind `ResolveShares`/`ResolveOrderChargeShares` and
+`AllocatePercent`/`SumEquals` → `allocation.chargeTotal` and `allocation.split`;
+`FindStaleAmountSplits`/`ConvertAmountSplitsToPercent` → `allocation.rebalance`. The Go names
+in that list that still exist (`ResolveShares`, `ResolveOrderChargeShares`, `AdditionalChargeTotals`,
+`RebalanceAmountSplits`) are thin calls into `pkg/rules`; the rest are deleted. They stay native: `toMinorUnits` (money in cents for the credit memo
 dialog and invoice line comparison, not an allocation rule), and the GraphQL shaping helpers
 `nestChargeAllocations`, `toChargeAllocationInput`, `hasAnyAllocations`. Grouping allocations
 by the charge they target (`TargetID`, the kind filters in `ResolveShares`) and payer
@@ -986,14 +989,14 @@ decimal.
 | Currency upper-casing | ASCII | Unicode | ASCII (Go) |
 
 **What replaces what.** `formatReportValue` and `reportValueTone` → `report.format`;
-`resolveReportDisplay` and `reportfmt.Resolve` → `report.resolve` (or `resolve` inside
-`report.format`); `Resolved.String`, `ToneFor`, `Band.Bounds` and `bandLabel` → `report.format`.
-They stay native:
+`resolveReportDisplay` and the Go baseline and restyling → `report.resolve` (or `resolve` inside
+`report.format`), which `reportfmt.Resolve` now calls; `Resolved.String`, `ToneFor` and
+`bandLabel` → `report.format`, deleted from Go. They stay native:
 
 - dates (Go time layouts; `formatDate` and `dateParts` with `Intl`), fed by the `date` cells;
 - `reportfmt.ExcelFormat` (Go only; nothing in the browser writes XLSX number formats);
 - `Spec.Validate` and `Band.Validate`, which are save-time checks with developer messages;
-- `Band.IsWhole` and `IsLowest`, which the query compiler and drill-through use;
+- `Band.IsWhole`, `IsLowest` and `Bounds`, which the query compiler and drill-through use;
 - `reportNumericValue` (float coercion for charts) and `isNumericDisplay` (a one-line style
   check for alignment).
 
@@ -1127,7 +1130,9 @@ TypeScript bug and two blind spots:
 and the weight and scale constants → inside those operations. They stay native: `laneKeyDisplay`
 and `laneKeyStringDisplay` (substituting translated record names into `segments`),
 `laneEndDisplay` and `laneDisplayLabel` (translated labels only), `IsEffectiveAt` and
-`MatchesDayOfWeek` and the rest of rule matching (server-side, against shipment facts).
+`MatchesDayOfWeek` and the rest of rule matching (server-side, against shipment facts). The Go
+names in this list are deleted; `rategeo.MatchLane`, `rategeo.ScopeKeys` and
+`rateagreement.ApplyLanes` call the module in their place.
 
 ### Rate matrices (`matrix.*`)
 
@@ -1206,7 +1211,8 @@ Moving it from TypeScript fixed three things. Its messages are TypeScript's Engl
   overlaps.
 
 **What replaces what.** `ContainsQuantity` → `matrix::band::contains`; `SelectCell` →
-`matrix.select`; `findMatrixCoverageIssues` → `matrix.coverage`. They stay native: the sheet
+`matrix.select` (both deleted from Go; `ratematrix.LookupCell` calls the module);
+`findMatrixCoverageIssues` → `matrix.coverage`. They stay native: the sheet
 projection (`buildMatrixGrid`, `sliceBuckets`, `bucketKeyOf`, `cellCoordinate`,
 `coordinateKey`), `axisLabel` and `bandLabel` for headers, which only lay cells out and label
 them. `DensityScale.ClassFor` and the formula lookups' `KeyNormalization` and `RangeOverflow`
@@ -1334,6 +1340,58 @@ core options both the API and the worker start with) gives the default runtime t
 the metrics. At start it warms the runtime in the background: compile, instantiate and call
 `rules.version`, within two minutes. Start-up never waits for it. A failure is logged at error
 level and every call reports it as `ErrUnavailable`.
+
+### Go callers
+
+Every Go caller of the allocation, report, lane and matrix rules goes through a typed wrapper in
+`pkg/rules` (`allocation.go`, `report.go`, `lane.go`, `matrix.go`). The wrappers send decimals
+exactly (`decimal.Decimal` marshals as a JSON string), read output decimals back from strings,
+and check that the module answered for as many items as it was asked about. User-facing
+messages decode into `rules.Message`, whose arguments may be nested messages: `shared/i18n`
+translates an argument that is an `i18n.Localizer` in the reader's locale, so
+`Message.ValidationError` and `Message.BusinessError` (and `*rules.MatrixSelectError`, which
+`errortypes` localizes) translate all the way down. No Go code computes these rules any more.
+
+| Package | Op | One call per |
+|---|---|---|
+| `operations/domain/shipment`: `ResolveShares`, `ResolveOrderChargeShares`, `BillsWholeChargeToPayer` | `allocation.split` | shipment or order: every charge and its allocation rows in one request |
+| `operations/domain/shipment`: `AdditionalChargeTotals`, `ChargeTotalsByCharge` | `allocation.chargeTotal` | shipment: every accessorial line priced at once |
+| `operations/domain/shipment`: `RebalanceAmountSplits` | `allocation.rebalance` | shipment edit |
+| `rating/domain/ratematrix`: `LookupCell` (from `rateengine/matrix.go`) | `matrix.select` | matrix lookup: the cells the SQL pre-filter returned |
+| `rating/domain/rateagreement`: `ApplyLanes` | `lane.keys`, `lane.specificity` | save: every rule of the agreement, the amendment or the imported sheet |
+| `rating/domain/ratezone`: `RateZone.StampMembers`, through `rategeo.ScopeKeys` | `lane.keys` | zone save: every member |
+| `places/domain/rategeo`: `MatchLane` (from `rateengine`) | `lane.keys` | rating request, twice: the bare ends' keys for zone membership, then the candidates once the zones are known |
+| `places/domain/rategeo`: `ScopeKeys` (from `rateengine/matrix.go`) | `lane.keys` | matrix lookup: every geographic axis |
+| `pkg/reportfmt`: `Resolve` (from `workspace/app/reporting/compiler`) | `report.resolve` | report compile: every output column |
+| `pkg/reportfmt`: `Batch.Format`, `FormatRow` | `report.format` | chunk of up to `reportfmt.BatchRows` (500) rows across all columns |
+
+The allocation callers above them (invoice create, consolidate and reconciliation, the billing
+queue's preview, review, reassign and payer share, invoice adjustments, the charge allocation
+repository, the operations allocation check, billing readiness and transfer plans, the order
+service and the GraphQL shipment and charge allocation mappers) take a `context.Context` and
+return an error, and make one call per shipment, invoice or request, never one per charge.
+Storage-bound validation (`ValidateAllocations`, `TargetID`, grouping by charge) stays in Go.
+
+**Report rendering.** The CSV, PDF and XLSX renderers stream the dataset into a
+`reportfmt.Batch` and format each chunk of 500 rows in one call (`render.streamFormatted`); the
+totals row is one more call. The dashboard workbook formats each tile's rows and totals together,
+and the delivery email's digest formats its sample rows and totals in one call. A cell the module
+returns as `{date}` is written in Go with the column's date style in the report's zone, and a Go
+`time.Time` value never reaches the module. Each column's catalog type travels as `valueType`.
+A report of 100,000 rows makes 200 calls; the module's own work per call is linear in its cells.
+
+**Lanes on save.** `rateagreement.ApplyLanes` stamps `LaneKey` and `SpecificityScore` on a batch
+of rules before validation and before any insert: the service's create, update and amend plans,
+the rate import's staging (which then reports a row whose end has no key), and the seeds. A rule
+written without it is refused by `BeforeAppendModel` (`ErrLaneNotApplied`), as a zone member
+without its match key is (`ErrMatchKeyNotApplied`). `lane.coverage` is not run on the server:
+rate agreement validation has no warning channel, only errors, and dead or duplicate lanes are
+legal. The lane editor runs it and shows each issue on its lane.
+
+**What stays in Go.** Dates (Go layouts and zones), `Resolved.ExcelFormat` with the currency
+symbols Excel number formats need, `Spec.Validate`, `Band.Validate`, and `Band.Bounds`,
+`IsLowest` and `IsWhole`, which the query compiler and drill-through use to filter rows rather
+than to label them.
 
 ### The browser loader (`client/packages/shared/src/rules`)
 
