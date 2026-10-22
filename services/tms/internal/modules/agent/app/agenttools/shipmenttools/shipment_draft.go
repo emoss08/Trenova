@@ -9,30 +9,31 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 type ShipmentDraft struct {
-	CustomerID        string            `json:"customerId"`
-	BillToCustomerID  string            `json:"billToCustomerId"`
-	ServiceTypeID     string            `json:"serviceTypeId"`
-	ShipmentTypeID    string            `json:"shipmentTypeId"`
-	FormulaTemplateID string            `json:"formulaTemplateId"`
-	BaseRate          string            `json:"baseRate"`
-	FreightTerms      string            `json:"freightTerms"`
-	TractorTypeID     string            `json:"tractorTypeId"`
-	TrailerTypeID     string            `json:"trailerTypeId"`
-	BOL               string            `json:"bol"`
-	ExternalReference string            `json:"externalReference"`
-	Pieces            *int64            `json:"pieces"`
-	Weight            *int64            `json:"weight"`
-	TemperatureMin    *int16            `json:"temperatureMin"`
-	TemperatureMax    *int16            `json:"temperatureMax"`
-	RatingUnit        *int64            `json:"ratingUnit"`
-	Moves             []moveDraft       `json:"moves"`
-	Commodities       []commodityDraft  `json:"commodities"`
-	AdditionalCharges []chargeLineDraft `json:"additionalCharges"`
+	CustomerID          string            `json:"customerId"`
+	BillToCustomerID    string            `json:"billToCustomerId"`
+	ServiceTypeID       string            `json:"serviceTypeId"`
+	ShipmentTypeID      string            `json:"shipmentTypeId"`
+	FormulaTemplateID   string            `json:"formulaTemplateId"`
+	Inputs              map[string]string `json:"inputs"`
+	FreightChargeAmount string            `json:"freightChargeAmount"`
+	FreightTerms        string            `json:"freightTerms"`
+	TractorTypeID       string            `json:"tractorTypeId"`
+	TrailerTypeID       string            `json:"trailerTypeId"`
+	BOL                 string            `json:"bol"`
+	ExternalReference   string            `json:"externalReference"`
+	Pieces              *int64            `json:"pieces"`
+	Weight              *int64            `json:"weight"`
+	TemperatureMin      *int16            `json:"temperatureMin"`
+	TemperatureMax      *int16            `json:"temperatureMax"`
+	Moves               []moveDraft       `json:"moves"`
+	Commodities         []commodityDraft  `json:"commodities"`
+	AdditionalCharges   []chargeLineDraft `json:"additionalCharges"`
 }
 
 type moveDraft struct {
@@ -116,6 +117,17 @@ func (r draftReader) requiredID(field, value string) pulid.ID {
 	return r.id(field, value)
 }
 
+func (r draftReader) inputs(field string, values map[string]string) tarifftypes.Inputs {
+	inputs, err := tarifftypes.InputsFromLiterals(values)
+	if err != nil {
+		r.multiErr.Add(field, errortypes.ErrInvalid, "{0}", err.Error())
+
+		return tarifftypes.Inputs{}
+	}
+
+	return inputs
+}
+
 func (r draftReader) decimal(field, value string) decimal.NullDecimal {
 	text := strings.TrimSpace(value)
 	if text == "" {
@@ -161,7 +173,11 @@ func (d *ShipmentDraft) Build(
 		FormulaTemplateID: read.id("formulaTemplateId", d.FormulaTemplateID),
 		TractorTypeID:     read.id("tractorTypeId", d.TractorTypeID),
 		TrailerTypeID:     read.id("trailerTypeId", d.TrailerTypeID),
-		BaseRate:          read.decimal("baseRate", d.BaseRate),
+		TariffInputs:      read.inputs("inputs", d.Inputs),
+		FreightChargeAmount: read.decimal(
+			"freightChargeAmount",
+			d.FreightChargeAmount,
+		),
 		BOL:               strings.TrimSpace(d.BOL),
 		ExternalReference: strings.TrimSpace(d.ExternalReference),
 		Pieces:            d.Pieces,
@@ -171,9 +187,6 @@ func (d *ShipmentDraft) Build(
 	}
 	if billTo := read.id("billToCustomerId", d.BillToCustomerID); billTo.IsNotNil() {
 		entity.BillToCustomerID = &billTo
-	}
-	if d.RatingUnit != nil {
-		entity.RatingUnit = *d.RatingUnit
 	}
 	if terms := strings.TrimSpace(d.FreightTerms); terms != "" {
 		entity.FreightTerms = shipment.FreightTerms(terms)

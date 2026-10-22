@@ -26,7 +26,6 @@ import (
 
 const (
 	maxAgreementRules        = 50
-	maxAgreementBreaks       = 20
 	maxAgreementAccessorials = 50
 	maxMatrixCells           = 200
 	matrixCellPage           = 100
@@ -149,23 +148,22 @@ func laneEnd(scopeType rategeo.ScopeType, value, city string) string {
 }
 
 type rateAgreementRow struct {
-	ID            string       `json:"id"`
-	Code          string       `json:"code"`
-	Name          string       `json:"name"`
-	PartyType     string       `json:"partyType"`
-	CustomerID    string       `json:"customerId,omitempty"`
-	CarrierID     string       `json:"carrierId,omitempty"`
-	Party         string       `json:"party,omitempty"`
-	AgreementType string       `json:"agreementType"`
-	Status        string       `json:"status"`
-	Priority      int16        `json:"priority"`
-	ContractRef   string       `json:"contractRef,omitempty"`
-	EffectiveFrom optionalDate `json:"effectiveFrom"`
-	EffectiveTo   optionalDate `json:"effectiveTo"`
-	AutoRenew     bool         `json:"autoRenew"`
-	Currency      string       `json:"currency"`
-	MinCharge     string       `json:"defaultMinCharge,omitempty"`
-	MaxCharge     string       `json:"defaultMaxCharge,omitempty"`
+	ID            string            `json:"id"`
+	Code          string            `json:"code"`
+	Name          string            `json:"name"`
+	PartyType     string            `json:"partyType"`
+	CustomerID    string            `json:"customerId,omitempty"`
+	CarrierID     string            `json:"carrierId,omitempty"`
+	Party         string            `json:"party,omitempty"`
+	AgreementType string            `json:"agreementType"`
+	Status        string            `json:"status"`
+	Priority      int16             `json:"priority"`
+	ContractRef   string            `json:"contractRef,omitempty"`
+	EffectiveFrom optionalDate      `json:"effectiveFrom"`
+	EffectiveTo   optionalDate      `json:"effectiveTo"`
+	AutoRenew     bool              `json:"autoRenew"`
+	Currency      string            `json:"currency"`
+	Inputs        map[string]string `json:"inputs,omitempty"`
 }
 
 func rateAgreementRowFrom(entity *rateagreement.RateAgreement, gate *fieldGate) rateAgreementRow {
@@ -191,11 +189,8 @@ func rateAgreementRowFrom(entity *rateagreement.RateAgreement, gate *fieldGate) 
 	case entity.Carrier != nil:
 		row.Party = entity.Carrier.Name
 	}
-	if entity.DefaultMinCharge.Valid && gate.show("defaultMinCharge", "defaultMinCharge") {
-		row.MinCharge = nullDecimalText(entity.DefaultMinCharge)
-	}
-	if entity.DefaultMaxCharge.Valid && gate.show("defaultMaxCharge", "defaultMaxCharge") {
-		row.MaxCharge = nullDecimalText(entity.DefaultMaxCharge)
+	if len(entity.Inputs) > 0 && gate.show(fieldInputs, fieldInputs) {
+		row.Inputs = inputTexts(entity.Inputs)
 	}
 
 	return row
@@ -331,9 +326,9 @@ func (t *getRateAgreementTool) SearchTerms() []string {
 
 func (t *getRateAgreementTool) Description() string {
 	return "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, " +
-		"rates, minimums and weight breaks. It also gives the current version, the " +
-		"accessorial schedule and the fuel surcharge binding. rate_explain says how it " +
-		"priced one shipment. Take the id from rate_list_agreements."
+		"their tariffs and inputs. It also gives the agreement's own inputs, the current " +
+		"version, the accessorial schedule and the fuel surcharge binding. rate_explain " +
+		"says how it priced one shipment. Take the id from rate_list_agreements."
 }
 
 func (t *getRateAgreementTool) ParamSchema() map[string]any {
@@ -351,34 +346,20 @@ func (t *getRateAgreementTool) Policy() agentports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{resource: permission.ResourceRateAgreement})
 }
 
-type rateBreakRow struct {
-	FromWeight string `json:"fromWeight"`
-	ToWeight   string `json:"toWeight,omitempty"`
-	Label      string `json:"label,omitempty"`
-	Rate       string `json:"rate,omitempty"`
-	MinCharge  string `json:"minCharge,omitempty"`
-}
-
 type rateRuleRow struct {
-	ID            string         `json:"id"`
-	Label         string         `json:"label,omitempty"`
-	Origin        string         `json:"origin"`
-	Destination   string         `json:"destination"`
-	Direction     string         `json:"direction"`
-	Priority      int16          `json:"priority"`
-	EffectiveFrom optionalDate   `json:"effectiveFrom"`
-	EffectiveTo   optionalDate   `json:"effectiveTo"`
-	HazmatOnly    bool           `json:"hazmatOnly,omitempty"`
-	TempOnly      bool           `json:"tempControlOnly,omitempty"`
-	FormulaID     string         `json:"formulaTemplateId,omitempty"`
-	RateMatrixID  string         `json:"rateMatrixId,omitempty"`
-	Currency      string         `json:"currency,omitempty"`
-	Rate          string         `json:"rate,omitempty"`
-	MinCharge     string         `json:"minCharge,omitempty"`
-	MaxCharge     string         `json:"maxCharge,omitempty"`
-	Discount      string         `json:"discountPercent,omitempty"`
-	Breaks        []rateBreakRow `json:"weightBreaks,omitempty"`
-	BreaksOmitted int            `json:"weightBreaksOmitted,omitempty"`
+	ID            string            `json:"id"`
+	Label         string            `json:"label,omitempty"`
+	Origin        string            `json:"origin"`
+	Destination   string            `json:"destination"`
+	Direction     string            `json:"direction"`
+	Priority      int16             `json:"priority"`
+	EffectiveFrom optionalDate      `json:"effectiveFrom"`
+	EffectiveTo   optionalDate      `json:"effectiveTo"`
+	HazmatOnly    bool              `json:"hazmatOnly,omitempty"`
+	TempOnly      bool              `json:"tempControlOnly,omitempty"`
+	FormulaID     string            `json:"formulaTemplateId,omitempty"`
+	Currency      string            `json:"currency,omitempty"`
+	Inputs        map[string]string `json:"inputs,omitempty"`
 }
 
 type rateAccessorialRow struct {
@@ -392,8 +373,7 @@ type rateAccessorialRow struct {
 	EffectiveTo         optionalDate `json:"effectiveTo"`
 	Amount              string       `json:"amount,omitempty"`
 	MaxAmount           string       `json:"maxAmount,omitempty"`
-	ApplyCondition      string       `json:"applyCondition,omitempty"`
-	ConditionLanguage   int16        `json:"conditionLanguageVersion,omitempty"`
+	Condition           string       `json:"condition,omitempty"`
 }
 
 type rateFuelRow struct {
@@ -414,7 +394,6 @@ type rateAgreementView struct {
 	Description         string               `json:"description,omitempty"`
 	BillToCustomerID    string               `json:"billToCustomerId,omitempty"`
 	RenewalNoticeDays   int16                `json:"renewalNoticeDays"`
-	RoundingMode        string               `json:"roundingMode"`
 	SubmittedAt         optionalDate         `json:"submittedAt"`
 	ApprovedAt          optionalDate         `json:"approvedAt"`
 	ReviewComment       string               `json:"reviewComment,omitempty"`
@@ -471,7 +450,6 @@ func (t *getRateAgreementTool) Query(
 		Description:       entity.Description,
 		BillToCustomerID:  pointerIDString(entity.BillToCustomerID),
 		RenewalNoticeDays: entity.RenewalNoticeDays,
-		RoundingMode:      string(entity.RoundingMode),
 		SubmittedAt: expectedDate(
 			typeutils.ValueOrZero(entity.SubmittedAt),
 			absentNotSubmitted,
@@ -517,10 +495,7 @@ func (t *getRateAgreementTool) rules(
 	rules []*rateagreement.RateAgreementRule,
 	gate *fieldGate,
 ) []rateRuleRow {
-	showRate := gate.show("rate", "rules.rate")
-	showMin := gate.show("minCharge", "rules.minCharge")
-	showMax := gate.show("maxCharge", "rules.maxCharge")
-	showDiscount := gate.show("discountPercent", "rules.discountPercent")
+	showInputs := gate.show(fieldInputs, "rules.inputs")
 
 	rows := make([]rateRuleRow, 0, min(len(rules), maxAgreementRules))
 	for _, rule := range rules {
@@ -545,42 +520,11 @@ func (t *getRateAgreementTool) rules(
 			EffectiveTo:   expectedDate(typeutils.ValueOrZero(rule.EffectiveTo), absentOpenEnded),
 			HazmatOnly:    rule.HazmatOnly,
 			TempOnly:      rule.TempControlOnly,
-			FormulaID:     pointerIDString(rule.FormulaTemplateID),
-			RateMatrixID:  pointerIDString(rule.RateMatrixID),
+			FormulaID:     pulidString(rule.FormulaTemplateID),
 			Currency:      rule.Currency,
 		}
-		if showRate {
-			row.Rate = nullDecimalText(rule.Rate)
-		}
-		if showMin {
-			row.MinCharge = nullDecimalText(rule.MinCharge)
-		}
-		if showMax {
-			row.MaxCharge = nullDecimalText(rule.MaxCharge)
-		}
-		if showDiscount {
-			row.Discount = nullDecimalText(rule.DiscountPercent)
-		}
-		for _, weightBreak := range rule.Breaks {
-			if weightBreak == nil {
-				continue
-			}
-			if len(row.Breaks) == maxAgreementBreaks {
-				row.BreaksOmitted++
-				continue
-			}
-			entry := rateBreakRow{
-				FromWeight: weightBreak.FromWeight.String(),
-				ToWeight:   nullDecimalText(weightBreak.ToWeight),
-				Label:      weightBreak.Label,
-			}
-			if showRate {
-				entry.Rate = weightBreak.Rate.String()
-			}
-			if showMin {
-				entry.MinCharge = nullDecimalText(weightBreak.MinCharge)
-			}
-			row.Breaks = append(row.Breaks, entry)
+		if showInputs {
+			row.Inputs = inputTexts(rule.Inputs)
 		}
 		rows = append(rows, row)
 	}
@@ -594,7 +538,7 @@ func (t *getRateAgreementTool) accessorials(
 ) []rateAccessorialRow {
 	showAmount := gate.show(fieldAmount, "accessorials.amount")
 	showMax := gate.show("maxAmount", "accessorials.maxAmount")
-	showCondition := gate.show("applyCondition", "accessorials.applyCondition")
+	showCondition := gate.show("condition", "accessorials.condition")
 
 	rows := make([]rateAccessorialRow, 0, min(len(accessorials), maxAgreementAccessorials))
 	for _, accessorial := range accessorials {
@@ -624,10 +568,7 @@ func (t *getRateAgreementTool) accessorials(
 			row.MaxAmount = nullDecimalText(accessorial.MaxAmount)
 		}
 		if showCondition {
-			row.ApplyCondition = accessorial.ApplyCondition
-			if accessorial.ApplyCondition != "" {
-				row.ConditionLanguage = int16(accessorial.ConditionLanguageVersion.OrCurrent())
-			}
+			row.Condition = accessorial.Condition
 		}
 		rows = append(rows, row)
 	}
@@ -650,17 +591,15 @@ func newGetRateMatrixTool(
 func (t *getRateMatrixTool) Name() string { return "rate_get_matrix" }
 
 func (t *getRateMatrixTool) Description() string {
-	return "Retrieve one rate matrix by id: the grid of rates a lane rule prices from. " +
-		"It gives the axes (zone, zip, weight break, freight class and so on) and up to " +
-		"200 cells with their keys, ranges and values. Take the id from a rule's " +
-		"rateMatrixId in rate_get_agreement."
+	return "Retrieve one rate matrix by id: a table a tariff looks values up in. It gives " +
+		"the value type, the axes (zone, zip, weight break, freight class and so on) and up " +
+		"to 200 cells with their keys, ranges and values. Take the id from the page you are on."
 }
 
 func (t *getRateMatrixTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramRateMatrixID: agenttoolschema.RecordIDText(permission.ResourceRateMatrix,
-			"The rate matrix's id, from a rule's rateMatrixId in "+
-				"rate_get_agreement or the page you are on."),
+			"The rate matrix's id, from the page you are on."),
 		"cellOffset": intParam("How many cells to skip. When a result says cellsHasMore, " +
 			"call again with its nextCellOffset."),
 	}, paramRateMatrixID)
@@ -688,21 +627,19 @@ type matrixCellRow struct {
 }
 
 type rateMatrixView struct {
-	ID                string               `json:"id"`
-	Code              string               `json:"code"`
-	Name              string               `json:"name"`
-	Description       string               `json:"description,omitempty"`
-	Status            string               `json:"status"`
-	Currency          string               `json:"currency"`
-	FormulaTemplateID string               `json:"formulaTemplateId"`
-	RoundingMode      string               `json:"roundingMode"`
-	Dimensions        []matrixDimensionRow `json:"dimensions"`
-	CellCount         int                  `json:"cellCount"`
-	CellOffset        int                  `json:"cellOffset,omitempty"`
-	Cells             []matrixCellRow      `json:"cells"`
-	CellsHasMore      bool                 `json:"cellsHasMore"`
-	NextCellOffset    *int                 `json:"nextCellOffset,omitempty"`
-	Withheld          []string             `json:"withheldByAccess,omitempty"`
+	ID             string               `json:"id"`
+	Code           string               `json:"code"`
+	Name           string               `json:"name"`
+	Description    string               `json:"description,omitempty"`
+	Status         string               `json:"status"`
+	ValueType      string               `json:"valueType"`
+	Dimensions     []matrixDimensionRow `json:"dimensions"`
+	CellCount      int                  `json:"cellCount"`
+	CellOffset     int                  `json:"cellOffset,omitempty"`
+	Cells          []matrixCellRow      `json:"cells"`
+	CellsHasMore   bool                 `json:"cellsHasMore"`
+	NextCellOffset *int                 `json:"nextCellOffset,omitempty"`
+	Withheld       []string             `json:"withheldByAccess,omitempty"`
 }
 
 func (t *getRateMatrixTool) Query(
@@ -736,18 +673,16 @@ func (t *getRateMatrixTool) Query(
 
 	gate := t.access.gate(ctx, params, permission.ResourceRateMatrix)
 	view := rateMatrixView{
-		ID:                matrix.ID.String(),
-		Code:              matrix.Code,
-		Name:              matrix.Name,
-		Description:       matrix.Description,
-		Status:            string(matrix.Status),
-		Currency:          matrix.Currency,
-		FormulaTemplateID: pulidString(matrix.FormulaTemplateID),
-		RoundingMode:      string(matrix.RoundingMode),
-		Dimensions:        make([]matrixDimensionRow, 0, len(matrix.Dimensions)),
-		CellCount:         total,
-		CellOffset:        offset,
-		Cells:             make([]matrixCellRow, 0, len(cells)),
+		ID:          matrix.ID.String(),
+		Code:        matrix.Code,
+		Name:        matrix.Name,
+		Description: matrix.Description,
+		Status:      string(matrix.Status),
+		ValueType:   matrix.ValueType,
+		Dimensions:  make([]matrixDimensionRow, 0, len(matrix.Dimensions)),
+		CellCount:   total,
+		CellOffset:  offset,
+		Cells:       make([]matrixCellRow, 0, len(cells)),
 	}
 	axes := 0
 	for _, dimension := range matrix.Dimensions {

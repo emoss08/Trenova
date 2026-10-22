@@ -94,15 +94,14 @@ type ImportField struct {
 type RequiredField string
 
 const (
-	RequiredCustomer        = RequiredField("customerId")
-	RequiredServiceType     = RequiredField("serviceTypeId")
-	RequiredShipmentType    = RequiredField("shipmentTypeId")
-	RequiredFormulaTemplate = RequiredField("formulaTemplateId")
+	RequiredCustomer     = RequiredField("customerId")
+	RequiredServiceType  = RequiredField("serviceTypeId")
+	RequiredShipmentType = RequiredField("shipmentTypeId")
 )
 
 func (f RequiredField) IsValid() bool {
 	switch f {
-	case RequiredCustomer, RequiredServiceType, RequiredShipmentType, RequiredFormulaTemplate:
+	case RequiredCustomer, RequiredServiceType, RequiredShipmentType:
 		return true
 	default:
 		return false
@@ -114,15 +113,13 @@ func AllRequiredFields() []RequiredField {
 		RequiredCustomer,
 		RequiredServiceType,
 		RequiredShipmentType,
-		RequiredFormulaTemplate,
 	}
 }
 
 type RequiredFields struct {
-	CustomerID        string `json:"customerId"`
-	ServiceTypeID     string `json:"serviceTypeId"`
-	ShipmentTypeID    string `json:"shipmentTypeId"`
-	FormulaTemplateID string `json:"formulaTemplateId"`
+	CustomerID     string `json:"customerId"`
+	ServiceTypeID  string `json:"serviceTypeId"`
+	ShipmentTypeID string `json:"shipmentTypeId"`
 }
 
 func (r RequiredFields) Value(field RequiredField) string {
@@ -133,8 +130,6 @@ func (r RequiredFields) Value(field RequiredField) string {
 		return r.ServiceTypeID
 	case RequiredShipmentType:
 		return r.ShipmentTypeID
-	case RequiredFormulaTemplate:
-		return r.FormulaTemplateID
 	default:
 		return ""
 	}
@@ -603,10 +598,9 @@ func (s *ShipmentImport) normalized() *ShipmentImport {
 	out := &ShipmentImport{
 		Fields: make([]ImportField, 0, len(s.Fields)),
 		Required: RequiredFields{
-			CustomerID:        strings.TrimSpace(s.Required.CustomerID),
-			ServiceTypeID:     strings.TrimSpace(s.Required.ServiceTypeID),
-			ShipmentTypeID:    strings.TrimSpace(s.Required.ShipmentTypeID),
-			FormulaTemplateID: strings.TrimSpace(s.Required.FormulaTemplateID),
+			CustomerID:     strings.TrimSpace(s.Required.CustomerID),
+			ServiceTypeID:  strings.TrimSpace(s.Required.ServiceTypeID),
+			ShipmentTypeID: strings.TrimSpace(s.Required.ShipmentTypeID),
 		},
 		Stops: make([]ImportStop, 0, len(s.Stops)),
 	}

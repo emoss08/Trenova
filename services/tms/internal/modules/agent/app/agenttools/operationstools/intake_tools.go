@@ -170,13 +170,18 @@ func shipmentDraftSchema() map[string]any {
 			),
 			"formulaTemplateId": agenttoolschema.RecordIDText(
 				permission.ResourceFormulaTemplate,
-				"The rating method that prices the freight, from "+
-					"formula_list_templates. Leave it out when the customer's rate agreement "+
-					"covers the lane, and the contract's is used.",
+				"The tariff that prices the freight, from formula_list_templates. Leave "+
+					"it out when the customer's rate agreement covers the lane, and the "+
+					"contract's is used, or when freightChargeAmount gives the price.",
 			),
-			"baseRate": common.AmountProperty(
-				"The rate the rating method prices with, as the person " +
-					"gave it: 2450 for a $2,450 flat load, 2.10 for $2.10 a mile.",
+			"inputs": agenttoolschema.StringMap("Values for the inputs the tariff declares, "+
+				"which formula_get_template lists, as the person gave them: $2,450 for a "+
+				"flat load, $2.10/mi for a rate a mile, 12% for a percent. Leave an input "+
+				"out to take the tariff's default.", 4000),
+			common.FieldFreightChargeAmount: common.AmountProperty(
+				"The freight charge the person or the customer's rate confirmation gives, " +
+					"such as 2450. The shipment is then rated by hand at it and no tariff " +
+					"runs; leave formulaTemplateId out.",
 			),
 			"freightTerms": agenttoolschema.Enum(
 				"Who pays the freight. Defaults to Prepaid.",
@@ -217,8 +222,6 @@ func shipmentDraftSchema() map[string]any {
 				-100,
 				200,
 			),
-			"ratingUnit": common.IntegerProperty("How many units the rating method prices. "+
-				"Defaults to 1.", 1, 1_000_000),
 			"moves": map[string]any{
 				toolschema.KeyType: toolschema.TypeArray,
 				toolschema.KeyDescription: "Usually one move, sequence 0. Each has its stops in " +
@@ -488,7 +491,7 @@ func (t *CreateShipmentTool) contractRating(
 	entity *shipment.Shipment,
 	actor *permissionports.RequestActor,
 ) error {
-	if entity.FormulaTemplateID.IsNotNil() {
+	if entity.FormulaTemplateID.IsNotNil() || entity.FreightChargeAmount.Valid {
 		return nil
 	}
 	if t.contracts == nil {
@@ -510,8 +513,8 @@ func (t *CreateShipmentTool) contractRating(
 	}
 
 	entity.FormulaTemplateID = *priced.FormulaTemplateID
-	if !entity.BaseRate.Valid && priced.BaseRate.Valid {
-		entity.BaseRate = priced.BaseRate
+	if len(entity.TariffInputs) == 0 {
+		entity.TariffInputs = priced.Inputs.Clone()
 	}
 
 	return nil
@@ -522,7 +525,8 @@ func errNoRatingMethod(outcome string) error {
 		"one the person or the customer's own rate confirmation gives. When neither gives " +
 		"one, ask the person for it, offering one to react to (a figure from " +
 		"rate_quote or their recent loads on the lane, if you can get one). Send it as " +
-		"formulaTemplateId from formula_list_templates and baseRate"
+		"freightChargeAmount, or as formulaTemplateId from formula_list_templates with " +
+		"its inputs"
 	if outcome != "" {
 		message += " (the agreements answered " + outcome + ")"
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -44,7 +45,9 @@ func schemaCheck(tool agentports.AgentTool, args map[string]any) error {
 func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}},
+	)
 	payload := shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
 	)
@@ -98,7 +101,7 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 		Applied:           true,
 		Outcome:           ratequote.OutcomeRated,
 		FormulaTemplateID: &template,
-		BaseRate:          decimal.NewNullDecimal(decimal.RequireFromString("2.10")),
+		Inputs:            ratedInputs(t, "$2.10/mi"),
 	}}
 	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
 		Shipments: &agenttoolstest.FakeShipmentWriter{},
@@ -110,13 +113,29 @@ func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
 	entity, err := tool.Draft(t.Context(), &params)
 	require.NoError(t, err)
 	assert.Equal(t, template, entity.FormulaTemplateID)
-	require.True(t, entity.BaseRate.Valid)
-	assert.True(t, entity.BaseRate.Decimal.Equal(decimal.RequireFromString("2.10")))
+	assert.True(t, ratedInputs(t, "$2.10/mi").Equal(entity.TariffInputs))
 
 	named := createShipmentParams()
 	_, err = tool.Draft(t.Context(), &named)
 	require.NoError(t, err)
 	assert.Equal(t, 1, contracts.calls, "a rating the call names is never second-guessed")
+
+	priced := createShipmentParams()
+	quoted := priced.Params["shipment"].(map[string]any)
+	delete(quoted, "formulaTemplateId")
+	quoted["freightChargeAmount"] = "1500.00"
+	entity, err = tool.Draft(t.Context(), &priced)
+	require.NoError(t, err)
+	assert.Equal(t, 1, contracts.calls, "a price the call gives is never second-guessed")
+	assert.True(t, entity.FormulaTemplateID.IsNil())
+	assert.True(t, decimal.RequireFromString("1500").Equal(entity.FreightChargeAmount.Decimal))
+}
+
+func ratedInputs(t *testing.T, rate string) tarifftypes.Inputs {
+	t.Helper()
+	inputs, err := tarifftypes.InputsFromLiterals(map[string]string{"rate": rate})
+	require.NoError(t, err)
+	return inputs
 }
 
 func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T) {
@@ -141,14 +160,15 @@ func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T)
 func TestCreateShipment_TheSchemaRefusesWhatOnlyTheRaterOrTheSystemSets(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: &agenttoolstest.FakeShipmentWriter{}},
+	)
 	for field, value := range map[string]any{
-		"rateLocked":          true,
-		"rateOverrideAmount":  "0",
-		"ratingDetail":        map[string]any{"source": "Rated"},
-		"status":              "Completed",
-		"freightChargeAmount": "1500.00",
-		"rateAgreementId":     pulid.MustNew("ragr_").String(),
+		"rateLocked":         true,
+		"rateOverrideAmount": "0",
+		"ratingDetail":       map[string]any{"source": "Rated"},
+		"status":             "Completed",
+		"rateAgreementId":    pulid.MustNew("ragr_").String(),
 	} {
 		payload := shipmentPayload(
 			pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"),
@@ -166,7 +186,9 @@ func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: writer},
+	)
 	origin, dest := pulid.MustNew("loc_"), pulid.MustNew("loc_")
 	sent := map[string]any{"shipment": map[string]any{
 		"customerId":     pulid.MustNew("cus_").String(),
@@ -207,8 +229,11 @@ func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 
 	err = tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(sent))
 	require.Error(t, err, "stops numbered from 1 are refused before anything is filed")
-	assert.Contains(t, err.Error(),
-		"moves[0].stops[0].sequence: Sequences count from 0 in travel order, so this one is 0, not 1")
+	assert.Contains(
+		t,
+		err.Error(),
+		"moves[0].stops[0].sequence: Sequences count from 0 in travel order, so this one is 0, not 1",
+	)
 	assert.Contains(t, err.Error(), "moves[0].stops[1].sequence:")
 	assert.Zero(t, writer.Previews, "the plan never ran on a misnumbered shipment")
 }
@@ -217,7 +242,9 @@ func TestCreateShipment_NumbersStopsFromZeroInTravelOrder(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: writer},
+	)
 	payload := shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
 	)
@@ -243,7 +270,9 @@ func TestCreateShipment_ReadsEachWindowWhereTheStopIs(t *testing.T) {
 	origin, dest := pulid.MustNew("loc_"), pulid.MustNew("loc_")
 	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{
 		Shipments: writer,
-		Locations: agenttoolstest.FakeLocationZones{Zones: map[pulid.ID]string{origin: "America/Los_Angeles"}},
+		Locations: agenttoolstest.FakeLocationZones{
+			Zones: map[pulid.ID]string{origin: "America/Los_Angeles"},
+		},
 	})
 	payload := shipmentPayload(pulid.MustNew("cus_"), pulid.MustNew("svc_"), origin, dest)
 	stops := payload["moves"].([]any)[0].(map[string]any)["stops"].([]any)
@@ -277,7 +306,9 @@ func TestCreateShipment_RefusesAWindowItCannotRead(t *testing.T) {
 			t.Parallel()
 
 			writer := &agenttoolstest.FakeShipmentWriter{}
-			tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
+			tool := operationstools.NewCreateShipmentTool(
+				operationstools.CreateShipmentDeps{Shipments: writer},
+			)
 			payload := shipmentPayload(
 				pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"),
 				pulid.MustNew("loc_"),
@@ -301,7 +332,9 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: writer},
+	)
 	commodityID, accessorialID := pulid.MustNew("com_"), pulid.MustNew("acc_")
 	billTo, template := pulid.MustNew("cus_"), pulid.MustNew("fmt_")
 	payload := shipmentPayload(
@@ -309,7 +342,7 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 	)
 	payload["formulaTemplateId"] = template.String()
 	payload["billToCustomerId"] = billTo.String()
-	payload["baseRate"] = "2.45"
+	payload["inputs"] = map[string]any{"rate": "$2.45/mi"}
 	payload["freightTerms"] = "Collect"
 	payload["commodities"] = []any{map[string]any{
 		"commodityId": commodityID.String(), "pieces": 26, "weight": 42000,
@@ -327,8 +360,7 @@ func TestCreateShipment_EntersTheFreightChargesAndRating(t *testing.T) {
 	assert.Equal(t, template, created.FormulaTemplateID)
 	require.NotNil(t, created.BillToCustomerID)
 	assert.Equal(t, billTo, *created.BillToCustomerID)
-	require.True(t, created.BaseRate.Valid)
-	assert.True(t, decimal.RequireFromString("2.45").Equal(created.BaseRate.Decimal))
+	assert.True(t, ratedInputs(t, "$2.45/mi").Equal(created.TariffInputs))
 	assert.Equal(t, shipment.FreightTermsCollect, created.FreightTerms)
 	require.Len(t, created.Commodities, 1)
 	assert.Equal(t, commodityID, created.Commodities[0].CommodityID)
@@ -347,7 +379,9 @@ func TestCreateShipment_SaysWhatItCreated(t *testing.T) {
 	t.Parallel()
 
 	writer := &agenttoolstest.FakeShipmentWriter{}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: writer})
+	tool := operationstools.NewCreateShipmentTool(
+		operationstools.CreateShipmentDeps{Shipments: writer},
+	)
 	params := agenttoolstest.ExecuteParams(map[string]any{"shipment": shipmentPayload(
 		pulid.MustNew("cus_"), pulid.MustNew("svc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_"),
 	)})
@@ -402,9 +436,13 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 	}}
 	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), createShipmentParams())
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&shipments.guard,
+		func() (*agent.ToolPreview, error) {
+			return tool.Preview(t.Context(), createShipmentParams())
+		},
+	)
 
 	require.Len(t, preview.Warnings, 1)
 	warning := preview.Warnings[0]
@@ -413,7 +451,11 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 		[]string{"No rate agreement covers this lane, so this shipment is priced at zero"},
 		warning.Args)
 	assert.Nil(t, preview.Refusal(), "a flagged shipment can still be approved")
-	require.NotNil(t, agenttoolstest.PreviewChange(t, preview, 0).Money, "the rating is shown as money")
+	require.NotNil(
+		t,
+		agenttoolstest.PreviewChange(t, preview, 0).Money,
+		"the rating is shown as money",
+	)
 }
 
 func TestLocalTimeProperty_NeverAsksForUnixSeconds(t *testing.T) {
