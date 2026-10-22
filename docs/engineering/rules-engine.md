@@ -432,8 +432,9 @@ that read it, with code `table`, as does reading a code the request did not send
   ```
 
 The Go host's side is under "Go callers: Tariff" below: at most four loads, three of cells and
-then the still-needed tables whole. `tariff.check` and the editor read shapes only, so a host
-sends them tables without cells.
+then the still-needed tables whole. `tariff.test` and `tariff.scaffoldTest` follow the same
+protocol, so a test that reads a matrix runs on the server and in the browser alike.
+`tariff.check` and the editor read shapes only, so a host sends them tables without cells.
 
 ### `tariff.test`
 
@@ -442,9 +443,10 @@ Runs a file's own `test` blocks against the sample record (`src/tariff/eval/test
 applies to each test. Output:
 
 ```json
-{"tests": [{"name", "range", "status": "passed" | "failed" | "error",
+{"tests": [{"name", "range", "status": "passed" | "failed" | "error" | "needs",
   "failures": [{"range", "message", "values": [{"range", "display", "value"?}]}],
-  "bill": … | null, "error": … | null}]}
+  "bill": … | null, "error": … | null}],
+ "needs": [{"table": "Grid", "keys": ["A"]}]}
 ```
 
 - A test starts from the sample record and the inputs' defaults, applies its `given`s in order
@@ -454,10 +456,19 @@ applies to each test. Output:
 - A failing `expect` reports each operand's `display` and wire `value`, so the author sees what
   the tariff computed. An evaluation error makes the status `error`, with the error. `bill` is
   the test's bill, when it rated.
-- A file that does not check answers `{"tests": [], "error": {"code": "check", …}}`.
-- `tariff.test` answers no needs: a test that reads table cells the request did not carry ends
-  with status `error` (code `internal`, "The test reads rate table cells the request did not
-  carry").
+- A file that does not check answers `{"tests": [], "needs": [], "error": {"code": "check", …}}`.
+- **Needs.** Tests read tables under the on-demand protocol: a lookup of cells the request did
+  not carry is a provisional miss and the test keeps running, so one run finds every need it
+  can, from its `given`s, the rating and its `expect`s. A test that recorded needs ends with
+  status `needs` (no failures, bill or error, since the miss may have caused them), and the
+  response's `needs` is every test's needs, each once. The host loads them and runs the tests
+  again, exactly as it does for `tariff.evaluate` (from `eval/runner.json`):
+
+  ```json
+  {"tests": "tariff \"Grid\"\n…\nlet rate = tables.Grid[lane.destination.zip3, w] ?? fail \"No rate\"\n…",
+   "expect": {"tests": [{"name": "to A", "status": "needs", "failures": []}, …],
+              "needs": [{"table": "Grid", "keys": ["A"]}, {"table": "Grid", "keys": ["B"]}]}}
+  ```
 
 ### `tariff.scaffoldTest`
 
@@ -526,13 +537,17 @@ doc in it is a `Message`.
               "params": [{"name", "type", "default"}], "returns", "doc"}],
  "tableMethods": [{"name", "doc"}],
  "units": [{"unit", "dimension", "factor", "si"}],
- "keywords": […], "contextual": ["cents", "total", "lines", "as"],
+ "keywords": […], "contextual": ["as", "cents", "to", "up", "down", "half", "even", "total", "lines"],
  "schema": {"roots": [{"name", "doc", "type", "fields"}], "records": [{"name", "fields"}],
             "enums": [{"name", "variants"}]}}
 ```
 
 The modules are `std.ltl`, `std.fuel`, `std.time` and `std.accessorials`, in that order. A
-schema field is `{name, type, descriptor, words, doc, fields}`. The catalog is static data;
+schema field is `{name, type, descriptor, words, doc, fields}`. `keywords` are the lexer's
+reserved words, never names; `contextual` are the lexer's contextual words (keywords only where
+the grammar uses them, which `tariff.tokens` classes as `keyword` there and `name` elsewhere)
+and the test-only names `total` and `lines`, so a parameter may be called `to`. A unit's
+`dimension` is its base's name, `Percent` for `%` and `Count` for a count label. The catalog is static data;
 the Go host caches it per module version.
 
 ### Limits
@@ -579,7 +594,7 @@ the call, so the range is always in the source the author is looking at
 | Code | When |
 |---|---|
 | `check` | the file does not load or check (the gate); the message is the first error finding |
-| `internal` | the program did something its types rule out, which the gate makes unreachable for a file that checked; and a test that reads cells the request did not carry |
+| `internal` | the program did something its types rule out, which the gate makes unreachable for a file that checked |
 | `budget` | a budget is spent |
 | `input` | an input value that does not fit its declared type, or names no input |
 | `record` | the record does not fit the schema |
@@ -1086,43 +1101,20 @@ names in this list are deleted; `rategeo.MatchLane`, `rategeo.ScopeKeys` and
 Pinned by `testdata/matrix.json`. Dimensions are
 `{"position": 0..3, "matchMode": "Exact" | "Range", "kind": "Zone", "label": ""}`. Cells are the
 GraphQL cell (`id`, `d0Key`..`d3Key`, `d0Min`..`d3Max`; other fields ignored). A blank or `null`
-bound is no bound, and `null` entries are skipped. A position outside 0..3 or more than four
-lookup values is `invalid_input`. A dimension's display label is its trimmed `label`, or else
-the English name of its kind (Zone, Postal prefix, Postal code, State, Country, Weight break,
-Distance, Pieces, Linear feet, Freight class, Equipment, Service, Custom, Quantity). A host that
-translates passes the translated name as `label`.
+bound is no bound, and `null` entries are skipped. A position outside 0..3 is `invalid_input`. A
+dimension's display label is its trimmed `label`, or else the English name of its kind (Zone,
+Postal prefix, Postal code, State, Country, Weight break, Distance, Pieces, Linear feet, Freight
+class, Equipment, Service, Custom, Quantity). A host that translates passes the translated name
+as `label`.
 
 **Bands** are half open, `[min, max)`, and a missing bound is no bound:
-`matrix::band::contains(min, max, value)` implements it for `matrix.*` (`ContainsQuantity`).
-Tariff's table lookups (`src/tariff/eval/tables.rs`) apply the same half-open rule to the cells
-the host sends, in their own code.
+`matrix::band::contains(min, max, value)` implements it. Tariff's table lookups
+(`src/tariff/eval/tables.rs`) use the same rule for the cells the host sends, and for
+interpolation's segments; a table band always has a floor (a cell without one is a malformed
+table), since sorting by floor is what makes the lowest band win where bands overlap.
 
-#### `matrix.select`
-
-One lookup and its candidate cells (`SelectCell`). Nothing calls it any more: the Go matrix
-lookup it served is deleted, tariffs read matrices as Tariff tables, and its Go wrapper
-`rules.SelectMatrixCell` has no caller.
-
-```json
-{"dimensions": [{"position": 0, "matchMode": "Exact"}, {"position": 1, "matchMode": "Range", "kind": "WeightBreak"}],
- "cells": [{"id": "rmc_1", "d0Key": "SE", "d1Min": 0, "d1Max": 1000}, {"id": "rmc_2", "d0Key": "SE", "d1Min": 1000}],
- "values": [{"keys": ["SE", "SOUTH"]}, {"quantity": "1000"}]}
-```
-
-→ `{"cell": {"index": 1, "id": "rmc_2", "preference": 0, "matchedKeys": ["SE", "1000", "", ""]}}`,
-or `{"error": {"code": "dimension_value_missing", "position": 1, "message": {"message": "No value was supplied for the matrix dimension {0}", "args": ["Weight break"]}}}`,
-or `{"error": {"code": "no_matching_cell", "message": {"message": "No matrix cell matches the supplied values"}}}`.
-
-- Every exact axis needs a key and every banded axis a quantity; the first axis without one, in
-  dimension order, fails the lookup. An axis with another match mode constrains nothing, as in
-  Go.
-- A cell matches when its key on every exact axis is one of that axis's keys and its band on
-  every banded axis contains the quantity.
-- The keys are ordered most preferred first. `preference` is the sum of the matched keys'
-  positions, and the lowest wins, then the lowest cell ID, then the earlier cell in the request
-  (unsaved cells, which sort before saved ones). Go's `sort.Slice` left that last tie
-  unspecified.
-- `matchedKeys` gives per position the key matched, or the quantity normalised.
+A rate is read by a tariff, from a matrix sent as a Tariff table (above); there is no lookup
+operation of its own.
 
 #### `matrix.coverage`
 
@@ -1161,8 +1153,8 @@ Moving it from TypeScript fixed three things. Its messages are TypeScript's Engl
 - It skipped every band after an unbounded one or before a floorless one, missing their
   overlaps.
 
-**What replaces what.** `ContainsQuantity` → `matrix::band::contains`; `SelectCell` →
-`matrix.select` (both deleted from Go, as is `ratematrix.LookupCell`, which called the module);
+**What replaces what.** `ContainsQuantity` → `matrix::band::contains` (deleted from Go, as are
+`SelectCell` and `ratematrix.LookupCell`: tariffs read matrices as tables);
 `findMatrixCoverageIssues` → `matrix.coverage`. They stay native: the sheet
 projection (`buildMatrixGrid`, `sliceBuckets`, `bucketKeyOf`, `cellCoordinate`,
 `coordinateKey`), `axisLabel` and `bandLabel` for headers, which only lay cells out and label
@@ -1176,12 +1168,28 @@ The Studio checks and tests Tariff in the browser with the same module the serve
 these facts cross HTTP (all under `/api/v1`; every range is the module's `{from, to}` in UTF-16
 code units of the source):
 
-- **`GET /formula-templates/context`** returns `{context, libraries}`. `context` is the
+- **`GET /formula-templates/context`** returns `{context, libraries, tablesStamp}`. `context` is the
   organisation's `rules.TariffContext` (settings, table shapes, accessorial codes and the source
   of every importable library, the latest approved version of each); `libraries` lists them as
   `{path, libraryId, name, description, versionNumber}`. The browser passes `context` to its own
   `tariff.check`, `tariff.test` and editor operations, and reads the language itself from
   `tariff.catalog`.
+- **`POST /formula-templates/context/cells`** (formula-template read) takes `{needs, whole?}`,
+  the `needs` a browser `tariff.test` answered (at most 200, each a table code and at most four
+  keys), and answers the cells of those combinations, or with `whole: true` the tables they
+  name entire, read at the organisation's rate table stamp:
+
+  ```json
+  {"stamp": "12:40:1767225600",
+   "tables": [{"code": "Grid", "cells": [{"at": [{"key": "A"}, {"min": "0"}], "value": "20"}],
+               "loaded": [["A"]]}]}
+  ```
+
+  A table the organisation does not have is left out; a whole table has `loaded: null`. It is
+  a read (write coverage `read-only`, allowed on a read-only plan). The context endpoint's
+  `tablesStamp` is the same stamp: the browser keeps loaded cells per stamp
+  (`lib/tariff-table-cells.ts`), and an answer at another stamp means a matrix changed, so it
+  reads the context again.
 - **`POST /formula-templates/test`** (the preview) takes `{source, inputs?, shipmentId?}`, with
   `inputs` a map of wire values, and answers:
 
@@ -1313,8 +1321,8 @@ level and every call reports it as `ErrUnavailable`.
 ### Go callers
 
 Every Go caller of the allocation, report and lane rules goes through a typed wrapper in
-`pkg/rules` (`allocation.go`, `report.go`, `lane.go`; `matrix.go` wraps `matrix.select`, which
-nothing calls). The wrappers send decimals exactly (`decimal.Decimal` marshals as a JSON
+`pkg/rules` (`allocation.go`, `report.go`, `lane.go`; Go calls no `matrix.*` operation, which
+only the browser's matrix editor runs). The wrappers send decimals exactly (`decimal.Decimal` marshals as a JSON
 string), read output decimals back from strings, and check that the module answered for as many
 items as it was asked about. User-facing messages decode into `rules.Message`, whose arguments
 may be nested messages: `shared/i18n` translates an argument that is an `i18n.Localizer` in the
@@ -1384,10 +1392,12 @@ call. Libraries come two ways:
 
 Tables, codes and settings come from `ContextSource`, which sends table shapes only (cells
 load on demand, below). `SourceCheck.Imports` turns the module's imports into pins (`{path,
-libraryId, versionNumber}`). `RunTests` and `TestChecked` make one `tariff.test` call (a source
-that does not check runs no tests); they load no cells, so a test that reads an exact-axis
-table ends in `error` (see `tariff.test`). `ScaffoldTest` runs `tariff.scaffoldTest`, loading
-the cells it `needs` up to `MaxNeedPasses` (4) times, then fails with `ErrNeedsUnmet`.
+libraryId, versionNumber}`). `RunTests` and `TestChecked` (a source that does not check runs no
+tests; `SourceCheck` carries the tenant its context was built for) run `tariff.test`, and
+`ScaffoldTest` runs `tariff.scaffoldTest`, both loading the cells the module `needs` exactly as
+the rater does (below), so saving, submitting, readiness, the preview and "Save as test" all
+pass a tariff that reads a matrix. `TableCells` serves the browser's loads
+(`POST /formula-templates/context/cells`, under "The Tariff server API").
 `Catalog` caches `tariff.catalog` per module version.
 
 **The rater.** `tariff.Rater.Rate` (the `tariffports.Rater` that `rateengine/pricing.go` and
@@ -1407,7 +1417,9 @@ per table for every missing combination's stored keys, then cached per combinati
 answer included) and appends them and the combinations to `cells` and `loaded`. The rater loads
 cells after each of its first three evaluations that need them; after a fourth it loads each
 still-needed table whole (`LoadWhole`, `loaded` absent), and a fifth evaluation that still needs
-cells is `ErrUnresolvedNeeds`.
+cells is `ErrUnresolvedNeeds`. The loop is one `cellLoad` (`rating/app/tariff/cells.go`) that the
+rater, the test runs and "Save as test" share; `ContextSource.TableStamp` gives the
+organisation's lookup stamp the browser keeps its loaded cells by.
 
 **The resolver.** `TemplateResolver.ResolveBilling` (the `tariffports.Resolver` rating calls)
 returns a template's billing version as of a date with its source, stored input declarations,
@@ -1436,17 +1448,19 @@ two-second timeout per rating (the backtest's past shipments come from
 | an error finding of `tariff.check` | validation on `source` with the finding's range (`CheckRefusal`); an `input-value` finding is validation on its `path` |
 | a test that fails or errs at submit or approval | validation naming the failing tests |
 | an evaluation error (`TariffEvalError`) | the preview reports it as `error`; "Save as test" as `Evaluation`, an `EvaluationError` validation on `source` with its code and range; rating as the rater's business error carrying the code |
-| a refusal (`TariffRefusal`) | the preview reports it as `refusal`; rating records its text, in the default locale, as the rating's refusal (`rateengine`); `Refusal` would make it a `RefusalError` validation on `source`, but nothing calls it |
+| a refusal (`TariffRefusal`) | the preview reports it as `refusal`; rating records its text, a crate-written refusal in the reader's locale (`i18n.FromContext`), as the rating's refusal (`rateengine`) |
 | `ErrRequest`, `ErrTrap`, `ErrUnavailable` | 500, logged; the detail is never shown |
 | `ErrContextDone` | the context's own error, or `timeout` when the preview's deadline ran out |
 
-`api/helpers/classifier.go` classifies the three error types as validation, so REST answers a
+`api/helpers/classifier.go` classifies the two error types as validation, so REST answers a
 `validation-error` problem (HTTP 400) whose error carries `range`, and GraphQL a field error;
 messages translate in the reader's locale through `shared/i18n`.
 
 **Nova** reads the language with `formula_describe_language` (the catalog plus the
-organisation's context, `tariff.Findings` and `tariff.SummarizeTests` turning ranges into lines
-and columns), checks with `formula_check`, runs tests with `formula_run_tests`, rates with
+organisation's context, `tariff.Findings` and `tariff.SummarizeTests` turning the module's UTF-16
+ranges into lines and character columns, and cutting excerpts, through
+`stringutils.ByteOffsetOfUTF16`, so text after `°F`, `é` or an emoji is placed right and never
+split), checks with `formula_check`, runs tests with `formula_run_tests`, rates with
 `formula_preview`, and proposes whole files with `formula_propose` and `formula_library_propose`,
 which are shown only when the source checks clean and has at least one test, all passing.
 
@@ -1517,7 +1531,9 @@ fetch. The file must be served as `application/wasm`:
 ### Browser callers
 
 The typed wrappers beside the loader are `tariff.ts` (with `tariff-wire.ts` for Tariff's wire
-values), `allocation.ts` (with `allocation-form.ts` for zod), `report.ts`, `lane.ts` and
+values, whose unit table, `tariff-units.generated.ts`, `build-wasm.sh install` writes from the
+crate's `SIMPLE_UNITS` through `tests/client_units.rs`, a test that fails when the committed
+copy drifts, since formatting a value must not wait for the module), `allocation.ts` (with `allocation-form.ts` for zod), `report.ts`, `lane.ts` and
 `matrix.ts`; `wire.ts` shapes form values for them, sending a value that is not a decimal yet
 ("abc", `NaN`, "1.") as "not filled in" so a half-typed form never refuses the request. Decimal
 outputs stay strings in every client type and become numbers only where a formatter or a chart
@@ -1551,7 +1567,7 @@ Each screen calls once per question for everything it shows, and waits in one of
 | Lane key labels (`useLaneKeyLabels`: import rate sheet, simulation) | `lane.parse` | every distinct key on screen | `LaneKeyTableSkeleton`, `SimulationPanelSkeleton` |
 | Desk rate agreement card | `lane.keys` | every lane read so far, again when a page arrives | the card's skeleton |
 | Tariff editor in both Studios (`components/formula-editor`): highlighting, lint, completion, hover, signature help, definition, rename, inlays, folding, format | `tariff.tokens`, `tariff.check`, `tariff.complete`, `tariff.hover`, `tariff.signature`, `tariff.definition`, `tariff.rename`, `tariff.inlays`, `tariff.format` | the document at the cursor or the visible range; one check per text, kind and context (an LRU of four), shared by the linter, the folding and the Studio | `StudioSkeleton` (the Studio's provider), and `TariffEditor`'s own `useRules()` |
-| Template and library Studios: outline, problems, tests panel, readiness, reference pane, "Save as test" on the sample load | `tariff.check`, `tariff.test`, `tariff.catalog`, `tariff.scaffoldTest` | the source once per text (`useTariffWorkbench`); the tests once the source has rested 400 ms; the catalog once per loaded runtime | `StudioSkeleton` |
+| Template and library Studios: outline, problems, tests panel, readiness, reference pane, "Save as test" on the sample load | `tariff.check`, `tariff.test`, `tariff.catalog`, `tariff.scaffoldTest` | the source once per text (`useTariffWorkbench`); the tests once the source has rested 400 ms, again after each load of the table cells they need (`useTariffTests`: three loads by combination, then the tables whole, through `POST /formula-templates/context/cells`, kept per stamp); the catalog once per loaded runtime | `StudioSkeleton` |
 | Nova's proposal card | `tariff.check`, `tariff.test`, `tariff.format` | the proposed source | the Studio's boundary |
 | Desk formula template card, every read-only source (`TariffCode`) | `tariff.tokens`, `tariff.check` | the source, once per text | the card's skeleton |
 | Rate matrix grid editor | `matrix.coverage` | the whole matrix, on each change of its cells or axes; each axis labelled as the screen names it | `MatrixGridEditorSkeleton` |

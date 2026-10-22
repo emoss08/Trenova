@@ -33,7 +33,6 @@ CodeMirror counts. A refused request throws `RulesRequestError {op, code, detail
 | `tariffTokens(rules, source)` | `tariff.tokens` | the editor's highlighting and every read-only view of a source (`TariffCode`) |
 | `tariffFormat(rules, source)` | `tariff.format` | the format command and Nova's proposals; `formatted: null` with the syntax errors that stop it |
 | `tariffTest(rules, {source, context})` | `tariff.test` | the tests panel, the outline's test dots, readiness and Nova's proposal card |
-| `tariffEvaluate(rules, {context, record, programs, trace})` | `tariff.evaluate` | no screen: the Studio's preview is rated on the server, and a test's bill comes from `tariff.test` |
 | `tariffScaffoldTest(rules, {source, context, record, inputs, name})` | `tariff.scaffoldTest` | "Save as test" on the sample load (a real shipment is scaffolded on the server) |
 | `tariffCatalog(rules)` | `tariff.catalog` | the reference pane and the definition dialog for a standard library name; memoised per runtime in a `WeakMap` |
 | `tariffComplete`, `tariffHover`, `tariffSignature`, `tariffDefinition`, `tariffRename`, `tariffPrepareRename`, `tariffInlays` | `tariff.complete`, `.hover`, `.signature`, `.definition`, `.rename` (with and without `newName`), `.inlays` | the editor's features at a cursor or over the visible range |
@@ -88,9 +87,14 @@ The template studio (`routes/formula-template/_components/studio/`) and the libr
 (`routes/formula-library/_components/studio/`) share their pieces from
 `apps/web/src/components/tariff-studio/`:
 
-- `useTariffWorkbench({rules, source, kind, context})`: the check, the error and warning counts,
-  the test count, the tests (`useTariffTests`, run with `tariff.test` once the source has rested
-  400 ms, and not at all while it has errors) and each test's verdict by name. Everything a
+- `useTariffWorkbench({rules, source, kind, context, tablesStamp})`: the check, the error and
+  warning counts, the test count, the tests (`useTariffTests`, run with `tariff.test` once the
+  source has rested 400 ms, and not at all while it has errors) and each test's verdict by name.
+  The context carries only the shapes of tables with an exact axis, so a run that answers
+  `needs` loads those cells (`useTariffTableCells`, `POST /formula-templates/context/cells`,
+  cached in the query cache per rate table stamp), lays them into the context and runs again:
+  three loads by combination, then the tables whole, as the server does. A test waiting for
+  cells has status `needs`; the tests panel says so, and offers Retry when a load fails. Everything a
   Studio shows (the underlines, the outline, the tests panel, readiness, Nova's card) reads this
   one answer, so none can disagree.
 - `useTariffEditorBinding({read, write})`: reveal a range, apply a fix and append a block

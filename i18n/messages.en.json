@@ -24354,17 +24354,6 @@
       "rules/allocation"
     ]
   },
-  "Amounts typed on the shipment, for tariffs that bill what was entered.": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/tariff"
-    ]
-  },
   "An API key": {
     "sites": 1,
     "scope": [
@@ -87937,6 +87926,15 @@
       "routes/reports"
     ]
   },
+  "Each rate table need names a table and at most four keys": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Each recipient gets an email with a link to the report when it completes.": {
     "sites": 1,
     "scope": [
@@ -138925,6 +138923,15 @@
       "apps/dash/routes"
     ]
   },
+  "Load at most 200 rate table key combinations at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Load balance": {
     "sites": 1,
     "scope": [
@@ -140913,6 +140920,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Loading the rate table cells this test reads…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Loading the reconciliation": {
@@ -153338,6 +153354,15 @@
       "go/other"
     ]
   },
+  "Name the rate table cells to load": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Name the records to retry, or the error categories whose records to retry": {
     "sites": 1,
     "scope": [
@@ -161172,17 +161197,6 @@
       "routes/edi"
     ]
   },
-  "No matrix cell matches the supplied values": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/matrix"
-    ]
-  },
   "No maximum load on file": {
     "sites": 1,
     "scope": [
@@ -164563,17 +164577,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "No value was supplied for the matrix dimension {0}": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/matrix"
     ]
   },
   "No values match.": {
@@ -218741,7 +218744,7 @@
     ]
   },
   "Retry": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "ts"
     ],
@@ -263468,15 +263471,6 @@
       "routes/fuel-management"
     ]
   },
-  "The formula refused to rate": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The formula template does not check: {0}": {
     "sites": 1,
     "scope": [
@@ -263520,17 +263514,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "The freight charge typed on the shipment.": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/tariff"
     ]
   },
   "The freight lines add up to {0}: freight cannot be below zero": {
@@ -267053,17 +267036,6 @@
       "routes/shipment"
     ]
   },
-  "The other charges typed on the shipment.": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/tariff"
-    ]
-  },
   "The other half of the safety record. Visible recognition reaches the driver in Dash; internal notes stay with the office.": {
     "sites": 1,
     "scope": [
@@ -268583,6 +268555,33 @@
     ],
     "areas": [
       "routes/accessorial-charge"
+    ]
+  },
+  "The rate table cells the tests read could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The rate table cells these tests read could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The rate table cells this test reads could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The rate table {0} cannot be read with {1} as a key": {
@@ -272504,17 +272503,6 @@
       "routes/formula-template"
     ]
   },
-  "The test reads rate table cells the request did not carry": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "apps/web/rules",
-      "rules/tariff"
-    ]
-  },
   "The test was refused: {0}": {
     "sites": 2,
     "scope": [
@@ -274954,6 +274942,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "These tests read more rate table cells than can be loaded at once.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.": {
@@ -298909,6 +298906,15 @@
     ],
     "areas": [
       "routes/factoring"
+    ]
+  },
+  "Waiting for rate table cells": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Waiting for release": {
