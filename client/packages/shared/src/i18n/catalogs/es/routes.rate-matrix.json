@@ -7,6 +7,7 @@
   "Axis {0}": "Eje {0}",
   "Changing an axis after rates exist changes what every existing cell means. Re-upload the grid after any change here.": "Cambiar un eje cuando ya existen tarifas cambia el significado de cada celda existente. Vuelva a cargar la cuadrícula tras cualquier cambio aquí.",
   "Could not save the rates": "No se pudieron guardar las tarifas",
+  "Each cell's number is read as this: a flat amount, a rate per unit, a percent or a plain number. Money is in the contract's currency.": "El número de cada celda se lee así: un importe fijo, una tarifa por unidad, un porcentaje o un número simple. El dinero está en la moneda del contrato.",
   "Enter a published tariff as the grid it was published as, and point any lane at it.": "Introduzca una tarifa publicada tal como se publicó, como cuadrícula, y apunte cualquier ruta a ella.",
   "Four axes is the limit. Origin zone, destination zone, weight break and class covers every published tariff we have seen, and a fifth would make the grid unreadable.": "Cuatro ejes es el límite. Zona de origen, zona de destino, tramo de peso y clase cubren toda tarifa publicada que hayamos visto, y un quinto haría ilegible la cuadrícula.",
   "How this tariff grid is identified and whether it is live.": "Cómo se identifica esta cuadrícula tarifaria y si está activa.",
@@ -29,12 +30,19 @@
   "Select key normalization": "Seleccione la normalización de claves",
   "Select match mode": "Seleccione el modo de coincidencia",
   "Select overflow policy": "Seleccione la política de desbordamiento",
+  "Select value type": "Seleccione el tipo de valor",
   "The short name lanes refer to": "El nombre corto al que hacen referencia las rutas",
   "This matrix has no rates yet. Every lane pointing at it prices nothing until it does.": "Esta matriz todavía no tiene tarifas. Toda ruta que apunte a ella no tarifica nada hasta que las tenga.",
+  "Value at {0}, {1}": "Valor en {0}, {1}",
+  "Value type": "Tipo de valor",
+  "Values are": "Los valores son",
   "What a quantity past the last band, or below the first, prices at. Strict is a lookup miss; clamping prices heavy freight at the top break.": "A qué precio se tarifica una cantidad por encima del último tramo o por debajo del primero. Strict es un fallo de búsqueda; el modo de fijación tarifica la carga pesada al tramo superior.",
   "What about the shipment this axis reads": "Qué dato del envío lee este eje",
+  "What the numbers in the grid mean when a tariff reads them.": "Qué significan los números de la cuadrícula cuando una tarifa los lee.",
   "What this axis is called in the grid — leave blank to use the kind": "Cómo se llama este eje en la cuadrícula; déjelo en blanco para usar el tipo",
   "What this tariff is called out loud": "Cómo se llama esta tarifa de viva voz",
   "Where this tariff came from, so the next person knows what they are amending": "De dónde procede esta tarifa, para que la siguiente persona sepa qué está modificando",
-  "Zone-to-zone base rates by weight break, published July 2025": "Tarifas base de zona a zona por tramo de peso, publicadas en julio de 2025"
+  "Zone-to-zone base rates by weight break, published July 2025": "Tarifas base de zona a zona por tramo de peso, publicadas en julio de 2025",
+  "{0, plural, one {# cell is not a number} other {# cells are not numbers}}.": "{0, plural, one {# celda no es un número} other {# celdas no son números}}.",
+  "{0, plural, one {# cell is not a whole number} other {# cells are not whole numbers}}. This matrix holds whole numbers.": "{0, plural, one {# celda no es un número entero} other {# celdas no son números enteros}}. Esta matriz contiene números enteros."
 }

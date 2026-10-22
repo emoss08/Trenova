@@ -8895,6 +8895,15 @@
       "routes/desk"
     ]
   },
+  "A record field name cannot start with $": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
+    ]
+  },
   "A record hidden by your data access": {
     "sites": 1,
     "scope": [
@@ -152208,6 +152217,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Must be a decimal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/types"
     ]
   },
   "Must be a list": {
@@ -331359,6 +331377,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} UTC{1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "{0} a change · {1} changes or {2} a run · {3} changes or {4} a day": {
