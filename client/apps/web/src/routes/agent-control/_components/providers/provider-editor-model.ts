@@ -124,6 +124,10 @@ export const providerEditorSchema = z
     structuredOutputMode: structuredOutputModeSchema,
     reasoningEffort: reasoningEffortSchema,
     thinkingStyle: thinkingStyleSchema,
+    advisorEnabled: z.boolean(),
+    advisorModel: z.string(),
+    scripts: z.boolean(),
+    scriptWrites: z.boolean(),
     maxTokens: wholeIn({ min: 256, max: 200_000 }, () =>
       translate("Between {0} and {1} tokens", 256, 200_000),
     ),
@@ -209,6 +213,10 @@ export function editorValuesFromProvider(provider: AIProviderWithLimits): Provid
     structuredOutputMode: provider.structuredOutputMode,
     reasoningEffort: provider.reasoningEffort,
     thinkingStyle: provider.thinkingStyle,
+    advisorEnabled: provider.advisorEnabled,
+    advisorModel: provider.advisorModel,
+    scripts: provider.scripts,
+    scriptWrites: provider.scriptWrites,
     maxTokens: String(provider.maxTokens),
     embeddingDimensionsChoice:
       provider.embeddingDimensions === null || provider.embeddingDimensions === undefined
@@ -273,6 +281,10 @@ export function editorValuesFromPreset(
     structuredOutputMode: preset.structuredOutputMode,
     reasoningEffort: "Off",
     thinkingStyle: "Auto",
+    advisorEnabled: false,
+    advisorModel: "",
+    scripts: false,
+    scriptWrites: false,
     maxTokens: "8192",
     embeddingDimensionsChoice:
       preset.embeddingDimensions > 0 ? String(preset.embeddingDimensions) : "",
@@ -488,6 +500,10 @@ function savePayload(
       structuredOutputMode: values.structuredOutputMode,
       reasoningEffort: values.reasoningEffort,
       thinkingStyle: values.thinkingStyle,
+      advisorEnabled: values.advisorEnabled,
+      advisorModel: values.advisorModel,
+      scripts: values.scripts,
+      scriptWrites: values.scriptWrites,
       extraBodyText: values.extraBodyText,
       inputCostPerMillion: toDecimal(values.inputCostPerMillion),
       outputCostPerMillion: toDecimal(values.outputCostPerMillion),

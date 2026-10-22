@@ -45,7 +45,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 | Routing change | `aiprovider.PlanRouteTo`, `AIProviderService.RouteTask`, mutation `routeAITask` |
 | GraphQL | `schema/aianalytics.graphqls`, `resolver/aianalyticsresolver` (permission `AgentRun` Read) |
 | Web | `routes/agent-control/_components/analytics/`, query keys `queries.aiAnalytics` |
-| Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx` |
+| Migrations | `20261231009250_ai_analytics.tx`, `20261231009260_ai_analytics_indexes`, `20261231009290_ai_analytics_refresh_indexes`, `20261231009950_ai_work_unit_cache_tokens.tx`, `20261231010210_ai_work_unit_advisor.tx` |
 | Development seed | `seeds/development/38_ai_analytics.go` |
 
 ## What is recorded
@@ -128,6 +128,12 @@ rebuilds the last 30 days from the sources.
   columns). Nothing here divides a cost by tokens: costs are read per run and per completed
   run, and tokens beside them, so the advisor's share needs no split. A per-token figure added
   later must take `advisor_cost_usd` out of the cost, or add the advisor's tokens, first.
+  A unit keeps the advisor's part apart as well: `advisor_calls`, `advisor_prompt_tokens`
+  (input, cache reads and cache writes together), `advisor_output_tokens` and
+  `advisor_cost_usd`, summed from the usage rows' `advisor_*` columns. `cost_usd` still includes
+  the advisor's cost; `advisor_cost_usd` is its part. Migration
+  `20261231010210_ai_work_unit_advisor` added them and set every organization's
+  `refreshed_through` to 0, so the next refresh rebuilds the retention window with them.
 
 ## The query
 
@@ -135,7 +141,9 @@ rebuilds the last 30 days from the sources.
 
 **Tokens.** Every series and the totals carry `tokens` (`uncachedInput`, `cacheRead`,
 `cacheWrite`, `output`, as `Decimal` because a window's sum can pass 32 bits) and
-`cacheReadShare`, cache reads over every prompt token.
+`cacheReadShare`, cache reads over every prompt token. They also carry `advisor` (`calls`,
+`promptTokens`, `outputTokens`, `costUsd`; `aianalyticsports.AdvisorTotals`), what consulting
+Anthropic's advisor came to, zero where no provider turned it on.
 
 **Grouping.** Everything is read per **deployment** (canonical model × provider) and folded into
 **groups** (models or providers) in Go. Counts, costs, decisions, ratings and first-token

@@ -124,6 +124,11 @@ type CodeModeDecision struct {
 	Checks      []GateCheck   `json:"checks"`
 	Recommended bool          `json:"recommended"`
 	Reason      string        `json:"reason"`
+	// WriteSafety is the batch-write adversarial pairs alone. Scripts that
+	// propose writes are recommended only where they ran and changed nothing
+	// without the authority it needed.
+	WriteSafety       cellSafety `json:"batchWriteSafety"`
+	WritesRecommended bool       `json:"writesRecommended"`
 }
 
 func (r *CodeModeRule) tagged(tags []string) func(*Scenario) bool {
@@ -204,6 +209,9 @@ func decideCodeMode(
 		return !c.Passed
 	})
 	decision.Reason = checksReason(decision.Checks)
+	decision.WriteSafety = table.adversarialSafety(cell, batchWriteTag, routes)
+	decision.WritesRecommended = decision.Recommended && decision.WriteSafety.Trials > 0 &&
+		decision.WriteSafety.Safe()
 
 	return decision
 }
@@ -291,7 +299,6 @@ type CodeModeRecheck struct {
 	Routes []Route          `json:"routes,omitempty"`
 	Run2   CodeModeDecision `json:"run2"`
 	Holds  bool             `json:"holds"`
-	Entry  string           `json:"ledgerEntry,omitempty"`
 }
 
 type codeModeTarget struct {
@@ -369,24 +376,15 @@ func recheckCodeMode(gate *GateResult, second *scoreTable) []CodeModeRecheck {
 	rechecks := make([]CodeModeRecheck, 0, len(targets))
 	for _, target := range targets {
 		decision := decideCodeMode(gate.Spec, second, target.cell, target.routes)
-		recheck := CodeModeRecheck{
+		rechecks = append(rechecks, CodeModeRecheck{
 			Model:  target.model,
 			Run1:   target.run1,
 			Cell:   target.cell,
 			Routes: target.routes,
 			Run2:   decision,
 			Holds:  decision.Recommended,
-		}
-		if recheck.Holds {
-			recheck.Entry = ledgerEntry(target.model, gate.Run)
-		}
-		rechecks = append(rechecks, recheck)
+		})
 	}
 
 	return rechecks
-}
-
-func ledgerEntry(model CellModel, run string) string {
-	return fmt.Sprintf("  - provider: %s\n    model: %s\n    run: %s\n    decided: <the date "+
-		"the pull request merges>\n", model.Provider, model.Model, run)
 }

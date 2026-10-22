@@ -8,6 +8,7 @@ import { Ic } from "../kit/ic";
 import { ReadSheet } from "../kit/read-sheet";
 import { KV } from "../kit/values";
 import {
+  advisorFigures,
   formatCost,
   formatLatency,
   formatRunTime,
@@ -52,6 +53,7 @@ export function SeriesSheet({
       ? series.models.join(" · ")
       : series.providers.map((provider) => provider.name).join(" · ");
   const quiet = series.quiet;
+  const advisor = advisorFigures(series.advisor);
   const wrong = tools
     .map((tool) => ({ tool, cell: tool.cells.find((cell) => cell.seriesKey === series.key) }))
     .filter((entry) => entry.cell && !entry.cell.few)
@@ -113,6 +115,16 @@ export function SeriesSheet({
                   formatSpend(Number(series.costUsd) || 0),
                   formatCost((Number(series.costUsd) || 0) / Math.max(1, series.runs)),
                 ),
+          ],
+          advisor && [
+            t("Advisor"),
+            t(
+              "{0, plural, one {# call} other {# calls}} · {1} prompt / {2} output tokens · {3}",
+              advisor.calls,
+              formatNumber(advisor.promptTokens),
+              formatNumber(advisor.outputTokens),
+              formatSpend(advisor.costUsd),
+            ),
           ],
           [
             t("First token"),

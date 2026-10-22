@@ -1279,6 +1279,44 @@ export const assistantArtifactPageSchema = z.object({
   counts: artifactCountsSchema.default({ all: 0, pinned: 0, families: {} }),
 });
 
+/**
+ * One page of a table's list, read again from its source with the person's
+ * own access: rows projected into the table's columns, where the list goes on
+ * from them, how many there are in all when asked, the columns the person may
+ * not see, and whether the list takes a search and which columns it sorts by.
+ */
+export const artifactRowsSchema = z.object({
+  rows: z
+    .array(z.record(z.string(), z.unknown()))
+    .nullable()
+    .transform((rows) => rows ?? []),
+  hasMore: z.boolean().default(false),
+  nextCursor: z.string().optional().default(""),
+  nextOffset: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .transform((next) => next ?? null),
+  total: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .transform((total) => total ?? null),
+  withheld: z
+    .array(z.string())
+    .nullable()
+    .optional()
+    .transform((keys) => keys ?? []),
+  searchable: z.boolean().default(false),
+  sortable: z
+    .array(z.string())
+    .nullable()
+    .optional()
+    .transform((keys) => keys ?? []),
+});
+
 export const documentRewriteSchema = z.object({ text: z.string() });
 
 /** An artifact as a streamed turn announces it, before the pane reads it whole. */
@@ -2159,6 +2197,7 @@ export type AssistantLiveTurn = z.infer<typeof assistantLiveTurnSchema>;
 export type AssistantLiveTurnList = z.infer<typeof assistantLiveTurnListSchema>;
 export type AssistantArtifact = z.infer<typeof assistantArtifactSchema>;
 export type AssistantArtifactPage = z.infer<typeof assistantArtifactPageSchema>;
+export type ArtifactRows = z.infer<typeof artifactRowsSchema>;
 export type ArtifactKind = z.infer<typeof artifactKindSchema>;
 export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;
 export type AssistantArtifactEvent = z.infer<typeof assistantArtifactEventSchema>;

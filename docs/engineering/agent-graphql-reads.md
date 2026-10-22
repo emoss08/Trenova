@@ -448,6 +448,12 @@ read with `errStaleCursor` ("call it again without after"), and `offset` with
 `TestGraphQLListTool_PagesThroughWhatTheRepositoryToolPagedThrough` walks every page of both paths
 and compares them.
 
+A person's table pages the same list again through the Desk's rows endpoint (see "A table that
+pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool handed out. Only that
+read sets `QueryToolParams.IncludeTotal`, which sends `includeTotalCount: true` and returns the
+connection's `totalCount` as `total`; the model's reads never pay for the count, and the
+parameter is not in any tool's schema.
+
 Three kinds of root field do not page this way, and their tools say so:
 
 - limit/offset fields (`carrierInvoiceMatches`, `ediCarrierInvoices`, `mySettlements`): offset

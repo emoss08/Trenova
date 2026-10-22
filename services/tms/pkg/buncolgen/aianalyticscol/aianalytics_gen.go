@@ -548,61 +548,69 @@ var WorkUnitTable = buncolgen.TableInfo{
 //	q.Where(WorkUnitColumns.ID.Eq(), id)           // WHERE aiwu.id = ?
 //	q.Order(WorkUnitColumns.CreatedAt.OrderDesc())  // ORDER BY aiwu.created_at DESC
 var WorkUnitColumns = struct {
-	ID                buncolgen.Column // "id" → qualified: "aiwu.id"
-	BusinessUnitID    buncolgen.Column // "business_unit_id" → qualified: "aiwu.business_unit_id"
-	OrganizationID    buncolgen.Column // "organization_id" → qualified: "aiwu.organization_id"
-	Source            buncolgen.Column // "source" → qualified: "aiwu.source"
-	AgentDefinitionID buncolgen.Column // "agent_definition_id" → qualified: "aiwu.agent_definition_id"
-	ProviderID        buncolgen.Column // "provider_id" → qualified: "aiwu.provider_id"
-	Model             buncolgen.Column // "model" → qualified: "aiwu.model"
-	ModelKey          buncolgen.Column // "model_key" → qualified: "aiwu.model_key"
-	Task              buncolgen.Column // "task" → qualified: "aiwu.task"
-	Outcome           buncolgen.Column // "outcome" → qualified: "aiwu.outcome"
-	DecisionRunID     buncolgen.Column // "decision_run_id" → qualified: "aiwu.decision_run_id"
-	StartedAtMs       buncolgen.Column // "started_at_ms" → qualified: "aiwu.started_at_ms"
-	FinishedAt        buncolgen.Column // "finished_at" → qualified: "aiwu.finished_at"
-	DurationMs        buncolgen.Column // "duration_ms" → qualified: "aiwu.duration_ms"
-	FirstTokenMs      buncolgen.Column // "first_token_ms" → qualified: "aiwu.first_token_ms"
-	ModelCalls        buncolgen.Column // "model_calls" → qualified: "aiwu.model_calls"
-	FailedCalls       buncolgen.Column // "failed_calls" → qualified: "aiwu.failed_calls"
-	Failovers         buncolgen.Column // "failovers" → qualified: "aiwu.failovers"
-	InputTokens       buncolgen.Column // "input_tokens" → qualified: "aiwu.input_tokens"
-	OutputTokens      buncolgen.Column // "output_tokens" → qualified: "aiwu.output_tokens"
-	CostUSD           buncolgen.Column // "cost_usd" → qualified: "aiwu.cost_usd"
-	CacheReadTokens   buncolgen.Column // "cache_read_tokens" → qualified: "aiwu.cache_read_tokens"
-	CacheWriteTokens  buncolgen.Column // "cache_write_tokens" → qualified: "aiwu.cache_write_tokens"
-	ToolCalls         buncolgen.Column // "tool_calls" → qualified: "aiwu.tool_calls"
-	ToolFailuresModel buncolgen.Column // "tool_failures_model" → qualified: "aiwu.tool_failures_model"
-	ToolFailuresTool  buncolgen.Column // "tool_failures_tool" → qualified: "aiwu.tool_failures_tool"
-	RefreshStamp      buncolgen.Column // "refresh_stamp" → qualified: "aiwu.refresh_stamp"
+	ID                  buncolgen.Column // "id" → qualified: "aiwu.id"
+	BusinessUnitID      buncolgen.Column // "business_unit_id" → qualified: "aiwu.business_unit_id"
+	OrganizationID      buncolgen.Column // "organization_id" → qualified: "aiwu.organization_id"
+	Source              buncolgen.Column // "source" → qualified: "aiwu.source"
+	AgentDefinitionID   buncolgen.Column // "agent_definition_id" → qualified: "aiwu.agent_definition_id"
+	ProviderID          buncolgen.Column // "provider_id" → qualified: "aiwu.provider_id"
+	Model               buncolgen.Column // "model" → qualified: "aiwu.model"
+	ModelKey            buncolgen.Column // "model_key" → qualified: "aiwu.model_key"
+	Task                buncolgen.Column // "task" → qualified: "aiwu.task"
+	Outcome             buncolgen.Column // "outcome" → qualified: "aiwu.outcome"
+	DecisionRunID       buncolgen.Column // "decision_run_id" → qualified: "aiwu.decision_run_id"
+	StartedAtMs         buncolgen.Column // "started_at_ms" → qualified: "aiwu.started_at_ms"
+	FinishedAt          buncolgen.Column // "finished_at" → qualified: "aiwu.finished_at"
+	DurationMs          buncolgen.Column // "duration_ms" → qualified: "aiwu.duration_ms"
+	FirstTokenMs        buncolgen.Column // "first_token_ms" → qualified: "aiwu.first_token_ms"
+	ModelCalls          buncolgen.Column // "model_calls" → qualified: "aiwu.model_calls"
+	FailedCalls         buncolgen.Column // "failed_calls" → qualified: "aiwu.failed_calls"
+	Failovers           buncolgen.Column // "failovers" → qualified: "aiwu.failovers"
+	InputTokens         buncolgen.Column // "input_tokens" → qualified: "aiwu.input_tokens"
+	OutputTokens        buncolgen.Column // "output_tokens" → qualified: "aiwu.output_tokens"
+	CostUSD             buncolgen.Column // "cost_usd" → qualified: "aiwu.cost_usd"
+	CacheReadTokens     buncolgen.Column // "cache_read_tokens" → qualified: "aiwu.cache_read_tokens"
+	CacheWriteTokens    buncolgen.Column // "cache_write_tokens" → qualified: "aiwu.cache_write_tokens"
+	AdvisorCalls        buncolgen.Column // "advisor_calls" → qualified: "aiwu.advisor_calls"
+	AdvisorPromptTokens buncolgen.Column // "advisor_prompt_tokens" → qualified: "aiwu.advisor_prompt_tokens"
+	AdvisorOutputTokens buncolgen.Column // "advisor_output_tokens" → qualified: "aiwu.advisor_output_tokens"
+	AdvisorCostUSD      buncolgen.Column // "advisor_cost_usd" → qualified: "aiwu.advisor_cost_usd"
+	ToolCalls           buncolgen.Column // "tool_calls" → qualified: "aiwu.tool_calls"
+	ToolFailuresModel   buncolgen.Column // "tool_failures_model" → qualified: "aiwu.tool_failures_model"
+	ToolFailuresTool    buncolgen.Column // "tool_failures_tool" → qualified: "aiwu.tool_failures_tool"
+	RefreshStamp        buncolgen.Column // "refresh_stamp" → qualified: "aiwu.refresh_stamp"
 }{
-	ID:                buncolgen.NewColumn("id", "aiwu"),
-	BusinessUnitID:    buncolgen.NewColumn("business_unit_id", "aiwu"),
-	OrganizationID:    buncolgen.NewColumn("organization_id", "aiwu"),
-	Source:            buncolgen.NewColumn("source", "aiwu"),
-	AgentDefinitionID: buncolgen.NewColumn("agent_definition_id", "aiwu"),
-	ProviderID:        buncolgen.NewColumn("provider_id", "aiwu"),
-	Model:             buncolgen.NewColumn("model", "aiwu"),
-	ModelKey:          buncolgen.NewColumn("model_key", "aiwu"),
-	Task:              buncolgen.NewColumn("task", "aiwu"),
-	Outcome:           buncolgen.NewColumn("outcome", "aiwu"),
-	DecisionRunID:     buncolgen.NewColumn("decision_run_id", "aiwu"),
-	StartedAtMs:       buncolgen.NewColumn("started_at_ms", "aiwu"),
-	FinishedAt:        buncolgen.NewColumn("finished_at", "aiwu"),
-	DurationMs:        buncolgen.NewColumn("duration_ms", "aiwu"),
-	FirstTokenMs:      buncolgen.NewColumn("first_token_ms", "aiwu"),
-	ModelCalls:        buncolgen.NewColumn("model_calls", "aiwu"),
-	FailedCalls:       buncolgen.NewColumn("failed_calls", "aiwu"),
-	Failovers:         buncolgen.NewColumn("failovers", "aiwu"),
-	InputTokens:       buncolgen.NewColumn("input_tokens", "aiwu"),
-	OutputTokens:      buncolgen.NewColumn("output_tokens", "aiwu"),
-	CostUSD:           buncolgen.NewColumn("cost_usd", "aiwu"),
-	CacheReadTokens:   buncolgen.NewColumn("cache_read_tokens", "aiwu"),
-	CacheWriteTokens:  buncolgen.NewColumn("cache_write_tokens", "aiwu"),
-	ToolCalls:         buncolgen.NewColumn("tool_calls", "aiwu"),
-	ToolFailuresModel: buncolgen.NewColumn("tool_failures_model", "aiwu"),
-	ToolFailuresTool:  buncolgen.NewColumn("tool_failures_tool", "aiwu"),
-	RefreshStamp:      buncolgen.NewColumn("refresh_stamp", "aiwu"),
+	ID:                  buncolgen.NewColumn("id", "aiwu"),
+	BusinessUnitID:      buncolgen.NewColumn("business_unit_id", "aiwu"),
+	OrganizationID:      buncolgen.NewColumn("organization_id", "aiwu"),
+	Source:              buncolgen.NewColumn("source", "aiwu"),
+	AgentDefinitionID:   buncolgen.NewColumn("agent_definition_id", "aiwu"),
+	ProviderID:          buncolgen.NewColumn("provider_id", "aiwu"),
+	Model:               buncolgen.NewColumn("model", "aiwu"),
+	ModelKey:            buncolgen.NewColumn("model_key", "aiwu"),
+	Task:                buncolgen.NewColumn("task", "aiwu"),
+	Outcome:             buncolgen.NewColumn("outcome", "aiwu"),
+	DecisionRunID:       buncolgen.NewColumn("decision_run_id", "aiwu"),
+	StartedAtMs:         buncolgen.NewColumn("started_at_ms", "aiwu"),
+	FinishedAt:          buncolgen.NewColumn("finished_at", "aiwu"),
+	DurationMs:          buncolgen.NewColumn("duration_ms", "aiwu"),
+	FirstTokenMs:        buncolgen.NewColumn("first_token_ms", "aiwu"),
+	ModelCalls:          buncolgen.NewColumn("model_calls", "aiwu"),
+	FailedCalls:         buncolgen.NewColumn("failed_calls", "aiwu"),
+	Failovers:           buncolgen.NewColumn("failovers", "aiwu"),
+	InputTokens:         buncolgen.NewColumn("input_tokens", "aiwu"),
+	OutputTokens:        buncolgen.NewColumn("output_tokens", "aiwu"),
+	CostUSD:             buncolgen.NewColumn("cost_usd", "aiwu"),
+	CacheReadTokens:     buncolgen.NewColumn("cache_read_tokens", "aiwu"),
+	CacheWriteTokens:    buncolgen.NewColumn("cache_write_tokens", "aiwu"),
+	AdvisorCalls:        buncolgen.NewColumn("advisor_calls", "aiwu"),
+	AdvisorPromptTokens: buncolgen.NewColumn("advisor_prompt_tokens", "aiwu"),
+	AdvisorOutputTokens: buncolgen.NewColumn("advisor_output_tokens", "aiwu"),
+	AdvisorCostUSD:      buncolgen.NewColumn("advisor_cost_usd", "aiwu"),
+	ToolCalls:           buncolgen.NewColumn("tool_calls", "aiwu"),
+	ToolFailuresModel:   buncolgen.NewColumn("tool_failures_model", "aiwu"),
+	ToolFailuresTool:    buncolgen.NewColumn("tool_failures_tool", "aiwu"),
+	RefreshStamp:        buncolgen.NewColumn("refresh_stamp", "aiwu"),
 }
 
 // WorkUnitFieldMap maps JSON API field names to database column names.
@@ -610,33 +618,37 @@ var WorkUnitColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by WorkUnit.GetStaticFieldMap().
 var WorkUnitFieldMap = map[string]string{
-	"id":                "id",
-	"businessUnitId":    "business_unit_id",
-	"organizationId":    "organization_id",
-	"source":            "source",
-	"agentDefinitionId": "agent_definition_id",
-	"providerId":        "provider_id",
-	"model":             "model",
-	"modelKey":          "model_key",
-	"task":              "task",
-	"outcome":           "outcome",
-	"decisionRunId":     "decision_run_id",
-	"startedAtMs":       "started_at_ms",
-	"finishedAt":        "finished_at",
-	"durationMs":        "duration_ms",
-	"firstTokenMs":      "first_token_ms",
-	"modelCalls":        "model_calls",
-	"failedCalls":       "failed_calls",
-	"failovers":         "failovers",
-	"inputTokens":       "input_tokens",
-	"outputTokens":      "output_tokens",
-	"costUsd":           "cost_usd",
-	"cacheReadTokens":   "cache_read_tokens",
-	"cacheWriteTokens":  "cache_write_tokens",
-	"toolCalls":         "tool_calls",
-	"toolFailuresModel": "tool_failures_model",
-	"toolFailuresTool":  "tool_failures_tool",
-	"refreshStamp":      "refresh_stamp",
+	"id":                  "id",
+	"businessUnitId":      "business_unit_id",
+	"organizationId":      "organization_id",
+	"source":              "source",
+	"agentDefinitionId":   "agent_definition_id",
+	"providerId":          "provider_id",
+	"model":               "model",
+	"modelKey":            "model_key",
+	"task":                "task",
+	"outcome":             "outcome",
+	"decisionRunId":       "decision_run_id",
+	"startedAtMs":         "started_at_ms",
+	"finishedAt":          "finished_at",
+	"durationMs":          "duration_ms",
+	"firstTokenMs":        "first_token_ms",
+	"modelCalls":          "model_calls",
+	"failedCalls":         "failed_calls",
+	"failovers":           "failovers",
+	"inputTokens":         "input_tokens",
+	"outputTokens":        "output_tokens",
+	"costUsd":             "cost_usd",
+	"cacheReadTokens":     "cache_read_tokens",
+	"cacheWriteTokens":    "cache_write_tokens",
+	"advisorCalls":        "advisor_calls",
+	"advisorPromptTokens": "advisor_prompt_tokens",
+	"advisorOutputTokens": "advisor_output_tokens",
+	"advisorCostUsd":      "advisor_cost_usd",
+	"toolCalls":           "tool_calls",
+	"toolFailuresModel":   "tool_failures_model",
+	"toolFailuresTool":    "tool_failures_tool",
+	"refreshStamp":        "refresh_stamp",
 }
 
 // WorkUnitInsertableColumns lists column names suitable for INSERT statements on the "ai_work_units" table.
@@ -665,6 +677,10 @@ var WorkUnitInsertableColumns = []string{
 	"cost_usd",
 	"cache_read_tokens",
 	"cache_write_tokens",
+	"advisor_calls",
+	"advisor_prompt_tokens",
+	"advisor_output_tokens",
+	"advisor_cost_usd",
 	"tool_calls",
 	"tool_failures_model",
 	"tool_failures_tool",
@@ -721,33 +737,37 @@ func WorkUnitApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	WorkUnitFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var WorkUnitFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Source            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
-	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
-	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
-	Model             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
-	ModelKey          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelKey" → DB: "model_key"
-	Task              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
-	Outcome           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outcome" → DB: "outcome"
-	DecisionRunID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decisionRunId" → DB: "decision_run_id"
-	StartedAtMs       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAtMs" → DB: "started_at_ms"
-	FinishedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
-	DurationMs        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "durationMs" → DB: "duration_ms"
-	FirstTokenMs      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "firstTokenMs" → DB: "first_token_ms"
-	ModelCalls        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelCalls" → DB: "model_calls"
-	FailedCalls       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedCalls" → DB: "failed_calls"
-	Failovers         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failovers" → DB: "failovers"
-	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
-	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
-	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
-	CacheReadTokens   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadTokens" → DB: "cache_read_tokens"
-	CacheWriteTokens  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteTokens" → DB: "cache_write_tokens"
-	ToolCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
-	ToolFailuresModel func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailuresModel" → DB: "tool_failures_model"
-	ToolFailuresTool  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailuresTool" → DB: "tool_failures_tool"
-	RefreshStamp      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "refreshStamp" → DB: "refresh_stamp"
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Source              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "source" → DB: "source"
+	AgentDefinitionID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	ProviderID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	Model               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	ModelKey            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelKey" → DB: "model_key"
+	Task                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
+	Outcome             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outcome" → DB: "outcome"
+	DecisionRunID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decisionRunId" → DB: "decision_run_id"
+	StartedAtMs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAtMs" → DB: "started_at_ms"
+	FinishedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	DurationMs          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "durationMs" → DB: "duration_ms"
+	FirstTokenMs        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "firstTokenMs" → DB: "first_token_ms"
+	ModelCalls          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modelCalls" → DB: "model_calls"
+	FailedCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failedCalls" → DB: "failed_calls"
+	Failovers           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failovers" → DB: "failovers"
+	InputTokens         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
+	OutputTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
+	CostUSD             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	CacheReadTokens     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadTokens" → DB: "cache_read_tokens"
+	CacheWriteTokens    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteTokens" → DB: "cache_write_tokens"
+	AdvisorCalls        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorCalls" → DB: "advisor_calls"
+	AdvisorPromptTokens func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorPromptTokens" → DB: "advisor_prompt_tokens"
+	AdvisorOutputTokens func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorOutputTokens" → DB: "advisor_output_tokens"
+	AdvisorCostUSD      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "advisorCostUsd" → DB: "advisor_cost_usd"
+	ToolCalls           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
+	ToolFailuresModel   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailuresModel" → DB: "tool_failures_model"
+	ToolFailuresTool    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolFailuresTool" → DB: "tool_failures_tool"
+	RefreshStamp        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "refreshStamp" → DB: "refresh_stamp"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("id", op, value)
@@ -817,6 +837,18 @@ var WorkUnitFilter = struct {
 	},
 	CacheWriteTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("cacheWriteTokens", op, value)
+	},
+	AdvisorCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorCalls", op, value)
+	},
+	AdvisorPromptTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorPromptTokens", op, value)
+	},
+	AdvisorOutputTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorOutputTokens", op, value)
+	},
+	AdvisorCostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("advisorCostUsd", op, value)
 	},
 	ToolCalls: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("toolCalls", op, value)

@@ -22,6 +22,7 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { JsonEditorField } from "@/components/fields/json-editor-field";
 import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
 import { apiService } from "@/services/api";
+import { DEFAULT_ADVISOR_MODEL } from "@/types/ai-provider";
 import type {
   AIProviderCatalog,
   AIProviderPreset,
@@ -102,6 +103,12 @@ import {
   type ProviderEditorValues,
 } from "./provider-editor-model";
 import { PlatformFields } from "./platform-fields";
+import {
+  AdvisorFields,
+  ScriptFields,
+  useClearUnavailableAgentSettings,
+} from "./agent-settings-fields";
+import { CHAT_TASK } from "./agent-settings-model";
 import {
   CREDENTIAL_LABELS,
   PLATFORM_LABELS,
@@ -229,6 +236,7 @@ export function ProviderEditor({
     mode: "onChange",
   });
   const values = useWatch({ control: form.control }) as ProviderEditorValues;
+  useClearUnavailableAgentSettings(form);
   const [ran, setRan] = useState<{ connection: string; test: DraftTest } | null>(null);
   const [removing, setRemoving] = useState(false);
   const [removeBusy, setRemoveBusy] = useState(false);
@@ -363,6 +371,7 @@ export function ProviderEditor({
     (task: string | number) => metas.find((meta) => meta.task === task)?.label ?? String(task),
     [metas],
   );
+  const chatLabel = taskLabel(CHAT_TASK);
   const changeFields: ChangeFields = {
     name: { label: t("Name") },
     kind: { label: t("Kind"), format: (value) => kindLabel(String(value)) },
@@ -415,6 +424,13 @@ export function ProviderEditor({
     structuredOutputMode: { label: t("Structured output") },
     reasoningEffort: { label: t("Reasoning") },
     thinkingStyle: { label: t("Thinking") },
+    advisorEnabled: { label: t("Advisor") },
+    advisorModel: {
+      label: t("Advisor model"),
+      format: (value) => (value === "" ? DEFAULT_ADVISOR_MODEL : String(value)),
+    },
+    scripts: { label: t("Scripts") },
+    scriptWrites: { label: t("Scripts may propose writes") },
     maxTokens: { label: t("Most tokens per reply") },
     embeddingDimensionsChoice: { label: t("Vector size") },
     embeddingInputStyle: { label: t("Embedding input") },
@@ -695,6 +711,32 @@ export function ProviderEditor({
           )}
         </div>
       ),
+    },
+    ...(values.kind === "AnthropicMessages"
+      ? [
+          {
+            id: "advisor",
+            label: t("Advisor"),
+            note: t("A stronger model the model may consult mid-reply."),
+            help: t(
+              "Each consultation is billed at the advisor model's price on top of this provider's; AI Analytics shows advisor calls, tokens and cost. If the API refuses the advisor for this model, the refusal shows here and calls go out without it.",
+            ),
+            keys: ["advisorEnabled", "advisorModel"],
+            content: (
+              <AdvisorFields refusal={saved?.advisorRefusal ?? null} chatLabel={chatLabel} />
+            ),
+          } satisfies EditSection,
+        ]
+      : []),
+    {
+      id: "scripts",
+      label: t("Scripts"),
+      note: t("Whether the model may answer with a short read-only script."),
+      help: t(
+        "A script runs in your organization's E2B sandbox with no network access, and the rows it reads are sent to E2B, as data analysis does. It also needs Read-only scripts turned on in the E2B extension and the code_mode permission. Every read goes through the same permissions as a normal tool call, and sandbox time counts against the extension's daily limit.",
+      ),
+      keys: ["scripts", "scriptWrites"],
+      content: <ScriptFields chatLabel={chatLabel} />,
     },
     {
       id: "limits",

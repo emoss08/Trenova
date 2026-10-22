@@ -30,6 +30,48 @@ import (
 
 const scriptModel = "claude-sonnet-5-5"
 
+var scriptProvider = pulid.MustNew("aiprv_")
+
+// stubScripts stands in for the chat providers' script settings. It answers
+// with what settings holds now, so a test can turn scripts off mid-turn.
+type stubScripts struct {
+	mu       sync.Mutex
+	settings aiprovider.ScriptSettings
+	asked    []pulid.ID
+}
+
+func scriptsOn(settings aiprovider.ScriptSettings) *stubScripts {
+	return &stubScripts{settings: settings}
+}
+
+func (s *stubScripts) set(settings aiprovider.ScriptSettings) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.settings = settings
+}
+
+func (s *stubScripts) ScriptsOffered(context.Context, pagination.TenantInfo) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.settings.Scripts, nil
+}
+
+func (s *stubScripts) ScriptSettings(
+	_ context.Context,
+	providerID pulid.ID,
+	_ pagination.TenantInfo,
+) (aiprovider.ScriptSettings, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.asked = append(s.asked, providerID)
+	if providerID != scriptProvider {
+		return aiprovider.ScriptSettings{}, nil
+	}
+
+	return s.settings, nil
+}
+
 type syncLedger struct {
 	mu    sync.Mutex
 	steps map[string]agentports.RunStep
@@ -179,7 +221,8 @@ func newScriptHarness(
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{Tools: tools},
 		&stubActionRegistry{Tools: actions}, permissions)
 	rt.extensions = codeModeExtensions{}
-	rt.codeMode = codemode.Gate{Ledger: enabledLedger(t)}
+	rt.codeMode = codemode.Gate{}
+	rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 
 	names := []string{agentextension.ToolRunScript}
 	for _, tool := range reads {
@@ -210,16 +253,6 @@ func newScriptHarness(
 	}
 }
 
-func enabledLedger(t *testing.T) codemode.Ledger {
-	t.Helper()
-
-	ledger, err := codemode.ParseLedger([]byte("models:\n  - provider: AnthropicMessages\n" +
-		"    model: " + scriptModel + "\n    run: test\n    decided: test\n"))
-	require.NoError(t, err)
-
-	return ledger
-}
-
 func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) ToolOutcome {
 	h.script.steps = steps
 
@@ -232,6 +265,7 @@ func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) ToolOutcom
 		Taint:          &agent.RunTaint{},
 		Model:          scriptModel,
 		Provider:       aiprovider.KindAnthropicMessages,
+		ProviderID:     scriptProvider,
 		ScriptPosition: 1,
 	})
 }
@@ -490,7 +524,7 @@ func TestBrokerSemaphoreBoundsConcurrentDispatches(t *testing.T) {
 	assert.Greater(t, tool.peak.Load(), int32(1))
 }
 
-func TestScriptToolIsGatedPerModel(t *testing.T) {
+func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("shipment_list", map[string]any{}, nil)
@@ -504,7 +538,8 @@ func TestScriptToolIsGatedPerModel(t *testing.T) {
 		Provider: aiprovider.KindAnthropicMessages,
 	})
 	assert.True(t, denied.Failed)
-	assert.Contains(t, denied.Content, "not enabled for claude-haiku-5-5")
+	assert.Contains(t, denied.Content, "scripts are not turned on for the provider that answered "+
+		"with claude-haiku-5-5")
 	assert.Zero(t, h.script.calls, "no sandbox is asked for")
 
 	h.req.CodeMode = codemode.OverrideOff
@@ -517,15 +552,21 @@ func TestScriptToolIsGatedPerModel(t *testing.T) {
 		Taint:          &agent.RunTaint{},
 		Model:          scriptModel,
 		Provider:       aiprovider.KindAnthropicMessages,
+		ProviderID:     scriptProvider,
 		ScriptPosition: codemode.ScriptsPerTurn + 1,
 	})
 	assert.True(t, fourth.Failed)
 	assert.Contains(t, fourth.Content, "at most 3 scripts")
 
 	shipped := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
-	shipped.rt.codeMode = codemode.Gate{Ledger: codemode.Shipped()}
+	shipped.rt.scripts = scriptsOn(aiprovider.ScriptSettings{})
 	refused := shipped.run(t.Context(), read(1, "shipment_list", nil))
-	assert.True(t, refused.Failed, "the shipped ledger enables no model")
+	assert.True(t, refused.Failed, "a provider ships with scripts off")
+
+	unwired := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	unwired.rt.scripts = nil
+	assert.True(t, unwired.run(t.Context(), read(1, "shipment_list", nil)).Failed,
+		"without the providers' settings no script runs")
 
 	forced := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
 	forced.rt.codeMode = codemode.Gate{Forced: true}
@@ -539,14 +580,55 @@ func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 
 	tool := queryTool("shipment_list", map[string]any{}, nil)
 	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
-	h.rt.codeMode = codemode.Gate{Ledger: codemode.Shipped()}
+	scripts := scriptsOn(aiprovider.ScriptSettings{})
+	h.rt.scripts = scripts
 
 	closed := h.rt.OpenTurn(t.Context(), h.req)
 	assert.False(t, closed.tools.offers(agentextension.ToolRunScript))
 
-	h.rt.codeMode = codemode.Gate{Ledger: enabledLedger(t)}
+	scripts.set(aiprovider.ScriptSettings{Scripts: true})
+	assert.False(t, closed.tools.offers(agentextension.ToolRunScript),
+		"turning scripts on mid-turn adds nothing to a turn already open")
 	open := h.rt.OpenTurn(t.Context(), h.req)
 	assert.True(t, open.tools.offers(agentextension.ToolRunScript))
+}
+
+func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
+	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	scripts := scriptsOn(aiprovider.ScriptSettings{Scripts: true})
+	h.rt.scripts = scripts
+
+	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
+
+	scripts.set(aiprovider.ScriptSettings{})
+	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
+	turnedOff := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
+		Call:           agentports.ToolCall{ID: "call_second", Name: agentextension.ToolRunScript},
+		Taint:          &agent.RunTaint{},
+		Ordinal:        1,
+		Model:          scriptModel,
+		Provider:       aiprovider.KindAnthropicMessages,
+		ProviderID:     scriptProvider,
+		ScriptPosition: 2,
+	})
+	assert.True(t, turnedOff.Failed, "scripts turned off mid-turn refuse the next script at once")
+	assert.Contains(t, turnedOff.Content, "scripts are not turned on")
+
+	scripts.set(aiprovider.ScriptSettings{Scripts: true})
+	failover := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
+		Call:           agentports.ToolCall{ID: "call_failover", Name: agentextension.ToolRunScript},
+		Taint:          &agent.RunTaint{},
+		Model:          "claude-haiku-5-5",
+		Provider:       aiprovider.KindAnthropicMessages,
+		ProviderID:     pulid.MustNew("aiprv_"),
+		Ordinal:        2,
+		ScriptPosition: 3,
+	})
+	assert.True(t, failover.Failed, "a failover to a provider without scripts runs no code")
+	assert.Contains(t, scripts.asked, scriptProvider)
 }
 
 func TestScriptTraceAndSteps(t *testing.T) {
