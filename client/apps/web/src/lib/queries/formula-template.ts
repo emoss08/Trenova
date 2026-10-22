@@ -16,6 +16,12 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       apiService.formulaTemplateService.list({ limit }, { signal }),
   }),
+  /** The inputs a template version declares; no version is the one that bills today. */
+  inputs: (templateId: string, versionNumber: number | null) => ({
+    queryKey: [templateId, versionNumber ?? "billing"],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.getDeclaredInputs(templateId, versionNumber, { signal }),
+  }),
   usage: (templateId: FormulaTemplate["id"]) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.getUsage(templateId),

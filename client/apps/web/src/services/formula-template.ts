@@ -59,7 +59,16 @@ import {
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { pageThreadSchema, type PageThread } from "@/types/assistant";
 import { pricedScenarioSchema, type PricedScenario } from "@/types/page-draft";
+import {
+  tariffInputDeclarationsSchema,
+  type TariffInputDeclaration,
+} from "@trenova/shared/types/tariff";
 import { z } from "zod";
+
+const declaredInputsSchema = z.object({
+  inputs: tariffInputDeclarationsSchema,
+  billing: z.object({ versionNumber: z.number().int() }).nullish(),
+});
 
 export type ImportTestCasePayload = {
   name: string;
@@ -274,6 +283,33 @@ export class FormulaTemplateService {
         "Formula Template Version",
       ),
     };
+  }
+
+  /**
+   * The inputs a template's version declares, for a contract form. With no version it is the
+   * version that bills today (the template's billing version), or the template's own content
+   * while nothing has been approved.
+   */
+  public async getDeclaredInputs(
+    templateId: string,
+    versionNumber: number | null,
+    options?: { signal?: AbortSignal },
+  ): Promise<TariffInputDeclaration[]> {
+    if (versionNumber !== null) {
+      const version = await api.get<unknown>(
+        `/formula-templates/${templateId}/versions/${versionNumber}`,
+        { signal: options?.signal },
+      );
+      return safeParse(declaredInputsSchema, version, "Formula Template Version Inputs").then(
+        (parsed) => parsed.inputs,
+      );
+    }
+    const template = await api.get<unknown>(`/formula-templates/${templateId}/`, {
+      signal: options?.signal,
+    });
+    const parsed = await safeParse(declaredInputsSchema, template, "Formula Template Inputs");
+    const billing = parsed.billing?.versionNumber;
+    return billing ? this.getDeclaredInputs(templateId, billing, options) : parsed.inputs;
   }
 
   public async getVersion(
