@@ -84,3 +84,50 @@ func TestFormatTariffCanonicalises(t *testing.T) {
 	require.NotNil(t, formatted.Formatted)
 	assert.Contains(t, *formatted.Formatted, `charge "A" = $1 + $2`)
 }
+
+func TestCheckTariffDeclaresInputsAndValidatesValues(t *testing.T) {
+	t.Parallel()
+
+	result, err := rules.CheckTariff(t.Context(), &rules.TariffCheckRequest{
+		Source:  linehaulTariff,
+		Kind:    rules.TariffKindTariff,
+		Context: &rules.TariffContext{},
+		Values: &rules.TariffInputValues{
+			Rule: map[string]rules.RawJSON{"rate": rules.MoneyValue(decimal.NewFromInt(2))},
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, result.Inputs, 2)
+	assert.Equal(t, "rate", result.Inputs[0].Name)
+	assert.Equal(t, "Paid per loaded mile.", result.Inputs[0].Doc)
+	assert.JSONEq(t, `{"$q":"2.35","u":"$/mi"}`, string(result.Inputs[0].Default))
+	assert.False(t, result.OK)
+	problem := result.FirstError()
+	require.NotNil(t, problem)
+	assert.Equal(t, "input-value", problem.Code)
+	assert.Equal(t, "rule.rate", problem.Path)
+}
+
+func TestCheckTariffReportsTypeErrorsWithRanges(t *testing.T) {
+	t.Parallel()
+
+	result, err := rules.CheckTariff(t.Context(), &rules.TariffCheckRequest{
+		Source:  "tariff \"t\"\n\ncharge \"A\" = $1 + 1 lb\n",
+		Context: &rules.TariffContext{},
+	})
+	require.NoError(t, err)
+	problem := result.FirstError()
+	require.NotNil(t, problem)
+	require.NotNil(t, problem.Range)
+	assert.Positive(t, problem.Range.To)
+	assert.NotEmpty(t, problem.Message.String())
+}
+
+func TestTariffCatalogListsTheStandardLibrary(t *testing.T) {
+	t.Parallel()
+
+	catalog, err := rules.TariffCatalog(t.Context())
+	require.NoError(t, err)
+	assert.Contains(t, string(catalog), `"std.ltl"`)
+	assert.Contains(t, string(catalog), `"deficit"`)
+}

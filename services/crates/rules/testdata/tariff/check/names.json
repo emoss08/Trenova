@@ -1,0 +1,752 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "a let is read after it is defined",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "types": {
+    "miles": "Distance"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "miles",
+     "code": "before-definition",
+     "message": "`miles` is used before it is defined. Move this below the line that defines it",
+     "related": [
+      {
+       "at": "miles",
+       "line": 3,
+       "message": "It is defined here"
+      }
+     ]
+    }
+   ],
+   "name": "using a let before it is defined",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/mi * miles",
+    "let miles = shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "miles",
+     "code": "unused",
+     "message": "`miles` is never used"
+    },
+    {
+     "at": "mils",
+     "code": "unknown-name",
+     "fixes": [
+      {
+       "label": "Change to `miles`",
+       "result": [
+        "tariff \"t\"",
+        "let miles = shipment.distance",
+        "charge \"x\" = $1/mi * miles"
+       ]
+      }
+     ],
+     "message": "Nothing is named `mils`. Did you mean `miles`?"
+    }
+   ],
+   "name": "an unknown name suggests the closest",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" = $1/mi * mils"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "zzzqqq",
+     "code": "unknown-name",
+     "message": "Nothing is named `zzzqqq`: declare it with `let` or as an `input`"
+    }
+   ],
+   "name": "an unknown name with nothing close",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = zzzqqq"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipmnt",
+     "code": "unknown-name",
+     "fixes": [
+      {
+       "label": "Change to `shipment`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"x\" = $1/mi * shipment.distance"
+       ]
+      }
+     ],
+     "message": "Nothing is named `shipmnt`. Did you mean `shipment`?"
+    }
+   ],
+   "name": "a misspelt root",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/mi * shipmnt.distance"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment",
+     "code": "shadow",
+     "message": "`shipment` is already a schema root; pick another name"
+    },
+    {
+     "at": "shipment",
+     "code": "unused",
+     "message": "`shipment` is never used"
+    }
+   ],
+   "name": "a let may not shadow a root",
+   "source": [
+    "tariff \"t\"",
+    "let shipment = 1",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "unused",
+     "message": "The input `rate` is never used"
+    },
+    {
+     "at": "rate",
+     "code": "shadow",
+     "message": "`rate` is already an input; pick another name",
+     "nth": 2,
+     "related": [
+      {
+       "at": "rate",
+       "line": 2,
+       "message": "It is declared here"
+      }
+     ]
+    }
+   ],
+   "name": "a let may not shadow an input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "let rate = $2",
+    "charge \"x\" = rate"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "fee",
+     "code": "shadow",
+     "message": "`fee` is already a function; pick another name",
+     "nth": 2,
+     "related": [
+      {
+       "at": "fee",
+       "line": 2,
+       "message": "It is declared here"
+      }
+     ]
+    }
+   ],
+   "name": "a let may not shadow a function",
+   "source": [
+    "tariff \"t\"",
+    "fn fee() -> Money = $1",
+    "let fee = $2",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "shadow",
+     "message": "`a` is already declared above; pick another name",
+     "nth": 5,
+     "related": [
+      {
+       "at": "a",
+       "line": 2,
+       "message": "It is declared here"
+      }
+     ]
+    }
+   ],
+   "name": "a let may not shadow another let in scope",
+   "source": [
+    "tariff \"t\"",
+    "let a = $1",
+    "if shipment.hazmat {",
+    "  let a = $2",
+    "  charge \"x\" = a",
+    "}",
+    "charge \"y\" = a"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "sibling blocks may reuse a name",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  let a = $1",
+    "  charge \"x\" = a",
+    "} else {",
+    "  let a = $2",
+    "  charge \"y\" = a",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "unknown-name",
+     "message": "Nothing is named `a`: declare it with `let` or as an `input`",
+     "nth": 8
+    }
+   ],
+   "name": "a block's names are not visible after it",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  let a = $1",
+    "  charge \"x\" = a",
+    "}",
+    "charge \"y\" = a"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "unused",
+     "message": "`a` is never used",
+     "nth": 2
+    }
+   ],
+   "name": "an unused let is a warning",
+   "source": [
+    "tariff \"t\"",
+    "let a = $1",
+    "charge \"x\" = $2"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "unused",
+     "message": "`a` is never used",
+     "nth": 3
+    }
+   ],
+   "name": "an unused var is a warning",
+   "source": [
+    "tariff \"t\"",
+    "var a = $1",
+    "charge \"x\" = $2"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "unused",
+     "message": "The input `rate` is never used"
+    }
+   ],
+   "name": "an unused input is a warning",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "charge \"x\" = $2"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "fee",
+     "code": "unused",
+     "message": "`fee` is imported and never used",
+     "nth": 2
+    }
+   ],
+   "name": "an unused import is a warning",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees.{ fee }",
+    "charge \"x\" = $2"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "fees",
+     "code": "unused",
+     "message": "The module `fees` is imported and never used"
+    }
+   ],
+   "name": "an unused module alias is a warning",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "charge \"x\" = $2"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a module alias is used through its members",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "charge \"x\" = fees.fee()"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "var accumulates in a loop",
+   "source": [
+    "tariff \"t\"",
+    "var total = $0",
+    "for stop in shipment.stops {",
+    "  total += $10",
+    "}",
+    "charge \"x\" = total"
+   ],
+   "types": {
+    "total": "Money"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "total",
+     "code": "assign",
+     "fixes": [
+      {
+       "label": "Declare it with `var`",
+       "result": [
+        "tariff \"t\"",
+        "var total = $0",
+        "total = $5",
+        "charge \"x\" = total"
+       ]
+      }
+     ],
+     "message": "`total` can't be changed: only a `var` can. Declare it with `var` to accumulate into it",
+     "nth": 2
+    }
+   ],
+   "name": "assigning a let is refused with a fix to var",
+   "source": [
+    "tariff \"t\"",
+    "let total = $0",
+    "total = $5",
+    "charge \"x\" = total"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "assign",
+     "message": "Only a `var` can be changed, and `rate` isn't one",
+     "nth": 2
+    }
+   ],
+   "name": "assigning an input is refused",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "rate = $2",
+    "charge \"x\" = rate"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "totl",
+     "code": "unknown-name",
+     "message": "Nothing is named `totl`: declare it with `let` or as an `input`"
+    }
+   ],
+   "name": "assigning an unknown name",
+   "source": [
+    "tariff \"t\"",
+    "totl = $2",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "`5 lb` is a weight, but `total` is declared as money"
+    }
+   ],
+   "name": "a var's type cannot change",
+   "source": [
+    "tariff \"t\"",
+    "var total = $0",
+    "total = 5 lb",
+    "charge \"x\" = total"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "total += 5 lb",
+     "code": "unit-mismatch",
+     "message": "`total` is money and `5 lb` is a weight. `total + 5 lb` adds money to a weight. Both sides must be the same kind of value."
+    }
+   ],
+   "name": "+= must keep the var's type",
+   "source": [
+    "tariff \"t\"",
+    "var total = $0",
+    "total += 5 lb",
+    "charge \"x\" = total"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "-= on a count",
+   "source": [
+    "tariff \"t\"",
+    "var left = 10",
+    "left -= 1",
+    "charge \"x\" = $1 * left"
+   ],
+   "types": {
+    "left": "Int"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "1.5",
+     "code": "type-mismatch",
+     "message": "`1.5` is a number, but `n` is declared as a whole number"
+    }
+   ],
+   "name": "Int += Number widens away from Int and is refused",
+   "source": [
+    "tariff \"t\"",
+    "var n = 1",
+    "n += 1.5",
+    "charge \"x\" = $1 * n"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment",
+     "code": "closed-function",
+     "message": "`shipment` is the record being rated, which a function can't read: a function sees only its parameters, constants, types and other functions. Pass it in as a parameter"
+    }
+   ],
+   "name": "a function cannot read the record",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Distance = shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "closed-function",
+     "message": "`rate` is an input, which a function can't read: a function sees only its parameters, constants, types and other functions. Pass it in as a parameter",
+     "nth": 2
+    }
+   ],
+   "name": "a function cannot read an input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "fn f() -> Money = rate",
+    "charge \"x\" = f() + rate"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "base",
+     "code": "closed-function",
+     "message": "`base` is the tariff's own binding, which a function can't read: a function sees only its parameters, constants, types and other functions. Pass it in as a parameter",
+     "nth": 2
+    }
+   ],
+   "name": "a function cannot read the tariff's lets",
+   "source": [
+    "tariff \"t\"",
+    "let base = $1",
+    "fn f() -> Money = base",
+    "charge \"x\" = f() + base"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a function can read constants and other functions",
+   "source": [
+    "library \"t\"",
+    "const BASE: Money = $10",
+    "fn twice(x: Money) -> Money = x * 2",
+    "fn f() -> Money = twice(BASE)"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "tables",
+     "code": "closed-function",
+     "message": "`tables` is the organisation's rate tables, which a function can't read: a function sees only its parameters, constants, types and other functions. Pass it in as a parameter"
+    }
+   ],
+   "name": "a function cannot read tables",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Money? = tables.Zones[\"a\"]"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a parameter may reuse a root's name inside a function",
+   "source": [
+    "library \"t\"",
+    "fn f(fuel: Money/gal) -> Money/gal = fuel"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "g",
+     "code": "shadow",
+     "message": "`g` is already a function; pick another name",
+     "nth": 2,
+     "related": [
+      {
+       "at": "g",
+       "line": 2,
+       "message": "It is declared here"
+      }
+     ]
+    }
+   ],
+   "name": "a parameter may not shadow a function",
+   "source": [
+    "library \"t\"",
+    "fn g() -> Int = 1",
+    "fn f(g: Int) -> Int = g"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "fee",
+     "code": "not-a-value",
+     "fixes": [
+      {
+       "label": "Call it: `fee()`",
+       "result": [
+        "tariff \"t\"",
+        "fn fee() -> Money = $1",
+        "let f = fee()",
+        "charge \"x\" = f"
+       ]
+      }
+     ],
+     "message": "`fee` is a function: call it with its arguments, as in `fee()`",
+     "nth": 2
+    }
+   ],
+   "name": "a function is not a value",
+   "source": [
+    "tariff \"t\"",
+    "fn fee() -> Money = $1",
+    "let f = fee",
+    "charge \"x\" = f"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.fees",
+      "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "f",
+     "code": "unused",
+     "message": "`f` is never used",
+     "nth": 4
+    },
+    {
+     "at": "fees",
+     "code": "not-a-value",
+     "message": "`fees` is a module: read one of its declarations, as in `fees.name(…)`",
+     "nth": 2
+    }
+   ],
+   "name": "a module is not a value",
+   "source": [
+    "tariff \"t\"",
+    "use org.fees",
+    "let f = fees",
+    "charge \"x\" = fees.fee()"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "t",
+     "code": "unused",
+     "message": "`t` is never used",
+     "nth": 4
+    },
+    {
+     "at": "tables",
+     "code": "table",
+     "message": "Read a rate table by its code and keys, as in `tables.Zones[lane.origin.zip3, lane.destination.zip3]`"
+    }
+   ],
+   "name": "tables alone is not a value",
+   "source": [
+    "tariff \"t\"",
+    "let t = tables",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "stop",
+     "code": "unknown-name",
+     "message": "Nothing is named `stop`: declare it with `let` or as an `input`",
+     "nth": 4
+    }
+   ],
+   "name": "a loop variable is scoped to its loop",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  charge \"x\" = $1 * stop.sequence",
+    "}",
+    "charge \"y\" = $1 * stop.sequence"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "s",
+     "code": "shadow",
+     "message": "`s` is already declared above; pick another name",
+     "nth": 5,
+     "related": [
+      {
+       "at": "s",
+       "line": 2,
+       "message": "It is declared here"
+      }
+     ]
+    }
+   ],
+   "name": "a lambda parameter may not shadow a name in scope",
+   "source": [
+    "tariff \"t\"",
+    "let s = 1",
+    "let n = shipment.stops.count(s => s.appointment)",
+    "charge \"x\" = $1 * (n + s)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "require let binds for the rest of the block",
+   "source": [
+    "tariff \"t\"",
+    "require let w = shipment.weight else \"No weight\"",
+    "charge \"x\" = $1/lb * w"
+   ],
+   "types": {
+    "w": "Weight"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "w",
+     "code": "unknown-name",
+     "message": "Nothing is named `w`: declare it with `let` or as an `input`",
+     "nth": 4
+    }
+   ],
+   "name": "if let binds inside its block only",
+   "source": [
+    "tariff \"t\"",
+    "if let w = shipment.weight {",
+    "  charge \"x\" = $1/lb * w",
+    "}",
+    "charge \"y\" = $1/lb * w"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "UPPERCASE constants are read like names",
+   "source": [
+    "tariff \"t\"",
+    "const BASE = $5",
+    "charge \"x\" = BASE * 2"
+   ],
+   "types": {
+    "BASE * 2": "Money"
+   }
+  }
+ ]
+}
