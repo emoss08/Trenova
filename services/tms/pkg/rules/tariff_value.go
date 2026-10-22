@@ -122,3 +122,17 @@ func encodeTariff(value any) RawJSON {
 	}
 	return encoded
 }
+
+type RawJSON []byte
+
+func (r RawJSON) MarshalJSON() ([]byte, error) {
+	if len(r) == 0 {
+		return []byte("null"), nil
+	}
+	return r, nil
+}
+
+func (r *RawJSON) UnmarshalJSON(data []byte) error {
+	*r = append((*r)[:0], data...)
+	return nil
+}

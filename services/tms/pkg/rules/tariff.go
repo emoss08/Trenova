@@ -11,6 +11,11 @@ import (
 )
 
 const (
+	SeverityError   = "error"
+	SeverityWarning = "warning"
+)
+
+const (
 	OpTariffCheck        = "tariff.check"
 	OpTariffEvaluate     = "tariff.evaluate"
 	OpTariffTest         = "tariff.test"
@@ -158,12 +163,13 @@ type TariffHeader struct {
 }
 
 type TariffInput struct {
-	Name     string  `json:"name"`
-	Doc      string  `json:"doc,omitempty"`
-	Type     RawJSON `json:"type"`
-	Display  string  `json:"display,omitempty"`
-	Required bool    `json:"required"`
-	Default  RawJSON `json:"default,omitempty"`
+	Name       string       `json:"name"`
+	Doc        string       `json:"doc,omitempty"`
+	Type       string       `json:"type"`
+	Descriptor RawJSON      `json:"descriptor"`
+	Required   bool         `json:"required"`
+	Default    RawJSON      `json:"default,omitempty"`
+	Range      *TariffRange `json:"range,omitempty"`
 }
 
 type TariffImport struct {
