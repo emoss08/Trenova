@@ -312,7 +312,7 @@ impl Writer<'_> {
             return;
         };
         for field in &record.fields {
-            if matches!(field.name.as_str(), "pickup" | "delivery" | "entered") {
+            if matches!(field.name.as_str(), "pickup" | "delivery") {
                 continue;
             }
             let (Some(value), Some(default)) =

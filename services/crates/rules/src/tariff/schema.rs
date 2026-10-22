@@ -458,18 +458,6 @@ impl Builder {
             ("code", Type::Text, message!("The code.")),
             ("description", Type::Text, message!("The description.")),
         ]);
-        let entered = record(&[
-            (
-                "freight",
-                Type::money(),
-                message!("The freight charge typed on the shipment."),
-            ),
-            (
-                "other",
-                Type::money(),
-                message!("The other charges typed on the shipment."),
-            ),
-        ]);
         let stop = Type::Record(Arc::clone(stop));
         vec![
             (
@@ -491,11 +479,6 @@ impl Builder {
                 "trailerType",
                 opt(reference),
                 message!("The trailer's equipment type."),
-            ),
-            (
-                "entered",
-                entered,
-                message!("Amounts typed on the shipment, for tariffs that bill what was entered."),
             ),
             (
                 "stops",

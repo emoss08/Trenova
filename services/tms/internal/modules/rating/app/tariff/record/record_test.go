@@ -34,8 +34,6 @@ type catalog struct {
 	} `json:"schema"`
 }
 
-var hostless = map[string]bool{"shipment.entered": true}
-
 func fullShipment() *shipment.Shipment {
 	texas := &usstate.UsState{ID: pulid.MustNew("st_"), Abbreviation: "TX", CountryIso3: "USA"}
 	illinois := &usstate.UsState{ID: pulid.MustNew("st_"), Abbreviation: "IL", CountryIso3: "USA"}
@@ -136,9 +134,6 @@ func compare(t *testing.T, path string, fields []schemaField, value any) {
 
 	want := make([]string, 0, len(fields))
 	for _, field := range fields {
-		if hostless[path+"."+field.Name] {
-			continue
-		}
 		want = append(want, field.Name)
 	}
 	sort.Strings(want)
