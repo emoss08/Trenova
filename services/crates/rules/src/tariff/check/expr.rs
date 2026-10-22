@@ -46,6 +46,9 @@ fn interpolatable(ty: &Type) -> bool {
 impl Checker<'_> {
     /// The type of an expression, checked with the type expected where it is written.
     pub fn expr(&mut self, expr: &Expr, expected: Option<&Type>) -> Type {
+        if let Some(expected) = expected.filter(|ty| !matches!(ty, Type::Error | Type::Never)) {
+            self.out.expected.insert(expr.id, expected.clone());
+        }
         let ty = self.expr_kind(expr, expected);
         self.record(expr, ty)
     }

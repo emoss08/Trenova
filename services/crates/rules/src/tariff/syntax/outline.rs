@@ -3,7 +3,8 @@
 //! The outline lists the header, inputs, constants, types, enums, functions, charges, total
 //! clauses and tests in source order. A charge written inside an `if`, `for` or `match` is still
 //! listed, with how many of them enclose it. Folding covers every block, record, record type,
-//! list, enum body, argument list and doc comment that spans more than one line.
+//! list, enum body, argument list, doc comment, run of `//` comment lines and run of `use` lines
+//! that spans more than one line.
 
 use super::ast::ArmBody;
 use super::ast::Block;
@@ -94,6 +95,10 @@ pub enum FoldKind {
     List,
     /// A doc comment.
     Doc,
+    /// Consecutive `//` comment lines.
+    Comment,
+    /// Consecutive `use` lines.
+    Imports,
 }
 
 impl FoldKind {
@@ -105,6 +110,8 @@ impl FoldKind {
             Self::Record => "record",
             Self::List => "list",
             Self::Doc => "doc",
+            Self::Comment => "comment",
+            Self::Imports => "imports",
         }
     }
 }
@@ -138,7 +145,9 @@ pub fn outline(source: &str, file: &File) -> Outline {
     for item in &file.items {
         builder.item(item);
     }
-    builder.docs(file);
+    builder.comments(file, TokenKind::DocComment, FoldKind::Doc);
+    builder.comments(file, TokenKind::Comment, FoldKind::Comment);
+    builder.imports(file);
     walk::exprs(file, &mut |expr| builder.fold_expr(expr));
     builder.outline.items.sort_by_key(|item| item.span.start);
     builder
@@ -342,16 +351,17 @@ impl Builder<'_> {
     }
 
     /// Doc comments of more than one line.
-    fn docs(&mut self, file: &File) {
+    /// Folds each run of consecutive comment lines of one kind.
+    fn comments(&mut self, file: &File, comment: TokenKind, kind: FoldKind) {
         let mut run: Option<Span> = None;
         let mut previous_was_newline = false;
         for token in &file.tokens {
             match token.kind {
-                TokenKind::DocComment => {
+                found if found == comment => {
                     run = Some(match run {
                         Some(span) if previous_was_newline => span.cover(token.span),
                         Some(span) => {
-                            self.fold(span, FoldKind::Doc);
+                            self.fold(span, kind);
                             token.span
                         }
                         None => token.span,
@@ -361,14 +371,29 @@ impl Builder<'_> {
                 TokenKind::Newline if !previous_was_newline => previous_was_newline = true,
                 _ => {
                     if let Some(span) = run.take() {
-                        self.fold(span, FoldKind::Doc);
+                        self.fold(span, kind);
                     }
                     previous_was_newline = false;
                 }
             }
         }
         if let Some(span) = run {
-            self.fold(span, FoldKind::Doc);
+            self.fold(span, kind);
+        }
+    }
+
+    /// Folds each run of consecutive `use` items.
+    fn imports(&mut self, file: &File) {
+        let mut run: Option<Span> = None;
+        for item in &file.items {
+            if matches!(item.kind, ItemKind::Use(_)) {
+                run = Some(run.map_or(item.span, |span| span.cover(item.span)));
+            } else if let Some(span) = run.take() {
+                self.fold(span, FoldKind::Imports);
+            }
+        }
+        if let Some(span) = run {
+            self.fold(span, FoldKind::Imports);
         }
     }
 }

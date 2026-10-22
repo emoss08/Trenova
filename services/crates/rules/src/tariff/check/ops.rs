@@ -43,7 +43,12 @@ struct Values {
     agreement: Option<Map<String, Json>>,
 }
 
-fn kind(text: Option<&str>) -> Result<Option<FileKind>, RequestError> {
+/// The file kind a request names: `tariff`, `library` or `condition`, or none.
+///
+/// # Errors
+///
+/// When the text names no kind.
+pub fn kind(text: Option<&str>) -> Result<Option<FileKind>, RequestError> {
     match text {
         None => Ok(None),
         Some("tariff") => Ok(Some(FileKind::Tariff)),
