@@ -486,7 +486,7 @@ func realisticShipment() shipmentFixture {
 			ID:          templateID,
 			Name:        "Midwest dry van",
 			Description: "Distance-based dry van rating for the Midwest lanes",
-			Expression:  "max(minCharge, distance * ratePerMile) + stops * stopCharge",
+			Source:      "tariff \"Midwest dry van\"\n",
 		},
 		Moves: []*shipment.ShipmentMove{move},
 		Commodities: []*shipment.ShipmentCommodity{{

@@ -146,10 +146,12 @@ cases:
     expect: [location_create]
   - request: which rating methods do we have
     expect: [formula_list_templates]
-  - request: what shipment values can a rate expression reference
-    expect: [formula_describe_schema]
-  - request: what would this pricing rule charge a 500 mile load
-    expect: [formula_test_expression]
+  - request: what shipment values can a rate formula reference
+    expect: [formula_describe_language]
+  - request: what would this pricing rule bill for that shipment
+    expect: [formula_preview]
+  - request: do the expectations in this formula still hold
+    expect: [formula_run_tests]
   - request: write me a per mile rate with a floor of 350
     expect: [formula_propose]
 nothing:
