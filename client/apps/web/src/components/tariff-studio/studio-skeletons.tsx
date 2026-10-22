@@ -1,9 +1,10 @@
+import { BillViewSkeleton } from "@/components/tariff-bill/bill-view-skeleton";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 
 /*
- * The studio's loading shapes. Each lazy piece has the outline of what
+ * The Tariff studio's loading shapes, shared by the template and library pages. Each lazy piece has the outline of what
  * replaces it, at its size, so nothing moves when the piece lands: the form
  * column keeps its rhythm, the rail keeps its height, the editor keeps its
  * lines. Every one is drawn from `Skeleton`, which spends `ui-shimmer`.
@@ -37,8 +38,8 @@ function SectionHeadSkeleton({ action = true }: { action?: boolean }) {
   );
 }
 
-/** The expression section: its head, the editor at its resting height, and the status bar. */
-export function ExpressionSectionSkeleton() {
+/** The source section: its head, the editor at its resting height, and the status bar. */
+export function SourceSectionSkeleton() {
   return (
     <section className="flex flex-col gap-3" aria-busy>
       <SectionHeadSkeleton />
@@ -55,8 +56,8 @@ export function ExpressionSectionSkeleton() {
   );
 }
 
-/** The breakdown section: its head and two lines. */
-export function BreakdownSectionSkeleton() {
+/** A section that lists rows (inputs, tests): its head and two rows. */
+export function ListSectionSkeleton() {
   return (
     <section className="flex flex-col gap-3" aria-busy>
       <SectionHeadSkeleton />
@@ -68,33 +69,28 @@ export function BreakdownSectionSkeleton() {
   );
 }
 
-/** The preview pane: the load picker, the billed card, and the values it reads. */
+/** The preview pane: the load picker, the bill card and the trace's toggle. */
 export function PreviewPaneSkeleton() {
   return (
     <div className="flex flex-col gap-3 p-3" aria-busy>
       <Skeleton className="h-7 w-48" />
       <div className="bg-card flex flex-col gap-3 rounded-lg border p-3.5">
         <Skeleton className="h-3 w-12" />
-        <Skeleton className="h-9 w-36" />
-        <Skeleton className="h-3 w-44" />
+        <BillViewSkeleton />
       </div>
-      <Skeleton className="mt-1 h-4 w-40" />
-      <div className="flex flex-col gap-2">
-        <Rows widths={[100, 100, 100, 100]} height="h-7" />
-      </div>
+      <Skeleton className="h-3 w-24" />
     </div>
   );
 }
 
-/** The scenarios pane: the tally, its actions, and three rows. */
-export function ScenariosPaneSkeleton() {
+/** The tests panel: the tally, its action, and three tests. */
+export function TestsPaneSkeleton() {
   return (
     <div className="flex flex-col gap-3 p-3" aria-busy>
       <div className="flex items-center gap-2">
         <Skeleton className="h-7 w-16" />
         <span className="flex-1" />
-        <Skeleton className="h-6 w-28" />
-        <Skeleton className="h-6 w-14" />
+        <Skeleton className="h-6 w-20" />
       </div>
       <div className="bg-card flex flex-col gap-px overflow-hidden rounded-lg border">
         <Rows widths={[100, 100, 100]} height="h-12" />
@@ -142,14 +138,25 @@ export function NovaPaneSkeleton() {
   );
 }
 
-/** The whole studio before its template arrives: the top bar, the trace, the form and the rail. */
-export function StudioSkeleton({ className }: { className?: string }) {
+/**
+ * The whole studio before its record arrives: the top bar, the outline, the form and the rail.
+ * A template's form has its inputs; a library's does not.
+ */
+export function StudioSkeleton({
+  className,
+  label,
+  inputs = true,
+}: {
+  className?: string;
+  label?: string;
+  inputs?: boolean;
+}) {
   const t = useT();
   return (
     <div
       className={cn("bg-canvas flex h-full flex-col overflow-hidden", className)}
       aria-busy
-      aria-label={t("Loading the formula studio")}
+      aria-label={label ?? t("Loading the formula studio")}
     >
       <div className="flex h-13 items-center gap-3 border-b px-3">
         <Skeleton className="size-7 rounded-md" />
@@ -162,20 +169,21 @@ export function StudioSkeleton({ className }: { className?: string }) {
       </div>
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] min-[900px]:grid-cols-[minmax(0,1fr)_minmax(360px,420px)] min-[1180px]:grid-cols-[248px_minmax(0,1fr)_minmax(360px,420px)]">
         <div className="hidden flex-col gap-4 border-r p-4 min-[1180px]:flex">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-3.5 w-40" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-20 w-full rounded-lg" />
+          <Skeleton className="h-3 w-16" />
+          <Rows widths={[70, 54, 62]} />
+          <Skeleton className="h-3 w-16" />
+          <Rows widths={[48, 66]} />
+          <Skeleton className="h-3 w-12" />
+          <Rows widths={[80, 58]} />
         </div>
         <div className="mx-auto flex w-full max-w-200 flex-col gap-7 px-8 pt-5 max-[900px]:px-4">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-8 w-2/3" />
             <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-6 w-56" />
           </div>
-          <ExpressionSectionSkeleton />
-          <BreakdownSectionSkeleton />
+          <SourceSectionSkeleton />
+          {inputs && <ListSectionSkeleton />}
+          <ListSectionSkeleton />
         </div>
         <div className="bg-card border-border-strong my-2 mr-2 hidden flex-col overflow-hidden rounded-lg border min-[900px]:flex">
           <div className="flex h-10 items-center gap-3 border-b px-3">

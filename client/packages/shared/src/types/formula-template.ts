@@ -17,6 +17,7 @@ import {
   tariffRefusalSchema,
   tariffTestResultSchema,
   tariffTraceEventSchema,
+  type TariffInputValues,
 } from "./tariff";
 import { userSchema } from "./user";
 
@@ -206,7 +207,7 @@ export type ForkLineage = {
  */
 export type FormulaPreviewRequest = {
   source: string;
-  inputs?: Record<string, unknown>;
+  inputs?: TariffInputValues;
   shipmentId?: string;
 };
 
@@ -238,7 +239,7 @@ export type FormulaPreviewResponse = z.output<typeof formulaPreviewResponseSchem
 export type ScaffoldTestRequest = {
   source: string;
   shipmentId: string;
-  inputs?: Record<string, unknown>;
+  inputs?: TariffInputValues;
   name: string;
 };
 export const scaffoldTestResponseSchema = z.object({ test: z.string() });

@@ -55,6 +55,7 @@ import {
   tariffInputDeclarationsSchema,
   type TariffContext,
   type TariffInputDeclaration,
+  type TariffInputValues,
 } from "@trenova/shared/types/tariff";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
 import { pageThreadSchema, type PageThread } from "@/types/assistant";
@@ -83,7 +84,7 @@ export type SubmitForReviewRequest = {
 
 /** The load Nova's explanation is priced on: the preview's sample inputs or a saved shipment. */
 export type ExplainPreviewLoad = {
-  inputs?: Record<string, unknown>;
+  inputs?: TariffInputValues;
   shipmentId?: string;
 };
 

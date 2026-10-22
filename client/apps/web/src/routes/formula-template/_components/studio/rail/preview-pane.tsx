@@ -1,8 +1,19 @@
 import { ControlledShipmentAutocompleteField } from "@/components/autocomplete-fields";
-import { ReceiptView } from "@/components/formula-editor/receipt-view";
-import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
-import { previewFailure } from "@/lib/formula-preview";
-import { translateMessage } from "@trenova/shared/i18n/message";
+import { BillView } from "@/components/tariff-bill/bill-view";
+import { BillViewSkeleton } from "@/components/tariff-bill/bill-view-skeleton";
+import { refusalText } from "@/components/tariff-bill/refusal-text";
+import { TraceView } from "@/components/tariff-bill/trace-view";
+import { ProblemsList } from "@/components/tariff-studio/problems-list";
+import { describeApiError } from "@/lib/api-error-message";
+import { apiService } from "@/services/api";
+import { useMutation } from "@tanstack/react-query";
+import {
+  AlertCircleIcon,
+  Beaker02Icon,
+  ChevronRightIcon,
+  Save01Icon,
+  XCircleIcon,
+} from "@trenova/shared/components/icons";
 import {
   Alert,
   AlertAction,
@@ -11,228 +22,140 @@ import {
 } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { Switch } from "@trenova/shared/components/ui/switch";
+import { toast } from "@trenova/shared/components/ui/toast";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type {
-  FormulaTemplateFormValues,
-  FormulaValueSource,
-} from "@trenova/shared/types/formula-template";
-import {
-  Beaker02Icon,
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Pin01Icon,
-  Shield01Icon,
-  XCircleIcon,
-} from "@trenova/shared/components/icons";
-import { useMemo, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
-import { toast } from "@trenova/shared/components/ui/toast";
-import { formatMoney, formatStudioValue, previewAmounts, roundingLabel } from "../model/format";
+import { tariffScaffoldTest } from "@trenova/shared/rules/tariff";
+import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
+import { EMPTY_TARIFF_CONTEXT } from "@trenova/shared/types/tariff";
+import { useState } from "react";
+import { useFormContext } from "react-hook-form";
 import { useStudio } from "../studio-context";
-import type { PreviewSource } from "../use-live-preview";
-import { ValueSourceTag } from "./value-source";
+import { presentInputs, type PreviewSource } from "../use-live-preview";
 
-function parseTyped(raw: string, type: string): unknown {
-  if (raw === "") return null;
-  if (["number", "integer", "float"].includes(type.toLowerCase())) {
-    const amount = Number(raw);
-    return Number.isFinite(amount) && !raw.endsWith(".") ? amount : raw;
-  }
-  return raw;
-}
-
-function ValueEditor({
-  name,
-  type,
-  value,
-  onChange,
-}: {
-  name: string;
-  type: string;
-  value: unknown;
-  onChange: (value: unknown) => void;
-}) {
+/**
+ * "Save as test": names the test, then writes a `test` block pinning the bill the preview got.
+ * For a real shipment the server builds the block from the shipment's record
+ * (`POST /formula-templates/scaffold-test`); for the sample record the browser's module does.
+ */
+function SaveAsTest() {
   const t = useT();
-  if (type.toLowerCase() === "boolean" || typeof value === "boolean") {
+  const { preview, context, rules, previewInputs, appendToSource, setTab } = useStudio();
+  const { getValues } = useFormContext<FormulaTemplateFormValues>();
+  const usingShipment = preview.source === "shipment" && preview.shipmentId !== "";
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState("");
+
+  const save = useMutation({
+    mutationFn: async (title: string) => {
+      const source = getValues("source") ?? "";
+      const inputs = presentInputs(previewInputs.getValues("inputs"));
+      if (usingShipment) {
+        const response = await apiService.formulaTemplateService.scaffoldTest({
+          source,
+          shipmentId: preview.shipmentId,
+          inputs,
+          name: title,
+        });
+        return response.test;
+      }
+      const scaffold = tariffScaffoldTest(rules, {
+        source,
+        context: context ?? EMPTY_TARIFF_CONTEXT,
+        record: null,
+        inputs,
+        name: title,
+      });
+      if (!scaffold.test) {
+        throw new Error(
+          scaffold.error ? translateMessage(scaffold.error.message, t) : t("The test could not be written."),
+        );
+      }
+      return scaffold.test;
+    },
+    onSuccess: (block) => {
+      appendToSource(block);
+      setNaming(false);
+      setName("");
+      setTab("tests");
+    },
+    onError: (error) =>
+      toast.error(t("Could not save the test"), {
+        description: describeApiError(error, t("The test could not be written.")),
+      }),
+  });
+
+  const fallback = usingShipment ? t("rates the picked shipment as billed") : t("bills the sample load as previewed");
+
+  if (!naming) {
     return (
-      <span className="flex items-center gap-1.5">
-        <Switch
-          size="sm"
-          checked={value === true}
-          onCheckedChange={(checked) => onChange(checked)}
-          aria-label={name}
-        />
-        <span className="text-foreground-muted font-mono text-2xs">
-          {value === true ? "true" : "false"}
-        </span>
-      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="xs"
+        className="gap-1"
+        onClick={() => {
+          setName(fallback);
+          setNaming(true);
+        }}
+      >
+        <Save01Icon className="size-3" />
+        {t("Save as test")}
+      </Button>
     );
   }
+
   return (
-    <Input
-      value={typeof value === "string" || typeof value === "number" ? String(value) : ""}
-      onChange={(event) => onChange(parseTyped(event.target.value, type))}
-      inputMode={type.toLowerCase() === "number" ? "decimal" : undefined}
-      aria-label={name}
-      placeholder={t("empty")}
-      inputContainerClassName="w-28"
-      className="h-6 text-right font-mono text-xs md:text-xs"
-    />
+    <form
+      className="flex w-full items-center gap-1.5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        save.mutate(name.trim() || fallback);
+      }}
+    >
+      <Input
+        autoFocus
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        aria-label={t("Test name")}
+        className="h-7 text-xs md:text-xs"
+        inputContainerClassName="flex-1"
+      />
+      <Button type="submit" size="xs" isLoading={save.isPending}>
+        {t("Save")}
+      </Button>
+      <Button type="button" variant="ghost" size="xs" onClick={() => setNaming(false)}>
+        {t("Cancel")}
+      </Button>
+    </form>
   );
 }
 
 /**
- * The preview: a load, what the editor bills it, and the values it read.
- * The load is the sample, with any value the person types over it, or a real
- * shipment. Every amount here is the engine's answer for the editor as it is.
+ * The preview: what the tariff in the editor bills one load, rated on the server: the sample
+ * record with the sample inputs, or a real shipment. It shows the bill line by line, or why the
+ * tariff refused, or the error that stopped it, then the trace of how it got there.
  */
 export function PreviewPane() {
   const t = useT();
-  const { preview, analysis, known, scenarios, setTab } = useStudio();
-  const { control } = useFormContext<FormulaTemplateFormValues>();
-  const variableDefinitions = useWatch({ control, name: "variableDefinitions" }) ?? [];
-  const roundingMode = useWatch({ control, name: "roundingMode" });
-  const roundingPrecision = useWatch({ control, name: "roundingPrecision" }) ?? 2;
-  const [showAll, setShowAll] = useState(false);
-  const [receiptOpen, setReceiptOpen] = useState(false);
-  const [pinnedKey, setPinnedKey] = useState<string | null>(null);
-
+  const { preview, errors, reveal, jumpTo } = useStudio();
+  const [traceOpen, setTraceOpen] = useState(false);
   const result = preview.result;
-  const failure = previewFailure(result);
-  const amounts = previewAmounts(result);
-  const usingShipment = preview.source === "shipment" && preview.shipmentId !== "";
-  const durationMicros = result?.receipt?.durationMicros;
-
-  const docs = useMemo(
-    () => new Map(known.variables.map((variable) => [variable.name, variable])),
-    [known.variables],
-  );
-  const receiptSources = useMemo(
-    () =>
-      new Map(
-        (result?.receipt?.variables ?? []).map((variable) => [variable.name, variable.source]),
-      ),
-    [result?.receipt?.variables],
-  );
-  const customNames = new Set(variableDefinitions.map((variable) => variable.name));
-
-  const sourceOf = (name: string): FormulaValueSource => {
-    if (name in preview.overrides) return usingShipment ? "override" : "input";
-    const read = receiptSources.get(name);
-    if (read) return read;
-    if (customNames.has(name)) return "default";
-    if (usingShipment) return docs.get(name)?.category === "computed" ? "computed" : "field";
-    return "sample";
-  };
-
-  const reads = analysis.reads;
-  const schemaNames = known.variables.filter((variable) => !variable.custom).map((v) => v.name);
-  const rest = schemaNames.filter((name) => !reads.includes(name));
-  const shown = showAll ? [...reads, ...rest] : reads;
-  const overrideCount = Object.keys(preview.overrides).length;
-  const overrides = preview.overrides;
-  const valueOf = preview.valueOf;
-  const setOverride = preview.setOverride;
-
-  // The list is virtualized: with every shipment variable shown it runs to
-  // a few hundred rows, each with a field of its own.
-  const valueRows = useMemo(
-    (): VirtualRow[] =>
-      shown.map((name) => {
-        const doc = docs.get(name);
-        const type = doc?.type ?? "Number";
-        return {
-          key: name,
-          render: () => (
-            <div
-              className={cn(
-                "flex items-center gap-2 border-b py-1",
-                name in overrides && "bg-warning-subtle -mx-1.5 rounded-sm px-1.5",
-              )}
-            >
-              <span className="min-w-0 flex-1 truncate font-mono text-xs" title={doc?.description}>
-                {name}
-              </span>
-              <ValueEditor
-                name={name}
-                type={type}
-                value={valueOf(name)}
-                onChange={(value) => setOverride(name, value)}
-              />
-              <ValueSourceTag source={sourceOf(name)} />
-            </div>
-          ),
-        };
-      }),
-    // sourceOf reads only what the row's props already carry, so it is not a dependency of its own.
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-    [shown, docs, overrides, valueOf, setOverride, receiptSources, customNames, usingShipment],
-  );
-
-  const pinKey = amounts
-    ? JSON.stringify([preview.source, preview.shipmentId, preview.overrides, amounts.billed])
-    : null;
-  const pinned = pinKey !== null && pinKey === pinnedKey;
-
-  const pin = async () => {
-    if (!amounts || !pinKey) return;
-    const overrides = Object.entries(preview.overrides).slice(0, 2);
-    const name = usingShipment
-      ? [preview.valueOf("proNumber"), preview.valueOf("origin.city")]
-          .filter(Boolean)
-          .map(formatStudioValue)
-          .join(" · ") || t("Picked shipment")
-      : overrides.length > 0
-        ? t(
-            "Sample load · {0}",
-            overrides.map(([key, value]) => `${key} ${formatStudioValue(value)}`).join(", "),
-          )
-        : t(
-            "Sample load, {0} mi · {1} stops",
-            formatStudioValue(preview.valueOf("totalDistance")),
-            formatStudioValue(preview.valueOf("totalStops")),
-          );
-    try {
-      await scenarios.add([
-        {
-          name: name.slice(0, 100),
-          variables: preview.loadValues(),
-          expectedAmount: amounts.billed,
-        },
-      ]);
-      setPinnedKey(pinKey);
-      setTab("scenarios");
-    } catch (error) {
-      toast.error(t("Could not pin the scenario"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    }
-  };
+  const serverErrors = (result?.diagnostics ?? []).filter((finding) => finding.severity === "error");
 
   return (
     <div className="flex flex-col gap-3 p-3">
-      <div className="flex items-center gap-2">
-        <SegmentedControl<PreviewSource>
-          aria-label={t("Preview load")}
-          value={preview.source}
-          onValueChange={preview.setSource}
-          items={[
-            { value: "sample", label: t("Sample load") },
-            { value: "shipment", label: t("Real shipment") },
-          ]}
-        />
-        <span className="flex-1" />
-        {durationMicros !== undefined && (
-          <span className="text-foreground-subtle font-mono text-2xs tabular-nums">
-            {durationMicros < 1000 ? "<1" : (durationMicros / 1000).toFixed(1)} ms
-          </span>
-        )}
-      </div>
+      <SegmentedControl<PreviewSource>
+        aria-label={t("Preview load")}
+        value={preview.source}
+        onValueChange={preview.setSource}
+        items={[
+          { value: "sample", label: t("Sample load") },
+          { value: "shipment", label: t("Real shipment") },
+        ]}
+      />
 
       {preview.source === "shipment" && (
         <ControlledShipmentAutocompleteField
@@ -259,180 +182,121 @@ export function PreviewPane() {
         aria-busy={preview.isPending || undefined}
         className={cn(
           "bg-card rounded-lg border",
-          result && !result.valid && "border-danger-border",
-          preview.isPending && "opacity-80",
+          (result?.error || result?.refusal) && "border-danger-border",
+          preview.isPending && result && "opacity-80",
         )}
       >
-        {!result ? (
+        {preview.blocked ? (
           <div className="text-foreground-muted flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
             <Beaker02Icon className="text-foreground-subtle size-5" />
-            {preview.source === "shipment" && !preview.shipmentId
-              ? t("Pick a shipment to price it with the editor's formula.")
-              : t("Write an expression and the charge appears here as you type.")}
-          </div>
-        ) : amounts ? (
-          <div className="flex flex-col gap-2 p-3.5">
-            <div className="flex items-center gap-2">
-              <span className="text-foreground-muted text-xs">{t("Billed")}</span>
-              <span className="flex-1" />
-              <Button
-                type="button"
-                variant="ghost"
-                size="xs"
-                className="gap-1"
-                disabled={pinned}
-                onClick={() => void pin()}
-              >
-                {pinned ? <CheckIcon className="size-3" /> : <Pin01Icon className="size-3" />}
-                {pinned ? t("Pinned") : t("Pin as scenario")}
+            {errors > 0
+              ? t("Fix the {0, plural, one {error} other {# errors}} in the source to see the bill.", errors)
+              : t("Write the tariff and its bill appears here as you type.")}
+            {errors > 0 && (
+              <Button type="button" variant="link" size="xs" onClick={() => jumpTo("source")}>
+                {t("Go to the source")}
               </Button>
-            </div>
-            <span key={amounts.billed} className="fs-settle font-mono text-4xl tabular-nums">
-              {formatMoney(
-                amounts.billed,
-                roundingMode === "None" ? 4 : Math.max(roundingPrecision, 0),
-              )}
-            </span>
-            <div className="flex flex-col gap-0.5 text-xs">
-              {amounts.bound && amounts.limit !== null ? (
-                <span className="text-warning flex items-center gap-1.5">
-                  <Shield01Icon className="size-3" />
-                  {amounts.bound === "min"
-                    ? t(
-                        "Formula produced {0}; raised to the {1} minimum",
-                        formatMoney(amounts.raw),
-                        formatMoney(amounts.limit),
-                      )
-                    : t(
-                        "Formula produced {0}; lowered to the {1} maximum",
-                        formatMoney(amounts.raw),
-                        formatMoney(amounts.limit),
-                      )}
-                </span>
-              ) : (
-                <span className="text-success flex items-center gap-1.5">
-                  <Shield01Icon className="size-3" />
-                  {t("Within the charge policy")}
-                </span>
-              )}
-              <span className="text-foreground-subtle">
-                {roundingMode === "None"
-                  ? t("Not rounded")
-                  : amounts.rounded
-                    ? t(
-                        "Rounded {0} from {1}",
-                        roundingLabel(roundingMode, t),
-                        formatStudioValue(result.rounding?.unroundedAmount),
-                      )
-                    : t("Rounding made no change")}
-              </span>
-            </div>
-
-            {(result.breakdown?.length ?? 0) > 0 && (
-              <div className="mt-1 flex flex-col border-t pt-2">
-                {(result.breakdown ?? []).map((line) => (
-                  <div
-                    key={line.name}
-                    className="flex items-center justify-between gap-2 py-0.5 text-xs"
-                  >
-                    <span className="text-foreground-muted truncate">
-                      {line.label || line.name}
-                    </span>
-                    <span
-                      className={cn("font-mono tabular-nums", line.error && "text-danger")}
-                      title={line.error}
-                    >
-                      {line.error ? t("Fails") : formatMoney(line.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {result.receipt && (
-              <div className="flex flex-col gap-1.5 border-t pt-2">
-                <button
-                  type="button"
-                  onClick={() => setReceiptOpen((open) => !open)}
-                  aria-expanded={receiptOpen}
-                  className="ui-focus-ring text-foreground-muted hover:text-foreground flex items-center gap-1 self-start rounded-sm text-xs"
-                >
-                  {receiptOpen ? (
-                    <ChevronDownIcon className="size-3" />
-                  ) : (
-                    <ChevronRightIcon className="size-3" />
-                  )}
-                  {t(
-                    "Receipt · {0, plural, one {# value read} other {# values read}}",
-                    result.receipt.variables.length,
-                  )}
-                </button>
-                {receiptOpen && (
-                  <ScrollArea maskVariant="card" className="max-h-64">
-                    <ReceiptView receipt={result.receipt} />
-                  </ScrollArea>
-                )}
-              </div>
             )}
           </div>
-        ) : (
+        ) : !result ? (
+          preview.isPending ? (
+            <BillViewSkeleton className="p-3.5" />
+          ) : (
+            <div className="text-foreground-muted flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
+              <Beaker02Icon className="text-foreground-subtle size-5" />
+              {preview.source === "shipment" && !preview.shipmentId
+                ? t("Pick a shipment to rate it with the tariff in the editor.")
+                : t("The bill appears here as you type.")}
+            </div>
+          )
+        ) : serverErrors.length > 0 ? (
+          <div className="flex flex-col gap-1 p-3.5">
+            <span className="text-sm font-medium">{t("The server's check refused the source")}</span>
+            <ProblemsList
+              diagnostics={serverErrors}
+              source={preview.lastRequest?.source ?? ""}
+              onReveal={reveal}
+              onApplyFix={() => undefined}
+              className="-mx-3.5"
+            />
+          </div>
+        ) : result.error ? (
+          <div className="flex items-start gap-2 p-3.5">
+            <AlertCircleIcon className="text-warning mt-0.5 size-4 shrink-0" />
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="text-sm font-medium">{t("The rating stopped with an error")}</span>
+              <p className="text-foreground-muted text-xs break-words">
+                {translateMessage(result.error.message, t)}
+              </p>
+              {result.error.range && (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="xs"
+                  className="self-start"
+                  onClick={() => result.error?.range && reveal(result.error.range)}
+                >
+                  {t("Show where")}
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : result.refusal ? (
           <div className="flex items-start gap-2 p-3.5">
             <XCircleIcon className="text-danger mt-0.5 size-4 shrink-0" />
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="text-sm font-medium">
-                {result.valid
-                  ? t("Not a charge")
-                  : analysis.errorCount > 0
-                    ? t("The expression has errors")
-                    : t("Fails on this load")}
-              </span>
-              <p className="text-foreground-muted font-mono text-xs break-words whitespace-pre-wrap">
-                {result.valid
-                  ? t(
-                      "The formula returned {0}. It needs to return a number.",
-                      formatStudioValue(result.result),
-                    )
-                  : failure && translateMessage(failure, t)}
-              </p>
+              <span className="text-sm font-medium">{t("The tariff refused to rate this load")}</span>
+              <p className="text-sm break-words">{refusalText(result.refusal, t)}</p>
+              <div className="flex items-center gap-1">
+                {result.refusal.range && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="xs"
+                    onClick={() => result.refusal?.range && reveal(result.refusal.range)}
+                  >
+                    {t("Show where")}
+                  </Button>
+                )}
+                <SaveAsTest />
+              </div>
             </div>
           </div>
+        ) : result.bill ? (
+          <div className="flex flex-col gap-2 p-3.5">
+            <div className="flex items-center gap-2">
+              <span className="text-foreground-muted text-xs">{t("Bill")}</span>
+              <span className="flex-1" />
+              <SaveAsTest />
+            </div>
+            <BillView bill={result.bill} onSelectRange={reveal} />
+          </div>
+        ) : (
+          <p className="text-foreground-muted px-4 py-6 text-center text-sm">
+            {t("The rating billed nothing.")}
+          </p>
         )}
       </div>
 
-      <div className="flex items-center gap-2 pt-1">
-        <span className="text-sm font-semibold">
-          {showAll ? t("All variables") : t("Values this formula reads")}
-        </span>
-        <span className="flex-1" />
-        {overrideCount > 0 && (
-          <Button type="button" variant="link" size="xs" onClick={preview.resetOverrides}>
-            {t("Reset {0}", overrideCount)}
-          </Button>
-        )}
-      </div>
-      <VirtualRows
-        rows={valueRows}
-        estimateSize={33}
-        initialHeight={480}
-        className="max-h-120"
-        aria-label={showAll ? t("All variables") : t("Values this formula reads")}
-        empty={
-          <p className="text-foreground-muted text-xs">
-            {t("Nothing yet. Values appear here as the expression names them.")}
-          </p>
-        }
-      />
-      <Button
-        type="button"
-        variant="quiet"
-        size="xs"
-        className="self-start"
-        onClick={() => setShowAll((all) => !all)}
-      >
-        {showAll
-          ? t("Show only what the formula reads")
-          : t("Show all {0} shipment variables", schemaNames.length)}
-      </Button>
+      {result && !preview.blocked && result.trace.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={() => setTraceOpen((open) => !open)}
+            aria-expanded={traceOpen}
+            className="ui-focus-ring text-foreground-muted hover:text-foreground flex items-center gap-1 self-start rounded-sm text-xs"
+          >
+            <ChevronRightIcon className={cn("size-3 transition-transform", traceOpen && "rotate-90")} />
+            {t(
+              "Trace · {0, plural, one {# step} other {# steps}}",
+              result.trace.length,
+            )}
+          </button>
+          {traceOpen && (
+            <TraceView trace={result.trace} lookups={result.lookups} onSelectRange={reveal} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
