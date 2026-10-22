@@ -77,6 +77,7 @@ minimum minimumCharge
 round to cents
 
 test "a two-drop load bills one extra drop" {
+  given fuel.price = $3.20/gal
   given shipment.stops = [pickup(), delivery(), delivery()]
   expect charge(XDROP) == $75
 }
@@ -238,6 +239,9 @@ The arithmetic rules:
 
 - `+`, `-` and comparison take the same dimension: `500 lb + 2 cwt` is `700 lb`.
 - `Money × Number`, `Money × Percent` and `Money / Number` give `Money`.
+- A percent scaled by a number is a percent, in either order: `0.5% × 3` is `1.5%`, and
+  `Percent / Number` is a `Percent`. `Percent ± Percent` is a `Percent`; `Percent × Percent` is
+  an error.
 - `Money/unit × quantity` gives `Money` (`$2.35/mi × 812 mi`), converting units as needed
   (`$18.50/cwt × 1_200 lb = $222`).
 - `Money / quantity` gives a rate; `quantity / quantity` of one dimension gives a `Number`.
