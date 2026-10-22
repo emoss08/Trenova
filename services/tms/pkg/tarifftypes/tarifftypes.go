@@ -23,6 +23,13 @@ func (i Inputs) Clone() Inputs {
 	return out
 }
 
+func (i Inputs) OrEmpty() Inputs {
+	if i == nil {
+		return Inputs{}
+	}
+	return i
+}
+
 func (i Inputs) Equal(other Inputs) bool {
 	if len(i) != len(other) {
 		return false

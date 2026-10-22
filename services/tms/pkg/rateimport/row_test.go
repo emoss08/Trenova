@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/rateimport"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,10 +29,31 @@ var standardTemplates = map[string]pulid.ID{
 	formulatemplate.StandardPerCwt:   pulid.MustNew("ft_"),
 }
 
-func resolveTemplate(name string) (pulid.ID, bool) {
-	id, ok := standardTemplates[name]
+var templateRates = map[string]string{
+	formulatemplate.StandardFlatRate: `{"kind":"money"}`,
+	formulatemplate.StandardPerMile:  `{"kind":"quantity","dimension":"Money/Distance","unit":"$/mi"}`,
+	formulatemplate.StandardPerCwt:   `{"kind":"quantity","dimension":"Money/Weight","unit":"$/cwt"}`,
+}
 
-	return id, ok
+func resolveTemplate(name string) (*rateimport.Template, bool) {
+	id, ok := standardTemplates[name]
+	if !ok {
+		return nil, false
+	}
+
+	return &rateimport.Template{ID: id, Inputs: []tarifftypes.InputDecl{
+		{Name: formulatemplate.StandardInputRate, Type: rules.RawJSON(templateRates[name]), Required: true},
+		{Name: formulatemplate.StandardInputMinimumCharge, Type: rules.RawJSON(`{"kind":"money"}`)},
+	}}, true
+}
+
+func inputText(t *testing.T, rule *rateagreement.RateAgreementRule, name string) string {
+	t.Helper()
+	raw, ok := rule.Inputs[name]
+	if !ok {
+		return ""
+	}
+	return string(raw)
 }
 
 func TestParseRow_ReadsALaneAndItsPrice(t *testing.T) {
@@ -48,11 +71,9 @@ func TestParseRow_ReadsALaneAndItsPrice(t *testing.T) {
 	assert.Equal(t, rategeo.ScopeTypeState, rule.OriginScopeType)
 	assert.Equal(t, "IL", rule.OriginScopeValue)
 	assert.Equal(t, "GA", rule.DestinationScopeValue)
-	require.NotNil(t, rule.FormulaTemplateID)
-	assert.Equal(t, standardTemplates[formulatemplate.StandardPerMile], *rule.FormulaTemplateID)
-	assert.True(t, rule.Rate.Valid)
-	assert.Equal(t, "2.35", rule.Rate.Decimal.String())
-	assert.Equal(t, "450", rule.MinCharge.Decimal.String())
+	assert.Equal(t, standardTemplates[formulatemplate.StandardPerMile], rule.FormulaTemplateID)
+	assert.JSONEq(t, `{"$q":"2.35","u":"$/mi"}`, inputText(t, rule, "rate"))
+	assert.JSONEq(t, `{"$q":"450","u":"$"}`, inputText(t, rule, "minimumCharge"))
 }
 
 // The lane key is what the engine matches on, and a row that produced a rule
@@ -181,7 +202,7 @@ func TestParseRow_ReadsMoneyTheWayASpreadsheetWritesIt(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, "2350", rule.Rate.Decimal.String())
+	assert.JSONEq(t, `{"$q":"2350","u":"$"}`, inputText(t, rule, "rate"))
 }
 
 func TestParseRow_ARateThatIsNotANumberIsRefused(t *testing.T) {
@@ -213,11 +234,10 @@ func TestParseRow_ReadsTheBasisTheWayAPersonWritesIt(t *testing.T) {
 		)
 
 		require.NoErrorf(t, err, "spelling %q", spelling)
-		require.NotNilf(t, rule.FormulaTemplateID, "spelling %q", spelling)
 		assert.Equalf(
 			t,
 			standardTemplates[formulatemplate.StandardPerMile],
-			*rule.FormulaTemplateID,
+			rule.FormulaTemplateID,
 			"spelling %q",
 			spelling,
 		)
@@ -270,8 +290,7 @@ func TestParseRow_DefaultsToFlatWhenTheSheetHasNoBasisColumn(t *testing.T) {
 	rule, err := rateimport.ParseRow(mapping, []string{"IL", "GA", "1500"}, resolveTemplate)
 
 	require.NoError(t, err)
-	require.NotNil(t, rule.FormulaTemplateID)
-	assert.Equal(t, standardTemplates[formulatemplate.StandardFlatRate], *rule.FormulaTemplateID)
+	assert.Equal(t, standardTemplates[formulatemplate.StandardFlatRate], rule.FormulaTemplateID)
 }
 
 // A short row is what a spreadsheet produces when the last columns are empty,
@@ -284,7 +303,7 @@ func TestParseRow_AShortRowDoesNotPanic(t *testing.T) {
 	rule, err := rateimport.ParseRow(mapping, []string{"IL", "GA", "Flat", "1500"}, resolveTemplate)
 
 	require.NoError(t, err)
-	assert.False(t, rule.MinCharge.Valid)
+	assert.Empty(t, inputText(t, rule, "minimumCharge"))
 }
 
 // The label is what somebody scans the lane list for, and a sheet that does not

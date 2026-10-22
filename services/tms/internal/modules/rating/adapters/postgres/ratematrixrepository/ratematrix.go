@@ -168,7 +168,6 @@ func (r *repository) ListConnection(
 						return dba.
 							NewSelect().
 							Model(entities).
-							Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.FormulaTemplate)).
 							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 								return applyRateMatrixColumns(sq, req.RateMatrixColumns)
 							})
@@ -428,8 +427,7 @@ func (r *repository) SelectOptions(
 						cols.Code,
 						cols.Name,
 						cols.Description,
-						cols.FormulaTemplateID,
-						cols.Currency,
+						cols.ValueType,
 						cols.Status,
 					},
 					OrgColumnRef:     &cols.OrganizationID,

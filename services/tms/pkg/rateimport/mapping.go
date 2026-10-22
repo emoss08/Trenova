@@ -30,9 +30,7 @@ const (
 	FieldRate        Field = "rate"
 	FieldCurrency    Field = "currency"
 
-	FieldMinCharge       Field = "minCharge"
-	FieldMaxCharge       Field = "maxCharge"
-	FieldDiscountPercent Field = "discountPercent"
+	FieldMinCharge Field = "minCharge"
 
 	FieldEffectiveFrom Field = "effectiveFrom"
 	FieldEffectiveTo   Field = "effectiveTo"
@@ -77,9 +75,7 @@ var synonyms = map[Field][]string{
 	},
 	FieldCurrency: {"currency", "curr", "ccy"},
 
-	FieldMinCharge:       {"mincharge", "minimum", "minimumcharge", "min", "floor"},
-	FieldMaxCharge:       {"maxcharge", "maximum", "maximumcharge", "max", "ceiling", "cap"},
-	FieldDiscountPercent: {"discount", "discountpercent", "discountpct", "off"},
+	FieldMinCharge: {"mincharge", "minimum", "minimumcharge", "min", "floor"},
 
 	FieldEffectiveFrom: {
 		"effectivefrom", "effective", "effectivedate", "startdate", "start",

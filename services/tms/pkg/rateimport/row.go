@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -44,10 +45,12 @@ var basisSpellings = map[string]string{
 	"percent":       formulatemplate.StandardPercentOfSellRate,
 }
 
-// TemplateResolver finds the organization's active formula template with a
-// given name. ParseRow is pure and cannot ask the database, so the lookup is
-// handed in by whoever staged the sheet.
-type TemplateResolver func(name string) (pulid.ID, bool)
+type Template struct {
+	ID     pulid.ID
+	Inputs []tarifftypes.InputDecl
+}
+
+type TemplateResolver func(name string) (*Template, bool)
 
 var scopeSpellings = map[string]rategeo.ScopeType{
 	"state":      rategeo.ScopeTypeState,
@@ -107,7 +110,7 @@ func ParseRow(
 		return nil, err
 	}
 
-	templateID, ok := templates(templateName)
+	template, ok := templates(templateName)
 	if !ok {
 		return nil, fmt.Errorf(
 			"no active formula template named %q exists to price this rate type",
@@ -124,6 +127,11 @@ func ParseRow(
 		return nil, errNoRate
 	}
 
+	inputs, err := ruleInputs(mapping, row, template, rate.Decimal)
+	if err != nil {
+		return nil, err
+	}
+
 	rule := &rateagreement.RateAgreementRule{
 		Label:                 label(mapping, row, origin, destination),
 		Status:                rateagreement.RuleStatusActive,
@@ -134,14 +142,9 @@ func ParseRow(
 		DestinationScopeValue: destination.Value,
 		DestinationCity:       destination.City,
 		Direction:             rateagreement.DirectionDirectional,
-		AllowDeficitRating:    true,
-		FormulaTemplateID:     &templateID,
-		Rate:                  rate,
+		FormulaTemplateID:     template.ID,
+		Inputs:                inputs,
 		Currency:              mapping.Value(row, FieldCurrency),
-	}
-
-	if err = applyGuardrails(mapping, row, rule); err != nil {
-		return nil, err
 	}
 
 	return rule, nil
@@ -149,29 +152,45 @@ func ParseRow(
 
 var errNoRate = errors.New("this row names a lane but no rate, so it would price nothing")
 
-func applyGuardrails(
+var (
+	errNoRateInput    = errors.New("this rate type's tariff takes no rate")
+	errNoMinimumInput = errors.New("this rate type's tariff takes no minimum charge")
+)
+
+func ruleInputs(
 	mapping Mapping,
 	row []string,
-	rule *rateagreement.RateAgreementRule,
-) error {
-	for _, guardrail := range []struct {
-		field Field
-		name  string
-		set   func(decimal.NullDecimal)
-	}{
-		{FieldMinCharge, "minimum charge", func(v decimal.NullDecimal) { rule.MinCharge = v }},
-		{FieldMaxCharge, "maximum charge", func(v decimal.NullDecimal) { rule.MaxCharge = v }},
-		{FieldDiscountPercent, "discount", func(v decimal.NullDecimal) { rule.DiscountPercent = v }},
-	} {
-		value, err := decimalutils.ParseMoneyText(mapping.Value(row, guardrail.field))
-		if err != nil {
-			return fmt.Errorf("%s: %w", guardrail.name, err)
-		}
-
-		guardrail.set(value)
+	template *Template,
+	rate decimal.Decimal,
+) (tarifftypes.Inputs, error) {
+	rateDecl := tarifftypes.FindInput(template.Inputs, formulatemplate.StandardInputRate)
+	if rateDecl == nil {
+		return nil, errNoRateInput
 	}
+	rateValue, err := rateDecl.ScalarValue(rate)
+	if err != nil {
+		return nil, fmt.Errorf("rate: %w", err)
+	}
+	inputs := tarifftypes.Inputs{formulatemplate.StandardInputRate: rateValue}
 
-	return nil
+	minimum, err := decimalutils.ParseMoneyText(mapping.Value(row, FieldMinCharge))
+	if err != nil {
+		return nil, fmt.Errorf("minimum charge: %w", err)
+	}
+	if !minimum.Valid {
+		return inputs, nil
+	}
+	minimumDecl := tarifftypes.FindInput(template.Inputs, formulatemplate.StandardInputMinimumCharge)
+	if minimumDecl == nil {
+		return nil, errNoMinimumInput
+	}
+	minimumValue, err := minimumDecl.ScalarValue(minimum.Decimal)
+	if err != nil {
+		return nil, fmt.Errorf("minimum charge: %w", err)
+	}
+	inputs[formulatemplate.StandardInputMinimumCharge] = minimumValue
+
+	return inputs, nil
 }
 
 func blank(row []string) bool {
