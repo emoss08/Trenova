@@ -57,6 +57,12 @@ The build uses:
 
 CI rebuilds the module and fails when either committed copy differs from it.
 
+The module is about 1.1 MB, 0.4 MB gzipped. The browser fetches it lazily, never on the
+startup path, and the service worker caches it as a hashed asset. Most of the weight is the
+crate's own code, Rust's collections and JSON; `opt-level = "z"` would save about 8% gzipped at
+a cost in speed, which matters on the server's report and rating paths, so the profile stays at
+`"s"`.
+
 ### The ABI
 
 The protocol, in order:

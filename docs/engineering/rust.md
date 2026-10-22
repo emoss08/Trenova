@@ -41,7 +41,7 @@ and a crash in a PDF parser must never stop anything else.
 services/
   Cargo.toml              [workspace] members = ["imaging", "crates/*"]; dependencies, lints, profiles
   Cargo.lock
-  rust-toolchain.toml     1.94 (the channel desktop/capture pins), rustfmt, clippy, wasm targets
+  rust-toolchain.toml     1.94 (the channel desktop/capture pins), rustfmt, clippy, the wasm32-unknown-unknown target
   deny.toml               cargo-deny: advisories, licences, duplicate majors, sources
   clippy.toml             words doc comments may use unquoted (PDFium, WebP, ...)
   .cargo/config.toml      only what every build needs

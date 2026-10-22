@@ -153,9 +153,13 @@ protocol drift. Effort is small, because the Rust code already exists.
 
 ### R3. One shared calculation crate for the browser and the server
 
-**Status.** Built: `services/crates/rules`. The browser no longer has its own copy of the
-allocation, report formatting, lane or matrix rules; the TypeScript files in the table below keep
-only display and shaping helpers. See [rules-engine.md](../../engineering/rules-engine.md).
+**Status.** Done. `services/crates/rules` (`trenova-rules`) holds all five rule sets in the
+table below, compiled to one `wasm32-unknown-unknown` module that the TMS runs in wazero and the
+web app loads lazily. expr-lang is gone from the TMS, the browser's parser, checker and formatter
+are deleted, the conformance corpus lives in the crate, the evaluator is metered and exact, and
+every Go and TypeScript copy named below is deleted. See
+[rules-engine.md](../../engineering/rules-engine.md). The rest of this section is the analysis
+as it was written.
 
 **Today.** Several rule sets live twice, once in Go and once in TypeScript, held together by tests on
 one side or by nothing.
@@ -167,9 +171,6 @@ one side or by nothing.
 | Report value formatting | `pkg/reportfmt/format.go:214` (`shopspring/decimal`) | `packages/shared/src/lib/report-format.ts:242` (`toFixed`) | None | `1.005` → Go "1.01", JS "1.00"; `2.675` → Go "2.68", JS "2.67" |
 | Lane specificity | `rategeo.Weight`, rate agreement weights | `packages/shared/src/lib/rate.ts` ("must stay in step", lines 7-12) | None | Unknown |
 | Matrix quantity bands | `ratematrix.ContainsQuantity` | `packages/shared/src/lib/rate-matrix.ts` | None | Unknown |
-
-**Status.** The last four rows are done on the server: the Go code they name is deleted and every
-Go caller runs the `trenova-rules` module (`docs/engineering/rules-engine.md`, "Go callers").
 
 The formula evaluator also has a runtime defect. On timeout it abandons the goroutine running the
 expression, which keeps using CPU (`rating/app/formula/engine/engine.go:527-563`). Each evaluation also
