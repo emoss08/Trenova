@@ -39,9 +39,13 @@ func (t *CorrectChargeCodeTool) Preview(
 	if err != nil {
 		return nil, err
 	}
+	money, err := common.ChargeEditMoney(ctx, plan.Before, plan.After)
+	if err != nil {
+		return nil, err
+	}
 	toolpreview.AttachMoney(
 		change,
-		common.ChargeEditMoney(plan.Before, plan.After),
+		money,
 		toolpreview.SensitiveAs("totalChargeAmount", "otherChargeAmount"),
 	)
 

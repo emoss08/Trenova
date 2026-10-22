@@ -90,22 +90,22 @@ func renderPlaceholder(locale Locale, body string, args []any) (string, bool) {
 
 	value := args[index]
 	if !hasRest {
-		return stringify(value), true
+		return stringifyIn(locale, value), true
 	}
 
 	kind, forms, hasForms := strings.Cut(strings.TrimSpace(rest), ",")
 	if !hasForms || strings.TrimSpace(kind) != "plural" {
-		return stringify(value), true
+		return stringifyIn(locale, value), true
 	}
 
 	number, ok := toFloat(value)
 	if !ok {
-		return stringify(value), true
+		return stringifyIn(locale, value), true
 	}
 
 	chosen, ok := pluralBranch(forms, selectPlural(locale, number))
 	if !ok {
-		return stringify(value), true
+		return stringifyIn(locale, value), true
 	}
 
 	return strings.ReplaceAll(chosen, "#", formatCount(locale, number)), true
@@ -178,6 +178,17 @@ func toFloat(value any) (float64, bool) {
 	default:
 		return 0, false
 	}
+}
+
+type Localizer interface {
+	Localize(locale Locale) string
+}
+
+func stringifyIn(locale Locale, value any) string {
+	if localizer, ok := value.(Localizer); ok {
+		return localizer.Localize(locale)
+	}
+	return stringify(value)
 }
 
 func stringify(value any) string {

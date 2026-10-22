@@ -196,8 +196,9 @@ func (s *CarrierRateAgreementSeed) ensure(
 		CreatedAt:            spec.now,
 		UpdatedAt:            spec.now,
 	}
-	rule.ApplyLaneKey()
-	rule.SpecificityScore = rule.ComputeSpecificity()
+	if err = rateagreement.ApplyLanes(ctx, []*rateagreement.RateAgreementRule{rule}); err != nil {
+		return fmt.Errorf("key the carrier lane: %w", err)
+	}
 	if _, err = tx.NewInsert().Model(rule).Exec(ctx); err != nil {
 		return fmt.Errorf("insert rule: %w", err)
 	}

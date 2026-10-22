@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,7 +36,9 @@ func (c *countingMatrixRepo) GetLookupData(
 
 	c.calls++
 
-	return nil, nil
+	return []*ratematrixports.RateMatrixLookupData{
+		exactLookupMatrix("per_mile", map[string]string{"EXP": "3"}),
+	}, nil
 }
 
 func (c *countingMatrixRepo) count() int {
@@ -53,22 +55,12 @@ func setupCountingService(t *testing.T, repo ratematrixports.RateMatrixRepositor
 	res := resolver.NewResolver()
 	resolver.RegisterDefaultComputed(res)
 
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
 
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Engine:         eng,
+		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:       res,
 		VersionRepo:    &stubVersionRepo{},
 		RateMatrixRepo: repo,
@@ -81,7 +73,7 @@ func memoTemplate(orgID, buID pulid.ID) *formulatemplate.FormulaTemplate {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Name:           "Per Mile",
-		Expression:     "totalDistance * 2",
+		Expression:     `lookupOr("per_mile", "STD", 2) * totalDistance`,
 		Type:           formulatemplate.TemplateTypeFreightCharge,
 		SchemaID:       "shipment",
 	}
@@ -218,6 +210,24 @@ func TestRateTableCache_NestedInstallKeepsTheOuterMemo(t *testing.T) {
 
 	assert.Equal(t, 1, repo.count(),
 		"a service installing its own memo must not undo the batch's")
+}
+
+func TestRate_AFormulaThatReadsNoTableNeverLoadsTheTenantsTables(t *testing.T) {
+	t.Parallel()
+
+	repo := &countingMatrixRepo{}
+	svc := setupCountingService(t, repo)
+
+	template := memoTemplate(pulid.MustNew("org_"), pulid.MustNew("bu_"))
+	template.Expression = "totalDistance * 2"
+
+	resp, err := svc.Rate(t.Context(), &formula.RateRequest{
+		Template: template,
+		Entity:   memoShipment(),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 0, repo.count(), "no lookup in the formula, no matrix read")
+	assert.Empty(t, resp.Receipt.Lookups)
 }
 
 func memoShipment() *shipment.Shipment {

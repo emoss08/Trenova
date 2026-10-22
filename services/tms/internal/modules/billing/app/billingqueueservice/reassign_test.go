@@ -176,14 +176,14 @@ func TestReassignRows_WholeChargeToTheShipmentPayerIsNoRows(t *testing.T) {
 	t.Parallel()
 
 	f := newSplitShipment()
-	rows, err := reassignRows(f.shipment, &billingqueueports.ReassignChargeRequest{
+	rows, err := reassignRows(t.Context(), f.shipment, &billingqueueports.ReassignChargeRequest{
 		ChargeKind: shipment.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{{
 			BillToCustomerID: f.acme,
 			Method:           shipment.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
-	}, decimal.NewFromInt(2850))
+	}, nil)
 
 	require.NoError(t, err)
 	assert.Empty(t, rows)
@@ -193,7 +193,7 @@ func TestReassignRows_RefusesARowIDFromAnotherCharge(t *testing.T) {
 	t.Parallel()
 
 	f := newSplitShipment()
-	_, err := reassignRows(f.shipment, &billingqueueports.ReassignChargeRequest{
+	_, err := reassignRows(t.Context(), f.shipment, &billingqueueports.ReassignChargeRequest{
 		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
 		AdditionalChargeID: f.detention.ID,
 		Allocations: []*shipment.ChargeAllocation{{
@@ -202,7 +202,7 @@ func TestReassignRows_RefusesARowIDFromAnotherCharge(t *testing.T) {
 			Method:           shipment.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
-	}, decimal.RequireFromString("1154.38"))
+	}, f.detention)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "does not belong to this charge")
@@ -214,7 +214,7 @@ func TestReassignRows_KeepsTheIdentityOfARowAlreadyOnTheCharge(t *testing.T) {
 	f := newSplitShipment()
 	existing := f.shipment.ChargeAllocations[0]
 	existing.Version = 4
-	rows, err := reassignRows(f.shipment, &billingqueueports.ReassignChargeRequest{
+	rows, err := reassignRows(t.Context(), f.shipment, &billingqueueports.ReassignChargeRequest{
 		ChargeKind: shipment.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{
 			{
@@ -229,7 +229,7 @@ func TestReassignRows_KeepsTheIdentityOfARowAlreadyOnTheCharge(t *testing.T) {
 				Percent:          decimal.NewNullDecimal(decimal.NewFromInt(50)),
 			},
 		},
-	}, decimal.NewFromInt(2850))
+	}, nil)
 
 	require.NoError(t, err)
 	require.Len(t, rows, 2)
@@ -661,16 +661,17 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 	stale := cloneShipment(f.shipment)
 	stale.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(3000))
 
-	refused := staleAmountSplitError(
-		shipment.FindStaleAmountSplits(stale, stale.ChargeAllocations),
-		accessorialNames(stale.AdditionalCharges),
-	)
+	rebalance, err := shipment.RebalanceAmountSplits(t.Context(), stale, stale.ChargeAllocations)
+	require.NoError(t, err)
+	refused := staleAmountSplitError(rebalance.Stale, accessorialNames(stale.AdditionalCharges))
 	require.Len(t, refused.Errors, 1)
 	assert.Equal(t, convertAmountSplitsField, refused.Errors[0].Field)
 	assert.Contains(t, refused.Error(), "total 2850.00 but the charge is now 3000.00")
 
-	assert.Equal(t, 1, shipment.ConvertAmountSplitsToPercent(stale, stale.ChargeAllocations))
-	assert.Empty(t, shipment.FindStaleAmountSplits(stale, stale.ChargeAllocations))
+	assert.Equal(t, 1, rebalance.ConvertToPercent())
+	after, err := shipment.RebalanceAmountSplits(t.Context(), stale, stale.ChargeAllocations)
+	require.NoError(t, err)
+	assert.Empty(t, after.Stale)
 	assert.Equal(
 		t,
 		"Charges updated from billing queue; 1 amount split(s) converted to percentages",

@@ -106,16 +106,23 @@ func (s *service) planChargeUpdateFrom(
 	}
 
 	freight := shp.FreightChargeAmount.Decimal
-	otherTotal := shipment.AdditionalChargesTotal(shp.AdditionalCharges, freight)
-	shp.OtherChargeAmount = decimal.NewNullDecimal(otherTotal)
-	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(otherTotal))
+	other, err := shipment.AdditionalChargeTotals(ctx, shp.AdditionalCharges, freight)
+	if err != nil {
+		return nil, err
+	}
+	shp.OtherChargeAmount = decimal.NewNullDecimal(other.Sum)
+	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(other.Sum))
 
+	rebalance, err := shipment.RebalanceAmountSplits(ctx, shp, shp.ChargeAllocations)
+	if err != nil {
+		return nil, err
+	}
 	convertedSplits := 0
-	if stale := shipment.FindStaleAmountSplits(shp, shp.ChargeAllocations); len(stale) > 0 {
+	if rebalance.HasStale() {
 		if !req.ConvertAmountSplitsToPercent {
-			return nil, staleAmountSplitError(stale, chargeNames)
+			return nil, staleAmountSplitError(rebalance.Stale, chargeNames)
 		}
-		convertedSplits = shipment.ConvertAmountSplitsToPercent(shp, shp.ChargeAllocations)
+		convertedSplits = rebalance.ConvertToPercent()
 	}
 
 	return &billingqueueports.ChargeUpdatePreview{

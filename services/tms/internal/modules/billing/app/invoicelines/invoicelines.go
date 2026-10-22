@@ -29,15 +29,24 @@ func SignedAmount(billType billingqueue.BillType, amount decimal.Decimal) decima
 
 // ForShipment emits the lines that bill a shipment in full to one payer.
 func ForShipment(
+	ctx context.Context,
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
 	startLineNumber int,
-) []*invoice.InvoiceLine {
-	return ForShipmentShare(billType, shp, nil, startLineNumber)
+) ([]*invoice.InvoiceLine, error) {
+	if shp == nil {
+		return nil, nil
+	}
+
+	resolution, err := shipment.ResolveShares(ctx, shp, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return ForShipmentShare(billType, shp, resolution.Primary(), startLineNumber), nil
 }
 
-// ForShipmentShare emits only the lines one payer is billed for. A nil share
-// bills the whole shipment, which is what every single-payer invoice is. A
+// ForShipmentShare emits only the lines one payer is billed for. A
 // partial share carries the percent it bills on the line and in its description,
 // so the invoice reads correctly on its own.
 func ForShipmentShare(
@@ -46,15 +55,8 @@ func ForShipmentShare(
 	share *shipment.PayerShare,
 	startLineNumber int,
 ) []*invoice.InvoiceLine {
-	if shp == nil {
+	if shp == nil || share == nil {
 		return nil
-	}
-	if share == nil {
-		resolution, err := shipment.ResolveShares(shp, nil)
-		if err != nil || resolution == nil || len(resolution.Shares) == 0 {
-			return nil
-		}
-		share = resolution.Shares[0]
 	}
 
 	lines := make([]*invoice.InvoiceLine, 0, len(share.Charges))

@@ -26,19 +26,3 @@ export const FUNCTION_CATEGORY_LABELS: Record<string, string> = defineLabels({
 export function categoryLabel(category: string, labels: Record<string, string>): string {
   return labels[category] ?? (category ? category : "Other");
 }
-
-/** Which control a sample-data field should render for a schema type. */
-export type SampleInputKind = "number" | "boolean" | "enum" | "text";
-
-export function sampleInputKind(type: string, enumValues?: string[] | null): SampleInputKind {
-  if (enumValues && enumValues.length > 0) return "enum";
-  switch (type.toLowerCase()) {
-    case "number":
-    case "integer":
-      return "number";
-    case "boolean":
-      return "boolean";
-    default:
-      return "text";
-  }
-}

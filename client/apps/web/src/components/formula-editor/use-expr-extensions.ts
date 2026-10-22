@@ -2,16 +2,15 @@ import { lintGutter } from "@codemirror/lint";
 import { Compartment, Prec, type Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
+import type { FormulaFormatResult } from "@trenova/shared/rules/formula";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import { useEffect, useMemo, useState, type RefObject } from "react";
-import { formatEditorDocument, type FormatResult } from "./expr-format";
+import { FORMAT_KEY, formatEditorDocument } from "./editor-format";
 import { createExprHover, type HoverVariable } from "./expr-hover";
 import { exprLanguageSupport } from "./expr-language";
 import { createExprLinter, type DeclareInput } from "./expr-lint";
 import { createSignatureHelp } from "./expr-signature";
 import type { KnownIdentifiers } from "./known-identifiers";
-
-/** The key that formats the document, as VS Code binds it. */
-export const FORMAT_KEY = "Shift-Alt-f";
 
 export type ExprExtensionOptions = {
   /** What the last preview resolved each name to, for the hover card. */
@@ -21,50 +20,50 @@ export type ExprExtensionOptions = {
   /** Draws the gutter's markers; off for a one-line editor. */
   gutter?: boolean;
   /** Told what formatting from the keyboard did, so the page can say why it was refused. */
-  onFormat?: (result: FormatResult) => void;
+  onFormat?: (result: FormulaFormatResult) => void;
 };
 
 /**
- * Builds the editor's extensions once and swaps only the language and
+ * Builds the editor's extensions once and swaps only the highlighter and
  * completion source when the known identifiers change. Without the
  * compartment every keystroke in a custom-variable name rebuilt the whole
  * extension set for the main editor and every breakdown line, and CodeMirror
- * reconfigured all of them. The linter, hover and signature help read the
- * current identifiers through a ref for the same reason.
+ * reconfigured all of them. The linter, hover, signature help and the format
+ * key read the loaded rules module and the current identifiers through
+ * getters for the same reason.
  */
 export function useExprExtensions(
+  rules: RulesRuntime,
   known: KnownIdentifiers,
   lint: boolean,
   viewRef: RefObject<EditorView | null>,
-  options: ExprExtensionOptions | (() => ReadonlyMap<string, HoverVariable>) = {},
+  options: ExprExtensionOptions = {},
 ): Extension[] {
-  const resolved: ExprExtensionOptions =
-    typeof options === "function" ? { hoverValues: options } : options;
   const [compartment] = useState(() => new Compartment());
   const [initialKnown] = useState(known);
+  const getRules = useLatestCallback(() => rules);
   const getKnown = useLatestCallback(() => known);
   const getHoverValues = useLatestCallback(
-    (): ReadonlyMap<string, HoverVariable> => resolved.hoverValues?.() ?? new Map(),
+    (): ReadonlyMap<string, HoverVariable> => options.hoverValues?.() ?? new Map(),
   );
-  const reportFormat = useLatestCallback((result: FormatResult) => resolved.onFormat?.(result));
-  const getDeclareInput = useLatestCallback(() => resolved.declareInput);
-  const gutter = resolved.gutter ?? false;
+  const reportFormat = useLatestCallback((result: FormulaFormatResult) =>
+    options.onFormat?.(result),
+  );
+  const getDeclareInput = useLatestCallback(() => options.declareInput);
+  const gutter = options.gutter ?? false;
 
   const extensions = useMemo(() => {
     const list: Extension[] = [
       compartment.of(exprLanguageSupport(initialKnown)),
       EditorView.lineWrapping,
-      createExprHover(getHoverValues, getKnown),
-      createSignatureHelp(getKnown),
+      createExprHover(getRules, getHoverValues, getKnown),
+      createSignatureHelp(getRules, getKnown),
       Prec.high(
         keymap.of([
           {
             key: FORMAT_KEY,
             run: (view) => {
-              const result = formatEditorDocument(view, {
-                operators: getKnown().operatorNames,
-              });
-              reportFormat(result);
+              reportFormat(formatEditorDocument(view, getRules()));
               return true;
             },
           },
@@ -72,13 +71,14 @@ export function useExprExtensions(
       ),
     ];
     if (lint) {
-      list.push(createExprLinter(getKnown, getDeclareInput));
+      list.push(createExprLinter(getRules, getKnown, getDeclareInput));
       if (gutter) list.push(lintGutter());
     }
     return list;
   }, [
     compartment,
     initialKnown,
+    getRules,
     getHoverValues,
     getKnown,
     reportFormat,

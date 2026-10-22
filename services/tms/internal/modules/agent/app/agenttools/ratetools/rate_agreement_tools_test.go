@@ -52,8 +52,8 @@ func agreementRule(label string, rate string) *rateagreement.RateAgreementRule {
 		DestinationScopeType: rategeo.ScopeTypeAny,
 		Direction:            rateagreement.DirectionDirectional,
 		Rate:                 decimal.NewNullDecimal(decimal.RequireFromString(rate)),
+		LaneKey:              "ST:" + texasStateID.String() + ">ANY",
 	}
-	rule.ApplyLaneKey()
 
 	return rule
 }

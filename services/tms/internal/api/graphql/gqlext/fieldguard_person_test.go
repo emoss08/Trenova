@@ -147,6 +147,52 @@ func TestPersonRead_ARootThatAuthorizesAKindReturnsItsOwnRecords(t *testing.T) {
 	assert.False(t, resolved)
 }
 
+// A mutation that assigns a worker's training authorizes the training record
+// it returns, not the worker that record carries: for a caller who cannot
+// read workers the worker is linked and shows its reference view, as it would
+// under a query. Row-level security does not hide the worker, so the guard is
+// all that stands between the payload and the worker's other fields.
+func TestPersonRead_ARecordAMutationsPayloadCarriesIsLinked(t *testing.T) {
+	t.Parallel()
+
+	guard, ctx := personGuard(t, permission.ResourceWorker)
+	assigned := []fieldStep{
+		{object: "Mutation", field: "assignWorkerTraining"},
+		{object: "WorkerTrainingRecord", field: "worker"},
+	}
+
+	result, resolved := resolveNested(t, guard, ctx,
+		steps(assigned, fieldStep{object: "Worker", field: "wholeName", nonNull: true})...)
+	assert.Equal(t, "stored value", result, "a worker's name is in the worker reference view")
+	assert.True(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		steps(assigned, fieldStep{object: "Worker", field: "email"})...)
+	assert.Nil(t, result, "a worker's email needs worker read")
+	assert.False(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		fieldStep{object: "Mutation", field: "patchWorker"},
+		fieldStep{object: "Worker", field: "email"},
+	)
+	assert.Equal(t, "stored value", result, "the record a mutation returns is its own")
+	assert.True(t, resolved)
+
+	result, resolved = resolveNested(t, guard, ctx,
+		fieldStep{object: "Mutation", field: "assignWorkerTraining", authorizes: "worker"},
+		fieldStep{object: "WorkerTrainingRecord", field: "worker"},
+		fieldStep{object: "Worker", field: "email"},
+	)
+	assert.Equal(t, "stored value", result, "a mutation that declares @authorizes returns its own")
+	assert.True(t, resolved)
+
+	reader, readerCtx := personGuard(t)
+	result, resolved = resolveNested(t, reader, readerCtx,
+		steps(assigned, fieldStep{object: "Worker", field: "email"})...)
+	assert.Equal(t, "stored value", result, "a worker reader sees the whole worker")
+	assert.True(t, resolved)
+}
+
 func TestPersonRead_APartOfALinkedRecordFollowsThatRecordsRead(t *testing.T) {
 	t.Parallel()
 

@@ -1,86 +1,67 @@
-import {
-  checkExpression,
-  engineErrorRange,
-  engineErrorText,
-  type ExprDiagnostic,
-  type ExprType,
-} from "@/components/formula-editor/expr-check";
-import type { Program } from "@/components/formula-editor/expr-parser";
+import { checkExpression } from "@/components/formula-editor/formula-check";
+import { lintFindings } from "@/components/formula-editor/expr-lint";
 import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
-import type { FormulaStatement } from "@trenova/shared/types/formula-template";
-
-export { inferInputType } from "@/components/formula-editor/expr-check";
+import type {
+  FormulaBinding,
+  FormulaCheckStatement,
+  FormulaLookupTable,
+} from "@trenova/shared/rules/formula";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
+import type { FormulaDiagnostic, FormulaValueType } from "@trenova/shared/types/formula-template";
 
 export type ExpressionAnalysis = {
+  /** Nothing but spaces and comments: the studio shows where to start, not a problem. */
   empty: boolean;
-  /** Everything the language service found, errors first by position. */
-  problems: ExprDiagnostic[];
-  /** Problems that stop the expression from running. */
+  /** Everything `formula.check` found, sorted by position, except that the formula is empty. */
+  problems: FormulaDiagnostic[];
+  /** Problems that stop the expression from saving. */
   errorCount: number;
   warningCount: number;
-  /** Shipment schema variables the expression reads, by root path. */
+  /** Schema fields the expression reads, by the path it reads them as. */
   schemaReads: ReadonlySet<string>;
   /** The template's own inputs the expression reads. */
   inputReads: ReadonlySet<string>;
   functionCalls: ReadonlySet<string>;
   /** Every name the expression reads, inputs first, in the order they first appear. */
   reads: readonly string[];
-  /** Names bound with `let`; they are the expression's own and never inputs. */
-  bindings: ReadonlySet<string>;
-  program: Program;
-  resultType: ExprType;
-  /** The engine's schema is still loading, so names have not been checked yet. */
+  /** The top-level `let` lines; they are the expression's own and never inputs. */
+  bindings: readonly FormulaBinding[];
+  /** Each `let` line and value, with its range: what the trace and the inline values follow. */
+  statements: readonly FormulaCheckStatement[];
+  /** Every rate table the expression reads, in source order. */
+  lookupTables: readonly FormulaLookupTable[];
+  resultType: FormulaValueType;
+  /** The schema is still loading, so names have not been checked yet. */
   pending: boolean;
 };
 
-const EMPTY_SET: ReadonlySet<string> = new Set();
-
 /**
  * What the expression reads and what is wrong with it, from the same
- * language service the editor underlines with, so the problems list, the
- * status bar and the rate trace never disagree with the squiggles.
+ * `formula.check` the editor underlines with and the server saves by, so the
+ * problems list, the status bar and the rate trace never disagree with the
+ * squiggles.
  */
-export function analyzeExpression(expression: string, known: KnownIdentifiers): ExpressionAnalysis {
-  const analysis = checkExpression(expression, known);
-  const empty = analysis.program.empty;
-  const problems = empty ? [] : analysis.diagnostics;
+export function analyzeExpression(
+  rules: RulesRuntime,
+  expression: string,
+  known: KnownIdentifiers,
+): ExpressionAnalysis {
+  const check = checkExpression(rules, expression, known);
+  const problems = lintFindings(check.diagnostics);
   return {
-    empty,
+    empty: check.empty,
     problems,
     errorCount: problems.filter((problem) => problem.severity === "error").length,
     warningCount: problems.filter((problem) => problem.severity === "warning").length,
-    schemaReads: empty ? EMPTY_SET : analysis.schemaReads,
-    inputReads: empty ? EMPTY_SET : analysis.inputReads,
-    functionCalls: empty ? EMPTY_SET : analysis.functionCalls,
-    reads: empty ? [] : analysis.reads,
-    bindings: new Set(analysis.bindings.keys()),
-    program: analysis.program,
-    resultType: analysis.resultType,
-    pending: analysis.pending,
-  };
-}
-
-/**
- * What the engine said when it ran the expression on the preview load, as a
- * problem anchored where it happened: on the statement the trace blames, or
- * at the position expr writes into its message, or on the whole expression.
- */
-export function engineProblem(
-  expression: string,
-  error: string,
-  statements: readonly FormulaStatement[] | null | undefined,
-): ExprDiagnostic {
-  const failed = statements?.find((statement) => statement.error);
-  const text = engineErrorText(failed?.error ?? error);
-  const range = failed
-    ? { from: failed.start, to: failed.end }
-    : (engineErrorRange(error, expression) ?? { from: 0, to: expression.length });
-  return {
-    ...range,
-    severity: "error",
-    code: "engine",
-    message: text,
-    fixes: [],
+    schemaReads: new Set(check.schemaReads),
+    inputReads: new Set(check.inputReads),
+    functionCalls: new Set(check.functionCalls),
+    reads: check.reads,
+    bindings: check.bindings,
+    statements: check.statements,
+    lookupTables: check.lookupTables,
+    resultType: check.resultType,
+    pending: check.pending,
   };
 }
 

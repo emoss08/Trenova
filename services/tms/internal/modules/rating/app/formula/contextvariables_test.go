@@ -9,13 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -43,21 +44,13 @@ func setupServiceWithProviders(
 
 	registry := newTestRegistry(t)
 	res := resolver.NewResolver()
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-	require.NoError(t, err)
-
 	return formula.NewService(formula.ServiceParams{
-		Logger:           zap.NewNop(),
-		Registry:         registry,
-		Engine:           eng,
+		Logger:   zap.NewNop(),
+		Registry: registry,
+		Environment: environment.NewBuilder(environment.Params{
+			Registry: registry,
+			Resolver: res,
+		}),
 		Resolver:         res,
 		VersionRepo:      &stubVersionRepo{},
 		RateMatrixRepo:   &stubMatrixRepo{},
@@ -103,36 +96,44 @@ func TestContextVariables_MemoizedPerContextAndTenant(t *testing.T) {
 	assert.EqualValues(t, 3, fuel.calls.Load(), "without a memo every call asks")
 }
 
-func TestBuildValidationEnvironmentForTenant_IncludesProvidedVariables(t *testing.T) {
+func TestPreview_WithoutAShipmentSeesTheTenantsProvidedValuesExactly(t *testing.T) {
 	t.Parallel()
 
 	fuel := &stubContextProvider{variables: map[string]any{"fuelPrice": 3.85}}
 	svc := setupServiceWithProviders(t, fuel)
 
-	env, err := svc.BuildValidationEnvironmentForTenant(
-		t.Context(),
-		testTenant(),
-		"shipment",
-		map[string]any{"customRate": 2.0},
-	)
+	preview, err := svc.Preview(t.Context(), &formula.PreviewRequest{
+		SchemaID:   "shipment",
+		Expression: "coalesce(fuelPrice, 0) * customRate",
+		Variables:  map[string]any{"customRate": 2.0},
+		TenantInfo: testTenant(),
+	})
 	require.NoError(t, err)
-	assert.InDelta(t, 3.85, env["fuelPrice"], 0.0001)
-	assert.InDelta(t, 2.0, env["customRate"], 0.0001)
+	require.True(t, preview.Valid(), "%+v", preview.Diagnostics)
+	assert.Equal(t, decimal.RequireFromString("7.7"), preview.Evaluated.Amount)
+	assert.Equal(t, decimal.RequireFromString("3.85"), preview.Variables["fuelPrice"])
+	assert.Equal(t, decimal.RequireFromString("2"), preview.Variables["customRate"])
 }
 
-func TestEvaluatePredicate_SeesTheTenantsProvidedValues(t *testing.T) {
+func TestEvaluatePredicates_SeeTheTenantsProvidedValues(t *testing.T) {
 	t.Parallel()
 
 	fuel := &stubContextProvider{variables: map[string]any{"fuelPrice": 4.5}}
 	svc := setupServiceWithProviders(t, fuel)
 
-	holds, err := svc.EvaluatePredicate(t.Context(), &formulatemplateports.EvaluatePredicateRequest{
-		Expression: "fuelPrice > 4",
-		SchemaID:   "shipment",
-		Entity:     &shipment.Shipment{ServiceType: &servicetype.ServiceType{Code: "STD"}},
-		TenantInfo: testTenant(),
-	})
+	outcomes, err := svc.EvaluatePredicates(
+		t.Context(),
+		&formulatemplateports.EvaluatePredicatesRequest{
+			Expressions: []string{"fuelPrice > 4", "fuelPrice > 5"},
+			SchemaID:    "shipment",
+			Entity:      &shipment.Shipment{ServiceType: &servicetype.ServiceType{Code: "STD"}},
+			TenantInfo:  testTenant(),
+		},
+	)
 	require.NoError(t, err)
-	assert.True(t, holds)
-	assert.EqualValues(t, 1, fuel.calls.Load())
+	require.Len(t, outcomes, 2)
+	require.NoError(t, outcomes[0].Err)
+	assert.True(t, outcomes[0].Holds)
+	assert.False(t, outcomes[1].Holds)
+	assert.EqualValues(t, 1, fuel.calls.Load(), "one batch builds one environment")
 }

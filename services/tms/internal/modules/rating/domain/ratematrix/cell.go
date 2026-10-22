@@ -112,27 +112,6 @@ func (rmc *RateMatrixCell) SetBoundsAt(position int16, minimum, maximum decimal.
 	}
 }
 
-// ContainsQuantity reports whether a quantity falls inside the cell's band on
-// the given axis.
-//
-// Bands are half open: a shipment weighing exactly the upper bound belongs to
-// the next band up. Tariffs are written that way — a "1000 to 2000" break means
-// two thousand pounds rates at the next tier — and closed intervals would let
-// two adjacent bands both claim the boundary.
-func (rmc *RateMatrixCell) ContainsQuantity(position int16, quantity decimal.Decimal) bool {
-	minimum, maximum := rmc.BoundsAt(position)
-
-	if minimum.Valid && quantity.LessThan(minimum.Decimal) {
-		return false
-	}
-
-	if maximum.Valid && quantity.GreaterThanOrEqual(maximum.Decimal) {
-		return false
-	}
-
-	return true
-}
-
 func (rmc *RateMatrixCell) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(rmc,
 		validation.Field(&rmc.D0Key,

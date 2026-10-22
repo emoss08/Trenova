@@ -1,18 +1,22 @@
 package shipment
 
 import (
-	"sort"
+	"context"
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/decimalutils"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 const SharePlaces = 2
+
+var errSplitShape = errors.New("the rules module answered a split with the wrong shape")
 
 // AllocatedCharge is one payer's slice of one charge.
 type AllocatedCharge struct {
@@ -36,17 +40,6 @@ type PayerShare struct {
 	FreightAmount     decimal.Decimal
 	AccessorialAmount decimal.Decimal
 	TotalAmount       decimal.Decimal
-}
-
-func (p *PayerShare) add(charge AllocatedCharge) {
-	p.Charges = append(p.Charges, charge)
-	switch charge.Kind {
-	case ChargeAllocationKindFreight:
-		p.FreightAmount = p.FreightAmount.Add(charge.Amount)
-	case ChargeAllocationKindAccessorial, ChargeAllocationKindOrderCharge:
-		p.AccessorialAmount = p.AccessorialAmount.Add(charge.Amount)
-	}
-	p.TotalAmount = p.TotalAmount.Add(charge.Amount)
 }
 
 // ShareResolution is a shipment's charges divided among its payers. The default
@@ -90,159 +83,157 @@ func (r *ShareResolution) Primary() *PayerShare {
 	return r.Shares[0]
 }
 
-type shareBuilder struct {
-	defaultPayer pulid.ID
-	byPayer      map[pulid.ID]*PayerShare
-	order        []pulid.ID
-	split        bool
+type chargeGroup struct {
+	base   AllocatedCharge
+	field  string
+	charge rules.AllocationCharge
 }
 
-func newShareBuilder(defaultPayer pulid.ID) *shareBuilder {
-	b := &shareBuilder{
-		defaultPayer: defaultPayer,
-		byPayer:      make(map[pulid.ID]*PayerShare, 2),
+func allocationRows(allocations []*ChargeAllocation) []rules.AllocationRow {
+	rows := make([]rules.AllocationRow, 0, len(allocations))
+	for _, allocation := range allocations {
+		rows = append(rows, rules.AllocationRow{
+			ID:               allocation.ID.String(),
+			BillToCustomerID: allocation.BillToCustomerID.String(),
+			Method:           string(allocation.Method),
+			Percent:          allocation.Percent,
+			Amount:           allocation.Amount,
+			Sequence:         int64(allocation.Sequence),
+		})
 	}
-	b.share(defaultPayer)
 
-	return b
+	return rows
 }
 
-func (b *shareBuilder) share(payerID pulid.ID) *PayerShare {
-	if existing, ok := b.byPayer[payerID]; ok {
-		return existing
-	}
-	share := &PayerShare{PayerID: payerID}
-	b.byPayer[payerID] = share
-	b.order = append(b.order, payerID)
-
-	return share
-}
-
-func (b *shareBuilder) resolution() *ShareResolution {
-	shares := make([]*PayerShare, 0, len(b.order))
-	shares = append(shares, b.byPayer[b.defaultPayer])
-	others := make([]pulid.ID, 0, len(b.order))
-	for _, id := range b.order {
-		if id != b.defaultPayer {
-			others = append(others, id)
-		}
-	}
-	sort.Slice(others, func(i, j int) bool { return others[i] < others[j] })
-	for _, id := range others {
-		shares = append(shares, b.byPayer[id])
-	}
-
-	return &ShareResolution{
-		DefaultPayerID: b.defaultPayer,
-		Shares:         shares,
-		IsSplit:        b.split || len(shares) > 1,
-	}
-}
-
-// AllocateCharge divides one charge among the allocations that name it, or
-// gives it whole to the default payer when nothing does. Percent rows are
-// rounded to cents with the remainder on the last row by sequence; amount rows
-// must add up to the charge exactly.
-func (b *shareBuilder) allocate(
-	base AllocatedCharge,
+func accessorialCharge(
+	charge *AdditionalCharge,
 	allocations []*ChargeAllocation,
-	field string,
-) error {
-	if len(allocations) == 0 {
-		base.Percent = decimal.NewNullDecimal(decimalutils.Percent100)
-		base.Amount = base.ChargeTotal.RoundBank(SharePlaces)
-		base.Partial = false
-		b.share(b.defaultPayer).add(base)
-		return nil
+) rules.AllocationCharge {
+	if charge == nil {
+		return rules.AllocationCharge{Kind: rules.AllocationKindAccessorial}
 	}
 
-	sorted := make([]*ChargeAllocation, len(allocations))
-	copy(sorted, allocations)
-	sort.SliceStable(sorted, func(i, j int) bool {
-		if sorted[i].Sequence != sorted[j].Sequence {
-			return sorted[i].Sequence < sorted[j].Sequence
-		}
-		return sorted[i].ID < sorted[j].ID
-	})
+	return rules.AllocationCharge{
+		Kind:        rules.AllocationKindAccessorial,
+		Method:      string(charge.Method),
+		Amount:      decimal.NewNullDecimal(charge.Amount),
+		Unit:        int64(charge.Unit),
+		Allocations: allocationRows(allocations),
+	}
+}
 
-	method := sorted[0].Method
-	amounts := make([]decimal.Decimal, 0, len(sorted))
-	for _, allocation := range sorted {
-		if allocation.Method != method {
-			return errortypes.NewValidationError(
-				field,
-				errortypes.ErrInvalid,
-				"A charge must be split either by percent or by amount, not both",
-			)
+func totalCharge(
+	kind string,
+	total decimal.Decimal,
+	allocations []*ChargeAllocation,
+) rules.AllocationCharge {
+	return rules.AllocationCharge{
+		Kind:        kind,
+		Total:       decimal.NewNullDecimal(total),
+		Allocations: allocationRows(allocations),
+	}
+}
+
+func groupAllocations(
+	allocations []*ChargeAllocation,
+) (freight []*ChargeAllocation, byCharge map[pulid.ID][]*ChargeAllocation) {
+	freight = make([]*ChargeAllocation, 0, len(allocations))
+	byCharge = make(map[pulid.ID][]*ChargeAllocation, len(allocations))
+	for _, allocation := range allocations {
+		if allocation == nil {
+			continue
+		}
+		switch allocation.ChargeKind {
+		case ChargeAllocationKindFreight:
+			freight = append(freight, allocation)
+		case ChargeAllocationKindAccessorial:
+			if target := allocation.TargetID(); target.IsNotNil() {
+				byCharge[target] = append(byCharge[target], allocation)
+			}
+		case ChargeAllocationKindOrderCharge:
 		}
 	}
 
-	switch method {
-	case ChargeAllocationMethodPercent:
-		percents := make([]decimal.Decimal, 0, len(sorted))
-		for _, allocation := range sorted {
-			percents = append(percents, allocation.Percent.Decimal)
-		}
-		shares, err := decimalutils.AllocatePercent(base.ChargeTotal, percents, SharePlaces)
-		if err != nil {
-			return errortypes.NewValidationError(
-				field,
-				errortypes.ErrInvalid,
-				"Percent allocations for this charge must total 100",
-			)
-		}
-		amounts = shares
-	case ChargeAllocationMethodAmount:
-		for _, allocation := range sorted {
-			amounts = append(amounts, allocation.Amount.Decimal)
-		}
-		if !decimalutils.SumEquals(amounts, base.ChargeTotal, SharePlaces) {
-			return errortypes.NewValidationError(
-				field,
-				errortypes.ErrInvalid,
-				"Amount allocations for this charge must add up to {0}",
-				base.ChargeTotal.StringFixed(SharePlaces),
-			)
-		}
-	default:
-		return errortypes.NewValidationError(
-			field,
-			errortypes.ErrInvalid,
-			"Allocation method must be Percent or Amount",
+	return freight, byCharge
+}
+
+func resolveGroups(
+	ctx context.Context,
+	defaultPayer pulid.ID,
+	base decimal.Decimal,
+	groups []chargeGroup,
+) (*ShareResolution, error) {
+	req := &rules.AllocationSplitRequest{
+		DefaultPayerID: defaultPayer.String(),
+		Base:           base,
+		Charges:        make([]rules.AllocationCharge, 0, len(groups)),
+	}
+	for i := range groups {
+		req.Charges = append(req.Charges, groups[i].charge)
+	}
+
+	split, err := rules.SplitCharges(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("split charges between payers: %w", err)
+	}
+	if len(split.Charges) != len(groups) {
+		return nil, fmt.Errorf(
+			"%w: %d charges came back for %d sent",
+			errSplitShape,
+			len(split.Charges),
+			len(groups),
 		)
 	}
-
-	for i, allocation := range sorted {
-		share := base
-		share.AllocationID = allocation.ID
-		share.Method = method
-		share.Amount = amounts[i].RoundBank(SharePlaces)
-		share.Partial = !share.Amount.Equal(base.ChargeTotal.RoundBank(SharePlaces))
-		switch method {
-		case ChargeAllocationMethodPercent:
-			share.Percent = allocation.Percent
-		case ChargeAllocationMethodAmount:
-			share.Percent = decimal.NullDecimal{}
-			if !base.ChargeTotal.IsZero() {
-				share.Percent = decimal.NewNullDecimal(
-					share.Amount.Mul(decimalutils.Percent100).Div(base.ChargeTotal).Round(6),
-				)
-			}
-		}
-		if share.Partial || allocation.BillToCustomerID != b.defaultPayer {
-			b.split = true
-		}
-		b.share(allocation.BillToCustomerID).add(share)
+	if index, message := split.FirstError(); message != nil {
+		return nil, message.ValidationError(groups[index].field, errortypes.ErrInvalid)
 	}
 
-	return nil
+	resolution := &ShareResolution{
+		DefaultPayerID: defaultPayer,
+		Shares:         make([]*PayerShare, 0, len(split.Payers)),
+		IsSplit:        split.IsSplit,
+	}
+	byPayer := make(map[pulid.ID]*PayerShare, len(split.Payers))
+	for _, payer := range split.Payers {
+		share := &PayerShare{
+			PayerID:           pulid.ID(payer.PayerID),
+			FreightAmount:     payer.FreightAmount,
+			AccessorialAmount: payer.AccessorialAmount,
+			TotalAmount:       payer.TotalAmount,
+		}
+		byPayer[share.PayerID] = share
+		resolution.Shares = append(resolution.Shares, share)
+	}
+
+	for i, charge := range split.Charges {
+		for _, share := range charge.Shares {
+			payer, ok := byPayer[pulid.ID(share.BillToCustomerID)]
+			if !ok {
+				return nil, fmt.Errorf(
+					"%w: a share went to %s, who is not among the payers",
+					errSplitShape,
+					share.BillToCustomerID,
+				)
+			}
+			allocated := groups[i].base
+			allocated.ChargeTotal = charge.Total
+			allocated.AllocationID = pulid.ID(share.AllocationID)
+			allocated.Method = ChargeAllocationMethod(share.Method)
+			allocated.Percent = share.Percent
+			allocated.Amount = share.Amount
+			allocated.Partial = share.Partial
+			payer.Charges = append(payer.Charges, allocated)
+		}
+	}
+
+	return resolution, nil
 }
 
-// ResolveShares divides a shipment's freight and accessorials among its payers.
-// Percentage accessorials are computed on the full freight charge and only then
-// split, so a payer with 40% of the linehaul does not also see a smaller fuel
-// surcharge than the contract produced.
-func ResolveShares(shp *Shipment, allocations []*ChargeAllocation) (*ShareResolution, error) {
+func ResolveShares(
+	ctx context.Context,
+	shp *Shipment,
+	allocations []*ChargeAllocation,
+) (*ShareResolution, error) {
 	if shp == nil {
 		return nil, errortypes.NewValidationError(
 			"shipment",
@@ -251,55 +242,65 @@ func ResolveShares(shp *Shipment, allocations []*ChargeAllocation) (*ShareResolu
 		)
 	}
 
-	builder := newShareBuilder(shp.PayerID())
 	freight := shp.FreightChargeAmount.Decimal
+	freightAllocations, byCharge := groupAllocations(allocations)
 
-	freightAllocations := make([]*ChargeAllocation, 0, len(allocations))
-	byCharge := make(map[pulid.ID][]*ChargeAllocation, len(allocations))
-	for _, allocation := range allocations {
-		if allocation == nil {
-			continue
-		}
-		switch allocation.ChargeKind {
-		case ChargeAllocationKindFreight:
-			freightAllocations = append(freightAllocations, allocation)
-		case ChargeAllocationKindAccessorial:
-			target := allocation.TargetID()
-			if target.IsNil() {
-				continue
-			}
-			byCharge[target] = append(byCharge[target], allocation)
-		case ChargeAllocationKindOrderCharge:
-		}
-	}
-
-	if err := builder.allocate(AllocatedCharge{
-		Kind:        ChargeAllocationKindFreight,
-		ChargeTotal: freight,
-	}, freightAllocations, "freightAllocations"); err != nil {
-		return nil, err
-	}
-
+	groups := make([]chargeGroup, 0, len(shp.AdditionalCharges)+1)
+	groups = append(groups, chargeGroup{
+		base:   AllocatedCharge{Kind: ChargeAllocationKindFreight},
+		field:  "freightAllocations",
+		charge: totalCharge(rules.AllocationKindFreight, freight, freightAllocations),
+	})
 	for i, charge := range shp.AdditionalCharges {
 		if charge == nil {
 			continue
 		}
-		field := "additionalCharges[" + strconv.Itoa(i) + "].allocations"
-		if err := builder.allocate(AllocatedCharge{
-			Kind:        ChargeAllocationKindAccessorial,
-			Charge:      charge,
-			ChargeTotal: charge.Total(freight),
-		}, byCharge[charge.ID], field); err != nil {
-			return nil, err
-		}
+		groups = append(groups, chargeGroup{
+			base: AllocatedCharge{
+				Kind:   ChargeAllocationKindAccessorial,
+				Charge: charge,
+			},
+			field:  "additionalCharges[" + strconv.Itoa(i) + "].allocations",
+			charge: accessorialCharge(charge, byCharge[charge.ID]),
+		})
 	}
 
-	return builder.resolution(), nil
+	return resolveGroups(ctx, shp.PayerID(), freight, groups)
 }
 
-// ResolveOrderChargeShares divides order-level charges the same way, with the
-// order's own payer as the default. Charges are identified by id, description
-// and amount so the order package can call this without a cycle.
+func BillsWholeChargeToPayer(
+	ctx context.Context,
+	shp *Shipment,
+	charge *AdditionalCharge,
+	rows []*ChargeAllocation,
+) (bool, error) {
+	if shp == nil {
+		return false, nil
+	}
+
+	freight := shp.FreightChargeAmount.Decimal
+	request := totalCharge(rules.AllocationKindFreight, freight, rows)
+	if charge != nil {
+		request = accessorialCharge(charge, rows)
+	}
+
+	split, err := rules.SplitCharges(ctx, &rules.AllocationSplitRequest{
+		DefaultPayerID: shp.PayerID().String(),
+		Base:           freight,
+		Charges:        []rules.AllocationCharge{request},
+	})
+	if err != nil {
+		return false, fmt.Errorf("check whether a split bills the whole charge: %w", err)
+	}
+	if len(split.Charges) != 1 || split.Charges[0].Error != nil {
+		return false, nil
+	}
+
+	shares := split.Charges[0].Shares
+	return len(shares) == 1 && !shares[0].Partial &&
+		pulid.ID(shares[0].BillToCustomerID) == shp.PayerID(), nil
+}
+
 type OrderChargeRef struct {
 	ID          pulid.ID
 	Description string
@@ -307,37 +308,39 @@ type OrderChargeRef struct {
 }
 
 func ResolveOrderChargeShares(
+	ctx context.Context,
 	charges []OrderChargeRef,
 	allocations []*ChargeAllocation,
 	defaultPayerID pulid.ID,
 ) (*ShareResolution, error) {
-	builder := newShareBuilder(defaultPayerID)
-
 	byCharge := make(map[pulid.ID][]*ChargeAllocation, len(allocations))
 	for _, allocation := range allocations {
 		if allocation == nil || allocation.ChargeKind != ChargeAllocationKindOrderCharge {
 			continue
 		}
-		target := allocation.TargetID()
-		if target.IsNil() {
-			continue
+		if target := allocation.TargetID(); target.IsNotNil() {
+			byCharge[target] = append(byCharge[target], allocation)
 		}
-		byCharge[target] = append(byCharge[target], allocation)
 	}
 
+	groups := make([]chargeGroup, 0, len(charges))
 	for i, charge := range charges {
-		field := "charges[" + strconv.Itoa(i) + "].allocations"
-		if err := builder.allocate(AllocatedCharge{
-			Kind:          ChargeAllocationKindOrderCharge,
-			OrderChargeID: charge.ID,
-			Description:   charge.Description,
-			ChargeTotal:   charge.Amount,
-		}, byCharge[charge.ID], field); err != nil {
-			return nil, err
-		}
+		groups = append(groups, chargeGroup{
+			base: AllocatedCharge{
+				Kind:          ChargeAllocationKindOrderCharge,
+				OrderChargeID: charge.ID,
+				Description:   charge.Description,
+			},
+			field: "charges[" + strconv.Itoa(i) + "].allocations",
+			charge: totalCharge(
+				rules.AllocationKindOrderCharge,
+				charge.Amount,
+				byCharge[charge.ID],
+			),
+		})
 	}
 
-	return builder.resolution(), nil
+	return resolveGroups(ctx, defaultPayerID, decimal.Zero, groups)
 }
 
 // ValidateAllocationsParams carries what a validation pass needs to judge a set

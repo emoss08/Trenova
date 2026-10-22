@@ -1,14 +1,17 @@
-import { formatEditorDocument, type FormatResult } from "@/components/formula-editor/expr-format";
+import { formatEditorDocument } from "@/components/formula-editor/editor-format";
 import type { InlineValue } from "@/components/formula-editor/expr-inline-values";
 import { ExpressionEditor, selectEditorRange } from "@/components/formula-editor/expression-editor";
 import type { EditorRange } from "@/components/formula-editor/highlight-range";
+import { EXPRESSION_SCOPE, previewWarnings } from "@/lib/formula-preview";
 import { apiService } from "@/services/api";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useRichT } from "@trenova/shared/i18n/rich";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { translateMessage } from "@trenova/shared/i18n/message";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import type { FormulaFormatResult } from "@trenova/shared/rules/formula";
 import { formatAltShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import type {
@@ -29,7 +32,6 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { NovaButton } from "../ai/nova-button";
-import { engineErrorText } from "@/components/formula-editor/expr-check";
 import { formatMoney, formatStudioValue, numericAmount } from "../model/format";
 import { useStudio } from "../studio-context";
 import { ExplainPanel, type ExplainState } from "./explain-panel";
@@ -84,15 +86,16 @@ function MaterialBanner() {
 function inlineValuesOf(
   statements: readonly FormulaStatement[] | null | undefined,
   expression: string,
+  t: TranslateFn,
 ): InlineValue[] {
   if (!statements) return [];
   const values: InlineValue[] = [];
   for (const statement of statements) {
-    if (statement.end > expression.length) continue;
+    if (statement.to > expression.length) continue;
     if (statement.error) {
       values.push({
-        at: statement.end,
-        text: `✕ ${engineErrorText(statement.error)}`,
+        at: statement.to,
+        text: t("✕ {0}", translateMessage(statement.error, t)),
         tone: "bad",
       });
       break;
@@ -105,7 +108,7 @@ function inlineValuesOf(
           ? formatStudioValue(amount)
           : formatStudioValue(statement.value);
     values.push({
-      at: statement.end,
+      at: statement.to,
       text: `= ${text}`,
       tone: statement.kind === "result" ? "ok" : "muted",
     });
@@ -119,7 +122,8 @@ function inlineValuesOf(
  */
 export function ExpressionSection() {
   const t = useT();
-  const { mode, known, analysis, preview, askNova, draftContent, declareInput } = useStudio();
+  const { mode, known, analysis, preview, askNova, draftContent, declareInput, rules } =
+    useStudio();
   const { control, getValues } = useFormContext<FormulaTemplateFormValues>();
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
@@ -142,7 +146,9 @@ export function ExpressionSection() {
 
   const empty = analysis.empty;
   const result = preview.result;
-  const serverWarnings = result?.valid ? (result.warnings?.length ?? 0) : 0;
+  const serverWarnings = previewWarnings(result).filter(
+    (warning) => warning.scope !== EXPRESSION_SCOPE,
+  ).length;
   const warnings = analysis.warningCount + serverWarnings;
   const status = empty
     ? { tone: "idle" as const, label: t("Empty") }
@@ -163,9 +169,9 @@ export function ExpressionSection() {
   const inlineValues = useMemo(
     () =>
       showValues && !empty && analysis.errorCount === 0
-        ? inlineValuesOf(result?.statements, getValues("expression") ?? "")
+        ? inlineValuesOf(result?.statements, getValues("expression") ?? "", t)
         : [],
-    [showValues, empty, analysis.errorCount, result?.statements, getValues],
+    [showValues, empty, analysis.errorCount, result?.statements, getValues, t],
   );
 
   const jump = useCallback((range: EditorRange) => {
@@ -176,7 +182,7 @@ export function ExpressionSection() {
   // Formatting is refused, never approximated: a formula that does not parse
   // would lose what the parser could not place, and a comment would be dropped.
   const formatted = useCallback(
-    (outcome: FormatResult) => {
+    (outcome: FormulaFormatResult) => {
       if (outcome.ok) return;
       if (outcome.reason === "syntax") {
         toast.warning(t("Fix the syntax first, then format"));
@@ -189,9 +195,9 @@ export function ExpressionSection() {
   const format = useCallback(() => {
     const view = editorRef.current?.view;
     if (!view) return;
-    formatted(formatEditorDocument(view, { operators: known.operatorNames }));
+    formatted(formatEditorDocument(view, rules));
     view.focus();
-  }, [formatted, known.operatorNames]);
+  }, [formatted, rules]);
 
   return (
     <section className="flex flex-col gap-3">

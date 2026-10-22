@@ -2,6 +2,7 @@ package billingqueueservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
@@ -249,8 +250,6 @@ func (s *service) expandShipmentDetails(
 		return nil
 	}
 
-	defer s.attachPayerShare(ctx, item, tenantInfo)
-
 	cust, err := s.customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 		ID:         fullShipment.CustomerID,
 		TenantInfo: tenantInfo,
@@ -282,7 +281,7 @@ func (s *service) expandShipmentDetails(
 		}
 	}
 
-	return nil
+	return s.attachPayerShare(ctx, item, tenantInfo)
 }
 
 func (s *service) GetStats(
@@ -367,7 +366,7 @@ func (s *service) TransferToBillingItems(
 		)
 	}
 
-	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
+	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}

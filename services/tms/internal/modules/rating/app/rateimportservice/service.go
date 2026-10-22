@@ -157,7 +157,7 @@ func (s *Service) Upload(
 		return nil, err
 	}
 
-	staged, err := stage(sheet, existing, templates)
+	staged, err := stage(ctx, sheet, existing, templates)
 	if err != nil {
 		return nil, templateProblems(err)
 	}

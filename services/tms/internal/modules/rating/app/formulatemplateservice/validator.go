@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +19,9 @@ func (s *Service) validateTemplate(
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	s.validateVariableNames(entity, multiErr)
+	if err := s.validateVariableNames(ctx, entity, multiErr); err != nil {
+		return err
+	}
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -31,24 +31,25 @@ func (s *Service) validateTemplate(
 }
 
 func (s *Service) validateVariableNames(
+	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
 	multiErr *errortypes.MultiError,
-) {
+) error {
 	if len(entity.VariableDefinitions) == 0 {
-		return
+		return nil
 	}
 
-	fields, err := s.formulaService.BuildValidationEnvironment(entity.SchemaID, nil)
-	if err != nil {
-		return
-	}
-
+	roots := s.formulaService.FieldRoots(entity.SchemaID)
 	for i, def := range entity.VariableDefinitions {
 		if def == nil || def.Name == "" {
 			continue
 		}
 		field := fmt.Sprintf("variableDefinitions[%d].name", i)
-		if engine.IsReservedName(def.Name) {
+		reserved, err := s.formulaService.IsReservedName(ctx, def.Name)
+		if err != nil {
+			return err
+		}
+		if reserved {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,
@@ -57,7 +58,7 @@ func (s *Service) validateVariableNames(
 			)
 			continue
 		}
-		if _, shadows := fields[def.Name]; shadows {
+		if _, shadows := roots[def.Name]; shadows {
 			multiErr.Add(
 				field,
 				errortypes.ErrInvalid,
@@ -66,112 +67,38 @@ func (s *Service) validateVariableNames(
 			)
 		}
 	}
+
+	return nil
 }
 
 func (s *Service) validateExpression(
 	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
 ) error {
-	variables := make(map[string]any, len(entity.VariableDefinitions))
-	for _, varDef := range entity.VariableDefinitions {
-		if varDef.DefaultValue != nil {
-			variables[varDef.Name] = varDef.DefaultValue
-			continue
-		}
-
-		variables[varDef.Name] = typeutils.DefaultValueForType(string(varDef.Type))
-	}
-
-	env, err := s.formulaService.BuildValidationEnvironment(entity.SchemaID, variables)
+	checked, err := s.formulaService.CheckTemplate(ctx, entity)
 	if err != nil {
-		return errortypes.NewValidationError(
-			"schemaId",
-			errortypes.ErrInvalid,
-			expressionErrorMessage(err),
-		)
+		return err
 	}
-
-	outcome := s.formulaService.ValidateExpressionDetailed(ctx, entity.Expression, env)
-	if outcome.Err != nil {
-		return errortypes.NewValidationError(
-			"expression",
-			errortypes.ErrInvalid,
-			expressionErrorMessage(outcome.Err),
-		)
-	}
-	if outcome.Warning != "" {
-		s.l.Warn("expression produced a runtime error against the synthetic validation environment",
-			zap.String("expression", entity.Expression),
-			zap.String("warning", outcome.Warning),
-		)
-	}
-	s.logUnguardedNullableFields(ctx, entity, variables)
-
-	multiErr := errortypes.NewMultiError()
-	for i, def := range entity.BreakdownDefinitions {
-		if def == nil {
-			continue
-		}
-		defOutcome := s.formulaService.ValidateExpressionDetailed(ctx, def.Expression, env)
-		if defOutcome.Err != nil {
-			multiErr.Add(
-				fmt.Sprintf("breakdownDefinitions[%d].expression", i),
-				errortypes.ErrInvalid,
-				expressionErrorMessage(defOutcome.Err),
-			)
-		}
-	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}
-
-	if err = s.formulaService.ValidateLookupTables(ctx, entity.Expression, tenantInfo); err != nil {
+	if err = formula.Refusal(checked); err != nil {
 		return err
 	}
 
-	for _, def := range entity.BreakdownDefinitions {
-		if def == nil {
-			continue
-		}
-		if err = s.formulaService.ValidateLookupTables(
-			ctx,
-			def.Expression,
-			tenantInfo,
-		); err != nil {
-			return err
-		}
-	}
-
+	s.logUnguardedNullableFields(entity, checked)
 	return nil
 }
 
-// logUnguardedNullableFields records, at save time, the nullable fields a
-// template relies on without a guard. Saving is still allowed: the Studio has
-// already shown the author the same warning with a one-click fix, and a draft
-// is where an unfinished formula belongs.
 func (s *Service) logUnguardedNullableFields(
-	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
-	variables map[string]any,
+	checked []formula.Checked,
 ) {
-	found, err := s.formulaService.UnguardedNullableFields(
-		ctx,
-		entity.Expression,
-		entity.SchemaID,
-		variables,
-	)
-	if err != nil || len(found) == 0 {
-		return
+	fields := make([]string, 0, 2)
+	for _, item := range checked {
+		for _, name := range item.Check.Unguarded() {
+			fields = appendUnique(fields, name)
+		}
 	}
-
-	fields := make([]string, 0, len(found))
-	for _, item := range found {
-		fields = append(fields, item.Field)
+	if len(fields) == 0 {
+		return
 	}
 
 	s.l.Info("formula template uses nullable fields without a guard",

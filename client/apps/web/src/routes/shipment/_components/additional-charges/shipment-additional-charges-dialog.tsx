@@ -16,7 +16,8 @@ import {
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
 import type { SelectOption as GraphQLSelectOption } from "@/lib/graphql/select-options";
-import { chargeLineTotal } from "@trenova/shared/lib/charge-split";
+import { useRules } from "@trenova/shared/hooks/use-rules";
+import { chargeTotals } from "@trenova/shared/rules/allocation";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useRef } from "react";
 import { type Control, type FieldValues, useFormContext, useWatch } from "react-hook-form";
@@ -52,7 +53,10 @@ export function AdditionalChargeDialog({
   // server, so its dollar total is unknown here and only a percent split can
   // be checked against it.
   const percentOnly = method === "Percentage";
-  const lineTotal = percentOnly ? null : chargeLineTotal({ method, amount, unit });
+  const rules = useRules();
+  const lineTotal = percentOnly
+    ? null
+    : chargeTotals(rules, { charges: [{ method, amount, unit }] }).totals[0];
   const lastAppliedChargeIdRef = useRef<string | null>(
     isEditing ? (getValues(`additionalCharges.${index}.accessorialChargeId`) ?? null) : null,
   );

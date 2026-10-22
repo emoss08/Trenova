@@ -21,6 +21,8 @@ export default defineConfig({
     projects: [
       {
         plugins: [routeCatalogs({ srcDir: srcAlias })],
+        // The setup loads rules.wasm through @trenova/shared/rules/test-module (?inline).
+        assetsInclude: ["**/*.wasm"],
         resolve: {
           alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
           dedupe: ["react-router"],
@@ -47,6 +49,7 @@ export default defineConfig({
             ],
           }),
         ],
+        assetsInclude: ["**/*.wasm"],
         resolve: {
           alias: { "@": srcAlias, "@trenova/shared": sharedAlias, ...editionAlias() },
           dedupe: ["react-router"],

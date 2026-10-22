@@ -102,7 +102,6 @@ func TestGrants_NamesTheNarrowKindsTheDatabaseEnforces(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, readscope.Grants{
 		"shipment": {Scope: "own"},
-		"order":    {Scope: "none"},
 		"worker":   {Scope: "team", Team: team},
 	}, grants)
 	assert.Equal(t, 1, teams.calls)
@@ -119,14 +118,15 @@ func TestGrants_IgnoresAScopeTheKindDoesNotDeclare(t *testing.T) {
 	grants, err := svc.Grants(t.Context(), principal())
 
 	require.NoError(t, err)
-	assert.Equal(t, readscope.Grants{
-		"order":   {Scope: "own"},
-		"invoice": {Scope: "none"},
-		"worker":  {Scope: "none"},
-	}, grants)
+	assert.Equal(t, readscope.Grants{"order": {Scope: "own"}}, grants)
 }
 
-func TestGrants_DeniesEveryKindThePrincipalCannotRead(t *testing.T) {
+// A kind the principal cannot read is left out of the read scope, so the
+// database shows its rows to the relations, loaders and joins that reach them
+// from a record the person can read, and the application shows them as the
+// kind's reference view. A root read of the kind is refused before it reaches
+// the database.
+func TestGrants_LeavesAKindThePrincipalCannotReadToTheApplication(t *testing.T) {
 	t.Parallel()
 
 	svc := newService(t, enforcing(), &fakeTeams{}, map[string]permission.DataScope{
@@ -136,15 +136,18 @@ func TestGrants_DeniesEveryKindThePrincipalCannotRead(t *testing.T) {
 	grants, err := svc.Grants(t.Context(), principal())
 
 	require.NoError(t, err)
-	assert.Equal(t, readscope.Grants{
-		"invoice": {Scope: readscope.ScopeNone},
-		"order":   {Scope: readscope.ScopeNone},
-		"worker":  {Scope: readscope.ScopeNone},
-	}, grants)
+	assert.Empty(t, grants)
 
 	encoded, err := grants.Encode()
 	require.NoError(t, err)
-	assert.Equal(t, "invoice:none;order:none;worker:none", encoded)
+	assert.Empty(t, encoded)
+	for _, kind := range []string{"shipment", "order", "invoice", "worker"} {
+		narrowed, err := readscope.Narrows(
+			readscope.With(t.Context(), svc.Resolver(principal())), kind,
+		)
+		require.NoError(t, err)
+		assert.False(t, narrowed, kind)
+	}
 }
 
 func TestGrants_NarrowsNothingWhileTheDatabaseDoesNotEnforceScopes(t *testing.T) {

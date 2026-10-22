@@ -157,7 +157,11 @@ func (r *repository) reconcileHeaderTotals(
 	entity *shipment.Shipment,
 ) error {
 	freight := entity.FreightChargeAmount.Decimal
-	other := shipment.AdditionalChargesTotal(entity.AdditionalCharges, freight)
+	totals, err := shipment.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
+	if err != nil {
+		return err
+	}
+	other := totals.Sum
 	total := freight.Add(other)
 
 	if entity.OtherChargeAmount.Valid && entity.OtherChargeAmount.Decimal.Equal(other) &&

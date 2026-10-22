@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -12,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/decimalutils"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -40,28 +43,28 @@ type ScenarioPrice struct {
 	Amount    string
 	Valid     bool
 	Error     string
+	Code      string
 }
 
 func (s *Service) PriceScenario(ctx context.Context, req *PriceScenarioRequest) *ScenarioPrice {
-	evaluation := s.TestExpression(
+	evaluation, err := s.TestExpression(
 		contextvariablecache.With(ratetablecache.With(ctx)),
 		candidateRequest(req.SchemaID, req.TenantInfo, req.Content, req.Inputs),
 	)
 
 	price := &ScenarioPrice{Variables: scenarioVariables(req.Content, req.Inputs)}
-	if !evaluation.Valid {
-		price.Error = evaluationError(evaluation)
+	if err != nil {
+		price.Error = errortypes.LocalizedText(ctx, err)
 		return price
 	}
-
-	amount, ok := evaluation.Result.(decimal.Decimal)
-	if !ok {
-		price.Error = "The expression evaluated to something other than an amount"
+	if !evaluation.Valid || evaluation.Result == nil {
+		price.Error = evaluationError(ctx, evaluation)
+		price.Code = evaluation.FailureCode()
 		return price
 	}
 
 	price.Valid = true
-	price.Amount = amount.String()
+	price.Amount = evaluation.Result.String()
 	return price
 }
 
@@ -75,6 +78,7 @@ type ScenarioTraceRequest struct {
 type scenarioRun struct {
 	content    *formulatemplate.ScenarioContent
 	evaluation *TestExpressionResponse
+	failure    string
 }
 
 func (r *scenarioRun) valid() bool {
@@ -94,12 +98,11 @@ func (r *scenarioRun) billed() *string {
 		return nil
 	}
 
-	amount, ok := r.evaluation.Result.(decimal.Decimal)
-	if !ok {
+	if r.evaluation.Result == nil {
 		return nil
 	}
 
-	return decimalText(amount)
+	return decimalText(*r.evaluation.Result)
 }
 
 func (r *scenarioRun) clamp() (string, *decimal.Decimal) {
@@ -129,11 +132,11 @@ func (r *scenarioRun) terms() ([]string, map[string]*string) {
 		if _, seen := values[statement.Name]; !seen {
 			order = append(order, statement.Name)
 		}
-		if statement.Error != "" {
+		if statement.Error != nil {
 			values[statement.Name] = nil
 			continue
 		}
-		values[statement.Name] = traceText(statement.Value)
+		values[statement.Name] = TraceValueText(statement.Value)
 	}
 
 	return order, values
@@ -187,7 +190,7 @@ func (s *Service) ScenarioTrace(
 	before := s.runTracedScenario(ctx, template.SchemaID, req.TenantInfo, recorded, testCase)
 	after := s.runTracedScenario(ctx, template.SchemaID, req.TenantInfo, req.Candidate, testCase)
 
-	trace := buildScenarioTrace(testCase, before, after)
+	trace := buildScenarioTrace(ctx, testCase, before, after)
 	trace.BaselineLabel = baselineLabel(testCase.RecordedOnVersion)
 	trace.RecordedOnVersion = testCase.RecordedOnVersion
 	trace.RecordedBy = recorderOf(testCase)
@@ -229,10 +232,15 @@ func (s *Service) runTracedScenario(
 	req := candidateRequest(schemaID, tenantInfo, content, testCase.Variables)
 	req.TraceStatements = true
 
-	return &scenarioRun{content: content, evaluation: s.TestExpression(ctx, req)}
+	evaluation, err := s.TestExpression(ctx, req)
+	if err != nil {
+		return &scenarioRun{content: content, failure: errortypes.LocalizedText(ctx, err)}
+	}
+	return &scenarioRun{content: content, evaluation: evaluation}
 }
 
 func buildScenarioTrace(
+	ctx context.Context,
 	testCase *formulatemplate.TestCase,
 	before, after *scenarioRun,
 ) *formulatemplateports.ScenarioTrace {
@@ -257,7 +265,11 @@ func buildScenarioTrace(
 		trace.Delta = decimalText(actual.Sub(testCase.ExpectedAmount))
 	}
 	if !after.valid() {
-		trace.Error = evaluationError(after.evaluation)
+		trace.Error = after.failure
+		if trace.Error == "" {
+			trace.Error = evaluationError(ctx, after.evaluation)
+			trace.ErrorCode = after.evaluation.FailureCode()
+		}
 	}
 
 	rows := inputRows(testCase.Variables, before.content, after.content)
@@ -444,15 +456,27 @@ func decimalText(value decimal.Decimal) *string {
 	return &text
 }
 
-func evaluationError(evaluation *TestExpressionResponse) string {
-	if evaluation == nil {
-		return "The expression could not be evaluated"
+func evaluationError(ctx context.Context, evaluation *TestExpressionResponse) string {
+	if evaluation != nil {
+		if message := strings.TrimSpace(
+			evaluation.FailureText(i18n.FromContext(ctx)),
+		); message != "" {
+			return message
+		}
 	}
-	if message := strings.TrimSpace(evaluation.Error); message != "" {
-		return message
-	}
+	return i18n.T(ctx, "The expression could not be evaluated")
+}
 
-	return strings.TrimSpace(evaluation.Message)
+func TraceValueText(value rules.RawJSON) *string {
+	if len(value) == 0 || string(value) == "null" {
+		return nil
+	}
+	var text string
+	if err := sonic.Unmarshal(value, &text); err == nil {
+		return &text
+	}
+	raw := string(value)
+	return &raw
 }
 
 func baselineLabel(recordedOnVersion *int64) string {

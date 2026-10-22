@@ -153,8 +153,14 @@ export function PreviewGrid({
           loading={loading}
           sort={sort}
           onSortChange={setSort}
-          onCellClick={(rowIndex, columnIndex) => {
-            const target = buildDrillTarget(ir, preview.columns, rows[rowIndex], columnIndex);
+          onCellClick={(rowIndex, columnIndex, cellText) => {
+            const target = buildDrillTarget(
+              ir,
+              preview.columns,
+              rows[rowIndex],
+              columnIndex,
+              (at) => cellText(rowIndex, at),
+            );
             if (target) setDrillTarget(target);
           }}
           emptyMessage={t("The report compiled but returned no rows for the preview window.")}

@@ -9,83 +9,171 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func moneyInBands(band *Band) Resolved {
-	return Resolve(ResolveInput{
+func resolveOne(t *testing.T, in ResolveInput) Resolved {
+	t.Helper()
+	displays, err := Resolve(t.Context(), []ResolveInput{in})
+	require.NoError(t, err)
+	require.Len(t, displays, 1)
+	return displays[0]
+}
+
+func formatValues(t *testing.T, display Resolved, fieldType reportcatalog.FieldType, values ...any) []Cell {
+	t.Helper()
+	batch := NewBatch([]Column{{Display: &display, Type: fieldType}}, nil)
+	for _, value := range values {
+		batch.Add([]any{value})
+	}
+	rows, err := batch.Format(t.Context())
+	require.NoError(t, err)
+	cells := make([]Cell, 0, len(rows))
+	for _, row := range rows {
+		cells = append(cells, row.Cells[0])
+	}
+	return cells
+}
+
+func formatTexts(t *testing.T, display Resolved, fieldType reportcatalog.FieldType, values ...any) []string {
+	t.Helper()
+	cells := formatValues(t, display, fieldType, values...)
+	out := make([]string, 0, len(cells))
+	for _, cell := range cells {
+		out = append(out, cell.Text)
+	}
+	return out
+}
+
+func moneyInBands(t *testing.T, band *Band) Resolved {
+	t.Helper()
+	return resolveOne(t, ResolveInput{
 		Type: reportcatalog.FieldDecimal,
 		Hint: reportcatalog.FormatMoney,
 		Band: band,
 	})
 }
 
-// The scanned value is the range's lower bound, so a banded cell only makes
-// sense when it renders as the whole range.
 func TestBandLabelsRenderAsRanges(t *testing.T) {
-	display := moneyInBands(&Band{Edges: []float64{0, 1000, 5000}})
+	t.Parallel()
 
-	assert.Equal(t, "$0.00 – $1,000.00", display.String(decimal.NewFromInt(0), nil))
-	assert.Equal(t, "$1,000.00 – $5,000.00", display.String(decimal.NewFromInt(1000), nil))
-	assert.Equal(t, "$5,000.00+", display.String(decimal.NewFromInt(5000), nil))
+	display := moneyInBands(t, &Band{Edges: []float64{0, 1000, 5000}})
+
+	assert.Equal(t,
+		[]string{"$0.00 – $1,000.00", "$1,000.00 – $5,000.00", "$5,000.00+"},
+		formatTexts(t, display, reportcatalog.FieldDecimal,
+			decimal.NewFromInt(0), decimal.NewFromInt(1000), decimal.NewFromInt(5000)),
+	)
 }
 
 func TestFixedWidthBandsAreAlwaysBounded(t *testing.T) {
-	display := Resolve(ResolveInput{
+	t.Parallel()
+
+	display := resolveOne(t, ResolveInput{
 		Type: reportcatalog.FieldInt,
 		Hint: reportcatalog.FormatCount,
 		Band: &Band{Width: 5},
 	})
 
-	assert.Equal(t, "0 – 5", display.String(int64(0), nil))
-	assert.Equal(t, "25 – 30", display.String(int64(25), nil))
-	assert.Equal(t, "-10 – -5", display.String(int64(-10), nil))
+	assert.Equal(t,
+		[]string{"0 – 5", "25 – 30", "-10 – -5"},
+		formatTexts(t, display, reportcatalog.FieldInt, int64(0), int64(25), int64(-10)),
+	)
 }
 
-// A duration band reads through the column's own display, so the ranges come
-// out in the units the author chose rather than raw seconds.
+func TestBandBoundsAreExactDecimals(t *testing.T) {
+	t.Parallel()
+
+	display := resolveOne(t, ResolveInput{
+		Type: reportcatalog.FieldDecimal,
+		Spec: &Spec{Style: StyleNumber, Decimals: intOf(1)},
+		Band: &Band{Width: 0.1},
+	})
+
+	assert.Equal(t, []string{"0.2 – 0.3"},
+		formatTexts(t, display, reportcatalog.FieldDecimal, decimal.RequireFromString("0.2")))
+}
+
 func TestBandLabelsFollowTheColumnDisplay(t *testing.T) {
+	t.Parallel()
+
 	hours := 3600.0
-	display := Resolve(ResolveInput{
+	display := resolveOne(t, ResolveInput{
 		Type: reportcatalog.FieldInt,
 		Hint: reportcatalog.FormatDuration,
 		Band: &Band{Edges: []float64{0, 2 * hours, 4 * hours}},
 	})
 
-	assert.Equal(t, "0:00 – 2:00", display.String(int64(0), nil))
-	assert.Equal(t, "4:00+", display.String(int64(4*hours), nil))
+	assert.Equal(t, []string{"0:00 – 2:00", "4:00+"},
+		formatTexts(t, display, reportcatalog.FieldInt, int64(0), int64(4*hours)))
 }
 
-// The query groups anything below the first boundary onto that boundary, so a
-// stray low value still labels as the first range rather than inventing one
-// beneath it. IsLowest is what stops a drill-through re-applying that floor and
-// hiding the very rows the range counted.
 func TestBandLabelClampsBelowTheFirstBoundary(t *testing.T) {
-	band := &Band{Edges: []float64{0, 1000}}
-	display := moneyInBands(band)
+	t.Parallel()
 
-	assert.Equal(t, "$0.00 – $1,000.00", display.String(decimal.NewFromInt(-250), nil))
-	assert.Equal(t, "$0.00 – $1,000.00", display.String(decimal.NewFromInt(0), nil))
+	band := &Band{Edges: []float64{0, 1000}}
+	display := moneyInBands(t, band)
+
+	assert.Equal(t,
+		[]string{"$0.00 – $1,000.00", "$0.00 – $1,000.00"},
+		formatTexts(t, display, reportcatalog.FieldDecimal,
+			decimal.NewFromInt(-250), decimal.NewFromInt(0)),
+	)
 
 	assert.True(t, band.IsLowest(-250))
 	assert.True(t, band.IsLowest(0))
 	assert.False(t, band.IsLowest(1000))
 }
 
-// A range is a label, not a number; writing it into a native numeric Excel cell
-// would show the lower bound alone and quietly change what the sheet says.
-func TestBandedColumnsExportAsText(t *testing.T) {
-	display := moneyInBands(&Band{Width: 1000})
+func TestAMalformedBandRendersTheValueItself(t *testing.T) {
+	t.Parallel()
 
+	display := moneyInBands(t, &Band{Edges: []float64{500}})
+	require.NotNil(t, display.Band)
+
+	assert.Equal(t, []string{"$700.00"},
+		formatTexts(t, display, reportcatalog.FieldDecimal, decimal.NewFromInt(700)))
+}
+
+func TestBandLabelWritesATrailingUnitOnce(t *testing.T) {
+	t.Parallel()
+
+	weight := resolveOne(t, ResolveInput{
+		Type: reportcatalog.FieldInt,
+		Hint: reportcatalog.FormatWeight,
+		Band: &Band{Width: 5000},
+	})
+	assert.Equal(t, []string{"10,000 – 15,000 lbs"},
+		formatTexts(t, weight, reportcatalog.FieldInt, int64(10000)))
+
+	money := moneyInBands(t, &Band{Width: 1000})
+	assert.Equal(t, []string{"$0.00 – $1,000.00"},
+		formatTexts(t, money, reportcatalog.FieldDecimal, decimal.NewFromInt(0)))
+}
+
+func TestBandedColumnsExportAsText(t *testing.T) {
+	t.Parallel()
+
+	display := moneyInBands(t, &Band{Width: 1000})
 	_, native := display.ExcelFormat()
 	assert.False(t, native)
 
-	unbanded := Resolve(ResolveInput{
-		Type: reportcatalog.FieldDecimal,
-		Hint: reportcatalog.FormatMoney,
-	})
+	unbanded := moneyInBands(t, nil)
 	_, native = unbanded.ExcelFormat()
 	assert.True(t, native)
 }
 
+func TestResolveReturnsItsOwnBand(t *testing.T) {
+	t.Parallel()
+
+	band := &Band{Edges: []float64{0, 100.5}}
+	display := moneyInBands(t, band)
+
+	band.Edges[1] = 999
+	require.NotNil(t, display.Band)
+	assert.Equal(t, []float64{0, 100.5}, display.Band.Edges)
+}
+
 func TestBandValidation(t *testing.T) {
+	t.Parallel()
+
 	require.NoError(t, (*Band)(nil).Validate())
 	require.NoError(t, (&Band{Width: 100}).Validate())
 	require.NoError(t, (&Band{Edges: []float64{0, 1}}).Validate())
@@ -102,9 +190,9 @@ func TestBandValidation(t *testing.T) {
 	require.ErrorContains(t, (&Band{Edges: tooMany}).Validate(), "at most")
 }
 
-// A malformed band must not read as "no band" — that would silently drop the
-// grouping the author asked for instead of telling them it was wrong.
 func TestMalformedBandIsNotEmpty(t *testing.T) {
+	t.Parallel()
+
 	assert.True(t, (*Band)(nil).IsEmpty())
 	assert.True(t, (&Band{}).IsEmpty())
 
@@ -115,33 +203,26 @@ func TestMalformedBandIsNotEmpty(t *testing.T) {
 }
 
 func TestBandIsWhole(t *testing.T) {
+	t.Parallel()
+
 	assert.True(t, (&Band{Width: 100}).IsWhole())
 	assert.False(t, (&Band{Width: 100.5}).IsWhole())
 	assert.True(t, (&Band{Edges: []float64{0, 10, 20}}).IsWhole())
 	assert.False(t, (&Band{Edges: []float64{0, 10.25}}).IsWhole())
 }
 
-// Resolve must not hand out the author's slice, or a later edit to the spec
-// would change a contract already sent to a renderer.
-func TestResolveClonesTheBand(t *testing.T) {
-	band := &Band{Edges: []float64{0, 100}}
-	display := moneyInBands(band)
+func TestBandBounds(t *testing.T) {
+	t.Parallel()
 
-	band.Edges[1] = 999
-	require.NotNil(t, display.Band)
-	assert.InDelta(t, 100, display.Band.Edges[1], 0)
+	band := &Band{Edges: []float64{0, 1000, 5000}}
+	lower, upper, bounded := band.Bounds(1200)
+	assert.InDelta(t, 1000, lower, 0)
+	assert.InDelta(t, 5000, upper, 0)
+	assert.True(t, bounded)
+
+	lower, _, bounded = band.Bounds(7000)
+	assert.InDelta(t, 5000, lower, 0)
+	assert.False(t, bounded)
 }
 
-// A trailing unit describes the whole range, so it is written once. A leading
-// currency symbol still leads each end.
-func TestBandLabelWritesATrailingUnitOnce(t *testing.T) {
-	weight := Resolve(ResolveInput{
-		Type: reportcatalog.FieldInt,
-		Hint: reportcatalog.FormatWeight,
-		Band: &Band{Width: 5000},
-	})
-	assert.Equal(t, "10,000 – 15,000 lbs", weight.String(int64(10000), nil))
-
-	money := moneyInBands(&Band{Width: 1000})
-	assert.Equal(t, "$0.00 – $1,000.00", money.String(decimal.NewFromInt(0), nil))
-}
+func intOf(v int) *int { return &v }

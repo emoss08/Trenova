@@ -1,11 +1,12 @@
+import { translate } from "@trenova/shared/i18n/runtime";
+import type { FormulaCheckSchema } from "@trenova/shared/rules/formula";
 import type {
-  FormulaDisabledReason,
+  FormulaCatalog,
+  FormulaDisabledFunction,
+  FormulaFunction,
   FormulaSchemaResponse,
-  FormulaValueType,
   VariableDefinitionInput,
 } from "@trenova/shared/types/formula-template";
-import { VARIADIC_ARGS } from "@trenova/shared/types/formula-template";
-import { KEYWORDS, WORD_OPERATORS } from "./expr-parser";
 
 export type VariableDoc = {
   name: string;
@@ -17,154 +18,141 @@ export type VariableDoc = {
   enum?: string[] | null;
 };
 
-export type FunctionDoc = {
-  name: string;
-  signature: string;
-  description: string;
-  example?: string;
-  category?: string;
-  /** Written infix (`text startsWith "x"`) or as a slice, not as a call. */
-  operator?: boolean;
-};
+/** A function as `formula.catalog` lists it; its description and example are messages. */
+export type FunctionDoc = FormulaFunction;
 
-/** How a function is called and what it gives back, as the engine publishes it. */
-export type FunctionShape = {
-  name: string;
-  signature: string;
-  minArgs: number;
-  /** Infinity when it takes any number of arguments. */
-  maxArgs: number;
-  returns: FormulaValueType;
-  numericArgs: boolean;
-  /** Its second argument is evaluated per item, where `#` and `.field` read the item. */
-  predicate: boolean;
-};
-
-export type DisabledFunction = {
-  name: string;
-  reason: FormulaDisabledReason;
-  replacement: string | null;
-};
-
+/**
+ * What the editor knows about names, from two sources: the record's fields as
+ * `GET /formula-templates/schema` publishes them (with the template's inputs),
+ * and the functions, built-ins, keywords and disabled names of the rules
+ * module's `formula.catalog`. The checks themselves are the module's; this is
+ * what the highlighter, the completions, the hover card and the reference read.
+ */
 export type KnownIdentifiers = {
-  /** False until the engine's schema has arrived; nothing can be called unknown before then. */
+  /** False until the schema has arrived; until then no name is called unknown. */
   ready: boolean;
+  /** The record's fields and the template's inputs, as the reference lists them. */
   variables: VariableDoc[];
-  /** The documented functions the reference lists. */
+  /** The fields of a list's items, named `list[].field` as the schema publishes them. */
+  itemFields: VariableDoc[];
+  /** The documented functions and word operators the reference lists. */
   functions: FunctionDoc[];
-  /** Every callable name, documented or a builtin the engine keeps, with its shape. */
-  shapes: Map<string, FunctionShape>;
-  disabled: Map<string, DisabledFunction>;
-  variableRoots: Set<string>;
-  variablePaths: Set<string>;
-  functionNames: Set<string>;
-  operatorNames: Set<string>;
+  /** Every function a formula calls by name, documented or built-in. */
+  callables: ReadonlyMap<string, FunctionDoc>;
+  disabled: ReadonlyMap<string, FormulaDisabledFunction>;
+  /** The language's keywords: every reserved word that is not a function. */
+  keywords: ReadonlySet<string>;
+  /** The words written as operators (`text startsWith "x"`). */
+  operatorNames: ReadonlySet<string>;
+  variableRoots: ReadonlySet<string>;
+  variablePaths: ReadonlySet<string>;
+  /** What `formula.check` and `formula.identifier` read; null until the schema has arrived. */
+  schema: FormulaCheckSchema | null;
 };
 
-/** Words expr parses as binary operators; a tokenizer must not take them for variables. */
-export const EXPR_OPERATOR_WORDS: ReadonlySet<string> = WORD_OPERATORS;
+type CatalogKnowledge = Pick<
+  KnownIdentifiers,
+  "functions" | "callables" | "disabled" | "keywords" | "operatorNames"
+>;
 
-export const EXPR_KEYWORDS: ReadonlySet<string> = KEYWORDS;
+const ITEM_FIELD = "[].";
+const WORD = /^[A-Za-z_]\w*$/;
+const fromCatalog = new WeakMap<FormulaCatalog, CatalogKnowledge>();
 
-type SchemaSource = Pick<FormulaSchemaResponse, "variables" | "functions"> &
-  Partial<Pick<FormulaSchemaResponse, "builtins" | "disabled">>;
-
-function toShape(fn: FormulaSchemaResponse["functions"][number]): FunctionShape {
-  return {
-    name: fn.name,
-    signature: fn.signature,
-    minArgs: fn.minArgs,
-    maxArgs: fn.maxArgs === VARIADIC_ARGS ? Number.POSITIVE_INFINITY : fn.maxArgs,
-    returns: fn.returns,
-    numericArgs: fn.numericArgs,
-    predicate: fn.predicate,
+function catalogKnowledge(catalog: FormulaCatalog): CatalogKnowledge {
+  const cached = fromCatalog.get(catalog);
+  if (cached) return cached;
+  const callables = new Map<string, FunctionDoc>();
+  const operatorNames = new Set<string>();
+  for (const fn of catalog.functions) {
+    if (fn.operator) {
+      if (WORD.test(fn.name)) operatorNames.add(fn.name);
+    } else {
+      callables.set(fn.name, fn);
+    }
+  }
+  for (const fn of catalog.builtins) callables.set(fn.name, fn);
+  const knowledge: CatalogKnowledge = {
+    functions: catalog.functions,
+    callables,
+    disabled: new Map(catalog.disabled.map((fn) => [fn.name, fn])),
+    keywords: new Set(
+      catalog.reserved.filter((word) => !callables.has(word) && !operatorNames.has(word)),
+    ),
+    operatorNames,
   };
+  fromCatalog.set(catalog, knowledge);
+  return knowledge;
+}
+
+function rootOf(name: string): string {
+  const dot = name.indexOf(".");
+  return dot === -1 ? name : name.slice(0, dot);
 }
 
 /**
- * What the editor knows about names, from the engine's own description of the
- * schema (`GET /formula-templates/schema`) and the template's inputs. Until the
- * description has loaded, only the inputs are known and `ready` is false.
+ * Builds what the editor knows from the module's catalog, the schema (undefined
+ * while it loads) and the template's inputs.
  */
 export function buildKnownIdentifiers(
-  schema: SchemaSource | undefined,
-  customVariables: VariableDefinitionInput[] = [],
+  catalog: FormulaCatalog,
+  schema: Pick<FormulaSchemaResponse, "variables"> | undefined,
+  customVariables: readonly VariableDefinitionInput[] = [],
 ): KnownIdentifiers {
-  const variables: VariableDoc[] = (schema?.variables ?? []).map((variable) => ({
-    name: variable.name,
-    type: variable.type,
-    description: variable.description ?? "",
-    category: variable.category ?? "",
-    nullable: variable.nullable ?? false,
-    enum: variable.enum ?? null,
-  }));
+  const variables: VariableDoc[] = [];
+  const itemFields: VariableDoc[] = [];
+  for (const variable of schema?.variables ?? []) {
+    const doc: VariableDoc = {
+      name: variable.name,
+      type: variable.type,
+      description: variable.description ?? "",
+      category: variable.category ?? "",
+      nullable: variable.nullable ?? false,
+      enum: variable.enum ?? null,
+    };
+    (variable.name.includes(ITEM_FIELD) ? itemFields : variables).push(doc);
+  }
 
-  for (const custom of customVariables) {
-    if (!custom.name) continue;
+  const inputs = customVariables.filter((custom) => custom.name);
+  for (const custom of inputs) {
     variables.push({
       name: custom.name,
       type: custom.type ?? "Any",
-      description: custom.description || "Custom variable",
+      description: custom.description || translate("Custom variable"),
       category: "custom",
       custom: true,
     });
   }
 
-  const functions: FunctionDoc[] = (schema?.functions ?? []).map((fn) => ({
-    name: fn.name,
-    signature: fn.signature,
-    description: fn.description ?? "",
-    example: fn.example || undefined,
-    category: fn.category || undefined,
-    operator: fn.operator || undefined,
-  }));
-
-  const shapes = new Map<string, FunctionShape>();
-  const functionNames = new Set<string>();
-  const operatorNames = new Set<string>(EXPR_OPERATOR_WORDS);
-  for (const fn of schema?.functions ?? []) {
-    if (fn.operator) {
-      operatorNames.add(fn.name);
-      continue;
-    }
-    functionNames.add(fn.name);
-    shapes.set(fn.name, toShape(fn));
-  }
-  for (const fn of schema?.builtins ?? []) {
-    functionNames.add(fn.name);
-    shapes.set(fn.name, toShape(fn));
-  }
-
-  const disabled = new Map<string, DisabledFunction>(
-    (schema?.disabled ?? []).map((fn) => [
-      fn.name,
-      { name: fn.name, reason: fn.reason, replacement: fn.replacement ?? null },
-    ]),
-  );
-
   const variableRoots = new Set<string>();
   const variablePaths = new Set<string>();
   for (const variable of variables) {
     variablePaths.add(variable.name);
-    const dot = variable.name.indexOf(".");
-    variableRoots.add(dot === -1 ? variable.name : variable.name.slice(0, dot));
+    variableRoots.add(rootOf(variable.name));
   }
 
   return {
+    ...catalogKnowledge(catalog),
     ready: schema !== undefined,
     variables,
-    functions,
-    shapes,
-    disabled,
+    itemFields,
     variableRoots,
     variablePaths,
-    functionNames,
-    operatorNames,
+    schema: schema
+      ? {
+          variables: schema.variables,
+          inputs: inputs.map((custom) => ({ name: custom.name, type: custom.type ?? "Any" })),
+        }
+      : null,
   };
 }
 
 export function isOperatorWord(known: KnownIdentifiers, identifier: string): boolean {
   return known.operatorNames.has(identifier);
+}
+
+export function isKeyword(known: KnownIdentifiers, identifier: string): boolean {
+  return known.keywords.has(identifier);
 }
 
 export type FunctionInsertion = { text: string; cursor: number };
@@ -175,9 +163,7 @@ export type FunctionInsertion = { text: string; cursor: number };
  * spaces and an empty string to type into; a slice gets a sample range with
  * the cursor on the start index.
  */
-export function functionInsertion(
-  fn: Pick<FunctionDoc, "name"> & Partial<FunctionDoc>,
-): FunctionInsertion {
+export function functionInsertion(fn: Pick<FunctionDoc, "name" | "operator">): FunctionInsertion {
   if (!fn.operator) {
     const text = `${fn.name}()`;
     return { text, cursor: text.length - 1 };
@@ -191,11 +177,21 @@ export function functionInsertion(
 
 export function isKnownVariable(known: KnownIdentifiers, identifier: string): boolean {
   if (known.variablePaths.has(identifier)) return true;
-  const dot = identifier.indexOf(".");
-  const root = dot === -1 ? identifier : identifier.slice(0, dot);
-  return known.variableRoots.has(root);
+  return known.variableRoots.has(rootOf(identifier));
 }
 
 export function isKnownFunction(known: KnownIdentifiers, identifier: string): boolean {
-  return known.functionNames.has(identifier);
+  return known.callables.has(identifier);
+}
+
+/** The schema's description of an item's field (`.weight`), when every list that has it agrees. */
+export function itemFieldDoc(known: KnownIdentifiers, field: string): VariableDoc | null {
+  const suffix = `${ITEM_FIELD}${field}`;
+  const matches = known.itemFields.filter((doc) => doc.name.endsWith(suffix));
+  const [first] = matches;
+  if (!first) return null;
+  const agree = matches.every(
+    (doc) => doc.type === first.type && Boolean(doc.nullable) === Boolean(first.nullable),
+  );
+  return agree ? { ...first, name: field } : null;
 }

@@ -7,16 +7,19 @@ import (
 	"io"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportfmt"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,15 +72,20 @@ func testColumn(
 	hint reportcatalog.FormatHint,
 ) reportports.ReportResultColumn {
 	return reportports.ReportResultColumn{
-		ID:     id,
-		Label:  label,
-		Type:   fieldType,
-		Format: hint,
-		Display: reportfmt.Resolve(reportfmt.ResolveInput{
-			Type: fieldType,
-			Hint: hint,
-		}),
+		ID:      id,
+		Label:   label,
+		Type:    fieldType,
+		Format:  hint,
+		Display: mustResolve(reportfmt.ResolveInput{Type: fieldType, Hint: hint}),
 	}
+}
+
+func mustResolve(in reportfmt.ResolveInput) reportfmt.Resolved {
+	displays, err := reportfmt.Resolve(context.Background(), []reportfmt.ResolveInput{in})
+	if err != nil {
+		panic(err)
+	}
+	return displays[0]
 }
 
 func testSchema() []reportports.ReportResultColumn {
@@ -417,22 +425,87 @@ func TestRegistryResolvesRenderers(t *testing.T) {
 	assert.Contains(t, err.Error(), "no renderer registered")
 }
 
-func TestFormatCellEdgeCases(t *testing.T) {
+func formatOne(t *testing.T, column *reportports.ReportResultColumn, value any) string {
+	t.Helper()
 	loc := metaLocation(&reportports.ReportRunMeta{Timezone: "America/Chicago"})
+	cells, err := reportfmt.FormatRow(
+		t.Context(),
+		formatColumns([]reportports.ReportResultColumn{*column}),
+		[]any{value},
+		loc,
+	)
+	require.NoError(t, err)
+	return cells[0].Text
+}
 
+func TestFormatCellEdgeCases(t *testing.T) {
 	epochCol := testColumn("c", "Created", reportcatalog.FieldEpoch, reportcatalog.FormatNone)
-	assert.Equal(t, "2026-07-16 00:00", formatCell(&epochCol, int64(1784178000), loc))
+	assert.Equal(t, "2026-07-16 00:00", formatOne(t, &epochCol, int64(1784178000)))
 
 	intCol := testColumn("c", "Count", reportcatalog.FieldInt, reportcatalog.FormatCount)
-	assert.Equal(t, "42", formatCell(&intCol, int64(42), loc))
-	assert.Equal(t, "", formatCell(&intCol, nil, loc))
+	assert.Equal(t, "42", formatOne(t, &intCol, int64(42)))
+	assert.Equal(t, "", formatOne(t, &intCol, nil))
 
 	strCol := testColumn("c", "Name", reportcatalog.FieldString, reportcatalog.FormatNone)
-	assert.Equal(t, strings.Repeat("x", 3), formatCell(&strCol, "xxx", loc))
+	assert.Equal(t, strings.Repeat("x", 3), formatOne(t, &strCol, "xxx"))
 
-	// A column with no resolved display renders raw rather than guessing.
 	bare := &reportports.ReportResultColumn{Type: reportcatalog.FieldDecimal}
-	assert.Equal(t, "1234.5", formatCell(bare, decimal.RequireFromString("1234.5"), loc))
+	assert.Equal(t, "1234.5", formatOne(t, bare, decimal.RequireFromString("1234.5")))
+}
+
+type formatCallCounter struct {
+	mu    sync.Mutex
+	calls map[string]int
+}
+
+func (c *formatCallCounter) CallFinished(op, _ string, _ time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.calls[op]++
+}
+
+func (c *formatCallCounter) InstanceAcquired()        {}
+func (c *formatCallCounter) InstanceReleased()        {}
+func (c *formatCallCounter) InstanceDiscarded(string) {}
+
+func (c *formatCallCounter) count(op string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.calls[op]
+}
+
+func TestRenderersFormatAChunkOfRowsPerModuleCall(t *testing.T) {
+	const totalRows = 2*reportfmt.BatchRows + 1
+
+	counter := &formatCallCounter{calls: map[string]int{}}
+	rules.Default().Instrument(nil, counter)
+	t.Cleanup(func() { rules.Default().Instrument(nil, nil) })
+
+	dataset := &fakeReader{
+		schema: testSchema(),
+		total:  totalRows,
+		totals: reportports.ReportRow{nil, decimal.NewFromInt(7), int64(3), nil, nil},
+		generate: func(i int64) reportports.ReportRow {
+			return reportports.ReportRow{
+				fmt.Sprintf("Customer %d", i), decimal.NewFromInt(i), i, int64(1784131200), true,
+			}
+		},
+	}
+
+	var buf bytes.Buffer
+	_, err := NewCSV(CSVParams{Config: testConfig()}).Render(t.Context(), &reportports.ReportRenderRequest{
+		Dataset: dataset,
+		Sink:    &buf,
+		Meta:    testMeta(),
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, 3+1, counter.count(rules.OpReportFormat),
+		"three chunks of rows and one totals row")
+	lines := strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n")
+	require.Len(t, lines, totalRows+2)
+	assert.Equal(t, "Customer 1000,\"$1,000.00\",\"1,000\",2026-07-15 11:00,Yes", lines[1001])
+	assert.Equal(t, "Total,$7.00,3,,", lines[len(lines)-1])
 }
 
 func zapNop() *zap.Logger { return zap.NewNop() }

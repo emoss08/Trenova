@@ -3,12 +3,11 @@ package render
 import (
 	"context"
 	"encoding/csv"
-	"errors"
-	"io"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/pkg/reportfmt"
 	"go.uber.org/fx"
 )
 
@@ -59,21 +58,13 @@ func (r *CSVRenderer) Render(
 	}
 
 	record := make([]string, len(schema))
-	for {
-		row, err := req.Dataset.Next(ctx)
-		if errors.Is(err, io.EOF) {
-			break
+	if err := streamFormatted(ctx, req.Dataset, loc, func(row *reportfmt.Row) error {
+		for i := range row.Cells {
+			record[i] = row.Cells[i].Text
 		}
-		if err != nil {
-			return nil, err
-		}
-
-		for i := range schema {
-			record[i] = formatCell(&schema[i], row[i], loc)
-		}
-		if err = writer.Write(record); err != nil {
-			return nil, err
-		}
+		return writer.Write(record)
+	}); err != nil {
+		return nil, err
 	}
 
 	totals, err := totalsCells(ctx, req.Dataset, loc)

@@ -34,13 +34,7 @@ func TestService_MoneyArithmeticCarriesNoBinaryNoise(t *testing.T) {
 		t.Run(expression, func(t *testing.T) {
 			t.Parallel()
 
-			resp, err := svc.EvaluateExpression(t.Context(), &formula.EvaluateExpressionRequest{
-				Expression: expression,
-				Entity:     shippedOnMarchFirst(),
-				SchemaID:   "shipment",
-			})
-			require.NoError(t, err)
-			assert.Equal(t, want, resp.Amount.String())
+			assert.Equal(t, want, evaluate(t, svc, shippedOnMarchFirst(), expression).String())
 		})
 	}
 }

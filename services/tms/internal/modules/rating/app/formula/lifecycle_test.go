@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -39,20 +39,11 @@ func setupLifecycleService(
 
 	registry := newTestRegistry(t)
 	res := resolver.NewResolver()
-	eng, err := engine.NewEngine(engine.Params{
-		Registry: registry,
-		Resolver: res,
-		EnvBuilder: engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-			Registry: registry,
-			Resolver: res,
-		}),
-	})
-	require.NoError(t, err)
 
 	return formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Engine:         eng,
+		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:       res,
 		Repo:           &singleTemplateRepo{template: template},
 		VersionRepo:    &approvedVersionRepo{approved: approved},

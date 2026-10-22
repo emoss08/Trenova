@@ -23,6 +23,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const storedTotalField = "currentTotalCharge"
+
 const (
 	ReadinessPass = "pass"
 	ReadinessWarn = "warn"
@@ -258,12 +260,12 @@ func (s *Service) expressionReadiness(
 
 	if err := s.validateExpression(ctx, &candidate); err != nil {
 		check.Status = ReadinessFail
-		check.Detail = expressionErrorMessage(err)
+		check.Detail = expressionErrorMessage(ctx, err)
 		return check
 	}
 
 	check.Status = ReadinessPass
-	check.Detail = "Compiles, and every rate table it names exists"
+	check.Detail = "Checks clean, and every rate table it names exists"
 	return check
 }
 
@@ -273,27 +275,15 @@ func (s *Service) nullableReadiness(
 ) ReadinessCheck {
 	check := ReadinessCheck{Key: ReadinessCheckNullables, Label: "Safe on every shipment"}
 
-	variables := template.ScenarioContent().VariableDefaults()
-
 	fields := make([]string, 0, 2)
-	expressions := []string{template.Expression}
-	for _, def := range template.BreakdownDefinitions {
-		if def != nil {
-			expressions = append(expressions, def.Expression)
-		}
-	}
-	for _, expression := range expressions {
-		found, err := s.formulaService.UnguardedNullableFields(
-			ctx,
-			expression,
-			template.SchemaID,
-			variables,
-		)
-		if err != nil {
-			continue
-		}
-		for _, item := range found {
-			fields = appendUnique(fields, item.Field)
+	readsStoredTotal := false
+	checked, err := s.formulaService.CheckTemplate(ctx, template)
+	if err == nil {
+		for _, item := range checked {
+			for _, name := range item.Check.Unguarded() {
+				fields = appendUnique(fields, name)
+			}
+			readsStoredTotal = readsStoredTotal || item.Check.ReadsField(storedTotalField)
 		}
 	}
 
@@ -305,10 +295,7 @@ func (s *Service) nullableReadiness(
 			strings.Join(fields, ", "),
 		))
 	}
-	if template.Type == formulatemplate.TemplateTypeFreightCharge &&
-		slices.ContainsFunc(expressions, func(expression string) bool {
-			return s.formulaService.ReferencesField(expression, storedTotalField)
-		}) {
+	if template.Type == formulatemplate.TemplateTypeFreightCharge && readsStoredTotal {
 		details = append(details, storedTotalField+
 			" is the total stored before this rating, so the freight charge trails by one save")
 	}
@@ -396,8 +383,8 @@ func (s *Service) breakdownReadiness(
 
 	req := candidateRequest(template.SchemaID, tenantInfo, template.ScenarioContent(), nil)
 	req.Breakdowns = lines
-	result := s.TestExpression(ctx, req)
-	if !result.Valid {
+	result, err := s.TestExpression(ctx, req)
+	if err != nil || result.FirstErrorDiagnostic() != nil || result.Result == nil {
 		check.Status = ReadinessWarn
 		check.Detail = "The formula does not run on the sample load, so the lines cannot be checked"
 		return check, true
@@ -458,8 +445,10 @@ func (r *TestExpressionResponse) RawAmount() decimal.Decimal {
 		return r.Rounding.UnroundedAmount
 	}
 
-	amount, _ := r.Result.(decimal.Decimal)
-	return amount
+	if r.Result == nil {
+		return decimal.Zero
+	}
+	return *r.Result
 }
 
 func boundNoun(guardrail *formulatemplatetypes.GuardrailResult) string {

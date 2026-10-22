@@ -13,10 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeLookup struct {
-	formulatemplatetypes.RateTableLookup
-}
-
 type stampedSource struct {
 	stamp  atomic.Value
 	stamps atomic.Int32
@@ -38,9 +34,9 @@ func (s *stampedSource) Stamp(context.Context) (string, error) {
 	return s.stamp.Load().(string), nil //nolint:errcheck // always a string
 }
 
-func (s *stampedSource) Build(context.Context, string) (formulatemplatetypes.RateTableLookup, error) {
+func (s *stampedSource) Build(context.Context, string) (*formulatemplatetypes.RateTables, error) {
 	s.builds.Add(1)
-	return &fakeLookup{}, nil
+	return &formulatemplatetypes.RateTables{Stamp: s.stamp.Load().(string)}, nil //nolint:errcheck // always a string
 }
 
 func TestGetStamped_ReusesAcrossContextsWhileTheStampHolds(t *testing.T) {
@@ -54,7 +50,7 @@ func TestGetStamped_ReusesAcrossContextsWhileTheStampHolds(t *testing.T) {
 	second, err := ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
 	require.NoError(t, err)
 
-	assert.Same(t, first, second, "a second request in a new context reuses the built lookup")
+	assert.Same(t, first, second, "a second request in a new context reuses the encoded tables")
 	assert.EqualValues(t, 1, source.builds.Load(), "the expensive read happened once")
 	assert.EqualValues(t, 2, source.stamps.Load(), "each new context asks the cheap stamp")
 }
@@ -72,7 +68,7 @@ func TestGetStamped_RebuildsWhenTheStampMoves(t *testing.T) {
 	second, err := ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
 	require.NoError(t, err)
 
-	assert.NotSame(t, first, second, "a changed matrix means a fresh lookup")
+	assert.NotSame(t, first, second, "a changed matrix means freshly encoded tables")
 	assert.EqualValues(t, 2, source.builds.Load())
 }
 

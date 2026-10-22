@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 func schemaReference() *formulaassistantservice.Reference {
 	return &formulaassistantservice.Reference{
 		SchemaID: "shipment",
-		Variables: []formulatemplatetypes.SchemaVariableInfo{
+		Variables: []rules.FormulaVariable{
 			{
 				Name: "requiresTemperatureControl", Type: "boolean", Computed: true,
 				Description: "Whether the shipment requires temperature control. True when a minimum or maximum is set.",
@@ -21,7 +21,7 @@ func schemaReference() *formulaassistantservice.Reference {
 			{Name: "totalDistance", Type: "number", Description: "Total distance in miles."},
 			{Name: "hasHazmat", Type: "boolean", Description: "Whether any commodity is hazardous."},
 		},
-		Functions: []formulatemplatetypes.SchemaFunctionInfo{
+		Functions: []formulaassistantservice.FunctionReference{
 			{Name: "ceil", Signature: "ceil(x)", Description: "Rounds up.", Example: "ceil(1.2) = 2"},
 		},
 	}
@@ -68,7 +68,7 @@ func TestSchemaView_FindsAVariableByItsOwnName(t *testing.T) {
 	t.Parallel()
 
 	reference := schemaReference()
-	reference.Variables = append(reference.Variables, formulatemplatetypes.SchemaVariableInfo{
+	reference.Variables = append(reference.Variables, rules.FormulaVariable{
 		Name: "baseRate", Type: "number", Description: "Base rate per unit for freight charge calculation",
 	})
 

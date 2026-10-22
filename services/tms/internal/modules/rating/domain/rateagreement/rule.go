@@ -138,6 +138,8 @@ type RateAgreementRule struct {
 	Agreement  *RateAgreement            `json:"-"                    bun:"rel:belongs-to,join:rate_agreement_id=id"`
 	RateMatrix *ratematrix.RateMatrix    `json:"rateMatrix,omitempty" bun:"rel:belongs-to,join:rate_matrix_id=id"`
 	Breaks     []*RateAgreementRuleBreak `json:"breaks,omitempty"     bun:"rel:has-many,join:id=rate_agreement_rule_id"`
+
+	lane laneState
 }
 
 // OriginScope and DestinationScope read the two ends back as the geography
@@ -164,88 +166,6 @@ func (rar *RateAgreementRule) DestinationScope() rategeo.Scope {
 func (rar *RateAgreementRule) IsRadiusLane() bool {
 	return rar.OriginScopeType == rategeo.ScopeTypeRadius ||
 		rar.DestinationScopeType == rategeo.ScopeTypeRadius
-}
-
-// ApplyLaneKey recomputes the stored lane key from the two scopes.
-//
-// A radius lane has no key. It still needs a non-empty value because the column
-// is not null, so it gets a sentinel that no shipment will ever generate — the
-// rule is unreachable by key on purpose, and reachable only through the
-// geospatial query.
-func (rar *RateAgreementRule) ApplyLaneKey() {
-	originKey, originOK := rar.OriginScope().Key()
-	destinationKey, destinationOK := rar.DestinationScope().Key()
-
-	if !originOK || !destinationOK {
-		rar.LaneKey = RadiusLaneKey
-		return
-	}
-
-	rar.LaneKey = rategeo.LaneKey(originKey, destinationKey)
-}
-
-// RadiusLaneKey is the placeholder stored on lanes that are matched
-// geospatially. It cannot collide with a real key because no scope encodes to
-// this string.
-const RadiusLaneKey = "RADIUS"
-
-// ReverseLaneKey is the lane key with the two ends swapped, which is what a
-// bidirectional rule must also be reachable by.
-func (rar *RateAgreementRule) ReverseLaneKey() (string, bool) {
-	if rar.Direction != DirectionBidirectional {
-		return "", false
-	}
-
-	originKey, originOK := rar.OriginScope().Key()
-	destinationKey, destinationOK := rar.DestinationScope().Key()
-	if !originOK || !destinationOK {
-		return "", false
-	}
-
-	return rategeo.LaneKey(destinationKey, originKey), true
-}
-
-// ComputeSpecificity scores how narrowly the rule is written.
-//
-// Geography is scaled clear of every condition, so a tighter lane always wins
-// regardless of how many conditions a broader rule piles on. See specificity.go
-// for why the weights are fixed constants.
-func (rar *RateAgreementRule) ComputeSpecificity() int32 {
-	score := rategeo.LaneSpecificity(rar.OriginScopeType, rar.DestinationScopeType) * GeographyScale
-
-	if len(rar.CommodityIDs) > 0 {
-		score += ConditionWeightCommodity
-	}
-	if len(rar.FreightClasses) > 0 {
-		score += ConditionWeightFreightClass
-	}
-	if len(rar.TractorTypeIDs) > 0 || len(rar.TrailerTypeIDs) > 0 ||
-		len(rar.EquipmentClasses) > 0 {
-		score += ConditionWeightEquipmentType
-	}
-	if len(rar.ServiceTypeIDs) > 0 {
-		score += ConditionWeightServiceType
-	}
-	if len(rar.ShipmentTypeIDs) > 0 {
-		score += ConditionWeightShipmentType
-	}
-	if rar.MinWeight.Valid || rar.MaxWeight.Valid {
-		score += ConditionWeightWeightRange
-	}
-	if rar.MinDistance.Valid || rar.MaxDistance.Valid {
-		score += ConditionWeightDistanceRange
-	}
-	if len(rar.ServiceModels) > 0 {
-		score += ConditionWeightServiceModel
-	}
-	if rar.HazmatOnly {
-		score += ConditionWeightHazmat
-	}
-	if rar.TempControlOnly {
-		score += ConditionWeightTempControl
-	}
-
-	return score
 }
 
 // IsEffectiveAt reports whether the rule's own window covers a moment. The
@@ -319,9 +239,6 @@ func (rar *RateAgreementRule) applyDefaults() {
 	if rar.DestinationScopeType == "" {
 		rar.DestinationScopeType = rategeo.ScopeTypeAny
 	}
-
-	rar.ApplyLaneKey()
-	rar.SpecificityScore = rar.ComputeSpecificity()
 }
 
 // ValidateWithin checks the rule against the agreement it belongs to, which is
@@ -429,6 +346,7 @@ func (rar *RateAgreementRule) validateScopes(multiErr *errortypes.MultiError) {
 		field:        "originScopeValue",
 		radiusField:  "originRadiusMeters",
 		scope:        rar.OriginScope(),
+		keyed:        !rar.lane.applied || rar.lane.origin,
 		radiusMeters: rar.OriginRadiusMeters,
 		latitude:     rar.OriginLatitude,
 		longitude:    rar.OriginLongitude,
@@ -439,6 +357,7 @@ func (rar *RateAgreementRule) validateScopes(multiErr *errortypes.MultiError) {
 		field:        "destinationScopeValue",
 		radiusField:  "destinationRadiusMeters",
 		scope:        rar.DestinationScope(),
+		keyed:        !rar.lane.applied || rar.lane.destination,
 		radiusMeters: rar.DestinationRadiusMeters,
 		latitude:     rar.DestinationLatitude,
 		longitude:    rar.DestinationLongitude,
@@ -450,6 +369,7 @@ type scopeSide struct {
 	field        string
 	radiusField  string
 	scope        rategeo.Scope
+	keyed        bool
 	radiusMeters *float64
 	latitude     *float64
 	longitude    *float64
@@ -494,7 +414,7 @@ func validateScopeSide(multiErr *errortypes.MultiError, side *scopeSide) {
 
 	// A scope that cannot be reduced to a key would be stored and never
 	// matched, which reads as a rate that silently never applies.
-	if _, ok := side.scope.Key(); !ok {
+	if !side.keyed {
 		multiErr.Add(
 			side.field,
 			errortypes.ErrInvalid,
@@ -653,6 +573,9 @@ func validateDecimalRange(
 
 func (rar *RateAgreementRule) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	rar.applyDefaults()
+	if rar.LaneKey == "" {
+		return ErrLaneNotApplied
+	}
 
 	now := timeutils.NowUnix()
 

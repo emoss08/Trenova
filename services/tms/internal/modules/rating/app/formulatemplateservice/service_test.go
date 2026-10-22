@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/engine"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -165,20 +165,10 @@ func newFormulaServiceWithMatrices(
 	registry := schema.NewRegistry()
 	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-	require.NoError(t, err)
 	return formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
-		Engine:         eng,
+		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:       res,
 		VersionRepo:    versions,
 		RateMatrixRepo: &stubMatrixLookupRepo{data: matrices},
@@ -1461,12 +1451,12 @@ func TestTestExpression_ValidExpression(t *testing.T) {
 		Variables:  map[string]any{},
 	}
 
-	result := deps.svc.TestExpression(t.Context(), req)
+	result := must(t)(deps.svc.TestExpression(t.Context(), req))
 
 	require.NotNil(t, result)
 	assert.True(t, result.Valid)
-	assert.Equal(t, "Expression is valid", result.Message)
-	assert.Empty(t, result.Error)
+	assert.Nil(t, result.Error)
+	assert.Empty(t, result.Diagnostics)
 }
 
 func TestTestExpression_InvalidExpression(t *testing.T) {
@@ -1479,11 +1469,11 @@ func TestTestExpression_InvalidExpression(t *testing.T) {
 		Variables:  map[string]any{},
 	}
 
-	result := deps.svc.TestExpression(t.Context(), req)
+	result := must(t)(deps.svc.TestExpression(t.Context(), req))
 
 	require.NotNil(t, result)
 	assert.False(t, result.Valid)
-	assert.NotEmpty(t, result.Error)
+	assert.NotEmpty(t, failureOf(result))
 }
 
 func TestTestExpression_WithCustomVariables(t *testing.T) {
@@ -1498,11 +1488,10 @@ func TestTestExpression_WithCustomVariables(t *testing.T) {
 		},
 	}
 
-	result := deps.svc.TestExpression(t.Context(), req)
+	result := must(t)(deps.svc.TestExpression(t.Context(), req))
 
 	require.NotNil(t, result)
-	assert.True(t, result.Valid)
-	assert.Equal(t, "Expression is valid", result.Message)
+	assert.True(t, result.Valid, failureOf(result))
 }
 
 func TestTestExpression_UndefinedVariable(t *testing.T) {
@@ -1515,11 +1504,11 @@ func TestTestExpression_UndefinedVariable(t *testing.T) {
 		Variables:  map[string]any{},
 	}
 
-	result := deps.svc.TestExpression(t.Context(), req)
+	result := must(t)(deps.svc.TestExpression(t.Context(), req))
 
 	require.NotNil(t, result)
 	assert.False(t, result.Valid)
-	assert.NotEmpty(t, result.Error)
+	assert.NotEmpty(t, failureOf(result))
 }
 
 func TestTestExpression_ComplexExpression(t *testing.T) {
@@ -1532,11 +1521,10 @@ func TestTestExpression_ComplexExpression(t *testing.T) {
 		Variables:  map[string]any{},
 	}
 
-	result := deps.svc.TestExpression(t.Context(), req)
+	result := must(t)(deps.svc.TestExpression(t.Context(), req))
 
 	require.NotNil(t, result)
-	assert.True(t, result.Valid)
-	assert.Equal(t, "Expression is valid", result.Message)
+	assert.True(t, result.Valid, failureOf(result))
 }
 
 func TestTestExpression_NestedShipmentFields(t *testing.T) {
@@ -1553,11 +1541,10 @@ func TestTestExpression_NestedShipmentFields(t *testing.T) {
 		},
 	}
 
-	result := deps.svc.TestExpression(t.Context(), req)
+	result := must(t)(deps.svc.TestExpression(t.Context(), req))
 
 	require.NotNil(t, result)
-	assert.True(t, result.Valid)
-	assert.Equal(t, "Expression is valid", result.Message)
+	assert.True(t, result.Valid, failureOf(result))
 }
 
 func TestTestExpression_NonNumericResult(t *testing.T) {
@@ -1570,12 +1557,13 @@ func TestTestExpression_NonNumericResult(t *testing.T) {
 		Variables:  map[string]any{},
 	}
 
-	result := deps.svc.TestExpression(t.Context(), req)
+	result := must(t)(deps.svc.TestExpression(t.Context(), req))
 
 	require.NotNil(t, result)
 	assert.False(t, result.Valid)
-	assert.NotEmpty(t, result.Error)
-	assert.Equal(t, "Expression validation failed", result.Message)
+	require.NotNil(t, result.FirstErrorDiagnostic(), "a text result is refused before it runs")
+	assert.Equal(t, "result-type", result.FirstErrorDiagnostic().Code)
+	assert.Nil(t, result.Result)
 }
 
 func TestValidateTemplate_NonNumericExpression(t *testing.T) {
@@ -2498,7 +2486,7 @@ func TestTestExpression_WithShipment(t *testing.T) {
 		},
 	)).Return(entity, nil)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "customRate * 2",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"customRate": 10.0},
@@ -2507,14 +2495,13 @@ func TestTestExpression_WithShipment(t *testing.T) {
 		Breakdowns: []*formulatypes.BreakdownDefinition{
 			{Name: "fuel", Label: "Fuel Surcharge", Expression: "customRate"},
 		},
-	})
+	}))
 
 	require.NotNil(t, result)
 	assert.True(t, result.Valid)
 
-	amount, ok := result.Result.(decimal.Decimal)
-	require.True(t, ok)
-	assert.True(t, decimal.NewFromInt(20).Equal(amount))
+	require.NotNil(t, result.Result)
+	assert.True(t, decimal.NewFromInt(20).Equal(*result.Result))
 
 	require.Len(t, result.Breakdown, 1)
 	assert.Equal(t, "fuel", result.Breakdown[0].Name)
@@ -2534,7 +2521,7 @@ func TestTestExpression_WithShipment_LoadFailure(t *testing.T) {
 	deps.shipmentRepo.On("GetByID", mock.Anything, mock.Anything).
 		Return(nil, errors.New("shipment not found"))
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	_, err := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "customRate * 2",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"customRate": 10.0},
@@ -2542,17 +2529,15 @@ func TestTestExpression_WithShipment_LoadFailure(t *testing.T) {
 		TenantInfo: newTenantInfo(),
 	})
 
-	require.NotNil(t, result)
-	assert.False(t, result.Valid)
-	assert.Equal(t, "Failed to load shipment", result.Message)
-	assert.NotEmpty(t, result.Error)
+	require.Error(t, err, "a shipment that cannot be read is the request's failure, not the formula's")
+	assert.Contains(t, err.Error(), "shipment not found")
 }
 
-func TestTestExpression_BreakdownsWithoutShipment(t *testing.T) {
+func TestTestExpression_ABreakdownLineThatDoesNotCheckIsScopedToItsLine(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
-	result := deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
+	result := must(t)(deps.svc.TestExpression(t.Context(), &TestExpressionRequest{
 		Expression: "customRate * 2",
 		SchemaID:   "shipment",
 		Variables:  map[string]any{"customRate": 10.0},
@@ -2560,14 +2545,15 @@ func TestTestExpression_BreakdownsWithoutShipment(t *testing.T) {
 			{Name: "fuel", Label: "Fuel Surcharge", Expression: "customRate * 0.1"},
 			{Name: "broken", Label: "Broken", Expression: "missingVariable * 2"},
 		},
-	})
+	}))
 
 	require.NotNil(t, result)
-	assert.True(t, result.Valid)
-	require.Len(t, result.Breakdown, 2)
-	assert.True(t, decimal.NewFromInt(1).Equal(result.Breakdown[0].Amount))
-	assert.Empty(t, result.Breakdown[0].Error)
-	assert.NotEmpty(t, result.Breakdown[1].Error)
+	assert.False(t, result.Valid, "a line that does not check refuses the preview")
+	refusal := result.FirstErrorDiagnostic()
+	require.NotNil(t, refusal)
+	assert.Equal(t, "breakdowns[1].expression", refusal.Scope)
+	assert.Equal(t, "unknown-variable", refusal.Code)
+	assert.Equal(t, "missingVariable", refusal.Name)
 }
 
 func TestFork_MissingRequestedVersionFails(t *testing.T) {
@@ -2684,20 +2670,10 @@ func newFormulaServiceWithProviders(
 	registry := schema.NewRegistry()
 	testutil.RegisterShipmentFormulaSchema(t, registry)
 	res := resolver.NewResolver()
-	envBuilder := engine.NewEnvironmentBuilder(engine.EnvironmentBuilderParams{
-		Registry: registry,
-		Resolver: res,
-	})
-	eng, err := engine.NewEngine(engine.Params{
-		Registry:   registry,
-		Resolver:   res,
-		EnvBuilder: envBuilder,
-	})
-	require.NoError(t, err)
 	return formula.NewService(formula.ServiceParams{
 		Logger:           zap.NewNop(),
 		Registry:         registry,
-		Engine:           eng,
+		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
 		Resolver:         res,
 		VersionRepo:      &stubFormulaVersionRepo{},
 		RateMatrixRepo:   &stubMatrixLookupRepo{},

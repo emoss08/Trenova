@@ -1,10 +1,9 @@
-import { buildKnownIdentifiers } from "@/components/formula-editor/known-identifiers";
 import { fireEvent, render, waitFor } from "@testing-library/react";
 import { useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
 import { ActiveEditorProvider, useActiveEditorInsert } from "../active-editor";
 import { ExpressionEditor } from "../expression-editor";
-import { describedShipment } from "@/components/formula-editor/__tests__/described-shipment";
+import { knownFor } from "@/components/formula-editor/__tests__/formula-fixtures";
 
 vi.mock("@trenova/shared/components/theme-provider", () => ({
   useTheme: () => ({ theme: "light", setTheme: vi.fn() }),
@@ -23,7 +22,7 @@ function Harness() {
   const { control } = useForm<{ main: string; line: string }>({
     defaultValues: { main: "", line: "" },
   });
-  const known = buildKnownIdentifiers(describedShipment, []);
+  const known = knownFor();
   return (
     <ActiveEditorProvider>
       <div data-testid="main">
