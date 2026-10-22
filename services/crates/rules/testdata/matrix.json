@@ -210,7 +210,7 @@
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [{"d0Min": 0, "d0Max": 2000}, {"d0Min": 1000}]},
       "exact": true,
       "output": {"issues": [{"kind": "overlap", "position": 0,
-        "message": {"message": "{0} bands {1} and {2} overlap, so the same shipment matches both.", "args": ["Weight", "0 – under 2,000", "1,000 and over"]},
+        "message": {"message": "{0} bands {1} and {2} overlap, so the same shipment matches both.", "args": ["Weight", {"message": "{0} – under {1}", "args": ["0", "2,000"]}, {"message": "{0} and over", "args": ["1,000"]}]},
         "bands": [{"min": "0", "max": "2000"}, {"min": "1000", "max": null}]}]}
     },
     {
@@ -272,8 +272,8 @@
         {"d0Min": 0, "d0Max": 5000}, {"d0Min": 1000, "d0Max": 2000}, {"d0Min": 3000, "d0Max": 4000}, {"d0Min": 5000}
       ]},
       "output": {"issues": [
-        {"kind": "overlap", "message": {"args": ["Weight", "0 – under 5,000", "1,000 – under 2,000"]}},
-        {"kind": "overlap", "message": {"args": ["Weight", "0 – under 5,000", "3,000 – under 4,000"]}}
+        {"kind": "overlap", "message": {"args": ["Weight", {"message": "{0} – under {1}", "args": ["0", "5,000"]}, {"message": "{0} – under {1}", "args": ["1,000", "2,000"]}]}},
+        {"kind": "overlap", "message": {"args": ["Weight", {"message": "{0} – under {1}", "args": ["0", "5,000"]}, {"message": "{0} – under {1}", "args": ["3,000", "4,000"]}]}}
       ]}
     },
     {
@@ -282,7 +282,7 @@
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [
         {"d0Min": 0}, {"d0Min": 1000, "d0Max": 2000}
       ]},
-      "output": {"issues": [{"kind": "overlap", "message": {"args": ["Weight", "0 and over", "1,000 – under 2,000"]}, "bands": [{"min": "0", "max": null}, {"min": "1000", "max": "2000"}]}]}
+      "output": {"issues": [{"kind": "overlap", "message": {"args": ["Weight", {"message": "{0} and over", "args": ["0"]}, {"message": "{0} – under {1}", "args": ["1,000", "2,000"]}]}, "bands": [{"min": "0", "max": null}, {"min": "1000", "max": "2000"}]}]}
     },
     {
       "name": "coverage: bands without a floor sort first and overlap each other",
@@ -290,13 +290,13 @@
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [
         {"d0Max": 1000}, {"d0Max": 2000}, {"d0Min": 2000}
       ]},
-      "output": {"issues": [{"kind": "overlap", "message": {"args": ["Weight", "under 1,000", "under 2,000"]}}]}
+      "output": {"issues": [{"kind": "overlap", "message": {"args": ["Weight", {"message": "under {0}", "args": ["1,000"]}, {"message": "under {0}", "args": ["2,000"]}]}}]}
     },
     {
       "name": "coverage: an empty band label reads Any",
       "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "LinearFeet", "matchMode": "Range"}], "cells": [{}, {"d0Min": 5}]},
-      "output": {"issues": [{"kind": "overlap", "message": {"args": ["Linear feet", "Any", "5 and over"]}}]}
+      "output": {"issues": [{"kind": "overlap", "message": {"args": ["Linear feet", {"message": "Any"}, {"message": "{0} and over", "args": ["5"]}]}}]}
     }
   ]
 }

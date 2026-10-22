@@ -311,8 +311,8 @@ fn sweep(bands: &[Bounds], label: &str, axis: i64) -> Vec<Issue> {
                     message!("{0} bands {1} and {2} overlap, so the same shipment matches both."),
                     [
                         Arg::from(label),
-                        Arg::from(band_label(reach).english()),
-                        Arg::from(band_label(*band).english()),
+                        Arg::from(band_label(reach)),
+                        Arg::from(band_label(*band)),
                     ],
                 ),
                 vec![reach, *band],

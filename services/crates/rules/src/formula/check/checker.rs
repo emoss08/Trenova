@@ -63,7 +63,7 @@ fn quote(name: &str) -> String {
 /// An inner phrase passed as an argument, in English: [`Arg`] has no nested message, so the
 /// phrase is filled in here and the outer template is what the caller translates.
 fn phrase(message: &Message) -> Arg {
-    Arg::Text(message.english())
+    Arg::from(message.clone())
 }
 
 fn replace(label: Message, span: Span, insert: String) -> Fix {
@@ -413,7 +413,7 @@ impl Checker<'_> {
                 if ty == Type::Boolean {
                     let name = value
                         .path()
-                        .unwrap_or_else(|| Message::new(message!("test")).english());
+                        .map_or_else(|| Arg::from(Message::new(message!("test"))), Arg::from);
                     self.error(
                         value.span,
                         Code::ResultType,
@@ -421,7 +421,7 @@ impl Checker<'_> {
                             message!(
                                 "The formula must come to an amount, but this comes to true/false. Write {0} ? amount : 0"
                             ),
-                            [Arg::from(name)],
+                            [name],
                         ),
                     );
                 } else if !ty.is_numeric() {
@@ -1743,11 +1743,11 @@ impl Checker<'_> {
         } else {
             Message::new(message!("the duration"))
         };
-        let subject = other.path().unwrap_or_else(|| fallback.english());
+        let subject = other.path().map_or_else(|| Arg::from(fallback), Arg::from);
         self.error(
             number.span,
             Code::Type,
-            Message::with(template, [Arg::from(subject), Arg::from(binary.op.text())]),
+            Message::with(template, [subject, Arg::from(binary.op.text())]),
         );
     }
 
@@ -1771,21 +1771,18 @@ impl Checker<'_> {
                         operand.span,
                         format!("({name} ? 1 : 0)"),
                     ));
-                    Message::with(
+                    Arg::from(Message::with(
                         message!(" Write ({0} ? amount : 0) to charge when it is true."),
                         [Arg::from(name.as_str())],
-                    )
-                    .english()
+                    ))
                 }
-                (Type::Boolean, None) => Message::new(message!(
+                (Type::Boolean, None) => Arg::from(Message::new(message!(
                     " Write (test ? amount : 0) to charge when a test holds."
-                ))
-                .english(),
-                (Type::String, _) => Message::new(message!(
+                ))),
+                (Type::String, _) => Arg::from(Message::new(message!(
                     " Compare text with ==, or look its rate up with lookup()."
-                ))
-                .english(),
-                _ => String::new(),
+                ))),
+                _ => Arg::from(String::new()),
             };
             self.report(
                 operand.span,
@@ -1796,7 +1793,7 @@ impl Checker<'_> {
                     [
                         Arg::from(binary.op.text()),
                         phrase(&self.describe(operand, ty)),
-                        Arg::from(hint),
+                        hint,
                     ],
                 ),
                 None,

@@ -22,7 +22,8 @@ macro_rules! message {
     };
 }
 
-/// One argument of a message.
+/// One argument of a message: text, a count, or a phrase that is itself a message, so a
+/// sentence built from parts still translates as a whole in each part.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(untagged)]
 pub enum Arg {
@@ -30,6 +31,15 @@ pub enum Arg {
     Text(String),
     /// A count, which a plural placeholder selects on.
     Count(i64),
+    /// A phrase that is itself a message (a value's description, a type word), sent as
+    /// `{"message": ..., "args": [...]}`. Hosts translate it first and substitute the result.
+    Message(Box<Message>),
+}
+
+impl From<Message> for Arg {
+    fn from(value: Message) -> Self {
+        Self::Message(Box::new(value))
+    }
 }
 
 impl From<&str> for Arg {
@@ -150,6 +160,7 @@ fn placeholder(inner: &str, args: &[Arg]) -> String {
         _ => match arg {
             Some(Arg::Text(text)) => text.clone(),
             Some(Arg::Count(count)) => count.to_string(),
+            Some(Arg::Message(message)) => message.english(),
             None => format!("{{{inner}}}"),
         },
     }
@@ -191,6 +202,18 @@ mod tests {
         assert_eq!(
             Message::with(template, [Arg::from(3i64)]).english(),
             "3 stops past free time"
+        );
+    }
+
+    #[test]
+    fn nests_messages_as_arguments() {
+        let inner = Message::with("{0} is a number", [Arg::from("x")]);
+        let outer = Message::with("cannot add {0}", [Arg::from(inner)]);
+        assert_eq!(outer.english(), "cannot add x is a number");
+        let json = serde_json::to_string(&outer).unwrap_or_default();
+        assert_eq!(
+            json,
+            r#"{"message":"cannot add {0}","args":[{"message":"{0} is a number","args":["x"]}]}"#
         );
     }
 

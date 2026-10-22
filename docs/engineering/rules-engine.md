@@ -101,7 +101,9 @@ reports an internal error. No input, however malformed, may make the crate panic
   everything is a byte `Span`, converted at the edge by `span::Utf16Index`.
 - **User-facing text** is a `Message`: `{"message": "unknown name {0}", "args": ["foo"]}`. The
   template is English ICU with positional placeholders; it is also the catalog key. The browser
-  passes it to `translate(message, ...args)`; Go passes it to `shared/i18n`. Templates are
+  passes it to `translate(message, ...args)`; Go passes it to `shared/i18n`. An argument is
+  text, a count (for plurals) or a nested `Message` (a phrase such as a value's description or a
+  band label), which the host translates first and substitutes. Templates are
   declared with `message!("...")`, and `task i18n` extracts them into the Go scope and the web
   app's `web` bundle.
 - **Names** on the wire are camelCase.
