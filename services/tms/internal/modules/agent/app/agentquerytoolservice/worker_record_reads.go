@@ -51,6 +51,17 @@ const (
 		"files. Each shows where its safety performance history request stands: asked when, " +
 		"followed up how often, and what came back. It yields the verificationId the " +
 		"verification tools take."
+	toolListWorkerSafetyEvents = "worker_list_safety_events"
+
+	opDeskWorkerRecognitions = "DeskWorkerRecognitions"
+
+	workerSafetyEventsSummary = "List safety events newest first: one worker's, or, leaving " +
+		"out the worker, those still open across the fleet. One worker's come with their " +
+		"roadside violations and recognitions; the fleet's each name the driver. Events are " +
+		"accidents, inspections, citations, complaints and near misses with their points and " +
+		"status. It yields the safetyEventId, violationId and recognitionId the safety tools take."
+	noteOpenAcrossTheFleet = "Defaults to true when no worker is named, and to false for one " +
+		"worker's; set it to false for the fleet's closed events too."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"
 	fieldWorker      = "worker"
@@ -144,6 +155,24 @@ func workerRecordReadSpecs() []graphQLListSpec {
 			references:   theWorker,
 			notes:        map[string]string{paramWorkerID: noteEveryWorker},
 			defaults:     listDefaults,
+		},
+		{
+			name:         toolListWorkerSafetyEvents,
+			entityPlural: "safety events",
+			summary:      workerSafetyEventsSummary,
+			resource:     permission.ResourceWorkerSafetyEvent,
+			references:   theWorker,
+			notes: map[string]string{
+				paramWorkerID:   noteEveryWorker,
+				wfParamOpenOnly: noteOpenAcrossTheFleet,
+			},
+			defaults: listDefaults,
+			unscoped: map[string]any{wfParamOpenOnly: true},
+			alongside: []alongsideSpec{{
+				key:       "recognitions",
+				operation: opDeskWorkerRecognitions,
+				what:      "recognitions",
+			}},
 		},
 		{
 			name:         toolListEmploymentVerifications,

@@ -43758,12 +43758,23 @@
     },
     {
       "name": "worker_list_safety_events",
-      "description": "List safety events still open across the fleet, or one worker's with their roadside violations and recognitions. Leave out the worker for the fleet: each open event comes with its driver. Events are accidents, inspections, citations, complaints and near misses with their points and status. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
+      "description": "List safety events newest first: one worker's, or, leaving out the worker, those still open across the fleet. One worker's come with their roadside violations and recognitions; the fleet's each name the driver. Events are accidents, inspections, citations, complaints and near misses with their points and status. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "openOnly": {
+            "description": "Only the events still open or under review. Defaults to true when no worker is named, and to false for one worker's; set it to false for the fleet's closed events too.",
+            "type": "boolean"
+          },
           "workerId": {
-            "description": "The worker; leave it out for every open event across the fleet, by id from worker_list. A name is not an id.",
+            "description": "The worker, from worker_list. Never guess one. Leave it out for every worker's.",
             "type": "string",
             "x-recordOf": "worker"
           }

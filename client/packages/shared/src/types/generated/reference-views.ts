@@ -1147,4 +1147,5 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   WorkerPolicy: "worker_policy",
   WorkerRecognition: "worker_recognition",
   WorkerSafetyEvent: "worker_safety_event",
+  WorkerSafetyViolation: "worker_safety_event",
 };

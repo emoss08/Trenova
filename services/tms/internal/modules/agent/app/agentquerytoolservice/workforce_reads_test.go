@@ -21,9 +21,6 @@ import (
 )
 
 type fakeWorkforceReads struct {
-	events       []*worker.WorkerSafetyEvent
-	violations   []*worker.WorkerSafetyViolation
-	recognitions []*worker.WorkerRecognition
 	tests        []*worker.WorkerDOTTest
 	draw         *worker.DOTRandomDraw
 	entries      []*worker.DOTRandomDrawEntry
@@ -37,38 +34,6 @@ type fakeWorkforceReads struct {
 	injuriesReq *workerports.ListWorkerInjuriesRequest
 	expensesReq *driverpayports.ListDriverExpenseConnectionRequest
 	casesReq    *workerports.ListLeaveCasesRequest
-}
-
-func (f *fakeWorkforceReads) ListEvents(
-	context.Context,
-	pagination.TenantInfo,
-	pulid.ID,
-) ([]*worker.WorkerSafetyEvent, error) {
-	return f.events, nil
-}
-
-func (f *fakeWorkforceReads) ListOpenEvents(
-	context.Context,
-	pagination.TenantInfo,
-	int,
-) ([]*worker.WorkerSafetyEvent, error) {
-	return f.events, nil
-}
-
-func (f *fakeWorkforceReads) ListViolations(
-	context.Context,
-	*workerports.ListWorkerSafetyViolationsRequest,
-) ([]*worker.WorkerSafetyViolation, error) {
-	return f.violations, nil
-}
-
-func (f *fakeWorkforceReads) ListRecognitions(
-	context.Context,
-	pagination.TenantInfo,
-	pulid.ID,
-	bool,
-) ([]*worker.WorkerRecognition, error) {
-	return f.recognitions, nil
 }
 
 func (f *fakeWorkforceReads) ListPools(
@@ -130,50 +95,6 @@ func (f *fakeWorkforceReads) ListRequirements(
 	pagination.TenantInfo,
 ) ([]*permit.Requirement, error) {
 	return f.requirements, nil
-}
-
-func TestListWorkerSafetyEvents_NestsViolationsUnderTheirEvent(t *testing.T) {
-	t.Parallel()
-
-	eventID := pulid.MustNew("wsev_")
-	reads := &fakeWorkforceReads{
-		events: []*worker.WorkerSafetyEvent{{
-			ID:          eventID,
-			Kind:        worker.SafetyEventInspection,
-			Severity:    worker.SafetySeverityMinor,
-			Status:      worker.SafetyEventStatusOpen,
-			OccurredAt:  1_790_000_000,
-			Description: "Level 2 at the Gary scale",
-			Points:      2,
-		}},
-		violations: []*worker.WorkerSafetyViolation{{
-			ID:            pulid.MustNew("wsvi_"),
-			SafetyEventID: eventID,
-			Basic:         worker.BasicVehicleMaintenance,
-			Code:          "393.9",
-		}},
-		recognitions: []*worker.WorkerRecognition{{
-			ID:    pulid.MustNew("wrec_"),
-			Kind:  worker.RecognitionKindTenure,
-			Title: "Ten years",
-		}},
-	}
-	tool := newListWorkerSafetyEventsTool(reads, &fakePermissions{allowed: true})
-	params := map[string]any{paramWorkerID: pulid.MustNew("wrk_").String()}
-
-	result, err := tool.Query(t.Context(), testParams(params))
-	require.NoError(t, err)
-	record := result.(*workerSafetyRecord)
-	require.Len(t, record.Events, 1)
-	require.Len(t, record.Events[0].Violations, 1)
-	assert.Equal(t, "393.9", record.Events[0].Violations[0].Code)
-	assert.Len(t, record.Recognitions, 1)
-	assert.Equal(t, permission.ResourceWorkerSafetyEvent, tool.Policy().Resource)
-
-	fleet, err := tool.Query(t.Context(), testParams(map[string]any{}))
-	require.NoError(t, err, "with no worker it lists the fleet's open events")
-	assert.Empty(t, fleet.(*workerSafetyRecord).Recognitions,
-		"recognitions belong to one worker's record")
 }
 
 func TestGetDOTRandomDraw_ListsEverySelection(t *testing.T) {
@@ -286,7 +207,6 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 
 	reads := &fakeWorkforceReads{}
 	for _, tool := range []agentports.AgentQueryTool{
-		newListWorkerSafetyEventsTool(reads, nil),
 		newListDOTRandomDrawsTool(reads, nil),
 		newGetDOTRandomDrawTool(reads, nil),
 		newListDriverExpensesTool(reads, nil),
@@ -297,33 +217,4 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 		assert.Equal(t, permission.OpRead, policy.Operation, tool.Name())
 		assert.Equal(t, agent.ToolKindQuery, policy.Kind, tool.Name())
 	}
-}
-
-/*
-"What safety stuff is still open" could not be answered: the safety events list
-took one worker only, so the agent listed DOT tests and credentials and said it
-could not check the fleet. With no worker it lists every open event, each with
-its driver.
-*/
-func TestListWorkerSafetyEvents_ListsTheFleetsOpenEventsWithNoWorker(t *testing.T) {
-	t.Parallel()
-
-	jane := &worker.Worker{ID: pulid.MustNew("wrk_"), FirstName: "Jane", LastName: "Doe"}
-	reads := &fakeWorkforceReads{events: []*worker.WorkerSafetyEvent{{
-		ID:       pulid.MustNew("wse_"),
-		WorkerID: jane.ID,
-		Worker:   jane,
-		Kind:     worker.SafetyEventAccident,
-		Status:   worker.SafetyEventStatusOpen,
-	}}}
-	tool := newListWorkerSafetyEventsTool(reads, &fakePermissions{})
-
-	result, err := tool.Query(t.Context(), agentParams(map[string]any{},
-		permission.SensitivityRestricted))
-	require.NoError(t, err)
-	record, ok := result.(*workerSafetyRecord)
-	require.True(t, ok)
-	require.Len(t, record.Events, 1)
-	assert.Equal(t, "Jane Doe", record.Events[0].Worker)
-	assert.Equal(t, jane.ID.String(), record.Events[0].WorkerID)
 }

@@ -26,8 +26,8 @@ func (r *repository) ListViolations(
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = workercol.WorkerSafetyViolationScopeTenant(sq, req.TenantInfo)
-				if !req.SafetyEventID.IsNil() {
-					sq = sq.Where(cols.SafetyEventID.Eq(), req.SafetyEventID)
+				if len(req.SafetyEventIDs) > 0 {
+					sq = sq.Where(cols.SafetyEventID.In(), bun.List(req.SafetyEventIDs))
 				}
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)

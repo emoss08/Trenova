@@ -52,6 +52,7 @@ type besideRead struct {
 	RootField string
 	Resource  string
 	Input     string
+	Keys      []string
 }
 
 type toolRead struct {
@@ -120,7 +121,9 @@ var graphQLReads = map[string]graphQLRead{
 {{- if .Alongside }}
 		Alongside: []graphQLAlongside{
 {{- range .Alongside }}
-			{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}, Input: {{ quote .Input }}},
+			{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}
+{{- if .Input }}, Input: {{ quote .Input }}{{ end }}
+{{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}},
 {{- end }}
 		},
 {{- end }}
@@ -242,6 +245,7 @@ func besideReads(b *binding) []besideRead {
 			RootField: beside.RootField.Name,
 			Resource:  string(beside.Resource),
 			Input:     beside.Input,
+			Keys:      beside.Keys,
 		})
 	}
 

@@ -80,6 +80,7 @@ type FactoryParams struct {
 	RoutingGuideWithEntriesByID               *RoutingGuideWithEntriesByIDLoaderFactory
 	WorkerDQFVerificationsByWorkerID          *WorkerDQFVerificationsByWorkerIDLoaderFactory
 	WorkerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
+	WorkerSafetyViolationsByEventID           *WorkerSafetyViolationsByEventIDLoaderFactory
 	FiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	AgentPlanStepsByPlanID                    *AgentPlanStepsByPlanIDLoaderFactory
@@ -169,6 +170,7 @@ type Factory struct {
 	routingGuideWithEntriesByID               *RoutingGuideWithEntriesByIDLoaderFactory
 	workerDQFVerificationsByWorkerID          *WorkerDQFVerificationsByWorkerIDLoaderFactory
 	workerLeaveEntriesByCaseID                *WorkerLeaveEntriesByCaseIDLoaderFactory
+	workerSafetyViolationsByEventID           *WorkerSafetyViolationsByEventIDLoaderFactory
 	fiscalPeriodsByFiscalYearID               *FiscalPeriodsByFiscalYearIDLoaderFactory
 	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	agentPlanStepsByPlanID                    *AgentPlanStepsByPlanIDLoaderFactory
@@ -258,6 +260,7 @@ type set struct {
 	routingGuideWithEntriesByID               *dataloadgen.Loader[string, *tender.RoutingGuide]
 	workerDQFVerificationsByWorkerID          *dataloadgen.Loader[string, []*worker.WorkerEmploymentVerification]
 	workerLeaveEntriesByCaseID                *dataloadgen.Loader[string, []*worker.WorkerLeaveEntry]
+	workerSafetyViolationsByEventID           *dataloadgen.Loader[string, []*worker.WorkerSafetyViolation]
 	fiscalPeriodsByFiscalYearID               *dataloadgen.Loader[string, []*fiscalperiod.FiscalPeriod]
 	agentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	agentPlanStepsByPlanID                    *dataloadgen.Loader[string, []*agent.AgentProposal]
@@ -354,6 +357,7 @@ func NewFactory(p FactoryParams) *Factory {
 		routingGuideWithEntriesByID:               p.RoutingGuideWithEntriesByID,
 		workerDQFVerificationsByWorkerID:          p.WorkerDQFVerificationsByWorkerID,
 		workerLeaveEntriesByCaseID:                p.WorkerLeaveEntriesByCaseID,
+		workerSafetyViolationsByEventID:           p.WorkerSafetyViolationsByEventID,
 		fiscalPeriodsByFiscalYearID:               p.FiscalPeriodsByFiscalYearID,
 		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
 		agentPlanStepsByPlanID:                    p.AgentPlanStepsByPlanID,
@@ -481,6 +485,10 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 		),
 		workerLeaveEntriesByCaseID: newWorkerLeaveEntriesByCaseIDLoader(
 			f.workerLeaveEntriesByCaseID,
+			tenantInfo,
+		),
+		workerSafetyViolationsByEventID: newWorkerSafetyViolationsByEventIDLoader(
+			f.workerSafetyViolationsByEventID,
 			tenantInfo,
 		),
 		fiscalPeriodsByFiscalYearID: newFiscalPeriodsByFiscalYearIDLoader(

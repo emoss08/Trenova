@@ -296,3 +296,114 @@ func TestUnpagedList_LeavesOutTheWorkerOfAPrivacyCase(t *testing.T) {
 	assert.Equal(t, "wrk_1", items[0]["workerId"])
 	assert.Contains(t, items[1], "worker")
 }
+
+func safetyAnswers() map[string]*agentports.GraphQLReadResult {
+	return map[string]*agentports.GraphQLReadResult{
+		"DeskWorkerSafetyEvents": {Data: map[string]any{"workerSafetyEvents": []any{
+			map[string]any{
+				"id": "wsev_1", "kind": "Inspection", "status": "Open",
+				"violations": []any{map[string]any{"id": "wsvi_1", "code": "393.9"}},
+			},
+		}}},
+		"DeskWorkerRecognitions": {
+			Data: map[string]any{"workerRecognitions": []any{
+				map[string]any{"id": "wrec_1", "title": "Ten years", "__typename": "WorkerRecognition"},
+			}},
+			Withheld: []string{"workerRecognitions.title"},
+		},
+	}
+}
+
+func TestUnpagedList_ReadsTheWorkersRecognitionsByTheWorkerTheCallNames(t *testing.T) {
+	t.Parallel()
+
+	reader := &keyedReader{answers: safetyAnswers()}
+	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolListWorkerSafetyEvents), reader,
+		&mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+
+	workerID := pulid.MustNew("wrk_").String()
+	data, err := tool.Query(t.Context(), keyedCall(map[string]any{paramWorkerID: workerID}))
+	require.NoError(t, err)
+
+	sent := reader.sent("DeskWorkerRecognitions")
+	require.NotNil(t, sent)
+	assert.Equal(t, map[string]any{"workerId": workerID}, sent.Variables)
+	outcome, _ := data.(map[string]any)
+	recognitions, _ := outcome["recognitions"].([]map[string]any)
+	require.Len(t, recognitions, 1)
+	assert.Equal(t, "wrec_1", recognitions[0]["id"])
+	assert.NotContains(t, recognitions[0], "__typename")
+	assert.Contains(t, outcome["withheldByAccess"], "recognitions.title")
+	items, _ := outcome["items"].([]map[string]any)
+	require.Len(t, items, 1)
+	assert.NotEmpty(t, items[0]["violations"])
+}
+
+func TestUnpagedList_ReadsNoRecognitionsWithoutAWorker(t *testing.T) {
+	t.Parallel()
+
+	reader := &keyedReader{answers: safetyAnswers()}
+	tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolListWorkerSafetyEvents), reader,
+		&mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+
+	data, err := tool.Query(t.Context(), keyedCall(map[string]any{wfParamOpenOnly: true}))
+	require.NoError(t, err)
+
+	assert.Nil(t, reader.sent("DeskWorkerRecognitions"), "a read keyed by the worker needs one")
+	outcome, _ := data.(map[string]any)
+	assert.NotContains(t, outcome, "recognitions")
+	sent := reader.sent("DeskWorkerSafetyEvents")
+	require.NotNil(t, sent)
+	assert.Equal(t, map[string]any{"openOnly": true, "limit": graphQLListLimit}, sent.Variables)
+}
+
+func TestUnpagedList_AKeyedReadAlongsideTakesNoTableInput(t *testing.T) {
+	t.Parallel()
+
+	spec := keyedSpec(t, toolListWorkerSafetyEvents)
+	spec.alongside[0].inputs = map[string]any{inputStatus: activeStatus}
+	_, err := newGraphQLUnpagedListTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	require.ErrorContains(t, err, "takes no table input")
+}
+
+func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_").String()
+	cases := map[string]struct {
+		params map[string]any
+		want   map[string]any
+	}{
+		"no worker reads what is still open across the fleet": {
+			params: map[string]any{},
+			want:   map[string]any{"openOnly": true, "limit": graphQLListLimit},
+		},
+		"no worker, and the closed ones asked for too": {
+			params: map[string]any{wfParamOpenOnly: false},
+			want:   map[string]any{"openOnly": false, "limit": graphQLListLimit},
+		},
+		"one worker's record is read whole": {
+			params: map[string]any{paramWorkerID: workerID},
+			want:   map[string]any{"workerId": workerID, "limit": graphQLListLimit},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			reader := &keyedReader{answers: safetyAnswers()}
+			tool, err := newGraphQLUnpagedListTool(keyedSpec(t, toolListWorkerSafetyEvents), reader,
+				&mocks.DenyResourcesPermissionEngine{})
+			require.NoError(t, err)
+
+			_, err = tool.Query(t.Context(), keyedCall(tc.params))
+			require.NoError(t, err)
+
+			sent := reader.sent("DeskWorkerSafetyEvents")
+			require.NotNil(t, sent)
+			assert.Equal(t, tc.want, sent.Variables)
+		})
+	}
+}
