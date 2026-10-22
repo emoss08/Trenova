@@ -69,7 +69,7 @@ describe("tariffCheck", () => {
     expect(check.ok).toBe(true);
     expect(check.header).toEqual({ kind: "tariff", name: "Dry van TL" });
     expect(check.diagnostics).toEqual([]);
-    expect(check.inputs.map(({ range: _, ...input }) => input)).toEqual([
+    expect(check.inputs.map((input) => ({ ...input, range: undefined }))).toEqual([
       {
         name: "rate",
         doc: "Paid per loaded mile.",

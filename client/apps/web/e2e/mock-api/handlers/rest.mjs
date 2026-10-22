@@ -12,6 +12,7 @@ import { ORG, permissionManifest } from "../fixtures/session.mjs";
 import { SETTINGS_ROUTES } from "./settings.mjs";
 import { PALETTE_ROUTES } from "./palette.mjs";
 import { FORMULA_ROUTES } from "./formula.mjs";
+import { FORMULA_LIBRARY_ROUTES } from "./formula-library.mjs";
 import { FORMULA_NOVA_ROUTES } from "./formula-nova.mjs";
 import { CUSTOMER_TRACKING_ROUTES } from "./customertracking.mjs";
 
@@ -21,6 +22,7 @@ const ROUTES = [
   ...CUSTOMER_TRACKING_ROUTES,
   ...FORMULA_NOVA_ROUTES,
   ...FORMULA_ROUTES,
+  ...FORMULA_LIBRARY_ROUTES,
   ...DESK_CASE_ROUTES,
   ...EDI_DRAFT_ROUTES,
   ...DESK_PLAN_ROUTES,
