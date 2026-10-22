@@ -38,9 +38,9 @@ describe("the libraries column", () => {
   it("lists the libraries a template imports, or none", () => {
     const column = getColumns(translate).find((c) => c.id === "imports");
     if (!column || typeof column.cell !== "function") throw new Error("no imports column");
+    const cell = column.cell;
     const render_ = (imports: FormulaTemplateRow["imports"]) =>
-      render(<>{column.cell?.({ row: { original: { imports } } } as never)}</>).container
-        .textContent;
+      render(<>{cell({ row: { original: { imports } } } as never)}</>).container.textContent;
     expect(render_([{ path: "org.accessorials", version: "flv_1" }])).toBe("org.accessorials");
     expect(render_([])).toBe("None");
   });

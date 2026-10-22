@@ -217,14 +217,12 @@ describe("pageContextSchema", () => {
       draft: {
         surface: "formula",
         formula: {
-          schemaId: "shipment",
-          templateType: "FreightCharge",
-          expression: "1",
-          variables: [],
+          kind: "tariff",
+          source: 'tariff "t"\n',
         },
       },
     });
 
-    expect(parsed.draft?.formula?.expression).toBe("1");
+    expect(parsed.draft?.formula?.source).toBe('tariff "t"\n');
   });
 });

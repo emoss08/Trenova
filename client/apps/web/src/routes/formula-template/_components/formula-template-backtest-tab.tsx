@@ -241,7 +241,7 @@ function VersionPicker({
   const t = useT();
 
   const versions = useQuery({
-    ...formulaTemplate.versions(templateId, VERSION_PICKER_LIMIT),
+    ...formulaTemplate.versions(templateId ?? "", VERSION_PICKER_LIMIT),
     staleTime: 30_000,
   });
   const options = versions.data?.results ?? [];
