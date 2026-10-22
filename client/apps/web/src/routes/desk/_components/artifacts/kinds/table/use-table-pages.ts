@@ -58,7 +58,8 @@ const PAGE_SIZE_KEY = "desk.table.pageSize";
  * soon as the table opens and Next is instant. Searching or sorting reads the
  * list from its start instead, as does a table cut to fit once the person
  * pages past the rows it holds. A list the person may no longer read stops at
- * the agent's rows.
+ * the agent's rows. A list that no longer takes the place the agent's read
+ * stopped at is read again from its start.
  */
 export function useTablePages({
   threadId,
@@ -139,6 +140,7 @@ export function useTablePages({
 
   const failure = read.error;
   const locked = failure instanceof ApiRequestError && failure.status === 403;
+  const stale = failure instanceof ApiRequestError && failure.getFieldErrors("after").length > 0;
   const pages = read.data?.pages ?? NO_PAGES;
   const first = pages[0];
   const recordEntity = isRecordEntityType(entity) ? entity : null;
@@ -186,7 +188,7 @@ export function useTablePages({
   const need = (shownPage + 1) * size;
   const waiting = !filtering && buffer.length < need && hasMore && failure === null;
 
-  if (remote && !fromStart && !resumesAfterAgent(paging) && need > agentRows.length) {
+  if (remote && !fromStart && (stale || (!resumesAfterAgent(paging) && need > agentRows.length))) {
     setRestarted(true);
   }
 

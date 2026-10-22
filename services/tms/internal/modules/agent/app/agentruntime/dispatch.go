@@ -38,7 +38,8 @@ type toolOutcome struct {
 	batch []agentports.PendingAction
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
-	data any
+	data    any
+	ranWith map[string]any
 	// publishes marks a document the observer has to keep; its result is
 	// written once the observer says what it kept.
 	publishes bool
@@ -159,6 +160,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 
 		outcome := s.runQueryTool(ctx, req, tool, call)
+		outcome.ranWith = call.Arguments
 		if note := contract.note(); note != "" && !outcome.failed {
 			outcome.content += "\n\n[" + note + "]"
 		}

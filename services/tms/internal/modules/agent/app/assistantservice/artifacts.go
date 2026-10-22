@@ -205,6 +205,7 @@ func (r *artifactRecorder) observe(
 		observation.Call.Name,
 		observation.Call.Arguments,
 	)
+	noteReadWith(artifact, observation.RanWith)
 	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
 		return r.bunch(&observation, artifact)
 	}

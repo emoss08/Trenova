@@ -312,6 +312,34 @@ describe("DeskTableBody paging a list", () => {
     expect(list.reads[0]).toMatchObject({ after: undefined, offset: undefined, total: true });
   });
 
+  it("reads the list from its start when it no longer takes the place Nova stopped at", async () => {
+    list.failures.push(
+      new ApiRequestError(400, {
+        title: "Bad Request",
+        status: 400,
+        errors: [
+          {
+            field: "after",
+            message: "This page can no longer be read. Read the list from its start",
+            code: "INVALID",
+          },
+        ],
+      } as never),
+    );
+    renderTable(agentRead());
+
+    expect(await within(pager()).findByText("1–25 of 60")).toBeInTheDocument();
+    expect(list.reads).toHaveLength(2);
+    expect(list.reads[0]).toMatchObject({ after: "c-25", total: true });
+    expect(list.reads[1]).toMatchObject({ after: undefined, offset: undefined, total: true });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Commodity 1")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+    expect(await screen.findByText("Commodity 26")).toBeInTheDocument();
+    expect(list.reads[2]).toMatchObject({ after: "c-25", total: false });
+  });
+
   it("shows fifty rows a page when asked, and remembers it", async () => {
     renderTable(agentRead());
     await within(pager()).findByText("1–25 of 60");

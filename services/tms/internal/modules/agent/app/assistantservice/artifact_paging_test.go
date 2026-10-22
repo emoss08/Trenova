@@ -303,3 +303,31 @@ func TestArtifactRecorder_AShortPagedTableStaysWhetherOrNotTheReplyLinkedIt(t *t
 
 	assert.Len(t, recorder.recorded, 1)
 }
+
+func TestArtifactRecorder_ATableKeepsTheArgumentsItsListRanWith(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubArtifactRepo{}
+	recorder := newPagingRecorder(t, repo)
+	observation := pageRead(
+		"call_1",
+		map[string]any{"status": "ready for review"},
+		queuePage(0, 2, map[string]any{"hasMore": true, "nextCursor": "c-2"}),
+	)
+	observation.RanWith = map[string]any{"status": []any{"ReadyForReview"}}
+
+	_, err := recorder.observe(observation)
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 1)
+	assert.Equal(t,
+		map[string]any{"status": []any{"ReadyForReview"}},
+		repo.upserts[0].Payload[payloadReadWith],
+	)
+	observation.RanWith["status"] = []any{"Posted"}
+	assert.Equal(t,
+		map[string]any{"status": []any{"ReadyForReview"}},
+		repo.upserts[0].Payload[payloadReadWith],
+		"the table keeps its own copy",
+	)
+}

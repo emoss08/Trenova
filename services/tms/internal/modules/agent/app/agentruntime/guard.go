@@ -213,6 +213,7 @@ func (s *Service) claimAndDispatch(
 	}
 	if !outcome.failed && showsResults(req) {
 		step.Outcome.Data = stepData(outcome.data)
+		step.Outcome.RanWith = outcome.ranWith
 	}
 	// The settle rides a context that cancellation cannot reach. The failures
 	// this ledger exists for — an activity timing out, a person pressing Stop —
@@ -264,6 +265,7 @@ func replayedOutcome(recorded agentports.RunStepOutcome) toolOutcome {
 	// reading one would take the call for a query that returned something.
 	if len(recorded.Data) > 0 {
 		outcome.data = recorded.Data
+		outcome.ranWith = recorded.RanWith
 	}
 
 	return outcome
