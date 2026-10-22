@@ -5837,6 +5837,46 @@ export type PackingGroup =
   | 'II'
   | 'III';
 
+/** What the field guard does with one field of a linked record. */
+export type PageAccessDecision =
+  | 'VISIBLE'
+  /** Outside the kind's reference view, and the reader cannot read the kind. */
+  | 'WITHHELD_KIND'
+  /** Above the reader's sensitivity ceiling. */
+  | 'WITHHELD_SENSITIVITY';
+
+export type PageAccessDraftPermissionInput = {
+  operations: Array<string>;
+  resource: string;
+};
+
+export type PageAccessPreviewInput = {
+  /** The role being edited. */
+  draft?: PageAccessRoleDraftInput | null | undefined;
+  /** A path in the app, such as /shipments/shp_123. */
+  location: string;
+  /** A saved role to preview. Exactly one of roleId and draft is set. */
+  roleId?: string | number | null | undefined;
+};
+
+/** A role as the role editor holds it before it is saved. */
+export type PageAccessRoleDraftInput = {
+  maxSensitivity: string;
+  parentRoleIds?: Array<string | number> | null | undefined;
+  permissions: Array<PageAccessDraftPermissionInput>;
+};
+
+/** How a screen depends on one kind of record (docs/engineering/reference-views.md). */
+export type PageAccessUse =
+  /** The screen asks for fields beyond the kind's reference view with @requiresRead. */
+  | 'DECLARED'
+  /** The screen reads records of the kind as root records, which needs the kind's read. */
+  | 'READ'
+  /** The screen shows the kind only through its reference view. */
+  | 'REFERENCE'
+  /** The screen's route, or a REST endpoint it calls, checks the kind. */
+  | 'REQUIRED';
+
 export type PauseAccountingSyncInput = {
   integrationType: AccountingSystem;
   reason?: string | null | undefined;
@@ -6790,6 +6830,12 @@ export type ReviseDeskMemoryInput = {
   roleId?: string | number | null | undefined;
   scope?: AgentMemoryScope | null | undefined;
   version: number;
+};
+
+export type RoleResourceGuideInput = {
+  maxSensitivity: string;
+  /** At most 64 resources, such as one category of the role editor. */
+  resources: Array<string>;
 };
 
 /**
@@ -16048,6 +16094,36 @@ export type UpdateOrganizationSettingsMutationVariables = Exact<{
 
 export type UpdateOrganizationSettingsMutation = { updateOrganization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
 
+export type PageAccessRequirementFieldsFragment = { resource: string, resourceName: string, operation: string, operationName: string, allowed: boolean } & { ' $fragmentName'?: 'PageAccessRequirementFieldsFragment' };
+
+export type PageAccessFieldsFragment = { path: string, name: string, operations: Array<string>, withheld: number, blocked: boolean, requires: Array<{ ' $fragmentRefs'?: { 'PageAccessRequirementFieldsFragment': PageAccessRequirementFieldsFragment } }>, endpoints: Array<{ method: string, path: string, requires: Array<{ ' $fragmentRefs'?: { 'PageAccessRequirementFieldsFragment': PageAccessRequirementFieldsFragment } }> }>, kinds: Array<{ resource: string, resourceName: string, use: PageAccessUse, canRead: boolean, withheld: number, fields: Array<{ name: string, inView: boolean, decision: PageAccessDecision }> }> } & { ' $fragmentName'?: 'PageAccessFieldsFragment' };
+
+export type PageAccessQueryVariables = Exact<{
+  location: string;
+}>;
+
+
+export type PageAccessQuery = { pageAccess: { ' $fragmentRefs'?: { 'PageAccessFieldsFragment': PageAccessFieldsFragment } } | null };
+
+export type PageAccessPreviewQueryVariables = Exact<{
+  input: PageAccessPreviewInput;
+}>;
+
+
+export type PageAccessPreviewQuery = { pageAccessPreview: { ' $fragmentRefs'?: { 'PageAccessFieldsFragment': PageAccessFieldsFragment } } | null };
+
+export type PageAccessScreensQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PageAccessScreensQuery = { pageAccessScreens: Array<{ path: string, name: string }> };
+
+export type RoleResourceGuidesQueryVariables = Exact<{
+  input: RoleResourceGuideInput;
+}>;
+
+
+export type RoleResourceGuidesQuery = { roleResourceGuides: Array<{ resource: string, name: string, granted: string, withheld: string, ceiling: string | null, screens: Array<{ path: string, name: string, use: PageAccessUse }> }> };
+
 export type DeskWorkerPerformanceReviewsQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -19203,6 +19279,7 @@ export { OrderTableRowFieldsFragmentDoc, OrderTableDocument } from "./documents/
 export { OrgHolidayFieldsFragmentDoc, OrgHolidaysDocument, CreateOrgHolidayDocument, UpdateOrgHolidayDocument, DeleteOrgHolidayDocument } from "./documents/org-holiday/operations";
 export { JobPositionsDocument, HeadcountDocument, JobPositionHoldersDocument, MyTeamDocument, ApprovalDelegationsDocument, AssignWorkerPositionDocument, AssignUserPositionDocument, CreateJobPositionDocument, UpdateJobPositionDocument, DelegateApprovalDocument, RevokeApprovalDelegationDocument } from "./documents/org-structure/operations";
 export { OrganizationSettingsStateFieldsFragmentDoc, OrganizationSettingsFieldsFragmentDoc, OrganizationSettingsDocument, UpdateOrganizationSettingsDocument } from "./documents/organization/page";
+export { PageAccessRequirementFieldsFragmentDoc, PageAccessFieldsFragmentDoc, PageAccessDocument, PageAccessPreviewDocument, PageAccessScreensDocument, RoleResourceGuidesDocument } from "./documents/page-access/page-access";
 export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";

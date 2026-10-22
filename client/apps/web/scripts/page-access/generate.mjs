@@ -7,8 +7,8 @@
  * The route tree is the product guide's reading of the router
  * (`../product-guide/sources.mjs`). A screen's code is every module reachable
  * from its page module, through static and dynamic imports, short of the app
- * shell: what `main.tsx` loads before any route (the navigation, the command
- * palette, the assistant) runs on every screen and belongs to none.
+ * shell: what `main.tsx` loads statically, before any route (the navigation,
+ * the page bar, the permission store), runs on every screen and belongs to none.
  *
  * `go run ./internal/api/graphql/gqlext/refgen` (from services/tms) then
  * reads this file and the operations to write manifest_gen.json, which says
@@ -99,11 +99,12 @@ function build() {
   const graph = new ModuleGraph(graphPaths(WEB_ROOT));
   const documents = operationsByDocument();
 
-  // The shell: everything main.tsx loads, except the pages the router loads
-  // lazily, which are the screens.
-  const router = graph.paths.router;
+  // The shell: what main.tsx loads before any route, by static imports
+  // alone. What the shell loads lazily (the assistant, the palette, the page
+  // access panel) and the pages the router loads are not on every screen, so
+  // a screen that imports one of them runs it.
   const shell = graph.closure([graph.paths.main], {
-    follow: (from, _target, dynamic) => !(dynamic && from === router),
+    follow: (_from, _target, dynamic) => !dynamic,
   });
 
   const screens = [];

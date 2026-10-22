@@ -16,7 +16,6 @@ import { dirname, join, resolve } from "node:path";
 import { parseFile, walk } from "../product-guide/ast.mjs";
 
 const GRAPHQL_DOCUMENTS = "@trenova/graphql/generated/graphql";
-const REST_CLIENT = "@trenova/shared/lib/api";
 const REST_METHODS = new Set(["get", "post", "put", "patch", "delete"]);
 const EXTENSIONS = [".tsx", ".ts", "/index.tsx", "/index.ts"];
 

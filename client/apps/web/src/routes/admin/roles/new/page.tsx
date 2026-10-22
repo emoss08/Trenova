@@ -16,11 +16,13 @@ import { createRoleSchema } from "@trenova/shared/types/role";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { RolePageLayout } from "../_components/role-builder-layout";
 import { RoleForm } from "../_components/role-form";
 import { RolePermissionMatrix } from "../_components/role-permission-matrix";
+import { RoleScreenPreviewCard } from "../_components/role-screen-preview-card";
+import { toRoleDraft } from "@/lib/role-draft";
 import {
   RoleTemplateSelector,
   type TemplateSelection,
@@ -46,9 +48,11 @@ export function RoleCreatePage() {
   });
 
   const {
+    control,
     formState: { isSubmitting },
     handleSubmit,
   } = form;
+  const maxSensitivity = useWatch({ control, name: "maxSensitivity" });
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: CreateRole) => {
@@ -121,9 +125,12 @@ export function RoleCreatePage() {
               <RolePermissionMatrix
                 permissions={permissions}
                 onPermissionsChange={setPermissions}
+                maxSensitivity={maxSensitivity}
               />
             </CardContent>
           </Card>
+
+          <RoleScreenPreviewCard draft={toRoleDraft(maxSensitivity, permissions)} />
         </RolePageLayout>
       </Form>
     </FormProvider>

@@ -5,7 +5,7 @@ import { create } from "zustand";
  * command palette runs "Keyboard shortcuts" and "Notifications" as commands, so
  * their open state cannot live inside the menu that used to own it.
  */
-export type AppDialog = "shortcuts" | "notifications";
+export type AppDialog = "shortcuts" | "notifications" | "page-access";
 
 interface AppDialogsState {
   active: AppDialog | null;

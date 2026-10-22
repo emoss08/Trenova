@@ -10,10 +10,12 @@ import {
   type ResourceCategory,
   type ResourceDefinition,
 } from "@/lib/role-api";
-import { impliedOperations } from "@/lib/implied-operations";
+import { grantReads, impliedOperations } from "@/lib/implied-operations";
 import { bundleState } from "@/lib/role-bundles";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { permissionBundlesQuery, RoleBundlePicker } from "./role-bundle-picker";
+import { ResourceGuideLine, useRoleResourceGuides } from "./role-resource-guide";
+import type { RoleResourceGuide } from "@/lib/graphql/page-access";
 import { cn } from "@trenova/shared/lib/utils";
 import type { AddPermission, DataScope, Operation } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
@@ -31,11 +33,14 @@ import { useCallback, useMemo, useState } from "react";
 type RolePermissionMatrixProps = {
   permissions: AddPermission[];
   onPermissionsChange: (permissions: AddPermission[]) => void;
+  /** The role's sensitivity ceiling, which decides what its reference views show. */
+  maxSensitivity: string;
 };
 
 export function RolePermissionMatrix({
   permissions,
   onPermissionsChange,
+  maxSensitivity,
 }: RolePermissionMatrixProps) {
   const t = useT();
 
@@ -71,6 +76,28 @@ export function RolePermissionMatrix({
     }
     return map;
   }, [permissions]);
+
+  // What the role reads, as the engine evaluates it: a grant's read, an
+  // operation that implies it, or the read of the resource's parent.
+  const readable = useMemo(() => {
+    const definitions = new Map(
+      resourceCategories.flatMap((category) =>
+        category.resources.map((resource) => [resource.resource, resource] as const),
+      ),
+    );
+    const reads = (resource: string) => {
+      const definition = definitions.get(resource);
+      const granted = permissionMap.get(resource)?.operations ?? [];
+      return definition !== undefined && grantReads(granted, definition.operations);
+    };
+    const out = new Set<string>();
+    for (const [resource, definition] of definitions) {
+      if (reads(resource) || (definition.parentResource && reads(definition.parentResource))) {
+        out.add(resource);
+      }
+    }
+    return out;
+  }, [resourceCategories, permissionMap]);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -291,6 +318,8 @@ export function RolePermissionMatrix({
                   onToggleAllForCategory={toggleAllForCategory}
                   onUpdateDataScope={updateDataScope}
                   bundleSources={bundleSources}
+                  maxSensitivity={maxSensitivity}
+                  readable={readable}
                 />
               ))}
             </div>
@@ -312,6 +341,8 @@ type CategorySectionProps = {
   onToggleAllForCategory: (category: ResourceCategory, action: "select" | "clear") => void;
   onUpdateDataScope: (resource: string, scope: DataScope) => void;
   bundleSources: Map<string, string[]>;
+  maxSensitivity: string;
+  readable: Set<string>;
 };
 
 function CategorySection({
@@ -325,8 +356,15 @@ function CategorySection({
   onToggleAllForCategory,
   onUpdateDataScope,
   bundleSources,
+  maxSensitivity,
+  readable,
 }: CategorySectionProps) {
   const t = useT();
+  const { guides, isPending: guidesPending } = useRoleResourceGuides(
+    category.resources.map((resource) => resource.resource),
+    maxSensitivity,
+    isExpanded,
+  );
 
   const grantedCount = category.resources.filter((r) => permissionMap.has(r.resource)).length;
 
@@ -386,11 +424,14 @@ function CategorySection({
                   key={resource.resource}
                   resource={resource}
                   permission={permissionMap.get(resource.resource)}
+                  reads={readable.has(resource.resource)}
                   isLast={idx === category.resources.length - 1}
                   onToggleOperation={(op) => onToggleOperation(resource, op)}
                   onToggleAll={() => onToggleAllForResource(resource)}
                   onUpdateDataScope={(scope) => onUpdateDataScope(resource.resource, scope)}
                   sources={bundleSources.get(resource.resource)}
+                  guide={guides.get(resource.resource)}
+                  guidePending={guidesPending}
                 />
               ))}
             </div>
@@ -409,6 +450,10 @@ type ResourceRowProps = {
   onToggleAll: () => void;
   onUpdateDataScope: (scope: DataScope) => void;
   sources?: string[];
+  guide?: RoleResourceGuide;
+  guidePending: boolean;
+  /** Whether the role reads the resource, directly, by implication or through its parent. */
+  reads: boolean;
 };
 
 function ResourceRow({
@@ -419,6 +464,9 @@ function ResourceRow({
   onToggleAll,
   onUpdateDataScope,
   sources,
+  guide,
+  guidePending,
+  reads,
 }: ResourceRowProps) {
   const t = useT();
 
@@ -476,6 +524,7 @@ function ResourceRow({
             {t("From {0}", sources.join(", "))}
           </p>
         ) : null}
+        <ResourceGuideLine guide={guide} reads={reads} isPending={guidePending} />
       </div>
 
       <div className="flex items-center gap-1.5">

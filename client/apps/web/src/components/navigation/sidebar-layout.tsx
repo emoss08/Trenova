@@ -14,6 +14,7 @@ import { useLocation } from "react-router";
 import { AssistantWidget, useAssistantSideInset } from "../assistant/assistant-widget";
 import { CommandPaletteMount } from "../command-palette/command-palette-mount";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
+import { PageAccessMount } from "../page-access/page-access-mount";
 import { PageHeader, type PageHeaderProps } from "../page-header";
 import {
   ShellFrameContext,
@@ -125,6 +126,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     <>
       <CommandPaletteMount />
       <KeyboardShortcutsDialog />
+      <PageAccessMount />
       <AssistantWidget />
       {/* With the assistant docked down one side, the page moves over for it
           rather than sitting under it. */}
