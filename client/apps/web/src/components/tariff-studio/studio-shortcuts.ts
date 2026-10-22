@@ -1,7 +1,7 @@
 import { formatShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { useEffect } from "react";
 
-export type StudioShortcut = "save" | "run" | "search" | "preview" | "scenarios" | "nova";
+export type StudioShortcut = "save" | "run" | "search" | "preview" | "tests" | "nova";
 
 type KeyLike = {
   key: string;
@@ -18,7 +18,7 @@ const KEY_TO_SHORTCUT: Record<string, StudioShortcut> = {
   enter: "run",
   j: "nova",
   "1": "preview",
-  "2": "scenarios",
+  "2": "tests",
 };
 
 const SHORTCUT_KEY_LABEL: Record<StudioShortcut, string> = {
@@ -26,7 +26,7 @@ const SHORTCUT_KEY_LABEL: Record<StudioShortcut, string> = {
   run: "Enter",
   search: "/",
   preview: "1",
-  scenarios: "2",
+  tests: "2",
   nova: "J",
 };
 

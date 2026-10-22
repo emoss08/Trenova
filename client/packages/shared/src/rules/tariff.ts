@@ -302,6 +302,15 @@ const scaffoldSchema = z.object({
     .nullish()
     .transform((value) => value ?? null),
   error: tariffEvalErrorSchema.nullish().transform((value) => value ?? null),
+  /** `needs` when the rating reads rate table cells the request did not carry. */
+  status: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  needs: z
+    .array(z.object({ table: z.string(), keys: z.array(z.string()) }))
+    .nullish()
+    .transform((value) => value ?? []),
 });
 export type TariffScaffold = z.output<typeof scaffoldSchema>;
 

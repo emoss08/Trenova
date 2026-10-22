@@ -27,7 +27,7 @@ describe("matchStudioShortcut", () => {
     expect(matchStudioShortcut(press("j", { meta: true }))).toBe("nova");
     expect(matchStudioShortcut(press("J", { ctrl: true }))).toBe("nova");
     expect(matchStudioShortcut(press("1", { ctrl: true }))).toBe("preview");
-    expect(matchStudioShortcut(press("2", { ctrl: true }))).toBe("scenarios");
+    expect(matchStudioShortcut(press("2", { ctrl: true }))).toBe("tests");
   });
 
   it("ignores keys without the modifier, with extra modifiers, or unmapped keys", () => {

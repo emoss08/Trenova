@@ -6,6 +6,7 @@ import {
   tariffCheck,
   tariffEvaluate,
   tariffFormat,
+  tariffScaffoldTest,
   tariffTest,
   tariffTokens,
 } from "./tariff";
@@ -235,5 +236,24 @@ describe("tariffCatalog", () => {
       expect.arrayContaining(["shipment", "lane", "customer", "fuel", "rating", "tables"]),
     );
     expect(catalog.keywords).toContain("charge");
+  });
+});
+
+describe("tariffScaffoldTest", () => {
+  it("writes a test block pinning the bill, with a given for each input that differs", () => {
+    const scaffold = tariffScaffoldTest(rules, {
+      source: SOURCE,
+      context,
+      record: null,
+      inputs: { rate: { $q: "2.1", u: "$/mi" } },
+      name: "from a shipment",
+    });
+
+    expect(scaffold).toEqual({
+      test: 'test "from a shipment" {\n  given input.rate = $2.10/mi\n  expect total == $450.00\n}\n',
+      error: null,
+      status: null,
+      needs: [],
+    });
   });
 });
