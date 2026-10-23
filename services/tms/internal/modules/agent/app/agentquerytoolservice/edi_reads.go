@@ -35,6 +35,8 @@ const (
 	fieldISAReceiverID      = "isaReceiverId"
 	fieldAckMessageID       = "ackMessageId"
 	fieldDeliveryRemotePath = "deliveryRemotePath"
+	fieldPartnerDocProfile  = "partnerDocumentProfileId"
+	fieldRawPurgedAt        = "rawPurgedAt"
 	argReconciliationStatus = "reconciliationStatus"
 
 	ackHealthFollowUp = "Open one with edi_get_message to read why; edi_retry_message " +
@@ -154,8 +156,8 @@ func ediMessagesListSpec() graphQLListSpec {
 		},
 		instants: []string{fieldEDICreated},
 		unoffered: []string{
-			"templateId", "templateVersionId", "partnerDocumentProfileId", fieldAckMessageID,
-			fieldDeliveryRemotePath, "rawPurgedAt", "segmentCount", "updatedAt",
+			"templateId", "templateVersionId", fieldPartnerDocProfile, fieldAckMessageID,
+			fieldDeliveryRemotePath, fieldRawPurgedAt, "segmentCount", "updatedAt",
 		},
 		references: map[string]idReference{
 			paramPartnerID: ediPartnerReference,
