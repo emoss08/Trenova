@@ -141,6 +141,7 @@ func (s *Service) rescheduleBilledContent(
 		source: resolved.Source,
 		mode:   tariff.LibrariesPinned,
 		pins:   version.Imports,
+		tables: version.Tables,
 	})
 	if err != nil {
 		return nil, err

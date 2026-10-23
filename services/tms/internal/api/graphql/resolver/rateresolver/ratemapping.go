@@ -134,20 +134,50 @@ func rateMatrixToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 	}
 
 	model := &gqlmodel.RateMatrix{
-		ID:             entity.ID.String(),
-		BusinessUnitID: entity.BusinessUnitID.String(),
-		OrganizationID: entity.OrganizationID.String(),
-		Code:           entity.Code,
-		Name:           entity.Name,
-		Description:    entity.Description,
-		Status:         string(entity.Status),
-		ValueType:      entity.ValueType,
-		Version:        int(entity.Version),
-		CreatedAt:      int(entity.CreatedAt),
-		UpdatedAt:      int(entity.UpdatedAt),
+		ID:                     entity.ID.String(),
+		BusinessUnitID:         entity.BusinessUnitID.String(),
+		OrganizationID:         entity.OrganizationID.String(),
+		Code:                   entity.Code,
+		Name:                   entity.Name,
+		Description:            entity.Description,
+		Status:                 entity.Status,
+		ValueType:              entity.ValueType,
+		CellCount:              int(entity.DraftCellCount),
+		PublishedVersionNumber: int(entity.PublishedVersionNumber),
+		PublishedAt:            base.Int64PtrToIntPtr(entity.PublishedAt),
+		HasDraftChanges:        entity.HasDraftChanges,
+		SubmittedByID:          base.IDPtrFromPtr(entity.SubmittedByID),
+		SubmittedAt:            base.Int64PtrToIntPtr(entity.SubmittedAt),
+		ApprovedByID:           base.IDPtrFromPtr(entity.ApprovedByID),
+		ApprovedAt:             base.Int64PtrToIntPtr(entity.ApprovedAt),
+		ReviewComment:          entity.ReviewComment,
+		Version:                int(entity.Version),
+		CreatedAt:              int(entity.CreatedAt),
+		UpdatedAt:              int(entity.UpdatedAt),
 	}
 
 	return model
+}
+
+func rateMatrixDimensionsToModel(
+	dimensions []*ratematrix.RateMatrixDimension,
+) []*gqlmodel.RateMatrixDimension {
+	out := make([]*gqlmodel.RateMatrixDimension, 0, len(dimensions))
+	for _, dimension := range dimensions {
+		if dimension == nil {
+			continue
+		}
+		out = append(out, &gqlmodel.RateMatrixDimension{
+			ID:               dimension.ID.String(),
+			Position:         int(dimension.Position),
+			Kind:             string(dimension.Kind),
+			MatchMode:        string(dimension.MatchMode),
+			Label:            dimension.Label,
+			KeyNormalization: string(dimension.KeyNormalization),
+			RangeOverflow:    string(dimension.RangeOverflow),
+		})
+	}
+	return out
 }
 
 func rateMatrixConnectionToModel(
@@ -327,21 +357,7 @@ func rateMatrixCardToModel(entity *ratematrix.RateMatrix) *gqlmodel.RateMatrix {
 		return nil
 	}
 
-	model.Dimensions = make([]*gqlmodel.RateMatrixDimension, 0, len(entity.Dimensions))
-	for _, dimension := range entity.Dimensions {
-		if dimension == nil {
-			continue
-		}
-		model.Dimensions = append(model.Dimensions, &gqlmodel.RateMatrixDimension{
-			ID:               dimension.ID.String(),
-			Position:         int(dimension.Position),
-			Kind:             string(dimension.Kind),
-			MatchMode:        string(dimension.MatchMode),
-			Label:            dimension.Label,
-			KeyNormalization: string(dimension.KeyNormalization),
-			RangeOverflow:    string(dimension.RangeOverflow),
-		})
-	}
+	model.Dimensions = rateMatrixDimensionsToModel(entity.Dimensions)
 
 	return model
 }
@@ -353,6 +369,10 @@ func rateMatrixCellToModel(entity *ratematrix.RateMatrixCell) *gqlmodel.RateMatr
 		D1Key:           entity.D1Key,
 		D2Key:           entity.D2Key,
 		D3Key:           entity.D3Key,
+		D0KeyTo:         entity.D0KeyTo,
+		D1KeyTo:         entity.D1KeyTo,
+		D2KeyTo:         entity.D2KeyTo,
+		D3KeyTo:         entity.D3KeyTo,
 		D0Min:           base.NullDecimalToStringPtr(entity.D0Min),
 		D0Max:           base.NullDecimalToStringPtr(entity.D0Max),
 		D1Min:           base.NullDecimalToStringPtr(entity.D1Min),

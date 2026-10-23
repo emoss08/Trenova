@@ -1,0 +1,14 @@
+# The rate tables a formula template reads, each with the published version its last check pinned
+# and the matrix's newest published version, so the Studio can say when a newer one is out.
+query FormulaTemplateTables($id: ID!) {
+  formulaTemplate(id: $id) {
+    id
+    tables {
+      code
+      rateMatrixId
+      versionNumber
+      latestVersionNumber
+      archived
+    }
+  }
+}

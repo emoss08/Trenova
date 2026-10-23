@@ -70,6 +70,7 @@ type BacktestResponse struct {
 type ratedContent struct {
 	source    string
 	libraries []rules.TariffLibrary
+	tables    []tarifftypes.TablePin
 }
 
 func (s *Service) Backtest(ctx context.Context, req *BacktestRequest) (*BacktestResponse, error) {
@@ -139,7 +140,7 @@ func (s *Service) backtestCandidate(
 		if err != nil {
 			return nil, err
 		}
-		return s.pinnedContent(ctx, req.TenantInfo, version.Source, version.Imports)
+		return s.pinnedContent(ctx, req.TenantInfo, version.Source, version.Imports, version.Tables)
 	}
 
 	return s.latestContent(ctx, templateTenant(template), req.Source)
@@ -169,12 +170,13 @@ func (s *Service) pinnedContent(
 	tenant pagination.TenantInfo,
 	source string,
 	imports []tarifftypes.Import,
+	tables []tarifftypes.TablePin,
 ) (*ratedContent, error) {
 	libraries, err := s.resolver.PinnedLibraries(ctx, tenant, imports)
 	if err != nil {
 		return nil, err
 	}
-	return &ratedContent{source: source, libraries: libraries}, nil
+	return &ratedContent{source: source, libraries: libraries, tables: tables}, nil
 }
 
 type ApprovalImpactRequest struct {
@@ -273,6 +275,7 @@ func (s *Service) backtestShipment(
 		name:      template.Name,
 		source:    candidate.source,
 		libraries: candidate.libraries,
+		tables:    candidate.tables,
 		inputs:    record.Inputs,
 		shipment:  record,
 	})
@@ -321,6 +324,7 @@ func (s *Service) recomputeCurrent(
 		name:      template.Name,
 		source:    current.source,
 		libraries: current.libraries,
+		tables:    current.tables,
 		inputs:    record.Inputs,
 		shipment:  record,
 	})
@@ -353,7 +357,7 @@ func (s *Service) recordedContent(
 			return nil, err
 		}
 		if version != nil {
-			return s.pinnedContent(ctx, tenant, version.Source, version.Imports)
+			return s.pinnedContent(ctx, tenant, version.Source, version.Imports, version.Tables)
 		}
 	}
 
@@ -369,7 +373,7 @@ func (s *Service) recordedContent(
 	if err != nil {
 		return nil, err
 	}
-	return s.pinnedContent(ctx, tenant, content.Source, content.Imports)
+	return s.pinnedContent(ctx, tenant, content.Source, content.Imports, content.Tables)
 }
 
 func (s *Service) lookupVersion(

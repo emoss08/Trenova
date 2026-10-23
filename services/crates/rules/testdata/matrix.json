@@ -112,6 +112,28 @@
       "name": "coverage: an empty band label reads Any",
       "input": {"dimensions": [{"position": 0, "kind": "LinearFeet", "matchMode": "Range"}], "cells": [{}, {"d0Min": 5}]},
       "output": {"issues": [{"kind": "overlap", "message": {"args": ["Linear feet", {"message": "Any"}, {"message": "{0} and over", "args": ["5"]}]}}]}
+    },
+    {
+      "name": "coverage: postal ranges that meet or leave gaps are fine",
+      "input": {"dimensions": [{"position": 0, "kind": "ZipRange", "matchMode": "Range", "label": "Origin"}], "cells": [{"d0Key": "30000", "d0KeyTo": "31999"}, {"d0Key": "32000", "d0KeyTo": "34999"}, {"d0Key": "40000", "d0KeyTo": "41999"}]},
+      "exact": true,
+      "output": {"issues": []}
+    },
+    {
+      "name": "coverage: overlapping postal ranges are an overlap, compared trimmed and upper-cased",
+      "input": {"dimensions": [{"position": 0, "kind": "ZipRange", "matchMode": "Range", "label": "Origin"}], "cells": [{"d0Key": "k1a", "d0KeyTo": "K1Z"}, {"d0Key": " K1P ", "d0KeyTo": "K2B"}]},
+      "exact": true,
+      "output": {"issues": [{"kind": "overlap", "position": 0, "message": {"message": "{0} ranges {1} and {2} overlap, so the same postal code matches both.", "args": ["Origin", "K1A–K1Z", "K1P–K2B"]}}]}
+    },
+    {
+      "name": "coverage: postal ranges are checked within each slice",
+      "input": {"dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact", "label": "Zone"}, {"position": 1, "kind": "ZipRange", "matchMode": "Range", "label": "Destination"}], "cells": [{"d0Key": "SE", "d1Key": "30000", "d1KeyTo": "31999"}, {"d0Key": "NE", "d1Key": "31000", "d1KeyTo": "32999"}, {"d0Key": "SE", "d1Key": "31500", "d1KeyTo": "33999"}]},
+      "output": {"issues": [{"kind": "overlap", "position": 1, "message": {"args": ["Destination", "30000–31999", "31500–33999"]}, "slices": ["SE"]}]}
+    },
+    {
+      "name": "coverage: the same postal range twice in a slice is a duplicate",
+      "input": {"dimensions": [{"position": 0, "kind": "ZipRange", "matchMode": "Range", "label": "Origin"}], "cells": [{"d0Key": "30000", "d0KeyTo": "31999"}, {"d0Key": "30000", "d0KeyTo": "31999"}]},
+      "output": {"issues": [{"kind": "duplicate", "message": {"args": ["30000–31999"]}}]}
     }
   ]
 }

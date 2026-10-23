@@ -18,6 +18,8 @@ aliases:
     path: name
   FormulaLibraryVersion:
     path: name
+  RateMatrix:
+    cellCount: draftCellCount
   AgentProposal:
     fromScript: scriptStepKey
   AgentControl:
@@ -438,7 +440,9 @@ virtuals:
   FormulaTemplate:
     - usageCount
   RateMatrix:
-    - cellCount
+    - cells
+  RateMatrixVersion:
+    - dimensions
     - cells
   RateAgreement:
     - lanes

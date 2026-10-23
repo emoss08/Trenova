@@ -48,6 +48,7 @@ type FormulaTemplate struct {
 	Source               string                  `json:"source"               bun:"source,type:TEXT,notnull"`
 	Inputs               []tarifftypes.InputDecl `json:"inputs"               bun:"inputs,type:JSONB,notnull,default:'[]'"`
 	Imports              []tarifftypes.Import    `json:"imports"              bun:"imports,type:JSONB,notnull,default:'[]'"`
+	Tables               []tarifftypes.TablePin  `json:"tables"               bun:"tables,type:JSONB,notnull,default:'[]'"`
 	TestCount            int32                   `json:"testCount"            bun:"test_count,type:INTEGER,notnull,default:0"`
 	Status               Status                  `json:"status"               bun:"status,type:formula_template_status_enum,notnull,default:'Draft'"`
 	SubmittedByID        *pulid.ID               `json:"submittedById"        bun:"submitted_by_id,type:VARCHAR(100)"`
@@ -123,6 +124,7 @@ func (ft *FormulaTemplate) ApplyVersion(version *FormulaTemplateVersion) *Formul
 	resolved.Source = version.Source
 	resolved.Inputs = version.Inputs
 	resolved.Imports = version.Imports
+	resolved.Tables = version.Tables
 	resolved.TestCount = version.TestCount
 	resolved.CurrentVersionNumber = version.VersionNumber
 	return &resolved
@@ -141,7 +143,9 @@ func (ft *FormulaTemplate) HasMaterialChange(other *FormulaTemplate) bool {
 		return true
 	}
 
-	return ft.Source != other.Source || !tarifftypes.ImportsEqual(ft.Imports, other.Imports)
+	return ft.Source != other.Source ||
+		!tarifftypes.ImportsEqual(ft.Imports, other.Imports) ||
+		!tarifftypes.TablePinsEqual(ft.Tables, other.Tables)
 }
 
 func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -168,6 +172,9 @@ func (ft *FormulaTemplate) normalizeCollections() {
 	}
 	if ft.Imports == nil {
 		ft.Imports = []tarifftypes.Import{}
+	}
+	if ft.Tables == nil {
+		ft.Tables = []tarifftypes.TablePin{}
 	}
 }
 

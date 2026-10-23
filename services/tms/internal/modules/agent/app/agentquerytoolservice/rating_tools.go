@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
@@ -35,6 +34,10 @@ type rateMatrixReader interface {
 		ctx context.Context,
 		req *ratematrixports.ListRateMatrixCellsRequest,
 	) (*pagination.ListResult[*ratematrix.RateMatrixCell], error)
+	GetVersion(
+		ctx context.Context,
+		req *ratematrixports.GetVersionRequest,
+	) (*ratematrix.RateMatrixVersion, error)
 }
 
 func provideGetRateMatrixTool(
@@ -86,6 +89,8 @@ func (t *getRateMatrixTool) ParamSchema() map[string]any {
 			"The rate matrix's id, from the page you are on."),
 		"cellOffset": intParam("How many cells to skip. When a result says cellsHasMore, " +
 			"call again with its nextCellOffset."),
+		"versionNumber": intParam("A published version to read, as tariffs pinned it. Leave it " +
+			"out to read the draft being edited; publishedVersionNumber names the newest version."),
 	}, paramRateMatrixID)
 }
 
@@ -116,6 +121,9 @@ type rateMatrixView struct {
 	Name           string               `json:"name"`
 	Description    string               `json:"description,omitempty"`
 	Status         string               `json:"status"`
+	Published      int64                `json:"publishedVersionNumber"`
+	DraftChanged   bool                 `json:"hasDraftChanges"`
+	VersionNumber  int64                `json:"versionNumber"`
 	ValueType      string               `json:"valueType"`
 	Dimensions     []matrixDimensionRow `json:"dimensions"`
 	CellCount      int                  `json:"cellCount"`
@@ -139,6 +147,7 @@ func (t *getRateMatrixTool) Query(
 		return nil, err
 	}
 	offset := max(optionalInt(params.Params, "cellOffset", 0), 0)
+	versionNumber := int64(max(optionalInt(params.Params, "versionNumber", 0), 0))
 
 	tenant := tenantOf(params)
 	matrix, err := t.matrices.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
@@ -149,27 +158,47 @@ func (t *getRateMatrixTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	dimensions := matrix.Dimensions
+	valueType := matrix.ValueType
+	if versionNumber > 0 {
+		version, vErr := t.matrices.GetVersion(ctx, &ratematrixports.GetVersionRequest{
+			TenantInfo:    tenant,
+			RateMatrixID:  id,
+			VersionNumber: versionNumber,
+		})
+		if vErr != nil {
+			return nil, vErr
+		}
+		dimensions = version.Dimensions
+		valueType = version.ValueType
+	}
 
-	cells, total, err := t.cells(ctx, tenant, id, offset)
+	cells, total, err := t.cells(ctx, tenant, ratematrix.VersionKey{
+		RateMatrixID:  id,
+		VersionNumber: versionNumber,
+	}, offset)
 	if err != nil {
 		return nil, err
 	}
 
 	gate := t.access.gate(ctx, params, permission.ResourceRateMatrix)
 	view := rateMatrixView{
-		ID:          matrix.ID.String(),
-		Code:        matrix.Code,
-		Name:        matrix.Name,
-		Description: matrix.Description,
-		Status:      string(matrix.Status),
-		ValueType:   matrix.ValueType,
-		Dimensions:  make([]matrixDimensionRow, 0, len(matrix.Dimensions)),
-		CellCount:   total,
-		CellOffset:  offset,
-		Cells:       make([]matrixCellRow, 0, len(cells)),
+		ID:            matrix.ID.String(),
+		Code:          matrix.Code,
+		Name:          matrix.Name,
+		Description:   matrix.Description,
+		Status:        string(matrix.Status),
+		Published:     matrix.PublishedVersionNumber,
+		DraftChanged:  matrix.HasDraftChanges,
+		VersionNumber: versionNumber,
+		ValueType:     valueType,
+		Dimensions:    make([]matrixDimensionRow, 0, len(dimensions)),
+		CellCount:     total,
+		CellOffset:    offset,
+		Cells:         make([]matrixCellRow, 0, len(cells)),
 	}
 	axes := 0
-	for _, dimension := range matrix.Dimensions {
+	for _, dimension := range dimensions {
 		if dimension == nil {
 			continue
 		}
@@ -216,15 +245,16 @@ func (t *getRateMatrixTool) Query(
 func (t *getRateMatrixTool) cells(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	matrixID pulid.ID,
+	key ratematrix.VersionKey,
 	offset int,
 ) ([]*ratematrix.RateMatrixCell, int, error) {
 	cells := make([]*ratematrix.RateMatrixCell, 0, matrixCellPage)
 	total := 0
 	for len(cells) < maxMatrixCells {
 		page, err := t.matrices.ListCells(ctx, &ratematrixports.ListRateMatrixCellsRequest{
-			TenantInfo:   tenant,
-			RateMatrixID: matrixID,
+			TenantInfo:    tenant,
+			RateMatrixID:  key.RateMatrixID,
+			VersionNumber: key.VersionNumber,
 			Filter: &pagination.QueryOptions{
 				TenantInfo: tenant,
 				Pagination: pagination.Info{
@@ -247,7 +277,14 @@ func (t *getRateMatrixTool) cells(
 }
 
 func cellKeys(cell *ratematrix.RateMatrixCell, axes int) []string {
-	keys := []string{cell.D0Key, cell.D1Key, cell.D2Key, cell.D3Key}[:min(max(axes, 0), 4)]
+	keys := make([]string, 0, ratematrix.MaxDimensions)
+	for position := range int16(min(max(axes, 0), ratematrix.MaxDimensions)) {
+		key := cell.KeyAt(position)
+		if to := cell.KeyToAt(position); to != "" {
+			key += " to " + to
+		}
+		keys = append(keys, key)
+	}
 	for _, key := range keys {
 		if key != "" {
 			return keys

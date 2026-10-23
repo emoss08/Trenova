@@ -16,6 +16,7 @@ func stampDimensions(entity *ratematrix.RateMatrix, resetIDs bool) {
 		}
 
 		dimension.RateMatrixID = entity.ID
+		dimension.VersionNumber = ratematrix.DraftVersion
 		dimension.OrganizationID = entity.OrganizationID
 		dimension.BusinessUnitID = entity.BusinessUnitID
 	}

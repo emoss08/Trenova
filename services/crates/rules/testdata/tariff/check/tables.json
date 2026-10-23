@@ -948,6 +948,140 @@
     "  expect total >= $0",
     "}"
    ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "ZipRange",
+        "label": "origin",
+        "match": "Range"
+       },
+       {
+        "kind": "WeightBreak",
+        "match": "Range",
+        "unit": "lb"
+       }
+      ],
+      "code": "Lanes",
+      "valueType": "Money/cwt"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "a zip-range axis takes a postal code or a list of them",
+   "source": [
+    "tariff \"t\"",
+    "let one = tables.Lanes[lane.origin.zip, shipment.weight ?? 0 lb] ?? $0/cwt",
+    "let many = tables.Lanes[[lane.origin.zip, lane.origin.zip3], shipment.weight ?? 0 lb] ?? $0/cwt",
+    "charge \"x\" = (one + many) * (shipment.weight ?? 0 lb)"
+   ],
+   "types": {
+    "tables.Lanes[lane.origin.zip, shipment.weight ?? 0 lb]": "Money/cwt?"
+   }
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "ZipRange",
+        "label": "origin",
+        "match": "Range"
+       }
+      ],
+      "code": "Lanes",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "band",
+     "code": "table-shape",
+     "message": "`band` works only on a table with one axis of bands, and `Lanes` isn't one"
+    }
+   ],
+   "name": "a zip-range axis is not a band to read with band",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = tables.Lanes.band(\"30303\")?.value ?? $0"
+   ]
+  },
+  {
+   "context": {
+    "tables": [
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Zones",
+      "valueType": "Money",
+      "version": 3
+     },
+     {
+      "axes": [
+       {
+        "kind": "ZipRange",
+        "match": "Range"
+       }
+      ],
+      "code": "Lanes",
+      "valueType": "Money",
+      "version": 7
+     },
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Unread",
+      "valueType": "Money",
+      "version": 1
+     },
+     {
+      "axes": [
+       {
+        "kind": "Zip3",
+        "match": "Exact"
+       }
+      ],
+      "code": "Unversioned",
+      "valueType": "Money"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "the tables a file reads are reported once each with their versions",
+   "source": [
+    "tariff \"t\"",
+    "let zone = tables.Zones[lane.origin.zip3] ?? $0",
+    "let postal = tables.Lanes.cell(lane.origin.zip)?.value ?? tables.Lanes[lane.destination.zip] ?? $0",
+    "let other = tables.Unversioned[lane.destination.zip3] ?? $0",
+    "charge \"x\" = zone + postal + other"
+   ],
+   "tables": [
+    {
+     "code": "Lanes",
+     "version": 7
+    },
+    {
+     "code": "Unversioned",
+     "version": null
+    },
+    {
+     "code": "Zones",
+     "version": 3
+    }
+   ]
   }
  ]
 }

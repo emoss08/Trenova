@@ -168,7 +168,8 @@ pub struct Settings {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Axis {
-    /// `Exact` or `Range`.
+    /// `Exact` or `Range`. A `ZipRange` axis is `Range`: its cells hold inclusive postal-code
+    /// ranges (`from`, `to`) rather than quantity bands.
     #[serde(rename = "match")]
     pub match_mode: String,
     /// What the axis varies by, as Go's `ratematrix.DimensionKind` (`Zone`, `WeightBreak`, …).
@@ -190,7 +191,28 @@ pub struct Axis {
     pub overflow: String,
 }
 
+/// The kind of an axis whose cells are inclusive postal-code ranges.
+pub const ZIP_RANGE: &str = "ZipRange";
+
 impl Axis {
+    /// Whether the axis's cells are postal-code ranges, keyed by `Text`.
+    #[must_use]
+    pub fn is_zip_range(&self) -> bool {
+        self.kind == ZIP_RANGE
+    }
+
+    /// Whether a lookup key on this axis may be a list tried in order: exact and zip-range axes.
+    #[must_use]
+    pub fn takes_key_list(&self) -> bool {
+        self.match_mode.eq_ignore_ascii_case("exact") || self.is_zip_range()
+    }
+
+    /// Whether the axis is banded by quantity, which `.band(x)` and `.interpolate(x)` read.
+    #[must_use]
+    pub fn is_banded(&self) -> bool {
+        self.match_mode.eq_ignore_ascii_case("range") && !self.is_zip_range()
+    }
+
     /// The type of the key a tariff gives this axis.
     #[must_use]
     pub fn key_type(&self, schema: &Schema) -> Type {
@@ -218,6 +240,10 @@ pub struct TableShape {
     /// The matrix's name, for hover.
     #[serde(default)]
     pub name: String,
+    /// The published version of the matrix the shape and cells are, which `tariff.check`
+    /// reports beside the code of every table a file reads so the host can pin it.
+    #[serde(default)]
+    pub version: Option<i64>,
     /// The axes in position order: one to four.
     pub axes: Vec<Axis>,
     /// What a cell holds, as a Tariff type: `Money`, `Money/cwt`, `Money/mi`, `Percent`,
@@ -227,8 +253,8 @@ pub struct TableShape {
     /// leave them out for `tariff.check` and the editor.
     #[serde(default)]
     pub cells: Option<Vec<super::eval::tables::CellWire>>,
-    /// The exact-axis key combinations whose cells `cells` holds, one normalised key per exact
-    /// axis in axis order; absent when `cells` is the whole table. A lookup outside them is a
+    /// The keyed-axis combinations whose cells `cells` holds, one normalised key per exact or
+    /// zip-range axis in axis order; absent when `cells` is the whole table. A lookup outside them is a
     /// need the host answers by loading those cells and evaluating again.
     #[serde(default)]
     pub loaded: Option<Vec<Vec<String>>>,

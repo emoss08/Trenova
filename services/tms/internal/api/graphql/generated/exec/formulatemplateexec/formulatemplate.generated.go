@@ -25,6 +25,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "FormulaTemplate", Implementors: []string{"FormulaTemplate"}},
 		{Name: "FormulaTemplateConnection", Implementors: []string{"FormulaTemplateConnection"}},
 		{Name: "FormulaTemplateEdge", Implementors: []string{"FormulaTemplateEdge"}},
+		{Name: "FormulaTemplateTable", Implementors: []string{"FormulaTemplateTable"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "FormulaInputDeclaration", Fields: []*gqlexec.Field{
@@ -224,6 +225,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Imports, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFormulaLibraryImport2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐImportᚄ),
+			},
+			{
+				Name:      "tables",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "FormulaTemplateTable",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*formulatemplate.FormulaTemplate)
+					return obj.Tables, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateTable2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐTablePinᚄ),
 			},
 			{
 				Name:     "testCount",
@@ -447,6 +459,62 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "FormulaTemplateTable", Fields: []*gqlexec.Field{
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tarifftypes.TablePin)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "rateMatrixId",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tarifftypes.TablePin)
+					return obj.RateMatrixID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "versionNumber",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tarifftypes.TablePin)
+					return obj.VersionNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:       "latestVersionNumber",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tarifftypes.TablePin)
+					return gqlexec.Resolver[resolverFormulaTemplateTable](ec, "FormulaTemplateTable").LatestVersionNumber(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:       "archived",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tarifftypes.TablePin)
+					return gqlexec.Resolver[resolverFormulaTemplateTable](ec, "FormulaTemplateTable").Archived(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "formulaTemplates",
@@ -480,6 +548,7 @@ var Shard = &gqlexec.Shard{
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "FormulaLibraryImport", Check: func(r any) bool { _, ok := r.(resolverFormulaLibraryImport); return ok }},
 		{Root: "FormulaTemplate", Check: func(r any) bool { _, ok := r.(resolverFormulaTemplate); return ok }},
+		{Root: "FormulaTemplateTable", Check: func(r any) bool { _, ok := r.(resolverFormulaTemplateTable); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
 }
@@ -491,6 +560,11 @@ type resolverFormulaLibraryImport interface {
 type resolverFormulaTemplate interface {
 	Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaInputDeclaration, error)
 	UsageCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error)
+}
+
+type resolverFormulaTemplateTable interface {
+	LatestVersionNumber(ctx context.Context, obj *tarifftypes.TablePin) (int, error)
+	Archived(ctx context.Context, obj *tarifftypes.TablePin) (bool, error)
 }
 
 type resolverQuery interface {
@@ -623,6 +697,18 @@ func marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNFormulaTemplateTable2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐTablePin(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tarifftypes.TablePin) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "FormulaTemplateTable", &v)
+}
+
+func marshalNFormulaTemplateTable2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐTablePinᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []tarifftypes.TablePin) graphql.Marshaler {
+	return gqlexec.List[tarifftypes.TablePin]{
+		Elem:        marshalNFormulaTemplateTable2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋtarifftypesᚐTablePin,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {

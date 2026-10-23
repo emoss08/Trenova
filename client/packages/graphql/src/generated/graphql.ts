@@ -14678,6 +14678,13 @@ export type FormulaTemplateTableQueryVariables = Exact<{
 
 export type FormulaTemplateTableQuery = { formulaTemplates: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'FormulaTemplateTableRowFieldsFragment': FormulaTemplateTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type FormulaTemplateTablesQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type FormulaTemplateTablesQuery = { formulaTemplate: { id: string, tables: Array<{ code: string, rateMatrixId: string, versionNumber: number, latestVersionNumber: number, archived: boolean }> } | null };
+
 export type DeskFuelCardPurchaseFieldsFragment = { id: string, purchasedAt: number, vendor: string | null, vendorCity: string | null, fuelType: IftaFuelType, gallons: string, totalAmount: string, currencyCode: string, taxPaid: boolean, jurisdiction: { id: string, code: string } } & { ' $fragmentName'?: 'DeskFuelCardPurchaseFieldsFragment' };
 
 export type DeskFuelCardCardQueryVariables = Exact<{
@@ -16916,13 +16923,28 @@ export type DeskRateMatrixCardQueryVariables = Exact<{
 }>;
 
 
-export type DeskRateMatrixCardQuery = { rateMatrix: { id: string, code: string, name: string, description: string, status: string, valueType: string, cellCount: number, dimensions: Array<{ id: string, position: number, kind: string, matchMode: string, label: string, keyNormalization: string, rangeOverflow: string }> | null, cells: Array<{ id: string, d0Key: string, d1Key: string, d2Key: string, d3Key: string, d0Min: string | null, d0Max: string | null, d1Min: string | null, d1Max: string | null, d2Min: string | null, d2Max: string | null, d3Min: string | null, d3Max: string | null, deficitEligible: boolean, value: string, minCharge: string | null }> } | null };
+export type DeskRateMatrixCardQuery = { rateMatrix: { id: string, code: string, name: string, description: string, status: FormulaTemplateStatus, publishedVersionNumber: number, hasDraftChanges: boolean, valueType: string, cellCount: number, dimensions: Array<{ id: string, position: number, kind: string, matchMode: string, label: string, keyNormalization: string, rangeOverflow: string }> | null, cells: Array<{ id: string, d0Key: string, d1Key: string, d2Key: string, d3Key: string, d0KeyTo: string, d1KeyTo: string, d2KeyTo: string, d3KeyTo: string, d0Min: string | null, d0Max: string | null, d1Min: string | null, d1Max: string | null, d2Min: string | null, d2Max: string | null, d3Min: string | null, d3Max: string | null, deficitEligible: boolean, value: string, minCharge: string | null }> } | null };
+
+export type RateMatrixRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RateMatrixRecordQuery = { rateMatrix: { id: string, code: string, name: string, status: FormulaTemplateStatus, publishedVersionNumber: number, publishedAt: number | null, hasDraftChanges: boolean, cellCount: number, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, version: number, updatedAt: number } | null, rateMatrixVersions: Array<{ id: string, rateMatrixId: string, versionNumber: number, code: string, name: string, valueType: string, cellCount: number, changeMessage: string, submittedById: string | null, publishedById: string | null, createdAt: number, publishedBy: { id: string, name: string, username: string, profilePicUrl: string } | null }>, rateMatrixReviews: Array<{ id: string, rateMatrixId: string, round: number, decision: FormulaReviewDecision, actorId: string | null, comment: string, baseVersionNumber: number, createdAt: number, requestedReviewerId: string | null, reviewerNote: string, actor: { id: string, name: string, username: string, profilePicUrl: string } | null, requestedReviewer: { id: string, name: string, username: string, profilePicUrl: string } | null }>, rateMatrixUsages: Array<{ templateId: string, templateName: string, templateStatus: FormulaTemplateStatus, templateVersion: number, versionStatus: FormulaTemplateStatus, matrixVersionNumber: number }> };
+
+export type RateMatrixVersionAxesQueryVariables = Exact<{
+  id: string | number;
+  versionNumber: number;
+}>;
+
+
+export type RateMatrixVersionAxesQuery = { rateMatrixVersion: { id: string, rateMatrixId: string, versionNumber: number, valueType: string, cellCount: number, dimensions: Array<{ id: string, position: number, kind: string, matchMode: string, label: string, keyNormalization: string, rangeOverflow: string }> } | null };
 
 export type RateAgreementRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partyType: RateAgreementPartyType, customerId: string | null, carrierId: string | null, code: string, name: string, description: string, agreementType: RateAgreementType, status: RateAgreementStatus, contractRef: string, priority: number, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number, currency: string, inputs: unknown, marginFloorPercent: string | null, maxPayPercentOfSell: string | null, submittedById: string | null, submittedAt: number | null, approvedById: string | null, approvedAt: number | null, reviewComment: string, currentVersionNumber: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateAgreementRowFieldsFragment' };
 
 export type RateZoneRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateZoneRowFieldsFragment' };
 
-export type RateMatrixRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: string, valueType: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateMatrixRowFieldsFragment' };
+export type RateMatrixRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, code: string, name: string, description: string, status: FormulaTemplateStatus, valueType: string, publishedVersionNumber: number, publishedAt: number | null, hasDraftChanges: boolean, cellCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'RateMatrixRowFieldsFragment' };
 
 export type RateQuoteRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string | null, partyType: RateAgreementPartyType, partyId: string, purpose: RateQuotePurpose, outcome: RateQuoteOutcome, rateAgreementId: string | null, rateAgreementRuleId: string | null, formulaTemplateId: string | null, specificityScore: number, currency: string, billingCurrency: string, linehaulAmount: string, totalAmount: string, billingAmount: string, foregoneAmount: string | null, overrideReason: string, asOf: number, ratedAt: number, ratedById: string | null, engineVersion: string, createdAt: number } & { ' $fragmentName'?: 'RateQuoteRowFieldsFragment' };
 
@@ -19912,6 +19934,7 @@ export { FormulaLibraryDocument } from "./documents/formula-library/record";
 export { FormulaLibraryTableRowFieldsFragmentDoc, FormulaLibraryTableDocument } from "./documents/formula-library/table";
 export { DeskFormulaTemplatesDocument, DeskFormulaTemplateCardDocument } from "./documents/formula-template/desk";
 export { FormulaTemplateTableRowFieldsFragmentDoc, FormulaTemplateTableDocument } from "./documents/formula-template/table";
+export { FormulaTemplateTablesDocument } from "./documents/formula-template/tables";
 export { DeskFuelCardPurchaseFieldsFragmentDoc, DeskFuelCardCardDocument, DeskFuelCardsDocument } from "./documents/fuel-card/desk";
 export { FuelCardFieldsFragmentDoc, FuelCardTableDocument, FuelCardDocument, CreateFuelCardDocument, UpdateFuelCardDocument, CancelFuelCardDocument, AssignFuelCardDocument, SyncFuelCardFeedDocument } from "./documents/fuel-card/operations";
 export { DeskFuelPurchaseImportsDocument } from "./documents/fuel-purchase-import/desk";
@@ -19967,6 +19990,7 @@ export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDoc
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
 export { DeskRateAgreementPricingDocument, DeskRateAgreementsDocument, DeskRateAgreementCardDocument, DeskRateMatrixCardDocument } from "./documents/rate/desk";
+export { RateMatrixRecordDocument, RateMatrixVersionAxesDocument } from "./documents/rate/matrix-record";
 export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
 export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";

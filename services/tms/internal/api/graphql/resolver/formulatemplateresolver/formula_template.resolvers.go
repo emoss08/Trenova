@@ -19,8 +19,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-
-
 func (r *FormulaLibraryImportResolver) Library(ctx context.Context, obj *tarifftypes.Import) (*formulalibrary.FormulaLibrary, error) {
 	if obj.LibraryID.IsNil() {
 		return nil, nil
@@ -31,7 +29,6 @@ func (r *FormulaLibraryImportResolver) Library(ctx context.Context, obj *tarifft
 func (r *FormulaTemplateResolver) Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaInputDeclaration, error) {
 	return formulaInputDeclarationsToModel(obj.Inputs)
 }
-
 
 func (r *FormulaTemplateResolver) UsageCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error) {
 	stats, err := formulaTemplateStats(ctx, obj)
@@ -82,4 +79,20 @@ func (r *QueryResolver) FormulaTemplate(ctx context.Context, id string) (*formul
 		TemplateID: templateID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
+}
+
+func (r *FormulaTemplateTableResolver) LatestVersionNumber(ctx context.Context, obj *tarifftypes.TablePin) (int, error) {
+	matrix, err := pinnedMatrix(ctx, obj)
+	if err != nil || matrix == nil {
+		return int(obj.VersionNumber), err
+	}
+	return int(max(matrix.PublishedVersionNumber, obj.VersionNumber)), nil
+}
+
+func (r *FormulaTemplateTableResolver) Archived(ctx context.Context, obj *tarifftypes.TablePin) (bool, error) {
+	matrix, err := pinnedMatrix(ctx, obj)
+	if err != nil || matrix == nil {
+		return false, err
+	}
+	return matrix.Status == formulatemplate.StatusInactive, nil
 }

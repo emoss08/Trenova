@@ -58,6 +58,7 @@ type FormulaTemplateVersion struct {
 	Source         string                           `json:"source"         bun:"source,type:TEXT,notnull"`
 	Inputs         []tarifftypes.InputDecl          `json:"inputs"         bun:"inputs,type:JSONB,notnull,default:'[]'"`
 	Imports        []tarifftypes.Import             `json:"imports"        bun:"imports,type:JSONB,notnull,default:'[]'"`
+	Tables         []tarifftypes.TablePin           `json:"tables"         bun:"tables,type:JSONB,notnull,default:'[]'"`
 	TestCount      int32                            `json:"testCount"      bun:"test_count,type:INTEGER,notnull,default:0"`
 	Status         Status                           `json:"status"         bun:"status,type:formula_template_status_enum,notnull"`
 	EffectiveFrom  *int64                           `json:"effectiveFrom"  bun:"effective_from,type:BIGINT"`
@@ -81,6 +82,9 @@ func (ftv *FormulaTemplateVersion) BeforeAppendModel(_ context.Context, query bu
 		}
 		if ftv.Imports == nil {
 			ftv.Imports = []tarifftypes.Import{}
+		}
+		if ftv.Tables == nil {
+			ftv.Tables = []tarifftypes.TablePin{}
 		}
 		ftv.CreatedAt = timeutils.NowUnix()
 	}
@@ -117,6 +121,7 @@ func NewVersionFromTemplate(
 		Source:         ft.Source,
 		Inputs:         ft.Inputs,
 		Imports:        ft.Imports,
+		Tables:         ft.Tables,
 		TestCount:      ft.TestCount,
 		Status:         ft.Status,
 		Metadata:       ft.Metadata,

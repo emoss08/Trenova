@@ -2,6 +2,7 @@ package tariff
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -27,12 +29,14 @@ const (
 	prefixZip5    = "Z5:"
 	prefixZip3    = "Z3:"
 	prefixCountry = "CT:"
+
+	comboSeparator = "\x1f"
 )
 
 type TablesParams struct {
 	fx.In
 
-	Matrices       ratematrixports.RateMatrixRepository
+	Versions       ratematrixports.RateMatrixVersionRepository
 	Zones          ratezoneports.RateZoneRepository
 	States         usstateports.UsStateRepository
 	EquipmentTypes equipmenttypeports.EquipmentTypeRepository
@@ -40,7 +44,7 @@ type TablesParams struct {
 }
 
 type Tables struct {
-	matrices       ratematrixports.RateMatrixRepository
+	versions       ratematrixports.RateMatrixVersionRepository
 	zones          ratezoneports.RateZoneRepository
 	states         usstateports.UsStateRepository
 	equipmentTypes equipmenttypeports.EquipmentTypeRepository
@@ -50,7 +54,7 @@ type Tables struct {
 //nolint:gocritic // fx param structs are passed by value
 func NewTables(p TablesParams) *Tables {
 	return &Tables{
-		matrices:       p.Matrices,
+		versions:       p.Versions,
 		zones:          p.Zones,
 		states:         p.States,
 		equipmentTypes: p.EquipmentTypes,
@@ -58,53 +62,156 @@ func NewTables(p TablesParams) *Tables {
 	}
 }
 
-type tableState struct {
-	stamp string
-	entry *ratetablecache.Entry
+type tableSet struct {
+	stamp  string
+	byCode map[string]*ratetablecache.Version
+	order  []string
 }
 
-func (t *Tables) load(ctx context.Context, tenant pagination.TenantInfo) (*tableState, error) {
-	stamp, entry, err := ratetablecache.Tables(
+func (s *tableSet) table(code string) (*ratetablecache.Version, bool) {
+	version, ok := s.byCode[code]
+	return version, ok
+}
+
+func (t *Tables) served(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (string, *ratetablecache.Served, error) {
+	return ratetablecache.ServedTables(
 		ctx,
 		tenant.OrgID,
 		tenant.BuID,
 		func(ctx context.Context) (string, error) {
-			return t.matrices.GetLookupStamp(ctx, tenant)
+			return t.versions.ServedStamp(ctx, tenant)
 		},
-		func(ctx context.Context, _ string) (*ratetablecache.Entry, error) {
-			return t.build(ctx, tenant)
+		func(ctx context.Context, _ string) (*ratetablecache.Served, error) {
+			return t.buildServed(ctx, tenant)
 		},
 	)
+}
+
+func (t *Tables) set(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	pins []tarifftypes.TablePin,
+) (*tableSet, error) {
+	stamp, served, err := t.served(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	return &tableState{stamp: stamp, entry: entry}, nil
+	set := &tableSet{
+		stamp:  stamp,
+		byCode: make(map[string]*ratetablecache.Version, len(served.Versions)+len(pins)),
+		order:  make([]string, 0, len(served.Versions)+len(pins)),
+	}
+	for _, version := range served.Versions {
+		set.add(version)
+	}
+	if len(pins) == 0 {
+		return set, nil
+	}
+
+	pinned, err := t.pinnedVersions(ctx, tenant, pins)
+	if err != nil {
+		return nil, err
+	}
+	for _, version := range pinned {
+		set.add(version)
+	}
+	slices.Sort(set.order)
+	return set, nil
+}
+
+func (s *tableSet) add(version *ratetablecache.Version) {
+	code := version.Index.Code
+	if _, exists := s.byCode[code]; !exists {
+		s.order = append(s.order, code)
+	}
+	s.byCode[code] = version
+}
+
+func (t *Tables) pinnedVersions(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	pins []tarifftypes.TablePin,
+) ([]*ratetablecache.Version, error) {
+	keys := make([]ratetablecache.VersionKey, 0, len(pins))
+	for _, pin := range pins {
+		if pin.RateMatrixID.IsNil() || pin.VersionNumber <= 0 {
+			continue
+		}
+		keys = append(keys, ratetablecache.VersionKey{
+			MatrixID: pin.RateMatrixID,
+			Version:  pin.VersionNumber,
+		})
+	}
+	found, err := t.versionEntries(ctx, tenant, keys)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*ratetablecache.Version, 0, len(keys))
+	for _, key := range keys {
+		if version, ok := found[key]; ok {
+			out = append(out, version)
+		}
+	}
+	return out, nil
+}
+
+func (t *Tables) versionEntries(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	keys []ratetablecache.VersionKey,
+) (map[ratetablecache.VersionKey]*ratetablecache.Version, error) {
+	return ratetablecache.Versions(
+		ctx,
+		tenant.OrgID,
+		tenant.BuID,
+		keys,
+		func(ctx context.Context, missing []ratetablecache.VersionKey) ([]*ratetablecache.Version, error) {
+			domainKeys := make([]ratematrix.VersionKey, 0, len(missing))
+			for _, key := range missing {
+				domainKeys = append(domainKeys, ratematrix.VersionKey{
+					RateMatrixID:  key.MatrixID,
+					VersionNumber: key.Version,
+				})
+			}
+			versions, err := t.versions.GetByKeys(ctx, &ratematrixports.GetVersionsByKeysRequest{
+				TenantInfo: tenant,
+				Keys:       domainKeys,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return t.buildVersions(ctx, tenant, versions)
+		},
+	)
 }
 
 func (t *Tables) Stamp(ctx context.Context, tenant pagination.TenantInfo) (string, error) {
-	state, err := t.load(ctx, tenant)
-	if err != nil {
-		return "", err
-	}
-	return state.stamp, nil
+	stamp, _, err := t.served(ctx, tenant)
+	return stamp, err
 }
 
 func (t *Tables) Shapes(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	distanceUnit string,
+	pins []tarifftypes.TablePin,
 ) ([]rules.TariffTable, error) {
-	state, err := t.load(ctx, tenant)
+	set, err := t.set(ctx, tenant, pins)
 	if err != nil {
 		return nil, err
 	}
-	tables := make([]rules.TariffTable, len(state.entry.Tables))
-	for i := range state.entry.Tables {
-		tables[i] = state.entry.Tables[i]
-		tables[i].Axes = withDistanceUnit(tables[i].Axes, distanceUnit)
-		if tables[i].Loaded != nil {
-			tables[i].Loaded = [][]string{}
+	tables := make([]rules.TariffTable, 0, len(set.order))
+	for _, code := range set.order {
+		version := set.byCode[code]
+		table := version.Shape
+		table.Axes = withDistanceUnit(table.Axes, distanceUnit)
+		if table.Loaded != nil {
+			table.Loaded = [][]string{}
 		}
+		tables = append(tables, table)
 	}
 	return tables, nil
 }
@@ -121,80 +228,127 @@ func withDistanceUnit(axes []rules.TariffAxis, unit string) []rules.TariffAxis {
 	return out
 }
 
-func (t *Tables) build(
+func (t *Tables) buildServed(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-) (*ratetablecache.Entry, error) {
-	matrices, err := t.matrices.ListTables(ctx, tenant)
+) (*ratetablecache.Served, error) {
+	served, err := t.versions.ListServed(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-
-	entry := &ratetablecache.Entry{
-		Tables: make([]rules.TariffTable, 0, len(matrices)),
-		Index:  make([]ratetablecache.Table, 0, len(matrices)),
+	keys := make([]ratetablecache.VersionKey, 0, len(served))
+	byKey := make(map[ratetablecache.VersionKey]*ratematrix.RateMatrixVersion, len(served))
+	for _, version := range served {
+		key := cacheKey(version.Key())
+		keys = append(keys, key)
+		byKey[key] = version
 	}
-	whole := make([]pulid.ID, 0, len(matrices))
-	wholeAt := make(map[pulid.ID]int, len(matrices))
+	entries, err := ratetablecache.Versions(
+		ctx,
+		tenant.OrgID,
+		tenant.BuID,
+		keys,
+		func(ctx context.Context, missing []ratetablecache.VersionKey) ([]*ratetablecache.Version, error) {
+			versions := make([]*ratematrix.RateMatrixVersion, 0, len(missing))
+			for _, key := range missing {
+				versions = append(versions, byKey[key])
+			}
+			return t.buildVersions(ctx, tenant, versions)
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	out := &ratetablecache.Served{Versions: make([]*ratetablecache.Version, 0, len(keys))}
+	for _, key := range keys {
+		if entry, ok := entries[key]; ok {
+			out.Versions = append(out.Versions, entry)
+		}
+	}
+	return out, nil
+}
 
-	for _, matrix := range matrices {
-		dimensions := matrix.OrderedDimensions()
-		if len(dimensions) == 0 {
+func cacheKey(key ratematrix.VersionKey) ratetablecache.VersionKey {
+	return ratetablecache.VersionKey{MatrixID: key.RateMatrixID, Version: key.VersionNumber}
+}
+
+func domainKey(key ratetablecache.VersionKey) ratematrix.VersionKey {
+	return ratematrix.VersionKey{RateMatrixID: key.MatrixID, VersionNumber: key.Version}
+}
+
+func (t *Tables) buildVersions(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	versions []*ratematrix.RateMatrixVersion,
+) ([]*ratetablecache.Version, error) {
+	out := make([]*ratetablecache.Version, 0, len(versions))
+	whole := make([]ratematrix.VersionKey, 0, len(versions))
+	wholeAt := make(map[ratematrix.VersionKey]int, len(versions))
+
+	for _, version := range versions {
+		if version == nil {
 			continue
 		}
-		table := rules.TariffTable{
-			Code:      matrix.Code,
-			Name:      matrix.Name,
-			ValueType: matrix.ValueType,
-			Axes:      make([]rules.TariffAxis, 0, len(dimensions)),
+		dimensions := version.OrderedDimensions()
+		if len(dimensions) == 0 || len(dimensions) > ratematrix.MaxDimensions {
+			continue
 		}
-		index := ratetablecache.Table{
-			MatrixID: matrix.ID,
-			Code:     matrix.Code,
-			Axes:     make([]ratetablecache.Axis, 0, len(dimensions)),
+		entry := &ratetablecache.Version{
+			Shape: rules.TariffTable{
+				Code:      version.Code,
+				Name:      version.Name,
+				Version:   version.VersionNumber,
+				MatrixID:  version.RateMatrixID,
+				ValueType: version.ValueType,
+				Axes:      make([]rules.TariffAxis, 0, len(dimensions)),
+			},
+			Index: ratetablecache.Table{
+				Key:  cacheKey(version.Key()),
+				Code: version.Code,
+				Axes: make([]ratetablecache.Axis, 0, len(dimensions)),
+			},
 		}
-		exact := false
+		keyed := false
 		for _, dimension := range dimensions {
-			table.Axes = append(table.Axes, axisShape(dimension))
-			axis, axisErr := t.axisIndex(ctx, tenant, matrix.ID, dimension)
-			if axisErr != nil {
-				return nil, axisErr
+			entry.Shape.Axes = append(entry.Shape.Axes, axisShape(dimension))
+			axis, err := t.axisIndex(ctx, tenant, version.Key(), dimension)
+			if err != nil {
+				return nil, err
 			}
-			exact = exact || axis.Exact
-			index.Axes = append(index.Axes, axis)
+			keyed = keyed || axis.Keyed()
+			entry.Index.Axes = append(entry.Index.Axes, axis)
 		}
-		if exact {
-			table.Loaded = [][]string{}
+		if keyed {
+			entry.Shape.Loaded = [][]string{}
 		} else {
-			table.Cells = []rules.TariffCell{}
-			wholeAt[matrix.ID] = len(entry.Tables)
-			whole = append(whole, matrix.ID)
+			entry.Shape.Cells = []rules.TariffCell{}
+			wholeAt[version.Key()] = len(out)
+			whole = append(whole, version.Key())
 		}
-		entry.Tables = append(entry.Tables, table)
-		entry.Index = append(entry.Index, index)
+		out = append(out, entry)
 	}
 
 	if len(whole) == 0 {
-		return entry, nil
+		return out, nil
 	}
-	cells, err := t.matrices.ListTableCells(ctx, &ratematrixports.ListTableCellsRequest{
-		TenantInfo:    tenant,
-		RateMatrixIDs: whole,
+	cells, err := t.versions.ListTableCells(ctx, &ratematrixports.ListTableCellsRequest{
+		TenantInfo: tenant,
+		Keys:       whole,
 	})
 	if err != nil {
 		return nil, err
 	}
 	for _, cell := range cells {
-		at, ok := wholeAt[cell.RateMatrixID]
+		at, ok := wholeAt[ratematrix.VersionKey{
+			RateMatrixID:  cell.RateMatrixID,
+			VersionNumber: cell.VersionNumber,
+		}]
 		if !ok {
 			continue
 		}
-		entry.Tables[at].Cells = append(
-			entry.Tables[at].Cells,
-			encodeCell(&entry.Index[at], cell),
-		)
+		out[at].Shape.Cells = append(out[at].Shape.Cells, encodeCell(&out[at].Index, cell))
 	}
-	return entry, nil
+	return out, nil
 }
 
 func axisShape(dimension *ratematrix.RateMatrixDimension) rules.TariffAxis {
@@ -205,6 +359,9 @@ func axisShape(dimension *ratematrix.RateMatrixDimension) rules.TariffAxis {
 	}
 	if dimension.MatchMode == ratematrix.MatchModeExact {
 		axis.Normalization = string(dimension.KeyNormalization)
+		return axis
+	}
+	if dimension.IsPostalRange() {
 		return axis
 	}
 	axis.Overflow = string(dimension.RangeOverflow)
@@ -220,23 +377,27 @@ func axisShape(dimension *ratematrix.RateMatrixDimension) rules.TariffAxis {
 func (t *Tables) axisIndex(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	matrixID pulid.ID,
+	key ratematrix.VersionKey,
 	dimension *ratematrix.RateMatrixDimension,
 ) (ratetablecache.Axis, error) {
 	axis := ratetablecache.Axis{
 		Position:      dimension.Position,
 		Kind:          string(dimension.Kind),
 		Exact:         dimension.MatchMode == ratematrix.MatchModeExact,
+		Postal:        dimension.IsPostalRange(),
 		Normalization: string(dimension.KeyNormalization),
+	}
+	if axis.Postal {
+		return t.postalIndex(ctx, tenant, key, axis)
 	}
 	if !axis.Exact || !translatedKind(dimension.Kind) {
 		return axis, nil
 	}
 
-	stored, err := t.matrices.ListAxisKeys(ctx, &ratematrixports.ListAxisKeysRequest{
-		TenantInfo:   tenant,
-		RateMatrixID: matrixID,
-		Position:     dimension.Position,
+	stored, err := t.versions.ListAxisKeys(ctx, &ratematrixports.ListAxisKeysRequest{
+		TenantInfo: tenant,
+		Key:        key,
+		Position:   dimension.Position,
 	})
 	if err != nil {
 		return axis, err
@@ -248,14 +409,40 @@ func (t *Tables) axisIndex(
 
 	axis.Forward = make(map[string]string, len(stored))
 	axis.Reverse = make(map[string][]string, len(stored))
-	for _, key := range stored {
-		name, ok := names[referenceID(dimension.Kind, key)]
+	for _, storedKey := range stored {
+		name, ok := names[referenceID(dimension.Kind, storedKey)]
 		if !ok {
 			continue
 		}
-		axis.Forward[key] = name
+		axis.Forward[storedKey] = name
 		normalized := normalize(&axis, name)
-		axis.Reverse[normalized] = append(axis.Reverse[normalized], key)
+		axis.Reverse[normalized] = append(axis.Reverse[normalized], storedKey)
+	}
+	return axis, nil
+}
+
+func (t *Tables) postalIndex(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	key ratematrix.VersionKey,
+	axis ratetablecache.Axis,
+) (ratetablecache.Axis, error) {
+	ranges, err := t.versions.ListAxisRanges(ctx, &ratematrixports.ListAxisKeysRequest{
+		TenantInfo: tenant,
+		Key:        key,
+		Position:   axis.Position,
+	})
+	if err != nil {
+		return axis, err
+	}
+	index := ratematrix.NewPostalIndex(ranges)
+	axis.Ranges = func(lookup string) []string {
+		found := index.Find(lookup)
+		starts := make([]string, 0, len(found))
+		for _, postal := range found {
+			starts = append(starts, postal.From)
+		}
+		return starts
 	}
 	return axis, nil
 }
@@ -341,6 +528,9 @@ func (t *Tables) referenceNames(
 }
 
 func normalize(axis *ratetablecache.Axis, key string) string {
+	if axis.Postal {
+		return ratematrix.NormalizePostal(key)
+	}
 	if axis.Kind == string(ratematrix.DimensionKindFreightClass) {
 		if class, ok := commodity.ParseFreightClass(key); ok {
 			return string(class)
@@ -373,6 +563,12 @@ func forward(axis *ratetablecache.Axis, stored string) string {
 }
 
 func reverse(axis *ratetablecache.Axis, key string) []string {
+	if axis.Postal {
+		if axis.Ranges == nil {
+			return nil
+		}
+		return axis.Ranges(key)
+	}
 	if axis.Reverse != nil {
 		return axis.Reverse[key]
 	}
@@ -403,36 +599,76 @@ func encodeCell(index *ratetablecache.Table, cell *ratematrix.RateMatrixCell) ru
 	}
 	for i := range index.Axes {
 		axis := &index.Axes[i]
-		if axis.Exact {
+		switch {
+		case axis.Postal:
+			postal := cell.PostalRangeAt(axis.Position)
+			out.At = append(out.At, rules.TariffCellPosition{From: postal.From, To: postal.To})
+		case axis.Exact:
 			out.At = append(
 				out.At,
 				rules.TariffCellPosition{Key: forward(axis, cell.KeyAt(axis.Position))},
 			)
-			continue
+		default:
+			low, high := cell.BoundsAt(axis.Position)
+			position := rules.TariffCellPosition{}
+			if low.Valid {
+				value := low.Decimal
+				position.Min = &value
+			}
+			if high.Valid {
+				value := high.Decimal
+				position.Max = &value
+			}
+			out.At = append(out.At, position)
 		}
-		low, high := cell.BoundsAt(axis.Position)
-		position := rules.TariffCellPosition{}
-		if low.Valid {
-			value := low.Decimal
-			position.Min = &value
-		}
-		if high.Valid {
-			value := high.Decimal
-			position.Max = &value
-		}
-		out.At = append(out.At, position)
 	}
 	return out
 }
 
-func cellCombo(index *ratetablecache.Table, cell *rules.TariffCell) []string {
+func storedCombo(index *ratetablecache.Table, cell *rules.TariffCell) []string {
 	combo := make([]string, 0, len(index.Axes))
 	for i := range index.Axes {
-		if index.Axes[i].Exact && i < len(cell.At) {
-			combo = append(combo, normalize(&index.Axes[i], cell.At[i].Key))
+		axis := &index.Axes[i]
+		if i >= len(cell.At) {
+			continue
+		}
+		switch {
+		case axis.Postal:
+			combo = append(combo, cell.At[i].From)
+		case axis.Exact:
+			combo = append(combo, normalize(axis, cell.At[i].Key))
 		}
 	}
 	return combo
+}
+
+func lookupCombos(index *ratetablecache.Table, combo []string) [][]string {
+	out := [][]string{make([]string, 0, len(combo))}
+	keyed := 0
+	for i := range index.Axes {
+		axis := &index.Axes[i]
+		if !axis.Keyed() {
+			continue
+		}
+		if keyed >= len(combo) {
+			return nil
+		}
+		key := combo[keyed]
+		keyed++
+		choices := []string{key}
+		if axis.Postal {
+			choices = reverse(axis, key)
+		}
+		next := make([][]string, 0, len(out)*len(choices))
+		for _, prefix := range out {
+			for _, choice := range choices {
+				extended := append(slices.Clone(prefix), choice)
+				next = append(next, extended)
+			}
+		}
+		out = next
+	}
+	return out
 }
 
 func (t *Tables) LoadCells(
@@ -441,12 +677,13 @@ func (t *Tables) LoadCells(
 	tariffCtx *rules.TariffContext,
 	needs []rules.TariffNeed,
 ) error {
-	state, err := t.load(ctx, tenant)
+	grouped := groupNeeds(needs)
+	indexes, err := t.contextIndexes(ctx, tenant, tariffCtx, mapKeys(grouped))
 	if err != nil {
 		return err
 	}
-	for table, combos := range groupNeeds(needs) {
-		index, _, ok := state.entry.Table(table)
+	for table, combos := range grouped {
+		index, ok := indexes[table]
 		if !ok {
 			continue
 		}
@@ -454,7 +691,7 @@ func (t *Tables) LoadCells(
 		if at < 0 {
 			continue
 		}
-		cells, loadErr := t.cellsFor(ctx, tenant, state.stamp, index, combos)
+		cells, loadErr := t.cellsFor(ctx, tenant, index, combos)
 		if loadErr != nil {
 			return loadErr
 		}
@@ -471,45 +708,85 @@ func (t *Tables) LoadCells(
 	return nil
 }
 
+func mapKeys(grouped map[string][][]string) []string {
+	out := make([]string, 0, len(grouped))
+	for code := range grouped {
+		out = append(out, code)
+	}
+	return out
+}
+
+func (t *Tables) contextIndexes(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	tariffCtx *rules.TariffContext,
+	codes []string,
+) (map[string]*ratetablecache.Table, error) {
+	keys := make([]ratetablecache.VersionKey, 0, len(codes))
+	byKey := make(map[ratetablecache.VersionKey]string, len(codes))
+	for _, code := range codes {
+		at := tableAt(tariffCtx, code)
+		if at < 0 {
+			continue
+		}
+		table := &tariffCtx.Tables[at]
+		if table.MatrixID.IsNil() || table.Version <= 0 {
+			continue
+		}
+		key := ratetablecache.VersionKey{MatrixID: table.MatrixID, Version: table.Version}
+		keys = append(keys, key)
+		byKey[key] = code
+	}
+	found, err := t.versionEntries(ctx, tenant, keys)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]*ratetablecache.Table, len(found))
+	for key, version := range found {
+		out[byKey[key]] = &version.Index
+	}
+	return out, nil
+}
+
 func (t *Tables) LoadWhole(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	tariffCtx *rules.TariffContext,
 	tables []string,
 ) error {
-	state, err := t.load(ctx, tenant)
+	indexes, err := t.contextIndexes(ctx, tenant, tariffCtx, tables)
 	if err != nil {
 		return err
 	}
-	ids := make([]pulid.ID, 0, len(tables))
-	indexes := make(map[pulid.ID]*ratetablecache.Table, len(tables))
-	for _, code := range tables {
-		index, _, ok := state.entry.Table(code)
-		if !ok || tableAt(tariffCtx, code) < 0 {
-			continue
-		}
-		ids = append(ids, index.MatrixID)
-		indexes[index.MatrixID] = index
+	keys := make([]ratematrix.VersionKey, 0, len(indexes))
+	byKey := make(map[ratematrix.VersionKey]*ratetablecache.Table, len(indexes))
+	for _, index := range indexes {
+		key := domainKey(index.Key)
+		keys = append(keys, key)
+		byKey[key] = index
 	}
-	if len(ids) == 0 {
+	if len(keys) == 0 {
 		return nil
 	}
-	cells, err := t.matrices.ListTableCells(ctx, &ratematrixports.ListTableCellsRequest{
-		TenantInfo:    tenant,
-		RateMatrixIDs: ids,
+	cells, err := t.versions.ListTableCells(ctx, &ratematrixports.ListTableCellsRequest{
+		TenantInfo: tenant,
+		Keys:       keys,
 	})
 	if err != nil {
 		return err
 	}
-	byTable := make(map[string][]rules.TariffCell, len(ids))
+	byTable := make(map[string][]rules.TariffCell, len(keys))
 	for _, cell := range cells {
-		index, ok := indexes[cell.RateMatrixID]
+		index, ok := byKey[ratematrix.VersionKey{
+			RateMatrixID:  cell.RateMatrixID,
+			VersionNumber: cell.VersionNumber,
+		}]
 		if !ok {
 			continue
 		}
 		byTable[index.Code] = append(byTable[index.Code], encodeCell(index, cell))
 	}
-	for _, index := range indexes {
+	for _, index := range byKey {
 		target := &tariffCtx.Tables[tableAt(tariffCtx, index.Code)]
 		target.Cells = byTable[index.Code]
 		if target.Cells == nil {
@@ -523,20 +800,13 @@ func (t *Tables) LoadWhole(
 func (t *Tables) cellsFor(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	stamp string,
 	index *ratetablecache.Table,
 	combos [][]string,
 ) ([]rules.TariffCell, error) {
 	out := make([]rules.TariffCell, 0, len(combos))
 	missing := make([][]string, 0, len(combos))
 	for _, combo := range combos {
-		if cached, ok := ratetablecache.Cells(
-			tenant.OrgID,
-			tenant.BuID,
-			stamp,
-			index.Code,
-			combo,
-		); ok {
+		if cached, ok := ratetablecache.Cells(tenant.OrgID, tenant.BuID, index.Key, combo); ok {
 			out = append(out, cached...)
 			continue
 		}
@@ -549,33 +819,31 @@ func (t *Tables) cellsFor(
 	keys := storedKeys(index, missing)
 	if keys == nil {
 		for _, combo := range missing {
-			ratetablecache.StoreCells(tenant.OrgID, tenant.BuID, stamp, index.Code, combo, nil)
+			ratetablecache.StoreCells(tenant.OrgID, tenant.BuID, index.Key, combo, nil)
 		}
 		return out, nil
 	}
-	cells, err := t.matrices.LoadTableCells(ctx, &ratematrixports.LoadTableCellsRequest{
-		TenantInfo:   tenant,
-		RateMatrixID: index.MatrixID,
-		Keys:         keys,
+	cells, err := t.versions.LoadTableCells(ctx, &ratematrixports.LoadTableCellsRequest{
+		TenantInfo: tenant,
+		Key:        domainKey(index.Key),
+		Keys:       keys,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	wanted := make(map[string][]rules.TariffCell, len(missing))
-	for _, combo := range missing {
-		wanted[strings.Join(combo, "\x1f")] = []rules.TariffCell{}
-	}
+	byStored := make(map[string][]rules.TariffCell, len(cells))
 	for _, cell := range cells {
 		encoded := encodeCell(index, cell)
-		key := strings.Join(cellCombo(index, &encoded), "\x1f")
-		if bucket, ok := wanted[key]; ok {
-			wanted[key] = append(bucket, encoded)
-		}
+		key := strings.Join(storedCombo(index, &encoded), comboSeparator)
+		byStored[key] = append(byStored[key], encoded)
 	}
 	for _, combo := range missing {
-		found := wanted[strings.Join(combo, "\x1f")]
-		ratetablecache.StoreCells(tenant.OrgID, tenant.BuID, stamp, index.Code, combo, found)
+		found := make([]rules.TariffCell, 0, 4)
+		for _, stored := range lookupCombos(index, combo) {
+			found = append(found, byStored[strings.Join(stored, comboSeparator)]...)
+		}
+		ratetablecache.StoreCells(tenant.OrgID, tenant.BuID, index.Key, combo, found)
 		out = append(out, found...)
 	}
 	return out, nil
@@ -584,18 +852,18 @@ func (t *Tables) cellsFor(
 func storedKeys(index *ratetablecache.Table, combos [][]string) map[int16][]string {
 	keys := make(map[int16][]string, len(index.Axes))
 	seen := make(map[int16]map[string]struct{}, len(index.Axes))
-	exact := 0
+	keyed := 0
 	for i := range index.Axes {
 		axis := &index.Axes[i]
-		if !axis.Exact {
+		if !axis.Keyed() {
 			continue
 		}
 		seen[axis.Position] = make(map[string]struct{}, len(combos))
 		for _, combo := range combos {
-			if exact >= len(combo) {
+			if keyed >= len(combo) {
 				continue
 			}
-			for _, stored := range reverse(axis, combo[exact]) {
+			for _, stored := range reverse(axis, combo[keyed]) {
 				if _, dup := seen[axis.Position][stored]; dup {
 					continue
 				}
@@ -606,7 +874,7 @@ func storedKeys(index *ratetablecache.Table, combos [][]string) map[int16][]stri
 		if len(keys[axis.Position]) == 0 {
 			return nil
 		}
-		exact++
+		keyed++
 	}
 	return keys
 }
@@ -615,7 +883,7 @@ func groupNeeds(needs []rules.TariffNeed) map[string][][]string {
 	grouped := make(map[string][][]string, len(needs))
 	seen := make(map[string]struct{}, len(needs))
 	for _, need := range needs {
-		key := need.Table + "\x1e" + strings.Join(need.Keys, "\x1f")
+		key := need.Table + "\x1e" + strings.Join(need.Keys, comboSeparator)
 		if _, dup := seen[key]; dup {
 			continue
 		}

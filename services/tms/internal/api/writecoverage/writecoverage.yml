@@ -2544,6 +2544,24 @@ writes:
   "POST /api/v1/rate-matrices/":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
+  "POST /api/v1/rate-matrices/:rateMatrixID/approve/":
+    exempt: configuration
+    reason: "Publishing a rate matrix version is a reviewer's decision on pricing every tariff can pin; it waits for a person who did not write the draft."
+  "POST /api/v1/rate-matrices/:rateMatrixID/archive/":
+    exempt: configuration
+    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
+  "POST /api/v1/rate-matrices/:rateMatrixID/reject/":
+    exempt: configuration
+    reason: "Rejecting a rate matrix draft is a reviewer's decision on pricing; it waits for a person who did not write the draft."
+  "POST /api/v1/rate-matrices/:rateMatrixID/request-changes/":
+    exempt: configuration
+    reason: "Returning a rate matrix draft for changes is a reviewer's decision on pricing; it waits for a person who did not write the draft."
+  "POST /api/v1/rate-matrices/:rateMatrixID/restore/":
+    exempt: configuration
+    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
+  "POST /api/v1/rate-matrices/:rateMatrixID/submit/":
+    exempt: configuration
+    reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."
   "PUT /api/v1/rate-matrices/:rateMatrixID/":
     exempt: configuration
     reason: "A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist."

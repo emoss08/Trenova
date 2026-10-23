@@ -2424,10 +2424,22 @@ export const rateMatrixValueTypeChoices = [
   { label: "Whole number", value: "Int" },
 ] satisfies ReadonlyArray<GenericSelectOption<RateMatrixValueType>>;
 
+/**
+ * A matrix moves through the formula review states; for a table they read as publishing. Active is
+ * the draft being the newest published version, Inactive an archived matrix.
+ */
+export const rateMatrixStatusChoices = [
+  { label: "Published", value: "Active", color: "var(--success)" },
+  { label: "Archived", value: "Inactive", color: "var(--danger)" },
+  { label: "Draft", value: "Draft", color: "var(--foreground-subtle)" },
+  { label: "In review", value: "InReview", color: "var(--warning)" },
+] satisfies ReadonlyArray<GenericSelectOption<FormulaTemplateStatus>>;
+
 export const rateMatrixDimensionKindChoices = [
   { label: "Zone", value: "Zone" },
   { label: "Postal prefix", value: "Zip3" },
   { label: "Postal code", value: "Zip5" },
+  { label: "Postal range", value: "ZipRange" },
   { label: "State", value: "State" },
   { label: "Country", value: "Country" },
   { label: "Weight break", value: "WeightBreak" },

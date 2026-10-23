@@ -861,6 +861,74 @@ func (_c *MockFormulaTemplateVersionRepository_ListLibraryUsages_Call) RunAndRet
 	return _c
 }
 
+// ListMatrixUsages provides a mock function for the type MockFormulaTemplateVersionRepository
+func (_mock *MockFormulaTemplateVersionRepository) ListMatrixUsages(ctx context.Context, req *formulatemplateports.ListMatrixUsagesRequest) ([]*formulatemplateports.MatrixUsage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListMatrixUsages")
+	}
+
+	var r0 []*formulatemplateports.MatrixUsage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListMatrixUsagesRequest) ([]*formulatemplateports.MatrixUsage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListMatrixUsagesRequest) []*formulatemplateports.MatrixUsage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*formulatemplateports.MatrixUsage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *formulatemplateports.ListMatrixUsagesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateVersionRepository_ListMatrixUsages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMatrixUsages'
+type MockFormulaTemplateVersionRepository_ListMatrixUsages_Call struct {
+	*mock.Call
+}
+
+// ListMatrixUsages is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *formulatemplateports.ListMatrixUsagesRequest
+func (_e *MockFormulaTemplateVersionRepository_Expecter) ListMatrixUsages(ctx interface{}, req interface{}) *MockFormulaTemplateVersionRepository_ListMatrixUsages_Call {
+	return &MockFormulaTemplateVersionRepository_ListMatrixUsages_Call{Call: _e.mock.On("ListMatrixUsages", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListMatrixUsages_Call) Run(run func(ctx context.Context, req *formulatemplateports.ListMatrixUsagesRequest)) *MockFormulaTemplateVersionRepository_ListMatrixUsages_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *formulatemplateports.ListMatrixUsagesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*formulatemplateports.ListMatrixUsagesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListMatrixUsages_Call) Return(matrixUsages []*formulatemplateports.MatrixUsage, err error) *MockFormulaTemplateVersionRepository_ListMatrixUsages_Call {
+	_c.Call.Return(matrixUsages, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateVersionRepository_ListMatrixUsages_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.ListMatrixUsagesRequest) ([]*formulatemplateports.MatrixUsage, error)) *MockFormulaTemplateVersionRepository_ListMatrixUsages_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListScheduled provides a mock function for the type MockFormulaTemplateVersionRepository
 func (_mock *MockFormulaTemplateVersionRepository) ListScheduled(ctx context.Context, req *formulatemplateports.ListScheduledVersionsRequest) ([]*formulatemplate.FormulaTemplateVersion, error) {
 	ret := _mock.Called(ctx, req)

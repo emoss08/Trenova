@@ -6960,7 +6960,9 @@ type RateAgreementVersion struct {
 }
 
 // A rate table a tariff looks values up in: one to four axes, such as origin zone
-// by destination zone, and a value of one Tariff type in every cell.
+// by destination zone, and a value of one Tariff type in every cell. The matrix
+// is a draft that editors change; approving a submitted draft publishes it as the
+// next numbered version, which formula template versions pin.
 type RateMatrix struct {
 	ID             string `json:"id"`
 	BusinessUnitID string `json:"businessUnitId"`
@@ -6968,29 +6970,46 @@ type RateMatrix struct {
 	Code           string `json:"code"`
 	Name           string `json:"name"`
 	Description    string `json:"description"`
-	Status         string `json:"status"`
+	// Draft while it has unpublished changes, InReview once submitted, Active when
+	// the draft is the newest published version, Inactive once archived.
+	Status formulatemplate.Status `json:"status"`
 	// What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
 	ValueType string `json:"valueType"`
-	// The matrix's axes, by position. Read by rateMatrix only.
+	// The draft's axes, by position. Read by rateMatrix only.
 	Dimensions []*RateMatrixDimension `json:"dimensions,omitempty"`
-	// How many cells the grid holds.
+	// How many cells the draft holds.
 	CellCount int `json:"cellCount"`
-	// The grid's cells, a page at a time: offset skips that many, and limit takes
+	// The draft's cells, a page at a time: offset skips that many, and limit takes
 	// at most 100.
-	Cells     []*RateMatrixCell `json:"cells"`
-	Version   int               `json:"version"`
-	CreatedAt int               `json:"createdAt"`
-	UpdatedAt int               `json:"updatedAt"`
+	Cells []*RateMatrixCell `json:"cells"`
+	// The newest published version, which tariffs read by default; 0 before the first.
+	PublishedVersionNumber int  `json:"publishedVersionNumber"`
+	PublishedAt            *int `json:"publishedAt,omitempty"`
+	// Whether the draft differs from the newest published version.
+	HasDraftChanges bool    `json:"hasDraftChanges"`
+	SubmittedByID   *string `json:"submittedById,omitempty"`
+	SubmittedAt     *int    `json:"submittedAt,omitempty"`
+	ApprovedByID    *string `json:"approvedById,omitempty"`
+	ApprovedAt      *int    `json:"approvedAt,omitempty"`
+	ReviewComment   string  `json:"reviewComment"`
+	Version         int     `json:"version"`
+	CreatedAt       int     `json:"createdAt"`
+	UpdatedAt       int     `json:"updatedAt"`
 }
 
 // One cell of a rate matrix: a key or a range on each axis, by position (d0 is
-// the first axis), and the value it holds.
+// the first axis), and the value it holds. On a ZipRange axis the key is the
+// range's first postal code and keyTo its last, both inclusive.
 type RateMatrixCell struct {
 	ID              string  `json:"id"`
 	D0Key           string  `json:"d0Key"`
 	D1Key           string  `json:"d1Key"`
 	D2Key           string  `json:"d2Key"`
 	D3Key           string  `json:"d3Key"`
+	D0KeyTo         string  `json:"d0KeyTo"`
+	D1KeyTo         string  `json:"d1KeyTo"`
+	D2KeyTo         string  `json:"d2KeyTo"`
+	D3KeyTo         string  `json:"d3KeyTo"`
 	D0Min           *string `json:"d0Min,omitempty"`
 	D0Max           *string `json:"d0Max,omitempty"`
 	D1Min           *string `json:"d1Min,omitempty"`

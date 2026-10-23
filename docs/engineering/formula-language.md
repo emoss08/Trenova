@@ -929,11 +929,29 @@ now carries instead of assuming miles.
 
 ### Rate tables
 
-Every active rate matrix with one to four dimensions is a table, named by its code. A matrix
-declares its **value type** (`Money`, `Money/cwt`, `Money/mi`, `Percent`, `Number`, …), and each
-dimension's kind gives its key type: zones, zips, states, countries, freight classes, equipment
-and service types are `Text` (or the enum) and match exactly; weight breaks, distance, pieces and
-linear feet are quantities in bands.
+Every published, unarchived rate matrix with one to four dimensions is a table, named by its
+code. A matrix declares its **value type** (`Money`, `Money/cwt`, `Money/mi`, `Percent`, `Number`,
+…), and each dimension's kind gives its key type: zones, zips, states, countries, freight
+classes, equipment and service types are `Text` (or the enum) and match exactly; weight breaks,
+distance, pieces and linear feet are quantities in bands; a **postal range** axis (`ZipRange`) is
+`Text` matched against ranges.
+
+**Versions.** A matrix is versioned like a formula library. Editors change its draft; submitting
+the draft sends it to review, and a reviewer approving it publishes it as the next numbered
+version, which is immutable. A tariff reads a table at a version: a formula template version pins
+`code → version` for every table its check reads (as it pins library imports), so rating with a
+template version reads the pinned versions' cells, and publishing a matrix version never reprices
+a contract until a new template version is approved. Editing and testing a draft in the Studio
+read each table's newest published version, and the Studio shows which one. An archived matrix is
+no longer served to new checks; versions already pinned keep rating.
+
+**Postal ranges.** A `ZipRange` axis's cells hold an inclusive range of postal codes, `{"from",
+"to"}`, both ends trimmed and upper-cased and of one length `n`. A key matches a range when it has
+at least `n` characters and its first `n` characters fall between the ends, compared character by
+character in Unicode code point order (`"10001-1234"` matches `100`–`149`; `"9"` matches no range
+of length 3). The axis is keyed, so it takes part in on-demand loading like an exact axis; it
+takes no normalisation and no overflow policy (a key no range holds is a miss), and ranges on one
+axis never overlap, which the server and `matrix.coverage` refuse.
 
 - `tables.Zones[lane.origin.zip3, lane.destination.zip3]` gives the value type, optional
   (`Money/cwt?`): a miss is `none`, so `?? fail "…"` refuses to rate with a reason.
@@ -950,6 +968,14 @@ linear feet are quantities in bands.
   Normalisation (trim, upper case, zip3) and range overflow keep their per-dimension settings.
 - In tests, `given tables.Zones["A", "B"] = $20/cwt` sets a cell, so a test does not depend on
   the table's live cells (see "Tests").
+- `tariff.check` reports `tables: [{ code, version }]`, every table the file and the modules it
+  imports read, with the version the context held. The server turns these into the pins a
+  template version stores; the context's `TableShape` carries `version` for that.
+
+On the wire a table axis is `{ "match": "Exact" | "Range", "kind", "label", "unit"?,
+"normalization"?, "overflow"? }`; a postal range axis is `{ "match": "Range", "kind": "ZipRange" }`.
+A cell's `at` holds `{ "key" }` on an exact axis, `{ "min", "max"? }` on a band and `{ "from", "to"
+}` on a postal range.
 
 ## Modules and the standard library
 
@@ -1227,6 +1253,20 @@ variant's name, and `null` is none.
 - **Formula libraries** are a new organisation-level record with the same versioning and review as
   templates (`formula_libraries`, `formula_library_versions`), with GraphQL reads, REST writes,
   permissions, audit, agent tools and an editor.
+- **Rate matrices** are versioned with the library review flow and statuses: the draft is version
+  `0` of `rate_matrix_dimensions` and `rate_matrix_cells`, each published version a
+  `rate_matrix_versions` row with its own dimension and cell rows keyed by `(matrix,
+  version_number)`, copied from the draft in one `INSERT … SELECT` on approval. Reviews are
+  `rate_matrix_reviews`; `rate_matrices` carries the review state, `published_version_number` and
+  `has_draft_changes`. Templates and template versions store `tables` (the pins), and
+  `formula_template_version_tables` indexes them for "who pins this matrix". The server's table
+  cache keys published cells by `(tenant, matrix, version)` with no invalidation, and serves the
+  newest published versions under a stamp that moves when one is published or archived; a rating
+  batch reads its cells by `(matrix, version)` in bounded, batched queries. Postal range cells
+  keep the range's end in `dN_key_to` beside its start in `dN_key`. GraphQL reads
+  `rateMatrixVersions`, `rateMatrixVersion`, `rateMatrixReviews`, `rateMatrixUsages` and
+  `FormulaTemplate.tables`; REST writes `submit`, `approve`, `reject`, `request-changes`,
+  `archive` and `restore` under `/rate-matrices/:id/`.
 - **Rate agreement rules and agreements** gain `inputs` and lose the pricing columns above; the
   breaks table is dropped. **Rate matrices** gain `valueType` and lose their template, rounding
   and currency (a table's money is in the rating currency). Density scales are removed: the NMFC

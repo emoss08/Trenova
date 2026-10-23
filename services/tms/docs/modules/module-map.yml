@@ -456,6 +456,8 @@ modules:
       - rateconfirmationrepository
       - rateimportrepository
       - ratematrixrepository
+      - ratematrixreviewrepository
+      - ratematrixversionrepository
       - ratequoterepository
       - ratesimulationrepository
       - ratezonerepository
