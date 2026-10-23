@@ -30,7 +30,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -195,7 +194,7 @@ func seedRateMatrix(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, l
 	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
 	matrix := &ratematrix.RateMatrix{
 		ID: pulid.MustNew("rmx_"), OrganizationID: org, BusinessUnitID: bu,
-		Code: "LTL-" + label, Name: "LTL " + label, Status: domaintypes.StatusActive,
+		Code: "LTL-" + label, Name: "LTL " + label, Status: formulatemplate.StatusActive,
 		ValueType: ratematrix.ValueTypeMoney,
 	}
 	_, err := admin.NewInsert().Model(matrix).Exec(ctx)
