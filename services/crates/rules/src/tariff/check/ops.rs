@@ -137,6 +137,7 @@ fn input_json(input: &InputInfo, utf16: Option<&Utf16Index>) -> Json {
         "descriptor": input.descriptor,
         "required": input.required,
         "default": input.default,
+        "constraint": input.constraint.as_ref().map_or(Json::Null, crate::tariff::constraint::Constraint::to_json),
         "range": range(utf16, input.span),
     })
 }

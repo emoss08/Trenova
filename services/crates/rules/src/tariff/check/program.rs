@@ -415,13 +415,17 @@ fn unused_globals(
     }
 }
 
-/// The labels and codes a file's charges bill, for its tests' `charge(…)`.
+/// The labels and codes a file's charges bill and the labels of its choices, for its tests'
+/// `charge(…)` and `chosen(…)`.
 fn billed(stmts: &[&Stmt]) -> super::checker::Billed {
     let mut out = super::checker::Billed::default();
     for stmt in stmts {
         super::visit::stmt(
             stmt,
             &mut |inner| {
+                if let StmtKind::Choose(choose) = &inner.kind {
+                    out.choices.push(choose.label.text.clone());
+                }
                 if let StmtKind::Charge(charge) = &inner.kind {
                     match charge.label.literal() {
                         Some(label) => out.labels.push(label),
