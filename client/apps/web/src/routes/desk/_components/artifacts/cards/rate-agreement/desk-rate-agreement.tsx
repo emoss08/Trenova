@@ -41,7 +41,7 @@ import {
   CardTimeline,
   RecordCard,
 } from "../../record-card/record-card";
-import { cardDay, cardMoment, money, neighborsIn } from "../../record-card/record-card-values";
+import { cardDay, cardMoment, neighborsIn } from "../../record-card/record-card-values";
 import { useRecordActivity } from "../../record-card/record-activity";
 import { CardMeterSkeleton } from "../../skeletons/record-card-skeleton";
 import { useListedRecords, type RecordArtifactProps } from "../registry";
@@ -49,12 +49,11 @@ import {
   accessorialTerms,
   agreementReferences,
   agreementStage,
-  breakLabel,
   fuelTerms,
   guardrails,
-  lanePricing,
   laneTerms,
   pricingGroups,
+  tariffTerms,
 } from "./rate-agreement-card";
 import { ApprovalPath, TermPanel } from "./rate-agreement-term";
 import { RATE_AGREEMENT_SECTIONS } from "./rate-agreement-sections";
@@ -65,8 +64,8 @@ import { DeskRateAgreementSkeleton } from "./rate-agreement-skeleton";
  * so the card reads the most specific first and the next page on request.
  */
 const LANE_PAGE = 8;
-/** The weight breaks a lane lists before saying how many more it has. */
-const BREAK_ROWS = 4;
+/** The tariff terms a lane lists before saying how many more it sets. */
+const TERM_ROWS = 4;
 /** The versions the card lists. */
 const VERSION_ROWS = 4;
 /** The ways of pricing the rate structure draws before folding the rest into one. */
@@ -204,7 +203,6 @@ function AgreementCard({
     [agreement, lanes, latestVersions],
   );
   const templates = useRecordNames("FORMULA_TEMPLATE", refs.templates).names;
-  const matrices = useRecordNames("RATE_MATRIX", refs.matrices).names;
   const charges = useRecordNames("ACCESSORIAL_CHARGE", refs.charges).names;
   const programs = useRecordNames("FUEL_SURCHARGE_PROGRAM", refs.programs).names;
   const customers = useRecordNames("CUSTOMER", refs.customers).names;
@@ -362,7 +360,6 @@ function AgreementCard({
                 key={group.key}
                 label={group.label}
                 reading={t("{0, plural, one {# lane} other {# lanes}}", group.lanes)}
-                figure={group.range ?? undefined}
                 share={group.share}
                 state="ok"
               />
@@ -411,7 +408,6 @@ function AgreementCard({
                     <LanePrice
                       lane={lane}
                       templates={templates}
-                      matrices={matrices}
                       onOpenTemplate={listedTemplates.open}
                     />
                   }
@@ -465,15 +461,8 @@ function AgreementCard({
         </CardSection>
       )}
 
-      <CardSection title={t("Limits")}>
-        <dl className="dk-ra-limits">
-          {guardrails(agreement, t, marginsVisible).map((row) => (
-            <div key={row.key}>
-              <dt>{row.label}</dt>
-              <dd>{row.value}</dd>
-            </div>
-          ))}
-        </dl>
+      <CardSection title={t("Contract terms")}>
+        <ContractTerms agreement={agreement} currency={currency} marginsVisible={marginsVisible} />
       </CardSection>
 
       {access.activity && (
@@ -544,36 +533,62 @@ function PartyRow({
   );
 }
 
-/** How a lane is priced: the rate on its formula template, which opens in place, or its rate table. */
+/**
+ * What the agreement sets for every lane: the tariff inputs its lanes share, and the margin it
+ * keeps on carrier freight.
+ */
+function ContractTerms({
+  agreement,
+  currency,
+  marginsVisible,
+}: {
+  agreement: RateAgreement;
+  currency: string;
+  marginsVisible: boolean;
+}) {
+  const t = useT();
+  const rows = [
+    ...tariffTerms(agreement.inputs, currency, t),
+    ...guardrails(agreement, t, marginsVisible),
+  ];
+  if (rows.length === 0) {
+    return (
+      <p className="dk-ra-note">
+        {t("Each lane sets its own terms; the agreement sets none for all of them.")}
+      </p>
+    );
+  }
+  return (
+    <dl className="dk-ra-limits">
+      {rows.map((row) => (
+        <div key={row.key}>
+          <dt>{row.label}</dt>
+          <dd>{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** The tariff that prices a lane, which opens in place. */
 function LanePrice({
   lane,
   templates,
-  matrices,
   onOpenTemplate,
 }: {
   lane: RateAgreementRule;
   templates: ReadonlyMap<string, string>;
-  matrices: ReadonlyMap<string, string>;
   onOpenTemplate: ((templateId: string) => void) | undefined;
 }) {
-  const t = useT();
-  const pricing = lanePricing(lane);
-  if (pricing.by === "matrix") {
-    return <span>{t("Rate table {0}", matrices.get(pricing.matrixId) ?? "…")}</span>;
-  }
-  if (pricing.by === "none") {
-    return <span className="dk-ra-off">{t("Not priced")}</span>;
-  }
-  const name = templates.get(pricing.templateId) ?? "…";
+  const name = templates.get(lane.formulaTemplateId) ?? "…";
   return (
     <span>
-      {pricing.rate !== null && <b>{pricing.rate}</b>}
       {onOpenTemplate ? (
         <Button
           variant="bare"
           size="bare"
           className="dk-ra-tpl"
-          onClick={() => onOpenTemplate(pricing.templateId)}
+          onClick={() => onOpenTemplate(lane.formulaTemplateId)}
         >
           {name}
         </Button>
@@ -584,7 +599,7 @@ function LanePrice({
   );
 }
 
-/** One lane: its places, how it is priced, what bounds it, and its first weight breaks. */
+/** One lane: its places, the tariff that prices it, the loads it covers, and its first terms. */
 function LaneRow({
   lane,
   index,
@@ -601,8 +616,9 @@ function LaneRow({
   pricedBy: ReactNode;
 }) {
   const t = useT();
-  const terms = laneTerms(lane, currency, t);
-  const breaks = lane.breaks.slice(0, BREAK_ROWS);
+  const terms = laneTerms(lane, t);
+  const inputs = tariffTerms(lane.inputs, currency, t);
+  const shownInputs = inputs.slice(0, TERM_ROWS);
   return (
     <div className="dk-ra-lane">
       <div className="dk-ra-lane-h">
@@ -623,17 +639,17 @@ function LaneRow({
           ))}
         </ul>
       )}
-      {breaks.length > 0 && (
-        <dl className="dk-ra-breaks">
-          {breaks.map((weightBreak, breakIndex) => (
-            <div key={weightBreak.id ?? breakIndex}>
-              <dt>{breakLabel(weightBreak, t)}</dt>
-              <dd>{money(weightBreak.rate, currency)}</dd>
+      {shownInputs.length > 0 && (
+        <dl className="dk-ra-terms" aria-label={t("Lane terms")}>
+          {shownInputs.map((input) => (
+            <div key={input.key}>
+              <dt>{input.label}</dt>
+              <dd>{input.value}</dd>
             </div>
           ))}
-          {lane.breaks.length > breaks.length && (
+          {inputs.length > shownInputs.length && (
             <div className="dk-ra-more">
-              <dt>{t("{0} more", lane.breaks.length - breaks.length)}</dt>
+              <dt>{t("{0} more", inputs.length - shownInputs.length)}</dt>
             </div>
           )}
         </dl>

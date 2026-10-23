@@ -28,9 +28,11 @@ import (
 // convertedGets names each converted get by the converted list whose rows
 // it reads one of.
 var convertedGets = map[string]string{
-	"customer_list": "customer_get",
-	"location_list": "location_get",
-	"carrier_list":  "carrier_get",
+	"customer_list":           "customer_get",
+	"location_list":           "location_get",
+	"carrier_list":            "carrier_get",
+	"equipment_list_tractors": "equipment_get_tractor",
+	"equipment_list_trailers": "equipment_get_trailer",
 }
 
 func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.T) {

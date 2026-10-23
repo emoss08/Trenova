@@ -53,10 +53,17 @@ func (r *repository) Create(
 				zap.Int64("versionNumber", version.VersionNumber),
 			)
 
-			_, err := r.db.DBForContext(ctx).NewInsert().Model(version).Exec(ctx)
-			if err != nil {
+			dba := r.db.DBForContext(ctx)
+			if _, err := dba.NewInsert().Model(version).Exec(ctx); err != nil {
 				log.Error("failed to create formula template version", zap.Error(err))
 				return nil, err
+			}
+
+			if rows := version.ImportRows(); len(rows) > 0 {
+				if _, err := dba.NewInsert().Model(&rows).Exec(ctx); err != nil {
+					log.Error("failed to record formula template version imports", zap.Error(err))
+					return nil, err
+				}
 			}
 
 			return version, nil
@@ -576,4 +583,95 @@ func (r *repository) ClearScheduled(
 
 		return cleared, nil
 	})
+}
+
+const defaultLibraryUsageLimit = 200
+
+func (r *repository) ListLibraryUsages(
+	ctx context.Context,
+	req *formulatemplateports.ListLibraryUsagesRequest,
+) ([]*formulatemplateports.LibraryUsage, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*formulatemplateports.LibraryUsage, error) {
+			imports := formulatemplatecol.VersionImportColumns
+			versions := formulatemplatecol.FormulaTemplateVersionColumns
+			templates := formulatemplatecol.FormulaTemplateColumns
+			limit := req.Limit
+			if limit <= 0 || limit > defaultLibraryUsageLimit {
+				limit = defaultLibraryUsageLimit
+			}
+
+			type usageRow struct {
+				TemplateID           pulid.ID               `bun:"template_id"`
+				TemplateName         string                 `bun:"template_name"`
+				TemplateStatus       formulatemplate.Status `bun:"template_status"`
+				TemplateVersion      int64                  `bun:"template_version"`
+				VersionStatus        formulatemplate.Status `bun:"version_status"`
+				LibraryVersionNumber int64                  `bun:"library_version_number"`
+			}
+
+			rows := make([]usageRow, 0, 16)
+			query := r.db.DBForContext(ctx).
+				NewSelect().
+				TableExpr(
+					"? AS ?",
+					bun.Ident(formulatemplatecol.VersionImportTable.Name),
+					bun.Ident(formulatemplatecol.VersionImportTable.Alias),
+				).
+				Join(
+					"JOIN ? AS ? ON ? AND ? AND ?",
+					bun.Ident(formulatemplatecol.FormulaTemplateVersionTable.Name),
+					bun.Ident(formulatemplatecol.FormulaTemplateVersionTable.Alias),
+					bun.Safe(versions.ID.EqColumn(imports.TemplateVersionID)),
+					bun.Safe(versions.OrganizationID.EqColumn(imports.OrganizationID)),
+					bun.Safe(versions.BusinessUnitID.EqColumn(imports.BusinessUnitID)),
+				).
+				Join(
+					"JOIN ? AS ? ON ? AND ? AND ?",
+					bun.Ident(formulatemplatecol.FormulaTemplateTable.Name),
+					bun.Ident(formulatemplatecol.FormulaTemplateTable.Alias),
+					bun.Safe(templates.ID.EqColumn(imports.TemplateID)),
+					bun.Safe(templates.OrganizationID.EqColumn(imports.OrganizationID)),
+					bun.Safe(templates.BusinessUnitID.EqColumn(imports.BusinessUnitID)),
+				).
+				ColumnExpr(imports.TemplateID.As("template_id")).
+				ColumnExpr(templates.Name.As("template_name")).
+				ColumnExpr(templates.Status.As("template_status")).
+				ColumnExpr(imports.TemplateVersion.As("template_version")).
+				ColumnExpr(versions.Status.As("version_status")).
+				ColumnExpr(imports.LibraryVersionNumber.As("library_version_number")).
+				Where(imports.OrganizationID.Eq(), req.TenantInfo.OrgID).
+				Where(imports.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+				Where(imports.LibraryID.Eq(), req.LibraryID)
+			if req.VersionNumber != nil {
+				query = query.Where(imports.LibraryVersionNumber.Eq(), *req.VersionNumber)
+			}
+			err := query.
+				OrderExpr(imports.LibraryVersionNumber.OrderDesc()).
+				OrderExpr(imports.TemplateID.OrderAsc()).
+				OrderExpr(imports.TemplateVersion.OrderDesc()).
+				Limit(int64(limit)).
+				Scan(ctx, &rows)
+			if err != nil {
+				r.l.Error("failed to list formula library usages", zap.Error(err))
+				return nil, err
+			}
+
+			usages := make([]*formulatemplateports.LibraryUsage, 0, len(rows))
+			for i := range rows {
+				row := &rows[i]
+				usages = append(usages, &formulatemplateports.LibraryUsage{
+					TemplateID:           row.TemplateID,
+					TemplateName:         row.TemplateName,
+					TemplateStatus:       row.TemplateStatus,
+					TemplateVersion:      row.TemplateVersion,
+					VersionStatus:        row.VersionStatus,
+					LibraryVersionNumber: row.LibraryVersionNumber,
+				})
+			}
+			return usages, nil
+		},
+	)
 }

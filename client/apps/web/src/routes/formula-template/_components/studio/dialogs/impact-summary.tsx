@@ -3,12 +3,12 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { BacktestResponse } from "@trenova/shared/types/formula-template";
 import { BacktestTruncatedNote } from "../../backtest-truncated-note";
-import { formatMoney } from "../model/format";
+import { formatCurrency, formatCurrencyWhole } from "@trenova/shared/lib/utils";
 
 const MOVERS_SHOWN = 3;
 
 function signedMoney(amount: number): string {
-  return `${amount >= 0 ? "+" : "−"}${formatMoney(Math.abs(amount), 0)}`;
+  return `${amount >= 0 ? "+" : "−"}${formatCurrencyWhole(Math.round(Math.abs(amount)))}`;
 }
 
 /**
@@ -91,8 +91,8 @@ export function ImpactSummary({
             >
               <span className="truncate font-mono">{mover.proNumber || mover.shipmentId}</span>
               <span className="font-mono tabular-nums">
-                {formatMoney(mover.currentAmount)} →{" "}
-                <b className="font-semibold">{formatMoney(mover.candidateAmount)}</b>
+                {formatCurrency(mover.currentAmount)} →{" "}
+                <b className="font-semibold">{formatCurrency(mover.candidateAmount)}</b>
               </span>
             </div>
           ))}

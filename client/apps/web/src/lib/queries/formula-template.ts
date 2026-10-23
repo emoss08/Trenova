@@ -1,43 +1,52 @@
 import { apiService } from "@/services/api";
-import type {
-  FormulaTemplate,
-  TestExpressionRequest,
-} from "@trenova/shared/types/formula-template";
+import type { FormulaPreviewRequest } from "@trenova/shared/types/formula-template";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import type { QueryClient } from "@tanstack/react-query";
 
 export const formulaTemplate = createQueryKeys("formulaTemplate", {
-  get: (templateId: FormulaTemplate["id"]) => ({
+  get: (templateId: string) => ({
     queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.get(templateId),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.get(templateId, { signal }),
   }),
   recent: (limit: number) => ({
     queryKey: [limit],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       apiService.formulaTemplateService.list({ limit }, { signal }),
   }),
-  usage: (templateId: FormulaTemplate["id"]) => ({
+  /** The inputs a template version declares; no version is the one that bills today. */
+  inputs: (templateId: string, versionNumber: number | null) => ({
+    queryKey: [templateId, versionNumber ?? "billing"],
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.getDeclaredInputs(templateId, versionNumber, { signal }),
+  }),
+  usage: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.getUsage(templateId),
   }),
-  price: (request: TestExpressionRequest) => ({
+  /** The preview's rating of a source with sample inputs or a real shipment. */
+  preview: (request: FormulaPreviewRequest) => ({
     queryKey: [request],
-    queryFn: async () => apiService.formulaTemplateService.test(request),
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.preview(request, { signal }),
   }),
-  schema: (schemaId: string) => ({
-    queryKey: [schemaId],
-    queryFn: async () => apiService.formulaTemplateService.getSchema(schemaId),
-  }),
-  versionDiff: (templateId: FormulaTemplate["id"], fromVersion: number, toVersion: number) => ({
+  /** What the browser checks a tariff against (GET /formula-templates/context). */
+  context: {
+    queryKey: null,
+    queryFn: async ({ signal }: { signal?: AbortSignal }) =>
+      apiService.formulaTemplateService.getContext({ signal }),
+  },
+  /**
+   * The rate table cells the browser's tests have loaded (POST /formula-templates/context/cells),
+   * kept per rate table stamp; written by `useTariffTableCells`, never fetched.
+   */
+  contextCells: (stamp: string) => ({ queryKey: [stamp] }),
+  versionDiff: (templateId: string, fromVersion: number, toVersion: number) => ({
     queryKey: [templateId, fromVersion, toVersion],
     queryFn: async () =>
       apiService.formulaTemplateService.compareVersions(templateId, fromVersion, toVersion),
   }),
-  testCases: (templateId: FormulaTemplate["id"]) => ({
-    queryKey: [templateId],
-    queryFn: async () => apiService.formulaTemplateService.listTestCases(templateId),
-  }),
-  versions: (templateId: FormulaTemplate["id"], limit?: number, offset?: number) => ({
+  versions: (templateId: string, limit?: number, offset?: number) => ({
     queryKey: [templateId, limit, offset],
     queryFn: async () =>
       apiService.formulaTemplateService.listVersions(templateId, {
@@ -45,26 +54,26 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
         offset,
       }),
   }),
-  lineage: (templateId: FormulaTemplate["id"]) => ({
+  lineage: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async () => {
       return apiService.formulaTemplateService.getLineage(templateId);
     },
   }),
-  scheduledVersions: (templateId: FormulaTemplate["id"]) => ({
+  scheduledVersions: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.listScheduledVersions(templateId),
   }),
-  approvalImpact: (templateId: FormulaTemplate["id"]) => ({
+  approvalImpact: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.approvalImpact(templateId),
   }),
-  reviewers: (templateId: FormulaTemplate["id"]) => ({
+  reviewers: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async ({ signal }: { signal?: AbortSignal }) =>
       apiService.formulaTemplateService.listReviewers(templateId, { signal }),
   }),
-  readiness: (templateId: FormulaTemplate["id"]) => ({
+  readiness: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.readiness(templateId),
   }),
@@ -72,11 +81,11 @@ export const formulaTemplate = createQueryKeys("formulaTemplate", {
     queryKey: null,
     queryFn: async () => apiService.formulaTemplateService.listStandards(),
   },
-  reviews: (templateId: FormulaTemplate["id"]) => ({
+  reviews: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.listReviews(templateId),
   }),
-  reviewDiff: (templateId: FormulaTemplate["id"]) => ({
+  reviewDiff: (templateId: string) => ({
     queryKey: [templateId],
     queryFn: async () => apiService.formulaTemplateService.reviewDiff(templateId),
   }),

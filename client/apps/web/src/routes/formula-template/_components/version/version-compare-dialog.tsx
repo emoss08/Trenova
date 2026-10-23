@@ -13,7 +13,7 @@ import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { FieldChange } from "@trenova/shared/types/formula-template";
 import { useQuery } from "@tanstack/react-query";
 import { MinusIcon, PlusIcon, RefreshCw02Icon } from "@trenova/shared/components/icons";
-import { ExpressionDiff } from "@/components/formula-editor/expression-diff";
+import { SourceDiff } from "@/components/tariff-studio/source-diff";
 
 type VersionCompareDialogProps = {
   open: boolean;
@@ -132,7 +132,7 @@ function ChangeItem({ path, change }: ChangeItemProps) {
   };
 
   const formattedPath = path.replace(/\./g, " → ");
-  const isExpressionChange = path === "expression" || path.endsWith(".expression");
+  const isSourceChange = path === "source";
 
   return (
     <div className="overflow-hidden rounded-lg border">
@@ -145,8 +145,8 @@ function ChangeItem({ path, change }: ChangeItemProps) {
       </div>
 
       <div className="p-3">
-        {change.type === "updated" && isExpressionChange ? (
-          <ExpressionDiff before={formatValue(change.from)} after={formatValue(change.to)} />
+        {change.type === "updated" && isSourceChange ? (
+          <SourceDiff before={formatValue(change.from)} after={formatValue(change.to)} />
         ) : change.type === "updated" ? (
           <div className="grid grid-cols-2 gap-4">
             <div>

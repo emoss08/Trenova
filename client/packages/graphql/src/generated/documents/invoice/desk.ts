@@ -2,4 +2,4 @@
 import type { TypedDocumentString, DeskInvoiceCardQuery, DeskInvoiceCardQueryVariables, DeskInvoiceNeighborFragment } from "../../graphql";
 
 export const DeskInvoiceNeighborFragmentDoc = {"__meta__":{"fragmentName":"DeskInvoiceNeighbor"}} as unknown as TypedDocumentString<DeskInvoiceNeighborFragment, unknown>;
-export const DeskInvoiceCardDocument = {"__meta__":{"kind":"query","name":"DeskInvoiceCard","hash":"sha256:ad4298ee943d0ebadcae2af270238cf5e66492471d909d99df3c14807149ea84"}} as unknown as TypedDocumentString<DeskInvoiceCardQuery, DeskInvoiceCardQueryVariables>;
+export const DeskInvoiceCardDocument = {"__meta__":{"kind":"query","name":"DeskInvoiceCard","hash":"sha256:999c7e0d491ec67cede9bfa0b886e9a98cded555418d9929104cb1b9acd28fab"}} as unknown as TypedDocumentString<DeskInvoiceCardQuery, DeskInvoiceCardQueryVariables>;

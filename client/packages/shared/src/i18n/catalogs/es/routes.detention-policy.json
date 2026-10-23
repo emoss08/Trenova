@@ -105,6 +105,7 @@
   "Pays out {0} more than it bills": "Paga {0} más de lo que factura",
   "Pickup override": "Anulación de la recogida",
   "Preview scenario": "Previsualizar el escenario",
+  "Pricing": "Tarificación",
   "Rate source": "Origen de la tarifa",
   "Re-price settled history under these terms. The engine is the same one that bills live shipments, so the projection is exact rather than estimated.": "Vuelva a tarificar el historial ya liquidado con estas condiciones. El motor es el mismo que factura los envíos reales, por lo que la proyección es exacta y no estimada.",
   "Re-run": "Volver a ejecutar",

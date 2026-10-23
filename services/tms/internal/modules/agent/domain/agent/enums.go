@@ -53,6 +53,7 @@ const (
 	SubjectDashboard            = SubjectType("Dashboard")
 	SubjectAccountingConnection = SubjectType("AccountingConnection")
 	SubjectFormulaTemplate      = SubjectType("FormulaTemplate")
+	SubjectFormulaLibrary       = SubjectType("FormulaLibrary")
 	SubjectAccountingSyncRecord = SubjectType("AccountingSyncRecord")
 	SubjectAccountingInbound    = SubjectType("AccountingInboundChange")
 	SubjectAccountingDrift      = SubjectType("AccountingDriftFinding")
@@ -98,6 +99,8 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 		return permission.ResourceAccountingIntegration, true
 	case SubjectFormulaTemplate:
 		return permission.ResourceFormulaTemplate, true
+	case SubjectFormulaLibrary:
+		return permission.ResourceFormulaLibrary, true
 	case SubjectAccountingSyncRecord, SubjectAccountingInbound, SubjectAccountingDrift:
 		return permission.ResourceAccountingSync, true
 	case SubjectInvoice:
@@ -161,6 +164,7 @@ func (s SubjectType) IsValid() bool {
 		SubjectDashboard,
 		SubjectAccountingConnection,
 		SubjectFormulaTemplate,
+		SubjectFormulaLibrary,
 		SubjectAccountingSyncRecord,
 		SubjectAccountingInbound,
 		SubjectAccountingDrift,
@@ -194,6 +198,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectDashboard,
 		SubjectAccountingConnection,
 		SubjectFormulaTemplate,
+		SubjectFormulaLibrary,
 		SubjectAccountingSyncRecord,
 		SubjectAccountingInbound,
 		SubjectAccountingDrift,

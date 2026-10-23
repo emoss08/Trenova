@@ -72,8 +72,8 @@ type graphQLListSpec struct {
 	// no order, as the screen's search cannot (closest name first).
 	rank func(query string, rows []map[string]any) []map[string]any
 	// shape applies to each row what the screen's resolver does not, given
-	// the fields withheld from it.
-	shape func(row map[string]any, withheld map[string]struct{})
+	// the fields withheld from it and the call's clock.
+	shape func(row map[string]any, withheld map[string]struct{}, clk clock)
 	// defaults are parameter values a call that omits them reads with (the
 	// active courses, not the retired ones), named in their notes.
 	defaults map[string]any
@@ -121,6 +121,9 @@ type idReference struct {
 // schema is the parameter an id or a list of ids becomes.
 func (ref idReference) schema(list bool) map[string]any {
 	description := agenttoolschema.IDDescription(ref.what, ref.source)
+	if ref.most == 0 {
+		ref.most = unpagedMost
+	}
 	switch {
 	case list && len(ref.kinds) > 0:
 		return agenttoolschema.KindIDs(description, ref.most, ref.kinds...)
@@ -886,8 +889,9 @@ func (t *graphQLListTool) page(
 		for _, path := range page.withheld {
 			withheld[path] = struct{}{}
 		}
+		clk := clockFor(params)
 		for _, item := range page.items {
-			t.spec.shape(item, withheld)
+			t.spec.shape(item, withheld, clk)
 		}
 	}
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {

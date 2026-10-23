@@ -32,13 +32,6 @@ func (e *RateAgreementRule) GetStaticFieldMap() map[string]string {
 	return rateagreementcol.RateAgreementRuleFieldMap
 }
 
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreementRuleBreak].
-// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [rateagreementcol.RateAgreementRuleBreakFieldMap] instead of parsing struct tags via reflection.
-func (e *RateAgreementRuleBreak) GetStaticFieldMap() map[string]string {
-	return rateagreementcol.RateAgreementRuleBreakFieldMap
-}
-
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreementVersion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [rateagreementcol.RateAgreementVersionFieldMap] instead of parsing struct tags via reflection.

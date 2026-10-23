@@ -474,6 +474,7 @@ const (
 	fieldTotalAmount   = "totalAmount"
 	fieldTotalMiles    = "totalMiles"
 	fieldAmount        = "amount"
+	fieldInputs        = "inputs"
 	fieldAmountMinor   = "amountMinor"
 	withheldAmounts    = "amounts"
 	withheldLineAmount = "lines.amount"

@@ -156,11 +156,30 @@ export function InvoiceChargesTab({ invoice }: { invoice: Invoice }) {
           ) : (
             <ChargeBreakdown group={groups[0]} currencyCode={invoice.currencyCode} />
           )}
+          <RatingNotes notes={invoice.ratingNotes ?? []} />
         </div>
       </ScrollArea>
 
       <InvoiceChargeTotals invoice={invoice} />
     </div>
+  );
+}
+
+/** The notes the tariffs wrote on the bills this invoice carries, in their authors' words. */
+function RatingNotes({ notes }: { notes: readonly string[] }) {
+  const t = useT();
+  if (notes.length === 0) return null;
+  return (
+    <section aria-label={t("Notes from the tariff")} className="rounded-lg border px-3 py-2">
+      <p className="text-muted-foreground mb-1 text-xs font-medium">{t("Notes from the tariff")}</p>
+      <ul className="flex flex-col gap-0.5">
+        {notes.map((note, index) => (
+          <li key={`${index}-${note}`} className="text-xs">
+            {note}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -283,9 +302,9 @@ function ChargeBreakdown({
         </div>
       ) : null}
 
-      <ul aria-label={t("Line haul")} className="flex flex-col">
+      <ul aria-label={t("Freight")} className="flex flex-col">
         {freightLines.map((line) => (
-          <FreightRows key={line.id} line={line} currencyCode={currencyCode} />
+          <FreightRow key={line.id} line={line} currencyCode={currencyCode} />
         ))}
       </ul>
 
@@ -316,25 +335,25 @@ function ChargeBreakdown({
   );
 }
 
-function FreightRows({ line, currencyCode }: { line: InvoiceLine; currencyCode: string }) {
+/**
+ * One freight line of the bill: the tariff's charge under its own label (the customer's text,
+ * as written), with the quantity it billed at its rate and unit.
+ */
+function FreightRow({ line, currencyCode }: { line: InvoiceLine; currencyCode: string }) {
   const t = useT();
 
+  const calculation = describeChargeCalculation(line, currencyCode, t);
+  const share = describeAllocationShare(line, t);
+  const details = [calculation, share, t("Line {0}", line.lineNumber)].filter(
+    (detail): detail is string => Boolean(detail),
+  );
+
   return (
-    <>
-      {line.rate != null ? (
-        <ChargeRowLayout
-          label={t("Base rate")}
-          details={[t("Per-unit rate before formula")]}
-          value={formatCurrency(line.rate, currencyCode)}
-          muted
-        />
-      ) : null}
-      <ChargeRowLayout
-        label={t("Line haul")}
-        details={[t("Line {0}", line.lineNumber)]}
-        value={formatCurrency(line.amount ?? 0, currencyCode)}
-      />
-    </>
+    <ChargeRowLayout
+      label={line.description || t("Line haul")}
+      details={details}
+      value={formatCurrency(line.amount ?? 0, currencyCode)}
+    />
   );
 }
 
@@ -349,7 +368,7 @@ function ChargeRow({ line, currencyCode }: { line: InvoiceLine; currencyCode: st
 
   return (
     <ChargeRowLayout
-      label={t(line.description)}
+      label={line.description}
       code={line.chargeCode}
       details={details}
       value={formatCurrency(line.amount ?? 0, currencyCode)}

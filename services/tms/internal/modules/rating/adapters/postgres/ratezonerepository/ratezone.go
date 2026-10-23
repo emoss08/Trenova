@@ -1,7 +1,9 @@
 package ratezonerepository
 
 import (
+	"cmp"
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/ratezonecol"
 
@@ -214,30 +216,34 @@ func (r *repository) GetByID(
 	})
 }
 
-// ResolveMembership turns a place's match keys into the zones that contain it.
-//
-// This runs twice on every rating, once per end of the lane, so it is served
-// entirely from the covering index on (organization, business unit, match key)
-// and returns nothing but the zone ids.
-func (r *repository) ResolveMembership(
-	ctx context.Context,
-	req *ratezoneports.ResolveZoneMembershipRequest,
-) ([]pulid.ID, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		if len(req.MatchKeys) == 0 {
-			return nil, nil
-		}
+type laneZoneRow struct {
+	ID       pulid.ID `bun:"id"`
+	Code     string   `bun:"code"`
+	MatchKey string   `bun:"match_key"`
+}
 
-		log := r.l.With(zap.String("operation", "ResolveMembership"))
+func (r *repository) ResolveLaneZones(
+	ctx context.Context,
+	req *ratezoneports.ResolveLaneZonesRequest,
+) (*ratezoneports.LaneZones, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratezoneports.LaneZones, error) {
+		keys := make([]string, 0, len(req.OriginKeys)+len(req.DestinationKeys))
+		keys = append(keys, req.OriginKeys...)
+		keys = append(keys, req.DestinationKeys...)
+		if len(keys) == 0 {
+			return &ratezoneports.LaneZones{}, nil
+		}
 
 		memberCols := ratezonecol.RateZoneMemberColumns
 		zoneCols := ratezonecol.RateZoneColumns
 
-		zoneIDs := make([]pulid.ID, 0, len(req.MatchKeys))
+		rows := make([]laneZoneRow, 0, len(keys))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*ratezone.RateZoneMember)(nil)).
-			ColumnExpr("DISTINCT "+memberCols.RateZoneID.String()).
+			ColumnExpr("DISTINCT "+zoneCols.ID.Qualified()+" AS id").
+			ColumnExpr(zoneCols.Code.Qualified()+" AS code").
+			ColumnExpr(memberCols.MatchKey.Qualified()+" AS match_key").
 			Join(
 				"JOIN "+ratezonecol.RateZoneTable.As(ratezonecol.RateZoneTable.Alias)+
 					" ON "+zoneCols.ID.Qualified()+" = "+memberCols.RateZoneID.Qualified()+
@@ -246,16 +252,87 @@ func (r *repository) ResolveMembership(
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return ratezonecol.RateZoneMemberScopeTenant(sq, req.TenantInfo).
-					Where(memberCols.MatchKey.In(), bun.List(req.MatchKeys)).
+					Where(memberCols.MatchKey.In(), bun.List(keys)).
 					Where(zoneCols.Status.Eq(), domaintypes.StatusActive)
 			}).
-			Scan(ctx, &zoneIDs)
+			Scan(ctx, &rows)
 		if err != nil {
-			log.Error("failed to resolve zone membership", zap.Error(err))
+			r.l.With(zap.String("operation", "ResolveLaneZones")).
+				Error("failed to resolve lane zones", zap.Error(err))
 			return nil, err
 		}
 
-		return zoneIDs, nil
+		return &ratezoneports.LaneZones{
+			Origin:      laneSide(rows, req.OriginKeys),
+			Destination: laneSide(rows, req.DestinationKeys),
+		}, nil
+	})
+}
+
+func laneSide(rows []laneZoneRow, keys []string) []ratezoneports.ZoneRef {
+	rank := make(map[string]int, len(keys))
+	for index, key := range keys {
+		if _, seen := rank[key]; !seen {
+			rank[key] = index
+		}
+	}
+
+	best := make(map[pulid.ID]int, len(rows))
+	refs := make([]ratezoneports.ZoneRef, 0, len(rows))
+	for _, row := range rows {
+		position, ok := rank[row.MatchKey]
+		if !ok {
+			continue
+		}
+		current, seen := best[row.ID]
+		if !seen {
+			refs = append(refs, ratezoneports.ZoneRef{ID: row.ID, Code: row.Code})
+			best[row.ID] = position
+			continue
+		}
+		if position < current {
+			best[row.ID] = position
+		}
+	}
+
+	slices.SortStableFunc(refs, func(a, b ratezoneports.ZoneRef) int {
+		return cmp.Or(cmp.Compare(best[a.ID], best[b.ID]), cmp.Compare(a.Code, b.Code))
+	})
+	return refs
+}
+
+func (r *repository) GetCodesByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) (map[pulid.ID]string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]string, error) {
+		codes := make(map[pulid.ID]string, len(ids))
+		if len(ids) == 0 {
+			return codes, nil
+		}
+
+		zoneCols := ratezonecol.RateZoneColumns
+		zones := make([]*ratezone.RateZone, 0, len(ids))
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&zones).
+			Column(zoneCols.ID.Bare(), zoneCols.Code.Bare()).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return ratezonecol.RateZoneScopeTenant(sq, tenantInfo).
+					Where(zoneCols.ID.In(), bun.List(ids))
+			}).
+			Scan(ctx)
+		if err != nil {
+			r.l.With(zap.String("operation", "GetCodesByIDs")).
+				Error("failed to read rate zone codes", zap.Error(err))
+			return nil, err
+		}
+
+		for _, zone := range zones {
+			codes[zone.ID] = zone.Code
+		}
+		return codes, nil
 	})
 }
 

@@ -270,6 +270,7 @@ components:
   rating-test:
     in:
       - internal/modules/rating/ratingtest
+      - internal/modules/rating/ratingtest/**
   operations-domain:
     in:
       - internal/modules/operations/domain

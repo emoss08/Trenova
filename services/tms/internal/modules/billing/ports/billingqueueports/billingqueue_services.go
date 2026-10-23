@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 )
 
 type TransferToBillingRequest struct {
@@ -66,7 +66,7 @@ type BillingQueueStats struct {
 type UpdateChargesRequest struct {
 	ItemID            pulid.ID
 	FormulaTemplateID *pulid.ID
-	BaseRate          *decimal.Decimal
+	TariffInputs      tarifftypes.Inputs
 	AdditionalCharges []*shipment.AdditionalCharge
 	TenantInfo        pagination.TenantInfo
 	// ConvertAmountSplitsToPercent answers the refusal an edit gets when it

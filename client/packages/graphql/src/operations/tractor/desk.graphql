@@ -76,6 +76,22 @@ query DeskTractorPosition($tractorId: ID!) {
   }
 }
 
+# Where the fleet's tractors last reported themselves, for the Desk's agent:
+# every tractor with a recent enough reading, or only the ones named.
+query DeskVehiclePositions($maxAgeSeconds: Int, $tractorIds: [ID!]) {
+  vehiclePositions(maxAgeSeconds: $maxAgeSeconds, tractorIds: $tractorIds) {
+    tractorId
+    tractorCode
+    latitude
+    longitude
+    formattedLocation
+    speedMph
+    engineState
+    recordedAt
+    primaryWorkerName
+  }
+}
+
 # The tractor's inspections, newest first, a page at a time: the next page is
 # read from before the last one shown.
 query DeskTractorInspections(

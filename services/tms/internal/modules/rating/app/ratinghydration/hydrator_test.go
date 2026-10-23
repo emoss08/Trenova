@@ -1,9 +1,7 @@
 package ratinghydration_test
 
 import (
-	"os"
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -11,9 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -27,47 +22,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func realSchema(t *testing.T) []byte {
-	t.Helper()
-
-	raw, err := os.ReadFile("../formula/schema/definitions/shipment.schema.json")
-	require.NoError(t, err)
-	return raw
-}
-
-func environmentFor(t *testing.T, schemaJSON []byte) *environment.Builder {
-	t.Helper()
-
-	registry := schema.NewRegistry()
-	require.NoError(t, registry.Register("shipment", schemaJSON))
-
-	return environment.NewBuilder(environment.Params{
-		Registry: registry,
-		Resolver: resolver.NewResolver(),
-	})
-}
-
 func tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 }
 
-func TestNew_CoversEveryRelationTheShipmentSchemaReads(t *testing.T) {
+func TestNew_LoadsEveryRelationTheTariffRecordReads(t *testing.T) {
 	t.Parallel()
 
-	env := environmentFor(t, realSchema(t))
-	hydrator, err := ratinghydration.New(
-		ratingtest.HydratorParams(env, ratingtest.NewRelationStore()),
-	)
+	hydrator, err := ratinghydration.New(ratingtest.HydratorParams(ratingtest.NewRelationStore()))
 	require.NoError(t, err)
 
-	inline := map[string]bool{
-		"Moves": true, "Moves.Stops": true, "Commodities": true, "AdditionalCharges": true,
-	}
 	loaded := hydrator.Relations()
-	for _, relation := range env.RequiredPreloads("shipment") {
-		if inline[relation] {
-			continue
-		}
+	for _, relation := range []string{
+		"Customer",
+		"ServiceType",
+		"ShipmentType",
+		"TractorType",
+		"TrailerType",
+		"Moves.Stops.Location",
+		"Moves.Stops.Location.State",
+		"Commodities.Commodity",
+		"Commodities.Commodity.HazardousMaterial",
+	} {
 		assert.Contains(t, loaded, relation, "the hydrator must load %s", relation)
 	}
 	assert.Less(
@@ -76,31 +52,6 @@ func TestNew_CoversEveryRelationTheShipmentSchemaReads(t *testing.T) {
 		slices.Index(loaded, "Moves.Stops.Location.State"),
 		"a relation loads before the relations under it",
 	)
-}
-
-func TestNew_RefusesASchemaRelationItCannotLoad(t *testing.T) {
-	t.Parallel()
-
-	schemaJSON := strings.Replace(
-		string(realSchema(t)),
-		`"properties": {`,
-		`"properties": {
-        "billToName": {
-            "type": "string",
-            "description": "The bill-to customer's name",
-            "x-source": { "path": "BillToCustomer.Name" }
-        },`,
-		1,
-	)
-
-	_, err := ratinghydration.New(
-		ratingtest.HydratorParams(
-			environmentFor(t, []byte(schemaJSON)),
-			ratingtest.NewRelationStore(),
-		),
-	)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "BillToCustomer")
 }
 
 func TestHydrateShipment_LoadsEveryMissingRelationOneQueryPerKind(t *testing.T) {

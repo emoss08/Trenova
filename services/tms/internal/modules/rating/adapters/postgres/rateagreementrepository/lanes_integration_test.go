@@ -18,6 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -82,10 +84,8 @@ func seedLaneFixture(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Per Mile " + code,
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "baseRate * totalDistance",
+		Source:         perMileTariff,
 		Status:         formulatemplate.StatusActive,
-		SchemaID:       "shipment",
 	}
 	_, err = db.NewInsert().Model(template).Exec(ctx)
 	require.NoError(t, err)
@@ -109,8 +109,8 @@ func (f *laneFixture) rule(
 		DestinationScopeType:  "State",
 		DestinationScopeValue: "FL",
 		Direction:             rateagreement.DirectionDirectional,
-		FormulaTemplateID:     &f.templateID,
-		Rate:                  decimal.NewNullDecimal(decimal.RequireFromString("2.00")),
+		FormulaTemplateID:     f.templateID,
+		Inputs:                perMileRate("2.00"),
 		EffectiveFrom:         100,
 	}
 	if mutate != nil {
@@ -193,27 +193,6 @@ func TestListLanes_PagesLiveLanesMostSpecificFirstAndCountsTheRest(t *testing.T)
 	})
 	expectedIDs := laneIDs(expected)
 
-	breaks := []*rateagreement.RateAgreementRuleBreak{
-		{
-			OrganizationID:      fixture.tenantInfo.OrgID,
-			BusinessUnitID:      fixture.tenantInfo.BuID,
-			RateAgreementRuleID: expected[0].ID,
-			FromWeight:          decimal.Zero,
-			ToWeight:            decimal.NewNullDecimal(decimal.NewFromInt(5_000)),
-			Rate:                decimal.RequireFromString("2.50"),
-		},
-		{
-			OrganizationID:      fixture.tenantInfo.OrgID,
-			BusinessUnitID:      fixture.tenantInfo.BuID,
-			RateAgreementRuleID: expected[0].ID,
-			FromWeight:          decimal.NewFromInt(5_000),
-			Rate:                decimal.RequireFromString("2.25"),
-			SortOrder:           1,
-		},
-	}
-	_, err := db.NewInsert().Model(&breaks).Exec(ctx)
-	require.NoError(t, err)
-
 	request := func(limit, offset int) *rateagreementports.ListRateAgreementLanesRequest {
 		return &rateagreementports.ListRateAgreementLanesRequest{
 			TenantInfo:      fixture.tenantInfo,
@@ -230,8 +209,7 @@ func TestListLanes_PagesLiveLanesMostSpecificFirstAndCountsTheRest(t *testing.T)
 	assert.Equal(t, 2, first.Retired, "one inactive rule and one closed-out rule")
 	assert.Equal(t, 2, first.Limit)
 	assert.Equal(t, 0, first.Offset)
-	require.Len(t, first.Lanes[0].Breaks, 2, "each lane carries its breaks")
-	assert.Empty(t, first.Lanes[1].Breaks)
+	assert.True(t, perMileRate("2.00").Equal(first.Lanes[0].Inputs), "each lane carries its inputs")
 
 	second, err := repo.ListLanes(ctx, request(2, 2))
 	require.NoError(t, err)
@@ -438,4 +416,15 @@ func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 	assert.Empty(t, headerOnly.Rules)
 	assert.Empty(t, headerOnly.Accessorials)
 	assert.Nil(t, headerOnly.FuelBinding)
+}
+
+const perMileTariff = "tariff \"Per Mile\"\n\ninput rate: Money/mi\n\n" +
+	"charge \"Per Mile\" (quantity: shipment.distance, rate: rate)\n"
+
+func perMileRate(rate string) tarifftypes.Inputs {
+	return tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString(rate), "$/mi")}
+}
+
+func flatRate(amount string) tarifftypes.Inputs {
+	return tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.RequireFromString(amount))}
 }

@@ -266,26 +266,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "defaultMinCharge",
+				Name:     "inputs",
+				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
-					return obj.DefaultMinCharge, nil
+					return obj.Inputs, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
-			},
-			{
-				Name:     "defaultMaxCharge",
-				ChildErr: errNoChild8,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.RateAgreement)
-					return obj.DefaultMaxCharge, nil
-				},
-				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
 			},
 			{
 				Name:     "marginFloorPercent",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.MarginFloorPercent, nil
@@ -294,7 +286,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "maxPayPercentOfSell",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateAgreement)
 					return obj.MaxPayPercentOfSell, nil
@@ -516,32 +508,12 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "formulaTemplateId",
-				NonNull:  true,
-				ChildErr: errNoChild0,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.RateMatrix)
-					return obj.FormulaTemplateID, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNID2string),
-			},
-			{
-				Name:     "formulaTemplateName",
+				Name:     "valueType",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateMatrix)
-					return obj.FormulaTemplateName, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "currency",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.RateMatrix)
-					return obj.Currency, nil
+					return obj.ValueType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -695,7 +667,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "purpose",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.Purpose, nil
@@ -705,7 +677,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild10,
+				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.Outcome, nil
@@ -772,7 +744,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "linehaulAmount",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.LinehaulAmount, nil
@@ -782,7 +754,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalAmount",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.TotalAmount, nil
@@ -792,7 +764,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billingAmount",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.BillingAmount, nil
@@ -801,7 +773,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "foregoneAmount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.RateQuote)
 					return obj.ForegoneAmount, nil
@@ -1104,9 +1076,10 @@ var (
 	errNoChild5  = errors.New("field of type Int does not have child fields")
 	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
 	errNoChild7  = errors.New("field of type Boolean does not have child fields")
-	errNoChild8  = errors.New("field of type Decimal does not have child fields")
-	errNoChild9  = errors.New("field of type RateQuotePurpose does not have child fields")
-	errNoChild10 = errors.New("field of type RateQuoteOutcome does not have child fields")
+	errNoChild8  = errors.New("field of type JSON does not have child fields")
+	errNoChild9  = errors.New("field of type Decimal does not have child fields")
+	errNoChild10 = errors.New("field of type RateQuotePurpose does not have child fields")
+	errNoChild11 = errors.New("field of type RateQuoteOutcome does not have child fields")
 )
 
 func field_Query_rateAgreements_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1196,6 +1169,18 @@ func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v map[string]any) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	res := graphql.MarshalMap(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}

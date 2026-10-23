@@ -156,8 +156,10 @@ protocol drift. Effort is small, because the Rust code already exists.
 **Status.** Done. `services/crates/rules` (`trenova-rules`) holds all five rule sets in the
 table below, compiled to one `wasm32-unknown-unknown` module that the TMS runs in wazero and the
 web app loads lazily. expr-lang is gone from the TMS, the browser's parser, checker and formatter
-are deleted, the conformance corpus lives in the crate, the evaluator is metered and exact, and
-every Go and TypeScript copy named below is deleted. See
+are deleted, and every Go and TypeScript copy named below is deleted. The expr-flavoured formula
+language itself has since been replaced by Tariff, a statically typed rating language the crate
+owns ([formula-language.md](../../engineering/formula-language.md)), with its corpora under
+`testdata/tariff/` and a metered, exact evaluator. See
 [rules-engine.md](../../engineering/rules-engine.md). The rest of this section is the analysis
 as it was written.
 

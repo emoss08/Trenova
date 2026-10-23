@@ -26,10 +26,10 @@ type AccessorialFacts struct {
 // settlement reading two different lists is exactly the complaint contract
 // pricing exists to fix.
 //
-// Rows carrying an ApplyCondition come back rather than being dropped: only the
-// caller has a formula engine to answer one with, and answering "no" here would
-// silently disable every conditional accessorial in the product. A caller
-// without an engine should treat a condition as unmet rather than as absent.
+// Rows carrying a Condition come back rather than being dropped: only the
+// tariff call answers one, and answering "no" here would silently disable
+// every conditional accessorial in the product. A caller holding no answer for
+// a row should treat its condition as unmet rather than as absent.
 func (ra *RateAgreement) AutoApplyAccessorials(
 	facts AccessorialFacts,
 ) []*RateAgreementAccessorial {

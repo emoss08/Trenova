@@ -19,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -34,12 +35,7 @@ import (
 // It is stored on every quote so that two runs disagreeing can be told apart:
 // the same version with a different context means the shipment moved, and the
 // same context with a different version means we did.
-const EngineVersion = "1.0.0"
-
-// linehaulLabel is what every path that produces the base charge calls it, so
-// the trace reads the same whether the number came from a rate per mile, a
-// matrix cell or a formula.
-const linehaulLabel = "Linehaul"
+const EngineVersion = "2.0.0"
 
 // RateContext is everything a rating reads.
 //
@@ -99,9 +95,11 @@ type RateContext struct {
 	// agreements written as a share of what the customer pays.
 	SellTotal decimal.NullDecimal
 
-	// Entity is the shipment itself, needed only by rules that delegate to a
-	// formula template — the formula engine resolves its own variables from it.
-	Entity any
+	Entity *shipment.Shipment
+
+	OriginZoneCodes      []string
+	DestinationZoneCodes []string
+	ZonesResolved        bool
 
 	// SimulateAgreementID lets one agreement price this shipment whatever its
 	// status, which is what a simulation of a draft contract needs.

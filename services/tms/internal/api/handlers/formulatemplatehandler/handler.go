@@ -65,9 +65,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/formula-templates")
 	api.GET("/", requireRead, h.list)
 	api.POST("/", requireCreate, h.create)
-	api.GET("/schema", requireRead, h.getSchema)
+	api.GET("/context", requireRead, h.getContext)
+	api.POST("/context/cells", requireRead, h.getContextCells)
 	api.POST("/bulk-update-status", requireUpdate, h.bulkUpdateStatus)
-	api.POST("/test", requireAuthoring, h.testExpression)
+	api.POST("/test", requireAuthoring, h.preview)
+	api.POST("/scaffold-test", requireAuthoring, h.scaffoldTest)
 	api.POST("/duplicate", requireDuplicate, h.duplicate)
 	api.POST("/import", requireCreate, h.importTemplates)
 	api.GET("/standards", requireRead, h.listStandards)
@@ -79,7 +81,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/ai/thread/", requireRead, requireAssistant, h.openAssistantThread)
 	api.POST("/ai/explain", requireRead, requireAssistant, h.explainFormula)
 	api.POST("/ai/describe-inputs", requireRead, requireAssistant, h.describeInputs)
-	api.POST("/ai/suggest-scenarios", requireRead, requireAssistant, h.suggestScenarios)
+	api.POST("/ai/suggest-tests", requireRead, requireAssistant, h.suggestTests)
+	api.POST("/ai/explain-test", requireRead, requireAssistant, h.explainTest)
 
 	idGroup := api.Group("/:templateID")
 	idGroup.GET("/", requireRead, h.get)
@@ -105,17 +108,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	idGroup.POST("/impact", requireAuthoringOrApprove, h.approvalImpact)
 	idGroup.GET("/readiness", requireRead, h.readiness)
 	idGroup.GET("/review-diff", requireRead, h.reviewDiff)
-	idGroup.GET("/test-cases", requireRead, h.listTestCases)
-	idGroup.POST("/test-cases", requireUpdate, h.createTestCase)
-	idGroup.PUT("/test-cases/:testCaseID", requireUpdate, h.updateTestCase)
-	idGroup.DELETE("/test-cases/:testCaseID", requireUpdate, h.deleteTestCase)
-	idGroup.POST("/test-cases/run", requireAuthoring, h.runTestCases)
-	idGroup.POST(
-		"/test-cases/:testCaseID/explain",
-		requireRead,
-		requireAssistant,
-		h.explainScenario,
-	)
 	idGroup.GET("/versions/scheduled", requireRead, h.listScheduledVersions)
 	idGroup.PATCH(
 		"/versions/:versionNumber/effective-date",

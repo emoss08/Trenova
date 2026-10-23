@@ -20,7 +20,8 @@ charges** (whether the nightly late-charge run raises debit memos).
 Unless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that
 nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a
 copy of another shipment. Choose a rating method on the shipment, or set a fallback formula
-template here.
+template here. Minimums, maximums and rounding are not set here or on an agreement: each tariff
+writes them in its own source.
 
 Billing managers and finance leads use it. A warning at the top of the page notes that these
 settings affect revenue processing and invoicing, and should change only after review.
@@ -64,7 +65,7 @@ Keywords: unrated shipments, fallback formula, margin floor, rate override reaso
 1. Open [Billing controls](/admin/billing-controls).
 2. In **Rating policy**, choose the **Unrated shipment disposition**: **Fall back to formula
    template**, **Zero the rate and flag for review** or **Block the save**.
-3. For the fallback, optionally pick a **Fallback formula template**.
+3. For the fallback, optionally pick a **Fallback formula template**. It runs with the defaults its tariff declares, since no contract supplies its inputs; a tariff with an input that has no default refuses to rate such a shipment and says which input is missing.
 4. Turn on **Require rate override reason** and **Enforce margin floor** as needed.
 5. Select **Save changes**.
 

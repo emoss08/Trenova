@@ -34,6 +34,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -78,6 +80,7 @@ type Params struct {
 	AccountingDrift   accountingsyncports.AccountingDriftFindingRepository   `optional:"true"`
 	Dispatch          dispatchcontrolports.DispatchControlRepository         `optional:"true"`
 	Formulas          formulatemplateports.FormulaTemplateRepository         `optional:"true"`
+	FormulaLibraries  formulalibraryports.FormulaLibraryRepository           `optional:"true"`
 	Invoices          invoiceports.InvoiceRepository                         `optional:"true"`
 	Disputes          invoiceports.InvoiceDisputeRepository                  `optional:"true"`
 	Noas              factoringports.NoaRepository                           `optional:"true"`
@@ -111,6 +114,7 @@ type Service struct {
 	accountingDrift   accountingsyncports.AccountingDriftFindingRepository
 	dispatch          dispatchcontrolports.DispatchControlRepository
 	formulas          formulatemplateports.FormulaTemplateRepository
+	formulaLibraries  formulalibraryports.FormulaLibraryRepository
 	invoices          invoiceports.InvoiceRepository
 	disputes          invoiceports.InvoiceDisputeRepository
 	noas              factoringports.NoaRepository
@@ -143,6 +147,7 @@ func New(p Params) agentports.AgentSubjectDescriber {
 		inbound:           p.Inbound,
 		dispatch:          p.Dispatch,
 		formulas:          p.Formulas,
+		formulaLibraries:  p.FormulaLibraries,
 		invoices:          p.Invoices,
 		disputes:          p.Disputes,
 		noas:              p.Noas,
@@ -196,6 +201,8 @@ func (s *Service) Describe(
 		return s.accountingDriftFinding(ctx, tenant, subjectID)
 	case agent.SubjectFormulaTemplate:
 		return s.formulaTemplate(ctx, tenant, subjectID)
+	case agent.SubjectFormulaLibrary:
+		return s.formulaLibrary(ctx, tenant, subjectID)
 	case agent.SubjectInvoice:
 		return s.invoice(ctx, tenant, subjectID)
 	case agent.SubjectInvoiceDispute:
@@ -1028,6 +1035,8 @@ func (s *Service) dashboard(
 	return subject, nil
 }
 
+const noteVersion = "version"
+
 func (s *Service) formulaTemplate(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -1051,25 +1060,52 @@ func (s *Service) formulaTemplate(
 	}
 
 	subject.Label = "Formula template: " + found.Name
-	notes := map[string]any{
-		"name":                found.Name,
-		"description":         found.Description,
-		"type":                found.Type,
-		"status":              found.Status,
-		"schemaId":            found.SchemaID,
-		"savedExpression":     found.Expression,
-		"variableDefinitions": found.VariableDefinitions,
-		"roundingMode":        found.RoundingMode,
-		"roundingPrecision":   found.RoundingPrecision,
-		"version":             found.CurrentVersionNumber,
+	subject.Notes = marshalNotes(map[string]any{
+		"name":        found.Name,
+		"description": found.Description,
+		"status":      found.Status,
+		"savedSource": found.Source,
+		"inputs":      found.Inputs,
+		"imports":     found.Imports,
+		"testCount":   found.TestCount,
+		noteVersion:   found.CurrentVersionNumber,
+	})
+
+	return subject, nil
+}
+
+func (s *Service) formulaLibrary(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	libraryID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectFormulaLibrary,
+		ID:    libraryID.String(),
+		Label: "Formula library",
 	}
-	if found.MinCharge.Valid {
-		notes["minCharge"] = found.MinCharge.Decimal.String()
+	if s.formulaLibraries == nil {
+		return subject, nil
 	}
-	if found.MaxCharge.Valid {
-		notes["maxCharge"] = found.MaxCharge.Decimal.String()
+
+	found, err := s.formulaLibraries.GetByID(ctx, &formulalibraryports.GetLibraryByIDRequest{
+		LibraryID:  libraryID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load formula library: %w", err)
 	}
-	subject.Notes = marshalNotes(notes)
+
+	subject.Label = "Formula library: " + formulalibrary.Path(found.Name)
+	subject.Notes = marshalNotes(map[string]any{
+		"path":        formulalibrary.Path(found.Name),
+		"description": found.Description,
+		"status":      found.Status,
+		"savedSource": found.Source,
+		"imports":     found.Imports,
+		"testCount":   found.TestCount,
+		noteVersion:   found.CurrentVersionNumber,
+	})
 
 	return subject, nil
 }

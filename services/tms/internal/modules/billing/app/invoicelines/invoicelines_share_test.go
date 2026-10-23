@@ -74,7 +74,7 @@ func TestForShipmentSharePartialFreightCarriesItsShare(t *testing.T) {
 	require.Len(t, lines, 2)
 
 	freight := lines[0]
-	assert.Equal(t, "Freight charge (60% share)", freight.Description)
+	assert.Equal(t, "Per Mile (60% share)", freight.Description)
 	assert.True(t, freight.Amount.Equal(dec("1470")), "60% of 2450")
 	assert.True(t, freight.UnitPrice.Equal(dec("1470")))
 	require.True(t, freight.AllocationPercent.Valid)
@@ -137,7 +137,7 @@ func TestForShipmentShareFullShareMatchesForShipment(t *testing.T) {
 		assert.True(t, viaShare[i].ChargeAllocationID.IsNil())
 		assert.False(t, viaShare[i].IsPartialShare())
 	}
-	assert.Equal(t, invoicelines.FreightDescription, viaShare[0].Description)
+	assert.Equal(t, "Per Mile", viaShare[0].Description)
 	assert.Equal(t, "Detention", viaShare[1].Description)
 }
 

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -12,34 +14,37 @@ import (
 
 const amendAt = int64(1_800_000_000)
 
-func storedLane(label, rate string) *rateagreement.RateAgreementRule {
-	templateID := pulid.MustNew("ft_")
+func rateInput(rate string) tarifftypes.Inputs {
+	return tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString(rate), "$/mi")}
+}
 
+func storedLane(label, rate string) *rateagreement.RateAgreementRule {
 	return &rateagreement.RateAgreementRule{
 		ID:                pulid.MustNew("ragr_"),
 		Label:             label,
 		Status:            rateagreement.RuleStatusActive,
 		Direction:         rateagreement.DirectionDirectional,
-		FormulaTemplateID: &templateID,
-		Rate:              decimal.NewNullDecimal(decimal.RequireFromString(rate)),
+		FormulaTemplateID: pulid.MustNew("ft_"),
+		Inputs:            rateInput(rate),
 		EffectiveFrom:     1_700_000_000,
 	}
 }
 
 // resubmitted is the round trip a save performs: the client loads the lane,
-// re-serializes it, and sends it back. Pointer fields come back as new
-// allocations and decimals as re-parsed values, which is exactly what the
-// terms comparison has to see through.
+// re-serializes it, and sends it back. Input values come back re-encoded, with
+// their keys in another order and their decimals in another form, which is
+// exactly what the terms comparison has to see through.
 func resubmitted(rule *rateagreement.RateAgreementRule) *rateagreement.RateAgreementRule {
 	clone := *rule
-
-	if rule.FormulaTemplateID != nil {
-		templateID := *rule.FormulaTemplateID
-		clone.FormulaTemplateID = &templateID
-	}
-	if rule.Rate.Valid {
-		clone.Rate = decimal.NewNullDecimal(
-			decimal.RequireFromString(rule.Rate.Decimal.String() + "000"),
+	clone.Inputs = make(tarifftypes.Inputs, len(rule.Inputs))
+	for name, value := range rule.Inputs {
+		quantity, err := rules.DecodeQuantity(value)
+		if err != nil {
+			clone.Inputs[name] = value
+			continue
+		}
+		clone.Inputs[name] = rules.RawJSON(
+			`{"u":"` + quantity.Unit + `","$q":"` + quantity.Value.String() + `000"}`,
 		)
 	}
 
@@ -81,7 +86,7 @@ func TestPlanSupersedesAChangedLaneWithASuccessorFromTheAmendmentMoment(t *testi
 	stored := storedLane("Dallas to Chicago", "2.55")
 
 	edited := resubmitted(stored)
-	edited.Rate = decimal.NewNullDecimal(decimal.RequireFromString("2.75"))
+	edited.Inputs = rateInput("2.75")
 
 	plan, planErr := planRuleAmendment(
 		[]*rateagreement.RateAgreementRule{stored},
@@ -131,7 +136,7 @@ func TestPlanRefusesToSucceedALaneWhoseWindowAlreadyClosed(t *testing.T) {
 	stored := storedLane("Expiring", "2.55")
 
 	edited := resubmitted(stored)
-	edited.Rate = decimal.NewNullDecimal(decimal.RequireFromString("2.75"))
+	edited.Inputs = rateInput("2.75")
 	closed := amendAt - 1
 	edited.EffectiveTo = &closed
 
@@ -153,58 +158,18 @@ func TestSameTermsSeesThroughDecimalRepresentation(t *testing.T) {
 		"NUMERIC trailing zeroes must not read as a term change")
 }
 
-func TestSameTermsNoticesEveryPricingField(t *testing.T) {
+func TestSameTermsNoticesTheTariffAndItsInputs(t *testing.T) {
 	stored := storedLane("Dallas to Chicago", "2.55")
 
-	matrixed := resubmitted(stored)
-	matrixed.FormulaTemplateID = nil
-	matrixID := pulid.MustNew("rmx_")
-	matrixed.RateMatrixID = &matrixID
-	matrixed.Rate = decimal.NullDecimal{}
+	retemplated := resubmitted(stored)
+	retemplated.FormulaTemplateID = pulid.MustNew("ft_")
+	assert.False(t, stored.SameTerms(retemplated))
 
-	assert.False(t, stored.SameTerms(matrixed))
+	repriced := resubmitted(stored)
+	repriced.Inputs = rateInput("2.60")
+	assert.False(t, stored.SameTerms(repriced))
 
-	discounted := resubmitted(stored)
-	discounted.DiscountPercent = decimal.NewNullDecimal(decimal.RequireFromString("3"))
-	assert.False(t, stored.SameTerms(discounted))
-}
-
-func TestSameTermsComparesBreaksByBand(t *testing.T) {
-	banded := storedLane("Banded", "2.55")
-	banded.Rate = decimal.NullDecimal{}
-	banded.Breaks = []*rateagreement.RateAgreementRuleBreak{
-		{
-			FromWeight: decimal.Zero,
-			ToWeight:   decimal.NewNullDecimal(decimal.NewFromInt(5000)),
-			Rate:       decimal.RequireFromString("18.50"),
-		},
-		{
-			FromWeight: decimal.NewFromInt(5000),
-			Rate:       decimal.RequireFromString("15.25"),
-		},
-	}
-
-	same := resubmitted(banded)
-	same.Breaks = []*rateagreement.RateAgreementRuleBreak{
-		{
-			FromWeight: decimal.NewFromInt(5000),
-			Rate:       decimal.RequireFromString("15.250000"),
-		},
-		{
-			FromWeight: decimal.Zero,
-			ToWeight:   decimal.NewNullDecimal(decimal.NewFromInt(5000)),
-			Rate:       decimal.RequireFromString("18.500"),
-		},
-	}
-	assert.True(t, banded.SameTerms(same), "band order and decimal form carry no meaning")
-
-	repriced := resubmitted(banded)
-	repriced.Breaks = []*rateagreement.RateAgreementRuleBreak{
-		banded.Breaks[0],
-		{
-			FromWeight: decimal.NewFromInt(5000),
-			Rate:       decimal.RequireFromString("14.00"),
-		},
-	}
-	assert.False(t, banded.SameTerms(repriced))
+	extended := resubmitted(stored)
+	extended.Inputs["minimumCharge"] = rules.MoneyValue(decimal.NewFromInt(450))
+	assert.False(t, stored.SameTerms(extended))
 }

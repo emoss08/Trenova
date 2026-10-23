@@ -40,6 +40,7 @@ var readOnlyWriteAllowedPaths = map[string]struct{}{
 	"/api/v1/rate-quotes/shipment/:shipmentID/explain":                 {},
 	"/api/v1/rate-agreements/rate-increase/preview":                    {},
 	"/api/v1/formula-templates/:templateID/backtest":                   {},
+	"/api/v1/formula-templates/context/cells":                          {},
 	"/api/v1/detention/backtest":                                       {},
 	"/api/v1/detention-policies/preview":                               {},
 	"/api/v1/billing/invoices/:invoiceID/preview":                      {},

@@ -1147,6 +1147,80 @@ describe("chargesOf", () => {
     });
   });
 
+  it("lists each freight line of the bill with its quantity and rate, and a tariff's charge by its label", () => {
+    const lines = chargesOf(
+      rulesSync(),
+      shipment({
+        freightChargeAmount: 2650,
+        totalChargeAmount: 2800,
+        ratingDetail: {
+          formulaTemplateName: "LTL classes",
+          agreementName: "Acme 2026",
+          ruleLabel: "TX-GA",
+        } as Shipment["ratingDetail"],
+        freightLines: [
+          {
+            label: "Linehaul",
+            quantity: 12.4,
+            quantityUnit: "cwt",
+            rate: 210,
+            rateUnit: "$/cwt",
+            amount: 2604,
+          },
+          {
+            label: "Deficit weight",
+            quantity: null,
+            rate: null,
+            amount: 46,
+          },
+        ],
+        additionalCharges: [
+          {
+            id: "c1",
+            method: "Flat",
+            amount: 150,
+            unit: 1,
+            isTariff: true,
+            label: "Liftgate, 2 stops",
+            quantity: 2,
+            rate: 75,
+            rateUnit: "$",
+            accessorialCharge: { code: "LIFT", description: "Liftgate" },
+          },
+        ] as unknown as Shipment["additionalCharges"],
+      }),
+      t,
+    ).lines;
+
+    expect(lines).toEqual([
+      { key: "freight-0", label: "Linehaul", detail: "12.4 cwt × $210.00/cwt", amount: 2604 },
+      { key: "freight-1", label: "Deficit weight", detail: "", amount: 46 },
+      { key: "c1", label: "Liftgate, 2 stops", detail: "2 × $75.00", amount: "150" },
+    ]);
+  });
+
+  it("names the rating method on a flat first freight line", () => {
+    const [first] = chargesOf(
+      rulesSync(),
+      shipment({
+        freightChargeAmount: 1500,
+        ratingDetail: {
+          agreementName: "Acme 2026",
+          ruleLabel: "TX-GA",
+        } as Shipment["ratingDetail"],
+        freightLines: [{ label: "Freight", amount: 1500 }],
+      } as Partial<Shipment>),
+      t,
+    ).lines;
+
+    expect(first).toEqual({
+      key: "freight-0",
+      label: "Freight",
+      detail: "Acme 2026 · TX-GA",
+      amount: 1500,
+    });
+  });
+
   it("names the formula when no contract priced it, and says when the rate was overridden", () => {
     const charges = chargesOf(
       rulesSync(),

@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -33,33 +32,28 @@ func TestSummarizeLanes_GroupsLiveLanesByWhatPricesThem(t *testing.T) {
 		OrganizationID: fixture.tenantInfo.OrgID,
 		BusinessUnitID: fixture.tenantInfo.BuID,
 		Name:           "Flat LN-SUM",
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "baseRate",
+		Source:         flatTariff,
 		Status:         formulatemplate.StatusActive,
-		SchemaID:       "shipment",
 	}
 	_, err := db.NewInsert().Model(flat).Exec(ctx)
 	require.NoError(t, err)
 
-	rate := func(value string) decimal.NullDecimal {
-		return decimal.NewNullDecimal(decimal.RequireFromString(value))
-	}
 	closedOutAt := int64(200)
 	insertRules(t, ctx, db,
-		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Rate = rate("1.50") }),
-		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Rate = rate("2.75") }),
-		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Rate = rate("2.10") }),
+		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Inputs = perMileRate("1.50") }),
+		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Inputs = perMileRate("2.75") }),
+		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Inputs = perMileRate("2.10") }),
 		fixture.rule(func(r *rateagreement.RateAgreementRule) {
-			r.FormulaTemplateID = &flat.ID
-			r.Rate = rate("950")
+			r.FormulaTemplateID = flat.ID
+			r.Inputs = flatRate("950")
 		}),
 		fixture.rule(func(r *rateagreement.RateAgreementRule) {
 			r.Status = rateagreement.RuleStatusInactive
-			r.Rate = rate("9.99")
+			r.Inputs = perMileRate("9.99")
 		}),
 		fixture.rule(func(r *rateagreement.RateAgreementRule) {
 			r.EffectiveTo = &closedOutAt
-			r.Rate = rate("0.10")
+			r.Inputs = perMileRate("0.10")
 		}),
 	)
 
@@ -79,7 +73,6 @@ func TestSummarizeLanes_GroupsLiveLanesByWhatPricesThem(t *testing.T) {
 	assert.Equal(t, 3, perMile.Lanes)
 	assert.Equal(t, "1.5", perMile.MinRate.Decimal.String())
 	assert.Equal(t, "2.75", perMile.MaxRate.Decimal.String())
-	assert.Nil(t, perMile.RateMatrixID)
 
 	flatGroup := summary.Groups[1]
 	assert.Equal(t, "Flat LN-SUM", flatGroup.FormulaTemplateName)
@@ -126,3 +119,5 @@ func TestSummarizeLanes_AgreementOutsideTheTenantIsNotFound(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
+
+const flatTariff = "tariff \"Flat\"\n\ninput rate: Money\n\ncharge \"Flat\" = rate\n"

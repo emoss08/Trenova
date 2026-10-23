@@ -5,8 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 )
 
 // ChangeKind is what committing a sheet would do to one lane.
@@ -155,24 +154,12 @@ func movedFields(prior, incoming *rateagreement.RateAgreementRule) []FieldChange
 	compareString(
 		&moved,
 		"formulaTemplateId",
-		pulidText(prior.FormulaTemplateID),
-		pulidText(incoming.FormulaTemplateID),
-	)
-	compareString(
-		&moved,
-		"rateMatrixId",
-		pulidText(prior.RateMatrixID),
-		pulidText(incoming.RateMatrixID),
+		prior.FormulaTemplateID.String(),
+		incoming.FormulaTemplateID.String(),
 	)
 	compareString(&moved, "currency", prior.Currency, incoming.Currency)
-	// The label is deliberately not compared. A sheet without a label column
-	// has one generated for it, and comparing a generated name to a stored one
-	// would mark every row on every import as changed.
 
-	compareDecimal(&moved, "rate", prior.Rate, incoming.Rate)
-	compareDecimal(&moved, "minCharge", prior.MinCharge, incoming.MinCharge)
-	compareDecimal(&moved, "maxCharge", prior.MaxCharge, incoming.MaxCharge)
-	compareDecimal(&moved, "discountPercent", prior.DiscountPercent, incoming.DiscountPercent)
+	compareInputs(&moved, prior.Inputs, incoming.Inputs)
 
 	return moved
 }
@@ -185,36 +172,31 @@ func compareString(moved *[]FieldChange, field, before, after string) {
 	*moved = append(*moved, FieldChange{Field: field, Before: before, After: after})
 }
 
-// compareDecimal treats absence and zero as different, because a contract with
-// no minimum charge and one with a minimum of zero are different contracts.
-func compareDecimal(moved *[]FieldChange, field string, before, after decimal.NullDecimal) {
-	if before.Valid == after.Valid {
-		if !before.Valid || before.Decimal.Equal(after.Decimal) {
-			return
+func compareInputs(moved *[]FieldChange, before, after tarifftypes.Inputs) {
+	names := make([]string, 0, len(before)+len(after))
+	for name := range before {
+		names = append(names, name)
+	}
+	for name := range after {
+		if _, ok := before[name]; !ok {
+			names = append(names, name)
 		}
 	}
+	slices.Sort(names)
 
-	*moved = append(*moved, FieldChange{
-		Field:  field,
-		Before: decimalText(before),
-		After:  decimalText(after),
-	})
-}
-
-func decimalText(value decimal.NullDecimal) string {
-	if !value.Valid {
-		return ""
+	for _, name := range names {
+		prior, hadPrior := before[name]
+		next, hasNext := after[name]
+		if hadPrior && hasNext &&
+			(tarifftypes.Inputs{name: prior}).Equal(tarifftypes.Inputs{name: next}) {
+			continue
+		}
+		*moved = append(*moved, FieldChange{
+			Field:  "inputs." + name,
+			Before: tarifftypes.DisplayValue(prior),
+			After:  tarifftypes.DisplayValue(next),
+		})
 	}
-
-	return value.Decimal.String()
-}
-
-func pulidText(id *pulid.ID) string {
-	if id == nil || id.IsNil() {
-		return ""
-	}
-
-	return id.String()
 }
 
 func sortByRisk(changes []Change) {

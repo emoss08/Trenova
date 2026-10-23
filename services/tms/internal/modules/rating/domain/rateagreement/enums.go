@@ -161,36 +161,6 @@ func (rs RuleStatus) IsValid() bool {
 	}
 }
 
-// FreightClassSource says where a class rated rule gets its freight class.
-type FreightClassSource string
-
-const (
-	// FreightClassSourceCommodity reads the class recorded on the commodity.
-	FreightClassSourceCommodity = FreightClassSource("Commodity")
-	// FreightClassSourceDensity derives the class from weight and cube against
-	// a density scale, which is how the 2025 NMFC restructure expects most
-	// freight to be classified.
-	FreightClassSourceDensity = FreightClassSource("Density")
-	// FreightClassSourceFixed pins every shipment on the rule to one class,
-	// which is how released-value and FAK arrangements are written.
-	FreightClassSourceFixed = FreightClassSource("Fixed")
-)
-
-func (fcs FreightClassSource) String() string {
-	return string(fcs)
-}
-
-func (fcs FreightClassSource) IsValid() bool {
-	switch fcs {
-	case FreightClassSourceCommodity,
-		FreightClassSourceDensity,
-		FreightClassSourceFixed:
-		return true
-	default:
-		return false
-	}
-}
-
 // Direction says whether a lane prices the reverse haul as well.
 type Direction string
 

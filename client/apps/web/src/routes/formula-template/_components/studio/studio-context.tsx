@@ -1,28 +1,34 @@
 import type { PageRequest } from "@/components/assistant/use-thread-model";
+import type { TariffDefinitionTarget } from "@/components/formula-editor/tariff-service";
+import { tariffReadiness } from "@/components/tariff-studio/readiness";
+import type { TariffTestsState } from "@/components/tariff-studio/use-tariff-tests";
 import {
-  reconcileBreakdown,
-  type BreakdownReconciliation,
-} from "@/components/formula-editor/breakdown-reconcile";
-import type { KnownIdentifiers } from "@/components/formula-editor/known-identifiers";
-import { useKnownIdentifiers } from "@/hooks/use-formula-schema";
+  useTariffEditorBinding,
+  useTariffWorkbench,
+} from "@/components/tariff-studio/use-tariff-workbench";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { unguardedFields } from "@/lib/formula-preview";
-import { hasMaterialChange } from "@/lib/formula-template-material";
+import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
 import { formulaTemplate } from "@/lib/queries/formula-template";
+import type { EditorView } from "@codemirror/view";
+import { useQuery } from "@tanstack/react-query";
 import { useRules } from "@trenova/shared/hooks/use-rules";
-import type { RulesRuntime } from "@trenova/shared/rules/runtime";
-import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type {
   FormulaDraftContent,
-  FormulaInputType,
   FormulaTemplate,
   FormulaTemplateFormValues,
-  FormulaTestCaseInput,
   ReadinessCheck,
   TemplateUsageResponse,
 } from "@trenova/shared/types/formula-template";
-import { useQuery } from "@tanstack/react-query";
+import type {
+  TariffCheckResult,
+  TariffContext,
+  TariffFix,
+  TariffInputValues,
+  TariffRange,
+  TariffTestStatus,
+} from "@trenova/shared/types/tariff";
 import { nanoid } from "nanoid";
 import {
   createContext,
@@ -34,72 +40,79 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
-import { useFormContext, useFormState, useWatch } from "react-hook-form";
-import { analyzeExpression, type ExpressionAnalysis } from "./model/expression-analysis";
-import { studioReadiness } from "./model/readiness";
+import {
+  useForm,
+  useFormContext,
+  useFormState,
+  useWatch,
+  type UseFormReturn,
+} from "react-hook-form";
 import { useLivePreview, type LivePreviewState } from "./use-live-preview";
-import { useStudioScenarios, type StudioScenariosState } from "./use-studio-scenarios";
-import { useStudioRail } from "./use-studio-rail";
+import { useStudioRail } from "@/components/tariff-studio/use-studio-rail";
 
 export type StudioMode = "create" | "edit";
-export type StudioTab = "preview" | "scenarios" | "reference" | "nova";
-export type StudioSection = "details" | "expression" | "inputs" | "policy" | "breakdown";
+export type StudioTab = "preview" | "tests" | "reference" | "nova";
+export type StudioSection = "details" | "source" | "inputs" | "tests";
 
-export const STUDIO_SECTIONS: readonly StudioSection[] = [
-  "details",
-  "expression",
-  "inputs",
-  "policy",
-  "breakdown",
-];
+export const STUDIO_SECTIONS: readonly StudioSection[] = ["details", "source", "inputs", "tests"];
 
 export const sectionDomId = (section: StudioSection) => `studio-section-${section}`;
 
-/** What saving hands the page: the scenarios a template being created carries with it. */
-export type StudioSaveExtras = { testCases: FormulaTestCaseInput[] };
+/**
+ * The sample input values the preview rates with, held apart from the template itself. The
+ * values are wire values; the form types them loosely because react-hook-form's path types do
+ * not terminate on a recursive value type.
+ */
+export type PreviewInputsForm = { inputs: Record<string, unknown> };
 
 export type StudioProps = {
   mode: StudioMode;
   template: FormulaTemplate | null;
   isSubmitting: boolean;
-  onSave: (extras: StudioSaveExtras) => void;
+  onSave: () => void;
   onTemplateChanged?: (template: FormulaTemplate) => void;
 };
 
 /**
- * What changes as the person works: the analysis, the preview, the scenarios
- * and the tab. A consumer of this re-renders on every keystroke in the editor.
+ * What changes as the person works: the check, the tests, the preview and the tab. A consumer
+ * of this re-renders on every keystroke in the editor.
  */
 type StudioStateValue = {
-  known: KnownIdentifiers;
-  analysis: ExpressionAnalysis;
+  /** The organisation's context the source is checked against; null while it loads. */
+  context: TariffContext | null;
+  contextError: boolean;
+  check: TariffCheckResult;
+  errors: number;
+  warnings: number;
+  tests: TariffTestsState;
+  /** Each test's verdict from the last run, by name. */
+  testStatus: ReadonlyMap<string, TariffTestStatus>;
   preview: LivePreviewState;
-  scenarios: StudioScenariosState;
   usage: TemplateUsageResponse | undefined;
   usageTotal: number;
   readiness: ReadinessCheck[];
-  reconciliation: BreakdownReconciliation | null;
   /** The editor holds unsaved changes. */
   dirty: boolean;
-  /** The unsaved changes alter what the template computes, so saving demotes it. */
+  /** The unsaved changes alter what the template bills, so saving demotes it. */
   material: boolean;
   tab: StudioTab;
   /** The screen is too narrow for the panel beside the form, so it floats over it. */
   stacked: boolean;
-  /** The floating panel of preview, scenarios, reference and Nova is showing. */
+  /** The floating panel of preview, tests, reference and Nova is showing. */
   railOpen: boolean;
   novaRequest: PageRequest | null;
   /** Nova is writing a reply in the rail. */
   novaBusy: boolean;
   activeSection: StudioSection;
-  /** The input whose row should take focus, once, after it was declared. */
-  focusInput: string | null;
+  /** The source range something outside the editor points at, lit in the editor. */
+  highlight: TariffRange | null;
+  /** The imported library declaration go to definition opened, if any. */
+  definition: TariffDefinitionTarget | null;
 };
 
 /**
- * What stays the same while the person works: the page's props, the
- * callbacks and the refs. A consumer that needs only these never re-renders
- * for a keystroke in the editor.
+ * What stays the same while the person works: the page's props, the callbacks and the refs. A
+ * consumer that needs only these never re-renders for a keystroke in the editor.
  */
 type StudioActionsValue = StudioProps & {
   /** Shows a pane, opening the floating panel when it is closed. */
@@ -112,12 +125,23 @@ type StudioActionsValue = StudioProps & {
   setActiveSection: (section: StudioSection) => void;
   jumpTo: (section: StudioSection) => void;
   formViewport: RefObject<HTMLDivElement | null>;
+  /** The source editor's view, once it exists. */
+  setEditorView: (view: EditorView | null) => void;
+  /** Selects a source range in the editor and brings the editor into view. */
+  reveal: (range: TariffRange) => void;
+  /** Lights a range while something points at it; null clears it. */
+  setHighlight: (range: TariffRange | null) => void;
+  /** Applies a fix's edits through the editor, so they can be undone. */
+  applyFix: (fix: Pick<TariffFix, "changes">) => void;
+  /** Appends a `test` block to the source, through the editor so it can be undone. */
+  appendToSource: (text: string) => void;
+  openDefinition: (target: TariffDefinitionTarget) => void;
+  closeDefinition: () => void;
   /** The editor as it is, saved or not, in the shape Nova's calls read. */
   draftContent: () => FormulaDraftContent;
   save: () => void;
-  /** Adds an input for a name the formula reads, and takes the person to its row. */
-  declareInput: (name: string, type: FormulaInputType) => void;
-  clearFocusInput: () => void;
+  /** The preview's sample input values. */
+  previewInputs: UseFormReturn<PreviewInputsForm>;
   /** Names Nova's conversation about a template not yet created, for the life of the page. */
   unsavedNovaKey: string;
   /** The loaded rules module, for work done outside a render (applying a proposal). */
@@ -148,60 +172,36 @@ export function useStudio(): StudioContextValue {
   return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }
 
-function stringAmount(value: number | string | null | undefined): string | null {
-  if (value === null || value === undefined || value === "") return null;
-  return String(value);
-}
-
 export function StudioProvider({ children, ...props }: StudioProps & { children: ReactNode }) {
   const t = useT();
-  // Everything below analyses the formula synchronously with the rules
-  // module, so the studio suspends here, behind its skeleton, until the
-  // module has loaded (it is usually ready already: main.tsx preloads it).
+  // Everything below checks the source synchronously with the rules module, so the studio
+  // suspends here, behind its skeleton, until the module has loaded (main.tsx preloads it).
   const rules = useRules();
   const { mode, template, onSave } = props;
   const form = useFormContext<FormulaTemplateFormValues>();
   const { isDirty } = useFormState({ control: form.control });
-  const user = useAuthStore((state) => state.user);
-
-  const [
-    name,
-    description,
-    expression,
-    schemaId,
-    variableDefinitions,
-    breakdownDefinitions,
-    type,
-    minCharge,
-    maxCharge,
-    roundingMode,
-    roundingPrecision,
-  ] = useWatch({
+  const [name, description, source] = useWatch({
     control: form.control,
-    name: [
-      "name",
-      "description",
-      "expression",
-      "schemaId",
-      "variableDefinitions",
-      "breakdownDefinitions",
-      "type",
-      "minCharge",
-      "maxCharge",
-      "roundingMode",
-      "roundingPrecision",
-    ],
+    name: ["name", "description", "source"],
+  });
+  const text = source ?? "";
+
+  const { context, tablesStamp, isError: contextError } = useTariffCheckContext();
+  const { check, errors, warnings, tests, testStatus } = useTariffWorkbench({
+    rules,
+    source: text,
+    kind: "tariff",
+    context,
+    tablesStamp,
   });
 
-  const known = useKnownIdentifiers(rules, schemaId || "shipment", variableDefinitions ?? []);
-  const analysis = useMemo(
-    () => analyzeExpression(rules, expression ?? "", known),
-    [rules, expression, known],
-  );
-
-  const preview = useLivePreview();
-  const author = useMemo(() => (user?.id ? { id: user.id, name: user.name } : null), [user]);
-  const scenarios = useStudioScenarios({ templateId: template?.id ?? null, author });
+  const previewInputs = useForm<PreviewInputsForm>({ defaultValues: { inputs: {} } });
+  const sampleInputs = useWatch({ control: previewInputs.control, name: "inputs" });
+  const preview = useLivePreview({
+    source: text,
+    inputs: sampleInputs as TariffInputValues | undefined,
+    errors,
+  });
 
   const { data: usage } = useQuery({
     ...formulaTemplate.usage(template?.id ?? ""),
@@ -210,85 +210,24 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   });
   const usageTotal = usage?.usages.reduce((sum, item) => sum + item.count, 0) ?? 0;
 
-  const result = preview.result;
-  const reconciliation = useMemo(() => {
-    if (!result?.valid || !result.breakdown || result.breakdown.length === 0) return null;
-    const total = typeof result.result === "number" ? result.result : Number(result.result);
-    if (!Number.isFinite(total)) return null;
-    return reconcileBreakdown({
-      total,
-      rawAmount: result.receipt?.rawAmount ?? result.guardrail?.rawAmount ?? total,
-      guardrailApplied: result.guardrail?.applied ?? false,
-      lines: result.breakdown,
-    });
-  }, [result]);
-
-  // Only the fields that decide materiality are compared, and only when one
-  // of them changes: watching the whole form here re-ran the comparison, and
-  // re-rendered every consumer, for each character typed into the name.
-  const material = useMemo(
-    () =>
-      mode === "edit" && isDirty && template !== null
-        ? hasMaterialChange(template, {
-            expression,
-            schemaId,
-            type,
-            minCharge,
-            maxCharge,
-            roundingMode,
-            roundingPrecision,
-            variableDefinitions,
-            breakdownDefinitions,
-          } as FormulaTemplateFormValues)
-        : false,
-    [
-      mode,
-      isDirty,
-      template,
-      expression,
-      schemaId,
-      type,
-      minCharge,
-      maxCharge,
-      roundingMode,
-      roundingPrecision,
-      variableDefinitions,
-      breakdownDefinitions,
-    ],
-  );
+  const material = mode === "edit" && isDirty && template !== null && template.source !== text;
 
   const readiness = useMemo(
     () =>
-      studioReadiness(
+      tariffReadiness(
         {
           mode,
           name: name ?? "",
           description: description ?? "",
-          expressionEmpty: analysis.empty,
-          expressionErrors: analysis.errorCount,
-          previewValid: result ? result.valid : null,
-          unguardedFields: unguardedFields(result),
-          scenarioTotal: scenarios.total,
-          scenarioPassed: scenarios.passed,
-          breakdownLines: (breakdownDefinitions ?? []).length,
-          reconciliation,
+          sourceEmpty: text.trim() === "",
+          errors,
+          warnings,
+          tests,
           dirty: isDirty,
         },
         t,
       ),
-    [
-      mode,
-      name,
-      description,
-      analysis,
-      result,
-      scenarios.total,
-      scenarios.passed,
-      breakdownDefinitions,
-      reconciliation,
-      isDirty,
-      t,
-    ],
+    [mode, name, description, text, errors, warnings, tests, isDirty, t],
   );
 
   const stacked = useMediaQuery("(max-width: 899px)");
@@ -303,12 +242,10 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   );
   const [novaRequest, setNovaRequest] = useState<PageRequest | null>(null);
   const askNova = useCallback(
-    (text?: string) => {
+    (question?: string) => {
       setTab("nova");
-      const question = text?.trim();
-      if (question) {
-        setNovaRequest({ key: nanoid(), text: question });
-      }
+      const trimmed = question?.trim();
+      if (trimmed) setNovaRequest({ key: nanoid(), text: trimmed });
     },
     [setTab],
   );
@@ -317,8 +254,11 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   }, []);
 
   const [novaBusy, setNovaBusy] = useState(false);
-  const [activeSection, setActiveSection] = useState<StudioSection>("expression");
+  const [activeSection, setActiveSection] = useState<StudioSection>("source");
+  const [highlight, setHighlight] = useState<TariffRange | null>(null);
+  const [definition, setDefinition] = useState<TariffDefinitionTarget | null>(null);
   const formViewport = useRef<HTMLDivElement | null>(null);
+
   const jumpTo = useCallback((section: StudioSection) => {
     const viewport = formViewport.current;
     const target = document.getElementById(sectionDomId(section));
@@ -331,57 +271,25 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     }
   }, []);
 
+  const { setEditorView, reveal, applyFix, appendToSource } = useTariffEditorBinding({
+    read: () => form.getValues("source") ?? "",
+    write: (next) => form.setValue("source", next, { shouldDirty: true, shouldValidate: true }),
+  });
+
+  const openDefinition = useCallback((target: TariffDefinitionTarget) => setDefinition(target), []);
+  const closeDefinition = useCallback(() => setDefinition(null), []);
+
   const draftContent = useCallback((): FormulaDraftContent => {
     const current = form.getValues();
     return {
       ...(template?.id ? { templateId: template.id } : {}),
       name: current.name ?? "",
       description: current.description ?? "",
-      type: current.type,
-      schemaId: current.schemaId || "shipment",
-      expression: current.expression ?? "",
-      variableDefinitions: current.variableDefinitions ?? [],
-      breakdownDefinitions: current.breakdownDefinitions ?? [],
-      minCharge: stringAmount(current.minCharge),
-      maxCharge: stringAmount(current.maxCharge),
-      roundingMode: current.roundingMode,
-      roundingPrecision: current.roundingPrecision,
+      source: current.source ?? "",
     };
   }, [form, template]);
 
-  const [focusInput, setFocusInput] = useState<string | null>(null);
-  const clearFocusInput = useCallback(() => setFocusInput(null), []);
-  const declareInput = useCallback(
-    (name: string, type: FormulaInputType) => {
-      const current = form.getValues("variableDefinitions") ?? [];
-      const existing = current.findIndex((variable) => variable.name === name);
-      if (existing === -1) {
-        form.setValue(
-          "variableDefinitions",
-          [
-            ...current,
-            {
-              name,
-              type,
-              description: "",
-              required: false,
-              defaultValue: type === "Boolean" ? false : type === "String" ? "" : undefined,
-            },
-          ],
-          { shouldDirty: true, shouldValidate: true },
-        );
-      }
-      setFocusInput(name);
-      jumpTo("inputs");
-    },
-    [form, jumpTo],
-  );
-
-  const heldForCreate = scenarios.heldForCreate;
-  const save = useCallback(() => {
-    onSave({ testCases: mode === "create" ? heldForCreate() : [] });
-  }, [heldForCreate, mode, onSave]);
-
+  const save = useCallback(() => onSave(), [onSave]);
   const [unsavedNovaKey] = useState(() => nanoid());
 
   const { isSubmitting, onTemplateChanged } = props;
@@ -400,10 +308,16 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       setActiveSection,
       jumpTo,
       formViewport,
+      setEditorView,
+      reveal,
+      setHighlight,
+      applyFix,
+      appendToSource,
+      openDefinition,
+      closeDefinition,
       draftContent,
       save,
-      declareInput,
-      clearFocusInput,
+      previewInputs,
       unsavedNovaKey,
       rules,
     }),
@@ -418,10 +332,15 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       askNova,
       clearNovaRequest,
       jumpTo,
+      setEditorView,
+      reveal,
+      applyFix,
+      appendToSource,
+      openDefinition,
+      closeDefinition,
       draftContent,
       save,
-      declareInput,
-      clearFocusInput,
+      previewInputs,
       unsavedNovaKey,
       rules,
     ],
@@ -429,14 +348,17 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
 
   const state = useMemo<StudioStateValue>(
     () => ({
-      known,
-      analysis,
+      context,
+      contextError,
+      check,
+      errors,
+      warnings,
+      tests,
+      testStatus,
       preview,
-      scenarios,
       usage,
       usageTotal,
       readiness,
-      reconciliation,
       dirty: isDirty,
       material,
       tab,
@@ -445,17 +367,21 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       novaRequest,
       novaBusy,
       activeSection,
-      focusInput,
+      highlight,
+      definition,
     }),
     [
-      known,
-      analysis,
+      context,
+      contextError,
+      check,
+      errors,
+      warnings,
+      tests,
+      testStatus,
       preview,
-      scenarios,
       usage,
       usageTotal,
       readiness,
-      reconciliation,
       isDirty,
       material,
       tab,
@@ -464,7 +390,8 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       novaRequest,
       novaBusy,
       activeSection,
-      focusInput,
+      highlight,
+      definition,
     ],
   );
 

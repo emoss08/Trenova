@@ -80,6 +80,7 @@ type GetLatestFuelPricesRequest struct {
 type LatestPricesPerIndexRequest struct {
 	TenantInfo pagination.TenantInfo
 	PerIndex   int
+	OnOrBefore string
 }
 
 type GetFuelIndexPriceByIDRequest struct {

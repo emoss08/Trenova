@@ -332,7 +332,7 @@ describe("chargeRows", () => {
       templateId: "ft_permile",
       name: LONG_TEMPLATE,
     });
-    expect(rows[0]?.detail).toBe("$3.75 base rate");
+    expect(rows[0]?.detail).toBe("760 mi × $3.75/mi");
     expect(rows.slice(1).map((row) => row.basis)).toEqual([
       { kind: "text", text: "14.25% of $2,850.00" },
       { kind: "text", text: "3 hours × $75.00" },
@@ -345,7 +345,7 @@ describe("chargeRows", () => {
 
     expect(rows.map((row) => row.detail)).toEqual([
       "8 shipments",
-      "4 shipments · $3.05 base rate",
+      "4 shipments · 1,652.46 cwt × $3.05/cwt",
       "12 shipments",
       "4 shipments",
     ]);
@@ -402,7 +402,7 @@ describe("chargeRows", () => {
     );
 
     expect(rows.map((row) => [row.name, row.basis])).toEqual([
-      ["Linehaul", { kind: "text", text: "No formula template" }],
+      ["Freight charge", { kind: "text", text: "No formula template" }],
       ["Stop off", { kind: "text", text: "2 × $69.00" }],
       ["Tarp", { kind: "text", text: "2 units" }],
       ["Goodwill credit", { kind: "text", text: "" }],

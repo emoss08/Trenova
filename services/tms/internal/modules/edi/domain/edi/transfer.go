@@ -35,9 +35,7 @@ type LoadTenderPayload struct {
 	TemperatureMax           *int16                           `json:"temperatureMax,omitempty"`
 	FreightChargeAmount      decimal.NullDecimal              `json:"freightChargeAmount"`
 	OtherChargeAmount        decimal.NullDecimal              `json:"otherChargeAmount"`
-	BaseRate                 decimal.NullDecimal              `json:"baseRate"`
 	TotalChargeAmount        decimal.NullDecimal              `json:"totalChargeAmount"`
-	RatingUnit               int64                            `json:"ratingUnit"`
 	RatingDetail             map[string]any                   `json:"ratingDetail,omitempty"`
 	Moves                    []LoadTenderMove                 `json:"moves"`
 	Commodities              []LoadTenderCommodity            `json:"commodities"`

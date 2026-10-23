@@ -1,7 +1,7 @@
 //! Routes one request to the operation it names and wraps the answer.
 //!
 //! A request is `{"op": "<area>.<name>", "input": {...}}`. The response is `{"ok": <output>}` when
-//! the operation ran, whatever it found (a formula with errors is still a successful check), or
+//! the operation ran, whatever it found (a file with errors is still a successful check), or
 //! `{"error": {"code": "...", "detail": "..."}}` when the request itself was unusable: malformed
 //! JSON, an unknown operation, or input that does not match the operation's shape. A request
 //! error is always a caller bug, never something to show a user, so its detail is plain English
@@ -61,12 +61,6 @@ type Handler = fn(&RawValue) -> OpResult;
 /// Every operation the module answers, by name.
 const OPERATIONS: &[(&str, Handler)] = &[
     ("rules.version", version),
-    ("formula.catalog", crate::formula::ops::catalog),
-    ("formula.check", crate::formula::ops::check),
-    ("formula.format", crate::formula::ops::format),
-    ("formula.signature", crate::formula::ops::signature),
-    ("formula.identifier", crate::formula::ops::identifier),
-    ("formula.evaluate", crate::formula::eval::ops::evaluate),
     ("allocation.split", crate::allocation::ops::split),
     ("allocation.remainder", crate::allocation::ops::remainder),
     (
@@ -80,8 +74,23 @@ const OPERATIONS: &[(&str, Handler)] = &[
     ("lane.keys", crate::lane::ops::keys),
     ("lane.parse", crate::lane::ops::parse),
     ("lane.coverage", crate::lane::ops::coverage),
-    ("matrix.select", crate::matrix::ops::select),
     ("matrix.coverage", crate::matrix::ops::coverage),
+    ("tariff.check", crate::tariff::check::ops::check),
+    ("tariff.evaluate", crate::tariff::eval::ops::evaluate),
+    ("tariff.test", crate::tariff::eval::ops::test),
+    (
+        "tariff.scaffoldTest",
+        crate::tariff::eval::ops::scaffold_test,
+    ),
+    ("tariff.format", crate::tariff::syntax::ops::format),
+    ("tariff.tokens", crate::tariff::syntax::ops::tokens),
+    ("tariff.complete", crate::tariff::editor::ops::complete),
+    ("tariff.hover", crate::tariff::editor::ops::hover),
+    ("tariff.signature", crate::tariff::editor::ops::signature),
+    ("tariff.definition", crate::tariff::editor::ops::definition),
+    ("tariff.rename", crate::tariff::editor::ops::rename),
+    ("tariff.inlays", crate::tariff::editor::ops::inlays),
+    ("tariff.catalog", crate::tariff::check::ops::catalog),
 ];
 
 /// Runs one request and returns the response bytes. Never panics on any input.
@@ -154,7 +163,7 @@ mod tests {
     fn version_lists_every_operation() {
         let response = call(r#"{"op":"rules.version"}"#);
         assert!(response.starts_with(r#"{"ok":{"version":""#), "{response}");
-        assert!(response.contains("\"formula.evaluate\""), "{response}");
+        assert!(response.contains("\"tariff.evaluate\""), "{response}");
     }
 
     #[test]

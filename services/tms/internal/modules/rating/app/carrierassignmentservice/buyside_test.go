@@ -1,18 +1,25 @@
 package carrierassignmentservice
 
 import (
+	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,6 +31,72 @@ func chargeIDPtr() *pulid.ID {
 
 func money(value string) decimal.Decimal {
 	return decimal.RequireFromString(value)
+}
+
+type buySideFixture struct {
+	t         *testing.T
+	service   *Service
+	catalog   []*accessorialcharge.AccessorialCharge
+	fuelIDs   []pulid.ID
+	resolver  *fuelsurchargeportsmock.MockFuelSurchargeResolver
+	fuelCalls int
+}
+
+func newBuySideFixture(t *testing.T) *buySideFixture {
+	t.Helper()
+
+	fixture := &buySideFixture{t: t}
+	accessorials := accessorialchargeportsmock.NewMockAccessorialChargeRepository(t)
+	accessorials.EXPECT().
+		ListCatalog(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			_ pagination.TenantInfo,
+		) ([]*accessorialcharge.AccessorialCharge, error) {
+			return fixture.catalog, nil
+		}).
+		Maybe()
+	fixture.resolver = fuelsurchargeportsmock.NewMockFuelSurchargeResolver(t)
+	fixture.resolver.EXPECT().
+		FuelChargeIDs(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, pagination.TenantInfo) ([]pulid.ID, error) {
+			return fixture.fuelIDs, nil
+		}).
+		Maybe()
+	fixture.service = &Service{accessorialRepo: accessorials, fuelResolver: fixture.resolver}
+
+	return fixture
+}
+
+func (f *buySideFixture) charge(code string) *accessorialcharge.AccessorialCharge {
+	charge := &accessorialcharge.AccessorialCharge{
+		ID:          pulid.MustNew("acc_"),
+		Code:        code,
+		Description: code + " charge",
+	}
+	f.catalog = append(f.catalog, charge)
+
+	return charge
+}
+
+func (f *buySideFixture) fuel(code string) *accessorialcharge.AccessorialCharge {
+	charge := f.charge(code)
+	f.fuelIDs = append(f.fuelIDs, charge.ID)
+
+	return charge
+}
+
+func (f *buySideFixture) rate(parts *buySideParts) (*buySideResult, error) {
+	f.t.Helper()
+
+	if parts.entity == nil {
+		parts.entity = &shipment.Shipment{}
+	}
+
+	return f.service.buySideRating(f.t.Context(), pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}, parts)
 }
 
 func ratedBuySide(amount string) *ratequoteports.RatedShipment {
@@ -42,126 +115,260 @@ func ratedBuySide(amount string) *ratequoteports.RatedShipment {
 	}
 }
 
-// A contract that priced the load produces one number, and the quote explains
-// how it got there. Splitting it back into a rate and a distance would let the
-// assignment recompute a total that disagrees with its own quote, which is the
-// exact failure contract pricing exists to remove.
+func billing(
+	rated *ratequoteports.RatedShipment,
+	lines ...tarifftypes.Line,
+) *ratequoteports.RatedShipment {
+	rated.Bill = &tarifftypes.Bill{
+		Currency: "USD",
+		Lines: append(
+			[]tarifftypes.Line{{Kind: tarifftypes.LineCharge, Amount: rated.Amount}},
+			lines...),
+		FreightTotal: rated.Amount,
+	}
+
+	return rated
+}
+
+func codedLine(code, label, amount string) tarifftypes.Line {
+	return tarifftypes.Line{
+		Kind:   tarifftypes.LineCharge,
+		Code:   code,
+		Label:  label,
+		Amount: money(amount),
+	}
+}
+
+func flatAccessorial(
+	charge *accessorialcharge.AccessorialCharge,
+	amount string,
+) *rateagreement.RateAgreementAccessorial {
+	return &rateagreement.RateAgreementAccessorial{
+		ID:                  pulid.MustNew("raga_"),
+		AccessorialChargeID: charge.ID,
+		AccessorialCharge:   charge,
+		AutoApply:           true,
+		Method:              accessorialcharge.MethodFlat,
+		Amount:              money(amount),
+	}
+}
+
 func TestBuySideRating_PricesTheAssignmentAsAFlatAmount(t *testing.T) {
 	t.Parallel()
 
-	rating, err := buySideRating(ratedBuySide("1450.75"), nil, decimal.NullDecimal{})
+	rated := ratedBuySide("1450.75")
+	rating, err := newBuySideFixture(t).rate(&buySideParts{rated: rated})
 
 	require.NoError(t, err)
 	assert.Equal(t, shipment.CarrierRateMethodFlat, rating.RateMethod)
 	assert.True(t, rating.BaseRate.Equal(money("1450.75")), "base rate was %s", rating.BaseRate)
-}
-
-func TestBuySideRating_CarriesTheQuoteSoThePayIsAnswerable(t *testing.T) {
-	t.Parallel()
-
-	rated := ratedBuySide("1450")
-
-	rating, err := buySideRating(rated, nil, decimal.NullDecimal{})
-
-	require.NoError(t, err)
 	require.NotNil(t, rating.RateQuoteID)
 	assert.Equal(t, rated.Quote.ID, *rating.RateQuoteID)
+	assert.True(t, rating.FuelSurcharge.IsZero())
+	assert.Empty(t, rating.Accessorials)
 }
 
-// A lane no carrier contract covers is not something to guess at. Writing a
-// zero would make the load look free and settle for nothing.
 func TestBuySideRating_RefusesWhenNoContractCoversTheLane(t *testing.T) {
 	t.Parallel()
 
 	rated := ratedBuySide("0")
 	rated.Outcome = ratequote.OutcomeNoRateFound
 
-	_, err := buySideRating(rated, nil, decimal.NullDecimal{})
+	_, err := newBuySideFixture(t).rate(&buySideParts{rated: rated})
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "carrier")
 }
 
-// The contract's accessorial schedule is the same list the sell side reads, so
-// the rate confirmation and the carrier settlement cannot disagree about what
-// this carrier is owed.
+func TestBuySideRating_SplitsTheTariffsCodedLinesIntoFuelAndAccessorials(t *testing.T) {
+	t.Parallel()
+
+	fixture := newBuySideFixture(t)
+	fixture.fuel("FSC")
+	stop := fixture.charge("STOP")
+	rated := billing(
+		ratedBuySide("1450"),
+		codedLine("fsc", "Fuel", "210"),
+		codedLine("STOP", "Extra stop", "75"),
+		codedLine("STOP", "Waived stop", "0"),
+	)
+
+	rating, err := fixture.rate(&buySideParts{rated: rated})
+
+	require.NoError(t, err)
+	assert.True(t, rating.BaseRate.Equal(money("1450")))
+	assert.True(t, rating.FuelSurcharge.Equal(money("210")))
+	require.Len(t, rating.Accessorials, 1)
+	assert.Equal(t, stop.ID, *rating.Accessorials[0].AccessorialChargeID)
+	assert.Equal(t, "Extra stop", rating.Accessorials[0].Description)
+	assert.True(t, rating.Accessorials[0].Amount.Equal(money("75")))
+}
+
+func TestBuySideRating_RefusesACodeTheCatalogDoesNotHave(t *testing.T) {
+	t.Parallel()
+
+	fixture := newBuySideFixture(t)
+	rated := billing(ratedBuySide("1450"), codedLine("LUMP", "Lumper", "90"))
+
+	_, err := fixture.rate(&buySideParts{rated: rated})
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "catalog")
+}
+
 func TestBuySideRating_TakesAccessorialsFromTheCarriersContract(t *testing.T) {
 	t.Parallel()
 
-	chargeID := pulid.MustNew("acc_")
+	fixture := newBuySideFixture(t)
+	lumper := fixture.charge("LUMP")
 	agreement := &rateagreement.RateAgreement{
-		Accessorials: []*rateagreement.RateAgreementAccessorial{
-			{
-				AccessorialChargeID: chargeID,
-				AutoApply:           true,
-				Method:              accessorialcharge.MethodFlat,
-				Amount:              money("125"),
-				AccessorialCharge: &accessorialcharge.AccessorialCharge{
-					ID:   chargeID,
-					Code: "LUMP",
-				},
-			},
-		},
+		Accessorials: []*rateagreement.RateAgreementAccessorial{flatAccessorial(lumper, "125")},
 	}
 
-	rating, err := buySideRating(ratedBuySide("1450"), agreement, decimal.NullDecimal{})
+	rating, err := fixture.rate(&buySideParts{rated: ratedBuySide("1450"), agreement: agreement})
 
 	require.NoError(t, err)
 	require.Len(t, rating.Accessorials, 1)
-	require.NotNil(t, rating.Accessorials[0].AccessorialChargeID)
-	assert.Equal(t, chargeID, *rating.Accessorials[0].AccessorialChargeID)
+	assert.Equal(t, lumper.ID, *rating.Accessorials[0].AccessorialChargeID)
+	assert.Equal(t, "LUMP charge", rating.Accessorials[0].Description)
 	assert.True(t, rating.Accessorials[0].Amount.Equal(money("125")))
 }
 
-// A row waiting for somebody to add it by hand is a price, not a charge.
 func TestBuySideRating_LeavesManualAccessorialsAlone(t *testing.T) {
 	t.Parallel()
 
+	fixture := newBuySideFixture(t)
+	manual := flatAccessorial(fixture.charge("LUMP"), "125")
+	manual.AutoApply = false
 	agreement := &rateagreement.RateAgreement{
-		Accessorials: []*rateagreement.RateAgreementAccessorial{
-			{AccessorialChargeID: pulid.MustNew("acc_"), AutoApply: false, Amount: money("125")},
-		},
+		Accessorials: []*rateagreement.RateAgreementAccessorial{manual},
 	}
 
-	rating, err := buySideRating(ratedBuySide("1450"), agreement, decimal.NullDecimal{})
+	rating, err := fixture.rate(&buySideParts{rated: ratedBuySide("1450"), agreement: agreement})
 
 	require.NoError(t, err)
 	assert.Empty(t, rating.Accessorials)
 }
 
-// An accessorial whose application depends on a formula cannot be answered here
-// — this path has no engine — and applying it anyway would pay a carrier for a
-// condition nobody checked.
-func TestBuySideRating_SkipsAccessorialsWithAnUncheckedCondition(t *testing.T) {
+func TestBuySideRating_AppliesAConditionalAccessorialOnlyWhenTheTariffSaidSo(t *testing.T) {
 	t.Parallel()
 
+	fixture := newBuySideFixture(t)
+	met := flatAccessorial(fixture.charge("STOP"), "75")
+	met.Condition = "condition \"Multi stop\"\n\nshipment.stops.count() > 2\n"
+	unmet := flatAccessorial(fixture.charge("LUMP"), "125")
+	unmet.Condition = "condition \"Lumper\"\n\nshipment.stops.count() > 9\n"
+	rated := ratedBuySide("1450")
+	rated.Conditions = map[pulid.ID]bool{met.ID: true, unmet.ID: false}
 	agreement := &rateagreement.RateAgreement{
-		Accessorials: []*rateagreement.RateAgreementAccessorial{
-			{
-				AccessorialChargeID: pulid.MustNew("acc_"),
-				AutoApply:           true,
-				ApplyCondition:      "totalStops > 2",
-				Amount:              money("125"),
+		Accessorials: []*rateagreement.RateAgreementAccessorial{met, unmet},
+	}
+
+	rating, err := fixture.rate(&buySideParts{rated: rated, agreement: agreement})
+
+	require.NoError(t, err)
+	require.Len(t, rating.Accessorials, 1)
+	assert.Equal(t, met.AccessorialChargeID, *rating.Accessorials[0].AccessorialChargeID)
+}
+
+func TestBuySideRating_SkipsAContractAccessorialTheTariffBilled(t *testing.T) {
+	t.Parallel()
+
+	fixture := newBuySideFixture(t)
+	stop := fixture.charge("STOP")
+	agreement := &rateagreement.RateAgreement{
+		Accessorials: []*rateagreement.RateAgreementAccessorial{flatAccessorial(stop, "50")},
+	}
+	rated := billing(ratedBuySide("1450"), codedLine("STOP", "Extra stop", "75"))
+
+	rating, err := fixture.rate(&buySideParts{rated: rated, agreement: agreement})
+
+	require.NoError(t, err)
+	require.Len(t, rating.Accessorials, 1)
+	assert.True(t, rating.Accessorials[0].Amount.Equal(money("75")), "the tariff's line wins")
+}
+
+func fuelBound(programID pulid.ID) *rateagreement.RateAgreement {
+	return &rateagreement.RateAgreement{
+		ID: pulid.MustNew("rag_"),
+		FuelBinding: &rateagreement.RateAgreementFuelBinding{
+			FuelSurchargeProgramID: programID,
+		},
+	}
+}
+
+func TestBuySideRating_PricesFuelFromTheCarrierAgreementsProgram(t *testing.T) {
+	t.Parallel()
+
+	fixture := newBuySideFixture(t)
+	fsc := fixture.fuel("FSC")
+	agreement := fuelBound(pulid.MustNew("fsp_"))
+	fixture.resolver.EXPECT().
+		ResolveShipmentCharge(mock.Anything, mock.MatchedBy(
+			func(req *fuelsurchargeports.ResolveShipmentChargeRequest) bool {
+				return req.Override != nil && req.Override.AgreementID == agreement.ID &&
+					req.Linehaul.Equal(money("1450"))
 			},
-		},
-	}
+		)).
+		Return(&fuelsurchargeports.ResolvedFuelSurcharge{
+			AccessorialChargeID: fsc.ID,
+			Amount:              money("188.50"),
+		}, nil).
+		Once()
 
-	rating, err := buySideRating(ratedBuySide("1450"), agreement, decimal.NullDecimal{})
+	rating, err := fixture.rate(&buySideParts{rated: ratedBuySide("1450"), agreement: agreement})
 
 	require.NoError(t, err)
-	assert.Empty(t, rating.Accessorials)
+	assert.True(t, rating.FuelSurcharge.Equal(money("188.50")))
 }
 
-// Margin is measured against what the load sold for, which is the number a
-// broker is actually managing.
-func TestBuySideRating_MeasuresMarginAgainstTheSellPrice(t *testing.T) {
+func TestBuySideRating_LeavesFuelToTheTariffWhenItBilledFuel(t *testing.T) {
 	t.Parallel()
 
-	rating, err := buySideRating(
-		ratedBuySide("1400"),
-		nil,
-		decimal.NewNullDecimal(money("2000")),
-	)
+	fixture := newBuySideFixture(t)
+	fsc := fixture.fuel("FSC")
+	fixture.resolver.EXPECT().
+		ResolveShipmentCharge(mock.Anything, mock.Anything).
+		Return(&fuelsurchargeports.ResolvedFuelSurcharge{
+			AccessorialChargeID: fsc.ID,
+			Amount:              money("188.50"),
+		}, nil).
+		Maybe()
+	rated := billing(ratedBuySide("1450"), codedLine("FSC", "Fuel", "210"))
+
+	rating, err := fixture.rate(&buySideParts{
+		rated:     rated,
+		agreement: fuelBound(pulid.MustNew("fsp_")),
+	})
+
+	require.NoError(t, err)
+	assert.True(t, rating.FuelSurcharge.Equal(money("210")))
+}
+
+func TestBuySideRating_AWaivedProgramChargesNoFuel(t *testing.T) {
+	t.Parallel()
+
+	fixture := newBuySideFixture(t)
+	agreement := fuelBound(pulid.MustNew("fsp_"))
+	agreement.FuelBinding.Waived = true
+
+	rating, err := fixture.rate(&buySideParts{rated: ratedBuySide("1450"), agreement: agreement})
+
+	require.NoError(t, err)
+	assert.True(t, rating.FuelSurcharge.IsZero())
+}
+
+func TestBuySideRating_MeasuresMarginAgainstTheWholePay(t *testing.T) {
+	t.Parallel()
+
+	fixture := newBuySideFixture(t)
+	fixture.fuel("FSC")
+	rated := billing(ratedBuySide("1300"), codedLine("FSC", "Fuel", "100"))
+
+	rating, err := fixture.rate(&buySideParts{
+		rated:     rated,
+		sellTotal: decimal.NewNullDecimal(money("2000")),
+	})
 
 	require.NoError(t, err)
 	assert.True(t, rating.Margin.Amount.Equal(money("600")),
@@ -177,18 +384,16 @@ func TestBuySideRating_FlagsAMarginBelowTheContractsFloor(t *testing.T) {
 		MarginFloorPercent: decimal.NewNullDecimal(money("15")),
 	}
 
-	rating, err := buySideRating(
-		ratedBuySide("1900"),
-		agreement,
-		decimal.NewNullDecimal(money("2000")),
-	)
+	rating, err := newBuySideFixture(t).rate(&buySideParts{
+		rated:     ratedBuySide("1900"),
+		agreement: agreement,
+		sellTotal: decimal.NewNullDecimal(money("2000")),
+	})
 
 	require.NoError(t, err)
 	assert.True(t, rating.Margin.BelowFloor)
 }
 
-// A shipment nobody has priced for the customer yet is not a margin breach.
-// A broker quoting cost first is ordinary.
 func TestBuySideRating_UnpricedSellSideIsNotAMarginBreach(t *testing.T) {
 	t.Parallel()
 
@@ -196,7 +401,10 @@ func TestBuySideRating_UnpricedSellSideIsNotAMarginBreach(t *testing.T) {
 		MarginFloorPercent: decimal.NewNullDecimal(money("15")),
 	}
 
-	rating, err := buySideRating(ratedBuySide("1900"), agreement, decimal.NullDecimal{})
+	rating, err := newBuySideFixture(t).rate(&buySideParts{
+		rated:     ratedBuySide("1900"),
+		agreement: agreement,
+	})
 
 	require.NoError(t, err)
 	assert.False(t, rating.Margin.Breached())

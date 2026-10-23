@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -229,6 +230,17 @@ func argumentParam(field *graphQLField) []graphQLParam {
 		}}
 	}
 
+	if field.Type == graphQLTypeID {
+		description := field.Description
+		if description == "" {
+			description = "The " + stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+				field.Name)) + " whose records are read."
+		}
+		return []graphQLParam{{
+			Name: field.Name, Field: field.Name, Kind: paramReferences,
+			Schema: agenttoolschema.IDList(description, unpagedMost),
+		}}
+	}
 	if field.Type == graphQLTypeInt && !field.List {
 		return intArgumentParam(field)
 	}
@@ -368,7 +380,7 @@ func (t *graphQLUnpagedListTool) Query(
 			hidden[path] = struct{}{}
 		}
 		for _, item := range items {
-			t.spec.shape(item, hidden)
+			t.spec.shape(item, hidden, clk)
 		}
 	}
 
@@ -425,11 +437,17 @@ func (t *graphQLUnpagedListTool) checkArguments(args map[string]any) error {
 		}
 	}
 	for _, param := range t.params {
-		if param.Kind != paramReference {
+		raw, present := args[param.Name]
+		if !present || raw == nil {
 			continue
 		}
-		if raw, present := args[param.Name]; present && raw != nil {
+		switch param.Kind { //nolint:exhaustive // only ids are checked here
+		case paramReference:
 			if _, err := requirePulid(args, param.Name); err != nil {
+				return err
+			}
+		case paramReferences:
+			if _, err := pulidList(raw, param.Name); err != nil {
 				return err
 			}
 		}

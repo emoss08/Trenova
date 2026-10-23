@@ -541,7 +541,17 @@ function buildShipment(raw, index, anchor) {
     totalChargeAmount: total,
     freightChargeAmount: total,
     otherChargeAmount: "0",
-    baseRate: total,
+    tariffInputs: { amount: { $q: total, u: "$" } },
+    freightLines: [
+      {
+        label: "Linehaul",
+        quantity: null,
+        quantityUnit: null,
+        rate: null,
+        rateUnit: null,
+        amount: total,
+      },
+    ],
     weight: 38400,
     pieces: 22,
     temperatureMin: null,

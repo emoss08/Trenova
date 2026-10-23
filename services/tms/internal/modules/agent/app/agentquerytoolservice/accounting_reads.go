@@ -240,7 +240,7 @@ func accountingGetSpecs() []getSpec {
 			paramName:   paramSyncRecordID,
 			idSource:    "from accounting_list_sync_records or the run's subject",
 			shape: func(record map[string]any) {
-				syncRecordActions(record, nil)
+				syncRecordActions(record, nil, clock{})
 				record[accountingMeaningField] = syncMeaning(record, "the accounting system")
 			},
 			alongside: []alongsideSpec{{
@@ -284,7 +284,7 @@ func accountingGetSpecs() []getSpec {
 			}},
 			shape: func(record map[string]any) {
 				if mapping, ok := record["mapping"].(map[string]any); ok {
-					mappingActions(mapping, nil)
+					mappingActions(mapping, nil, clock{})
 				}
 			},
 		},
@@ -317,7 +317,7 @@ func withinTolerance(items []map[string]any, beside map[string]any) {
 // inboundActions says what can be done with an inbound change, as the
 // domain decides it: applied while proposed for a reason a person can act
 // on, ignored while open.
-func inboundActions(row map[string]any, _ map[string]struct{}) {
+func inboundActions(row map[string]any, _ map[string]struct{}, _ clock) {
 	status, _ := row[accountingStatusField].(string)
 	reason, _ := row["reason"].(string)
 	open := accountingsync.InboundChangeStatus(status).IsOpen()
@@ -328,7 +328,7 @@ func inboundActions(row map[string]any, _ map[string]struct{}) {
 
 // syncRecordActions says what can be done with a sync record, and drops the
 // next try's time unless one is still due.
-func syncRecordActions(row map[string]any, _ map[string]struct{}) {
+func syncRecordActions(row map[string]any, _ map[string]struct{}, _ clock) {
 	status := accountingsync.SyncStatus(stringOf(row[accountingStatusField]))
 	row["canRetry"] = status.Retryable()
 	row["canSkip"] = !status.IsFinal() && status != accountingsync.SyncStatusInFlight
@@ -344,7 +344,7 @@ func syncStateMeaning(row map[string]any) {
 	if !ok {
 		return
 	}
-	syncRecordActions(record, nil)
+	syncRecordActions(record, nil, clock{})
 	row[accountingMeaningField] = syncMeaning(record, stringOf(row[accountingProviderField]))
 }
 
@@ -377,7 +377,7 @@ func syncMeaning(record map[string]any, provider string) string {
 
 // mappingActions says whether a mapping's record can be created in the
 // accounting system rather than chosen.
-func mappingActions(row map[string]any, _ map[string]struct{}) {
+func mappingActions(row map[string]any, _ map[string]struct{}, _ clock) {
 	kind := accountingsync.ReferenceKind(stringOf(row["providerKind"]))
 	row["canCreateInAccountingSystem"] = kind.Creatable() &&
 		stringOf(row["state"]) != string(accountingsync.MappingStateConfirmed)

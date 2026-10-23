@@ -197,3 +197,61 @@ describe("NumberField value kind", () => {
     expect(state()).toBe("123");
   });
 });
+
+describe("NumberField with a codec", () => {
+  type Wrapped = { amount: { $q: string; u: string } | undefined };
+
+  const codec = {
+    decode: (value: unknown) =>
+      value && typeof value === "object" && "$q" in value ? String(value.$q) : "",
+    encode: (text: string, previous: unknown) => {
+      const digits = text.endsWith(".") ? text.slice(0, -1) : text;
+      if (digits === "" || digits === "-") return undefined;
+      const unit =
+        previous && typeof previous === "object" && "u" in previous ? String(previous.u) : "$";
+      return { $q: digits, u: unit };
+    },
+  };
+
+  function CodecHarness({ initial }: { initial?: Wrapped["amount"] }) {
+    const form = useForm<Wrapped>({ defaultValues: { amount: initial } });
+    const value = useWatch({ control: form.control, name: "amount" });
+    return (
+      <>
+        <NumberField<Wrapped>
+          control={form.control}
+          name="amount"
+          label="Amount"
+          valueType="string"
+          codec={codec}
+          decimalScale={4}
+        />
+        <State values={value ?? null} />
+      </>
+    );
+  }
+
+  it("keeps the digits typed so far while writing the value they mean", async () => {
+    const user = userEvent.setup();
+    render(<CodecHarness />);
+    const field = screen.getByRole("textbox");
+
+    await user.type(field, "2.");
+    expect(field).toHaveValue("2.");
+    expect(screen.getByTestId("state")).toHaveTextContent('{"$q":"2","u":"$"}');
+
+    await user.type(field, "05");
+    expect(screen.getByTestId("state")).toHaveTextContent('{"$q":"2.05","u":"$"}');
+  });
+
+  it("keeps what else the value carries when its digits change", async () => {
+    const user = userEvent.setup();
+    render(<CodecHarness initial={{ $q: "1", u: "$/km" }} />);
+    const field = screen.getByRole("textbox");
+
+    await user.clear(field);
+    await user.type(field, "3");
+
+    expect(screen.getByTestId("state")).toHaveTextContent('{"$q":"3","u":"$/km"}');
+  });
+});

@@ -15,8 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -28,8 +29,9 @@ const (
 	// so a seeded contract is always in force for the loads it should price.
 	rateSeedEffectiveFrom = int64(1_700_000_000)
 
-	rateMatrixCode   = "ZONE-TL"
-	densityScaleCode = "NMFC-2025"
+	rateMatrixCode = "ZONE_TL"
+
+	multiStopCondition = "condition \"More than two stops\"\n\nshipment.stops.count() > 2\n"
 )
 
 type RateAgreementSeed struct {
@@ -37,8 +39,8 @@ type RateAgreementSeed struct {
 }
 
 // RateAgreementSeed builds a working rate book: the geography contracts are
-// written against, a zone-by-zone rate matrix, the 2025 density scale, and a
-// customer agreement whose lanes deliberately overlap.
+// written against, a zone-by-zone rate table a tariff can read, and a customer
+// agreement whose lanes deliberately overlap.
 //
 // The overlap is the point. Three rules cover the Dallas outbound lane at
 // different widths — a location pair, a city pair, and a zone pair — so the
@@ -53,8 +55,8 @@ func NewRateAgreementSeed() *RateAgreementSeed {
 	seed := &RateAgreementSeed{}
 	seed.BaseSeed = *seedhelpers.NewBaseSeed(
 		"RateAgreement",
-		"1.0.0",
-		"Creates rate zones, a zone rate matrix, the 2025 density scale, and a customer rate agreement with overlapping lanes",
+		"2.0.0",
+		"Creates rate zones, a zone rate table, and a customer rate agreement with overlapping lanes",
 		[]common.Environment{
 			common.EnvDevelopment,
 		},
@@ -132,7 +134,6 @@ type rateSeedRefs struct {
 	accessorls map[string]pulid.ID
 	programID  *pulid.ID
 	matrixID   pulid.ID
-	densityID  pulid.ID
 	approverID pulid.ID
 }
 
@@ -172,10 +173,6 @@ func (s *RateAgreementSeed) Run(ctx context.Context, tx bun.Tx) error {
 			refs.approverID = admin.ID
 
 			if err = s.createZones(ctx, tx, sc, refs); err != nil {
-				return err
-			}
-
-			if err = s.createDensityScale(ctx, tx, sc, refs); err != nil {
 				return err
 			}
 
@@ -227,7 +224,6 @@ func (s *RateAgreementSeed) loadRefs(
 		Where("organization_id = ?", org.ID).
 		Where("business_unit_id = ?", org.BusinessUnitID).
 		Where("status = ?", formulatemplate.StatusActive).
-		Where("type = ?", formulatemplate.TemplateTypeFreightCharge).
 		Scan(ctx); err != nil {
 		return nil, fmt.Errorf("load formula templates: %w", err)
 	}
@@ -347,55 +343,6 @@ func (s *RateAgreementSeed) createZones(
 	return nil
 }
 
-// createDensityScale seeds the 2025 NMFC density ladder as the organization's
-// default, which is what a density-rated LTL rule classifies against.
-func (s *RateAgreementSeed) createDensityScale(
-	ctx context.Context,
-	tx bun.Tx,
-	sc *seedhelpers.SeedContext,
-	refs *rateSeedRefs,
-) error {
-	scale := &ratematrix.DensityScale{
-		ID:             pulid.MustNew("rds_"),
-		OrganizationID: refs.orgID,
-		BusinessUnitID: refs.buID,
-		Code:           densityScaleCode,
-		Name:           "NMFC 2025 Density Scale",
-		Description:    "The thirteen-tier density ladder the July 2025 NMFC docket moved most commodities onto",
-		Status:         domaintypes.StatusActive,
-		EffectiveFrom:  rateSeedEffectiveFrom,
-		IsOrgDefault:   true,
-		CreatedAt:      refs.now,
-		UpdatedAt:      refs.now,
-	}
-
-	if _, err := tx.NewInsert().Model(scale).Exec(ctx); err != nil {
-		return fmt.Errorf("insert density scale: %w", err)
-	}
-
-	if err := sc.TrackCreated(ctx, "rate_density_scales", scale.ID, s.Name()); err != nil {
-		return fmt.Errorf("track density scale: %w", err)
-	}
-
-	refs.densityID = scale.ID
-
-	tiers := ratematrix.StandardDensityTiers(refs.orgID, refs.buID)
-	for _, tier := range tiers {
-		tier.ID = pulid.MustNew("rdt_")
-		tier.RateDensityScaleID = scale.ID
-		tier.CreatedAt = refs.now
-		tier.UpdatedAt = refs.now
-	}
-
-	if _, err := tx.NewInsert().Model(&tiers).Exec(ctx); err != nil {
-		return fmt.Errorf("insert density scale tiers: %w", err)
-	}
-
-	sc.Logger().Info("Created density scale %s with %d tiers", densityScaleCode, len(tiers))
-
-	return nil
-}
-
 // zoneMatrixCell is one priced intersection of the seeded zone matrix.
 type zoneMatrixCell struct {
 	origin      string
@@ -422,33 +369,24 @@ func zoneMatrixCells() []zoneMatrixCell {
 
 // createMatrix builds a zone-by-zone rate table, which is the shape a truckload
 // tariff most often arrives in: a grid of origin region against destination
-// region, priced per mile.
+// region, priced per mile. A tariff reads it as tables.ZONE_TL.
 func (s *RateAgreementSeed) createMatrix(
 	ctx context.Context,
 	tx bun.Tx,
 	sc *seedhelpers.SeedContext,
 	refs *rateSeedRefs,
 ) error {
-	perMileID, ok := refs.templates[formulatemplate.StandardPerMile]
-	if !ok {
-		return fmt.Errorf(
-			"the %q formula template is not seeded; the zone matrix cannot say what its cells mean",
-			formulatemplate.StandardPerMile,
-		)
-	}
-
 	matrix := &ratematrix.RateMatrix{
-		ID:                pulid.MustNew("rmx_"),
-		OrganizationID:    refs.orgID,
-		BusinessUnitID:    refs.buID,
-		Code:              rateMatrixCode,
-		Name:              "Zone to Zone Truckload",
-		Description:       "Per-mile linehaul by origin region and destination region",
-		Status:            domaintypes.StatusActive,
-		Currency:          "USD",
-		FormulaTemplateID: perMileID,
-		CreatedAt:         refs.now,
-		UpdatedAt:         refs.now,
+		ID:             pulid.MustNew("rmx_"),
+		OrganizationID: refs.orgID,
+		BusinessUnitID: refs.buID,
+		Code:           rateMatrixCode,
+		Name:           "Zone to Zone Truckload",
+		Description:    "Per-mile linehaul by origin region and destination region",
+		Status:         domaintypes.StatusActive,
+		ValueType:      ratematrix.ValueTypeMoney + "/mi",
+		CreatedAt:      refs.now,
+		UpdatedAt:      refs.now,
 	}
 
 	if _, err := tx.NewInsert().Model(matrix).Exec(ctx); err != nil {
@@ -539,15 +477,10 @@ type laneDef struct {
 	destType    rategeo.ScopeType
 	destValue   string
 	destCity    string
-	// template names the standard formula template that prices the lane, and
-	// useMatrix points the lane at the zone matrix instead — a lane carries
-	// exactly one of the two.
-	template  string
-	useMatrix bool
-	rate      string
-	minCharge string
-	minMiles  string
-	priority  int16
+	template    string
+	rate        string
+	minCharge   string
+	priority    int16
 }
 
 // zoneRef and stateRef mark a lane value that has to be resolved to an id once
@@ -586,7 +519,6 @@ func seededLanes() []resolvedLane {
 				template:   formulatemplate.StandardPerMile,
 				rate:       "2.55",
 				minCharge:  "850.00",
-				minMiles:   "250",
 			},
 			originSrc:   scopeSourceState,
 			destSrc:     scopeSourceState,
@@ -598,7 +530,8 @@ func seededLanes() []resolvedLane {
 				label:      "Southwest to Midwest, zone pair",
 				originType: rategeo.ScopeTypeZone,
 				destType:   rategeo.ScopeTypeZone,
-				useMatrix:  true,
+				template:   formulatemplate.StandardPerMile,
+				rate:       "2.35",
 				minCharge:  "750.00",
 			},
 			originSrc:   scopeSourceZone,
@@ -611,7 +544,8 @@ func seededLanes() []resolvedLane {
 				label:      "West Coast to Midwest, zone pair",
 				originType: rategeo.ScopeTypeZone,
 				destType:   rategeo.ScopeTypeZone,
-				useMatrix:  true,
+				template:   formulatemplate.StandardPerMile,
+				rate:       "2.85",
 				minCharge:  "950.00",
 			},
 			originSrc:   scopeSourceZone,
@@ -677,7 +611,7 @@ func seededAccessorials() []accessorialDef {
 			method:    accessorialcharge.MethodFlat,
 			amount:    "75.00",
 			autoApply: true,
-			condition: "totalStops > 2",
+			condition: multiStopCondition,
 		},
 	}
 }
@@ -693,27 +627,26 @@ func (s *RateAgreementSeed) createAgreement(
 	stamped := refs.now
 
 	agreement := &rateagreement.RateAgreement{
-		ID:                pulid.MustNew("rag_"),
-		OrganizationID:    refs.orgID,
-		BusinessUnitID:    refs.buID,
-		PartyType:         rateagreement.PartyTypeCustomer,
-		CustomerID:        &customerID,
-		Code:              "SEED-TL-2026",
-		Name:              refs.customer.Name + " Truckload Agreement",
-		Description:       "Seeded contract with overlapping lanes so rate resolution can be demonstrated",
-		AgreementType:     rateagreement.AgreementTypeContract,
-		Status:            rateagreement.StatusActive,
-		Priority:          10,
-		EffectiveFrom:     rateSeedEffectiveFrom,
-		Currency:          "USD",
-		RoundingMode:      ratetypes.RoundingModeHalfUp,
-		RoundingPrecision: 2,
-		SubmittedByID:     &approverID,
-		SubmittedAt:       &stamped,
-		ApprovedByID:      &approverID,
-		ApprovedAt:        &stamped,
-		CreatedAt:         refs.now,
-		UpdatedAt:         refs.now,
+		ID:             pulid.MustNew("rag_"),
+		OrganizationID: refs.orgID,
+		BusinessUnitID: refs.buID,
+		PartyType:      rateagreement.PartyTypeCustomer,
+		CustomerID:     &customerID,
+		Code:           "SEED-TL-2026",
+		Name:           refs.customer.Name + " Truckload Agreement",
+		Description:    "Seeded contract with overlapping lanes so rate resolution can be demonstrated",
+		AgreementType:  rateagreement.AgreementTypeContract,
+		Status:         rateagreement.StatusActive,
+		Priority:       10,
+		EffectiveFrom:  rateSeedEffectiveFrom,
+		Currency:       "USD",
+		Inputs:         tarifftypes.Inputs{},
+		SubmittedByID:  &approverID,
+		SubmittedAt:    &stamped,
+		ApprovedByID:   &approverID,
+		ApprovedAt:     &stamped,
+		CreatedAt:      refs.now,
+		UpdatedAt:      refs.now,
 	}
 
 	if _, err := tx.NewInsert().Model(agreement).Exec(ctx); err != nil {
@@ -794,7 +727,6 @@ func (s *RateAgreementSeed) buildRule(
 		PartyID:               agreement.PartyID(),
 		Label:                 lane.def.label,
 		Status:                rateagreement.RuleStatusActive,
-		AllowDeficitRating:    true,
 		OriginScopeType:       lane.def.originType,
 		OriginScopeValue:      originValue,
 		OriginCity:            lane.def.originCity,
@@ -808,29 +740,19 @@ func (s *RateAgreementSeed) buildRule(
 		UpdatedAt:             refs.now,
 	}
 
-	if lane.def.rate != "" {
-		rule.Rate = decimal.NewNullDecimal(decimal.RequireFromString(lane.def.rate))
+	templateID, ok := refs.templates[lane.def.template]
+	if !ok {
+		return nil, false
 	}
-
-	if lane.def.minCharge != "" {
-		rule.MinCharge = decimal.NewNullDecimal(decimal.RequireFromString(lane.def.minCharge))
-	}
-
-	if lane.def.minMiles != "" {
-		rule.MinBillableDistance = decimal.NewNullDecimal(
-			decimal.RequireFromString(lane.def.minMiles),
-		)
-	}
-
-	if lane.def.useMatrix {
-		matrixID := refs.matrixID
-		rule.RateMatrixID = &matrixID
-	} else {
-		templateID, ok := refs.templates[lane.def.template]
-		if !ok {
-			return nil, false
-		}
-		rule.FormulaTemplateID = &templateID
+	rule.FormulaTemplateID = templateID
+	rule.Inputs = tarifftypes.Inputs{
+		formulatemplate.StandardInputRate: seededTariffInputs(
+			lane.def.template,
+			decimal.RequireFromString(lane.def.rate),
+		)[formulatemplate.StandardInputRate],
+		formulatemplate.StandardInputMinimumCharge: rules.MoneyValue(
+			decimal.RequireFromString(lane.def.minCharge),
+		),
 	}
 
 	return rule, true
@@ -888,7 +810,7 @@ func (s *RateAgreementSeed) createAccessorials(
 			RateUnit:            def.rateUnit,
 			Amount:              decimal.RequireFromString(def.amount),
 			AutoApply:           def.autoApply,
-			ApplyCondition:      def.condition,
+			Condition:           def.condition,
 			EffectiveFrom:       &effectiveFrom,
 			CreatedAt:           refs.now,
 			UpdatedAt:           refs.now,

@@ -10,6 +10,10 @@ import {
 } from "../../skeletons/record-card-skeleton";
 
 const FORMULA_LINES = [88, 64, 76] as const;
+const CHARGE_ROWS = [
+  [30, 16],
+  [44, 22],
+] as const;
 const VARIABLE_ROWS = [
   [26, 58],
   [34, 46],
@@ -19,9 +23,9 @@ const PRICE_LINES = [42, 30] as const;
 
 /**
  * The formula template card while its code or its template is read: the
- * kicker and name over the sample price and status, the formula in its code
- * block with the limits under it, the variables with their fields, and the
- * sample price as a ledger, each where the card draws it.
+ * kicker and name over the sample total and status, the source in its code
+ * block, the charges it bills, the inputs with their defaults, and the sample
+ * bill as a ledger, each where the card draws it.
  */
 export function DeskFormulaTemplateSkeleton({ stepper = false }: { stepper?: boolean }) {
   const t = useT();
@@ -42,14 +46,9 @@ export function DeskFormulaTemplateSkeleton({ stepper = false }: { stepper?: boo
             <SkeletonBar key={index} w={line} className="dk-rec-sk-line" />
           ))}
         </div>
-        <div className="dk-ft-rules">
-          {[0, 1, 2].map((rule) => (
-            <div key={rule}>
-              <SkeletonBar w="46%" className="dk-rec-sk-label" />
-              <SkeletonBar w="64%" className="dk-rec-sk-line" />
-            </div>
-          ))}
-        </div>
+      </CardSectionSkeleton>
+      <CardSectionSkeleton title={40} aside={52}>
+        <CardRowsSkeleton rows={CHARGE_ROWS} trailing={48} />
       </CardSectionSkeleton>
       <CardSectionSkeleton title={64} aside={36}>
         <CardRowsSkeleton rows={VARIABLE_ROWS} trailing={112} />

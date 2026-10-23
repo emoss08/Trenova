@@ -1326,7 +1326,7 @@ export const DESK_RECORD_NAMES = {
   car_lonestar: { label: "Lone Star Haulers", meta: { code: "LSH" } },
   ft_mile: { label: "Per mile" },
   ft_flat: { label: "Flat rate" },
-  rm_se: { label: "Southeast zones" },
+  ft_ltl: { label: "LTL weight breaks" },
   acc_det: { label: "Detention" },
   acc_lump: { label: "Lumper" },
   acc_stop: { label: "Extra stop" },
@@ -1345,28 +1345,49 @@ export const DESK_RECORD_NAMES = {
 const STATES = ["st_tx", "st_ok", "st_la", "st_ar", "st_ga", "st_tn"];
 const CITIES = { st_tx: "Dallas", st_ok: "Tulsa", st_la: "Shreveport", st_ar: "Little Rock" };
 
+/** A decimal as Tariff's wire writes it: `{"$q": "2.35", "u": "$/mi"}`. */
+const quantity = (amount, unit) => ({ $q: String(amount), u: unit });
+
 /**
- * Lanes for an agreement, each priced the way `plan` says: a formula template
- * and its rates (evenly spread from low to high), or a rate table.
+ * The input values a lane sets for its tariff, the way `plan` prices it: a per-mile rate and a
+ * minimum, a flat amount, or weight breaks (`std.ltl.Break` rows).
+ */
+function laneInputs(templateId, rate) {
+  switch (templateId) {
+    case "ft_mile":
+      return { rate: quantity(rate, "$/mi"), minimumCharge: quantity("350", "$") };
+    case "ft_flat":
+      return { amount: quantity(rate, "$") };
+    case "ft_ltl":
+      return {
+        breaks: [
+          { from: quantity("0", "lb"), rate: quantity("42.5", "$/cwt"), minimum: quantity("95", "$") },
+          { from: quantity("500", "lb"), rate: quantity("35.1", "$/cwt"), minimum: null },
+          { from: quantity("2000", "lb"), rate: quantity("28.4", "$/cwt"), minimum: null },
+          { from: quantity("5000", "lb"), rate: quantity("22.75", "$/cwt"), minimum: null },
+          { from: quantity("10000", "lb"), rate: quantity("18.9", "$/cwt"), minimum: null },
+        ],
+      };
+    default:
+      return {};
+  }
+}
+
+/**
+ * Lanes for an agreement, each priced the way `plan` says: a tariff and the rate its input
+ * takes (evenly spread from low to high).
  */
 function agreementLanes(agreementId, anchor, plan) {
   const lanes = [];
-  for (const {
-    templateId = null,
-    matrixId = null,
-    count,
-    low = 0,
-    high = 0,
-    currency = null,
-  } of plan) {
+  for (const { templateId, count, low = 0, high = 0, currency = null } of plan) {
     for (let index = 0; index < count; index += 1) {
       const n = lanes.length;
       const origin = STATES[n % STATES.length];
       const destination = STATES[(n * 5 + 1) % STATES.length];
       const city = n % 3 === 0 ? CITIES[origin] : undefined;
-      const rate = templateId
-        ? (low + ((high - low) * index) / Math.max(1, count - 1)).toFixed(4)
-        : null;
+      const rate = (low + ((high - low) * index) / Math.max(1, count - 1)).toFixed(
+        templateId === "ft_mile" ? 4 : 2,
+      );
       lanes.push({
         id: `${agreementId}_rule_${n + 1}`,
         rateAgreementId: agreementId,
@@ -1380,30 +1401,13 @@ function agreementLanes(agreementId, anchor, plan) {
         destinationCity: "",
         direction: n % 4 === 0 ? "Bidirectional" : "Directional",
         formulaTemplateId: templateId,
-        rateMatrixId: matrixId,
-        rate,
+        inputs: laneInputs(templateId, rate),
         currency,
-        minCharge: templateId === "ft_mile" ? "350" : null,
-        freightClassSource: "Commodity",
-        allowDeficitRating: true,
         daysOfWeek: 0,
         hazmatOnly: n % 7 === 3,
         tempControlOnly: false,
         priority: 0,
         effectiveFrom: anchor - 90 * DAY,
-        breaks:
-          templateId === "ft_flat" && index === 0
-            ? [
-                { id: `${agreementId}_brk_1`, fromWeight: "0", toWeight: "10000", rate: "850" },
-                {
-                  id: `${agreementId}_brk_2`,
-                  fromWeight: "10000",
-                  toWeight: "30000",
-                  rate: "1100",
-                },
-                { id: `${agreementId}_brk_3`, fromWeight: "30000", toWeight: null, rate: "1400" },
-              ]
-            : [],
       });
     }
   }
@@ -1417,37 +1421,14 @@ function agreementLanes(agreementId, anchor, plan) {
 export function laneSummary(lanes, names = DESK_RECORD_NAMES) {
   const groups = new Map();
   for (const lane of lanes) {
-    const key = [lane.formulaTemplateId ?? "", lane.rateMatrixId ?? "", lane.currency ?? ""].join(
-      ":",
-    );
+    const key = [lane.formulaTemplateId, lane.currency ?? ""].join(":");
     const group = groups.get(key) ?? {
-      formulaTemplateId: lane.formulaTemplateId ?? null,
-      formulaTemplateName: lane.formulaTemplateId
-        ? (names[lane.formulaTemplateId]?.label ?? "")
-        : "",
-      rateMatrixId: lane.rateMatrixId ?? null,
-      rateMatrixName: lane.rateMatrixId ? (names[lane.rateMatrixId]?.label ?? "") : "",
+      formulaTemplateId: lane.formulaTemplateId,
+      formulaTemplateName: names[lane.formulaTemplateId]?.label ?? "",
       currency: lane.currency ?? "",
       lanes: 0,
-      minRate: null,
-      maxRate: null,
     };
     group.lanes += 1;
-    if (lane.rate !== null) {
-      const rate = Number(lane.rate);
-      group.minRate =
-        group.minRate === null
-          ? lane.rate
-          : Number(group.minRate) <= rate
-            ? group.minRate
-            : lane.rate;
-      group.maxRate =
-        group.maxRate === null
-          ? lane.rate
-          : Number(group.maxRate) >= rate
-            ? group.maxRate
-            : lane.rate;
-    }
     groups.set(key, group);
   }
   return {
@@ -1486,10 +1467,7 @@ export function deskRateAgreements(anchor) {
     autoRenew: false,
     renewalNoticeDays: 30,
     currency: "USD",
-    defaultMinCharge: "200",
-    defaultMaxCharge: null,
-    roundingMode: "HalfUp",
-    roundingPrecision: 2,
+    inputs: { minimumCharge: quantity("200", "$") },
     billToCustomerId: null,
     marginFloorPercent: null,
     maxPayPercentOfSell: null,
@@ -1509,7 +1487,7 @@ export function deskRateAgreements(anchor) {
   const acmeLanes = agreementLanes("ra_acme", anchor, [
     { templateId: "ft_mile", count: 30, low: 2.1, high: 3.45 },
     { templateId: "ft_flat", count: 10, low: 850, high: 1400 },
-    { matrixId: "rm_se", count: 6 },
+    { templateId: "ft_ltl", count: 6 },
   ]);
   const lonestarLanes = agreementLanes("ra_lonestar", anchor, [
     { templateId: "ft_mile", count: 5, low: 1.85, high: 2.4 },
@@ -1543,7 +1521,7 @@ export function deskRateAgreements(anchor) {
             freeUnits: 2,
             waived: false,
             autoApply: true,
-            applyCondition: "",
+            condition: null,
           },
           {
             id: "raa_lump",
@@ -1553,7 +1531,7 @@ export function deskRateAgreements(anchor) {
             amount: "85",
             waived: false,
             autoApply: false,
-            applyCondition: "",
+            condition: null,
           },
         ],
         fuelBinding: { fuelSurchargeProgramId: "fsp_doe", waived: false, capAmount: "0.6" },
@@ -1580,7 +1558,7 @@ export function deskRateAgreements(anchor) {
         {
           id: "rav_a3",
           versionNumber: 3,
-          changeMessage: "Added the Southeast zone lanes",
+          changeMessage: "Added the LTL weight-break lanes",
           createdById: "usr_mia",
           createdAt: anchor - 12 * DAY,
           effectiveFrom: anchor - 12 * DAY,
@@ -1624,7 +1602,7 @@ export function deskRateAgreements(anchor) {
             amount: "75",
             waived: true,
             autoApply: false,
-            applyCondition: "",
+            condition: null,
           },
         ],
       }),
@@ -2070,7 +2048,7 @@ const TURNS = {
   ],
   "agreement-acme": [
     "How is Acme's contract priced?",
-    "Acme's dry van contract is active through next summer and renews on its own. Most of its 46 lanes are per mile between $2.10 and $3.45; ten are flat rates and six read the Southeast zone table. [Acme dry van contract](artifact:art_agreement-acme) has the lanes and their terms.",
+    "Acme's dry van contract is active through next summer and renews on its own. Most of its 46 lanes are per mile between $2.10 and $3.45; ten are flat rates and six price LTL by weight break. [Acme dry van contract](artifact:art_agreement-acme) has the lanes and their terms.",
   ],
   "agreement-lonestar": [
     "When do Lone Star's rates run out?",

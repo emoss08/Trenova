@@ -446,6 +446,7 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  formula_library: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   formula_template: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   fuel_card: [
     "businessUnitId",
@@ -1094,6 +1095,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   FiscalPeriod: "fiscal_period",
   FiscalYear: "fiscal_year",
   FleetCode: "fleet_code",
+  FormulaLibrary: "formula_library",
   FormulaTemplate: "formula_template",
   FuelCard: "fuel_card",
   FuelPurchase: "fuel_purchase",

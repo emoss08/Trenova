@@ -386,7 +386,7 @@ scenarios:
 | `maxCalls`, `maxFailedCalls` | tool calls in the step, and those refused (`denied`, `invalid`, `duplicate`, `over_budget`, `failed`, `unregistered`) |
 | `replyIncludes`, `replyExcludes` | case-insensitive text; `a\|b` alternatives; `/pattern/` is a regular expression |
 | `noRecordIds` | the reply shows no internal record id, by the same detector the reply pass uses (`shared/recordids`), so an `artifact:` link is not counted |
-| `formula` | on a formula scenario: the studio's draft expression, after the step, contains each entry (`a\|b`, `/pattern/`) |
+| `formula` | on a formula scenario: the studio's draft Tariff source, after the step, contains each entry (`a\|b`, `/pattern/`) |
 | `refused` | the scope guard refused (`true`) or answered (`false`) |
 | `proposals` | a proposal of `tool` was filed whose arguments contain `args` (strings compared case-insensitively, numbers by value) |
 | `noProposals` | nothing was proposed |
@@ -410,11 +410,13 @@ way, from `edi-guide.html` and `edi-guides.json` (a version and its revision).
 
 A scenario with a `formula:` block talks to the Formula Studio's own assistant instead of a Desk
 agent: the bench opens the studio's page thread (`OpenPageThread`, origin `Formula`), on the
-template named by `template` (looked up by name; leave it out for a new formula, and `type`
-sets the template type, `FreightCharge` by default), and sends the studio's draft with every
-message, as the page does. Each `formula_propose` edit the agent makes is applied to that draft
-before the next message, the way the studio applies it, so a follow-up edits what the agent
-wrote, and the transcript shows the draft after every step.
+template named by `template` (looked up by name; leave it out for a new formula), or on the
+organization library named by `library` (its name, with or without `org.`), and sends the
+editor's draft (the Tariff source) with every message, as the page does. Each
+`formula_propose` or `formula_library_propose` edit the agent makes is applied to that draft
+before the next message, the way the editor applies it, so a follow-up edits what the agent
+wrote, and the transcript shows the source after every step. A step's `formula` patterns match
+the source.
 
 ```yaml
   - name: formula-edit-existing-per-mile
@@ -423,7 +425,7 @@ wrote, and the transcript shows the draft after every step.
       - say: "change this so every stop after the second one adds 75"
         expect:
           calls: ["formula_propose"]
-          formula: ["totalDistance", "totalStops"]
+          formula: ["shipment.distance", '/shipment\.stops|extraStops/']
 ```
 
 A scenario with `palette: true` asks the way the command palette does: the case opens with

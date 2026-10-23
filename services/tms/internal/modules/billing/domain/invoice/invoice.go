@@ -104,6 +104,7 @@ type Invoice struct {
 	LastSendError             string                `json:"lastSendError"             bun:"last_send_error,type:TEXT,nullzero"`
 	LastSendWarning           string                `json:"lastSendWarning"           bun:"last_send_warning,type:TEXT,nullzero"`
 	Memo                      string                `json:"memo"                      bun:"memo,type:TEXT,nullzero"`
+	RatingNotes               []string              `json:"ratingNotes"               bun:"rating_notes,array,type:text[],nullzero"`
 	RemittanceInstructions    string                `json:"remittanceInstructions"    bun:"remittance_instructions,type:TEXT,nullzero"`
 	EmailSubjectSnapshot      string                `json:"emailSubjectSnapshot"      bun:"email_subject_snapshot,type:VARCHAR(998),nullzero"`
 	EmailBodySnapshot         string                `json:"emailBodySnapshot"         bun:"email_body_snapshot,type:TEXT,nullzero"`
@@ -174,7 +175,7 @@ type InvoiceLine struct {
 	AccessorialChargeID pulid.ID                   `json:"accessorialChargeId" bun:"accessorial_charge_id,type:VARCHAR(100),nullzero"`
 	ChargeCode          string                     `json:"chargeCode"          bun:"charge_code,type:VARCHAR(10),nullzero"`
 	ChargeMethod        accessorialcharge.Method   `json:"chargeMethod"        bun:"charge_method,type:VARCHAR(20),nullzero"`
-	RateUnit            accessorialcharge.RateUnit `json:"rateUnit"            bun:"rate_unit,type:VARCHAR(20),nullzero"`
+	RateUnit            string                     `json:"rateUnit"            bun:"rate_unit,type:VARCHAR(32),nullzero"`
 	Rate                decimal.NullDecimal        `json:"rate"                bun:"rate,type:NUMERIC(19,4),nullzero"`
 	RateBasisAmount     decimal.NullDecimal        `json:"rateBasisAmount"     bun:"rate_basis_amount,type:NUMERIC(19,4),nullzero"`
 	FormulaTemplateID   pulid.ID                   `json:"formulaTemplateId"   bun:"formula_template_id,type:VARCHAR(100),nullzero"`

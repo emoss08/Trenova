@@ -15,8 +15,6 @@ type FormulaTemplateStatsLoaderFactoryParams struct {
 	TemplateRepo formulatemplateports.FormulaTemplateRepository
 }
 
-// FormulaTemplateStatsLoaderFactory batches the per-row usage and scenario
-// counts a list page shows, so a page of fifty templates costs one query.
 type FormulaTemplateStatsLoaderFactory struct {
 	templateRepo formulatemplateports.FormulaTemplateRepository
 }
@@ -57,8 +55,6 @@ func (f *FormulaTemplateStatsLoaderFactory) batchFunc(
 			return values, errs
 		}
 
-		// A template with no consumers and no scenarios has no row; that is
-		// a zero, not a miss.
 		for _, id := range ids {
 			for _, idx := range indexesByID[id] {
 				values[idx] = stats[id]
