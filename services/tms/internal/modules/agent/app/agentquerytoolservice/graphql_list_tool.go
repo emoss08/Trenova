@@ -10,6 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -111,6 +112,9 @@ type graphQLListSpec struct {
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
+	// marks names, for a Marked read, the record a row carries outside text
+	// in (a match's EDI carrier invoice), which the run is tainted with.
+	marks func(row map[string]any) (agent.RecordRef, bool)
 }
 
 // idReference is where a list's id parameter points: the resource, what the
@@ -481,7 +485,7 @@ func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), accountingReadSpecs(),
-		ediReadSpecs(),
+		ediReadSpecs(), carrierReadSpecs(),
 	)
 }
 
@@ -855,10 +859,14 @@ func (t *graphQLListTool) Query(
 	}
 	outcome.Note = strings.Join(notes, " ")
 	if len(beside) == 0 {
-		return outcome, nil
+		return withMarks(&t.spec, page.items, outcome), nil
+	}
+	combined, err := withBeside(&outcome, beside)
+	if err != nil {
+		return nil, err
 	}
 
-	return withBeside(&outcome, beside)
+	return withMarks(&t.spec, page.items, combined), nil
 }
 
 // withBeside is a page's outcome with the records read alongside it, each

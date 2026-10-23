@@ -434,7 +434,7 @@ func (t *graphQLUnpagedListTool) Query(
 		outcome[outcomeWithheldNote] = withheldNote
 	}
 
-	return outcome, nil
+	return withMarks(&t.spec, items, outcome), nil
 }
 
 // rows are the records the root returned, as a list or under items, and the

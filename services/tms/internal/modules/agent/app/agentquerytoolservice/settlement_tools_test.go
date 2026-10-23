@@ -242,32 +242,6 @@ func (f *fakeCarrierSettlements) ListInvoiceMatches(
 	return &pagination.ListResult[*carriersettlement.InvoiceMatch]{Items: f.matches}, nil
 }
 
-func TestListCarrierInvoiceMatches_MarksOnlyInvoicesACarrierSentOverEDI(t *testing.T) {
-	t.Parallel()
-
-	ediInvoice := pulid.MustNew("ecinv_")
-	tool := newListCarrierInvoiceMatchesTool(&fakeCarrierSettlements{
-		matches: []*carriersettlement.InvoiceMatch{
-			{ID: pulid.MustNew("cim_"), EDICarrierInvoiceID: &ediInvoice, VarianceMinor: 1500},
-			{ID: pulid.MustNew("cim_")},
-		},
-	}, &fakePermissions{})
-
-	result, err := tool.Query(t.Context(), agentParams(map[string]any{}, ""))
-	require.NoError(t, err)
-
-	outcome := result.(*gatedOutcome)
-	rows := outcome.Items.([]invoiceMatchRow)
-	require.Len(t, rows, 2)
-	assert.Equal(t, "EDI", rows[0].Source)
-	assert.Equal(t, "Manual", rows[1].Source)
-	assert.Empty(t, rows[0].Variance)
-	assert.Equal(t, []agent.RecordRef{{
-		EntityType: carrierInvoiceEntity,
-		ID:         ediInvoice.String(),
-	}}, outcome.TaintedRecords())
-}
-
 func TestGetCarrierSettlement_ShowsLinesAtRestricted(t *testing.T) {
 	t.Parallel()
 

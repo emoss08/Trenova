@@ -125,3 +125,8 @@ reads:
   - tool: edi_get_ack_health
     operation: DeskEdiAckHealth
     reason: Acknowledgment health is read by ediAckHealth, keyed by its own arguments rather than a record's id.
+  - tool: carrier_list_intelligence_events
+    operation: DeskCarrierIntelEvents
+    reason: The tool is named for the carrier it watches; its records are the events, read by carrierIntelEvents with their screen's filter.
+  - tool: carrier_list_capacity_postings
+  - tool: carrier_list_invoice_matches
