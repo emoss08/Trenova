@@ -9,6 +9,7 @@ import type {
   TariffBill,
   TariffBillLine,
   TariffLineKind,
+  TariffLineLimit,
   TariffNote,
   TariffRange,
 } from "@trenova/shared/types/tariff";
@@ -28,22 +29,43 @@ export type BillViewProps = {
   className?: string;
 };
 
-/** What the reader calls a line a total clause added; the tariff gives adjustments no label. */
-export function tariffLineLabel(line: TariffBillLine, t: TranslateFn): string {
-  return adjustmentLabel(line.kind, t) ?? line.label ?? "";
+/**
+ * What the reader calls a line a total clause added; the tariff gives adjustments no label. The
+ * adjustment of a `minimum … on freight` or `maximum … on freight` clause says it is the freight's.
+ */
+export function tariffLineLabel(
+  line: Pick<TariffBillLine, "kind" | "label" | "on">,
+  t: TranslateFn,
+): string {
+  return adjustmentLabel(line.kind, line.on === "freight", t) ?? line.label ?? "";
 }
 
-function adjustmentLabel(kind: TariffLineKind, t: TranslateFn): string | null {
+function adjustmentLabel(kind: TariffLineKind, freight: boolean, t: TranslateFn): string | null {
   switch (kind) {
     case "minimum":
-      return t("Minimum charge adjustment");
+      return freight ? t("Minimum charge adjustment (freight)") : t("Minimum charge adjustment");
     case "maximum":
-      return t("Maximum charge adjustment");
+      return freight ? t("Maximum charge adjustment (freight)") : t("Maximum charge adjustment");
     case "rounding":
       return t("Rounding");
     case "charge":
       return null;
   }
+}
+
+/**
+ * That a charge's own minimum or maximum set its amount, and what it came to before: the reason
+ * its quantity times its rate no longer make its amount.
+ */
+function limitText(
+  limit: TariffLineLimit,
+  t: TranslateFn,
+  currency: string | null | undefined,
+): string {
+  const computed = formatTariffValue(limit.computed, t, { currency });
+  return limit.kind === "minimum"
+    ? t("Minimum applied · computed {0}", computed)
+    : t("Maximum applied · computed {0}", computed);
 }
 
 type LineRowProps = {
@@ -84,6 +106,11 @@ function LineRow({ line, converted, currency, onSelectRange }: LineRowProps) {
         </span>
         {basis && (
           <span className="text-foreground-subtle font-mono text-xs tabular-nums">{basis}</span>
+        )}
+        {line.limit && (
+          <span data-limit={line.limit.kind} className="text-foreground-muted text-xs tabular-nums">
+            {limitText(line.limit, t, currency)}
+          </span>
         )}
       </span>
       <span className="flex shrink-0 flex-col items-end gap-0.5">
@@ -167,10 +194,12 @@ function BillRemarks({
 }
 
 /**
- * A tariff's bill as the customer will be billed: each charge with its code and its quantity
- * times rate, the adjustments the total clauses made (labelled in the reader's language), the
- * reviews it asks a person for, the notes, the freight, accessorial and grand totals, and the totals in the billing currency when
- * the bill was converted. Charge labels are the customer's text and are shown as written.
+ * A tariff's bill as the customer will be billed: each charge with its code, its quantity times
+ * rate and the minimum or maximum that set its amount, the adjustments the total clauses made
+ * (labelled in the reader's language, a freight-only one as the freight's), what the tariff asks
+ * a person to review before it bills, the notes, the freight, accessorial and grand totals, and
+ * the totals in the billing currency when the bill was converted. Charge labels are the
+ * customer's text and are shown as written.
  */
 export function BillView({
   bill,
@@ -205,13 +234,18 @@ export function BillView({
         </ul>
       )}
 
-      <BillRemarks
-        label={t("Reviews")}
-        remarks={bill.reviews}
-        icon={<Flag01Icon className="text-warning mt-0.5 size-3.5 shrink-0" />}
-        className="text-foreground"
-        onSelectRange={onSelectRange}
-      />
+      {bill.reviews.length > 0 && (
+        <section aria-label={t("Needs review")} className="flex flex-col gap-1">
+          <span className="text-warning-foreground text-xs font-medium">{t("Needs review")}</span>
+          <BillRemarks
+            label={t("Reviews")}
+            remarks={bill.reviews}
+            icon={<Flag01Icon className="text-warning mt-0.5 size-3.5 shrink-0" />}
+            className="text-foreground"
+            onSelectRange={onSelectRange}
+          />
+        </section>
+      )}
       <BillRemarks
         label={t("Notes")}
         remarks={bill.notes}

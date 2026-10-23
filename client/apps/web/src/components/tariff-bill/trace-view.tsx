@@ -31,13 +31,13 @@ export function describeTraceEvent(
     case "iteration":
       return t("{0} = {1} (pass {2})", event.name, formatShownValue(event, t), event.index + 1);
     case "charge":
-      return event.code
-        ? t("Billed {0} ({1}): {2}", event.label, event.code, formatShownValue(event, t))
-        : t("Billed {0}: {1}", event.label, formatShownValue(event, t));
+      return describeCharge(event, t);
     case "dropped":
       return t("Dropped {0}: it came to zero", event.label);
     case "note":
       return t("Note: {0}", event.text);
+    case "review":
+      return t("Needs review: {0}", event.text);
     case "refusal":
       return t("Refused: {0}", event.message);
     case "lookup": {
@@ -49,18 +49,48 @@ export function describeTraceEvent(
         : t("tables.{0}[{1}] = {2}", lookup.table, keys, formatShownValue(lookup, t));
     }
     case "choice":
-      return event.chosen === null
-        ? t("{0}: every option refused", event.label)
-        : t("{0}: chose {1}", event.label, event.chosen);
+      if (event.chosen === null) return t("{0}: every option refused", event.label);
+      return event.subtotal === null
+        ? t("{0}: chose {1}", event.label, event.chosen)
+        : t(
+            "{0}: chose {1} at {2}",
+            event.label,
+            event.chosen,
+            formatTariffValue(event.subtotal, t),
+          );
     case "truncated":
       return t("The trace stops here; the rest of the rating is not recorded.");
   }
+}
+
+/** A billed charge, with the minimum or maximum that set its amount and what it came to before. */
+function describeCharge(
+  event: Extract<TariffTraceEvent, { kind: "charge" }>,
+  t: TranslateFn,
+): string {
+  const amount = formatShownValue(event, t);
+  const { label, code, limit } = event;
+  if (limit === null) {
+    return code
+      ? t("Billed {0} ({1}): {2}", label, code, amount)
+      : t("Billed {0}: {1}", label, amount);
+  }
+  const computed = formatTariffValue(limit.computed, t);
+  if (limit.kind === "minimum") {
+    return code
+      ? t("Billed {0} ({1}): {2}, its minimum (it came to {3})", label, code, amount, computed)
+      : t("Billed {0}: {1}, its minimum (it came to {2})", label, amount, computed);
+  }
+  return code
+    ? t("Billed {0} ({1}): {2}, its maximum (it came to {3})", label, code, amount, computed)
+    : t("Billed {0}: {1}, its maximum (it came to {2})", label, amount, computed);
 }
 
 const TONE: Partial<Record<TariffTraceEvent["kind"], string>> = {
   charge: "text-foreground",
   choice: "text-foreground font-medium",
   refusal: "text-danger-foreground",
+  review: "text-warning-foreground",
   dropped: "text-foreground-subtle",
   truncated: "text-foreground-subtle italic",
 };
@@ -75,7 +105,9 @@ export type TraceViewProps = {
 
 /**
  * The rating, statement by statement as it ran: each binding with its value, the branches and
- * arms taken, loops, the charges billed or dropped, notes, a refusal and every rate table read.
+ * arms taken, loops, the charges billed (with the minimum or maximum that set one) or dropped,
+ * notes, reviews, the option each choice kept and its subtotal, a refusal and every rate table
+ * read.
  */
 export function TraceView({ trace, lookups = [], onSelectRange, className }: TraceViewProps) {
   const t = useT();

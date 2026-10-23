@@ -52,7 +52,10 @@ function fieldEntries(
   });
 }
 
-/** Everything the data tab lists: the schema's roots and fields, the tables and the codes. */
+/**
+ * Everything the data tab lists: the schema's roots with their fields and methods (`bill` and
+ * `bill.charge(…)`), the tables and the codes.
+ */
 export function dataEntries(
   catalog: TariffCatalog,
   context: TariffContext | null,
@@ -69,6 +72,17 @@ export function dataEntries(
       insert: root.name,
     },
     ...fieldEntries(root.name, root.fields, root.name),
+    ...root.methods.map((method): ReferenceEntry => {
+      const call = `${root.name}.${method.name}(`;
+      return {
+        key: `root-method:${root.name}.${method.name}`,
+        group: root.name,
+        label: `${root.name}.${method.signature}`,
+        doc: tariffDocText(method.doc) ?? "",
+        insert: `${call})`,
+        cursor: call.length,
+      };
+    }),
   ]);
   const tables = (context?.tables ?? []).map((table): ReferenceEntry => ({
     key: `table:${table.code}`,
@@ -129,7 +143,7 @@ export function libraryEntries(
   return [...org, ...std];
 }
 
-/** Methods and properties by the type they are on, the built-in types, units and keywords. */
+/** The built-in types, the schema's enums, methods and properties by type, and the units. */
 export function languageEntries(catalog: TariffCatalog, t: TranslateFn): ReferenceEntry[] {
   const methods = catalog.methods.map((method): ReferenceEntry => ({
     key: `method:${method.receiver}.${method.name}`,
@@ -147,6 +161,16 @@ export function languageEntries(catalog: TariffCatalog, t: TranslateFn): Referen
     doc: tariffDocText(type.doc) ?? "",
     insert: type.name,
   }));
+  const enums = catalog.schema.enums.map((enumeration): ReferenceEntry => ({
+    key: `enum:${enumeration.name}`,
+    group: t("Enums"),
+    label: enumeration.name,
+    meta: enumeration.variants.join(" | "),
+    doc: enumeration.ordered
+      ? t("Ordered: its variants compare in this order, so a range of them means something.")
+      : "",
+    insert: enumeration.name,
+  }));
   const units = catalog.units.map((unit): ReferenceEntry => ({
     key: `unit:${unit.unit}`,
     group: t("Units"),
@@ -155,7 +179,7 @@ export function languageEntries(catalog: TariffCatalog, t: TranslateFn): Referen
     doc: "",
     insert: unit.unit,
   }));
-  return [...types, ...methods, ...units];
+  return [...types, ...enums, ...methods, ...units];
 }
 
 function ReferenceRow({ entry, onInsert }: { entry: ReferenceEntry; onInsert: () => void }) {

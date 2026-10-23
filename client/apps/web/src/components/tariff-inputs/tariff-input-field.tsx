@@ -18,6 +18,8 @@ import {
   isTariffDate,
   isTariffNumber,
   isTariffQuantity,
+  isTariffTime,
+  normalizeTariffTime,
   tariffDate,
   tariffDecimal,
   tariffNumber,
@@ -97,8 +99,8 @@ function numberCodec(empty: TariffEmptyValue): NumberFieldCodec {
 /**
  * One scalar input (or a scalar field of a record) as a form field, writing its wire value:
  * money, rates and quantities as decimal text with their unit, percents, whole and decimal
- * numbers, yes or no, text, dates and enums. A quantity whose dimension has more than one unit
- * gets a unit select limited to that dimension.
+ * numbers, yes or no, text, dates, times of day and enums. A quantity whose dimension has more
+ * than one unit gets a unit select limited to that dimension.
  */
 export function TariffScalarField(props: TariffScalarFieldProps) {
   const { type } = props;
@@ -121,6 +123,8 @@ export function TariffScalarField(props: TariffScalarFieldProps) {
     case "date":
     case "dateTime":
       return <TariffDateField {...props} dateTime={type.kind === "dateTime"} />;
+    case "time":
+      return <TariffTimeField {...props} />;
     case "list":
       return type.item.kind === "text" ? <TariffTextListField {...props} /> : null;
     case "record":
@@ -452,6 +456,58 @@ function TariffDateField({
                 field.onChange(
                   tariffDate(dateTime ? `${next}:00${localOffset(new Date(next))}` : next),
                 );
+              }}
+            />
+          </FieldWrapper>
+        );
+      }}
+    />
+  );
+}
+
+/**
+ * A time of day, written as the module writes it (`17:30:00`): the browser's own time control,
+ * in minutes unless the value carries seconds. A time has no date and no zone, so it is never
+ * shifted into the reader's zone.
+ */
+function TariffTimeField({
+  path,
+  label,
+  description,
+  layout,
+  ariaLabel,
+  disabled,
+  empty,
+}: TariffScalarFieldProps) {
+  const { control } = useFormContext<FieldValues>();
+  return (
+    <Controller
+      control={control}
+      name={path}
+      render={({ field, fieldState }) => {
+        const time = isTariffTime(field.value) ? normalizeTariffTime(field.value.$time) : null;
+        const seconds = time !== null && !time.endsWith(":00");
+        return (
+          <FieldWrapper
+            name={path}
+            htmlFor={path}
+            label={label}
+            description={description ?? undefined}
+            error={fieldState.error?.message}
+            layout={layout}
+          >
+            <Input
+              id={path}
+              type="time"
+              step={seconds ? 1 : 60}
+              value={time === null ? "" : seconds ? time : time.slice(0, 5)}
+              disabled={disabled}
+              aria-label={ariaLabel}
+              aria-invalid={fieldState.invalid}
+              onBlur={field.onBlur}
+              onChange={(event) => {
+                const next = normalizeTariffTime(event.target.value);
+                field.onChange(next === null ? empty : { $time: next });
               }}
             />
           </FieldWrapper>

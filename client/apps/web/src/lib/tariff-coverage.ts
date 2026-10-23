@@ -13,8 +13,11 @@ export const TARIFF_REGION_LABELS: Record<TariffRegionKind, string> = defineLabe
   loop: "Loop body",
   option: "Option",
   charge: "Charge",
+  review: "Review",
   refusal: "Refusal",
   function: "Function body",
+  applies: "Condition applies",
+  notApplies: "Condition does not apply",
 });
 
 /** The gutter's tooltip: that no test reaches the region, and what kind of region it is. */
@@ -25,13 +28,22 @@ export const TARIFF_UNREACHED_LABELS: Record<TariffRegionKind, string> = defineL
   loop: "No test runs this loop's body",
   option: "No test reaches this option",
   charge: "No test bills this charge",
+  review: "No test reaches this review",
   refusal: "No test reaches this refusal",
   function: "No test calls this function",
+  applies: "No test sees this condition apply",
+  notApplies: "No test sees this condition not apply",
 });
+
+/** A condition's outcome: it spans the whole final expression but holds none of its code. */
+function isOutcome(region: TariffRegion): boolean {
+  return region.kind === "applies" || region.kind === "notApplies";
+}
 
 /**
  * The regions no test or property case ran, outermost first where they nest: an unreached `if`
- * branch is listed once, not again for each charge inside it.
+ * branch is listed once, not again for each charge inside it. A condition's unseen outcome
+ * hides nothing inside its expression, since a test may run that code with the other outcome.
  */
 export function unreachedRegions(coverage: TariffCoverage | null | undefined): TariffRegion[] {
   const unreached = (coverage?.regions ?? []).filter((region) => region.hits === 0);
@@ -40,6 +52,7 @@ export function unreachedRegions(coverage: TariffCoverage | null | undefined): T
       !unreached.some(
         (other) =>
           other !== region &&
+          !isOutcome(other) &&
           other.range.from <= region.range.from &&
           region.range.to <= other.range.to &&
           (other.range.from < region.range.from || region.range.to < other.range.to),

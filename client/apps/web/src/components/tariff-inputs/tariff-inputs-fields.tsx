@@ -5,7 +5,11 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { PlusIcon, RefreshCcw01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { describeTariffConstraint, isListType } from "@trenova/shared/lib/tariff-constraint";
+import {
+  describeTariffConstraint,
+  isListType,
+  orderedEnumChoices,
+} from "@trenova/shared/lib/tariff-constraint";
 import { inheritedTariffValue, tariffInputText } from "@trenova/shared/lib/tariff-inputs";
 import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import { emptyTariffValue } from "@trenova/shared/rules/tariff-wire";
@@ -223,12 +227,14 @@ function rowDescription(
 }
 
 /**
- * The values a text or enum input's `where` list allows, which the field offers as a select;
- * null for any other input or constraint.
+ * The values a text or enum input's `where` list allows, or the variants an ordered enum's
+ * `where` range spans, which the field offers as a select; null for any other input or
+ * constraint.
  */
 export function constraintChoices(declaration: TariffInputDeclaration): string[] | null {
   const constraint = declaration.constraint;
-  if (!constraint || !("oneOf" in constraint)) return null;
+  if (!constraint) return null;
+  if (!("oneOf" in constraint)) return orderedEnumChoices(constraint, declaration.descriptor);
   const type =
     declaration.descriptor.kind === "optional"
       ? declaration.descriptor.inner
