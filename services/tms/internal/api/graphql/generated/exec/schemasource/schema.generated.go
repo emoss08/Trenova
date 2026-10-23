@@ -29321,7 +29321,7 @@ extend type Query {
   storedMileage(id: ID!): StoredMileage
 }
 `, BuiltIn: false},
-	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription {
+	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription @kind(resource: "table_change_alert") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!

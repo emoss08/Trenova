@@ -167,3 +167,52 @@ func TestReaderArguments_WithholdsWhatTheReaderCannotReach(t *testing.T) {
 		ReaderArguments(t.Context(), event, nil)["email"],
 		"with no ceiling at all the reader is held to Internal")
 }
+
+// An alert tool's arguments, read back from the trail, show at Internal only
+// what table_change_alert declares Internal (its event types, condition match
+// and status); its name, table, conditions and watched columns and any custom
+// text stay Restricted.
+func TestReaderArguments_KeepsAnAlertsDetailsRestricted(t *testing.T) {
+	t.Parallel()
+
+	redactor := NewRedactor(
+		permission.NewRegistry(),
+		fakePolicies{"report_create_table_change_alert": {
+			Name:     "report_create_table_change_alert",
+			Kind:     agent.ToolKindAction,
+			Resource: permission.ResourceTableChangeAlert,
+		}},
+		auditservice.NewSensitiveDataManager(config.EncryptionConfig{}),
+	)
+	redacted, err := redactor.Arguments("report_create_table_change_alert", map[string]any{
+		"name":           "Big invoices",
+		"tableName":      "invoices",
+		"eventTypes":     []any{"UPDATE"},
+		"conditions":     []any{map[string]any{"field": "total", "operator": "gt", "value": 5000}},
+		"conditionMatch": "all",
+		"watchedColumns": []any{"total"},
+		"customTitle":    "Heads up",
+		"customMessage":  "A large invoice changed",
+		"status":         "Active",
+	})
+	require.NoError(t, err)
+	event := &aiaudit.AIAuditEvent{
+		Arguments:           redacted.Values,
+		ArgumentSensitivity: redacted.Sensitivity,
+	}
+
+	internal := ReaderArguments(t.Context(), event, fixedCeiling(permission.SensitivityInternal))
+	for _, shown := range []string{"eventTypes", "conditionMatch", "status"} {
+		assert.Equal(t, redacted.Values[shown], internal[shown], shown)
+	}
+	for _, hidden := range []string{
+		"name", "tableName", "conditions", "watchedColumns", "customTitle", "customMessage",
+	} {
+		assert.Equal(t, aiaudit.WithheldPlaceholder, internal[hidden], hidden)
+	}
+
+	restricted := ReaderArguments(
+		t.Context(), event, fixedCeiling(permission.SensitivityRestricted),
+	)
+	assert.Equal(t, "Big invoices", restricted["name"])
+}

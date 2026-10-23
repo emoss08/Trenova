@@ -139,6 +139,7 @@ func (s *TCASubscription) GetPostgresSearchConfig() domaintypes.PostgresSearchCo
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Type: domaintypes.FieldTypeText},
 			{Name: "table_name", Type: domaintypes.FieldTypeText},
+			{Name: "status", Type: domaintypes.FieldTypeEnum},
 		},
 	}
 }

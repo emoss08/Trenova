@@ -59,6 +59,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenderexec"
@@ -131,6 +132,7 @@ import (
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentresolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
+	tablechangealertresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tablechangealertresolver"
 	telematicsresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsresolver"
 	tenantresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenantresolver"
 	tenderresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenderresolver"
@@ -244,6 +246,7 @@ import (
 	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	tablechangealertservice "github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	tableexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"go.uber.org/fx"
 	zap "go.uber.org/zap"
@@ -362,6 +365,7 @@ type ResolverParams struct {
 	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
+	TableChangeAlertService      *tablechangealertservice.Service
 	TableExportService           *tableexportservice.Service
 	TelematicsService            *telematicsservice.Service
 	TenderService                *tenderservice.Service
@@ -443,6 +447,7 @@ var shards = []*gqlexec.Shard{
 	sharedexec.Shard,
 	shipmentexec.Shard,
 	shipmenttypeexec.Shard,
+	tablechangealertexec.Shard,
 	telematicsexec.Shard,
 	tenantexec.Shard,
 	tenderexec.Shard,
@@ -985,6 +990,11 @@ var operations = []Operation{
 		Document: "query DeskReportSchedules($definitionId: ID, $enabledOnly: Boolean, $limit: Int) { reportSchedules( definitionId: $definitionId enabledOnly: $enabledOnly limit: $limit ) { consecutiveFailures cronExpression definitionId emailRecipients enabled formats id mine nextRunAt timezone } }",
 	},
 	{
+		Name:     "DeskTableChangeAlerts",
+		Hash:     "sha256:8ea214e904499850748a3e1163a64d3150f223904af354c5adff19e7d294dbdf",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskTableChangeAlerts($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { tcaSubscriptions(input: $input) { edges { node { conditionMatch conditions eventTypes id name status tableName watchedColumns } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
 		Name:     "CarrierSettlementDetail",
 		Hash:     "sha256:30368f798f729dfd25fe937fa96ec488d450acc1bf52324c08d66b714fa5bf24",
 		Document: "query CarrierSettlementDetail($id: ID!) @requiresRead(kind: \"carrier\") { carrierSettlement(id: $id) { adjustmentsMinor approvedAt approvedById batchId carrier { code id name paymentMethod paymentTermDays remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitState { abbreviation id } remitToName scac } carrierId createdAt currencyCode exchangeRate exchangeRateDate grossCostMinor id lines { amountMinor costEventId description eventType glAccountId id lineNumber moveId proNumber shipmentId } netPayableMinor notes paidAt paidById paidExchangeRate paidExchangeRateDate paidJournalBatchId payDate paymentMethod paymentReference periodEnd periodStart postedAt postedById postedJournalBatchId settlementNumber shipmentCount status submittedAt submittedById updatedAt version voidJournalBatchId voidReason voidedAt voidedById } }",
@@ -1482,6 +1492,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		ShipmentTypeService: p.ShipmentTypeService,
 	}
+	tablechangealertDeps := &tablechangealertresolver.Deps{
+		Core:                    core,
+		TableChangeAlertService: p.TableChangeAlertService,
+	}
 	telematicsDeps := &telematicsresolver.Deps{
 		Core:              core,
 		ShipmentService:   p.ShipmentService,
@@ -1669,6 +1683,7 @@ func NewSchema(p ResolverParams) Schema {
 		servicetypeQuery:              &servicetypeQuery{Deps: servicetypeDeps},
 		shipmentQuery:                 &shipmentQuery{Deps: shipmentDeps},
 		shipmenttypeQuery:             &shipmenttypeQuery{Deps: shipmenttypeDeps},
+		tablechangealertQuery:         &tablechangealertQuery{Deps: tablechangealertDeps},
 		telematicsQuery:               &telematicsQuery{Deps: telematicsDeps},
 		tenantQuery:                   &tenantQuery{Deps: tenantDeps},
 		tenderQuery:                   &tenderQuery{Deps: tenderDeps},
@@ -1897,6 +1912,7 @@ func NewSchema(p ResolverParams) Schema {
 		"ShipmentMove":                 func() any { return &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps} },
 		"ShipmentMoveJurisdictionMile": func() any { return &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps} },
 		"ShipmentRatingDetail":         func() any { return &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps} },
+		"TCASubscription":              func() any { return &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps} },
 		"Tender":                       func() any { return &tenderresolver.TenderResolver{Deps: tenderDeps} },
 		"TenderOffer":                  func() any { return &tenderresolver.TenderOfferResolver{Deps: tenderDeps} },
 		"Tractor":                      func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
@@ -2072,6 +2088,7 @@ type queryResolver struct {
 	*servicetypeQuery
 	*shipmentQuery
 	*shipmenttypeQuery
+	*tablechangealertQuery
 	*telematicsQuery
 	*tenantQuery
 	*tenderQuery
@@ -2199,6 +2216,7 @@ type (
 	servicetypeQuery                = servicetyperesolver.QueryResolver
 	shipmentQuery                   = shipmentresolver.QueryResolver
 	shipmenttypeQuery               = shipmenttyperesolver.QueryResolver
+	tablechangealertQuery           = tablechangealertresolver.QueryResolver
 	telematicsQuery                 = telematicsresolver.QueryResolver
 	tenantQuery                     = tenantresolver.QueryResolver
 	tenderQuery                     = tenderresolver.QueryResolver
