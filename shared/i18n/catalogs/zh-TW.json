@@ -9332,7 +9332,6 @@
   "Status Mismatch": "狀態不符",
   "Status Update Preference": "狀態更新偏好",
   "Status Update Recipients": "狀態更新收件者",
-  "Status cannot be changed from {0} to {1} here; submit, approve, reject, or archive the library instead": "無法在此將狀態從 {0} 變更為 {1}；請改為提交、核准、退回或封存公式庫",
   "Status cannot be longer than 100 characters": "狀態不得超過 100 個字元",
   "Status cannot be longer than 50 characters": "狀態不得超過 50 個字元",
   "Status cannot be longer than 80 characters": "狀態不得超過 80 個字元",

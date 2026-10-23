@@ -26837,7 +26837,6 @@
   "Status Mismatch": "状态不一致",
   "Status Update Preference": "状态更新偏好",
   "Status Update Recipients": "状态更新收件人",
-  "Status cannot be changed from {0} to {1} here; submit, approve, reject, or archive the library instead": "无法在此将状态从 {0} 更改为 {1}；请改为提交、批准、退回或归档公式库",
   "Status cannot be longer than 100 characters": "状态不得超过 100 个字符",
   "Status cannot be longer than 50 characters": "状态不得超过 50 个字符",
   "Status cannot be longer than 80 characters": "状态不得超过 80 个字符",
