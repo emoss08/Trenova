@@ -55,7 +55,8 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 
 // derivedParams are every parameter a bound read derives, in the shape its
 // root field reads: an unpaged list's arguments, a paged list's record
-// fields and root arguments, a get's arguments but its id.
+// fields but the ones its spec leaves unoffered and its root arguments, a
+// get's arguments but its id.
 func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam {
 	t.Helper()
 
@@ -72,8 +73,16 @@ func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam 
 	}
 	args, _, _, err := read.rootParams(tool, skip)
 	require.NoError(t, err)
+	var unoffered []string
+	for _, spec := range graphQLListSpecs() {
+		if spec.name == tool {
+			unoffered = spec.unoffered
+		}
+	}
+	fields, err := offered(tool, read.typedParams(), unoffered)
+	require.NoError(t, err)
 
-	return withRootArgs(read.typedParams(), args)
+	return withRootArgs(fields, args)
 }
 
 // Every field a converted tool's hand-kept catalog entry lets a model filter

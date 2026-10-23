@@ -281,6 +281,11 @@ reads:
   - tool: worker_list_shift_templates
     operation: ShiftTemplates
     reason: Shift patterns are read whole by shiftTemplates, which no rule binds because it does not page.
+  - tool: carrier_list_intelligence_events
+    operation: DeskCarrierIntelEvents
+    reason: The tool is named for the carrier it watches; its records are the events, read by carrierIntelEvents with their screen's filter.
+  - tool: carrier_list_capacity_postings
+  - tool: carrier_list_invoice_matches
   - tool: inbox_get_inbound_message
   - tool: inbox_list_inbound_messages
   - tool: inbox_list_email_profiles
