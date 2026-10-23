@@ -158,7 +158,7 @@ func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevel
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
-	_, resolvers := convertedListCases(conn)
+	_, resolvers := convertedListCases(conn, admin)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
 	schedules := schedulingrepository.New(schedulingrepository.Params{DB: conn, Logger: logger})
 	draws := workerdrugalcoholrepository.New(

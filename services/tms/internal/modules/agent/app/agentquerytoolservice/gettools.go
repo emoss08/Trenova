@@ -57,6 +57,18 @@ type getSpec struct {
 	// is itself the finding (no ELD has reported a driver's hours) rather
 	// than a missing record.
 	absent func(id pulid.ID) map[string]any
+	// keyResource is the resource of the record a get is keyed by when that
+	// is not its own (a driver's earnings, read by the worker's id).
+	keyResource permission.Resource
+	// amounts shows each amount the record holds in minor units as its
+	// decimal (graphql_money.go), and minorUnits are fields that hold minor
+	// units under a name the schema does not mark with Minor.
+	amounts    bool
+	minorUnits []string
+	// outside are the fields whose text someone outside the organization
+	// wrote (a driver's own description); a record that shows one is marked
+	// as read from outside, as reads Marked declares.
+	outside []string
 }
 
 type getTool struct {
@@ -93,7 +105,9 @@ func (t *getTool) Policy() agentports.ToolPolicy {
 // is still held to a prefix rather than checked for shape alone.
 func (t *getTool) ParamSchema() map[string]any {
 	property := agenttoolschema.IDText(t.spec.idDescription())
-	if len(t.spec.kinds) > 0 {
+	if t.spec.keyResource != "" {
+		property = agenttoolschema.RecordIDText(t.spec.keyResource, t.spec.idDescription())
+	} else if len(t.spec.kinds) > 0 {
 		property = agenttoolschema.KindID(t.spec.idDescription(), t.spec.kinds...)
 	} else if _, typed := t.spec.resource.IDPrefix(); typed {
 		property = agenttoolschema.RecordIDText(t.spec.resource, t.spec.idDescription())
@@ -235,7 +249,7 @@ func graphQLGetSpecs() []getSpec {
 		workerHOSGetSpec(),
 		formulaTemplateGetSpec(),
 		formulaLibraryGetSpec(),
-	}, slices.Concat(accountingGetSpecs(), ediGetSpecs(), factoringGetSpecs())...)
+	}, slices.Concat(accountingGetSpecs(), ediGetSpecs(), settlementGetSpecs(), factoringGetSpecs())...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.

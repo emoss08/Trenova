@@ -1,5 +1,5 @@
 {
-  "version": "sha256:6d37fd3257be4432d13160c8f34db21644de386482f6e5b3efd6b224556bfca8",
+  "version": "sha256:0789f91c77cae01dbf0aa9c5140faae86f300f3b757f76fe4f524d43f182e2c7",
   "screens": [
     {
       "path": "/",
@@ -29547,6 +29547,8 @@
         "customer",
         "detention",
         "dot_random_pool",
+        "driver_pay_profile",
+        "driver_settlement",
         "invoice",
         "performance_review",
         "performance_review_template",
@@ -30266,7 +30268,9 @@
           "requires": []
         }
       ],
-      "reads": [],
+      "reads": [
+        "driver_settlement"
+      ],
       "references": [
         "worker"
       ],
@@ -30314,7 +30318,9 @@
           "requires": []
         }
       ],
-      "reads": [],
+      "reads": [
+        "driver_pay_profile"
+      ],
       "references": [
         "worker"
       ],
@@ -38430,7 +38436,9 @@
     {
       "name": "DriverPayEventTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_settlement"
+      ],
       "linked": [
         {
           "kind": "worker",
@@ -38642,7 +38650,9 @@
     {
       "name": "EffectiveWorkerPayAssignment",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_pay_profile"
+      ],
       "linked": [],
       "declared": []
     },
@@ -40742,7 +40752,9 @@
     {
       "name": "PayProfileAssignments",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_pay_profile"
+      ],
       "linked": [
         {
           "kind": "worker",
@@ -40757,14 +40769,18 @@
     {
       "name": "PayProfileDetail",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_pay_profile"
+      ],
       "linked": [],
       "declared": []
     },
     {
       "name": "PayProfileTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_pay_profile"
+      ],
       "linked": [],
       "declared": []
     },
@@ -43379,7 +43395,9 @@
     {
       "name": "UnsettledPayEvents",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_settlement"
+      ],
       "linked": [],
       "declared": []
     },
@@ -44263,7 +44281,9 @@
     {
       "name": "WorkerEarningsSummary",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_settlement"
+      ],
       "linked": [],
       "declared": []
     },
@@ -44385,7 +44405,9 @@
     {
       "name": "WorkerPayAssignments",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "driver_pay_profile"
+      ],
       "linked": [],
       "declared": []
     },

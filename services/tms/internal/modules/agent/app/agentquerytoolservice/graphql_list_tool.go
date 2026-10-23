@@ -10,6 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -116,6 +117,13 @@ type graphQLListSpec struct {
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
+	// outside are the fields whose text someone outside the organization
+	// wrote (a driver's own description); a record that shows one is marked
+	// as read from outside, as reads Marked declares.
+	outside []string
+	// amounts shows each amount the record holds in minor units as the
+	// decimal a person reads, and filters it by that decimal (graphql_money.go).
+	amounts bool
 }
 
 // idReference is where a list's id parameter points: the resource, what the
@@ -210,6 +218,9 @@ func newGraphQLListTool(
 	}
 	if params, err = instantParams(spec.name, params, spec.instants); err != nil {
 		return nil, err
+	}
+	if spec.amounts {
+		params = amountParams(params)
 	}
 	if tabled {
 		params = withInputParams(params, inputParams(inputType))
@@ -504,7 +515,8 @@ func graphQLListSpecs() []graphQLListSpec {
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
 		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
-		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), factoringReadSpecs(),
+		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), settlementReadSpecs(),
+		factoringReadSpecs(),
 	)
 }
 
@@ -783,6 +795,41 @@ type graphQLListOutcome struct {
 	Total            *int             `json:"total,omitempty"`
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
+
+	outside []agent.RecordRef
+}
+
+// TaintedRecords is on the value: a list returns its outcome by value, as
+// its callers and the runtime's taint carrier read it.
+//
+//nolint:gocritic // the outcome is passed by value wherever a list returns it
+func (o graphQLListOutcome) TaintedRecords() []agent.RecordRef { return o.outside }
+
+// outsideRecords are the records among items that show text written outside
+// the organization in one of the fields named, each under its kind.
+func outsideRecords(
+	resource permission.Resource,
+	fields []string,
+	items ...map[string]any,
+) []agent.RecordRef {
+	if len(fields) == 0 {
+		return nil
+	}
+	var out []agent.RecordRef
+	for _, item := range items {
+		id, _ := item[recordIDField].(string)
+		if id == "" {
+			continue
+		}
+		for _, field := range fields {
+			if text, _ := item[field].(string); strings.TrimSpace(text) != "" {
+				out = append(out, agent.RecordRef{EntityType: resource.String(), ID: id})
+				break
+			}
+		}
+	}
+
+	return out
 }
 
 func (t *graphQLListTool) Query(
@@ -862,6 +909,7 @@ func (t *graphQLListTool) Query(
 		HasMore:          page.hasMore,
 		Total:            page.total,
 		WithheldByAccess: page.withheld,
+		outside:          outsideRecords(t.spec.resource, t.spec.outside, page.items...),
 	}
 	if page.hasMore {
 		outcome.NextCursor = window.next(page.endCursor)
@@ -962,6 +1010,12 @@ func (t *graphQLListTool) page(
 		for _, item := range page.items {
 			t.spec.shape(item, withheld, clk)
 		}
+	}
+	if t.spec.amounts {
+		for _, item := range page.items {
+			presentAmounts(item)
+		}
+		page.withheld = presentedPaths(page.withheld)
 	}
 	if info, ok := connection[connectionPageInfo].(map[string]any); ok {
 		page.hasMore, _ = info[pageHasNext].(bool)
@@ -1069,6 +1123,17 @@ func (t *graphQLListTool) relativeWithheld(paths []string) []string {
 		t.read.RootField+"."+connectionEdges+"."+connectionNode+".")
 }
 
+// carried reports whether any row holds the field.
+func carried(items []map[string]any, name string) bool {
+	for _, item := range items {
+		if _, ok := item[name]; ok {
+			return true
+		}
+	}
+
+	return false
+}
+
 // compact drops what tells a model nothing: nulls, empty lists and type
 // names, in the record and in each record it carries.
 func compact(node map[string]any) map[string]any {
@@ -1107,11 +1172,12 @@ func selectedColumns(fields []graphQLField, items []map[string]any) []string {
 		if !field.Selected {
 			continue
 		}
-		for _, item := range items {
-			if _, ok := item[field.Name]; ok {
-				out = append(out, field.Name)
-				break
+		for _, name := range []string{field.Name, presentedName(field.Name)} {
+			if slices.Contains(out, name) || !carried(items, name) {
+				continue
 			}
+			out = append(out, name)
+			break
 		}
 	}
 
@@ -1271,8 +1337,13 @@ func (t *graphQLListTool) nearMiss(
 }
 
 func (t *graphQLListTool) keptOut(condition any) string {
-	return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
-		"some do, so that one alone keeps them out.", t.spec.entityPlural, condition)
+	named := fmt.Sprint(condition)
+	if t.spec.amounts {
+		named = presentedName(named)
+	}
+
+	return fmt.Sprintf("No %s matched every condition. Without the condition on %s "+
+		"some do, so that one alone keeps them out.", t.spec.entityPlural, named)
 }
 
 // runView reads a composed table view through the same operation, so the

@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -177,6 +179,11 @@ func (t *graphQLGetTool) Query(
 		}
 		t.spec.shape(record, hidden, clockFor(params))
 	}
+	if t.spec.amounts {
+		presentAmounts(record)
+		presentMinor(record, t.spec.minorUnits)
+		withheld = presentedPaths(withheld)
+	}
 	beside, besideWithheld, notes, err := t.beside.read(ctx, params, variables, false)
 	if err != nil {
 		return nil, err
@@ -191,9 +198,24 @@ func (t *graphQLGetTool) Query(
 	if len(notes) > 0 {
 		record[outcomeNote] = strings.Join(notes, " ")
 	}
+	if outside := outsideRecords(t.spec.resource, t.spec.outside, record); len(outside) > 0 {
+		return &markedRecord{record: record, outside: outside}, nil
+	}
 
 	return record, nil
 }
+
+// markedRecord is a get's record that shows text written outside the
+// organization, encoded as the record and naming itself so the run marks
+// what it read.
+type markedRecord struct {
+	record  map[string]any
+	outside []agent.RecordRef
+}
+
+func (r *markedRecord) MarshalJSON() ([]byte, error) { return sonic.Marshal(r.record) }
+
+func (r *markedRecord) TaintedRecords() []agent.RecordRef { return r.outside }
 
 // variables are what the read sends: the id the call names, parsed so a
 // paraphrased id is refused rather than read as a missing record, and the

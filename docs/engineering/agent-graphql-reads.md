@@ -297,6 +297,7 @@ becomes a parameter. Its type comes from the field's GraphQL type:
 | `Boolean` | `<field>`: boolean | `eq` |
 | `ID` | `<field>`: `RecordID` of the resource the tool's `references` entry names, with the tool that supplies one; a nullable one also gives `has<Thing>`: boolean | `eq`; `isnotnull` / `isnull` |
 | `Int`, `Float`, `Decimal` | `<field>Min`, `<field>Max` | `gte` / `lte` |
+| `Int` named `<amount>Minor` (minor units), where the spec sets `amounts` | `<amount>Min`, `<amount>Max`: a decimal string such as `1250.00` | `gte` / `lte` on the minor units (`money.MinorUnits`) |
 | `String` | `<field>`: string | `contains` (`eq` for codes the configuration marks exact) |
 
 - **A record kept under another resource names its kind.** An id reference may name a record
@@ -537,7 +538,7 @@ names that parameter in `paramName`, and a `references` entry under the same nam
 other record's id rather than the get's own. A get need not take an id: `accounting_get_connection` reads `accountingSyncStatus(integrationType:)`,
 and `accounting_get_mapping` names a mapping by its id or by its target type with a record or a
 key. A get's `shape` applies to its record what the screen's resolver does not (what a sync
-record's status means). A human key the person may say instead (a PRO number) is a second,
+record's status means). A get keyed by the id of another kind's record (`settlement_get_driver_earnings` reads `workerEarningsSummary(workerId:)`) names that kind in `keyResource`, so its parameter is typed as a worker id from `worker_list`. A human key the person may say instead (a PRO number) is a second,
 optional parameter. The generator resolves it through the list operation's exact filter on that
 field, so `shipment_get` with `proNumber` reads `shipments` filtered by `proNumber`, then the card.
 A variable the operation sends to a field of the record rather than to its root is a parameter
@@ -679,6 +680,13 @@ reads as no; the ceiling still applies inside the view. This replaced the id-onl
 added, so an agent and a person are told the same thing about a linked record.
 `TestConvertedLists_ATractorsDriversShowTheirReferenceView` holds the tractor list to it.
 
+**A field that carries a record or a part is a field too.** `worker`, `lines` or `exceptions` on a
+settlement is judged by its own name on the kind holding it before anything inside it is: a kind
+with a Restricted default that does not declare it withholds the whole driver, every line or every
+exception at Internal, however its inner fields are ranked. Declaring a kind's sensitivities
+therefore declares its relation and part fields (Internal, since what they carry is judged again
+by its own kind or field), as `driver_settlement` and the other pay kinds do.
+
 **A record's id is never withheld.** Row-level security has already decided the row may be read,
 and the id carries none of the row's content. A tool needs it to name the row in the next call.
 
@@ -791,6 +799,21 @@ Each module's PR:
 | Fuel | `fuel_list_ifta_returns` | none | reads `DeskIftaReturns`, added for the Desk: the repository row's figures and each return's problems, with `blockingProblems` counted by the domain's `ProblemCode.Blocks` in the spec's `shape`. Every `ifta_return` field is Internal |
 | Fuel | `fuel_list_ifta_mileage_entries` | none | reads `DeskIftaMileageEntries`, added for the Desk; every `ifta_jurisdiction_mileage` field is Internal |
 | Fuel | `fuel_list_ifta_jurisdictions` | none | reads `DeskIftaJurisdictions`; `iftaJurisdictions` gains `countryCode` and `activeOnly`, which the resolver passes to `ListJurisdictions`, and the spec reads the active ones by default as the repository tool always did. The jurisdictions are global reference data under the root's `fuel_purchase` check and stay ungated, as the repository tool read them: declaring a kind on `IFTAJurisdiction` would withhold a mileage entry's or purchase's jurisdiction code from a reader without fuel purchase read |
+| Settlements | `settlement_list_driver` | none | reads `DriverSettlementTable`, named because `mySettlements` is the driver portal's own read of the record. The pay figures (gross, reimbursements, deductions, carry-forwards, net, miles) are Restricted and withheld at Internal, as the repository row gated them; each settlement's `worker` (now declared Internal on `driver_settlement`) shows the worker reference view. `query` matches the settlement number and pay profile name, no longer the driver's name: a driver is named by `workerId` from `worker_list`. `open: true` becomes `status` with Draft, PendingApproval and Approved, which its note says, and `hasExceptions: false` now narrows to settlements without exceptions |
+| Settlements | `settlement_list_pay_events` | none | reads `DriverPayEventTable`. `DriverPayEvent` had no kind, so the guard did not gate it; it now declares `@kind(resource: "driver_settlement")`, and its gross, miles, hold and void reasons follow `driver_settlement`'s Restricted fields, as the repository row gated the gross and hold reason (it did not return the void reason) |
+| Settlements | `settlement_list_carrier` | none | reads `CarrierSettlementTable`, named because `DeskCarrierSettlements` reads one carrier's settlements for its card and names no carrier. The gross, adjustments and net payable stay Restricted, as the repository row gated them; the payment method and reference, which the repository row did not return, are Restricted on `carrier_settlement`. `carrier` and `lines` are now declared Internal so the carrier shows its reference view |
+| Settlements | `settlement_list_driver_expenses` | `amount` | reads `DriverExpenseTable`. `driver_expense` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; who submitted it, its status, dates, receipt, review and links are now Internal, and the amount, the driver's description and the review note stay Restricted. The repository row returned the amount ungated, so it is newly withheld at Internal and the description says so. Marked: a row is marked as read from outside only where the description is shown |
+| Settlements | `settlement_list_pay_profiles` | none | reads `PayProfileTable`. `PayProfile` had no kind; it now declares `@kind(resource: "driver_pay_profile")`. `driver_pay_profile` declared no field sensitivities, so every field but `id` would be withheld at Internal; a profile's name, classification, status, currency, description and its components' kind, method and description are now Internal, and the guaranteed minimum, per-diem rate and cap, each component's rate, bands and amount bounds stay Restricted |
+| Settlements | `settlement_list_escrow_accounts` | none | reads `EscrowAccountTable`; the balance, target and interest rate stay Restricted, as the repository row gated them. `query` no longer resolves a driver's name to an id: a driver is named by `workerId` from `worker_list` |
+| Settlements | `settlement_list_advances` | none | reads `PayAdvanceTable`; the amount, recovered, written off and outstanding figures, notes and write-off reason stay Restricted, as the repository row gated the amounts. The repository tool's "no advance in this status" note becomes the generic near-miss probe |
+| Settlements | `settlement_list_recurring_deductions` | none | reads `RecurringDeductionTable`; the amount, cap and amount taken stay Restricted, as the repository row gated them. `payCodeId` and `escrowAccountId` become typed references |
+| Settlements | `settlement_list_recurring_earnings` | none | reads `RecurringEarningTable`; the amount, cap and amount paid stay Restricted, as the repository row gated them. `payCodeId` becomes a typed reference |
+| Settlements | `settlement_list_pay_assignments` | `notes` | reads `WorkerPayAssignments`, an unpaged list keyed by the worker. `WorkerPayAssignment` had no kind; it now declares `@kind(resource: "driver_pay_profile")`. The split percent and the assignment's notes are Restricted (the repository row returned the notes ungated); each row's `payProfile` names the profile. `inForce` is the spec's `shape`, from the call's clock |
+| Settlements | `settlement_list_pay_codes` | none | reads `DeskPayCodeOptions`, written for it (no operation read `payCodeOptions`): the active codes, narrowed by `direction`. Every field it selects is Internal |
+| Settlements | `settlement_get_driver` | none | reads `DeskDriverSettlementStatement`, written for it: the Desk's card sums the lines by how each was paid, and the adjustment tools take a line's id. The disputes on it come with their status (all of them, not only the open ones), and only for a reader who may read `settlement_dispute`, as the resolver gives them. The settlement's `exceptions` (code, severity, message) and `lines`, `disputes` and `worker` are now declared Internal; each line's quantity, rate and amount stay Restricted |
+| Settlements | `settlement_get_driver_earnings` | none | reads `WorkerEarningsSummary`, a get keyed by the worker. `WorkerEarningsSummary` had no kind, so the guard did not gate it on the settlement workspace either; it now declares `@kind(resource: "driver_settlement")`, the accrued count is Internal and the accrued gross, outstanding advances and escrow balance are Restricted, as the repository tool gated them. `outstandingAdvances` holds minor units under an unmarked name, so the spec names it in `minorUnits` |
+| Settlements | `settlement_get_dispute` | none | reads `SettlementDisputeDetail`. `settlement_dispute` declared no field sensitivities; its status, category, links, who submitted and resolved it and when are now Internal, and the driver's description and the resolution note stay Restricted, as the repository tool gated them. Marked only where the description is shown |
+| Settlements | `settlement_get_carrier` | none | reads `CarrierSettlementDetail`, named because the Desk's card sums the cost lines by kind and the tool returns each line by id. `lineNumber`, `costEventId` and `glAccountId` are now declared Internal on `carrier_settlement`; the payment method, which the repository tool gated as Restricted only when set, is Restricted |
 
 | Factoring | `factoring_list_readiness` | none | reads `DeskFactoringInvoiceStates` (written for it, the queue's input spread from the table input) with the queue's totals alongside (`FactoringSummary`, read on every call). `FactoringInvoiceState` and `FactoringSummary` had no kind, so the guard did not gate them; both now declare `@kind(resource: "invoice")`, the resource their roots check, and `invoice` declares what a readiness state carries (verdict, failed checks, the checks' code, message and fix, the dates, the factor) Internal. The open balance and every total stay Restricted, as the repository tool withheld them by the invoice's amounts. Ready is the default verdict, as before; `verdict` is now a list and can name Excluded or Funded too |
 | Factoring | `factoring_get_readiness` | none | reads `DeskFactoringReadiness`, which evaluates the invoice now through `factoringReadiness(invoiceId:)`, as the repository tool did; `InvoiceFactoring` reads the stored state instead and was not used |
@@ -857,7 +880,12 @@ selects a field the registry classifies as outside content (an inbound message's
 `body`, an EDI file's raw text) may not be `Never`.
 
 For `Marked` tools, the records a result carries are the nodes' `id`s under the binding's record
-kind. `callTaint` reads them from the result as it reads `TaintedRecords` today.
+kind. `callTaint` reads them from the result as it reads `TaintedRecords` today. The spec names
+the fields whose text was written outside the organization (`outside`: a driver's own description
+of an expense or a pay dispute), and a record is marked only where one of them is shown: one the
+ceiling withheld was never read, as the repository tools marked a description only when they
+showed it. A list's outcome and a get's record each carry the marks (`graphQLListOutcome`,
+`markedRecord`); an unpaged list refuses `outside`, since its outcome carries none.
 
 ## Tracing
 
@@ -904,6 +932,17 @@ A list returns what `searchOutcome` returns today, with cursor paging:
 - **Items.** `items` are the connection's `edges[].node`, as the operation selects them. Before
   encoding, nulls, `__typename` and empty lists are dropped. A nested record keeps the fields the
   operation selects for it, usually `id` with `code`/`name`.
+- **Amounts.** The schema carries money in minor units, named `<amount>Minor` (`netPayMinor`:
+  `230000`). A list or get spec that sets `amounts` shows each one as the decimal a person reads,
+  under the name without the suffix (`netPay: "2300.00"`), beside the record's `currencyCode`, so
+  a model never reads cents as dollars. `withheldByAccess`, `columns` and the near-miss note name
+  it the same way, and where the record already carries the decimal under that name the
+  minor-unit copy is dropped (`graphql_money.go`). It runs after the spec's `shape`, which still
+  reads the minor units (the accounting drift lists, which do not set it, compare them to the
+  tolerance). An amount the schema holds in minor units under another name
+  (`WorkerEarningsSummary.outstandingAdvances`) is named in the get spec's `minorUnits`. Such a
+  spec's amount filters take the decimal too (Typed parameters). The settlement and pay reads set
+  it; a module whose reads carry money sets it when it converts.
 - **Columns.** `columns` are the node's top-level fields, in the operation's order.
 - **Near-misses.** When page one is empty, `listnearmiss` probes again with the query or one
   typed parameter dropped, through the same operation; each probe is charged to the budget. Then
