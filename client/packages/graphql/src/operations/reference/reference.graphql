@@ -241,6 +241,14 @@ fragment FuelPurchaseReference on FuelPurchase {
   fuelType
 }
 
+fragment FuelPurchaseImportBatchReference on FuelPurchaseImportBatch {
+  id
+  provider
+  origin
+  fileName
+  rowCount
+}
+
 fragment FuelSurchargeProgramReference on FuelSurchargeProgram {
   id
   name

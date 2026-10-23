@@ -3076,7 +3076,7 @@ type QueryResolver interface {
 	HomeLayoutPresets(ctx context.Context) ([]*gqlmodel.HomeLayoutPreset, error)
 	HomeLayoutPreset(ctx context.Context, id string) (*gqlmodel.HomeLayoutPreset, error)
 	HomeLayoutPreview(ctx context.Context, presetID *string, roleID *string) (*gqlmodel.HomeLayout, error)
-	IFTAJurisdictions(ctx context.Context, membersOnly *bool) ([]*ifta.Jurisdiction, error)
+	IFTAJurisdictions(ctx context.Context, membersOnly *bool, countryCode *string, activeOnly *bool) ([]*ifta.Jurisdiction, error)
 	IFTATaxRates(ctx context.Context, input gqlmodel.IFTATaxRatesInput) (*gqlmodel.IFTATaxRateConnection, error)
 	IFTAMileageEntries(ctx context.Context, input gqlmodel.IFTAMileageEntriesInput) (*gqlmodel.IFTAJurisdictionMileageEntryConnection, error)
 	IFTAMileageEntry(ctx context.Context, id string) (*ifta.JurisdictionMileageEntry, error)

@@ -131,17 +131,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `formula_get_template` | field-no-op | formulaTemplate | propose DeskFormulaTemplateCard | n/a | id | Same FormulaTemplateRepository.GetByID via service; no persisted op reads formulaTemplate(id). |
 | `formula_list_templates` | op | formulaTemplates | FormulaTemplateTable | cursor | DataTable fieldFilters only | Same repository list. |
 
-## fuel
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `fuel_list_cards` | op | fuelCards | FuelCardTable | cursor | bespoke FuelCardsInput (DataTable + typed) | Same FuelPurchase repository ListCards via service. |
-| `fuel_list_ifta_jurisdictions` | partial | iftaJurisdictions | IftaJurisdictions | unpaged list | typed membersOnly | Same IFTA ListJurisdictions; countryCode filter missing (client-side only). |
-| `fuel_list_ifta_mileage_entries` | op | iftaMileageEntries | IftaMileageEntryTable | cursor | bespoke IFTAMileageEntriesInput (DataTable + typed) | Same ListMileageEntries. |
-| `fuel_list_ifta_returns` | op | iftaReturns | IftaReturnTable | cursor | bespoke IFTAReturnsInput (DataTable + year, statuses) | Same ListReturns. |
-| `fuel_list_purchase_imports` | op | fuelPurchaseImports | FuelPurchaseImportTable | cursor | bespoke FuelPurchaseImportsInput (DataTable + typed) | Same ListImportBatches. |
-| `fuel_list_purchases` | op | fuelPurchases | FuelPurchaseTable | cursor | bespoke FuelPurchasesInput (DataTable + typed) | Same ListPurchases. |
-
 ## home
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
@@ -311,11 +300,11 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 91 |
-| op, converted (rows removed) | 28 |
+| op, not yet converted | 86 |
+| op, converted (rows removed) | 33 |
 | field-no-op | 6 |
-| partial, not yet converted | 23 |
-| partial, converted (rows removed) | 7 |
+| partial, not yet converted | 22 |
+| partial, converted (rows removed) | 8 |
 | none | 21 |
 | **total** | **176** |
 

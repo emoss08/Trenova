@@ -5,19 +5,12 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
-	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,22 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-type fakeFuelPurchases struct {
-	fuelpurchaseports.FuelPurchaseRepository
-
-	purchases []*fuelpurchase.FuelPurchase
-	captured  *fuelpurchaseports.ListFuelPurchasesRequest
-}
-
-func (f *fakeFuelPurchases) ListPurchases(
-	_ context.Context,
-	req *fuelpurchaseports.ListFuelPurchasesRequest,
-) (*pagination.CursorListResult[*fuelpurchase.FuelPurchase], error) {
-	f.captured = req
-
-	return pagination.NewCursorListResult(f.purchases, len(f.purchases)+1), nil
-}
 
 func encodedRows(t *testing.T, result any) []map[string]any {
 	t.Helper()
@@ -53,43 +30,6 @@ func encodedRows(t *testing.T, result any) []map[string]any {
 	require.NoError(t, sonic.Unmarshal(raw, &decoded))
 
 	return decoded.Items
-}
-
-func TestListFuelPurchases_ReadsTheTractorAndJurisdictionItNames(t *testing.T) {
-	t.Parallel()
-
-	jurisdiction := &ifta.Jurisdiction{ID: pulid.MustNew("ifj_"), Code: "TX"}
-	unit := &tractor.Tractor{ID: pulid.MustNew("trac_"), Code: "TRC-001"}
-	repo := &fakeFuelPurchases{purchases: []*fuelpurchase.FuelPurchase{{
-		ID:               pulid.MustNew("fpur_"),
-		TractorID:        unit.ID,
-		Tractor:          unit,
-		JurisdictionID:   jurisdiction.ID,
-		Jurisdiction:     jurisdiction,
-		PurchasedAt:      1_784_000_000,
-		FuelType:         domaintypes.IFTAFuelTypeDiesel,
-		Quantity:         decimal.RequireFromString("100"),
-		QuantityUnit:     fuelpurchase.QuantityUnitGallon,
-		Gallons:          decimal.RequireFromString("100"),
-		TotalAmountMinor: 38_990,
-		CurrencyCode:     "USD",
-		TaxPaid:          true,
-		Source:           fuelpurchase.PurchaseSourceManual,
-	}}}
-	tool := newListFuelPurchasesTool(repo)
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
-	require.NoError(t, err)
-	require.NotNil(t, repo.captured)
-	assert.True(t, repo.captured.IncludeTractor)
-	assert.True(t, repo.captured.IncludeJurisdiction)
-
-	rows := encodedRows(t, result)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "TRC-001", rows[0]["tractorCode"])
-	assert.Equal(t, "TX", rows[0]["jurisdiction"])
-	assert.Equal(t, "389.90", rows[0]["totalAmount"])
-	assert.Equal(t, permission.ResourceFuelPurchase, tool.Policy().Resource)
 }
 
 type fakeFuelIndexPrices struct {
@@ -137,40 +77,6 @@ func TestListFuelIndexPrices_BoundsTheWindowAndTheCount(t *testing.T) {
 	rows := result.(map[string]any)["prices"].([]fuelIndexPriceRow)
 	require.Len(t, rows, 1)
 	assert.True(t, rows[0].IsManual)
-}
-
-type fakeIFTAJurisdictions struct {
-	iftaports.IFTARepository
-
-	captured *iftaports.ListJurisdictionsRequest
-}
-
-func (f *fakeIFTAJurisdictions) ListJurisdictions(
-	_ context.Context,
-	req *iftaports.ListJurisdictionsRequest,
-) ([]*ifta.Jurisdiction, error) {
-	f.captured = req
-
-	return []*ifta.Jurisdiction{{
-		ID: pulid.MustNew("ifj_"), CountryCode: "US", Code: "TX", Name: "Texas",
-		IsIftaMember: true,
-	}}, nil
-}
-
-func TestListIFTAJurisdictions_OnlyActiveOnes(t *testing.T) {
-	t.Parallel()
-
-	repo := &fakeIFTAJurisdictions{}
-	tool := newListIFTAJurisdictionsTool(repo)
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"countryCode": " us "}))
-	require.NoError(t, err)
-	assert.Equal(t, "US", repo.captured.CountryCode)
-	assert.Equal(t, []ifta.JurisdictionStatus{ifta.JurisdictionStatusActive},
-		repo.captured.Statuses)
-	rows := result.(map[string]any)["jurisdictions"].([]iftaJurisdictionRow)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "TX", rows[0].Code)
 }
 
 type fakeRateImports struct {

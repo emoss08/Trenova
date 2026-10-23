@@ -14,8 +14,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetsafetyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelpurchaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
@@ -50,8 +52,10 @@ import (
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
 	fleetcoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	fleetsafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
+	fuelpurchaseresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fuelpurchaseresolver"
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
+	iftaresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/iftaresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
 	locationresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
 	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
@@ -94,6 +98,9 @@ import (
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
+	fueldeskcardservice "github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
+	fuelpurchaseservice "github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
@@ -127,13 +134,17 @@ type ResolverParams struct {
 	CustomerService              *customerservice.Service
 	DispatchAutoAssignService    agentports.DispatchAutoAssignService
 	DispatchConsoleService       agentports.DispatchConsoleService
+	DistanceCalculationService   shipmentports.DistanceCalculationService `optional:"true"`
 	DocumentTypeService          *documenttypeservice.Service
 	DriverPortalService          *driverportalservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	FleetCodeService             *fleetcodeservice.Service
+	FuelDeskCards                *fueldeskcardservice.Service
+	FuelPurchaseService          *fuelpurchaseservice.Service
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	IFTAService                  *iftaservice.Service
 	LocationCategoryService      *locationcategoryservice.Service
 	LocationService              *locationservice.Service
 	Logger                       *zap.Logger
@@ -171,8 +182,10 @@ var shards = []*gqlexec.Shard{
 	equipmenttypeexec.Shard,
 	fleetcodeexec.Shard,
 	fleetsafetyexec.Shard,
+	fuelpurchaseexec.Shard,
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
+	iftaexec.Shard,
 	locationexec.Shard,
 	locationcategoryexec.Shard,
 	performancereviewexec.Shard,
@@ -263,6 +276,36 @@ var operations = []Operation{
 		Name:     "EquipmentTypeTable",
 		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFuelCards",
+		Hash:     "sha256:0661b9d3f4e70e04b937f94c366a42733cd8e1fc3c5f823788653c03a5676fdc",
+		Document: "query DeskFuelCards($includeTotalCount: Boolean = false, $input: FuelCardsInput!) { fuelCards(input: $input) { edges { node { assignedTractor { code id } assignedTractorId assignedWorker { id wholeName } assignedWorkerId cancelledAt discoveredAt expiresAt id label lastFour provider status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskIftaJurisdictions",
+		Hash:     "sha256:c6b2439e792f8fc14711df7e41a9a1059a6580b37f3529fbc1215d65b935025e",
+		Document: "query DeskIftaJurisdictions($activeOnly: Boolean = false, $countryCode: String, $membersOnly: Boolean = false) { iftaJurisdictions( membersOnly: $membersOnly countryCode: $countryCode activeOnly: $activeOnly ) { code countryCode id isIftaMember name } }",
+	},
+	{
+		Name:     "DeskIftaMileageEntries",
+		Hash:     "sha256:e7e986449df213ca57da9b7d451bb23322f8bcb19da7dc91be5f4e08490aabd2",
+		Document: "query DeskIftaMileageEntries($includeTotalCount: Boolean = false, $input: IFTAMileageEntriesInput!) { iftaMileageEntries(input: $input) { edges { node { id jurisdiction { code id } jurisdictionId loaded miles notes quarter shipmentMoveId source tractor { code id } tractorId traveledAt year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskIftaReturns",
+		Hash:     "sha256:9c28e3f7591425725845f95ae14d77e3c39eecdf469a8b044f36c0f02c75dbd0",
+		Document: "query DeskIftaReturns($includeTotalCount: Boolean = false, $input: IFTAReturnsInput!) { iftaReturns(input: $input) { edges { node { amendmentNumber currencyCode filedAt filingReference finalizedAt id netDue problems { code fuelType jurisdictionCode message } quarter status totalGallons totalMiles totalTaxPaidGallons year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFuelPurchaseImports",
+		Hash:     "sha256:0d40cca356dae5f9b56d4fe32797325e664f3b2a8e6ccbae2712cf21a6c4fedb",
+		Document: "query DeskFuelPurchaseImports($includeTotalCount: Boolean = false, $input: FuelPurchaseImportsInput!) { fuelPurchaseImports(input: $input) { edges { node { committedAt committedCount error errorCount fileName id origin provider rowCount stagedAt status summary { alreadyImportedCount duplicateInFileCount newCount totalAmount totalGallons } } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFuelPurchases",
+		Hash:     "sha256:aa1b9b1aed82223c05fd9d7f4ab67141992cd681605e745c1c2b099d5661366b",
+		Document: "query DeskFuelPurchases($includeTotalCount: Boolean = false, $input: FuelPurchasesInput!) { fuelPurchases(input: $input) { edges { node { cardLastFour currencyCode fuelCardId fuelType gallons id importBatchId jurisdiction { code id } jurisdictionId purchasedAt quantity quantityUnit source taxPaid totalAmount tractor { code id } tractorId transactionReference vendor vendorCity worker { id wholeName } workerId } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskLocationCard",
@@ -451,6 +494,11 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		WorkerSafetyService: p.WorkerSafetyService,
 	}
+	fuelpurchaseDeps := &fuelpurchaseresolver.Deps{
+		Core:                core,
+		FuelDeskCards:       p.FuelDeskCards,
+		FuelPurchaseService: p.FuelPurchaseService,
+	}
 	hazardousmaterialDeps := &hazardousmaterialresolver.Deps{
 		Core:                     core,
 		HazardousMaterialService: p.HazardousMaterialService,
@@ -458,6 +506,11 @@ func NewSchema(p ResolverParams) Schema {
 	holdreasonDeps := &holdreasonresolver.Deps{
 		Core:              core,
 		HoldReasonService: p.HoldReasonService,
+	}
+	iftaDeps := &iftaresolver.Deps{
+		Core:                       core,
+		IftaService:                p.IFTAService,
+		DistanceCalculationService: p.DistanceCalculationService,
 	}
 	locationDeps := &locationresolver.Deps{
 		Core:            core,
@@ -544,6 +597,8 @@ func NewSchema(p ResolverParams) Schema {
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
+		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
+		iftaMutation:                  &iftaMutation{Deps: iftaDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
@@ -571,8 +626,10 @@ func NewSchema(p ResolverParams) Schema {
 		equipmenttypeQuery:         &equipmenttypeQuery{Deps: equipmenttypeDeps},
 		fleetcodeQuery:             &fleetcodeQuery{Deps: fleetcodeDeps},
 		fleetsafetyQuery:           &fleetsafetyQuery{Deps: fleetsafetyDeps},
+		fuelpurchaseQuery:          &fuelpurchaseQuery{Deps: fuelpurchaseDeps},
 		hazardousmaterialQuery:     &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
 		holdreasonQuery:            &holdreasonQuery{Deps: holdreasonDeps},
+		iftaQuery:                  &iftaQuery{Deps: iftaDeps},
 		locationQuery:              &locationQuery{Deps: locationDeps},
 		locationcategoryQuery:      &locationcategoryQuery{Deps: locationcategoryDeps},
 		performancereviewQuery:     &performancereviewQuery{Deps: performancereviewDeps},
@@ -645,23 +702,42 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":           func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":            func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"DOTRandomDraw":       func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomDrawEntry":  func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomPool":       func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
-		"DQFFile":             func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
-		"DQFItem":             func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
-		"DisciplinaryLadder":  func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
-		"DrugAlcoholStanding": func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
-		"FleetSafetyRank":     func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
-		"FleetSafetyTerminal": func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
-		"LeaveControl":        func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":    func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":    func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"OSHAAnnualSummary":   func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"PTOChartDataPoint":   func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PerformanceReview":   func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"Commodity":                    func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":                     func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"DOTRandomDraw":                func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomDrawEntry":           func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomPool":                func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
+		"DQFFile":                      func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
+		"DQFItem":                      func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
+		"DisciplinaryLadder":           func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
+		"DrugAlcoholStanding":          func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
+		"FleetSafetyRank":              func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
+		"FleetSafetyTerminal":          func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
+		"FuelCard":                     func() any { return &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps} },
+		"FuelCardDeskCard":             func() any { return &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps} },
+		"FuelFeedStatus":               func() any { return &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps} },
+		"FuelHeldSpend":                func() any { return &fuelpurchaseresolver.FuelHeldSpendResolver{Deps: fuelpurchaseDeps} },
+		"FuelJurisdictionGallons":      func() any { return &fuelpurchaseresolver.FuelJurisdictionGallonsResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchase":                 func() any { return &fuelpurchaseresolver.FuelPurchaseResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseIFTA":             func() any { return &fuelpurchaseresolver.FuelPurchaseIFTAResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseImportBatch":      func() any { return &fuelpurchaseresolver.FuelPurchaseImportBatchResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseImportRow":        func() any { return &fuelpurchaseresolver.FuelPurchaseImportRowResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseImportSummary":    func() any { return &fuelpurchaseresolver.FuelPurchaseImportSummaryResolver{Deps: fuelpurchaseDeps} },
+		"FuelSpend":                    func() any { return &fuelpurchaseresolver.FuelSpendResolver{Deps: fuelpurchaseDeps} },
+		"IFTAFleetMPG":                 func() any { return &iftaresolver.IFTAFleetMPGResolver{Deps: iftaDeps} },
+		"IFTAJurisdiction":             func() any { return &iftaresolver.IFTAJurisdictionResolver{Deps: iftaDeps} },
+		"IFTAJurisdictionMileageEntry": func() any { return &iftaresolver.IFTAJurisdictionMileageEntryResolver{Deps: iftaDeps} },
+		"IFTAPeriod":                   func() any { return &iftaresolver.IFTAPeriodResolver{Deps: iftaDeps} },
+		"IFTAReturn":                   func() any { return &iftaresolver.IFTAReturnResolver{Deps: iftaDeps} },
+		"IFTAReturnLine":               func() any { return &iftaresolver.IFTAReturnLineResolver{Deps: iftaDeps} },
+		"IFTAReturnProblem":            func() any { return &iftaresolver.IFTAReturnProblemResolver{Deps: iftaDeps} },
+		"IFTATaxRate":                  func() any { return &iftaresolver.IFTATaxRateResolver{Deps: iftaDeps} },
+		"LeaveControl":                 func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
+		"LeaveEntitlement":             func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
+		"LocationCategory":             func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"OSHAAnnualSummary":            func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
+		"PTOChartDataPoint":            func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PerformanceReview":            func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
@@ -714,6 +790,8 @@ type mutationResolver struct {
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
 	*fleetsafetyMutation
+	*fuelpurchaseMutation
+	*iftaMutation
 	*performancereviewMutation
 	*telematicsMutation
 	*tenantMutation
@@ -742,8 +820,10 @@ type queryResolver struct {
 	*equipmenttypeQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
+	*fuelpurchaseQuery
 	*hazardousmaterialQuery
 	*holdreasonQuery
+	*iftaQuery
 	*locationQuery
 	*locationcategoryQuery
 	*performancereviewQuery
@@ -771,6 +851,8 @@ type (
 	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
 	fleetsafetyMutation            = fleetsafetyresolver.MutationResolver
+	fuelpurchaseMutation           = fuelpurchaseresolver.MutationResolver
+	iftaMutation                   = iftaresolver.MutationResolver
 	performancereviewMutation      = performancereviewresolver.MutationResolver
 	telematicsMutation             = telematicsresolver.MutationResolver
 	tenantMutation                 = tenantresolver.MutationResolver
@@ -796,8 +878,10 @@ type (
 	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
 	fleetcodeQuery                 = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery               = fleetsafetyresolver.QueryResolver
+	fuelpurchaseQuery              = fuelpurchaseresolver.QueryResolver
 	hazardousmaterialQuery         = hazardousmaterialresolver.QueryResolver
 	holdreasonQuery                = holdreasonresolver.QueryResolver
+	iftaQuery                      = iftaresolver.QueryResolver
 	locationQuery                  = locationresolver.QueryResolver
 	locationcategoryQuery          = locationcategoryresolver.QueryResolver
 	performancereviewQuery         = performancereviewresolver.QueryResolver

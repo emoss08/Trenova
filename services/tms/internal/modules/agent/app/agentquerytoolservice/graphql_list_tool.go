@@ -96,9 +96,12 @@ type graphQLListSpec struct {
 }
 
 // idReference is where a list's id parameter points: the resource, what the
-// id is, and the tool a model gets one from.
+// id is, and the tool a model gets one from. A record kept under another
+// resource's permission (an IFTA jurisdiction under fuel purchases) names its
+// kind, so its id is still held to the kind's prefix.
 type idReference struct {
 	resource permission.Resource
+	kind     permission.RecordKind
 	what     string
 	source   string
 }
@@ -140,16 +143,30 @@ func newGraphQLListTool(
 		return nil, err
 	}
 
-	return &graphQLListTool{
+	tool := &graphQLListTool{
 		spec:        *spec,
 		read:        read,
 		input:       input,
-		params:      params,
 		sortable:    agenttoolschema.Derived(spec.name+".graphqlSortBy", read.sortable()),
 		reader:      reader,
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
-	}, nil
+	}
+	tool.params = slices.DeleteFunc(params, tool.confidential)
+
+	return tool, nil
+}
+
+// confidential marks a parameter on a Confidential field, which no reader's
+// data access reaches (a card provider's own card id): offering it would
+// only lead to a refusal.
+func (t *graphQLListTool) confidential(param graphQLParam) bool {
+	if param.OnInput {
+		return false
+	}
+	resource, name := t.fieldOwner(param.Field)
+
+	return !fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityRestricted)
 }
 
 // referenced types each id parameter by the resource its spec names, drops
@@ -171,6 +188,14 @@ func referenced(
 			continue
 		}
 		param.Schema = agenttoolschema.RecordID(ref.resource, ref.what, ref.source)
+		if ref.kind != "" {
+			if param.Kind == paramReferences {
+				return nil, fmt.Errorf("%s references %q by kind, which only one id can take",
+					tool, param.Name)
+			}
+			param.Schema = agenttoolschema.KindID(
+				agenttoolschema.IDDescription(ref.what, ref.source), ref.kind)
+		}
 		if param.Kind == paramReferences {
 			param.Schema = agenttoolschema.RecordIDs(ref.resource,
 				agenttoolschema.IDDescription(ref.what, ref.source), unpagedMost)
@@ -225,7 +250,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), fuelReadSpecs(),
 	)
 }
 
