@@ -4,20 +4,6 @@ package ratematrix
 
 import "github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DensityScale].
-// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [ratematrixcol.DensityScaleFieldMap] instead of parsing struct tags via reflection.
-func (e *DensityScale) GetStaticFieldMap() map[string]string {
-	return ratematrixcol.DensityScaleFieldMap
-}
-
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DensityScaleTier].
-// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [ratematrixcol.DensityScaleTierFieldMap] instead of parsing struct tags via reflection.
-func (e *DensityScaleTier) GetStaticFieldMap() map[string]string {
-	return ratematrixcol.DensityScaleTierFieldMap
-}
-
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateMatrix].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [ratematrixcol.RateMatrixFieldMap] instead of parsing struct tags via reflection.

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -135,17 +136,31 @@ func (s *Service) rescheduleBilledContent(
 	resolved := template.ApplyVersionFull(version)
 	resolved.CurrentVersionNumber = template.CurrentVersionNumber + 1
 
-	if err := s.validateTemplate(ctx, resolved); err != nil {
+	content, err := s.checkContent(ctx, &contentRequest{
+		tenant: templateTenant(resolved),
+		source: resolved.Source,
+		mode:   tariff.LibrariesPinned,
+		pins:   version.Imports,
+	})
+	if err != nil {
 		return nil, err
 	}
-	if err := s.requirePassingTestCases(ctx, resolved, req.TenantInfo); err != nil {
-		return nil, err
+	if refusal := content.refusal(); refusal != nil {
+		return nil, refusal
+	}
+	if !content.testsPass() {
+		return nil, errortypes.NewValidationError(
+			versionNumberField,
+			errortypes.ErrInvalid,
+			"Version {0}'s tests no longer pass with the libraries it pinned, so it cannot bill again",
+			version.VersionNumber,
+		)
 	}
 
 	changeMessage := fmt.Sprintf("Version %d scheduled to bill again", version.VersionNumber)
 
 	var scheduled *formulatemplate.FormulaTemplateVersion
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		updated, txErr := s.repo.Update(txCtx, resolved)
 		if txErr != nil {
 			return txErr

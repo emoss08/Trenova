@@ -28,15 +28,16 @@ type Status struct {
 
 func (s *Service) ListVehiclePositions(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	maxAgeSeconds int64,
+	req *telematicsports.ListVehiclePositionsRequest,
 ) ([]*telematics.VehiclePosition, error) {
-	if maxAgeSeconds <= 0 {
-		maxAgeSeconds = defaultPositionMaxAgeSeconds
+	maxAge := req.MaxAgeSeconds
+	if maxAge <= 0 {
+		maxAge = defaultPositionMaxAgeSeconds
 	}
 	return s.repo.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
-		TenantInfo:     tenantInfo,
-		MaxAgeSeconds:  maxAgeSeconds,
+		TenantInfo:     req.TenantInfo,
+		TractorIDs:     req.TractorIDs,
+		MaxAgeSeconds:  maxAge,
 		IncludeTractor: true,
 		IncludeWorker:  true,
 	})

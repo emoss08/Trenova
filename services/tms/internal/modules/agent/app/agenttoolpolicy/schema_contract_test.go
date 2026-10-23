@@ -21,10 +21,8 @@ var domainOwnedSchemas = map[string]string{
 	"report_run:parameters": "keyed by the parameters each saved report declares; the " +
 		"report compiler checks every value against its declaration",
 	"report_preview:parameters": "as report_run",
-	"formula_test_expression:variables": "keyed by the variables each formula declares; " +
-		"the formula engine checks every value against its declared type",
-	"formula_test_expression:scenarios[].variables": "as formula_test_expression:variables",
-	"formula_propose:scenarios[].variables":         "as formula_test_expression:variables",
+	"formula_preview:inputs": "keyed by the inputs each Tariff source declares; the " +
+		"Tariff checker checks every value against its declared type",
 }
 
 func domainOwned(tool, path string) bool {

@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -20,19 +22,33 @@ func sheet(rows ...[]string) *pkgrateimport.Sheet {
 	}
 }
 
-// standardTemplates stands in for the organization's seeded formula templates,
-// which is what staging resolves a sheet's rate types against. Existing rules
-// price through the same per-mile template, so a lane the sheet restates
-// identically compares as unchanged.
 var standardTemplates = map[string]pulid.ID{
 	formulatemplate.StandardFlatRate: pulid.MustNew("ft_"),
 	formulatemplate.StandardPerMile:  pulid.MustNew("ft_"),
 }
 
-func resolveTemplate(name string) (pulid.ID, bool) {
-	id, ok := standardTemplates[name]
+var templateRates = map[string]string{
+	formulatemplate.StandardFlatRate: `{"kind":"money"}`,
+	formulatemplate.StandardPerMile:  `{"kind":"quantity","dimension":"Money/Distance","unit":"$/mi"}`,
+}
 
-	return id, ok
+func resolveTemplate(name string) (*pkgrateimport.Template, bool) {
+	id, ok := standardTemplates[name]
+	if !ok {
+		return nil, false
+	}
+
+	return &pkgrateimport.Template{ID: id, Inputs: []tarifftypes.InputDecl{
+		{
+			Name:       formulatemplate.StandardInputRate,
+			Descriptor: rules.RawJSON(templateRates[name]),
+			Required:   true,
+		},
+		{
+			Name:       formulatemplate.StandardInputMinimumCharge,
+			Descriptor: rules.RawJSON(`{"kind":"money"}`),
+		},
+	}}, true
 }
 
 func existingRule(laneKey, rate string) *rateagreement.RateAgreementRule {
@@ -42,8 +58,13 @@ func existingRule(laneKey, rate string) *rateagreement.RateAgreementRule {
 		ID:                pulid.MustNew("ragr_"),
 		LaneKey:           laneKey,
 		Label:             laneKey,
-		FormulaTemplateID: &templateID,
-		Rate:              decimal.NewNullDecimal(decimal.RequireFromString(rate)),
+		FormulaTemplateID: templateID,
+		Inputs: tarifftypes.Inputs{
+			formulatemplate.StandardInputRate: rules.QuantityValue(
+				decimal.RequireFromString(rate),
+				"$/mi",
+			),
+		},
 	}
 }
 

@@ -689,7 +689,7 @@ function toShipmentInput(
     cancelReason: payload.cancelReason,
     otherChargeAmount: String(payload.otherChargeAmount ?? "0"),
     freightChargeAmount: String(payload.freightChargeAmount ?? "0"),
-    baseRate: String(payload.baseRate ?? "0"),
+    tariffInputs: payload.tariffInputs ?? {},
     totalChargeAmount: String(payload.totalChargeAmount ?? "0"),
     pieces: payload.pieces,
     weight: payload.weight,
@@ -702,7 +702,6 @@ function toShipmentInput(
     transferredToBillingAt: payload.transferredToBillingAt,
     markedReadyToBillAt: payload.markedReadyToBillAt,
     billedAt: payload.billedAt,
-    ratingUnit: payload.ratingUnit,
     fuelSurchargeLocked: payload.fuelSurchargeLocked ?? false,
     // The one rating field a caller may write. Everything else the system owns
     // is restored from the stored shipment on save.

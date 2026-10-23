@@ -491,7 +491,6 @@ type PreviousRateSummary struct {
 	FreightChargeAmount decimal.Decimal `json:"freightChargeAmount" bun:"freight_charge_amount"`
 	OtherChargeAmount   decimal.Decimal `json:"otherChargeAmount"   bun:"other_charge_amount"`
 	TotalChargeAmount   decimal.Decimal `json:"totalChargeAmount"   bun:"total_charge_amount"`
-	RatingUnit          int64           `json:"ratingUnit"          bun:"rating_unit"`
 	Pieces              *int64          `json:"pieces"              bun:"pieces"`
 	Weight              *int64          `json:"weight"              bun:"weight"`
 	CreatedAt           int64           `json:"createdAt"           bun:"created_at"`

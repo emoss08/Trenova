@@ -106,6 +106,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/app/storedmileageservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -259,6 +260,7 @@ type Params struct {
 	FiscalYearService            *fiscalyearservice.Service
 	FiscalPeriodService          *fiscalperiodservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
+	FormulaLibraryService        *formulalibraryservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
@@ -492,6 +494,7 @@ type Services struct {
 	FiscalYearService            *fiscalyearservice.Service
 	FiscalPeriodService          *fiscalperiodservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
+	FormulaLibraryService        *formulalibraryservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
@@ -731,6 +734,7 @@ func newServices(p *Params) *Services {
 		FiscalYearService:            p.FiscalYearService,
 		FiscalPeriodService:          p.FiscalPeriodService,
 		FormulaTemplateService:       p.FormulaTemplateService,
+		FormulaLibraryService:        p.FormulaLibraryService,
 		FuelSurchargeService:         p.FuelSurchargeService,
 		CostingService:               p.CostingService,
 		DetentionService:             p.DetentionService,

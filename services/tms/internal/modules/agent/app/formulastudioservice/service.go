@@ -31,18 +31,14 @@ type formulaEngine interface {
 		ctx context.Context,
 		req formulatemplateports.GetFormulaTemplateByIDRequest,
 	) (*formulatemplate.FormulaTemplate, error)
-	TestExpression(
+	Preview(
 		ctx context.Context,
-		req *formulatemplateservice.TestExpressionRequest,
-	) (*formulatemplateservice.TestExpressionResponse, error)
-	PriceScenario(
+		req *formulatemplateservice.PreviewRequest,
+	) (*formulatemplateports.PreviewResult, error)
+	TestSource(
 		ctx context.Context,
-		req *formulatemplateservice.PriceScenarioRequest,
-	) *formulatemplateservice.ScenarioPrice
-	ScenarioTrace(
-		ctx context.Context,
-		req *formulatemplateservice.ScenarioTraceRequest,
-	) (*formulatemplateports.ScenarioTrace, error)
+		req *formulatemplateservice.TestSourceRequest,
+	) (*formulatemplateservice.TestSourceResult, error)
 	ReviewDiff(
 		ctx context.Context,
 		req *formulatemplateservice.ReviewDiffRequest,

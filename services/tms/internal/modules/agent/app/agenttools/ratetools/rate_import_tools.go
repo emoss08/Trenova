@@ -123,7 +123,7 @@ func NewCommitRateImportTool(imports RateImportKeeper) agentports.AgentTool {
 			for _, rule := range plan.Rules {
 				lines = append(lines, agent.MoneyLine{
 					Label: laneRateLabel(rule),
-					After: rule.Rate,
+					After: headlineRate(rule.Inputs),
 				})
 			}
 			change := toolpreview.Money(

@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tractorexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
@@ -64,6 +65,7 @@ import (
 	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
+	telematicsresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsresolver"
 	tenantresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenantresolver"
 	tractorresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tractorresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
@@ -109,6 +111,7 @@ import (
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
+	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	workerchecklistservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	workercredentialservice "github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	workerdqfservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
@@ -161,7 +164,9 @@ type ResolverParams struct {
 	PerformanceReviewService     *performancereviewservice.Service
 	PermissionEngine             permissionports.PermissionEngine
 	ServiceTypeService           *servicetypeservice.Service
+	ShipmentService              shipmentports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
+	TelematicsService            *telematicsservice.Service
 	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
 	WorkerChecklistService       *workerchecklistservice.Service
@@ -201,6 +206,7 @@ var shards = []*gqlexec.Shard{
 	servicetypeexec.Shard,
 	sharedexec.Shard,
 	shipmenttypeexec.Shard,
+	telematicsexec.Shard,
 	tenantexec.Shard,
 	tractorexec.Shard,
 	trailerexec.Shard,
@@ -250,9 +256,24 @@ var operations = []Operation{
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "DeskTractorCard",
+		Hash:     "sha256:7e891cf8b78a2c790d256fc2a4d6f22a889904c19d0eef1b48a232741c3df9a1",
+		Document: "query DeskTractorCard($id: ID!) { tractor(id: $id) { code createdAt equipmentManufacturer { id name } equipmentType { code description id } externalId fleetCode { code id } fuelType id iftaQualified lastKnownLocation { id latitude longitude name } leaseEndDate leaseReference lessorName licensePlateNumber make model ownerWorker { firstName id lastName } ownershipType primaryWorker { firstName id lastName } registrationExpiry registrationNumber secondaryWorker { firstName id lastName } state { abbreviation } status vin year } }",
+	},
+	{
+		Name:     "DeskTrailerCard",
+		Hash:     "sha256:0a228b3ed6cf7d63b60e5ab74e5316d0db769b5c08ecec9ccf5df21e0e74682c",
+		Document: "query DeskTrailerCard($id: ID!) { trailer(id: $id) { code createdAt equipmentManufacturer { id name } equipmentType { code description id } externalId fleetCode { code id } id lastInspectionDate lastKnownLocation { id latitude longitude name } leaseEndDate leaseReference lessorName licensePlateNumber make maxLoadWeight model ownerWorker { firstName id lastName } ownershipType registrationExpiry registrationNumber registrationState { abbreviation } status vin year } }",
+	},
+	{
 		Name:     "EquipmentManufacturerTable",
 		Hash:     "sha256:1ad59b9754cf4b8c511c8cf3af0762a6da6adf252d5bb3fd05b50b349bcdaec7",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer { businessUnitId createdAt description id name organizationId status updatedAt version } query EquipmentManufacturerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentManufacturers(input: $input) { edges { node { ...EquipmentManufacturerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskVehiclePositions",
+		Hash:     "sha256:0c986c67a9359bf90e930fca12fc8de79ac3c8ab034a876baddb44e457941232",
+		Document: "query DeskVehiclePositions($maxAgeSeconds: Int, $tractorIds: [ID!]) { vehiclePositions(maxAgeSeconds: $maxAgeSeconds, tractorIds: $tractorIds) { engineState formattedLocation latitude longitude primaryWorkerName recordedAt speedMph tractorCode tractorId } }",
 	},
 	{
 		Name:     "TractorTable",
@@ -535,6 +556,11 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		ShipmentTypeService: p.ShipmentTypeService,
 	}
+	telematicsDeps := &telematicsresolver.Deps{
+		Core:              core,
+		ShipmentService:   p.ShipmentService,
+		TelematicsService: p.TelematicsService,
+	}
 	tenantDeps := &tenantresolver.Deps{
 		Core:                core,
 		OrganizationService: p.OrganizationService,
@@ -596,6 +622,7 @@ func NewSchema(p ResolverParams) Schema {
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
 		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
+		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
 		tractorMutation:               &tractorMutation{Deps: tractorDeps},
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
@@ -632,6 +659,7 @@ func NewSchema(p ResolverParams) Schema {
 		performancereviewQuery:     &performancereviewQuery{Deps: performancereviewDeps},
 		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
 		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
+		telematicsQuery:            &telematicsQuery{Deps: telematicsDeps},
 		tenantQuery:                &tenantQuery{Deps: tenantDeps},
 		tractorQuery:               &tractorQuery{Deps: tractorDeps},
 		trailerQuery:               &trailerQuery{Deps: trailerDeps},
@@ -775,6 +803,7 @@ type mutationResolver struct {
 	*fleetsafetyMutation
 	*journalentryMutation
 	*performancereviewMutation
+	*telematicsMutation
 	*tenantMutation
 	*tractorMutation
 	*trailerMutation
@@ -812,6 +841,7 @@ type queryResolver struct {
 	*performancereviewQuery
 	*servicetypeQuery
 	*shipmenttypeQuery
+	*telematicsQuery
 	*tenantQuery
 	*tractorQuery
 	*trailerQuery
@@ -835,6 +865,7 @@ type (
 	fleetsafetyMutation            = fleetsafetyresolver.MutationResolver
 	journalentryMutation           = journalentryresolver.MutationResolver
 	performancereviewMutation      = performancereviewresolver.MutationResolver
+	telematicsMutation             = telematicsresolver.MutationResolver
 	tenantMutation                 = tenantresolver.MutationResolver
 	tractorMutation                = tractorresolver.MutationResolver
 	trailerMutation                = trailerresolver.MutationResolver
@@ -869,6 +900,7 @@ type (
 	performancereviewQuery         = performancereviewresolver.QueryResolver
 	servicetypeQuery               = servicetyperesolver.QueryResolver
 	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver
+	telematicsQuery                = telematicsresolver.QueryResolver
 	tenantQuery                    = tenantresolver.QueryResolver
 	tractorQuery                   = tractorresolver.QueryResolver
 	trailerQuery                   = trailerresolver.QueryResolver

@@ -30,6 +30,7 @@ const (
 	SeedDriverPayLedger                 SeedID = "DriverPayLedger"                 // from 12_driverpay_ledger.go
 	SeedEDITradingPartner               SeedID = "EDITradingPartner"               // from 39_edi_trading_partner.go
 	SeedFiscalYear                      SeedID = "FiscalYear"                      // from 36_fiscal_year.go
+	SeedFormulaLibrary                  SeedID = "FormulaLibrary"                  // from 02_formulalibrary.go
 	SeedFormulaTemplate                 SeedID = "FormulaTemplate"                 // from 01_formulatemplate.go
 	SeedFuelSpendIFTA                   SeedID = "FuelSpendIFTA"                   // from 24_fuel_spend_ifta.go
 	SeedFuelSurcharge                   SeedID = "FuelSurcharge"                   // from 10_fuelsurcharge.go
@@ -88,6 +89,7 @@ var AllSeedIDs = []SeedID{
 	SeedDriverPayLedger,
 	SeedEDITradingPartner,
 	SeedFiscalYear,
+	SeedFormulaLibrary,
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,
@@ -159,6 +161,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedDriverPayLedger,
 	SeedEDITradingPartner,
 	SeedFiscalYear,
+	SeedFormulaLibrary,
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,

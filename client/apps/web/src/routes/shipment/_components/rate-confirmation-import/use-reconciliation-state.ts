@@ -116,7 +116,6 @@ export function useReconciliationState() {
       customerId: string;
       serviceTypeId: string;
       shipmentTypeId: string;
-      formulaTemplateId: string;
       tractorTypeId?: string;
       trailerTypeId?: string;
     }): ShipmentCreateInput => {
@@ -199,11 +198,12 @@ export function useReconciliationState() {
         ownerId: undefined,
         enteredById: undefined,
         canceledById: undefined,
-        formulaTemplateId: requiredFields.formulaTemplateId,
+        // A tendered rate is a manual rate: one freight amount, and no tariff to run.
+        formulaTemplateId: undefined,
         consolidationGroupId: undefined,
         otherChargeAmount: 0,
         freightChargeAmount: rate,
-        baseRate: rate,
+        tariffInputs: {},
         totalChargeAmount: rate,
         pieces: pieces ?? undefined,
         weight: weight ?? undefined,
@@ -212,7 +212,6 @@ export function useReconciliationState() {
         actualDeliveryDate: undefined,
         actualShipDate: undefined,
         canceledAt: undefined,
-        ratingUnit: 1,
         fuelSurchargeLocked: false,
         freightTerms: "Prepaid",
         freightAllocations: [],

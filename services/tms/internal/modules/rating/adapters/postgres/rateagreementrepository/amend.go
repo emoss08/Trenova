@@ -153,46 +153,7 @@ func (r *repository) insertRules(
 			return err
 		}
 
-		return r.insertRuleBreaks(ctx, req.Rules)
-	})
-}
-
-func (r *repository) insertRuleBreaks(
-	ctx context.Context,
-	rules []*rateagreement.RateAgreementRule,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		breaks := make([]*rateagreement.RateAgreementRuleBreak, 0)
-
-		for _, rule := range rules {
-			if rule == nil {
-				continue
-			}
-
-			for _, ruleBreak := range rule.Breaks {
-				if ruleBreak == nil {
-					continue
-				}
-
-				ruleBreak.ID = pulid.Nil
-				ruleBreak.RateAgreementRuleID = rule.ID
-				ruleBreak.OrganizationID = rule.OrganizationID
-				ruleBreak.BusinessUnitID = rule.BusinessUnitID
-				breaks = append(breaks, ruleBreak)
-			}
-		}
-
-		if len(breaks) == 0 {
-			return nil
-		}
-
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&breaks).
-			Returning("*").
-			Exec(ctx)
-
-		return err
+		return nil
 	})
 }
 

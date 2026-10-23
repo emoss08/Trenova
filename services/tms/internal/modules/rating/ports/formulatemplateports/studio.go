@@ -1,7 +1,8 @@
 package formulatemplateports
 
 import (
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/shopspring/decimal"
 )
 
@@ -14,7 +15,8 @@ type BacktestSummary struct {
 	ErrorCount          int             `json:"errorCount"`
 	CurrentErrorCount   int             `json:"currentErrorCount"`
 	CandidateErrorCount int             `json:"candidateErrorCount"`
-	GuardrailCount      int             `json:"guardrailCount"`
+	RefusedCount        int             `json:"refusedCount"`
+	AdjustedCount       int             `json:"adjustedCount"`
 	CurrentTotal        decimal.Decimal `json:"currentTotal"`
 	CandidateTotal      decimal.Decimal `json:"candidateTotal"`
 	TotalDelta          decimal.Decimal `json:"totalDelta"`
@@ -23,66 +25,33 @@ type BacktestSummary struct {
 	MaxDecrease         decimal.Decimal `json:"maxDecrease"`
 }
 
-type ScenarioVerdict string
+type PreviewError struct {
+	Code    string             `json:"code"`
+	Message string             `json:"message"`
+	Range   *rules.TariffRange `json:"range"`
+}
 
-const (
-	ScenarioVerdictIntended = ScenarioVerdict("intended")
-	ScenarioVerdictBug      = ScenarioVerdict("bug")
-	ScenarioVerdictUnclear  = ScenarioVerdict("unclear")
-)
+type PreviewResult struct {
+	Valid       bool                     `json:"valid"`
+	Diagnostics []rules.TariffDiagnostic `json:"diagnostics"`
+	Inputs      []tarifftypes.InputDecl  `json:"inputs"`
+	Imports     []tarifftypes.Import     `json:"imports"`
+	Charges     []rules.TariffChargeRef  `json:"charges"`
+	Bill        *rules.TariffBill        `json:"bill"`
+	RatedBill   *tarifftypes.Bill        `json:"-"`
+	Refusal     *rules.TariffRefusal     `json:"refusal"`
+	Error       *PreviewError            `json:"error"`
+	Trace       rules.RawJSON            `json:"trace"`
+	Lookups     rules.RawJSON            `json:"lookups"`
+	Tests       []rules.TariffTestResult `json:"tests"`
+}
 
-func (v ScenarioVerdict) IsValid() bool {
-	switch v {
-	case ScenarioVerdictIntended, ScenarioVerdictBug, ScenarioVerdictUnclear:
-		return true
-	default:
-		return false
+func (r *PreviewResult) FailingTests() []string {
+	names := make([]string, 0, len(r.Tests))
+	for i := range r.Tests {
+		if r.Tests[i].Status != rules.TariffTestPassed {
+			names = append(names, r.Tests[i].Name)
+		}
 	}
-}
-
-type ScenarioTraceRowKind string
-
-const (
-	ScenarioRowInput   = ScenarioTraceRowKind("input")
-	ScenarioRowTerm    = ScenarioTraceRowKind("term")
-	ScenarioRowFormula = ScenarioTraceRowKind("formula")
-	ScenarioRowPolicy  = ScenarioTraceRowKind("policy")
-	ScenarioRowBilled  = ScenarioTraceRowKind("billed")
-)
-
-type ScenarioTraceRow struct {
-	Kind   ScenarioTraceRowKind `json:"kind"`
-	Name   string               `json:"name"`
-	Before *string              `json:"before"`
-	After  *string              `json:"after"`
-}
-
-type ScenarioRecorder struct {
-	ID   pulid.ID `json:"id"`
-	Name string   `json:"name"`
-}
-
-type ScenarioTrace struct {
-	Expected          string             `json:"expected"`
-	Actual            *string            `json:"actual"`
-	Delta             *string            `json:"delta"`
-	BaselineLabel     string             `json:"baselineLabel"`
-	RecordedOnVersion *int64             `json:"recordedOnVersion"`
-	RecordedBy        *ScenarioRecorder  `json:"recordedBy"`
-	Error             string             `json:"error,omitempty"`
-	ErrorCode         string             `json:"errorCode,omitempty"`
-	Rows              []ScenarioTraceRow `json:"rows"`
-
-	ScenarioName        string          `json:"-"`
-	ScenarioInputs      map[string]any  `json:"-"`
-	ExpressionChanged   bool            `json:"-"`
-	PolicyChanged       bool            `json:"-"`
-	RecordedRaw         *string         `json:"-"`
-	RecordedBilled      *string         `json:"-"`
-	RecordedClamp       string          `json:"-"`
-	CandidateRaw        *string         `json:"-"`
-	CandidateClamp      string          `json:"-"`
-	CandidateExpression string          `json:"-"`
-	FallbackVerdict     ScenarioVerdict `json:"-"`
-	FallbackWhy         string          `json:"-"`
+	return names
 }

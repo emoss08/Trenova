@@ -88,7 +88,7 @@ vi.mock("../auto-rate-dialog", () => ({ AutoRateDialog: () => null }));
 vi.mock("../additional-charges/fuel-surcharge-change-dialog", () => ({
   FuelSurchargeChangeDialog: () => null,
 }));
-vi.mock("@/components/formula-editor/receipt-view", () => ({ ReceiptView: () => null }));
+vi.mock("../shipment-tariff-inputs", () => ({ ShipmentTariffInputs: () => null }));
 
 afterEach(cleanup);
 

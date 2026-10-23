@@ -259,15 +259,9 @@ func (s *Service) PlanApplyRateIncrease(
 }
 
 func rateIncreaseApplicable(plan *RateIncreasePlan) error {
-	if plan.NegativeCount > 0 {
-		return errortypes.NewBusinessError(
-			"This decrease would push some lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.",
-		)
-	}
-
 	if len(plan.Lines) == 0 {
 		return errortypes.NewBusinessError(
-			"No lane in scope carries a rate this change could move",
+			"No lane in scope carries a money input this change could move",
 		)
 	}
 

@@ -40,10 +40,7 @@ export type RateIncreaseRequestPayload = {
   customerId?: string | null;
   carrierId?: string | null;
   partyType?: RatePartyType;
-  adjustment: {
-    percentChange?: number | null;
-    flatChange?: number | null;
-  };
+  adjustment: { percentChange: number };
   effectiveFrom: number;
 };
 

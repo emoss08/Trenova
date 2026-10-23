@@ -1,13 +1,17 @@
 package rateagreementservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/tarifftest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +38,6 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 	original.Version = 4
 
 	priorRuleID := pulid.MustNew("rarl_")
-	templateID := pulid.MustNew("ft_")
 	original.Rules = []*rateagreement.RateAgreementRule{
 		{
 			ID:                    pulid.MustNew("rarl_"),
@@ -45,13 +48,12 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 			DestinationScopeType:  "State",
 			DestinationScopeValue: "FL",
 			Direction:             rateagreement.DirectionDirectional,
-			FormulaTemplateID:     &templateID,
-			Rate:                  decimal.NewNullDecimal(decimal.NewFromInt(2)),
-			EffectiveFrom:         100,
-			SupersedesRuleID:      &priorRuleID,
-			Breaks: []*rateagreement.RateAgreementRuleBreak{
-				{ID: pulid.MustNew("ragb_"), Rate: decimal.NewFromInt(1)},
+			FormulaTemplateID:     tarifftest.PerMile().TemplateID,
+			Inputs: tarifftypes.Inputs{
+				"rate": rules.QuantityValue(decimal.NewFromInt(2), "$/mi"),
 			},
+			EffectiveFrom:    100,
+			SupersedesRuleID: &priorRuleID,
 		},
 	}
 	original.Accessorials = []*rateagreement.RateAgreementAccessorial{
@@ -103,7 +105,7 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: audit,
 	})
 
@@ -128,8 +130,7 @@ func TestDuplicate_CopiesTheContractAsAFreshDraft(t *testing.T) {
 	assert.True(t, copiedRule.ID.IsNil())
 	assert.Nil(t, copiedRule.SupersedesRuleID, "a copy has no lineage — its history starts here")
 	assert.Equal(t, "ST:GA>ST:FL", copiedRule.LaneKey)
-	require.Len(t, copiedRule.Breaks, 1)
-	assert.True(t, copiedRule.Breaks[0].ID.IsNil())
+	assert.True(t, copiedRule.Inputs.Equal(original.Rules[0].Inputs), "the inputs carry over")
 
 	require.Len(t, created.Accessorials, 1)
 	assert.True(t, created.Accessorials[0].ID.IsNil())

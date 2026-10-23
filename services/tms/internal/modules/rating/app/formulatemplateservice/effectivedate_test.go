@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -36,9 +37,9 @@ func approvedSnapshot(
 		Name:          template.Name,
 		Description:   template.Description,
 		Status:        formulatemplate.StatusActive,
-		Expression:    "totalDistance * 2",
-		SchemaID:      template.SchemaID,
-		Type:          template.Type,
+		Source:        perMileSource,
+		Imports:       []tarifftypes.Import{},
+		TestCount:     1,
 		CreatedAt:     effectiveFrom,
 		EffectiveFrom: &effectiveFrom,
 	}
@@ -92,10 +93,9 @@ func TestUpdateVersionEffectiveDate_SchedulingBilledContentStartsANewWindow(t *t
 
 	template := newTestTemplate()
 	template.CurrentVersionNumber = 4
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	started := timeutils.NowUnix() - 30*86_400
 	old := approvedSnapshot(template, 2, started)
-	old.Expression = "totalDistance * 2.5"
+	old.Source = perMileRetypedSource
 
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).Return(old, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -122,7 +122,7 @@ func TestUpdateVersionEffectiveDate_SchedulingBilledContentStartsANewWindow(t *t
 
 	require.NotNil(t, created)
 	assert.EqualValues(t, 5, created.VersionNumber, "a new window, not a moved one")
-	assert.Equal(t, "totalDistance * 2.5", created.Expression)
+	assert.Equal(t, perMileRetypedSource, created.Source)
 	assert.Equal(t, formulatemplate.StatusActive, created.Status)
 	require.NotNil(t, created.EffectiveFrom)
 	assert.Equal(t, next, *created.EffectiveFrom)
@@ -131,15 +131,14 @@ func TestUpdateVersionEffectiveDate_SchedulingBilledContentStartsANewWindow(t *t
 	deps.versionRepo.AssertNotCalled(t, "UpdateEffectiveDate")
 }
 
-func TestUpdateVersionEffectiveDate_SchedulingBilledContentRunsItsScenarios(t *testing.T) {
+func TestUpdateVersionEffectiveDate_SchedulingBilledContentRunsItsTests(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 
 	template := newTestTemplate()
 	template.CurrentVersionNumber = 4
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	old := approvedSnapshot(template, 2, timeutils.NowUnix()-30*86_400)
-	old.Expression = "totalDistance * 9"
+	old.Source = perMileFailingSource
 
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).Return(old, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -149,7 +148,7 @@ func TestUpdateVersionEffectiveDate_SchedulingBilledContentRunsItsScenarios(t *t
 		t.Context(),
 		scheduleRequest(template, 2, &next),
 	)
-	require.Error(t, err, "the old content no longer passes the template's scenarios")
+	require.Error(t, err, "the old content no longer passes its own tests")
 	deps.versionRepo.AssertNotCalled(t, "Create")
 	deps.repo.AssertNotCalled(t, "Update")
 }

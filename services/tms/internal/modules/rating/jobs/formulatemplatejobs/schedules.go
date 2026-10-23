@@ -16,7 +16,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "formula-template-expire-stale-submissions",
-			Description:   "Return formula templates waiting in review for more than 14 days to draft",
+			Description:   "Return formula templates and libraries waiting in review for more than 14 days to draft",
 			Spec:          schedule.Cron("0 6 * * *"),
 			Workflow:      ExpireStaleSubmissionsWorkflow,
 			TaskQueue:     string(temporaltype.TaskQueueSystem),

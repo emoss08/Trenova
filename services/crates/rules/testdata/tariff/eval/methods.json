@@ -1,0 +1,466 @@
+[
+  {
+    "name": "round to an int",
+    "expr": "2.5.round()",
+    "display": "3"
+  },
+  {
+    "name": "round half away from zero below zero",
+    "expr": "(-2.5).round()",
+    "display": "-3"
+  },
+  {
+    "name": "round to places",
+    "expr": "2.345.round(places: 2)",
+    "display": "2.35"
+  },
+  {
+    "name": "round to places positionally",
+    "expr": "2.344.round(2)",
+    "display": "2.34"
+  },
+  {
+    "name": "round half even",
+    "expr": "2.5.roundHalfEven()",
+    "display": "2"
+  },
+  {
+    "name": "round half even to places",
+    "expr": "2.345.roundHalfEven(places: 2)",
+    "display": "2.34"
+  },
+  {
+    "name": "floor",
+    "expr": "2.9.floor()",
+    "display": "2"
+  },
+  {
+    "name": "floor below zero",
+    "expr": "(-2.1).floor()",
+    "display": "-3"
+  },
+  {
+    "name": "ceil",
+    "expr": "2.1.ceil()",
+    "display": "3"
+  },
+  {
+    "name": "abs of a number",
+    "expr": "(-4.5).abs()",
+    "display": "4.5"
+  },
+  {
+    "name": "min of numbers",
+    "expr": "3.min(7)",
+    "display": "3"
+  },
+  {
+    "name": "max of numbers",
+    "expr": "3.max(7)",
+    "display": "7"
+  },
+  {
+    "name": "min of an int and a number is a number",
+    "expr": "3.min(3.5)",
+    "display": "3"
+  },
+  {
+    "name": "clamp within",
+    "expr": "5.clamp(1, 9)",
+    "display": "5"
+  },
+  {
+    "name": "clamp above",
+    "expr": "15.clamp(1, 9)",
+    "display": "9"
+  },
+  {
+    "name": "clamp below",
+    "expr": "(-15).clamp(1, 9)",
+    "display": "1"
+  },
+  {
+    "name": "clamp with crossed bounds is an argument error",
+    "expr": "5.clamp(9, 1)",
+    "error": "argument"
+  },
+  {
+    "name": "pow",
+    "expr": "2.pow(10)",
+    "display": "1024"
+  },
+  {
+    "name": "pow of a number",
+    "expr": "1.5.pow(2)",
+    "display": "2.25"
+  },
+  {
+    "name": "pow with a negative exponent",
+    "expr": "2.pow(-2)",
+    "display": "0.25"
+  },
+  {
+    "name": "pow of zero to a negative power",
+    "expr": "0.pow(-1)",
+    "error": "divideByZero"
+  },
+  {
+    "name": "pow overflow",
+    "expr": "10.pow(40)",
+    "error": "overflow"
+  },
+  {
+    "name": "sqrt",
+    "expr": "2.25.sqrt()",
+    "display": "1.5"
+  },
+  {
+    "name": "sqrt of a negative",
+    "expr": "(-1).sqrt()",
+    "error": "argument"
+  },
+  {
+    "name": "money rounds to cents half up",
+    "expr": "$2.345.round()",
+    "display": "$2.35"
+  },
+  {
+    "name": "money rounds half even",
+    "expr": "$2.345.roundHalfEven()",
+    "display": "$2.34"
+  },
+  {
+    "name": "money rounds up to an increment",
+    "expr": "$451.20.roundUp(to: $5)",
+    "display": "$455.00"
+  },
+  {
+    "name": "money rounds down to an increment",
+    "expr": "$459.99.roundDown(to: $5)",
+    "display": "$455.00"
+  },
+  {
+    "name": "money already on the increment stays",
+    "expr": "$455.roundUp(to: $5)",
+    "display": "$455.00"
+  },
+  {
+    "name": "money abs",
+    "expr": "(-$12.5).abs()",
+    "display": "$12.50"
+  },
+  {
+    "name": "money min",
+    "expr": "$10.min($12)",
+    "display": "$10.00"
+  },
+  {
+    "name": "money max",
+    "expr": "$10.max($12)",
+    "display": "$12.00"
+  },
+  {
+    "name": "money clamp",
+    "expr": "$500.clamp($100, $450)",
+    "display": "$450.00"
+  },
+  {
+    "name": "rounding money to a zero increment",
+    "expr": "$5.roundUp(to: $0)",
+    "error": "argument"
+  },
+  {
+    "name": "quantity value",
+    "expr": "1_240 lb.value",
+    "display": "1240"
+  },
+  {
+    "name": "quantity in another unit",
+    "expr": "1_240 lb.in(cwt)",
+    "display": "12.4 cwt"
+  },
+  {
+    "name": "value after conversion",
+    "expr": "1_240 lb.in(cwt).value",
+    "display": "12.4"
+  },
+  {
+    "name": "density in a quotient unit",
+    "expr": "(1000 lb / 125 ft3).in(kg/m3)",
+    "display": "128.14770699168111663724056524 kg/m3"
+  },
+  {
+    "name": "a rate in another unit",
+    "expr": "$0.185/lb.in(cwt)",
+    "display": "$18.50/cwt"
+  },
+  {
+    "name": "a rate in a whole rate unit",
+    "expr": "$0.185/lb.in($/cwt)",
+    "display": "$18.50/cwt"
+  },
+  {
+    "name": "a duration in minutes",
+    "expr": "1.5 h.in(min)",
+    "display": "90 min"
+  },
+  {
+    "name": "quantity round to an increment",
+    "expr": "1_249 lb.round(to: 100 lb)",
+    "display": "1200 lb"
+  },
+  {
+    "name": "quantity round half up",
+    "expr": "1_250 lb.round(to: 100 lb)",
+    "display": "1300 lb"
+  },
+  {
+    "name": "quantity round up",
+    "expr": "1_240 lb.roundUp(to: 100 lb)",
+    "display": "1300 lb"
+  },
+  {
+    "name": "quantity round up by another unit",
+    "expr": "1_240 lb.roundUp(to: 1 cwt)",
+    "display": "1300 lb"
+  },
+  {
+    "name": "quantity round down",
+    "expr": "1_299 lb.roundDown(to: 100 lb)",
+    "display": "1200 lb"
+  },
+  {
+    "name": "duration round up to 15 minutes",
+    "expr": "1.1 h.roundUp(to: 15 min)",
+    "display": "1.25 h"
+  },
+  {
+    "name": "quantity abs",
+    "expr": "(-5 mi).abs()",
+    "display": "5 mi"
+  },
+  {
+    "name": "quantity min across units",
+    "expr": "1 cwt.min(90 lb)",
+    "display": "90 lb"
+  },
+  {
+    "name": "quantity max",
+    "expr": "(30 mi - 50 mi).max(0 mi)",
+    "display": "0 mi"
+  },
+  {
+    "name": "quantity clamp",
+    "expr": "6_000 lb.clamp(500 lb, 5_000 lb)",
+    "display": "5000 lb"
+  },
+  {
+    "name": "text len counts characters",
+    "expr": "\"café\".len",
+    "display": "4"
+  },
+  {
+    "name": "text isEmpty",
+    "expr": "\"\".isEmpty",
+    "display": "true"
+  },
+  {
+    "name": "text upper",
+    "expr": "\"atl\".upper()",
+    "display": "ATL"
+  },
+  {
+    "name": "text lower",
+    "expr": "\"ATL\".lower()",
+    "display": "atl"
+  },
+  {
+    "name": "text trim",
+    "expr": "\"  75201 \".trim()",
+    "display": "75201"
+  },
+  {
+    "name": "text startsWith",
+    "expr": "\"75201\".startsWith(\"752\")",
+    "display": "true"
+  },
+  {
+    "name": "text endsWith",
+    "expr": "\"75201\".endsWith(\"01\")",
+    "display": "true"
+  },
+  {
+    "name": "text contains",
+    "expr": "\"Dallas TX\".contains(\"TX\")",
+    "display": "true"
+  },
+  {
+    "name": "text replace",
+    "expr": "\"a-b-c\".replace(\"-\", \"/\")",
+    "display": "a/b/c"
+  },
+  {
+    "name": "text replace with nothing to find",
+    "expr": "\"abc\".replace(\"\", \"x\")",
+    "error": "argument"
+  },
+  {
+    "name": "text split",
+    "expr": "\"a,b,c\".split(\",\")",
+    "display": "[a, b, c]"
+  },
+  {
+    "name": "text split len",
+    "expr": "\"a,b,c\".split(\",\").len",
+    "display": "3"
+  },
+  {
+    "name": "text split without a separator",
+    "expr": "\"abc\".split(\"\")",
+    "error": "argument"
+  },
+  {
+    "name": "text matches a pattern",
+    "expr": "\"75201\".matches(\"^75[0-9]{{3}}$\")",
+    "display": "true"
+  },
+  {
+    "name": "text does not match",
+    "expr": "\"85201\".matches(\"^75\")",
+    "display": "false"
+  },
+  {
+    "name": "a pattern that does not compile",
+    "expr": "\"x\".matches(pattern)",
+    "error": "regex",
+    "prelude": "input pattern: Text = \"(\""
+  },
+  {
+    "name": "a text index",
+    "expr": "\"café\"[3] ?? \"\"",
+    "display": "é"
+  },
+  {
+    "name": "a text index past the end is none",
+    "expr": "\"café\"[4] ?? \"-\"",
+    "display": "-"
+  },
+  {
+    "name": "date year month day",
+    "expr": "\"{@2026-10-22.year}/{@2026-10-22.month}/{@2026-10-22.day}\"",
+    "display": "2026/10/22"
+  },
+  {
+    "name": "date weekday",
+    "expr": "@2026-10-22.weekday",
+    "display": "Thu"
+  },
+  {
+    "name": "date weekend",
+    "expr": "@2026-10-25.weekend",
+    "display": "true"
+  },
+  {
+    "name": "date addDays",
+    "expr": "@2026-12-30.addDays(3)",
+    "display": "2027-01-02"
+  },
+  {
+    "name": "date addDays backwards",
+    "expr": "@2026-03-01.addDays(-1)",
+    "display": "2026-02-28"
+  },
+  {
+    "name": "date addDays past year 9999",
+    "expr": "@9999-12-31.addDays(1)",
+    "error": "overflow"
+  },
+  {
+    "name": "date-time hour on its own clock",
+    "expr": "@2026-10-22T08:30-05:00.hour",
+    "display": "8"
+  },
+  {
+    "name": "date-time minute",
+    "expr": "@2026-10-22T08:30-05:00.minute",
+    "display": "30"
+  },
+  {
+    "name": "date-time date on its own clock",
+    "expr": "@2026-10-22T23:30-05:00.date",
+    "display": "2026-10-22"
+  },
+  {
+    "name": "date-time weekday",
+    "expr": "@2026-10-24T23:30-05:00.weekday",
+    "display": "Sat"
+  },
+  {
+    "name": "date-time weekend",
+    "expr": "@2026-10-23T23:30-05:00.weekend",
+    "display": "false"
+  },
+  {
+    "name": "date-time year",
+    "expr": "@2026-10-23T23:30-05:00.year",
+    "display": "2026"
+  },
+  {
+    "name": "date-time addHours",
+    "expr": "@2026-10-22T22:00-05:00.addHours(3)",
+    "display": "2026-10-23T01:00:00-05:00"
+  },
+  {
+    "name": "date-time addHours takes whole hours",
+    "expr": "@2026-10-22T22:00Z.addHours(0.25)",
+    "error": "check",
+    "message": {
+      "message": "{0} is {1}, but {2} of {3} takes {4}"
+    }
+  },
+  {
+    "name": "date-time addDays",
+    "expr": "@2026-10-22T22:00-05:00.addDays(1)",
+    "display": "2026-10-23T22:00:00-05:00"
+  },
+  {
+    "name": "list len",
+    "expr": "[1, 2, 3].len",
+    "display": "3"
+  },
+  {
+    "name": "list isEmpty",
+    "expr": "[].isEmpty",
+    "display": "true"
+  },
+  {
+    "name": "list index",
+    "expr": "[10, 20, 30][1] ?? 0",
+    "display": "20"
+  },
+  {
+    "name": "a list index out of range is none",
+    "expr": "[10, 20, 30][3] ?? -1",
+    "display": "-1"
+  },
+  {
+    "name": "a negative list index is none",
+    "expr": "[10, 20, 30][-1] ?? -1",
+    "display": "-1"
+  },
+  {
+    "name": "optional chaining on none",
+    "expr": "shipment.trailerType?.code ?? \"none\"",
+    "display": "none"
+  },
+  {
+    "name": "optional chaining on a value",
+    "expr": "shipment.serviceType.code",
+    "display": "STD"
+  },
+  {
+    "name": "percent value",
+    "expr": "18%.value",
+    "display": "18"
+  }
+]

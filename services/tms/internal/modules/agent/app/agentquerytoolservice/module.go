@@ -85,8 +85,6 @@ func coreToolProviders() []any {
 		newListDashboardsTool,
 		newListInvoicesTool,
 		newListCarrierCapacityPostingsTool,
-		newGetTractorTool,
-		newGetTrailerTool,
 		newGetInvoiceTool,
 		newListBillingQueueItemsTool,
 		newGetBillingQueueItemTool,
@@ -107,7 +105,6 @@ func coreToolProviders() []any {
 		provideDescribeReportDatasetTool,
 		providePreviewReportTool,
 		provideGetShipmentTrackingTool,
-		provideListVehiclePositionsTool,
 		provideGetWorkerHOSTool,
 		provideGetDispatchBoardTool,
 		provideListServiceFailuresTool,
@@ -226,13 +223,6 @@ func provideGetShipmentTrackingTool(
 	stopEtas stopetaports.Repository,
 ) agentports.AgentQueryTool {
 	return newGetShipmentTrackingTool(shipments, console, telematics, stopEtas)
-}
-
-func provideListVehiclePositionsTool(
-	telematics *telematicsservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListVehiclePositionsTool(telematics, permissions)
 }
 
 func provideGetWorkerHOSTool(telematics *telematicsservice.Service) agentports.AgentQueryTool {

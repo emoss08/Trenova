@@ -107,7 +107,7 @@ export function VersionHistoryPanel({
   const [selectedForCompare, setSelectedForCompare] = useState<number | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    ...formulaTemplate.versions(template?.id),
+    ...formulaTemplate.versions(template?.id ?? ""),
     enabled: open && !!template?.id,
   });
 
@@ -338,32 +338,27 @@ function getChangeBadges(
   const changes = Object.entries(changeSummary);
   const badges: ChangeBadgeInfo[] = [];
 
-  const hasExpression = changes.some(([k]) => k === "expression");
-  const variableChanges = changes.filter(([k]) => k.startsWith("variableDefinitions"));
-  const metadataChanges = changes.filter(([k]) => k.startsWith("metadata"));
+  const hasSource = changes.some(([k]) => k === "source");
+  const importChanges = changes.filter(([k]) => k.startsWith("imports"));
   const hasStatus = changes.some(([k]) => k === "status");
   const hasName = changes.some(([k]) => k === "name");
   const hasDescription = changes.some(([k]) => k === "description");
-  const hasType = changes.some(([k]) => k === "type");
 
-  if (hasExpression) {
+  if (hasSource) {
     badges.push({
-      label: translate("Expr"),
+      label: translate("Source"),
       color: "bg-info-subtle text-info-subtle-foreground",
-      tooltip: translate("Expression changed"),
+      tooltip: translate("Source changed"),
     });
   }
 
-  if (variableChanges.length > 0) {
+  if (importChanges.length > 0) {
     badges.push({
-      label:
-        variableChanges.length > 1
-          ? translate("Vars ({0})", variableChanges.length)
-          : translate("Vars"),
+      label: translate("Libraries"),
       color: "bg-accent-violet-subtle text-accent-violet-on-subtle",
       tooltip: translate(
-        "{0, plural, one {# variable change} other {# variable changes}}",
-        variableChanges.length,
+        "{0, plural, one {# pinned library changed} other {# pinned libraries changed}}",
+        importChanges.length,
       ),
     });
   }
@@ -376,17 +371,12 @@ function getChangeBadges(
     });
   }
 
-  const otherCount =
-    (hasName ? 1 : 0) + (hasDescription ? 1 : 0) + (hasType ? 1 : 0) + metadataChanges.length;
+  const otherCount = (hasName ? 1 : 0) + (hasDescription ? 1 : 0);
 
   if (otherCount > 0) {
     const otherLabels: string[] = [];
     if (hasName) otherLabels.push(translate("name"));
     if (hasDescription) otherLabels.push(translate("description"));
-    if (hasType) otherLabels.push(translate("type"));
-    if (metadataChanges.length > 0) {
-      otherLabels.push(translate("{0} metadata", metadataChanges.length));
-    }
 
     badges.push({
       label: `+${otherCount}`,

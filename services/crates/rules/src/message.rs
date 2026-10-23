@@ -11,6 +11,10 @@
 //! and the web app's `web` bundle), so the literal must be a single string literal: no
 //! `concat!`, no variables. A template never contains a bare `{` or `}` that is not a
 //! placeholder, since ICU would read it as one; write `'{'` instead.
+//!
+//! The one other source of templates is the Tariff standard library: its doc comments are
+//! product text too, and [`crate::tariff::stdlib::docs`] turns each into a template that
+//! `task i18n` collects from the `.tariff` sources.
 
 use serde::Serialize;
 

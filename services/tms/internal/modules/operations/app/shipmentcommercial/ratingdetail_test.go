@@ -3,13 +3,15 @@ package shipmentcommercial
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -18,162 +20,118 @@ import (
 	"go.uber.org/zap"
 )
 
-// A contract prices from its own tables, so there are no formula variables to
-// record — but every reader of the detail, the GraphQL schema included, treats
-// the map as always present. A nil one fails the response, not just the field.
-func TestRecalculate_ContractRatingLeavesResolvedVariablesEmptyNotNil(t *testing.T) {
-	t.Parallel()
-
-	entity := validShipment()
-
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
-
-	require.NoError(
-		t,
-		calculator.Recalculate(
-			t.Context(),
-			entity,
-			&tenant.ShipmentControl{},
-			pulid.MustNew("usr_"),
-		),
-	)
-
-	require.NotNil(t, entity.RatingDetail)
-	assert.NotNil(t, entity.RatingDetail.ResolvedVariables)
-	assert.Empty(t, entity.RatingDetail.ResolvedVariables)
-}
-
-// When a formula did produce the linehaul, the detail has to name it: the
-// billing panel shows the template and its expression, and the trace is the
-// only place they exist by the time the quote comes back.
-func TestRecalculate_FormulaPricedShipmentNamesItsTemplate(t *testing.T) {
-	t.Parallel()
-
-	entity := validShipment()
-	linehaul := decimal.NewFromInt(1500)
-
-	trace := &ratetypes.Trace{
-		Totals: ratetypes.Totals{Linehaul: linehaul, Total: linehaul},
-	}
-	trace.AddComponent(&ratetypes.Component{
-		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Linehaul",
-		Amount:     linehaul,
-		Source:     ratetypes.ComponentSourceFormulaTemplate,
-		SourceID:   "ft_01JT",
-		SourceName: "Mileage Base",
-		Detail: map[string]any{
-			"expression":    "distance * ratePerMile",
-			"versionNumber": int64(4),
-		},
-	})
+func rateOnce(
+	t *testing.T,
+	rated *ratequoteports.RatedShipment,
+) *ratequoteportsmock.MockRateEngine {
+	t.Helper()
 
 	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
-		Return(&ratequoteports.RatedShipment{
-			Amount:   linehaul,
-			Currency: "USD",
-			Outcome:  ratequote.OutcomeFormulaFallback,
-			Quote: &ratequote.RateQuote{
-				Outcome:        ratequote.OutcomeFormulaFallback,
-				LinehaulAmount: linehaul,
-				TotalAmount:    linehaul,
-				RatedAt:        shipmentcommercialtest.RatedAt,
-				Trace:          trace,
-			},
-		}, nil).
+		Return(rated, nil).
 		Once()
+
+	return engine
+}
+
+func recalculateWith(
+	t *testing.T,
+	engine ratequoteports.RateEngine,
+	entity *shipment.Shipment,
+) {
+	t.Helper()
 
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
-	require.NoError(
-		t,
-		calculator.Recalculate(
-			t.Context(),
-			entity,
-			&tenant.ShipmentControl{},
-			pulid.MustNew("usr_"),
-		),
-	)
+	require.NoError(t, calculator.Recalculate(
+		t.Context(),
+		entity,
+		&tenant.ShipmentControl{},
+		pulid.MustNew("usr_"),
+	))
+}
+
+func TestRecalculate_TheDetailRecordsTheTariffsBillAndInputs(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipment()
+	freight := decimal.NewFromInt(1500)
+	templateID := pulid.MustNew("ft_")
+	inputs, err := tarifftypes.InputsFromLiterals(map[string]string{"rate": "$2.50/mi"})
+	require.NoError(t, err)
+	statements := rules.RawJSON(`[{"line":4,"value":{"$q":"600","u":"mi"}}]`)
+
+	recalculateWith(t, rateOnce(t, &ratequoteports.RatedShipment{
+		Amount:              freight,
+		Total:               freight,
+		Currency:            "USD",
+		Outcome:             ratequote.OutcomeFormulaFallback,
+		FormulaTemplateID:   &templateID,
+		FormulaTemplateName: "Per Mile",
+		TemplateVersion:     4,
+		TariffInputs:        inputs,
+		Bill:                shipmentcommercialtest.FreightBill(freight),
+		Quote: &ratequote.RateQuote{
+			Outcome:        ratequote.OutcomeFormulaFallback,
+			LinehaulAmount: freight,
+			TotalAmount:    freight,
+			RatedAt:        shipmentcommercialtest.RatedAt,
+			Trace:          &ratetypes.Trace{Statements: statements},
+		},
+	}), entity)
 
 	detail := entity.RatingDetail
 	require.NotNil(t, detail)
-	assert.Equal(t, "ft_01JT", detail.FormulaTemplateID)
-	assert.Equal(t, "Mileage Base", detail.FormulaTemplateName)
-	assert.Equal(t, "distance * ratePerMile", detail.Expression)
+	assert.Equal(t, templateID.String(), detail.FormulaTemplateID)
+	assert.Equal(t, "Per Mile", detail.FormulaTemplateName)
 	assert.Equal(t, int64(4), detail.VersionNumber)
-	assert.NotNil(t, detail.ResolvedVariables)
+	assert.Equal(t, string(ratequote.OutcomeFormulaFallback), detail.Source)
+	assert.Equal(t, shipmentcommercialtest.RatedAt, detail.RatedAt)
+	assert.True(t, inputs.Equal(detail.Inputs))
+	require.NotNil(t, detail.Bill)
+	assert.True(t, detail.Bill.FreightTotal.Equal(freight))
+	assert.JSONEq(t, string(statements), string(detail.Trace))
+	assert.Empty(t, detail.Refusal)
 }
 
-// A rate that a minimum charge took over is the first thing a customer
-// questions, so the shipment has to say so — and say which of the bounds it
-// was, since the last one applied is what produced the number they were quoted.
-func TestRecalculate_ClampedRateRecordsTheGuardrailThatDecidedIt(t *testing.T) {
+func TestRecalculate_ARefusalIsRecordedInTheTariffsWords(t *testing.T) {
 	t.Parallel()
 
 	entity := validShipment()
-	clamped := decimal.NewFromInt(500)
 
-	trace := &ratetypes.Trace{
-		Totals: ratetypes.Totals{Linehaul: clamped, Total: clamped},
-		Guardrails: []ratetypes.Guardrail{
-			{
-				Kind:    ratetypes.ComponentKindMinimumCharge,
-				Applied: true,
-				Bound:   decimal.NewFromInt(400),
-				Raw:     decimal.NewFromInt(320),
-				Result:  decimal.NewFromInt(400),
-			},
-			{
-				Kind:    ratetypes.ComponentKindAbsoluteMinCharge,
-				Applied: true,
-				Bound:   clamped,
-				Raw:     decimal.NewFromInt(400),
-				Result:  clamped,
-			},
+	recalculateWith(t, rateOnce(t, &ratequoteports.RatedShipment{
+		Currency: "USD",
+		Outcome:  ratequote.OutcomeNoRateFound,
+		Refusal:  "Hazmat loads are quoted by hand",
+		Quote: &ratequote.RateQuote{
+			Outcome: ratequote.OutcomeNoRateFound,
+			RatedAt: shipmentcommercialtest.RatedAt,
 		},
-	}
+	}), entity)
 
-	engine := ratequoteportsmock.NewMockRateEngine(t)
-	engine.EXPECT().
-		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
-		Return(&ratequoteports.RatedShipment{
-			Amount:   clamped,
-			Currency: "USD",
-			Outcome:  ratequote.OutcomeRated,
-			Quote: &ratequote.RateQuote{
-				Outcome:        ratequote.OutcomeRated,
-				LinehaulAmount: clamped,
-				TotalAmount:    clamped,
-				RatedAt:        shipmentcommercialtest.RatedAt,
-				Trace:          trace,
-			},
-		}, nil).
-		Once()
+	detail := entity.RatingDetail
+	require.NotNil(t, detail)
+	assert.Equal(t, "Hazmat loads are quoted by hand", detail.Refusal)
+	assert.Nil(t, detail.Bill)
+	assert.Empty(t, entity.FreightLines)
+	assert.True(t, entity.FreightChargeAmount.Decimal.IsZero())
+}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
-	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
+func TestRecalculate_AHandRateIsRecordedAsManual(t *testing.T) {
+	t.Parallel()
 
-	require.NoError(
-		t,
-		calculator.Recalculate(
-			t.Context(),
-			entity,
-			&tenant.ShipmentControl{},
-			pulid.MustNew("usr_"),
-		),
-	)
+	entity := validShipment()
+	entity.FormulaTemplateID = pulid.Nil
+	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(900))
 
-	require.NotNil(t, entity.RatingDetail)
-	guardrail := entity.RatingDetail.Guardrail
-	require.NotNil(t, guardrail)
-	assert.True(t, guardrail.Applied)
-	assert.Equal(t, "min", guardrail.Bound)
-	assert.InDelta(t, 400.0, guardrail.RawResult, 0.001)
-	require.NotNil(t, guardrail.MinCharge)
-	assert.InDelta(t, 500.0, *guardrail.MinCharge, 0.001)
-	assert.Nil(t, guardrail.MaxCharge)
+	recalculateWith(t, ratequoteportsmock.NewMockRateEngine(t), entity)
+
+	detail := entity.RatingDetail
+	require.NotNil(t, detail)
+	assert.Equal(t, shipment.RatingSourceManual, detail.Source)
+	assert.True(t, detail.RatedByHand())
+	require.Len(t, entity.FreightLines, 1)
+	assert.True(t, entity.FreightLines[0].Amount.Equal(decimal.NewFromInt(900)))
 }

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	tariffrules "github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
@@ -12,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -62,8 +64,10 @@ func rateAgreementWithRules(count int) *rateagreement.RateAgreement {
 			ID:               pulid.MustNew("ragr_"),
 			OriginScopeType:  "State",
 			OriginScopeValue: "TX",
-			Rate:             decimal.NewNullDecimal(decimal.NewFromInt(int64(idx + 1))),
-			MinCharge:        decimal.NewNullDecimal(decimal.NewFromInt(150)),
+			Inputs: tarifftypes.Inputs{
+				"rate":          tariffrules.QuantityValue(decimal.NewFromInt(int64(idx+1)), "$/mi"),
+				"minimumCharge": tariffrules.MoneyValue(decimal.NewFromInt(150)),
+			},
 		})
 	}
 
@@ -91,12 +95,11 @@ func TestGetRateAgreement_BoundsTheRulesAndWithholdsRates(t *testing.T) {
 	assert.Len(t, view.Rules, maxAgreementRules)
 	assert.Equal(t, 7, view.RulesOmitted)
 	assert.Equal(t, "State TX", view.Rules[0].Origin)
-	assert.Empty(t, view.Rules[0].Rate)
-	assert.Empty(t, view.Rules[0].MinCharge)
+	assert.Empty(t, view.Rules[0].Inputs)
 	require.NotNil(t, view.CurrentVersion)
 	assert.Equal(t, int64(3), view.CurrentVersion.VersionNumber)
 	assert.Empty(t, view.CurrentVersion.ChangeMessage)
-	assert.Subset(t, view.Withheld, []string{"rules.rate", "rules.minCharge", "changeMessage"})
+	assert.Subset(t, view.Withheld, []string{"rules.inputs", "changeMessage"})
 	assert.NotContains(t, view.Withheld, "marginFloorPercent",
 		"a confidential term is never sent and never named")
 }
@@ -114,8 +117,7 @@ func TestGetRateAgreement_ShowsRatesAtRestricted(t *testing.T) {
 	require.NoError(t, err)
 
 	view := result.(rateAgreementView)
-	assert.Equal(t, "1", view.Rules[0].Rate)
-	assert.Equal(t, "150", view.Rules[0].MinCharge)
+	assert.Equal(t, map[string]string{"rate": "$1/mi", "minimumCharge": "$150"}, view.Rules[0].Inputs)
 	assert.Equal(t, "Raised Dallas rates 4 percent", view.CurrentVersion.ChangeMessage)
 }
 
@@ -266,23 +268,23 @@ func TestGetFuelSurchargeRates_SaysWhenNoPriceIsOnFile(t *testing.T) {
 	assert.Equal(t, 1, result.(searchOutcome).Count)
 }
 
-func TestRateAgreementAccessorials_NameTheLanguageAConditionIsWrittenIn(t *testing.T) {
+func TestRateAgreementAccessorials_ShowTheConditionSource(t *testing.T) {
 	t.Parallel()
 
 	tool := &getRateAgreementTool{}
 	gate := fieldAccess{}.gateAt(permission.ResourceRateAgreement, permission.SensitivityConfidential)
+	condition := "condition \"Multi-stop\"\n\nshipment.stops.count() > 2\n"
 
 	rows := tool.accessorials([]*rateagreement.RateAgreementAccessorial{
 		{
 			AccessorialChargeID: pulid.MustNew("acc_"),
 			AutoApply:           true,
-			ApplyCondition:      "totalStops > 2",
+			Condition:           condition,
 		},
 		{AccessorialChargeID: pulid.MustNew("acc_")},
 	}, gate)
 
 	require.Len(t, rows, 2)
-	assert.Equal(t, "totalStops > 2", rows[0].ApplyCondition)
-	assert.Equal(t, int16(formulatypes.CurrentLanguageVersion), rows[0].ConditionLanguage)
-	assert.Zero(t, rows[1].ConditionLanguage, "a row without a condition has no language")
+	assert.Equal(t, condition, rows[0].Condition)
+	assert.Empty(t, rows[1].Condition)
 }

@@ -125,6 +125,105 @@ describe("BillingQueueChargesTab payer bill", () => {
   });
 });
 
+// A shipment one tariff rated, as `GET /billing-queue/:id/` returns it with no split to
+// resolve: two freight lines from the bill, a charge the tariff billed itself with its label,
+// quantity and rate, and the tariff's input values the shipment carries.
+function tariffRatedItem(): BillingQueueItem {
+  const item = queueItem({
+    payer: "acme",
+    share: {
+      ...ACME_SHARE_JSON,
+      lines: [],
+      payers: [],
+      freightAmount: "0",
+      accessorialAmount: "0",
+      totalAmount: "0",
+      resolutionError: "",
+    },
+  });
+  const shipment = item.shipment!;
+  return {
+    ...item,
+    payerShare: null,
+    shipment: {
+      ...shipment,
+      formulaTemplateId: "ft_ltl",
+      formulaTemplate: { id: "ft_ltl", name: "LTL class rates" } as never,
+      tariffInputs: {
+        minimumCharge: { $q: "95", u: "$" },
+        fuelPeg: { $q: "1.2", u: "$/gal" },
+      },
+      freightChargeAmount: 2850,
+      freightLines: [
+        {
+          label: "Linehaul",
+          quantity: 12.4,
+          quantityUnit: "cwt",
+          rate: 210,
+          rateUnit: "$/cwt",
+          amount: 2604,
+        },
+        {
+          label: "Deficit weight",
+          quantity: null,
+          quantityUnit: null,
+          rate: null,
+          rateUnit: null,
+          amount: 246,
+        },
+      ],
+      additionalCharges: [
+        {
+          id: "ac_lift",
+          accessorialChargeId: "acc_lift",
+          method: "Flat",
+          amount: 150,
+          unit: 1,
+          isSystemGenerated: true,
+          isTariff: true,
+          label: "Liftgate, 2 stops",
+          quantity: 2,
+          rate: 75,
+          rateUnit: "$",
+          accessorialCharge: { id: "acc_lift", code: "LIFT", description: "Liftgate" },
+        },
+      ] as never,
+      otherChargeAmount: 150,
+      totalChargeAmount: 3000,
+    },
+  };
+}
+
+describe("BillingQueueChargesTab on a tariff's bill", () => {
+  it("lists each freight line of the bill with its quantity and rate", () => {
+    renderTab(tariffRatedItem());
+
+    expect(screen.getByText("Linehaul")).toBeInTheDocument();
+    expect(screen.getByText("12.4 cwt × $210.00/cwt")).toBeInTheDocument();
+    expect(screen.getByText("Deficit weight")).toBeInTheDocument();
+    expect(screen.getByText("Freight subtotal")).toBeInTheDocument();
+    expect(screen.queryByText("Base rate")).not.toBeInTheDocument();
+  });
+
+  it("names a charge the tariff billed by its label and keeps it out of hand edits", () => {
+    renderTab(tariffRatedItem());
+
+    expect(screen.getByText("Liftgate, 2 stops")).toBeInTheDocument();
+    expect(screen.getByText("2 × $75.00")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete Liftgate, 2 stops" })).toBeDisabled();
+  });
+
+  it("shows the tariff's terms the shipment rated with, with a way to adjust them", () => {
+    renderTab(tariffRatedItem());
+
+    const terms = screen.getByRole("list", { name: "Terms" });
+    expect(within(terms).getByText("Minimum charge")).toBeInTheDocument();
+    expect(within(terms).getByText("$95.00")).toBeInTheDocument();
+    expect(within(terms).getByText("$1.20/gal")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Adjust terms" })).toBeEnabled();
+  });
+});
+
 describe("BillingQueueChargesTab safe edits", () => {
   // Deleting a charge the freight split does not touch still re-resolves every
   // split; an amount split that stops adding up is refused with a named field,

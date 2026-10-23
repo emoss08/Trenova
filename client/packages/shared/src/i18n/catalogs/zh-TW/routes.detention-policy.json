@@ -105,6 +105,7 @@
   "Pays out {0} more than it bills": "支出比收入多 {0}",
   "Pickup override": "取貨覆寫",
   "Preview scenario": "預覽情境",
+  "Pricing": "定價",
   "Rate source": "費率來源",
   "Re-price settled history under these terms. The engine is the same one that bills live shipments, so the projection is exact rather than estimated.": "以這些條款重新計價已結算的歷史資料。所使用的引擎與為實際運單計費者相同，因此推算結果為精確值而非估計值。",
   "Re-run": "重新執行",

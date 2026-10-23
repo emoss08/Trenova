@@ -16,16 +16,30 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
-	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
+
+const perMileSource = `tariff "Per Mile"
+
+input rate: Money/mi
+input minimumCharge: Money = $0
+
+charge "Per Mile" (quantity: shipment.distance, rate: rate)
+minimum minimumCharge
+
+test "a short haul bills its miles" {
+  given input.rate = $2/mi
+  given shipment.distance = 100 mi
+  expect total == $200
+}
+`
 
 type stubCompleter struct {
 	reply    any
@@ -77,10 +91,11 @@ func (s stubAccess) MayUseAgent(
 }
 
 type stubEngine struct {
-	evaluation *formulatemplateservice.TestExpressionResponse
-	trace      *formulatemplateports.ScenarioTrace
-	priced     []*formulatemplateservice.PriceScenarioRequest
-	tested     []*formulatemplateservice.TestExpressionRequest
+	preview  *formulatemplateports.PreviewResult
+	tests    func(source string) *formulatemplateservice.TestSourceResult
+	diff     *formulatemplateservice.ReviewDiffResponse
+	previews []*formulatemplateservice.PreviewRequest
+	tested   []string
 }
 
 func (s *stubEngine) GetByID(
@@ -88,41 +103,34 @@ func (s *stubEngine) GetByID(
 	formulatemplateports.GetFormulaTemplateByIDRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	return &formulatemplate.FormulaTemplate{
-		Name:       "Per mile",
-		Expression: "totalDistance * rate",
+		Name:                 "Per Mile",
+		Source:               perMileSource,
+		TestCount:            1,
+		CurrentVersionNumber: 2,
 	}, nil
 }
 
-func (s *stubEngine) TestExpression(
+func (s *stubEngine) Preview(
 	_ context.Context,
-	req *formulatemplateservice.TestExpressionRequest,
-) (*formulatemplateservice.TestExpressionResponse, error) {
-	s.tested = append(s.tested, req)
-	return s.evaluation, nil
+	req *formulatemplateservice.PreviewRequest,
+) (*formulatemplateports.PreviewResult, error) {
+	s.previews = append(s.previews, req)
+	return s.preview, nil
 }
 
-func (s *stubEngine) PriceScenario(
+func (s *stubEngine) TestSource(
 	_ context.Context,
-	req *formulatemplateservice.PriceScenarioRequest,
-) *formulatemplateservice.ScenarioPrice {
-	s.priced = append(s.priced, req)
-	return &formulatemplateservice.ScenarioPrice{Amount: "412.5", Valid: true}
-}
-
-func (s *stubEngine) ScenarioTrace(
-	context.Context,
-	*formulatemplateservice.ScenarioTraceRequest,
-) (*formulatemplateports.ScenarioTrace, error) {
-	return s.trace, nil
+	req *formulatemplateservice.TestSourceRequest,
+) (*formulatemplateservice.TestSourceResult, error) {
+	s.tested = append(s.tested, req.Source)
+	return s.tests(req.Source), nil
 }
 
 func (s *stubEngine) ReviewDiff(
 	context.Context,
 	*formulatemplateservice.ReviewDiffRequest,
 ) (*formulatemplateservice.ReviewDiffResponse, error) {
-	return &formulatemplateservice.ReviewDiffResponse{
-		CurrentExpression: "totalDistance * rate",
-	}, nil
+	return s.diff, nil
 }
 
 func (s *stubEngine) Backtest(
@@ -141,6 +149,25 @@ type fixture struct {
 	actor      *permissionports.RequestActor
 }
 
+func declaredInputs() []tarifftypes.InputDecl {
+	return []tarifftypes.InputDecl{
+		{Name: "rate", Type: "Money/mi", Required: true},
+		{Name: "minimumCharge", Type: "Money", Doc: "The least a load bills"},
+		{Name: "fuelPeg", Type: "Money/gal"},
+	}
+}
+
+func passingRun(names ...string) *rules.TariffTestRun {
+	run := &rules.TariffTestRun{Tests: []rules.TariffTestResult{}}
+	for _, name := range names {
+		run.Tests = append(run.Tests, rules.TariffTestResult{
+			Name:   name,
+			Status: rules.TariffTestPassed,
+		})
+	}
+	return run
+}
+
 func newFixture(t *testing.T, reply any) *fixture {
 	t.Helper()
 
@@ -156,34 +183,34 @@ func newFixture(t *testing.T, reply any) *fixture {
 		Version:             7,
 		PreferredProviderID: pulid.MustNew("aip_"),
 	}
+	label := "Per Mile"
 	completer := &stubCompleter{reply: reply}
 	engine := &stubEngine{
-		evaluation: &formulatemplateservice.TestExpressionResponse{
+		preview: &formulatemplateports.PreviewResult{
 			Valid:  true,
-			Result: new(decimal.NewFromInt(250)),
-			Statements: []formulatemplatetypes.Statement{
-				{
-					Index: 0,
-					Kind:  formulatemplatetypes.StatementLet,
-					Name:  "base",
-					Code:  "let base = totalDistance * rate",
-					Value: rules.RawJSON(`"200"`),
-				},
-				{
-					Index: 1,
-					Kind:  formulatemplatetypes.StatementLet,
-					Name:  "fuel",
-					Code:  "let fuel = base * 0.25",
-					Value: rules.RawJSON(`"50"`),
-				},
-				{
-					Index: 2,
-					Kind:  formulatemplatetypes.StatementResult,
-					Code:  "base + fuel",
-					Value: rules.RawJSON(`"250"`),
-				},
+			Inputs: declaredInputs(),
+			RatedBill: &tarifftypes.Bill{
+				Total: decimal.NewFromInt(250),
+				Lines: []tarifftypes.Line{{
+					Kind:   tarifftypes.LineCharge,
+					Label:  label,
+					Amount: decimal.NewFromInt(250),
+				}},
 			},
+			Trace: rules.RawJSON(`[
+				{"kind":"let","name":"miles","display":"125 mi"},
+				{"kind":"charge","label":"Per Mile","display":"$250"},
+				{"kind":"note","text":"Minimum not reached"}
+			]`),
 		},
+		tests: func(string) *formulatemplateservice.TestSourceResult {
+			return &formulatemplateservice.TestSourceResult{
+				Check:  &rules.TariffCheck{OK: true},
+				Inputs: declaredInputs(),
+				Tests:  passingRun("a short haul bills its miles"),
+			}
+		},
+		diff: &formulatemplateservice.ReviewDiffResponse{CurrentSource: perMileSource},
 	}
 
 	return &fixture{
@@ -203,55 +230,42 @@ func newFixture(t *testing.T, reply any) *fixture {
 }
 
 func draft() agentports.FormulaStudioDraft {
-	return agentports.FormulaStudioDraft{
-		Name:     "Per mile",
-		SchemaID: "shipment",
-		Content: formulatemplate.ScenarioContent{
-			Expression: "let base = totalDistance * rate; let fuel = base * 0.25; base + fuel",
-			VariableDefinitions: []*formulatypes.VariableDefinition{
-				{Name: "rate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 2.0},
-				{
-					Name:        "fuelPercent",
-					Type:        formulatypes.VariableValueTypeNumber,
-					Description: "Fuel",
-				},
-				{Name: "stops", Type: formulatypes.VariableValueTypeNumber},
-			},
-		},
-	}
+	return agentports.FormulaStudioDraft{Name: "Per Mile", Source: perMileSource}
 }
 
-func TestExplainFormula_BoundsTheModelAndFillsEveryStatement(t *testing.T) {
+func TestExplainFormula_BoundsTheModelAndFillsEveryStep(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, map[string]any{"items": []map[string]any{
-		{"statementIndex": 0, "says": "  `base`   is the linehaul.  "},
-		{"statementIndex": 0, "says": "a second answer for the same line"},
-		{"statementIndex": 9, "says": "out of range"},
-		{"statementIndex": 2, "says": strings.Repeat("long ", 200)},
+		{"index": 0, "says": "  `miles`   is the trip.  "},
+		{"index": 0, "says": "a second answer for the same step"},
+		{"index": 9, "says": "out of range"},
+		{"index": 2, "says": strings.Repeat("long ", 200)},
 	}})
+	shipmentID := pulid.MustNew("shp_")
 
 	resp, err := f.svc.ExplainFormula(t.Context(), &agentports.ExplainFormulaRequest{
-		TenantInfo:   f.tenant,
-		Draft:        draft(),
-		SampleValues: map[string]any{"totalDistance": 100.0},
+		TenantInfo: f.tenant,
+		Draft:      draft(),
+		Inputs:     tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.NewFromInt(2), "$/mi")},
+		ShipmentID: shipmentID,
 	}, f.actor)
 	require.NoError(t, err)
 
 	require.Len(t, resp.Items, 3)
-	assert.Equal(t, "`base` is the linehaul.", resp.Items[0].Says)
-	assert.Equal(t, "`fuel` comes to 50 on this load.", resp.Items[1].Says)
+	assert.Equal(t, "`miles` is the trip.", resp.Items[0].Says)
+	assert.Equal(t, "\"Per Mile\" bills $250 on this load.", resp.Items[1].Says)
 	assert.LessOrEqual(t, len([]rune(resp.Items[2].Says)), maxSaysRunes+1)
 	for index, item := range resp.Items {
-		assert.Equal(t, index, item.StatementIndex)
+		assert.Equal(t, index, item.Index)
 	}
-	assert.Equal(t, "250", *resp.BilledAmount)
-	assert.Len(t, resp.Statements, 3)
+	assert.Same(t, f.engine.preview, resp.Preview)
 
-	require.Len(t, f.engine.tested, 1)
-	assert.True(t, f.engine.tested[0].TraceStatements)
-	assert.Equal(t, 2.0, f.engine.tested[0].Variables["rate"], "defaults come first")
-	assert.Equal(t, 100.0, f.engine.tested[0].Variables["totalDistance"])
+	require.Len(t, f.engine.previews, 1)
+	assert.Equal(t, perMileSource, f.engine.previews[0].Source)
+	require.NotNil(t, f.engine.previews[0].ShipmentID)
+	assert.Equal(t, shipmentID, *f.engine.previews[0].ShipmentID)
+	assert.Contains(t, f.engine.previews[0].Inputs, "rate")
 
 	require.Len(t, f.completer.requests, 1)
 	request := f.completer.requests[0]
@@ -262,6 +276,43 @@ func TestExplainFormula_BoundsTheModelAndFillsEveryStatement(t *testing.T) {
 	for _, section := range request.Context.Sections {
 		assert.False(t, section.Trusted, "page content is untrusted: %s", section.Title)
 	}
+}
+
+func TestExplainFormula_RefusesSourceThatDoesNotCheck(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, nil)
+	f.engine.preview = &formulatemplateports.PreviewResult{
+		Valid: false,
+		Diagnostics: []rules.TariffDiagnostic{{
+			Severity: rules.SeverityError,
+			Code:     "unknown-name",
+			Message:  rules.Message{Template: "There is no `ratee`"},
+		}},
+	}
+
+	_, err := f.svc.ExplainFormula(t.Context(), &agentports.ExplainFormulaRequest{
+		TenantInfo: f.tenant,
+		Draft:      draft(),
+	}, f.actor)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err), "%v", err)
+	assert.Empty(t, f.completer.requests)
+}
+
+func TestExplainFormula_WithoutATraceAsksNothing(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, nil)
+	f.engine.preview.Trace = nil
+
+	resp, err := f.svc.ExplainFormula(t.Context(), &agentports.ExplainFormulaRequest{
+		TenantInfo: f.tenant,
+		Draft:      draft(),
+	}, f.actor)
+	require.NoError(t, err)
+	assert.Empty(t, resp.Items)
+	assert.Empty(t, f.completer.requests)
 }
 
 func TestExplainFormula_WithoutAProviderIsABusinessError(t *testing.T) {
@@ -300,16 +351,18 @@ func TestAssistant_RefusesWhenTheAgentIsWithheldOrOff(t *testing.T) {
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
 	assert.Empty(t, f.completer.requests)
+	assert.Empty(t, f.engine.tested, "nothing runs for an agent that is off")
 }
 
 func TestDescribeInputs_OnlyBlankOnesAndBounded(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, map[string]any{"descriptions": []map[string]any{
-		{"name": "rate", "description": "The rate per loaded mile"},
-		{"name": "fuelPercent", "description": "already described"},
+		{"name": "rate", "description": "  What the contract pays per mile  "},
+		{"name": "rate", "description": "a second answer"},
+		{"name": "minimumCharge", "description": "already described"},
 		{"name": "invented", "description": "not an input"},
-		{"name": "stops", "description": strings.Repeat("x", 300)},
+		{"name": "fuelPeg", "description": strings.Repeat("x", 300)},
 	}})
 
 	resp, err := f.svc.DescribeInputs(t.Context(), &agentports.DescribeFormulaInputsRequest{
@@ -318,10 +371,10 @@ func TestDescribeInputs_OnlyBlankOnesAndBounded(t *testing.T) {
 	}, f.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, "The rate per loaded mile", resp.Descriptions["rate"])
-	assert.NotContains(t, resp.Descriptions, "fuelPercent")
+	assert.Equal(t, "What the contract pays per mile", resp.Descriptions["rate"])
+	assert.NotContains(t, resp.Descriptions, "minimumCharge")
 	assert.NotContains(t, resp.Descriptions, "invented")
-	assert.LessOrEqual(t, len([]rune(resp.Descriptions["stops"])), maxInputDescriptionRunes)
+	assert.LessOrEqual(t, len([]rune(resp.Descriptions["fuelPeg"])), maxInputDescriptionRunes)
 	assert.Equal(t, aiusage.FeatureFormulaGenerate, f.completer.requests[0].Attribution.Feature)
 }
 
@@ -329,117 +382,196 @@ func TestDescribeInputs_NothingBlankAsksNothing(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, nil)
-	described := draft()
-	described.Content.VariableDefinitions = described.Content.VariableDefinitions[1:2]
+	f.engine.tests = func(string) *formulatemplateservice.TestSourceResult {
+		return &formulatemplateservice.TestSourceResult{
+			Check:  &rules.TariffCheck{OK: true},
+			Inputs: declaredInputs()[1:2],
+			Tests:  passingRun(),
+		}
+	}
 
 	resp, err := f.svc.DescribeInputs(t.Context(), &agentports.DescribeFormulaInputsRequest{
 		TenantInfo: f.tenant,
-		Draft:      described,
+		Draft:      draft(),
 	}, f.actor)
 	require.NoError(t, err)
 	assert.Empty(t, resp.Descriptions)
 	assert.Empty(t, f.completer.requests)
 }
 
-func TestSuggestScenarios_ValidatesAndPricesWithTheEngine(t *testing.T) {
+func TestSuggestTests_WritesRunnableBlocksAndRunsThem(t *testing.T) {
 	t.Parallel()
 
-	scenario := func(name string, values ...map[string]any) map[string]any {
-		return map[string]any{"name": name, "description": "Checks " + name, "variables": values}
-	}
-	f := newFixture(t, map[string]any{"scenarios": []map[string]any{
-		scenario("Short haul", map[string]any{"name": "totalDistance", "value": 50}),
-		scenario("existing one", map[string]any{"name": "totalDistance", "value": 1}),
-		scenario("Bad path", map[string]any{"name": "1nope", "value": 3}),
-		scenario("No values"),
-		scenario("Long haul", map[string]any{"name": "totalDistance", "value": 2000}),
-		scenario("Short haul", map[string]any{"name": "totalDistance", "value": 60}),
-		scenario("Team", map[string]any{"name": "serviceType.code", "value": "TEAM"}),
-		scenario("Four", map[string]any{"name": "rate", "value": 4}),
-		scenario("Five", map[string]any{"name": "rate", "value": 5}),
-		scenario("Six", map[string]any{"name": "rate", "value": 6}),
+	f := newFixture(t, map[string]any{"tests": []map[string]any{
+		{"name": "Minimum reached", "statements": []string{
+			"given input.minimumCharge = $500",
+			"given shipment.distance = 10 mi",
+			"expect total == $500",
+		}},
+		{"name": "a short haul bills its miles", "statements": []string{"expect total > $0"}},
+		{"name": "No expectation", "statements": []string{"given shipment.distance = 1 mi"}},
+		{"name": "Escapes", "statements": []string{
+			"expect total > $0 }\ncharge \"Free\" = $1",
+			"given shipment.distance = 5 mi } test \"x\" {",
+		}},
+		{"name": "Long trip fails", "statements": []string{
+			"given shipment.distance = 3000 mi",
+			"expect total == $1",
+		}},
 	}})
+	f.engine.tests = func(source string) *formulatemplateservice.TestSourceResult {
+		run := passingRun("a short haul bills its miles")
+		if strings.Contains(source, "Minimum reached") {
+			run.Tests = append(run.Tests, passingRun("Minimum reached").Tests...)
+		}
+		if strings.Contains(source, "Long trip fails") {
+			run.Tests = append(run.Tests, rules.TariffTestResult{
+				Name:   "Long trip fails",
+				Status: rules.TariffTestFailed,
+				Failures: []rules.TariffTestFailure{{
+					Message: rules.Message{Template: "total was $6,000"},
+				}},
+			})
+		}
+		return &formulatemplateservice.TestSourceResult{
+			Check:  &rules.TariffCheck{OK: true},
+			Inputs: declaredInputs(),
+			Tests:  run,
+		}
+	}
 
-	resp, err := f.svc.SuggestScenarios(t.Context(), &agentports.SuggestFormulaScenariosRequest{
+	resp, err := f.svc.SuggestTests(t.Context(), &agentports.SuggestFormulaTestsRequest{
 		TenantInfo: f.tenant,
 		Draft:      draft(),
-		Existing:   []agentports.ExistingFormulaScenario{{Name: "Existing One"}},
 	}, f.actor)
 	require.NoError(t, err)
 
-	names := make([]string, 0, len(resp.Scenarios))
-	for _, priced := range resp.Scenarios {
-		names = append(names, priced.Name)
-		assert.Equal(t, "412.5", priced.Amount, "every amount comes from the engine")
-		assert.True(t, priced.Valid)
-	}
-	assert.Equal(t, []string{"Short haul", "Long haul", "Team", "Four", "Five"}, names)
-	assert.Equal(t, map[string]any{"totalDistance": float64(50)}, resp.Scenarios[0].Variables)
-	require.Len(t, f.engine.priced, 5)
-	assert.Equal(t, "shipment", f.engine.priced[0].SchemaID)
+	require.Len(t, resp.Tests, 2)
+	assert.Equal(t, "Minimum reached", resp.Tests[0].Name)
+	assert.Equal(t, rules.TariffTestPassed, resp.Tests[0].Status)
+	assert.Equal(t, "test \"Minimum reached\" {\n  given input.minimumCharge = $500\n"+
+		"  given shipment.distance = 10 mi\n  expect total == $500\n}", resp.Tests[0].Block)
+	assert.Equal(t, "Long trip fails", resp.Tests[1].Name)
+	assert.Equal(t, rules.TariffTestFailed, resp.Tests[1].Status)
+	require.Len(t, resp.Tests[1].Failures, 1)
+
+	require.Len(t, f.engine.tested, 2)
+	assert.True(t, strings.HasPrefix(f.engine.tested[1], strings.TrimRight(perMileSource, "\n")))
+	assert.Contains(t, f.engine.tested[1], resp.Tests[0].Block)
+	assert.NotContains(t, f.engine.tested[1], "charge \"Free\"")
 }
 
-func TestExplainScenario_UsesTheModelOnlyWhenItAnswersInShape(t *testing.T) {
+func TestSuggestTests_RefusesSourceThatDoesNotCheck(t *testing.T) {
 	t.Parallel()
 
-	trace := &formulatemplateports.ScenarioTrace{
-		Expected:        "250",
-		BaselineLabel:   "v3",
-		FallbackVerdict: formulatemplateports.ScenarioVerdictIntended,
-		FallbackWhy:     "`rate`'s default changed.",
-		Rows: []formulatemplateports.ScenarioTraceRow{
-			{Kind: formulatemplateports.ScenarioRowInput, Name: "rate"},
-		},
+	f := newFixture(t, nil)
+	f.engine.tests = func(string) *formulatemplateservice.TestSourceResult {
+		return &formulatemplateservice.TestSourceResult{
+			Check: &rules.TariffCheck{
+				OK: false,
+				Diagnostics: []rules.TariffDiagnostic{{
+					Severity: rules.SeverityError,
+					Code:     "syntax",
+					Message:  rules.Message{Template: "Expected a charge"},
+				}},
+			},
+			Tests: passingRun(),
+		}
 	}
 
-	f := newFixture(t, map[string]any{"why": "Something.", "verdict": "maybe"})
-	f.engine.trace = trace
-	resp, err := f.svc.ExplainScenario(t.Context(), &agentports.ExplainFormulaScenarioRequest{
+	_, err := f.svc.SuggestTests(t.Context(), &agentports.SuggestFormulaTestsRequest{
 		TenantInfo: f.tenant,
+		Draft:      draft(),
+	}, f.actor)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err))
+	assert.Empty(t, f.completer.requests)
+}
+
+func TestExplainTest_APassingTestNeedsNoModel(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, nil)
+
+	resp, err := f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+		TenantInfo: f.tenant,
+		Draft:      draft(),
+		TestName:   "a short haul bills its miles",
+	}, f.actor)
+	require.NoError(t, err)
+	assert.Equal(t, agentports.FormulaTestVerdictIntended, resp.Verdict)
+	assert.False(t, resp.Generated)
+	assert.Empty(t, f.completer.requests)
+
+	_, err = f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+		TenantInfo: f.tenant,
+		Draft:      draft(),
+		TestName:   "no such test",
+	}, f.actor)
+	assert.True(t, errortypes.IsError(err))
+}
+
+func failingTests(string) *formulatemplateservice.TestSourceResult {
+	return &formulatemplateservice.TestSourceResult{
+		Check:  &rules.TariffCheck{OK: true},
+		Inputs: declaredInputs(),
+		Tests: &rules.TariffTestRun{Tests: []rules.TariffTestResult{{
+			Name:   "a short haul bills its miles",
+			Status: rules.TariffTestFailed,
+			Failures: []rules.TariffTestFailure{{
+				Message: rules.Message{Template: "total was $250, not $200"},
+			}},
+		}}},
+	}
+}
+
+func TestExplainTest_UsesTheModelOnlyWhenItAnswersInShape(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, map[string]any{"verdict": "maybe", "why": "Something."})
+	f.engine.tests = failingTests
+	resp, err := f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
+		TenantInfo: f.tenant,
+		Draft:      draft(),
+		TestName:   "a short haul bills its miles",
 	}, f.actor)
 	require.NoError(t, err)
 	assert.False(t, resp.Generated)
-	assert.Equal(t, formulatemplateports.ScenarioVerdictIntended, resp.Verdict)
-	assert.Equal(t, "`rate`'s default changed.", resp.Why)
-	assert.Equal(t, "v3", resp.BaselineLabel)
-	require.Len(t, resp.Rows, 1)
+	assert.Equal(t, agentports.FormulaTestVerdictUnclear, resp.Verdict)
+	assert.Contains(t, resp.Why, "total was $250, not $200")
 
 	f = newFixture(t, map[string]any{
-		"why":     "The `rate` default rose from 2.5 to 3. That moves `base` to $300.00. Extra.",
-		"verdict": "bug",
+		"verdict": "intended",
+		"why":     "  The `rate` rose,   so the expectation is out of date. ",
 	})
-	f.engine.trace = trace
-	resp, err = f.svc.ExplainScenario(t.Context(), &agentports.ExplainFormulaScenarioRequest{
+	f.engine.tests = failingTests
+	resp, err = f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
 		TenantInfo: f.tenant,
+		Draft:      draft(),
+		TestName:   "a short haul bills its miles",
 	}, f.actor)
 	require.NoError(t, err)
 	assert.True(t, resp.Generated)
-	assert.Equal(t, formulatemplateports.ScenarioVerdictBug, resp.Verdict)
-	assert.Equal(
-		t,
-		"The `rate` default rose from 2.5 to 3. That moves `base` to $300.00.",
-		resp.Why,
-	)
+	assert.Equal(t, agentports.FormulaTestVerdictIntended, resp.Verdict)
+	assert.Equal(t, "The `rate` rose, so the expectation is out of date.", resp.Why)
 }
 
-func TestExplainScenario_FallsBackWithoutAProvider(t *testing.T) {
+func TestExplainTest_FallsBackWithoutAProvider(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t, nil)
 	f.svc.completion = nil
-	f.engine.trace = &formulatemplateports.ScenarioTrace{
-		Expected:        "250",
-		FallbackVerdict: formulatemplateports.ScenarioVerdictBug,
-		FallbackWhy:     "The formula fails on this load now: boom",
-	}
+	f.engine.tests = failingTests
 
-	resp, err := f.svc.ExplainScenario(t.Context(), &agentports.ExplainFormulaScenarioRequest{
+	resp, err := f.svc.ExplainTest(t.Context(), &agentports.ExplainFormulaTestRequest{
 		TenantInfo: f.tenant,
+		Draft:      draft(),
+		TestName:   "a short haul bills its miles",
 	}, f.actor)
 	require.NoError(t, err)
 	assert.False(t, resp.Generated)
-	assert.Equal(t, formulatemplateports.ScenarioVerdictBug, resp.Verdict)
-	assert.NotNil(t, resp.Rows, "rows are an empty list, never null")
+	assert.Equal(t, agentports.FormulaTestVerdictUnclear, resp.Verdict)
+	assert.Equal(t, rules.TariffTestFailed, resp.Test.Status)
 }
 
 func TestDraftReviewNote_IsBoundedAndNeedsAProvider(t *testing.T) {
@@ -455,6 +587,11 @@ func TestDraftReviewNote_IsBoundedAndNeedsAProvider(t *testing.T) {
 	assert.LessOrEqual(t, len([]rune(resp.Note)), formulatemplate.MaxReviewerNoteLength)
 	assert.Nil(t, resp.Backtest, "a first version has no backtest")
 
+	sections := f.completer.requests[0].Context.Sections
+	require.Len(t, sections, 3)
+	assert.Contains(t, sections[1].Content, "first version")
+	assert.Contains(t, sections[1].Content, perMileSource)
+
 	f = newFixture(t, nil)
 	f.svc.completion = nil
 	_, err = f.svc.DraftReviewNote(t.Context(), &agentports.DraftFormulaReviewNoteRequest{
@@ -463,4 +600,29 @@ func TestDraftReviewNote_IsBoundedAndNeedsAProvider(t *testing.T) {
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
 	assert.Contains(t, business.Error(), "No AI provider")
+}
+
+func TestDraftReviewNote_BacktestsAgainstTheApprovedVersion(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t, map[string]any{"note": "The rate rose."})
+	f.engine.diff = &formulatemplateservice.ReviewDiffResponse{
+		HasApprovedBase: true,
+		BaseVersion:     1,
+		CurrentVersion:  2,
+		ChangeCount:     1,
+		BaseSource:      strings.Replace(perMileSource, "$0", "$100", 1),
+		CurrentSource:   perMileSource,
+	}
+
+	resp, err := f.svc.DraftReviewNote(t.Context(), &agentports.DraftFormulaReviewNoteRequest{
+		TenantInfo:      f.tenant,
+		IncludeBacktest: true,
+	}, f.actor)
+	require.NoError(t, err)
+	require.NotNil(t, resp.Backtest)
+	assert.Equal(t, "The rate rose.", resp.Note)
+	diff := f.completer.requests[0].Context.Sections[1].Content
+	assert.Contains(t, diff, "From v1 (approved) to v2")
+	assert.Contains(t, diff, "Approved source:")
 }

@@ -26,7 +26,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [graphql-executor](graphql-executor.md) | the gqlexec generator or runtime | `task gqlgen`, never `go tool gqlgen generate` |
 | [bun/buncolgen](bun/buncolgen.md) | any repository code | generated column helpers only, never hand-written column names |
 | [rust](rust.md) | any Rust code | services build on `trenova-service-kit`; untrusted input is parsed in `trenova-sandbox` |
-| [rules-engine](rules-engine.md) | `services/crates/rules`, `pkg/rules`, `client/packages/shared/src/rules`, any caller of the formula language, allocation, report formatting, lanes or rate matrices | one artifact for both hosts: rebuild with `task rust:wasm-rules` and commit both copies, never edit `rules.wasm`; one call per request, never one per item |
+| [rules-engine](rules-engine.md) | `services/crates/rules`, `pkg/rules`, `client/packages/shared/src/rules`, any caller of Tariff, allocation, report formatting, lanes or rate matrices | one artifact for both hosts: rebuild with `task rust:wasm-rules` and commit both copies, never edit `rules.wasm`; one call per request, never one per item |
 | [imaging-worker](imaging-worker.md) | the worker, its proto, `infrastructure/imaging`, `pagerender`, anything that renders or assembles a document; `blob.go`, `storedobject` | no PDF or image library in Go; stored objects go through `storedobject` as streaming sealed blobs |
 
 ## Operations domain
@@ -39,7 +39,8 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [customer-tracking](customer-tracking.md) | `customertracking*`, public tracking endpoints, status email templates | one `customer_status_notifications` row per shipment, event and stop, sent exactly once |
 | [tender-negotiation](tender-negotiation.md) | `tender`, `tenderservice`, `tenderjobs`, tender routes and settings | one workflow per round; a bounce inserts new offer rows; the carrier is paid `AgreedRate()` |
 | [exception-queue](exception-queue.md) | `watchtower`, `watchtowerservice`, exception sources, settings or tools | a source never overwrites owner, status or resolution |
-| [formula-language-service](formula-language-service.md) | the Formula Studio's editor, its linter, hover, signature help or format command, `analyzeExpression`, a consumer of `formula.*` in the browser | the language lives in `services/crates/rules` and is never re-implemented in TypeScript; call the module only after `useRules()` has loaded it, and show its messages with `translateMessage` |
+| [formula-language](formula-language.md) | what Tariff means: its syntax, types, units, the bill, contracts and inputs, the data roots, rate tables, the standard library, tests; any tariff, library or condition source (seeds, standard templates, Nova's prompt) | the reference is normative: a change to the language changes it, the crate and the corpus together; a file that does not check never saves, previews or rates, and values cross the boundary only in its wire forms |
+| [formula-language-service](formula-language-service.md) | the Formula Studio or the library studio, the Tariff editor (highlighting, lint, completion, hover, signature help, definition, rename, inlays, folding, format), the shared `components/tariff-studio` pieces, a consumer of `tariff.*` in the browser | Tariff lives in `services/crates/rules` and is never lexed, checked or evaluated in TypeScript; call the module only after `useRules()` has loaded it, and show its messages with `translateMessage` |
 
 ## Agents and AI
 

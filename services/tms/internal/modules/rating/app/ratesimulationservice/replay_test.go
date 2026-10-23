@@ -33,6 +33,7 @@ func simulated(value string) *ratequoteports.RatedShipment {
 
 	return &ratequoteports.RatedShipment{
 		Amount:  amount(value),
+		Total:   amount(value),
 		Outcome: ratequote.OutcomeRated,
 		RuleID:  &ruleID,
 		Quote:   &ratequote.RateQuote{Trace: &ratetypes.Trace{}},

@@ -186,6 +186,25 @@ trenova db seed-check
 trenova db seed-clean
 ```
 
+### Volume data
+
+`trenova db seed-volume` (`task db-seed-volume`) is deliberately not a registered seed. It
+fills the development organization with a large, varied data set (10,000 shipments over 12
+months by default, with the customers, locations, equipment, workers, carriers, billing queue,
+invoices, adjustments, carrier and driver settlements, fuel and IFTA, bank reconciliation,
+collections, journals and payments that go with them, all linked: a customer's lanes run through
+its own facilities, reefer and hazmat loads go to matching trailers and endorsed drivers, and
+invoices, payments and ledger lines tie back to their shipments) for checking performance, pagination and
+loading states. It runs only against development or test databases, requires the development
+seeds, and adds to what exists, so running it again grows the data set.
+
+```bash
+trenova db seed-volume                          # 10,000 shipments, 12 months
+trenova db seed-volume --shipments 50000        # heavier
+trenova db seed-volume --months 24 --seed 42    # two years, reproducible
+task db-seed-volume shipments=25000 months=18
+```
+
 ## Code Generation
 
 ### Seed ID Generation

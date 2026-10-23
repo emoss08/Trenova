@@ -179,7 +179,8 @@ func TestCreateLoadBuildsShipment(t *testing.T) {
 	assert.Equal(t, "PO 88240", entity.ExternalReference)
 	require.NotNil(t, entity.Weight)
 	assert.Equal(t, int64(42000), *entity.Weight)
-	assert.Equal(t, "1240", entity.BaseRate.Decimal.String())
+	assert.Equal(t, "1240", entity.FreightChargeAmount.Decimal.String())
+	assert.True(t, entity.FormulaTemplateID.IsNil(), "a tendered rate is a manual rate")
 	require.Len(t, entity.Moves, 1)
 	stops := entity.Moves[0].Stops
 	require.Len(t, stops, 2)

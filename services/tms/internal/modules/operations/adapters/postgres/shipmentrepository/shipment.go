@@ -437,7 +437,6 @@ func (r *repository) GetPreviousRates(
 				ColumnExpr(sp.FreightChargeAmount.Qualified()).
 				ColumnExpr(sp.OtherChargeAmount.Qualified()).
 				ColumnExpr(sp.TotalChargeAmount.Qualified()).
-				ColumnExpr(sp.RatingUnit.Qualified()).
 				ColumnExpr(sp.Pieces.Qualified()).
 				ColumnExpr(sp.Weight.Qualified()).
 				ColumnExpr(sp.CreatedAt.Qualified()).
@@ -750,7 +749,8 @@ func (r *repository) UpdateDerivedState(
 					sp.ActualDeliveryDate.Bare(),
 					sp.FormulaTemplateID.Bare(),
 					sp.FreightChargeAmount.Bare(),
-					sp.BaseRate.Bare(),
+					sp.TariffInputs.Bare(),
+					sp.FreightLines.Bare(),
 					sp.OtherChargeAmount.Bare(),
 					sp.TotalChargeAmount.Bare(),
 					sp.RatingDetail.Bare(),

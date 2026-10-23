@@ -6,6 +6,7 @@ import {
   bucketKeyOf,
   cellBoundsAt,
   coordinateKey,
+  matrixValueUnit,
   sliceBuckets,
   type MatrixAxisPosition,
 } from "../rate-matrix";
@@ -220,5 +221,21 @@ describe("sliceBuckets", () => {
     ]);
 
     expect(buckets.map((bucket) => bucket.min)).toEqual([0, 1000]);
+  });
+});
+
+describe("matrixValueUnit", () => {
+  it("writes a cell's unit the way a Tariff literal does", () => {
+    expect(matrixValueUnit("Money")).toBe("$");
+    expect(matrixValueUnit("Money/cwt")).toBe("$/cwt");
+    expect(matrixValueUnit("Money/mi")).toBe("$/mi");
+    expect(matrixValueUnit("Money/pallet")).toBe("$/pallet");
+    expect(matrixValueUnit("Money/ft3")).toBe("$/ft3");
+    expect(matrixValueUnit("Percent")).toBe("%");
+  });
+
+  it("gives a plain number no unit", () => {
+    expect(matrixValueUnit("Number")).toBe("");
+    expect(matrixValueUnit("Int")).toBe("");
   });
 });

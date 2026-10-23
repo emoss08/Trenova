@@ -1,3 +1,4 @@
+import { readStoredTariffBill, type StoredTariffBill } from "@trenova/shared/types/tariff-form";
 import {
   RECORD_ID_KEY,
   formatDisplayValue,
@@ -448,15 +449,6 @@ export function composedViewFrom(artifact: AssistantArtifact): ComposedViewArtif
   };
 }
 
-export type RateComponent = {
-  label: string;
-  basis: string;
-  amount: string;
-  runningTotal: string;
-};
-
-export type RateGuardrail = { kind: string; bound: string; raw: string; result: string };
-
 export type RateExplanationArtifact = {
   shipmentId: string;
   side: string;
@@ -464,15 +456,14 @@ export type RateExplanationArtifact = {
   winner: { agreementCode: string; agreementName: string; ruleLabel: string } | null;
   tieBreak: string;
   rejected: { agreementCode: string; ruleLabel: string; reason: string; detail: string }[];
-  components: RateComponent[];
-  guardrails: RateGuardrail[];
+  /** The winning tariff's bill: its charges, notes and adjustments, in wire form; null when unread. */
+  bill: StoredTariffBill | null;
   totals: { linehaul: string; fuel: string; accessorial: string; total: string };
   warnings: string[];
-  /** How a shipment no agreement priced got its price: its formula template, or an entered amount. */
+  /** How a shipment no agreement priced got its price: its tariff, or an entered amount. */
   pricedBy: {
     method: string;
     explanation: string;
-    expression: string;
     override: string;
     overrideReason: string;
   } | null;
@@ -512,22 +503,7 @@ export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanatio
         reason: stringOf(entry.reason),
         detail: stringOf(entry.detail),
       })),
-    components: listOf(payload.components)
-      .filter(isRecord)
-      .map((entry) => ({
-        label: stringOf(entry.label),
-        basis: stringOf(entry.basis),
-        amount: amountOf(entry.amount),
-        runningTotal: amountOf(entry.runningTotal),
-      })),
-    guardrails: listOf(payload.guardrails)
-      .filter(isRecord)
-      .map((entry) => ({
-        kind: stringOf(entry.kind),
-        bound: amountOf(entry.bound),
-        raw: amountOf(entry.raw),
-        result: amountOf(entry.result),
-      })),
+    bill: readStoredTariffBill(payload.bill),
     totals: totalsOf(payload.totals),
     warnings: listOf(payload.warnings).filter(
       (warning): warning is string => typeof warning === "string" && warning !== "",
@@ -538,7 +514,6 @@ export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanatio
         : {
             method: stringOf(pricedBy.method),
             explanation: stringOf(pricedBy.explanation),
-            expression: stringOf(pricedBy.expression),
             override: amountOf(pricedBy.override),
             overrideReason: stringOf(pricedBy.overrideReason),
           },

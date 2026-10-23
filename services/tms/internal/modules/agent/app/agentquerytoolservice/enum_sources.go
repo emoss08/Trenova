@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/pkg/ratetypes"
 )
 
 const (
@@ -82,19 +82,8 @@ var (
 		ratequoteports.ShopStrategyGuideRank,
 		ratequoteports.ShopStrategyFastestAccept,
 	})
-	formulaVariableTypes = agenttoolschema.Source(
-		"formula.variableType",
-		[]string{"Number", "String", "Boolean"},
-	)
-	formulaTemplateTypeSource = agenttoolschema.Source(
-		"formula.templateType",
-		[]string{pagedraft.TemplateTypeFreightCharge, pagedraft.TemplateTypeAccessorialCharge},
-	)
-	formulaRoundingModes = agenttoolschema.Source(
-		"formula.roundingMode",
-		ratetypes.AllRoundingModes(),
-	)
-	ratingSides = agenttoolschema.Source(
+	formulaKinds = agenttoolschema.Source("formula.kind", formulaassistantservice.AllKinds())
+	ratingSides  = agenttoolschema.Source(
 		"rating.side",
 		[]string{"Customer", "Carrier"},
 	)

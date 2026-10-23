@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -329,10 +330,6 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 				"type":        "integer",
 				"description": "Weight in pounds, when known.",
 			},
-			"ratingUnit": map[string]any{
-				"type":        "integer",
-				"description": "Rating units; defaults to 1.",
-			},
 			"asOf": map[string]any{
 				"type":        "string",
 				"description": "Rate as of this date, YYYY-MM-DD. Defaults to the first stop's date, then today.",
@@ -356,17 +353,20 @@ type quoteStopParam struct {
 }
 
 type quoteView struct {
-	Outcome           string           `json:"outcome"`
-	Amount            decimal.Decimal  `json:"amount"`
-	Currency          string           `json:"currency"`
-	BaseRate          *decimal.Decimal `json:"baseRate,omitempty"`
-	AgreementID       string           `json:"agreementId,omitempty"`
-	RuleID            string           `json:"ruleId,omitempty"`
-	FormulaTemplateID string           `json:"formulaTemplateId,omitempty"`
-	BillToCustomerID  string           `json:"billToCustomerId,omitempty"`
-	Lane              []string         `json:"lane"`
-	TotalDistance     float64          `json:"totalDistance"`
-	Note              string           `json:"note,omitempty"`
+	Outcome           string            `json:"outcome"`
+	Amount            decimal.Decimal   `json:"amount"`
+	Total             decimal.Decimal   `json:"total"`
+	Currency          string            `json:"currency"`
+	Inputs            map[string]string `json:"inputs,omitempty"`
+	Lines             []quoteLine       `json:"lines,omitempty"`
+	Refusal           string            `json:"refusal,omitempty"`
+	AgreementID       string            `json:"agreementId,omitempty"`
+	RuleID            string            `json:"ruleId,omitempty"`
+	FormulaTemplateID string            `json:"formulaTemplateId,omitempty"`
+	BillToCustomerID  string            `json:"billToCustomerId,omitempty"`
+	Lane              []string          `json:"lane"`
+	TotalDistance     float64           `json:"totalDistance"`
+	Note              string            `json:"note,omitempty"`
 }
 
 func (t *quoteShipmentTool) Query(
@@ -414,10 +414,6 @@ func (t *quoteShipmentTool) Query(
 	if weight := optionalInt(params.Params, "weight", 0); weight > 0 {
 		value := int64(weight)
 		entity.Weight = &value
-	}
-	entity.RatingUnit = int64(optionalInt(params.Params, "ratingUnit", 1))
-	if entity.RatingUnit <= 0 {
-		entity.RatingUnit = 1
 	}
 
 	asOf := entity.Moves[0].Stops[0].ScheduledWindowStart
@@ -541,7 +537,6 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Status:         shipment.StatusNew,
-		RatingUnit:     1,
 		Moves:          []*shipment.ShipmentMove{move},
 	}, nil
 }
@@ -583,12 +578,12 @@ func quoteViewOf(rated *ratequoteports.RatedShipment, lane []string) *quoteView 
 	view := &quoteView{
 		Outcome:  string(rated.Outcome),
 		Amount:   rated.Amount,
+		Total:    rated.Total,
 		Currency: rated.Currency,
+		Inputs:   inputTexts(rated.TariffInputs),
+		Lines:    quoteLines(rated.Bill),
+		Refusal:  rated.Refusal,
 		Lane:     lane,
-	}
-	if rated.BaseRate.Valid {
-		base := rated.BaseRate.Decimal
-		view.BaseRate = &base
 	}
 	if rated.AgreementID != nil {
 		view.AgreementID = rated.AgreementID.String()
@@ -854,4 +849,37 @@ func optionalPulid(params map[string]any, key string) (pulid.ID, bool, error) {
 	}
 
 	return id, true, nil
+}
+
+type quoteLine struct {
+	Label  string          `json:"label"`
+	Code   string          `json:"code,omitempty"`
+	Amount decimal.Decimal `json:"amount"`
+}
+
+func quoteLines(bill *tarifftypes.Bill) []quoteLine {
+	if bill == nil {
+		return nil
+	}
+	lines := make([]quoteLine, 0, len(bill.Lines))
+	for i := range bill.Lines {
+		line := &bill.Lines[i]
+		label := line.Label
+		if label == "" {
+			label = string(line.Kind)
+		}
+		lines = append(lines, quoteLine{Label: label, Code: line.Code, Amount: line.Amount})
+	}
+	return lines
+}
+
+func inputTexts(inputs tarifftypes.Inputs) map[string]string {
+	if len(inputs) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(inputs))
+	for name, raw := range inputs {
+		out[name] = tarifftypes.DisplayValue(raw)
+	}
+	return out
 }

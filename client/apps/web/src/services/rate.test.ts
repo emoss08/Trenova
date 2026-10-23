@@ -57,16 +57,24 @@ function appliedQuote() {
       engineVersion: "2026.09.1",
       inputs: { ratingDate: 1_757_000_000, weekday: 3, partyType: "Customer", partyId: "cus_1" },
       candidateCount: 0,
-      components: [
-        {
-          sequence: 0,
-          kind: "Linehaul",
-          label: "Linehaul",
-          amount: "1500.25",
-          runningTotal: "1500.25",
-          source: "FormulaTemplate",
-        },
-      ],
+      bill: {
+        currency: "USD",
+        lines: [
+          {
+            kind: "Charge",
+            label: "Linehaul",
+            freight: true,
+            amount: "1500.25",
+            quantity: "625.1",
+            quantityUnit: "mi",
+            rate: "2.4",
+            rateUnit: "$/mi",
+          },
+        ],
+        freightTotal: "1500.25",
+        accessorialTotal: "0",
+        total: "1500.25",
+      },
       totals: { linehaul: "1500.25", fuel: "0", accessorial: "0", total: "1500.25" },
     },
     createdAt: 1_757_000_100,
@@ -98,7 +106,8 @@ describe("RateQuoteService.getAppliedForShipment", () => {
     expect(quote?.outcome).toBe("FormulaFallback");
     expect(quote?.linehaulAmount).toBe(1500.25);
     expect(quote?.foregoneAmount).toBeNull();
-    expect(quote?.trace?.components?.[0]?.amount).toBe(1500.25);
+    expect(quote?.trace?.bill?.lines[0]?.amount).toEqual({ $q: "1500.25", u: "$" });
+    expect(quote?.trace?.bill?.notes).toEqual([]);
     expect(toastError).not.toHaveBeenCalled();
   });
 });

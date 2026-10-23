@@ -1,5 +1,5 @@
 // Starts loading rules.wasm once the page has loaded and the browser is idle, so a screen
-// that needs it later (the formula editor, a rate screen) finds it ready. It never competes
+// that needs it later (the Tariff editor, a rate screen) finds it ready. It never competes
 // with first paint: it waits for the load event and then for idle time, and the loader itself
 // is imported only then, so nothing of it is in the startup bundle. A failure is logged and
 // forgotten; useRules() and loadRules() try again when something needs the module.

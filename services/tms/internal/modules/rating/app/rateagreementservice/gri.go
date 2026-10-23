@@ -2,12 +2,14 @@ package rateagreementservice
 
 import (
 	"context"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -21,37 +23,25 @@ import (
 // reason carriers announce GRIs with effective dates instead of quietly
 // repricing.
 
-// ratePrecision is the rate column's scale; adjusted rates are rounded to it
-// so a 3% increase does not manufacture digits the column cannot hold.
 const ratePrecision = 6
 
-// RateAdjustment is how much a GRI moves every rate it touches: by a percent,
-// or by a flat amount per rating unit. Exactly one.
 type RateAdjustment struct {
 	PercentChange decimal.NullDecimal `json:"percentChange"`
-	FlatChange    decimal.NullDecimal `json:"flatChange"`
 }
 
 func (ra RateAdjustment) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
 	switch {
-	case ra.PercentChange.Valid && ra.FlatChange.Valid:
+	case !ra.PercentChange.Valid:
 		multiErr.Add(
-			"adjustment",
-			errortypes.ErrInvalid,
-			"Choose a percent change or a flat change, not both",
-		)
-	case !ra.PercentChange.Valid && !ra.FlatChange.Valid:
-		multiErr.Add(
-			"adjustment",
+			"adjustment.percentChange",
 			errortypes.ErrRequired,
-			"An adjustment is required — a percent change or a flat change",
+			"A percent change is required",
 		)
-	case ra.PercentChange.Valid &&
-		ra.PercentChange.Decimal.LessThanOrEqual(decimal.NewFromInt(-100)):
+	case ra.PercentChange.Decimal.LessThanOrEqual(decimal.NewFromInt(-100)):
 		multiErr.Add(
-			"adjustment",
+			"adjustment.percentChange",
 			errortypes.ErrInvalid,
 			"A decrease of 100% or more would invert every rate it touches",
 		)
@@ -64,16 +54,16 @@ func (ra RateAdjustment) Validate() *errortypes.MultiError {
 	return nil
 }
 
-// applyTo moves one rate by the adjustment.
-func (ra RateAdjustment) applyTo(rate decimal.Decimal) decimal.Decimal {
-	if ra.PercentChange.Valid {
-		factor := decimal.NewFromInt(1).
-			Add(ra.PercentChange.Decimal.Div(decimal.NewFromInt(100)))
+func (ra RateAdjustment) factor() decimal.Decimal {
+	return decimal.NewFromInt(1).Add(ra.PercentChange.Decimal.Div(decimal.NewFromInt(100)))
+}
 
-		return rate.Mul(factor).Round(ratePrecision)
-	}
+func roundRate(value decimal.Decimal) decimal.Decimal {
+	return value.Round(ratePrecision)
+}
 
-	return rate.Add(ra.FlatChange.Decimal).Round(ratePrecision)
+func (ra RateAdjustment) applyTo(inputs tarifftypes.Inputs) (tarifftypes.Inputs, error) {
+	return inputs.ScaleMoney(ra.factor(), roundRate)
 }
 
 // RateIncreaseRequest names the agreements a GRI touches and how far it moves
@@ -138,15 +128,15 @@ func (req *RateIncreaseRequest) Validate() *errortypes.MultiError {
 // RateIncreaseLine is one lane's before and after, which is what somebody
 // reviews before applying a GRI.
 type RateIncreaseLine struct {
-	RateAgreementID pulid.ID        `json:"rateAgreementId"`
-	AgreementCode   string          `json:"agreementCode"`
-	AgreementName   string          `json:"agreementName"`
-	RuleID          pulid.ID        `json:"ruleId"`
-	LaneKey         string          `json:"laneKey"`
-	Label           string          `json:"label"`
-	Before          decimal.Decimal `json:"before"`
-	After           decimal.Decimal `json:"after"`
-	BreakCount      int             `json:"breakCount"`
+	RateAgreementID pulid.ID           `json:"rateAgreementId"`
+	AgreementCode   string             `json:"agreementCode"`
+	AgreementName   string             `json:"agreementName"`
+	RuleID          pulid.ID           `json:"ruleId"`
+	LaneKey         string             `json:"laneKey"`
+	Label           string             `json:"label"`
+	Before          tarifftypes.Inputs `json:"before"`
+	After           tarifftypes.Inputs `json:"after"`
+	Changed         []string           `json:"changed"`
 }
 
 // RateIncreasePlan is everything a GRI would do, stated before it does it.
@@ -155,13 +145,7 @@ type RateIncreasePlan struct {
 	AgreementCount int                 `json:"agreementCount"`
 	Lines          []*RateIncreaseLine `json:"lines"`
 
-	// SkippedNoRate counts matrix-priced rules: their numbers live in the
-	// matrix cells, so a GRI cannot move them and says so instead of
-	// pretending it did.
-	SkippedNoRate int `json:"skippedNoRate"`
-	// NegativeCount counts lanes a flat decrease would push below zero. A
-	// plan carrying any refuses to apply.
-	NegativeCount int `json:"negativeCount"`
+	SkippedNoMoney int `json:"skippedNoMoney"`
 }
 
 // agreementIncreasePlan is one agreement's slice of the GRI: what to show, what
@@ -169,21 +153,17 @@ type RateIncreasePlan struct {
 type agreementIncreasePlan struct {
 	Lines         []*RateIncreaseLine
 	Clones        []*rateagreement.RateAgreementRule
-	SupersededIDs []pulid.ID
-	SkippedNoRate int
-	NegativeCount int
-	AmendAt       int64
+	SupersededIDs  []pulid.ID
+	SkippedNoMoney int
+	AmendAt        int64
 }
 
-// planAgreementIncrease works out what a GRI does to one agreement, touching
-// nothing: the originals stay as they are, and the successors are fresh copies
-// at the new rates.
 func planAgreementIncrease(
 	agreement *rateagreement.RateAgreement,
 	rules []*rateagreement.RateAgreementRule,
 	adjustment RateAdjustment,
 	amendAt int64,
-) agreementIncreasePlan {
+) (agreementIncreasePlan, error) {
 	plan := agreementIncreasePlan{
 		Lines:         make([]*RateIncreaseLine, 0, len(rules)),
 		Clones:        make([]*rateagreement.RateAgreementRule, 0, len(rules)),
@@ -196,16 +176,14 @@ func planAgreementIncrease(
 			continue
 		}
 
-		if !rule.Rate.Valid {
-			plan.SkippedNoRate++
-			continue
+		after, err := adjustment.applyTo(rule.Inputs)
+		if err != nil {
+			return plan, err
 		}
-
-		before := rule.Rate.Decimal
-		after := adjustment.applyTo(before)
-
-		if after.IsNegative() {
-			plan.NegativeCount++
+		changed := changedInputs(rule.Inputs, after)
+		if len(changed) == 0 {
+			plan.SkippedNoMoney++
+			continue
 		}
 
 		plan.Lines = append(plan.Lines, &RateIncreaseLine{
@@ -215,24 +193,32 @@ func planAgreementIncrease(
 			RuleID:          rule.ID,
 			LaneKey:         rule.LaneKey,
 			Label:           rule.Label,
-			Before:          before,
+			Before:          rule.Inputs,
 			After:           after,
-			BreakCount:      len(rule.Breaks),
+			Changed:         changed,
 		})
 
-		plan.Clones = append(plan.Clones, cloneRuleAtRate(rule, adjustment, amendAt))
+		plan.Clones = append(plan.Clones, cloneRuleWithInputs(rule, after, amendAt))
 		plan.SupersededIDs = append(plan.SupersededIDs, rule.ID)
 	}
 
-	return plan
+	return plan, nil
 }
 
-// cloneRuleAtRate copies a rule as its own successor: same lane, same terms,
-// the adjusted rates, a fresh identity, and the lineage pointer back to the
-// rule it replaces.
-func cloneRuleAtRate(
+func changedInputs(before, after tarifftypes.Inputs) []string {
+	changed := make([]string, 0, len(after))
+	for name, value := range after {
+		if !(tarifftypes.Inputs{name: value}).Equal(tarifftypes.Inputs{name: before[name]}) {
+			changed = append(changed, name)
+		}
+	}
+	slices.Sort(changed)
+	return changed
+}
+
+func cloneRuleWithInputs(
 	rule *rateagreement.RateAgreementRule,
-	adjustment RateAdjustment,
+	inputs tarifftypes.Inputs,
 	amendAt int64,
 ) *rateagreement.RateAgreementRule {
 	successor := *rule
@@ -245,22 +231,7 @@ func cloneRuleAtRate(
 	successor.Version = 0
 	successor.CreatedAt = 0
 	successor.UpdatedAt = 0
-	successor.Rate = decimal.NewNullDecimal(adjustment.applyTo(rule.Rate.Decimal))
-
-	successor.Breaks = make([]*rateagreement.RateAgreementRuleBreak, 0, len(rule.Breaks))
-	for _, ruleBreak := range rule.Breaks {
-		if ruleBreak == nil {
-			continue
-		}
-
-		clonedBreak := *ruleBreak
-		clonedBreak.ID = pulid.Nil
-		clonedBreak.RateAgreementRuleID = pulid.Nil
-		clonedBreak.CreatedAt = 0
-		clonedBreak.UpdatedAt = 0
-		clonedBreak.Rate = adjustment.applyTo(ruleBreak.Rate)
-		successor.Breaks = append(successor.Breaks, &clonedBreak)
-	}
+	successor.Inputs = inputs
 
 	return &successor
 }
@@ -288,7 +259,7 @@ func (s *Service) ApplyRateIncrease(
 		zap.String("userId", userID.String()),
 	)
 
-	plan, slices, err := s.planRateIncrease(ctx, req)
+	plan, agreementPlans, err := s.planRateIncrease(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +268,7 @@ func (s *Service) ApplyRateIncrease(
 		return nil, err
 	}
 
-	for _, slice := range slices {
+	for _, slice := range agreementPlans {
 		if len(slice.plan.Clones) == 0 {
 			continue
 		}
@@ -349,7 +320,7 @@ func (s *Service) planRateIncrease(
 		EffectiveFrom: req.EffectiveFrom,
 		Lines:         make([]*RateIncreaseLine, 0),
 	}
-	slices := make([]agreementSlice, 0, len(agreements))
+	agreementPlans := make([]agreementSlice, 0, len(agreements))
 
 	now := timeutils.NowUnix()
 
@@ -367,21 +338,23 @@ func (s *Service) planRateIncrease(
 			return nil, nil, listErr
 		}
 
-		slice := planAgreementIncrease(agreement, rules, req.Adjustment, amendAt)
+		slice, planErr := planAgreementIncrease(agreement, rules, req.Adjustment, amendAt)
+		if planErr != nil {
+			return nil, nil, planErr
+		}
 
-		if len(slice.Lines) == 0 && slice.SkippedNoRate == 0 {
+		if len(slice.Lines) == 0 && slice.SkippedNoMoney == 0 {
 			continue
 		}
 
 		plan.AgreementCount++
 		plan.Lines = append(plan.Lines, slice.Lines...)
-		plan.SkippedNoRate += slice.SkippedNoRate
-		plan.NegativeCount += slice.NegativeCount
+		plan.SkippedNoMoney += slice.SkippedNoMoney
 
-		slices = append(slices, agreementSlice{agreement: agreement, plan: slice})
+		agreementPlans = append(agreementPlans, agreementSlice{agreement: agreement, plan: slice})
 	}
 
-	return plan, slices, nil
+	return plan, agreementPlans, nil
 }
 
 // scopedAgreements resolves the request's scope to the active agreements it

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -65,7 +64,6 @@ func (r *repository) ListLanes(
 			if err = r.db.DBForContext(ctx).
 				NewSelect().
 				Model(&page.Lanes).
-				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Breaks)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return applyLiveLanes(scopeAgreementRules(sq, req), now)
 				}).
@@ -103,19 +101,16 @@ func (r *repository) SummarizeLanes(
 
 			cols := rateagreementcol.RateAgreementRuleColumns
 			ftCols := formulatemplatecol.FormulaTemplateColumns
-			rmCols := ratematrixcol.RateMatrixColumns
 			groups := make([]*rateagreementports.LanePricingGroup, 0, 8)
 			err := r.db.DBForContext(ctx).
 				NewSelect().
 				Model((*rateagreement.RateAgreementRule)(nil)).
 				ColumnExpr(cols.FormulaTemplateID.As("formula_template_id")).
 				ColumnExpr("COALESCE(?, '') AS formula_template_name", bun.Safe(ftCols.Name.Qualified())).
-				ColumnExpr(cols.RateMatrixID.As("rate_matrix_id")).
-				ColumnExpr("COALESCE(?, '') AS rate_matrix_name", bun.Safe(rmCols.Name.Qualified())).
 				ColumnExpr("COALESCE(?, '') AS currency", bun.Safe(cols.Currency.Qualified())).
 				ColumnExpr(buncolgen.Count("lanes")).
-				ColumnExpr("MIN(?) AS min_rate", bun.Safe(cols.Rate.Qualified())).
-				ColumnExpr("MAX(?) AS max_rate", bun.Safe(cols.Rate.Qualified())).
+				ColumnExpr("MIN(?) AS min_rate", bun.Safe(rateInputExpr(cols.Inputs.Qualified()))).
+				ColumnExpr("MAX(?) AS max_rate", bun.Safe(rateInputExpr(cols.Inputs.Qualified()))).
 				Join(
 					"LEFT JOIN ? AS ? ON ?",
 					bun.Safe(formulatemplatecol.FormulaTemplateTable.Name),
@@ -124,21 +119,11 @@ func (r *repository) SummarizeLanes(
 						" AND "+ftCols.OrganizationID.EqColumn(cols.OrganizationID)+
 						" AND "+ftCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)),
 				).
-				Join(
-					"LEFT JOIN ? AS ? ON ?",
-					bun.Safe(ratematrixcol.RateMatrixTable.Name),
-					bun.Safe(ratematrixcol.RateMatrixTable.Alias),
-					bun.Safe(rmCols.ID.EqColumn(cols.RateMatrixID)+
-						" AND "+rmCols.OrganizationID.EqColumn(cols.OrganizationID)+
-						" AND "+rmCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)),
-				).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return applyLiveLanes(scopeAgreementRules(sq, req), timeutils.NowUnix())
 				}).
 				GroupExpr(cols.FormulaTemplateID.Qualified()).
 				GroupExpr(ftCols.Name.Qualified()).
-				GroupExpr(cols.RateMatrixID.Qualified()).
-				GroupExpr(rmCols.Name.Qualified()).
 				GroupExpr(cols.Currency.Qualified()).
 				OrderExpr("lanes DESC").
 				Scan(ctx, &groups)
@@ -234,4 +219,9 @@ func openRuleWindowCondition() string {
 	cols := rateagreementcol.RateAgreementRuleColumns
 
 	return "(" + cols.EffectiveTo.IsNull() + " OR " + cols.EffectiveTo.Gt() + ")"
+}
+
+func rateInputExpr(column string) string {
+	return "CASE WHEN jsonb_typeof(" + column + " -> 'rate') = 'object' THEN (" + column +
+		" -> 'rate' ->> '$q')::numeric END"
 }

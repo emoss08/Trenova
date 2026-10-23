@@ -1,0 +1,1898 @@
+[
+  {
+    "name": "a bool round trips",
+    "source": "tariff \"t\"\ninput x: Bool\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": true
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": true
+    }
+  },
+  {
+    "name": "text round trips",
+    "source": "tariff \"t\"\ninput x: Text\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": "Dallas, TX"
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": "Dallas, TX"
+    }
+  },
+  {
+    "name": "an int round trips",
+    "source": "tariff \"t\"\ninput x: Int\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$n": "1200"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$n": "1200"
+      }
+    }
+  },
+  {
+    "name": "an int's trailing zeros normalise",
+    "source": "tariff \"t\"\ninput x: Int\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$n": "1200"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$n": "1200.00"
+      }
+    }
+  },
+  {
+    "name": "a number round trips",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$n": "2.5"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$n": "2.5"
+      }
+    }
+  },
+  {
+    "name": "a number normalises",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$n": "2.5"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$n": "2.50"
+      }
+    }
+  },
+  {
+    "name": "a negative number",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$n": "-0.125"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$n": "-0.125"
+      }
+    }
+  },
+  {
+    "name": "zero normalises",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$n": "0"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$n": "-0.000"
+      }
+    }
+  },
+  {
+    "name": "money round trips",
+    "source": "tariff \"t\"\ninput x: Money\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "450",
+            "u": "$"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "450",
+        "u": "$"
+      }
+    }
+  },
+  {
+    "name": "money normalises its scale",
+    "source": "tariff \"t\"\ninput x: Money\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "450",
+            "u": "$"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "450.00",
+        "u": "$"
+      }
+    }
+  },
+  {
+    "name": "a rate round trips in its unit",
+    "source": "tariff \"t\"\ninput x: Money/mi\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "2.35",
+            "u": "$/mi"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "2.35",
+        "u": "$/mi"
+      }
+    }
+  },
+  {
+    "name": "a rate in another unit of the dimension keeps its unit",
+    "source": "tariff \"t\"\ninput x: Money/cwt\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "0.185",
+            "u": "$/lb"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "0.185",
+        "u": "$/lb"
+      }
+    }
+  },
+  {
+    "name": "a weight round trips",
+    "source": "tariff \"t\"\ninput x: Weight\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "1240",
+            "u": "lb"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "1240",
+        "u": "lb"
+      }
+    }
+  },
+  {
+    "name": "a weight in kilograms keeps its unit",
+    "source": "tariff \"t\"\ninput x: Weight\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "500",
+            "u": "kg"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "500",
+        "u": "kg"
+      }
+    }
+  },
+  {
+    "name": "a density round trips",
+    "source": "tariff \"t\"\ninput x: Weight/Volume\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "8",
+            "u": "lb/ft3"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "8",
+        "u": "lb/ft3"
+      }
+    }
+  },
+  {
+    "name": "a duration round trips",
+    "source": "tariff \"t\"\ninput x: Duration\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "90",
+            "u": "min"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "90",
+        "u": "min"
+      }
+    }
+  },
+  {
+    "name": "a percent round trips",
+    "source": "tariff \"t\"\ninput x: Percent\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "18",
+            "u": "%"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "18",
+        "u": "%"
+      }
+    }
+  },
+  {
+    "name": "a date round trips",
+    "source": "tariff \"t\"\ninput x: Date\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$date": "2026-10-22"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22"
+      }
+    }
+  },
+  {
+    "name": "a date-time keeps its offset",
+    "source": "tariff \"t\"\ninput x: DateTime\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$date": "2026-10-22T08:00:00-05:00"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22T08:00:00-05:00"
+      }
+    }
+  },
+  {
+    "name": "a date-time in utc",
+    "source": "tariff \"t\"\ninput x: DateTime\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$date": "2026-10-22T08:00:00Z"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22T08:00:00Z"
+      }
+    }
+  },
+  {
+    "name": "a date-time without seconds gains them",
+    "source": "tariff \"t\"\ninput x: DateTime\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$date": "2026-10-22T08:00:00+01:30"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22T08:00+01:30"
+      }
+    }
+  },
+  {
+    "name": "a date-time with a zero fraction",
+    "source": "tariff \"t\"\ninput x: DateTime\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$date": "2026-10-22T08:00:00Z"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22T08:00:00.000Z"
+      }
+    }
+  },
+  {
+    "name": "an enum variant round trips",
+    "source": "tariff \"t\"\ninput x: StopKind\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": "Delivery"
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": "Delivery"
+    }
+  },
+  {
+    "name": "an optional present",
+    "source": "tariff \"t\"\ninput x: Money?\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "$q": "5",
+            "u": "$"
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "$q": "5",
+        "u": "$"
+      }
+    }
+  },
+  {
+    "name": "an optional none",
+    "source": "tariff \"t\"\ninput x: Money?\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": null
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": null
+    }
+  },
+  {
+    "name": "a list round trips",
+    "source": "tariff \"t\"\ninput x: List<Int>\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": [
+            {
+              "$n": "1"
+            },
+            {
+              "$n": "2"
+            }
+          ]
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": [
+        {
+          "$n": "1"
+        },
+        {
+          "$n": "2"
+        }
+      ]
+    }
+  },
+  {
+    "name": "an empty list",
+    "source": "tariff \"t\"\ninput x: List<Text>\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": []
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": []
+    }
+  },
+  {
+    "name": "an inline record round trips",
+    "source": "tariff \"t\"\ninput x: { a: Int, b: Money? }\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "a": {
+              "$n": "1"
+            },
+            "b": {
+              "$q": "2",
+              "u": "$"
+            }
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "a": {
+          "$n": "1"
+        },
+        "b": {
+          "$q": "2",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a record's optional field may be left out",
+    "source": "tariff \"t\"\ninput x: { a: Int, b: Money? }\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": {
+            "a": {
+              "$n": "1"
+            },
+            "b": null
+          }
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": {
+        "a": {
+          "$n": "1"
+        }
+      }
+    }
+  },
+  {
+    "name": "a declared record round trips",
+    "source": "tariff \"t\"\nuse std.ltl.{ Break }\ninput x: List<Break>\nlet v = x",
+    "expect": {
+      "status": "rated",
+      "trace": [
+        {
+          "kind": "bind",
+          "name": "v",
+          "value": [
+            {
+              "from": {
+                "$q": "0",
+                "u": "lb"
+              },
+              "rate": {
+                "$q": "42",
+                "u": "$/cwt"
+              },
+              "minimum": null
+            }
+          ]
+        }
+      ]
+    },
+    "trace": true,
+    "inputs": {
+      "x": [
+        {
+          "from": {
+            "$q": "0",
+            "u": "lb"
+          },
+          "rate": {
+            "$q": "42",
+            "u": "$/cwt"
+          },
+          "minimum": null
+        }
+      ]
+    }
+  },
+  {
+    "name": "an int that is not whole",
+    "source": "tariff \"t\"\ninput x: Int\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "{0} is not a whole number",
+              "args": [
+                "1.5"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$n": "1.5"
+      }
+    }
+  },
+  {
+    "name": "a number written as a json number",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "A number is written as a decimal string, such as \"12.5\""
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$n": 12
+      }
+    }
+  },
+  {
+    "name": "a number with an exponent",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a decimal number",
+              "args": [
+                "1e3"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$n": "1e3"
+      }
+    }
+  },
+  {
+    "name": "a number with a plus sign",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a decimal number",
+              "args": [
+                "+1"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$n": "+1"
+      }
+    }
+  },
+  {
+    "name": "a number with a trailing point",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a decimal number",
+              "args": [
+                "1."
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$n": "1."
+      }
+    }
+  },
+  {
+    "name": "a number that is not a number",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a decimal number",
+              "args": [
+                "abc"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$n": "abc"
+      }
+    }
+  },
+  {
+    "name": "a bare json number for an int",
+    "source": "tariff \"t\"\ninput x: Int\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Int",
+                {
+                  "message": "a JSON number"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": 12
+    }
+  },
+  {
+    "name": "text for a bool",
+    "source": "tariff \"t\"\ninput x: Bool\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Bool",
+                {
+                  "message": "text"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": "yes"
+    }
+  },
+  {
+    "name": "a bool for text",
+    "source": "tariff \"t\"\ninput x: Text\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Text",
+                {
+                  "message": "true or false"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": true
+    }
+  },
+  {
+    "name": "null where nothing is optional",
+    "source": "tariff \"t\"\ninput x: Money\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Money",
+                {
+                  "message": "null"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": null
+    }
+  },
+  {
+    "name": "a quantity of the wrong dimension",
+    "source": "tariff \"t\"\ninput x: Money/mi\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "{0} is not a unit of {1}",
+              "args": [
+                "$/cwt",
+                "Money/mi"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$q": "2",
+        "u": "$/cwt"
+      }
+    }
+  },
+  {
+    "name": "a weight for money",
+    "source": "tariff \"t\"\ninput x: Money\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "{0} is not a unit of {1}",
+              "args": [
+                "lb",
+                "Money"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$q": "2",
+        "u": "lb"
+      }
+    }
+  },
+  {
+    "name": "a unit that is not a unit",
+    "source": "tariff \"t\"\ninput x: Weight\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a unit",
+              "args": [
+                "stone"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$q": "2",
+        "u": "stone"
+      }
+    }
+  },
+  {
+    "name": "a quantity without its unit",
+    "source": "tariff \"t\"\ninput x: Weight\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "A quantity needs its unit under \"u\""
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$q": "2"
+      }
+    }
+  },
+  {
+    "name": "a quantity with an extra key",
+    "source": "tariff \"t\"\ninput x: Weight\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "{0} does not belong in this value",
+              "args": [
+                "x"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$q": "2",
+        "u": "lb",
+        "x": 1
+      }
+    }
+  },
+  {
+    "name": "a number tagged as a quantity",
+    "source": "tariff \"t\"\ninput x: Number\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Number",
+                {
+                  "message": "a quantity"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$q": "2",
+        "u": "lb"
+      }
+    }
+  },
+  {
+    "name": "a percent in another unit",
+    "source": "tariff \"t\"\ninput x: Percent\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "A percent is written with the unit \"%\", not \"{0}\"",
+              "args": [
+                "$"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$q": "18",
+        "u": "$"
+      }
+    }
+  },
+  {
+    "name": "a date that is not a date",
+    "source": "tariff \"t\"\ninput x: Date\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a date (YYYY-MM-DD)",
+              "args": [
+                "2026-02-30"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$date": "2026-02-30"
+      }
+    }
+  },
+  {
+    "name": "a date-time for a date",
+    "source": "tariff \"t\"\ninput x: Date\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a date (YYYY-MM-DD)",
+              "args": [
+                "2026-02-03T00:00:00Z"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$date": "2026-02-03T00:00:00Z"
+      }
+    }
+  },
+  {
+    "name": "a date-time without an offset",
+    "source": "tariff \"t\"\ninput x: DateTime\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a date-time with its offset (YYYY-MM-DDTHH:MM:SS±HH:MM)",
+              "args": [
+                "2026-10-22T08:00:00"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22T08:00:00"
+      }
+    }
+  },
+  {
+    "name": "a date-time with a fraction of a second",
+    "source": "tariff \"t\"\ninput x: DateTime\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a date-time with its offset (YYYY-MM-DDTHH:MM:SS±HH:MM)",
+              "args": [
+                "2026-10-22T08:00:00.5Z"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22T08:00:00.5Z"
+      }
+    }
+  },
+  {
+    "name": "a date for a date-time",
+    "source": "tariff \"t\"\ninput x: DateTime\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a date-time with its offset (YYYY-MM-DDTHH:MM:SS±HH:MM)",
+              "args": [
+                "2026-10-22"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "$date": "2026-10-22"
+      }
+    }
+  },
+  {
+    "name": "an unknown enum variant",
+    "source": "tariff \"t\"\ninput x: StopKind\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a {1}",
+              "args": [
+                "Dropoff",
+                "StopKind"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": "Dropoff"
+    }
+  },
+  {
+    "name": "an enum variant in the wrong case",
+    "source": "tariff \"t\"\ninput x: StopKind\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "\"{0}\" is not a {1}",
+              "args": [
+                "delivery",
+                "StopKind"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": "delivery"
+    }
+  },
+  {
+    "name": "a record missing a required field",
+    "source": "tariff \"t\"\ninput x: { a: Int, b: Money? }\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "The required field {0} is missing",
+              "args": [
+                "a"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "b": {
+          "$q": "1",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a record with an unknown field",
+    "source": "tariff \"t\"\ninput x: { a: Int }\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "{0} is not a field of {1}",
+              "args": [
+                "c",
+                "{ a: Int }"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "a": {
+          "$n": "1"
+        },
+        "c": {
+          "$n": "2"
+        }
+      }
+    }
+  },
+  {
+    "name": "a record field of the wrong type",
+    "source": "tariff \"t\"\ninput x: { a: Int }\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Int",
+                {
+                  "message": "text"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {
+        "a": "one"
+      }
+    }
+  },
+  {
+    "name": "a list item of the wrong type",
+    "source": "tariff \"t\"\ninput x: List<Int>\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Int",
+                {
+                  "message": "text"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": [
+        {
+          "$n": "1"
+        },
+        "two"
+      ]
+    }
+  },
+  {
+    "name": "an object for a list",
+    "source": "tariff \"t\"\ninput x: List<Int>\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "List<Int>",
+                {
+                  "message": "a record"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": {}
+    }
+  },
+  {
+    "name": "a list for a record",
+    "source": "tariff \"t\"\ninput x: { a: Int }\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "{ a: Int }",
+                {
+                  "message": "a list"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": []
+    }
+  },
+  {
+    "name": "null for a list item that is not optional",
+    "source": "tariff \"t\"\ninput x: List<Int>\nlet v = x",
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "The value given for the input {0} does not fit it: {1}",
+          "args": [
+            "x",
+            {
+              "message": "Expected {0}, got {1}",
+              "args": [
+                "Int",
+                {
+                  "message": "null"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "inputs": {
+      "x": [
+        null
+      ]
+    }
+  },
+  {
+    "name": "a record field of the wrong type names its path",
+    "source": "tariff \"t\"\ncharge \"x\" = $1",
+    "facts": {
+      "shipment": {
+        "distance": {
+          "$q": "5",
+          "u": "lb"
+        }
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "record",
+        "message": {
+          "message": "The record does not fit the schema at {0}: {1}",
+          "args": [
+            "shipment.distance",
+            {
+              "message": "{0} is not a unit of {1}",
+              "args": [
+                "lb",
+                "Distance"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a stop's field names its index in the path",
+    "source": "tariff \"t\"\ncharge \"x\" = $1",
+    "facts": {
+      "shipment": {
+        "stops": [
+          {
+            "sequence": {
+              "$n": "1"
+            },
+            "kind": "Pick",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": null,
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC"
+            }
+          }
+        ]
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "record",
+        "message": {
+          "args": [
+            "shipment.stops[0].kind",
+            {
+              "message": "\"{0}\" is not a {1}"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "an unknown record field is refused",
+    "source": "tariff \"t\"\ncharge \"x\" = $1",
+    "facts": {
+      "customer": {
+        "vip": true
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "record",
+        "message": {
+          "args": [
+            "customer.vip",
+            {
+              "message": "{0} is not a field of {1}"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a record that carries entered is refused: the field is not in the schema",
+    "source": "tariff \"t\"\nnote \"{shipment.proNumber}\"",
+    "facts": {
+      "shipment": {
+        "entered": {
+          "freight": {
+            "$q": "100",
+            "u": "$"
+          },
+          "other": {
+            "$q": "0",
+            "u": "$"
+          }
+        }
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "record"
+      }
+    }
+  },
+  {
+    "name": "a record that is not an object",
+    "op": "tariff.evaluate",
+    "input": {
+      "record": [],
+      "programs": [
+        {
+          "id": "p",
+          "source": "tariff \"t\"\ncharge \"x\" = $1"
+        }
+      ]
+    },
+    "expect": {
+      "ok": {
+        "results": [
+          {
+            "status": "error",
+            "error": {
+              "code": "record"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a record missing a root",
+    "op": "tariff.evaluate",
+    "input": {
+      "record": {
+        "shipment": {}
+      },
+      "programs": [
+        {
+          "id": "p",
+          "source": "tariff \"t\"\ncharge \"x\" = $1"
+        }
+      ]
+    },
+    "expect": {
+      "ok": {
+        "results": [
+          {
+            "status": "error",
+            "error": {
+              "code": "record"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "values nest too deeply to decode",
+    "source": "tariff \"t\"\ninput x: List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<List<Int>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\nlet v = 1",
+    "inputs": {
+      "x": [
+        [
+          [
+            [
+              [
+                [
+                  [
+                    [
+                      [
+                        [
+                          [
+                            [
+                              [
+                                [
+                                  [
+                                    [
+                                      [
+                                        [
+                                          [
+                                            [
+                                              [
+                                                [
+                                                  [
+                                                    [
+                                                      [
+                                                        [
+                                                          [
+                                                            [
+                                                              [
+                                                                [
+                                                                  [
+                                                                    [
+                                                                      [
+                                                                        [
+                                                                          [
+                                                                            [
+                                                                              [
+                                                                                [
+                                                                                  [
+                                                                                    [
+                                                                                      [
+                                                                                        [
+                                                                                          [
+                                                                                            [
+                                                                                              [
+                                                                                                [
+                                                                                                  [
+                                                                                                    [
+                                                                                                      [
+                                                                                                        [
+                                                                                                          [
+                                                                                                            [
+                                                                                                              [
+                                                                                                                [
+                                                                                                                  [
+                                                                                                                    [
+                                                                                                                      [
+                                                                                                                        [
+                                                                                                                          [
+                                                                                                                            [
+                                                                                                                              [
+                                                                                                                                [
+                                                                                                                                  [
+                                                                                                                                    [
+                                                                                                                                      [
+                                                                                                                                        [
+                                                                                                                                          []
+                                                                                                                                        ]
+                                                                                                                                      ]
+                                                                                                                                    ]
+                                                                                                                                  ]
+                                                                                                                                ]
+                                                                                                                              ]
+                                                                                                                            ]
+                                                                                                                          ]
+                                                                                                                        ]
+                                                                                                                      ]
+                                                                                                                    ]
+                                                                                                                  ]
+                                                                                                                ]
+                                                                                                              ]
+                                                                                                            ]
+                                                                                                          ]
+                                                                                                        ]
+                                                                                                      ]
+                                                                                                    ]
+                                                                                                  ]
+                                                                                                ]
+                                                                                              ]
+                                                                                            ]
+                                                                                          ]
+                                                                                        ]
+                                                                                      ]
+                                                                                    ]
+                                                                                  ]
+                                                                                ]
+                                                                              ]
+                                                                            ]
+                                                                          ]
+                                                                        ]
+                                                                      ]
+                                                                    ]
+                                                                  ]
+                                                                ]
+                                                              ]
+                                                            ]
+                                                          ]
+                                                        ]
+                                                      ]
+                                                    ]
+                                                  ]
+                                                ]
+                                              ]
+                                            ]
+                                          ]
+                                        ]
+                                      ]
+                                    ]
+                                  ]
+                                ]
+                              ]
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    "expect": {
+      "status": "error"
+    }
+  }
+]

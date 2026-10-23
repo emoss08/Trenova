@@ -2,6 +2,7 @@ package pulid_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -40,6 +41,28 @@ func TestMustNew(t *testing.T) {
 		t.Parallel()
 		id := pulid.MustNew("org_")
 		assert.Equal(t, "org_", id.Prefix())
+	})
+}
+
+func TestMustNewAt(t *testing.T) {
+	t.Parallel()
+
+	t.Run("embeds the given time", func(t *testing.T) {
+		t.Parallel()
+		at := time.Date(2025, time.March, 14, 9, 26, 53, 0, time.UTC)
+		id := pulid.MustNewAt("shp_", at)
+
+		assert.Equal(t, "shp_", id.Prefix())
+		got, err := id.Time()
+		require.NoError(t, err)
+		assert.True(t, at.Equal(got.UTC()))
+	})
+
+	t.Run("mints distinct ids for the same instant", func(t *testing.T) {
+		t.Parallel()
+		at := time.Date(2025, time.March, 14, 9, 26, 53, 0, time.UTC)
+
+		assert.NotEqual(t, pulid.MustNewAt("shp_", at), pulid.MustNewAt("shp_", at))
 	})
 }
 

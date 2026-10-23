@@ -1,0 +1,152 @@
+library "std.ltl"
+
+/// Less-than-truckload pricing: weight breaks, deficit weight rating, billed weight and the
+/// NMFC density scale.
+
+/// One weight break of an LTL rate.
+type Break = {
+  /// The lightest weight the break prices.
+  from: Weight,
+  /// What the break charges per hundredweight.
+  rate: Money/cwt,
+  /// The least a shipment priced at the break pays, if anything.
+  minimum: Money?,
+}
+
+/// A weight priced at a break.
+type Rated = {
+  /// The weight to bill.
+  weight: Weight,
+  /// The rate it bills at, per hundredweight.
+  rate: Money/cwt,
+  /// The break's minimum charge, if it has one.
+  minimum: Money?,
+  /// Whether the weight is the next break's minimum weight, billed because that costs less
+  /// than the actual weight.
+  deficit: Bool,
+}
+
+/// Deficit weight rating. Prices `actual` at the rate of the heaviest break at or below it (a
+/// weight below every break prices at the lightest), and also the next break's minimum weight
+/// at the next break's rate; bills whichever costs less, each priced at no less than its
+/// break's minimum. With `allow: false` the actual weight is always billed. Refuses to rate
+/// when there are no breaks.
+fn deficit(breaks: List<Break>, actual: Weight, allow: Bool = true) -> Rated {
+  let sorted = breaks.sortBy(b => b.from)
+  require let lightest = sorted.first() else "There are no weight breaks to rate {actual} with"
+  let current = sorted.where(b => b.from <= actual).last() ?? lightest
+  if allow {
+    if let next = sorted.find(b => b.from > current.from) {
+      if cost(next, next.from) < cost(current, actual) {
+        return { weight: next.from, rate: next.rate, minimum: next.minimum, deficit: true }
+      }
+    }
+  }
+  return { weight: actual, rate: current.rate, minimum: current.minimum, deficit: false }
+}
+
+/// What `weight` costs at a break: its rate times the weight, and never less than its minimum.
+private fn cost(at: Break, weight: Weight) -> Money = (at.rate * weight).max(at.minimum ?? $0)
+
+/// The weight to bill: `weight` rounded up to the next multiple of `to`, 100 lb unless given.
+fn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)
+
+/// The NMFC freight class for a density, on the 13-provision density scale in effect from
+/// 2025-07-19. Each band includes its lower bound: 1 lb/ft3 is Class300.
+fn densityClass(density: Weight/Volume) -> FreightClass = match density {
+  ..1 lb/ft3 => Class400
+  1 lb/ft3..2 lb/ft3 => Class300
+  2 lb/ft3..4 lb/ft3 => Class250
+  4 lb/ft3..6 lb/ft3 => Class175
+  6 lb/ft3..8 lb/ft3 => Class125
+  8 lb/ft3..10 lb/ft3 => Class100
+  10 lb/ft3..12 lb/ft3 => Class92_5
+  12 lb/ft3..15 lb/ft3 => Class85
+  15 lb/ft3..22.5 lb/ft3 => Class70
+  22.5 lb/ft3..30 lb/ft3 => Class65
+  30 lb/ft3..35 lb/ft3 => Class60
+  35 lb/ft3..50 lb/ft3 => Class55
+  50 lb/ft3.. => Class50
+}
+
+test "a weight between breaks bills at its own break when that is cheaper" {
+  let breaks: List<Break> = [
+    { from: 0 lb, rate: $42/cwt, minimum: $90 },
+    { from: 500 lb, rate: $35.50/cwt, minimum: none },
+    { from: 1_000 lb, rate: $28.10/cwt, minimum: none },
+    { from: 2_000 lb, rate: $22.75/cwt, minimum: none },
+  ]
+  let rated = deficit(breaks, actual: 1_240 lb)
+  expect rated.weight == 1_240 lb
+  expect rated.rate == $28.10/cwt
+  expect not rated.deficit
+}
+
+test "the next break's minimum weight is billed when it costs less" {
+  let breaks: List<Break> = [
+    { from: 0 lb, rate: $42/cwt, minimum: none },
+    { from: 500 lb, rate: $35.50/cwt, minimum: none },
+    { from: 1_000 lb, rate: $28.10/cwt, minimum: none },
+    { from: 2_000 lb, rate: $22.75/cwt, minimum: none },
+  ]
+  expect deficit(breaks, actual: 450 lb) == { weight: 500 lb, rate: $35.50/cwt, minimum: none, deficit: true }
+  expect deficit(breaks, actual: 1_900 lb).weight == 2_000 lb
+  expect deficit(breaks, actual: 300 lb).weight == 300 lb
+}
+
+test "a break's minimum counts when comparing" {
+  let breaks: List<Break> = [
+    { from: 0 lb, rate: $42/cwt, minimum: $200 },
+    { from: 500 lb, rate: $35.50/cwt, minimum: none },
+  ]
+  expect deficit(breaks, actual: 100 lb).deficit
+  expect deficit(breaks, actual: 100 lb).minimum == none
+}
+
+test "allow false always bills the actual weight" {
+  let breaks: List<Break> = [
+    { from: 0 lb, rate: $42/cwt, minimum: none },
+    { from: 500 lb, rate: $35.50/cwt, minimum: none },
+  ]
+  expect deficit(breaks, actual: 450 lb, allow: false).weight == 450 lb
+  expect deficit(breaks, actual: 450 lb, allow: false).rate == $42/cwt
+}
+
+test "breaks are read in weight order and a light shipment prices at the lightest" {
+  let breaks: List<Break> = [
+    { from: 1_000 lb, rate: $28.10/cwt, minimum: none },
+    { from: 100 lb, rate: $42/cwt, minimum: none },
+  ]
+  expect deficit(breaks, actual: 50 lb, allow: false).rate == $42/cwt
+  expect deficit(breaks, actual: 1_500 lb).rate == $28.10/cwt
+}
+
+test "no breaks refuses to rate" {
+  let breaks: List<Break> = []
+  let rated = deficit(breaks, actual: 450 lb)
+  expect fails "There are no weight breaks to rate 450 lb with"
+}
+
+test "billed weight rounds up to the next hundred pounds" {
+  expect billed(1_240 lb) == 1_300 lb
+  expect billed(1_200 lb) == 1_200 lb
+  expect billed(1_201 lb, to: 50 lb) == 1_250 lb
+  expect billed(100 kg) == 300 lb
+}
+
+test "the density scale's bands include their lower bounds" {
+  expect densityClass(0.5 lb/ft3) == Class400
+  expect densityClass(1 lb/ft3) == Class300
+  expect densityClass(3.99 lb/ft3) == Class250
+  expect densityClass(4 lb/ft3) == Class175
+  expect densityClass(7 lb/ft3) == Class125
+  expect densityClass(9 lb/ft3) == Class100
+  expect densityClass(11 lb/ft3) == Class92_5
+  expect densityClass(12 lb/ft3) == Class85
+  expect densityClass(22.4 lb/ft3) == Class70
+  expect densityClass(22.5 lb/ft3) == Class65
+  expect densityClass(30 lb/ft3) == Class60
+  expect densityClass(49.9 lb/ft3) == Class55
+  expect densityClass(50 lb/ft3) == Class50
+  expect densityClass(160.184634 kg/m3) == Class92_5
+}

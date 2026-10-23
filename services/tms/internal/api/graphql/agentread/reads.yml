@@ -31,6 +31,11 @@ reads:
   - tool: equipment_list_manufacturers
   - tool: equipment_list_tractors
   - tool: equipment_list_trailers
+  - tool: equipment_get_tractor
+  - tool: equipment_get_trailer
+  - tool: equipment_list_positions
+    operation: DeskVehiclePositions
+    reason: The tool is named for positions, which no kind claims; its rows are each tractor's latest reading.
   - tool: equipment_list_types
   - tool: location_list_categories
   - tool: masterdata_list_accessorial_charges

@@ -13,8 +13,11 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,23 +25,29 @@ import (
 
 type formulaVisibilityShipment struct {
 	FormulaTemplate *struct {
-		Expression string `json:"expression"`
+		Source string `json:"source"`
 	} `json:"formulaTemplate"`
 	RatingDetail struct {
-		FormulaTemplateName string  `json:"formulaTemplateName"`
-		Expression          string  `json:"expression"`
-		Result              float64 `json:"result"`
+		FormulaTemplateName string         `json:"formulaTemplateName"`
+		Trace               map[string]any `json:"trace"`
+		Bill                *struct {
+			Total string `json:"total"`
+		} `json:"bill"`
 	} `json:"ratingDetail"`
 }
 
 func ratedShipment(id pulid.ID) *shipment.Shipment {
 	return &shipment.Shipment{
 		ID:              id,
-		FormulaTemplate: &formulatemplate.FormulaTemplate{Expression: "weight * 2"},
+		FormulaTemplate: &formulatemplate.FormulaTemplate{Source: "tariff \"Per pound\"\n"},
 		RatingDetail: &shipment.RatingDetail{
 			FormulaTemplateName: "Per pound",
-			Expression:          "weight * 2",
-			Result:              42,
+			Trace:               rules.RawJSON(`{"statements":["weight * 2"]}`),
+			Bill: &tarifftypes.Bill{
+				Currency:     "USD",
+				FreightTotal: decimal.NewFromInt(42),
+				Total:        decimal.NewFromInt(42),
+			},
 		},
 	}
 }
@@ -94,15 +103,16 @@ func TestShipmentHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			var body formulaVisibilityShipment
 			require.NoError(t, ginCtx.ResponseJSON(&body))
 			assert.Equal(t, "Per pound", body.RatingDetail.FormulaTemplateName)
-			assert.InDelta(t, 42, body.RatingDetail.Result, 0)
+			require.NotNil(t, body.RatingDetail.Bill, "the bill is not formula content")
+			assert.Equal(t, "42", body.RatingDetail.Bill.Total)
 			if tt.wantVisible {
 				require.NotNil(t, body.FormulaTemplate)
-				assert.Equal(t, "weight * 2", body.FormulaTemplate.Expression)
-				assert.Equal(t, "weight * 2", body.RatingDetail.Expression)
+				assert.Equal(t, "tariff \"Per pound\"\n", body.FormulaTemplate.Source)
+				assert.NotEmpty(t, body.RatingDetail.Trace)
 				return
 			}
 			assert.Nil(t, body.FormulaTemplate)
-			assert.Empty(t, body.RatingDetail.Expression)
+			assert.Empty(t, body.RatingDetail.Trace)
 		})
 	}
 }
@@ -143,7 +153,7 @@ func TestShipmentHandler_List_HidesFormulaContentWithoutFormulaRead(t *testing.T
 	require.NoError(t, ginCtx.ResponseJSON(&body))
 	require.Len(t, body.Items, 2)
 	assert.Nil(t, body.Items[0].FormulaTemplate)
-	assert.Empty(t, body.Items[0].RatingDetail.Expression)
+	assert.Empty(t, body.Items[0].RatingDetail.Trace)
 	assert.Equal(t, "Per pound", body.Items[0].RatingDetail.FormulaTemplateName)
 }
 
@@ -199,7 +209,7 @@ func TestShipmentHandler_TransferToBilling_HidesFormulaContentWithoutFormulaRead
 			}
 			require.NoError(t, ginCtx.ResponseJSON(&body))
 			assert.Nil(t, body.Shipment.FormulaTemplate)
-			assert.Empty(t, body.Shipment.RatingDetail.Expression)
+			assert.Empty(t, body.Shipment.RatingDetail.Trace)
 			assert.Equal(t, "Per pound", body.Shipment.RatingDetail.FormulaTemplateName)
 		})
 	}
