@@ -12,12 +12,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetsafetyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalentryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalreversalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/manualjournalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
@@ -47,12 +51,16 @@ import (
 	documenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
 	equipmentmanufacturerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
+	fiscalperiodresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
 	fleetcoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	fleetsafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
+	journalentryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalentryresolver"
+	journalreversalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalreversalresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
 	locationresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
+	manualjournalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/manualjournalresolver"
 	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
@@ -69,6 +77,13 @@ import (
 	workersafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workersafetyresolver"
 	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
+	fiscalperiodservice "github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
+	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
+	journalreversalservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
+	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
+	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
@@ -128,12 +143,19 @@ type ResolverParams struct {
 	DriverPortalService          *driverportalservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
+	FiscalPeriodService          *fiscalperiodservice.Service
 	FleetCodeService             *fleetcodeservice.Service
+	GLAccountRepo                glaccountports.GLAccountRepository
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	JournalCards                 *journalcardservice.Service
+	JournalEntryService          *journalentryservice.Service
+	JournalReversalService       *journalreversalservice.Service
+	JournalReview                journalentryports.JournalReviewService
 	LocationCategoryService      *locationcategoryservice.Service
 	LocationService              *locationservice.Service
 	Logger                       *zap.Logger
+	ManualJournalService         *manualjournalservice.Service
 	OrgStructureService          *orgstructureservice.Service
 	OrganizationService          tenantports.OrganizationService
 	PerformanceReviewService     *performancereviewservice.Service
@@ -164,12 +186,16 @@ var shards = []*gqlexec.Shard{
 	documenttypeexec.Shard,
 	equipmentmanufacturerexec.Shard,
 	equipmenttypeexec.Shard,
+	fiscalperiodexec.Shard,
 	fleetcodeexec.Shard,
 	fleetsafetyexec.Shard,
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
+	journalentryexec.Shard,
+	journalreversalexec.Shard,
 	locationexec.Shard,
 	locationcategoryexec.Shard,
+	manualjournalexec.Shard,
 	performancereviewexec.Shard,
 	preludeexec.Shard,
 	servicetypeexec.Shard,
@@ -242,6 +268,36 @@ var operations = []Operation{
 		Name:     "EquipmentTypeTable",
 		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskJournalEntryCard",
+		Hash:     "sha256:19b6ca90530f874add30a452d7613c9f3f904b1e4d3bbf03a9304dec06136629",
+		Document: "fragment DeskJournalCardEntryFields on JournalEntry { accountingDate approvedAt createdAt description entryNumber entryType id isApproved isAutoGenerated isPosted isReversal postedAt requiresApproval reversalDate reversalReason status totalCredit totalDebit } fragment DeskJournalCardLineFields on JournalCardLine { accountCode accountName category creditAmount customerId customerName debitAmount description glAccountId lineNumber locationId locationName } fragment DeskJournalCardPeriodFields on FiscalPeriod { closedAt endDate id name periodNumber startDate status } fragment DeskJournalCardPersonFields on User { id name } fragment DeskJournalCardPostingFields on JournalCardPosting { accountingDate period { ...DeskJournalCardPeriodFields } refusal } query DeskJournalEntryCard($id: ID!) @requiresRead(kind: \"fiscal_period\") { journalEntryCard(id: $id) { approvedBy { ...DeskJournalCardPersonFields } createdBy { ...DeskJournalCardPersonFields } entry { approvalNotes entryDate fiscalPeriodId referenceId referenceNumber referenceType rejectedAt rejectionReason reversalOfId reversedById ...DeskJournalCardEntryFields } lines { isReconciled ...DeskJournalCardLineFields } period { ...DeskJournalCardPeriodFields } postedBy { ...DeskJournalCardPersonFields } posting { ...DeskJournalCardPostingFields } rejectedBy { ...DeskJournalCardPersonFields } reversal { approvedAt cancelReason createdAt id postedAt reasonCode reasonText rejectionReason requestedAccountingDate status } reversalOf { ...DeskJournalCardEntryFields } reversalRequestedBy { ...DeskJournalCardPersonFields } reversedBy { ...DeskJournalCardEntryFields } source { batchNumber id sourceDocumentNumber sourceEventType sourceObjectId sourceObjectType status } } }",
+	},
+	{
+		Name:     "DeskManualJournalCard",
+		Hash:     "sha256:1c91df8041f2edb76527ad3a0a8d2d17411bd31c785ff3aa4972d6552da2226f",
+		Document: "fragment DeskJournalCardEntryFields on JournalEntry { accountingDate approvedAt createdAt description entryNumber entryType id isApproved isAutoGenerated isPosted isReversal postedAt requiresApproval reversalDate reversalReason status totalCredit totalDebit } fragment DeskJournalCardLineFields on JournalCardLine { accountCode accountName category creditAmount customerId customerName debitAmount description glAccountId lineNumber locationId locationName } fragment DeskJournalCardPeriodFields on FiscalPeriod { closedAt endDate id name periodNumber startDate status } fragment DeskJournalCardPersonFields on User { id name } fragment DeskJournalCardPostingFields on JournalCardPosting { accountingDate period { ...DeskJournalCardPeriodFields } refusal } query DeskManualJournalCard($id: ID!) @requiresRead(kind: \"fiscal_period\") { manualJournalCard(id: $id) { approvedBy { ...DeskJournalCardPersonFields } cancelledBy { ...DeskJournalCardPersonFields } createdBy { ...DeskJournalCardPersonFields } entries { ...DeskJournalCardEntryFields } journal { accountingDate approvedAt cancelReason cancelledAt createdAt currencyCode description id isBalanced postedBatchId reason rejectedAt rejectionReason requestNumber status totalCredit totalDebit updatedAt } lines { ...DeskJournalCardLineFields } postedAt postedBy { ...DeskJournalCardPersonFields } posting { ...DeskJournalCardPostingFields } rejectedBy { ...DeskJournalCardPersonFields } requestedPeriod { ...DeskJournalCardPeriodFields } } }",
+	},
+	{
+		Name:     "DeskFiscalPeriods",
+		Hash:     "sha256:c22d5b0498f147c9c963063c7884f23945675a97c198f3042a31c42176ed3276",
+		Document: "query DeskFiscalPeriods($input: DataTableConnectionInput!) { fiscalPeriods(input: $input) { edges { node { closedAt endDate fiscalYearId id isAdjusting lockedAt name periodNumber periodType reopenReason reopenedAt startDate status } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskJournalEntries",
+		Hash:     "sha256:bd92550ddfea9ad1b863ec925f8a74f5092f104f809350e1bdb23051ef59523d",
+		Document: "query DeskJournalEntries($input: DataTableConnectionInput!) { journalEntries(input: $input) { edges { node { accountingDate description entryDate entryNumber entryType fiscalPeriodId id isAutoGenerated isReversal referenceNumber referenceType status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskJournalReversals",
+		Hash:     "sha256:382e6ca816a39498faeaeaa777da093470eefbdb85add044b97019f75e1b18fe",
+		Document: "query DeskJournalReversals($input: DataTableConnectionInput!) { journalReversals(input: $input) { edges { node { approvedAt cancelReason createdAt id originalJournalEntryId postedAt reasonCode reasonText rejectionReason requestedAccountingDate resolvedFiscalPeriodId reversalJournalEntryId status } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskManualJournals",
+		Hash:     "sha256:2b8491c72820af80533bbfa7b71e23e336b13954455e017f1fa0b56ed556be14",
+		Document: "query DeskManualJournals($input: DataTableConnectionInput!) { manualJournals(input: $input) { edges { node { accountingDate approvedAt cancelReason createdAt currencyCode description id isBalanced postedBatchId reason rejectionReason requestNumber requestedFiscalPeriodId status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "DeskLocationCard",
@@ -422,6 +478,10 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                 core,
 		EquipmentTypeService: p.EquipmentTypeService,
 	}
+	fiscalperiodDeps := &fiscalperiodresolver.Deps{
+		Core:                core,
+		FiscalPeriodService: p.FiscalPeriodService,
+	}
 	fleetcodeDeps := &fleetcoderesolver.Deps{
 		Core:             core,
 		FleetCodeService: p.FleetCodeService,
@@ -438,6 +498,17 @@ func NewSchema(p ResolverParams) Schema {
 		Core:              core,
 		HoldReasonService: p.HoldReasonService,
 	}
+	journalentryDeps := &journalentryresolver.Deps{
+		Core:                core,
+		GlAccountRepo:       p.GLAccountRepo,
+		JournalEntryService: p.JournalEntryService,
+		JournalCards:        p.JournalCards,
+		JournalReview:       p.JournalReview,
+	}
+	journalreversalDeps := &journalreversalresolver.Deps{
+		Core:                   core,
+		JournalReversalService: p.JournalReversalService,
+	}
 	locationDeps := &locationresolver.Deps{
 		Core:            core,
 		LocationService: p.LocationService,
@@ -445,6 +516,11 @@ func NewSchema(p ResolverParams) Schema {
 	locationcategoryDeps := &locationcategoryresolver.Deps{
 		Core:                    core,
 		LocationCategoryService: p.LocationCategoryService,
+	}
+	manualjournalDeps := &manualjournalresolver.Deps{
+		Core:                 core,
+		ManualJournalService: p.ManualJournalService,
+		JournalCards:         p.JournalCards,
 	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                     core,
@@ -518,6 +594,7 @@ func NewSchema(p ResolverParams) Schema {
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
+		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
 		tractorMutation:               &tractorMutation{Deps: tractorDeps},
@@ -542,12 +619,16 @@ func NewSchema(p ResolverParams) Schema {
 		documenttypeQuery:          &documenttypeQuery{Deps: documenttypeDeps},
 		equipmentmanufacturerQuery: &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
 		equipmenttypeQuery:         &equipmenttypeQuery{Deps: equipmenttypeDeps},
+		fiscalperiodQuery:          &fiscalperiodQuery{Deps: fiscalperiodDeps},
 		fleetcodeQuery:             &fleetcodeQuery{Deps: fleetcodeDeps},
 		fleetsafetyQuery:           &fleetsafetyQuery{Deps: fleetsafetyDeps},
 		hazardousmaterialQuery:     &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
 		holdreasonQuery:            &holdreasonQuery{Deps: holdreasonDeps},
+		journalentryQuery:          &journalentryQuery{Deps: journalentryDeps},
+		journalreversalQuery:       &journalreversalQuery{Deps: journalreversalDeps},
 		locationQuery:              &locationQuery{Deps: locationDeps},
 		locationcategoryQuery:      &locationcategoryQuery{Deps: locationcategoryDeps},
+		manualjournalQuery:         &manualjournalQuery{Deps: manualjournalDeps},
 		performancereviewQuery:     &performancereviewQuery{Deps: performancereviewDeps},
 		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
 		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
@@ -617,23 +698,29 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":           func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":            func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"DOTRandomDraw":       func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomDrawEntry":  func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomPool":       func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
-		"DQFFile":             func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
-		"DQFItem":             func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
-		"DisciplinaryLadder":  func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
-		"DrugAlcoholStanding": func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
-		"FleetSafetyRank":     func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
-		"FleetSafetyTerminal": func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
-		"LeaveControl":        func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":    func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":    func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"OSHAAnnualSummary":   func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"PTOChartDataPoint":   func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PerformanceReview":   func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"Commodity":            func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":             func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"DOTRandomDraw":        func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomDrawEntry":   func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomPool":        func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
+		"DQFFile":              func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
+		"DQFItem":              func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
+		"DisciplinaryLadder":   func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
+		"DrugAlcoholStanding":  func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
+		"FleetSafetyRank":      func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
+		"FleetSafetyTerminal":  func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
+		"JournalCardLine":      func() any { return &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps} },
+		"JournalCardPosting":   func() any { return &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps} },
+		"JournalEntry":         func() any { return &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps} },
+		"JournalEntryLine":     func() any { return &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps} },
+		"JournalReviewSummary": func() any { return &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps} },
+		"JournalSourceInfo":    func() any { return &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps} },
+		"LeaveControl":         func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
+		"LeaveEntitlement":     func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
+		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"OSHAAnnualSummary":    func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
+		"PTOChartDataPoint":    func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PerformanceReview":    func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
@@ -686,6 +773,7 @@ type mutationResolver struct {
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
 	*fleetsafetyMutation
+	*journalentryMutation
 	*performancereviewMutation
 	*tenantMutation
 	*tractorMutation
@@ -711,12 +799,16 @@ type queryResolver struct {
 	*documenttypeQuery
 	*equipmentmanufacturerQuery
 	*equipmenttypeQuery
+	*fiscalperiodQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
 	*hazardousmaterialQuery
 	*holdreasonQuery
+	*journalentryQuery
+	*journalreversalQuery
 	*locationQuery
 	*locationcategoryQuery
+	*manualjournalQuery
 	*performancereviewQuery
 	*servicetypeQuery
 	*shipmenttypeQuery
@@ -741,6 +833,7 @@ type (
 	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
 	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
 	fleetsafetyMutation            = fleetsafetyresolver.MutationResolver
+	journalentryMutation           = journalentryresolver.MutationResolver
 	performancereviewMutation      = performancereviewresolver.MutationResolver
 	tenantMutation                 = tenantresolver.MutationResolver
 	tractorMutation                = tractorresolver.MutationResolver
@@ -763,12 +856,16 @@ type (
 	documenttypeQuery              = documenttyperesolver.QueryResolver
 	equipmentmanufacturerQuery     = equipmentmanufacturerresolver.QueryResolver
 	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
+	fiscalperiodQuery              = fiscalperiodresolver.QueryResolver
 	fleetcodeQuery                 = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery               = fleetsafetyresolver.QueryResolver
 	hazardousmaterialQuery         = hazardousmaterialresolver.QueryResolver
 	holdreasonQuery                = holdreasonresolver.QueryResolver
+	journalentryQuery              = journalentryresolver.QueryResolver
+	journalreversalQuery           = journalreversalresolver.QueryResolver
 	locationQuery                  = locationresolver.QueryResolver
 	locationcategoryQuery          = locationcategoryresolver.QueryResolver
+	manualjournalQuery             = manualjournalresolver.QueryResolver
 	performancereviewQuery         = performancereviewresolver.QueryResolver
 	servicetypeQuery               = servicetyperesolver.QueryResolver
 	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver

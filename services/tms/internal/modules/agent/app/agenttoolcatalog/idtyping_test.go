@@ -31,6 +31,8 @@ var ownKeys = map[string]struct{}{
 // values that are not PULIDs at all, and an id whose kind is chosen by another
 // parameter from a list the registry does not follow. Each says why.
 var untypedIDs = map[string]string{
+	"ledger_list_journal_entries.referenceId": "the id of whichever source record " +
+		"referenceType names (an invoice, a payment, a settlement), stored as text",
 	"formula_describe_schema.schemaId": "the name of a formula schema, such as shipment",
 	"formula_test_expression.schemaId": "the name of a formula schema, such as shipment",
 	"formula_propose.schemaId":         "the name of a formula schema, such as shipment",

@@ -220,6 +220,8 @@ func graphQLGetSpecs() []getSpec {
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
+		journalEntryGetSpec(),
+		manualJournalGetSpec(),
 	}
 }
 

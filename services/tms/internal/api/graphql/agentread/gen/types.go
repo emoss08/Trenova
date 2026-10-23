@@ -21,7 +21,8 @@ type goType struct {
 // goTypes reads, from gqlgen's own configuration, the Go type each bound
 // tool's node binds to, so the tool can ask that entity for the filter
 // configuration the server compiles its filters with. An unpaged list
-// filters by its root field's arguments alone, so it needs none.
+// filters by its root field's arguments alone and a get reads one record by
+// its id, so neither needs one: a card (JournalEntryCard) is no entity.
 func goTypes(configPath string, bindings []*binding) (map[string]goType, error) {
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
@@ -37,7 +38,7 @@ func goTypes(configPath string, bindings []*binding) (map[string]goType, error) 
 	out := make(map[string]goType, len(bindings))
 	var problems []string
 	for _, b := range bindings {
-		if b.unpaged() {
+		if b.unpaged() || b.Verb == verbGet {
 			continue
 		}
 		full := b.Entity

@@ -221,7 +221,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), ledgerReadSpecs(),
 	)
 }
 

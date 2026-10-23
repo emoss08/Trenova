@@ -97,14 +97,16 @@ const (
 
 // unfilteredFields are selected by operations but are never what a person
 // narrows a list by: the tenant, the row's version, its id, which a get reads,
-// and the Google Places id an address was geocoded to, which nothing a model
-// reads supplies.
+// the Google Places id an address was geocoded to, which nothing a model
+// reads supplies, and the words of a cancelled record's reason, which the
+// conventions keep for the reason a cancel is given.
 var unfilteredFields = map[string]struct{}{
 	recordIDField:        {},
 	tenantOrganizationID: {},
 	tenantBusinessUnitID: {},
 	rowVersion:           {},
 	geocodedPlaceID:      {},
+	cancelReason:         {},
 }
 
 const (
@@ -112,6 +114,7 @@ const (
 	tenantBusinessUnitID = "businessUnitId"
 	rowVersion           = "version"
 	geocodedPlaceID      = "placeId"
+	cancelReason         = "cancelReason"
 	fieldNotes           = "notes"
 	recordIDField        = "id"
 	// graphQLEnumSource names an enum parameter's values by the schema's own
@@ -330,12 +333,36 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 		if !config.FilterableFields[field.Name] {
 			continue
 		}
-		params = append(params, paramsFor(field)...)
+		derived := paramsFor(field)
+		if field.Type == graphQLTypeString && config.EnumMap[field.Name] {
+			derived = exactParams(derived)
+		}
+		params = append(params, derived...)
 	}
 	params = append(params, r.nestedParams(config.FilterableFields)...)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 
 	return params
+}
+
+// exactParams turns a text parameter into an equality one, for a String field
+// whose column is a database enum (a journal entry's status): the database
+// cannot match part of an enum value, and a model names the whole value.
+func exactParams(params []graphQLParam) []graphQLParam {
+	out := slices.Clone(params)
+	for idx := range out {
+		if out[idx].Kind != paramContains {
+			continue
+		}
+		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(out[idx].Field))
+		out[idx].Kind = paramEquals
+		out[idx].Schema = map[string]any{
+			toolschema.KeyType:        toolschema.TypeString,
+			toolschema.KeyDescription: "Only records whose " + words + " is exactly this.",
+		}
+	}
+
+	return out
 }
 
 // nestedParams are the parameters of the filters the configuration allows
