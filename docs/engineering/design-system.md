@@ -225,7 +225,11 @@ is for data that *is* uppercase — a SCAC, a state code, a VIN.
 
 Fonts: `font-sans` (Geist) for everything; `font-mono` (Geist Mono) for numbers
 that must align in a column — load numbers, IDs, currency, timestamps. Pair it
-with `tabular-nums`.
+with `tabular-nums`. `font-code` (JetBrains Mono) is for source code only: the
+formula editor (`var(--font-code)` in its theme), `HighlightedCode` and
+`SourceDiff`. It draws ligatures through `--code-ligatures`, which the person
+turns off in Settings → Preferences (the root's `data-code-ligatures="off"`,
+set by `CodeLigaturesPreference`); a new code surface spends both.
 
 ### Weight
 
@@ -777,10 +781,11 @@ below), or use `TariffCode` (`apps/web/src/components/tariff-code/`), which does
 suspends until the module has loaded. The editor spends the same roles through `cm-syntax-<role>`
 classes, so a source reads the same in the editor, a Desk card and a diff.
 
-Colour is by role, on the categorical hues, through seven tokens: `--syntax-keyword` (violet),
-`--syntax-string` (emerald), `--syntax-number` (amber), `--syntax-property` (sky),
-`--syntax-function` (indigo), `--syntax-type` (teal) and `--syntax-meta` (rose). Comments and
-punctuation take `--foreground-subtle` and `--foreground-muted`, and a diff's added and removed
+Colour is by role, in the Gruvbox palette (its faded inks in light, its bright ones in dark),
+through seven tokens: `--syntax-keyword` (red), `--syntax-string` (green), `--syntax-number`
+(purple), `--syntax-property` (blue), `--syntax-function` (aqua), `--syntax-type` (yellow) and
+`--syntax-meta` (orange). Only a value's lightness moves from Gruvbox's, where AA needs it. Comments
+(in italics) and punctuation take `--foreground-subtle` and `--foreground-muted`, and a diff's added and removed
 lines take the success and danger text. Each syntax token is written out in both themes rather
 than pointing at an accent, so `pnpm lint:design` holds it to AA on `--card`, `--sunken` and
 `--surface-hover` (the ground under a Desk reply's code block). A theme switch recolours code

@@ -83,7 +83,6 @@ const highlightTheme = EditorView.baseTheme({
   ".cm-syntax-property": { color: "var(--syntax-property)" },
   ".cm-syntax-string": { color: "var(--syntax-string)" },
   ".cm-syntax-operator": { color: "var(--foreground-muted)" },
-  ".cm-syntax-comment": { color: "var(--foreground-subtle)" },
-  ".cm-tariff-doc": { fontStyle: "italic" },
+  ".cm-syntax-comment": { color: "var(--foreground-subtle)", fontStyle: "italic" },
   ".cm-tariff-code": { fontWeight: "500" },
 });

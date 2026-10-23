@@ -41,55 +41,55 @@ func (_m *MockFormulaTemplateRepository) EXPECT() *MockFormulaTemplateRepository
 	return &MockFormulaTemplateRepository_Expecter{mock: &_m.Mock}
 }
 
-// BulkDuplicate provides a mock function for the type MockFormulaTemplateRepository
-func (_mock *MockFormulaTemplateRepository) BulkDuplicate(ctx context.Context, req *formulatemplateports.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error) {
-	ret := _mock.Called(ctx, req)
+// BulkCreate provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) BulkCreate(ctx context.Context, entities []*formulatemplate.FormulaTemplate) ([]*formulatemplate.FormulaTemplate, error) {
+	ret := _mock.Called(ctx, entities)
 
 	if len(ret) == 0 {
-		panic("no return value specified for BulkDuplicate")
+		panic("no return value specified for BulkCreate")
 	}
 
 	var r0 []*formulatemplate.FormulaTemplate
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error)); ok {
-		return returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*formulatemplate.FormulaTemplate) ([]*formulatemplate.FormulaTemplate, error)); ok {
+		return returnFunc(ctx, entities)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.BulkDuplicateFormulaTemplateRequest) []*formulatemplate.FormulaTemplate); ok {
-		r0 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []*formulatemplate.FormulaTemplate) []*formulatemplate.FormulaTemplate); ok {
+		r0 = returnFunc(ctx, entities)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*formulatemplate.FormulaTemplate)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *formulatemplateports.BulkDuplicateFormulaTemplateRequest) error); ok {
-		r1 = returnFunc(ctx, req)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []*formulatemplate.FormulaTemplate) error); ok {
+		r1 = returnFunc(ctx, entities)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockFormulaTemplateRepository_BulkDuplicate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkDuplicate'
-type MockFormulaTemplateRepository_BulkDuplicate_Call struct {
+// MockFormulaTemplateRepository_BulkCreate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkCreate'
+type MockFormulaTemplateRepository_BulkCreate_Call struct {
 	*mock.Call
 }
 
-// BulkDuplicate is a helper method to define mock.On call
+// BulkCreate is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *formulatemplateports.BulkDuplicateFormulaTemplateRequest
-func (_e *MockFormulaTemplateRepository_Expecter) BulkDuplicate(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_BulkDuplicate_Call {
-	return &MockFormulaTemplateRepository_BulkDuplicate_Call{Call: _e.mock.On("BulkDuplicate", ctx, req)}
+//   - entities []*formulatemplate.FormulaTemplate
+func (_e *MockFormulaTemplateRepository_Expecter) BulkCreate(ctx interface{}, entities interface{}) *MockFormulaTemplateRepository_BulkCreate_Call {
+	return &MockFormulaTemplateRepository_BulkCreate_Call{Call: _e.mock.On("BulkCreate", ctx, entities)}
 }
 
-func (_c *MockFormulaTemplateRepository_BulkDuplicate_Call) Run(run func(ctx context.Context, req *formulatemplateports.BulkDuplicateFormulaTemplateRequest)) *MockFormulaTemplateRepository_BulkDuplicate_Call {
+func (_c *MockFormulaTemplateRepository_BulkCreate_Call) Run(run func(ctx context.Context, entities []*formulatemplate.FormulaTemplate)) *MockFormulaTemplateRepository_BulkCreate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *formulatemplateports.BulkDuplicateFormulaTemplateRequest
+		var arg1 []*formulatemplate.FormulaTemplate
 		if args[1] != nil {
-			arg1 = args[1].(*formulatemplateports.BulkDuplicateFormulaTemplateRequest)
+			arg1 = args[1].([]*formulatemplate.FormulaTemplate)
 		}
 		run(
 			arg0,
@@ -99,12 +99,12 @@ func (_c *MockFormulaTemplateRepository_BulkDuplicate_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockFormulaTemplateRepository_BulkDuplicate_Call) Return(formulaTemplates []*formulatemplate.FormulaTemplate, err error) *MockFormulaTemplateRepository_BulkDuplicate_Call {
+func (_c *MockFormulaTemplateRepository_BulkCreate_Call) Return(formulaTemplates []*formulatemplate.FormulaTemplate, err error) *MockFormulaTemplateRepository_BulkCreate_Call {
 	_c.Call.Return(formulaTemplates, err)
 	return _c
 }
 
-func (_c *MockFormulaTemplateRepository_BulkDuplicate_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.BulkDuplicateFormulaTemplateRequest) ([]*formulatemplate.FormulaTemplate, error)) *MockFormulaTemplateRepository_BulkDuplicate_Call {
+func (_c *MockFormulaTemplateRepository_BulkCreate_Call) RunAndReturn(run func(ctx context.Context, entities []*formulatemplate.FormulaTemplate) ([]*formulatemplate.FormulaTemplate, error)) *MockFormulaTemplateRepository_BulkCreate_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -785,6 +785,74 @@ func (_c *MockFormulaTemplateRepository_SelectOptions_Call) Return(listResult *p
 }
 
 func (_c *MockFormulaTemplateRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.FormulaTemplateSelectOptionsRequest) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)) *MockFormulaTemplateRepository_SelectOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TakenNames provides a mock function for the type MockFormulaTemplateRepository
+func (_mock *MockFormulaTemplateRepository) TakenNames(ctx context.Context, req *formulatemplateports.ListTakenNamesRequest) (map[string]struct{}, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TakenNames")
+	}
+
+	var r0 map[string]struct{}
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListTakenNamesRequest) (map[string]struct{}, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *formulatemplateports.ListTakenNamesRequest) map[string]struct{}); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]struct{})
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *formulatemplateports.ListTakenNamesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFormulaTemplateRepository_TakenNames_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TakenNames'
+type MockFormulaTemplateRepository_TakenNames_Call struct {
+	*mock.Call
+}
+
+// TakenNames is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *formulatemplateports.ListTakenNamesRequest
+func (_e *MockFormulaTemplateRepository_Expecter) TakenNames(ctx interface{}, req interface{}) *MockFormulaTemplateRepository_TakenNames_Call {
+	return &MockFormulaTemplateRepository_TakenNames_Call{Call: _e.mock.On("TakenNames", ctx, req)}
+}
+
+func (_c *MockFormulaTemplateRepository_TakenNames_Call) Run(run func(ctx context.Context, req *formulatemplateports.ListTakenNamesRequest)) *MockFormulaTemplateRepository_TakenNames_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *formulatemplateports.ListTakenNamesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*formulatemplateports.ListTakenNamesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_TakenNames_Call) Return(stringToStruct map[string]struct{}, err error) *MockFormulaTemplateRepository_TakenNames_Call {
+	_c.Call.Return(stringToStruct, err)
+	return _c
+}
+
+func (_c *MockFormulaTemplateRepository_TakenNames_Call) RunAndReturn(run func(ctx context.Context, req *formulatemplateports.ListTakenNamesRequest) (map[string]struct{}, error)) *MockFormulaTemplateRepository_TakenNames_Call {
 	_c.Call.Return(run)
 	return _c
 }

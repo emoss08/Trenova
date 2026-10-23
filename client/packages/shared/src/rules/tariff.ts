@@ -9,6 +9,7 @@
 // The catalog is static per module, so it is read once per loaded runtime.
 
 import {
+  tariffChangeSchema,
   tariffCheckResultSchema,
   tariffDiagnosticsSchema,
   tariffEvalErrorSchema,
@@ -33,6 +34,7 @@ export const TARIFF_EVALUATE_OP = "tariff.evaluate";
 export const TARIFF_TEST_OP = "tariff.test";
 export const TARIFF_FORMAT_OP = "tariff.format";
 export const TARIFF_TOKENS_OP = "tariff.tokens";
+export const TARIFF_SET_NAME_OP = "tariff.setName";
 export const TARIFF_COMPLETE_OP = "tariff.complete";
 export const TARIFF_HOVER_OP = "tariff.hover";
 export const TARIFF_SIGNATURE_OP = "tariff.signature";
@@ -51,6 +53,7 @@ export const TARIFF_OPERATIONS = [
   TARIFF_TEST_OP,
   TARIFF_FORMAT_OP,
   TARIFF_TOKENS_OP,
+  TARIFF_SET_NAME_OP,
   TARIFF_COMPLETE_OP,
   TARIFF_HOVER_OP,
   TARIFF_SIGNATURE_OP,
@@ -122,10 +125,23 @@ export function tariffFormat(rules: RulesRuntime, source: string): TariffFormatR
   return formatResultSchema.parse(rules.call(TARIFF_FORMAT_OP, { source }));
 }
 
+const namedSchema = z.object({ source: z.string(), change: tariffChangeSchema });
+export type TariffNamed = z.output<typeof namedSchema>;
+
+/**
+ * The file with its header naming `name`, and the one edit that makes it. A template's name is
+ * its header's, so the name field and every rename write it through here.
+ */
+export function tariffSetName(rules: RulesRuntime, source: string, name: string): TariffNamed {
+  return namedSchema.parse(rules.call(TARIFF_SET_NAME_OP, { source, name }));
+}
+
 /** The classes the module highlights a token as. */
 export const tariffTokenKindSchema = z.enum([
   "keyword",
   "name",
+  "function",
+  "field",
   "type",
   "code",
   "number",

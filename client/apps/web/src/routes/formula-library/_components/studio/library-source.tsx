@@ -2,6 +2,7 @@ import { TariffEditor } from "@/components/formula-editor/tariff-editor";
 import { isTestItem } from "@/lib/tariff-outline";
 import { formatTariffDocument } from "@/components/formula-editor/tariff-format";
 import { NovaButton } from "@/components/tariff-studio/nova-button";
+import { NewerVersionNotice } from "@/components/tariff-studio/newer-version";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
 import {
   reportFormat,
@@ -129,6 +130,8 @@ export function LibrarySource() {
         </div>
         <NovaButton onClick={() => askNova()}>{t("Ask Nova")}</NovaButton>
       </div>
+
+      <NewerVersionNotice />
 
       <MaterialBanner />
 

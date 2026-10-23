@@ -1,5 +1,5 @@
 {
-  "version": "sha256:95c2ec798d360606f5b6599731127c30315807ec794853f2767d9cb7968588a8",
+  "version": "sha256:4ef8cab91faaf2e194b899307e98fc4c6c0043966cbfd8a4c736a0f5e3be55f9",
   "modules": [
     {
       "id": "home",
@@ -7722,7 +7722,7 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Select **New formula template**, then **New formula template** in the menu. The Formula Studio opens.",
-            "Type the name over **Untitled rating method** and add a description under it.",
+            "Type the name over **Untitled rating method** and add a description under it. The name is the `tariff \"…\"` line at the top of the source: typing either one changes the other.",
             "Under **Source**, describe the method and select **Draft it** to have Nova write it, or pick one from **Standard library** or **Your templates**, or write the tariff yourself.",
             "Check what it bills in **Preview** and that its **Tests** pass.",
             "Select **Create template**. The template is saved as a draft."

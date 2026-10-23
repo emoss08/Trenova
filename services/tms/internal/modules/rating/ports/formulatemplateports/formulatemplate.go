@@ -37,6 +37,11 @@ type BulkDuplicateFormulaTemplateRequest struct {
 	TemplateIDs []pulid.ID            `json:"templateIds"`
 }
 
+type ListTakenNamesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Bases      []string
+}
+
 type GetFormulaTemplatesByIDsRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	TemplateIDs []pulid.ID            `json:"templateIds"`
@@ -108,10 +113,14 @@ type FormulaTemplateRepository interface {
 		ctx context.Context,
 		req *BulkUpdateFormulaTemplateStatusRequest,
 	) ([]*formulatemplate.FormulaTemplate, error)
-	BulkDuplicate(
+	BulkCreate(
 		ctx context.Context,
-		req *BulkDuplicateFormulaTemplateRequest,
+		entities []*formulatemplate.FormulaTemplate,
 	) ([]*formulatemplate.FormulaTemplate, error)
+	TakenNames(
+		ctx context.Context,
+		req *ListTakenNamesRequest,
+	) (map[string]struct{}, error)
 	CountUsages(
 		ctx context.Context,
 		req *GetTemplateUsageRequest,

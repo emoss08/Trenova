@@ -25,6 +25,7 @@ import type { EditorView } from "@codemirror/view";
 import { useCallback, useRef, useState, type ReactNode } from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { NovaButton } from "@/components/tariff-studio/nova-button";
+import { NewerVersionNotice } from "@/components/tariff-studio/newer-version";
 import { useStudio } from "../studio-context";
 import { presentInputs } from "../use-live-preview";
 import { ExplainPanel, type ExplainState } from "./explain-panel";
@@ -109,6 +110,8 @@ export function SourceSection() {
   const status = sourceStatus({ empty, errors, warnings }, t);
 
   const outline = check.outline?.items ?? [];
+  // Typing the name writes the header, so a new template is still blank until it holds more.
+  const blank = empty || outline.every((item) => item.kind === "header");
   const charges = outline.filter((item) => item.kind === "charge").length;
   const testCount = outline.filter(isTestItem).length;
   const trace = preview.result && !preview.blocked ? preview.result.trace : null;
@@ -152,6 +155,8 @@ export function SourceSection() {
         <NovaButton onClick={() => askNova()}>{t("Ask Nova")}</NovaButton>
       </SectionHead>
 
+      <NewerVersionNotice />
+
       <MaterialBanner />
 
       {contextError && (
@@ -170,7 +175,7 @@ export function SourceSection() {
         </Alert>
       )}
 
-      {mode === "create" && empty && <StartCard />}
+      {mode === "create" && blank && <StartCard />}
 
       <div
         className={cn(
@@ -195,7 +200,7 @@ export function SourceSection() {
               onFormat={(result) => reportFormat(result, t)}
               ariaLabel={t("Tariff source")}
               placeholder={t('tariff "Name of the rating method"')}
-              minHeight={mode === "create" && empty ? "96px" : "240px"}
+              minHeight={mode === "create" && blank ? "96px" : "240px"}
               maxHeight={SOURCE_EDITOR_MAX_HEIGHT}
               primary
               embedded

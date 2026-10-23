@@ -2,7 +2,6 @@ package formulatemplaterepository
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
@@ -473,74 +472,43 @@ func (r *repository) bulkUpdateStatus(
 	return entities, nil
 }
 
-func (r *repository) BulkDuplicate(
+func (r *repository) BulkCreate(
 	ctx context.Context,
-	req *formulatemplateports.BulkDuplicateFormulaTemplateRequest,
+	entities []*formulatemplate.FormulaTemplate,
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
-			log := r.l.With(
-				zap.String("operation", "BulkDuplicate"),
-				zap.Any("request", req),
-			)
-
-			entities, err := r.GetByIDs(ctx, formulatemplateports.GetFormulaTemplatesByIDsRequest{
-				TemplateIDs: req.TemplateIDs,
-				TenantInfo:  req.TenantInfo,
-			})
-			if err != nil {
-				log.Error("failed to get formula template", zap.Error(err))
-				return nil, err
+			if len(entities) == 0 {
+				return entities, nil
 			}
 
-			newEntities := make([]*formulatemplate.FormulaTemplate, 0, len(entities))
-			taken, err := r.namesLike(ctx, req.TenantInfo, entities)
-			if err != nil {
-				log.Error("failed to read existing template names", zap.Error(err))
-				return nil, err
-			}
-
-			for _, e := range entities {
-				name := nextAvailableName(taken, e.Name+" (Copy)")
-				taken[name] = struct{}{}
-				seed := formulatemplate.SeedFromTemplate(e)
-				seed.Name = name
-				newEntities = append(newEntities, seed.Build())
-			}
-
-			results, err := r.db.DBForContext(ctx).
+			_, err := r.db.DBForContext(ctx).
 				NewInsert().
-				Model(&newEntities).
+				Model(&entities).
 				Returning("*").
 				Exec(ctx)
 			if err != nil {
-				log.Error("failed to bulk insert formula templates", zap.Error(err))
+				if dberror.IsUniqueConstraintViolation(err) {
+					return nil, duplicateTemplateName(entities[0].Name)
+				}
+				r.l.Error("failed to bulk insert formula templates", zap.Error(err))
 				return nil, err
 			}
 
-			if err = dberror.CheckBulkRowsAffected(
-				results,
-				"FormulaTemplate",
-				req.TemplateIDs,
-			); err != nil {
-				return nil, err
-			}
-
-			return newEntities, nil
+			return entities, nil
 		},
 	)
 }
 
-func (r *repository) namesLike(
+func (r *repository) TakenNames(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	sources []*formulatemplate.FormulaTemplate,
+	req *formulatemplateports.ListTakenNamesRequest,
 ) (map[string]struct{}, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]struct{}, error) {
-		taken := make(map[string]struct{}, len(sources))
-		if len(sources) == 0 {
+		taken := make(map[string]struct{}, len(req.Bases))
+		if len(req.Bases) == 0 {
 			return taken, nil
 		}
 
@@ -551,10 +519,10 @@ func (r *repository) namesLike(
 			Model((*formulatemplate.FormulaTemplate)(nil)).
 			Column(ft.Name.String()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = formulatemplatecol.FormulaTemplateScopeTenant(sq, tenantInfo)
+				sq = formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo)
 				return sq.WhereGroup(" AND ", func(orGroup *bun.SelectQuery) *bun.SelectQuery {
-					for _, source := range sources {
-						orGroup = orGroup.WhereOr(ft.Name.Like(), source.Name+" (Copy%")
+					for _, base := range req.Bases {
+						orGroup = orGroup.WhereOr(ft.Name.Like(), base+"%")
 					}
 					return orGroup
 				})
@@ -569,19 +537,6 @@ func (r *repository) namesLike(
 
 		return taken, nil
 	})
-}
-
-func nextAvailableName(taken map[string]struct{}, base string) string {
-	if _, exists := taken[base]; !exists {
-		return base
-	}
-
-	for suffix := 2; ; suffix++ {
-		candidate := fmt.Sprintf("%s %d", base, suffix)
-		if _, exists := taken[candidate]; !exists {
-			return candidate
-		}
-	}
 }
 
 func (r *repository) CountUsages(

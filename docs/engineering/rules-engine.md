@@ -28,7 +28,7 @@ conventions are in [rust.md](rust.md).
 | `src/message.rs` | `message!` and `Message`: user-facing text as English ICU templates plus arguments |
 | `src/span.rs` | byte spans inside the crate; UTF-16 `Range` on the wire |
 | `src/wire.rs` | `Dec`: exact decimals on the wire |
-| `src/tariff/syntax/` | lexer, error-tolerant parser, syntax tree, outline, formatter, tokens for highlighting, and loading a file with the libraries it imports; `tariff.format`, `tariff.tokens` |
+| `src/tariff/syntax/` | lexer, error-tolerant parser, syntax tree, outline, formatter, tokens for highlighting, and loading a file with the libraries it imports; `tariff.format`, `tariff.tokens`, `tariff.setName` |
 | `src/tariff/check/` | types, units, inference, flow narrowing, exhaustiveness, modules, inputs, diagnostics with fixes, and the catalog; `tariff.check`, `tariff.catalog` |
 | `src/tariff/eval/` | values with units, the metered interpreter, the bill and its total clauses, rate tables, the trace, the test runner and the test scaffold; `tariff.evaluate`, `tariff.test`, `tariff.scaffoldTest` |
 | `src/tariff/editor/` | completion, hover, signature help, go to definition, rename and inlay hints; the six editor operations |
@@ -552,7 +552,7 @@ null, "error": …}` when the tariff does not check, the record does not fit or 
 or `{"test": null, "status": "needs", "needs": […]}` when it needs cells the request did not
 carry.
 
-### `tariff.format` and `tariff.tokens`
+### `tariff.format`, `tariff.tokens` and `tariff.setName`
 
 `tariff.format`: `{"source"}` gives `{"formatted": "…"}`, the file in the one canonical style
 (`src/tariff/syntax/format/mod.rs`: two-space indentation, at most one blank line kept, numbers
@@ -563,8 +563,19 @@ same tree with the same comments, and formatting it again changes nothing.
 
 `tariff.tokens`: `{"source"}` gives `{"tokens": [{"from": 0, "to": 6, "kind": "keyword"}, …]}`,
 every token but newlines and the end of the file, classed for highlighting: `keyword`, `name`,
-`type`, `code`, `number`, `unit`, `money`, `percent`, `date`, `text`, `escape`,
-`interpolation`, `punct`, `comment`, `doc` or `error`.
+`function`, `field`, `type`, `code`, `number`, `unit`, `money`, `percent`, `date`, `text`,
+`escape`, `interpolation`, `punct`, `comment`, `doc` or `error`. The lexer reads every
+`camelCase` word as a name; the tokens beside it class it further, so a name before `(` is a
+`function` (called, or declared with `fn`) and a name after `.` or `?.` is a `field`
+(`src/tariff/syntax/ops.rs`). Both read the tokens alone, so a broken file still highlights.
+
+`tariff.setName`: `{"source", "name"}` gives `{"source": "…", "change": {"range", "insert"}}`,
+the file with its header naming `name` and the one edit that makes it, in UTF-16 code units. The
+name is written as a text literal that reads back exactly (`\"`, `\\`, `\n`, `\t`, `{{`,
+`}}`); a header without its name gets one after the keyword, and a file without a header gets
+`tariff "…"` and a blank line at the top. A formula template's name is its header's, so the Go
+host renames through it (Duplicate, Fork, Import) and the browser's name field writes the header
+with it.
 
 ### The editor operations
 
