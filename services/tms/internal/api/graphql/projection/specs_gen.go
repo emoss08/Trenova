@@ -364,6 +364,8 @@ var EdiMappingProfileItemSpec TypeSpec
 
 var EdiMessageSpec TypeSpec
 
+var EdiMessageDiagnosticSpec TypeSpec
+
 var EdiPartnerSpec TypeSpec
 
 var EdiPartnerCustomerSpec TypeSpec
@@ -373,6 +375,10 @@ var EdiPartnerDocumentProfileSpec TypeSpec
 var EdiTemplateSpec TypeSpec
 
 var EdiTemplateVersionSpec TypeSpec
+
+var EdiTenderChargeSpec TypeSpec
+
+var EdiTenderCommoditySpec TypeSpec
 
 var EdiTestCaseSpec TypeSpec
 
@@ -12286,6 +12292,10 @@ func init() {
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
 			},
+			{
+				Name:    "suggestedCarrier",
+				Special: "suggestedCarrier",
+			},
 		},
 	}
 
@@ -12541,6 +12551,10 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
+			},
+			{
+				Name:        "rawPurgedAt",
+				FieldMapKey: "rawPurgedAt",
 			},
 		},
 	}
@@ -12814,6 +12828,53 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
+			},
+			{
+				Name:        "invoiceId",
+				FieldMapKey: "invoiceId",
+			},
+			{
+				Name:        "rawPurgedAt",
+				FieldMapKey: "rawPurgedAt",
+			},
+		},
+	}
+
+	EdiMessageDiagnosticSpec = TypeSpec{
+		TypeName: "EdiMessageDiagnostic",
+		FieldMap: edicol.EDIMessageValidationErrorFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "severity",
+				FieldMapKey: "severity",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "segmentId",
+				FieldMapKey: "segmentId",
+			},
+			{
+				Name:        "elementPosition",
+				FieldMapKey: "elementPosition",
+			},
+			{
+				Name:        "path",
+				FieldMapKey: "path",
+			},
+			{
+				Name:        "message",
+				FieldMapKey: "message",
+			},
+			{
+				Name:        "suggestedFix",
+				FieldMapKey: "suggestedFix",
 			},
 		},
 	}
@@ -13201,6 +13262,52 @@ func init() {
 		},
 	}
 
+	EdiTenderChargeSpec = TypeSpec{
+		TypeName: "EdiTenderCharge",
+		FieldMap: edicol.EDITransferFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:    "charge",
+				Special: "charge",
+			},
+			{
+				Name:    "method",
+				Special: "method",
+			},
+			{
+				Name:    "amount",
+				Special: "amount",
+			},
+		},
+	}
+
+	EdiTenderCommoditySpec = TypeSpec{
+		TypeName: "EdiTenderCommodity",
+		FieldMap: shipmentcol.ShipmentCommodityFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:    "commodity",
+				Special: "commodity",
+			},
+			{
+				Name:        "weight",
+				FieldMapKey: "weight",
+			},
+			{
+				Name:        "pieces",
+				FieldMapKey: "pieces",
+			},
+		},
+	}
+
 	EdiTestCaseSpec = TypeSpec{
 		TypeName: "EdiTestCase",
 		FieldMap: edicol.EDITestCaseFieldMap,
@@ -13364,6 +13471,66 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
+			},
+			{
+				Name:        "direction",
+				FieldMapKey: "targetOrganizationId",
+			},
+			{
+				Name:    "counterparty",
+				Special: "counterparty",
+			},
+			{
+				Name:        "bol",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "customerLabel",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "serviceTypeLabel",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "shipmentTypeLabel",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "pieces",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "weight",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "temperatureMin",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "temperatureMax",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "stopCount",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "stops",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "commodities",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "charges",
+				FieldMapKey: "tenderPayload",
+			},
+			{
+				Name:        "canDecide",
+				FieldMapKey: "status",
 			},
 		},
 	}
