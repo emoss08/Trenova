@@ -229,7 +229,7 @@ func (s *Service) Approve(
 				matrix *ratematrix.RateMatrix,
 				r *ApprovalActionRequest,
 			) error {
-				if err := refuseOwnReview(matrix, r.TenantInfo.UserID); err != nil {
+				if err := refuseOwnReview(matrix, r); err != nil {
 					return err
 				}
 				if formulatemplate.SubmissionIsStale(matrix.SubmittedAt, timeutils.NowUnix()) {
@@ -322,22 +322,26 @@ func (s *Service) publish(
 	return nil
 }
 
-func refuseOwnReview(matrix *ratematrix.RateMatrix, userID pulid.ID) error {
-	if matrix.SubmittedByID != nil && *matrix.SubmittedByID == userID {
-		return errortypes.NewValidationError(
+func refuseOwnReview(matrix *ratematrix.RateMatrix, req *ApprovalActionRequest) error {
+	userID := req.TenantInfo.UserID
+	if err := req.RefuseOwn(
+		matrix.SubmittedByID != nil && *matrix.SubmittedByID == userID,
+		errortypes.NewValidationError(
 			"approvedById",
 			errortypes.ErrInvalid,
 			"A rate matrix cannot be published by its submitter",
-		)
+		),
+	); err != nil {
+		return err
 	}
-	if matrix.EditedBy(userID) {
-		return errortypes.NewValidationError(
+	return req.RefuseOwn(
+		matrix.EditedBy(userID),
+		errortypes.NewValidationError(
 			"approvedById",
 			errortypes.ErrInvalid,
 			"You edited this draft, so another reviewer must publish it",
-		)
-	}
-	return nil
+		),
+	)
 }
 
 func (s *Service) Reject(

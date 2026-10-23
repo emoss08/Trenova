@@ -180,6 +180,11 @@ func (r *Registry) registerRateResources() {
 				DisplayName: "Archive",
 				Description: "Archive rate matrices so no new template version reads them",
 			},
+			OperationDefinition{
+				Operation:   OpApproveOwn,
+				DisplayName: "Publish own changes",
+				Description: "Publish a rate matrix draft you submitted or edited, without a second reviewer",
+			},
 		),
 		DefaultSensitivity: SensitivityConfidential,
 		FieldSensitivities: map[string]FieldSensitivity{

@@ -494,3 +494,31 @@ func TestTestSource_RunsTheLibrarysTests(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, failing.Tests.Passed())
 }
+
+func TestApprove_ApproveOwnLetsTheSubmitterApprove(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	library := newLibrary()
+	inReview(library)
+	tenant := newTenantInfo()
+	library.SubmittedByID = &tenant.UserID
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(library, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(returnsLibrary, nil)
+	deps.reviewRepo.On("Latest", mock.Anything, mock.Anything, mock.Anything).
+		Return((*formulalibrary.FormulaLibraryReview)(nil), nil)
+	deps.reviewRepo.On("Create", mock.Anything, mock.Anything).
+		Return(&formulalibrary.FormulaLibraryReview{}, nil)
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).
+		Return([]pulid.ID{tenant.UserID}, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).Return(returnsVersion, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	approved, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
+		TenantInfo:    tenant,
+		EntityID:      library.ID,
+		MayApproveOwn: true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, formulatemplate.StatusActive, approved.Status)
+}

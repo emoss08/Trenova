@@ -151,7 +151,7 @@ Keywords: duplicate tariff, fork, export JSON, import templates, standard templa
 3. To bring templates in, select **New formula template** and choose **Import templates** (from a file exported from Trenova) or **Install standard templates** (Trenova's standard rating methods, each with its own tests).
 
 ## Notes
-Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.
+Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. Someone who submitted a template, or edited the revision under review, cannot approve it unless their role has the "Approve own changes" permission for formula templates, which administrators have; an approval made that way is recorded in the audit log as approved without a second reviewer.
 
 Nova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the same rating engine that bills shipments.
 

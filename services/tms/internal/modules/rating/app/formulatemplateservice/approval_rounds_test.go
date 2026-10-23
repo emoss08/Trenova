@@ -407,3 +407,50 @@ func TestApprove_RefusesAnyoneWhoAuthoredTheRevision(t *testing.T) {
 	assert.Contains(t, err.Error(), "authored")
 	deps.repo.AssertNotCalled(t, "Update")
 }
+
+func TestApprove_ApproveOwnLetsTheSubmitterWhoAuthoredItApproveAndTheAuditSaysSo(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, &formulatemplate.Review{
+		Round: 2, Decision: formulatemplate.ReviewDecisionSubmitted, BaseVersionNumber: 4,
+	})
+	logged := captureAudit(deps)
+	template := approvableTemplate(deps)
+	author := newTenantInfo()
+	template.SubmittedByID = &author.UserID
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
+		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).
+		Return([]pulid.ID{author.UserID}, nil)
+
+	req := &ApprovalActionRequest{TenantInfo: author, EntityID: template.ID, MayApproveOwn: true}
+	approved, err := deps.svc.Approve(t.Context(), req)
+	require.NoError(t, err)
+	assert.Equal(t, formulatemplate.StatusActive, approved.Status)
+	assert.Equal(t,
+		"Formula template approved by its author, without a second reviewer",
+		logged.last(t).Comment,
+	)
+}
+
+func TestApprove_WithoutApproveOwnTheSubmitterIsStillRefused(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, nil)
+	template := approvableTemplate(deps)
+	author := newTenantInfo()
+	template.SubmittedByID = &author.UserID
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
+		TenantInfo: author,
+		EntityID:   template.ID,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "submitter")
+	deps.repo.AssertNotCalled(t, "Update")
+}

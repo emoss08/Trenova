@@ -317,6 +317,38 @@ func TestNobodyPublishesADraftTheyWroteOrSubmitted(t *testing.T) {
 	}
 }
 
+func TestApproveOwnLetsTheSubmitterAndEditorPublishTheirOwnDraft(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTest(t)
+	author := pulid.MustNew("usr_")
+	tenant := tenantFor(author)
+	matrix := submitted(zoneMatrix(tenant), author)
+	matrix.DraftEditorIDs = []pulid.ID{author}
+	matrix.PublishedVersionNumber = 1
+
+	expectLoad(deps, matrix)
+	expectHeaderSave(deps)
+	expectReviews(deps)
+	deps.repo.EXPECT().CountMisfitCells(mock.Anything, mock.Anything).Return(int64(0), nil)
+	deps.versionRepo.EXPECT().Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			version *ratematrix.RateMatrixVersion,
+		) (*ratematrix.RateMatrixVersion, error) {
+			return version, nil
+		})
+	deps.repo.EXPECT().CopyVersion(mock.Anything, mock.Anything).Return(int64(3), nil)
+
+	approved, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
+		TenantInfo:    tenant,
+		EntityID:      matrix.ID,
+		MayApproveOwn: true,
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, approved.PublishedVersionNumber)
+}
+
 func TestSubmitRefusesADraftThatMatchesThePublishedVersion(t *testing.T) {
 	t.Parallel()
 

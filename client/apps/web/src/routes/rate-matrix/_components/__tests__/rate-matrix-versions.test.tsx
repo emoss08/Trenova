@@ -17,6 +17,7 @@ vi.mock("@/lib/graphql/rate-matrix", async (importOriginal) => ({
 
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
+  useReviewApproval: () => ({ allowed: true, needsSecondReviewer: false }),
 }));
 
 vi.mock("@/services/api", () => ({

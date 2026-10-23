@@ -1,4 +1,4 @@
-import { usePermission } from "@/hooks/use-permission";
+import { usePermission, useReviewApproval } from "@/hooks/use-permission";
 import { formulaLibraryRoutes } from "@/lib/formula-library-routes";
 import {
   ArchiveIcon,
@@ -84,7 +84,7 @@ export function LibraryTopBar({
   const { control } = useFormContext<FormulaLibraryFormValues>();
   const name = useWatch({ control, name: "name" })?.trim() ?? "";
   const { allowed: canSubmit } = usePermission(Resource.FormulaLibrary, Operation.Submit);
-  const { allowed: canApprove } = usePermission(Resource.FormulaLibrary, Operation.Approve);
+  const approval = useReviewApproval(Resource.FormulaLibrary, library?.submittedById);
   const { allowed: canReject } = usePermission(Resource.FormulaLibrary, Operation.Reject);
   const { allowed: canDuplicate } = usePermission(Resource.FormulaLibrary, Operation.Duplicate);
   const { allowed: canArchive } = usePermission(Resource.FormulaLibrary, Operation.Archive);
@@ -158,7 +158,7 @@ export function LibraryTopBar({
       )}
       {mode === "edit" && status === "InReview" && (
         <>
-          {canApprove && (
+          {approval.allowed && (
             <Button
               type="button"
               variant="outline"
@@ -170,6 +170,23 @@ export function LibraryTopBar({
               <CheckIcon className="text-success size-3.5" />
               {t("Approve")}
             </Button>
+          )}
+          {approval.needsSecondReviewer && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span>
+                    <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled>
+                      <CheckIcon className="size-3.5" />
+                      {t("Approve")}
+                    </Button>
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {t("You submitted this, so another reviewer has to approve it")}
+              </TooltipContent>
+            </Tooltip>
           )}
           {canReject && (
             <Button

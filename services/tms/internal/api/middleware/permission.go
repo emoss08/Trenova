@@ -185,6 +185,24 @@ func BuildPermissionCheckRequest(
 	}
 }
 
+// Allows reports whether the caller of a request holds an operation on a resource, for a
+// handler that passes a permission-derived choice into a service rather than gating the route.
+func Allows(
+	c *gin.Context,
+	engine permissionports.PermissionEngine,
+	resource permission.Resource,
+	operation permission.Operation,
+) (bool, error) {
+	result, err := engine.Check(
+		c.Request.Context(),
+		BuildPermissionCheckRequest(authctx.GetAuthContext(c), resource.String(), operation),
+	)
+	if err != nil {
+		return false, err
+	}
+	return result != nil && result.Allowed, nil
+}
+
 func permissionContextAttributes(
 	authCtx *authctx.AuthContext,
 ) permissionports.RequestContextAttributes {

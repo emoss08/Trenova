@@ -83,6 +83,6 @@ Keywords: copy library, archive library
 3. Archiving a library templates still import asks you to confirm and lists them. They keep the version they pinned, but no new template version can import an archived library.
 
 ## Notes
-Viewing the page needs read access to formula libraries, and creating one needs create access. **Duplicate**, **Archive**, **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. The person who submitted a library cannot approve it.
+Viewing the page needs read access to formula libraries, and creating one needs create access. **Duplicate**, **Archive**, **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. Someone who submitted a library, or edited the revision under review, cannot approve it unless their role has the "Approve own changes" permission for formula libraries, which administrators have; an approval made that way is recorded in the audit log as approved without a second reviewer.
 
 Submitting needs a description, a source with no errors and at least one test, all passing. Renaming a library that templates import changes the path they import it by: their approved versions keep working, but a new version of each must import the new name.

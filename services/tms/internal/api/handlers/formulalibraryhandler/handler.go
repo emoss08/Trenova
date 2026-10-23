@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
@@ -28,6 +29,7 @@ type Params struct {
 	PageAssistant        agentports.PageAssistant `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	PermissionEngine     permissionports.PermissionEngine
 }
 
 type Handler struct {
@@ -35,6 +37,7 @@ type Handler struct {
 	pageAssistant agentports.PageAssistant
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
+	permEngine    permissionports.PermissionEngine
 }
 
 func New(p Params) *Handler {
@@ -43,6 +46,7 @@ func New(p Params) *Handler {
 		pageAssistant: p.PageAssistant,
 		eh:            p.ErrorHandler,
 		pm:            p.PermissionMiddleware,
+		permEngine:    p.PermissionEngine,
 	}
 }
 
@@ -348,6 +352,7 @@ func (h *Handler) handleApprovalAction(
 		ctx context.Context,
 		req *formulalibraryservice.ApprovalActionRequest,
 	) (*formulalibrary.FormulaLibrary, error),
+	mayApproveOwn bool,
 ) {
 	authCtx := authctx.GetAuthContext(c)
 	id, ok := h.libraryID(c)
@@ -362,9 +367,10 @@ func (h *Handler) handleApprovalAction(
 	}
 
 	library, err := action(c.Request.Context(), &formulalibraryservice.ApprovalActionRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		EntityID:   id,
-		Comment:    req.Comment,
+		TenantInfo:    pagination.FromAuthAsUser(authCtx),
+		EntityID:      id,
+		Comment:       req.Comment,
+		MayApproveOwn: mayApproveOwn,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -389,7 +395,17 @@ func (h *Handler) handleApprovalAction(
 // @Security BearerAuth
 // @Router /formula-libraries/{libraryID}/approve [post]
 func (h *Handler) approve(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.Approve)
+	mayApproveOwn, err := middleware.Allows(
+		c,
+		h.permEngine,
+		permission.ResourceFormulaLibrary,
+		permission.OpApproveOwn,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	h.handleApprovalAction(c, h.service.Approve, mayApproveOwn)
 }
 
 // @Summary Reject a formula library
@@ -407,7 +423,7 @@ func (h *Handler) approve(c *gin.Context) {
 // @Security BearerAuth
 // @Router /formula-libraries/{libraryID}/reject [post]
 func (h *Handler) reject(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.Reject)
+	h.handleApprovalAction(c, h.service.Reject, false)
 }
 
 // @Summary Request changes on a formula library
@@ -425,7 +441,7 @@ func (h *Handler) reject(c *gin.Context) {
 // @Security BearerAuth
 // @Router /formula-libraries/{libraryID}/request-changes [post]
 func (h *Handler) requestChanges(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.RequestChanges)
+	h.handleApprovalAction(c, h.service.RequestChanges, false)
 }
 
 // @Summary A formula library's readiness for review

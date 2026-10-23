@@ -33,34 +33,38 @@ const (
 	OpResolve   Operation = "resolve"
 	OpManage    Operation = "manage"
 	OpPost      Operation = "post"
+	// OpApproveOwn lets a reviewer approve a revision they submitted or authored, where the
+	// two-person rule would otherwise send it to someone else.
+	OpApproveOwn Operation = "approve_own"
 )
 
 var Dependencies = map[Operation][]Operation{
-	OpRead:      {},
-	OpCreate:    {OpRead},
-	OpUpdate:    {OpRead},
-	OpDelete:    {OpRead},
-	OpExport:    {OpRead},
-	OpImport:    {OpRead, OpCreate},
-	OpApprove:   {OpRead, OpUpdate},
-	OpReject:    {OpRead, OpUpdate},
-	OpAssign:    {OpRead, OpUpdate},
-	OpUnassign:  {OpRead, OpUpdate},
-	OpArchive:   {OpRead, OpUpdate},
-	OpRestore:   {OpRead, OpUpdate},
-	OpSubmit:    {OpRead, OpUpdate},
-	OpCancel:    {OpRead, OpUpdate},
-	OpDuplicate: {OpRead, OpCreate},
-	OpClose:     {OpRead, OpUpdate},
-	OpLock:      {OpRead, OpUpdate},
-	OpUnlock:    {OpRead, OpUpdate},
-	OpActivate:  {OpRead, OpUpdate},
-	OpReopen:    {OpRead, OpUpdate},
-	OpPin:       {OpRead},
-	OpUnpin:     {OpRead},
-	OpResolve:   {OpRead},
-	OpManage:    {OpRead, OpUpdate, OpDelete},
-	OpPost:      {OpRead},
+	OpRead:       {},
+	OpCreate:     {OpRead},
+	OpUpdate:     {OpRead},
+	OpDelete:     {OpRead},
+	OpExport:     {OpRead},
+	OpImport:     {OpRead, OpCreate},
+	OpApprove:    {OpRead, OpUpdate},
+	OpReject:     {OpRead, OpUpdate},
+	OpAssign:     {OpRead, OpUpdate},
+	OpUnassign:   {OpRead, OpUpdate},
+	OpArchive:    {OpRead, OpUpdate},
+	OpRestore:    {OpRead, OpUpdate},
+	OpSubmit:     {OpRead, OpUpdate},
+	OpCancel:     {OpRead, OpUpdate},
+	OpDuplicate:  {OpRead, OpCreate},
+	OpClose:      {OpRead, OpUpdate},
+	OpLock:       {OpRead, OpUpdate},
+	OpUnlock:     {OpRead, OpUpdate},
+	OpActivate:   {OpRead, OpUpdate},
+	OpReopen:     {OpRead, OpUpdate},
+	OpPin:        {OpRead},
+	OpUnpin:      {OpRead},
+	OpResolve:    {OpRead},
+	OpManage:     {OpRead, OpUpdate, OpDelete},
+	OpPost:       {OpRead},
+	OpApproveOwn: {OpRead, OpUpdate, OpApprove},
 }
 
 var Dependents = computeDependents()
@@ -167,53 +171,55 @@ const (
 	ClientOpExport uint32 = 1 << 4
 	ClientOpImport uint32 = 1 << 5
 
-	ClientOpApprove   uint32 = 1 << 8
-	ClientOpReject    uint32 = 1 << 9
-	ClientOpAssign    uint32 = 1 << 10
-	ClientOpUnassign  uint32 = 1 << 11
-	ClientOpArchive   uint32 = 1 << 12
-	ClientOpRestore   uint32 = 1 << 13
-	ClientOpSubmit    uint32 = 1 << 14
-	ClientOpCancel    uint32 = 1 << 15
-	ClientOpDuplicate uint32 = 1 << 16
-	ClientOpClose     uint32 = 1 << 17
-	ClientOpLock      uint32 = 1 << 18
-	ClientOpUnlock    uint32 = 1 << 19
-	ClientOpActivate  uint32 = 1 << 20
-	ClientOpReopen    uint32 = 1 << 21
-	ClientOpPin       uint32 = 1 << 22
-	ClientOpUnpin     uint32 = 1 << 23
-	ClientOpResolve   uint32 = 1 << 24
-	ClientOpManage    uint32 = 1 << 25
-	ClientOpPost      uint32 = 1 << 26
+	ClientOpApprove    uint32 = 1 << 8
+	ClientOpReject     uint32 = 1 << 9
+	ClientOpAssign     uint32 = 1 << 10
+	ClientOpUnassign   uint32 = 1 << 11
+	ClientOpArchive    uint32 = 1 << 12
+	ClientOpRestore    uint32 = 1 << 13
+	ClientOpSubmit     uint32 = 1 << 14
+	ClientOpCancel     uint32 = 1 << 15
+	ClientOpDuplicate  uint32 = 1 << 16
+	ClientOpClose      uint32 = 1 << 17
+	ClientOpLock       uint32 = 1 << 18
+	ClientOpUnlock     uint32 = 1 << 19
+	ClientOpActivate   uint32 = 1 << 20
+	ClientOpReopen     uint32 = 1 << 21
+	ClientOpPin        uint32 = 1 << 22
+	ClientOpUnpin      uint32 = 1 << 23
+	ClientOpResolve    uint32 = 1 << 24
+	ClientOpManage     uint32 = 1 << 25
+	ClientOpPost       uint32 = 1 << 26
+	ClientOpApproveOwn uint32 = 1 << 27
 )
 
 var OperationToBit = map[Operation]uint32{
-	OpRead:      ClientOpRead,
-	OpCreate:    ClientOpCreate,
-	OpUpdate:    ClientOpUpdate,
-	OpDelete:    ClientOpDelete,
-	OpExport:    ClientOpExport,
-	OpImport:    ClientOpImport,
-	OpApprove:   ClientOpApprove,
-	OpReject:    ClientOpReject,
-	OpAssign:    ClientOpAssign,
-	OpUnassign:  ClientOpUnassign,
-	OpArchive:   ClientOpArchive,
-	OpRestore:   ClientOpRestore,
-	OpSubmit:    ClientOpSubmit,
-	OpCancel:    ClientOpCancel,
-	OpDuplicate: ClientOpDuplicate,
-	OpClose:     ClientOpClose,
-	OpLock:      ClientOpLock,
-	OpUnlock:    ClientOpUnlock,
-	OpActivate:  ClientOpActivate,
-	OpReopen:    ClientOpReopen,
-	OpPin:       ClientOpPin,
-	OpUnpin:     ClientOpUnpin,
-	OpResolve:   ClientOpResolve,
-	OpManage:    ClientOpManage,
-	OpPost:      ClientOpPost,
+	OpRead:       ClientOpRead,
+	OpCreate:     ClientOpCreate,
+	OpUpdate:     ClientOpUpdate,
+	OpDelete:     ClientOpDelete,
+	OpExport:     ClientOpExport,
+	OpImport:     ClientOpImport,
+	OpApprove:    ClientOpApprove,
+	OpReject:     ClientOpReject,
+	OpAssign:     ClientOpAssign,
+	OpUnassign:   ClientOpUnassign,
+	OpArchive:    ClientOpArchive,
+	OpRestore:    ClientOpRestore,
+	OpSubmit:     ClientOpSubmit,
+	OpCancel:     ClientOpCancel,
+	OpDuplicate:  ClientOpDuplicate,
+	OpClose:      ClientOpClose,
+	OpLock:       ClientOpLock,
+	OpUnlock:     ClientOpUnlock,
+	OpActivate:   ClientOpActivate,
+	OpReopen:     ClientOpReopen,
+	OpPin:        ClientOpPin,
+	OpUnpin:      ClientOpUnpin,
+	OpResolve:    ClientOpResolve,
+	OpManage:     ClientOpManage,
+	OpPost:       ClientOpPost,
+	OpApproveOwn: ClientOpApproveOwn,
 }
 
 func OperationsToBitmask(ops []Operation) uint32 {
@@ -281,6 +287,11 @@ var operationDefinitions = map[Operation]OperationDefinition{
 	OpResolve:  {Operation: OpResolve, DisplayName: "Resolve", Description: "Resolve records"},
 	OpManage:   {Operation: OpManage, DisplayName: "Manage", Description: "Manage records"},
 	OpPost:     {Operation: OpPost, DisplayName: "Post", Description: "Post records to the ledger"},
+	OpApproveOwn: {
+		Operation:   OpApproveOwn,
+		DisplayName: "Approve own changes",
+		Description: "Approve a revision you submitted or edited yourself, without a second reviewer",
+	},
 }
 
 // operations builds a definition slice in the order asked for. It allocates a

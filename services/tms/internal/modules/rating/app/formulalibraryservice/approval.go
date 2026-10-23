@@ -192,17 +192,20 @@ func (s *Service) Approve(
 				library *formulalibrary.FormulaLibrary,
 				r *ApprovalActionRequest,
 			) error {
-				if library.SubmittedByID != nil && *library.SubmittedByID == r.TenantInfo.UserID {
-					return errortypes.NewValidationError(
+				if err := r.RefuseOwn(
+					library.SubmittedByID != nil && *library.SubmittedByID == r.TenantInfo.UserID,
+					errortypes.NewValidationError(
 						"approvedById",
 						errortypes.ErrInvalid,
 						"A library cannot be approved by its submitter",
-					)
+					),
+				); err != nil {
+					return err
 				}
 				if formulatemplate.SubmissionIsStale(library.SubmittedAt, timeutils.NowUnix()) {
 					return staleSubmissionError()
 				}
-				if err := s.refuseRevisionAuthor(vCtx, library, r.TenantInfo); err != nil {
+				if err := s.refuseRevisionAuthor(vCtx, library, r); err != nil {
 					return err
 				}
 
@@ -267,8 +270,9 @@ func (s *Service) Approve(
 func (s *Service) refuseRevisionAuthor(
 	ctx context.Context,
 	library *formulalibrary.FormulaLibrary,
-	tenantInfo pagination.TenantInfo,
+	req *ApprovalActionRequest,
 ) error {
+	tenantInfo := req.TenantInfo
 	var baseVersion int64
 	latest, err := s.reviewRepo.Latest(ctx, library.ID, tenantInfo)
 	if err != nil {
@@ -289,14 +293,14 @@ func (s *Service) refuseRevisionAuthor(
 	if err != nil {
 		return err
 	}
-	if slices.Contains(authors, tenantInfo.UserID) {
-		return errortypes.NewValidationError(
+	return req.RefuseOwn(
+		slices.Contains(authors, tenantInfo.UserID),
+		errortypes.NewValidationError(
 			"approvedById",
 			errortypes.ErrInvalid,
 			"You authored part of this revision, so another reviewer must approve it",
-		)
-	}
-	return nil
+		),
+	)
 }
 
 func (s *Service) Reject(

@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -154,13 +156,25 @@ func (h *Handler) approve(c *gin.Context) {
 		return
 	}
 
+	mayApproveOwn, err := middleware.Allows(
+		c,
+		h.permEngine,
+		permission.ResourceFormulaTemplate,
+		permission.OpApproveOwn,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	template, err := h.service.ApproveFrom(
 		c.Request.Context(),
 		&formulatemplateservice.ApproveRequest{
 			ApprovalActionRequest: formulatemplateservice.ApprovalActionRequest{
-				TenantInfo: pagination.FromAuthAsUser(authCtx),
-				EntityID:   templateID,
-				Comment:    req.Comment,
+				TenantInfo:    pagination.FromAuthAsUser(authCtx),
+				EntityID:      templateID,
+				Comment:       req.Comment,
+				MayApproveOwn: mayApproveOwn,
 			},
 			EffectiveFrom: req.EffectiveFrom,
 		},

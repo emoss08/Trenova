@@ -1,7 +1,7 @@
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { ReviewHistoryView } from "@/components/tariff-studio/review-history-view";
 import type { ReviewEntryData } from "@/components/tariff-studio/review-rounds";
-import { usePermission } from "@/hooks/use-permission";
+import { usePermission, useReviewApproval } from "@/hooks/use-permission";
 import { formulaTemplateStatusChoices, rateMatrixStatusChoices } from "@/lib/choices";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import type { RateMatrixRecord, RateMatrixRecordVersion } from "@/lib/graphql/rate-matrix";
@@ -18,6 +18,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import {
@@ -231,7 +232,7 @@ export function RateMatrixVersions({ rateMatrixId }: { rateMatrixId?: string }) 
     enabled: Boolean(rateMatrixId),
   });
   const canSubmit = usePermission(Resource.RateMatrix, Operation.Submit).allowed;
-  const canApprove = usePermission(Resource.RateMatrix, Operation.Approve).allowed;
+  const approval = useReviewApproval(Resource.RateMatrix, record.data?.submittedById);
   const canReject = usePermission(Resource.RateMatrix, Operation.Reject).allowed;
   const canArchive = usePermission(Resource.RateMatrix, Operation.Archive).allowed;
   const canUpdate = usePermission(Resource.RateMatrix, Operation.Update).allowed;
@@ -314,7 +315,7 @@ export function RateMatrixVersions({ rateMatrixId }: { rateMatrixId?: string }) 
               </Button>
             </>
           )}
-          {actions.decide && canApprove && (
+          {actions.decide && approval.allowed && (
             <Button
               type="button"
               size="sm"
@@ -324,6 +325,23 @@ export function RateMatrixVersions({ rateMatrixId }: { rateMatrixId?: string }) 
               <CheckIcon className="size-3.5" />
               {t("Publish")}
             </Button>
+          )}
+          {actions.decide && approval.needsSecondReviewer && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span>
+                    <Button type="button" size="sm" className="gap-1.5" disabled>
+                      <CheckIcon className="size-3.5" />
+                      {t("Publish")}
+                    </Button>
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {t("You submitted this draft, so another reviewer has to publish it")}
+              </TooltipContent>
+            </Tooltip>
           )}
           {actions.archive && canArchive && (
             <Button
