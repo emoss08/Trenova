@@ -36,6 +36,7 @@ type PreviewResult struct {
 	Diagnostics []rules.TariffDiagnostic `json:"diagnostics"`
 	Inputs      []tarifftypes.InputDecl  `json:"inputs"`
 	Imports     []tarifftypes.Import     `json:"imports"`
+	Tables      []tarifftypes.TablePin   `json:"tables"`
 	Charges     []rules.TariffChargeRef  `json:"charges"`
 	Bill        *rules.TariffBill        `json:"bill"`
 	RatedBill   *tarifftypes.Bill        `json:"-"`

@@ -588,6 +588,10 @@ var RateMatrixCellSpec TypeSpec
 
 var RateMatrixDimensionSpec TypeSpec
 
+var RateMatrixReviewSpec TypeSpec
+
+var RateMatrixVersionSpec TypeSpec
+
 var RateQuoteSpec TypeSpec
 
 var RateZoneSpec TypeSpec
@@ -16365,6 +16369,10 @@ func init() {
 				FieldMapKey: "imports",
 			},
 			{
+				Name:        "tables",
+				FieldMapKey: "tables",
+			},
+			{
 				Name:        "testCount",
 				FieldMapKey: "testCount",
 			},
@@ -22488,12 +22496,44 @@ func init() {
 				},
 			},
 			{
-				Name:    "cellCount",
-				Special: "cellCount",
+				Name:        "cellCount",
+				FieldMapKey: "draftCellCount",
 			},
 			{
 				Name:    "cells",
 				Special: "cells",
+			},
+			{
+				Name:        "publishedVersionNumber",
+				FieldMapKey: "publishedVersionNumber",
+			},
+			{
+				Name:        "publishedAt",
+				FieldMapKey: "publishedAt",
+			},
+			{
+				Name:        "hasDraftChanges",
+				FieldMapKey: "hasDraftChanges",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "submittedAt",
+				FieldMapKey: "submittedAt",
+			},
+			{
+				Name:        "approvedById",
+				FieldMapKey: "approvedById",
+			},
+			{
+				Name:        "approvedAt",
+				FieldMapKey: "approvedAt",
+			},
+			{
+				Name:        "reviewComment",
+				FieldMapKey: "reviewComment",
 			},
 			{
 				Name:        "version",
@@ -22537,6 +22577,22 @@ func init() {
 			{
 				Name:        "d3Key",
 				FieldMapKey: "d3Key",
+			},
+			{
+				Name:        "d0KeyTo",
+				FieldMapKey: "d0KeyTo",
+			},
+			{
+				Name:        "d1KeyTo",
+				FieldMapKey: "d1KeyTo",
+			},
+			{
+				Name:        "d2KeyTo",
+				FieldMapKey: "d2KeyTo",
+			},
+			{
+				Name:        "d3KeyTo",
+				FieldMapKey: "d3KeyTo",
 			},
 			{
 				Name:        "d0Min",
@@ -22620,6 +22676,145 @@ func init() {
 			{
 				Name:        "rangeOverflow",
 				FieldMapKey: "rangeOverflow",
+			},
+		},
+	}
+
+	RateMatrixReviewSpec = TypeSpec{
+		TypeName: "RateMatrixReview",
+		FieldMap: ratematrixcol.RateMatrixReviewFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "rateMatrixId",
+				FieldMapKey: "rateMatrixId",
+			},
+			{
+				Name:        "round",
+				FieldMapKey: "round",
+			},
+			{
+				Name:        "decision",
+				FieldMapKey: "decision",
+			},
+			{
+				Name:        "actorId",
+				FieldMapKey: "actorId",
+			},
+			{
+				Name:        "actor",
+				FieldMapKey: "actorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "comment",
+				FieldMapKey: "comment",
+			},
+			{
+				Name:        "baseVersionNumber",
+				FieldMapKey: "baseVersionNumber",
+			},
+			{
+				Name:        "requestedReviewerId",
+				FieldMapKey: "requestedReviewerId",
+			},
+			{
+				Name:        "requestedReviewer",
+				FieldMapKey: "requestedReviewerId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "reviewerNote",
+				FieldMapKey: "reviewerNote",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	RateMatrixVersionSpec = TypeSpec{
+		TypeName: "RateMatrixVersion",
+		FieldMap: ratematrixcol.RateMatrixVersionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "rateMatrixId",
+				FieldMapKey: "rateMatrixId",
+			},
+			{
+				Name:        "versionNumber",
+				FieldMapKey: "versionNumber",
+			},
+			{
+				Name:        "code",
+				FieldMapKey: "code",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "valueType",
+				FieldMapKey: "valueType",
+			},
+			{
+				Name:    "dimensions",
+				Special: "dimensions",
+			},
+			{
+				Name:        "cellCount",
+				FieldMapKey: "cellCount",
+			},
+			{
+				Name:    "cells",
+				Special: "cells",
+			},
+			{
+				Name:        "changeMessage",
+				FieldMapKey: "changeMessage",
+			},
+			{
+				Name:        "submittedById",
+				FieldMapKey: "submittedById",
+			},
+			{
+				Name:        "publishedById",
+				FieldMapKey: "publishedById",
+			},
+			{
+				Name:        "publishedBy",
+				FieldMapKey: "publishedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
 			},
 		},
 	}

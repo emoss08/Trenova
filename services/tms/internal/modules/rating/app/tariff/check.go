@@ -3,6 +3,8 @@ package tariff
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -92,6 +94,7 @@ type SourceCheckRequest struct {
 	Kind       rules.TariffKind
 	Mode       LibraryMode
 	Pins       []tarifftypes.Import
+	TablePins  []tarifftypes.TablePin
 	Values     *rules.TariffInputValues
 }
 
@@ -101,6 +104,33 @@ type SourceCheck struct {
 	Context    *rules.TariffContext
 	Libraries  LibrarySet
 	Imports    []tarifftypes.Import
+	Tables     []tarifftypes.TablePin
+}
+
+func TablePins(check *rules.TariffCheck, tariffCtx *rules.TariffContext) []tarifftypes.TablePin {
+	if check == nil || tariffCtx == nil {
+		return []tarifftypes.TablePin{}
+	}
+	pins := make([]tarifftypes.TablePin, 0, len(check.Tables))
+	for _, read := range check.Tables {
+		at := tableAt(tariffCtx, read.Code)
+		if at < 0 {
+			continue
+		}
+		table := &tariffCtx.Tables[at]
+		if table.MatrixID.IsNil() || table.Version <= 0 {
+			continue
+		}
+		pins = append(pins, tarifftypes.TablePin{
+			Code:          table.Code,
+			RateMatrixID:  table.MatrixID,
+			VersionNumber: table.Version,
+		})
+	}
+	slices.SortFunc(pins, func(a, b tarifftypes.TablePin) int {
+		return strings.Compare(a.Code, b.Code)
+	})
+	return pins
 }
 
 func (c *SourceCheck) OK() bool {
@@ -113,7 +143,15 @@ func (c *Checker) CheckSource(ctx context.Context, req *SourceCheckRequest) (*So
 		return nil, err
 	}
 
-	tariffCtx, err := c.contextFor(ctx, req.TenantInfo, libraries.Context())
+	var tablePins []tarifftypes.TablePin
+	if req.Mode == LibrariesPinned {
+		tablePins = req.TablePins
+	}
+	tariffCtx, err := c.contextWith(ctx, &tariffports.ContextRequest{
+		TenantInfo: req.TenantInfo,
+		Libraries:  libraries.Context(),
+		Tables:     tablePins,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -134,6 +172,7 @@ func (c *Checker) CheckSource(ctx context.Context, req *SourceCheckRequest) (*So
 		Context:    tariffCtx,
 		Libraries:  libraries,
 		Imports:    libraries.Pins(check.Imports),
+		Tables:     TablePins(check, tariffCtx),
 	}, nil
 }
 
@@ -149,10 +188,17 @@ func (c *Checker) contextFor(
 	tenantInfo pagination.TenantInfo,
 	libraries []rules.TariffLibrary,
 ) (*rules.TariffContext, error) {
-	tariffCtx, err := c.context.Context(ctx, &tariffports.ContextRequest{
+	return c.contextWith(ctx, &tariffports.ContextRequest{
 		TenantInfo: tenantInfo,
 		Libraries:  libraries,
 	})
+}
+
+func (c *Checker) contextWith(
+	ctx context.Context,
+	req *tariffports.ContextRequest,
+) (*rules.TariffContext, error) {
+	tariffCtx, err := c.context.Context(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("build tariff context: %w", err)
 	}

@@ -16,9 +16,10 @@ import (
 )
 
 type fakeRateMatrices struct {
-	matrix *ratematrix.RateMatrix
-	cells  []*ratematrix.RateMatrixCell
-	pages  int
+	matrix   *ratematrix.RateMatrix
+	cells    []*ratematrix.RateMatrixCell
+	versions map[int64]*ratematrix.RateMatrixVersion
+	pages    int
 }
 
 func (f *fakeRateMatrices) GetByID(
@@ -28,18 +29,100 @@ func (f *fakeRateMatrices) GetByID(
 	return f.matrix, nil
 }
 
+func (f *fakeRateMatrices) GetVersion(
+	_ context.Context,
+	req *ratematrixports.GetVersionRequest,
+) (*ratematrix.RateMatrixVersion, error) {
+	version, ok := f.versions[req.VersionNumber]
+	if !ok {
+		return nil, fmt.Errorf("no version %d", req.VersionNumber)
+	}
+	return version, nil
+}
+
 func (f *fakeRateMatrices) ListCells(
 	_ context.Context,
 	req *ratematrixports.ListRateMatrixCellsRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
 	f.pages++
-	offset := min(req.Filter.Pagination.Offset, len(f.cells))
-	end := min(offset+req.Filter.Pagination.Limit, len(f.cells))
+	cells := make([]*ratematrix.RateMatrixCell, 0, len(f.cells))
+	for _, cell := range f.cells {
+		if cell.VersionNumber == req.VersionNumber {
+			cells = append(cells, cell)
+		}
+	}
+	offset := min(req.Filter.Pagination.Offset, len(cells))
+	end := min(offset+req.Filter.Pagination.Limit, len(cells))
 
 	return &pagination.ListResult[*ratematrix.RateMatrixCell]{
-		Items: f.cells[offset:end],
-		Total: len(f.cells),
+		Items: cells[offset:end],
+		Total: len(cells),
 	}, nil
+}
+
+func TestGetRateMatrix_ReadsAPublishedVersionWithItsPostalRanges(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeRateMatrices{
+		matrix: &ratematrix.RateMatrix{
+			ID:                     pulid.MustNew("rmx_"),
+			Code:                   "ZIPS",
+			ValueType:              ratematrix.ValueTypeNumber,
+			PublishedVersionNumber: 2,
+			HasDraftChanges:        true,
+			Dimensions: []*ratematrix.RateMatrixDimension{
+				{Position: 0, Kind: ratematrix.DimensionKindZone},
+			},
+		},
+		versions: map[int64]*ratematrix.RateMatrixVersion{
+			2: {
+				VersionNumber: 2,
+				ValueType:     ratematrix.ValueTypeMoney,
+				Dimensions: []*ratematrix.RateMatrixDimension{{
+					Position:  0,
+					Kind:      ratematrix.DimensionKindZipRange,
+					MatchMode: ratematrix.MatchModeRange,
+				}},
+			},
+		},
+		cells: []*ratematrix.RateMatrixCell{
+			{VersionNumber: 0, D0Key: "SE", Value: decimal.RequireFromString("9")},
+			{
+				VersionNumber: 2,
+				D0Key:         "30000",
+				D0KeyTo:       "31999",
+				Value:         decimal.RequireFromString("4"),
+			},
+		},
+	}
+	tool := newGetRateMatrixTool(fake, &fakePermissions{})
+
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		"rateMatrixId":  fake.matrix.ID.String(),
+		"versionNumber": float64(2),
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+
+	view := result.(rateMatrixView)
+	assert.EqualValues(t, 2, view.VersionNumber)
+	assert.EqualValues(t, 2, view.Published)
+	assert.True(t, view.DraftChanged)
+	assert.Equal(t, ratematrix.ValueTypeMoney, view.ValueType)
+	require.Len(t, view.Dimensions, 1)
+	assert.Equal(t, string(ratematrix.DimensionKindZipRange), view.Dimensions[0].Kind)
+	require.Len(t, view.Cells, 1)
+	assert.Equal(t, []string{"30000 to 31999"}, view.Cells[0].Keys)
+	assert.Equal(t, "4", view.Cells[0].Value)
+
+	draft, err := tool.Query(t.Context(), agentParams(
+		map[string]any{"rateMatrixId": fake.matrix.ID.String()},
+		permission.SensitivityRestricted,
+	))
+	require.NoError(t, err)
+	draftView := draft.(rateMatrixView)
+	assert.Zero(t, draftView.VersionNumber)
+	require.Len(t, draftView.Cells, 1)
+	assert.Equal(t, []string{"SE"}, draftView.Cells[0].Keys)
 }
 
 func TestGetRateMatrix_ReturnsAtMostTwoHundredCells(t *testing.T) {

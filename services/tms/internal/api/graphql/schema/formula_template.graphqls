@@ -35,6 +35,21 @@ type FormulaLibraryImport {
   library: FormulaLibrary
 }
 
+"A rate table a formula version reads, pinned to the published matrix version it was checked against."
+type FormulaTemplateTable {
+  "The table's code, as the source reads it: tables.<code>."
+  code: String!
+  rateMatrixId: ID!
+  versionNumber: Int!
+  """
+  The matrix's newest published version. Greater than versionNumber when a
+  newer version is available; approving a new template version adopts it.
+  """
+  latestVersionNumber: Int!
+  "Whether the matrix is archived, so no new template version can read it."
+  archived: Boolean!
+}
+
 type FormulaTemplate {
   id: ID!
   businessUnitId: ID!
@@ -47,6 +62,8 @@ type FormulaTemplate {
   inputs: [FormulaInputDeclaration!]!
   "The organization libraries the source imports. Approval pins each to the version approved at that moment."
   imports: [FormulaLibraryImport!]!
+  "The rate tables the source reads, each pinned to the published version the last check read."
+  tables: [FormulaTemplateTable!]!
   "How many test blocks the source holds."
   testCount: Int!
   status: FormulaTemplateStatus!

@@ -17,6 +17,7 @@ type Seed struct {
 	Source      string
 	Inputs      []tarifftypes.InputDecl
 	Imports     []tarifftypes.Import
+	Tables      []tarifftypes.TablePin
 	TestCount   int32
 	Metadata    map[string]any
 
@@ -39,6 +40,10 @@ func (s Seed) Build() *FormulaTemplate {
 	if imports == nil {
 		imports = []tarifftypes.Import{}
 	}
+	tables := slices.Clone(s.Tables)
+	if tables == nil {
+		tables = []tarifftypes.TablePin{}
+	}
 	var metadata map[string]any
 	if s.Metadata != nil {
 		metadata = maps.Clone(s.Metadata)
@@ -52,6 +57,7 @@ func (s Seed) Build() *FormulaTemplate {
 		Source:               s.Source,
 		Inputs:               inputs,
 		Imports:              imports,
+		Tables:               tables,
 		TestCount:            s.TestCount,
 		Status:               status,
 		Metadata:             metadata,
@@ -73,6 +79,7 @@ func SeedFromTemplate(source *FormulaTemplate) Seed {
 		Source:              source.Source,
 		Inputs:              source.Inputs,
 		Imports:             source.Imports,
+		Tables:              source.Tables,
 		TestCount:           source.TestCount,
 		Metadata:            source.Metadata,
 		SourceTemplateID:    &sourceID,
@@ -92,6 +99,7 @@ func SeedFromVersion(snapshot *FormulaTemplateVersion) Seed {
 		Source:              snapshot.Source,
 		Inputs:              snapshot.Inputs,
 		Imports:             snapshot.Imports,
+		Tables:              snapshot.Tables,
 		TestCount:           snapshot.TestCount,
 		Metadata:            snapshot.Metadata,
 		SourceTemplateID:    &sourceID,

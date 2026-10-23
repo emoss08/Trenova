@@ -298,6 +298,7 @@ type Resolver struct {
 	formulaLibraryImport               *formulatemplateresolver.FormulaLibraryImportResolver
 	formulaLibraryVersion              *formulalibraryresolver.FormulaLibraryVersionResolver
 	formulaTemplate                    *formulatemplateresolver.FormulaTemplateResolver
+	formulaTemplateTable               *formulatemplateresolver.FormulaTemplateTableResolver
 	fuelCard                           *fuelpurchaseresolver.FuelCardResolver
 	fuelCardDeskCard                   *fuelpurchaseresolver.FuelCardDeskCardResolver
 	fuelFeedStatus                     *fuelpurchaseresolver.FuelFeedStatusResolver
@@ -373,6 +374,7 @@ type Resolver struct {
 	query                              *queryResolver
 	rateAgreement                      *rateresolver.RateAgreementResolver
 	rateMatrix                         *rateresolver.RateMatrixResolver
+	rateMatrixVersion                  *rateresolver.RateMatrixVersionResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
@@ -1333,6 +1335,7 @@ func FromServices(s *Services) *Resolver {
 		formulaLibraryImport:         &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps},
 		formulaLibraryVersion:        &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps},
 		formulaTemplate:              &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps},
+		formulaTemplateTable:         &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps},
 		fuelCard:                     &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps},
 		fuelCardDeskCard:             &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps},
 		fuelFeedStatus:               &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps},
@@ -1638,6 +1641,7 @@ func FromServices(s *Services) *Resolver {
 		},
 		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
 		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
+		rateMatrixVersion:            &rateresolver.RateMatrixVersionResolver{Deps: rateDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
@@ -2351,6 +2355,10 @@ func (r *Resolver) FormulaTemplate() generated.FormulaTemplateResolver {
 	return r.formulaTemplate
 }
 
+func (r *Resolver) FormulaTemplateTable() generated.FormulaTemplateTableResolver {
+	return r.formulaTemplateTable
+}
+
 func (r *Resolver) FuelCard() generated.FuelCardResolver {
 	return r.fuelCard
 }
@@ -2889,6 +2897,10 @@ func (r *Resolver) RateAgreement() generated.RateAgreementResolver {
 
 func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
 	return r.rateMatrix
+}
+
+func (r *Resolver) RateMatrixVersion() generated.RateMatrixVersionResolver {
+	return r.rateMatrixVersion
 }
 
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {

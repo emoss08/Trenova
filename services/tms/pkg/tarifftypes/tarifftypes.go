@@ -150,6 +150,12 @@ type Import struct {
 	VersionNumber int64    `json:"versionNumber"`
 }
 
+type TablePin struct {
+	Code          string   `json:"code"`
+	RateMatrixID  pulid.ID `json:"rateMatrixId"`
+	VersionNumber int64    `json:"versionNumber"`
+}
+
 type LineKind string
 
 const (

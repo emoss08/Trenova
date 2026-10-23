@@ -97,10 +97,15 @@ func (v *Validator) ValidateCells(
 		}
 
 		cell.RateMatrixID = matrix.ID
+		cell.VersionNumber = ratematrix.DraftVersion
 		cell.OrganizationID = req.TenantInfo.OrgID
 		cell.BusinessUnitID = req.TenantInfo.BuID
 
 		cell.ValidateAgainst(dimensions, multiErr.WithIndex("cells", index))
+	}
+
+	if !multiErr.HasErrors() {
+		ratematrix.ValidatePostalAxes(dimensions, req.Cells, multiErr)
 	}
 
 	if multiErr.HasErrors() {

@@ -86,7 +86,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 276 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 282 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 56 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
@@ -97,14 +97,14 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1177 writes: 639 GraphQL mutations and 538 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1183 writes: 639 GraphQL mutations and 544 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 459 |
-| Exempt | 718 |
+| Exempt | 724 |
 | — Security | 87 |
-| — Configuration | 276 |
+| — Configuration | 282 |
 | — User preference | 40 |
 | — Infrastructure | 56 |
 | — Agent administration | 108 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 49 |
 | — Duplicate | 10 |
 | **Pending** | **0** |
-| Total | 1177 |
+| Total | 1183 |
 
 Of the 459 writes an agent should be able to make, 459 have a tool (100%).
 
@@ -258,7 +258,7 @@ The writes no tool performs yet, and what the tool would do.
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
 | rateimport | 3 | 2 | 1 | 0 |
-| ratematrix | 4 | 0 | 4 | 0 |
+| ratematrix | 10 | 0 | 10 | 0 |
 | ratequote | 3 | 0 | 3 | 0 |
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 3 | 0 | 3 | 0 |
@@ -1847,6 +1847,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.delete | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/approve/`<br>ratematrixhandler.approve | Exempt, configuration: Publishing a rate matrix version is a reviewer's decision on pricing every tariff can pin; it waits for a person who did not write the draft. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/archive/`<br>ratematrixhandler.archive | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/reject/`<br>ratematrixhandler.reject | Exempt, configuration: Rejecting a rate matrix draft is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/request-changes/`<br>ratematrixhandler.requestChanges | Exempt, configuration: Returning a rate matrix draft for changes is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/restore/`<br>ratematrixhandler.restore | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/submit/`<br>ratematrixhandler.submit | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `PUT /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.update | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `PUT /api/v1/rate-matrices/:rateMatrixID/cells/`<br>ratematrixhandler.replaceCells | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 

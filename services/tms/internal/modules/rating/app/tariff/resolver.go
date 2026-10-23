@@ -172,6 +172,7 @@ func (r *TemplateResolver) ResolveBilling(
 		Source:        content.Source,
 		Inputs:        content.Inputs,
 		Imports:       content.Imports,
+		Tables:        content.Tables,
 		Libraries:     libraries,
 	}, nil
 }

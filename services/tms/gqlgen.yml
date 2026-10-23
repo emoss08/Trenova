@@ -96,8 +96,6 @@ models:
         resolver: true
   RateMatrix:
     fields:
-      cellCount:
-        resolver: true
       cells:
         resolver: true
   Shipment:
@@ -3943,6 +3941,28 @@ models:
   FormulaLibraryReview:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary.FormulaLibraryReview
+  FormulaTemplateTable:
+    model:
+      - github.com/emoss08/trenova/pkg/tarifftypes.TablePin
+    fields:
+      latestVersionNumber:
+        resolver: true
+      archived:
+        resolver: true
+  RateMatrixVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixVersion
+    fields:
+      dimensions:
+        resolver: true
+      cells:
+        resolver: true
+  RateMatrixReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixReview
+  RateMatrixUsage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports.MatrixUsage
   FormulaTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.FormulaTemplate

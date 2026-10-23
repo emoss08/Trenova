@@ -248,6 +248,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -448,6 +450,7 @@ type ResolverRoot interface {
 	FormulaLibraryImport() FormulaLibraryImportResolver
 	FormulaLibraryVersion() FormulaLibraryVersionResolver
 	FormulaTemplate() FormulaTemplateResolver
+	FormulaTemplateTable() FormulaTemplateTableResolver
 	FuelCard() FuelCardResolver
 	FuelCardDeskCard() FuelCardDeskCardResolver
 	FuelFeedStatus() FuelFeedStatusResolver
@@ -523,6 +526,7 @@ type ResolverRoot interface {
 	Query() QueryResolver
 	RateAgreement() RateAgreementResolver
 	RateMatrix() RateMatrixResolver
+	RateMatrixVersion() RateMatrixVersionResolver
 	ReviewRating() ReviewRatingResolver
 	RiskDecision() RiskDecisionResolver
 	Role() RoleResolver
@@ -1508,6 +1512,11 @@ type FormulaLibraryVersionResolver interface {
 type FormulaTemplateResolver interface {
 	Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaInputDeclaration, error)
 	UsageCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error)
+}
+
+type FormulaTemplateTableResolver interface {
+	LatestVersionNumber(ctx context.Context, obj *tarifftypes.TablePin) (int, error)
+	Archived(ctx context.Context, obj *tarifftypes.TablePin) (bool, error)
 }
 
 type FuelCardResolver interface {
@@ -3197,6 +3206,10 @@ type QueryResolver interface {
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
 	RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error)
 	RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error)
+	RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error)
+	RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrix.RateMatrixVersion, error)
+	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrix.RateMatrixReview, error)
+	RateMatrixUsages(ctx context.Context, rateMatrixID string, versionNumber *int) ([]*formulatemplateports.MatrixUsage, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
 	RecurringShipment(ctx context.Context, id string) (*recurringshipment.RecurringShipment, error)
@@ -3393,8 +3406,12 @@ type RateAgreementResolver interface {
 }
 
 type RateMatrixResolver interface {
-	CellCount(ctx context.Context, obj *gqlmodel.RateMatrix) (int, error)
 	Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
+}
+
+type RateMatrixVersionResolver interface {
+	Dimensions(ctx context.Context, obj *ratematrix.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error)
+	Cells(ctx context.Context, obj *ratematrix.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }
 
 type ReviewRatingResolver interface {
@@ -4172,6 +4189,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"FormulaLibraryImport":               func() any { return r.FormulaLibraryImport() },
 			"FormulaLibraryVersion":              func() any { return r.FormulaLibraryVersion() },
 			"FormulaTemplate":                    func() any { return r.FormulaTemplate() },
+			"FormulaTemplateTable":               func() any { return r.FormulaTemplateTable() },
 			"FuelCard":                           func() any { return r.FuelCard() },
 			"FuelCardDeskCard":                   func() any { return r.FuelCardDeskCard() },
 			"FuelFeedStatus":                     func() any { return r.FuelFeedStatus() },
@@ -4247,6 +4265,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"Query":                              func() any { return r.Query() },
 			"RateAgreement":                      func() any { return r.RateAgreement() },
 			"RateMatrix":                         func() any { return r.RateMatrix() },
+			"RateMatrixVersion":                  func() any { return r.RateMatrixVersion() },
 			"ReviewRating":                       func() any { return r.ReviewRating() },
 			"RiskDecision":                       func() any { return r.RiskDecision() },
 			"Role":                               func() any { return r.Role() },

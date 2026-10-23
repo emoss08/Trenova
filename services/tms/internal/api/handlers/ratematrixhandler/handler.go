@@ -1,7 +1,10 @@
 package ratematrixhandler
 
 import (
+	"context"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -11,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -41,27 +45,316 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	resource := permission.ResourceRateMatrix.String()
+	requireRead := h.pm.RequirePermission(resource, permission.OpRead)
+	requireUpdate := h.pm.RequirePermission(resource, permission.OpUpdate)
 
 	api := rg.Group("/rate-matrices")
-	api.GET("/", h.pm.RequirePermission(resource, permission.OpRead), h.list)
-	api.GET("/:rateMatrixID/", h.pm.RequirePermission(resource, permission.OpRead), h.get)
+	api.GET("/", requireRead, h.list)
+	api.GET("/:rateMatrixID/", requireRead, h.get)
 	api.POST("/", h.pm.RequirePermission(resource, permission.OpCreate), h.create)
-	api.PUT("/:rateMatrixID/", h.pm.RequirePermission(resource, permission.OpUpdate), h.update)
+	api.PUT("/:rateMatrixID/", requireUpdate, h.update)
 	api.DELETE("/:rateMatrixID/", h.pm.RequirePermission(resource, permission.OpDelete), h.delete)
 
-	api.GET(
-		"/:rateMatrixID/cells/",
-		h.pm.RequirePermission(resource, permission.OpRead),
-		h.listCells,
+	api.GET("/:rateMatrixID/cells/", requireRead, h.listCells)
+	api.PUT("/:rateMatrixID/cells/", requireUpdate, h.replaceCells)
+
+	api.POST(
+		"/:rateMatrixID/submit/",
+		h.pm.RequirePermission(resource, permission.OpSubmit),
+		h.submit,
 	)
-	api.PUT(
-		"/:rateMatrixID/cells/",
-		h.pm.RequirePermission(resource, permission.OpUpdate),
-		h.replaceCells,
+	api.POST(
+		"/:rateMatrixID/approve/",
+		h.pm.RequirePermission(resource, permission.OpApprove),
+		h.approve,
 	)
+	api.POST(
+		"/:rateMatrixID/reject/",
+		h.pm.RequirePermission(resource, permission.OpReject),
+		h.reject,
+	)
+	api.POST(
+		"/:rateMatrixID/request-changes/",
+		h.pm.RequirePermission(resource, permission.OpReject),
+		h.requestChanges,
+	)
+	api.POST(
+		"/:rateMatrixID/archive/",
+		h.pm.RequirePermission(resource, permission.OpArchive),
+		h.archive,
+	)
+	api.POST("/:rateMatrixID/restore/", requireUpdate, h.restore)
+	api.GET("/:rateMatrixID/reviewers/", requireRead, h.reviewers)
 
 	selectOptions := api.Group("/select-options", responseguard.References())
 	selectOptions.GET("/", h.selectOptions)
+}
+
+type approvalActionRequest struct {
+	Comment string `json:"comment"`
+}
+
+type submitRequest struct {
+	Comment      string `json:"comment"`
+	ReviewerID   string `json:"reviewerId"`
+	ReviewerNote string `json:"reviewerNote"`
+}
+
+// @Summary Submit a rate matrix draft for review
+// @Description A draft that differs from the published version, with cells that fit its axes, waits for a reviewer to publish it. An archived matrix is submitted to bring it back.
+// @ID submitRateMatrix
+// @Tags Rate Matrices
+// @Accept json
+// @Produce json
+// @Param rateMatrixID path string true "Rate matrix ID"
+// @Param request body submitRequest true "Comment, and optionally a reviewer and a note for them"
+// @Success 200 {object} ratematrix.RateMatrix
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-matrices/{rateMatrixID}/submit [post]
+func (h *Handler) submit(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	matrixID, err := h.matrixID(c)
+	if err != nil {
+		return
+	}
+
+	var req submitRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	reviewerID := pulid.Nil
+	if raw := strings.TrimSpace(req.ReviewerID); raw != "" {
+		parsed, parseErr := pulid.Parse(raw)
+		if parseErr != nil {
+			h.eh.HandleError(c, errortypes.NewValidationError(
+				"reviewerId",
+				errortypes.ErrInvalid,
+				"Choose an active reviewer, other than you, who can publish rate matrices",
+			))
+			return
+		}
+		reviewerID = parsed
+	}
+
+	submitted, err := h.service.Submit(c.Request.Context(), &ratematrixservice.SubmitRequest{
+		ApprovalActionRequest: ratematrixservice.ApprovalActionRequest{
+			TenantInfo: tenantOf(authCtx),
+			EntityID:   matrixID,
+			Comment:    req.Comment,
+		},
+		ReviewerID:   reviewerID,
+		ReviewerNote: req.ReviewerNote,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, submitted)
+}
+
+func (h *Handler) handleApprovalAction(
+	c *gin.Context,
+	action func(
+		ctx context.Context,
+		req *ratematrixservice.ApprovalActionRequest,
+	) (*ratematrix.RateMatrix, error),
+) {
+	authCtx := authctx.GetAuthContext(c)
+	matrixID, err := h.matrixID(c)
+	if err != nil {
+		return
+	}
+
+	var req approvalActionRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	updated, err := action(c.Request.Context(), &ratematrixservice.ApprovalActionRequest{
+		TenantInfo: tenantOf(authCtx),
+		EntityID:   matrixID,
+		Comment:    req.Comment,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, updated)
+}
+
+// @Summary Publish a rate matrix draft
+// @Description Copies the submitted draft into the next published version. Tariffs read it once a formula template version that pins it is approved; contracts already rating keep the version they pinned.
+// @ID approveRateMatrix
+// @Tags Rate Matrices
+// @Accept json
+// @Produce json
+// @Param rateMatrixID path string true "Rate matrix ID"
+// @Param request body approvalActionRequest true "An optional comment"
+// @Success 200 {object} ratematrix.RateMatrix
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-matrices/{rateMatrixID}/approve [post]
+func (h *Handler) approve(c *gin.Context) {
+	h.handleApprovalAction(c, h.service.Approve)
+}
+
+// @Summary Reject a rate matrix draft
+// @ID rejectRateMatrix
+// @Tags Rate Matrices
+// @Accept json
+// @Produce json
+// @Param rateMatrixID path string true "Rate matrix ID"
+// @Param request body approvalActionRequest true "Why it was rejected"
+// @Success 200 {object} ratematrix.RateMatrix
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-matrices/{rateMatrixID}/reject [post]
+func (h *Handler) reject(c *gin.Context) {
+	h.handleApprovalAction(c, h.service.Reject)
+}
+
+// @Summary Request changes to a rate matrix draft
+// @ID requestRateMatrixChanges
+// @Tags Rate Matrices
+// @Accept json
+// @Produce json
+// @Param rateMatrixID path string true "Rate matrix ID"
+// @Param request body approvalActionRequest true "What needs to change"
+// @Success 200 {object} ratematrix.RateMatrix
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-matrices/{rateMatrixID}/request-changes [post]
+func (h *Handler) requestChanges(c *gin.Context) {
+	h.handleApprovalAction(c, h.service.RequestChanges)
+}
+
+// @Summary Archive a rate matrix
+// @Description An archived matrix is no longer read by new template versions; versions already pinned keep reading it.
+// @ID archiveRateMatrix
+// @Tags Rate Matrices
+// @Accept json
+// @Produce json
+// @Param rateMatrixID path string true "Rate matrix ID"
+// @Param request body ratematrixservice.ArchiveRequest true "Confirm when template versions pin it"
+// @Success 200 {object} ratematrix.RateMatrix
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-matrices/{rateMatrixID}/archive [post]
+func (h *Handler) archive(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	matrixID, err := h.matrixID(c)
+	if err != nil {
+		return
+	}
+
+	req := new(ratematrixservice.ArchiveRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = tenantOf(authCtx)
+	req.RateMatrixID = matrixID
+
+	archived, err := h.service.Archive(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, archived)
+}
+
+// @Summary Restore a rate matrix draft from a published version
+// @Description Replaces the draft's axes and cells with a published version's. Restoring the newest published version discards the draft's changes.
+// @ID restoreRateMatrixVersion
+// @Tags Rate Matrices
+// @Accept json
+// @Produce json
+// @Param rateMatrixID path string true "Rate matrix ID"
+// @Param request body ratematrixservice.RestoreVersionRequest true "The published version to restore"
+// @Success 200 {object} ratematrix.RateMatrix
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-matrices/{rateMatrixID}/restore [post]
+func (h *Handler) restore(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	matrixID, err := h.matrixID(c)
+	if err != nil {
+		return
+	}
+
+	req := new(ratematrixservice.RestoreVersionRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = tenantOf(authCtx)
+	req.RateMatrixID = matrixID
+
+	restored, err := h.service.RestoreVersion(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, restored)
+}
+
+// @Summary List who can publish a rate matrix
+// @ID listRateMatrixReviewers
+// @Tags Rate Matrices
+// @Produce json
+// @Param rateMatrixID path string true "Rate matrix ID"
+// @Success 200 {array} ratematrixservice.Reviewer
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /rate-matrices/{rateMatrixID}/reviewers [get]
+func (h *Handler) reviewers(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	if _, err := h.matrixID(c); err != nil {
+		return
+	}
+
+	reviewers, err := h.service.ListReviewers(c.Request.Context(), tenantOf(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	helpers.JSON(c, http.StatusOK, reviewers)
 }
 
 // @Summary List rate matrices
@@ -241,6 +534,7 @@ func (h *Handler) delete(c *gin.Context) {
 // @Tags Rate Matrices
 // @Produce json
 // @Param rateMatrixID path string true "Rate matrix ID"
+// @Param versionNumber query int false "A published version; 0 or absent reads the draft"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
 // @Success 200 {object} pagination.Response[[]ratematrix.RateMatrixCell]
@@ -259,6 +553,20 @@ func (h *Handler) listCells(c *gin.Context) {
 		return
 	}
 
+	versionNumber := ratematrix.DraftVersion
+	if raw := strings.TrimSpace(c.Query("versionNumber")); raw != "" {
+		parsed, parseErr := strconv.ParseInt(raw, 10, 64)
+		if parseErr != nil || parsed < 0 {
+			h.eh.HandleError(c, errortypes.NewValidationError(
+				"versionNumber",
+				errortypes.ErrInvalid,
+				"Version number must be a published version, or 0 for the draft",
+			))
+			return
+		}
+		versionNumber = parsed
+	}
+
 	pagination.List(
 		c,
 		req,
@@ -267,9 +575,10 @@ func (h *Handler) listCells(c *gin.Context) {
 			return h.service.ListCells(
 				c.Request.Context(),
 				&ratematrixports.ListRateMatrixCellsRequest{
-					TenantInfo:   tenantOf(authCtx),
-					RateMatrixID: matrixID,
-					Filter:       req,
+					TenantInfo:    tenantOf(authCtx),
+					RateMatrixID:  matrixID,
+					VersionNumber: versionNumber,
+					Filter:        req,
 				},
 			)
 		},

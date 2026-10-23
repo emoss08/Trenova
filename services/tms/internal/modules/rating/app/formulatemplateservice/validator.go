@@ -74,6 +74,7 @@ type contentRequest struct {
 	source string
 	mode   tariff.LibraryMode
 	pins   []tarifftypes.Import
+	tables []tarifftypes.TablePin
 }
 
 func (s *Service) checkContent(ctx context.Context, req *contentRequest) (*contentCheck, error) {
@@ -83,6 +84,7 @@ func (s *Service) checkContent(ctx context.Context, req *contentRequest) (*conte
 		Kind:       rules.TariffKindTariff,
 		Mode:       req.mode,
 		Pins:       req.pins,
+		TablePins:  req.tables,
 	})
 	if err != nil {
 		return nil, err
@@ -129,6 +131,7 @@ func (s *Service) prepareContent(
 func applyContent(entity *formulatemplate.FormulaTemplate, content *contentCheck) {
 	entity.Inputs = tarifftypes.InputDeclsFrom(content.checked.Check.Inputs)
 	entity.Imports = content.checked.Imports
+	entity.Tables = content.checked.Tables
 	entity.TestCount = content.testCount()
 }
 
