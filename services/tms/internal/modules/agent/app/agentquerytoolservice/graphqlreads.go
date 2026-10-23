@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -27,7 +28,10 @@ type graphQLRead struct {
 	Entity    func() domaintypes.PostgresSearchable
 	// Unpaged marks a list whose root field returns every record at once,
 	// keyed by its own arguments (a worker's checklists by workerId).
-	Unpaged   bool
+	Unpaged bool
+	// Items marks an unpaged list whose root holds its records under items
+	// (a carrier invoice list read by limit and offset).
+	Items     bool
 	Variables []graphQLVariable
 	Fields    []graphQLField
 	// Alongside are the reads a tool makes beside its own, for records its
@@ -149,6 +153,11 @@ const (
 	// paramReferences is a list of ids a root argument takes (the documents
 	// whose sync state is read).
 	paramReferences
+	// paramInstantFrom and paramInstantTo bound an instant people name to
+	// the minute (when an EDI message was created), where a day is too
+	// coarse.
+	paramInstantFrom
+	paramInstantTo
 )
 
 // graphQLParam is one typed parameter of a tool that reads through GraphQL,
@@ -368,7 +377,7 @@ func inputValue(param *graphQLParam, args map[string]any, raw any, clk clock) (a
 		}
 		return endOfDay(clk, day), nil
 	case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
-		paramReference, paramReferences:
+		paramReference, paramReferences, paramInstantFrom, paramInstantTo:
 	}
 
 	return raw, nil
@@ -614,6 +623,52 @@ func scalarParams(
 	return nil
 }
 
+// instantParams are a list's parameters with each Timestamp the spec names as
+// an instant bounded to the minute rather than the day: createdAtFrom/To
+// take a date and time with its offset.
+func instantParams(tool string, params []graphQLParam, instants []string) ([]graphQLParam, error) {
+	for _, field := range instants {
+		matched := false
+		for idx := range params {
+			param := &params[idx]
+			if param.Field != field || param.OnInput ||
+				(param.Kind != paramDayFrom && param.Kind != paramDayTo) {
+				continue
+			}
+			matched = true
+			words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field))
+			if param.Kind == paramDayFrom {
+				param.Kind = paramInstantFrom
+				param.Schema = agenttoolschema.DateTime("Only records whose " + words +
+					" is at or after this instant.")
+				continue
+			}
+			param.Kind = paramInstantTo
+			param.Schema = agenttoolschema.DateTime("Only records whose " + words +
+				" is at or before this instant.")
+		}
+		if !matched {
+			return nil, fmt.Errorf("%s names %q an instant, which is not one of its dated "+
+				"fields", tool, field)
+		}
+	}
+
+	return params, nil
+}
+
+// readInstant is an instant parameter as Unix seconds, refusing anything
+// but a date and time with its offset.
+func readInstant(args map[string]any, name string) (int64, error) {
+	raw := strings.TrimSpace(optionalString(args, name))
+	at, err := time.Parse(time.RFC3339, raw)
+	if err != nil {
+		return 0, fmt.Errorf("parameter %q must be a date and time with its offset, such as "+
+			"2026-03-14T09:30:00-05:00", name)
+	}
+
+	return at.Unix(), nil
+}
+
 // presenceParam is the has<Thing> parameter a nullable reference becomes, so
 // a call can ask for the records that have one, or lack one, without naming
 // which.
@@ -710,6 +765,15 @@ func compileFilter(
 			return nil, false, dayErr
 		}
 		return compare(dbtype.OpLessThanOrEqual, endOfDay(clk, day)), true, nil
+	case paramInstantFrom, paramInstantTo:
+		at, atErr := readInstant(args, param.Name)
+		if atErr != nil {
+			return nil, false, atErr
+		}
+		if param.Kind == paramInstantFrom {
+			return compare(dbtype.OpGreaterThanOrEqual, at), true, nil
+		}
+		return compare(dbtype.OpLessThanOrEqual, at), true, nil
 	case paramAtLeast:
 		return compare(dbtype.OpGreaterThanOrEqual, args[param.Name]), true, nil
 	case paramAtMost:
