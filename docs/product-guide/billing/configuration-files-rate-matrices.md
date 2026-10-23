@@ -36,8 +36,7 @@ Keywords: zip ranges, postal code ranges, zip to zip, 3-digit zip ranges
 1. Give the matrix an axis whose **Dimension** is **Postal range**, and save it.
 2. On **Rates**, the axis's postal ranges are listed above the grid. Type the first and last postal code of a range (for example `100` through `149`) and select **Add range**. The range arrives as a row of blank cells across the other axes; fill each in before **Save rates** turns on.
 3. To change a range, select **Edit** beside it, change its ends and select **Apply**; **Remove** deletes the range's cells on every sheet.
-
-Both ends of a range are included and have the same number of characters, every range on one axis has that length, and ranges never overlap. A postal code matches the range its first characters fall between, compared character by character after trimming and upper-casing, so `10001` and `10001-1234` both match `100` through `149`. A postal code that no range holds finds no rate.
+4. Keep both ends of a range the same number of characters, every range on one axis the same length, and ranges apart: both ends are included, and overlapping ranges are refused. A postal code matches the range its first characters fall between, compared character by character after trimming and upper-casing, so `10001` and `10001-1234` both match `100` through `149`; a postal code that no range holds finds no rate.
 
 ### Submit, publish or send back a draft
 Keywords: review matrix, approve tariff, publish rates, request changes
@@ -50,8 +49,7 @@ Keywords: version history, previous rates, roll back matrix
 1. Open the matrix and its **Versions** tab. Each published version shows its cell count, who published it, when, and how many template versions pin it.
 2. Select **View rates** to read a version's grid, which cannot be edited.
 3. Select **Restore to draft** to replace the draft's axes and rates with that version's, then submit the draft to publish it again.
-
-**Pinned by** lists every formula template version that pins a version of this matrix, with the version it pins.
+4. Check **Pinned by** to see every formula template version that pins a version of this matrix, with the version it pins.
 
 ### Retire a rate matrix
 Keywords: deactivate tariff, disable matrix, archive matrix

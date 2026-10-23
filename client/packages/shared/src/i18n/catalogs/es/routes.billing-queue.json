@@ -164,6 +164,7 @@
   "The shipment is already in the billing queue.": "El envío ya está en la cola de facturación.",
   "The shipment no longer exists or belongs to another organization.": "El envío ya no existe o pertenece a otra organización.",
   "The shipments could not be loaded": "No se pudieron cargar los envíos",
+  "The tariff held this rating for review; approve the rating first": "La tarifa retuvo esta tarificación para revisión; apruebe primero la tarificación",
   "The transfer could not be started": "No se pudo iniciar la transferencia",
   "The transfer report could not be loaded.": "No se pudo cargar el informe de la transferencia.",
   "The transfer stopped because of an unexpected error.": "La transferencia se detuvo debido a un error inesperado.",
