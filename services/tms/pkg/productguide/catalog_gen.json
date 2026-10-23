@@ -1,5 +1,5 @@
 {
-  "version": "sha256:7530d558e758e34a63a5803e80d7a864c3cac90c8d720aa9e4e6ad4941602f93",
+  "version": "sha256:235c57159a7d2deaec5f61304ee91b94aff6c9b3b33462214486a8bca565d52e",
   "modules": [
     {
       "id": "home",
@@ -7744,6 +7744,23 @@
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
             "Write a `best \"Label\"` block with an `option` for each method (`worst` keeps the highest instead). An option that refuses, with `require` or `fail`, is left out for that load.",
             "**Preview** shows each choice under the bill: which option it chose, every option's subtotal, the options that lost struck through, and why a refused option did not apply. **Trace** lists the choice where it was made, and the shipment's bill shows the same once the template rates it."
+          ]
+        },
+        {
+          "title": "Edit the source with Vim keys",
+          "keywords": [
+            "vim",
+            "vim mode",
+            "neovim",
+            "astronvim",
+            "jj escape",
+            "keybindings",
+            "modal editing"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, then select **Vim** in the bar under the editor (or turn on **Vim keys in the formula editor** in [Settings](/settings) under **Preferences**). The choice stays on this device and applies to formula libraries too.",
+            "The editor has normal, insert and visual modes, with the mode shown under the text. Type jj or jk to leave insert mode.",
+            "Space is the leader, as in AstroNvim: gd goes to a definition, K shows the hover card, gl shows the line's problems and ]d or [d moves between them, Space l f formats, Space l r renames, Space l R or grr finds every use of a name, gcc or Space / comments a line, and Space w or :w saves."
           ]
         },
         {
@@ -17567,11 +17584,12 @@
             "24-hour clock",
             "timezone",
             "language",
-            "reduce motion"
+            "reduce motion",
+            "vim keys"
           ],
           "steps": [
             "Open [Settings](/settings) and go to **Preferences**.",
-            "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement."
+            "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement. **Vim keys in the formula editor** gives the formula editor Vim's modes and AstroNvim's keys."
           ]
         },
         {

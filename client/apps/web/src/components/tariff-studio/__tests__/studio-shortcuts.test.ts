@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { matchStudioShortcut, shortcutHint } from "../studio-shortcuts";
+import { EDITOR_SAVE_EVENT } from "@/components/formula-editor/tariff-commands";
+import { renderHook } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { matchStudioShortcut, shortcutHint, useStudioShortcuts } from "../studio-shortcuts";
 
 const press = (
   key: string,
@@ -60,5 +62,20 @@ describe("shortcutHint", () => {
     expect(shortcutHint("run", false)).toBe("Ctrl+Enter");
     expect(shortcutHint("nova", true)).toBe("⌘J");
     expect(shortcutHint("search", false)).toBe("/");
+  });
+});
+
+describe("useStudioShortcuts", () => {
+  it("saves when an editor inside the page asks to, as Ctrl+S does", () => {
+    const save = vi.fn();
+    const { unmount } = renderHook(() => useStudioShortcuts({ save }));
+    const editor = document.createElement("div");
+    document.body.appendChild(editor);
+    editor.dispatchEvent(new CustomEvent(EDITOR_SAVE_EVENT, { bubbles: true }));
+    expect(save).toHaveBeenCalledTimes(1);
+    unmount();
+    editor.dispatchEvent(new CustomEvent(EDITOR_SAVE_EVENT, { bubbles: true }));
+    expect(save).toHaveBeenCalledTimes(1);
+    editor.remove();
   });
 });

@@ -65,6 +65,12 @@ Keywords: best, worst, lower of, greater of, per mile or flat
 2. Write a `best "Label"` block with an `option` for each method (`worst` keeps the highest instead). An option that refuses, with `require` or `fail`, is left out for that load.
 3. **Preview** shows each choice under the bill: which option it chose, every option's subtotal, the options that lost struck through, and why a refused option did not apply. **Trace** lists the choice where it was made, and the shipment's bill shows the same once the template rates it.
 
+### Edit the source with Vim keys
+Keywords: vim, vim mode, neovim, astronvim, jj escape, keybindings, modal editing
+1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, then select **Vim** in the bar under the editor (or turn on **Vim keys in the formula editor** in [Settings](/settings) under **Preferences**). The choice stays on this device and applies to formula libraries too.
+2. The editor has normal, insert and visual modes, with the mode shown under the text. Type jj or jk to leave insert mode.
+3. Space is the leader, as in AstroNvim: gd goes to a definition, K shows the hover card, gl shows the line's problems and ]d or [d moves between them, Space l f formats, Space l r renames, Space l R or grr finds every use of a name, gcc or Space / comments a line, and Space w or :w saves.
+
 ### Preview what a template bills
 Keywords: preview charge, test on a shipment, bill, trace
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. **Preview** bills the **Sample load** with the inputs' sample values, which you can change under **Inputs**; select **Real shipment** to bill a saved shipment instead.

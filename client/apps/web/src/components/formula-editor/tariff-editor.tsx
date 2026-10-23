@@ -1,8 +1,9 @@
 import { FieldWrapper } from "@/components/fields/field-components";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
+import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
 import { lintGutter } from "@codemirror/lint";
-import { Prec, type Extension } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import { Compartment, Prec, type Extension } from "@codemirror/state";
+import { EditorView, keymap, type Command } from "@codemirror/view";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { cn } from "@trenova/shared/lib/utils";
@@ -26,6 +27,7 @@ import { tariffActionMenu } from "./tariff-actions";
 import { setTariffCoverage, tariffCoverage } from "./tariff-coverage";
 import { darkTheme, languageServiceTheme, lightTheme } from "./editor-theme";
 import { highlightRangeExtension, setHighlightRange } from "./highlight-range";
+import { tariffEditorCommands, tariffLanguageData } from "./tariff-commands";
 import { tariffAutocomplete } from "./tariff-complete";
 import { tariffFolding } from "./tariff-fold";
 import { FORMAT_KEY, formatTariffDocument } from "./tariff-format";
@@ -43,6 +45,7 @@ import {
   type TariffReferencesRequest,
 } from "./tariff-service";
 import { tariffSignatureHelp } from "./tariff-signature";
+import { useTariffVim } from "./use-tariff-vim";
 
 const NO_TRACE: readonly TariffTraceEvent[] = [];
 
@@ -98,6 +101,7 @@ export type TariffEditorProps = {
  * operations, and the last test run's coverage in the gutter, so the browser holds no grammar of
  * its own. It suspends
  * until the module has loaded, so it sits under a Suspense boundary with its screen's skeleton.
+ * A full editor that can be edited takes Vim keys when the person has turned them on.
  */
 export function TariffEditor({
   kind,
@@ -142,6 +146,13 @@ export function TariffEditor({
     setReferences(request),
   );
 
+  const vimKeys = useEditorPreferenceStore((state) => state.vimKeys) && !mini && !readOnly;
+  const vimExtension = useTariffVim(vimKeys);
+  const [vimSlot] = useState(() => new Compartment());
+  const applyVim = useLatestCallback((view: EditorView) =>
+    view.dispatch({ effects: vimSlot.reconfigure(vimExtension ?? []) }),
+  );
+
   const extensions = useMemo((): Extension[] => {
     const service: TariffLanguageService = {
       rules: getRules,
@@ -151,7 +162,15 @@ export function TariffEditor({
       openDefinition,
       showReferences,
     };
+    const format: Command = (view) => {
+      if (view.state.readOnly) return false;
+      reportFormat(formatTariffDocument(view, getRules()));
+      return true;
+    };
     const list: Extension[] = [
+      vimSlot.of([]),
+      tariffEditorCommands.of({ format }),
+      tariffLanguageData,
       tariffHighlight(getRules),
       tariffNotices(),
       tariffReferenceMarks(service),
@@ -166,22 +185,21 @@ export function TariffEditor({
       EditorView.lineWrapping,
       highlightRangeExtension(),
       languageServiceTheme,
-      Prec.high(
-        keymap.of([
-          {
-            key: FORMAT_KEY,
-            run: (view) => {
-              if (view.state.readOnly) return false;
-              reportFormat(formatTariffDocument(view, getRules()));
-              return true;
-            },
-          },
-        ]),
-      ),
+      Prec.high(keymap.of([{ key: FORMAT_KEY, run: format }])),
     ];
     if (!mini) list.push(tariffCoverage(), lintGutter());
     return list;
-  }, [getRules, getKind, getContext, getTrace, openDefinition, showReferences, reportFormat, mini]);
+  }, [
+    getRules,
+    getKind,
+    getContext,
+    getTrace,
+    openDefinition,
+    showReferences,
+    reportFormat,
+    mini,
+    vimSlot,
+  ]);
 
   const check = useMemo(
     () => (onCheck ? checkTariffSource(rules, value, kind, context) : null),
@@ -204,11 +222,16 @@ export function TariffEditor({
     if (viewRef.current) setTariffCoverage(viewRef.current, coverage);
   }, [coverage]);
 
+  useEffect(() => {
+    if (viewRef.current) applyVim(viewRef.current);
+  }, [vimExtension, applyVim]);
+
   const handleRef = (instance: ReactCodeMirrorRef | null) => {
     const view = instance?.view ?? null;
     if (view === viewRef.current) return;
     viewRef.current = view;
     if (view && coverage) setTariffCoverage(view, coverage);
+    if (view && vimExtension) applyVim(view);
     onView?.(view);
     if (primary) setPrimary?.(view);
   };
@@ -232,7 +255,9 @@ export function TariffEditor({
       data-tariff-kind={kind}
       onFocusCapture={() => setActive?.(viewRef.current)}
       className={cn(
-        "overflow-hidden",
+        // CodeMirror stacks its gutters, panels (Vim's mode line) and cards at z-index 200 to
+        // 500; isolating the editor keeps those inside it, under the app's tooltips and menus.
+        "isolate overflow-hidden",
         embedded ? "rounded-none" : "border-input ui-container-focus-ring rounded-md border",
         invalid && !embedded && "border-destructive [--ring:var(--ring-danger)]",
         className,

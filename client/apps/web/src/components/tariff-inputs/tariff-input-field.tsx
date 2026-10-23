@@ -1,10 +1,10 @@
-import { FieldWrapper } from "@/components/fields/field-components";
+import { FieldRow, FieldWrapper, type FieldLayout } from "@/components/fields/field-components";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField, type NumberFieldCodec } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
-import { SwitchField } from "@/components/fields/switch-field";
 import { TextChipsField } from "@/components/fields/text-chips-field";
 import { Input } from "@trenova/shared/components/ui/input";
+import { Switch } from "@trenova/shared/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@trenova/shared/components/ui/select";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 import {
   isTariffDate,
   isTariffNumber,
@@ -23,7 +24,6 @@ import {
   tariffQuantity,
   tariffUnitsOf,
 } from "@trenova/shared/rules/tariff-wire";
-import { cn } from "@trenova/shared/lib/utils";
 import type { TariffType } from "@trenova/shared/types/tariff";
 import { Controller, useFormContext, useWatch, type FieldValues, type Path } from "react-hook-form";
 
@@ -41,7 +41,9 @@ export type TariffScalarFieldProps = {
   /** The type as the tariff wrote it (`Money/pallet`), for the unit a folded count shows. */
   typeText?: string;
   label?: string;
-  description?: string | null;
+  description?: React.ReactNode;
+  /** Where a labelled field puts its label: above the control, or in a column beside it. */
+  layout?: FieldLayout;
   placeholder?: string;
   /** A table cell: no label or description, named for assistive technology instead. */
   ariaLabel?: string;
@@ -133,6 +135,7 @@ function TariffNumberField({
   typeText,
   label,
   description,
+  layout,
   placeholder,
   ariaLabel,
   currency,
@@ -165,6 +168,7 @@ function TariffNumberField({
       codec={codec}
       label={label}
       description={description ?? undefined}
+      layout={layout}
       placeholder={placeholder ?? ""}
       aria-label={ariaLabel}
       sideText={sideText || undefined}
@@ -181,6 +185,7 @@ function TariffQuantityField({
   type,
   label,
   description,
+  layout,
   placeholder,
   ariaLabel,
   disabled,
@@ -194,95 +199,122 @@ function TariffQuantityField({
   const value: unknown = useWatch({ control, name: path });
   const unit = isTariffQuantity(value) ? value.u : type.unit;
 
+  const unitSelect =
+    units.length > 1 ? (
+      <Select
+        value={unit}
+        disabled={disabled}
+        onValueChange={(next) => {
+          if (!next) return;
+          const current = getValues(path);
+          // A unit chosen before any digits waits for them; the field writes the value in the
+          // unit it shows.
+          setValue(path, tariffQuantity(isTariffQuantity(current) ? current.$q : "0", next), {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }}
+      >
+        <SelectTrigger
+          className="h-7 w-24 shrink-0 font-mono text-xs"
+          aria-label={t("Unit of {0}", label ?? ariaLabel ?? "")}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {units.map((option) => (
+            <SelectItem key={option} value={option} className="font-mono text-xs">
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    ) : undefined;
+
   return (
-    <div className="flex min-w-0 items-start gap-1.5">
-      <div className="min-w-0 flex-1">
-        <NumberField
-          control={control}
-          name={path as Path<FieldValues>}
-          codec={codec}
-          label={label}
-          description={description ?? undefined}
-          placeholder={placeholder ?? ""}
-          aria-label={ariaLabel}
-          sideText={units.length > 1 ? undefined : unit}
-          decimalScale={money ? SCALE.rate : SCALE.quantity}
-          allowNegative
-          thousandSeparator
-          disabled={disabled}
-        />
-      </div>
-      {units.length > 1 && (
-        <div className={cn("shrink-0", label ? "pt-5" : undefined)}>
-          <Select
-            value={unit}
-            disabled={disabled}
-            onValueChange={(next) => {
-              if (!next) return;
-              const current = getValues(path);
-              // A unit chosen before any digits waits for them; the field writes the
-              // value in the unit it shows.
-              if (isTariffQuantity(current)) {
-                setValue(path, tariffQuantity(current.$q, next), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-              } else {
-                setValue(path, tariffQuantity("0", next), {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-              }
-            }}
-          >
-            <SelectTrigger
-              className="h-7 w-24 font-mono text-xs"
-              aria-label={t("Unit of {0}", label ?? ariaLabel ?? "")}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {units.map((option) => (
-                <SelectItem key={option} value={option} className="font-mono text-xs">
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-    </div>
+    <NumberField
+      control={control}
+      name={path as Path<FieldValues>}
+      codec={codec}
+      label={label}
+      description={description ?? undefined}
+      layout={layout}
+      placeholder={placeholder ?? ""}
+      aria-label={ariaLabel}
+      sideText={unitSelect ? undefined : unit}
+      endAddon={unitSelect}
+      decimalScale={money ? SCALE.rate : SCALE.quantity}
+      allowNegative
+      thousandSeparator
+      disabled={disabled}
+    />
   );
 }
 
+/**
+ * Yes or no. Unset, it shows the value it inherits. Labelled, it is a row like every other
+ * input's, the switch where the others have their control; a table cell is the switch alone.
+ */
 function TariffBoolField({
   path,
   label,
   description,
+  layout,
   ariaLabel,
   disabled,
   inheritedBool,
 }: TariffScalarFieldProps) {
   const { control } = useFormContext<FieldValues>();
-  const value: unknown = useWatch({ control, name: path });
+  useFieldRegistration(label ? path : undefined, label);
   return (
-    <SwitchField
+    <Controller
       control={control}
-      name={path as Path<FieldValues>}
-      label={label ?? ariaLabel ?? ""}
-      aria-label={ariaLabel}
-      description={description ?? undefined}
-      disabled={disabled}
-      outlined={Boolean(label)}
-      checked={typeof value === "boolean" ? value : (inheritedBool ?? false)}
+      name={path}
+      render={({ field, fieldState }) => {
+        const toggle = (
+          <Switch
+            ref={field.ref}
+            name={field.name}
+            checked={typeof field.value === "boolean" ? field.value : (inheritedBool ?? false)}
+            onCheckedChange={field.onChange}
+            onBlur={field.onBlur}
+            disabled={disabled}
+            aria-label={label ?? ariaLabel}
+            aria-invalid={fieldState.invalid}
+          />
+        );
+        if (!label) return toggle;
+        const error = fieldState.error?.message;
+        if (layout === "inline") {
+          return (
+            <FieldRow label={label} description={describe(description)}>
+              <div className="flex h-7 items-center">{toggle}</div>
+              {error && <p className="text-danger-foreground text-2xs">{error}</p>}
+            </FieldRow>
+          );
+        }
+        return (
+          <FieldWrapper label={label} description={description} error={error}>
+            <div className="flex h-7 items-center">{toggle}</div>
+          </FieldWrapper>
+        );
+      }}
     />
   );
+}
+
+/** A description in a row's label column, styled as a field's own description is. */
+function describe(description: React.ReactNode): React.ReactNode {
+  if (!description) return null;
+  if (typeof description !== "string") return description;
+  return <p className="text-2xs text-foreground/70 text-left">{description}</p>;
 }
 
 function TariffTextField({
   path,
   label,
   description,
+  layout,
   placeholder,
   ariaLabel,
   disabled,
@@ -308,6 +340,7 @@ function TariffTextField({
       name={path as Path<FieldValues>}
       label={label}
       description={description ?? undefined}
+      layout={layout}
       placeholder={placeholder}
       aria-label={ariaLabel}
       disabled={disabled}
@@ -315,7 +348,13 @@ function TariffTextField({
   );
 }
 
-function TariffTextListField({ path, label, description, placeholder }: TariffScalarFieldProps) {
+function TariffTextListField({
+  path,
+  label,
+  description,
+  layout,
+  placeholder,
+}: TariffScalarFieldProps) {
   const { control } = useFormContext<FieldValues>();
   return (
     <TextChipsField
@@ -323,6 +362,7 @@ function TariffTextListField({ path, label, description, placeholder }: TariffSc
       name={path as Path<FieldValues>}
       label={label ?? ""}
       description={description ?? undefined}
+      layout={layout}
       placeholder={placeholder}
     />
   );
@@ -333,6 +373,7 @@ function TariffEnumField({
   type,
   label,
   description,
+  layout,
   placeholder,
   disabled,
   oneOf,
@@ -348,6 +389,7 @@ function TariffEnumField({
       name={path as Path<FieldValues>}
       label={label}
       description={description ?? undefined}
+      layout={layout}
       placeholder={placeholder ?? ""}
       options={variants.map((variant) => ({ label: variant, value: variant }))}
       isReadOnly={disabled}
@@ -373,6 +415,7 @@ function TariffDateField({
   path,
   label,
   description,
+  layout,
   ariaLabel,
   disabled,
   empty,
@@ -391,6 +434,7 @@ function TariffDateField({
             label={label}
             description={description ?? undefined}
             error={fieldState.error?.message}
+            layout={layout}
           >
             <Input
               type={dateTime ? "datetime-local" : "date"}

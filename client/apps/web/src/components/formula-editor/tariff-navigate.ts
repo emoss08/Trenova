@@ -55,14 +55,17 @@ export function goToDefinition(
   return true;
 }
 
-/** Go to definition from the cursor, for a menu that has no position of its own. */
-export function goToDefinitionAtCursor(view: EditorView): boolean {
+/**
+ * Goes to the declaration of the name under the cursor (F12, `gd` in Vim, and the editor's menu),
+ * or says there is none.
+ */
+export const goToDefinitionAtCursor: Command = (view) => {
   const service = view.state.facet(tariffServiceFacet);
   if (!service) return false;
-  const found = goToDefinition(service, view, view.state.selection.main.head);
-  if (!found) showEditorNotice(view, translate("There is no declaration to go to here"));
+  if (goToDefinition(service, view, view.state.selection.main.head)) return true;
+  showEditorNotice(view, translate("There is no declaration to go to here"));
   return true;
-}
+};
 
 type RenameState = { offset: number; name: string; refusal: string | null } | null;
 
@@ -189,14 +192,12 @@ export function startRename(
 }
 
 export function tariffNavigation(service: TariffLanguageService): Extension {
-  const definition: Command = (view) =>
-    goToDefinition(service, view, view.state.selection.main.head);
   return [
     tariffServiceFacet.of(service),
     renameField,
     keymap.of([
-      { key: "F12", run: definition },
-      { key: "F2", run: (view) => startRename(view) },
+      { key: "F12", run: goToDefinitionAtCursor },
+      { key: "F2", run: startRename },
     ]),
     EditorView.domEventHandlers({
       mousedown: (event, view) => {

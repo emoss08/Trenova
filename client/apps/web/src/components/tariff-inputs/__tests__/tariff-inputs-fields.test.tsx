@@ -7,7 +7,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { tariffInputValuesSchemaFor } from "@trenova/shared/lib/tariff-inputs";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { z } from "zod";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TariffInputsFields } from "../tariff-inputs-fields";
 
 afterEach(cleanup);
@@ -76,6 +76,16 @@ const breaks: TariffInputDeclaration = {
   range: null,
 };
 
+const residential: TariffInputDeclaration = {
+  name: "residential",
+  doc: "Whether delivery is residential.",
+  type: "Bool",
+  descriptor: { kind: "bool" },
+  required: false,
+  default: true,
+  range: { from: 120, to: 131 },
+};
+
 function Values() {
   const values = useWatch({ name: "inputs" }) as unknown;
   return <pre data-testid="values">{JSON.stringify(values ?? {})}</pre>;
@@ -86,12 +96,14 @@ function Harness({
   initial = {},
   inherited,
   validate = false,
+  onReveal,
 }: {
   declarations: TariffInputDeclaration[];
   initial?: Record<string, unknown>;
   inherited?: TariffInputValues;
   /** Validate as a contract form does: the shared input check in a resolver, on every change. */
   validate?: boolean;
+  onReveal?: (declaration: TariffInputDeclaration) => void;
 }) {
   const form = useForm<{ inputs: Record<string, unknown> }>({
     defaultValues: { inputs: initial },
@@ -111,6 +123,7 @@ function Harness({
         name="inputs"
         inherited={inherited}
         inheritedFrom={inherited ? "agreement" : undefined}
+        onReveal={onReveal}
       />
       <Values />
     </FormProvider>
@@ -135,7 +148,7 @@ describe("TariffInputsFields", () => {
     const user = userEvent.setup();
     render(<Harness declarations={[rate]} />);
 
-    await user.type(screen.getByRole("textbox", { name: "" }), "2.35");
+    await user.type(screen.getByRole("textbox", { name: "Paid per loaded mile" }), "2.35");
 
     expect(values()).toEqual({ rate: { $q: "2.35", u: "$/mi" } });
   });
@@ -359,6 +372,39 @@ describe("TariffInputsFields", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows an unset yes-or-no input as its default and writes it when switched", async () => {
+    const user = userEvent.setup();
+    render(<Harness declarations={[residential]} />);
+
+    const toggle = screen.getByRole("switch", { name: "Whether delivery is residential" });
+    expect(toggle).toBeChecked();
+    expect(values()).toEqual({});
+
+    await user.click(toggle);
+
+    expect(values()).toEqual({ residential: false });
+    expect(toggle).not.toBeChecked();
+  });
+
+  it("links each input to its declaration when the form sits beside the source", async () => {
+    const user = userEvent.setup();
+    const onReveal = vi.fn();
+    render(<Harness declarations={[residential, minimumCharge]} onReveal={onReveal} />);
+
+    await user.click(screen.getByRole("button", { name: "Show residential in the source" }));
+
+    expect(onReveal).toHaveBeenCalledWith(residential);
+    expect(screen.getByRole("button", { name: "Show minimumCharge in the source" })).toBeDisabled();
+  });
+
+  it("leaves out the declaration links when no source is beside the form", () => {
+    render(<Harness declarations={[residential]} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Show residential in the source" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("says when a tariff declares no inputs", () => {
     render(<Harness declarations={[]} />);
 
@@ -378,6 +424,13 @@ describe("TariffInputsFields", () => {
     it("shows the bounds as the field's help text", () => {
       render(<Harness declarations={[boundedRate]} />);
       expect(screen.getByText("From $0.50/mi to $15.00/mi")).toBeInTheDocument();
+    });
+
+    it("keeps the bounds beside the doc when the field links to its declaration", () => {
+      render(<Harness declarations={[boundedRate]} onReveal={vi.fn()} />);
+      expect(screen.getByText("From $0.50/mi to $15.00/mi")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Show rate in the source" })).toBeInTheDocument();
+      expect(screen.queryByText(/object Object/)).not.toBeInTheDocument();
     });
 
     it("puts the bounds after the doc's description", () => {

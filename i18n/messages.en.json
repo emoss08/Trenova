@@ -1624,6 +1624,24 @@
       "routes/reconciliation-summary"
     ]
   },
+  "70% of linehaul with stop pay and a hazmat premium for owner-operators": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "75% of total revenue with stop pay for leased owner-operators": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "7d": {
     "sites": 1,
     "scope": [
@@ -38184,6 +38202,15 @@
       "routes/fuel-management"
     ]
   },
+  "Banded per-loaded-mile pay with stop pay and detention for company drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bands start here — usually your peg (base) price.": {
     "sites": 1,
     "scope": [
@@ -44134,6 +44161,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Calendar fiscal year opened for volume seed history": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Calendar rules for accessorials: weekends, business hours and time spent within them. Every function reads a date-time on its own clock, in the offset it carries.": {
@@ -68859,15 +68895,6 @@
       "go/other"
     ]
   },
-  "Ctrl": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Curfew Conflict": {
     "sites": 1,
     "scope": [
@@ -73708,15 +73735,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "Declared inputs": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Declares a compile-time constant at file level, importable from a library.": {
@@ -102772,7 +102790,7 @@
     ]
   },
   "F12": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -102781,7 +102799,7 @@
     ]
   },
   "F2": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -109714,6 +109732,15 @@
       "apps/web/lib"
     ]
   },
+  "Flat pay per load with stop pay and short free time for local drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Flat per shipment": {
     "sites": 1,
     "scope": [
@@ -109721,6 +109748,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Flat per-total-mile with a $900 guaranteed weekly minimum for regional drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Flat rate": {
@@ -112858,7 +112894,7 @@
     ]
   },
   "Fuel surcharge": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -116449,7 +116485,7 @@
     ]
   },
   "Guaranteed minimum pay top-up": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -138677,7 +138713,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -155342,7 +155378,7 @@
     ]
   },
   "Negative balance carried forward from prior settlement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -166565,6 +166601,15 @@
       "routes/factoring-company"
     ]
   },
+  "Non-taxable reimbursement of a driver-paid trip expense": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Non-urgent emails arrive together at 8:00 AM. Urgent ones still come right away.": {
     "sites": 1,
     "scope": [
@@ -166943,6 +166988,15 @@
     "areas": [
       "apps/web/lib",
       "packages/shared/lib"
+    ]
+  },
+  "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Normalize phone": {
@@ -243349,6 +243403,15 @@
       "routes/worker"
     ]
   },
+  "Show {0} in the source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Show {0} more": {
     "sites": 1,
     "scope": [
@@ -247114,15 +247177,6 @@
     ],
     "areas": [
       "routes/rate-zone"
-    ]
-  },
-  "Space": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Space-separated scopes requested during authentication.": {
@@ -255357,6 +255411,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Team per-loaded-mile rate split evenly between both drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Team player": {
@@ -290933,6 +290996,15 @@
       "routes/customer"
     ]
   },
+  "Turn on Vim keys": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turn on if the employer reported any accidents; the count is asked next.": {
     "sites": 1,
     "scope": [
@@ -300165,6 +300237,51 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Vim": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys are on. jj or jk leaves insert mode and Space is the leader.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys could not be loaded. The editor's own keys still work.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys in the formula editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
+  "Vim keys · code editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Violates hazmat segregation rule \"{0}\" ({1}) — conflicts with \"{2}\"": {

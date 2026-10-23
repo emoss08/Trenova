@@ -43,7 +43,10 @@ export type TariffReferencesRequest = {
   references: readonly TariffReference[];
 };
 
-/** The service an editor's commands ask (rename, find references, promote to input). */
+/**
+ * The service an editor's commands ask: rename, go to definition, hover, find references and
+ * promote to input at the cursor.
+ */
 export const tariffServiceFacet = Facet.define<TariffLanguageService, TariffLanguageService | null>(
   {
     combine: (values) => values[0] ?? null,

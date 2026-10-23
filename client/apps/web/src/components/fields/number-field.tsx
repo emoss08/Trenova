@@ -11,14 +11,17 @@ import { ChevronDownIcon, ChevronUpIcon } from "@trenova/shared/components/icons
 import { useState } from "react";
 import { Controller, type FieldPathValue, type FieldValues, type Path } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
-import { FieldWrapper } from "./field-components";
+import { FieldWrapper, type FieldLayout } from "./field-components";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseNumberFieldProps = {
   /** Maps a value that is not a plain number or decimal text in and out of the field. */
   codec?: NumberFieldCodec;
   label?: React.ReactNode;
-  description?: string;
+  description?: React.ReactNode;
+  layout?: FieldLayout;
+  /** Drawn beside the input at its height, such as a unit select. */
+  endAddon?: React.ReactNode;
   className?: string;
   /** Classes for the input alone; `className` also reaches the label's wrapper. */
   inputClassName?: string;
@@ -112,6 +115,8 @@ function NumberFieldImpl<T extends FieldValues>({
   inputClassName,
   placeholder = "Enter Valid Number",
   sideText,
+  layout,
+  endAddon,
   rules,
   tabIndex,
   decimalScale = 0,
@@ -189,81 +194,86 @@ function NumberFieldImpl<T extends FieldValues>({
             required={!!rules?.required}
             error={fieldState.error?.message}
             className={className}
+            layout={layout}
+            htmlFor={inputId}
           >
-            <div className="relative overflow-hidden">
-              <NumericFormat
-                value={codec ? text : (field.value ?? "")}
-                onValueChange={(values, source) => {
-                  if (codec) {
-                    // A value set from outside (a reset) re-renders the digits it
-                    // already holds; writing them back would only churn the form.
-                    if (source.source === "event") write(values.value);
-                    return;
-                  }
-                  field.onChange(asString ? values.value : (values.floatValue ?? null));
-                }}
-                onBlur={field.onBlur}
-                getInputRef={field.ref}
-                decimalScale={decimalScale}
-                fixedDecimalScale={fixedDecimalScale}
-                allowNegative={allowNegative}
-                thousandSeparator={thousandSeparator}
-                prefix={prefix}
-                suffix={suffix}
-                name={field.name}
-                tabIndex={tabIndex}
-                placeholder={placeholder}
-                id={inputId}
-                disabled={props.disabled}
-                readOnly={props.readOnly}
-                aria-label={props["aria-label"]}
-                aria-describedby={cn(
-                  description && descriptionId,
-                  fieldState.error && errorId,
-                  props["aria-describedby"],
-                )}
-                className={cn(
-                  "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 outline-none md:text-xs",
-                  "file:border-0 file:bg-transparent file:text-sm file:font-medium",
-                  "placeholder:text-muted-foreground",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                  "read-only:text-muted-foreground read-only:cursor-default",
-                  "ui-focus-ring",
-                  props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
-                  fieldState.invalid && fieldInvalidClass,
-                  sideText ? "pr-16" : "pr-12",
-                  className,
-                  inputClassName,
-                )}
-              />
+            <div className={cn(endAddon !== undefined && "flex items-start gap-1.5")}>
+              <div className="relative min-w-0 flex-1 overflow-hidden">
+                <NumericFormat
+                  value={codec ? text : (field.value ?? "")}
+                  onValueChange={(values, source) => {
+                    if (codec) {
+                      // A value set from outside (a reset) re-renders the digits it
+                      // already holds; writing them back would only churn the form.
+                      if (source.source === "event") write(values.value);
+                      return;
+                    }
+                    field.onChange(asString ? values.value : (values.floatValue ?? null));
+                  }}
+                  onBlur={field.onBlur}
+                  getInputRef={field.ref}
+                  decimalScale={decimalScale}
+                  fixedDecimalScale={fixedDecimalScale}
+                  allowNegative={allowNegative}
+                  thousandSeparator={thousandSeparator}
+                  prefix={prefix}
+                  suffix={suffix}
+                  name={field.name}
+                  tabIndex={tabIndex}
+                  placeholder={placeholder}
+                  id={inputId}
+                  disabled={props.disabled}
+                  readOnly={props.readOnly}
+                  aria-label={props["aria-label"]}
+                  aria-describedby={cn(
+                    description && descriptionId,
+                    fieldState.error && errorId,
+                    props["aria-describedby"],
+                  )}
+                  className={cn(
+                    "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 outline-none md:text-xs",
+                    "file:border-0 file:bg-transparent file:text-sm file:font-medium",
+                    "placeholder:text-muted-foreground",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    "read-only:text-muted-foreground read-only:cursor-default",
+                    "ui-focus-ring",
+                    props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
+                    fieldState.invalid && fieldInvalidClass,
+                    sideText ? "pr-16" : "pr-12",
+                    className,
+                    inputClassName,
+                  )}
+                />
 
-              <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0">
-                {sideText && (
-                  <div className="text-muted-foreground pointer-events-none mr-2 text-xs select-none">
-                    {sideText}
+                <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0">
+                  {sideText && (
+                    <div className="text-muted-foreground pointer-events-none mr-2 text-xs select-none">
+                      {sideText}
+                    </div>
+                  )}
+                  <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
+                    <button
+                      type="button"
+                      aria-label={t("Increment")}
+                      className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
+                      disabled={props.disabled || props.readOnly}
+                      onClick={() => stepBy(step, max, "max")}
+                    >
+                      <ChevronUpIcon className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t("Decrement")}
+                      className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
+                      disabled={props.disabled || props.readOnly}
+                      onClick={() => stepBy(-step, min, "min")}
+                    >
+                      <ChevronDownIcon className="h-3 w-3" />
+                    </button>
                   </div>
-                )}
-                <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
-                  <button
-                    type="button"
-                    aria-label={t("Increment")}
-                    className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
-                    disabled={props.disabled || props.readOnly}
-                    onClick={() => stepBy(step, max, "max")}
-                  >
-                    <ChevronUpIcon className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={t("Decrement")}
-                    className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
-                    disabled={props.disabled || props.readOnly}
-                    onClick={() => stepBy(-step, min, "min")}
-                  >
-                    <ChevronDownIcon className="h-3 w-3" />
-                  </button>
                 </div>
               </div>
+              {endAddon}
             </div>
           </FieldWrapper>
         );

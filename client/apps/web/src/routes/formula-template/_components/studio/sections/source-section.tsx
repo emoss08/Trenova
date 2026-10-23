@@ -4,6 +4,7 @@ import { formatTariffDocument } from "@/components/formula-editor/tariff-format"
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
 import {
   reportFormat,
+  SOURCE_EDITOR_MAX_HEIGHT,
   sourceStatus,
   SourceStatusBar,
 } from "@/components/tariff-studio/source-status";
@@ -194,6 +195,7 @@ export function SourceSection() {
               ariaLabel={t("Tariff source")}
               placeholder={t('tariff "Name of the rating method"')}
               minHeight={mode === "create" && empty ? "96px" : "240px"}
+              maxHeight={SOURCE_EDITOR_MAX_HEIGHT}
               primary
               embedded
             />
