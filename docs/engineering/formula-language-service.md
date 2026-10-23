@@ -69,13 +69,51 @@ reading the runtime, the kind, the context and the trace through getters
 | `tariff-lint.ts` | the linter, 250 ms after the last edit: each finding becomes an underline with its translated message and its fixes as actions (`applyTariffFix`, one undoable change); a library's finding is placed on the `use` line that imports it (`toTariffLint`) |
 | `tariff-complete.ts` | completion: the module's items in its order (`sort`), filtered client-side by what is typed, a snippet's `${1:x}` fields as tab stops, and an item's own `range` (`.` rewritten to `?.` on an optional) replacing the list's |
 | `tariff-hover.ts` | the hover card: the declaration as Tariff code coloured from the module's tokens (`appendTariffCode`), the type and unit, the doc, and what a binding came to on the last preview (`values` is that preview's trace) |
+| `cursor-tooltip.ts` | a card opened from the keyboard at the cursor (the hover card, a line's findings); it closes when the cursor moves, the text changes or on Escape |
 | `tariff-signature.ts` | signature help: the parameter being written in bold, its doc under it; a `StateField` asks on every cursor move |
 | `tariff-navigate.ts` | F12 or Mod-click: `tariff.definition` moves to a declaration in this file, or opens the library it is declared in (`onOpenDefinition({module, range, name})`); F2: prepare, then a rename panel that applies every edit as one change or shows why the name cannot be renamed |
 | `tariff-inlays.ts` | inferred types after bindings, parameter names before positional arguments and, with a trace, each binding's value, for the visible range; `refreshTariffInlays` redraws them when the trace changes |
 | `tariff-fold.ts` | folding from the outline's `folding` ranges (`foldAt` keeps the braces) |
 | `tariff-format.ts` | Shift-Alt-F and the format button; a file with syntax errors is left as written and the caller is told why |
 | `tariff-doc.ts` | `tariffDocText` and `appendTariffDoc` (an author's doc as written, a built-in's `Message` translated), and `unlessUnanswered` |
+| `tariff-commands.ts` | what the bindings share without importing each other: the editor's format command (`tariffEditorCommands`), `requestEditorSave` and Tariff's `//` comment tokens |
+| `tariff-vim.ts`, `use-tariff-vim.ts` | Vim keys (below) |
 | `editor-theme.ts` | the chrome for all of the above, from tokens only |
+
+`tariffServiceFacet` carries the service into the commands bound to keys (go to definition at
+the cursor, rename, the hover card at the cursor), so a key binding needs only the view.
+`tariff-lint.ts` also moves between findings (`jumpToDiagnostic`, optionally of one severity) and
+opens the cursor line's findings with their fixes (`showLineDiagnostics`).
+
+### Vim keys
+
+A person can turn on Vim keys for the formula editor, from the Studio's status bar or Settings →
+Preferences. The choice is kept on the device (`useEditorPreferenceStore`, beside the theme and
+reduce motion). A full editor that can be edited then fills a `Compartment` with
+`@replit/codemirror-vim`, which `useTariffVim` imports the first time the keys are turned on, so
+nobody else downloads it; the mini editor and read-only sources keep the editor's own keys.
+
+The bindings are AstroNvim's defaults on top of Vim's, defined once in `tariff-vim.ts` because
+Vim's mappings are global to the page:
+
+| Keys | Does |
+| --- | --- |
+| `jj`, `jk` (insert, 500 ms apart at most) | leave insert mode, as `better-escape.nvim` does |
+| Space | the leader; it no longer moves right |
+| `gd` | go to definition, leaving the cursor at the name's start in normal mode |
+| `K` | the hover card at the cursor |
+| `gl`, `<Space>ld` | the cursor line's findings with their fixes |
+| `]d` `[d`, `]e` `[e`, `]w` `[w` | the next or previous finding, error or warning, wrapping |
+| `<Space>la`, `gra`, `<Space>lD` | the lint panel, which lists every finding and its fixes |
+| `<Space>lf` | format, reported as the format key reports it |
+| `<Space>lr`, `grn` | rename |
+| `gcc`, `gc{motion}`, `<Space>/` (normal and visual) | toggle `//` comments |
+| `<Space>w`, `:w` | save, through the page's own Ctrl+S |
+
+Save is a DOM event (`EDITOR_SAVE_EVENT`) the Studios' `useStudioShortcuts` answers as Ctrl+S, so
+the rules for when a save may run live in one place. A new key goes in `TARIFF_VIM_NORMAL_KEYS`
+with a test in `__tests__/tariff-vim.test.ts`, which presses keys through `Vim.handleKey` on a
+mounted editor.
 
 `unlessUnanswered` wraps every assisting call. A request the module refuses is a caller bug, so it
 is logged once per operation for the developer, but it never breaks typing: the editor carries on

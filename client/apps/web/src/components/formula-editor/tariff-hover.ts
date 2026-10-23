@@ -2,13 +2,15 @@
 // declaration as Tariff code, its type and unit, its doc) and, given the last preview's trace,
 // what a binding came to.
 
-import { hoverTooltip, type Tooltip } from "@codemirror/view";
+import type { Extension } from "@codemirror/state";
+import { hoverTooltip, type Command, type EditorView, type Tooltip } from "@codemirror/view";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { formatShownValue } from "@trenova/shared/lib/tariff-value";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import { tariffHover, type TariffHover } from "@trenova/shared/rules/tariff";
+import { cursorTooltip, openCursorTooltip } from "./cursor-tooltip";
 import { appendTariffCode, appendTariffDoc, unlessUnanswered } from "./tariff-doc";
-import type { TariffLanguageService } from "./tariff-service";
+import { tariffServiceFacet, type TariffLanguageService } from "./tariff-service";
 
 /** The hover card's element. */
 export function renderTariffHover(
@@ -55,25 +57,47 @@ export function renderTariffHover(
   return dom;
 }
 
-export function tariffHoverCard(service: TariffLanguageService) {
-  return hoverTooltip((view, position): Tooltip | null => {
-    const hover = unlessUnanswered(
-      () =>
-        tariffHover(service.rules(), {
-          source: view.state.doc.toString(),
-          offset: position,
-          context: service.context(),
-          kind: service.kind(),
-          values: service.trace(),
-        }),
-      null,
-    );
-    if (!hover) return null;
-    return {
-      pos: hover.range.from,
-      end: hover.range.to,
-      above: true,
-      create: () => ({ dom: renderTariffHover(hover, service.rules()) }),
-    };
+function hoverAt(service: TariffLanguageService, view: EditorView, position: number) {
+  return unlessUnanswered(
+    () =>
+      tariffHover(service.rules(), {
+        source: view.state.doc.toString(),
+        offset: position,
+        context: service.context(),
+        kind: service.kind(),
+        values: service.trace(),
+      }),
+    null,
+  );
+}
+
+/** Opens the hover card for the name under the cursor (`K` in Vim); false when there is none. */
+export const showHoverAtCursor: Command = (view) => {
+  const service = view.state.facet(tariffServiceFacet);
+  if (!service) return false;
+  const hover = hoverAt(service, view, view.state.selection.main.head);
+  if (!hover) return false;
+  openCursorTooltip(view, {
+    pos: hover.range.from,
+    end: hover.range.to,
+    create: () => renderTariffHover(hover, service.rules()),
   });
+  return true;
+};
+
+export function tariffHoverCard(service: TariffLanguageService): Extension {
+  return [
+    tariffServiceFacet.of(service),
+    cursorTooltip,
+    hoverTooltip((view, position): Tooltip | null => {
+      const hover = hoverAt(service, view, position);
+      if (!hover) return null;
+      return {
+        pos: hover.range.from,
+        end: hover.range.to,
+        above: true,
+        create: () => ({ dom: renderTariffHover(hover, service.rules()) }),
+      };
+    }),
+  ];
 }

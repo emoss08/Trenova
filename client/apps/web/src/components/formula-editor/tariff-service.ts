@@ -4,6 +4,7 @@
 // check per text: the linter, the folding service and the Studio's own analysis all ask for the
 // same source with the same context, so the module checks it once.
 
+import { Facet } from "@codemirror/state";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import { tariffCheck } from "@trenova/shared/rules/tariff";
 import {
@@ -32,6 +33,13 @@ export type TariffLanguageService = {
   /** Opens a declaration that lives in an imported library. */
   openDefinition: (target: TariffDefinitionTarget) => void;
 };
+
+/** The service an editor's commands ask: rename, go to definition and hover at the cursor. */
+export const tariffServiceFacet = Facet.define<TariffLanguageService, TariffLanguageService | null>(
+  {
+    combine: (values) => values[0] ?? null,
+  },
+);
 
 type CacheEntry = {
   rules: RulesRuntime;

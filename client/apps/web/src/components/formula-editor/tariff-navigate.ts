@@ -3,13 +3,13 @@
 // (F2) from `tariff.rename`, which edits every reference the checker resolved at once or says
 // why the name cannot be renamed.
 
-import { Facet, StateEffect, StateField, type Extension } from "@codemirror/state";
+import { StateEffect, StateField, type Extension } from "@codemirror/state";
 import { EditorView, keymap, showPanel, type Command, type Panel } from "@codemirror/view";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { tariffDefinition, tariffPrepareRename, tariffRename } from "@trenova/shared/rules/tariff";
 import { unlessUnanswered } from "./tariff-doc";
-import type { TariffLanguageService } from "./tariff-service";
+import { tariffServiceFacet, type TariffLanguageService } from "./tariff-service";
 
 /** Moves the cursor onto a range, scrolls it into view and focuses the editor. */
 export function revealRange(view: EditorView, range: { from: number; to: number }) {
@@ -54,6 +54,13 @@ export function goToDefinition(
   return true;
 }
 
+/** Goes to the declaration of the name under the cursor (F12, and `gd` in Vim). */
+export const goToDefinitionAtCursor: Command = (view) => {
+  const service = view.state.facet(tariffServiceFacet);
+  if (!service) return false;
+  return goToDefinition(service, view, view.state.selection.main.head);
+};
+
 type RenameState = { offset: number; name: string; refusal: string | null } | null;
 
 const openRename = StateEffect.define<RenameState>();
@@ -66,11 +73,6 @@ const renameField = StateField.define<RenameState>({
   },
   provide: (field) =>
     showPanel.from(field, (state) => (state ? (view) => renamePanel(view, state) : null)),
-});
-
-/** The service an editor's rename panel asks. */
-const serviceFacet = Facet.define<TariffLanguageService, TariffLanguageService | null>({
-  combine: (values) => values[0] ?? null,
 });
 
 function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
@@ -103,7 +105,7 @@ function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
   });
   dom.addEventListener("submit", (event) => {
     event.preventDefault();
-    const service = view.state.facet(serviceFacet);
+    const service = view.state.facet(tariffServiceFacet);
     const name = input.value.trim();
     if (!service || name === "" || name === state.name) {
       close();
@@ -156,7 +158,7 @@ function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
  * that cannot (a schema root, a standard library name, a keyword) opens the panel with why.
  */
 export function startRename(view: EditorView): boolean {
-  const service = view.state.facet(serviceFacet);
+  const service = view.state.facet(tariffServiceFacet);
   if (!service) return false;
   const offset = view.state.selection.main.head;
   const prepared = unlessUnanswered(
@@ -181,13 +183,11 @@ export function startRename(view: EditorView): boolean {
 }
 
 export function tariffNavigation(service: TariffLanguageService): Extension {
-  const definition: Command = (view) =>
-    goToDefinition(service, view, view.state.selection.main.head);
   return [
-    serviceFacet.of(service),
+    tariffServiceFacet.of(service),
     renameField,
     keymap.of([
-      { key: "F12", run: definition },
+      { key: "F12", run: goToDefinitionAtCursor },
       { key: "F2", run: startRename },
     ]),
     EditorView.domEventHandlers({

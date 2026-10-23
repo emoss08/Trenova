@@ -1,8 +1,9 @@
 import { FieldWrapper } from "@/components/fields/field-components";
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
+import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
 import { lintGutter } from "@codemirror/lint";
-import { Prec, type Extension } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import { Compartment, Prec, type Extension } from "@codemirror/state";
+import { EditorView, keymap, type Command } from "@codemirror/view";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { cn } from "@trenova/shared/lib/utils";
@@ -17,11 +18,12 @@ import {
   type TariffTraceEvent,
 } from "@trenova/shared/types/tariff";
 import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { useActiveEditorRegistration } from "./active-editor";
 import { darkTheme, languageServiceTheme, lightTheme } from "./editor-theme";
 import { highlightRangeExtension, setHighlightRange } from "./highlight-range";
+import { tariffEditorCommands, tariffLanguageData } from "./tariff-commands";
 import { tariffAutocomplete } from "./tariff-complete";
 import { tariffFolding } from "./tariff-fold";
 import { FORMAT_KEY, formatTariffDocument } from "./tariff-format";
@@ -36,6 +38,7 @@ import {
   type TariffLanguageService,
 } from "./tariff-service";
 import { tariffSignatureHelp } from "./tariff-signature";
+import { useTariffVim } from "./use-tariff-vim";
 
 const NO_TRACE: readonly TariffTraceEvent[] = [];
 
@@ -84,6 +87,7 @@ export type TariffEditorProps = {
  * the check's outline, and completion, hover, signature help, go to definition, rename and inlay
  * hints from the editor operations, so the browser holds no grammar of its own. It suspends
  * until the module has loaded, so it sits under a Suspense boundary with its screen's skeleton.
+ * A full editor that can be edited takes Vim keys when the person has turned them on.
  */
 export function TariffEditor({
   kind,
@@ -123,6 +127,13 @@ export function TariffEditor({
   );
   const reportFormat = useLatestCallback((result: TariffFormatResult) => onFormat?.(result));
 
+  const vimKeys = useEditorPreferenceStore((state) => state.vimKeys) && !mini && !readOnly;
+  const vimExtension = useTariffVim(vimKeys);
+  const [vimSlot] = useState(() => new Compartment());
+  const applyVim = useLatestCallback((view: EditorView) =>
+    view.dispatch({ effects: vimSlot.reconfigure(vimExtension ?? []) }),
+  );
+
   const extensions = useMemo((): Extension[] => {
     const service: TariffLanguageService = {
       rules: getRules,
@@ -131,7 +142,15 @@ export function TariffEditor({
       trace: getTrace,
       openDefinition,
     };
+    const format: Command = (view) => {
+      if (view.state.readOnly) return false;
+      reportFormat(formatTariffDocument(view, getRules()));
+      return true;
+    };
     const list: Extension[] = [
+      vimSlot.of([]),
+      tariffEditorCommands.of({ format }),
+      tariffLanguageData,
       tariffHighlight(getRules),
       tariffLinter(service),
       tariffFolding(service),
@@ -143,22 +162,11 @@ export function TariffEditor({
       EditorView.lineWrapping,
       highlightRangeExtension(),
       languageServiceTheme,
-      Prec.high(
-        keymap.of([
-          {
-            key: FORMAT_KEY,
-            run: (view) => {
-              if (view.state.readOnly) return false;
-              reportFormat(formatTariffDocument(view, getRules()));
-              return true;
-            },
-          },
-        ]),
-      ),
+      Prec.high(keymap.of([{ key: FORMAT_KEY, run: format }])),
     ];
     if (!mini) list.push(lintGutter());
     return list;
-  }, [getRules, getKind, getContext, getTrace, openDefinition, reportFormat, mini]);
+  }, [getRules, getKind, getContext, getTrace, openDefinition, reportFormat, mini, vimSlot]);
 
   const check = useMemo(
     () => (onCheck ? checkTariffSource(rules, value, kind, context) : null),
@@ -177,10 +185,15 @@ export function TariffEditor({
     viewRef.current?.dispatch({ effects: refreshTariffInlays.of(null) });
   }, [trace]);
 
+  useEffect(() => {
+    if (viewRef.current) applyVim(viewRef.current);
+  }, [vimExtension, applyVim]);
+
   const handleRef = (instance: ReactCodeMirrorRef | null) => {
     const view = instance?.view ?? null;
     if (view === viewRef.current) return;
     viewRef.current = view;
+    if (view && vimExtension) applyVim(view);
     onView?.(view);
     if (primary) setPrimary?.(view);
   };

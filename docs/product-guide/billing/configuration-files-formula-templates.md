@@ -38,6 +38,12 @@ Keywords: tariff editor, formula error, autocomplete, hover, rename, go to defin
 4. Press F12 (or Ctrl-click) on a name to jump to where it is declared, including into a library it comes from, and F2 to rename a binding everywhere it is used.
 5. The format button under the editor (or Shift+Alt+F) lays the file out in Tariff's one style. A file with syntax errors is left as it is until it parses.
 
+### Edit the source with Vim keys
+Keywords: vim, vim mode, neovim, astronvim, jj escape, keybindings, modal editing
+1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, then select **Vim** in the bar under the editor (or turn on **Vim keys in the formula editor** in [Settings](/settings) under **Preferences**). The choice stays on this device and applies to formula libraries too.
+2. The editor has normal, insert and visual modes, with the mode shown under the text. Type jj or jk to leave insert mode.
+3. Space is the leader, as in AstroNvim: gd goes to a definition, K shows the hover card, gl shows the line's problems and ]d or [d moves between them, Space l f formats, Space l r renames, gcc or Space / comments a line, and Space w or :w saves.
+
 ### Preview what a template bills
 Keywords: preview charge, test on a shipment, bill, trace
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. **Preview** bills the **Sample load** with the inputs' sample values, which you can change under **Inputs**; select **Real shipment** to bill a saved shipment instead.

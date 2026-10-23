@@ -1,0 +1,31 @@
+// tariff-commands.ts holds what the editor's key bindings share without importing each other:
+// the format command the editor owns (so the keyboard and Vim report a refusal the same way), the
+// request to save the page the editor is on, and the comment syntax line commenting reads.
+
+import { EditorState, Facet } from "@codemirror/state";
+import type { Command, EditorView } from "@codemirror/view";
+
+export type TariffEditorCommands = {
+  /** Formats the document and tells the page what happened. */
+  format: Command;
+};
+
+export const tariffEditorCommands = Facet.define<TariffEditorCommands, TariffEditorCommands | null>(
+  {
+    combine: (values) => values[0] ?? null,
+  },
+);
+
+/** The event an editor raises to save the page it is on; the Studios answer it as Ctrl+S. */
+export const EDITOR_SAVE_EVENT = "trenova:editor-save";
+
+/** Asks the page holding the editor to save, as if the person had pressed Ctrl+S. */
+export function requestEditorSave(view: EditorView): boolean {
+  view.dom.dispatchEvent(new CustomEvent(EDITOR_SAVE_EVENT, { bubbles: true }));
+  return true;
+}
+
+/** Tariff's `//` line comments, for toggle comment (Ctrl+/, and `gc` in Vim). */
+export const tariffLanguageData = EditorState.languageData.of(() => [
+  { commentTokens: { line: "//" } },
+]);

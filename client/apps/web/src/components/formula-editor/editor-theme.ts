@@ -476,4 +476,67 @@ export const languageServiceTheme = EditorView.theme({
     margin: "0",
     color: "var(--danger-foreground)",
   },
+  ".cm-tooltip .cm-tariff-diagnostics": {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    padding: "8px 10px",
+    maxWidth: "360px",
+    fontSize: "12px",
+    whiteSpace: "normal",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-diagnostic": {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "6px",
+    paddingLeft: "8px",
+    borderLeft: "2px solid var(--foreground-subtle)",
+  },
+  ".cm-tariff-diagnostic p": {
+    margin: "0",
+    flexBasis: "100%",
+  },
+  ".cm-tariff-diagnostic-error": {
+    borderLeftColor: "var(--danger)",
+  },
+  ".cm-tariff-diagnostic-warning": {
+    borderLeftColor: "var(--warning)",
+  },
+  ".cm-tariff-diagnostic-fix": {
+    height: "22px",
+    padding: "0 8px",
+    borderRadius: "var(--radius-control)",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--card)",
+    fontSize: "11px",
+    color: "var(--foreground)",
+    cursor: "pointer",
+  },
+  "&.cm-editor .cm-fat-cursor": {
+    backgroundColor: "var(--selection)",
+    color: "var(--selection-foreground)",
+  },
+  "&.cm-editor:not(.cm-focused) .cm-fat-cursor": {
+    backgroundColor: "transparent",
+    outline: "1px solid var(--selection)",
+  },
+  ".cm-panels .cm-vim-panel": {
+    minHeight: "24px",
+    alignItems: "center",
+    padding: "0 12px",
+    fontFamily: "'Geist Mono', monospace",
+    fontSize: "11px",
+    color: "var(--foreground-muted)",
+    backgroundColor: "var(--sunken)",
+  },
+  ".cm-vim-panel input": {
+    fontFamily: "inherit",
+    fontSize: "inherit",
+    color: "var(--foreground)",
+  },
+  "&.cm-editor .cm-searchMatch": {
+    backgroundColor: "color-mix(in oklab, var(--warning) 30%, transparent)",
+  },
 });
