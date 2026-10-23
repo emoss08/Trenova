@@ -2,6 +2,7 @@ package manualjournalresolver
 
 import (
 	"context"
+	"slices"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -19,9 +20,21 @@ func manualJournalColumns(ctx context.Context, nodePathPrefix string) []string {
 		},
 		projection.SelectOptions{PathPrefix: nodePathPrefix},
 	)
+	if len(selection.Columns) == 0 || !selection.HasSpecial(balanceSpecial) {
+		return selection.Columns
+	}
 
-	return selection.Columns
+	columns := selection.Columns
+	for _, key := range []string{"totalDebit", "totalCredit"} {
+		if column := projection.ManualJournalSpec.FieldMap[key]; !slices.Contains(columns, column) {
+			columns = append(columns, column)
+		}
+	}
+
+	return columns
 }
+
+const balanceSpecial = "balance"
 
 func manualJournalConnectionToModel(
 	result *pagination.CursorListResult[*manualjournal.Request],

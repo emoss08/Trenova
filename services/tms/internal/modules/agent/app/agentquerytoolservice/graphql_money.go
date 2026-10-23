@@ -2,18 +2,21 @@ package agentquerytoolservice
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"github.com/shopspring/decimal"
 )
 
 // minorSuffix marks a field that holds an amount in minor units (cents), as
-// the schema names every one (netPayMinor). A result shows it as the decimal
-// a person reads, under the field's name without the suffix (netPay:
-// "1234.56"), and a filter on it takes that decimal, so a model never reads
-// or writes cents.
+// the schema names every one (netPayMinor). A spec that sets amounts shows
+// each as the decimal a person reads, under the field's name without the
+// suffix (netPay: "1234.56"), and filters it by that decimal, so a model
+// never reads or writes cents.
 const minorSuffix = "Minor"
 
 // moneyName is the name an amount in minor units is shown under, and whether
@@ -24,7 +27,7 @@ func moneyName(name string) (string, bool) {
 	return base, ok && base != ""
 }
 
-// presentedName is the name a result shows a field under.
+// presentedName is the name a result that shows amounts shows a field under.
 func presentedName(name string) string {
 	if base, ok := moneyName(name); ok {
 		return base
@@ -33,11 +36,22 @@ func presentedName(name string) string {
 	return name
 }
 
-// presentMoney shows each amount in minor units the node carries as its
-// decimal, named without the suffix. Where the record already carries the
-// amount as a decimal under that name, the minor-unit copy is dropped.
-func presentMoney(node, out map[string]any) {
-	for key, value := range node {
+// presentAmounts shows each amount in minor units the record and the records
+// it carries hold as its decimal, named without the suffix. Where a record
+// already carries the amount as a decimal under that name, the minor-unit
+// copy is dropped.
+func presentAmounts(record map[string]any) {
+	for key, value := range record {
+		switch v := value.(type) {
+		case map[string]any:
+			presentAmounts(v)
+		case []any:
+			for _, element := range v {
+				if object, ok := element.(map[string]any); ok {
+					presentAmounts(object)
+				}
+			}
+		}
 		base, ok := moneyName(key)
 		if !ok {
 			continue
@@ -46,11 +60,11 @@ func presentMoney(node, out map[string]any) {
 		if !counted {
 			continue
 		}
-		delete(out, key)
-		if _, decimalToo := node[base]; decimalToo {
+		delete(record, key)
+		if _, decimalToo := record[base]; decimalToo {
 			continue
 		}
-		out[base] = minorText(int64(minor))
+		record[base] = minorText(int64(minor))
 	}
 }
 
@@ -64,14 +78,54 @@ func presentMinor(record map[string]any, fields []string) {
 	}
 }
 
-// presentedPath names a field path as a result shows it.
-func presentedPath(path string) string {
-	parts := strings.Split(path, ".")
-	for idx, part := range parts {
-		parts[idx] = presentedName(part)
+// presentedPaths name withheld field paths as a result that shows amounts
+// names them (lines.amountMinor is lines.amount), once each.
+func presentedPaths(paths []string) []string {
+	out := make([]string, 0, len(paths))
+	for _, path := range paths {
+		parts := strings.Split(path, ".")
+		for idx, part := range parts {
+			parts[idx] = presentedName(part)
+		}
+		named := strings.Join(parts, ".")
+		if !slices.Contains(out, named) {
+			out = append(out, named)
+		}
 	}
 
-	return strings.Join(parts, ".")
+	return out
+}
+
+// amountParams turns the range parameters a spec that shows amounts derived
+// from fields held in minor units into the decimal a result shows: amountMin
+// and amountMax on amountMinor, compiled back to minor units.
+func amountParams(params []graphQLParam) []graphQLParam {
+	out := slices.Clone(params)
+	for idx := range out {
+		param := &out[idx]
+		if param.OnInput || (param.Kind != paramAtLeast && param.Kind != paramAtMost) {
+			continue
+		}
+		base, ok := moneyName(param.Field)
+		if !ok || strings.Contains(param.Field, ".") {
+			continue
+		}
+		suffix := suffixMin
+		bound := "at least"
+		if param.Kind == paramAtMost {
+			suffix, bound = suffixMax, "at most"
+		}
+		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(base))
+		param.Name = base + suffix
+		param.Minor = true
+		param.Schema = map[string]any{
+			toolschema.KeyType: toolschema.TypeString,
+			toolschema.KeyDescription: "Only records whose " + words + " is " + bound +
+				" this. Write it as a decimal in the record's currency, such as 1250.00.",
+		}
+	}
+
+	return out
 }
 
 // minorUnits reads a decimal a call sent for an amount filter as the minor

@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -481,8 +482,12 @@ func (r *QueryResolver) EDICarrierInvoices(ctx context.Context, reconciliationSt
 	req := &ediports.ListEDICarrierInvoicesRequest{
 		Filter: listFilterOptions(base.TenantInfo(authCtx), limit, offset),
 	}
-	if reconciliationStatus != nil {
+	if reconciliationStatus != nil && *reconciliationStatus != "" {
 		req.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatus(*reconciliationStatus)
+		if !req.ReconciliationStatus.IsValid() {
+			return nil, errortypes.NewValidationError("reconciliationStatus", errortypes.ErrInvalid,
+				"Reconciliation status must be Unmatched, MappingRequired, Matched or Variance")
+		}
 	}
 	result, err := r.CarrierSettlementService.ListUnmatchedEDIInvoices(ctx, req)
 	if err != nil {
@@ -572,4 +577,13 @@ func (r *CarrierSettlementResolver) PaidBy(ctx context.Context, obj *carriersett
 
 func (r *CarrierSettlementResolver) VoidedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
 	return base.LoadUser(ctx, obj.VoidedByID)
+}
+
+func (r *EdiCarrierInvoiceResolver) SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error) {
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	if !ok || authCtx == nil || obj.CarrierID.IsNotNil() {
+		return nil, nil
+	}
+
+	return r.CarrierSettlementService.SuggestCarrierFor(ctx, base.TenantInfo(authCtx), obj)
 }

@@ -24,7 +24,6 @@ func (f Facts) Counts() []int {
 		f.Uncovered,
 		f.Detention,
 		f.ReadyToBill,
-		f.LowMargin,
 		f.OpenSuggestions,
 	}
 }
@@ -40,7 +39,6 @@ func (f Facts) Filters() []shipment.QuickFilter {
 		{f.Uncovered, shipment.QuickFilterUncovered},
 		{f.Detention, shipment.QuickFilterDetention},
 		{f.ReadyToBill, shipment.QuickFilterReadyToBill},
-		{f.LowMargin, shipment.QuickFilterLowMargin},
 	}
 
 	out := make([]shipment.QuickFilter, 0, len(candidates))

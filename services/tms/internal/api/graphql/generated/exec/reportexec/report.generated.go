@@ -9,6 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -22,6 +23,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReportCatalogEntity", Implementors: []string{"ReportCatalogEntity"}},
 		{Name: "ReportCatalogEnumValue", Implementors: []string{"ReportCatalogEnumValue"}},
 		{Name: "ReportCatalogField", Implementors: []string{"ReportCatalogField"}},
+		{Name: "ReportCatalogKind", Implementors: []string{"ReportCatalogKind"}},
 		{Name: "ReportColumnDisplay", Implementors: []string{"ReportColumnDisplay"}},
 		{Name: "ReportDashboard", Implementors: []string{"ReportDashboard"}},
 		{Name: "ReportDefinition", Implementors: []string{"ReportDefinition"}},
@@ -29,6 +31,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReportDefinitionEdge", Implementors: []string{"ReportDefinitionEdge"}},
 		{Name: "ReportDefinitionRevision", Implementors: []string{"ReportDefinitionRevision"}},
 		{Name: "ReportDisplayRule", Implementors: []string{"ReportDisplayRule"}},
+		{Name: "ReportFieldProtection", Implementors: []string{"ReportFieldProtection"}},
 		{Name: "ReportPreview", Implementors: []string{"ReportPreview"}},
 		{Name: "ReportPreviewColumn", Implementors: []string{"ReportPreviewColumn"}},
 		{Name: "ReportRun", Implementors: []string{"ReportRun"}},
@@ -643,6 +646,36 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
+			{
+				Name:     "access",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogEdge)
+					return obj.Access, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportFieldAccess2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldAccess),
+			},
+			{
+				Name:     "inReferenceView",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogEdge)
+					return obj.InReferenceView, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "needsReadOf",
+				HasChild:  true,
+				ChildType: "ReportCatalogKind",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogEdge)
+					return obj.NeedsReadOf, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportCatalogKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportCatalogKind),
+			},
 		}},
 		{Object: "ReportCatalogEntity", Fields: []*gqlexec.Field{
 			{
@@ -711,6 +744,26 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogEntity)
 					return obj.OwnScopeSupported, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "readable",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogEntity)
+					return obj.Readable, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "exportable",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogEntity)
+					return obj.Exportable, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -860,14 +913,34 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
-				Name:     "accessible",
+				Name:     "access",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogField)
+					return obj.Access, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportFieldAccess2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldAccess),
+			},
+			{
+				Name:     "inReferenceView",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogField)
-					return obj.Accessible, nil
+					return obj.InReferenceView, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "protection",
+				HasChild:  true,
+				ChildType: "ReportFieldProtection",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogField)
+					return obj.Protection, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportFieldProtection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldProtection),
 			},
 			{
 				Name:     "sensitivity",
@@ -876,6 +949,28 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportCatalogField)
 					return obj.Sensitivity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "ReportCatalogKind", Fields: []*gqlexec.Field{
+			{
+				Name:     "resource",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogKind)
+					return obj.Resource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportCatalogKind)
+					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -894,7 +989,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "decimals",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportColumnDisplay)
 					return obj.Decimals, nil
@@ -1037,7 +1132,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDashboard)
 					return obj.ID, nil
@@ -1087,7 +1182,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ownerId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDashboard)
 					return obj.OwnerID, nil
@@ -1117,7 +1212,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDashboard)
 					return obj.Version, nil
@@ -1127,7 +1222,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDashboard)
 					return obj.CreatedAt, nil
@@ -1137,7 +1232,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDashboard)
 					return obj.UpdatedAt, nil
@@ -1149,7 +1244,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinition)
 					return obj.ID, nil
@@ -1227,7 +1322,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ownerId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinition)
 					return obj.OwnerID, nil
@@ -1297,7 +1392,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currentRevision",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinition)
 					return obj.CurrentRevision, nil
@@ -1306,7 +1401,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastRunAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinition)
 					return obj.LastRunAt, nil
@@ -1316,7 +1411,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinition)
 					return obj.Version, nil
@@ -1326,7 +1421,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinition)
 					return obj.CreatedAt, nil
@@ -1336,7 +1431,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinition)
 					return obj.UpdatedAt, nil
@@ -1370,7 +1465,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCount",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinitionConnection)
 					return obj.TotalCount, nil
@@ -1405,7 +1500,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinitionRevision)
 					return obj.ID, nil
@@ -1415,7 +1510,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "definitionId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinitionRevision)
 					return obj.DefinitionID, nil
@@ -1425,7 +1520,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "revisionNumber",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinitionRevision)
 					return obj.RevisionNumber, nil
@@ -1455,7 +1550,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdById",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinitionRevision)
 					return obj.CreatedByID, nil
@@ -1465,7 +1560,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportDefinitionRevision)
 					return obj.CreatedAt, nil
@@ -1515,6 +1610,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "ReportFieldProtection", Fields: []*gqlexec.Field{
+			{
+				Name:     "group",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportFieldProtection)
+					return obj.Group, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNProtectedFieldGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐFieldGroup),
+			},
+			{
+				Name:     "held",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportFieldProtection)
+					return obj.Held, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "ReportPreview", Fields: []*gqlexec.Field{
 			{
 				Name:      "columns",
@@ -1530,7 +1647,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rows",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportPreview)
 					return obj.Rows, nil
@@ -1539,7 +1656,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totals",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportPreview)
 					return obj.Totals, nil
@@ -1613,7 +1730,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.ID, nil
@@ -1622,7 +1739,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "definitionId",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.DefinitionID, nil
@@ -1631,7 +1748,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "revisionId",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.RevisionID, nil
@@ -1659,7 +1776,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "requestedById",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.RequestedByID, nil
@@ -1708,7 +1825,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rowCount",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.RowCount, nil
@@ -1718,7 +1835,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "byteSize",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.ByteSize, nil
@@ -1728,7 +1845,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "durationMs",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.DurationMs, nil
@@ -1757,7 +1874,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "artifactExpiresAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.ArtifactExpiresAt, nil
@@ -1776,7 +1893,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "queuedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.QueuedAt, nil
@@ -1785,7 +1902,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "startedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.StartedAt, nil
@@ -1794,7 +1911,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "completedAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.CompletedAt, nil
@@ -1804,7 +1921,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.Version, nil
@@ -1814,7 +1931,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRun)
 					return obj.CreatedAt, nil
@@ -1848,7 +1965,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCount",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportRunConnection)
 					return obj.TotalCount, nil
@@ -1914,7 +2031,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.ID, nil
@@ -1924,7 +2041,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "definitionId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.DefinitionID, nil
@@ -1994,7 +2111,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "notifyUserIds",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.NotifyUserIds, nil
@@ -2034,7 +2151,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runAsId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.RunAsID, nil
@@ -2043,7 +2160,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastRunId",
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.LastRunID, nil
@@ -2052,7 +2169,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "nextRunAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.NextRunAt, nil
@@ -2062,7 +2179,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "consecutiveFailures",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.ConsecutiveFailures, nil
@@ -2072,7 +2189,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.Version, nil
@@ -2082,7 +2199,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.CreatedAt, nil
@@ -2092,7 +2209,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportSchedule)
 					return obj.UpdatedAt, nil
@@ -2114,7 +2231,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "threshold",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportScheduleAlert)
 					return obj.Threshold, nil
@@ -2154,7 +2271,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.ID, nil
@@ -2164,7 +2281,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "definitionId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.DefinitionID, nil
@@ -2174,7 +2291,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ownerId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.OwnerID, nil
@@ -2240,7 +2357,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastRunAt",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.LastRunAt, nil
@@ -2250,7 +2367,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runCount",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.RunCount, nil
@@ -2260,7 +2377,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.Version, nil
@@ -2270,7 +2387,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.CreatedAt, nil
@@ -2280,7 +2397,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "updatedAt",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ReportView)
 					return obj.UpdatedAt, nil
@@ -2292,7 +2409,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "definitionId",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.TableExportResult)
 					return obj.DefinitionID, nil
@@ -2418,10 +2535,12 @@ var (
 	errNoChild1 = errors.New("field of type JSON does not have child fields")
 	errNoChild2 = errors.New("field of type Boolean does not have child fields")
 	errNoChild3 = errors.New("field of type Float does not have child fields")
-	errNoChild4 = errors.New("field of type Int does not have child fields")
-	errNoChild5 = errors.New("field of type ID does not have child fields")
-	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild7 = errors.New("field of type Any does not have child fields")
+	errNoChild4 = errors.New("field of type ReportFieldAccess does not have child fields")
+	errNoChild5 = errors.New("field of type Int does not have child fields")
+	errNoChild6 = errors.New("field of type ID does not have child fields")
+	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild8 = errors.New("field of type ProtectedFieldGroup does not have child fields")
+	errNoChild9 = errors.New("field of type Any does not have child fields")
 )
 
 func field_Mutation_createReportDefinition_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -5733,6 +5852,14 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
+func marshalNProtectedFieldGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐFieldGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v permission.FieldGroup) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNReportCatalog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportCatalog(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportCatalog) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -5893,6 +6020,10 @@ func marshalNReportDisplayRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ReportDisplayRule", v)
 }
 
+func marshalNReportFieldAccess2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldAccess(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.ReportFieldAccess) graphql.Marshaler {
+	return v
+}
+
 func marshalNReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
@@ -6051,6 +6182,20 @@ func marshalOReportBand2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋg
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ReportBand", v)
+}
+
+func marshalOReportCatalogKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportCatalogKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportCatalogKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportCatalogKind", v)
+}
+
+func marshalOReportFieldProtection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportFieldProtection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportFieldProtection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportFieldProtection", v)
 }
 
 func marshalOReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRun) graphql.Marshaler {

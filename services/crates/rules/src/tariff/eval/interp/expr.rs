@@ -112,6 +112,7 @@ impl<'a> Interp<'_, 'a> {
                 op, left, right, ..
             } => self.binary(env, expr, *op, left, right),
             ExprKind::Fail(text) => {
+                self.cover_in(env, expr.span);
                 let message = self.interpolate(env, text)?;
                 Err(refusal(message, self.root_span(env, expr.span)))
             }
@@ -139,7 +140,10 @@ impl<'a> Interp<'_, 'a> {
                     env.push();
                     let holds = self.condition(env, condition);
                     let result = match holds {
-                        Ok(true) => Some(self.eval(env, value)),
+                        Ok(true) => {
+                            self.cover_in(env, value.span);
+                            Some(self.eval(env, value))
+                        }
                         Ok(false) => None,
                         Err(stop) => Some(Err(stop)),
                     };
@@ -148,6 +152,7 @@ impl<'a> Interp<'_, 'a> {
                         return result;
                     }
                 }
+                self.cover_in(env, otherwise.span);
                 self.eval(env, otherwise)
             }
             ExprKind::Match { scrutinee, arms } => {
@@ -540,7 +545,7 @@ fn literal_number(value: Decimal, integer: bool, unit: Unit) -> Value {
 }
 
 /// The value of a number, money, percent, date or date-time literal.
-fn literal(kind: &ExprKind) -> Result<Value, Stop> {
+pub(super) fn literal(kind: &ExprKind) -> Result<Value, Stop> {
     match kind {
         ExprKind::Number {
             value,

@@ -50,6 +50,13 @@ export const keybindGroups: KeybindGroup[] = [
         keys: ["Ctrl", "J"],
         description: "Open or close the assistant from any page",
       },
+      {
+        id: "page-access",
+        label: "Page access",
+        keys: ["Ctrl", "Alt", "P"],
+        description: "See what this screen needs and what each role sees on it",
+        hotkey: "Mod+Alt+P",
+      },
     ],
   },
   {

@@ -130,7 +130,7 @@ type ProfitabilityCard struct {
 	AvgCPM            float64  `json:"avgCpm"`
 	AvgMarginPct      *float64 `json:"avgMarginPct"`
 	HasMargin         bool     `json:"hasMargin"`
-	UnprofitableCount int      `json:"unprofitableCount"`
+	UnprofitableCount *int     `json:"unprofitableCount"`
 	ShipmentCount     int      `json:"shipmentCount"`
 	TotalMiles        float64  `json:"totalMiles"`
 }

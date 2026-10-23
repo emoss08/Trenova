@@ -86,7 +86,7 @@ func (r *QueryResolver) EDICommunicationProfiles(ctx context.Context, input gqlm
 	return ediCommunicationProfileConnectionToModel(result)
 }
 
-func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTableConnectionInput, direction gqlmodel.EDITransferDirection) (*gqlmodel.EDITransferConnection, error) {
+func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTableConnectionInput, direction gqlmodel.EDITransferDirection, inboundFileID *string) (*gqlmodel.EDITransferConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -97,9 +97,14 @@ func (r *QueryResolver) EDITransfers(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
+	fileID, err := base.ParseOptionalIDField("inboundFileId", inboundFileID)
+	if err != nil {
+		return nil, err
+	}
 	req := &ediports.ListEDITransfersRequest{
-		Filter: tableInput.Filter,
-		Cursor: tableInput.Cursor,
+		Filter:        tableInput.Filter,
+		Cursor:        tableInput.Cursor,
+		InboundFileID: fileID,
 	}
 	var result *pagination.CursorListResult[*edi.EDITransfer]
 	if direction == gqlmodel.EDITransferDirectionInbound {
@@ -393,4 +398,167 @@ func (r *QueryResolver) EDIPartnerCard(ctx context.Context, id string) (*gqlmode
 	}
 
 	return ediPartnerCardToModel(card), nil
+}
+
+func (r *EdiTransferResolver) Direction(ctx context.Context, obj *edi.EDITransfer) (gqlmodel.EDITransferDirection, error) {
+	if obj.ReceivedBy(callerOrganization(ctx)) {
+		return gqlmodel.EDITransferDirectionInbound, nil
+	}
+	return gqlmodel.EDITransferDirectionOutbound, nil
+}
+
+func (r *EdiTransferResolver) Counterparty(ctx context.Context, obj *edi.EDITransfer) (*edi.EDIPartner, error) {
+	return obj.Counterparty(callerOrganization(ctx)), nil
+}
+
+func (r *EdiTransferResolver) BOL(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+	return optionalText(obj.TenderPayload.BOL), nil
+}
+
+func (r *EdiTransferResolver) CustomerLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+	return optionalText(obj.TenderPayload.CustomerLabel), nil
+}
+
+func (r *EdiTransferResolver) ServiceTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+	return optionalText(obj.TenderPayload.ServiceTypeLabel), nil
+}
+
+func (r *EdiTransferResolver) ShipmentTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error) {
+	return optionalText(obj.TenderPayload.ShipmentTypeLabel), nil
+}
+
+func (r *EdiTransferResolver) Pieces(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+	return optionalInt(obj.TenderPayload.Pieces), nil
+}
+
+func (r *EdiTransferResolver) Weight(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+	return optionalInt(obj.TenderPayload.Weight), nil
+}
+
+func (r *EdiTransferResolver) TemperatureMin(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+	return optionalInt(obj.TenderPayload.TemperatureMin), nil
+}
+
+func (r *EdiTransferResolver) TemperatureMax(ctx context.Context, obj *edi.EDITransfer) (*int, error) {
+	return optionalInt(obj.TenderPayload.TemperatureMax), nil
+}
+
+func (r *EdiTransferResolver) StopCount(ctx context.Context, obj *edi.EDITransfer) (int, error) {
+	return tenderStopCount(&obj.TenderPayload), nil
+}
+
+func (r *EdiTransferResolver) Stops(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderStop, error) {
+	return tenderStopsToModel(&obj.TenderPayload), nil
+}
+
+func (r *EdiTransferResolver) Commodities(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error) {
+	return tenderCommoditiesToModel(&obj.TenderPayload), nil
+}
+
+func (r *EdiTransferResolver) Charges(ctx context.Context, obj *edi.EDITransfer) (*gqlmodel.EDITenderCharges, error) {
+	return tenderChargesToModel(&obj.TenderPayload), nil
+}
+
+func (r *EdiTransferResolver) CanDecide(ctx context.Context, obj *edi.EDITransfer) (bool, error) {
+	return obj.Status.IsActionable(), nil
+}
+
+func (r *QueryResolver) EDITransfer(ctx context.Context, id string) (*gqlmodel.EDITransferDetail, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	transferID, err := base.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	req := ediports.GetEDITransferByIDRequest{ID: transferID, TenantInfo: base.TenantInfo(authCtx)}
+	transfer, err := r.EdiService.GetTransfer(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	detail := &gqlmodel.EDITransferDetail{
+		Transfer:           transfer,
+		UnresolvedMappings: []*gqlmodel.EDITransferMappingNeed{},
+	}
+	if !transfer.ReceivedBy(authCtx.OrganizationID) || !transfer.Status.IsActionable() {
+		return detail, nil
+	}
+
+	preview, err := r.EdiService.MappingPreviewOf(ctx, transfer)
+	if err != nil {
+		return nil, err
+	}
+	detail.UnresolvedMappings = mappingNeedsToModel(preview.Unresolved)
+	detail.CanAccept = len(detail.UnresolvedMappings) == 0
+
+	return detail, nil
+}
+
+func (r *QueryResolver) EDIMessage(ctx context.Context, id string) (*gqlmodel.EDIMessageDetail, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	messageID, err := base.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	message, err := r.EdiService.GetMessage(ctx, ediports.GetEDIMessageByIDRequest{
+		ID:         messageID,
+		TenantInfo: base.TenantInfo(authCtx),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ediMessageDetailToModel(message), nil
+}
+
+func (r *QueryResolver) EDIInboundFile(ctx context.Context, id string) (*gqlmodel.EDIInboundFileDetail, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	fileID, err := base.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := r.EdiInboundService.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{
+		ID:              fileID,
+		TenantInfo:      base.TenantInfo(authCtx),
+		IncludeMessages: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ediInboundFileDetailToModel(file), nil
+}
+
+func (r *QueryResolver) EDIAckHealth(ctx context.Context, partnerID *string, transactionSet *string, overdueAfterSeconds *int, sinceHours *int) (*gqlmodel.EDIAckHealth, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	req, err := ackHealthRequest(&ackHealthArguments{
+		tenant:              base.TenantInfo(authCtx),
+		partnerID:           partnerID,
+		transactionSet:      transactionSet,
+		overdueAfterSeconds: overdueAfterSeconds,
+		sinceHours:          sinceHours,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	health, err := r.EdiService.GetEDIAckHealth(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return ediAckHealthToModel(health), nil
 }

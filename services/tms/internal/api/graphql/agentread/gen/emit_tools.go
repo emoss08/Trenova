@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,13 +47,18 @@ type variable struct {
 	Description string
 }
 
-// besideRead is an operation a list reads alongside its own.
+// besideRead is an operation a tool reads alongside its own, or a list
+// instead of its own.
 type besideRead struct {
 	Operation string
 	RootField string
 	Resource  string
 	Input     string
 	Keys      []string
+	Object    bool
+	Own       []string
+	Variables []variable
+	Set       []string
 }
 
 type toolRead struct {
@@ -66,9 +72,11 @@ type toolRead struct {
 	EntityAlias string
 	EntityType  string
 	Unpaged     bool
+	Items       bool
 	Variables   []variable
 	Fields      []field
 	Alongside   []besideRead
+	Instead     []besideRead
 }
 
 type toolsData struct {
@@ -110,6 +118,9 @@ var graphQLReads = map[string]graphQLRead{
 {{- if .Unpaged }}
 		Unpaged:   true,
 {{- end }}
+{{- if .Items }}
+		Items:     true,
+{{- end }}
 		Variables: []graphQLVariable{
 {{- range .Variables }}
 			{Name: {{ quote .Name }}, Type: {{ quote .Type }}, NonNull: {{ .NonNull }}, List: {{ .List }}
@@ -121,9 +132,14 @@ var graphQLReads = map[string]graphQLRead{
 {{- if .Alongside }}
 		Alongside: []graphQLAlongside{
 {{- range .Alongside }}
-			{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}
-{{- if .Input }}, Input: {{ quote .Input }}{{ end }}
-{{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}},
+			{{ template "beside" . }}
+{{- end }}
+		},
+{{- end }}
+{{- if .Instead }}
+		Instead: []graphQLAlongside{
+{{- range .Instead }}
+			{{ template "beside" . }}
 {{- end }}
 		},
 {{- end }}
@@ -147,6 +163,25 @@ var graphQLInputs = map[string][]graphQLField{
 	},
 {{- end }}
 }
+{{ define "variable" -}}
+{Name: {{ quote .Name }}, Type: {{ quote .Type }}, NonNull: {{ .NonNull }}, List: {{ .List }}
+{{- if .Kind }}, Kind: {{ quote .Kind }}{{ end }}
+{{- if .Enum }}, Enum: []string{ {{- range $i, $v := .Enum }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Description }}, Description: {{ quote .Description }}{{ end }}},
+{{- end }}
+{{ define "beside" -}}
+{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}
+{{- if .Input }}, Input: {{ quote .Input }}{{ end }}
+{{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Object }}, Object: true{{ end }}
+{{- if .Own }}, Own: []string{ {{- range $i, $v := .Own }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Set }}, Set: []string{ {{- range $i, $v := .Set }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Variables }}, Variables: []graphQLVariable{
+{{- range .Variables }}
+	{{ template "variable" . }}
+{{- end }}
+}{{ end }}},
+{{- end }}
 {{ define "field" -}}
 {Name: {{ quote .Name }}, Type: {{ quote .Type }}, Kind: {{ quote .Kind }}, List: {{ .List }}, NonNull: {{ .NonNull }}
 {{- if .Selected }}, Selected: true{{ end }}
@@ -170,6 +205,9 @@ func writeTools(
 	aliases := make(map[string]string)
 	for _, b := range bindings {
 		gt, typed := types[b.Node]
+		if !b.tabled() {
+			gt, typed = goType{}, false
+		}
 		alias := ""
 		if typed {
 			alias = aliasFor(aliases, gt.Path)
@@ -185,14 +223,16 @@ func writeTools(
 			EntityAlias: alias,
 			EntityType:  gt.Name,
 			Unpaged:     b.unpaged(),
+			Items:       b.items(),
 			Variables:   variables(schema, b),
 			Fields:      nodeFields(schema, b),
-			Alongside:   besideReads(b),
+			Alongside:   besideReads(schema, b.Alongside, false),
+			Instead:     besideReads(schema, b.Instead, true),
 		})
 		for _, v := range b.Operation.Query.Operations[0].VariableDefinitions {
 			collectInputs(schema, v.Type.Name(), data.Inputs)
 		}
-		for _, beside := range b.Alongside {
+		for _, beside := range slices.Concat(b.Alongside, b.Instead) {
 			for _, v := range beside.Operation.Query.Operations[0].VariableDefinitions {
 				collectInputs(schema, v.Type.Name(), data.Inputs)
 			}
@@ -237,16 +277,27 @@ func aliasFor(aliases map[string]string, importPath string) string {
 	return alias
 }
 
-func besideReads(b *binding) []besideRead {
-	out := make([]besideRead, 0, len(b.Alongside))
-	for _, beside := range b.Alongside {
-		out = append(out, besideRead{
+// besideReads are the reads a tool makes beside or instead of its own. A
+// read made instead carries its variables, since the call names its own.
+func besideReads(schema *ast.Schema, reads []*alongside, described bool) []besideRead {
+	out := make([]besideRead, 0, len(reads))
+	for _, beside := range reads {
+		read := besideRead{
 			Operation: beside.Operation.Name,
 			RootField: beside.RootField.Name,
 			Resource:  string(beside.Resource),
 			Input:     beside.Input,
 			Keys:      beside.Keys,
-		})
+			Object:    beside.Object,
+			Own:       beside.Own,
+			Set:       beside.Set,
+		}
+		if described {
+			read.Variables = variables(schema, &binding{
+				Operation: beside.Operation, RootField: beside.RootField,
+			})
+		}
+		out = append(out, read)
 	}
 
 	return out
@@ -273,11 +324,14 @@ func variables(schema *ast.Schema, b *binding) []variable {
 		}
 	}
 
+	included := includeSwitches(b.Operation.Query)
 	out := make([]variable, 0, len(op.VariableDefinitions))
 	for _, v := range op.VariableDefinitions {
 		described := describeField(schema, v.Variable, v.Type, "")
 		if def, ok := arguments[v.Variable]; ok {
 			described.Description = strings.TrimSpace(def.Description)
+		} else if said, switched := included[v.Variable]; switched {
+			described.Description = said
 		}
 		out = append(out, variable{
 			Name:        v.Variable,
@@ -289,6 +343,34 @@ func variables(schema *ast.Schema, b *binding) []variable {
 			Description: described.Description,
 		})
 	}
+
+	return out
+}
+
+// includeSwitches describe each variable an operation reads only to include
+// a field (@include(if: $includeRaw) on raw), by that field's own schema
+// description, so the switch a tool offers says what turning it on returns.
+func includeSwitches(doc *ast.QueryDocument) map[string]string {
+	fragments := make(map[string]*ast.FragmentDefinition, len(doc.Fragments))
+	for _, fragment := range doc.Fragments {
+		fragments[fragment.Name] = fragment
+	}
+	out := make(map[string]string)
+	var walk func(set ast.SelectionSet)
+	walk = func(set ast.SelectionSet) {
+		for _, f := range collect(set, fragments) {
+			if directive := f.Directives.ForName("include"); directive != nil &&
+				f.Definition != nil && strings.TrimSpace(f.Definition.Description) != "" {
+				if arg := directive.Arguments.ForName("if"); arg != nil && arg.Value != nil &&
+					arg.Value.Kind == ast.Variable {
+					out[arg.Value.Raw] = "true also returns " + f.Name + ": " +
+						strings.TrimSpace(f.Definition.Description)
+				}
+			}
+			walk(f.SelectionSet)
+		}
+	}
+	walk(doc.Operations[0].SelectionSet)
 
 	return out
 }
@@ -358,6 +440,8 @@ func selectedFields(b *binding) map[string]map[string]struct{} {
 	}
 	set := root.SelectionSet
 	switch {
+	case b.items():
+		set = childSet(collect(set, fragments), itemsField)
 	case b.unpaged():
 	case b.Verb == verbList && b.RootField.Type.Name() != b.Node &&
 		strings.HasSuffix(b.RootField.Type.Name(), connection):

@@ -436,8 +436,8 @@ func detentionOccurrenceToModel(
 		GrossAmount:         entity.GrossAmount.String(),
 		BillableAmount:      entity.BillableAmount.String(),
 		DriverPayMinutes:    int(entity.DriverPayMinutes),
-		DriverPayAmount:     entity.DriverPayAmount.String(),
-		NetMargin:           entity.NetMargin.String(),
+		DriverPayAmount:     base.NullDecimalStringPtr(entity.DriverPayAmount),
+		NetMargin:           base.NullDecimalStringPtr(entity.NetMargin),
 		CapApplied:          entity.CapApplied,
 		ConvertedToLayover:  entity.ConvertedToLayover,
 		Currency:            entity.Currency,
@@ -598,6 +598,7 @@ func detentionDeskEntryToModel(
 		MinutesUntilFreeEnds: int(entry.MinutesUntilFreeEnds),
 		NoticeWindowOpen:     entry.NoticeWindowOpen,
 		AmountAtRisk:         entry.AmountAtRisk.String(),
+		BillableMinutes:      int(entry.BillableMinutes),
 		Urgency:              gqlmodel.DetentionDeskUrgency(entry.Urgency),
 	}
 
@@ -673,8 +674,8 @@ func facilityDetentionStatToModel(
 		MedianDwellMinutes: stat.MedianDwellMinutes,
 		P90DwellMinutes:    stat.P90DwellMinutes,
 		BilledAmount:       stat.BilledAmount.String(),
-		DriverPayAmount:    stat.DriverPayAmount.String(),
-		NetMargin:          stat.NetMargin.String(),
+		DriverPayAmount:    base.NullDecimalStringPtr(stat.DriverPayAmount),
+		NetMargin:          base.NullDecimalStringPtr(stat.NetMargin),
 		WaivedAmount:       stat.WaivedAmount.String(),
 		DisputeCount:       stat.DisputeCount,
 		SuppressedCount:    stat.SuppressedCount,
@@ -694,8 +695,8 @@ func customerDetentionStatToModel(
 		StopCount:       stat.StopCount,
 		BreachCount:     stat.BreachCount,
 		BilledAmount:    stat.BilledAmount.String(),
-		DriverPayAmount: stat.DriverPayAmount.String(),
-		NetMargin:       stat.NetMargin.String(),
+		DriverPayAmount: base.NullDecimalStringPtr(stat.DriverPayAmount),
+		NetMargin:       base.NullDecimalStringPtr(stat.NetMargin),
 		WaivedAmount:    stat.WaivedAmount.String(),
 		DisputeCount:    stat.DisputeCount,
 		SuppressedCount: stat.SuppressedCount,
@@ -728,8 +729,8 @@ func detentionBacktestBucketToModel(
 		ProposedAmount:  bucket.ProposedAmount.String(),
 		BaselineAmount:  bucket.BaselineAmount.String(),
 		Delta:           bucket.Delta.String(),
-		DriverPayAmount: bucket.DriverPayAmount.String(),
-		NetMargin:       bucket.NetMargin.String(),
+		DriverPayAmount: base.NullDecimalStringPtr(bucket.DriverPayAmount),
+		NetMargin:       base.NullDecimalStringPtr(bucket.NetMargin),
 	}
 }
 
@@ -759,8 +760,8 @@ func detentionBacktestResultToModel(
 		ProposedRevenue:     result.ProposedRevenue.String(),
 		BaselineRevenue:     result.BaselineRevenue.String(),
 		RevenueDelta:        result.RevenueDelta.String(),
-		ProposedDriverPay:   result.ProposedDriverPay.String(),
-		ProposedNetMargin:   result.ProposedNetMargin.String(),
+		ProposedDriverPay:   base.NullDecimalStringPtr(result.ProposedDriverPay),
+		ProposedNetMargin:   base.NullDecimalStringPtr(result.ProposedNetMargin),
 		NegativeMarginStops: result.NegativeMarginStops,
 		ByCustomer:          byCustomer,
 		ByFacility:          byFacility,
@@ -785,8 +786,8 @@ func detentionPreviewResultToModel(
 		RoundedMinutes:     int(result.RoundedMinutes),
 		BillableAmount:     result.BillableAmount.String(),
 		GrossAmount:        result.GrossAmount.String(),
-		DriverPayAmount:    result.DriverPayAmount.String(),
-		NetMargin:          result.NetMargin.String(),
+		DriverPayAmount:    base.NullDecimalStringPtr(result.DriverPayAmount),
+		NetMargin:          base.NullDecimalStringPtr(result.NetMargin),
 		ArrivedLate:        result.ArrivedLate,
 		CapApplied:         result.CapApplied,
 		Status:             result.Status,
@@ -882,4 +883,26 @@ func loadSignoff(ctx context.Context, id *string) (*tenant.User, error) {
 		return nil, err
 	}
 	return base.LoadUser(ctx, userID)
+}
+
+func detentionDeskFilter(
+	includeAwaitingApproval *bool,
+	urgency *gqlmodel.DetentionDeskUrgency,
+	shipmentID *string,
+	proNumber *string,
+) (*detentionservice.DeskFilter, error) {
+	shipmentFilter, err := base.ParseOptionalIDField("shipmentId", shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	filter := &detentionservice.DeskFilter{
+		IncludeAwaitingApproval: base.BoolValue(includeAwaitingApproval),
+		ShipmentID:              shipmentFilter,
+		ProNumber:               base.DerefString(proNumber),
+	}
+	if urgency != nil {
+		filter.Urgency = string(*urgency)
+	}
+
+	return filter, nil
 }

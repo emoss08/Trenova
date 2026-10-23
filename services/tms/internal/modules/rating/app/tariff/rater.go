@@ -18,6 +18,8 @@ const (
 	conditionPrefix = "condition:"
 
 	errorCodeInput = "input"
+
+	InputsField = "inputs"
 )
 
 var (
@@ -199,6 +201,7 @@ func (r *Rater) result(
 	}
 	out.Trace = result.Trace
 	out.Lookups = result.Lookups
+	out.Choices = result.Choices
 
 	switch result.Status {
 	case rules.TariffRated:
@@ -207,6 +210,7 @@ func (r *Rater) result(
 			return nil, err
 		}
 		out.Bill = bill
+		out.WireBill = result.Bill
 		return out, nil
 	case rules.TariffRefused:
 		out.Refusal = result.Refusal
@@ -225,7 +229,7 @@ func evaluationError(evalErr *rules.TariffEvalError) error {
 		return errMissingResult
 	}
 	if evalErr.Code == errorCodeInput {
-		return evalErr.Message.ValidationError("inputs", errortypes.ErrInvalid)
+		return evalErr.Message.ValidationError(InputsField, errortypes.ErrInvalid)
 	}
 	return evalErr.Message.BusinessError().
 		WithParam("code", evalErr.Code).

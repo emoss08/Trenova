@@ -4,11 +4,22 @@ import { formatCurrency, formatPercent } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { toneVar } from "@/components/kpi/tone";
 import { ProfitabilityBreakdownPopover } from "../../profitability/profitability-breakdown-popover";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 
 export function MarginCell({ shipment }: { shipment: Shipment }) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
 
   const estimate = shipment.profitabilityEstimate;
+
+  if (!marginsVisible) {
+    return (
+      <div className="flex flex-col items-end gap-0.5 text-right">
+        <WithheldValue group="Margins" />
+      </div>
+    );
+  }
 
   if (!estimate || estimate.totalMiles <= 0) {
     return (

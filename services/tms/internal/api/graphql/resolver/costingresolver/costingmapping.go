@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 func costingControlToModel(entity *costingcontrol.CostingControl) *gqlmodel.CostingControl {
@@ -175,8 +176,8 @@ func fleetCostSummaryToModel(summary *costingservice.FleetCostSummary) *gqlmodel
 		AvgCpm:             summary.AvgCPM.String(),
 		AvgMarginPercent:   base.NullDecimalToStringPtr(summary.AvgMarginPercent),
 		ShipmentCount:      summary.ShipmentCount,
-		UnprofitableCount:  summary.UnprofitableCount,
-		TotalRevenue:       summary.TotalRevenue.String(),
+		UnprofitableCount:  &summary.UnprofitableCount,
+		TotalRevenue:       base.NullDecimalStringPtr(decimal.NewNullDecimal(summary.TotalRevenue)),
 		TotalEstimatedCost: summary.TotalEstimatedCost.String(),
 		TotalMiles:         summary.TotalMiles,
 		EmptyMiles:         summary.EmptyMiles,

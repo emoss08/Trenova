@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCompact_ShowsAmountsInMinorUnitsAsDecimals(t *testing.T) {
+func TestPresentAmounts_ShowsAmountsInMinorUnitsAsDecimals(t *testing.T) {
 	t.Parallel()
 
 	row := compact(map[string]any{
@@ -22,6 +22,9 @@ func TestCompact_ShowsAmountsInMinorUnitsAsDecimals(t *testing.T) {
 			map[string]any{"id": "dstll_1", "amountMinor": float64(-1250)},
 		},
 	})
+	assert.InDelta(t, 230000, row["netPayMinor"], 0, "compact alone leaves minor units alone")
+
+	presentAmounts(row)
 
 	assert.Equal(t, "2300.00", row["netPay"])
 	assert.NotContains(t, row, "netPayMinor")
@@ -29,25 +32,19 @@ func TestCompact_ShowsAmountsInMinorUnitsAsDecimals(t *testing.T) {
 	assert.Equal(t, "-12.50", line["amount"])
 }
 
-func TestCompact_KeepsTheDecimalARecordAlreadyCarries(t *testing.T) {
+func TestPresentAmounts_KeepsTheDecimalARecordAlreadyCarries(t *testing.T) {
 	t.Parallel()
 
-	row := compact(map[string]any{
-		"disputedAmount":      "45.10",
-		"disputedAmountMinor": float64(4510),
-	})
+	row := map[string]any{"disputedAmount": "45.10", "disputedAmountMinor": float64(4510)}
+	presentAmounts(row)
 
 	assert.Equal(t, map[string]any{"disputedAmount": "45.10"}, row)
 }
 
-func TestRelativePaths_NameAWithheldAmountAsTheResultShowsIt(t *testing.T) {
+func TestPresentedPaths_NameAWithheldAmountAsTheResultShowsIt(t *testing.T) {
 	t.Parallel()
 
-	got := relativePaths([]string{
-		"driverSettlement.netPayMinor",
-		"driverSettlement.lines.amountMinor",
-		"driverSettlement.notes",
-	}, "driverSettlement.")
+	got := presentedPaths([]string{"netPayMinor", "lines.amountMinor", "notes", "netPayMinor"})
 
 	assert.Equal(t, []string{"netPay", "lines.amount", "notes"}, got)
 }
@@ -69,7 +66,9 @@ func TestSelectedColumns_NameAnAmountAsTheResultShowsIt(t *testing.T) {
 func TestAmountParams_TakeADecimalAndFilterTheMinorUnits(t *testing.T) {
 	t.Parallel()
 
-	params := paramsFor(&graphQLField{Name: "netPayMinor", Type: graphQLTypeInt, Kind: "scalar"})
+	params := amountParams(paramsFor(&graphQLField{
+		Name: "netPayMinor", Type: graphQLTypeInt, Kind: graphQLKindScalar,
+	}))
 	require.Len(t, params, 2)
 	assert.Equal(t, "netPayMin", params[0].Name)
 	assert.Equal(t, "netPayMax", params[1].Name)
@@ -114,15 +113,10 @@ func TestOutsideRecords_MarkOnlyRecordsThatShowTheText(t *testing.T) {
 		map[string]any{"id": "dexp_1", "description": "x"}))
 }
 
-func TestKeyVariable_IsTheOnlyRequiredIDOfAKeyedGet(t *testing.T) {
+func TestDriverEarnings_AreReadByTheWorkersID(t *testing.T) {
 	t.Parallel()
 
-	keyed := graphQLRead{Variables: []graphQLVariable{{Name: "workerId", Type: "ID", NonNull: true}}}
-	byID := graphQLRead{Variables: []graphQLVariable{{Name: "id", Type: "ID", NonNull: true}}}
-
-	assert.Equal(t, "workerId", keyed.keyVariable())
-	assert.Equal(t, "id", byID.keyVariable())
 	earnings, statement := graphQLReads[toolGetDriverEarnings], graphQLReads[toolGetDriverSettlement]
-	assert.Equal(t, "workerId", earnings.keyVariable())
-	assert.Equal(t, "id", statement.keyVariable())
+	assert.Equal(t, "workerId", earnings.getKey())
+	assert.Equal(t, "id", statement.getKey())
 }

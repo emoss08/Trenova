@@ -1830,7 +1830,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_iftaJurisdictions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAJurisdictions(ctx, fc.Args["membersOnly"].(*bool))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").IFTAJurisdictions(ctx, fc.Args["membersOnly"].(*bool), fc.Args["countryCode"].(*string), fc.Args["activeOnly"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNIFTAJurisdiction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋdomainᚋiftaᚐJurisdictionᚄ),
 			},
@@ -2072,7 +2072,7 @@ type resolverMutation interface {
 }
 
 type resolverQuery interface {
-	IFTAJurisdictions(ctx context.Context, membersOnly *bool) ([]*ifta.Jurisdiction, error)
+	IFTAJurisdictions(ctx context.Context, membersOnly *bool, countryCode *string, activeOnly *bool) ([]*ifta.Jurisdiction, error)
 	IFTATaxRates(ctx context.Context, input gqlmodel.IFTATaxRatesInput) (*gqlmodel.IFTATaxRateConnection, error)
 	IFTAMileageEntries(ctx context.Context, input gqlmodel.IFTAMileageEntriesInput) (*gqlmodel.IFTAJurisdictionMileageEntryConnection, error)
 	IFTAMileageEntry(ctx context.Context, id string) (*ifta.JurisdictionMileageEntry, error)
@@ -2360,7 +2360,7 @@ func field_Mutation_backfillJurisdictionMiles_args(ctx context.Context, ec *gqle
 }
 
 func field_Query_iftaJurisdictions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "membersOnly",
 		func(ctx context.Context, v any) (*bool, error) {
 			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
@@ -2369,6 +2369,22 @@ func field_Query_iftaJurisdictions_args(ctx context.Context, ec *gqlexec.Exec, r
 		return nil, err
 	}
 	args["membersOnly"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "countryCode",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["countryCode"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "activeOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["activeOnly"] = arg2
 	return args, nil
 }
 

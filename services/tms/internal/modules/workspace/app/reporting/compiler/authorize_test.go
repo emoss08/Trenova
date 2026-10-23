@@ -64,7 +64,10 @@ func TestAuthorize_AFieldOutsideTheViewNeedsTheKindsRead(t *testing.T) {
 		dim("c_customer", "name", "customer"),
 		dim("c_dot", "dotNumber", "customer"),
 	)))
-	requireAuthorizationError(t, err, "you do not have read access to Customers")
+	requireAuthorizationError(t, err,
+		`you do not have read access to Customers, which "DOT Number" on Customer needs; `+
+			"without it a report can use only its reference fields")
+	assert.NotContains(t, err.Error(), `"Name"`, "the reference field is not refused")
 }
 
 func TestAuthorize_AFilterOutsideTheViewNeedsTheKindsRead(t *testing.T) {
@@ -218,7 +221,7 @@ func TestAuthorize_AProtectedFieldNeedsItsGroup(t *testing.T) {
 		permission.FieldGroupSet(0).With(permission.FieldGroupMargins))
 	_, err := withheld.Compile(t.Context(), newRequest(def))
 	requireAuthorizationError(t, err,
-		`field "License Number" on Worker Profile is a protected field and needs protected_personal access`)
+		`field "License Number" on Worker Profile is in the Personal protected field group, which your role does not grant`)
 
 	granted := newTestCompilerWithGroups(allowAllEngine(),
 		permission.FieldGroupSet(0).With(permission.FieldGroupPersonal))
@@ -244,8 +247,35 @@ func TestAuthorize_AProtectedMarginIsWithheldOnAgreementsAndVersions(t *testing.
 			Entity:    entity,
 			Columns:   []report.ColumnSpec{dim("c_floor", "marginFloorPercent")},
 		}))
-		requireAuthorizationError(t, err, "protected_margins")
+		requireAuthorizationError(t, err, "in the Margins protected field group")
 	}
+}
+
+func TestAuthorize_ARateQuotesMarginAndCostNeedTheMarginsGroup(t *testing.T) {
+	t.Parallel()
+
+	withheld := newTestCompilerWithGroups(allowAllEngine(),
+		permission.FieldGroupSet(0).With(permission.FieldGroupPersonal))
+	granted := newTestCompilerWithGroups(allowAllEngine(), permission.AllFieldGroups())
+	for _, field := range []string{"marginAmount", "marginPercent", "costAmount"} {
+		def := &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    "rate_quote",
+			Columns:   []report.ColumnSpec{dim("c_total", "totalAmount"), dim("c_m", field)},
+		}
+		_, err := withheld.ValidateAndAuthorize(t.Context(), newRequest(def))
+		requireAuthorizationError(t, err, "in the Margins protected field group")
+
+		_, err = granted.ValidateAndAuthorize(t.Context(), newRequest(def))
+		require.NoErrorf(t, err, "%s is shown to a reader with the margins group", field)
+	}
+
+	_, err := withheld.ValidateAndAuthorize(t.Context(), newRequest(&report.Definition{
+		IRVersion: report.CurrentIRVersion,
+		Entity:    "rate_quote",
+		Columns:   []report.ColumnSpec{dim("c_total", "totalAmount")},
+	}))
+	require.NoError(t, err, "a quote's total is not a margin")
 }
 
 func TestAuthorize_EmploymentEventsNeedTheirOwnReadBesideAWorkerRead(t *testing.T) {

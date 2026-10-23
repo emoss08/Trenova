@@ -1,6 +1,7 @@
 //! A file's inputs as the hosts see them: name, doc, type (display text and a structured
 //! descriptor for building forms), whether a value is required, and the default as a wire
-//! value; and the validation of the input values a rate agreement rule and its agreement set.
+//! value, and its folded `where` constraint; and the validation of the input values a rate
+//! agreement rule and its agreement set, against their types and constraints.
 //!
 //! Descriptors: `{"kind":"money"}`, `{"kind":"quantity","dimension":"Money/Distance","unit":
 //! "$/mi"}`, `{"kind":"list","item":…}`, `{"kind":"optional","inner":…}`, `{"kind":"record",
@@ -52,6 +53,10 @@ pub fn describe(root: &Module, state: &State, _: &[ModuleAnalysis]) -> Vec<Input
             descriptor: descriptor(&ty),
             required: input.default.is_none(),
             default: state.defaults.get(&(root.id.0, name.clone())).map(wire),
+            constraint: state
+                .constraints
+                .get(&(root.id.0, name.clone()))
+                .map(super::decls::FoldedConstraint::to_wire),
             ty,
             span: symbol.span,
         });
@@ -121,7 +126,7 @@ pub fn validate(
         for (name, value) in values {
             let path = format!("{scope}.{name}");
             if let Some(input) = inputs.iter().find(|input| input.name == *name) {
-                check_value(&input.ty, value, &path, &mut out);
+                check_value(input, value, &path, &mut out);
             } else {
                 let suggestion = nearest(name, inputs.iter().map(|input| input.name.as_str()));
                 out.push(ValueFinding {
@@ -157,13 +162,27 @@ pub fn validate(
     out
 }
 
-/// Checks one wire value against a type with the evaluator's own codec, so a value the checker
-/// accepts is one the evaluator decodes.
-fn check_value(ty: &Type, value: &Json, path: &str, out: &mut Vec<ValueFinding>) {
-    if let Err(error) = crate::tariff::wire::decode(value, ty, path) {
+/// Checks one wire value against its input's type with the evaluator's own codec, so a value
+/// the checker accepts is one the evaluator decodes, then against the input's constraint with
+/// the evaluator's own test ([`crate::tariff::constraint::breach`]). A list item outside the
+/// constraint is named by its index: `rule.drops[2]`.
+fn check_value(input: &InputInfo, value: &Json, path: &str, out: &mut Vec<ValueFinding>) {
+    let decoded = match crate::tariff::wire::decode(value, &input.ty, path) {
+        Ok(decoded) => decoded,
+        Err(error) => {
+            out.push(ValueFinding {
+                path: error.path,
+                message: error.message,
+            });
+            return;
+        }
+    };
+    if let Some(constraint) = &input.constraint
+        && let Some(breach) = crate::tariff::constraint::breach(constraint, &decoded)
+    {
         out.push(ValueFinding {
-            path: error.path,
-            message: error.message,
+            path: format!("{path}{}", breach.suffix()),
+            message: breach.message(constraint, &input.name),
         });
     }
 }

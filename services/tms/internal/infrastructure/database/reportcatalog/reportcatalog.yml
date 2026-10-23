@@ -1189,9 +1189,9 @@ entities:
       fuelAmount: { label: Fuel, format: money }
       accessorialAmount: { label: Accessorials, format: money }
       totalAmount: { label: Total, format: money }
-      costAmount: { label: Cost, format: money }
-      marginAmount: { label: Margin, format: money }
-      marginPercent: { label: "Margin (%)" }
+      costAmount: { label: Cost, format: money, protected: Margins }
+      marginAmount: { label: Margin, format: money, protected: Margins }
+      marginPercent: { label: "Margin (%)", protected: Margins }
       billingCurrency: { label: "Billing Currency" }
       billingAmount: { label: "Billing Amount", format: money }
       fxRate: { label: "FX Rate" }

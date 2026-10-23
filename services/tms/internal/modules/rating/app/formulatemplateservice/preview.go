@@ -110,8 +110,12 @@ func (s *Service) Preview(
 		return result, nil
 	}
 
-	result.Bill = rated.Bill
+	result.Bill = rated.WireBill
+	result.RatedBill = rated.Bill
 	result.Refusal = rated.Refusal
+	if rated.Choices != nil {
+		result.Choices = rated.Choices
+	}
 	result.Trace = rated.Trace
 	result.Lookups = rated.Lookups
 	return result, nil
@@ -126,6 +130,7 @@ func previewOf(content *contentCheck) *formulatemplateports.PreviewResult {
 		Imports:     content.checked.Imports,
 		Charges:     check.Charges,
 		Tests:       content.tests.Tests,
+		Choices:     []rules.TariffChoice{},
 	}
 	if result.Diagnostics == nil {
 		result.Diagnostics = []rules.TariffDiagnostic{}

@@ -19,8 +19,6 @@ import (
 
 type fakeWorkforceReads struct {
 	tests        []*worker.WorkerDOTTest
-	draw         *worker.DOTRandomDraw
-	entries      []*worker.DOTRandomDrawEntry
 	injuries     []*worker.WorkerInjury
 	cases        []*worker.WorkerLeaveCase
 	permits      []*permit.Permit
@@ -29,35 +27,6 @@ type fakeWorkforceReads struct {
 	testsReq    *workerports.ListWorkerDOTTestsRequest
 	injuriesReq *workerports.ListWorkerInjuriesRequest
 	casesReq    *workerports.ListLeaveCasesRequest
-}
-
-func (f *fakeWorkforceReads) ListPools(
-	context.Context,
-	*workerports.ListDOTRandomPoolsRequest,
-) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
-	return &pagination.CursorListResult[*worker.DOTRandomPool]{}, nil
-}
-
-func (f *fakeWorkforceReads) ListDraws(
-	context.Context,
-	*workerports.ListDOTRandomDrawsRequest,
-) ([]*worker.DOTRandomDraw, error) {
-	return []*worker.DOTRandomDraw{f.draw}, nil
-}
-
-func (f *fakeWorkforceReads) GetDraw(
-	context.Context,
-	pagination.TenantInfo,
-	pulid.ID,
-) (*worker.DOTRandomDraw, error) {
-	return f.draw, nil
-}
-
-func (f *fakeWorkforceReads) ListDrawEntries(
-	context.Context,
-	*workerports.ListDOTRandomDrawEntriesRequest,
-) ([]*worker.DOTRandomDrawEntry, error) {
-	return f.entries, nil
 }
 
 func (f *fakeWorkforceReads) ListCases(
@@ -82,35 +51,6 @@ func (f *fakeWorkforceReads) ListRequirements(
 	pagination.TenantInfo,
 ) ([]*permit.Requirement, error) {
 	return f.requirements, nil
-}
-
-func TestGetDOTRandomDraw_ListsEverySelection(t *testing.T) {
-	t.Parallel()
-
-	reads := &fakeWorkforceReads{
-		draw: &worker.DOTRandomDraw{
-			ID:        pulid.MustNew("drdraw_"),
-			PeriodKey: "2026-Q3",
-			Status:    worker.RandomDrawStatusFinal,
-		},
-		entries: []*worker.DOTRandomDrawEntry{{
-			ID:        pulid.MustNew("drde_"),
-			WorkerID:  pulid.MustNew("wrk_"),
-			Substance: worker.DOTSubstanceAlcohol,
-			Rank:      1,
-			Status:    worker.RandomEntrySelected,
-		}},
-	}
-	tool := newGetDOTRandomDrawTool(reads, &fakePermissions{allowed: true})
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{
-		paramDrawID: reads.draw.ID.String(),
-	}))
-	require.NoError(t, err)
-	detail := result.(*randomDrawDetail)
-	assert.Equal(t, "2026-Q3", detail.PeriodKey)
-	require.Len(t, detail.Selections, 1)
-	assert.Equal(t, "Alcohol", detail.Selections[0].Substance)
 }
 
 func TestListShipmentPermits_PairsRequirementsWithPermits(t *testing.T) {
@@ -155,8 +95,6 @@ func TestWorkforceReads_AreClosedReadsOfTheirResource(t *testing.T) {
 
 	reads := &fakeWorkforceReads{}
 	for _, tool := range []agentports.AgentQueryTool{
-		newListDOTRandomDrawsTool(reads, nil),
-		newGetDOTRandomDrawTool(reads, nil),
 		newListShipmentPermitsTool(reads, nil),
 	} {
 		assert.Equal(t, false, tool.ParamSchema()["additionalProperties"], tool.Name())

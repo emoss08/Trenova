@@ -398,8 +398,10 @@ export const detentionOccurrenceSchema = z.object({
   grossAmount: z.coerce.number(),
   billableAmount: z.coerce.number(),
   driverPayMinutes: z.number().int(),
-  driverPayAmount: z.coerce.number(),
-  netMargin: z.coerce.number(),
+  /** Null to a reader without the margins field group. */
+  driverPayAmount: z.coerce.number().nullable(),
+  /** Null to a reader without the margins field group. */
+  netMargin: z.coerce.number().nullable(),
   capApplied: capKindSchema,
   convertedToLayover: z.boolean(),
   currency: z.string(),
@@ -516,8 +518,10 @@ export const previewResultSchema = z.object({
   roundedMinutes: z.number().int(),
   billableAmount: z.coerce.number(),
   grossAmount: z.coerce.number(),
-  driverPayAmount: z.coerce.number(),
-  netMargin: z.coerce.number(),
+  /** Null to a reader without the margins field group. */
+  driverPayAmount: z.coerce.number().nullable(),
+  /** Null to a reader without the margins field group. */
+  netMargin: z.coerce.number().nullable(),
   arrivedLate: z.boolean(),
   capApplied: capKindSchema,
   status: occurrenceStatusSchema,
@@ -536,8 +540,10 @@ export const backtestBucketSchema = z.object({
   proposedAmount: z.coerce.number(),
   baselineAmount: z.coerce.number(),
   delta: z.coerce.number(),
-  driverPayAmount: z.coerce.number(),
-  netMargin: z.coerce.number(),
+  /** Null to a reader without the margins field group. */
+  driverPayAmount: z.coerce.number().nullable(),
+  /** Null to a reader without the margins field group. */
+  netMargin: z.coerce.number().nullable(),
 });
 export type BacktestBucket = z.infer<typeof backtestBucketSchema>;
 
@@ -550,9 +556,12 @@ export const backtestResultSchema = z.object({
   proposedRevenue: z.coerce.number(),
   baselineRevenue: z.coerce.number(),
   revenueDelta: z.coerce.number(),
-  proposedDriverPay: z.coerce.number(),
-  proposedNetMargin: z.coerce.number(),
-  negativeMarginStops: z.number().int(),
+  /** Null to a reader without the margins field group. */
+  proposedDriverPay: z.coerce.number().nullable(),
+  /** Null to a reader without the margins field group. */
+  proposedNetMargin: z.coerce.number().nullable(),
+  /** Null to a reader without the margins field group. */
+  negativeMarginStops: z.number().int().nullable(),
   byCustomer: z.array(backtestBucketSchema).default([]),
   byFacility: z.array(backtestBucketSchema).default([]),
   from: z.number().int(),
@@ -570,8 +579,10 @@ export const facilityDetentionStatSchema = z.object({
   medianDwellMinutes: z.number(),
   p90DwellMinutes: z.number(),
   billedAmount: z.coerce.number(),
-  driverPayAmount: z.coerce.number(),
-  netMargin: z.coerce.number(),
+  /** Null to a reader without the margins field group. */
+  driverPayAmount: z.coerce.number().nullable(),
+  /** Null to a reader without the margins field group. */
+  netMargin: z.coerce.number().nullable(),
   waivedAmount: z.coerce.number(),
   disputeCount: z.number().int(),
   suppressedCount: z.number().int(),
@@ -584,8 +595,10 @@ export const customerDetentionStatSchema = z.object({
   stopCount: z.number().int(),
   breachCount: z.number().int(),
   billedAmount: z.coerce.number(),
-  driverPayAmount: z.coerce.number(),
-  netMargin: z.coerce.number(),
+  /** Null to a reader without the margins field group. */
+  driverPayAmount: z.coerce.number().nullable(),
+  /** Null to a reader without the margins field group. */
+  netMargin: z.coerce.number().nullable(),
   waivedAmount: z.coerce.number(),
   disputeCount: z.number().int(),
   suppressedCount: z.number().int(),

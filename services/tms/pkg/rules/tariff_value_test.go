@@ -61,3 +61,27 @@ func TestTariffRefusalReadsAuthorTextAndModuleMessages(t *testing.T) {
 	require.NotNil(t, generated.Message)
 	assert.Equal(t, "No value for rate", generated.Message.String())
 }
+
+func TestTariffRefusalWritesTheWireFormItReads(t *testing.T) {
+	t.Parallel()
+
+	authored, err := sonic.Marshal(rules.TariffRefusal{
+		Text:  "No fuel price",
+		Range: &rules.TariffRange{From: 1, To: 4},
+	})
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"message":"No fuel price","range":{"from":1,"to":4}}`, string(authored))
+
+	generated, err := sonic.Marshal(&rules.TariffRefusal{
+		Message: &rules.Message{Template: "No value for {0}", Args: []any{"rate"}},
+	})
+	require.NoError(t, err)
+	assert.JSONEq(t,
+		`{"message":{"message":"No value for {0}","args":["rate"]},"range":null}`,
+		string(generated))
+
+	var roundTrip rules.TariffRefusal
+	require.NoError(t, sonic.Unmarshal(generated, &roundTrip))
+	require.NotNil(t, roundTrip.Message)
+	assert.Equal(t, "No value for rate", roundTrip.Message.String())
+}

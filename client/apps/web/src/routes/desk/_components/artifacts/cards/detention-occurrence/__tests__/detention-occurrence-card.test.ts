@@ -318,6 +318,23 @@ describe("the money", () => {
   });
 });
 
+describe("the money without the margins field group", () => {
+  it("leaves the worker's pay and what is kept out, never as a zero", () => {
+    const occurrence = {
+      ...pendingCharge().occurrence,
+      driverPayAmount: null,
+      netMargin: null,
+    };
+    expect(paySplit(occurrence, t)).toEqual({
+      bill: 337.5,
+      pay: null,
+      margin: null,
+      payNote: "3h 15m payable",
+      payShare: 0,
+    });
+  });
+});
+
 describe("the notice", () => {
   it("says what the policy asks and what happens without it", () => {
     expect(noticeRule(pendingCharge().occurrence, t)).toBe(

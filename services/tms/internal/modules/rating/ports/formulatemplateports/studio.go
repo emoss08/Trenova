@@ -37,9 +37,11 @@ type PreviewResult struct {
 	Inputs      []tarifftypes.InputDecl  `json:"inputs"`
 	Imports     []tarifftypes.Import     `json:"imports"`
 	Charges     []rules.TariffChargeRef  `json:"charges"`
-	Bill        *tarifftypes.Bill        `json:"bill"`
+	Bill        *rules.TariffBill        `json:"bill"`
+	RatedBill   *tarifftypes.Bill        `json:"-"`
 	Refusal     *rules.TariffRefusal     `json:"refusal"`
 	Error       *PreviewError            `json:"error"`
+	Choices     []rules.TariffChoice     `json:"choices"`
 	Trace       rules.RawJSON            `json:"trace"`
 	Lookups     rules.RawJSON            `json:"lookups"`
 	Tests       []rules.TariffTestResult `json:"tests"`

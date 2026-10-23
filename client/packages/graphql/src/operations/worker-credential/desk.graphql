@@ -1,3 +1,32 @@
+# One credential as the agent's worker_get_credential reads it: what it is,
+# whose, its dates and health, who issued and verified it, and whether a scan
+# is on file. The number is never selected.
+query DeskWorkerCredential($id: ID!) {
+  workerCredential(id: $id) {
+    id
+    workerId
+    credentialTypeId
+    status
+    issuingAuthority
+    issuedAt
+    expiresAt
+    daysUntilExpiry
+    health
+    verifiedAt
+    documentId
+    notes
+    archivedAt
+    archiveReason
+    version
+    credentialType {
+      ...WorkerCredentialTypeReference
+    }
+    worker {
+      ...WorkerReference
+    }
+  }
+}
+
 query DeskWorkerCredentialList(
   $workerId: ID
   $includeArchived: Boolean

@@ -114,7 +114,8 @@ export function nextItemAfterReassignment(
 ): string | null | undefined {
   if (!result.canceledItemIds.includes(current.id)) return undefined;
   const next = result.items.find(
-    (row) => row.id !== current.id && row.shipmentId === current.shipmentId,
+    (row) =>
+      row.id !== current.id && current.shipmentId != null && row.shipmentId === current.shipmentId,
   );
   return next?.id ?? null;
 }

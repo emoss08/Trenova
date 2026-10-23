@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -321,4 +322,44 @@ func TestExplainRate_ListsTheChargesTheAgreementDidNotPrice(t *testing.T) {
 	require.NotNil(t, explanation.ShipmentTotal)
 	assert.True(t, explanation.ShipmentTotal.Equal(usd("1121.36")))
 	assert.NotEmpty(t, explanation.ChargesNote)
+}
+
+func tracedWithMargin() *ratequote.RateQuote {
+	trace := fullTrace()
+	trace.Totals.Cost = decimal.NewNullDecimal(usd("2100.00"))
+	trace.Totals.Margin = decimal.NewNullDecimal(usd("700.00"))
+	trace.Totals.MarginPct = decimal.NewNullDecimal(usd("25"))
+
+	return ratedQuote(trace)
+}
+
+func TestExplainRate_ShowsTheMarginOnlyToAPersonWithTheMarginsGroup(t *testing.T) {
+	t.Parallel()
+
+	params := map[string]any{"shipmentId": pulid.MustNew("shp_").String()}
+
+	granted := &explainRateTool{
+		quotes: &stubQuoteReader{quote: tracedWithMargin()},
+		access: newFieldAccess(marginsReader()),
+	}
+	result, err := granted.Query(t.Context(), chatParams(params, ""))
+	require.NoError(t, err)
+	totals := result.(rateExplanation).Totals
+	require.NotNil(t, totals.Margin)
+	assert.Equal(t, "700", totals.Margin.String())
+	require.NotNil(t, totals.MarginPct)
+	assert.Equal(t, "25", totals.MarginPct.String())
+
+	denied := &explainRateTool{
+		quotes: &stubQuoteReader{quote: tracedWithMargin()},
+		access: newFieldAccess(&fakePermissions{
+			readable: map[string]*permissionports.ResourcePermissionDetail{},
+		}),
+	}
+	result, err = denied.Query(t.Context(), chatParams(params, ""))
+	require.NoError(t, err)
+	totals = result.(rateExplanation).Totals
+	assert.Nil(t, totals.Margin, "a person without the margins group is told no margin")
+	assert.Nil(t, totals.MarginPct)
+	assert.Equal(t, "2800", totals.Total.String(), "the price itself still explains")
 }

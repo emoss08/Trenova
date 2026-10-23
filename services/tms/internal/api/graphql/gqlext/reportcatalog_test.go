@@ -6,17 +6,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestEveryProtectedFieldIsGatedInTheReportCatalog(t *testing.T) {
 	t.Parallel()
 
 	gated := 0
+	declared := protectedTypes()
 	for object, fields := range loadProtectedFields(t) {
-		resource, mapped := protectedFieldResources[object]
-		require.Truef(t, mapped,
-			"%s has protected fields but no resource in protectedFieldResources", object)
+		resource := declared[object].resource
+		if resource == "" {
+			continue
+		}
 		for field, group := range fields {
 			for i := range reportcatalog.Default.Entities {
 				entity := &reportcatalog.Default.Entities[i]
@@ -38,12 +39,51 @@ func TestEveryProtectedFieldIsGatedInTheReportCatalog(t *testing.T) {
 	assert.Positive(t, gated, "no protected field was found in the report catalog")
 }
 
+// restOnlyProtected are the protected fields of kinds no GraphQL type shows.
+// The REST routes withhold them through the entity
+// (TestEveryMarginFieldARESTResponseCarriesIsWithheld in responseguard), and
+// the report catalog gates them like any other.
+var restOnlyProtected = map[permission.Resource]map[string]permission.FieldGroup{
+	permission.ResourceRateQuote: {
+		"costAmount":    permission.FieldGroupMargins,
+		"marginAmount":  permission.FieldGroupMargins,
+		"marginPercent": permission.FieldGroupMargins,
+	},
+	permission.ResourceDispatchControl: {
+		"tenderCounterMarginFloorPercent": permission.FieldGroupMargins,
+	},
+}
+
+func TestEveryRESTOnlyProtectedFieldIsConfidentialInTheRegistry(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewRegistry()
+	for resource, fields := range restOnlyProtected {
+		for field := range fields {
+			assert.Equalf(t, permission.SensitivityConfidential,
+				registry.GetFieldSensitivity(resource.String(), field),
+				"%s.%s is protected, so the registry must classify it confidential",
+				resource, field)
+		}
+	}
+}
+
 func TestEveryProtectedCatalogFieldIsProtectedInTheSchema(t *testing.T) {
 	t.Parallel()
 
 	protected := make(map[permission.Resource]map[string]permission.FieldGroup, 3)
+	for resource, fields := range restOnlyProtected {
+		protected[resource] = make(map[string]permission.FieldGroup, len(fields))
+		for field, group := range fields {
+			protected[resource][field] = group
+		}
+	}
+	declared := protectedTypes()
 	for object, fields := range loadProtectedFields(t) {
-		resource := protectedFieldResources[object]
+		resource := declared[object].resource
+		if resource == "" {
+			continue
+		}
 		if protected[resource] == nil {
 			protected[resource] = make(map[string]permission.FieldGroup, len(fields))
 		}

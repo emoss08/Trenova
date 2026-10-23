@@ -34,6 +34,16 @@ func (s *Service) MappingPreview(
 		return nil, err
 	}
 
+	return s.MappingPreviewOf(ctx, transfer)
+}
+
+// MappingPreviewOf is how a transfer already read maps to its receiver's
+// records: which of the sender's codes resolve and which still need a
+// mapping.
+func (s *Service) MappingPreviewOf(
+	ctx context.Context,
+	transfer *edi.EDITransfer,
+) (*MappingPreview, error) {
 	targetPartner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
 		ID: transfer.TargetPartnerID,
 		TenantInfo: pagination.TenantInfo{

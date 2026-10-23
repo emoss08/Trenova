@@ -2,8 +2,12 @@ import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { setLocale } from "@trenova/shared/i18n/runtime";
 import userEvent from "@testing-library/user-event";
 import type { TariffInputDeclaration, TariffInputValues } from "@trenova/shared/types/tariff";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { afterEach, describe, expect, it } from "vitest";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { tariffInputValuesSchemaFor } from "@trenova/shared/lib/tariff-inputs";
+import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
+import { z } from "zod";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TariffInputsFields } from "../tariff-inputs-fields";
 
 afterEach(cleanup);
@@ -72,6 +76,16 @@ const breaks: TariffInputDeclaration = {
   range: null,
 };
 
+const residential: TariffInputDeclaration = {
+  name: "residential",
+  doc: "Whether delivery is residential.",
+  type: "Bool",
+  descriptor: { kind: "bool" },
+  required: false,
+  default: true,
+  range: { from: 120, to: 131 },
+};
+
 function Values() {
   const values = useWatch({ name: "inputs" }) as unknown;
   return <pre data-testid="values">{JSON.stringify(values ?? {})}</pre>;
@@ -81,13 +95,26 @@ function Harness({
   declarations,
   initial = {},
   inherited,
+  validate = false,
+  onReveal,
 }: {
   declarations: TariffInputDeclaration[];
   initial?: Record<string, unknown>;
   inherited?: TariffInputValues;
+  /** Validate as a contract form does: the shared input check in a resolver, on every change. */
+  validate?: boolean;
+  onReveal?: (declaration: TariffInputDeclaration) => void;
 }) {
   const form = useForm<{ inputs: Record<string, unknown> }>({
     defaultValues: { inputs: initial },
+    ...(validate
+      ? {
+          mode: "onChange" as const,
+          resolver: zodResolver(
+            z.object({ inputs: tariffInputValuesSchemaFor(declarations, translate) }),
+          ) as Resolver<{ inputs: Record<string, unknown> }>,
+        }
+      : {}),
   });
   return (
     <FormProvider {...form}>
@@ -96,6 +123,7 @@ function Harness({
         name="inputs"
         inherited={inherited}
         inheritedFrom={inherited ? "agreement" : undefined}
+        onReveal={onReveal}
       />
       <Values />
     </FormProvider>
@@ -120,7 +148,7 @@ describe("TariffInputsFields", () => {
     const user = userEvent.setup();
     render(<Harness declarations={[rate]} />);
 
-    await user.type(screen.getByRole("textbox", { name: "" }), "2.35");
+    await user.type(screen.getByRole("textbox", { name: "Paid per loaded mile" }), "2.35");
 
     expect(values()).toEqual({ rate: { $q: "2.35", u: "$/mi" } });
   });
@@ -344,9 +372,146 @@ describe("TariffInputsFields", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows an unset yes-or-no input as its default and writes it when switched", async () => {
+    const user = userEvent.setup();
+    render(<Harness declarations={[residential]} />);
+
+    const toggle = screen.getByRole("switch", { name: "Whether delivery is residential" });
+    expect(toggle).toBeChecked();
+    expect(values()).toEqual({});
+
+    await user.click(toggle);
+
+    expect(values()).toEqual({ residential: false });
+    expect(toggle).not.toBeChecked();
+  });
+
+  it("links each input to its declaration when the form sits beside the source", async () => {
+    const user = userEvent.setup();
+    const onReveal = vi.fn();
+    render(<Harness declarations={[residential, minimumCharge]} onReveal={onReveal} />);
+
+    await user.click(screen.getByRole("button", { name: "Show residential in the source" }));
+
+    expect(onReveal).toHaveBeenCalledWith(residential);
+    expect(screen.getByRole("button", { name: "Show minimumCharge in the source" })).toBeDisabled();
+  });
+
+  it("leaves out the declaration links when no source is beside the form", () => {
+    render(<Harness declarations={[residential]} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Show residential in the source" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("says when a tariff declares no inputs", () => {
     render(<Harness declarations={[]} />);
 
     expect(screen.getByText("This tariff declares no inputs.")).toBeInTheDocument();
+  });
+
+  describe("an input's where bounds", () => {
+    const boundedRate: TariffInputDeclaration = {
+      ...rate,
+      required: false,
+      default: { $q: "2.35", u: "$/mi" },
+      constraint: {
+        range: { min: { $q: "0.5", u: "$/mi" }, max: { $q: "15", u: "$/mi" }, maxInclusive: true },
+      },
+    };
+
+    it("shows the bounds as the field's help text", () => {
+      render(<Harness declarations={[boundedRate]} />);
+      expect(screen.getByText("From $0.50/mi to $15.00/mi")).toBeInTheDocument();
+    });
+
+    it("keeps the bounds beside the doc when the field links to its declaration", () => {
+      render(<Harness declarations={[boundedRate]} onReveal={vi.fn()} />);
+      expect(screen.getByText("From $0.50/mi to $15.00/mi")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Show rate in the source" })).toBeInTheDocument();
+      expect(screen.queryByText(/object Object/)).not.toBeInTheDocument();
+    });
+
+    it("puts the bounds after the doc's description", () => {
+      render(
+        <Harness
+          declarations={[
+            {
+              ...service,
+              type: "Int",
+              descriptor: { kind: "int" },
+              default: { $n: "2" },
+              constraint: { range: { min: { $n: "0" }, max: { $n: "10" }, maxInclusive: false } },
+            },
+          ]}
+        />,
+      );
+      expect(
+        screen.getByText("Guaranteed pays a premium. · At least 0 and below 10"),
+      ).toBeInTheDocument();
+    });
+
+    it("refuses a value outside the bounds as it is typed, and clears once it fits", async () => {
+      const user = userEvent.setup();
+      render(<Harness declarations={[boundedRate]} validate />);
+      const field = screen.getByPlaceholderText("Default: $2.35/mi");
+
+      await user.type(field, "235");
+      expect(await screen.findByText("Must be from $0.50/mi to $15.00/mi")).toBeInTheDocument();
+
+      await user.clear(field);
+      await user.type(field, "15");
+      await act(async () => {});
+      expect(screen.queryByText("Must be from $0.50/mi to $15.00/mi")).not.toBeInTheDocument();
+    });
+
+    it("offers a text input bounded by a list as a select of that list", async () => {
+      const user = userEvent.setup();
+      render(
+        <Harness
+          declarations={[
+            {
+              name: "level",
+              doc: "Service level.",
+              type: "Text",
+              descriptor: { kind: "text" },
+              required: false,
+              default: "Standard",
+              constraint: { oneOf: ["Standard", "Guaranteed"] },
+              range: null,
+            },
+          ]}
+        />,
+      );
+      expect(screen.queryByText(/One of/)).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /Default: Standard/ }));
+      const options = await screen.findAllByRole("option");
+      expect(options.map((option) => option.textContent)).toEqual(["Standard", "Guaranteed"]);
+      await user.click(options[1]!);
+      expect(values()).toEqual({ level: "Guaranteed" });
+    });
+
+    it("offers only the variants an enum's list allows", async () => {
+      const user = userEvent.setup();
+      render(
+        <Harness
+          declarations={[
+            {
+              ...service,
+              descriptor: {
+                kind: "enum",
+                name: "Service",
+                variants: ["Standard", "Guaranteed", "Expedited"],
+              },
+              constraint: { oneOf: ["Standard", "Expedited"] },
+            },
+          ]}
+        />,
+      );
+      await user.click(screen.getByRole("button", { name: /Default: Standard/ }));
+      const options = await screen.findAllByRole("option");
+      expect(options.map((option) => option.textContent)).toEqual(["Standard", "Expedited"]);
+    });
   });
 });

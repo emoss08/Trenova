@@ -47,3 +47,52 @@ query DeskFuelPurchaseCard($id: ID!) @requiresRead(kind: "fuel_card") {
     }
   }
 }
+
+# The Desk's fuel purchase list, read by the agent's fuel_list_purchases: when
+# and where fuel was bought for IFTA, how much, for what amount and whether tax
+# was paid, with the tractor, driver, jurisdiction and card it names, without
+# the odometer, notes and audit fields the edit panel loads.
+query DeskFuelPurchases($input: FuelPurchasesInput!, $includeTotalCount: Boolean = false) {
+  fuelPurchases(input: $input) {
+    edges {
+      node {
+        id
+        tractorId
+        workerId
+        jurisdictionId
+        fuelCardId
+        importBatchId
+        purchasedAt
+        vendor
+        vendorCity
+        fuelType
+        quantity
+        quantityUnit
+        gallons
+        totalAmount
+        currencyCode
+        taxPaid
+        cardLastFour
+        transactionReference
+        source
+        tractor {
+          id
+          code
+        }
+        worker {
+          id
+          wholeName
+        }
+        jurisdiction {
+          id
+          code
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

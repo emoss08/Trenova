@@ -167,6 +167,30 @@ func (r *Registry) registerCarrierResources() {
 		),
 		ParentResource:     ResourceCarrierSettlement.String(),
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"billToName":           SensitivityInternal,
+			"bol":                  SensitivityInternal,
+			"businessUnitId":       SensitivityInternal,
+			"carrierId":            SensitivityInternal,
+			"createdAt":            SensitivityInternal,
+			"currencyCode":         SensitivityInternal,
+			"deliveryDate":         SensitivityInternal,
+			"duplicateOfId":        SensitivityInternal,
+			"expectedAmount":       SensitivityRestricted,
+			"invoiceDate":          SensitivityInternal,
+			"invoiceNumber":        SensitivityInternal,
+			"organizationId":       SensitivityInternal,
+			"proNumber":            SensitivityInternal,
+			"reconciliationNotes":  SensitivityInternal,
+			"reconciliationStatus": SensitivityInternal,
+			"shipmentId":           SensitivityInternal,
+			"shipmentReference":    SensitivityInternal,
+			"suggestedCarrier":     SensitivityInternal,
+			"totalAmount":          SensitivityRestricted,
+			"updatedAt":            SensitivityInternal,
+			"varianceAmount":       SensitivityRestricted,
+			"version":              SensitivityInternal,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{
@@ -215,6 +239,10 @@ func (r *Registry) registerCarrierResources() {
 		},
 		ParentResource:     ResourceCarrier.String(),
 		DefaultSensitivity: SensitivityInternal,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"counterMargin":        SensitivityConfidential,
+			"counterMarginPercent": SensitivityConfidential,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

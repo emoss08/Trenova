@@ -15,7 +15,7 @@ func (r *Registry) registerProtectedFieldResources() {
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceProtectedMargins.String(),
 		DisplayName: "Margins",
-		Description: "The margin floor and pay ceiling a rate agreement sets against the sell price",
+		Description: "Every margin figure: margins and margin percents, margin floors and targets, and a cost shown beside the revenue it gives the margin of",
 		Category:    "Protected fields",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "See margins"},

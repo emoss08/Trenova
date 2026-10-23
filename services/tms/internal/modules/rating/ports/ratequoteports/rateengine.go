@@ -36,7 +36,7 @@ type RateShipmentRequest struct {
 	Purpose ratequote.Purpose
 	// Persist writes the quote. A what-if answers the question without leaving
 	// a record that competes with the shipment's real rate.
-	Persist bool
+	Persist     bool
 	FormulaOnly bool
 	UserID      pulid.ID
 
@@ -58,12 +58,13 @@ type RatedShipment struct {
 	RuleID           *pulid.ID `json:"ruleId,omitempty"`
 	BillToCustomerID *pulid.ID `json:"billToCustomerId,omitempty"`
 
-	FormulaTemplateID   *pulid.ID          `json:"formulaTemplateId,omitempty"`
-	FormulaTemplateName string             `json:"formulaTemplateName,omitempty"`
-	TemplateVersion     int64              `json:"templateVersion,omitempty"`
-	TariffInputs        tarifftypes.Inputs `json:"tariffInputs,omitempty"`
-	Bill                *tarifftypes.Bill  `json:"bill,omitempty"`
-	Refusal             string             `json:"refusal,omitempty"`
+	FormulaTemplateID   *pulid.ID            `json:"formulaTemplateId,omitempty"`
+	FormulaTemplateName string               `json:"formulaTemplateName,omitempty"`
+	TemplateVersion     int64                `json:"templateVersion,omitempty"`
+	TariffInputs        tarifftypes.Inputs   `json:"tariffInputs,omitempty"`
+	Bill                *tarifftypes.Bill    `json:"bill,omitempty"`
+	Refusal             string               `json:"refusal,omitempty"`
+	Choices             []tarifftypes.Choice `json:"choices,omitempty"`
 
 	Agreement  *rateagreement.RateAgreement `json:"-"`
 	Conditions map[pulid.ID]bool            `json:"-"`
@@ -153,7 +154,9 @@ type ShopOption struct {
 	Cost     decimal.Decimal   `json:"cost"`
 	Currency string            `json:"currency"`
 
-	Margin ratetypes.MarginVerdict `json:"margin"`
+	// Margin is null when the option was not priced, and to a reader without
+	// the margins field group.
+	Margin *ratetypes.MarginVerdict `json:"margin"`
 
 	Quote       *ratequote.RateQuote `json:"quote,omitempty"`
 	AgreementID *pulid.ID            `json:"agreementId,omitempty"`

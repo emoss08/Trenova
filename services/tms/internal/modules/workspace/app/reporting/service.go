@@ -11,11 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -37,6 +39,7 @@ type Params struct {
 	Executor         reportports.ReportDatasetExecutor
 	PermissionEngine permissionports.PermissionEngine
 	FieldAccess      permissionports.FieldAccess
+	ReferenceViews   permissionports.ReferenceViews
 	WorkflowStarter  kernelports.WorkflowStarter
 	Storage          kernelports.Client
 	AuditService     auditports.AuditService `optional:"true"`
@@ -56,8 +59,7 @@ type Service struct {
 	compiler      reportports.ReportCompiler
 	executor      reportports.ReportDatasetExecutor
 	perms         permissionports.PermissionEngine
-	fieldAccess   permissionports.FieldAccess
-	permRegistry  *permission.Registry
+	access        *reportaccess.Resolver
 	workflows     kernelports.WorkflowStarter
 	storage       kernelports.Client
 	audit         auditports.AuditService
@@ -74,6 +76,8 @@ func New(p Params) *Service {
 		reportMetrics = p.Metrics.Report
 	}
 
+	registry := permission.NewRegistry()
+
 	return &Service{
 		l:             p.Logger.Named("service.reporting"),
 		defRepo:       p.DefinitionRepo,
@@ -86,8 +90,13 @@ func New(p Params) *Service {
 		compiler:      p.Compiler,
 		executor:      p.Executor,
 		perms:         p.PermissionEngine,
-		fieldAccess:   p.FieldAccess,
-		permRegistry:  permission.NewRegistry(),
+		access: reportaccess.New(reportaccess.Params{
+			Catalog:  &reportcatalog.Default,
+			Engine:   p.PermissionEngine,
+			Registry: registry,
+			Views:    p.ReferenceViews,
+			Fields:   p.FieldAccess,
+		}),
 		workflows:     p.WorkflowStarter,
 		storage:       p.Storage,
 		audit:         p.AuditService,

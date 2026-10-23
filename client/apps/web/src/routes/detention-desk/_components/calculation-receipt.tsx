@@ -5,6 +5,7 @@ import { formatDetentionMinutes } from "@trenova/shared/lib/detention";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { CalculationTrace, TraceStep } from "@trenova/shared/types/detention";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 
 type CalculationReceiptProps = {
   trace: CalculationTrace | null | undefined;
@@ -26,6 +27,14 @@ function stepValue(step: TraceStep, currency: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * The driver's pay is withheld, amount and all, from a reader without the margins field
+ * group: beside the billed amount it gives the margin away.
+ */
+function payWithheld(step: TraceStep): boolean {
+  return step.kind === "DriverPay" && (step.amount === null || step.amount === undefined);
 }
 
 function receiptText(trace: CalculationTrace, currency: string): string {
@@ -103,6 +112,7 @@ export function CalculationReceipt({
                 {step.term && <p className="text-2xs text-muted-foreground/70">{step.term}</p>}
               </div>
 
+              {payWithheld(step) && <WithheldValue group="Margins" className="shrink-0" />}
               {value && (
                 <span
                   className={cn(

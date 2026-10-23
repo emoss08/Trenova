@@ -10,8 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -103,4 +103,16 @@ func (r *QueryResolver) AuditEntry(ctx context.Context, id string) (*audit.Entry
 		EntryID:    entryID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
+}
+
+func (r *AuditEntryResolver) Changes(ctx context.Context, obj *audit.Entry) (map[string]any, error) {
+	return audit.WithholdChanges(obj.Resource, obj.Changes, r.auditGroups(ctx)), nil
+}
+
+func (r *AuditEntryResolver) PreviousState(ctx context.Context, obj *audit.Entry) (map[string]any, error) {
+	return permission.WithholdProtectedJSON(obj.Resource, obj.PreviousState, r.auditGroups(ctx)), nil
+}
+
+func (r *AuditEntryResolver) CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error) {
+	return permission.WithholdProtectedJSON(obj.Resource, obj.CurrentState, r.auditGroups(ctx)), nil
 }

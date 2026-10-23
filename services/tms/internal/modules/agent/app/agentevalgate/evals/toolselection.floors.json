@@ -1,22 +1,22 @@
 {
   "keyword": {
-    "cases": 557,
+    "cases": 561,
     "recallAt5": 0.99,
     "top1": 0.96
   },
   "hybrid": {
-    "cases": 631,
+    "cases": 636,
     "recallAt5": 0.91,
-    "top1": 0.79
+    "top1": 0.8
   },
   "heldOut": {
     "keyword": {
-      "cases": 145,
+      "cases": 147,
       "recallAt5": 0.99,
       "top1": 0.95
     },
     "hybrid": {
-      "cases": 165,
+      "cases": 167,
       "recallAt5": 0.92,
       "top1": 0.82
     }

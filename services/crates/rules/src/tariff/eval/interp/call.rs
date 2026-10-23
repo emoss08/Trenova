@@ -1,6 +1,6 @@
 //! Calls: user and library functions, module-qualified functions, methods on values, rate
 //! table methods, the conversions `Number(x)` and `Int.parse(text)`, and in tests the record
-//! constructors and `charge(…)`.
+//! constructors, `charge(…)` and `chosen(…)` (in `choose`).
 
 use super::expr::{internal, unit_argument};
 use super::{Env, Flow, Interp};
@@ -37,6 +37,9 @@ impl<'a> Interp<'_, 'a> {
                 }
                 if self.view.is_some() && name.text == "charge" {
                     return self.read_charge(env, args);
+                }
+                if self.view.is_some() && name.text == "chosen" {
+                    return self.read_chosen(env, args);
                 }
                 if self.constructors {
                     if let Some((_, kind)) = STOP_CONSTRUCTORS
@@ -164,6 +167,12 @@ impl<'a> Interp<'_, 'a> {
                 }
             };
             scope.bind(&param.name.text, value, false);
+        }
+        if module == 0 {
+            self.cover(match &decl.body {
+                FnBody::Expr(body) => body.span,
+                FnBody::Block(block) => block.span,
+            });
         }
         let result = outcome.and_then(|()| match &decl.body {
             FnBody::Expr(body) => self.eval(&mut scope, body),

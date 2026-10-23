@@ -1,14 +1,11 @@
 import { Lock01Icon } from "@trenova/shared/components/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { referenceKindAccessLabel } from "@trenova/shared/lib/reference-access";
+import { withheldAccessLabel, type WithheldAccess } from "@trenova/shared/lib/reference-access";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ReferenceKind } from "@trenova/shared/types/generated/reference-views";
 import type { ReactNode } from "react";
 
-type LockedReferenceProps = {
-  /** The kind of record whose read the person lacks. */
-  kind: ReferenceKind;
+type LockedReferenceProps = WithheldAccess & {
   children: ReactNode;
   className?: string;
   /**
@@ -23,13 +20,13 @@ type LockedReferenceProps = {
  * tooltip saying whose read is missing. See docs/engineering/reference-views.md.
  */
 export function LockedReference({
-  kind,
   children,
   className,
   layout = "inline",
+  ...access
 }: LockedReferenceProps) {
   const t = useT();
-  const reason = t("You don't have access to {0}", referenceKindAccessLabel(kind));
+  const reason = t("You don't have access to {0}", withheldAccessLabel(access));
   const lock = (
     <Lock01Icon
       aria-hidden
@@ -105,21 +102,20 @@ export function WithheldPanel({ children, className }: WithheldPanelProps) {
   );
 }
 
-type WithheldValueProps = {
-  /** The kind of record the withheld field belongs to. */
-  kind: ReferenceKind;
+type WithheldValueProps = WithheldAccess & {
   className?: string;
 };
 
 /**
- * A linked record's field the server withheld because the person may not read its kind
- * (`null`, named in the response's `extensions.withheldByAccess`). It says so rather than
- * drawing a dash, a zero or "None", which would read as the record's actual value.
+ * A field the server withheld: a linked record's field the person may not read the kind of
+ * (`kind`, `null` and named in the response's `extensions.withheldByAccess`), or a protected
+ * field whose group the person's role does not grant (`group`, such as a margin). It says so
+ * rather than drawing a dash, a zero or "None", which would read as the actual value.
  */
-export function WithheldValue({ kind, className }: WithheldValueProps) {
+export function WithheldValue({ className, ...access }: WithheldValueProps) {
   const t = useT();
   return (
-    <LockedReference kind={kind} className={cn("text-xs text-foreground-muted", className)}>
+    <LockedReference {...access} className={cn("text-xs text-foreground-muted", className)}>
       {t("Hidden")}
     </LockedReference>
   );

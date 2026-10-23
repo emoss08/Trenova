@@ -94,14 +94,7 @@ impl Shape {
                 }
                 self.line(depth, &line);
             }
-            ItemKind::Input(input) => {
-                let mut line = format!("{private}input {}: {}", input.name.text, ty(&input.ty));
-                if let Some(default) = &input.default {
-                    line.push_str(" = ");
-                    write_expr(&mut line, default);
-                }
-                self.line(depth, &line);
-            }
+            ItemKind::Input(input) => self.line(depth, &input_line(private, input)),
             ItemKind::Const(constant) => {
                 let mut line = format!("{private}const {}", constant.name.text);
                 if let Some(t) = &constant.ty {
@@ -165,6 +158,13 @@ impl Shape {
                 self.line(depth, &format!("{private}test {:?}", test.name.text));
                 self.block(depth + 1, &test.body);
             }
+            ItemKind::Property(property) => {
+                self.line(
+                    depth,
+                    &format!("{private}property {:?}", property.name.text),
+                );
+                self.block(depth + 1, &property.body);
+            }
             ItemKind::Stmt(stmt) => {
                 if !private.is_empty() {
                     self.line(depth, "private");
@@ -216,6 +216,16 @@ impl Shape {
                 self.line(depth, "item");
                 self.item(depth + 1, item);
             }
+            StmtKind::Choose(choose) => {
+                self.line(
+                    depth,
+                    &format!("{} {:?}", choose.kind.keyword(), choose.label.text),
+                );
+                for option in &choose.options {
+                    self.line(depth + 1, &format!("option {:?}", option.label.text));
+                    self.block(depth + 2, &option.body);
+                }
+            }
             kind => {
                 let mut line = String::new();
                 write_simple_stmt(&mut line, kind);
@@ -244,6 +254,20 @@ impl Shape {
             }
         }
     }
+}
+
+/// An `input` declaration, on one line.
+fn input_line(private: &str, input: &super::ast::Input) -> String {
+    let mut line = format!("{private}input {}: {}", input.name.text, ty(&input.ty));
+    if let Some(default) = &input.default {
+        line.push_str(" = ");
+        write_expr(&mut line, default);
+    }
+    if let Some(constraint) = &input.constraint {
+        line.push_str(" where ");
+        write_expr(&mut line, constraint);
+    }
+    line
 }
 
 /// A statement that holds no block, on one line.
@@ -304,6 +328,25 @@ fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
             write_expr(line, value);
         }
         StmtKind::Expect(Expect::Holds(value)) => write_word_expr(line, "expect", value),
+        StmtKind::Expect(Expect::Monotone {
+            value,
+            direction,
+            target,
+            ..
+        }) => {
+            write_word_expr(line, "expect", value);
+            let path: Vec<&str> = target.iter().map(|n| n.text.as_str()).collect();
+            let _ = write!(line, " {} in {}", direction.word(), path.join("."));
+        }
+        StmtKind::Vary { target, values } => {
+            let path: Vec<&str> = target.iter().map(|n| n.text.as_str()).collect();
+            let _ = write!(line, "vary {}", path.join("."));
+            if let Some(values) = values {
+                line.push_str(" in ");
+                write_expr(line, values);
+            }
+        }
+        StmtKind::Assume(value) => write_word_expr(line, "assume", value),
         StmtKind::Expect(Expect::Fails(message)) => {
             line.push_str("expect fails");
             if let Some(message) = message {
@@ -311,7 +354,11 @@ fn write_simple_stmt(line: &mut String, kind: &StmtKind) {
             }
         }
         StmtKind::Expr(value) => write_word_expr(line, "expr", value),
-        StmtKind::If(_) | StmtKind::Match(_) | StmtKind::For(_) | StmtKind::Item(_) => {}
+        StmtKind::If(_)
+        | StmtKind::Match(_)
+        | StmtKind::For(_)
+        | StmtKind::Item(_)
+        | StmtKind::Choose(_) => {}
     }
 }
 

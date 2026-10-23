@@ -224,10 +224,14 @@ tool, when:
 - no persisted query, or more than one in a tier, reads that root field alone;
 - an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
 - a shard the operations reach asks for a resolver the full root does not build;
-- an operation a list reads `alongside` its own is not persisted, reads a field whose resolver
-  checks no read permission, or is neither a connection read that selects `pageInfo` and needs no
-  variable but its table input nor an unpaged list whose every variable the list's own operation
-  declares with the same type; or a paged list names one.
+- an operation a tool reads `alongside` its own, or a list `instead` of its own, is not
+  persisted, reads a field whose resolver checks no read permission, or has a shape the tool
+  cannot key: alongside, an unpaged list or one record whose every variable the tool's own
+  operation declares with the same type, or, beside an unpaged list only, a connection read
+  that selects `pageInfo` and needs no variable but its table input; instead, an unpaged list or
+  one record with a variable of its own and no input object;
+- a get's operation requires an input object, or a paged list's a filter input with a required
+  input-object field.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a
@@ -245,8 +249,29 @@ type, then `pnpm --filter @trenova/graphql codegen`; `TestReferenceFragmentsAreG
 until both are current. Editing a client operation can fail `TestEveryLinkedFieldIsDeclared` (it
 selects a linked record's field outside its view without `@requiresRead`) or
 `TestEveryDeclaredLinkedFieldIsNullable` (the field it declares is non-null). These are Go tests
-over the client's `.graphql` files, so they surface under `task test`. See
-[reference-views.md](reference-views.md).
+over the client's `.graphql` files, so they surface under `task test`. refgen also writes the page
+access manifest and the role editor's words (below). See [reference-views.md](reference-views.md).
+
+## Page access manifest
+
+`services/tms/pkg/pageaccess/manifest_gen.json` is what every screen needs and shows, and
+`services/tms/internal/modules/identity/app/pageaccessservice/viewwords_gen.go` is the role
+editor's words for each reference view. Both come from two generators, in this order:
+
+```bash
+pnpm --filter @trenova/web access:generate   # client/apps/web: writes pkg/pageaccess/screens_gen.json
+cd services/tms && go run ./internal/api/graphql/gqlext/refgen   # writes manifest_gen.json and viewwords_gen.go
+```
+
+`access:check` (the GraphQL Codegen job in `test-client.yml`) fails when a route, a page's
+imports or a REST call it makes changed what a screen runs; `TestPageAccessManifestIsGenerated`
+and `TestViewWordsAreGenerated` (`internal/api/pagemanifest`, under `task test`) fail when the
+manifest or the words are stale. So **adding a page, importing a GraphQL wrapper or a query
+factory into one, editing a client operation, changing a reference view or registering a REST
+route a screen calls means regenerating both**, the screens first. The Go tests run when a client
+operation changes alone (`test-tms.yml` watches `client/packages/graphql/src/operations/**`).
+A word new to `viewwords_gen.go` is a new catalog entry: run `task i18n` and translate it. See
+"The page access manifest" in [reference-views.md](reference-views.md).
 
 ## Schema changes
 

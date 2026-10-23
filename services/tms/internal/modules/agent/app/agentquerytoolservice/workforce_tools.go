@@ -19,12 +19,10 @@ const (
 	wfFieldResolution  = "resolution"
 	wfParamOpenOnly    = "openOnly"
 	wfParamClosed      = "includeClosed"
-	absentNotCompleted = "not completed"
 	absentNotDue       = "no due date"
 	absentNotExpiring  = "does not expire"
 	absentNotReturned  = "not back yet"
 	absentNotRequested = "not requested"
-	absentNotFinal     = "not finalized"
 	absentNotReceived  = "not received"
 )
 
@@ -146,8 +144,6 @@ func joinStrings[T ~string](values []T) string {
 
 func workforceQueryToolProviders() []any {
 	return []any{
-		provideListDOTRandomDrawsTool,
-		provideGetDOTRandomDrawTool,
 		provideListShipmentPermitsTool,
 		provideListPayrollExportsTool,
 	}

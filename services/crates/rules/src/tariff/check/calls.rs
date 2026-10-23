@@ -1,6 +1,6 @@
 //! Calls: user and library functions (named arguments, defaults, arity), module-qualified
 //! calls, built-in methods with their lambdas, conversions, the test record constructors and
-//! `charge(…)` in tests.
+//! `charge(…)` and `chosen(…)` (in [`super::choose`]) in tests.
 
 use super::checker::{Body, Checker, FnInfo, Global, Want};
 use super::describe::{quote, quote_span, words};
@@ -156,6 +156,9 @@ impl Checker<'_> {
             self.used.insert(name.text.clone());
             self.reference(name.span, info.symbol);
             return self.function_call(expr, &info, args, &name.text);
+        }
+        if name.text == "chosen" {
+            return self.chosen_lookup(expr, args);
         }
         if let Some((_, record)) = CONSTRUCTORS
             .iter()

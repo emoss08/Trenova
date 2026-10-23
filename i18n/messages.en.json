@@ -1624,6 +1624,24 @@
       "routes/reconciliation-summary"
     ]
   },
+  "70% of linehaul with stop pay and a hazmat premium for owner-operators": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "75% of total revenue with stop pay for leased owner-operators": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "7d": {
     "sites": 1,
     "scope": [
@@ -2588,6 +2606,24 @@
       "routes/inbox"
     ]
   },
+  "<c>{0}</c> falls as <c>{1}</c> grows:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "<c>{0}</c> rises as <c>{1}</c> grows:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "<e>{0, plural, one {# exception is} other {# exceptions are}}</e> still open.": {
     "sites": 1,
     "scope": [
@@ -3035,7 +3071,7 @@
       "go/other"
     ]
   },
-  "A `Bool` the test needs to hold after the tariff has run.": {
+  "A `Bool` the test needs to hold after the tariff has run; in a property, it must hold in every case, or `expect value nondecreasing in target` must hold as the target grows.": {
     "sites": 2,
     "scope": [
       "go",
@@ -3047,6 +3083,17 @@
     ]
   },
   "A `\\` in text must be followed by an escape": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `best`": {
     "sites": 2,
     "scope": [
       "go",
@@ -3079,7 +3126,84 @@
       "rules/tariff"
     ]
   },
+  "A `given` sets one value for every case, so it can't read {0}, which varies: vary the field itself instead": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "A `test` can only be written at the top level of a file, not inside a block": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `vary` list needs at least one value": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `vary` range needs both ends, as in `1 lb..40_000 lb`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `vary` range's ends are worked out before any case: write each as a literal or a constant": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `vary` takes a range, as in `1 lb..40_000 lb`, or a list of values, as in `[Standard, Expedited]`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `where` constraint is a range or a list of values: `lo..hi` (from `lo` up to but not including `hi`), `lo..=hi` (up to and including `hi`), or `[a, b]`; either end of a range may be left off": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A `worst`": {
     "sites": 2,
     "scope": [
       "go",
@@ -4183,6 +4307,39 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A choice holds only `option \"Label\"` blocks, one for each method": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A choice is named by its label, which is text: edit it between the quotes, and in every `chosen` that names it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A choice needs an option to bill": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "A clean workspace. Add your own records from day one.": {
@@ -6596,6 +6753,17 @@
       "go/other"
     ]
   },
+  "A library has no record or inputs to vary: vary a new name, as in `vary x in 1..10`, and pass it to the functions under test": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "A library holds only `use`, `const`, `type`, `enum`, `fn` and `test`; inputs, bindings and charges belong in a tariff": {
     "sites": 2,
     "scope": [
@@ -7861,6 +8029,24 @@
       "packages/shared/types"
     ]
   },
+  "A permission names an operation its resource does not have": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A permission names an unknown resource": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A person": {
     "sites": 2,
     "scope": [
@@ -8389,6 +8575,50 @@
       "go/other"
     ]
   },
+  "A property can't expect a refusal: it states what holds when the tariff rates. Narrow it with `assume` or its ranges instead": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A property checks a rule over many ratings, so it goes in a tariff or a library; check a condition with `test` blocks": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A property needs at least one `vary`: say what changes from case to case, as in `vary shipment.weight in 1 lb..40_000 lb`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A property: vary fields or inputs over ranges with `vary`, and say what holds in every case with `expect`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "A proposal can only be decided within the decider's own organization": {
     "sites": 1,
     "scope": [
@@ -8610,6 +8840,17 @@
     ]
   },
   "A range can only follow `in`, be walked by `for`, or be a `match` pattern": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A range constraint needs at least one end, as in `0..`, `..=10` or `0..=10`": {
     "sites": 2,
     "scope": [
       "go",
@@ -9345,6 +9586,15 @@
     ]
   },
   "A resolved dispute needs a resolution": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A resource is not one the registry declares": {
     "sites": 1,
     "scope": [
       "go"
@@ -11432,7 +11682,7 @@
       "go/other"
     ]
   },
-  "A test sets a few facts with given and checks the bill with expect. Tests run on every change and must pass before review.": {
+  "A test sets a few facts with given and checks the bill with expect. A property varies a fact over a range and checks a rule holds for every case. Both run on every change and must pass before review.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -11963,6 +12213,17 @@
     ]
   },
   "A value's name starts with a lower-case letter: `{0}`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "A vary takes a range with both ends, a list, or a Bool, enum or constrained input": {
     "sites": 2,
     "scope": [
       "go",
@@ -13734,6 +13995,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Above ceiling": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Above the ceiling — runs as {0}": {
@@ -16545,6 +16815,24 @@
       "routes/fiscal-year"
     ]
   },
+  "Active; editing the source returns it to draft, and approved templates keep the version they pinned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Active; editing the source will return it to draft": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Activity": {
     "sites": 15,
     "scope": [
@@ -17789,12 +18077,23 @@
     ]
   },
   "Add at least one test": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
+    ]
+  },
+  "Add at least one test block before submitting": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Add at least two lines on its page before submitting": {
@@ -20760,6 +21059,15 @@
       "routes/desk"
     ]
   },
+  "After driver pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "After guidance": {
     "sites": 1,
     "scope": [
@@ -21309,7 +21617,7 @@
     ]
   },
   "Agent run not found": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -24484,6 +24792,17 @@
       "rules/tariff"
     ]
   },
+  "An `option` can only be written inside `best` or `worst`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "An accepted connection must record when it was accepted": {
     "sites": 1,
     "scope": [
@@ -25433,6 +25752,17 @@
       "go/other"
     ]
   },
+  "An assumption must be true or false, not {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "An attached draft must name the shipment it was attached to": {
     "sites": 1,
     "scope": [
@@ -26348,6 +26678,39 @@
       "go/other"
     ]
   },
+  "An option can't change {0}, which is declared outside its {1}: a losing option must leave nothing behind. Declare the `var` inside the option, or bill the amount with `charge`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "An option needs a label, as in `option \"Per mile\"`: it names the method on the trace": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "An option runs to its end: it can't leave its choice": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "An optional secondary worker assigned to this tractor.": {
     "sites": 1,
     "scope": [
@@ -26935,6 +27298,17 @@
       "go/other"
     ]
   },
+  "Another choice is already labelled {0}: each `best` and `worst` needs its own label, so the trace and `chosen(…)` can tell them apart": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Another field": {
     "sites": 1,
     "scope": [
@@ -27500,6 +27874,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Any value": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Any value — or comma-separated choices": {
@@ -28291,6 +28674,24 @@
       "routes/service-failure-reason-code"
     ]
   },
+  "Applies once the library is in review": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Applies once the template is in review": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Applies to": {
     "sites": 1,
     "scope": [
@@ -29012,6 +29413,15 @@
     ],
     "areas": [
       "routes/driver-settlement"
+    ]
+  },
+  "Approval pins the newest approved versions: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Approval policy": {
@@ -31554,6 +31964,15 @@
       "go/other"
     ]
   },
+  "Ask for at most 64 resources at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Ask for at most {0} targets at a time": {
     "sites": 2,
     "scope": [
@@ -32030,6 +32449,15 @@
     ]
   },
   "Asks for every document this invoice is missing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Asks for more": {
     "sites": 1,
     "scope": [
       "ts"
@@ -33806,12 +34234,22 @@
     ]
   },
   "At least {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "packages/shared/lib"
+    ]
+  },
+  "At least {0} and below {1}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "packages/shared/lib"
     ]
   },
   "At least {0} characters": {
@@ -33971,12 +34409,13 @@
     ]
   },
   "At most {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/types"
+      "apps/web/types",
+      "packages/shared/lib"
     ]
   },
   "At most {0} changes": {
@@ -36815,7 +37254,7 @@
     ]
   },
   "BOL": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -37824,6 +38263,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Banded per-loaded-mile pay with stop pay and detention for company drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Bands start here — usually your peg (base) price.": {
@@ -38864,6 +39312,15 @@
       "routes/agent-control"
     ]
   },
+  "Below {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "Benchmark": {
     "sites": 2,
     "scope": [
@@ -39745,7 +40202,7 @@
     ]
   },
   "Billed": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -40833,6 +41290,61 @@
       "routes/billing-queue"
     ]
   },
+  "Bills the cheaper of two methods; add an `option` for each further one.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Bills the cheapest of several methods: each `option` runs, and the one with the lowest subtotal joins the bill.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Bills the dearest of several methods: each `option` runs, and the one with the highest subtotal joins the bill.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Bills the option with the highest subtotal of {0}.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Bills the option with the lowest subtotal of {0}.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Bills this period before it closes, without moving the customer's cycle": {
     "sites": 1,
     "scope": [
@@ -41842,6 +42354,26 @@
     "areas": [
       "apps/web/lib",
       "routes/invoice"
+    ]
+  },
+  "Bounds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Bounds the values a contract may set: a range, or a list after `where`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "Brakes, lights, load securement — everything a roadside inspection checks.": {
@@ -43694,6 +44226,15 @@
       "routes/worker"
     ]
   },
+  "Calendar fiscal year opened for volume seed history": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Calendar rules for accessorials: weekends, business hours and time spent within them. Every function reads a date-time on its own clock, in the offset it carries.": {
     "sites": 2,
     "scope": [
@@ -43978,7 +44519,25 @@
       "routes/agent-control"
     ]
   },
+  "Can read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Can read every record except HR, medical, drug testing and pay records, and change nothing.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Can see every field of {0} records, on their own screens and wherever another record shows one.": {
     "sites": 1,
     "scope": [
       "go"
@@ -49096,7 +49655,7 @@
     ]
   },
   "Change to {0}": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -49799,12 +50358,13 @@
     ]
   },
   "Charge": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "go/other",
       "routes/billing-queue",
       "routes/desk",
@@ -51318,6 +51878,24 @@
       "go/other"
     ]
   },
+  "Choice": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Choices": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Choose": {
     "sites": 2,
     "scope": [
@@ -51783,6 +52361,35 @@
       "go/other"
     ]
   },
+  "Choose a saved role or send the role being edited": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Choose a screen to preview": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/admin"
+    ]
+  },
+  "Choose a screen to see what this role would need and see there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Choose a shift": {
     "sites": 1,
     "scope": [
@@ -51871,6 +52478,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Choose a valid sensitivity": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Choose a value": {
@@ -53395,6 +54011,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Chose {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Chosen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Chosen By Person": {
@@ -55340,7 +55974,7 @@
     ]
   },
   "Close": {
-    "sites": 64,
+    "sites": 65,
     "scope": [
       "go",
       "ts"
@@ -65452,6 +66086,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Counterexample": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Counterparty": {
     "sites": 1,
     "scope": [
@@ -65878,7 +66521,7 @@
     ]
   },
   "Coverage": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -65943,6 +66586,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Coverage could not be measured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Coverage is measured once the source checks": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Coverage is required": {
@@ -68353,15 +69014,6 @@
       "go/other"
     ]
   },
-  "Ctrl": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Curfew Conflict": {
     "sites": 1,
     "scope": [
@@ -70566,11 +71218,13 @@
     ]
   },
   "DOT number": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/admin",
       "routes/carrier",
       "routes/customer",
@@ -73184,6 +73838,15 @@
       "rules/tariff"
     ]
   },
+  "Declared": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Declared here": {
     "sites": 2,
     "scope": [
@@ -73193,15 +73856,6 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
-    ]
-  },
-  "Declared inputs": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Declares a compile-time constant at file level, importable from a library.": {
@@ -73216,6 +73870,17 @@
     ]
   },
   "Declares a function: annotated parameters and return type, pure and closed.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Declares a property: a rule checked over many shipments, the cases chosen from the `vary` ranges, run on every change like a test.": {
     "sites": 2,
     "scope": [
       "go",
@@ -77088,6 +77753,15 @@
       "routes/formula-template"
     ]
   },
+  "Described": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Description": {
     "sites": 179,
     "scope": [
@@ -77257,12 +77931,14 @@
     ]
   },
   "Description is missing": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Description is required": {
@@ -78373,6 +79049,15 @@
     "areas": [
       "apps/web/config",
       "routes/shipment-control"
+    ]
+  },
+  "Detention margin by customer needs access to margins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "Detention notice due": {
@@ -84586,7 +85271,7 @@
     ]
   },
   "Driver pay": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -86539,15 +87224,6 @@
       "routes/edi"
     ]
   },
-  "EDI acknowledgment health": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "EDI approval workflow is not configured": {
     "sites": 1,
     "scope": [
@@ -86904,12 +87580,14 @@
     ]
   },
   "EDI partner": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "go/other",
       "routes/desk"
     ]
   },
@@ -87511,6 +88189,33 @@
       "routes/admin"
     ]
   },
+  "Each at least {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
+  "Each at least {0} and below {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
+  "Each at most {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "Each bar spans the middle half of runs. The line runs out to the slowest 5%, and the tick marks the median.": {
     "sites": 1,
     "scope": [
@@ -87518,6 +88223,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Each below {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Each carrier's rate goes up by this much, but never past the margin floor. With no charges on the shipment, rates stay as they were.": {
@@ -87727,6 +88441,15 @@
       "api/graphql"
     ]
   },
+  "Each from {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "Each funded invoice leaves receivables, with the fee as an expense.": {
     "sites": 1,
     "scope": [
@@ -87898,6 +88621,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Each one of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Each payer may appear only once": {
@@ -89101,6 +89833,15 @@
       "routes/formula-template"
     ]
   },
+  "Editor actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Effect": {
     "sites": 2,
     "scope": [
@@ -89516,6 +90257,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Else branch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Else if": {
@@ -96096,6 +96846,15 @@
       "routes/ifta-return"
     ]
   },
+  "Every contract and shipment fits ({0, plural, one {# distinct set of values} other {# distinct sets of values}} checked)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Every course this worker must complete for their driver type.": {
     "sites": 1,
     "scope": [
@@ -96612,6 +97371,15 @@
       "routes/shipment"
     ]
   },
+  "Every margin figure: margins and margin percents, margin floors and targets, and a cost shown beside the revenue it gives the margin of": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Every matched line is booked to the ledger through the factor's schedules. Only an opposite entry undoes a booking.": {
     "sites": 1,
     "scope": [
@@ -96700,6 +97468,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Every option refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Every organization is taxed at the rate published here, so a change or deletion moves the figures on every return for that quarter, not only yours. Enter rates as the matrix prints them, in USD per US gallon, and note the source.": {
@@ -98963,6 +99740,17 @@
       "rules/tariff"
     ]
   },
+  "Expected `in` and the varied value after `{0}`, like `{0} in shipment.weight`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Expected `to` and what to round to, like `round to cents` or `round up to $5`": {
     "sites": 2,
     "scope": [
@@ -99493,6 +100281,17 @@
       "rules/tariff"
     ]
   },
+  "Expected the choice's label in quotes after `{0}`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Expected the closing brace of the interpolation": {
     "sites": 2,
     "scope": [
@@ -99614,6 +100413,50 @@
       "rules/tariff"
     ]
   },
+  "Expected the option's label in quotes after `option`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Expected the options in braces after the label: `{0} \"Linehaul\"`, then an `option \"Per mile\"` block for each method": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Expected the property's body in braces": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Expected the property's name in quotes after `property`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Expected the rating to be refused with \"{0}\", but it was refused with \"{1}\"": {
     "sites": 2,
     "scope": [
@@ -99681,6 +100524,17 @@
     ]
   },
   "Expected the type's name after `type`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Expected the varied value after `{0} in`": {
     "sites": 2,
     "scope": [
       "go",
@@ -99786,7 +100640,29 @@
       "routes/edi"
     ]
   },
+  "Expected what the option bills, in braces": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Expected what to set after `given`, like `given shipment.weight = 1_240 lb`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Expected what to vary after `vary`, like `vary shipment.weight in 1 lb..40_000 lb`": {
     "sites": 2,
     "scope": [
       "go",
@@ -105136,7 +106012,7 @@
     ]
   },
   "Fall back to {0}": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -107198,6 +108074,15 @@
       "routes/agent-control"
     ]
   },
+  "Filtering loads by margin needs access to margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Filters": {
     "sites": 6,
     "scope": [
@@ -107628,6 +108513,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "Find references": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Find retrieval sources changed since they were indexed, per organization": {
@@ -108198,6 +109092,17 @@
       "rules/tariff"
     ]
   },
+  "First labelled here": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "First load": {
     "sites": 1,
     "scope": [
@@ -108600,6 +109505,24 @@
       "routes/formula-template"
     ]
   },
+  "Fix the source first; contracts are checked against its inputs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Fix the source's errors before submitting: {0}": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Fix the syntax first, then format": {
     "sites": 1,
     "scope": [
@@ -108950,6 +109873,15 @@
       "apps/web/lib"
     ]
   },
+  "Flat pay per load with stop pay and short free time for local drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Flat per shipment": {
     "sites": 1,
     "scope": [
@@ -108957,6 +109889,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Flat per-total-mile with a $900 guaranteed weekly minimum for regional drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Flat rate": {
@@ -109874,7 +110815,7 @@
     ]
   },
   "Forgiven": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -111559,11 +112500,12 @@
     ]
   },
   "From {0} to {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "packages/shared/lib",
       "routes/inbox"
     ]
   },
@@ -112093,7 +113035,7 @@
     ]
   },
   "Fuel surcharge": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -112538,6 +113480,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Function body": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Function name": {
@@ -114629,6 +115580,15 @@
       "packages/shared/components"
     ]
   },
+  "Go to definition": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Go to first page": {
     "sites": 1,
     "scope": [
@@ -115666,7 +116626,7 @@
     ]
   },
   "Guaranteed minimum pay top-up": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -117310,12 +118270,13 @@
     ]
   },
   "Held": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/routes",
+      "apps/web/components",
       "apps/web/hooks",
       "routes/agent-control",
       "routes/driver-pay-event",
@@ -117720,14 +118681,17 @@
     ]
   },
   "Hidden": {
-    "sites": 14,
+    "sites": 18,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/cost-control",
       "routes/desk",
+      "routes/dispatch-control",
       "routes/home",
       "routes/rate-agreement",
       "routes/shipment",
@@ -117991,6 +118955,15 @@
       "routes/desk"
     ]
   },
+  "Hide them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Hide until it fails again": {
     "sites": 2,
     "scope": [
@@ -118103,6 +119076,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Highest wins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Highlight color": {
@@ -119414,6 +120396,15 @@
       "routes/dash-control"
     ]
   },
+  "How each screen depends on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "How each shipment was priced, what it cost, and what an override gave away": {
     "sites": 1,
     "scope": [
@@ -120062,6 +121053,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "How much of each billed detention dollar survives driver pay needs access to margins.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-intelligence"
     ]
   },
   "How much of the result the sample covers.": {
@@ -121742,6 +122742,15 @@
       "routes/auth"
     ]
   },
+  "If branch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "If something on a settlement looks wrong, flag it from the statement and it will show up here.": {
     "sites": 1,
     "scope": [
@@ -122574,6 +123583,15 @@
       "rules/tariff"
     ]
   },
+  "Imports no organization library": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Improved": {
     "sites": 1,
     "scope": [
@@ -122740,6 +123758,28 @@
       "routes/carrier-sourcing"
     ]
   },
+  "In a property, `expect value nondecreasing in target`: the value never falls as the varied target grows.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "In a property, `expect value nonincreasing in target`: the value never rises as the varied target grows.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "In a status email {0}": {
     "sites": 1,
     "scope": [
@@ -122839,6 +123879,15 @@
       "routes/my-team"
     ]
   },
+  "In libraries": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "In pipeline": {
     "sites": 2,
     "scope": [
@@ -122889,6 +123938,15 @@
       "routes/formula-template",
       "routes/reconciliation-summary",
       "routes/settlement-dispute"
+    ]
+  },
+  "In review; awaiting a decision": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "In that folder, open PowerShell as an administrator and run these commands. They point Trenova Capture at this server and turn self-updating off.": {
@@ -122992,6 +124050,15 @@
   },
   "In the queue": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "In this file": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -124338,7 +125405,7 @@
     ]
   },
   "Inherited roles must belong to your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -129539,6 +130606,15 @@
       "rules/tariff"
     ]
   },
+  "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "It is decided in the conversation it was proposed in.": {
     "sites": 1,
     "scope": [
@@ -129549,7 +130625,7 @@
     ]
   },
   "It is declared here": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -129571,6 +130647,17 @@
     ]
   },
   "It is first given here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "It is given here": {
     "sites": 2,
     "scope": [
       "go",
@@ -129606,6 +130693,17 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "It is varied here": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "It is {0}": {
@@ -130298,6 +131396,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Its route and endpoints check no permission of their own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Its runs": {
@@ -132389,7 +133496,7 @@
       "routes/admin"
     ]
   },
-  "Keeps only the items a condition holds for.": {
+  "Keeps only the items a condition holds for; after an input, bounds the values a contract may set: `where $0.50/mi..=$15/mi` or `where [Standard, Guaranteed]`.": {
     "sites": 2,
     "scope": [
       "go",
@@ -132464,7 +133571,7 @@
     ]
   },
   "Kept": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -137787,7 +138894,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -138998,7 +140105,7 @@
     ]
   },
   "Ln {0}": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -140264,6 +141371,15 @@
       "routes/admin"
     ]
   },
+  "Loading page access": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Loading payment...": {
     "sites": 2,
     "scope": [
@@ -141125,6 +142241,15 @@
       "routes/agent-control"
     ]
   },
+  "Loading the screen preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Loading the service failure…": {
     "sites": 1,
     "scope": [
@@ -141330,6 +142455,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Loading what this grant means": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Loading what was read off the document": {
@@ -142918,6 +144052,15 @@
       "apps/web/components"
     ]
   },
+  "Loop body": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Loop cannot be longer than 50 characters": {
     "sites": 3,
     "scope": [
@@ -143122,6 +144265,15 @@
       "routes/agent-control"
     ]
   },
+  "Lowest wins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Lumper": {
     "sites": 1,
     "scope": [
@@ -143206,12 +144358,14 @@
     ]
   },
   "MC number": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/carrier",
       "routes/customer",
       "routes/desk",
@@ -143882,6 +145036,28 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Makes a field, an input or a new name take every value of a range or list.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Makes a field, an input or a new name take many values in a property: `vary shipment.weight in 1 lb..40_000 lb`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "Makes this reason visible to customers in the portal.": {
@@ -145037,7 +146213,7 @@
     ]
   },
   "Margin": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -145110,7 +146286,7 @@
     ]
   },
   "Margin per stop": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -145128,12 +146304,14 @@
     ]
   },
   "Margins": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/reports"
     ]
   },
   "Margins are tight — review before assigning.": {
@@ -145914,6 +147092,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Match arm": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Match bank receipt": {
@@ -149642,12 +150829,13 @@
     ]
   },
   "Missing": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
@@ -152493,21 +153681,41 @@
     ]
   },
   "Must be at least {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "packages/shared/lib"
+    ]
+  },
+  "Must be at least {0} and below {1}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "packages/shared/lib"
     ]
   },
   "Must be at most {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "packages/shared/lib"
+    ]
+  },
+  "Must be below {0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "packages/shared/lib"
     ]
   },
   "Must be between {0} and {1}": {
@@ -152517,6 +153725,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Must be from {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Must be greater than 0": {
@@ -152529,7 +153746,7 @@
     ]
   },
   "Must be one of {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -152590,6 +153807,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Must fit the input's bounds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "Must go out before the deadline": {
@@ -152989,6 +154215,15 @@
       "go/other"
     ]
   },
+  "Name and description are missing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Name at least one credential to renew": {
     "sites": 1,
     "scope": [
@@ -153159,12 +154394,14 @@
     ]
   },
   "Name is missing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "Name is required": {
@@ -153739,6 +154976,15 @@
       "routes/inbox"
     ]
   },
+  "Named and described": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Named groupings of geography that lane rules and rate matrices are written against": {
     "sites": 1,
     "scope": [
@@ -154233,6 +155479,15 @@
       "routes/desk"
     ]
   },
+  "Needs read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Needs reconnecting": {
     "sites": 1,
     "scope": [
@@ -154270,6 +155525,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Needs the {0} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Needs work": {
@@ -154317,6 +155581,15 @@
       "packages/shared/lib"
     ]
   },
+  "Needs {0} read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "NeedsReview": {
     "sites": 2,
     "scope": [
@@ -154345,7 +155618,7 @@
     ]
   },
   "Negative balance carried forward from prior settlement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -154584,7 +155857,7 @@
     ]
   },
   "Net detention margin": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -155899,7 +157172,7 @@
     ]
   },
   "New report": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -157327,6 +158600,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "No `best` or `worst` in this file is labelled {0}.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "No access policies configured": {
@@ -158828,6 +160112,15 @@
       "routes/shipment"
     ]
   },
+  "No contract or shipment sets this template's inputs yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No conversations match “{0}”": {
     "sites": 1,
     "scope": [
@@ -159909,6 +161202,24 @@
     ],
     "areas": [
       "routes/equipment-type"
+    ]
+  },
+  "No errors": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "No errors against the schema, the rate tables and the charge codes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No escrow accounts yet": {
@@ -161942,6 +163253,15 @@
       "routes/desk"
     ]
   },
+  "No other record shows {0} records, so without {1} on {0} they see none of them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "No other settlements on record.": {
     "sites": 1,
     "scope": [
@@ -162854,6 +164174,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "No read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "No reason for the off-contract rate": {
@@ -164347,6 +165676,24 @@
       "routes/fleet-safety"
     ]
   },
+  "No test bills this charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test calls this function": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "No test is on file for this worker.": {
     "sites": 1,
     "scope": [
@@ -164363,6 +165710,60 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "No test reaches this branch of the if": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test reaches this else branch": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test reaches this match arm": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test reaches this option": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test reaches this refusal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "No test runs this loop's body": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "No tests yet": {
@@ -165458,6 +166859,15 @@
       "routes/factoring-company"
     ]
   },
+  "Non-taxable reimbursement of a driver-paid trip expense": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Non-urgent emails arrive together at 8:00 AM. Urgent ones still come right away.": {
     "sites": 1,
     "scope": [
@@ -165836,6 +167246,15 @@
     "areas": [
       "apps/web/lib",
       "packages/shared/lib"
+    ]
+  },
+  "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Normalize phone": {
@@ -166247,6 +167666,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Not chosen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Not classified": {
@@ -168657,6 +170085,15 @@
       "routes/carrier-monitoring",
       "routes/inbox",
       "routes/intake"
+    ]
+  },
+  "Nothing here can be promoted to an input": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Nothing here yet": {
@@ -172817,6 +174254,15 @@
       "routes/collections"
     ]
   },
+  "Older than the 14-day limit, so it must be resubmitted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Older than {0} hours, past the maximum age the tender gate accepts. Vet the carrier again.": {
     "sites": 1,
     "scope": [
@@ -173977,6 +175423,28 @@
       "routes/ifta-return"
     ]
   },
+  "One method of a `best` or `worst`: its charges are its subtotal, and an option that refuses is out of the running.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "One method of the choice, with the charges it bills.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "One notice per obligation": {
     "sites": 1,
     "scope": [
@@ -174002,6 +175470,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "One of the methods {0} chooses between.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "One of the rates references a jurisdiction that does not exist": {
@@ -174056,6 +175535,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "One of {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "One or both versions not found in the retrieved range": {
@@ -177157,6 +178645,24 @@
       "apps/web/components"
     ]
   },
+  "Only {0} of {1} tests pass ({2}); fix the formula or the tests before submitting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Only {0} of {1} tests pass ({2}); fix the library or its tests before submitting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Op": {
     "sites": 1,
     "scope": [
@@ -180065,6 +181571,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Option": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Optional": {
@@ -183016,6 +184531,15 @@
       "routes/edi"
     ]
   },
+  "Overdue age must be between 60 and 2592000 seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Overdue invoices are charged once per thirty-day period at the customer's late charge rate, after their grace period, as one debit memo per customer per run.": {
     "sites": 1,
     "scope": [
@@ -184087,12 +185611,14 @@
     ]
   },
   "PO number": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "go/other",
       "routes/desk",
       "routes/order"
     ]
@@ -184230,11 +185756,13 @@
     ]
   },
   "PRO number": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/billing-queue",
       "routes/invoice",
       "routes/shipment"
@@ -184676,6 +186204,25 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Page access": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "apps/web/config"
+    ]
+  },
+  "Page access could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Page by a cursor or an offset, not both": {
@@ -185774,7 +187321,7 @@
     ]
   },
   "Part of Tariff's standard library.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -190749,7 +192296,7 @@
     ]
   },
   "Personal": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -190761,6 +192308,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/dispatch-console",
+      "routes/reports",
       "routes/shipment",
       "routes/worker"
     ]
@@ -192478,6 +194026,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Pins {0, plural, one {# library} other {# libraries}} at the newest approved version": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Pipeline state": {
@@ -195801,6 +197358,15 @@
       "routes/shipment-tracking-public"
     ]
   },
+  "Preview a screen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Preview and submit a policy-controlled credit, reversal, or credit-and-rebill flow.": {
     "sites": 1,
     "scope": [
@@ -198016,7 +199582,7 @@
     ]
   },
   "Profitability estimate": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -198186,6 +199752,37 @@
       "routes/collections"
     ]
   },
+  "Promote all {1} uses of {0} to an input": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Promote to input": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Promote {0} to an input": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Promoted": {
     "sites": 3,
     "scope": [
@@ -198312,6 +199909,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Property": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Proposal": {
@@ -200382,6 +201988,15 @@
       "routes/org-structure"
     ]
   },
+  "Put the cursor on a name to find its references": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Put the customer on hold when open receivables go over the credit limit, warn at 90% of it, and lift the hold once they are paid back under. An automatic hold stops new shipments but not billing.": {
     "sites": 1,
     "scope": [
@@ -202298,6 +203913,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "Ranking carriers by margin needs access to margins": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Rate": {
@@ -204446,12 +206070,13 @@
     ]
   },
   "Read": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "apps/web/components",
       "packages/shared/lib",
       "routes/admin",
       "routes/agent-control",
@@ -205577,11 +207202,12 @@
     ]
   },
   "Reads": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -205934,6 +207560,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Ready to submit for review": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Ready to trade": {
@@ -207876,6 +209511,15 @@
       "go/other"
     ]
   },
+  "Reconciliation status must be Unmatched, MappingRequired, Matched or Variance": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Reconciliation summary": {
     "sites": 1,
     "scope": [
@@ -209429,6 +211073,15 @@
       "routes/desk"
     ]
   },
+  "Records on this screen": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Records per change": {
     "sites": 1,
     "scope": [
@@ -210107,6 +211760,15 @@
       "apps/web/components"
     ]
   },
+  "Refactorings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Reference": {
     "sites": 36,
     "scope": [
@@ -210307,6 +211969,24 @@
       "go/other"
     ]
   },
+  "Reference only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Reference only — the rest needs {0} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Reference the clause this policy encodes, so a dispute can cite it.": {
     "sites": 1,
     "scope": [
@@ -210341,6 +212021,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Reference view": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Reference:": {
@@ -210396,6 +212085,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "References to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Referred on": {
@@ -210597,11 +212295,12 @@
     ]
   },
   "Refusal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "packages/shared/lib"
     ]
   },
@@ -210635,11 +212334,12 @@
     ]
   },
   "Refused": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
@@ -210792,6 +212492,15 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other"
+    ]
+  },
+  "Regions no test reaches": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Register a card so imported statements and hand-keyed purchases can be tied to the driver and unit that fuelled with it.": {
@@ -213275,6 +214984,15 @@
       "routes/reports"
     ]
   },
+  "Remove unavailable fields": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Remove value": {
     "sites": 1,
     "scope": [
@@ -213482,11 +215200,12 @@
     ]
   },
   "Rename": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox"
     ]
   },
@@ -216348,7 +218067,7 @@
     ]
   },
   "Required": {
-    "sites": 40,
+    "sites": 41,
     "scope": [
       "go",
       "ts"
@@ -224397,7 +226116,7 @@
     ]
   },
   "SCAC": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -225890,11 +227609,12 @@
     ]
   },
   "Save as test": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/formula-template"
     ]
   },
@@ -227359,6 +229079,28 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Say which values {0} takes, as in {1}: a new name has no type of its own": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "Say which values {0} takes, as in {1}: only a `Bool`, an enum or an input with a constraint can leave out `in`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "Say who is being put on the position": {
@@ -229020,6 +230762,15 @@
       "go/other"
     ]
   },
+  "Screen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Screening": {
     "sites": 2,
     "scope": [
@@ -229027,6 +230778,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Screens this affects": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Script": {
@@ -230922,6 +232682,15 @@
       "routes/billing-queue"
     ]
   },
+  "See what a person holding only this role would need and see on a screen, before you save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "See what failed": {
     "sites": 1,
     "scope": [
@@ -230938,6 +232707,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "See what this screen needs and what each role sees on it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "See whether a driver is on the portal and the invitations sent": {
@@ -237548,7 +239326,7 @@
       "routes/agent-control"
     ]
   },
-  "Sets a field of the sample record or an input for this test.": {
+  "Sets a field of the sample record or an input for this test, or for every case of a property.": {
     "sites": 2,
     "scope": [
       "go",
@@ -242025,6 +243803,15 @@
       "routes/worker"
     ]
   },
+  "Show {0} in the source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Show {0} more": {
     "sites": 1,
     "scope": [
@@ -242132,6 +243919,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Shown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Shown as": {
@@ -243723,6 +245519,17 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Skips the cases of a property where a condition is false; it is read before the tariff runs, so it can't read the bill.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "Skips the snapshot cache and always calls the provider, even when the current snapshot is still fresh.": {
@@ -245779,15 +247586,6 @@
     ],
     "areas": [
       "routes/rate-zone"
-    ]
-  },
-  "Space": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Space-separated scopes requested during authentication.": {
@@ -250942,6 +252740,15 @@
       "packages/shared/components"
     ]
   },
+  "Submitted recently": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Submitted to the base jurisdiction": {
     "sites": 1,
     "scope": [
@@ -250949,6 +252756,24 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Submitted {0, plural, one {# day} other {# days}} ago; decide soon or it expires at 14": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Submitted {0, plural, one {# day} other {# days}} ago; older than the 14-day limit, so it must be resubmitted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Submitted {0}": {
@@ -253997,6 +255822,15 @@
       "routes/order"
     ]
   },
+  "Team per-loaded-mile rate split evenly between both drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Team player": {
     "sites": 1,
     "scope": [
@@ -255816,7 +257650,7 @@
       "routes/formula-template"
     ]
   },
-  "Tests membership in a list or range, and names the list a `for` walks.": {
+  "Tests membership in a list or range, names the list a `for` walks, and gives the values a `vary` takes or the target a monotone `expect` follows.": {
     "sites": 2,
     "scope": [
       "go",
@@ -255835,6 +257669,46 @@
     ],
     "areas": [
       "apps/web/components",
+      "go/other"
+    ]
+  },
+  "Tests reach every region": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "go/other"
+    ]
+  },
+  "Tests reach {0, plural, one {the file's one region} other {all # regions}}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tests reach {0} of {1} regions": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "go/other"
+    ]
+  },
+  "Tests reach {0} of {1} regions; no test runs the rest": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "go/other"
     ]
   },
@@ -259603,6 +261477,15 @@
       "routes/desk"
     ]
   },
+  "The case refused to rate: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The case totals come from the log. These are the establishment figures it cannot supply: how many people worked here and for how many hours.": {
     "sites": 1,
     "scope": [
@@ -259862,6 +261745,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The choice's label, as written after `best` or `worst`.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "The chosen AI provider is not enabled for {0}": {
@@ -260488,6 +262382,50 @@
     ]
   },
   "The constant {0} is defined in terms of itself": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The constraint is written here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The constraint on {0} bounds each item of the list, not the list: say which lists it takes, as in {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The constraint on {0} lists the values it takes, {1}, so vary it over a list of them, or leave out `in` to take them all": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The constraint on {0}, {1}, is open at one end, so give it a range: {2}": {
     "sites": 2,
     "scope": [
       "go",
@@ -263365,6 +265303,15 @@
       "apps/web/lib"
     ]
   },
+  "The file has no branches, charges or refusals to reach": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The file imported with nothing in it, or every line was rejected. Import it again once it has rows.": {
     "sites": 1,
     "scope": [
@@ -263660,6 +265607,17 @@
     ]
   },
   "The first one is here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The first other statement": {
     "sites": 2,
     "scope": [
       "go",
@@ -264479,6 +266437,15 @@
       "rules/tariff"
     ]
   },
+  "The inputs are declared as in the approved version, so every contract still fits": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The inspections could not be read.": {
     "sites": 1,
     "scope": [
@@ -264914,6 +266881,17 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The label of the option the last evaluation of the `best` or `worst` with this label kept, or `none` when it was not reached or every option refused.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "The label.": {
@@ -265883,15 +267861,6 @@
     "areas": [
       "routes/accounting-mapping",
       "routes/admin"
-    ]
-  },
-  "The margin floor and pay ceiling a rate agreement sets against the sell price": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "The market area this end covers": {
@@ -267292,6 +269261,28 @@
       "go/other"
     ]
   },
+  "The option {0} bills no charge on any path, so it is always $0 and `best` always picks it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The option {0} bills no charge on any path, so it is always $0 and `worst` picks it only when every other option bills $0 or less": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The order could not be saved": {
     "sites": 1,
     "scope": [
@@ -268296,6 +270287,15 @@
       "rules/tariff"
     ]
   },
+  "The preview and runs are refused until they are removed or your access changes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "The preview could not be drawn": {
     "sites": 1,
     "scope": [
@@ -268303,6 +270303,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The preview could not be worked out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The preview couldn't be compiled": {
@@ -268851,6 +270860,39 @@
       "routes/accounting-sync"
     ]
   },
+  "The range reaches {0}, but the constraint on {2} takes only values below {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The range reaches {0}, past {1}, where the constraint on {2} ends": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The range starts at {0}, below {1}, where the constraint on {2} starts": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The rank-1 carrier has been offered the move.": {
     "sites": 1,
     "scope": [
@@ -269315,7 +271357,7 @@
     ]
   },
   "The rating was refused: {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -271063,6 +273105,51 @@
       "routes/worker"
     ]
   },
+  "The screen asks for fields beyond the reference view, which need their read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The screen lists or opens these records itself, which needs their read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The screen shows no kind of record the permission registry knows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The screen shows these only through their reference view.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The screen's route, or an endpoint it calls, checks this.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The script is empty. Send the Python to run.": {
     "sites": 1,
     "scope": [
@@ -271825,6 +273912,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The source does not check": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The source has no test named {0}": {
@@ -272946,12 +275042,14 @@
     ]
   },
   "The tests could not run": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
     ]
   },
   "The tests could not run: {0}": {
@@ -272961,6 +275059,26 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The tests run once the source checks": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tests used up the file's step budget ({0, plural, one {# step} other {# steps}}) before they finished": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "The tests wait for a clean check": {
@@ -273850,6 +275968,17 @@
       "go/other"
     ]
   },
+  "The values a `vary` takes are worked out once, before any case, so they can't read {0}, which varies": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The values are not valid.": {
     "sites": 1,
     "scope": [
@@ -274151,6 +276280,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The window must be between 1 and 720 hours": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "The window must be between 1 and {0} days": {
@@ -274890,6 +277028,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "There is no declaration to go to here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "There is no delivery setting to test": {
@@ -275772,6 +277919,17 @@
       "rules/tariff"
     ]
   },
+  "This `{0}` is missing its closing brace": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This accessorial is already priced by the agreement": {
     "sites": 1,
     "scope": [
@@ -276083,7 +278241,7 @@
       "go/other"
     ]
   },
-  "This assignment is outside the contract's margin terms: {0}": {
+  "This assignment is outside the contract's margin terms; override the margin floor to assign it anyway": {
     "sites": 1,
     "scope": [
       "go"
@@ -279008,6 +281166,17 @@
       "routes/carrier-tracking-public"
     ]
   },
+  "This list is empty, so no value can satisfy the constraint": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This list is missing its closing `]`": {
     "sites": 2,
     "scope": [
@@ -279138,6 +281307,16 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "This location is not a screen the page access manifest describes.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "This looks like a repeating lane": {
@@ -280107,7 +282286,40 @@
       "go/other"
     ]
   },
+  "This range holds no values a property can vary over": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This range is empty: its start isn't below its end": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "This range is empty: its start {0} is above its end {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "This range is empty: nothing is at least {0} and below {1}": {
     "sites": 2,
     "scope": [
       "go",
@@ -280693,6 +282905,15 @@
     ]
   },
   "This scope is not enforced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This screen would not open, or would open empty: its route or the records it lists need a permission this reader does not hold.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -281308,6 +283529,28 @@
       "routes/formula-template"
     ]
   },
+  "This tariff has no choice labelled {0}. Did you mean {1}?": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "This tariff has no choice labelled {0}: `chosen(…)` reads a `best` or `worst` by its label": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This tariff has no input named {0}": {
     "sites": 3,
     "scope": [
@@ -281685,6 +283928,17 @@
       "go/other"
     ]
   },
+  "This vary takes no values": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This verification has already been overridden": {
     "sites": 1,
     "scope": [
@@ -281721,7 +283975,7 @@
       "go/other"
     ]
   },
-  "This version's inputs no longer accept what {0} already set: {1}. Keep the inputs those contracts use, or change the contracts first": {
+  "This version's inputs no longer accept what {0, plural, one {# contract or shipment} other {# contracts and shipments}} already set: {1}. Keep the inputs those contracts use, or change the contracts first": {
     "sites": 1,
     "scope": [
       "go"
@@ -282091,6 +284345,17 @@
     "areas": [
       "apps/web/types",
       "routes/holiday"
+    ]
+  },
+  "This {0} already has an option labelled {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "This {0} company is already connected to another Trenova organization. Disconnect it there first.": {
@@ -287172,6 +289437,15 @@
       "go/other"
     ]
   },
+  "Transaction set must be 204, 210, 214, 990, 997 or 999": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Transaction set purpose code": {
     "sites": 1,
     "scope": [
@@ -289222,6 +291496,15 @@
       "routes/customer"
     ]
   },
+  "Turn on Vim keys": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turn on if the employer reported any accidents; the count is asked next.": {
     "sites": 1,
     "scope": [
@@ -290533,7 +292816,7 @@
     ]
   },
   "Unavailable": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -290542,7 +292825,17 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/desk",
-      "routes/factoring"
+      "routes/factoring",
+      "routes/reports"
+    ]
+  },
+  "Unavailable at your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Uncancel": {
@@ -291765,6 +294058,15 @@
   },
   "Unknown status": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Unknown status {0}": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -296215,6 +298517,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Varied values": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Vector size": {
     "sites": 2,
     "scope": [
@@ -297254,6 +299565,15 @@
     ],
     "areas": [
       "routes/bank-receipt-batch"
+    ]
+  },
+  "View as": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "View bank receipt work queue": {
@@ -298436,6 +300756,51 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Vim": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys are on. jj or jk leaves insert mode and Space is the leader.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys could not be loaded. The editor's own keys still work.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Vim keys in the formula editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
+  "Vim keys · code editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Violates hazmat segregation rule \"{0}\" ({1}) — conflicts with \"{2}\"": {
@@ -304225,6 +306590,15 @@
       "routes/edi"
     ]
   },
+  "What this screen needs": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What this shipment contributes to the invoice total.": {
     "sites": 1,
     "scope": [
@@ -309518,6 +311892,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Withheld fields": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Withheld from every qualifying settlement.": {
     "sites": 1,
     "scope": [
@@ -309651,6 +312034,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Without {0} on {1}, its {2} stay withheld there too: they rank above this role's sensitivity ceiling.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Word document": {
@@ -311521,6 +313913,15 @@
       "routes/formula-template"
     ]
   },
+  "Written": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Written Off": {
     "sites": 1,
     "scope": [
@@ -312603,6 +315004,15 @@
       "go/other"
     ]
   },
+  "You cannot open this report's data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "You cannot read this agent": {
     "sites": 1,
     "scope": [
@@ -312682,6 +315092,24 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "You did not submit this library": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "You did not submit this template": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You do not have access to any fields of {0}": {
@@ -313155,6 +315583,15 @@
       "go/other"
     ]
   },
+  "You pay more than you bill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/detention-desk"
+    ]
+  },
   "You raised this credit memo, so someone else must approve and post it": {
     "sites": 1,
     "scope": [
@@ -313228,6 +315665,24 @@
     ]
   },
   "You submitted this adjustment, so someone else must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "You submitted this library; someone else must approve it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "You submitted this template; someone else must approve it": {
     "sites": 1,
     "scope": [
       "go"
@@ -313420,6 +315875,15 @@
     ]
   },
   "You've used your AI allowance for this period.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "You, with your own roles": {
     "sites": 1,
     "scope": [
       "ts"
@@ -314614,11 +317078,13 @@
     ]
   },
   "Your role does not include margins.": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/cost-control",
+      "routes/dispatch-control",
       "routes/rate-agreement"
     ]
   },
@@ -315207,6 +317673,17 @@
       "rules/tariff"
     ]
   },
+  "`assume` runs before the tariff rates, so it can't read the bill ({0}): narrow the cases by the record, the inputs and the varied values": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "`charge(…)` reads a line of the bill, so it can only be used inside a tariff's `test` block": {
     "sites": 2,
     "scope": [
@@ -315240,7 +317717,40 @@
       "rules/tariff"
     ]
   },
-  "`expect` can only be used inside a `test` block": {
+  "`chosen(…)` reads which option a choice kept, so it can only be used inside a tariff's `test` block": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`chosen(…)` takes a choice's label in quotes, as in `chosen(\"Linehaul\")`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`chosen(…)` takes one choice label in quotes, as in `chosen(\"Linehaul\")`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`expect` can only be used inside a `test` or `property` block": {
     "sites": 2,
     "scope": [
       "go",
@@ -315262,7 +317772,7 @@
       "rules/tariff"
     ]
   },
-  "`given` can only be used inside a `test` block": {
+  "`given` can only be used inside a `test` or `property` block": {
     "sites": 2,
     "scope": [
       "go",
@@ -315318,6 +317828,17 @@
     ]
   },
   "`{0}` can only be used at the top level of a file, not inside a block": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "`{0}` can only be used inside a `property` block": {
     "sites": 2,
     "scope": [
       "go",
@@ -315538,7 +318059,7 @@
     ]
   },
   "a binding": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -316149,12 +318670,23 @@
       "rules/tariff"
     ]
   },
-  "accounting date": {
+  "accent": {
     "sites": 1,
     "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "accounting date": {
+    "sites": 3,
+    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/journal-review"
     ]
   },
@@ -316230,6 +318762,16 @@
       "apps/web/components"
     ]
   },
+  "address": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/pagemanifest",
+      "go/other"
+    ]
+  },
   "against approved v{0}": {
     "sites": 1,
     "scope": [
@@ -316246,6 +318788,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "agent definition": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "agents": {
@@ -316273,6 +318824,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "allow consolidation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "amount must be greater than zero": {
@@ -316336,7 +318896,7 @@
     ]
   },
   "an input": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -316376,11 +318936,12 @@
     ]
   },
   "and {0} more": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/benefits",
       "routes/detention-desk",
       "routes/org-structure"
@@ -316434,7 +318995,7 @@
     ]
   },
   "any value": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -316557,6 +319118,28 @@
       "routes/reports"
     ]
   },
+  "at least {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "at least {0} and below {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "at most": {
     "sites": 1,
     "scope": [
@@ -316564,6 +319147,17 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "at most {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "at once": {
@@ -316731,7 +319325,7 @@
     ]
   },
   "below {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -316768,6 +319362,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "bill to name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "billerId is not a user in this organization. Leave it out to assign the person who asked, or use an id a tool returned; never make one up": {
@@ -316920,6 +319523,15 @@
       "apps/web/components"
     ]
   },
+  "cadence months": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "calling tools it doesn't hold": {
     "sites": 1,
     "scope": [
@@ -316983,6 +319595,15 @@
       "go/other"
     ]
   },
+  "carrier": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "carrier settlement": {
     "sites": 1,
     "scope": [
@@ -316999,6 +319620,33 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "case number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "case year": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "category": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "change how they're split": {
@@ -317059,6 +319707,28 @@
       "routes/accounting-inbound"
     ]
   },
+  "chosen needs a choice's label": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "chosen needs a choice's label, not {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "chosen · {0} always on": {
     "sites": 1,
     "scope": [
@@ -317088,6 +319758,15 @@
       "go/other"
     ]
   },
+  "code": {
+    "sites": 22,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "code {0}": {
     "sites": 1,
     "scope": [
@@ -317095,6 +319774,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "color": {
+    "sites": 5,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "coming back later": {
@@ -317131,6 +319819,24 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "consolidation priority": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "content URL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "cost event": {
@@ -317232,6 +319938,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "credential type ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "credential types": {
     "sites": 1,
     "scope": [
@@ -317283,6 +319998,15 @@
   },
   "current_view": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "customer": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -317404,6 +320128,15 @@
       "rules/tariff"
     ]
   },
+  "definition": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "degree Celsius": {
     "sites": 2,
     "scope": [
@@ -317435,8 +320168,17 @@
       "routes/desk"
     ]
   },
-  "description": {
+  "delivery": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "description": {
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -317454,12 +320196,23 @@
     ]
   },
   "destination city": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
+    ]
+  },
+  "destination state": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "detention disputes": {
@@ -317517,6 +320270,15 @@
       "routes/inbox"
     ]
   },
+  "dispute status": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "distance": {
     "sites": 2,
     "scope": [
@@ -317544,6 +320306,24 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "document category": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "document classification": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "document not found": {
@@ -317638,6 +320418,33 @@
       "packages/shared/lib"
     ]
   },
+  "due at": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "due date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "due days after assignment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "due now": {
     "sites": 1,
     "scope": [
@@ -317655,6 +320462,15 @@
     "areas": [
       "routes/desk",
       "routes/shipment"
+    ]
+  },
+  "duration minutes": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "e.g. (555) 123-4567": {
@@ -319887,6 +322703,33 @@
       "go/other"
     ]
   },
+  "enabled for inbound": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "enabled for outbound": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "end date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "endDate must not be before startDate": {
     "sites": 1,
     "scope": [
@@ -319923,12 +322766,32 @@
       "go/other"
     ]
   },
-  "equipment type": {
+  "entry number": {
     "sites": 1,
     "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "entry type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "equipment type": {
+    "sites": 2,
+    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "packages/shared/lib"
     ]
   },
@@ -320101,6 +322964,24 @@
       "routes/invoice"
     ]
   },
+  "exclusive consolidation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "expires at": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "expires {0}": {
     "sites": 1,
     "scope": [
@@ -320119,7 +323000,25 @@
       "go/other"
     ]
   },
+  "external ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "extraction accuracy drift": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "facility type": {
     "sites": 1,
     "scope": [
       "go"
@@ -320138,6 +323037,15 @@
     ]
   },
   "factoring entry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "failed at": {
     "sites": 1,
     "scope": [
       "go"
@@ -320171,6 +323079,33 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "file name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "file size": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "file type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "fill every slot to ask": {
@@ -320227,6 +323162,15 @@
       "routes/agent-control"
     ]
   },
+  "first name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "first {0} shown": {
     "sites": 1,
     "scope": [
@@ -320236,6 +323180,15 @@
       "routes/reports"
     ]
   },
+  "fiscal period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "fiscal periods": {
     "sites": 1,
     "scope": [
@@ -320243,6 +323196,24 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "fiscal year": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "fleet code": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "fleet codes": {
@@ -320311,6 +323282,15 @@
       "routes/agent-control"
     ]
   },
+  "fragile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "free time": {
     "sites": 1,
     "scope": [
@@ -320336,6 +323316,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "freight class": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "from and to must be version numbers": {
@@ -320394,7 +323383,7 @@
     ]
   },
   "from {0} to {1}": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -320441,6 +323430,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "fuel type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "gallon": {
@@ -320519,6 +323517,15 @@
       "routes/inbox"
     ]
   },
+  "hazardous material": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "head v{0}": {
     "sites": 1,
     "scope": [
@@ -320575,6 +323582,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "icon": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "identical to production": {
@@ -320777,6 +323793,15 @@
     ]
   },
   "invoice": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "invoice date": {
     "sites": 1,
     "scope": [
       "go"
@@ -320792,6 +323817,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "invoice number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "invoice write-off": {
@@ -320822,6 +323856,15 @@
       "routes/inbox"
     ]
   },
+  "issued at": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "issued {0}": {
     "sites": 1,
     "scope": [
@@ -320838,6 +323881,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "items": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "items need": {
@@ -320946,6 +323998,15 @@
       "rules/tariff"
     ]
   },
+  "kind": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "kind must be pdf or thumbnail": {
     "sites": 1,
     "scope": [
@@ -320953,6 +324014,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "label": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "lanes priced": {
@@ -320972,6 +324042,24 @@
     "areas": [
       "routes/accounting-drift",
       "routes/accounting-inbound"
+    ]
+  },
+  "last four": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "last name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "last ran {0}": {
@@ -321121,6 +324209,15 @@
       "api/handlers"
     ]
   },
+  "linear feet per unit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "link it by sender": {
     "sites": 1,
     "scope": [
@@ -321159,6 +324256,15 @@
       "api/handlers"
     ]
   },
+  "loading instructions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "local worker mapping differs from Samsara external ID mapping": {
     "sites": 1,
     "scope": [
@@ -321177,6 +324283,15 @@
       "packages/shared/lib"
     ]
   },
+  "location category": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "locations": {
     "sites": 1,
     "scope": [
@@ -321186,6 +324301,15 @@
       "packages/shared/lib"
     ]
   },
+  "logo URL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "lowercase": {
     "sites": 1,
     "scope": [
@@ -321193,6 +324317,24 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "machine name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "make": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "manual journal": {
@@ -321213,14 +324355,31 @@
       "go/other"
     ]
   },
-  "margin {0}%": {
-    "sites": 2,
+  "margin {0}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "routes/shipment"
+      "apps/web/lib"
+    ]
+  },
+  "margin {0}%": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "margins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
     ]
   },
   "matched by radius": {
@@ -321250,6 +324409,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "max quantity per shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "max temperature": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "maximum active api keys reached": {
@@ -321297,6 +324474,15 @@
       "routes/inbox"
     ]
   },
+  "method": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "metre": {
     "sites": 2,
     "scope": [
@@ -321339,6 +324525,15 @@
       "apps/web/components"
     ]
   },
+  "min temperature": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "minute": {
     "sites": 2,
     "scope": [
@@ -321357,6 +324552,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "model": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "money": {
@@ -321406,6 +324610,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "name": {
+    "sites": 29,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "name@company.com": {
@@ -321808,7 +325021,7 @@
     ]
   },
   "nothing waived": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -321825,6 +325038,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "number": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "occurred at": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "of 100 · adequate": {
@@ -322149,6 +325380,17 @@
       "go/other"
     ]
   },
+  "one of {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "only proposes": {
     "sites": 1,
     "scope": [
@@ -322192,6 +325434,15 @@
     ],
     "areas": [
       "routes/ar-open-items"
+    ]
+  },
+  "opened at": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "openid email profile": {
@@ -322330,13 +325581,33 @@
       "go/other"
     ]
   },
-  "origin city": {
+  "origin": {
     "sites": 1,
     "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "origin city": {
+    "sites": 2,
+    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other"
+    ]
+  },
+  "origin state": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "origin → destination · {0} loads": {
@@ -322346,6 +325617,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "original name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "other messages": {
@@ -322476,6 +325756,15 @@
       "apps/web/components"
     ]
   },
+  "passing score": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "past the pickup window": {
     "sites": 1,
     "scope": [
@@ -322492,6 +325781,24 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "payment date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "payment method": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "pays {0}": {
@@ -322568,6 +325875,51 @@
       "packages/shared/lib"
     ]
   },
+  "period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "period end": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "period number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "period start": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "personal details": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/lib"
+    ]
+  },
   "pgvector is installed, but the tables that hold the index were never created. Run this on the server; running services notice within five minutes:": {
     "sites": 1,
     "scope": [
@@ -322635,6 +325987,15 @@
       "go/other"
     ]
   },
+  "plan type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "portal.example.com": {
     "sites": 1,
     "scope": [
@@ -322665,6 +326026,24 @@
       "rules/tariff"
     ]
   },
+  "profile field": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "profile pic URL": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "profile: {0}{1}": {
     "sites": 1,
     "scope": [
@@ -322672,6 +326051,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "provider": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "provider has no lookup capability": {
@@ -322683,7 +326071,25 @@
       "go/other"
     ]
   },
+  "provider message ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "publish invalidation request is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "purchased at": {
     "sites": 1,
     "scope": [
       "go"
@@ -322711,7 +326117,7 @@
     ]
   },
   "quote {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -322773,6 +326179,15 @@
       "routes/inbox"
     ]
   },
+  "rate unit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "rates raised up to {0}%": {
     "sites": 1,
     "scope": [
@@ -322827,6 +326242,15 @@
       "routes/agent-control"
     ]
   },
+  "reason code": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "recipient@example.com": {
     "sites": 1,
     "scope": [
@@ -322854,8 +326278,35 @@
       "routes/agent-control"
     ]
   },
+  "reference": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "reference number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "rendering this invoice's PDF would email it to the customer at once, as their billing profile sends invoices when the PDF is made; use invoice_send, which a person approves, instead": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "renewal window days": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -322910,6 +326361,24 @@
       "go/other"
     ]
   },
+  "request number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "requested accounting date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "requested {0}": {
     "sites": 1,
     "scope": [
@@ -322919,6 +326388,15 @@
       "routes/worker"
     ]
   },
+  "required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "required current": {
     "sites": 1,
     "scope": [
@@ -322926,6 +326404,60 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "required for driver types": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "requires acknowledgement": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "requires appointment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "requires document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "requires number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "resolved at": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "returns outside text": {
@@ -322981,6 +326513,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "row count": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "row limit reached": {
@@ -323091,6 +326632,15 @@
       "go/other"
     ]
   },
+  "sent at": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "service failure reason codes": {
     "sites": 1,
     "scope": [
@@ -323118,7 +326668,25 @@
       "routes/desk"
     ]
   },
+  "settlement number": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "settlement quote request is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "settlement status": {
     "sites": 1,
     "scope": [
       "go"
@@ -323283,6 +326851,15 @@
       "routes/desk"
     ]
   },
+  "sort order": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "specificity {0}": {
     "sites": 1,
     "scope": [
@@ -323339,6 +326916,33 @@
       "routes/factoring-company"
     ]
   },
+  "stackable": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "start date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "start minute": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "startDate and endDate must be provided together": {
     "sites": 1,
     "scope": [
@@ -323382,6 +326986,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "status": {
+    "sites": 35,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "status must be Active, Ended, Stopped or Failed": {
@@ -323440,6 +327053,24 @@
       "rules/tariff"
     ]
   },
+  "subject ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "subject type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "sum of {0}": {
     "sites": 1,
     "scope": [
@@ -323474,6 +327105,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "system": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "tables.{0}[{1}] = {2}": {
@@ -323551,7 +327191,7 @@
     ]
   },
   "template": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -324060,6 +327700,15 @@
       "go/other"
     ]
   },
+  "thumbnail URL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "thumbs up and down": {
     "sites": 1,
     "scope": [
@@ -324078,6 +327727,24 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "timezone": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "title": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "to answer": {
@@ -324242,6 +327909,15 @@
       "apps/web/lib"
     ]
   },
+  "tool name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "tool {0}": {
     "sites": 1,
     "scope": [
@@ -324294,6 +327970,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "tractor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "tractors": {
@@ -324350,6 +328035,15 @@
       "routes/agent-control"
     ]
   },
+  "trigger": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "true or false": {
     "sites": 6,
     "scope": [
@@ -324359,6 +328053,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "type": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "type it as plain text": {
@@ -324521,6 +328224,15 @@
       "routes/agent-control"
     ]
   },
+  "username": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "users": {
     "sites": 1,
     "scope": [
@@ -324566,7 +328278,54 @@
       "apps/web/components"
     ]
   },
+  "validity months": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "vary and assume only work inside a property": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "vendor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "vendor city": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "verbal warning": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "version label": {
     "sites": 1,
     "scope": [
       "go"
@@ -324800,6 +328559,15 @@
       "rules/tariff"
     ]
   },
+  "weight per unit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "weight {0}": {
     "sites": 2,
     "scope": [
@@ -324825,6 +328593,17 @@
     ],
     "areas": [
       "routes/ar-open-items"
+    ]
+  },
+  "what a property reads from the bill": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "what the shipment would be": {
@@ -324890,6 +328669,15 @@
       "routes/scheduling"
     ]
   },
+  "whole name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "width {0} over": {
     "sites": 1,
     "scope": [
@@ -324951,6 +328739,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "worker": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "worker checklists": {
@@ -325224,6 +329021,15 @@
     ]
   },
   "{0, plural, one {# EDI item needs attention} other {# EDI items need attention}}: dead-lettered messages, quarantined files, or overdue acknowledgments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# GraphQL operation} other {# GraphQL operations}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -325595,6 +329401,15 @@
       "apps/web/lib"
     ]
   },
+  "{0, plural, one {# case} other {# cases}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# case} other {# cases}} asked for: {1}": {
     "sites": 1,
     "scope": [
@@ -325602,6 +329417,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# case} other {# cases}}, {1} skipped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# cell can't be edited} other {# cells can't be edited}}": {
@@ -326515,6 +330339,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# field in this report is unavailable to you} other {# fields in this report are unavailable to you}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0, plural, one {# field scored} other {# fields scored}}": {
     "sites": 3,
     "scope": [
@@ -327011,6 +330844,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# kind of record} other {# kinds of record}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# lane in the agreement is not in this sheet and will stop pricing.} other {# lanes in the agreement are not in this sheet and will stop pricing.}}": {
     "sites": 1,
     "scope": [
@@ -327155,6 +330997,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {# linked field shown} other {# linked fields shown}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# linked field withheld} other {# linked fields withheld}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# link} other {# links}}": {
@@ -327712,11 +331572,13 @@
     ]
   },
   "{0, plural, one {# other} other {# others}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/desk"
     ]
   },
@@ -327901,6 +331763,15 @@
     ],
     "areas": [
       "routes/customer-payments"
+    ]
+  },
+  "{0, plural, one {# permission missing} other {# permissions missing}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# person holds} other {# people hold}} this role. Deleting it takes it from them, and anything they could do only through it stops working at once.": {
@@ -328549,6 +332420,15 @@
     ],
     "areas": [
       "routes/onboarding"
+    ]
+  },
+  "{0, plural, one {# screen this affects} other {# screens this affects}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0, plural, one {# second} other {# seconds}}": {
@@ -329259,6 +333139,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# use} other {# uses}}. Choose one to go to it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# value changed} other {# values changed}}": {
@@ -330751,6 +334640,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {Show # unreached region} other {Show # unreached regions}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {Signed out of # session} other {Signed out of # sessions}}": {
     "sites": 1,
     "scope": [
@@ -331538,6 +335436,15 @@
       "apps/web/components"
     ]
   },
+  "{0} (fails at {1})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} (inactive: it can't be billed)": {
     "sites": 2,
     "scope": [
@@ -331574,6 +335481,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} (refuses to rate at {1}: {2})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} (requested)": {
@@ -331628,6 +335544,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} ({1} is {2} at {3} = {4} but {5} at {6})": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} + running": {
@@ -332399,14 +336324,24 @@
       "rules/matrix"
     ]
   },
+  "{0} and {1, plural, one {# more} other {# more}}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} and {1}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "go/other",
       "rules/tariff"
     ]
   },
@@ -332447,6 +336382,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} and {1} overlap: vary one of them": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} and {1} use the same column.": {
@@ -333105,6 +337051,17 @@
       "routes/agent-control"
     ]
   },
+  "{0} can't leave an option of a {1}: each option runs to its end or refuses, and the choice compares what they billed": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} can't name {1}: a constant is camelCase or UPPERCASE, like `dieselBase` or `DIESEL_BASE`": {
     "sites": 2,
     "scope": [
@@ -333488,6 +337445,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} comes before the property's other statements: `vary`, `given` and `assume` set up each case before the tariff rates": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} company {1} is connected through this server's app. Disconnect it before switching to your own app.": {
@@ -334192,6 +338160,17 @@
       "rules/tariff"
     ]
   },
+  "{0} doesn't say what {1} holds: start the list with a value of the type it takes": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} doesn't say what {1} holds: write its type, as in {2}": {
     "sites": 2,
     "scope": [
@@ -334582,6 +338561,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} falls from {1} at {2} to {3} at {4}: it must not fall as {5} grows": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} feasible": {
@@ -335868,7 +339858,7 @@
     ]
   },
   "{0} is a field of the record a tariff rates, so it can't be renamed": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -336066,6 +340056,15 @@
       "go/other"
     ]
   },
+  "{0} is above your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0} is already mapped to {1}": {
     "sites": 1,
     "scope": [
@@ -336132,7 +340131,7 @@
     ]
   },
   "{0} is already {1}; pick another name": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -336454,7 +340453,7 @@
     ]
   },
   "{0} is never used": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -336462,6 +340461,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} is no longer in the catalog": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} is no longer ready to move up a tier on this agent": {
@@ -336963,6 +340971,17 @@
       "routes/agent-control"
     ]
   },
+  "{0} is outside its constraint: {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is outside the allowed range": {
     "sites": 1,
     "scope": [
@@ -336970,6 +340989,17 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "{0} is outside the constraint on {1}, {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} is overloaded · retrying": {
@@ -337114,6 +341144,17 @@
       "routes/agent-control"
     ]
   },
+  "{0} is set by a `given` in this property, so it can't also vary: remove one of them": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is set by this system and cannot be overridden": {
     "sites": 1,
     "scope": [
@@ -337187,6 +341228,28 @@
     ]
   },
   "{0} is used before it is defined. Move this below the line that defines it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is varied over a list, which has no order: vary it over a range to compare along it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is varied twice: each value is varied once per property": {
     "sites": 2,
     "scope": [
       "go",
@@ -337520,6 +341583,39 @@
       "rules/tariff"
     ]
   },
+  "{0} is {1}, which has no order, so it can't be varied over a range: list its values instead, as in {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is {1}, which has no order, so it can't rise or fall: compare a number, money, a quantity, a percent or a date": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is {1}, which has no order, so its constraint can't be a range: list the values it may take, as in `where [a, b]`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is {1}, which has no property or method {2}": {
     "sites": 2,
     "scope": [
@@ -337532,6 +341628,17 @@
     ]
   },
   "{0} is {1}, which isn't known before rating: a constant or default must be computed from literals and other constants": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is {1}: a record input, or a list of records, takes no `where` constraint": {
     "sites": 2,
     "scope": [
       "go",
@@ -337741,6 +341848,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} isn't varied in this property: vary it over a range first, as in {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} issued": {
@@ -338159,6 +342277,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} may be empty, and an empty value has no place in an order: give it a fallback": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} may be empty, so it can't be used as {1} here. Give it a fallback, bind it with `if let`, or refuse to rate without it": {
@@ -338613,6 +342742,17 @@
       "routes/admin"
     ]
   },
+  "{0} must be at least {1} and below {2}; {3} is outside it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} must be at least {1} characters": {
     "sites": 1,
     "scope": [
@@ -338620,6 +342760,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "{0} must be at least {1}; {2} is below it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} must be at most {1}": {
@@ -338640,6 +342791,28 @@
       "go/other"
     ]
   },
+  "{0} must be at most {1}; {2} is above it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} must be below {1}; {2} isn't": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} must be between {1} and {2} columns wide": {
     "sites": 1,
     "scope": [
@@ -338658,7 +342831,29 @@
       "go/other"
     ]
   },
+  "{0} must be from {1} to {2}; {3} is outside it": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} must be money, not {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} must be one of {1}; {2} isn't": {
     "sites": 2,
     "scope": [
       "go",
@@ -338685,6 +342880,17 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} needs a label, as in {1}: it names the choice on the trace and in `chosen(…)`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} needs a trusted provider. It's assigned here but will be skipped.": {
@@ -338740,6 +342946,17 @@
       "rules/tariff"
     ]
   },
+  "{0} needs at least two options to choose between: one `option \"Label\"` block for each method": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} needs text, not {1}": {
     "sites": 2,
     "scope": [
@@ -338749,6 +342966,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} needs the {1} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} needs two whole numbers, but {1} is {2} and {3} is {4}. Round first with {5}": {
@@ -338791,6 +343017,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} needs {1} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} negative margin": {
@@ -339450,6 +343685,15 @@
       "routes/shipment"
     ]
   },
+  "{0} of {1} pass": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} of {1} passing": {
     "sites": 2,
     "scope": [
@@ -339862,16 +344106,18 @@
     ]
   },
   "{0} on {1}": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/desk",
-      "routes/holiday"
+      "routes/holiday",
+      "routes/reports"
     ]
   },
   "{0} on {1}, opens in a new tab": {
@@ -340390,7 +344636,7 @@
     ]
   },
   "{0} put in play": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -340579,6 +344825,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} records show only that one is linked wherever a record they can read links to one ({1}); every field needs {2} on {0}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} records show only their {1} wherever a record they can read links to one ({2}); the rest needs {3} on {0}.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} recovered": {
@@ -340904,6 +345168,17 @@
     "areas": [
       "apps/web/components",
       "routes/shipment"
+    ]
+  },
+  "{0} rises from {1} at {2} to {3} at {4}: it must not rise as {5} grows": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} roles": {
@@ -342205,6 +346480,17 @@
       "apps/web/components"
     ]
   },
+  "{0} varies in this property, so a `given` can't also set it: remove one of them": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} view options": {
     "sites": 2,
     "scope": [
@@ -342239,6 +346525,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} v{1} (v{2} is approved)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} waiting": {
@@ -343855,7 +348150,7 @@
     ]
   },
   "{0}% of exposure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -344282,13 +348577,14 @@
     ]
   },
   "{0}, {1} and {2}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/rules",
+      "go/other",
       "rules/tariff"
     ]
   },
@@ -344387,6 +348683,24 @@
     ]
   },
   "{0}/{1} rules satisfied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0}: chose {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0}: every option refused": {
     "sites": 1,
     "scope": [
       "ts"
@@ -345410,6 +349724,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "· margin": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/dispatch-console"
     ]
   },
   "· margin {0}": {

@@ -386,7 +386,7 @@ impl Checker<'_> {
     fn global_value(&mut self, expr: &Expr, name: &Name, global: &Global) -> Type {
         match global {
             Global::Input { ty, symbol } => {
-                if !matches!(self.body, Body::Top) {
+                if !self.sees_inputs() {
                     self.closed(name, Message::new(message!("an input")));
                     return Type::Error;
                 }

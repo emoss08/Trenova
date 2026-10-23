@@ -445,6 +445,16 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "FuelProgramCurrentRate", Fields: []*gqlexec.Field{
 			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FuelProgramCurrentRate)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
 				Name:      "program",
 				NonNull:   true,
 				HasChild:  true,

@@ -147,7 +147,7 @@ export function BillingQueueReassignChargeDialog({
             {t(
               "{0} of charges on shipment {1}. A payer who gains a share gets a queue item; a payer left with nothing has theirs canceled.",
               formatCurrency(chargeTotal ?? 0),
-              shipment?.proNumber ?? item.shipmentId,
+              shipment?.proNumber ?? item.shipmentId ?? "",
             )}
           </DialogDescription>
         </DialogHeader>

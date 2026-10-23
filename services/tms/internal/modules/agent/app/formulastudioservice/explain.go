@@ -162,10 +162,10 @@ func traceText(
 		fmt.Fprintf(&builder, "[%d] %s\n", index, events[index].describe())
 	}
 	switch {
-	case preview.Bill != nil:
-		builder.WriteString("Bill total: " + preview.Bill.Total.String())
-		for i := range preview.Bill.Lines {
-			line := &preview.Bill.Lines[i]
+	case preview.RatedBill != nil:
+		builder.WriteString("Bill total: " + preview.RatedBill.Total.String())
+		for i := range preview.RatedBill.Lines {
+			line := &preview.RatedBill.Lines[i]
 			fmt.Fprintf(&builder, "\n- %s %s %s: %s",
 				line.Kind, line.Label, line.Code, line.Amount.String())
 		}

@@ -280,6 +280,9 @@ fn bodies(declarer: &Declarer<'_>, state: &mut State, out: &mut ModuleAnalysis) 
             used.extend(std::mem::take(&mut checker.used));
         });
     }
+    used.extend(super::property::properties(
+        declarer, state, &globals, out, &billed, &file_lets,
+    ));
     used.extend(names_read_by_declarations(module));
     unused_globals(declarer, &globals, &used, out);
     if let Some(slot) = state.globals.get_mut(index) {
@@ -415,13 +418,17 @@ fn unused_globals(
     }
 }
 
-/// The labels and codes a file's charges bill, for its tests' `charge(…)`.
+/// The labels and codes a file's charges bill and the labels of its choices, for its tests'
+/// `charge(…)` and `chosen(…)`.
 fn billed(stmts: &[&Stmt]) -> super::checker::Billed {
     let mut out = super::checker::Billed::default();
     for stmt in stmts {
         super::visit::stmt(
             stmt,
             &mut |inner| {
+                if let StmtKind::Choose(choose) = &inner.kind {
+                    out.choices.push(choose.label.text.clone());
+                }
                 if let StmtKind::Charge(charge) = &inner.kind {
                     match charge.label.literal() {
                         Some(label) => out.labels.push(label),

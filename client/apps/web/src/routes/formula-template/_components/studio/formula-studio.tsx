@@ -1,5 +1,7 @@
 import { ActiveEditorProvider } from "@/components/formula-editor/active-editor";
+import { isTestItem } from "@/lib/tariff-outline";
 import { DefinitionDialog } from "@/components/tariff-studio/definition-dialog";
+import { READINESS_KEYS } from "@/components/tariff-studio/readiness";
 import { OutlinePanel } from "@/components/tariff-studio/outline-panel";
 import { REFERENCE_SEARCH_ID } from "@/components/tariff-studio/reference-search";
 import { ExplainTest } from "./rail/explain-test";
@@ -192,9 +194,7 @@ function RailBody() {
     appendToSource(
       newTestBlock(
         "tariff",
-        (check.outline?.items ?? [])
-          .filter((item) => item.kind === "test")
-          .map((item) => item.name),
+        (check.outline?.items ?? []).filter(isTestItem).map((item) => item.name),
         t("a new test"),
       ),
     );
@@ -214,6 +214,7 @@ function RailBody() {
                 source={source}
                 onReveal={reveal}
                 onAddTest={addTest}
+                onSaveAsTest={appendToSource}
                 failureAside={(test) => <ExplainTest key={test.name} name={test.name} />}
               />
             </Suspense>
@@ -296,6 +297,7 @@ function StudioLayout() {
     definition,
     context,
     closeDefinition,
+    readiness,
   } = studio;
   const form = useFormContext<FormulaTemplateFormValues>();
   const source = useWatch({ control: form.control, name: "source" }) ?? "";
@@ -454,6 +456,14 @@ function StudioLayout() {
               open={submitOpen}
               onOpenChange={setSubmitOpen}
               template={template}
+              liveChecks={readiness.filter((check) => check.key === READINESS_KEYS.coverage)}
+              link={{
+                source,
+                onReveal: (range) => {
+                  setSubmitOpen(false);
+                  reveal(range);
+                },
+              }}
             />
           )}
 

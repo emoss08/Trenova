@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -133,7 +133,14 @@ func scopeRequest(filters ...shipment.QuickFilterSpec) *shipmentports.ShipmentBo
 		Filter:       &pagination.QueryOptions{},
 		QuickFilters: filters,
 		Timezone:     "UTC",
+		Margins:      true,
 	}
+}
+
+func scopeWithoutMargins(filters ...shipment.QuickFilterSpec) *shipmentports.ShipmentBoardScopeRequest {
+	req := scopeRequest(filters...)
+	req.Margins = false
+	return req
 }
 
 func TestCapabilities(t *testing.T) {
@@ -215,6 +222,37 @@ func TestQuickFilterCountsCountsEveryCountableFilter(t *testing.T) {
 	assert.True(t, basis.last.Margin)
 	assert.True(t, basis.last.Detention)
 	assert.Len(t, repo.lastFilters, len(shipment.CountableQuickFilters()))
+}
+
+func TestALowMarginFilterIsRefusedWithoutTheMarginsGroup(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubBoardRepo{}
+	basis := &stubBasis{}
+	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
+
+	_, err := svc.StageSummary(
+		t.Context(),
+		scopeWithoutMargins(shipment.Quick(shipment.QuickFilterLowMargin)),
+	)
+	require.Error(t, err, "the loads it returns say which ones run thin")
+	assert.Nil(t, repo.lastScope, "nothing is read for a refused filter")
+}
+
+func TestQuickFilterCountsLeaveOutTheLowMarginCountWithoutTheMarginsGroup(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubBoardRepo{counts: map[shipment.QuickFilter]int{shipment.QuickFilterLate: 3}}
+	basis := &stubBasis{}
+	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
+
+	rows, err := svc.QuickFilterCounts(t.Context(), scopeWithoutMargins())
+	require.NoError(t, err)
+	require.Len(t, rows, len(shipment.CountableQuickFilters())-1)
+	for _, row := range rows {
+		assert.NotEqual(t, shipment.QuickFilterLowMargin, row.Filter)
+	}
+	assert.False(t, basis.last.Margin, "no margin basis is resolved for a count nobody sees")
 }
 
 func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {

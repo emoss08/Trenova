@@ -33,8 +33,8 @@ type PreviewResult struct {
 	RoundedMinutes     int32                        `json:"roundedMinutes"`
 	BillableAmount     decimal.Decimal              `json:"billableAmount"`
 	GrossAmount        decimal.Decimal              `json:"grossAmount"`
-	DriverPayAmount    decimal.Decimal              `json:"driverPayAmount"`
-	NetMargin          decimal.Decimal              `json:"netMargin"`
+	DriverPayAmount    decimal.NullDecimal          `json:"driverPayAmount"`
+	NetMargin          decimal.NullDecimal          `json:"netMargin"`
 	ArrivedLate        bool                         `json:"arrivedLate"`
 	CapApplied         detention.CapKind            `json:"capApplied"`
 	Status             detention.OccurrenceStatus   `json:"status"`
@@ -134,8 +134,8 @@ func (s *Service) PreviewPolicy(
 		RoundedMinutes:     computed.RoundedMinutes,
 		BillableAmount:     computed.BillableAmount,
 		GrossAmount:        computed.GrossAmount,
-		DriverPayAmount:    computed.DriverPayAmount,
-		NetMargin:          computed.NetMargin,
+		DriverPayAmount:    decimal.NewNullDecimal(computed.DriverPayAmount),
+		NetMargin:          decimal.NewNullDecimal(computed.NetMargin),
 		ArrivedLate:        computed.ArrivedLate,
 		CapApplied:         computed.CapApplied,
 		Status:             computed.Status,

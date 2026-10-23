@@ -26,6 +26,53 @@ use std::sync::Arc;
 /// The calls one function makes: the callee's module and name, and where the call is.
 pub type Calls = Vec<(ModuleId, String, crate::span::Span)>;
 
+/// An input's `where` constraint with its parts folded to values.
+#[derive(Debug, Clone, PartialEq)]
+pub enum FoldedConstraint {
+    /// A range: the minimum is inclusive, the maximum inclusive when `max_inclusive`.
+    Range {
+        /// The smallest value accepted.
+        min: Option<Value>,
+        /// The bound above.
+        max: Option<Value>,
+        /// The maximum is accepted too.
+        max_inclusive: bool,
+    },
+    /// The values accepted.
+    OneOf(Vec<Value>),
+}
+
+impl FoldedConstraint {
+    /// The constraint in wire values, as `tariff.check` reports it.
+    #[must_use]
+    pub fn to_wire(&self) -> crate::tariff::constraint::Constraint {
+        match self {
+            Self::Range {
+                min,
+                max,
+                max_inclusive,
+            } => crate::tariff::constraint::Constraint::Range {
+                min: min.as_ref().map(super::consts::wire),
+                max: max.as_ref().map(super::consts::wire),
+                max_inclusive: *max_inclusive,
+            },
+            Self::OneOf(values) => crate::tariff::constraint::Constraint::OneOf(
+                values.iter().map(super::consts::wire).collect(),
+            ),
+        }
+    }
+}
+
+/// The type a constraint's values have: an item's for a list input, the inner type for an
+/// optional one, else the input's own.
+#[must_use]
+pub fn constraint_item_type(ty: &Type) -> Type {
+    match ty {
+        Type::List(item) | Type::Optional(item) => constraint_item_type(item),
+        other => other.clone(),
+    }
+}
+
 /// What the whole program has declared so far, shared by every module's check.
 #[derive(Debug, Default)]
 pub struct State {
@@ -39,6 +86,9 @@ pub struct State {
     pub values: BTreeMap<(u32, String), Result<Value, FoldError>>,
     /// Folded input defaults of each module, by name.
     pub defaults: BTreeMap<(u32, String), Value>,
+    /// Folded input `where` constraints of each module, by name: the range ends or the listed
+    /// values, each checked against the input's type (an item's type, for a list input).
+    pub constraints: BTreeMap<(u32, String), FoldedConstraint>,
     /// Functions whose bodies were checked while inferring their return type.
     pub inferred: BTreeSet<(u32, String)>,
     /// Every symbol.
@@ -459,38 +509,7 @@ impl Declarer<'_> {
         );
         let module = self.id();
         let types = &out.types;
-        let values = &state.values;
-        let lookup = |expr: &Expr| -> Option<Result<Value, FoldError>> {
-            let name = match &expr.kind {
-                ExprKind::Name(name) => name.text.clone(),
-                ExprKind::Field { target, name, .. } => {
-                    let ExprKind::Name(alias) = &target.kind else {
-                        return None;
-                    };
-                    let Some(Global::Module { module, .. }) = globals.values.get(&alias.text)
-                    else {
-                        return None;
-                    };
-                    return values
-                        .get(&(module.0, name.text.clone()))
-                        .cloned()
-                        .map(|v| v.map_err(|_| FoldError::Upstream));
-                }
-                _ => return None,
-            };
-            match globals.values.get(&name)? {
-                Global::Const {
-                    module: owner,
-                    name: declared,
-                    ..
-                } => values
-                    .get(&(owner.0, declared.clone()))
-                    .cloned()
-                    .map(|v| v.map_err(|_| FoldError::Upstream))
-                    .or(Some(Err(FoldError::Upstream))),
-                _ => None,
-            }
-        };
+        let lookup = |expr: &Expr| constant_of(globals, &state.values, expr);
         let type_of = |id: crate::tariff::syntax::ast::NodeId| {
             types
                 .get(usize::try_from(id.0).unwrap_or(usize::MAX))
@@ -634,11 +653,87 @@ impl Declarer<'_> {
                     state.defaults.insert((self.id().0, name.clone()), value);
                 }
             }
+            if let Some(constraint) = &decl.constraint
+                && let Some(folded) =
+                    self.fold_constraint(state, globals, out, name, &ty, constraint)
+            {
+                if let (Some(written), Some(value)) = (
+                    &decl.default,
+                    state.defaults.get(&(self.id().0, name.clone())),
+                ) {
+                    super::constraints::default(out, name, &ty, written, value, &folded);
+                }
+                state
+                    .constraints
+                    .insert((self.id().0, name.clone()), folded);
+            }
             let id = self.symbol(state, name, SymbolKind::Input, span, Some(ty.clone()), doc);
             globals
                 .values
                 .insert(name.clone(), Global::Input { ty, symbol: id });
         }
+    }
+
+    /// Folds an input's `where` constraint: a range's ends or a list's items, each a
+    /// compile-time value of the input's type (its item type for a `List<T>`, its inner type for
+    /// a `T?`). `None` when the constraint breaks one of the rules in [`super::constraints`] or
+    /// a part does not fold (the reasons are reported as they are found).
+    fn fold_constraint(
+        &self,
+        state: &mut State,
+        globals: &mut Globals,
+        out: &mut ModuleAnalysis,
+        name: &str,
+        ty: &Type,
+        constraint: &Expr,
+    ) -> Option<FoldedConstraint> {
+        let item = constraint_item_type(ty);
+        if matches!(item, Type::Error)
+            || !super::constraints::form(out, name, ty, &item, constraint)
+        {
+            return None;
+        }
+        let want = Want::Annotation {
+            name: name.to_owned(),
+        };
+        let fold = |checker: &Self, state: &mut State, out: &mut ModuleAnalysis, expr: &Expr| {
+            let before = out.diagnostics.len();
+            let (_, folded) = checker.constant_value(state, globals, out, expr, Some(&item), &want);
+            match folded {
+                Ok(value) if out.diagnostics.len() == before => Some(value),
+                _ => None,
+            }
+        };
+        let folded = match &constraint.kind {
+            ExprKind::Range {
+                start,
+                end,
+                inclusive,
+            } => {
+                let min = match start {
+                    Some(start) => Some(fold(self, state, out, start)?),
+                    None => None,
+                };
+                let max = match end {
+                    Some(end) => Some(fold(self, state, out, end)?),
+                    None => None,
+                };
+                FoldedConstraint::Range {
+                    min,
+                    max,
+                    max_inclusive: *inclusive,
+                }
+            }
+            ExprKind::List(items) => {
+                let mut values = Vec::with_capacity(items.len());
+                for value in items {
+                    values.push(fold(self, state, out, value)?);
+                }
+                FoldedConstraint::OneOf(values)
+            }
+            _ => return None,
+        };
+        super::constraints::admits_some(out, &item, constraint, &folded).then_some(folded)
     }
 
     /// Infers the return type of each function written `fn f(…) = expr` with no `->`, by
@@ -746,6 +841,8 @@ impl Declarer<'_> {
             expected_yet: false,
             early: BTreeSet::new(),
             expects_refusal: false,
+            property: None,
+            choice: super::choose::ChoiceState::default(),
         };
         let result = run(&mut checker);
         let calls = std::mem::take(&mut checker.calls);
@@ -758,7 +855,7 @@ impl Declarer<'_> {
 }
 
 /// The finding for a value that does not fold.
-fn fold_diagnostic(error: FoldError) -> Option<Diagnostic> {
+pub(super) fn fold_diagnostic(error: FoldError) -> Option<Diagnostic> {
     match error {
         FoldError::NotConstant(span) => Some(Diagnostic::error(
             "not-constant",
@@ -778,6 +875,43 @@ fn fold_diagnostic(error: FoldError) -> Option<Diagnostic> {
             Message::new(message!("This divides by zero")),
         )),
         FoldError::Upstream => None,
+    }
+}
+
+/// The folded value of the constant an expression names (`LIMIT`, `alias.LIMIT`), for a
+/// [`Folder`]: `None` when it names no constant, `Err` when that constant has no value.
+pub fn constant_of(
+    globals: &Globals,
+    values: &BTreeMap<(u32, String), Result<Value, FoldError>>,
+    expr: &Expr,
+) -> Option<Result<Value, FoldError>> {
+    let name = match &expr.kind {
+        ExprKind::Name(name) => name.text.clone(),
+        ExprKind::Field { target, name, .. } => {
+            let ExprKind::Name(alias) = &target.kind else {
+                return None;
+            };
+            let Some(Global::Module { module, .. }) = globals.values.get(&alias.text) else {
+                return None;
+            };
+            return values
+                .get(&(module.0, name.text.clone()))
+                .cloned()
+                .map(|v| v.map_err(|_| FoldError::Upstream));
+        }
+        _ => return None,
+    };
+    match globals.values.get(&name)? {
+        Global::Const {
+            module: owner,
+            name: declared,
+            ..
+        } => values
+            .get(&(owner.0, declared.clone()))
+            .cloned()
+            .map(|v| v.map_err(|_| FoldError::Upstream))
+            .or(Some(Err(FoldError::Upstream))),
+        _ => None,
     }
 }
 

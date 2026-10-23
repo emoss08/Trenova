@@ -68,6 +68,7 @@ function service(overrides: Partial<TariffLanguageService> = {}): TariffLanguage
     context: () => CONTEXT,
     trace: () => [],
     openDefinition: vi.fn(),
+    showReferences: vi.fn(),
     ...overrides,
   };
 }
@@ -180,6 +181,7 @@ describe("hover", () => {
           type: "Money",
           unit: "$",
           doc: null,
+          constraint: null,
           value: { value: { $q: "285", u: "$" }, display: "$285.00", times: 1 },
         },
       },

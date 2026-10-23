@@ -52,7 +52,6 @@ var (
 	voided    = map[string]any{"status": []any{"Voided"}}
 	closed    = map[string]any{"status": []any{"Closed"}}
 	writtenOf = map[string]any{"status": []any{"WrittenOff"}}
-	paused    = map[string]any{"status": []any{"Paused"}}
 	rejected  = map[string]any{"status": []any{"Rejected"}}
 )
 
@@ -753,23 +752,6 @@ func TestConvertedReads_MarkTheDriversWordsOnlyWhenShown(t *testing.T) {
 		assert.Equal(t, "driver_expense", ref.EntityType)
 		assert.Contains(t, ours.rows, ref.ID)
 	}
-}
-
-// restrictedRole is a person whose role reaches Restricted fields, as a
-// payroll lead's does.
-type restrictedRole struct {
-	mocks.DenyResourcesPermissionEngine
-}
-
-func (restrictedRole) GetResourcePermissions(
-	context.Context,
-	pulid.ID,
-	pulid.ID,
-	string,
-) (*permissionports.ResourcePermissionDetail, error) {
-	return &permissionports.ResourcePermissionDetail{
-		MaxSensitivity: permission.SensitivityRestricted,
-	}, nil
 }
 
 func internalCall(

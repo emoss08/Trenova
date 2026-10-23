@@ -500,7 +500,7 @@ export function DeskBillingItem({
   const recipient = terms?.recipients[0] ?? "";
   const invoiceNumber = invoice ? (invoice.posted ? invoice.number : invoice.draftNumber) : "";
   const lane = laneOf(item.shipment, t);
-  const shipmentPath = recordPath("shipment", item.shipmentId);
+  const shipmentPath = item.shipmentId ? recordPath("shipment", item.shipmentId) : "";
   const reason = barReason(item, t);
   const needs = review?.needsCount ?? 0;
   const postedNumber = posted?.invoiceNumber || (invoice?.posted ? invoice.number : "");
@@ -683,7 +683,7 @@ export function DeskBillingItem({
       <ActivityLog itemId={itemId} meId={user?.id} />
 
       {/* The documents a biller bills from are the shipment's, where they are filed. */}
-      {item.shipmentId !== "" && (
+      {item.shipmentId && (
         <CardDocuments
           resourceType="shipment"
           resourceId={item.shipmentId}
