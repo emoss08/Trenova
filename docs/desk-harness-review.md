@@ -1492,6 +1492,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: daily briefing | `insight_get_daily_briefing`; the briefing screen is cut to the sections the reader may read | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 | Typed reads through GraphQL: table change alerts | `report_list_table_change_alerts`; an alert's status, event types and condition match become Internal by the owner's decision | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
 | Search guard | a list refuses a free-text query over a field the reader may not be shown, read from the record's search configuration; ten lists refuse it (nine newly), `fuel_list_cards` always | 639 → 639 | unchanged, 0 pending | unchanged: no description changed, fixture not re-recorded | unchanged |
+| Fuel card search | by the owner's decision the fuel card search vector drops the provider's Confidential card id (migration `20261231010520`, index `20261231010525`), so `fuel_list_cards` searches its label and last four, both Internal, at every access | 639 → 639 | unchanged, 0 pending | unchanged: no description changed, fixture not re-recorded | unchanged |
 
 The carrier row's descriptions are in the embedding fixture re-recorded with the home page and rate matrix row; hybrid held-out ranking on that fixture is recall@5 0.93, top-1 0.83 over 167 cases, and keyword ranking is unchanged (0.99, 0.95 over 147).
 
