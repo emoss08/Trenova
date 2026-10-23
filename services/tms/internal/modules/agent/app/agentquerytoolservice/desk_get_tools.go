@@ -56,21 +56,25 @@ func updatePreferenceWarning(preference customer.StatusUpdatePreference) string 
 		"it as asked. So does any other update they ask for, such as a delay or a new ETA."
 }
 
-// newGetCustomerUpdatePreferencesTool answers the one question the customer
+const (
+	fieldStatusUpdatePreference = "statusUpdatePreference"
+	fieldStatusUpdateRecipients = "statusUpdateRecipients"
+	fieldEmailProfile           = "emailProfile"
+	fieldToRecipients           = "toRecipients"
+)
+
+// customerUpdatePreferencesGetSpec answers the one question the customer
 // update desk has to ask before it writes anything: does this customer want
-// to be told, and who is on the list.
+// to be told, and who is on the list. It reads DeskCustomerUpdatePreferences.
 //
 // It is deliberately narrow. customer_get returns the whole record, and a
 // model reading a whole customer to find one field reads thirty others it
 // does not need — including the billing addresses, which are not who asked
 // for status updates.
-func newGetCustomerUpdatePreferencesTool(
-	repo customerports.CustomerRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
+func customerUpdatePreferencesGetSpec() getSpec {
+	return getSpec{
 		name:     "customer_get_update_preferences",
-		entity:   "customer",
+		entity:   labelCustomer,
 		resource: permission.ResourceCustomer,
 		summary: "Retrieve what a customer asked to be told as their freight moves: " +
 			"whether they want arrival notices, departure notices, both or neither, and " +
@@ -80,36 +84,35 @@ func newGetCustomerUpdatePreferencesTool(
 			"approval. When the " +
 			"recipient list is empty the notice profile's own recipients are the fallback. " +
 			"Call this before writing any status update.",
-		paramName: "customerId",
+		paramName: paramCustomerID,
 		idSource:  "from customer_list or the customerId on shipment_get",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			entity, err := repo.GetByID(ctx, customerports.GetCustomerByIDRequest{
-				ID:         id,
-				TenantInfo: tenant,
-				CustomerFilterOptions: customerports.CustomerFilterOptions{
-					IncludeEmailProfile: true,
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
+		shape:     shapeUpdatePreferences,
+	}
+}
 
-			out := map[string]any{
-				"customerId":             entity.ID.String(),
-				"customerName":           entity.Name,
-				"statusUpdatePreference": entity.StatusUpdatePreference,
-				"wantsArrivals":          entity.StatusUpdatePreference.WantsArrivals(),
-				"wantsDepartures":        entity.StatusUpdatePreference.WantsDepartures(),
-				"statusUpdateRecipients": entity.StatusUpdateRecipients,
-			}
-			if warning := updatePreferenceWarning(entity.StatusUpdatePreference); warning != "" {
-				out["warning"] = warning
-			}
-			if entity.StatusUpdateRecipients == "" && entity.EmailProfile != nil {
-				out["fallbackRecipients"] = entity.EmailProfile.ToRecipients
-			}
-
-			return out, nil
-		},
-	}, permissions)
+// shapeUpdatePreferences words what the preference means for the agent:
+// whether arrivals and departures are wanted, the warning a customer set to
+// None needs, and the notice profile's recipients when the customer names
+// none. The profile itself is only the fallback, so it leaves the record.
+func shapeUpdatePreferences(record map[string]any, withheld map[string]struct{}, _ clock) {
+	profile, _ := record[fieldEmailProfile].(map[string]any)
+	delete(record, fieldEmailProfile)
+	if _, hidden := withheld[fieldStatusUpdatePreference]; hidden {
+		return
+	}
+	raw, _ := record[fieldStatusUpdatePreference].(string)
+	preference := customer.StatusUpdatePreference(raw)
+	record["wantsArrivals"] = preference.WantsArrivals()
+	record["wantsDepartures"] = preference.WantsDepartures()
+	if warning := updatePreferenceWarning(preference); warning != "" {
+		record["warning"] = warning
+	}
+	if _, hidden := withheld[fieldStatusUpdateRecipients]; hidden {
+		return
+	}
+	if recipients, _ := record[fieldStatusUpdateRecipients].(string); recipients == "" {
+		if fallback, ok := profile[fieldToRecipients].(string); ok && fallback != "" {
+			record["fallbackRecipients"] = fallback
+		}
+	}
 }

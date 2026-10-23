@@ -694,7 +694,8 @@ Each module's PR:
 | Parties | `customer_list` | none | every field the table selects is Internal |
 | Parties | `location_list` | none | every field the table selects is Internal |
 | Parties | `carrier_list` | none | every field the table selects is Internal |
-| Parties | `customer_get` | none | reads `DeskCustomerCard`: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `customer_get` | none | reads `DeskCustomerCard`, named in `reads.yml` because `DeskCustomerUpdatePreferences` reads the same root: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `customer_get_update_preferences` | none | reads `DeskCustomerUpdatePreferences`, a new operation on `customer(id)` selecting the preference, the recipients and the notice profile's recipients; every field is Internal. The spec's `shape` (new on gets) words what the repository tool computed: `wantsArrivals`, `wantsDepartures`, the warning for a customer set to None, and `fallbackRecipients` when the customer names none, and says none of it where the preference was withheld |
 | Parties | `location_get` | none | reads `DeskLocationCard`; every field it selects is Internal |
 | Parties | `carrier_get` | none | reads `DeskCarrierCard`, named in `reads.yml` because `DeskCarrierIntel` reads the same root; every field it selects is Internal |
 | Parties | `carrier_get_intelligence_event` | none at Internal | reads `CarrierIntelEvent`. `CarrierIntelEvent` had no kind (it is not named for `carrier_intelligence`), so the guard did not gate it and a reader below Internal got every field; it now declares `@kind(resource: "carrier_intelligence")`, so its fields follow `carrier_intelligence`'s Internal default on every read of the type, the carrier intelligence screens' included, as the repository tool gated them. Who acknowledged or resolved it shows the user reference view |
@@ -880,7 +881,10 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   means (no ELD has reported the driver's hours, which is the finding). A spec's `shape` applies
   to the record what the card's resolver does not, as a list's does to each row: `worker_get`
   folds a NonCompliant credential into `canBeAssigned`, `worker_get_hos` gives the clocks in
-  minutes and marks a reading over twelve hours old as stale. A get's node needs no Go entity: it
+  minutes and marks a reading over twelve hours old as stale, and
+  `customer_get_update_preferences` adds whether arrivals and departures are wanted, the warning
+  for a customer who takes no routine notices, and the notice profile's recipients as the
+  fallback. A get's node needs no Go entity: it
   filters by nothing but its id, so a card type (`JournalEntryCard`) binds as a record does. A
   card the get reads declares `@kind` of the record it draws, so the parts it carries that have no
   kind of their own (a journal's lines) are gated by that record's sensitivities rather than by

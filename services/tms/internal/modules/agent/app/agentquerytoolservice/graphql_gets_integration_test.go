@@ -223,7 +223,14 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 			},
 		},
 	}
-	require.Len(t, gets, len(convertedGets)+4)
+	customers := gets["customer_get"]
+	gets["customer_get_update_preferences"] = &getCase{key: "id", referenceCase: &referenceCase{
+		tool: "customer_get_update_preferences",
+		write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+			return customers.write(ctx, tenant, "U"+label, marked)
+		},
+	}}
+	require.Len(t, gets, len(convertedGets)+5)
 	require.ElementsMatch(t, agentquerytoolservice.ConvertedGetNames(), keysOf(gets),
 		"every converted get is read on Postgres")
 

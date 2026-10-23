@@ -52,11 +52,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `carrier_list_intelligence_events` | op | carrierIntelEvents | CarrierIntelEventTable (alt CarrierIntelEventInbox) | cursor | DataTable + bespoke CarrierIntelEventFilterInput (statuses, severities, categories, carrierId, openOnly) | Same CarrierIntelService.ListEvents. fromDate/toDate (DetectedFrom/To) not typed: send as fieldFilters on detectedAt. Picked Table (no Desk op); Inbox is the triage view. |
 | `carrier_list_invoice_matches` | op | carrierInvoiceMatches | CarrierInvoiceMatches | limit/offset | typed args status, carrierId | Same CarrierSettlementService.ListInvoiceMatches. |
 
-## customer
-
-| tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
-|---|---|---|---|---|---|---|
-| `customer_get_update_preferences` | field-no-op | customer | propose DeskCustomerUpdatePreferences | n/a | id | customer exposes statusUpdatePreference/statusUpdateRecipients, but no persisted op selects them (DeskCustomerCard does not); fallback recipients need emailProfile.toRecipients. |
 
 ## dispatch
 

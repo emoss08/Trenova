@@ -3020,6 +3020,13 @@ export type CustomerStatusSkipReason =
   /** The shipment was canceled or removed. */
   | 'ShipmentGone';
 
+/** What a customer asked to be told as their freight moves. */
+export type CustomerStatusUpdatePreference =
+  | 'Arrivals'
+  | 'ArrivalsAndDepartures'
+  | 'Departures'
+  | 'None';
+
 /** A part of a shipment a customer's tracking link may show. */
 export type CustomerTrackingField =
   /** When each stop was actually reached and left. */
@@ -12173,6 +12180,13 @@ export type DeskCustomerRateAgreementsQueryVariables = Exact<{
 
 export type DeskCustomerRateAgreementsQuery = { rateAgreements: { totalCount: number | null, edges: Array<{ node: { id: string, code: string, name: string, status: RateAgreementStatus, agreementType: RateAgreementType, effectiveFrom: number, effectiveTo: number | null, autoRenew: boolean, renewalNoticeDays: number } }> } };
 
+export type DeskCustomerUpdatePreferencesQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskCustomerUpdatePreferencesQuery = { customer: { id: string, name: string, statusUpdatePreference: CustomerStatusUpdatePreference, statusUpdateRecipients: string | null, emailProfile: { id: string, toRecipients: string } | null } | null };
+
 export type CustomerBillingProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle, billingCycleAnchorDay: number, billingCycleTimezone: string, lastBilledPeriodEnd: number | null, paymentTerm: CustomerPaymentTerm, hasBillingControlOverrides: boolean, creditLimit: string | null, creditBalance: string, creditStatus: CustomerCreditStatus, enforceCreditLimit: boolean, autoCreditHold: boolean, creditHoldReason: string, autoSendInvoiceOnGeneration: boolean, sendPaymentReminders: boolean, sendStatements: boolean, factoringCompanyId: string | null, creditHoldAutomatic: boolean, creditReviewedAt: number | null, emailInvoiceEnabled: boolean, ediInvoiceEnabled: boolean, splitBy: InvoiceSplitKey, sectionBy: InvoiceSectionKey, invoiceDetail: InvoiceDetail, minConsolidatedAmount: string | null, maxShipmentsPerInvoice: number, invoiceNumberFormat: CustomerInvoiceNumberFormat, customerInvoicePrefix: string, invoiceCopies: number, revenueAccountId: string | null, arAccountId: string | null, applyLateCharges: boolean, lateChargeRate: string | null, gracePeriodDays: number, taxExempt: boolean, taxExemptNumber: string, enforceCustomerBillingReq: boolean, validateCustomerRates: boolean, autoTransfer: boolean, autoMarkReadyToBill: boolean, autoApprove: boolean, autoBill: boolean, countLateOnlyOnAppointmentStops: boolean, autoApplyAccessorials: boolean, billingCurrency: string, requirePONumber: boolean, requireBOLNumber: boolean, requireDeliveryNumber: boolean, defaultBillerId: string | null, billingNotes: string, fuelSurchargeMode: CustomerFuelSurchargeMode, fuelSurchargeProgramId: string | null, version: number, createdAt: number, updatedAt: number, documentTypes: Array<{ id: string, code: string, name: string, color: string, documentClassification: DocumentClassification, documentCategory: DocumentCategory }> | null } & { ' $fragmentName'?: 'CustomerBillingProfileFieldsFragment' };
 
 export type CustomerEmailProfileFieldsFragment = { id: string, businessUnitId: string, organizationId: string, customerId: string, subject: string, comment: string, toRecipients: string, ccRecipients: string, bccRecipients: string, attachmentName: string, readReceipt: boolean, includeShipmentDetail: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CustomerEmailProfileFieldsFragment' };
@@ -19252,7 +19266,7 @@ export { CostingControlPageDocument, ResolvedCostProfilePageDocument, UpdateCost
 export { CustomFieldDefinitionTableRowFieldsFragmentDoc, CustomFieldDefinitionTableDocument } from "./documents/custom-field/table";
 export { CustomerPaymentTableDocument, CustomerPaymentDetailDocument, PostAndApplyCustomerPaymentDocument, ApplyUnappliedCustomerPaymentDocument, ReverseCustomerPaymentDocument } from "./documents/customer-payment/operations";
 export { CustomerTrackingProfileFieldsFragmentDoc, CustomerTrackingProfileDocument, UpdateCustomerTrackingProfileDocument } from "./documents/customer/customer-tracking-profile";
-export { DeskCustomerCardDocument, DeskCustomerRateAgreementsDocument } from "./documents/customer/desk";
+export { DeskCustomerCardDocument, DeskCustomerRateAgreementsDocument, DeskCustomerUpdatePreferencesDocument } from "./documents/customer/desk";
 export { CustomerBillingProfileFieldsFragmentDoc, CustomerEmailProfileFieldsFragmentDoc, CustomerTableRowFieldsFragmentDoc, CustomerTableDocument } from "./documents/customer/table";
 export { DataTableInsightFieldsDocument, DataTableFacetsDocument, DataTableAggregatesDocument, DataTableSeriesDocument } from "./documents/data-table-insight/operations";
 export { DetentionFacilityStatsDocument, DetentionCustomerStatsDocument, DetentionWaiverStatsDocument, DetentionPolicyPreviewDocument, DetentionBacktestDocument } from "./documents/detention/analytics";

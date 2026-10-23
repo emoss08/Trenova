@@ -1480,11 +1480,10 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: rates | `rate_list_agreements`, `rate_get_agreement`, `rate_list_fuel_index_prices`, `rate_list_fuel_surcharge_programs` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: the remaining workforce reads | `worker_get`, `worker_get_credential`, `worker_get_dot_random_draw`, `worker_get_hos`, `worker_get_schedule`, `worker_list_dot_random_draws`, `worker_list_shift_templates` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: formula templates and libraries | `formula_list_templates`, `formula_get_template`, `formula_list_libraries`, `formula_get_library` | unchanged | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
-
-The formula row's after figures read the 167 held-out cases Tariff (#888) left, whose fixture
 | Typed reads through GraphQL: fuel and IFTA | `fuel_list_cards`, `fuel_list_purchases`, `fuel_list_purchase_imports`, `fuel_list_ifta_returns`, `fuel_list_ifta_mileage_entries`, `fuel_list_ifta_jurisdictions` | unchanged | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
+| Typed reads through GraphQL: customer update preferences | `customer_get_update_preferences` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
-The fuel row's after figures read the 167 held-out cases Tariff (#888) left, whose fixture
+The formula and fuel rows' after figures read the 167 held-out cases Tariff (#888) left, whose fixture
 master carries stale; the before figures are the last measured on master (165 cases). Keyword
 ranking is unchanged on the 147 held-out cases (recall@5 0.99, top-1 0.95).
 
@@ -1696,6 +1695,14 @@ at Internal saw before is withheld now, and no field the repository tools hid is
 agreement descriptions changed, so the embedding fixture is re-recorded; held-out ranking: keyword unchanged (0.99 and
 0.95 over 147), hybrid recall@5 0.93 → 0.93 and top-1 0.82 → 0.83 (165 cases before, 167 on this
 master).
+
+The customer update preferences row converts the one field-no-op read in the customer module. It
+reads a new `DeskCustomerUpdatePreferences` operation on `customer(id)`, the preference, the
+recipients and the notice profile's recipients, and a get spec's new `shape` hook words what the
+repository tool computed from them: whether arrivals and departures are wanted, the warning for a
+customer set to None, and the fallback recipients. `customer_get` now names `DeskCustomerCard`,
+since two Desk operations read the root. The tool's description and schema are unchanged, so the
+catalog snapshot and the embedding fixture are too, and held-out ranking is unchanged.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

@@ -50,7 +50,8 @@ type getSpec struct {
 	// shape applies to a record read through GraphQL what the card's
 	// resolver does not, given the fields withheld from it and the call
 	// (what a sync record's status means; a NonCompliant worker cannot be
-	// assigned; a driver's clocks in minutes).
+	// assigned; a driver's clocks in minutes; a customer that takes no
+	// routine notices).
 	shape func(record map[string]any, withheld map[string]struct{}, clk clock)
 	// absent is what a get whose root returns nothing answers, where nothing
 	// is itself the finding (no ELD has reported a driver's hours) rather
@@ -216,6 +217,7 @@ func locationGetSpec() getSpec {
 func graphQLGetSpecs() []getSpec {
 	return append([]getSpec{
 		customerGetSpec(),
+		customerUpdatePreferencesGetSpec(),
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
