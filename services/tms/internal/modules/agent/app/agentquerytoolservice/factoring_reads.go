@@ -28,6 +28,8 @@ const (
 	fieldRemittanceCells  = "cells"
 	keyFactoringSummary   = "summary"
 	keyFactoringPath      = "path"
+	factoringScheduleTerm = "factoring schedule"
+	factorRemittanceTerm  = "factor remittance"
 
 	factoringQueuePath   = "/billing/factoring"
 	factoringSubsPath    = factoringQueuePath + "/submissions/"
@@ -135,7 +137,7 @@ func submissionsListSpec() graphQLListSpec {
 			"invoices; a failed one's id and version go to factoring_retry_submission or " +
 			"factoring_cancel_submission, and a sent one's to factoring_record_funding. " +
 			factoringMinorAmount,
-		searchTerms: []string{"factoring schedule", "schedule of accounts", "submitted to factor"},
+		searchTerms: []string{factoringScheduleTerm, "schedule of accounts", "submitted to factor"},
 		queryNote:   "Words to find in the schedule's number.",
 		references: map[string]idReference{
 			paramFactoringCompany: factoringCompanyReference,
@@ -155,7 +157,7 @@ func remittancesListSpec() graphQLListSpec {
 			"Failed, PartiallyApplied, Applied or Discarded), line, matched, exception and " +
 			"applied counts, and why it failed if it did. Pass one's id to " +
 			"factoring_get_remittance for its lines. " + factoringMinorAmount,
-		searchTerms: []string{"factor remittance", "funding report", "remittance exceptions"},
+		searchTerms: []string{factorRemittanceTerm, "funding report", "remittance exceptions"},
 		queryNote:   "Words to find in the remittance's file name.",
 		references: map[string]idReference{
 			paramFactoringCompany: factoringCompanyReference,
@@ -210,7 +212,7 @@ func factoringGetSpecs() []getSpec {
 		},
 		{
 			name:   "factoring_get_submission",
-			entity: "factoring schedule",
+			entity: factoringScheduleTerm,
 			summary: "Read one schedule of accounts with every invoice on it and why it " +
 				"failed, if it did. Each invoice (items) has its item id, amount, expected " +
 				"advance, fee and reserve, its packet once built, and once the factor decided " +
@@ -221,7 +223,7 @@ func factoringGetSpecs() []getSpec {
 				"factoring_release_reserve, factoring_record_chargeback or " +
 				"factoring_reverse_chargeback, and with factoring_retry_submission or " +
 				"factoring_cancel_submission for a failed one. " + factoringMinorAmount,
-			searchTerms: []string{"factoring schedule", "schedule of accounts", "failed schedule"},
+			searchTerms: []string{factoringScheduleTerm, "schedule of accounts", "failed schedule"},
 			resource:    permission.ResourceFactoringSubmission,
 			paramName:   "submissionId",
 			idSource:    "from factoring_list_submissions",
@@ -229,7 +231,7 @@ func factoringGetSpecs() []getSpec {
 		},
 		{
 			name:   "factoring_get_remittance",
-			entity: "factor remittance",
+			entity: factorRemittanceTerm,
 			summary: "Read one factor remittance with its lines and how each was matched. " +
 				"Each line has its row, kind, invoice number, amounts and date as the factor " +
 				"printed them, its match status, the schedule item it is matched to, and up " +
@@ -237,7 +239,7 @@ func factoringGetSpecs() []getSpec {
 				"its version and a line id with factoring_resolve_remittance_line, and its " +
 				"version with factoring_apply_remittance or factoring_discard_remittance. " +
 				factoringMinorAmount,
-			searchTerms: []string{"factor remittance", "remittance lines", "remittance exceptions"},
+			searchTerms: []string{factorRemittanceTerm, "remittance lines", "remittance exceptions"},
 			resource:    permission.ResourceFactoringRemittance,
 			paramName:   "remittanceId",
 			idSource:    "from factoring_list_remittances",

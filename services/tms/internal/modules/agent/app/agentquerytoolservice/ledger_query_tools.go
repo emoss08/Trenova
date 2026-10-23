@@ -90,7 +90,7 @@ func manualJournalRowFrom(entity *manualjournal.Request, gate *fieldGate) manual
 	if entity.RejectionReason != "" && gate.show("rejectionReason", "rejectionReason") {
 		row.RejectionReason = entity.RejectionReason
 	}
-	if entity.CancelReason != "" && gate.show("cancelReason", "cancelReason") {
+	if entity.CancelReason != "" && gate.show(fieldCancelReason, fieldCancelReason) {
 		row.CancelReason = entity.CancelReason
 	}
 
@@ -338,7 +338,7 @@ func newListJournalReversalsTool(
 					gate.show("rejectionReason", "rejectionReason") {
 					row.RejectionReason = item.RejectionReason
 				}
-				if item.CancelReason != "" && gate.show("cancelReason", "cancelReason") {
+				if item.CancelReason != "" && gate.show(fieldCancelReason, fieldCancelReason) {
 					row.CancelReason = item.CancelReason
 				}
 
