@@ -132,7 +132,9 @@ contract. The standard library (`std`) ships with the module and is versioned wi
   - with a unit: `500 lb`, `2.5 mi`, `4 h`, `30 min`, `48 ft`;
   - money: `$450`, `$2.35/mi`, `$18.50/cwt`;
   - percent: `18%`;
-  - date: `@2026-10-22`; date-time: `@2026-10-22T08:00-05:00`.
+  - date: `@2026-10-22`; date-time: `@2026-10-22T08:00-05:00`;
+  - time of day: `@17:30`, `@07:30:15` (hours `00` to `23`, seconds optional; no date and no
+    offset).
 
 ## Type system
 
@@ -194,7 +196,12 @@ The rules:
    - comparing different types is an error.
 
    `<`, `<=`, `>` and `>=` are defined on numbers, money, quantities of one dimension, rates of
-   one dimension, dates, date-times and durations.
+   one dimension, dates, date-times, times of day, durations, and the two **ordered enums**,
+   `FreightClass` and `Weekday`, which order by their declared variants (`Class50 < Class55 <
+   … < Class500`, `Mon < Tue < … < Sun`). Every other enum, schema or user, has no order, and
+   the checker says which enums do. Text has no order for these operators: a text range (see
+   "Ranges") is the one place text is ordered, so a band of zip codes is written
+   `zip in "30000"..="31999"`, never `zip >= "30000"`.
 9. **Numbers.**
    - `Int + - *` gives an `Int`, and `Int / Int` gives a `Number`.
    - `%` takes `Int`s only.
@@ -227,6 +234,7 @@ What the type system leaves out, and why:
 | Rates | `Money/mi`, `Money/cwt`, `Money/h`, `Money/pallet`, … | money per unit of a quantity |
 | `Text` | `"…"` | Unicode; length and indexing count characters |
 | `Date`, `DateTime` | `@2026-10-22`, `@2026-10-22T08:00-05:00` | instant plus UTC offset; date-times keep the stop's offset |
+| `Time` | `@17:30`, `@07:30:15` | a wall-clock time of day, no date and no offset; `DateTime.time` is the stop-local time |
 | `List<T>` | `[a, b]` | immutable |
 | Records | `{ code: FSC, amount: $10 }`, `type Charge = { … }` | structural; fields are typed |
 | Enums | `enum Zone { A, B, C }`, and every schema enum | variants are bare names: `Delivery`, `InTransit` |
@@ -278,6 +286,28 @@ it can name only one. When the billing currency differs, the host passes the exc
 force on the rating date and the module converts the finished bill: each line exactly, rounded the
 way the bill rounds, with any difference on the rounding line, so the converted lines still add
 up to the converted total. The rate is recorded on the bill. There is no `convert` and no currency literal inside the language.
+
+### Times of day
+
+Business hours, cut-offs and delivery windows are times on a dock's clock, not instants, so
+they have a type of their own:
+
+- **Values.** `Time` runs from `@00:00` to `@23:59:59`, to the second. `stop.arrival?.time` (any
+  `DateTime`'s `.time`) is the time the date-time shows in its own offset: the stop's local
+  time, whatever offset the host sent.
+- **Order.** Times compare, form ranges and match as ranges in wall-clock order within one day:
+  `at.time in @08:00..@17:00`, `match at.time { ..@08:00 => … @08:00..@17:00 => … @17:00.. => … }`.
+  A `match` on a `Time` is exhaustive once its ranges reach from `@00:00` to `@23:59:59`.
+- **Arithmetic.** `Time - Time` is the `Duration` between them on the same day, negative when
+  the right side is later (`@17:00 - @08:30` is `8.5 h`, `@08:00 - @09:00` is `-1 h`). There
+  is no `Time + Duration`: it would have to wrap at midnight or leave the day, and neither is a
+  time of day. Move a date-time instead (`at.addMinutes(90)`) and read its `.time`.
+- **No `Date.at(time)`.** A date and a time of day name an instant only together with an
+  offset, and the offset a stop's clock shows on a given date (daylight saving included) is the
+  time zone database's knowledge, which the module does not carry. Rather than guess one, the
+  language keeps the two apart: compare `at.time` with a `Time`, and build date-times from the
+  date-times the record gives (`at.addDays(n)`, `at.addHours(n)`, `at.addMinutes(n)`).
+- **Interpolation** writes `17:30`, or `07:30:15` when the seconds aren't zero.
 
 ### Optionals
 
@@ -360,6 +390,24 @@ The precedence, from loosest to tightest:
 - Ranges are half-open with `..` and closed with `..=`. Either end may be left off:
   `..500 lb`, `2_000 lb..`.
 
+### Ranges
+
+A range is written after `in`, as a `match` pattern, as an input's `where` constraint, as a
+property's `vary` values, or (of `Int`s) after `for … in`. Its ends are values of one type:
+
+- **Ordered values:** numbers, money, quantities, rates, percents, dates, date-times, times of
+  day, and the ordered enums (`rating.date.weekday in Mon..=Fri`,
+  `shipment.freightClass in Class50..=Class85`).
+- **Text**, in Unicode scalar order, character by character:
+  `lane.origin.zip in "30000"..="31999"`, `lane.destination.zip3 in "300".."320"`. This is how
+  a zip or postal range is written; `<` and `>` stay refused on text, and their error points
+  here. Because the comparison is character by character, `"9"` falls inside `"10".."200"`
+  (it sorts after `"1"`), so the checker warns (`text-range`) when a range's two literal ends
+  have different lengths: zip ranges are only right when every code has the ends' length.
+  The empty text `""` is the smallest text, so `.."300"` starts there.
+
+A text range is never walked (`for`) or varied (`vary`): there is no next text to step to.
+
 ### `match`
 
 ```tariff
@@ -373,9 +421,17 @@ let perCwt = match shipment.weight {
 
 - Patterns can be literals, ranges, enum variants (`Delivery`, `Dry Van | Reefer`), `none`, the
   wildcard `_`, record shapes (`{ kind: Delivery, appointment: true }`) and a guard (`x if x > 3`).
-- A `match` must be exhaustive: the checker names the values no arm covers.
-- Overlapping ranges are an error with both arms named. The weight-break table can't
-  double-count, which is the same rule the matrix coverage check applies to rate matrices.
+- A range pattern's ends are literals, or variants of an ordered enum: `"300".."320"` on text,
+  `@08:00..@17:00` on a time, `Class50..=Class85` on a `FreightClass`, `Mon..=Fri` on a
+  `Weekday`.
+- A `match` must be exhaustive: the checker names the values no arm covers. A range of an
+  ordered enum covers the variants from its start to its end, so `Mon..=Fri` and `Sat | Sun`
+  cover a `Weekday`; ranges on a `Time` cover it once they reach from `@00:00` to `@23:59:59`;
+  text ranges never cover all text without an open end (`"500"..`) or `_`.
+- Overlapping ranges are an error with both arms named, on every type that has ranges: text
+  ranges and text literals inside them, time ranges, and variant ranges that share a variant.
+  The weight-break table can't double-count, which is the same rule the matrix coverage check
+  applies to rate matrices.
 
 ### Collections and lambdas
 
@@ -408,7 +464,9 @@ The rules the checker and the evaluator share:
   kind (`Money`, `Weight`). An empty list has no average, so `avg` of one stops the rating with
   an `argument` error; test `isEmpty` first when the list may be empty.
 - **`sortBy`, `min` and `max`** order by a value that has an order: numbers, percents, money,
-  quantities, dates and date-times. Text has no order.
+  quantities, dates, date-times, times of day and the ordered enums (`FreightClass`,
+  `Weekday`): `shipment.commodities.max(c => c.freightClass ?? Class50)` is the highest class.
+  Text has no order here.
 - **Indexing** a list or a text, `xs[i]`, gives `T?`: `none` when `i` is outside it (negative
   or past the end), so it is handled like any optional (`xs[0] ?? fallback`, `xs[0]?.field`).
 
@@ -449,11 +507,14 @@ with them (`amount.roundUp(to: $5)`).
 | `Money` | | `round()` (to cents, half up), `roundHalfEven()`, `roundUp(to: Money)`, `roundDown(to: Money)`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)` |
 | Quantities | `value` | `in(unit)` (on a rate, also a unit of its denominator: `in(cwt)`),  `round(to: q)`, `roundUp(to: q)` (weight breaks bill to the next hundred: `roundUp(to: 100 lb)`), `roundDown(to: q)`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)` |
 | `Text` | `len`, `isEmpty` | `upper()`, `lower()`, `trim()`, `startsWith(t)`, `endsWith(t)`, `contains(t)`, `replace(a, b)`, `split(sep)`, `matches(pattern)` (a linear-time regular expression) |
-| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Weekday`: `Mon` … `Sun`), `weekend`; `DateTime` also `hour`, `minute`, `date` | `addDays(n: Int)`; `DateTime` also `addHours(n: Int)` |
+| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Weekday`: `Mon` … `Sun`), `weekend`; `DateTime` also `hour`, `minute`, `date`, `time` (the `Time` on its own clock) | `addDays(n: Int)`; `DateTime` also `addHours(n: Int)`, `addMinutes(n: Int)` |
+| `Time` | `hour` (0 to 23), `minute` | |
+| `FreightClass` | `number` (the class as a `Number`: `Class77_5.number` is `77.5`) | |
 | `Duration` | `value` | `in(unit)` and the quantity methods |
 | `List<T>` | `len`, `isEmpty` | the collection methods above |
 
-Durations come from subtracting date-times (or dates, in whole days).
+Durations come from subtracting date-times, dates (in whole days) or times of day (on one day,
+negative when the right side is later).
 
 ### Refusing to rate
 
@@ -608,8 +669,9 @@ input service: Service = Standard where [Standard, Guaranteed]
 
 - **Forms.** A constraint is a compile-time value (literals and constants, like a default):
   - a range of the input's type, for an ordered type (numbers, `Int`, money, quantities, rates,
-    percents, dates, date-times): `lo..hi` includes `lo` and excludes `hi`, `lo..=hi` includes
-    both, and either end may be left off (`1..`, `..=$15/mi`);
+    percents, dates, date-times, times of day, the ordered enums) or text: `lo..hi` includes
+    `lo` and excludes `hi`, `lo..=hi` includes both, and either end may be left off (`1..`,
+    `..=$15/mi`, `where @00:00..=@23:59`, `where "000"..="999"`, `where Class50..=Class100`);
   - a list of the input's type, for any type with equality: the value must be one of them.
   For an optional input (`T?`) the constraint applies when a value is set; `none` always passes.
   For a `List<T>` input of an ordered or comparable `T`, it applies to every item. Record inputs
@@ -628,10 +690,11 @@ input service: Service = Standard where [Standard, Guaranteed]
 - **What the bounds decide.** Where an input is read by its own name, the checker knows its
   values, and warns (`bounds`) about code the bounds make dead. It is a warning because the code
   runs; the bill is unaffected.
-  - A comparison with a compile-time value (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in [...]`) whose
-    answer the bounds fix is "never true" or "always true", quoting the constraint: with `input
-    rate: Money/mi where $0.50/mi..=$15/mi`, `rate > $20/mi` is never true and `rate >=
-    $0.50/mi` always is.
+  - A comparison with a compile-time value (`==`, `!=`, `<`, `<=`, `>`, `>=`, `in [...]`,
+    `in lo..hi`) whose answer the bounds fix is "never true" or "always true", quoting the
+    constraint: with `input rate: Money/mi where $0.50/mi..=$15/mi`, `rate > $20/mi` is never
+    true and `rate >= $0.50/mi` always is; with `input zip: Text where "30000"..="39999"`,
+    `zip in "40000"..` is never true.
   - Against a list constraint, a value outside the list names the values the input takes, and
     suggests the nearest of them with a fix: `service == "Guarenteed"` is never true, because
     `service` is only ever `"Standard"` or `"Guaranteed"`; did you mean `"Guaranteed"`?
@@ -692,8 +755,10 @@ now carries instead of assuming miles.
 - A `Commodity` has `name: Text`, `freightClass: FreightClass?`, `weight: Weight`, `pieces: Int`,
   `dimensions: { length: Length?, width: Length?, height: Length? }`, `volume: Volume?`,
   `density: Weight/Volume?`, `hazmat: Bool` and `stackable: Bool`.
-- The schema enums (`ShipmentStatus`, `StopKind`, `StopStatus`, `FreightClass`, `RatingMode`)
-  are enums of the language; `FreightClass` variants are `Class50` through `Class500`.
+- The schema enums (`ShipmentStatus`, `StopKind`, `StopStatus`, `FreightClass`, `RatingMode`,
+  `Weekday`) are enums of the language; `FreightClass` variants are `Class50` through
+  `Class500` (`Class77_5` is class 77.5), and `Weekday`'s are `Mon` through `Sun`. These two
+  are ordered by their variants, lowest class and Monday first; the others have no order.
 - Volume also has the liquid units `gal` and `l`, for fuel prices.
 
 ### Rate tables
@@ -730,8 +795,55 @@ linear feet are quantities in bands.
 |---|---|
 | `std.ltl` | `type Break = { from: Weight, rate: Money/cwt, minimum: Money? }`; `type Rated = { weight: Weight, rate: Money/cwt, minimum: Money?, deficit: Bool }`; `fn deficit(breaks: List<Break>, actual: Weight, allow: Bool = true) -> Rated` (today's deficit rating: the cheaper of the actual weight's break and the next break's minimum weight); `fn billed(weight: Weight, to: Weight = 100 lb) -> Weight`; `fn densityClass(density: Weight/Volume) -> FreightClass` (the NMFC density scale) |
 | `std.fuel` | `fn stepPercent(price: Money/gal, peg: Money/gal, step: Money/gal, perStep: Percent) -> Percent`; `fn perMile(price: Money/gal, peg: Money/gal, mpg: Number) -> Money/mi` |
-| `std.time` | `fn weekend(at: DateTime) -> Bool`; `fn afterHours(at: DateTime, open: Int = 8, close: Int = 17) -> Bool`; `fn businessDuration(start: DateTime, end: DateTime, open: Int = 8, close: Int = 17) -> Duration` |
+| `std.time` | `fn weekend(at: DateTime) -> Bool`; `fn afterHours(at: DateTime, open: Time = @08:00, close: Time = @17:00) -> Bool` (a weekend, before `open` or from `close` on, on `at`'s own clock); `fn businessDuration(start: DateTime, end: DateTime, open: Time = @08:00, close: Time = @17:00) -> Duration` (the weekday time between `open` and `close`) |
 | `std.accessorials` | `fn detention(dwell: Duration, free: Duration = 2 h, rate: Money/h, increment: Duration = 15 min) -> Money`; `fn extraStops(stops: List<Stop>, included: Int, fee: Money) -> Money` |
+| `std.tiers` | graduated (progressive) pricing, each tier pricing only the part of a distance or weight inside it: `type DistanceTier = { from: Distance, rate: Money/mi }`; `type DistanceStep = { from: Distance, to: Distance, distance: Distance, rate: Money/mi, amount: Money }`; `fn byDistance(tiers: List<DistanceTier>, distance: Distance) -> Money`; `fn distanceSteps(tiers: List<DistanceTier>, distance: Distance) -> List<DistanceStep>`; and for weight `type WeightTier = { from: Weight, rate: Money/cwt }`, `type WeightStep = { from: Weight, to: Weight, weight: Weight, rate: Money/cwt, amount: Money }`, `fn byWeight(tiers: List<WeightTier>, weight: Weight) -> Money`, `fn weightSteps(tiers: List<WeightTier>, weight: Weight) -> List<WeightStep>` |
+
+### Graduated tiers
+
+`std.ltl`'s breaks price the whole weight at one break's rate. A graduated rate prices each part
+at its own tier's rate, like income tax brackets: "the first 100 mi at $3/mi, the next 400 at
+$2.50/mi, beyond at $2/mi" is three `DistanceTier`s, and 250 mi bills $300 + $375.
+
+```tariff
+tariff "Graduated linehaul"
+
+use std.tiers.{ DistanceTier, distanceSteps }
+
+/// Each tier prices the miles from its start up to the next tier's start.
+input mileTiers: List<DistanceTier> = [
+  { from: 0 mi, rate: $3/mi },
+  { from: 100 mi, rate: $2.50/mi },
+  { from: 500 mi, rate: $2/mi },
+]
+
+for step in distanceSteps(mileTiers, shipment.distance) {
+  charge "Linehaul, {step.from} to {step.to}" (quantity: step.distance, rate: step.rate)
+}
+
+test "250 miles bills the first 100 at $3 and the next 150 at $2.50" {
+  given shipment.distance = 250 mi
+  expect total == $675
+  expect lines.len == 2
+}
+```
+
+Each tier the distance reaches is its own line, with its quantity and rate on the invoice;
+`charge "Linehaul" = byDistance(mileTiers, shipment.distance)` bills the same total as one line.
+
+- A tier runs from its `from` up to the next tier's `from`; the highest tier has no end. Tiers
+  are read in order of `from`, however the list is written, and the lowest tier also prices
+  anything below its start (as `std.ltl.deficit` prices a weight below every break): its step
+  starts at zero, so a list whose first tier starts at `1 mi` still prices a 0.5 mi load.
+- The steps leave out every tier the distance or weight doesn't reach, so each step's
+  `distance` (or `weight`) is above zero; a zero or negative quantity has no steps and bills
+  `$0`. `amount` is the step's `rate × distance`, exact; the bill rounds it with every other
+  line.
+- `byDistance` is the steps' total. No tiers at all refuses to rate ("There are no distance
+  tiers to price 250 mi with").
+- `WeightTier`, `WeightStep`, `byWeight` and `weightSteps` are the same for weight, priced per
+  hundredweight. There are two families rather than one because a tier's rate unit is part of
+  its type, and Tariff has no user generics.
 
 ## Tests
 
@@ -790,7 +902,7 @@ property "never below the minimum" {
   `input.name`, exactly as `given` takes, or a new `camelCase` name, bound for the rest of the
   property (the only form a library may use, to test its functions). The values are:
   - a range of an ordered type with both ends written: `1 lb..40_000 lb`, `$1/mi..=$5/mi`,
-    `@2026-01-01..@2027-01-01`;
+    `@2026-01-01..@2027-01-01`, `@06:00..=@20:00`, `Class50..=Class100`;
   - a list of values: `[Standard, Expedited]`, `[[pickup(), delivery()], [pickup(), delivery(),
     delivery()]]`.
 
@@ -812,7 +924,10 @@ property "never below the minimum" {
     every band edge of a range-keyed rate table axis of that dimension), each with its neighbours
     one *step* either side; and evenly spread points, until the axis has 24 values. The step is 1
     in the last decimal place the range's ends are written with (`1 lb..40_000 lb` steps by
-    1 lb, `$0.50/mi..$15/mi` by $0.01/mi), a day for dates and a minute for date-times.
+    1 lb, `$0.50/mi..$15/mi` by $0.01/mi), a day for dates, a minute for date-times and
+    times of day, and one variant for an ordered enum (`vary shipment.freightClass in
+    Class50..=Class100`). Text has no step, so a text range can't be varied over: list the
+    values instead.
   - For a list, every item.
   - With one `vary`, every value is a case. With several, every combination when there are at
     most 256, otherwise each axis's landmarks against the other axes' ends, filled up to 256 with
@@ -875,6 +990,7 @@ always decimal strings read exactly:
 | `Int`, `Number` | `{"$n": "1200"}` |
 | Money, quantities, rates, percents | `{"$q": "2.35", "u": "$/mi"}`, `{"$q": "1200", "u": "lb"}`, `{"$q": "18", "u": "%"}`, `{"$q": "450", "u": "$"}` |
 | `Date`, `DateTime` | `{"$date": "2026-10-22"}`, `{"$date": "2026-10-22T08:00:00-05:00"}` |
+| `Time` | `{"$time": "17:30:00"}` (`HH:MM` or `HH:MM:SS` is read; seconds are always written) |
 | Enum variants | a JSON string (`"Delivery"`), read as the declared enum |
 | `none` | JSON `null` |
 | Lists, records | JSON arrays and objects (record keys never start with `$`) |
@@ -1038,7 +1154,8 @@ matchStmt   = "match" expr "{" { arm } "}" ;
 arm         = pattern [ "if" expr ] "=>" ( block | expr ) NL ;
 pattern     = alt { "|" alt } ;
 alt         = literal | rangePat | TypeName | "none" | "_" | name | recordPat ;
-rangePat    = [ literal ] ( ".." | "..=" ) [ literal ] ;
+rangePat    = [ rangeEnd ] ( ".." | "..=" ) [ rangeEnd ] ;
+rangeEnd    = literal | TypeName [ "." TypeName ] ;             (* a variant of an ordered enum *)
 recordPat   = "{" name ":" pattern { "," name ":" pattern } [ "," ] "}" ;
 forStmt     = "for" name "in" expr [ "where" expr ] block ;
 require     = "require" condition "else" string NL ;
@@ -1076,7 +1193,7 @@ matchExpr   = "match" expr "{" { pattern [ "if" expr ] "=>" expr NL } "}" ;
 list        = "[" [ expr { "," expr } [ "," ] ] "]" ;
 record      = "{" name ":" expr { "," name ":" expr } [ "," ] "}" ;
 
-literal     = number [ unit ] | money | percent | string | date | dateTime
+literal     = number [ unit ] | money | percent | string | date | dateTime | time
             | "true" | "false" | "none" ;
 money       = "$" number [ "/" unit ] ;                       (* $450, $2.35/mi, $18.50/cwt *)
 percent     = number "%" ;
@@ -1086,6 +1203,7 @@ unit        = "lb" | "cwt" | "kg" | "t" | "ton" | "mi" | "km" | "in" | "ft" | "m
             | unit "/" unit ;                                 (* lb/ft3 for density *)
 date        = "@" digit4 "-" digit2 "-" digit2 ;
 dateTime    = date "T" digit2 ":" digit2 [ ":" digit2 ] ( "Z" | ( "+" | "-" ) digit2 ":" digit2 ) ;
+time        = "@" digit2 ":" digit2 [ ":" digit2 ] ;             (* @17:30, @07:30:15 *)
 string      = '"' { char | escape | "{" expr "}" | "{{" | "}}" } '"' ;
 ```
 

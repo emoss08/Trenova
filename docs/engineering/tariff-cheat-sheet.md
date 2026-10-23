@@ -72,6 +72,7 @@ total clauses (`minimum`, `maximum`, `round`) last, and tests at the end.
 | `$2.35/mi`, `$18.50/cwt`, `$65/h` | rates: money per unit |
 | `18%` | a percent (multiplies as 0.18) |
 | `@2026-10-22`, `@2026-10-22T08:00-05:00` | a date, a date-time |
+| `@17:30`, `@07:30:15` | a time of day: no date, no offset (`stop.arrival?.time` is the stop's local time) |
 | `"Stop {stop.sequence}"` | text, with `{…}` interpolation (`{{` for a brace) |
 | `true`, `false`, `none` | booleans, and the empty value of an optional |
 | `[a, b]`, `{ from: 0 lb, rate: $40/cwt }` | a list, a record |
@@ -121,7 +122,7 @@ hundredweight times a distance, and says what each side is.
   charge codes UPPERCASE (`FSC`).
 - Annotate inputs, function parameters and return types, record fields and library constants.
   Everything else is inferred, and the editor shows the type as a hint.
-- Types: `Bool`, `Int`, `Number`, `Percent`, `Money`, `Text`, `Date`, `DateTime`, the
+- Types: `Bool`, `Int`, `Number`, `Percent`, `Money`, `Text`, `Date`, `DateTime`, `Time`, the
   quantities `Weight`, `Distance`, `Length`, `Volume`, `Duration`, `Temperature`, `Count`, rates
   such as `Money/mi`, `List<T>`, records, enums, and `T?` for a value that may be empty.
 
@@ -205,6 +206,11 @@ test "no weight refuses" {
 - `for x in list where cond { … }` walks a list in order; `break` and `continue` work. There is no
   `while` and no recursion, so every rating ends.
 - `x in [Sat, Sun]` and `w in 500 lb..2_000 lb` test membership.
+- Ranges also work on times (`at.time in @08:00..@17:00`), on text (`lane.origin.zip in
+  "30000"..="31999"`, compared character by character, so keep both ends the same length), and
+  on `FreightClass` and `Weekday`, the two enums with an order (`Class50..=Class85`,
+  `Mon..=Fri`). The same ranges work as `match` arms and `where` constraints. `<` and `>` work on
+  times and those two enums, never on text.
 - Logic is `and`, `or`, `not`. Comparisons can't be chained: write `1 < n and n < 3`.
 
 List methods, with `x => …` lambdas:
@@ -282,7 +288,9 @@ Methods on values:
 | `Number` | `round(places: 2)`, `roundHalfEven()`, `floor()`, `ceil()`, `abs()`, `min(x)`, `max(x)`, `clamp(lo, hi)`, `pow(n)`, `sqrt()` |
 | `Percent` | `value` (`18%.value` is `18`) |
 | `Text` | `len`, `isEmpty`, `upper()`, `lower()`, `trim()`, `startsWith(t)`, `endsWith(t)`, `contains(t)`, `replace(a, b)`, `split(sep)`, `matches(pattern)` |
-| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Mon` … `Sun`), `weekend`, `addDays(n)`; on a `DateTime` also `hour`, `minute`, `date`, `addHours(n)` |
+| `Date`, `DateTime` | `year`, `month`, `day`, `weekday` (`Mon` … `Sun`), `weekend`, `addDays(n)`; on a `DateTime` also `hour`, `minute`, `date`, `time`, `addHours(n)`, `addMinutes(n)` |
+| `Time` | `hour`, `minute`; `@17:00 - @08:30` is `8.5 h` |
+| `FreightClass` | `number` (`Class77_5.number` is `77.5`) |
 
 ## Charges and the bill
 
@@ -420,8 +428,9 @@ Import with `use std.ltl.{ deficit, Break }`, or the whole module with `use std.
 |---|---|
 | `std.ltl` | `Break`, `Rated`, `deficit(breaks, actual:, allow: true)`, `billed(weight, to: 100 lb)`, `densityClass(density)` |
 | `std.fuel` | `stepPercent(price, peg:, step:, perStep:)`, `perMile(price, peg:, mpg:)` |
-| `std.time` | `weekend(at)`, `afterHours(at, open: 8, close: 17)`, `businessDuration(start, end, open: 8, close: 17)` |
+| `std.time` | `weekend(at)`, `afterHours(at, open: @08:00, close: @17:00)`, `businessDuration(start, end, open: @08:00, close: @17:00)` |
 | `std.accessorials` | `detention(dwell, free: 2 h, rate:, increment: 15 min)`, `extraStops(stops, included:, fee:)` |
+| `std.tiers` | `DistanceTier`, `byDistance(tiers, distance)`, `distanceSteps(tiers, distance)`; `WeightTier`, `byWeight(tiers, weight)`, `weightSteps(tiers, weight)` |
 
 Weight breaks are an input the rule edits as a table:
 
@@ -450,6 +459,38 @@ test "a heavy load rates at the deficit weight when cheaper" {
   expect charge("Linehaul") == $250
 }
 ```
+
+Graduated tiers price each part at its own tier's rate ("the first 100 mi at $3/mi, the next 400
+at $2.50/mi, beyond at $2/mi"), unlike breaks, which price the whole weight at one rate:
+
+```tariff
+tariff "Graduated mileage"
+
+use std.tiers.{ DistanceTier, byDistance }
+
+/// Each tier prices the miles from its start up to the next tier's start.
+input mileTiers: List<DistanceTier> = [
+  { from: 0 mi, rate: $3/mi },
+  { from: 100 mi, rate: $2.50/mi },
+  { from: 500 mi, rate: $2/mi },
+]
+
+charge "Linehaul" = byDistance(mileTiers, shipment.distance)
+
+test "the first 100 miles bill at $3 and the next 150 at $2.50" {
+  given shipment.distance = 250 mi
+  expect total == $675
+}
+
+test "past 500 miles bills at $2" {
+  given shipment.distance = 600 mi
+  expect total == $1_500
+}
+```
+
+`distanceSteps(tiers, distance)` gives each tier's part (`from`, `to`, `distance`, `rate`,
+`amount`) for one charge line per tier; `byWeight` and `weightSteps` do the same for weight with
+`WeightTier`s priced per hundredweight.
 
 ## Tests
 
@@ -541,6 +582,12 @@ test "units convert exactly" {
   expect (1_240 lb).in(cwt).value == 12.4
   expect @2026-10-22.weekday == Thu
   expect @2026-10-24.weekend
+  expect @2026-10-22T17:45-05:00.time == @17:45
+  expect @17:00 - @08:30 == 8.5 h
+  expect @2026-10-22.weekday in Mon..=Fri
+  expect Class77_5 < Class85
+  expect Class77_5.number == 77.5
+  expect "30301" in "30000"..="31999"
   expect "Stop {2} of {3}" == "Stop 2 of 3"
 }
 ```
@@ -613,6 +660,9 @@ an existing contract.
 | "…, so no contract can set it and this test proves nothing" | give the test a value inside the input's `where` bounds |
 | "The choice … has no option labelled …" | the suggested option label, or one of the labels listed |
 | "This match on … doesn't cover …" | add the missing ranges, or a `_` arm |
+| "… is text, which has no order …" | test a band of codes with a range: `zip in "30000"..="31999"`; the fix rewrites `zip < "31000"` as `zip in .."31000"` |
+| "This text range's ends have different lengths …" | text compares character by character, so `"9"` is inside `"10".."200"`: write both ends with the same number of characters |
+| "… has no order: only `FreightClass` and `Weekday` …" | compare the enum with `==`, or list the variants: `service in [Standard, Guaranteed]` |
 | "This arm overlaps an arm above it" | make the ranges meet without overlapping (`..500 lb`, `500 lb..`) |
 | "Comparisons can't be chained" | `1 < n and n < 3` |
 | "… isn't a variant of `StopKind`. Did you mean …?" | the suggested spelling |
