@@ -110,7 +110,8 @@ func (s *Service) Preview(
 		return result, nil
 	}
 
-	result.Bill = rated.Bill
+	result.Bill = rated.WireBill
+	result.RatedBill = rated.Bill
 	result.Refusal = rated.Refusal
 	if rated.Choices != nil {
 		result.Choices = rated.Choices

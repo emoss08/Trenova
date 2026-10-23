@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -325,15 +326,29 @@ func (r *TariffRefusal) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON writes the wire form UnmarshalJSON reads: the author's text as a
+// string, or the module's message with its arguments, beside the range.
 func (r TariffRefusal) MarshalJSON() ([]byte, error) {
-	var message any = r.Text
+	dst := append(make([]byte, 0, len(r.Text)+48), `{"message":`...)
 	if r.Message != nil {
-		message = *r.Message
+		var err error
+		if dst, err = appendMessage(dst, *r.Message); err != nil {
+			return nil, err
+		}
+	} else {
+		dst = appendString(dst, r.Text)
 	}
-	return sonic.Marshal(struct {
-		Message any          `json:"message"`
-		Range   *TariffRange `json:"range"`
-	}{Message: message, Range: r.Range})
+	dst = append(dst, `,"range":`...)
+	if r.Range == nil {
+		dst = append(dst, "null"...)
+	} else {
+		dst = append(dst, `{"from":`...)
+		dst = strconv.AppendInt(dst, int64(r.Range.From), 10)
+		dst = append(dst, `,"to":`...)
+		dst = strconv.AppendInt(dst, int64(r.Range.To), 10)
+		dst = append(dst, '}')
+	}
+	return append(dst, '}'), nil
 }
 
 func (r *TariffRefusal) Localize(locale i18n.Locale) string {

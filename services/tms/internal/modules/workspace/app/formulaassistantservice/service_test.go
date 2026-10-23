@@ -201,10 +201,10 @@ func TestPreview_ReportsTheBillOrWhereItStopped(t *testing.T) {
 	f := newFixture()
 	shipmentID := pulid.MustNew("shp_")
 	f.templates.preview = &formulatemplateports.PreviewResult{
-		Valid:  true,
-		Inputs: []tarifftypes.InputDecl{{Name: "rate", Type: "Money/mi", Required: true}},
-		Bill:   &tarifftypes.Bill{Total: decimal.NewFromInt(865)},
-		Tests:  passing("a short haul").Tests,
+		Valid:     true,
+		Inputs:    []tarifftypes.InputDecl{{Name: "rate", Type: "Money/mi", Required: true}},
+		RatedBill: &tarifftypes.Bill{Total: decimal.NewFromInt(865)},
+		Tests:     passing("a short haul").Tests,
 	}
 
 	preview, err := f.svc.Preview(t.Context(), &PreviewRequest{
@@ -343,7 +343,7 @@ func TestPreview_ReportsEachChoiceAndTheInputsBounds(t *testing.T) {
 		Inputs: []tarifftypes.InputDecl{
 			{Name: "rate", Type: "Money/mi", Required: true, Constraint: bounds},
 		},
-		Bill: &tarifftypes.Bill{Currency: "USD", Total: decimal.NewFromInt(900)},
+		RatedBill: &tarifftypes.Bill{Currency: "USD", Total: decimal.NewFromInt(900)},
 		Choices: []rules.TariffChoice{{
 			Label:  "Linehaul",
 			Kind:   rules.TariffChoiceBest,

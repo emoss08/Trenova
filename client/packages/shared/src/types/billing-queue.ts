@@ -257,7 +257,8 @@ export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
   businessUnitId: z.string(),
-  shipmentId: z.string(),
+  /** Absent on a credit or debit memo's item, which bills a customer rather than a shipment. */
+  shipmentId: nullableStringSchema,
   /** The customer this item bills. A split shipment has one item per payer. */
   billToCustomerId: nullableStringSchema,
   /** This payer's share of the shipment's charges. */

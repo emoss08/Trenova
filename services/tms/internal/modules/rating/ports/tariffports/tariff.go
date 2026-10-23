@@ -82,6 +82,7 @@ type RateRequest struct {
 
 type RateResult struct {
 	Bill       *tarifftypes.Bill
+	WireBill   *rules.TariffBill
 	Refusal    *rules.TariffRefusal
 	Conditions map[string]bool
 	Choices    []rules.TariffChoice

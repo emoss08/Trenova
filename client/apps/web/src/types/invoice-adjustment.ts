@@ -298,7 +298,7 @@ export const invoiceAdjustmentBatchSchema = z.object({
 export type InvoiceAdjustmentBatch = z.infer<typeof invoiceAdjustmentBatchSchema>;
 
 export const invoiceAdjustmentBatchQueueItemSchema = z.object({
-  batchId: z.string(),
+  id: z.string(),
   idempotencyKey: z.string(),
   status: invoiceAdjustmentBatchStatusSchema,
   totalCount: z.number().int(),

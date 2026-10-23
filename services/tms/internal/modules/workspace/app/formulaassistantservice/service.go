@@ -285,12 +285,12 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*Preview, e
 		&rules.TariffTestRun{Tests: result.Tests})
 	checked.OK = result.Valid
 
-	out := &Preview{Checked: checked, Bill: result.Bill}
+	out := &Preview{Checked: checked, Bill: result.RatedBill}
 	currency := ""
-	if result.Bill != nil {
-		currency = result.Bill.Currency
-		if result.Bill.Exchange != nil {
-			currency = result.Bill.Exchange.Currency
+	if result.RatedBill != nil {
+		currency = result.RatedBill.Currency
+		if result.RatedBill.Exchange != nil {
+			currency = result.RatedBill.Exchange.Currency
 		}
 	}
 	out.Choices, err = tarifftypes.ChoicesFrom(&tarifftypes.ChoicesRequest{

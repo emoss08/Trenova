@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -84,9 +85,25 @@ func NewManagerFromConfig(cfg ManagerConfig) (*Manager, error) {
 	}, nil
 }
 
+// cliStatementBackstop bounds a single statement from migrate, seed and reset
+// only against a connection that has gone silent. Schema drops, index builds
+// and bulk seed batches legitimately run for minutes; a statement blocked on a
+// lock fails fast on lock_timeout instead, as on the API's connection.
+const cliStatementBackstop = 30 * time.Minute
+
 func createDB(cfg *config.Config) (*bun.DB, error) {
 	db := bun.NewDB(
-		sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(cfg.GetMigrationDSN()))),
+		sql.OpenDB(pgdriver.NewConnector(
+			pgdriver.WithDSN(cfg.GetMigrationDSN()),
+			pgdriver.WithReadTimeout(cliStatementBackstop),
+			pgdriver.WithWriteTimeout(cliStatementBackstop),
+			pgdriver.WithConnParams(map[string]any{
+				"lock_timeout": fmt.Sprintf(
+					"%dms",
+					max(cfg.Database.GetLockTimeout().Milliseconds(), 1),
+				),
+			}),
+		)),
 		pgdialect.New(),
 	)
 
