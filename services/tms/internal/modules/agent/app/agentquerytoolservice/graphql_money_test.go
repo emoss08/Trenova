@@ -122,6 +122,7 @@ func TestKeyVariable_IsTheOnlyRequiredIDOfAKeyedGet(t *testing.T) {
 
 	assert.Equal(t, "workerId", keyed.keyVariable())
 	assert.Equal(t, "id", byID.keyVariable())
-	assert.Equal(t, "workerId", graphQLReads[toolGetDriverEarnings].keyVariable())
-	assert.Equal(t, "id", graphQLReads[toolGetDriverSettlement].keyVariable())
+	earnings, statement := graphQLReads[toolGetDriverEarnings], graphQLReads[toolGetDriverSettlement]
+	assert.Equal(t, "workerId", earnings.keyVariable())
+	assert.Equal(t, "id", statement.keyVariable())
 }
