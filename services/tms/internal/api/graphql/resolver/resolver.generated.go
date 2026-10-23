@@ -95,6 +95,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orderresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgholidayresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgstructureresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
@@ -893,6 +894,10 @@ func FromServices(s *Services) *Resolver {
 	orgstructureDeps := &orgstructureresolver.Deps{
 		Core: s.Core,
 	}
+	pageaccessDeps := &pageaccessresolver.Deps{
+		Core:              s.Core,
+		PageAccessService: s.PageAccessService,
+	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                     s.Core,
 		PerformanceReviewService: s.PerformanceReviewService,
@@ -1576,6 +1581,7 @@ func FromServices(s *Services) *Resolver {
 			orderQuery:                    &orderQuery{Deps: orderDeps},
 			orgholidayQuery:               &orgholidayQuery{Deps: orgholidayDeps},
 			orgstructureQuery:             &orgstructureQuery{Deps: orgstructureDeps},
+			pageaccessQuery:               &pageaccessQuery{Deps: pageaccessDeps},
 			performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
 			ptopolicyQuery:                &ptopolicyQuery{Deps: ptopolicyDeps},
 			rateQuery:                     &rateQuery{Deps: rateDeps},
@@ -2814,6 +2820,7 @@ type queryResolver struct {
 	*orderQuery
 	*orgholidayQuery
 	*orgstructureQuery
+	*pageaccessQuery
 	*performancereviewQuery
 	*ptopolicyQuery
 	*rateQuery
@@ -3326,6 +3333,7 @@ type (
 	orderQuery                      = orderresolver.QueryResolver
 	orgholidayQuery                 = orgholidayresolver.QueryResolver
 	orgstructureQuery               = orgstructureresolver.QueryResolver
+	pageaccessQuery                 = pageaccessresolver.QueryResolver
 	performancereviewQuery          = performancereviewresolver.QueryResolver
 	ptopolicyQuery                  = ptopolicyresolver.QueryResolver
 	rateQuery                       = rateresolver.QueryResolver

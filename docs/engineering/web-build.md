@@ -30,6 +30,11 @@ Things that were on every page and are not any more, and how they were kept off:
 
 - The Desk and assistant conversation (with markdown, syntax highlighting and chrono-node): the assistant
   panel and the command palette's answer card are `lazyComponent`s, preloaded on intent.
+- The page access panel (about 0.3 kB gzip of startup): the shell holds a user menu item, a
+  keybinds-config entry bound in `SidebarLayout`, and a `lazyComponent` of `page-access-sheet.tsx`
+  mounted once the app dialogs store marks the dialog `prepared` (the item pointed at, or opened).
+  The sheet lazy-loads the panel in turn, so the shell's import names one chunk to preload rather
+  than the panel's whole graph; the sheet draws the panel's skeleton meanwhile.
 - The Desk's 400 kB of CSS: the Desk loading screen, which the router imports for every page,
   imports `components/desk-chat/desk-frame.css`, the few rules it draws with, not the Desk's
   stylesheets.

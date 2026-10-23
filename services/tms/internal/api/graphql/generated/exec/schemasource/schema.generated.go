@@ -23212,6 +23212,154 @@ extend type Mutation {
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
 }
 `, BuiltIn: false},
+	{Name: "../schema/page_access.graphqls", Input: `"""
+How a screen depends on one kind of record (docs/engineering/reference-views.md).
+"""
+enum PageAccessUse {
+  "The screen's route, or a REST endpoint it calls, checks the kind."
+  REQUIRED
+  "The screen reads records of the kind as root records, which needs the kind's read."
+  READ
+  "The screen asks for fields beyond the kind's reference view with @requiresRead."
+  DECLARED
+  "The screen shows the kind only through its reference view."
+  REFERENCE
+}
+
+"What the field guard does with one field of a linked record."
+enum PageAccessDecision {
+  VISIBLE
+  "Outside the kind's reference view, and the reader cannot read the kind."
+  WITHHELD_KIND
+  "Above the reader's sensitivity ceiling."
+  WITHHELD_SENSITIVITY
+}
+
+"A permission a screen's route or one of its REST endpoints checks."
+type PageAccessRequirement {
+  resource: String!
+  resourceName: String!
+  operation: String!
+  operationName: String!
+  allowed: Boolean!
+}
+
+"A REST endpoint a screen calls, and what its route checks before its handler."
+type PageAccessEndpoint {
+  method: String!
+  path: String!
+  requires: [PageAccessRequirement!]!
+}
+
+"""
+One field a screen selects on a linked record. A name written Type.field is a
+field of a record that is part of the kind, which has no view of its own.
+"""
+type PageAccessField {
+  name: String!
+  inView: Boolean!
+  decision: PageAccessDecision!
+}
+
+"One kind a screen depends on, and what the reader sees of it there."
+type PageAccessKind {
+  resource: String!
+  resourceName: String!
+  use: PageAccessUse!
+  canRead: Boolean!
+  fields: [PageAccessField!]!
+  withheld: Int!
+}
+
+"""
+What a screen needs and what a person or a role would see on it, from the
+page access manifest. It never carries record data.
+"""
+type PageAccess {
+  "The route the location is, such as /shipments/:id."
+  path: String!
+  "The screen's English name from the navigation, or empty."
+  name: String!
+  operations: [String!]!
+  requires: [PageAccessRequirement!]!
+  endpoints: [PageAccessEndpoint!]!
+  kinds: [PageAccessKind!]!
+  "How many selected fields of linked records come back null."
+  withheld: Int!
+  "The route, or a kind the screen reads as root records, is refused."
+  blocked: Boolean!
+}
+
+"A screen of the page access manifest."
+type PageAccessScreen {
+  path: String!
+  name: String!
+}
+
+input PageAccessDraftPermissionInput {
+  resource: String!
+  operations: [String!]!
+}
+
+"A role as the role editor holds it before it is saved."
+input PageAccessRoleDraftInput {
+  maxSensitivity: String!
+  parentRoleIds: [ID!]
+  permissions: [PageAccessDraftPermissionInput!]!
+}
+
+input PageAccessPreviewInput {
+  "A path in the app, such as /shipments/shp_123."
+  location: String!
+  "A saved role to preview. Exactly one of roleId and draft is set."
+  roleId: ID
+  "The role being edited."
+  draft: PageAccessRoleDraftInput
+}
+
+"A screen a resource's grant changes, and how it depends on the resource."
+type RoleResourceScreen {
+  path: String!
+  name: String!
+  use: PageAccessUse!
+}
+
+"""
+What granting and withholding a resource's read means, in sentences built from
+the permission registry, the resource's reference view and the kinds that link
+to it, translated for the request.
+"""
+type RoleResourceGuide {
+  resource: String!
+  name: String!
+  granted: String!
+  withheld: String!
+  "The view's fields above the role's sensitivity ceiling, or null when none are."
+  ceiling: String
+  screens: [RoleResourceScreen!]!
+}
+
+input RoleResourceGuideInput {
+  "At most 64 resources, such as one category of the role editor."
+  resources: [String!]!
+  maxSensitivity: String!
+}
+
+extend type Query {
+  """
+  The caller's own access to the screen at a location: what it needs, which
+  kinds they read, and which linked fields come back as reference view only.
+  Null when no screen is at the location.
+  """
+  pageAccess(location: String!): PageAccess
+  "What a person holding only a role would need and see on a screen."
+  pageAccessPreview(input: PageAccessPreviewInput!): PageAccess
+  "Every screen of the page access manifest, to choose one to preview."
+  pageAccessScreens: [PageAccessScreen!]!
+  "The role editor's sentences for each resource, with the screens it affects."
+  roleResourceGuides(input: RoleResourceGuideInput!): [RoleResourceGuide!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/performance_review.graphqls", Input: `enum PerformanceReviewStatus {
   Draft
   Submitted

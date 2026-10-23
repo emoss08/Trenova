@@ -36,22 +36,51 @@ func (f LinkedField) String() string {
 // operation implying it) before it answers.
 type RootChecks func(root, field string) []permission.Resource
 
-// LinkedFields walks operations as the field guard walks a response and
-// returns every field the guard would withhold from a caller who cannot read
-// its kind: a field outside the reference view of a record carried by
-// another, or a shipment, order, invoice or worker carried by a mutation's
-// payload when the mutation's resolver does not check that kind (checks says
-// which it does). A field inside one of
-// those (a state under a withheld address) is never resolved once its parent
-// is withheld, so only the record's own fields are returned. Declared says
-// whether the operation names the kind in @requiresRead.
-func LinkedFields(
+// Selection is one field an operation selects on a record of a kind, and how
+// the field guard will have reached that record. A field of a record that is
+// part of another (a shipment's stop under a linked shipment) is the
+// carrier's: Kind is the carrier's kind and Part is set.
+type Selection struct {
+	Path     string
+	Type     string
+	Field    string
+	Kind     permission.Resource
+	Reach    refview.Reach
+	Part     bool
+	NonNull  bool
+	Declared bool
+}
+
+// OperationAccess is what one operation reads, as the field guard sees it at
+// run time: the kinds its root resolvers return (Roots), the kinds it reaches
+// under a self-scoped root (Own), the kinds it reaches as records another
+// record links to (Linked), the kinds it declares with @requiresRead, and
+// every field it selects on a record of a kind.
+type OperationAccess struct {
+	Name       string
+	Operation  ast.Operation
+	Roots      []permission.Resource
+	Own        []permission.Resource
+	Linked     []permission.Resource
+	Declared   []permission.Resource
+	Selections []Selection
+}
+
+// Operations walks operations as the field guard walks a response. A
+// shipment, order, invoice or worker a mutation's payload carries is the
+// operation's root record only when the mutation's resolver checks that kind
+// (checks says which it does; nil means none), as the guard sees it for a
+// caller who cannot read the kind. A field
+// inside a reference view field (a state under a customer's address) is never
+// decided on its own once the field holding it is shown, so only a record's
+// own fields are selections.
+func Operations(
 	schema *ast.Schema,
 	registry *permission.Registry,
 	operations ast.OperationList,
 	fragments ast.FragmentDefinitionList,
 	checks RootChecks,
-) ([]LinkedField, error) {
+) ([]OperationAccess, error) {
 	kinds, err := KindTypes(schema, registry)
 	if err != nil {
 		return nil, err
@@ -67,6 +96,7 @@ func LinkedFields(
 	for _, fragment := range fragments {
 		w.fragments[fragment.Name] = fragment
 	}
+	out := make([]OperationAccess, 0, len(operations))
 	for _, op := range operations {
 		var root *ast.Definition
 		switch op.Operation {
@@ -81,11 +111,61 @@ func LinkedFields(
 			continue
 		}
 		w.op = op
-		w.declared = RequiredReads(op)
+		w.access = &OperationAccess{
+			Name:      op.Name,
+			Operation: op.Operation,
+			Declared:  RequiredReads(op),
+		}
 		w.selections(root, op.SelectionSet, linkFrame{rootType: root.Name}, op.Name, nil)
+		out = append(out, *w.access)
 	}
 
-	return w.found, nil
+	return out, nil
+}
+
+// LinkedFields is every field the guard would withhold from a caller who
+// cannot read its kind: a field outside the reference view of a record
+// carried by another, any field of a part of one, or a shipment, order,
+// invoice or worker carried by a mutation's payload when the mutation's
+// resolver does not check that kind. Declared says whether the operation
+// names the kind in @requiresRead.
+func LinkedFields(
+	schema *ast.Schema,
+	registry *permission.Registry,
+	operations ast.OperationList,
+	fragments ast.FragmentDefinitionList,
+	checks RootChecks,
+) ([]LinkedField, error) {
+	accesses, err := Operations(schema, registry, operations, fragments, checks)
+	if err != nil {
+		return nil, err
+	}
+	views := refview.New(registry)
+	var found []LinkedField
+	for i := range accesses {
+		for _, s := range accesses[i].Selections {
+			if !BeyondView(views, s) {
+				continue
+			}
+			found = append(found, LinkedField{
+				Operation: accesses[i].Name,
+				Path:      s.Path,
+				Type:      s.Type,
+				Field:     s.Field,
+				Kind:      s.Kind,
+				NonNull:   s.NonNull,
+				Declared:  s.Declared,
+			})
+		}
+	}
+
+	return found, nil
+}
+
+// BeyondView reports whether a selection is withheld from a caller who
+// cannot read its kind.
+func BeyondView(views *refview.Views, s Selection) bool {
+	return s.Reach == refview.Nested && (s.Part || !views.InView(s.Kind, s.Field))
 }
 
 // RequiredReads is the kinds an operation declares with @requiresRead.
@@ -111,8 +191,7 @@ type linkWalker struct {
 	scopedKinds []string
 	fragments   map[string]*ast.FragmentDefinition
 	op          *ast.OperationDefinition
-	declared    []permission.Resource
-	found       []LinkedField
+	access      *OperationAccess
 }
 
 // linkFrame is where a walk is: the record it is in and how that record was
@@ -184,6 +263,7 @@ func (w *linkWalker) field(parent *ast.Definition, f *ast.Field, frame linkFrame
 	if kind, ok := w.kinds[child.Name]; ok {
 		next.record = w.reach(kind, next)
 		next.through = false
+		w.reached(next.record)
 	} else if frame.record != nil && frame.record.reach == refview.Nested && !frame.record.part &&
 		w.kindOf(parent) && w.views.InView(frame.record.kind, def.Name) {
 		next.through = true
@@ -228,6 +308,24 @@ func (w *linkWalker) reach(kind permission.Resource, frame linkFrame) *recordCon
 	return &recordContext{kind: kind, reach: refview.Nested}
 }
 
+func (w *linkWalker) reached(record *recordContext) {
+	switch {
+	case record.reach == refview.Root:
+		w.access.Roots = appendKind(w.access.Roots, record.kind)
+	case record.reach == refview.SelfScoped:
+		w.access.Own = appendKind(w.access.Own, record.kind)
+	case !record.part:
+		w.access.Linked = appendKind(w.access.Linked, record.kind)
+	}
+}
+
+func appendKind(kinds []permission.Resource, kind permission.Resource) []permission.Resource {
+	if slices.Contains(kinds, kind) {
+		return kinds
+	}
+	return append(kinds, kind)
+}
+
 func (w *linkWalker) scoped(kind permission.Resource) bool {
 	return slices.Contains(w.scopedKinds, kind.String())
 }
@@ -243,20 +341,18 @@ func (w *linkWalker) check(
 	frame linkFrame,
 	at string,
 ) {
+	if !w.kindOf(parent) {
+		return
+	}
 	record := frame.record
-	if record.reach != refview.Nested || !w.kindOf(parent) {
-		return
-	}
-	if !record.part && w.views.InView(record.kind, def.Name) {
-		return
-	}
-	w.found = append(w.found, LinkedField{
-		Operation: w.op.Name,
-		Path:      strings.TrimPrefix(at, "."+w.op.Name+"."),
-		Type:      parent.Name,
-		Field:     def.Name,
-		Kind:      record.kind,
-		NonNull:   def.Type.NonNull,
-		Declared:  slices.Contains(w.declared, record.kind),
+	w.access.Selections = append(w.access.Selections, Selection{
+		Path:     strings.TrimPrefix(at, "."+w.op.Name+"."),
+		Type:     parent.Name,
+		Field:    def.Name,
+		Kind:     record.kind,
+		Reach:    record.reach,
+		Part:     record.part,
+		NonNull:  def.Type.NonNull,
+		Declared: slices.Contains(w.access.Declared, record.kind),
 	})
 }

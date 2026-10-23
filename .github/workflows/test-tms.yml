@@ -10,6 +10,9 @@ on:
     paths:
       - "services/**"
       - "shared/**"
+      # Go tests read the client's operations: the reference view checks
+      # (gqlext) and the page access manifest (pagemanifest).
+      - "client/packages/graphql/src/operations/**"
       - "dev/samsara-sim/**"
       - "dev/edi-partner-sim/**"
       - "go.work"
@@ -31,6 +34,9 @@ on:
     paths:
       - "services/**"
       - "shared/**"
+      # Go tests read the client's operations: the reference view checks
+      # (gqlext) and the page access manifest (pagemanifest).
+      - "client/packages/graphql/src/operations/**"
       - "dev/samsara-sim/**"
       - "dev/edi-partner-sim/**"
       - "go.work"

@@ -26,11 +26,18 @@ func PersonCeiling(
 	if err != nil || detail == nil {
 		return permission.SensitivityInternal
 	}
-	if detail.MaxSensitivity.CanAccess(permission.SensitivityConfidential) {
+
+	return RoleCeiling(detail.MaxSensitivity)
+}
+
+// RoleCeiling is the most sensitive tier a role's sensitivity reaches: a
+// role that reaches Confidential reaches everything up to Restricted.
+func RoleCeiling(maxSensitivity permission.FieldSensitivity) permission.FieldSensitivity {
+	if maxSensitivity.CanAccess(permission.SensitivityConfidential) {
 		return permission.SensitivityRestricted
 	}
 
-	return detail.MaxSensitivity
+	return maxSensitivity
 }
 
 var defaultRegistry = sync.OnceValue(permission.NewRegistry)
