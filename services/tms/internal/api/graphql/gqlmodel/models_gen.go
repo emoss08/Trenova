@@ -709,6 +709,13 @@ type AccountingMappingConnection struct {
 	TotalCount *int                     `json:"totalCount,omitempty"`
 }
 
+// One mapping, and the accounting system records it could be set to.
+type AccountingMappingDetail struct {
+	Mapping *accountingsync.AccountingMapping `json:"mapping"`
+	// Usable records of the kind the mapping maps to whose names match optionsQuery, best first, at most ten. Empty without optionsQuery.
+	Options []*accountingsync.AccountingReferenceObject `json:"options"`
+}
+
 type AccountingMappingEdge struct {
 	Node   *accountingsync.AccountingMapping `json:"node"`
 	Cursor string                            `json:"cursor"`

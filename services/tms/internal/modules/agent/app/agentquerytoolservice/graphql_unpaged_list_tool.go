@@ -9,8 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -58,6 +56,15 @@ type alongsideSpec struct {
 	// (the credential types beside one worker's credentials, not beside what
 	// falls due across the organization).
 	scoped bool
+	// withheld is the note a result carries when the reader may not read
+	// the kind, so the model knows the records exist and are hidden.
+	withheld string
+	// shape applies to each record what its resolver does not (what a sync
+	// record's status means).
+	shape func(row map[string]any)
+	// note is what a read made instead of a list's always says beside its
+	// records (a document with no state was never sent).
+	note string
 }
 
 // graphQLUnpagedListTool is a list whose root field returns every record at
@@ -72,7 +79,7 @@ type graphQLUnpagedListTool struct {
 	// pages by cursor: the offset stays inside the nextCursor it hands out.
 	paged       bool
 	required    []string
-	alongside   []graphQLAlongside
+	beside      besideReads
 	reader      agentports.GraphQLReader
 	permissions permissionports.PermissionEngine
 }
@@ -87,11 +94,6 @@ func newGraphQLReadTool(
 	if read, ok := graphQLReads[spec.name]; ok && read.Unpaged {
 		return newGraphQLUnpagedListTool(spec, reader, permissions)
 	}
-	if len(spec.alongside) > 0 {
-		return nil, fmt.Errorf("%s pages; only an unpaged list reads alongside its own",
-			spec.name)
-	}
-
 	return newGraphQLListTool(spec, reader, permissions)
 }
 
@@ -108,7 +110,8 @@ func newGraphQLUnpagedListTool(
 		return nil, fmt.Errorf("%s reads %s, which is not an unpaged list", spec.name,
 			read.Operation)
 	}
-	if spec.rank != nil || spec.defaultsAt != nil || spec.queryNote != "" {
+	if spec.rank != nil || spec.defaultsAt != nil || spec.queryNote != "" ||
+		len(spec.instead) > 0 || spec.combine != nil || len(spec.names) > 0 {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
 
@@ -128,51 +131,23 @@ func newGraphQLUnpagedListTool(
 				spec.name, name)
 		}
 	}
-	alongside, err := matchAlongside(spec, read.Alongside)
+	alongside, err := matchAlongside(spec.name, "alongside", spec.alongside, read.Alongside)
 	if err != nil {
 		return nil, err
 	}
 
 	return &graphQLUnpagedListTool{
-		spec:        *spec,
-		read:        read,
-		params:      params,
-		paged:       read.pagesByOffset(),
-		required:    required,
-		alongside:   alongside,
+		spec:     *spec,
+		read:     read,
+		params:   params,
+		paged:    read.pagesByOffset(),
+		required: required,
+		beside: besideReads{
+			specs: spec.alongside, bound: alongside, reader: reader, permissions: permissions,
+		},
 		reader:      reader,
 		permissions: permissions,
 	}, nil
-}
-
-// matchAlongside pairs each read the spec makes alongside with the one the
-// generator proved, and refuses either without the other.
-func matchAlongside(
-	spec *graphQLListSpec,
-	bound []graphQLAlongside,
-) ([]graphQLAlongside, error) {
-	out := make([]graphQLAlongside, 0, len(spec.alongside))
-	for _, beside := range spec.alongside {
-		idx := slices.IndexFunc(bound, func(b graphQLAlongside) bool {
-			return b.Operation == beside.operation
-		})
-		if idx < 0 {
-			return nil, fmt.Errorf("%s reads %s alongside, which reads.yml does not list for it",
-				spec.name, beside.operation)
-		}
-		if len(bound[idx].Keys) > 0 && len(beside.inputs) > 0 {
-			return nil, fmt.Errorf("%s reads %s alongside by the call's own %s; it takes "+
-				"no table input", spec.name, beside.operation,
-				strings.Join(bound[idx].Keys, ", "))
-		}
-		out = append(out, bound[idx])
-	}
-	if len(out) != len(bound) {
-		return nil, fmt.Errorf("%s: reads.yml lists %d reads alongside it, its spec %d",
-			spec.name, len(bound), len(out))
-	}
-
-	return out, nil
 }
 
 // pagesByOffset reports whether an unpaged list's root takes a limit and an
@@ -230,6 +205,21 @@ func (r *graphQLRead) argumentParams(tool string) (params []graphQLParam, requir
 // types by its resource; anything else is derived as a table input's own
 // field is.
 func argumentParam(field *graphQLField) []graphQLParam {
+	if field.Type == graphQLTypeID && field.List {
+		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
+			strings.TrimSuffix(field.Name, "Ids")))
+		return []graphQLParam{{
+			Name: field.Name, Field: field.Name, Kind: paramReferences,
+			Schema: map[string]any{
+				toolschema.KeyType:        toolschema.TypeArray,
+				toolschema.KeyDescription: "The " + words + " records whose records are read.",
+				toolschema.KeyItems: map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+				},
+				toolschema.KeyMinItems: 1,
+			},
+		}}
+	}
 	if field.Type == graphQLTypeID && !field.List {
 		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(
 			strings.TrimSuffix(field.Name, suffixID)))
@@ -418,7 +408,9 @@ func (t *graphQLUnpagedListTool) Query(
 			notes = append(notes, note)
 		}
 	}
-	beside, besideWithheld, besideNotes, err := t.readAlongside(ctx, params, variables)
+	beside, besideWithheld, besideNotes, err := t.beside.read(
+		ctx, params, variables, namesReference(&t.spec, variables),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -464,66 +456,6 @@ func (t *graphQLUnpagedListTool) checkArguments(args map[string]any) error {
 	}
 
 	return nil
-}
-
-// readAlongside makes each read the list makes beside its own, where the
-// reader may read its kind and the call names what a keyed read is keyed by,
-// and returns the records by key, what it withheld, and a note for a read
-// cut short.
-func (t *graphQLUnpagedListTool) readAlongside(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-	sent map[string]any,
-) (records map[string][]map[string]any, withheld, notes []string, err error) {
-	if len(t.alongside) == 0 {
-		return nil, nil, nil, nil
-	}
-	ceilings := fieldsensitivity.NewAgentCeilings(
-		t.permissions, params.Actor, params.DataAccessCeiling,
-	)
-	records = make(map[string][]map[string]any, len(t.alongside))
-	for idx := range t.alongside {
-		bound := &t.alongside[idx]
-		spec := &t.spec.alongside[idx]
-		resource := permission.Resource(bound.Resource)
-		if !ceilings.Reads(ctx, resource) || (spec.scoped && !namesReference(&t.spec, sent)) {
-			continue
-		}
-		variables, keyed := alongsideVariables(bound, spec, sent)
-		if !keyed {
-			continue
-		}
-
-		var result *agentports.GraphQLReadResult
-		result, err = t.reader.Read(ctx, &agentports.GraphQLReadRequest{
-			Actor:             params.Actor,
-			Operation:         bound.Operation,
-			Variables:         variables,
-			DataAccessCeiling: params.DataAccessCeiling,
-			RequestID:         params.RunID.String(),
-		})
-		if err != nil {
-			return nil, nil, nil, err
-		}
-		if err = readFailure(result, resource); err != nil {
-			var refused *agentports.ReadRefusedError
-			if errors.As(err, &refused) {
-				continue
-			}
-			return nil, nil, nil, err
-		}
-
-		rows, prefix, note := alongsideRows(bound, spec, result.Data)
-		records[spec.key] = rows
-		for _, path := range relativePaths(result.Withheld, prefix) {
-			withheld = append(withheld, spec.key+"."+path)
-		}
-		if note != "" {
-			notes = append(notes, note)
-		}
-	}
-
-	return records, withheld, notes, nil
 }
 
 // alongsideVariables are what a read alongside sends: a keyed read the

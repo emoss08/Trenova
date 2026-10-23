@@ -1637,6 +1637,21 @@ the reason the inventory gives. One development case ("which recurring shipments
 tomorrow") dropped to second when the series list's description grew its filters, and the list now
 carries search terms; keyword held-out holds at 0.99 and 0.95 over 147, hybrid at 0.93 recall@5,
 with top-1 0.83 over 167 (the case counts grew with master's merges).
+The accounting row converts the seven accounting sync reads and adds the machinery the remaining
+modules need. A paged list now takes its root field's own arguments beside its table input (the
+required accounting system, as `system`), or pages by the root's own `first` and `after` with a
+filter input whose fields are its parameters; any tool reads keyed records alongside its own (the
+drift overview's tolerance, the connection's queue, a sync record's tries), and a list reads
+another operation instead when a call names that operation's own parameter (the sync state of
+documents named by id). Every accounting record and summary type had no kind, because a record
+kind is not a resource, so the guard gated none of them; each now declares `@kind`. The
+connection and mapping fields the tools read are declared Internal, where the integration's
+Restricted default would have withheld them, and its app keys stay Restricted. Two safe schema
+changes carry the reads the tools made that no root did: `accountingMappingDetail` (one mapping by
+id or by what it maps, with the records it could be set to) and an optional `integrationType` on
+`accountingSyncObjectStates`. No operation selects what the accounting system said in its own
+words. The descriptions changed, so the embedding fixture is re-recorded; held-out ranking holds
+(keyword 0.99 and 0.95 over 147, hybrid 0.93 and 0.83 over 167), and nothing was tuned against it.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

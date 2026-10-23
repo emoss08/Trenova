@@ -91,3 +91,29 @@ reads:
   - tool: dispatch_list_tenders
     operation: DeskShipmentTenders
     reason: A shipment's tenders are read whole by tendersByShipment, keyed by the shipment.
+  - tool: accounting_get_connection
+    operation: DeskAccountingConnection
+    reason: The link to an accounting system is read by accountingSyncStatus, keyed by the system rather than by a record's id.
+    alongside: [DeskAccountingSyncSummary]
+  - tool: accounting_get_mapping
+    operation: DeskAccountingMappingDetail
+    reason: One mapping is read by accountingMappingDetail, named by its id or by what it maps, with the records it could be set to.
+  - tool: accounting_get_sync_record
+    operation: DeskAccountingSyncRecord
+    reason: A sync record is a record kind of the accounting sync resource, read by accountingSyncRecord, which no rule finds from the resource.
+    alongside: [DeskAccountingSyncAttempts]
+  - tool: accounting_list_drift_findings
+    operation: DeskAccountingDriftFindings
+    reason: Drift findings are a record kind of the accounting sync resource, read by accountingDriftFindingTable for one accounting system.
+    alongside: [DeskAccountingDriftOverview]
+  - tool: accounting_list_inbound_changes
+    operation: DeskAccountingInboundChanges
+    reason: Inbound changes are a record kind of the accounting sync resource, read by accountingInboundChangeTable for one accounting system.
+  - tool: accounting_list_mapping_gaps
+    operation: DeskAccountingMappings
+    reason: What still needs matching is the mappings in the Unmatched and Proposed states, read by accountingMappings.
+    alongside: [DeskAccountingMappingSummary]
+  - tool: accounting_list_sync_records
+    operation: DeskAccountingSyncRecords
+    reason: The sync ledger is read by accountingSyncRecords, whose typed filter matches the tool's; accountingSyncRecordTable reads the same records for the data table.
+    instead: [DeskAccountingSyncObjectStates]

@@ -30,9 +30,12 @@ type graphQLRead struct {
 	Unpaged   bool
 	Variables []graphQLVariable
 	Fields    []graphQLField
-	// Alongside are the connection reads an unpaged list makes beside its
-	// own, for records of another kind its next call needs.
+	// Alongside are the reads a tool makes beside its own, for records its
+	// next call needs or that say what its own records mean.
 	Alongside []graphQLAlongside
+	// Instead are the reads a list makes in place of its own when a call
+	// names their own variables.
+	Instead []graphQLAlongside
 }
 
 // graphQLVariable is one of the operation's variables, described by the
@@ -47,17 +50,26 @@ type graphQLVariable struct {
 	Description string
 }
 
-// graphQLAlongside is a read a list makes beside its own, checked by its own
-// resolver for its own resource: a connection read through its table input,
-// or an unpaged list keyed by the list's own arguments.
+// graphQLAlongside is a read a tool makes beside or instead of its own,
+// checked by its own resolver for its own resource: a connection read
+// through its table input, or an unpaged list or one record keyed by the
+// tool's own arguments.
 type graphQLAlongside struct {
 	Operation string
 	RootField string
 	Resource  string
 	// Input is the variable a connection read takes its table input in.
 	Input string
-	// Keys are the variables an unpaged read takes from the list's own call.
+	// Keys are the variables a keyed read takes from the tool's own call.
 	Keys []string
+	// Object marks a keyed read whose root returns one record.
+	Object bool
+	// Own are the variables of a read made instead of a list's that the
+	// list does not take: naming one chooses the read.
+	Own []string
+	// Variables are a read made instead's variables, described by the root
+	// field arguments they are sent as.
+	Variables []graphQLVariable
 }
 
 type graphQLField struct {
@@ -134,8 +146,8 @@ const (
 	paramAtMost
 	paramPresent
 	paramReference
-	// paramReferences is a list of ids an unpaged list's argument takes (the
-	// tractors whose positions are read), sent as the list.
+	// paramReferences is a list of ids a root argument takes (the documents
+	// whose sync state is read).
 	paramReferences
 )
 
@@ -151,10 +163,16 @@ type graphQLParam struct {
 	// to (WorkerProfile for profile.cdlClass); empty for the record's own.
 	Holder string
 	// OnInput marks a parameter that is one of the input's own fields
-	// (WorkerPTOEntriesInput.workerId), sent as that field rather than as a
-	// field filter. Like any argument the screen sends, it is not judged by
-	// a record field's sensitivity.
+	// (WorkerPTOEntriesInput.workerId), or one of the root field's own
+	// arguments, sent as that field rather than as a field filter. Like any
+	// argument the screen sends, it is not judged by a record field's
+	// sensitivity.
 	OnInput bool
+	// Arg is the root variable an argument parameter is sent as (a drift
+	// list's integrationType), and ArgField the field of that variable's
+	// filter input it sets (statuses), when it is one.
+	Arg      string
+	ArgField string
 }
 
 // tableInputFields are what a table-shaped input holds for the table itself;
@@ -292,29 +310,68 @@ func compileInputs(params []graphQLParam, args map[string]any, clk clock) (map[s
 	out := make(map[string]any)
 	for _, param := range params {
 		raw, present := args[param.Name]
-		if !param.OnInput || !present || raw == nil {
+		if !param.OnInput || param.Arg != "" || !present || raw == nil {
 			continue
 		}
-		switch param.Kind {
-		case paramDayFrom:
-			day, err := readDay(args, param.Name, clk)
-			if err != nil {
-				return nil, err
-			}
-			out[param.Field] = day
-		case paramDayTo:
-			day, err := readDay(args, param.Name, clk)
-			if err != nil {
-				return nil, err
-			}
-			out[param.Field] = endOfDay(clk, day)
-		case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
-			paramReference, paramReferences:
-			out[param.Field] = raw
+		value, err := inputValue(&param, args, raw, clk)
+		if err != nil {
+			return nil, err
 		}
+		out[param.Field] = value
 	}
 
 	return out, nil
+}
+
+// compileArgs is the root variables a call's argument parameters set, each
+// filter input built from the fields its parameters name.
+func compileArgs(params []graphQLParam, args map[string]any, clk clock) (map[string]any, error) {
+	out := make(map[string]any)
+	for _, param := range params {
+		raw, present := args[param.Name]
+		if param.Arg == "" || !present || raw == nil {
+			continue
+		}
+		value, err := inputValue(&param, args, raw, clk)
+		if err != nil {
+			return nil, err
+		}
+		if param.ArgField == "" {
+			out[param.Arg] = value
+			continue
+		}
+		filter, _ := out[param.Arg].(map[string]any)
+		if filter == nil {
+			filter = make(map[string]any)
+			out[param.Arg] = filter
+		}
+		filter[param.ArgField] = value
+	}
+
+	return out, nil
+}
+
+// inputValue is the value an on-input or argument parameter sends: a day in
+// the organization's zone for a range end, the call's own value otherwise.
+func inputValue(param *graphQLParam, args map[string]any, raw any, clk clock) (any, error) {
+	switch param.Kind {
+	case paramDayFrom:
+		day, err := readDay(args, param.Name, clk)
+		if err != nil {
+			return nil, err
+		}
+		return day, nil
+	case paramDayTo:
+		day, err := readDay(args, param.Name, clk)
+		if err != nil {
+			return nil, err
+		}
+		return endOfDay(clk, day), nil
+	case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
+		paramReference, paramReferences:
+	}
+
+	return raw, nil
 }
 
 // typedParams derives a list tool's parameters from its record type: every
@@ -323,6 +380,9 @@ func compileInputs(params []graphQLParam, args map[string]any, clk clock) (map[s
 // operation's selection decides only what a result carries; a field the
 // table does not show can still narrow it, as the resolver accepts.
 func (r *graphQLRead) typedParams() []graphQLParam {
+	if r.Entity == nil {
+		return nil
+	}
 	config := querybuilder.GetFieldConfiguration(r.Entity())
 	params := make([]graphQLParam, 0, len(r.Fields))
 	for idx := range r.Fields {
@@ -392,6 +452,9 @@ func (r *graphQLRead) nestedField(path string) (parent, child *graphQLField, ok 
 
 // sortable is every field of the record the server can order the list by.
 func (r *graphQLRead) sortable() []string {
+	if r.Entity == nil {
+		return nil
+	}
 	config := querybuilder.GetFieldConfiguration(r.Entity())
 	out := make([]string, 0, len(r.Fields))
 	for _, field := range r.Fields {

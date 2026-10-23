@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,13 +47,17 @@ type variable struct {
 	Description string
 }
 
-// besideRead is an operation a list reads alongside its own.
+// besideRead is an operation a tool reads alongside its own, or a list
+// instead of its own.
 type besideRead struct {
 	Operation string
 	RootField string
 	Resource  string
 	Input     string
 	Keys      []string
+	Object    bool
+	Own       []string
+	Variables []variable
 }
 
 type toolRead struct {
@@ -69,6 +74,7 @@ type toolRead struct {
 	Variables   []variable
 	Fields      []field
 	Alongside   []besideRead
+	Instead     []besideRead
 }
 
 type toolsData struct {
@@ -121,9 +127,14 @@ var graphQLReads = map[string]graphQLRead{
 {{- if .Alongside }}
 		Alongside: []graphQLAlongside{
 {{- range .Alongside }}
-			{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}
-{{- if .Input }}, Input: {{ quote .Input }}{{ end }}
-{{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}},
+			{{ template "beside" . }}
+{{- end }}
+		},
+{{- end }}
+{{- if .Instead }}
+		Instead: []graphQLAlongside{
+{{- range .Instead }}
+			{{ template "beside" . }}
 {{- end }}
 		},
 {{- end }}
@@ -147,6 +158,24 @@ var graphQLInputs = map[string][]graphQLField{
 	},
 {{- end }}
 }
+{{ define "variable" -}}
+{Name: {{ quote .Name }}, Type: {{ quote .Type }}, NonNull: {{ .NonNull }}, List: {{ .List }}
+{{- if .Kind }}, Kind: {{ quote .Kind }}{{ end }}
+{{- if .Enum }}, Enum: []string{ {{- range $i, $v := .Enum }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Description }}, Description: {{ quote .Description }}{{ end }}},
+{{- end }}
+{{ define "beside" -}}
+{Operation: {{ quote .Operation }}, RootField: {{ quote .RootField }}, Resource: {{ quote .Resource }}
+{{- if .Input }}, Input: {{ quote .Input }}{{ end }}
+{{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Object }}, Object: true{{ end }}
+{{- if .Own }}, Own: []string{ {{- range $i, $v := .Own }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Variables }}, Variables: []graphQLVariable{
+{{- range .Variables }}
+	{{ template "variable" . }}
+{{- end }}
+}{{ end }}},
+{{- end }}
 {{ define "field" -}}
 {Name: {{ quote .Name }}, Type: {{ quote .Type }}, Kind: {{ quote .Kind }}, List: {{ .List }}, NonNull: {{ .NonNull }}
 {{- if .Selected }}, Selected: true{{ end }}
@@ -187,12 +216,13 @@ func writeTools(
 			Unpaged:     b.unpaged(),
 			Variables:   variables(schema, b),
 			Fields:      nodeFields(schema, b),
-			Alongside:   besideReads(b),
+			Alongside:   besideReads(schema, b.Alongside, false),
+			Instead:     besideReads(schema, b.Instead, true),
 		})
 		for _, v := range b.Operation.Query.Operations[0].VariableDefinitions {
 			collectInputs(schema, v.Type.Name(), data.Inputs)
 		}
-		for _, beside := range b.Alongside {
+		for _, beside := range slices.Concat(b.Alongside, b.Instead) {
 			for _, v := range beside.Operation.Query.Operations[0].VariableDefinitions {
 				collectInputs(schema, v.Type.Name(), data.Inputs)
 			}
@@ -237,16 +267,26 @@ func aliasFor(aliases map[string]string, importPath string) string {
 	return alias
 }
 
-func besideReads(b *binding) []besideRead {
-	out := make([]besideRead, 0, len(b.Alongside))
-	for _, beside := range b.Alongside {
-		out = append(out, besideRead{
+// besideReads are the reads a tool makes beside or instead of its own. A
+// read made instead carries its variables, since the call names its own.
+func besideReads(schema *ast.Schema, reads []*alongside, described bool) []besideRead {
+	out := make([]besideRead, 0, len(reads))
+	for _, beside := range reads {
+		read := besideRead{
 			Operation: beside.Operation.Name,
 			RootField: beside.RootField.Name,
 			Resource:  string(beside.Resource),
 			Input:     beside.Input,
 			Keys:      beside.Keys,
-		})
+			Object:    beside.Object,
+			Own:       beside.Own,
+		}
+		if described {
+			read.Variables = variables(schema, &binding{
+				Operation: beside.Operation, RootField: beside.RootField,
+			})
+		}
+		out = append(out, read)
 	}
 
 	return out

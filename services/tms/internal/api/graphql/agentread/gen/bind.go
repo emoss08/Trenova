@@ -37,10 +37,10 @@ const (
 	idType            = "ID"
 )
 
-// supplied are the variables a tool of each verb sends, by name and type: a
-// list builds the table input and turns the total count off, a get sends the
-// record's id. An operation that requires any other variable cannot be read
-// by the tool's typed parameters.
+// supplied are the variables a tool of each verb sends itself, by name and
+// type: a list builds the table input and turns the total count off, a get
+// sends the record's id. Any other scalar, enum or id variable is a
+// parameter of the tool's own (see unsupplied).
 var supplied = map[string]map[string]string{
 	verbList: {"": listInput, includeTotalCount: "Boolean"},
 	verbGet:  {idArgument: idType},
@@ -57,10 +57,14 @@ type read struct {
 	// compiles filters with, named when the GraphQL type binds to a
 	// generated model rather than to the entity itself.
 	Entity string `yaml:"entity,omitempty"`
-	// Alongside are operations an unpaged list reads beside its own, each
-	// for records of another kind the tool's next call needs (the templates a
-	// checklist can be started from). Each is proven as a named binding is.
+	// Alongside are operations a tool reads beside its own, each for records
+	// another call needs (the templates a checklist can be started from, the
+	// tolerance a drift list is judged by). Each is proven as a named binding
+	// is.
 	Alongside []string `yaml:"alongside,omitempty"`
+	// Instead are operations a list reads in place of its own when a call
+	// names their own variables (the sync state of documents named by id).
+	Instead []string `yaml:"instead,omitempty"`
 }
 
 type readsFile struct {
@@ -166,13 +170,16 @@ type binding struct {
 	Resource permission.Resource
 	Reason   string
 	Entity   string
-	// Alongside are the reads an unpaged list makes beside its own, each
-	// checked by its own resolver for its own resource.
+	// Alongside are the reads a tool makes beside its own, each checked by
+	// its own resolver for its own resource.
 	Alongside []*alongside
+	// Instead are the reads a list makes in place of its own when a call
+	// names their own variables.
+	Instead []*alongside
 }
 
-// alongside is a read an unpaged list makes beside its own: a connection
-// read through its table input, or an unpaged list keyed by the list's own
+// alongside is a read a tool makes beside its own: a connection read through
+// its table input, or an unpaged list or one record keyed by the tool's own
 // arguments.
 type alongside struct {
 	Operation *operation
@@ -180,9 +187,15 @@ type alongside struct {
 	Resource  permission.Resource
 	// Input is the variable a connection read takes its table input in.
 	Input string
-	// Keys are the variables an unpaged read takes from the list's own call
+	// Keys are the variables a keyed read takes from the tool's own call
 	// (a worker's recognitions by the workerId the call names).
 	Keys []string
+	// Object marks a keyed read whose root returns one record (an overview)
+	// rather than a list.
+	Object bool
+	// Own are the variables a read made instead of the list's takes that the
+	// list's operation does not declare: the call names them to choose it.
+	Own []string
 }
 
 // unpaged reports whether a list tool's root field returns the whole list
@@ -190,6 +203,22 @@ type alongside struct {
 // rather than paged through a table input.
 func (b *binding) unpaged() bool {
 	return b.Verb == verbList && b.RootField.Type.Elem != nil
+}
+
+// tabled reports whether a paged list reads through a table input, whose
+// record fields the server filters by its entity's configuration. A list
+// paged by its root's own first and after filters by its arguments alone.
+func (b *binding) tabled() bool {
+	if b.Verb != verbList || b.unpaged() {
+		return false
+	}
+	for _, variable := range b.Operation.Query.Operations[0].VariableDefinitions {
+		if typ := variable.Type.Name(); typ == listInput || tableShaped(boundSchema, typ) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // rootRead is what one Query root field reads, by the rule.
@@ -324,10 +353,6 @@ func bindOne(
 	if problem = unsupplied(b); problem != "" {
 		return nil, problem
 	}
-	if len(r.Alongside) > 0 && !b.unpaged() {
-		return nil, fmt.Sprintf("%s reads %s, which pages; only an unpaged list reads "+
-			"another operation alongside its own", r.Tool, b.Operation.Name)
-	}
 	for _, name := range r.Alongside {
 		beside, besideProblem := bindAlongside(catalog, b, name)
 		if besideProblem != "" {
@@ -335,29 +360,36 @@ func bindOne(
 		}
 		b.Alongside = append(b.Alongside, beside)
 	}
+	if len(r.Instead) > 0 && b.Verb != verbList {
+		return nil, fmt.Sprintf("%s is a %s tool; only a list reads another operation "+
+			"instead of its own", r.Tool, b.Verb)
+	}
+	for _, name := range r.Instead {
+		instead, insteadProblem := bindInstead(catalog, b, name)
+		if insteadProblem != "" {
+			return nil, insteadProblem
+		}
+		b.Instead = append(b.Instead, instead)
+	}
 
 	return b, ""
 }
 
-// bindAlongside proves an operation a list reads beside its own: it is
-// persisted, reads one root field whose resolver checks a resource for read,
-// which the tool asks of the reader before reading it, and is either a
-// connection read that selects its pageInfo and needs no variable but its
-// table input, or an unpaged list keyed by the list's own arguments.
-func bindAlongside(
+// provenRead is an operation another read is made through: persisted, one
+// root field, whose resolver checks a resource for read, which the tool asks
+// of the reader before reading it.
+func provenRead(
 	catalog map[string]*operation,
-	list *binding,
-	name string,
+	tool, name, how string,
 ) (beside *alongside, problem string) {
-	tool := list.Tool
 	chosen, ok := catalog[name]
 	if !ok {
-		return nil, fmt.Sprintf("%s reads %s alongside, which is not a persisted query",
-			tool, name)
+		return nil, fmt.Sprintf("%s reads %s %s, which is not a persisted query",
+			tool, name, how)
 	}
 	if len(chosen.Roots) != 1 {
-		return nil, fmt.Sprintf("%s reads %s alongside, which reads %d root fields; one is read",
-			tool, name, len(chosen.Roots))
+		return nil, fmt.Sprintf("%s reads %s %s, which reads %d root fields; one is read",
+			tool, name, how, len(chosen.Roots))
 	}
 	field := boundSchema.Query.Fields.ForName(chosen.Roots[0])
 	if field == nil {
@@ -366,24 +398,109 @@ func bindAlongside(
 	resource, checked := checkedResource(boundChecks, field.Name)
 	if !checked {
 		return nil, fmt.Sprintf("%s: the resolver of %s checks no read permission, so what "+
-			"%s reads alongside could not be held to it", tool, field.Name, tool)
+			"%s reads %s could not be held to it", tool, field.Name, tool, how)
 	}
-	beside = &alongside{
+
+	return &alongside{
 		Operation: chosen,
 		RootField: field,
 		Resource:  permission.Resource(resource),
-	}
+	}, ""
+}
+
+// keyedShape reports whether a read's root field returns an unpaged list or
+// one record, either of which a call's own arguments key.
+func keyedShape(field *ast.FieldDefinition) (object, ok bool) {
 	verb, _, shaped := readShape(boundSchema, field)
-	if shaped && verb == verbList && field.Type.Elem != nil {
+	switch {
+	case shaped && verb == verbList && field.Type.Elem != nil:
+		return false, true
+	case shaped && verb == verbGet:
+		return true, true
+	}
+
+	return false, false
+}
+
+// bindInstead proves an operation a list reads in place of its own: an
+// unpaged list or one record, keyed by variables of its own that the call
+// names to choose it, and by any of the list's own it shares, each of the
+// same type. None of its own variables may be an input object, since a
+// parameter cannot build one.
+func bindInstead(
+	catalog map[string]*operation,
+	list *binding,
+	name string,
+) (instead *alongside, problem string) {
+	instead, problem = provenRead(catalog, list.Tool, name, "instead")
+	if problem != "" {
+		return nil, problem
+	}
+	object, ok := keyedShape(instead.RootField)
+	if !ok {
+		return nil, fmt.Sprintf("%s reads %s instead, which is neither an unpaged list nor "+
+			"one record", list.Tool, name)
+	}
+	instead.Object = object
+	own := list.Operation.Query.Operations[0].VariableDefinitions
+	for _, variable := range instead.Operation.Query.Operations[0].VariableDefinitions {
+		if inputObject(variable.Type.Name()) {
+			return nil, fmt.Sprintf("%s reads %s instead, which takes $%s: %s; a parameter "+
+				"cannot build it", list.Tool, name, variable.Variable, variable.Type.String())
+		}
+		mine := own.ForName(variable.Variable)
+		switch {
+		case mine == nil:
+			instead.Own = append(instead.Own, variable.Variable)
+		case mine.Type.Name() != variable.Type.Name():
+			return nil, fmt.Sprintf("%s reads %s instead, whose $%s is %s where the list's "+
+				"is %s", list.Tool, name, variable.Variable, variable.Type.String(),
+				mine.Type.String())
+		default:
+			instead.Keys = append(instead.Keys, variable.Variable)
+		}
+	}
+	if len(instead.Own) == 0 {
+		return nil, fmt.Sprintf("%s reads %s instead, which takes no variable of its own for "+
+			"a call to choose it by", list.Tool, name)
+	}
+
+	return instead, ""
+}
+
+// bindAlongside proves an operation a tool reads beside its own: it is
+// persisted, reads one root field whose resolver checks a resource for read,
+// which the tool asks of the reader before reading it, and is either an
+// unpaged list or one record keyed by the tool's own arguments, or, beside
+// an unpaged list, a connection read that selects its pageInfo and needs no
+// variable but its table input.
+func bindAlongside(
+	catalog map[string]*operation,
+	list *binding,
+	name string,
+) (beside *alongside, problem string) {
+	tool := list.Tool
+	beside, problem = provenRead(catalog, tool, name, "alongside")
+	if problem != "" {
+		return nil, problem
+	}
+	chosen, field := beside.Operation, beside.RootField
+	if object, keyed := keyedShape(field); keyed {
+		beside.Object = object
 		if beside.Keys, problem = alongsideKeys(list, chosen, name); problem != "" {
 			return nil, problem
 		}
 
 		return beside, ""
 	}
+	verb, _, shaped := readShape(boundSchema, field)
 	if !shaped || verb != verbList || !pages(chosen, rootRead{field: field, verb: verbList}) {
 		return nil, fmt.Sprintf("%s reads %s alongside, which is neither a connection read "+
-			"that selects its pageInfo nor an unpaged list", tool, name)
+			"that selects its pageInfo nor a read keyed by the call", tool, name)
+	}
+	if !list.unpaged() {
+		return nil, fmt.Sprintf("%s reads %s alongside, a connection; only an unpaged list "+
+			"reads one, as a paged list's next call pages its own records", tool, name)
 	}
 	if problem = unsupplied(&binding{
 		Tool: tool, Verb: verbList, Operation: chosen, RootField: field,
@@ -402,10 +519,10 @@ func bindAlongside(
 	return beside, ""
 }
 
-// alongsideKeys are the variables an unpaged read alongside a list takes
-// from the list's own call: each one the list's operation declares, of the
-// same type, so the read is about the record the call names. It is made
-// only when the call names every one it requires.
+// alongsideKeys are the variables a keyed read alongside a tool takes from
+// the tool's own call: each one the tool's operation declares, of the same
+// type, so the read is about the record the call names. It is made only when
+// the call names every one it requires.
 func alongsideKeys(list *binding, chosen *operation, name string) (keys []string, problem string) {
 	own := list.Operation.Query.Operations[0].VariableDefinitions
 	for _, variable := range chosen.Query.Operations[0].VariableDefinitions {
@@ -419,8 +536,8 @@ func alongsideKeys(list *binding, chosen *operation, name string) (keys []string
 		keys = append(keys, variable.Variable)
 	}
 	if len(keys) == 0 {
-		return nil, fmt.Sprintf("%s reads %s alongside, an unpaged list keyed by nothing the "+
-			"call names", list.Tool, name)
+		return nil, fmt.Sprintf("%s reads %s alongside, a read keyed by nothing the call "+
+			"names", list.Tool, name)
 	}
 
 	return keys, ""
@@ -461,9 +578,11 @@ func tableShaped(schema *ast.Schema, name string) bool {
 }
 
 // unsupplied names the required variables of a binding's operation that its
-// tool's parameters cannot supply. An unpaged list takes each of its
-// operation's scalar, enum and id variables as a parameter of its own
-// (workerId), so only an input object it cannot build is refused.
+// tool's parameters cannot supply. Every tool takes its operation's scalar,
+// enum and id variables as parameters of its own (workerId, a required
+// integrationType), and a list builds any input object: its table input
+// from the table's fields, and a filter input from the filter's own. A get
+// cannot build an input object.
 func unsupplied(b *binding) string {
 	want := supplied[b.Verb]
 	var missing []string
@@ -471,7 +590,7 @@ func unsupplied(b *binding) string {
 		if !variable.Type.NonNull || variable.DefaultValue != nil {
 			continue
 		}
-		if b.RootField != nil && b.unpaged() && !inputObject(variable.Type.Name()) {
+		if b.RootField != nil && !inputObject(variable.Type.Name()) {
 			continue
 		}
 		if typ, ok := want[variable.Variable]; ok && typ == variable.Type.Name() {
@@ -479,6 +598,10 @@ func unsupplied(b *binding) string {
 		}
 		if typ, ok := want[""]; ok && (typ == variable.Type.Name() ||
 			(b.Verb == verbList && tableShaped(boundSchema, variable.Type.Name()))) {
+			continue
+		}
+		if b.RootField != nil && b.Verb == verbList && !b.unpaged() &&
+			buildable(variable.Type.Name()) {
 			continue
 		}
 		missing = append(missing, "$"+variable.Variable+": "+variable.Type.String())
@@ -489,6 +612,22 @@ func unsupplied(b *binding) string {
 
 	return fmt.Sprintf("%s reads %s, which requires %s; a %s tool's parameters cannot supply it",
 		b.Tool, b.Operation.Name, strings.Join(missing, ", "), b.Verb)
+}
+
+// buildable reports whether a paged list can build a filter input from its
+// parameters: every field it requires is a scalar, an enum or an id.
+func buildable(name string) bool {
+	def := boundSchema.Types[name]
+	if def == nil || def.Kind != ast.InputObject {
+		return false
+	}
+	for _, field := range def.Fields {
+		if field.Type.NonNull && field.DefaultValue == nil && inputObject(field.Type.Name()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func chooseBinding(

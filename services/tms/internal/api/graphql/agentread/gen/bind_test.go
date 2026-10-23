@@ -171,3 +171,139 @@ func TestAlongsideKeys_AKeyedReadTakesOnlyWhatTheListsCallSends(t *testing.T) {
 		})
 	}
 }
+
+const accountingSchema = `
+scalar Any
+enum Sys { Xero, Netsuite }
+input DataTableConnectionInput { first: Int, after: String, query: String, fieldFilters: [Any!], sort: [Any!] }
+input RecordFilter { statuses: [String!], search: String }
+input Nested { inner: RecordFilter! }
+type PageInfo { hasNextPage: Boolean!, endCursor: String }
+type Record { id: ID! }
+type RecordEdge { node: Record! }
+type RecordConnection { edges: [RecordEdge!]!, pageInfo: PageInfo! }
+type Overview { tolerance: Int! }
+type State { objectId: ID! }
+type Query {
+  records(integrationType: Sys!, input: DataTableConnectionInput!): RecordConnection!
+  ledger(integrationType: Sys!, first: Int, after: String, filter: RecordFilter, nested: Nested): RecordConnection!
+  overview(integrationType: Sys!): Overview!
+  states(objectIds: [ID!]!, integrationType: Sys): [State!]!
+  stateFilter(objectIds: [ID!]!, filter: RecordFilter): [State!]!
+  mismatched(objectIds: [ID!]!, integrationType: String): [State!]!
+  record(id: ID!, region: RecordFilter): Record!
+}
+`
+
+func accountingBinding(t *testing.T, schema *ast.Schema, verb, root, text string) *binding {
+	t.Helper()
+
+	return &binding{
+		Tool:      "accounting_list_records",
+		Verb:      verb,
+		RootField: schema.Query.Fields.ForName(root),
+		Operation: supplyOperation(t, schema, "Op", text),
+	}
+}
+
+// A paged list takes its root's own arguments as parameters, and builds a
+// filter input from its fields; a get takes scalar arguments but never an
+// input object.
+func TestUnsupplied_RootArgumentsAndFilterInputs(t *testing.T) {
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: accountingSchema})
+	boundSchema = schema
+	t.Cleanup(func() { boundSchema = nil })
+
+	cases := map[string]struct {
+		verb, root, text string
+		refused          bool
+	}{
+		"a required system beside the table input": {
+			verb: verbList, root: "records",
+			text: `query Op($integrationType: Sys!, $input: DataTableConnectionInput!) {
+				records(integrationType: $integrationType, input: $input) { edges { node { id } } pageInfo { hasNextPage } } }`,
+		},
+		"a filter input on a list paged by its root": {
+			verb: verbList, root: "ledger",
+			text: `query Op($integrationType: Sys!, $first: Int, $after: String, $filter: RecordFilter!) {
+				ledger(integrationType: $integrationType, first: $first, after: $after, filter: $filter) { edges { node { id } } pageInfo { hasNextPage } } }`,
+		},
+		"a filter input that needs another input": {
+			verb: verbList, root: "ledger",
+			text: `query Op($integrationType: Sys!, $nested: Nested!) {
+				ledger(integrationType: $integrationType, nested: $nested) { edges { node { id } } pageInfo { hasNextPage } } }`,
+			refused: true,
+		},
+		"a get keyed by the system": {
+			verb: verbGet, root: "overview",
+			text: `query Op($integrationType: Sys!) { overview(integrationType: $integrationType) { tolerance } }`,
+		},
+		"a get cannot build an input": {
+			verb: verbGet, root: "record",
+			text:    `query Op($id: ID!, $region: RecordFilter!) { record(id: $id, region: $region) { id } }`,
+			refused: true,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			problem := unsupplied(accountingBinding(t, schema, tc.verb, tc.root, tc.text))
+			assert.Equal(t, tc.refused, problem != "", problem)
+		})
+	}
+}
+
+// A read alongside a paged list or a get is keyed by the call, an object or
+// an unpaged list; a read instead of a list has a variable of its own, and
+// shares the list's others at the same type.
+func TestBindAlongsideAndInstead_KeyedByTheCall(t *testing.T) {
+	schema := gqlparser.MustLoadSchema(&ast.Source{Input: accountingSchema})
+	boundSchema, boundChecks = schema, map[string]string{
+		"records": "accounting_sync", "overview": "accounting_sync", "states": "accounting_sync",
+		"statefilter": "accounting_sync", "mismatched": "accounting_sync",
+	}
+	t.Cleanup(func() { boundSchema, boundChecks = nil, nil })
+
+	op := func(name, text string) *operation {
+		doc, errs := gqlparser.LoadQueryWithRules(schema, text, nil)
+		require.Empty(t, errs)
+		roots := []string{}
+		for _, selection := range doc.Operations[0].SelectionSet {
+			roots = append(roots, selection.(*ast.Field).Name)
+		}
+		return &operation{Name: name, Query: doc, Roots: roots}
+	}
+	catalog := map[string]*operation{
+		"Records": op("Records", `query Records($integrationType: Sys!, $input: DataTableConnectionInput!) {
+			records(integrationType: $integrationType, input: $input) { edges { node { id } } pageInfo { hasNextPage } } }`),
+		"Overview": op("Overview", `query Overview($integrationType: Sys!) {
+			overview(integrationType: $integrationType) { tolerance } }`),
+		"States": op("States", `query States($objectIds: [ID!]!, $integrationType: Sys) {
+			states(objectIds: $objectIds, integrationType: $integrationType) { objectId } }`),
+		"StateFilter": op("StateFilter", `query StateFilter($objectIds: [ID!]!, $filter: RecordFilter) {
+			stateFilter(objectIds: $objectIds, filter: $filter) { objectId } }`),
+		"Mismatched": op("Mismatched", `query Mismatched($objectIds: [ID!]!, $integrationType: String) {
+			mismatched(objectIds: $objectIds, integrationType: $integrationType) { objectId } }`),
+	}
+	list := &binding{
+		Tool: "accounting_list_records", Verb: verbList, Operation: catalog["Records"],
+		RootField: schema.Query.Fields.ForName("records"),
+	}
+
+	beside, problem := bindAlongside(catalog, list, "Overview")
+	require.Empty(t, problem)
+	assert.True(t, beside.Object)
+	assert.Equal(t, []string{"integrationType"}, beside.Keys)
+	_, problem = bindAlongside(catalog, list, "Records")
+	assert.Contains(t, problem, "only an unpaged list reads one")
+
+	instead, problem := bindInstead(catalog, list, "States")
+	require.Empty(t, problem)
+	assert.Equal(t, []string{"objectIds"}, instead.Own)
+	assert.Equal(t, []string{"integrationType"}, instead.Keys)
+	_, problem = bindInstead(catalog, list, "StateFilter")
+	assert.Contains(t, problem, "a parameter cannot build it")
+	_, problem = bindInstead(catalog, list, "Mismatched")
+	assert.Contains(t, problem, "where the list's is")
+	_, problem = bindInstead(catalog, list, "Overview")
+	assert.Contains(t, problem, "no variable of its own")
+}

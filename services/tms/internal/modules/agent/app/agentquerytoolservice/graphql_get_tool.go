@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
@@ -25,8 +29,17 @@ var errGraphQLRecordMissing = errors.New("the read returned no record")
 type graphQLGetTool struct {
 	getTool
 
-	read   graphQLRead
-	reader agentports.GraphQLReader
+	read graphQLRead
+	// params are the operation's variables other than the id, and required
+	// those of them it requires.
+	params   []graphQLParam
+	required []string
+	// byID and idRequired say whether the operation takes the record's id,
+	// and needs it.
+	byID       bool
+	idRequired bool
+	beside     besideReads
+	reader     agentports.GraphQLReader
 }
 
 func newGraphQLGetTool(
@@ -45,12 +58,65 @@ func newGraphQLGetTool(
 		return nil, fmt.Errorf("%s reads through GraphQL; its spec fetches nothing itself",
 			spec.name)
 	}
-
-	return &graphQLGetTool{
+	tool := &graphQLGetTool{
 		getTool: getTool{spec: *spec, access: newFieldAccess(permissions)},
 		read:    read,
 		reader:  reader,
-	}, nil
+	}
+	for _, variable := range read.Variables {
+		if variable.Name == graphQLIDVariable {
+			tool.byID, tool.idRequired = true, variable.NonNull
+		}
+	}
+	if tool.byID && spec.paramName == "" {
+		return nil, fmt.Errorf("%s reads by id; its spec names no id parameter", spec.name)
+	}
+	params, required, _, err := read.rootParams(spec.name,
+		map[string]struct{}{graphQLIDVariable: {}})
+	if err != nil {
+		return nil, err
+	}
+	if params, required, err = renamed(spec.name, params, spec.names, required); err != nil {
+		return nil, err
+	}
+	if params, err = referenced(spec.name, params, spec.references); err != nil {
+		return nil, err
+	}
+	if tool.params, err = annotate(spec.name, params, spec.notes); err != nil {
+		return nil, err
+	}
+	tool.required = required
+	bound, err := matchAlongside(spec.name, "alongside", spec.alongside, read.Alongside)
+	if err != nil {
+		return nil, err
+	}
+	tool.beside = besideReads{
+		specs: spec.alongside, bound: bound, reader: reader, permissions: permissions,
+	}
+
+	return tool, nil
+}
+
+// ParamSchema is the id the get's spec names, as every get tool's is, and
+// any other argument its operation takes.
+func (t *graphQLGetTool) ParamSchema() map[string]any {
+	if len(t.params) == 0 && t.byID && t.idRequired {
+		return t.getTool.ParamSchema()
+	}
+	properties := make(map[string]any, len(t.params)+1)
+	required := slices.Clone(t.required)
+	if t.byID {
+		own, _ := t.getTool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
+		properties[t.spec.paramName] = own[t.spec.paramName]
+		if t.idRequired {
+			required = append([]string{t.spec.paramName}, required...)
+		}
+	}
+	for _, param := range t.params {
+		properties[param.Name] = param.Schema
+	}
+
+	return argumentSchema(properties, required)
 }
 
 func (t *graphQLGetTool) Query(
@@ -60,7 +126,7 @@ func (t *graphQLGetTool) Query(
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
-	id, err := requirePulid(params.Params, t.spec.paramName)
+	variables, named, err := t.variables(params)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +134,7 @@ func (t *graphQLGetTool) Query(
 	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
-		Variables:         map[string]any{graphQLIDVariable: id.String()},
+		Variables:         variables,
 		DataAccessCeiling: params.DataAccessCeiling,
 		RequestID:         params.RunID.String(),
 	})
@@ -81,13 +147,62 @@ func (t *graphQLGetTool) Query(
 
 	node, ok := result.Data[t.read.RootField].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("%s %s: %w", t.spec.entity, id, errGraphQLRecordMissing)
+		return nil, fmt.Errorf("%s %s: %w", t.spec.entity, named, errGraphQLRecordMissing)
 	}
 	record := compact(node)
-	if withheld := relativePaths(result.Withheld, t.read.RootField+"."); len(withheld) > 0 {
+	if t.spec.shape != nil {
+		t.spec.shape(record)
+	}
+	withheld := relativePaths(result.Withheld, t.read.RootField+".")
+	beside, besideWithheld, notes, err := t.beside.read(ctx, params, variables, false)
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range beside {
+		record[key] = value
+	}
+	if withheld = append(withheld, besideWithheld...); len(withheld) > 0 {
 		record[outcomeWithheld] = withheld
 		record[outcomeWithheldNote] = withheldNote
 	}
+	if len(notes) > 0 {
+		record[outcomeNote] = strings.Join(notes, " ")
+	}
 
 	return record, nil
+}
+
+// variables are what the read sends: the id the call names, parsed so a
+// paraphrased id is refused rather than read as a missing record, and the
+// operation's other arguments; and how a missing record is named.
+func (t *graphQLGetTool) variables(
+	params *agentports.QueryToolParams,
+) (variables map[string]any, named string, err error) {
+	if err = requireArguments(t.required, params.Params); err != nil {
+		return nil, "", err
+	}
+	if err = checkReferences(t.params, params.Params); err != nil {
+		return nil, "", err
+	}
+	if variables, err = compileArgs(t.params, params.Params, clockFor(params)); err != nil {
+		return nil, "", err
+	}
+	if !t.byID {
+		return variables, "for those arguments", nil
+	}
+	var id pulid.ID
+	if t.idRequired {
+		id, err = requirePulid(params.Params, t.spec.paramName)
+	} else {
+		id, err = optionalID(params.Params, t.spec.paramName)
+	}
+	if err != nil {
+		return nil, "", err
+	}
+	if !id.IsNil() {
+		variables[graphQLIDVariable] = id.String()
+		named = id.String()
+	}
+
+	return variables, named, nil
 }

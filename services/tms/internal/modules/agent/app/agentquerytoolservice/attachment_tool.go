@@ -21,6 +21,8 @@ import (
 )
 
 const (
+	paramDocumentID = "documentId"
+
 	maxListedAttachments   = 25
 	attachmentReadingWait  = 20 * time.Second
 	attachmentReadingPoll  = time.Second

@@ -9259,6 +9259,113 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type DeskAccountingConnectionQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type DeskAccountingConnectionQuery = { accountingSyncStatus: { integrationType: AccountingSystem, providerName: string, available: boolean, connection: { id: string, status: AccountingConnectionStatus, externalCompanyName: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, refreshTokenAbsoluteExpiresAt: number, authMethod: AccountingAuthMethod, certificateExpiresAt: number | null, lastWebhookAt: number | null, setupStep: AccountingSetupStep, syncMode: AccountingSyncMode, ledgerGranularity: AccountingLedgerGranularity | null, ledgerOpeningBalancesSentAt: number | null, syncStartDate: number | null, syncEnabledAt: number | null, autoSync: boolean, pausedAt: number | null, pausedReason: string } | null } };
+
+export type DeskAccountingSyncSummaryQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type DeskAccountingSyncSummaryQuery = { accountingSyncSummary: { counts: Array<{ status: AccountingSyncRecordStatus, count: number }>, attention: Array<{ status: AccountingSyncRecordStatus, errorCategory: AccountingSyncErrorCategory | null, resolution: string, count: number, oldestQueuedAt: number, sampleRecordId: string }>, activeBackfill: { id: string, status: AccountingBackfillStatus, rangeStart: number, rangeEnd: number, objectTypes: Array<AccountingSyncObjectType>, enqueuedCount: number, alreadyQueuedCount: number } | null } };
+
+export type DeskAccountingSyncRecordFieldsFragment = { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, status: AccountingSyncRecordStatus, errorCategory: AccountingSyncErrorCategory | null, resolution: string, attemptCount: number, documentDate: number | null, queuedAt: number, nextAttemptAt: number | null, syncedAt: number | null, externalDocNumber: string, externalUrl: string, skippedReason: string } & { ' $fragmentName'?: 'DeskAccountingSyncRecordFieldsFragment' };
+
+export type DeskAccountingSyncRecordsQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  filter?: AccountingSyncRecordFilterInput | null | undefined;
+}>;
+
+
+export type DeskAccountingSyncRecordsQuery = { accountingSyncRecords: { edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskAccountingSyncRecordFieldsFragment': DeskAccountingSyncRecordFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskAccountingSyncObjectStatesQueryVariables = Exact<{
+  objectIds: Array<string | number> | string | number;
+  integrationType?: AccountingSystem | null | undefined;
+}>;
+
+
+export type DeskAccountingSyncObjectStatesQuery = { accountingSyncObjectStates: Array<{ objectType: AccountingSyncObjectType, objectId: string, providerName: string, record: { ' $fragmentRefs'?: { 'DeskAccountingSyncRecordFieldsFragment': DeskAccountingSyncRecordFieldsFragment } } }> };
+
+export type DeskAccountingSyncRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskAccountingSyncRecordQuery = { accountingSyncRecord: (
+    { dependsOnRecordId: string | null }
+    & { ' $fragmentRefs'?: { 'DeskAccountingSyncRecordFieldsFragment': DeskAccountingSyncRecordFieldsFragment } }
+  ) };
+
+export type DeskAccountingSyncAttemptsQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskAccountingSyncAttemptsQuery = { accountingSyncAttempts: Array<{ attemptNumber: number, outcome: AccountingSyncAttemptOutcome, errorCategory: AccountingSyncErrorCategory | null, startedAt: number, durationMs: number }> };
+
+export type DeskAccountingMappingFieldsFragment = { id: string, targetType: AccountingMappingTargetType, targetLabel: string, trenovaObjectId: string | null, trenovaKey: string, providerKind: AccountingReferenceKind, state: AccountingMappingState, required: boolean, externalId: string, externalName: string, source: AccountingMappingSource | null, confidence: number | null, reason: string, confirmedAt: number | null, candidates: Array<{ externalId: string, name: string, score: number, reason: string }> } & { ' $fragmentName'?: 'DeskAccountingMappingFieldsFragment' };
+
+export type DeskAccountingMappingsQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  filter?: AccountingMappingFilterInput | null | undefined;
+}>;
+
+
+export type DeskAccountingMappingsQuery = { accountingMappings: { edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskAccountingMappingFieldsFragment': DeskAccountingMappingFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskAccountingMappingSummaryQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type DeskAccountingMappingSummaryQuery = { accountingMappingSummary: { integrationType: AccountingSystem, providerName: string, requiredTotal: number, requiredConfirmed: number, canCompleteSetup: boolean, groups: Array<{ targetType: AccountingMappingTargetType, unmatched: number, proposed: number, confirmed: number }>, connection: { status: AccountingConnectionStatus, setupStep: AccountingSetupStep } | null } };
+
+export type DeskAccountingMappingDetailQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  id?: string | number | null | undefined;
+  targetType?: AccountingMappingTargetType | null | undefined;
+  recordId?: string | number | null | undefined;
+  key?: string | null | undefined;
+  optionsQuery?: string | null | undefined;
+}>;
+
+
+export type DeskAccountingMappingDetailQuery = { accountingMappingDetail: { mapping: { ' $fragmentRefs'?: { 'DeskAccountingMappingFieldsFragment': DeskAccountingMappingFieldsFragment } }, options: Array<{ externalId: string, label: string, accountType: string, itemType: string, number: string }> } };
+
+export type DeskAccountingDriftFindingsQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskAccountingDriftFindingsQuery = { accountingDriftFindingTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingDriftKind, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyName: string, externalUrl: string, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedBy: string, providerModifiedAt: number | null, detectedAt: number, directions: Array<AccountingDriftDirection>, pushed: boolean, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskAccountingDriftOverviewQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type DeskAccountingDriftOverviewQuery = { accountingDriftOverview: { checkedAt: number | null, checkError: string, toleranceMinor: number, currencyCode: string } };
+
+export type DeskAccountingInboundChangesQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskAccountingInboundChangesQuery = { accountingInboundChangeTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalNumber: string, externalUrl: string, partyName: string, partyObjectId: string | null, txnDate: number, amountMinor: number, currencyCode: string, referenceNumber: string, methodName: string, providerModifiedBy: string, detectedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, objectId: string | null, objectNumber: string, amountMinor: number, openMinor: number }> } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type AccountingDriftFindingFieldsFragment = { id: string, connectionId: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyId: string | null, partyName: string, externalId: string, externalUrl: string, kind: AccountingDriftKind, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedAt: number | null, providerModifiedBy: string, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, fixObjectType: AccountingDriftFixObject | null, fixObjectId: string | null, directions: Array<AccountingDriftDirection>, pushed: boolean, resolvedAt: number | null, detectedAt: number, lastSeenAt: number, version: number, updatedAt: number, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }>, resolvedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingDriftFindingFieldsFragment' };
 
 export type AccountingDriftOverviewFieldsFragment = { connectionId: string, providerName: string, checkedAt: number | null, checkError: string, toleranceMinor: number, currencyCode: string, summary: { open: number, amountOpen: number, goneOpen: number, statusOpen: number, balanceOpen: number, resolvedSince: number } } & { ' $fragmentName'?: 'AccountingDriftOverviewFieldsFragment' };
@@ -19183,6 +19290,7 @@ export class TypedDocumentString<TResult, TVariables>
 
 export { AccessorialChargeTableRowFieldsFragmentDoc, AccessorialChargeTableDocument } from "./documents/accessorial-charge/table";
 export { AccountTypeTableRowFieldsFragmentDoc, AccountTypeTableDocument } from "./documents/account-type/table";
+export { DeskAccountingSyncRecordFieldsFragmentDoc, DeskAccountingMappingFieldsFragmentDoc, DeskAccountingConnectionDocument, DeskAccountingSyncSummaryDocument, DeskAccountingSyncRecordsDocument, DeskAccountingSyncObjectStatesDocument, DeskAccountingSyncRecordDocument, DeskAccountingSyncAttemptsDocument, DeskAccountingMappingsDocument, DeskAccountingMappingSummaryDocument, DeskAccountingMappingDetailDocument, DeskAccountingDriftFindingsDocument, DeskAccountingDriftOverviewDocument, DeskAccountingInboundChangesDocument } from "./documents/accounting-sync/desk";
 export { AccountingDriftFindingFieldsFragmentDoc, AccountingDriftOverviewFieldsFragmentDoc, AccountingDriftOverviewDocument, AccountingDriftFindingDocument, AccountingDriftFixPreviewDocument, ResolveAccountingDriftDocument, DismissAccountingDriftDocument, CheckAccountingDriftDocument, AccountingDriftFindingTableDocument } from "./documents/accounting-sync/drift";
 export { AccountingInboundChangeFieldsFragmentDoc, AccountingInboundOverviewDocument, AccountingInboundChangeDocument, AccountingInboundApplyPreviewDocument, ApplyAccountingInboundChangeDocument, IgnoreAccountingInboundChangeDocument, AccountingInboundChangeTableDocument } from "./documents/accounting-sync/inbound";
 export { AccountingMappingFieldsFragmentDoc, AccountingReferenceObjectFieldsFragmentDoc, AccountingProviderProfileFieldsFragmentDoc, AccountingAppSettingsFieldsFragmentDoc, AccountingConnectionFieldsFragmentDoc, AccountingWebhookSubscriptionSummaryFieldsFragmentDoc, AccountingPreparedCertificateFieldsFragmentDoc, AccountingSyncStatusFieldsFragmentDoc, AccountingSyncRecordFieldsFragmentDoc, AccountingBackfillFieldsFragmentDoc, AccountingSyncStatusDocument, SaveAccountingAppDocument, RemoveAccountingAppDocument, AccountingMappingSummaryDocument, AccountingMappingsDocument, AccountingReferenceObjectsDocument, ConfirmAccountingMappingsDocument, RejectAccountingMappingDocument, SetAccountingMappingDocument, ClearAccountingMappingDocument, CreateAccountingReferenceRecordDocument, RefreshAccountingReferenceDataDocument, CompleteAccountingSetupDocument, StartAccountingAuthorizationDocument, FinishAccountingAuthorizationDocument, ChooseAccountingCompanyDocument, PrepareAccountingCertificateDocument, ConnectAccountingWithCertificateDocument, RenewAccountingCertificateDocument, DisconnectAccountingSystemDocument, CheckAccountingConnectionDocument, AccountingSyncSummaryDocument, AccountingSyncRecordsDocument, AccountingSyncRecordDocument, AccountingSyncAttemptsDocument, AccountingSyncObjectStatesDocument, AccountingBackfillsDocument, ChooseAccountingSyncModeDocument, EnableAccountingSyncDocument, UpdateAccountingSyncSettingsDocument, PauseAccountingSyncDocument, ResumeAccountingSyncDocument, RetryAccountingSyncDocument, ReleaseAccountingSyncDocument, SkipAccountingSyncDocument, RedateAccountingSyncDocument, RequestAccountingBackfillDocument, ChangeAccountingBackfillDocument } from "./documents/accounting-sync/operations";
