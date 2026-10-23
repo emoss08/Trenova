@@ -571,7 +571,7 @@ and checks the file (it may be broken) and answers from what is known
 
 | Operation | Input | Output |
 |---|---|---|
-| `tariff.complete` | `{source, kind?, context?, offset}` | `{"range": {from, to}, "items": [{"label", "kind", "detail", "doc", "insert", "snippet", "sort", "range"?}]}`, in `sort` order; a snippet uses `${1:placeholder}` tab stops and `$0` for the final cursor; an item's own `range` replaces the list's |
+| `tariff.complete` | `{source, kind?, context?, offset}` | `{"range": {from, to}, "items": [{"label", "kind", "detail", "doc", "insert", "snippet", "sort", "range"?}]}`, in `sort` order; a snippet is written as LSP writes one (`$1` or `${1:placeholder}` tab stops, `$0` for the final cursor, `\$`, `\}` and `\\` for those characters), and a call's placeholders are its required parameters' types (`round(${1:Money})`, `trip(empty: ${1:Distance}, rate: ${2:Money/mi})`); an item's own `range` replaces the list's |
 | `tariff.hover` | `{source, kind?, context?, offset, values?}` | `null`, or `{"range", "contents": {"signature", "type", "unit", "doc", "constraint"?: Message, "value"?: {"value", "display", "times"}}}`; `constraint` is an input's `where` bound in words ("from $0.50/mi to $15.00/mi"), kept apart from `doc`, which is the author's own text |
 | `tariff.signature` | `{source, kind?, context?, offset}` | `{"signatures": [{"label", "doc", "parameters": [{"label": [from, to], "doc"}]}], "active": 0 \| null, "activeParameter": n \| null}` |
 | `tariff.definition` | `{source, kind?, context?, offset}` | `{"targets": [{"module": null \| "std.ltl", "range", "selectionRange"}]}`; a target in a library has its ranges in that library's source |
