@@ -111,6 +111,10 @@ func (p *Profile) GetTableName() string        { return "email_profiles" }
 func (p *Profile) GetOrganizationID() pulid.ID { return p.OrganizationID }
 func (p *Profile) GetBusinessUnitID() pulid.ID { return p.BusinessUnitID }
 
+// profileSearchDescription is the description column the profile's search
+// vector matches.
+const profileSearchDescription = "description"
+
 func (p *Profile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "ep",
@@ -122,7 +126,12 @@ func (p *Profile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightA,
 			},
-			{Name: "from_name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{Name: "host", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   profileSearchDescription,
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 		},
 	}
 }
