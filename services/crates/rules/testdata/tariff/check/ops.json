@@ -593,6 +593,60 @@
    }
   },
   {
+   "name": "a list constraint and inputs without one",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+      "input fee: Money = $1",
+      "charge \"x\" = fee",
+      "note \"{service}\""
+     ],
+     "values": {
+      "rule": {
+       "service": "Expedited"
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "code": "input-value",
+       "path": "rule.service",
+       "message": {
+        "message": "{0} must be one of {1}; {2} isn't",
+        "args": [
+         "`service`",
+         "[Standard, Guaranteed]",
+         "Expedited"
+        ]
+       }
+      }
+     ],
+     "inputs": [
+      {
+       "name": "service",
+       "constraint": {
+        "oneOf": [
+         "Standard",
+         "Guaranteed"
+        ]
+       }
+      },
+      {
+       "name": "fee",
+       "constraint": null
+      }
+     ]
+    }
+   }
+  },
+  {
    "name": "the catalog lists modules, types, methods, units, keywords and the schema",
    "request": {
     "op": "tariff.catalog",

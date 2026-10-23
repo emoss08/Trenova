@@ -688,6 +688,12 @@ impl Declarer<'_> {
                 && let Some(folded) =
                     self.fold_constraint(state, globals, out, name, &ty, constraint)
             {
+                if let (Some(written), Some(value)) = (
+                    &decl.default,
+                    state.defaults.get(&(self.id().0, name.clone())),
+                ) {
+                    super::constraints::default(out, name, &ty, written, value, &folded);
+                }
                 state
                     .constraints
                     .insert((self.id().0, name.clone()), folded);
@@ -701,8 +707,8 @@ impl Declarer<'_> {
 
     /// Folds an input's `where` constraint: a range's ends or a list's items, each a
     /// compile-time value of the input's type (its item type for a `List<T>`, its inner type for
-    /// a `T?`). `None` when the constraint is neither a range nor a list, or a part does not fold
-    /// (the reasons are reported as they are folded).
+    /// a `T?`). `None` when the constraint breaks one of the rules in [`super::constraints`] or
+    /// a part does not fold (the reasons are reported as they are found).
     fn fold_constraint(
         &self,
         state: &mut State,
@@ -713,20 +719,23 @@ impl Declarer<'_> {
         constraint: &Expr,
     ) -> Option<FoldedConstraint> {
         let item = constraint_item_type(ty);
+        if matches!(item, Type::Error)
+            || !super::constraints::form(out, name, ty, &item, constraint)
+        {
+            return None;
+        }
         let want = Want::Annotation {
             name: name.to_owned(),
         };
-        let fold =
-            |checker: &Self, state: &mut State, out: &mut ModuleAnalysis, expr: &Expr| {
-                let before = out.diagnostics.len();
-                let (_, folded) =
-                    checker.constant_value(state, globals, out, expr, Some(&item), &want);
-                match folded {
-                    Ok(value) if out.diagnostics.len() == before => Some(value),
-                    _ => None,
-                }
-            };
-        match &constraint.kind {
+        let fold = |checker: &Self, state: &mut State, out: &mut ModuleAnalysis, expr: &Expr| {
+            let before = out.diagnostics.len();
+            let (_, folded) = checker.constant_value(state, globals, out, expr, Some(&item), &want);
+            match folded {
+                Ok(value) if out.diagnostics.len() == before => Some(value),
+                _ => None,
+            }
+        };
+        let folded = match &constraint.kind {
             ExprKind::Range {
                 start,
                 end,
@@ -740,21 +749,22 @@ impl Declarer<'_> {
                     Some(end) => Some(fold(self, state, out, end)?),
                     None => None,
                 };
-                Some(FoldedConstraint::Range {
+                FoldedConstraint::Range {
                     min,
                     max,
                     max_inclusive: *inclusive,
-                })
+                }
             }
             ExprKind::List(items) => {
                 let mut values = Vec::with_capacity(items.len());
                 for value in items {
                     values.push(fold(self, state, out, value)?);
                 }
-                Some(FoldedConstraint::OneOf(values))
+                FoldedConstraint::OneOf(values)
             }
-            _ => None,
-        }
+            _ => return None,
+        };
+        super::constraints::admits_some(out, &item, constraint, &folded).then_some(folded)
     }
 
     /// Infers the return type of each function written `fn f(…) = expr` with no `->`, by

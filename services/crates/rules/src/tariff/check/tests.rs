@@ -1,7 +1,8 @@
 //! The checker's corpus (`testdata/tariff/check/*.json`) and its end-to-end tests.
 //!
 //! A corpus file is `{"cases": [case, …]}`. A case gives `source` (a string or a list of
-//! lines), optionally `kind`, `context` (as `tariff.check` takes it) and `values`, and the
+//! lines), optionally `kind`, `context` (as `tariff.check` takes it) and `values` (whose
+//! `input-value` findings, `{"code", "path", "message"}`, come after the others), and the
 //! findings it must produce, all of them, in order of position: `{"code", "at": "snippet"
 //! (its first occurrence, or the `nth`), "message": "English text", "severity" (when not
 //! the code's usual one), "module" (for a finding in a library), "fixes": [{"label",
@@ -71,6 +72,10 @@ const CORPUS: &[(&str, &str)] = &[
     (
         "inputs",
         include_str!("../../../testdata/tariff/check/inputs.json"),
+    ),
+    (
+        "constraints",
+        include_str!("../../../testdata/tariff/check/constraints.json"),
     ),
 ];
 
@@ -216,6 +221,7 @@ fn run_case(file: &str, case: &Json) -> Option<String> {
             .filter(|_| module.0 != 0);
         actual.push(written(module_source, path, diagnostic));
     }
+    actual.extend(value_findings(&analysis, case.get("values")));
     let expected: Vec<Json> = case
         .get("diagnostics")
         .and_then(Json::as_array)
@@ -265,6 +271,28 @@ fn run_case(file: &str, case: &Json) -> Option<String> {
         }
     }
     (!problems.is_empty()).then(|| format!("{file}/{name}:\n{}", problems.join("\n")))
+}
+
+/// The `input-value` findings of a case's contract `values` (`{"rule": {…}, "agreement":
+/// {…}}`), as the corpus writes them: `{"code", "path", "message"}`, after the checker's.
+fn value_findings(analysis: &super::Analysis, values: Option<&Json>) -> Vec<Json> {
+    let Some(values) = values else {
+        return Vec::new();
+    };
+    let rule = values.get("rule").and_then(Json::as_object);
+    let agreement = values.get("agreement").and_then(Json::as_object);
+    super::inputs::validate(&analysis.inputs, rule, agreement)
+        .into_iter()
+        .map(|finding| {
+            json!({
+                "code": "input-value",
+                "at": "",
+                "path": finding.path,
+                "message": finding.message.english(),
+                "fixes": [],
+            })
+        })
+        .collect()
 }
 
 /// The type the checker recorded for the expression whose source is exactly `snippet`.

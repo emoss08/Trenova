@@ -4,8 +4,9 @@
 //!
 //! 1. starts from the sample record and the inputs' defaults;
 //! 2. applies its `given`s in order: a record path (`shipment.weight`, `lane.origin.zip3`) or
-//!    `input.name`. The test constructors (`pickup(…)`, `delivery(…)`, `splitPickup(…)`,
-//!    `splitDelivery(…)`, `commodity(…)`) build stops and commodities from the sample defaults.
+//!    `input.name` (a value outside the input's `where` constraint is an `input` error). The
+//!    test constructors (`pickup(…)`, `delivery(…)`, `splitPickup(…)`, `splitDelivery(…)`,
+//!    `commodity(…)`) build stops and commodities from the sample defaults.
 //!    Afterwards each stop without a sequence takes its position, and `shipment.pickup` and
 //!    `shipment.delivery` follow the stops unless a `given` set them;
 //! 3. runs the file;
@@ -34,7 +35,7 @@ use super::error::{EvalError, Refusal, Stop};
 use super::interp::link::Linked;
 use super::interp::{Env, Interp, Setup, TestView};
 use super::record::{sample, settle};
-use super::run::{Supplied, bind_inputs};
+use super::run::{Supplied, bind_inputs, enforce_constraint};
 use super::tables::{Need, Tables};
 use super::value::{Record, Value};
 use crate::message::{Arg, Message};
@@ -446,6 +447,8 @@ fn apply_givens<'a>(
         let value = interp.eval_in(&mut scope, value).map_err(stopped)?;
         match target.as_slice() {
             [head, name] if head.text == "input" => {
+                enforce_constraint(interp, &name.text, &value)
+                    .map_err(|error| error.at(stmt.span))?;
                 inputs.insert(name.text.clone(), value);
             }
             path => {

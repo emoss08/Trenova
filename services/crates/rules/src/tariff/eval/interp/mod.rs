@@ -230,6 +230,12 @@ impl<'p, 'a> Interp<'p, 'a> {
         self.types.input_type(name)
     }
 
+    /// The folded constraint of the root file's input `name`, when the oracle knows one.
+    #[must_use]
+    pub fn input_constraint(&self, name: &str) -> Option<&crate::tariff::constraint::Constraint> {
+        self.types.input_constraint(name)
+    }
+
     /// Whether events of code in `env` belong on the trace: the root file's own statements.
     fn traced(&self, env: &Env) -> bool {
         self.trace.enabled() && env.module == 0 && !env.function
