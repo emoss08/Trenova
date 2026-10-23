@@ -1,5 +1,6 @@
 import { newTestBlock } from "@/components/tariff-studio/source-edits";
-import { lineOf } from "@/components/tariff-studio/tests-panel";
+import { isTestItem } from "@/lib/tariff-outline";
+import { lineOf } from "@/lib/tariff-source-lines";
 import { Beaker02Icon, PlusIcon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -33,7 +34,7 @@ export function TestsSection() {
     useStudio();
   const { control } = useFormContext<FormulaTemplateFormValues>();
   const source = useWatch({ control, name: "source" }) ?? "";
-  const items = (check.outline?.items ?? []).filter((item) => item.kind === "test");
+  const items = (check.outline?.items ?? []).filter(isTestItem);
 
   const [suggested, setSuggested] = useState<SuggestedTestsState | null>(null);
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());

@@ -301,8 +301,18 @@ fn collect(site: &Site<'_, '_>, items: &mut Items) {
         use_path(site, items);
         return;
     }
-    if site.line_starts_with("given") && given_path(site, items) {
+    if site.line_starts_with("given") && given_path(site, items, "=") {
         return;
+    }
+    if in_property(site) {
+        if site.line_starts_with("vary")
+            && (after_vary_target(site, items) || given_path(site, items, "in"))
+        {
+            return;
+        }
+        if site.line_starts_with("expect") && monotone(site, items) {
+            return;
+        }
     }
     if site.before_is(".") || site.before_is("?.") {
         member(site, items);
@@ -310,6 +320,9 @@ fn collect(site: &Site<'_, '_>, items: &mut Items) {
     }
     if site.before_is("as") && site.line_starts_with("charge") {
         codes(site, items);
+        return;
+    }
+    if input_tail(site, items) {
         return;
     }
     if after_number(site, items) {
@@ -767,24 +780,74 @@ fn module_members(site: &Site<'_, '_>, items: &mut Items, module: ModuleId) {
     }
 }
 
-/// Makes a function item insert a call.
+/// Makes a function item insert a call, with a tab stop for each parameter it must be given.
 pub fn fill_call(site: &Site<'_, '_>, item: &mut CompletionItem, module: ModuleId, name: &str) {
-    let params = super::describe::function_decl(site.session, module, name)
-        .map_or(0, |decl| decl.params.len());
-    if params == 0 {
+    let Some(decl) = super::describe::function_decl(site.session, module, name) else {
         item.insert = format!("{name}()");
+        return;
+    };
+    let source = site
+        .session
+        .program
+        .module(module)
+        .map_or("", |found| found.source.as_str());
+    let required: Vec<(&str, String)> = decl
+        .params
+        .iter()
+        .filter(|param| param.default.is_none())
+        .map(|param| {
+            (
+                param.name.text.as_str(),
+                super::describe::flat(source_text(source, param.ty.span)),
+            )
+        })
+        .collect();
+    let (args, snippet) = call_args(decl.params.len(), &required);
+    item.insert = format!("{name}{args}");
+    item.snippet = snippet;
+    item.detail = Some(function_signature(site.session, module, decl).label);
+}
+
+/// A call's arguments as a snippet, and whether it has tab stops: `()` for a call that takes
+/// nothing, the cursor between the parentheses when every parameter has a default, a
+/// placeholder showing the type of a lone required parameter (`round(${1:Money})`), or each
+/// required parameter by name (`deadhead(empty: ${1:Distance}, rate: ${2:Money/mi})`).
+pub fn call_args<T: AsRef<str>>(params: usize, required: &[(&str, T)]) -> (String, bool) {
+    if params == 0 {
+        return (String::from("()"), false);
+    }
+    if required.is_empty() {
+        return (String::from("($0)"), true);
+    }
+    let field =
+        |index: usize, name: &str, ty: &str| format!("${{{index}:{}}}", placeholder(name, ty));
+    let args: Vec<String> = match required {
+        [(name, ty)] => vec![field(1, name, ty.as_ref())],
+        _ => required
+            .iter()
+            .enumerate()
+            .map(|(index, (name, ty))| format!("{name}: {}", field(index + 1, name, ty.as_ref())))
+            .collect(),
+    };
+    (format!("({})", args.join(", ")), true)
+}
+
+/// A placeholder's text, escaped for a snippet: the parameter's type, or its name when the type
+/// is a record written in braces, which a placeholder can't hold.
+fn placeholder(name: &str, ty: &str) -> String {
+    let text = if ty.is_empty() || ty.contains(['{', '}']) {
+        name
     } else {
-        item.insert = format!("{name}($0)");
-        item.snippet = true;
-    }
-    if let Some(decl) = super::describe::function_decl(site.session, module, name) {
-        item.detail = Some(function_signature(site.session, module, decl).label);
-    }
+        ty
+    };
+    text.replace('\\', "\\\\")
+        .replace('$', "\\$")
+        .replace('}', "\\}")
 }
 
 /// The variants of the enum named `name`, for `Enum.`.
 fn enum_variants(site: &Site<'_, '_>, items: &mut Items, name: &str) {
-    let Some(enumeration) = names::enums(site)
+    let Some(enumeration) = names::enums(site.session)
         .into_iter()
         .find(|(written, _)| written == name)
         .map(|(_, e)| e)
@@ -845,7 +908,7 @@ pub fn members(items: &mut Items, ty: &Type, rewrite: Option<Span>) {
     }
 }
 
-/// A method call to insert: `floor()`, `round($0)`, `where(${1:s} => $0)`.
+/// A method call to insert: `floor()`, `max(${1:Money})`, `where(${1:s} => $0)`.
 fn method_insert(method: &methods::Method, ty: &Type) -> (String, bool) {
     let Some(first) = method.params.first() else {
         return (format!("{}()", method.name), false);
@@ -874,7 +937,21 @@ fn method_insert(method: &methods::Method, ty: &Type) -> (String, bool) {
         };
         return (format!("{}(${{1:{name}}} => $0)", method.name), true);
     }
-    (format!("{}($0)", method.name), true)
+    let required: Vec<(&str, String)> = method
+        .params
+        .iter()
+        .filter(|param| param.default.is_none())
+        .map(|param| {
+            let shown = if param.ty == "Self" {
+                type_text(ty.unwrapped())
+            } else {
+                param.ty.to_owned()
+            };
+            (param.name, shown)
+        })
+        .collect();
+    let (args, snippet) = call_args(method.params.len(), &required);
+    (format!("{}{args}", method.name), snippet)
 }
 
 /// A table's axes and value type, for its detail.
@@ -976,9 +1053,162 @@ fn add_unit(items: &mut Items, rank: Rank, unit: &Simple) {
     }
 }
 
-/// `given …`: the fields along the path, or `input.` and the inputs. Returns whether the
-/// position is in the path (before the `=`).
-fn given_path(site: &Site<'_, '_>, items: &mut Items) -> bool {
+/// Whether the position is in a `property` block.
+fn in_property(site: &Site<'_, '_>) -> bool {
+    site.located
+        .item()
+        .is_some_and(|item| matches!(item.kind, ItemKind::Property(_)))
+}
+
+/// The words of the line before the word being typed, after its first, `.` and blanks left
+/// out.
+fn line_words<'s>(site: &'s Site<'_, '_>) -> Vec<&'s str> {
+    let Some(first) = site.line_first() else {
+        return Vec::new();
+    };
+    let end = site
+        .tokens()
+        .partition_point(|token| token.span.end <= site.start);
+    (first + 1..end)
+        .map(|index| site.text(index))
+        .filter(|word| *word != "." && !word.trim().is_empty())
+        .collect()
+}
+
+/// Whether a word is being started after a space, past the end of the token before it.
+fn after_space(site: &Site<'_, '_>) -> bool {
+    site.before
+        .and_then(|index| site.token(index))
+        .is_some_and(|token| token.span.end < site.start && token.kind != TokenKind::Newline)
+}
+
+/// `vary target |`: the `in` that gives its values. Returns whether this is that context.
+fn after_vary_target(site: &Site<'_, '_>, items: &mut Items) -> bool {
+    let words = line_words(site);
+    let target_done = site
+        .before
+        .and_then(|index| site.token(index))
+        .is_some_and(|token| matches!(token.kind, TokenKind::Name | TokenKind::Keyword))
+        && !site.before_is("vary")
+        && !site.before_is("input")
+        && !site.before_is("in");
+    if words.is_empty() || words.contains(&"in") || !target_done || !after_space(site) {
+        return false;
+    }
+    names::keyword(items, Rank::Expected, "in");
+    true
+}
+
+/// In a property's `expect`: `nondecreasing` and `nonincreasing` after a value, `in` after
+/// them, then the targets the property varies. Returns whether this is that context.
+fn monotone(site: &Site<'_, '_>, items: &mut Items) -> bool {
+    let words = line_words(site);
+    let direction = |word: &str| matches!(word, "nondecreasing" | "nonincreasing");
+    if words.last().copied().is_some_and(direction) && after_space(site) {
+        names::keyword(items, Rank::Expected, "in");
+        return true;
+    }
+    let before_in = words
+        .len()
+        .checked_sub(2)
+        .and_then(|at| words.get(at))
+        .copied();
+    if site.before_is("in") && before_in.is_some_and(direction) {
+        varied_targets(site, items);
+        return true;
+    }
+    let value_ends = site
+        .before
+        .and_then(|index| site.token(index))
+        .is_some_and(|token| {
+            matches!(
+                token.kind,
+                TokenKind::Name
+                    | TokenKind::Number
+                    | TokenKind::Money
+                    | TokenKind::Percent
+                    | TokenKind::Text
+                    | TokenKind::Date
+                    | TokenKind::Unit
+                    | TokenKind::Code
+            ) || matches!(site.text(site.before.unwrap_or(0)), ")" | "]")
+        });
+    if words.is_empty()
+        || words.iter().any(|word| direction(word))
+        || !value_ends
+        || !after_space(site)
+    {
+        return false;
+    }
+    names::keyword(items, Rank::Expected, "nondecreasing");
+    names::keyword(items, Rank::Expected, "nonincreasing");
+    true
+}
+
+/// The targets the property at the position varies, as a monotone `expect` names them.
+fn varied_targets(site: &Site<'_, '_>, items: &mut Items) {
+    let Some(ItemKind::Property(property)) = site.located.item().map(|item| &item.kind) else {
+        return;
+    };
+    for stmt in &property.body.stmts {
+        let StmtKind::Vary { target, .. } = &stmt.kind else {
+            continue;
+        };
+        let written: Vec<&str> = target.iter().map(|part| part.text.as_str()).collect();
+        if written.iter().any(|part| part.is_empty()) {
+            continue;
+        }
+        if let Some(item) = items.add(Rank::Expected, Kind::Value, &written.join(".")) {
+            item.detail = Some(String::from("vary"));
+        }
+    }
+}
+
+/// After an input's type or default: `where` and its snippet. Returns whether nothing else
+/// fits (after the type, before any default).
+fn input_tail(site: &Site<'_, '_>, items: &mut Items) -> bool {
+    let Some(ItemKind::Input(input)) = site.located.item().map(|item| &item.kind) else {
+        return false;
+    };
+    if !site.line_starts_with("input")
+        || !after_space(site)
+        || input
+            .constraint
+            .as_ref()
+            .is_some_and(|constraint| constraint.span.start <= site.start)
+        || matches!(
+            input.ty.kind,
+            crate::tariff::syntax::ast::TypeExprKind::Missing
+        )
+    {
+        return false;
+    }
+    let before_end = site
+        .before
+        .and_then(|index| site.token(index))
+        .map_or(0, |token| token.span.end);
+    let after_type = input.default.is_none() && before_end == input.ty.span.end;
+    let after_default = input
+        .default
+        .as_ref()
+        .is_some_and(|default| before_end == default.span.end);
+    if !after_type && !after_default {
+        return false;
+    }
+    names::keyword(items, Rank::Expected, "where");
+    if let Some(item) = items.add(Rank::Keyword, Kind::Snippet, "where …..…") {
+        item.insert = String::from("where ${1:low}..=${2:high}");
+        item.snippet = true;
+        item.doc = Some(Doc::Message(Message::new(crate::message!(
+            "Bounds the values a contract may set: a range, or a list after `where`."
+        ))));
+    }
+    after_type
+}
+
+/// `given …` or `vary …`: the fields along the path, or `input.` and the inputs. Returns
+/// whether the position is in the path (before `stop`, the `=` or `in` that ends it).
+fn given_path(site: &Site<'_, '_>, items: &mut Items, stop: &str) -> bool {
     let Some(first) = site.line_first() else {
         return false;
     };
@@ -989,7 +1219,7 @@ fn given_path(site: &Site<'_, '_>, items: &mut Items) -> bool {
         .map(|index| site.text(index))
         .filter(|word| *word != "." && !word.trim().is_empty())
         .collect();
-    if words.contains(&"=") {
+    if words.contains(&stop) {
         return false;
     }
     let session = site.session;
@@ -1113,7 +1343,7 @@ fn types(site: &Site<'_, '_>, items: &mut Items) {
             item.detail = Some(String::from("Schema"));
         }
     }
-    for (name, enumeration) in names::enums(site) {
+    for (name, enumeration) in names::enums(site.session) {
         if let Some(item) = items.add(Rank::Expected, Kind::Enum, &name) {
             item.detail = Some(format!("enum {name}"));
             item.doc.clone_from(&enumeration.doc);
@@ -1176,6 +1406,10 @@ fn inside(site: &Site<'_, '_>, bracket: &Bracket, items: &mut Items) -> Then {
     let Some(call) = call_with_open(&site.scopes, open_start) else {
         return Then::Values(None);
     };
+    if super::choices::is_chosen(site.session, call) {
+        names::choice_labels(site, items);
+        return Then::Done;
+    }
     names::arguments(site, items, call, bracket, at_part_start)
 }
 

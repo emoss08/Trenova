@@ -249,8 +249,29 @@ type, then `pnpm --filter @trenova/graphql codegen`; `TestReferenceFragmentsAreG
 until both are current. Editing a client operation can fail `TestEveryLinkedFieldIsDeclared` (it
 selects a linked record's field outside its view without `@requiresRead`) or
 `TestEveryDeclaredLinkedFieldIsNullable` (the field it declares is non-null). These are Go tests
-over the client's `.graphql` files, so they surface under `task test`. See
-[reference-views.md](reference-views.md).
+over the client's `.graphql` files, so they surface under `task test`. refgen also writes the page
+access manifest and the role editor's words (below). See [reference-views.md](reference-views.md).
+
+## Page access manifest
+
+`services/tms/pkg/pageaccess/manifest_gen.json` is what every screen needs and shows, and
+`services/tms/internal/modules/identity/app/pageaccessservice/viewwords_gen.go` is the role
+editor's words for each reference view. Both come from two generators, in this order:
+
+```bash
+pnpm --filter @trenova/web access:generate   # client/apps/web: writes pkg/pageaccess/screens_gen.json
+cd services/tms && go run ./internal/api/graphql/gqlext/refgen   # writes manifest_gen.json and viewwords_gen.go
+```
+
+`access:check` (the GraphQL Codegen job in `test-client.yml`) fails when a route, a page's
+imports or a REST call it makes changed what a screen runs; `TestPageAccessManifestIsGenerated`
+and `TestViewWordsAreGenerated` (`internal/api/pagemanifest`, under `task test`) fail when the
+manifest or the words are stale. So **adding a page, importing a GraphQL wrapper or a query
+factory into one, editing a client operation, changing a reference view or registering a REST
+route a screen calls means regenerating both**, the screens first. The Go tests run when a client
+operation changes alone (`test-tms.yml` watches `client/packages/graphql/src/operations/**`).
+A word new to `viewwords_gen.go` is a new catalog entry: run `task i18n` and translate it. See
+"The page access manifest" in [reference-views.md](reference-views.md).
 
 ## Schema changes
 

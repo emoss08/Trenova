@@ -566,7 +566,9 @@ const tariffReference = "Tariff in brief. A file starts with its kind: tariff \"
 	"tariffs to import; condition \"Name\" ends in one Bool expression. /// doc comments " +
 	"label what follows. Statements run top to bottom: use std.ltl.{ deficit, Break } or " +
 	"use org.accessorials.{ hazmat } imports; input name: Type = default declares a value " +
-	"the contract sets (file level only); let is immutable, var accumulates (total += x), " +
+	"the contract sets (file level only), and where $0.50/mi..=$15/mi (a range, lo..hi " +
+	"excluding hi) or where [Standard, Guaranteed] (a list) after it bounds what a contract " +
+	"may set; let is immutable, var accumulates (total += x), " +
 	"const is a compile-time constant; if / else if / else, if let x = optional { }, match " +
 	"value { pattern => { } }, for x in list where cond { } (no while, no recursion); " +
 	"require cond else \"message\" and fail \"message\" refuse to rate with a reason; fn " +
@@ -586,18 +588,27 @@ const tariffReference = "Tariff in brief. A file starts with its kind: tariff \"
 	"accessorial whose code the organisation's catalog lists; note \"text\" adds a note; " +
 	"charges may sit in if, match and for, never in a function. Total clauses come last, " +
 	"in order: minimum amount, maximum amount, round to cents (the default), round up to " +
-	"$5. Labels and messages interpolate {expr}. std.ltl has Break, deficit, billed and " +
+	"$5. best \"Linehaul\" { option \"Per mile\" { charge … } option \"Flat\" { charge … } } " +
+	"bills the option whose charges come to the least (worst the most); an option that " +
+	"refuses with require or fail is out of the running. Labels and messages interpolate " +
+	"{expr}. std.ltl has Break, deficit, billed and " +
 	"densityClass; std.fuel has stepPercent and perMile; std.time has weekend, afterHours " +
 	"and businessDuration; std.accessorials has detention and extraStops. Tests sit in " +
 	"the file, one statement per line: test \"name\" { given shipment.distance = 412 mi, " +
 	"given input.rate = $2.10/mi, expect charge(\"Linehaul\") == $865.20, expect total " +
-	"== $865.20 }, and expect fails \"message\" for a refusal; given lines override the sample record " +
+	"== $865.20 }, expect chosen(\"Linehaul\") == \"Flat\" for the option a best kept, and " +
+	"expect fails \"message\" for a refusal; given lines override the sample record " +
 	"(one pickup, one delivery) and pickup(), delivery() and commodity() build stops and " +
-	"lines. One full example:\n" +
+	"lines. A property checks a rule over many cases: property \"heavier never bills less\" " +
+	"{ vary shipment.weight in 1 lb..40_000 lb, given input.rate = $2.10/mi, assume cond, " +
+	"expect total nondecreasing in shipment.weight } or expect total >= $450; vary " +
+	"input.rate alone varies over its where bounds, and a failing property reports its " +
+	"simplest counterexample with a test block that reproduces it. Tests report which " +
+	"regions of the file no test reaches. One full example:\n" +
 	"tariff \"Per Mile\"\n" +
 	"/// Linehaul per loaded mile with a minimum.\n" +
 	"/// What the contract pays per mile.\n" +
-	"input rate: Money/mi\n" +
+	"input rate: Money/mi where $0.50/mi..=$15/mi\n" +
 	"/// The least a load bills.\n" +
 	"input minimumCharge: Money = $0\n" +
 	"require shipment.distance > 0 mi else \"This rate needs the trip's miles\"\n" +
@@ -607,4 +618,9 @@ const tariffReference = "Tariff in brief. A file starts with its kind: tariff \"
 	"  given input.rate = $2.10/mi\n" +
 	"  given shipment.distance = 412 mi\n" +
 	"  expect total == $865.20\n" +
+	"}\n" +
+	"property \"a longer haul never bills less\" {\n" +
+	"  vary shipment.distance in 1 mi..3_000 mi\n" +
+	"  given input.rate = $2.10/mi\n" +
+	"  expect total nondecreasing in shipment.distance\n" +
 	"}"

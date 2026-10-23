@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -25,7 +26,8 @@ var (
 // ---------------------------------------------------------------
 
 type FiscalPeriod struct {
-	bun.BaseModel `bun:"table:fiscal_periods,alias:fp" json:"-"`
+	bun.BaseModel             `bun:"table:fiscal_periods,alias:fp" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                        json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -206,6 +208,10 @@ func (fp *FiscalPeriod) maxPeriodNumber() int {
 
 func (fp *FiscalPeriod) GetID() pulid.ID {
 	return fp.ID
+}
+
+func (fp *FiscalPeriod) GetCreatedAt() int64 {
+	return fp.CreatedAt
 }
 
 func (fp *FiscalPeriod) GetTableName() string {

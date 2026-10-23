@@ -1,22 +1,22 @@
 package permission
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -935,10 +935,54 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 	assert.Equal(t, "shipment", result.Resource)
 	assert.Equal(t, permission.DataScopeOwn, result.DataScope)
 	assert.Contains(t, result.Operations, permission.OpRead)
-	assert.Empty(t, result.AccessibleFields,
-		"a list of only the classified fields would withhold every unclassified one; "+
-			"MaxSensitivity governs")
 	userRepo.AssertExpectations(t)
+	roleRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
+}
+
+func TestGetResourcePermissionsBatch_ReadsThePermissionsOnce(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil).Once()
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil).Once()
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+		{
+			ID:             roleID,
+			Name:           "Viewer",
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []*permission.ResourcePermission{
+				{
+					ID:         pulid.MustNew("rp_"),
+					RoleID:     roleID,
+					Resource:   "shipment",
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOwn,
+				},
+			},
+		},
+	}, nil).Once()
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
+		Return(nil).Once()
+
+	details, err := eng.GetResourcePermissionsBatch(
+		ctx, userID, orgID, []string{"shipment", "customer", "shipment", "not_a_resource"},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, details, 2, "each registered resource once; an unknown one has no entry")
+	assert.Contains(t, details["shipment"].Operations, permission.OpRead)
+	assert.Equal(t, permission.DataScopeOwn, details["shipment"].DataScope)
+	assert.Empty(t, details["customer"].Operations)
+	assert.Equal(t, permission.SensitivityInternal, details["customer"].MaxSensitivity)
 	roleRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
 }

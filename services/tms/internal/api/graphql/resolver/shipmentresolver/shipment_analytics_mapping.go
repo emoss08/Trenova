@@ -280,7 +280,7 @@ func profitabilityFromAnalytics(value any) *gqlmodel.ShipmentProfitabilityAnalyt
 		AvgCpm:            floatutils.FloatValue(card["avgCpm"]),
 		AvgMarginPct:      floatutils.FloatPtrValue(card["avgMarginPct"]),
 		HasMargin:         hasMargin,
-		UnprofitableCount: intutils.IntValue(card["unprofitableCount"]),
+		UnprofitableCount: intutils.IntPtrValue(card["unprofitableCount"]),
 		ShipmentCount:     intutils.IntValue(card["shipmentCount"]),
 		TotalMiles:        floatutils.FloatValue(card["totalMiles"]),
 	}

@@ -236,7 +236,10 @@ The rule, for each listed tool:
    rather than taking it on trust:
    - the operation is persisted and reads one root field;
    - the field's shape matches the tool's verb: a connection, a list or an `items` container for
-     a list tool, one record for a get;
+     a list tool, one record for a get. A get tool may also read the whole list one record holds,
+     keyed by that record's required id (`worker_get_schedule` reads
+     `workerShiftAssignments(workerId:)`): it binds as an unpaged list keyed by the id its call
+     names, and reads beside it as any such list does;
    - the field's resolver checks the tool's own resource for read. The generator reads the check
      from the resolver's code, and `TestGraphQLReadsCheckTheToolsOwnResource` holds every bound
      tool's policy resource to it, so a read meets the same check `authorize` made.
@@ -244,12 +247,16 @@ The rule, for each listed tool:
    A named binding with no reason fails generation. So does one that names the operation the rule
    would pick anyway. So does any binding, by rule or by name, whose operation requires a
    variable the tool cannot send: a list sends its `DataTableConnectionInput` and
-   `includeTotalCount`, a get sends `id`, any tool takes a scalar, enum or id variable as a
-   parameter of its own (a required `$integrationType` is a required parameter), and a paged list
+   `includeTotalCount`, a get sends `id` (or, for a record read by the id of the one it belongs to,
+   the operation's only required id: a driver's hours by `$workerId`), any tool takes a scalar,
+   enum or id variable as a parameter of its own (a required `$integrationType` is a required parameter), and a paged list
    builds a filter input whose required fields are scalars, enums or ids. A get never takes an
    input object. A list tool never binds to a connection read that selects no `pageInfo`,
    because it could not page. Where the node's type binds to a generated model (`gqlmodel`), the
-   line also names the `entity` whose filter configuration the resolver compiles with.
+   line also names the `entity` whose filter configuration the resolver compiles with. Only a
+   paged list compiles field filters, so only a paged list's binding carries an entity; a get and
+   an unpaged list read by their arguments alone, and may read a generated model
+   (`WorkerHosState`).
 
    The rule binds about two in five of the tools with an operation (49 of 119 in the trial
    recorded in the inventory). Tool names follow the product's words, not always their record
@@ -292,6 +299,11 @@ becomes a parameter. Its type comes from the field's GraphQL type:
 | `Int`, `Float`, `Decimal` | `<field>Min`, `<field>Max` | `gte` / `lte` |
 | `String` | `<field>`: string | `contains` (`eq` for codes the configuration marks exact) |
 
+- **A record kept under another resource names its kind.** An id reference may name a record
+  kind as well as its resource (`kind` on `idReference`): an IFTA jurisdiction is kept under fuel
+  purchases, so `jurisdictionId` is held to the `ifj_` prefix rather than to the purchase's.
+- **A Confidential field is not a parameter.** No reader's data access reaches it (a card
+  provider's own card id), so offering it would only lead to a refusal.
 - **An id with nowhere to get it is not offered.** An `ID` field the tool's `references` does not
   name is left out, keeping only its `has<Thing>` parameter when it is nullable: a model has no
   honest way to get an id no tool lists (`masterdata_list_fleet_codes` takes no `managerId`,
@@ -371,6 +383,20 @@ narrow the call. Any other `Int` argument is a parameter only when the schema de
 `unscoped`, not `defaults`: the safety events list reads what is still open across the
 organization when no worker is named, and one worker's record whole.
 
+A `String` argument that takes a day says so in its schema description (`as YYYY-MM-DD`, the fuel
+index price history's `from` and `to`); the tool offers it as an `agenttoolschema.Date`, refuses
+anything that is not a calendar day before the read, and sends the day as the text the argument
+takes. An id kept inside another resource's records (a fuel index inside fuel surcharge programs)
+is a reference by its record `kinds` rather than its resource, so the runtime still holds it to a
+prefix.
+
+A root that takes no argument at all (`fuelProgramCurrentRates`, a computed rate per active
+program) is an unpaged list with no parameters of its own. Where its repository tool matched a
+free-text query in what it read, the spec keeps that capability with `matches`, the row fields by
+dotted path (`program.code`, `program.name`) a case-insensitive `query` is matched against after
+the read, described by `queryNote`. The query never reaches the server, which has no search for
+it, and only an unpaged list may declare it: a paged list's query is the server's.
+
 **Reads alongside.** Where the repository tool returned records beside its own, because the next
 call needs their ids (the checklist templates a person starts by hand, the review templates) or
 because they say what the tool's records mean (the reconciliation tolerance a drift is judged by,
@@ -425,7 +451,9 @@ not judged by a record field's sensitivity, and not a field filter), typed by th
 and described in the schema's words; a required one is required in the schema and refused before
 the read when missing. Keyed reads alongside take it as their key. A spec's `names` give a derived
 parameter the name the tool takes it by: every accounting read calls `integrationType` `system`,
-as the accounting writes do.
+as the accounting writes do. Where a root argument and a record field derive the same parameter
+(a service failure's `shipmentId`), the root argument wins (`withRootArgs`): it is how the screen
+itself narrows the list.
 
 **Connections paged by their root.** A connection whose root takes its own `first` and `after`
 (`accountingSyncRecords(integrationType:, first:, after:, filter:)`) pages as a table input does:
@@ -433,6 +461,18 @@ as the accounting writes do.
 parameters sent inside it (`statuses`, named `status`), and the input's `search` is the tool's
 `query`. Its record type's fields are not filters, so it needs no Go entity and offers no sort;
 the near-miss probes drop one filter input field at a time.
+A read alongside may instead be an unpaged list keyed by the list's own arguments (a worker's
+recognitions beside their safety events). The generator proves that each of its variables is one
+the list's operation declares, of the same type, and the tool sends it the value the call sent,
+and makes the read only when the call names every one of them: with no worker named, the safety
+events list reads every worker's events and no recognitions. It takes no table input and is never
+cut short. An optional variable of its own that the list's operation does not declare is the
+spec's to set as the screen does (`inputs`): a worker's schedule reads their swaps with
+`openOnly: true` and `limit: 20`, as the repository tool did. The generator records those
+variables, and a spec that sets any other is refused at construction; a required one the list
+does not declare fails generation. A read alongside marked `scoped` is made only when the call names one of the list's
+records: the credential types come beside one worker's credentials, as the repository tool read
+them, and not beside what falls due across the organization.
 
 **Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
@@ -457,13 +497,44 @@ fields narrow by, so it needs no machinery of its own.
 `paramReferences` parameter: typed by the spec's `references` as a list of that resource's ids,
 each checked before the read, and sent as the list.
 
+**A default for a required argument.** A spec's `defaults` may name a root argument the schema
+requires (`ediTransfers(direction:)`, Inbound unless the call names Outbound, as the repository
+tool read it). The call that omits it is sent the default, so the tool's schema does not require
+it, and the parameter's note says what the default is.
+
+**Instants.** A record's `Timestamp` field gives a day range (`createdAtFrom`/`To`) by default.
+Where people bound it to the minute ("messages created since 08:30") the spec names the field in
+`instants`, and the two ends take `agenttoolschema.DateTime` (RFC 3339 with its offset) and compile
+to `gte`/`lte` on that second. A day sent where an instant is wanted is refused before the read.
+A name in `instants` that is none of the record's dated fields fails construction.
+
+**Fields no one narrows by.** Every filterable field is a parameter, and the description names
+every one an agent at Internal may use. Where that would bury the filters people use under ones
+no one asks for (an EDI message's template, the remote path it was dropped at, its row's
+`updatedAt`), the spec's `unoffered` leaves those fields out, and a name in it that is none of the
+record's filters fails construction. The resolver still accepts them from the screen.
+
+**Text arguments.** A `String` root argument an unpaged list or a get sends as it is (a
+credential type's code, a reconciliation status) takes the schema's description alone, not a
+field filter's "contains this text", since the resolver matches it exactly.
+
+**Include switches.** A get whose operation reads a field only on request
+(`raw @include(if: $includeRaw)`, a message's raw X12) takes the variable as a switch, described
+by the field's own schema description ("true also returns raw: …"), so a call that leaves it off
+never reads the field, and a reader whose ceiling withholds it is told so in `withheldByAccess`.
+
+**Numbers.** A model's numbers arrive as `float64`, which gqlgen's `Int` refuses where the HTTP
+transport hands it a JSON number, so the reader sends every whole number as an integer.
+
 **Get operations.** A root that takes an `id` and returns one record is a get even when the
 record carries a list under `items` (a schedule of accounts and its invoices); only a root with
 no `id` reads such a type as an `items` page. The get operation's own arguments become
-parameters: the id as `<record>Id`,
-marked with its resource, and every other scalar, enum or id variable as it is for a list's root
-arguments, named by the spec's `names`, typed by its `references` and noted by its `notes`. A get
-need not take an id: `accounting_get_connection` reads `accountingSyncStatus(integrationType:)`,
+parameters: the id as `<record>Id`, marked with its resource, and every other scalar, enum or id
+variable as it is for a list's root arguments, named by the spec's `names`, typed by its
+`references` and noted by its `notes`. A get read by the id of the record it belongs to (an
+invoice's factoring readiness by `invoiceId`, a factor's reserve balance by `factoringCompanyId`)
+names that parameter in `paramName`, and a `references` entry under the same name types it as the
+other record's id rather than the get's own. A get need not take an id: `accounting_get_connection` reads `accountingSyncStatus(integrationType:)`,
 and `accounting_get_mapping` names a mapping by its id or by its target type with a record or a
 key. A get's `shape` applies to its record what the screen's resolver does not (what a sync
 record's status means). A human key the person may say instead (a PRO number) is a second,
@@ -541,7 +612,11 @@ Three kinds of root field do not page this way, and their tools say so:
   offset, so the model learns one convention. An unpaged list whose root takes both a `limit` and
   an `offset` pages this way through `readOffsetWindow`: `offset` is never a parameter, `after`
   is, the read asks for one row past the page, and the cursor is bound to the call's other
-  arguments as a connection cursor is;
+  arguments as a connection cursor is. A root that returns its records under `items`
+  (`ediCarrierInvoices: EdiCarrierInvoiceList`) is read as an unpaged list of those items
+  (`graphQLRead.Items`), and the rule finds its operation as it does a list's; such a root must
+  declare `@authorizes` for its kind, since the field guard reads a record under a container that
+  is not a connection as carried by it;
 - unpaged lists: no `limit` or `after` parameter, and `hasMore` is never set; the list keyed by a
   record (above) returns every record the screen shows for it;
 - `DeskMemoryPage` (`items`, `next`): the tool reads `next` as the cursor.
@@ -641,7 +716,8 @@ Each module's PR:
 | Parties | `customer_list` | none | every field the table selects is Internal |
 | Parties | `location_list` | none | every field the table selects is Internal |
 | Parties | `carrier_list` | none | every field the table selects is Internal |
-| Parties | `customer_get` | none | reads `DeskCustomerCard`: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `customer_get` | none | reads `DeskCustomerCard`, named in `reads.yml` because `DeskCustomerUpdatePreferences` reads the same root: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `customer_get_update_preferences` | none | reads `DeskCustomerUpdatePreferences`, a new operation on `customer(id)` selecting the preference, the recipients and the notice profile's recipients; every field is Internal. The spec's `shape` (new on gets) words what the repository tool computed: `wantsArrivals`, `wantsDepartures`, the warning for a customer set to None, and `fallbackRecipients` when the customer names none, and says none of it where the preference was withheld |
 | Parties | `location_get` | none | reads `DeskLocationCard`; every field it selects is Internal |
 | Parties | `carrier_get` | none | reads `DeskCarrierCard`, named in `reads.yml` because `DeskCarrierIntel` reads the same root; every field it selects is Internal |
 | Parties | `carrier_get_intelligence_event` | none at Internal | reads `CarrierIntelEvent`. `CarrierIntelEvent` had no kind (it is not named for `carrier_intelligence`), so the guard did not gate it and a reader below Internal got every field; it now declares `@kind(resource: "carrier_intelligence")`, so its fields follow `carrier_intelligence`'s Internal default on every read of the type, the carrier intelligence screens' included, as the repository tool gated them. Who acknowledged or resolved it shows the user reference view |
@@ -662,6 +738,15 @@ Each module's PR:
 | Workforce | `worker_list_safety_events` | none | reads `DeskWorkerSafetyEvents`, with each worker's recognitions read alongside (`DeskWorkerRecognitions`) when the call names a worker. `worker_safety_event` and `worker_recognition` declare no field sensitivities and default to Internal, as the repository row read them. Each event gains `violations` (a loader, one query per page of events), which the repository tool read beside the events; `WorkerSafetyViolation` now declares `@kind(resource: "worker_safety_event")`, so its fields follow the event's. With no worker the list reads the events still open across the organization, newest first, as the repository tool did (the spec's `unscoped` default); `openOnly: false` lists the closed ones too, and one worker's record is read whole |
 | Workforce | `worker_list_credentials` | none | reads `DeskWorkerCredentialList`, with the active credential types read alongside (`DeskWorkerCredentialTypes`) when the call names a worker. `workerCredentials` takes an optional worker and the repository tool's filters (`expiringWithinDays`, `includeExpired`, `credentialTypeCode`, `requiredOnly`, `limit`), read by `WorkerCredentialService.List`: one worker's credentials, or with no worker or an expiry window the active ones falling due, soonest first, walked in the query. The window counts days from now, as the screen's expiry forecast does and the description says, where the repository tool counted calendar days in the caller's zone: GraphQL carries no caller's day. It pages by cursor over the root's `limit` and `offset`, as the repository tool paged by offset. `worker_credential` defaulted to Restricted with only `number` declared (Confidential), so every field outside its reference view would be withheld at Internal; what a credential is, whose, its dates, health, issuer, verification and whether a scan is on file are now Internal, and the notes and archive reason stay Restricted. The operation never selects `number`, which the repository tool withheld too |
 | Workforce | `worker_list` | none | reads `DeskWorkers`, which selects only what the Desk reads (no address, contact, personnel or Confidential profile fields); `city` is Restricted and withheld at Internal, as the repository row gated it |
+| Operations | `order_list` | none | reads `OrderTable`; every order field is Internal, as the repository row gated its amounts. `order` declares an "own" scope, and a person narrowed to their own orders reads the same rows on both paths (`TestConvertedLists_OrderListIsNarrowedToTheOwnerOnBothPaths`) |
+| Operations | `order_get` | none | reads `DeskOrder`, written for it: the card's fields with every leg the order groups (`legs`), named in `reads.yml` because `DeskOrderCard` pages its legs through shipments. The repository tool cut the legs at 50 and the charges at 100; the card reads them whole, as the order page does. The customer shows its reference view |
+| Operations | `shipment_list_recurring` | none | reads `DeskRecurringShipments`, written for it, which adds the last shipment a series made (`lastGeneratedShipmentId`) to what the table shows; every field is Internal |
+| Operations | `exception_list_service_failure_reason_codes` | none | reads `ServiceFailureReasonCodeTable`; it reads the active codes unless the call names `active`, as the repository tool always did, and pages where that tool read one page of 50 |
+| Operations | `exception_list_service_failures` | none | reads `ServiceFailureTable`, named in `reads.yml` because its row carries the `version` resolving a failure takes and `DeskRecordFailures` does not; the shipment and stop show their reference views |
+| Operations | `exception_get_service_failure` | none | reads `DeskServiceFailureCard`; who created, reviewed, resolved or voided it show the user reference view, which is what the repository tool reduced them to |
+| Operations | `detention_get_occurrence` | none at Internal | reads `DeskDetentionCard`, with the evidence, notices, collectability and the price now. `DetentionOccurrence`, `DetentionOccurrenceDetail` and `DetentionDeskEntry` had no kind, so the guard did not gate them; each now declares `@kind(resource: "detention")`, so their fields follow `detention`'s Internal default on every read, the detention screens' included |
+| Operations | `detention_list_occurrences` | none at Internal | reads `DeskDetentionOccurrences`, written for it. `detentionDesk` gains `includeAwaitingApproval`, `urgency`, `shipmentId` and `proNumber` (a PRO number or part of it), read by `DetentionService.ListDeskEntries`, and `DetentionDeskUrgency` gains `AwaitingApproval`, so the charges holding an invoice that the repository tool read beside the board are on the board's own read; the spec reads them by default. Each entry gains `billableMinutes`, priced as of now for a running clock. The tool no longer says which other urgencies a load is at when the one asked for matches nothing; the empty note names the filters instead |
+| Operations | `dispatch_list_tenders` | none | reads `DeskShipmentTenders`, written for it, which leaves out what a carrier wrote (a decline reason, a counter note) and where an offer was delivered, as the repository tool did, so the tool still reads nothing from outside. `tendersByShipment` gains `shipmentMoveId`, filtered in the repository within the shipment's tenders. The spec's `shape` adds `live`, each offer's `answerable` and `backOutAllowed`, and keeps `counterNeedsApproval` on a standing counter only, from the tender rules (`tender.Tender.IsLive`, `CanBounce`) |
 | Accounting | `accounting_list_drift_findings` | none | reads `DeskAccountingDriftFindings` with the overview alongside (`DeskAccountingDriftOverview`), which gives the tolerance each money difference is marked `withinTolerance` by. `AccountingDriftFinding` and `AccountingDriftOverview` had no kind (a record kind is not a resource), so the guard did not gate them; both now declare `@kind(resource: "accounting_sync")`, whose fields default to Internal, as the repository row read them |
 | Accounting | `accounting_list_inbound_changes` | none | reads `DeskAccountingInboundChanges`; `AccountingInboundChange` now declares `@kind(resource: "accounting_sync")` |
 | Accounting | `accounting_list_sync_records` | none | reads `DeskAccountingSyncRecords`, or, when the call names documents, `DeskAccountingSyncObjectStates` instead. Neither selects `errorMessage` or `errorCode`, the accounting system's own words, which the repository row never returned. `AccountingSyncRecord` and `AccountingSyncObjectState` now declare `@kind(resource: "accounting_sync")`. `accountingSyncObjectStates` gains an optional `integrationType` (one safe change), as the repository tool narrowed by system |
@@ -669,6 +754,43 @@ Each module's PR:
 | Accounting | `accounting_get_connection` | none | reads `DeskAccountingConnection` with the queue alongside (`DeskAccountingSyncSummary`) only for a reader of `accounting_sync`, as the repository tool did. `AccountingSyncStatus` now declares `@kind(resource: "accounting_integration")` and `AccountingSyncSummary` `@kind(resource: "accounting_sync")`. `accounting_integration` defaults to Restricted with ten fields declared, so every connection field but those would be withheld at Internal; the connection's operational state (status, setup step, sending mode and dates, failure count and category, certificate expiry, pause) is now declared Internal, and its app keys and every field not declared stay Restricted. A failure the accounting system worded itself (`Unknown`) is replaced by a pointer to the connection page, as `AgentErrorSummary` did |
 | Accounting | `accounting_list_mapping_gaps` | none | reads `DeskAccountingMappings` (states Unmatched and Proposed unless the call names others) with the summary alongside (`DeskAccountingMappingSummary`). `AccountingMapping` and `AccountingMappingSummary` now declare `@kind(resource: "accounting_integration")`; what a mapping maps, its state, the chosen record and the candidates are declared Internal |
 | Accounting | `accounting_get_mapping` | none | `partial`: no root read one mapping. `accountingMappingDetail` (one safe addition) names it by id or by target type with a record or a key, as `FindMapping` does, and returns the usable records it could be set to for an `optionsQuery`, as the repository tool searched them; checked by `accounting_integration` read. `AccountingMappingDetail` declares `@kind(resource: "accounting_integration")` |
+| EDI | `edi_list_partners` | none | reads `DeskEdiPartners`, written for it: what a partner row shows, without its contact details or settings. `edi` defaulted to Restricted with no field sensitivities, so every field but `id` would be withheld at Internal; a partner's, message's, file's and tender's operational fields are now declared Internal, and a partner's contact email and phone, the raw X12 and file text, a tender's payload and rate and the mapping snapshot stay Restricted, as the repository tools gated them |
+| EDI | `edi_list_inbound_files` | none | reads `DeskEdiInboundFiles`. `EdiInboundFile` had no kind (it is not named for `edi`), so the guard did not gate it; it now declares `@kind(resource: "edi")`. The ISA sender and receiver ids are parameters named `isaSender` and `isaReceiver`, since they are a partner's identifiers and no record's id |
+| EDI | `edi_list_transfers` | none | reads `DeskEdiTransfers`. `EdiTransfer` now declares `@kind(resource: "edi")` and gains what the repository row read from the tender (BOL, customer, service type, stop count) as fields of its own, with its `direction` and `counterparty` judged from the caller's organization, so a row never reads the Restricted payload. `ediTransfers` gains an optional `inboundFileId` (one safe change), as the repository tool narrowed by the file; `direction` is Inbound unless the call names one, as before |
+| EDI | `edi_list_messages` | none | `partial`: reads `DeskEdiMessages` (named, since `DeskEdiPartnerMessages` reads the same root for one partner's card). `EdiMessage` now declares `@kind(resource: "edi")` and gains `invoiceId` (a safe addition), which, as a filterable field, narrows by invoice as the repository tool did; the creation window is `createdAtFrom`/`To` to the minute (`instants`), where the repository tool took Unix seconds |
+| EDI | `edi_list_carrier_invoices` | none | reads `DeskEdiCarrierInvoices`, an `items` list paged by its root's limit and offset. `EdiCarrierInvoice` had no kind; it now declares `@kind(resource: "carrier_invoice_match")`, whose root `ediCarrierInvoices` now declares `@authorizes` for it, and the kind's fields are declared Internal but the totals, which stay Restricted as the repository row gated them. The suggested carrier is the type's `suggestedCarrier`, resolved only for an invoice no carrier is linked to, from the invoice already read (one carrier lookup per such row, where the repository tool read the invoice again first), and shows the carrier reference view. An unknown reconciliation status is refused |
+| EDI | `edi_get_partner` | none | reads `DeskEdiPartnerCard`, named because no rule finds it from the record kind; its readiness items gain their `label` (a safe addition), as the repository tool listed them. The card also carries each transport's settings, which the repository tool never returned: `EdiCommunicationProfile` now declares `@kind(resource: "edi")` and its `config` is Confidential, so no agent is ever shown it; its credentials are named and said to be on file, never read |
+| EDI | `edi_get_inbound_file` | none | `partial`: reads `DeskEdiInboundFile`, through `ediInboundFile` (one safe addition) and its `EdiInboundFileDetail`, which carries the file, its profile's name, the first fifty transaction sets parsed from it and, on `includeRaw`, its first 16 KB (`raw`, Restricted) |
+| EDI | `edi_get_message` | none | `partial`: reads `DeskEdiMessage`, through `ediMessage` and its `EdiMessageDetail`: the message, the document it decoded to, the first fifty findings with their count and, on `includeRaw`, the raw X12's first 16 KB (`raw`, Restricted) |
+| EDI | `edi_get_transfer` | none | `partial`: reads `DeskEdiTransfer`, through `ediTransfer` and its `EdiTransferDetail`: the tender's stops, commodities and rate (`charges`, Restricted, as the repository row gated it), whether it can be decided and accepted, and, for an inbound tender still open, the codes accepting it waits on (`MappingPreviewOf`, from the tender already read) |
+| EDI | `edi_get_ack_health` | none | `partial`: reads `DeskEdiAckHealth`, through `ediAckHealth` (one safe addition), which takes the partner, transaction set, overdue age and window the repository tool took and refuses one out of bounds; a 997 or 999 counts every set it answers in the service, and the tool's `shape` words each partner's answer and how long each overdue message has waited from the read's `asOf` |
+| Ledger | `ledger_list_journal_entries` | none | reads `DeskJournalEntries` on the new `journalEntries` root (journal_entry read), which lists every entry whatever its status, newest accounting date first, as `JournalEntryService.List` did; `journalReviewTable` reads only the entries still waiting to be approved or posted, so it could not serve the tool. The totals stay Restricted and withheld at Internal, as the repository row gated them. `JournalEntry` gains `entryDate`, `approvalNotes`, `rejectedAt` and `rejectionReason`, which the repository tools returned |
+| Ledger | `ledger_list_fiscal_periods` | none | reads `DeskFiscalPeriods` on the new `fiscalPeriods` root (fiscal_period read), latest start first; periods were reachable only under `FiscalYear.periods`, with no filter, sort or paging of their own. `FiscalPeriod` gains `reopenedAt` and `reopenReason`; the reason stays Restricted |
+| Ledger | `ledger_list_manual_journals` | none | reads `DeskManualJournals`; totals, reason and the rejection and cancel reasons stay Restricted, as the repository row gated them. `ManualJournal` gains `isBalanced` (Internal), which the repository row returned ungated |
+| Ledger | `ledger_list_journal_reversals` | none | reads `DeskJournalReversals`; the reason text and the rejection and cancel reasons stay Restricted, as the repository row gated them |
+| Ledger | `ledger_get_journal_entry` | none of what it returned | reads `DeskJournalEntryCard`. `JournalEntryCard` had no kind, so its lines' debits and credits were not gated on any read; it now declares `@kind(resource: "journal_entry")`, so they are Restricted, as the repository tool gated them. The card's own fields (`entry`, `lines`, `period`, `posting`, `source`, the people and the related entries) and a line's account, category and party names, and the posting's refusal, are declared Internal on journal_entry; a record the card carries is still decided by its own kind. The card adds what the repository tool did not read: the reversal request against the entry, whose reason text and rejection and cancel reasons are journal_reversal's and Restricted, and a line's customer and location only to a reader of those kinds. Lines gain `isReconciled` |
+| Ledger | `ledger_get_manual_journal` | none of what it returned | reads `DeskManualJournalCard`. `ManualJournalCard` now declares `@kind(resource: "manual_journal")` for the same reason; its own fields (`journal`, `lines`, `requestedPeriod`, `posting`, the people, `entries`), the lines' account and party names, their customer and location, `postedAt` and the posting's refusal are declared Internal, and their amounts stay Restricted. The entries it became are journal entries carried by the card, shown whole only to a reader of journal entries |
+| Rates | `rate_list_agreements` | none | reads `DeskRateAgreements`, which selects what the repository row carried and nothing more; the agreement's tariff `inputs` are Restricted and withheld at Internal, as the row gated them. The margin guardrails are `@protected` and never selected |
+| Rates | `rate_get_agreement` | none | reads `DeskRateAgreementCard` on the new `rateAgreement(id)` root. Its lanes are the new `lanes(first: 50)` field, the live lanes (current and starting later) the Desk's card pages, with `laneCount`, where the repository tool loaded every rule in force and cut the result at 50. The agreement's and each lane's tariff `inputs`, an accessorial's amount, cap and condition, the review comment and the version's change message stay Restricted, as the repository view gated them; the container fields (`lanes`, `laneCount`, `accessorials`, `fuelBinding`, `currentVersion`) and `fuelSurchargeProgramId` are declared Internal so their Restricted leaves are judged one by one. Inputs come as Tariff wire values, where the repository view wrote them as display text |
+| Rates | `rate_list_fuel_index_prices` | none | reads `DeskFuelIndexPrices`. `FuelIndexPrice` had no kind, so nothing was gated; it now declares `@kind(resource: "fuel_surcharge_program")` (Internal by default), as do `FuelIndexLatestPrice` and `FuelProgramCurrentRate` that carry it |
+| Rates | `rate_list_fuel_surcharge_programs` | none | reads `DeskFuelProgramCurrentRates`; `FuelProgramCurrentRate` declares `@kind(resource: "fuel_surcharge_program")` and gains `id`, the program's. The repository tool's per-row note (no price on file, a price outside the table) is the spec's `shape`, and is left off a row whose price or rate was withheld |
+| Workforce | `worker_get` | `leaveType`, `profile.nextTrainingDue`, `profile.safetyRating` | reads `DeskWorkerCard`, which now also selects what the repository row carried (postal code, emergency contact, leave type, termination, last MVR check, next training due, safety rating, compliance status, ELD and short-haul exemptions). `worker` declares none of the three newly withheld fields, so they take its Restricted default, where the repository row returned them ungated; they were not declared Internal, which would widen what a person whose role reaches only Internal sees. The contact, address, hire and termination dates and disqualification reason stay Restricted, as the repository row gated them. `profile.licenseNumber` is Confidential and now named in `withheldByAccess` rather than left out silently. `worker` now declares `profile` Internal: the field that holds the profile took the Restricted default, so the guard withheld the whole profile at Internal (`worker_list` included) even though each of its fields carries its own sensitivity, which still applies. The spec's `shape` folds a NonCompliant credential into `canBeAssigned`, as `worker_list` does |
+| Workforce | `worker_get_credential` | `notes`, `archiveReason` | reads the new `DeskWorkerCredential`; `worker_credential` keeps both Restricted, where the repository row returned them ungated. The operation never selects `number`. `worker_credential` now declares its `worker` and `credentialType` links Internal: they took the Restricted default, so at Internal the guard withheld the holder and the type outright (`worker_list_credentials` included); each linked record is still gated by its own kind, so the holder shows the worker reference view to a reader who cannot read workers |
+| Workforce | `worker_get_dot_random_draw` | none | reads `DotRandomDraw`. `DOTRandomDraw` and `DOTRandomDrawEntry` had no kind (neither is named for `dot_random_pool`), so the guard did not gate them and a reader below Internal got every field; both now declare `@kind(resource: "dot_random_pool")`, whose fields default to Internal, on every read of the type, the random testing page's included. Each selection's `worker` shows the worker reference view (the name the repository row carried) to a reader who cannot read workers |
+| Workforce | `worker_get_hos` | none | reads `WorkerHosState`, the telematics page's single-root read; `DeskWorkerHos` reads the violations beside it, which the tool never returned. `WorkerHosState` has no kind and stays ungated, as the repository tool and the page read it: declaring `worker` would put every clock under the worker's Restricted default |
+| Workforce | `worker_get_schedule` | none | reads `WorkerShiftAssignments` with `WorkerAvailabilityPreferences` and `ShiftSwapRequests` alongside, keyed by the worker; swaps are read only for a reader who may read `shift_swap`, open only, at most 20, as before. The resolvers' team scope governs. `WorkerShiftAssignment` and `WorkerAvailabilityPreference` now declare `@kind(resource: "worker_schedule")` and `ShiftSwapRequest` `@kind(resource: "shift_swap")`, all Internal by default; each assignment's `shiftTemplate` shows the shift template reference view (code, name, colour, start, length) to a reader who cannot read shift templates, and a swap's workers the worker reference view |
+| Workforce | `worker_list_dot_random_draws` | none | reads `DotRandomDraws` (one pool's or every pool's, the server's page of 50) with the active pools alongside (`DotRandomPools`); every field is Internal |
+| Workforce | `worker_list_shift_templates` | none | reads `ShiftTemplates`, the active patterns unless the call asks for the retired ones, 25 unless it asks for more, at most 100; every field is Internal. The spec's `shape` spells out the days, start and length |
+| Formula | `formula_list_templates` | none | reads `DeskFormulaTemplates`, added for the Desk: the row the repository tool returned (name, description, status, version, test count), not the imports and usage `FormulaTemplateTable` selects for the editor's table. Every `formula_template` field is Internal. The repository list was not gated, so at a role ceiling below Internal it now withholds every field but `id` |
+| Formula | `formula_get_template` | none | reads `DeskFormulaTemplateCard`, added for the Desk: the template whole, as the repository record was (Tariff source, inputs, imports, review state, version), with `usageCount` (one batched loader read) beside it. Every field is Internal, as the repository tool's redactor gated it |
+| Formula | `formula_list_libraries` | none | reads `DeskFormulaLibraries`, added for the Desk: path, description, status, version and test count, as the repository row carried. Every `formula_library` field is Internal; the repository list was not gated, so below Internal it now withholds every field but `id`. The tool came with Tariff after the inventory was taken |
+| Formula | `formula_get_library` | none | reads `DeskFormulaLibraryCard`, added for the Desk (the screen's `FormulaLibrary` reads three roots, its versions and reviews, which a get cannot bind): the library whole. Every field is Internal, as the repository tool's redactor gated it |
+| Fuel | `fuel_list_cards` | none | reads `DeskFuelCards`, added for the Desk: what the repository row carried (provider, last four, label, status, expiry, who carries it), with `unassigned` and `discoveredByFeed` kept by the spec's `shape`. Every `fuel_card` field but `externalCardId` (Confidential, never selected, never a parameter) is Internal; the repository list was not gated, so below Internal it now withholds every field but `id`. The tractor and driver show their reference views to a reader who cannot read them |
+| Fuel | `fuel_list_purchases` | none | reads `DeskFuelPurchases`, added for the Desk: the repository row's fields, with the tractor, driver and jurisdiction as linked records. Every `fuel_purchase` field is Internal, so the amount and card digits read as before at Internal; below Internal everything but `id` is withheld, where the repository list was ungated |
+| Fuel | `fuel_list_purchase_imports` | none | reads `DeskFuelPurchaseImports`, added for the Desk (the table's selection carries the column mapping and per-jurisdiction breakdowns). `FuelPurchaseImportBatch` had no kind, so the guard did not gate it; it now declares `@kind(resource: "fuel_purchase_import")`, and `fuel_purchase_import` gains a reference view (file name, origin, provider, row count) so the fuel card and purchase cards that carry a batch still name it to a reader of theirs. Every field is Internal |
+| Fuel | `fuel_list_ifta_returns` | none | reads `DeskIftaReturns`, added for the Desk: the repository row's figures and each return's problems, with `blockingProblems` counted by the domain's `ProblemCode.Blocks` in the spec's `shape`. Every `ifta_return` field is Internal |
+| Fuel | `fuel_list_ifta_mileage_entries` | none | reads `DeskIftaMileageEntries`, added for the Desk; every `ifta_jurisdiction_mileage` field is Internal |
+| Fuel | `fuel_list_ifta_jurisdictions` | none | reads `DeskIftaJurisdictions`; `iftaJurisdictions` gains `countryCode` and `activeOnly`, which the resolver passes to `ListJurisdictions`, and the spec reads the active ones by default as the repository tool always did. The jurisdictions are global reference data under the root's `fuel_purchase` check and stay ungated, as the repository tool read them: declaring a kind on `IFTAJurisdiction` would withhold a mileage entry's or purchase's jurisdiction code from a reader without fuel purchase read |
 
 | Factoring | `factoring_list_readiness` | none | reads `DeskFactoringInvoiceStates` (written for it, the queue's input spread from the table input) with the queue's totals alongside (`FactoringSummary`, read on every call). `FactoringInvoiceState` and `FactoringSummary` had no kind, so the guard did not gate them; both now declare `@kind(resource: "invoice")`, the resource their roots check, and `invoice` declares what a readiness state carries (verdict, failed checks, the checks' code, message and fix, the dates, the factor) Internal. The open balance and every total stay Restricted, as the repository tool withheld them by the invoice's amounts. Ready is the default verdict, as before; `verdict` is now a list and can name Excluded or Funded too |
 | Factoring | `factoring_get_readiness` | none | reads `DeskFactoringReadiness`, which evaluates the invoice now through `factoringReadiness(invoiceId:)`, as the repository tool did; `InvoiceFactoring` reads the stored state instead and was not used |
@@ -685,9 +807,22 @@ every converted read does, where the repository tools judged it by the person's 
 invoices. A role that reaches Restricted on a factoring kind and only Internal on invoices is
 shown the factoring money it was granted.
 
-None of the repository-backed reference, party or equipment lists was gated, so at a person's role ceiling below
-Internal each now withholds every field but `id`, where it used to return them all. No description
-names a field that is newly withheld at Internal, so none changed.
+The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
+returned every other column at any tier; at a person's role ceiling below Internal each converted
+ledger read now withholds every field but `id`. Their descriptions say the totals and amounts
+show when the data access reaches them.
+
+None of the repository-backed reference, party, equipment or operations lists was gated (only `order_list`
+gated its amounts, all Internal), so at a person's role ceiling below Internal each now withholds every
+field but `id`, where it used to return them all. No description names a field that is newly withheld
+at Internal, so none changed. The fuel index price and fuel surcharge program reads were not gated
+either and now withhold the same way below Internal; the rate agreement list and get already gated
+their rates.
+
+The EDI lists and gets were gated only where they named a field (a contact, the raw X12, a
+tender's rate), so at a person's role ceiling below Internal each now withholds every field but
+`id`, where the lists used to return them all. Nothing is newly withheld at Internal, so no EDI
+description changed for it.
 
 ## Permissions, data scopes and refusals
 
@@ -777,8 +912,20 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   `withheldByAccess`. A get for several ids (`invoice_get`) runs one read per id, at most 10
   concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
   parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
-  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, and a card
-  whose root returns nothing is a missing record, not an empty one.
+  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, or as the
+  one id the operation requires (`$workerId` for `worker_get_hos`), and a card whose root returns
+  nothing is a missing record, not an empty one, unless the spec's `absent` says what nothing
+  means (no ELD has reported the driver's hours, which is the finding). A spec's `shape` applies
+  to the record what the card's resolver does not, as a list's does to each row: `worker_get`
+  folds a NonCompliant credential into `canBeAssigned`, `worker_get_hos` gives the clocks in
+  minutes and marks a reading over twelve hours old as stale, and
+  `customer_get_update_preferences` adds whether arrivals and departures are wanted, the warning
+  for a customer who takes no routine notices, and the notice profile's recipients as the
+  fallback. A get's node needs no Go entity: it
+  filters by nothing but its id, so a card type (`JournalEntryCard`) binds as a record does. A
+  card the get reads declares `@kind` of the record it draws, so the parts it carries that have no
+  kind of their own (a journal's lines) are gated by that record's sensitivities rather than by
+  none.
 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by
@@ -832,9 +979,11 @@ which the tests range over: `TestConvertedLists_ReadWhatTheRepositoryToolsReadUn
 holds each to the above, and `TestConvertedLists_RefuseExactlyWhatAuthorizeRefuses` covers refusal
 for each, as a person and as an unattended agent. A module's PR adds its specs and its cases.
 
-A repository-backed list that another tool composes (`shipment_get` reads its customers and
-locations through `newListCustomersTool` and `newListLocationsTool`) keeps that use until the
-composing tool's own module converts it.
+A repository-backed list that another tool composes (`shipment_find_records` matches a new
+shipment's customer, stops and commodities through `newListCustomersTool`, `newListLocationsTool`
+and `newListCommoditiesTool`) keeps that use until the composing tool converts. The Operations
+module left `shipment_get`, `shipment_list`, `dispatch_get_board` and
+`exception_list_watchtower_items` on the repository path; the inventory says what each needs.
 
 ## Tools with no GraphQL equivalent
 

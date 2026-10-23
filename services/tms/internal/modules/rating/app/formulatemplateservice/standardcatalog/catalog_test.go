@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice/standardcatalog"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -56,7 +57,9 @@ func TestEveryRatingMethodTakesARateAndAMinimum(t *testing.T) {
 	for _, name := range append(ratingMethods, formulatemplate.StandardWeightBreaks) {
 		entry, ok := byName[name]
 		require.True(t, ok, "the catalog has %s", name)
-		assert.Contains(t, entry.Source, "\ninput "+formulatemplate.StandardInputMinimumCharge+": Money = $0\n", name)
+		assert.Contains(t, entry.Source,
+			"\ninput "+formulatemplate.StandardInputMinimumCharge+": Money = $0 where $0..=$100_000\n",
+			name)
 		assert.Contains(t, entry.Source, "\nminimum ", name)
 	}
 	for _, name := range ratingMethods {
@@ -107,4 +110,89 @@ func TestEveryStandardTemplateChecksClean(t *testing.T) {
 		assert.True(t, check.OK, "%s: %+v", entry.Name, check.Diagnostics)
 		assert.Nil(t, check.FirstError(), entry.Name)
 	}
+}
+
+func catalogByName(t *testing.T) map[string]standardcatalog.Template {
+	t.Helper()
+	catalog, err := standardcatalog.Load()
+	require.NoError(t, err)
+	byName := make(map[string]standardcatalog.Template, len(catalog))
+	for _, entry := range catalog {
+		byName[entry.Name] = entry
+	}
+	return byName
+}
+
+func TestEveryRateInputIsBounded(t *testing.T) {
+	t.Parallel()
+
+	codes := []rules.TariffChargeCode{}
+	for name, entry := range catalogByName(t) {
+		check, err := rules.CheckTariff(t.Context(), &rules.TariffCheckRequest{
+			Source:  entry.Source,
+			Kind:    rules.TariffKindTariff,
+			Context: &rules.TariffContext{Codes: &codes},
+		})
+		require.NoError(t, err, name)
+		for _, input := range check.Inputs {
+			if input.Name == formulatemplate.StandardInputBreaks ||
+				input.Name == "allowDeficit" {
+				continue
+			}
+			require.NotNil(t, input.Constraint, "%s: %s has no where clause", name, input.Name)
+			require.NotNil(t, input.Constraint.Range, "%s: %s", name, input.Name)
+			assert.False(t, input.Constraint.Range.Min.IsNone(), "%s: %s", name, input.Name)
+			assert.False(t, input.Constraint.Range.Max.IsNone(), "%s: %s", name, input.Name)
+		}
+	}
+}
+
+func TestTheLTLTemplatesNeverBillAHeavierLoadLess(t *testing.T) {
+	t.Parallel()
+
+	byName := catalogByName(t)
+	for _, name := range []string{formulatemplate.StandardPerCwt, formulatemplate.StandardWeightBreaks} {
+		run, err := rules.TestTariff(t.Context(), &rules.TariffTestRequest{
+			Source:  byName[name].Source,
+			Context: &rules.TariffContext{},
+		})
+		require.NoError(t, err, name)
+		var property *rules.TariffTestResult
+		for i := range run.Tests {
+			if run.Tests[i].IsProperty() && run.Tests[i].Name == "heavier never bills less" {
+				property = &run.Tests[i]
+			}
+		}
+		require.NotNil(t, property, "%s states the property", name)
+		assert.Equal(t, rules.TariffTestPassed, property.Status, "%s: %+v", name, property.Failures)
+		assert.Positive(t, property.Cases, name)
+	}
+}
+
+func TestPerMileOrFlatBillsTheLowerOfTheTwo(t *testing.T) {
+	t.Parallel()
+
+	entry := catalogByName(t)[formulatemplate.StandardPerMileOrFlat]
+	require.NotEmpty(t, entry.Source)
+	result, err := rules.EvaluateTariffs(t.Context(), &rules.TariffEvaluateRequest{
+		Context: &rules.TariffContext{},
+		Programs: []rules.TariffProgram{{
+			ID:     "rating",
+			Source: entry.Source,
+			Kind:   rules.TariffKindTariff,
+			Inputs: map[string]rules.RawJSON{
+				formulatemplate.StandardInputRate: rules.QuantityValue(
+					decimal.RequireFromString("2.50"),
+					"$/mi",
+				),
+				"flatRate": rules.MoneyValue(decimal.NewFromInt(1500)),
+			},
+		}},
+	})
+	require.NoError(t, err)
+	rated := result.Result("rating")
+	require.Equal(t, rules.TariffRated, rated.Status, "%+v %+v", rated.Error, rated.Refusal)
+	require.Len(t, rated.Choices, 1)
+	assert.Equal(t, rules.TariffChoiceBest, rated.Choices[0].Kind)
+	require.NotNil(t, rated.Choices[0].Chosen)
 }

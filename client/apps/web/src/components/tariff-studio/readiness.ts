@@ -1,5 +1,7 @@
+import { unreachedRegions } from "@/lib/tariff-coverage";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ReadinessCheck } from "@trenova/shared/types/formula-template";
+import type { TariffCoverage } from "@trenova/shared/types/tariff";
 import type { TariffTestsState } from "./use-tariff-tests";
 
 /** The keys the server's readiness uses, so a row in the Studio is the row Submit enforces. */
@@ -8,6 +10,7 @@ export const READINESS_KEYS = {
   source: "source",
   warnings: "warnings",
   tests: "tests",
+  coverage: "coverage",
   saved: "saved",
 } as const;
 
@@ -22,13 +25,38 @@ export type TariffReadinessInput = {
   dirty: boolean;
   /** A file with no tests is refused, not warned about: true for a library. */
   testsRequired?: boolean;
+  /** The regions the last test run reached, when it reported them. */
+  coverage?: TariffCoverage | null;
 };
+
+/**
+ * How much of the file the tests reach, as a readiness row: a warning that lists each region no
+ * test reaches (never blocking: an unreached branch may be fine, but a reviewer should know), or a
+ * pass when every region is reached. Null without coverage to judge.
+ */
+export function coverageReadiness(
+  coverage: TariffCoverage | null | undefined,
+  t: TranslateFn,
+): ReadinessCheck | null {
+  if (!coverage || coverage.total === 0) return null;
+  const unreached = unreachedRegions(coverage);
+  return {
+    key: READINESS_KEYS.coverage,
+    label: t("Tests reach every region"),
+    status: unreached.length > 0 ? "warn" : "pass",
+    detail: t("Tests reach {0} of {1} regions", coverage.reached, coverage.total),
+    ...(unreached.length > 0
+      ? { regions: unreached.map((region) => ({ range: region.range, kind: region.kind })) }
+      : {}),
+  };
+}
 
 /**
  * The Studio's live copy of the server's readiness, checked against what is in the editor
  * rather than what is saved: a name and description, a source the checker accepts and every
- * test passing block; warnings only warn, and so does a tariff with no tests (a library must
- * have one). Edit mode adds "Changes saved", because review always covers what is saved.
+ * test and property passing block; warnings only warn, and so do a tariff with no tests (a
+ * library must have one) and regions no test reaches. Edit mode adds "Changes saved", because
+ * review always covers what is saved.
  */
 export function tariffReadiness(input: TariffReadinessInput, t: TranslateFn): ReadinessCheck[] {
   const checks: ReadinessCheck[] = [];
@@ -93,6 +121,11 @@ export function tariffReadiness(input: TariffReadinessInput, t: TranslateFn): Re
             detail: t("Fix the errors to run the tests"),
           },
   );
+
+  if (tests.status === "ran" && !tests.stale) {
+    const coverage = coverageReadiness(input.coverage, t);
+    if (coverage) checks.push(coverage);
+  }
 
   if (input.mode === "edit" && input.dirty) {
     checks.push({

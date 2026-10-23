@@ -354,32 +354,32 @@ type DetentionStatsRequest struct {
 }
 
 type FacilityDetentionStat struct {
-	LocationID         pulid.ID        `bun:"location_id"          json:"locationId"`
-	LocationName       string          `bun:"location_name"        json:"locationName"`
-	StopCount          int             `bun:"stop_count"           json:"stopCount"`
-	BreachCount        int             `bun:"breach_count"         json:"breachCount"`
-	AvgDwellMinutes    int             `bun:"avg_dwell_minutes"    json:"avgDwellMinutes"`
-	MedianDwellMinutes float64         `bun:"median_dwell_minutes" json:"medianDwellMinutes"`
-	P90DwellMinutes    float64         `bun:"p90_dwell_minutes"    json:"p90DwellMinutes"`
-	BilledAmount       decimal.Decimal `bun:"billed_amount"        json:"billedAmount"`
-	DriverPayAmount    decimal.Decimal `bun:"driver_pay_amount"    json:"driverPayAmount"`
-	NetMargin          decimal.Decimal `bun:"net_margin"           json:"netMargin"`
-	WaivedAmount       decimal.Decimal `bun:"waived_amount"        json:"waivedAmount"`
-	DisputeCount       int             `bun:"dispute_count"        json:"disputeCount"`
-	SuppressedCount    int             `bun:"suppressed_count"     json:"suppressedCount"`
+	LocationID         pulid.ID            `bun:"location_id"          json:"locationId"`
+	LocationName       string              `bun:"location_name"        json:"locationName"`
+	StopCount          int                 `bun:"stop_count"           json:"stopCount"`
+	BreachCount        int                 `bun:"breach_count"         json:"breachCount"`
+	AvgDwellMinutes    int                 `bun:"avg_dwell_minutes"    json:"avgDwellMinutes"`
+	MedianDwellMinutes float64             `bun:"median_dwell_minutes" json:"medianDwellMinutes"`
+	P90DwellMinutes    float64             `bun:"p90_dwell_minutes"    json:"p90DwellMinutes"`
+	BilledAmount       decimal.Decimal     `bun:"billed_amount"        json:"billedAmount"`
+	DriverPayAmount    decimal.NullDecimal `bun:"driver_pay_amount"    json:"driverPayAmount"`
+	NetMargin          decimal.NullDecimal `bun:"net_margin"           json:"netMargin"`
+	WaivedAmount       decimal.Decimal     `bun:"waived_amount"        json:"waivedAmount"`
+	DisputeCount       int                 `bun:"dispute_count"        json:"disputeCount"`
+	SuppressedCount    int                 `bun:"suppressed_count"     json:"suppressedCount"`
 }
 
 type CustomerDetentionStat struct {
-	CustomerID      pulid.ID        `bun:"customer_id"       json:"customerId"`
-	CustomerName    string          `bun:"customer_name"     json:"customerName"`
-	StopCount       int             `bun:"stop_count"        json:"stopCount"`
-	BreachCount     int             `bun:"breach_count"      json:"breachCount"`
-	BilledAmount    decimal.Decimal `bun:"billed_amount"     json:"billedAmount"`
-	DriverPayAmount decimal.Decimal `bun:"driver_pay_amount" json:"driverPayAmount"`
-	NetMargin       decimal.Decimal `bun:"net_margin"        json:"netMargin"`
-	WaivedAmount    decimal.Decimal `bun:"waived_amount"     json:"waivedAmount"`
-	DisputeCount    int             `bun:"dispute_count"     json:"disputeCount"`
-	SuppressedCount int             `bun:"suppressed_count"  json:"suppressedCount"`
+	CustomerID      pulid.ID            `bun:"customer_id"       json:"customerId"`
+	CustomerName    string              `bun:"customer_name"     json:"customerName"`
+	StopCount       int                 `bun:"stop_count"        json:"stopCount"`
+	BreachCount     int                 `bun:"breach_count"      json:"breachCount"`
+	BilledAmount    decimal.Decimal     `bun:"billed_amount"     json:"billedAmount"`
+	DriverPayAmount decimal.NullDecimal `bun:"driver_pay_amount" json:"driverPayAmount"`
+	NetMargin       decimal.NullDecimal `bun:"net_margin"        json:"netMargin"`
+	WaivedAmount    decimal.Decimal     `bun:"waived_amount"     json:"waivedAmount"`
+	DisputeCount    int                 `bun:"dispute_count"     json:"disputeCount"`
+	SuppressedCount int                 `bun:"suppressed_count"  json:"suppressedCount"`
 }
 
 type WaiverLeakageStat struct {

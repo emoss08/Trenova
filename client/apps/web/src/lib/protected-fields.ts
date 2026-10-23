@@ -1,6 +1,8 @@
 import { Resource } from "@trenova/shared/types/generated/permission-resources";
 
-export type ProtectedFieldGroup = "Personal" | "Margins";
+import type { ProtectedFieldGroup } from "@trenova/shared/lib/reference-access";
+
+export type { ProtectedFieldGroup };
 
 export const PROTECTED_FIELD_GROUP_RESOURCES = {
   Personal: Resource.ProtectedPersonal,

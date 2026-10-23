@@ -50,7 +50,8 @@ type alongsideSpec struct {
 	// what names the records, for the note a cut-short read leaves.
 	what string
 	// inputs are the table input's fields every connection read sends
-	// (active templates, started by hand).
+	// (active templates, started by hand), or the variables a keyed read
+	// sends beside its keys (the open swaps only, at most twenty).
 	inputs map[string]any
 	// scoped reads it only when the call names one of the list's references
 	// (the credential types beside one worker's credentials, not beside what
@@ -94,6 +95,11 @@ func newGraphQLReadTool(
 	if read, ok := graphQLReads[spec.name]; ok && read.Unpaged {
 		return newGraphQLUnpagedListTool(spec, reader, permissions)
 	}
+	if len(spec.matches) > 0 {
+		return nil, fmt.Errorf("%s pages; its query is the server's, not matched in the rows",
+			spec.name)
+	}
+
 	return newGraphQLListTool(spec, reader, permissions)
 }
 
@@ -110,13 +116,16 @@ func newGraphQLUnpagedListTool(
 		return nil, fmt.Errorf("%s reads %s, which is not an unpaged list", spec.name,
 			read.Operation)
 	}
-	if spec.rank != nil || spec.defaultsAt != nil || spec.queryNote != "" ||
-		len(spec.instead) > 0 || spec.combine != nil || len(spec.names) > 0 {
+	if spec.rank != nil || spec.defaultsAt != nil || len(spec.instead) > 0 || spec.combine != nil ||
+		(spec.queryNote == "") != (len(spec.matches) == 0) {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
 
 	params, required, err := read.argumentParams(spec.name)
 	if err != nil {
+		return nil, err
+	}
+	if params, required, err = renamed(spec.name, params, spec.names, required); err != nil {
 		return nil, err
 	}
 	if params, err = referenced(spec.name, params, spec.references); err != nil {
@@ -190,6 +199,10 @@ func (r *graphQLRead) argumentParams(tool string) (params []graphQLParam, requir
 		}
 		for _, param := range derived {
 			param.OnInput = true
+			if said := variable.Description; said != "" && !variable.List &&
+				variable.Type == graphQLTypeString {
+				param.Schema = withDescription(param.Schema, said)
+			}
 			params = append(params, param)
 		}
 		if variable.NonNull {
@@ -245,6 +258,14 @@ func argumentParam(field *graphQLField) []graphQLParam {
 	}
 	if field.Type == graphQLTypeInt && !field.List {
 		return intArgumentParam(field)
+	}
+	if field.Type == graphQLTypeString && !field.List &&
+		strings.Contains(field.Description, dayTextFormat) {
+		return []graphQLParam{{
+			Name: field.Name, Field: field.Name, Kind: paramDayText,
+			Schema: agenttoolschema.Date(strings.TrimSpace(
+				strings.ReplaceAll(field.Description, ", as "+dayTextFormat, ""))),
+		}}
 	}
 
 	return inputFieldParams(field)
@@ -309,6 +330,12 @@ func (t *graphQLUnpagedListTool) ParamSchema() map[string]any {
 	if t.paged {
 		properties[paramAfter] = cursorPageSchema(graphQLListLimit, unpagedMost)[paramAfter]
 	}
+	if len(t.spec.matches) > 0 {
+		properties[graphQLParamQuery] = map[string]any{
+			toolschema.KeyType:        toolschema.TypeString,
+			toolschema.KeyDescription: t.spec.queryNote,
+		}
+	}
 	schema := map[string]any{
 		toolschema.KeyType:                 toolschema.TypeObject,
 		toolschema.KeyProperties:           properties,
@@ -364,18 +391,19 @@ func (t *graphQLUnpagedListTool) Query(
 		return nil, err
 	}
 
-	rows, _ := result.Data[t.read.RootField].([]any)
+	rows, prefix := t.rows(result.Data)
 	more := t.paged && window.more(len(rows), unpagedMost)
 	if t.paged && len(rows) > window.limit {
 		rows = rows[:window.limit]
 	}
+	query := strings.ToLower(strings.TrimSpace(optionalString(params.Params, graphQLParamQuery)))
 	items := make([]map[string]any, 0, len(rows))
 	for _, row := range rows {
-		if node, ok := row.(map[string]any); ok {
+		if node, ok := row.(map[string]any); ok && matchesQuery(node, t.spec.matches, query) {
 			items = append(items, compact(node))
 		}
 	}
-	withheld := relativePaths(result.Withheld, t.read.RootField+".")
+	withheld := relativePaths(result.Withheld, prefix)
 	if t.spec.shape != nil {
 		hidden := make(map[string]struct{}, len(withheld))
 		for _, path := range withheld {
@@ -386,7 +414,7 @@ func (t *graphQLUnpagedListTool) Query(
 		}
 	}
 
-	criteria := describeCriteria(t.spec.entityPlural, t.params, args, "")
+	criteria := describeCriteria(t.spec.entityPlural, t.params, args, query)
 	outcome := map[string]any{
 		outcomeCount:       len(items),
 		outcomeSearchedFor: criteria.Describe(),
@@ -430,6 +458,43 @@ func (t *graphQLUnpagedListTool) Query(
 	return outcome, nil
 }
 
+// rows are the records the root returned, as a list or under items, and the
+// prefix their withheld paths carry.
+func (t *graphQLUnpagedListTool) rows(data map[string]any) (rows []any, prefix string) {
+	if !t.read.Items {
+		rows, _ = data[t.read.RootField].([]any)
+		return rows, t.read.RootField + "."
+	}
+	holder, _ := data[t.read.RootField].(map[string]any)
+	rows, _ = holder[outcomeItems].([]any)
+
+	return rows, t.read.RootField + "." + outcomeItems + "."
+}
+
+// matchesQuery reports whether a row holds the query's text, ignoring case,
+// in any of the fields a spec matches it against; no query matches every row.
+func matchesQuery(row map[string]any, paths []string, query string) bool {
+	if query == "" {
+		return true
+	}
+	for _, path := range paths {
+		var value any = row
+		for part := range strings.SplitSeq(path, ".") {
+			object, ok := value.(map[string]any)
+			if !ok {
+				value = nil
+				break
+			}
+			value = object[part]
+		}
+		if text, ok := value.(string); ok && strings.Contains(strings.ToLower(text), query) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // checkArguments refuses a call that leaves out a required argument or names
 // a record by something other than its id, before anything is read.
 func (t *graphQLUnpagedListTool) checkArguments(args map[string]any) error {
@@ -468,7 +533,10 @@ func alongsideVariables(
 	sent map[string]any,
 ) (variables map[string]any, keyed bool) {
 	if bound.Input == "" {
-		variables = make(map[string]any, len(bound.Keys))
+		variables = make(map[string]any, len(bound.Keys)+len(spec.inputs))
+		for name, value := range spec.inputs {
+			variables[name] = value
+		}
 		for _, key := range bound.Keys {
 			value, present := sent[key]
 			if !present || value == nil {

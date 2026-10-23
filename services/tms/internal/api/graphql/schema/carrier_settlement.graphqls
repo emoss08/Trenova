@@ -341,7 +341,7 @@ type CarrierSettlementWorkspaceSummary {
 }
 
 "An inbound EDI 210 carrier freight invoice awaiting reconciliation."
-type EdiCarrierInvoice {
+type EdiCarrierInvoice @kind(resource: "carrier_invoice_match") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -365,6 +365,8 @@ type EdiCarrierInvoice {
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  "The carrier the invoice's SCAC or DOT number points to, for an invoice no carrier is linked to yet; null once one is linked or when nothing matches."
+  suggestedCarrier: Carrier
 }
 
 type EdiCarrierInvoiceList {
@@ -510,10 +512,11 @@ extend type Query {
   ): CarrierInvoiceMatchList! @authorizes(resource: "carrier_invoice_match")
   "Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched)."
   ediCarrierInvoices(
+    "Only invoices in this reconciliation status: Unmatched, MappingRequired, Matched or Variance."
     reconciliationStatus: String
     limit: Int
     offset: Int
-  ): EdiCarrierInvoiceList!
+  ): EdiCarrierInvoiceList! @authorizes(resource: "carrier_invoice_match")
   "Suggests a carrier for an EDI invoice by SCAC/DOT lookup against the carrier master."
   suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
   exportCarrierSettlementBatchCsv(batchId: ID!): String!

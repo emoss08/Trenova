@@ -1,8 +1,8 @@
 import { shipmentBoard } from "@/lib/queries/shipment-board";
 import {
   addQuickFilter,
-  QUICK_FILTER_MENU,
   quickFilterKey,
+  quickFilterMenu,
   quickFilterLabel,
   removeQuickFilter,
   type QuickFilterToken,
@@ -13,6 +13,7 @@ import type {
   DataTableSearchSuggestions,
 } from "@trenova/shared/types/data-table";
 import { useQuery } from "@tanstack/react-query";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { useCallback, useMemo, useState } from "react";
 import { useBoardScope } from "./use-board-scope";
 import { useShipmentBoardUrl } from "./url-state";
@@ -26,6 +27,7 @@ export function useQuickFilterSearch(): {
   chips: DataTableExtraChips;
 } {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
   const [{ qf }, setUrl] = useShipmentBoardUrl();
   const scope = useBoardScope();
   const [open, setOpen] = useState(false);
@@ -44,7 +46,7 @@ export function useQuickFilterSearch(): {
     () => ({
       title: t("Quick filters"),
       onOpenChange: setOpen,
-      items: QUICK_FILTER_MENU.map((entry) => ({
+      items: quickFilterMenu(marginsVisible).map((entry) => ({
         key: entry.filter,
         label: t(entry.label),
         dotClassName: entry.dotClassName,
@@ -53,7 +55,7 @@ export function useQuickFilterSearch(): {
         onSelect: () => setQuickFilters(addQuickFilter(qf, { filter: entry.filter })),
       })),
     }),
-    [counts.data, qf, setQuickFilters, t],
+    [counts.data, marginsVisible, qf, setQuickFilters, t],
   );
 
   const chips = useMemo<DataTableExtraChips>(

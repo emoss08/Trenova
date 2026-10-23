@@ -25,3 +25,12 @@ export function formatAltShortcut(key: string, mac: boolean = isMacPlatform()): 
   // i18n-ignore: key names as printed on the keyboard
   return mac ? `⌥${key}` : `Alt+${key}`;
 }
+
+/**
+ * The label for a Shift shortcut, spelled the way the person's platform spells it: "⇧F12" on a
+ * Mac, "Shift+F12" elsewhere.
+ */
+export function formatShiftShortcut(key: string, mac: boolean = isMacPlatform()): string {
+  // i18n-ignore: key names as printed on the keyboard
+  return mac ? `⇧${key}` : `Shift+${key}`;
+}

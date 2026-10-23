@@ -10,12 +10,21 @@
 //!   "kind", "detail", "doc", "insert", "snippet", "sort", "range"?}]}`, the items in `sort`
 //!   order; `snippet` inserts use `${1:placeholder}` tab stops and `$0` for the final cursor.
 //! - `tariff.hover` `{source, context, offset, values?}` → `null`, or `{"range", "contents":
-//!   {"signature", "type", "unit", "doc", "value"?: {"value", "display", "times"}}}`.
+//!   {"signature", "type", "unit", "doc", "value"?: {"value", "display", "times"},
+//!   "constraint"?: Message}}`; `constraint` is an input's `where` clause in words (`from
+//!   $0.50/mi to $15/mi`).
 //! - `tariff.signature` `{source, context, offset}` → `{"signatures": [{"label", "doc",
 //!   "parameters": [{"label": [from, to], "doc"}]}], "active": 0 | null, "activeParameter": n |
 //!   null}`.
 //! - `tariff.definition` `{source, context, offset}` → `{"targets": [{"module": null | "std.ltl",
 //!   "range", "selectionRange"}]}`.
+//! - `tariff.references` `{source, context, offset, includeDeclaration?}` → `{"references":
+//!   [{"range", "kind": "declaration" | "read" | "write", "module": null | "org.fees"}]}`: the
+//!   root file's occurrences in source order, after a declaration in a library (whose range is
+//!   in that library's source); `includeDeclaration` (default true) false leaves it out.
+//! - `tariff.actions` `{source, context, range: {from, to}}` → `{"actions": [{"id", "title":
+//!   Message, "edits": [{"range", "insert"}], "select": {from, to} | null}]}`: the refactorings
+//!   for the selection ([`super::actions`]); `select` is in the edited source.
 //! - `tariff.rename` `{source, context, offset, newName}` → `{"edits": [{"range", "insert"}]}`
 //!   or `{"error": Message}`; without `newName`, `{"range", "placeholder"}` or `{"error"}`.
 //! - `tariff.inlays` `{source, context, range: {from, to}, values?}` → `{"hints": [{"offset",
@@ -23,10 +32,12 @@
 //!
 //! `values` is the `trace` a `tariff.evaluate` of the same file returned ([`super::values`]).
 
+use super::actions::actions as offered;
 use super::complete::{Completion, complete as completions};
 use super::definition::definition as definitions;
 use super::hover::hover as hovered;
 use super::inlays::inlays as hints;
+use super::references::references as referenced;
 use super::rename::{prepare, rename as renamed};
 use super::session::Session;
 use super::signature::signature as signatures;
@@ -61,6 +72,34 @@ struct HoverInput {
     offset: u32,
     #[serde(default)]
     values: Option<Json>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ReferencesInput {
+    source: String,
+    #[serde(default)]
+    kind: Option<String>,
+    #[serde(default)]
+    context: Context,
+    offset: u32,
+    #[serde(default = "yes")]
+    include_declaration: bool,
+}
+
+const fn yes() -> bool {
+    true
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ActionsInput {
+    source: String,
+    #[serde(default)]
+    kind: Option<String>,
+    #[serde(default)]
+    context: Context,
+    range: Range,
 }
 
 #[derive(Deserialize)]
@@ -153,6 +192,9 @@ pub fn hover(input: &RawValue) -> OpResult {
     if let (Some(value), Some(object)) = (found.value, contents.as_object_mut()) {
         object.insert(String::from("value"), value);
     }
+    if let (Some(constraint), Some(object)) = (found.constraint, contents.as_object_mut()) {
+        object.insert(String::from("constraint"), json!(constraint));
+    }
     encode(&json!({ "range": range(index, found.range), "contents": contents }))
 }
 
@@ -209,6 +251,56 @@ pub fn definition(input: &RawValue) -> OpResult {
         })
         .collect();
     encode(&json!({ "targets": targets }))
+}
+
+/// `tariff.references`.
+///
+/// # Errors
+///
+/// When the input does not match the operation's shape.
+pub fn references(input: &RawValue) -> OpResult {
+    let input: ReferencesInput = decode(input)?;
+    let session = Session::new(&input.source, kind(input.kind.as_deref())?, &input.context);
+    let offset = session.byte(input.offset);
+    let found: Vec<Json> = referenced(&session, offset, input.include_declaration)
+        .iter()
+        .map(|occurrence| {
+            json!({
+                "range": range(session.utf16(occurrence.module), occurrence.span),
+                "kind": occurrence.kind.as_str(),
+                "module": session.module_path(occurrence.module),
+            })
+        })
+        .collect();
+    encode(&json!({ "references": found }))
+}
+
+/// `tariff.actions`.
+///
+/// # Errors
+///
+/// When the input does not match the operation's shape.
+pub fn actions(input: &RawValue) -> OpResult {
+    let input: ActionsInput = decode(input)?;
+    let session = Session::new(&input.source, kind(input.kind.as_deref())?, &input.context);
+    let from = session.byte(input.range.from.min(input.range.to));
+    let to = session.byte(input.range.to.max(input.range.from));
+    let index = &session.root().utf16;
+    let found: Vec<Json> = offered(&session, Span::new(from, to))
+        .iter()
+        .map(|action| {
+            json!({
+                "id": action.id,
+                "title": action.title,
+                "edits": action.edits.iter().map(|edit| json!({
+                    "range": range(index, edit.span),
+                    "insert": edit.insert,
+                })).collect::<Vec<_>>(),
+                "select": action.select.map(|select| json!({"from": select.from, "to": select.to})),
+            })
+        })
+        .collect();
+    encode(&json!({ "actions": found }))
 }
 
 /// `tariff.rename`.
@@ -283,6 +375,12 @@ pub fn steps_for_tests(op: &str, input: &Json) -> u64 {
         }
         "definition" => {
             let _ = definitions(&session, offset);
+        }
+        "references" => {
+            let _ = referenced(&session, offset, true);
+        }
+        "actions" => {
+            let _ = offered(&session, Span::new(offset, offset));
         }
         "rename" => {
             let _ = renamed(

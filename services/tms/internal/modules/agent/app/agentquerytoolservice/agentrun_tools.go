@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -50,50 +49,8 @@ var errMineNeedsAnAgent = fmt.Errorf(
 	paramMine,
 )
 
-type agentRunOwnership struct {
-	threads agentports.ThreadOwnerRepository
-}
-
-func (o agentRunOwnership) visible(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-	runs []*agent.AgentRun,
-) ([]*agent.AgentRun, error) {
-	threadIDs := make([]pulid.ID, 0, len(runs))
-	for _, run := range runs {
-		if run != nil && run.SubjectType == agent.SubjectAssistantThread {
-			threadIDs = append(threadIDs, run.SubjectID)
-		}
-	}
-
-	person := personOf(params.Actor)
-	owners := map[pulid.ID]pulid.ID{}
-	if len(threadIDs) > 0 && person.IsNotNil() {
-		read, err := o.threads.ThreadOwners(ctx, agentports.ThreadOwnersRequest{
-			TenantInfo: tenantOf(params),
-			ThreadIDs:  threadIDs,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("read who owns the conversations runs were on: %w", err)
-		}
-		owners = read
-	}
-
-	kept := make([]*agent.AgentRun, 0, len(runs))
-	for _, run := range runs {
-		if run == nil {
-			continue
-		}
-		if run.SubjectType == agent.SubjectAssistantThread {
-			owner, ok := owners[run.SubjectID]
-			if !ok || person.IsNil() || owner != person {
-				continue
-			}
-		}
-		kept = append(kept, run)
-	}
-
-	return kept, nil
+func runReaderOf(params *agentports.QueryToolParams) agentports.RunReader {
+	return agentports.PersonRunRead(personOf(params.Actor))
 }
 
 type agentRunLister interface {
@@ -104,28 +61,20 @@ type agentRunLister interface {
 }
 
 type listAgentRunsTool struct {
-	list   *listTool
-	runs   agentRunLister
-	owners agentRunOwnership
+	list *listTool
+	runs agentRunLister
 }
 
-func provideListAgentRunsTool(
-	runs agentports.AgentRunRepository,
-	threads agentports.ThreadOwnerRepository,
-) agentports.AgentQueryTool {
-	return newListAgentRunsTool(runs, threads)
+func provideListAgentRunsTool(runs agentports.AgentRunRepository) agentports.AgentQueryTool {
+	return newListAgentRunsTool(runs)
 }
 
-func newListAgentRunsTool(
-	runs agentRunLister,
-	threads agentports.ThreadOwnerRepository,
-) *listAgentRunsTool {
+func newListAgentRunsTool(runs agentRunLister) *listAgentRunsTool {
 	agentRunSpec := agentRunListSpec()
 
 	return &listAgentRunsTool{
-		list:   buildListTool(&agentRunSpec),
-		runs:   runs,
-		owners: agentRunOwnership{threads: threads},
+		list: buildListTool(&agentRunSpec),
+		runs: runs,
 	}
 }
 
@@ -284,16 +233,13 @@ func (t *listAgentRunsTool) Query(
 			FieldFilters: filters,
 			Sort:         sorting,
 		},
+		Reader: runReaderOf(params),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	fetched, more := trim(window, result.Items)
-	runs, err := t.owners.visible(ctx, params, fetched)
-	if err != nil {
-		return nil, err
-	}
+	runs, more := trim(window, result.Items)
 
 	rows := make([]agentRunRow, 0, len(runs))
 	tainted := make([]agent.RecordRef, 0, len(runs))
@@ -324,7 +270,7 @@ func (t *listAgentRunsTool) scope(
 	filters []domaintypes.FieldFilter,
 	criteria *filtercatalog.Criteria,
 ) ([]domaintypes.FieldFilter, error) {
-	scoped := make([]domaintypes.FieldFilter, 0, len(filters)+2)
+	scoped := make([]domaintypes.FieldFilter, 0, len(filters)+1)
 	scoped = append(scoped, filters...)
 
 	namedAgent := false
@@ -348,14 +294,6 @@ func (t *listAgentRunsTool) scope(
 			Value:    params.AgentDefinitionID.String(),
 		})
 		criteria.Field("agent", "this agent's own runs")
-	}
-
-	if !params.Actor.IsUser() {
-		scoped = append(scoped, domaintypes.FieldFilter{
-			Field:    agentRunFieldSubjectType,
-			Operator: dbtype.OpNotEqual,
-			Value:    string(agent.SubjectAssistantThread),
-		})
 	}
 
 	return scoped, nil
@@ -410,14 +348,12 @@ type getAgentRunParams struct {
 	fx.In
 
 	Runs      agentports.AgentRunRepository
-	Threads   agentports.ThreadOwnerRepository
 	Proposals agentports.AgentProposalRepository
 	Events    agentports.AgentRunEventRepository
 }
 
 type getAgentRunTool struct {
 	runs      agentRunGetter
-	owners    agentRunOwnership
 	proposals agentRunProposalLister
 	events    agentRunEventReader
 	access    fieldAccess
@@ -429,7 +365,6 @@ func newGetAgentRunTool(
 ) agentports.AgentQueryTool {
 	return &getAgentRunTool{
 		runs:      p.Runs,
-		owners:    agentRunOwnership{threads: p.Threads},
 		proposals: p.Proposals,
 		events:    p.Events,
 		access:    newFieldAccess(permissions),
@@ -550,16 +485,10 @@ func (t *getAgentRunTool) Query(
 	run, err := t.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
 		ID:         id,
 		TenantInfo: &tenant,
+		Reader:     runReaderOf(params),
 	})
 	if err != nil {
 		return nil, err
-	}
-	visible, err := t.owners.visible(ctx, params, []*agent.AgentRun{run})
-	if err != nil {
-		return nil, err
-	}
-	if len(visible) == 0 {
-		return nil, errortypes.NewNotFoundError("Agent run not found")
 	}
 
 	detail := agentRunDetailFrom(run)
@@ -569,7 +498,7 @@ func (t *getAgentRunTool) Query(
 		}
 	}
 	if optionalBool(params.Params, paramIncludeEvents) {
-		if err = t.addEvents(ctx, tenant, detail, run.ID); err != nil {
+		if err = t.addEvents(ctx, tenant, runReaderOf(params), detail, run.ID); err != nil {
 			return nil, err
 		}
 	}
@@ -661,6 +590,7 @@ func (t *getAgentRunTool) addProposals(
 func (t *getAgentRunTool) addEvents(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
+	reader agentports.RunReader,
 	detail *agentRunDetail,
 	runID pulid.ID,
 ) error {
@@ -676,6 +606,7 @@ func (t *getAgentRunTool) addEvents(
 		OwnerID:    runID,
 		After:      max(next-1-agentRunEventLimit, 0),
 		Limit:      agentRunEventLimit,
+		Reader:     reader,
 	})
 	if err != nil {
 		return fmt.Errorf("read the run's steps: %w", err)

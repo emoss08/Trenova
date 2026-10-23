@@ -17,6 +17,7 @@ import {
   type CatalogIndex,
 } from "./builder-state";
 import { CatalogFieldTree } from "./catalog-field-tree";
+import { isFieldAvailable } from "@/lib/report-catalog-access";
 
 type PivotPanelProps = {
   index: CatalogIndex;
@@ -91,7 +92,7 @@ export function PivotPanel({ index, ir, onChange }: PivotPanelProps) {
               entityKey={ir.entity}
               className="h-full"
               filterFields={(field, crossesToMany) =>
-                field.groupable && field.accessible && !crossesToMany
+                field.groupable && isFieldAvailable(field) && !crossesToMany
               }
               onSelectField={(selection) => {
                 const enumValues = selection.field.enumValues.map((value) => value.value);

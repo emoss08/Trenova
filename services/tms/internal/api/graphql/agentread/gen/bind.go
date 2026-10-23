@@ -196,13 +196,40 @@ type alongside struct {
 	// Own are the variables a read made instead of the list's takes that the
 	// list's operation does not declare: the call names them to choose it.
 	Own []string
+	// Set are the optional variables of a keyed read that the list's call
+	// does not declare, which the tool's spec sets as the screen does (the
+	// open swaps only, at most twenty).
+	Set []string
 }
 
 // unpaged reports whether a list tool's root field returns the whole list
-// at once ([WorkerChecklist!]!), keyed by its own arguments (workerId)
-// rather than paged through a table input.
+// at once ([WorkerChecklist!]!), or its records under items with a limit and
+// an offset (EdiCarrierInvoiceList), keyed by its own arguments rather than
+// paged through a table input.
 func (b *binding) unpaged() bool {
-	return b.Verb == verbList && b.RootField.Type.Elem != nil
+	return b.Verb == verbList && (b.RootField.Type.Elem != nil || b.items())
+}
+
+// items reports whether a list tool's root field returns its records under
+// items rather than as a list or a connection.
+func (b *binding) items() bool {
+	return b.Verb == verbList && b.RootField.Type.Elem == nil &&
+		itemsList(boundSchema, b.RootField)
+}
+
+// itemsList reports whether a root field returns an object that holds its
+// records as a list under items.
+func itemsList(schema *ast.Schema, field *ast.FieldDefinition) bool {
+	if schema == nil {
+		return false
+	}
+	def := schema.Types[field.Type.Name()]
+	if def == nil || def.Kind != ast.Object {
+		return false
+	}
+	items := def.Fields.ForName(itemsField)
+
+	return items != nil && items.Type.Elem != nil
 }
 
 // tabled reports whether a paged list reads through a table input, whose
@@ -494,7 +521,7 @@ func bindAlongside(
 	chosen, field := beside.Operation, beside.RootField
 	if object, keyed := keyedShape(field); keyed {
 		beside.Object = object
-		if beside.Keys, problem = alongsideKeys(list, chosen, name); problem != "" {
+		if beside.Keys, beside.Set, problem = alongsideKeys(list, chosen, name); problem != "" {
 			return nil, problem
 		}
 
@@ -529,22 +556,39 @@ func bindAlongside(
 // alongsideKeys are the variables a keyed read alongside a tool takes from
 // the tool's own call: each one the tool's operation declares, of the same
 // type, so the read is about the record the call names. It is made only when
-// the call names every one it requires. A read that takes no variable at all
-// is about the whole organization (the factoring queue's totals) and is made
-// on every call.
-func alongsideKeys(list *binding, chosen *operation, name string) (keys []string, problem string) {
+// the call names every one it requires. An optional variable the tool does
+// not declare is one the tool's spec sets as the screen does (openOnly on a
+// worker's swaps), returned as set; a required one, or an input object, the
+// tool could not send. A read that takes no variable at all is about the
+// whole organization (the factoring queue's totals) and is made on every
+// call.
+func alongsideKeys(
+	list *binding,
+	chosen *operation,
+	name string,
+) (keys, set []string, problem string) {
 	own := list.Operation.Query.Operations[0].VariableDefinitions
 	for _, variable := range chosen.Query.Operations[0].VariableDefinitions {
 		mine := own.ForName(variable.Variable)
-		if mine == nil || mine.Type.Name() != variable.Type.Name() ||
-			inputObject(variable.Type.Name()) {
-			return nil, fmt.Sprintf("%s reads %s alongside, which takes $%s: %s; the list's "+
-				"own call does not supply it", list.Tool, name, variable.Variable,
-				variable.Type.String())
+		switch {
+		case inputObject(variable.Type.Name()):
+		case mine != nil && mine.Type.Name() == variable.Type.Name():
+			keys = append(keys, variable.Variable)
+			continue
+		case mine == nil && !variable.Type.NonNull:
+			set = append(set, variable.Variable)
+			continue
 		}
-		keys = append(keys, variable.Variable)
+		return nil, nil, fmt.Sprintf("%s reads %s alongside, which takes $%s: %s; the "+
+			"list's own call does not supply it", list.Tool, name, variable.Variable,
+			variable.Type.String())
 	}
-	return keys, ""
+	if len(keys) == 0 && len(set) > 0 {
+		return nil, nil, fmt.Sprintf("%s reads %s alongside, a read keyed by nothing the "+
+			"call names", list.Tool, name)
+	}
+
+	return keys, set, ""
 }
 
 // tableFields are what makes an input a table's: a list tool builds any input
@@ -600,6 +644,9 @@ func unsupplied(b *binding) string {
 		if typ, ok := want[variable.Variable]; ok && typ == variable.Type.Name() {
 			continue
 		}
+		if b.Verb == verbGet && variable.Variable == getKey(b.Operation) {
+			continue
+		}
 		if typ, ok := want[""]; ok && (typ == variable.Type.Name() ||
 			(b.Verb == verbList && tableShaped(boundSchema, variable.Type.Name()))) {
 			continue
@@ -632,6 +679,28 @@ func buildable(name string) bool {
 	}
 
 	return true
+}
+
+// getKey is the variable a get sends the record's id in: $id, or, for a
+// record read by the id of the one it belongs to (a driver's hours by
+// $workerId), the operation's only required id variable.
+func getKey(op *operation) string {
+	key := ""
+	for _, variable := range op.Query.Operations[0].VariableDefinitions {
+		if !variable.Type.NonNull || variable.Type.Elem != nil ||
+			variable.Type.Name() != idType {
+			continue
+		}
+		if variable.Variable == idArgument {
+			return idArgument
+		}
+		if key != "" {
+			return ""
+		}
+		key = variable.Variable
+	}
+
+	return key
 }
 
 func chooseBinding(
@@ -676,6 +745,9 @@ func namedBinding(r read, chosen *operation) (b *binding, problem string) {
 	}
 	verb, node, ok := readShape(boundSchema, field)
 	want, _, _ := strings.Cut(agentports.ReadingOrder(r.Tool), readingSplit)
+	if ok && want == verbGet && keyedWhole(field) {
+		want = verbList
+	}
 	if !ok || verb != want {
 		return nil, fmt.Sprintf("%s is a %s tool, but %s reads %s, which is not one",
 			r.Tool, want, r.Operation, chosen.Roots[0])
@@ -696,6 +768,23 @@ func namedBinding(r read, chosen *operation) (b *binding, problem string) {
 		Reason:    r.Reason,
 		Entity:    r.Entity,
 	}, ""
+}
+
+// keyedWhole reports whether a root field returns every record one record
+// holds, keyed by that record's required id (a worker's shift assignments by
+// workerId): a get tool reads such a list as the record's own, an unpaged
+// list keyed by the id its call names.
+func keyedWhole(field *ast.FieldDefinition) bool {
+	if field.Type.Elem == nil {
+		return false
+	}
+	for _, argument := range field.Arguments {
+		if argument.Type.NonNull && argument.Type.Elem == nil && argument.Type.Name() == idType {
+			return true
+		}
+	}
+
+	return false
 }
 
 func describe(op *operation, problem string) string {
@@ -790,7 +879,7 @@ func ruleOperation(
 // connection read must select its pageInfo, or a tool reading through it
 // could never offer the next page.
 func pages(op *operation, rr rootRead) bool {
-	if rr.verb != verbList || rr.field.Type.Elem != nil {
+	if rr.verb != verbList || rr.field.Type.Elem != nil || itemsList(boundSchema, rr.field) {
 		return true
 	}
 	for _, selection := range op.Query.Operations[0].SelectionSet {

@@ -4,12 +4,13 @@ import type { ReportCatalog, ReportCatalogEntity } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
 import { ChevronRightIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
+import { isFieldAvailable, rootEntities } from "@/lib/report-catalog-access";
 import { CategoryTile } from "../../_components/report-card-chrome";
 
 function EntityTile({ entity, onSelect }: { entity: ReportCatalogEntity; onSelect: () => void }) {
   const t = useT();
 
-  const accessibleFields = entity.fields.filter((field) => field.accessible).length;
+  const availableFields = entity.fields.filter(isFieldAvailable).length;
 
   return (
     <button
@@ -25,7 +26,7 @@ function EntityTile({ entity, onSelect }: { entity: ReportCatalogEntity; onSelec
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{t(entity.label)}</p>
         <p className="text-muted-foreground truncate text-xs">
-          {entity.description || t("{0} fields", accessibleFields)}
+          {entity.description || t("{0} fields", availableFields)}
         </p>
       </div>
       <ChevronRightIcon className="text-muted-foreground/50 group-hover:text-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
@@ -46,7 +47,7 @@ export function EntityPicker({
 
   const grouped = useMemo(() => {
     const term = search.trim().toLowerCase();
-    const entities = catalog.entities.filter(
+    const entities = rootEntities(catalog).filter(
       (entity) =>
         !term ||
         entity.label.toLowerCase().includes(term) ||
@@ -61,7 +62,7 @@ export function EntityPicker({
       byCategory.set(entity.category, bucket);
     }
     return [...byCategory.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [catalog.entities, search]);
+  }, [catalog, search]);
 
   return (
     <div className="flex flex-1 justify-center overflow-y-auto">

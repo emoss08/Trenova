@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { rulesSync } from "@trenova/shared/rules/runtime";
 import { describe, expect, it, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
@@ -108,5 +108,65 @@ describe("useTariffWorkbench on an empty file", () => {
     expect(result.current.check.diagnostics).toEqual([]);
     expect(result.current.errors).toBe(0);
     expect(result.current.tests).toEqual({ status: "empty" });
+  });
+});
+
+describe("useTariffWorkbench with properties", () => {
+  const source = `tariff "LTL"
+charge "Freight" = (shipment.weight ?? 0 lb) * $0.30/lb
+if shipment.distance > 5_000 mi {
+  charge "Long haul" = $100
+}
+
+property "heavier never bills less" {
+  vary shipment.weight in 1 lb..40_000 lb
+  expect total nondecreasing in shipment.weight
+}
+`;
+
+  it("counts a property as a test, runs it, and hands the editor the coverage", async () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(
+        () =>
+          useTariffWorkbench({
+            rules: rulesSync(),
+            source,
+            kind: "tariff",
+            context: null,
+            tablesStamp: "",
+          }),
+        { wrapper },
+      );
+      expect(result.current.testCount).toBe(1);
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+      });
+      const tests = result.current.tests;
+      expect(tests.status).toBe("ran");
+      if (tests.status !== "ran") return;
+      expect(tests.run.tests.map((test) => [test.kind, test.status])).toEqual([
+        ["property", "passed"],
+      ]);
+      expect(result.current.coverage).toEqual(tests.run.coverage);
+      expect(result.current.coverage?.regions.some((region) => region.hits === 0)).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("hands the editor no coverage while the source has errors", () => {
+    const { result } = renderHook(
+      () =>
+        useTariffWorkbench({
+          rules: rulesSync(),
+          source: `${source}\nlet broken = nope\n`,
+          kind: "tariff",
+          context: null,
+          tablesStamp: "",
+        }),
+      { wrapper },
+    );
+    expect(result.current.coverage).toBeNull();
   });
 });

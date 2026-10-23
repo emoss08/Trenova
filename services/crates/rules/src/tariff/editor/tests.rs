@@ -3,12 +3,16 @@
 //!
 //! A corpus file holds `{"cases": [{"name", "source": [lines], "context"?, "input"?,
 //! "expect"}]}`. The source marks the cursor with `|` (removed before the request; inlays
-//! cases may leave it out); `context` replaces keys of the shared context ([`context`]);
-//! `input` adds fields to the request (`newName`, `values`, `range`). `expect` is checked
+//! cases may leave it out; an actions case marks its selection with two, or a cursor with
+//! one); `context` replaces keys of the shared context ([`context`]); `input` adds fields to
+//! the request (`newName`, `values`, `range`, `includeDeclaration`). `expect` is checked
 //! against the response the way the checker corpus checks: objects by the keys written, arrays
 //! item by item. Before comparing, every `{from, to}` range in the response gains its `text`
-//! (from the module it is in), and every inlay hint gains `line`: its line with the label
-//! written in at its offset as `⟨label⟩`. A completion case's `expect` may instead say
+//! (from the module it is in: a reference or definition target in a library reads that
+//! library's source), every inlay hint gains `line`: its line with the label written in at its
+//! offset as `⟨label⟩`, and every action gains `result`, the source with its edits applied (as
+//! lines), its `select` reading that result. An action whose source checks clean must leave a
+//! result that checks clean, and one whose source is formatted a formatted result. A completion case's `expect` may instead say
 //! `includes` (labels that must be offered), `excludes` (labels that must not), `order` (labels
 //! that must sort in this order), `items` (label to the item's expected fields), `range` (the
 //! replaced text) and `empty`.
@@ -42,6 +46,14 @@ const FILES: &[(&str, &str)] = &[
     (
         "inlays",
         include_str!("../../../testdata/tariff/editor/inlays.json"),
+    ),
+    (
+        "references",
+        include_str!("../../../testdata/tariff/editor/references.json"),
+    ),
+    (
+        "actions",
+        include_str!("../../../testdata/tariff/editor/actions.json"),
     ),
 ];
 
@@ -111,6 +123,17 @@ fn text(value: &Json) -> String {
         Json::String(text) => text.clone(),
         _ => String::new(),
     }
+}
+
+/// The source without its `|` markers, and the UTF-16 offsets of the first two (the second,
+/// for an actions case's selection, as if the first were already removed).
+fn selection(source: &str) -> (String, Option<(u32, u32)>) {
+    let (once, first) = marked(source);
+    let Some(first) = first else {
+        return (once, None);
+    };
+    let (twice, second) = marked(&once);
+    (twice, Some((first, second.unwrap_or(first))))
 }
 
 /// The source without its `|` marker, and the marker's UTF-16 offset.
@@ -189,6 +212,22 @@ fn annotate(op: &str, response: &mut Json, source: &str, context: &Json) {
         }
         return;
     }
+    if op == "references" {
+        for reference in response["references"].as_array_mut().into_iter().flatten() {
+            let module = module_source(reference["module"].as_str(), source, context);
+            texts(reference, &module);
+        }
+        return;
+    }
+    if op == "actions" {
+        for action in response["actions"].as_array_mut().into_iter().flatten() {
+            let result = applied(source, &action["edits"]);
+            texts(&mut action["edits"], source);
+            texts(&mut action["select"], &result);
+            action["result"] = Json::Array(result.split('\n').map(|line| json!(line)).collect());
+        }
+        return;
+    }
     texts(response, source);
     if op == "inlays" {
         let lines: Vec<&str> = source.split('\n').collect();
@@ -210,6 +249,79 @@ fn annotate(op: &str, response: &mut Json, source: &str, context: &Json) {
                 "{}⟨{label}⟩{}",
                 String::from_utf16_lossy(head),
                 String::from_utf16_lossy(tail)
+            ));
+        }
+    }
+}
+
+/// A source with edits (`[{range: {from, to}, insert}]`, UTF-16, none overlapping) applied.
+fn applied(source: &str, edits: &Json) -> String {
+    let mut units: Vec<u16> = source.encode_utf16().collect();
+    let mut edits: Vec<(usize, usize, String)> = edits
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|edit| {
+            (
+                usize::try_from(edit["range"]["from"].as_u64().unwrap_or(0)).unwrap_or(0),
+                usize::try_from(edit["range"]["to"].as_u64().unwrap_or(0)).unwrap_or(0),
+                edit["insert"].as_str().unwrap_or_default().to_owned(),
+            )
+        })
+        .collect();
+    edits.sort_by(|a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)));
+    for (from, to, insert) in edits {
+        let to = to.clamp(from, units.len());
+        let from = from.min(to);
+        units.splice(from..to, insert.encode_utf16());
+    }
+    String::from_utf16_lossy(&units)
+}
+
+/// Whether a file checks clean: `tariff.check` answers `ok: true`.
+fn checks_clean(source: &str, context: &Json) -> bool {
+    let request = json!({"op": "tariff.check", "input": {"source": source, "context": context}});
+    let response: Json =
+        serde_json::from_slice(&dispatch(request.to_string().as_bytes())).unwrap_or(Json::Null);
+    response["ok"]["ok"] == Json::Bool(true)
+}
+
+/// Whether the formatter leaves a source as it is (its final newline aside).
+fn is_formatted(source: &str) -> bool {
+    crate::tariff::syntax::format::format(source)
+        .is_ok_and(|out| out.trim_end() == source.trim_end())
+}
+
+/// Whether an actions case's source offers an action, checks clean and is formatted: the cases
+/// that prove promoted files stay clean.
+fn proves(response: &Json, source: &str, context: &Json) -> bool {
+    response["actions"]
+        .as_array()
+        .is_some_and(|actions| !actions.is_empty())
+        && checks_clean(source, context)
+        && is_formatted(source)
+}
+
+/// The problems with an actions response's edits, for a source that checks clean: a result
+/// that does not, and for a formatted source a result the formatter rewrites (unless a
+/// replacement pushed a line past the formatter's width, which the edits leave to it).
+fn actions_hold(response: &Json, source: &str, context: &Json, problems: &mut Vec<String>) {
+    if !checks_clean(source, context) {
+        return;
+    }
+    let formatted = is_formatted(source);
+    for action in response["actions"].as_array().into_iter().flatten() {
+        let result = applied(source, &action["edits"]);
+        let id = action["id"].as_str().unwrap_or("?");
+        if !checks_clean(&result, context) {
+            problems.push(format!("{id} leaves a file that does not check: {result}"));
+        }
+        let narrow = result
+            .lines()
+            .all(|line| line.chars().count() <= crate::tariff::syntax::format::WIDTH);
+        if formatted && narrow && !is_formatted(&result) {
+            problems.push(format!(
+                "{id} leaves a file the formatter rewrites: {result}"
             ));
         }
     }
@@ -306,9 +418,19 @@ fn completion_holds(response: &Json, expected: &Json, problems: &mut Vec<String>
     }
 }
 
-/// Runs one case; the problems found, with the response, when it fails.
-fn run_case(op: &str, case: &Json) -> Option<String> {
-    let (source, offset) = marked(&text(&case["source"]));
+/// A case's request answered: the annotated response, the source sent and the context.
+///
+/// # Errors
+///
+/// When the request fails.
+fn respond(op: &str, case: &Json) -> Result<(Json, String, Json), String> {
+    let (source, marks) = if op == "actions" {
+        selection(&text(&case["source"]))
+    } else {
+        let (source, offset) = marked(&text(&case["source"]));
+        (source, offset.map(|offset| (offset, offset)))
+    };
+    let offset = marks.map(|(first, _)| first);
     let mut context = context();
     if let (Some(base), Some(Json::Object(overrides))) =
         (context.as_object_mut(), case.get("context"))
@@ -323,6 +445,9 @@ fn run_case(op: &str, case: &Json) -> Option<String> {
     if op == "inlays" {
         let end = source.encode_utf16().count();
         input.insert(String::from("range"), json!({"from": 0, "to": end}));
+    } else if op == "actions" {
+        let (from, to) = marks.unwrap_or((0, 0));
+        input.insert(String::from("range"), json!({"from": from, "to": to}));
     } else {
         input.insert(String::from("offset"), json!(offset.unwrap_or(0)));
     }
@@ -335,11 +460,23 @@ fn run_case(op: &str, case: &Json) -> Option<String> {
     let response: Json =
         serde_json::from_slice(&dispatch(request.to_string().as_bytes())).unwrap_or(Json::Null);
     let Some(mut ok) = response.get("ok").cloned() else {
-        return Some(format!("the request failed: {response}"));
+        return Err(format!("the request failed: {response}"));
     };
     annotate(op, &mut ok, &source, &context);
+    Ok((ok, source, context))
+}
+
+/// Runs one case; the problems found, with the response, when it fails.
+fn run_case(op: &str, case: &Json) -> Option<String> {
+    let (ok, source, context) = match respond(op, case) {
+        Ok(answered) => answered,
+        Err(problem) => return Some(problem),
+    };
     let expected = case.get("expect").unwrap_or(&Json::Null);
     let mut problems = Vec::new();
+    if op == "actions" {
+        actions_hold(&ok, &source, &context, &mut problems);
+    }
     if op == "complete"
         && expected.is_object()
         && !expected.get("items").is_some_and(Json::is_array)
@@ -368,6 +505,26 @@ fn run_case(op: &str, case: &Json) -> Option<String> {
         };
         format!("{}\n  response: {shown}", problems.join("\n  "))
     })
+}
+
+#[test]
+fn promoted_files_check_clean_in_most_cases() {
+    let cases: Json =
+        serde_json::from_str(include_str!("../../../testdata/tariff/editor/actions.json"))
+            .unwrap_or(Json::Null);
+    let proving = cases["cases"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|case| {
+            respond("actions", case)
+                .is_ok_and(|(ok, source, context)| proves(&ok, &source, &context))
+        })
+        .count();
+    assert!(
+        proving >= 25,
+        "only {proving} actions cases start from a clean, formatted file"
+    );
 }
 
 #[test]
@@ -468,6 +625,9 @@ fn every_operation_answers_a_two_thousand_line_tariff_within_a_small_budget() {
         ("definition", at("weight149 > 100 lb", 2)),
         ("rename", at("let miles0 ", 6)),
         ("rename", at("fn helper7(", 5)),
+        ("references", at("let miles0 ", 6)),
+        ("references", at("input rate", 7)),
+        ("actions", at("$0.01/lb * weight149", 2)),
         ("inlays", 0),
     ];
     for (op, offset) in probes {
@@ -480,6 +640,8 @@ fn every_operation_answers_a_two_thousand_line_tariff_within_a_small_budget() {
         );
         let request = json!({"op": format!("tariff.{op}"), "input": if op == "inlays" {
             json!({"source": source, "context": context, "range": {"from": 0, "to": offset + 50_000}})
+        } else if op == "actions" {
+            json!({"source": source, "context": context, "range": {"from": offset, "to": offset}})
         } else {
             json!({"source": source, "context": context, "offset": offset})
         }});
@@ -520,8 +682,25 @@ fn features_at_every_offset(source: &str) {
         let _ = super::definition::definition(&session, offset);
         let _ = super::rename::prepare(&session, offset);
         let _ = super::rename::rename(&session, offset, "renamed");
+        let _ = super::references::references(&session, offset, true);
+        let _ = super::actions::actions(&session, crate::span::Span::new(offset, offset));
+        let _ = super::actions::actions(
+            &session,
+            crate::span::Span::new(offset, offset.saturating_add(5).min(end)),
+        );
     }
     let _ = super::inlays::inlays(&session, crate::span::Span::new(0, end), &values);
+}
+
+/// A tariff with every construct the reference added last: input constraints, choices nested
+/// in a loop and an option, properties with every kind of `vary`, and `chosen` in a test.
+const NEW_SYNTAX: &str = "tariff \"Choices\"\n\n/// Paid per loaded mile.\ninput rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi\ninput flat: Money = $450 where [$400, $450]\ninput service: Service = Standard\n\nenum Service { Standard, Expedited }\n\nbest \"Linehaul\" {\n  option \"Per mile\" {\n    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)\n  }\n  option \"Flat\" {\n    let fee = flat\n    charge \"Flat rate\" = fee\n  }\n}\n\nfor stop in shipment.stops {\n  worst \"Stop {stop.sequence}\" {\n    option \"Fee\" {\n      charge \"Stop fee\" = $5\n    }\n    option \"None\" {\n      fail \"no\"\n    }\n  }\n}\n\nproperty \"heavier never bills less\" {\n  vary shipment.weight in 1 lb..40_000 lb\n  vary input.rate\n  vary s in [Standard, Expedited]\n  assume s == Standard\n  given fuel.price = $3.20/gal\n  expect total nondecreasing in shipment.weight\n  expect total >= $0\n}\n\ntest \"flat wins\" {\n  expect chosen(\"Linehaul\") == \"Flat\"\n}\n";
+
+#[test]
+fn every_feature_answers_at_every_offset_of_the_new_syntax() {
+    features_at_every_offset(NEW_SYNTAX);
+    let half = NEW_SYNTAX.len() / 2;
+    features_at_every_offset(NEW_SYNTAX.get(..half).unwrap_or_default());
 }
 
 #[test]
@@ -555,6 +734,10 @@ fn malformed_requests_are_refused() {
         json!({"op": "tariff.rename", "input": {"source": "x", "offset": 0, "extra": true}}),
         json!({"op": "tariff.signature", "input": {"source": "x", "offset": 0, "kind": "nope"}}),
         json!({"op": "tariff.definition", "input": {"offset": 0}}),
+        json!({"op": "tariff.references", "input": {"source": "x", "offset": 0, "includeDeclaration": "yes"}}),
+        json!({"op": "tariff.references", "input": {"source": "x"}}),
+        json!({"op": "tariff.actions", "input": {"source": "x", "offset": 0}}),
+        json!({"op": "tariff.actions", "input": {"source": "x", "range": {"from": 0, "to": 1}, "newName": "a"}}),
     ] {
         let response: Json =
             serde_json::from_slice(&dispatch(request.to_string().as_bytes())).unwrap_or(Json::Null);
@@ -583,19 +766,22 @@ const OPS: &[&str] = &[
     "definition",
     "rename",
     "inlays",
+    "references",
+    "actions",
 ];
 
 proptest::proptest! {
     #![proptest_config(proptest::prelude::ProptestConfig::with_cases(128))]
 
     #[test]
-    fn no_operation_panics_on_arbitrary_text(source in "\\PC{0,120}", offset in 0u32..140, op in 0usize..6) {
+    fn no_operation_panics_on_arbitrary_text(source in "\\PC{0,120}", offset in 0u32..140, op in 0usize..8) {
         let name = OPS.get(op).copied().unwrap_or("complete");
         let input = json!({"source": source, "offset": offset, "newName": "x", "range": {"from": offset, "to": offset + 40}, "values": [{"kind": "bind", "name": "a", "display": "1", "range": {"from": 0, "to": 3}}]});
         let mut input = input;
         if let Some(object) = input.as_object_mut() {
             match name {
                 "inlays" => { object.remove("offset"); object.remove("newName"); }
+                "actions" => { object.remove("offset"); object.remove("newName"); object.remove("values"); }
                 "rename" => { object.remove("range"); object.remove("values"); }
                 "hover" => { object.remove("range"); object.remove("newName"); }
                 _ => { object.remove("range"); object.remove("newName"); object.remove("values"); }
@@ -621,6 +807,8 @@ proptest::proptest! {
             let _ = super::signature::signature(&session, at);
             let _ = super::definition::definition(&session, at);
             let _ = super::rename::rename(&session, at, "renamed");
+            let _ = super::references::references(&session, at, true);
+            let _ = super::actions::actions(&session, crate::span::Span::new(at, at));
         }
     }
 }

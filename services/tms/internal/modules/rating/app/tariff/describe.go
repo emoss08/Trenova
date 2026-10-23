@@ -93,19 +93,54 @@ func excerpt(source string, at *rules.TariffRange) string {
 	return text[:cut] + "…"
 }
 
+type MonotoneSide struct {
+	At     string `json:"at"`
+	Result string `json:"result"`
+}
+
+type MonotoneFailure struct {
+	Target     string       `json:"target"`
+	Expression string       `json:"expression"`
+	Direction  string       `json:"direction"`
+	Before     MonotoneSide `json:"before"`
+	After      MonotoneSide `json:"after"`
+}
+
+type VariedValue struct {
+	Target string `json:"target"`
+	Value  string `json:"value"`
+}
+
+type Counterexample struct {
+	Values   []VariedValue    `json:"values"`
+	Monotone *MonotoneFailure `json:"monotone,omitempty"`
+	Refusal  string           `json:"refusal,omitempty"`
+	Test     string           `json:"test"`
+}
+
 type TestOutcome struct {
-	Name     string          `json:"name"`
-	Status   string          `json:"status"`
-	At       *SourcePosition `json:"at,omitempty"`
-	Failures []string        `json:"failures,omitempty"`
-	Error    string          `json:"error,omitempty"`
+	Name           string          `json:"name"`
+	Kind           string          `json:"kind"`
+	Status         string          `json:"status"`
+	At             *SourcePosition `json:"at,omitempty"`
+	Cases          int             `json:"cases,omitempty"`
+	Skipped        int             `json:"skipped,omitempty"`
+	Failures       []string        `json:"failures,omitempty"`
+	Error          string          `json:"error,omitempty"`
+	Counterexample *Counterexample `json:"counterexample,omitempty"`
+}
+
+type CoverageReport struct {
+	*CoverageSummary
+	Summary string `json:"summary"`
 }
 
 type TestSummary struct {
-	Total  int           `json:"total"`
-	Passed int           `json:"passed"`
-	Error  string        `json:"error,omitempty"`
-	Tests  []TestOutcome `json:"tests"`
+	Total    int             `json:"total"`
+	Passed   int             `json:"passed"`
+	Error    string          `json:"error,omitempty"`
+	Tests    []TestOutcome   `json:"tests"`
+	Coverage *CoverageReport `json:"coverage,omitempty"`
 }
 
 func SummarizeTests(locale i18n.Locale, source string, run *rules.TariffTestRun) TestSummary {
@@ -119,26 +154,91 @@ func SummarizeTests(locale i18n.Locale, source string, run *rules.TariffTestRun)
 	for i := range run.Tests {
 		test := &run.Tests[i]
 		summary.Total++
-		outcome := TestOutcome{
-			Name:   test.Name,
-			Status: string(test.Status),
-			At:     positionPtr(source, &test.Range),
-		}
 		if test.Status == rules.TariffTestPassed {
 			summary.Passed++
 		}
-		if test.Error != nil {
-			outcome.Error = test.Error.Message.Localize(locale)
-		}
-		for j := range test.Failures {
-			if j == maxDescribedFailures {
-				break
-			}
-			outcome.Failures = append(outcome.Failures, failureText(locale, &test.Failures[j]))
-		}
-		summary.Tests = append(summary.Tests, outcome)
+		summary.Tests = append(summary.Tests, testOutcome(locale, source, test))
 	}
+	summary.Coverage = coverageReport(locale, source, run.Coverage)
 	return summary
+}
+
+func testOutcome(locale i18n.Locale, source string, test *rules.TariffTestResult) TestOutcome {
+	outcome := TestOutcome{
+		Name:   test.Name,
+		Kind:   string(test.Kind),
+		Status: string(test.Status),
+		At:     positionPtr(source, &test.Range),
+	}
+	if test.IsProperty() {
+		outcome.Cases = test.Cases
+		outcome.Skipped = test.Skipped
+	}
+	if test.Error != nil {
+		outcome.Error = test.Error.Message.Localize(locale)
+	}
+	for j := range test.Failures {
+		if j == maxDescribedFailures {
+			break
+		}
+		outcome.Failures = append(outcome.Failures, failureText(locale, &test.Failures[j]))
+	}
+	if test.Counterexample != nil {
+		outcome.Counterexample = counterexampleOf(locale, test.Counterexample)
+	}
+	return outcome
+}
+
+func counterexampleOf(locale i18n.Locale, example *rules.TariffCounterexample) *Counterexample {
+	out := &Counterexample{
+		Values: make([]VariedValue, 0, len(example.Values)),
+		Test:   example.Test,
+	}
+	for i := range example.Values {
+		out.Values = append(out.Values, VariedValue{
+			Target: example.Values[i].Target,
+			Value:  example.Values[i].Display,
+		})
+	}
+	if monotone := example.Monotone; monotone != nil {
+		out.Monotone = &MonotoneFailure{
+			Target:     monotone.Target,
+			Expression: monotone.Expression,
+			Direction:  string(monotone.Direction),
+			Before: MonotoneSide{
+				At:     monotone.Before.At.Display,
+				Result: monotone.Before.Result.Display,
+			},
+			After: MonotoneSide{
+				At:     monotone.After.At.Display,
+				Result: monotone.After.Result.Display,
+			},
+		}
+	}
+	if example.Refusal != nil {
+		out.Refusal = example.Refusal.Localize(locale)
+	}
+	return out
+}
+
+func coverageReport(
+	locale i18n.Locale,
+	source string,
+	coverage *rules.TariffCoverage,
+) *CoverageReport {
+	summary := SummarizeCoverage(source, coverage)
+	if summary == nil {
+		return nil
+	}
+	return &CoverageReport{
+		CoverageSummary: summary,
+		Summary: i18n.Translate(
+			locale,
+			"Tests reach {0} of {1} regions",
+			summary.Reached,
+			summary.Total,
+		),
+	}
 }
 
 func failureText(locale i18n.Locale, failure *rules.TariffTestFailure) string {

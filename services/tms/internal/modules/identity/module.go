@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/onboardingservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/app/permissionchange"
@@ -144,6 +145,7 @@ func SharedOptions() fx.Option {
 			func(s *readscopeservice.Service) permissionports.ScopePolicy { return s },
 			func(s *readscopeservice.Service) permissionports.ReadScopes { return s },
 			roleservice.New,
+			pageaccessservice.New,
 			permissiondomain.NewRegistry,
 			permissiondomain.NewRouteRegistry,
 			roleassignmentservice.New,

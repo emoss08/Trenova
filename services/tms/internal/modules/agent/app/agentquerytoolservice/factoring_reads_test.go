@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -247,4 +248,28 @@ func TestFactoringGetReadiness_EvaluatesTheInvoiceItNames(t *testing.T) {
 	record, ok := data.(map[string]any)
 	require.True(t, ok)
 	assert.Equal(t, factoringQueuePath, record[keyFactoringPath])
+}
+
+func TestFactoringGets_TypeTheirKeyByTheRecordItBelongsTo(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		param    string
+		recordOf string
+	}{
+		"factoring_get_readiness":       {param: paramFactoringInvoice, recordOf: "invoice"},
+		"factoring_get_reserve_balance": {param: paramFactoringCompany, recordOf: "factoring_company"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			schema := factoringTool(t, name, &keyedReader{}).ParamSchema()
+			properties, _ := schema[toolschema.KeyProperties].(map[string]any)
+			property, _ := properties[tc.param].(map[string]any)
+			require.NotNil(t, property, tc.param)
+			assert.Equal(t, tc.recordOf, property[toolschema.KeyRecordOf])
+			assert.Equal(t, []string{tc.param}, schema[toolschema.KeyRequired])
+		})
+	}
 }

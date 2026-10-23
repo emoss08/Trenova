@@ -1,0 +1,25 @@
+query DeskFiscalPeriods($input: DataTableConnectionInput!) {
+  fiscalPeriods(input: $input) {
+    edges {
+      node {
+        id
+        fiscalYearId
+        name
+        periodNumber
+        periodType
+        status
+        startDate
+        endDate
+        isAdjusting
+        lockedAt
+        closedAt
+        reopenedAt
+        reopenReason
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

@@ -1,6 +1,7 @@
 package formulatemplateservice
 
 import (
+	"github.com/emoss08/trenova/shared/i18n"
 	"context"
 	"testing"
 
@@ -274,13 +275,13 @@ func TestSubmissionAgeCheck(t *testing.T) {
 		return template
 	}
 
-	assert.Equal(t, ReadinessPass, submissionAgeCheck(inReview(&fresh), now).Status)
-	assert.Equal(t, ReadinessWarn, submissionAgeCheck(inReview(&aging), now).Status)
-	assert.Equal(t, ReadinessFail, submissionAgeCheck(inReview(&stale), now).Status)
+	assert.Equal(t, ReadinessPass, submissionAgeCheck(i18n.Default, inReview(&fresh), now).Status)
+	assert.Equal(t, ReadinessWarn, submissionAgeCheck(i18n.Default, inReview(&aging), now).Status)
+	assert.Equal(t, ReadinessFail, submissionAgeCheck(i18n.Default, inReview(&stale), now).Status)
 
 	draft := newTestTemplate()
 	draft.Status = formulatemplate.StatusDraft
-	assert.Equal(t, ReadinessPass, submissionAgeCheck(draft, now).Status,
+	assert.Equal(t, ReadinessPass, submissionAgeCheck(i18n.Default, draft, now).Status,
 		"age only matters while a decision is pending")
 }
 

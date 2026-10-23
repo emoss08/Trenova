@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatCurrency, formatPercent, formatPerMile } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon } from "@trenova/shared/components/icons";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useState, type ReactNode } from "react";
 
 const sourceBadges: Record<string, { label: string; className: string }> = {
@@ -41,7 +42,13 @@ export function ProfitabilityBreakdownPopover({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger render={<button>{trigger}</button>} />
       <PopoverContent align={align} className="w-80 space-y-3">
-        {isLoading || !data ? <BreakdownSkeleton /> : <BreakdownContent data={data} />}
+        {isLoading || data === undefined ? (
+          <BreakdownSkeleton />
+        ) : data === null ? (
+          <WithheldValue group="Margins" />
+        ) : (
+          <BreakdownContent data={data} />
+        )}
       </PopoverContent>
     </Popover>
   );
@@ -59,7 +66,7 @@ function BreakdownSkeleton() {
   );
 }
 
-type ProfitabilityData = ShipmentProfitabilityQuery["shipmentProfitability"];
+type ProfitabilityData = NonNullable<ShipmentProfitabilityQuery["shipmentProfitability"]>;
 
 function BreakdownContent({ data }: { data: ProfitabilityData }) {
   const t = useT();

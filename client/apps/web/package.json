@@ -22,14 +22,18 @@
     "test:e2e": "playwright test -c e2e/playwright.config.ts",
     "doctor": "npx react-doctor@latest",
     "guide:generate": "node scripts/product-guide/generate.mjs",
-    "guide:check": "node scripts/product-guide/generate.mjs --check"
+    "guide:check": "node scripts/product-guide/generate.mjs --check",
+    "access:generate": "node scripts/page-access/generate.mjs",
+    "access:check": "node scripts/page-access/generate.mjs --check"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
     "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/commands": "^6.11.0",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/language": "^6.13.1",
     "@codemirror/lint": "^6.9.7",
+    "@codemirror/search": "^6.7.1",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "6.43.6",
     "@date-fns/utc": "^2.1.1",
@@ -49,6 +53,7 @@
     "@nivo/colors": "^0.99.0",
     "@number-flow/react": "^0.6.2",
     "@radix-ui/react-collapsible": "^1.2.1",
+    "@replit/codemirror-vim": "^6.4.0",
     "@shadcn/react": "^0.3.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/query-async-storage-persister": "5.102.8",

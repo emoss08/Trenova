@@ -18,6 +18,10 @@ type PersonAccess struct {
 	engine permissionports.PermissionEngine
 	actor  *permissionports.RequestActor
 	check  func(ctx context.Context, kind permission.Resource) (bool, error)
+	detail func(
+		ctx context.Context,
+		kind permission.Resource,
+	) (*permissionports.ResourcePermissionDetail, error)
 
 	mu       sync.Mutex
 	reads    map[permission.Resource]bool
@@ -86,9 +90,7 @@ func (a *PersonAccess) Ceiling(
 		return ceiling, true
 	}
 
-	ceiling = fieldsensitivity.PersonCeiling(
-		ctx, a.engine, a.actor.UserID, a.actor.OrganizationID, kind,
-	)
+	ceiling = a.personCeiling(ctx, kind)
 	if ceiling == "" {
 		ceiling = permission.SensitivityInternal
 	}
@@ -98,6 +100,34 @@ func (a *PersonAccess) Ceiling(
 	a.mu.Unlock()
 
 	return ceiling, true
+}
+
+// WithDetail answers the person's ceilings from the surface's own read of
+// their permission detail rather than asking the engine for each kind.
+func (a *PersonAccess) WithDetail(
+	detail func(
+		ctx context.Context,
+		kind permission.Resource,
+	) (*permissionports.ResourcePermissionDetail, error),
+) *PersonAccess {
+	a.detail = detail
+	return a
+}
+
+func (a *PersonAccess) personCeiling(
+	ctx context.Context,
+	kind permission.Resource,
+) permission.FieldSensitivity {
+	if a.detail == nil {
+		return fieldsensitivity.PersonCeiling(
+			ctx, a.engine, a.actor.UserID, a.actor.OrganizationID, kind,
+		)
+	}
+	detail, err := a.detail(ctx, kind)
+	if err != nil {
+		return permission.SensitivityInternal
+	}
+	return fieldsensitivity.CeilingOf(detail)
 }
 
 // AgentAccess is an agent read's access: the agent's ceiling on every record
@@ -125,4 +155,46 @@ func (a AgentAccess) Ceiling(
 		return permission.SensitivityInternal, true
 	}
 	return a.Ceilings.For(ctx, kind), true
+}
+
+// RoleAccess is what a role would be shown, from its grants alone: what a
+// person holding only that role (and the roles it inherits) reads, with the
+// same ceiling on what they see of a linked record through its view. It is
+// how an administrator previews a screen as a role, and it never reads a
+// record.
+type RoleAccess struct {
+	registry *permission.Registry
+	grants   permission.RoleGrants
+}
+
+func NewRoleAccess(registry *permission.Registry, grants permission.RoleGrants) RoleAccess {
+	if registry == nil {
+		registry = fieldsensitivity.DefaultRegistry()
+	}
+	return RoleAccess{registry: registry, grants: grants}
+}
+
+func (a RoleAccess) Reads(_ context.Context, kind permission.Resource) bool {
+	return a.grants.Allows(a.registry, kind.String(), permission.OpRead)
+}
+
+// Allows reports whether the role may perform an operation on a resource.
+func (a RoleAccess) Allows(resource string, op permission.Operation) bool {
+	return a.grants.Allows(a.registry, resource, op)
+}
+
+func (a RoleAccess) Ceiling(
+	ctx context.Context,
+	kind permission.Resource,
+	reach Reach,
+) (permission.FieldSensitivity, bool) {
+	if reach != Nested || a.Reads(ctx, kind) {
+		return "", false
+	}
+	ceiling := fieldsensitivity.RoleCeiling(a.grants.MaxSensitivity)
+	if ceiling == "" {
+		ceiling = permission.SensitivityInternal
+	}
+
+	return ceiling, true
 }

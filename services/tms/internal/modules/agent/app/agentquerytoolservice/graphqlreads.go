@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -27,7 +28,10 @@ type graphQLRead struct {
 	Entity    func() domaintypes.PostgresSearchable
 	// Unpaged marks a list whose root field returns every record at once,
 	// keyed by its own arguments (a worker's checklists by workerId).
-	Unpaged   bool
+	Unpaged bool
+	// Items marks an unpaged list whose root holds its records under items
+	// (a carrier invoice list read by limit and offset).
+	Items     bool
 	Variables []graphQLVariable
 	Fields    []graphQLField
 	// Alongside are the reads a tool makes beside its own, for records its
@@ -70,6 +74,9 @@ type graphQLAlongside struct {
 	// Variables are a read made instead's variables, described by the root
 	// field arguments they are sent as.
 	Variables []graphQLVariable
+	// Set are the optional variables of a keyed read that the list's call
+	// does not declare, which the spec sets as the screen does.
+	Set []string
 }
 
 type graphQLField struct {
@@ -109,14 +116,16 @@ const (
 
 // unfilteredFields are selected by operations but are never what a person
 // narrows a list by: the tenant, the row's version, its id, which a get reads,
-// and the Google Places id an address was geocoded to, which nothing a model
-// reads supplies.
+// the Google Places id an address was geocoded to, which nothing a model
+// reads supplies, and the words of a cancelled record's reason, which the
+// conventions keep for the reason a cancel is given.
 var unfilteredFields = map[string]struct{}{
 	recordIDField:        {},
 	tenantOrganizationID: {},
 	tenantBusinessUnitID: {},
 	rowVersion:           {},
 	geocodedPlaceID:      {},
+	cancelReason:         {},
 }
 
 const (
@@ -124,6 +133,7 @@ const (
 	tenantBusinessUnitID = "businessUnitId"
 	rowVersion           = "version"
 	geocodedPlaceID      = "placeId"
+	cancelReason         = "cancelReason"
 	fieldNotes           = "notes"
 	fieldCancelReason    = "cancelReason"
 	paramReason          = "reason"
@@ -152,6 +162,21 @@ const (
 	// paramReferences is a list of ids a root argument takes (the documents
 	// whose sync state is read).
 	paramReferences
+	// paramInstantFrom and paramInstantTo bound an instant people name to
+	// the minute (when an EDI message was created), where a day is too
+	// coarse.
+	paramInstantFrom
+	paramInstantTo
+	// paramDayText is a day sent as the text a String argument takes (a fuel
+	// index price's day), not as a timestamp.
+	paramDayText
+)
+
+const (
+	// dayTextFormat is what the description of a String argument that takes
+	// a day says it is written as, and dayTextLayout how it is parsed.
+	dayTextFormat = "YYYY-MM-DD"
+	dayTextLayout = "2006-01-02"
 )
 
 // graphQLParam is one typed parameter of a tool that reads through GraphQL,
@@ -370,8 +395,10 @@ func inputValue(param *graphQLParam, args map[string]any, raw any, clk clock) (a
 			return nil, err
 		}
 		return endOfDay(clk, day), nil
+	case paramDayText:
+		return readDayText(args, param.Name)
 	case paramIn, paramEquals, paramContains, paramAtLeast, paramAtMost, paramPresent,
-		paramReference, paramReferences:
+		paramReference, paramReferences, paramInstantFrom, paramInstantTo:
 	}
 
 	return raw, nil
@@ -396,12 +423,36 @@ func (r *graphQLRead) typedParams() []graphQLParam {
 		if !config.FilterableFields[field.Name] {
 			continue
 		}
-		params = append(params, paramsFor(field)...)
+		derived := paramsFor(field)
+		if field.Type == graphQLTypeString && config.EnumMap[field.Name] {
+			derived = exactParams(derived)
+		}
+		params = append(params, derived...)
 	}
 	params = append(params, r.nestedParams(config.FilterableFields)...)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 
 	return params
+}
+
+// exactParams turns a text parameter into an equality one, for a String field
+// whose column is a database enum (a journal entry's status): the database
+// cannot match part of an enum value, and a model names the whole value.
+func exactParams(params []graphQLParam) []graphQLParam {
+	out := slices.Clone(params)
+	for idx := range out {
+		if out[idx].Kind != paramContains {
+			continue
+		}
+		words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(out[idx].Field))
+		out[idx].Kind = paramEquals
+		out[idx].Schema = map[string]any{
+			toolschema.KeyType:        toolschema.TypeString,
+			toolschema.KeyDescription: "Only records whose " + words + " is exactly this.",
+		}
+	}
+
+	return out
 }
 
 // nestedParams are the parameters of the filters the configuration allows
@@ -618,6 +669,52 @@ func scalarParams(
 	return nil
 }
 
+// instantParams are a list's parameters with each Timestamp the spec names as
+// an instant bounded to the minute rather than the day: createdAtFrom/To
+// take a date and time with its offset.
+func instantParams(tool string, params []graphQLParam, instants []string) ([]graphQLParam, error) {
+	for _, field := range instants {
+		matched := false
+		for idx := range params {
+			param := &params[idx]
+			if param.Field != field || param.OnInput ||
+				(param.Kind != paramDayFrom && param.Kind != paramDayTo) {
+				continue
+			}
+			matched = true
+			words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(field))
+			if param.Kind == paramDayFrom {
+				param.Kind = paramInstantFrom
+				param.Schema = agenttoolschema.DateTime("Only records whose " + words +
+					" is at or after this instant.")
+				continue
+			}
+			param.Kind = paramInstantTo
+			param.Schema = agenttoolschema.DateTime("Only records whose " + words +
+				" is at or before this instant.")
+		}
+		if !matched {
+			return nil, fmt.Errorf("%s names %q an instant, which is not one of its dated "+
+				"fields", tool, field)
+		}
+	}
+
+	return params, nil
+}
+
+// readInstant is an instant parameter as Unix seconds, refusing anything
+// but a date and time with its offset.
+func readInstant(args map[string]any, name string) (int64, error) {
+	raw := strings.TrimSpace(optionalString(args, name))
+	at, err := time.Parse(time.RFC3339, raw)
+	if err != nil {
+		return 0, fmt.Errorf("parameter %q must be a date and time with its offset, such as "+
+			"2026-03-14T09:30:00-05:00", name)
+	}
+
+	return at.Unix(), nil
+}
+
 // presenceParam is the has<Thing> parameter a nullable reference becomes, so
 // a call can ask for the records that have one, or lack one, without naming
 // which.
@@ -714,6 +811,15 @@ func compileFilter(
 			return nil, false, dayErr
 		}
 		return compare(dbtype.OpLessThanOrEqual, endOfDay(clk, day)), true, nil
+	case paramInstantFrom, paramInstantTo:
+		at, atErr := readInstant(args, param.Name)
+		if atErr != nil {
+			return nil, false, atErr
+		}
+		if param.Kind == paramInstantFrom {
+			return compare(dbtype.OpGreaterThanOrEqual, at), true, nil
+		}
+		return compare(dbtype.OpLessThanOrEqual, at), true, nil
 	case paramAtLeast:
 		return compare(dbtype.OpGreaterThanOrEqual, args[param.Name]), true, nil
 	case paramAtMost:
@@ -727,7 +833,19 @@ func compileFilter(
 			return compare(dbtype.OpIsNotNull, nil), true, nil
 		}
 		return compare(dbtype.OpIsNull, nil), true, nil
+	case paramDayText:
 	}
 
 	return nil, false, fmt.Errorf("parameter %q has no filter", param.Name)
+}
+
+// readDayText is a day a String argument takes, checked as a day and sent as
+// the text the argument's description names.
+func readDayText(args map[string]any, name string) (string, error) {
+	raw := strings.TrimSpace(optionalString(args, name))
+	if _, err := time.Parse(dayTextLayout, raw); err != nil {
+		return "", fmt.Errorf("parameter %q must be a date as %s", name, dayTextFormat)
+	}
+
+	return raw, nil
 }

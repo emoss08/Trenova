@@ -86,6 +86,15 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOAny2interface),
 			},
+			{
+				Name:     "constraint",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.FormulaInputDeclaration)
+					return obj.Constraint, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAny2interface),
+			},
 		}},
 		{Object: "FormulaLibraryImport", Fields: []*gqlexec.Field{
 			{

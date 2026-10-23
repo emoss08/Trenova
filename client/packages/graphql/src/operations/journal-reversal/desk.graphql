@@ -1,0 +1,25 @@
+query DeskJournalReversals($input: DataTableConnectionInput!) {
+  journalReversals(input: $input) {
+    edges {
+      node {
+        id
+        status
+        originalJournalEntryId
+        reversalJournalEntryId
+        requestedAccountingDate
+        resolvedFiscalPeriodId
+        reasonCode
+        reasonText
+        approvedAt
+        postedAt
+        rejectionReason
+        cancelReason
+        createdAt
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

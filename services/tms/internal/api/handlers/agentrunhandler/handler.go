@@ -124,6 +124,7 @@ func runRequest(c *gin.Context) (agentports.GetAgentRunByIDRequest, error) {
 			OrgID: authCtx.OrganizationID,
 			BuID:  authCtx.BusinessUnitID,
 		},
+		Reader: agentports.PersonRunRead(authCtx.UserID),
 	}, nil
 }
 

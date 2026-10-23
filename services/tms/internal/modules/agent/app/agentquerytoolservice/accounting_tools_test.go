@@ -6,14 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -222,106 +217,6 @@ func TestListCollectionsWorklist_NarrowsToASeverity(t *testing.T) {
 	assert.Equal(t, "Critical", rows[0].Severity)
 	assert.Equal(t, maxAccountingRows, fake.worklistReq.Limit,
 		"a severity is filtered over the whole worklist, not the first page of it")
-}
-
-type fakeJournalEntries struct {
-	entries  []*journalentry.JournalEntry
-	captured *journalentryports.ListJournalEntriesRequest
-}
-
-func (f *fakeJournalEntries) List(
-	_ context.Context,
-	req *journalentryports.ListJournalEntriesRequest,
-) (*pagination.ListResult[*journalentry.JournalEntry], error) {
-	f.captured = req
-
-	return &pagination.ListResult[*journalentry.JournalEntry]{Items: f.entries}, nil
-}
-
-func (f *fakeJournalEntries) GetByID(
-	_ context.Context,
-	req journalentryports.GetJournalEntryByIDRequest,
-) (*journalentry.JournalEntry, error) {
-	for _, entry := range f.entries {
-		if entry.ID == req.ID {
-			return entry, nil
-		}
-	}
-
-	return nil, errortypes.NewNotFoundError("Journal entry not found")
-}
-
-type fakeGLAccounts struct {
-	accounts []*glaccount.GLAccount
-}
-
-func (f *fakeGLAccounts) GetByIDs(
-	context.Context,
-	glaccountports.GetGLAccountsByIDsRequest,
-) ([]*glaccount.GLAccount, error) {
-	return f.accounts, nil
-}
-
-func TestListJournalEntries_PassesTheNarrowingToTheRepository(t *testing.T) {
-	t.Parallel()
-
-	fake := &fakeJournalEntries{}
-	tool := &listJournalEntriesTool{entries: fake, access: newFieldAccess(&fakePermissions{})}
-	period := pulid.MustNew("fp_")
-
-	_, err := tool.Query(t.Context(), agentParams(map[string]any{
-		"status":         "Posted",
-		"fiscalPeriodId": period.String(),
-		"fromDate":       "2026-03-01",
-		"toDate":         "2026-03-31",
-	}, ""))
-	require.NoError(t, err)
-
-	require.NotNil(t, fake.captured)
-	assert.Equal(t, "Posted", fake.captured.Status)
-	assert.Equal(t, period, fake.captured.FiscalPeriodID)
-	assert.Positive(t, fake.captured.AccountingDateStart)
-	assert.Greater(t, fake.captured.AccountingDateEnd, fake.captured.AccountingDateStart)
-
-	_, err = tool.Query(t.Context(), agentParams(map[string]any{"status": "Booked"}, ""))
-	require.Error(t, err)
-}
-
-func TestGetJournalEntry_NamesAccountsAndWithholdsAmounts(t *testing.T) {
-	t.Parallel()
-
-	account := &glaccount.GLAccount{
-		ID:          pulid.MustNew("gla_"),
-		AccountCode: "5100",
-		Name:        "Fuel expense",
-	}
-	entry := &journalentry.JournalEntry{
-		ID:             pulid.MustNew("je_"),
-		EntryNumber:    "JE-7",
-		TotalDebit:     5000,
-		ReversalReason: "Posted to the wrong period",
-		Lines: []*journalentry.JournalEntryLine{
-			{LineNumber: 1, GLAccountID: account.ID, DebitAmount: 5000},
-		},
-	}
-	tool := &getJournalEntryTool{
-		entries:  &fakeJournalEntries{entries: []*journalentry.JournalEntry{entry}},
-		accounts: &fakeGLAccounts{accounts: []*glaccount.GLAccount{account}},
-		access:   newFieldAccess(&fakePermissions{}),
-	}
-
-	result, err := tool.Query(t.Context(),
-		agentParams(map[string]any{"journalEntryId": entry.ID.String()}, ""))
-	require.NoError(t, err)
-
-	view := result.(journalEntryView)
-	require.Len(t, view.Lines, 1)
-	assert.Equal(t, "5100", view.Lines[0].AccountCode)
-	assert.Equal(t, "Fuel expense", view.Lines[0].AccountName)
-	assert.Empty(t, view.Lines[0].Debit)
-	assert.Empty(t, view.TotalDebit)
-	assert.Empty(t, view.ReversalReason)
-	assert.Subset(t, view.Withheld, []string{"totalDebit", "lines.debit", "reversalReason"})
 }
 
 type fakeCloseBlockers struct {

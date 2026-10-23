@@ -1,6 +1,7 @@
 //! Statements and blocks: bindings and assignment, charges and notes, `if`, `match` and
 //! `for`, refusals, `return`, `break` and `continue`, total clauses, and a test's `given` and
-//! `expect`.
+//! `expect`. A property's `vary`, `assume` and monotone `expect` are checked in
+//! [`super::property`].
 
 use super::HintKind;
 use super::checker::{Body, Checker, Global, Want};
@@ -108,6 +109,9 @@ impl Checker<'_> {
                 }
             }
             StmtKind::Total(clause) => self.total(stmt, clause),
+            StmtKind::Vary { target, values } => self.vary(target, values.as_ref()),
+            StmtKind::Assume(condition) => self.assume(condition),
+            StmtKind::Choose(choose) => self.choose(stmt, choose),
             StmtKind::Given { target, value } => self.given(stmt, target, value),
             StmtKind::Expect(expect) => {
                 self.expected_yet = true;
@@ -117,6 +121,7 @@ impl Checker<'_> {
                     }
                     Expect::Fails(Some(text)) => self.text_parts(text),
                     Expect::Fails(None) => {}
+                    Expect::Monotone { value, target, .. } => self.monotone(value, target),
                 }
             }
             StmtKind::Expr(value) => {
@@ -238,6 +243,7 @@ impl Checker<'_> {
             self.expr(value, None);
             return;
         }
+        self.assign_in_choice(target, id);
         let want = Want::Annotation {
             name: target.text.clone(),
         };
@@ -285,7 +291,7 @@ impl Checker<'_> {
 
     /// Refuses a billing statement (a charge or note) outside a tariff's top level and its
     /// blocks.
-    fn billing(&mut self, span: Span, what: Message) -> bool {
+    pub(super) fn billing(&mut self, span: Span, what: Message) -> bool {
         let reason = match (&self.body, self.kind) {
             (Body::Function { .. }, _) => Some(Message::new(message!(
                 "a function computes values; only a tariff bills them"
@@ -541,6 +547,7 @@ impl Checker<'_> {
             self.expr(value, None);
             return;
         }
+        self.property_given(target, value);
         if self.expected_yet {
             self.report(Diagnostic::error(
                 "given-order",
@@ -561,7 +568,7 @@ impl Checker<'_> {
     }
 
     /// The type of what a `given` sets: an input, or a field of a record root.
-    fn given_target(&mut self, target: &[Name]) -> Option<Type> {
+    pub(super) fn given_target(&mut self, target: &[Name]) -> Option<Type> {
         let (head, rest) = target.split_first()?;
         if head.text == "input" {
             let [name] = rest else {

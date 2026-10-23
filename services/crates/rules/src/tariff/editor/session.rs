@@ -201,6 +201,19 @@ impl<'c> Session<'c> {
         (span.end >= offset && span.start < span.end).then_some((span, *id))
     }
 
+    /// The symbol the checker recorded a reference to at exactly `span` of the root file.
+    #[must_use]
+    pub fn reference_at(&self, span: Span) -> Option<SymbolId> {
+        let from = self.references.partition_point(|reference| {
+            (reference.span.start, reference.span.end) < (span.start, span.end)
+        });
+        self.tick(1);
+        self.references
+            .get(from)
+            .filter(|reference| reference.span == span)
+            .map(|reference| reference.symbol)
+    }
+
     /// Every reference to a symbol in the root file, in source order.
     pub fn references_to(&self, symbol: SymbolId) -> impl Iterator<Item = &Reference> {
         self.tick(self.references.len());

@@ -99,7 +99,19 @@ type graphQLListSpec struct {
 	instead []alongsideSpec
 	// names are the names the tool takes derived parameters by, keyed by
 	// the derived name (integrationType is system).
-	names    map[string]string
+	names map[string]string
+	// instants are the Timestamp fields a call bounds to the minute rather
+	// than the day (when an EDI message was created).
+	instants []string
+	// unoffered are the record's fields no one narrows the list by (the
+	// template an EDI message was rendered from, the path it was dropped
+	// at), left out of the parameters so the ones people use stay readable.
+	unoffered []string
+	// matches are the row fields, by dotted path, an unpaged list whose root
+	// takes no search argument matches a free-text query against in the rows
+	// it read (program.code), as its repository tool did; queryNote then
+	// describes that query.
+	matches  []string
 	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
@@ -192,7 +204,13 @@ func newGraphQLListTool(
 		return nil, fmt.Errorf("%s: %s takes no table input and no page of its own",
 			spec.name, read.Operation)
 	}
-	params := read.typedParams()
+	params, err := offered(spec.name, read.typedParams(), spec.unoffered)
+	if err != nil {
+		return nil, err
+	}
+	if params, err = instantParams(spec.name, params, spec.instants); err != nil {
+		return nil, err
+	}
 	if tabled {
 		params = withInputParams(params, inputParams(inputType))
 	}
@@ -200,7 +218,7 @@ func newGraphQLListTool(
 	if err != nil {
 		return nil, err
 	}
-	params = append(params, args...)
+	params = withRootArgs(params, args)
 	slices.SortFunc(params, func(a, b graphQLParam) int { return strings.Compare(a.Name, b.Name) })
 	instead, err := insteadReads(spec, &read)
 	if err != nil {
@@ -230,14 +248,14 @@ func newGraphQLListTool(
 		return nil, err
 	}
 
-	return &graphQLListTool{
+	tool := &graphQLListTool{
 		spec:     *spec,
 		read:     read,
 		input:    input,
 		search:   search,
 		params:   params,
 		required: required,
-		demanded: requiredUnlessInstead(required, instead),
+		demanded: undefaulted(requiredUnlessInstead(required, instead), spec.defaults),
 		sortable: agenttoolschema.Derived(spec.name+".graphqlSortBy", read.sortable()),
 		beside: besideReads{
 			specs: spec.alongside, bound: bound, reader: reader, permissions: permissions,
@@ -246,7 +264,24 @@ func newGraphQLListTool(
 		reader:      reader,
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
-	}, nil
+	}
+	tool.params = slices.DeleteFunc(params, func(param graphQLParam) bool {
+		return tool.confidential(&param)
+	})
+
+	return tool, nil
+}
+
+// confidential marks a parameter on a Confidential field, which no reader's
+// data access reaches (a card provider's own card id): offering it would
+// only lead to a refusal.
+func (t *graphQLListTool) confidential(param *graphQLParam) bool {
+	if param.OnInput {
+		return false
+	}
+	resource, name := t.fieldOwner(param.Field)
+
+	return !fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityRestricted)
 }
 
 // pagesByCursor reports whether a list's root takes its own first and after,
@@ -369,6 +404,35 @@ func requiredUnlessInstead(required []string, instead []insteadRead) []string {
 	return out
 }
 
+// offered are a record's parameters less those of the fields a spec leaves
+// out, refusing a field that is none of its filters.
+func offered(tool string, params []graphQLParam, unoffered []string) ([]graphQLParam, error) {
+	for _, field := range unoffered {
+		if !slices.ContainsFunc(params, func(p graphQLParam) bool { return p.Field == field }) {
+			return nil, fmt.Errorf("%s leaves out %q, which is not one of its filters",
+				tool, field)
+		}
+	}
+
+	return slices.DeleteFunc(params, func(param graphQLParam) bool {
+		return slices.Contains(unoffered, param.Field)
+	}), nil
+}
+
+// undefaulted are the required arguments a call must name itself: one the
+// spec defaults (a transfer's direction, Inbound unless named) is sent for a
+// call that leaves it out, so the schema does not require it.
+func undefaulted(required []string, defaults map[string]any) []string {
+	if len(defaults) == 0 {
+		return required
+	}
+
+	return slices.DeleteFunc(slices.Clone(required), func(name string) bool {
+		_, defaulted := defaults[name]
+		return defaulted
+	})
+}
+
 // referenced types each id parameter by the resource its spec names, drops
 // the ones it names none for, and refuses a reference to no id parameter.
 func referenced(
@@ -438,8 +502,9 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), accountingReadSpecs(),
-		factoringReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
+		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
+		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), factoringReadSpecs(),
 	)
 }
 
@@ -571,13 +636,14 @@ func (t *graphQLListTool) describable(param graphQLParam) bool {
 // its lower end.
 func describedName(param graphQLParam) (string, bool) {
 	switch param.Kind {
-	case paramDayTo, paramAtMost:
+	case paramDayTo, paramAtMost, paramInstantTo:
 		return "", false
-	case paramDayFrom:
+	case paramDayFrom, paramInstantFrom:
 		return param.Name + "/" + suffixTo, true
 	case paramAtLeast:
 		return param.Name + "/" + suffixMax, true
-	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences:
+	case paramIn, paramEquals, paramContains, paramPresent, paramReference, paramReferences,
+		paramDayText:
 		return param.Name, true
 	}
 

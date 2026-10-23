@@ -55,6 +55,22 @@ func (r *graphQLRead) rootParams(
 	return params, required, search, nil
 }
 
+// withRootArgs adds a list's root-argument parameters to its field
+// parameters. Where both name the same thing (a service failure's
+// shipmentId), the root argument the screen itself sends wins.
+func withRootArgs(params, args []graphQLParam) []graphQLParam {
+	names := make(map[string]struct{}, len(args))
+	for _, arg := range args {
+		names[arg.Name] = struct{}{}
+	}
+	params = slices.DeleteFunc(params, func(param graphQLParam) bool {
+		_, shadowed := names[param.Name]
+		return shadowed
+	})
+
+	return append(params, args...)
+}
+
 // variableParams is one root variable's parameter, sent as that variable.
 func variableParams(tool, operation string, variable *graphQLVariable) ([]graphQLParam, error) {
 	field := graphQLField{
@@ -162,7 +178,7 @@ func checkReferences(params []graphQLParam, args map[string]any) error {
 				return err
 			}
 		case paramIn, paramEquals, paramContains, paramDayFrom, paramDayTo, paramAtLeast,
-			paramAtMost, paramPresent:
+			paramAtMost, paramPresent, paramInstantFrom, paramInstantTo, paramDayText:
 		}
 	}
 
@@ -208,10 +224,12 @@ func matchAlongside(
 			return nil, fmt.Errorf("%s reads %s %s, which reads.yml does not list for it",
 				tool, beside.operation, how)
 		}
-		if bound[idx].Input == "" && len(beside.inputs) > 0 {
-			return nil, fmt.Errorf("%s reads %s %s by the call's own arguments (%s); it "+
-				"takes no table input", tool, beside.operation, how,
-				strings.Join(bound[idx].Keys, ", "))
+		for name := range beside.inputs {
+			if bound[idx].Input == "" && !slices.Contains(bound[idx].Set, name) {
+				return nil, fmt.Errorf("%s reads %s %s by the call's own %s; it takes "+
+					"no %s of the spec's", tool, beside.operation, how,
+					strings.Join(bound[idx].Keys, ", "), name)
+			}
 		}
 		out = append(out, bound[idx])
 	}

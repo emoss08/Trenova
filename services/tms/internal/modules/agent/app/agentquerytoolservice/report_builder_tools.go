@@ -11,12 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -131,67 +132,33 @@ func sourceFromDefinition(definition *report.ReportDefinition) reportSource {
 	}
 }
 
-// catalogAccess answers which datasets and fields the actor may read, the
-// same way the report builder's own catalog does, so a model sees exactly
-// what the person driving it would see in the builder.
+// catalogAccess answers which datasets and fields the actor may use, by the
+// rule the report compiler and the builder's catalog decide by, so a model
+// sees exactly what the person driving it would see in the builder and builds
+// only reports that compile.
 type catalogAccess struct {
-	permissions permissionports.PermissionEngine
-	sensitivity *permission.Registry
+	resolver *reportaccess.Resolver
 }
 
-func newCatalogAccess(permissions permissionports.PermissionEngine) catalogAccess {
-	return catalogAccess{permissions: permissions, sensitivity: permission.NewRegistry()}
+func newCatalogAccess(resolver *reportaccess.Resolver) catalogAccess {
+	return catalogAccess{resolver: resolver}
 }
 
-// entity resolves one dataset for the actor: the catalog entry and what they
-// may read of it. A dataset the actor cannot read at all is reported as absent,
-// because a model told "you may not read invoices" will keep trying to.
-func (c catalogAccess) entity(
+func (c catalogAccess) forActor(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
-	entity *reportcatalog.Entity,
-) (*permissionports.ResourcePermissionDetail, bool, error) {
-	if c.permissions == nil {
-		return nil, false, errors.New(
+) (*reportaccess.Access, error) {
+	if c.resolver == nil {
+		return nil, errors.New(
 			"datasets cannot be described because authorization is unavailable",
 		)
 	}
 
-	detail, err := c.permissions.GetResourcePermissions(
-		ctx, params.Actor.PersonUserID(), params.OrganizationID, entity.Resource.String(),
-	)
-	if err != nil {
-		return nil, false, fmt.Errorf("resolve permissions for %q: %w", entity.Key, err)
-	}
-
-	for _, op := range detail.Operations {
-		if op == permission.OpRead {
-			return detail, true, nil
-		}
-	}
-
-	return nil, false, nil
-}
-
-func (c catalogAccess) fieldAccessible(
-	entity *reportcatalog.Entity,
-	field *reportcatalog.Field,
-	detail *permissionports.ResourcePermissionDetail,
-) (permission.FieldSensitivity, bool) {
-	sensitivity := c.sensitivity.GetFieldSensitivity(entity.Resource.String(), field.Key)
-
-	accessible := detail.MaxSensitivity.CanAccess(sensitivity)
-	if accessible && len(detail.AccessibleFields) > 0 {
-		accessible = false
-		for _, key := range detail.AccessibleFields {
-			if key == field.Key {
-				accessible = true
-				break
-			}
-		}
-	}
-
-	return sensitivity, accessible
+	return c.resolver.ForCatalog(ctx, pagination.TenantInfo{
+		OrgID:  params.OrganizationID,
+		BuID:   params.BusinessUnitID,
+		UserID: params.Actor.PersonUserID(),
+	})
 }
 
 type datasetEdgeRow struct {
@@ -207,8 +174,16 @@ type datasetEdgeRow struct {
 	// TargetFields are the keys on the dataset the edge leads to, given by
 	// report_get_dataset so a report can reach one edge out without a
 	// second call. A model that had only the edge's name guessed the field
-	// on the far side, and guessed wrong.
+	// on the far side, and guessed wrong. Only the keys this person may use
+	// are listed.
 	TargetFields []string `json:"targetFields,omitempty"`
+	// ReferenceOnly marks an edge to a dataset this person cannot read:
+	// through it only that dataset's reference fields, the ones TargetFields
+	// lists, can be used.
+	ReferenceOnly bool `json:"referenceOnly,omitempty"`
+	// Needs is what this person lacks to follow the edge at all, such as
+	// "worker read"; the edge is listed so a refusal is not a surprise.
+	Needs string `json:"needs,omitempty"`
 }
 
 // datasetRow is one dataset in the list. Edges are left to
@@ -236,10 +211,8 @@ type listReportDatasetsTool struct {
 	access catalogAccess
 }
 
-func newListReportDatasetsTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &listReportDatasetsTool{access: newCatalogAccess(permissions)}
+func newListReportDatasetsTool(resolver *reportaccess.Resolver) agentports.AgentQueryTool {
+	return &listReportDatasetsTool{access: newCatalogAccess(resolver)}
 }
 
 func (t *listReportDatasetsTool) Name() string { return "report_list_datasets" }
@@ -291,6 +264,11 @@ func (t *listReportDatasetsTool) Query(
 	criteria.Text(query)
 	criteria.Field("category", category)
 
+	access, err := t.access.forActor(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
 	words := stringutils.SearchWords(query)
 	catalog := &reportcatalog.Default
 	rows := make([]datasetRow, 0, len(catalog.Entities))
@@ -303,11 +281,11 @@ func (t *listReportDatasetsTool) Query(
 			continue
 		}
 
-		_, readable, err := t.access.entity(ctx, params, entity)
-		if err != nil {
-			return nil, err
+		kind, kindErr := access.Kind(ctx, entity.Resource)
+		if kindErr != nil {
+			return nil, kindErr
 		}
-		if !readable {
+		if !kind.Reads {
 			continue
 		}
 
@@ -354,31 +332,78 @@ func matchesDataset(entity *reportcatalog.Entity, words []string) bool {
 	)
 }
 
-func edgeRows(entity *reportcatalog.Entity, withTargetFields bool) []datasetEdgeRow {
+func edgeRows(
+	ctx context.Context,
+	access *reportaccess.Access,
+	decided *reportaccess.Entity,
+) ([]datasetEdgeRow, error) {
+	entity := decided.Entity
 	rows := make([]datasetEdgeRow, 0, len(entity.Edges))
 	for i := range entity.Edges {
 		edge := &entity.Edges[i]
 		if !edge.Traversable {
 			continue
 		}
+		use := decided.Edges[i]
+		target, ok := reportcatalog.Default.Entity(edge.Target)
+		if !ok {
+			continue
+		}
+		reached, err := access.Entity(ctx, target)
+		if err != nil {
+			return nil, err
+		}
+		if use.Available() && !reached.Usable() {
+			continue
+		}
+
 		row := datasetEdgeRow{
 			Name:        edge.Name,
 			Label:       edge.Label,
 			Target:      edge.Target,
 			Cardinality: string(edge.Cardinality),
+			Needs:       access.Need(use),
 		}
-		if key, ok := referenceKeyField(&reportcatalog.Default, entity, edge); ok {
+		if key, found := referenceKeyField(&reportcatalog.Default, entity, edge); found {
 			row.Key = key
 		}
-		if withTargetFields {
-			if target, ok := reportcatalog.Default.Entity(edge.Target); ok {
-				row.TargetFields = describedFieldKeys(target)
-			}
+		if use.Available() {
+			row.TargetFields = usableFieldKeys(&reached)
+			row.ReferenceOnly = !reached.Readable
 		}
 		rows = append(rows, row)
 	}
 
-	return rows
+	return rows, nil
+}
+
+// listedFieldCount is how many described fields report_get_dataset lists:
+// every one on a dataset the person reads, and the reference view alone on
+// one they reach only through a join.
+func listedFieldCount(decided *reportaccess.Entity) int {
+	if decided.Readable {
+		return describedFieldCount(decided.Entity)
+	}
+	count := 0
+	for i := range decided.Entity.Fields {
+		if describedField(&decided.Entity.Fields[i]) &&
+			decided.Fields[i].Decision != reportaccess.NeedsKindRead {
+			count++
+		}
+	}
+	return count
+}
+
+// usableFieldKeys are the described fields of an entity this person may use.
+func usableFieldKeys(decided *reportaccess.Entity) []string {
+	keys := make([]string, 0, len(decided.Fields))
+	for i := range decided.Entity.Fields {
+		field := &decided.Entity.Fields[i]
+		if describedField(field) && decided.Fields[i].Available() {
+			keys = append(keys, field.Key)
+		}
+	}
+	return keys
 }
 
 // datasetFieldRow is one field, in as few characters as say what a report
@@ -399,6 +424,9 @@ type datasetFieldRow struct {
 	// refuses a report that names one, so a model that knows this up front
 	// builds a report that compiles rather than one that is refused.
 	Closed bool `json:"closed,omitempty"`
+	// Needs is what a closed field lacks: a tier ("restricted access") or a
+	// protected field group ("the Personal field group").
+	Needs string `json:"needs,omitempty"`
 }
 
 type datasetDescription struct {
@@ -424,10 +452,8 @@ type describeReportDatasetTool struct {
 	access catalogAccess
 }
 
-func newDescribeReportDatasetTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &describeReportDatasetTool{access: newCatalogAccess(permissions)}
+func newDescribeReportDatasetTool(resolver *reportaccess.Resolver) agentports.AgentQueryTool {
+	return &describeReportDatasetTool{access: newCatalogAccess(resolver)}
 }
 
 func (t *describeReportDatasetTool) Name() string { return "report_get_dataset" }
@@ -485,15 +511,19 @@ func (t *describeReportDatasetTool) Query(
 		)
 	}
 
-	detail, readable, err := t.access.entity(ctx, params, entity)
+	access, err := t.access.forActor(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	if !readable {
+	decided, err := access.Entity(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	if !decided.Usable() {
 		return nil, fmt.Errorf(
-			"there is no dataset with the key %q that you can read; call "+
-				"report_list_datasets for the ones you can",
-			key,
+			"there is no dataset with the key %q that you can use: it needs %s read, "+
+				"which your role does not grant; call report_list_datasets for the ones you can",
+			key, entity.Resource,
 		)
 	}
 
@@ -509,7 +539,10 @@ func (t *describeReportDatasetTool) Query(
 			continue
 		}
 
-		_, accessible := t.access.fieldAccessible(entity, field, detail)
+		use := decided.Fields[i]
+		if use.Decision == reportaccess.NeedsKindRead {
+			continue
+		}
 		fields = append(fields, datasetFieldRow{
 			Key:          field.Key,
 			Label:        labelIfNotKey(field),
@@ -519,7 +552,8 @@ func (t *describeReportDatasetTool) Query(
 			Aggregations: aggregationNames(field),
 			NoFilter:     !field.Filterable,
 			NoGroup:      !field.Groupable,
-			Closed:       !accessible,
+			Closed:       !use.Available(),
+			Needs:        access.Need(use),
 		})
 	}
 
@@ -539,7 +573,14 @@ func (t *describeReportDatasetTool) Query(
 		"already know a related record's id, filter on the field the edge's key " +
 		"names with that id — customerId eq \"cus_…\" — not on the record's " +
 		"name, which two records can share and a rename changes. A field " +
-		"marked closed cannot be used by this person."
+		"marked closed cannot be used by this person; its needs says what it lacks. " +
+		"An edge marked referenceOnly leads to a dataset this person cannot read, " +
+		"and only its targetFields can be used through it."
+
+	edges, err := edgeRows(ctx, access, &decided)
+	if err != nil {
+		return nil, err
+	}
 
 	description := datasetDescription{
 		Dataset:     entity.Key,
@@ -547,10 +588,18 @@ func (t *describeReportDatasetTool) Query(
 		Description: entity.Description,
 		Category:    entity.Category,
 		Fields:      fields,
-		FieldCount:  describedFieldCount(entity),
+		FieldCount:  listedFieldCount(&decided),
 		Shown:       len(fields),
-		Edges:       edgeRows(entity, true),
+		Edges:       edges,
 		Note:        note,
+	}
+	if !decided.Readable {
+		description.Note = fmt.Sprintf(
+			"You cannot read %s (it needs %s read), so a report cannot start from this "+
+				"dataset. A report on a dataset you can read reaches it through an edge "+
+				"marked referenceOnly and can use only the fields listed here. ",
+			entity.PluralLabel, entity.Resource,
+		) + description.Note
 	}
 	if more {
 		next := window.offset + window.limit

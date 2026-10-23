@@ -1,3 +1,4 @@
+import { EDITOR_SAVE_EVENT } from "@/components/formula-editor/tariff-commands";
 import { formatShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { useEffect } from "react";
 
@@ -61,7 +62,8 @@ export function isTypingTarget(target: EventTarget | null): boolean {
 /**
  * Binds the studio shortcuts for the life of the component. Handlers that
  * are absent leave the browser's own behavior alone, so a page without a
- * search box does not swallow Ctrl+K.
+ * search box does not swallow Ctrl+K. An editor asking to save (`:w` in Vim)
+ * counts as the save shortcut.
  */
 export function useStudioShortcuts(handlers: Partial<Record<StudioShortcut, () => void>>) {
   useEffect(() => {
@@ -81,7 +83,13 @@ export function useStudioShortcuts(handlers: Partial<Record<StudioShortcut, () =
       handler();
     };
 
+    const onEditorSave = () => handlers.save?.();
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(EDITOR_SAVE_EVENT, onEditorSave);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(EDITOR_SAVE_EVENT, onEditorSave);
+    };
   }, [handlers]);
 }

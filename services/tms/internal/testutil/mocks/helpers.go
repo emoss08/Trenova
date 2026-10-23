@@ -108,6 +108,14 @@ func (a *AllowAllPermissionEngine) GetResourcePermissions(
 	return nil, nil
 }
 
+func (a *AllowAllPermissionEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, a, userID, orgID, resources)
+}
+
 func (a *AllowAllPermissionEngine) InvalidateUser(_ context.Context, _, _ pulid.ID) error {
 	return nil
 }

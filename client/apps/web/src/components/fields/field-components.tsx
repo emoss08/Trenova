@@ -65,6 +65,8 @@ type FieldWrapperProps = {
   error?: string;
   descriptionId?: string;
   errorId?: string;
+  /** The control's id, so the label names it. */
+  htmlFor?: string;
   /**
    * Where the label and description sit: above the control, or in a column
    * beside it, for a settings form read down a list of rows.
@@ -81,13 +83,49 @@ type FieldWrapperProps = {
 
 export type FieldLayout = "stacked" | "inline";
 
+/**
+ * The inline layout's row: the label and its description in a column beside the control, for a
+ * form read down a list of rows. A row with no label keeps the column, so something under a
+ * control (a reset, a hint) lines up with it.
+ */
+export function FieldRow({
+  label,
+  required,
+  description,
+  htmlFor,
+  className,
+  children,
+}: {
+  label?: React.ReactNode;
+  required?: boolean;
+  description?: React.ReactNode;
+  /** The control's id, so the label names it. */
+  htmlFor?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn("grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-x-4", className)}
+    >
+      <div className="flex min-w-0 flex-col gap-1 pt-2">
+        <FieldLabel label={label} required={required} htmlFor={htmlFor} className="text-sm" />
+        {description}
+      </div>
+      <div className="flex min-w-0 flex-col gap-0.5">{children}</div>
+    </div>
+  );
+}
+
 export function FieldLabel({
   label,
   required,
+  htmlFor,
   className,
 }: {
   label?: React.ReactNode;
   required?: boolean;
+  htmlFor?: string;
   className?: string;
 }) {
   if (!label) {
@@ -99,7 +137,11 @@ export function FieldLabel({
     return <div className={classes}>{label}</div>;
   }
 
-  return <Label className={classes}>{label}</Label>;
+  return (
+    <Label className={classes} htmlFor={htmlFor}>
+      {label}
+    </Label>
+  );
 }
 
 function FieldWrapperInner({ children }: { children: React.ReactNode }) {
@@ -120,6 +162,7 @@ export function FieldWrapper({
   error,
   descriptionId,
   errorId,
+  htmlFor,
   layout = "stacked",
   name,
   formatValue,
@@ -138,23 +181,20 @@ export function FieldWrapper({
 
   if (layout === "inline") {
     return (
-      <div
-        className={cn(
-          "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-x-4",
-          className,
-        )}
-      >
-        <div className="flex min-w-0 flex-col gap-1 pt-2">
-          <FieldLabel label={label} required={required} className="text-sm" />
-          {(description || warning?.show) && (
+      <FieldRow
+        label={label}
+        required={required}
+        htmlFor={htmlFor}
+        className={className}
+        description={
+          description || warning?.show ? (
             <FieldDescription description={description} warning={warning} id={descriptionId} />
-          )}
-        </div>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          {control}
-          {errorElement}
-        </div>
-      </div>
+          ) : null
+        }
+      >
+        {control}
+        {errorElement}
+      </FieldRow>
     );
   }
 
@@ -162,7 +202,7 @@ export function FieldWrapper({
     <div className={cn("flex flex-col gap-0.5", className)}>
       {label && (
         <FieldWrapperInner>
-          <FieldLabel label={label} required={required} />
+          <FieldLabel label={label} required={required} htmlFor={htmlFor} />
         </FieldWrapperInner>
       )}
       {control}

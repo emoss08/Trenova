@@ -67,3 +67,18 @@ query DeskCustomerRateAgreements($input: DataTableConnectionInput!) {
     totalCount
   }
 }
+
+# What a customer asked to be told as their freight moves, and who receives it:
+# the notice profile's recipients are the fallback when the customer names none.
+query DeskCustomerUpdatePreferences($id: ID!) {
+  customer(id: $id) {
+    id
+    name
+    statusUpdatePreference
+    statusUpdateRecipients
+    emailProfile {
+      id
+      toRecipients
+    }
+  }
+}

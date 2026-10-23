@@ -203,13 +203,16 @@ func factoringGetSpecs() []getSpec {
 				"kept out by factoring_set_override, or for a customer that is not factored.",
 			searchTerms: []string{"factor", "factoring", "ready to factor", "notice of assignment",
 				"noa"},
-			resource: permission.ResourceInvoice,
+			resource:  permission.ResourceInvoice,
+			paramName: paramFactoringInvoice,
 			references: map[string]idReference{paramFactoringInvoice: {
 				resource: permission.ResourceInvoice,
 				what:     "The invoice",
 				source:   "invoice_list, invoice_get or factoring_list_readiness",
 			}},
-			shape: func(record map[string]any) { record[keyFactoringPath] = factoringQueuePath },
+			shape: func(record map[string]any, _ map[string]struct{}, _ clock) {
+				record[keyFactoringPath] = factoringQueuePath
+			},
 		},
 		{
 			name:   "factoring_get_submission",
@@ -228,7 +231,7 @@ func factoringGetSpecs() []getSpec {
 			resource:    permission.ResourceFactoringSubmission,
 			paramName:   "submissionId",
 			idSource:    "from factoring_list_submissions",
-			shape:       recordPath(factoringSubsPath),
+			shape:       pathTo(factoringSubsPath),
 		},
 		{
 			name:   "factoring_get_remittance",
@@ -264,7 +267,8 @@ func factoringGetSpecs() []getSpec {
 				"factor should remit. " + factoringMinorAmount,
 			searchTerms: []string{"factoring reserve", "reserve balance", "due from factor",
 				"factor fees"},
-			resource: permission.ResourceFactoringReserve,
+			resource:  permission.ResourceFactoringReserve,
+			paramName: paramFactoringCompany,
 			references: map[string]idReference{paramFactoringCompany: {
 				resource: permission.ResourceFactoringCompany,
 				what:     factoringCompanyWhat,
@@ -325,18 +329,11 @@ func pathTo(prefix string) func(map[string]any, map[string]struct{}, clock) {
 	}
 }
 
-// recordPath names the page a record opens on.
-func recordPath(prefix string) func(map[string]any) {
-	open := pathTo(prefix)
-
-	return func(record map[string]any) { open(record, nil, clock{}) }
-}
-
 // remittanceLines keeps an unreadable line's cells, which say what the
 // factor printed, and drops every other line's, and names the remittance's
 // page.
-func remittanceLines(record map[string]any) {
-	recordPath(factoringRemitsPath)(record)
+func remittanceLines(record map[string]any, withheld map[string]struct{}, clk clock) {
+	pathTo(factoringRemitsPath)(record, withheld, clk)
 	lines, _ := record["lines"].([]any)
 	for _, line := range lines {
 		object, _ := line.(map[string]any)

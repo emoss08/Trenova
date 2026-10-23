@@ -199,6 +199,7 @@
   "{0} · {1} empty": "{0} · {1} en vacío",
   "{0} — rest must start by {1}": "{0} — el descanso debe comenzar antes de {1}",
   "· asked again": "· preguntado de nuevo",
+  "· margin": "· margen",
   "· margin {0}": "· margen {0}",
   "· responded {0}": "· respondió {0}",
   "· sent {0}": "· enviado {0}",

@@ -3,7 +3,7 @@
 //! - **type** hints: the inferred type after a `let` or `var` name without an annotation, a loop
 //!   variable, a lambda parameter and a pattern or `if let` binding (`: Distance`), and the
 //!   inferred return type of an `=`-bodied function without `->` (`-> Money`), all from the
-//!   checker's hints;
+//!   checker's hints, and a property's `vary` name (from the values it varies over);
 //! - **parameter** hints: the parameter's name before a positional argument whose meaning is
 //!   not obvious: any argument of a call with two or more parameters, or a literal, unless the
 //!   argument already names the parameter (`detention(dwell, …)`) or is a lambda;
@@ -18,6 +18,7 @@ use super::describe::{flat, type_text};
 use super::names::parameters;
 use super::session::Session;
 use super::values::Values;
+use super::vary::{varied, vary_type};
 use crate::span::Span;
 use crate::tariff::check::describe::snippet;
 use crate::tariff::check::{Callee, HintKind};
@@ -66,6 +67,7 @@ pub fn inlays(session: &Session<'_>, range: Span, values: &Values) -> Vec<Inlay>
     let utf16 = &session.root().utf16;
     let mut out = Vec::new();
     types(session, range, &mut out);
+    varied_types(session, range, &mut out);
     let scopes = Scopes::of(session.source(), session.file());
     session.tick(scopes.exprs.len());
     for call in &scopes.exprs {
@@ -117,6 +119,25 @@ fn types(session: &Session<'_>, range: Span, out: &mut Vec<(u32, Kind, String)>)
             }
         };
         out.push((at, Kind::Type, label));
+    }
+}
+
+/// The type of each `vary` name, after the name: the checker's hints do not reach a property's
+/// own names.
+fn varied_types(session: &Session<'_>, range: Span, out: &mut Vec<(u32, Kind, String)>) {
+    for varied in varied(session.file()) {
+        let at = varied.name.span.end;
+        if at < range.start || at > range.end {
+            continue;
+        }
+        let Some(ty) = varied
+            .values
+            .and_then(|values| vary_type(session, values))
+            .filter(|ty| !matches!(ty, Type::Error | Type::Never))
+        else {
+            continue;
+        };
+        out.push((at, Kind::Type, format!(": {}", type_text(&ty))));
     }
 }
 

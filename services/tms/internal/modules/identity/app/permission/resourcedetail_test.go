@@ -146,3 +146,32 @@ func TestGetResourcePermissions_AChildReportsItsOwnGrantWithWhatItsParentImplies
 	assert.Equal(t, permission.DataScopeTeam, detail.DataScope,
 		"a read the child's own grant answers is held to the child's scope")
 }
+
+func TestGetResourcePermissionsBatch_AgreesWithGetResourcePermissionsOnEveryKind(t *testing.T) {
+	t.Parallel()
+
+	credential := permission.ResourceWorkerCredential.String()
+	worker := permission.ResourceWorker.String()
+	eng, userID, orgID := cachedEngine(t, map[string]*permissionports.CachedResourcePermission{
+		credential: cachedGrant(permission.DataScopeTeam, permission.OpApprove),
+		worker: cachedGrant(permission.DataScopeOrganization,
+			permission.OpRead, permission.OpArchive, permission.OpRestore),
+	})
+	ctx := t.Context()
+
+	registry := permission.NewRegistry()
+	resources := make([]string, 0, len(registry.All()))
+	for _, def := range registry.All() {
+		resources = append(resources, def.Resource)
+	}
+
+	batch, err := eng.GetResourcePermissionsBatch(ctx, userID, orgID, resources)
+	require.NoError(t, err)
+	require.Len(t, batch, len(resources))
+
+	for _, resource := range resources {
+		single, singleErr := eng.GetResourcePermissions(ctx, userID, orgID, resource)
+		require.NoError(t, singleErr)
+		assert.Equal(t, single, batch[resource], resource)
+	}
+}

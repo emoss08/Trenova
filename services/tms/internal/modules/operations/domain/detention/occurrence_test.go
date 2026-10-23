@@ -18,8 +18,8 @@ func billableOccurrence() *detention.DetentionOccurrence {
 		StopID:          pulid.MustNew("stp_"),
 		Status:          detention.OccurrenceStatusPending,
 		BillableAmount:  decimal.RequireFromString("225.00"),
-		DriverPayAmount: decimal.RequireFromString("75.00"),
-		NetMargin:       decimal.RequireFromString("150.00"),
+		DriverPayAmount: decimal.NewNullDecimal(decimal.RequireFromString("75.00")),
+		NetMargin:       decimal.NewNullDecimal(decimal.RequireFromString("150.00")),
 		Currency:        "USD",
 		ClockStartAt:    1000,
 	}
@@ -83,7 +83,7 @@ func TestOccurrence_Waive(t *testing.T) {
 	assert.Equal(t, "225.00", occ.WaivedAmount.StringFixed(2),
 		"the forgiven amount is preserved so leakage stays measurable")
 	assert.True(t, occ.BillableAmount.IsZero())
-	assert.Equal(t, "-75.00", occ.NetMargin.StringFixed(2),
+	assert.Equal(t, "-75.00", occ.NetMargin.Decimal.StringFixed(2),
 		"waiving revenue does not unwind the driver pay already owed")
 	require.NotNil(t, occ.WaiverReason)
 	assert.Equal(t, detention.WaiverReasonWeather, *occ.WaiverReason)

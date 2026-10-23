@@ -21,6 +21,9 @@ const BASE = "/billing/configuration-files/formula-templates";
 const DRAFT = `${BASE}/fmt_studio_draft/edit`;
 const REVIEW = `${BASE}/fmt_studio_review/edit`;
 const ACTIVE = `${BASE}/fmt_studio_active/edit`;
+const LTL = `${BASE}/fmt_studio_ltl/edit`;
+const SHIPMENT_WITH_CHOICES =
+  "/shipment-management/shipments?panelType=edit&panelEntityId=shp_0412";
 const NEW = `${BASE}/new`;
 const LIBRARIES = "/billing/configuration-files/formula-libraries";
 const ACCESSORIALS = `${LIBRARIES}/fl_studio_accessorials/edit`;
@@ -71,6 +74,22 @@ async function pointAt(page, text, delta = 0) {
 async function cursorAt(page, text, delta = 0) {
   const point = await pointAt(page, text, delta);
   await page.mouse.click(point.x, point.y);
+}
+
+/** Scrolls the Studio's form to a section and lets it settle. */
+async function scrollToSection(page, section) {
+  await page.evaluate((id) => {
+    document.getElementById(`studio-section-${id}`)?.scrollIntoView({ block: "start" });
+  }, section);
+  await pause(page, 900);
+}
+
+/** Hovers the coverage bar beside the first line no test reaches. */
+async function hoverCoverageGap(page) {
+  const gap = page.locator(".cm-tariff-coverage-gap").first();
+  await gap.scrollIntoViewIfNeeded();
+  await gap.hover();
+  await pause(page, 600);
 }
 
 /** Picks the real shipment the preview rates. */
@@ -342,6 +361,145 @@ function shotsFor(colorScheme) {
     },
     { name: "narrow-1100", path: DRAFT, viewport: { width: 1100, height: 860 } },
     { name: "stacked-860", path: DRAFT, viewport: { width: 860, height: 900 } },
+
+    // Properties, coverage, references, Promote to input, choices and input bounds, on the LTL
+    // tariff: its weight break inverts at 1,000 lb, a hazmat fee no test reaches and a `best` of
+    // three linehaul methods.
+    { name: "ltl-edit", path: LTL },
+    { name: "ltl-tests", path: LTL, act: tab(/^Tests/) },
+    {
+      name: "ltl-coverage-unreached",
+      path: LTL,
+      act: async (page) => {
+        await tab(/^Tests/)(page);
+        await page.getByRole("button", { name: /^Show \d+ unreached region/ }).click();
+        await pause(page, 600);
+      },
+    },
+    { name: "ltl-coverage-tooltip", path: LTL, act: hoverCoverageGap },
+    {
+      name: "ltl-save-as-test",
+      path: LTL,
+      act: async (page) => {
+        await tab(/^Tests/)(page);
+        await page.getByRole("button", { name: "Save as test" }).click();
+        await pause(page, 2500);
+      },
+    },
+    {
+      name: "ltl-occurrences",
+      path: LTL,
+      act: async (page) => {
+        await cursorAt(page, "if weight >= 1_000 lb", 4);
+        await pause(page, 1200);
+      },
+    },
+    {
+      name: "ltl-find-references",
+      path: LTL,
+      act: async (page) => {
+        await cursorAt(page, "if weight >= 1_000 lb", 4);
+        await page.keyboard.press("Shift+F12");
+        await pause(page, 1200);
+      },
+    },
+    {
+      name: "ltl-editor-menu",
+      path: LTL,
+      act: async (page) => {
+        await cursorAt(page, "$425", 1);
+        await page.getByRole("button", { name: "Editor actions" }).click();
+        await pause(page, 600);
+      },
+    },
+    {
+      name: "ltl-promote-menu",
+      path: LTL,
+      act: async (page) => {
+        await cursorAt(page, "$425", 1);
+        await page.keyboard.press("Control+.");
+        await pause(page, 600);
+      },
+    },
+    {
+      name: "ltl-promote-rename",
+      path: LTL,
+      act: async (page) => {
+        await cursorAt(page, "$425", 1);
+        await page.keyboard.press("Control+.");
+        await pause(page, 600);
+        await page.keyboard.press("Enter");
+        await pause(page, 1200);
+      },
+    },
+    {
+      name: "ltl-promote-nothing",
+      path: LTL,
+      act: async (page) => {
+        await cursorAt(page, 'best "Linehaul"', 1);
+        await page.keyboard.press("Control+.");
+        await pause(page, 500);
+      },
+    },
+    {
+      name: "ltl-hover-bounds",
+      path: LTL,
+      act: async (page) => {
+        const point = await pointAt(page, "weight * rate", 10);
+        await page.mouse.move(point.x, point.y);
+        await pause(page, 1200);
+      },
+    },
+    { name: "ltl-preview-choices", path: LTL },
+    {
+      name: "ltl-preview-choices-shipment",
+      path: LTL,
+      act: (page) => pickShipment(page, "S-240811"),
+    },
+    {
+      name: "ltl-trace-choice",
+      path: LTL,
+      act: async (page) => {
+        await page.getByRole("button", { name: /^Trace/ }).click();
+        await pause(page, 600);
+      },
+    },
+    { name: "ltl-inputs-bounds", path: LTL, act: (page) => scrollToSection(page, "inputs") },
+    {
+      name: "ltl-inputs-out-of-bounds",
+      path: LTL,
+      act: async (page) => {
+        await scrollToSection(page, "inputs");
+        await page.getByPlaceholder("Default: $0.31/lb").fill("3");
+        await pause(page, 1200);
+      },
+    },
+    {
+      name: "ltl-inputs-service-select",
+      path: LTL,
+      act: async (page) => {
+        await scrollToSection(page, "inputs");
+        await page.getByRole("button", { name: /Default: Standard/ }).click();
+        await pause(page, 600);
+      },
+    },
+    {
+      name: "ltl-submit-readiness",
+      path: LTL,
+      act: async (page) => {
+        await page.getByRole("button", { name: "Submit for review" }).click();
+        await pause(page, 2500);
+      },
+    },
+    {
+      name: "shipment-rating-choices",
+      path: SHIPMENT_WITH_CHOICES,
+      settle: 8000,
+      act: async (page) => {
+        await page.getByRole("region", { name: "Choices" }).scrollIntoViewIfNeeded();
+        await pause(page, 900);
+      },
+    },
 
     { name: "libraries-list", path: LIBRARIES },
     { name: "library-active", path: ACCESSORIALS },

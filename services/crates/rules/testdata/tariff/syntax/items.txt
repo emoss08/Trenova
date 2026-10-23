@@ -360,3 +360,61 @@ let Miles = 1
 tariff "t"
 let Miles = 1
 ! syntax 15..20 A value's name starts with a lower-case letter: `miles`
+
+=== an input with a range constraint
+tariff "t"
+input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi
+input stops: Int where 0..
+---
+tariff "t"
+input rate: Money/mi = $2.35/[mi] where (..= $0.50/[mi] $15/[mi])
+input stops: Int where (.. 0 _)
+
+=== an input with a list constraint
+tariff "t"
+input service: Text = "Standard" where ["Standard", "Guaranteed"]
+---
+tariff "t"
+input service: Text = (text "Standard") where (list (text "Standard") (text "Guaranteed"))
+
+=== a property
+tariff "t"
+property "heavier never bills less" {
+  vary shipment.weight in 1 lb..40_000 lb
+  vary input.rate
+  vary w in [1 lb, 2 lb]
+  assume w > 0 lb
+  given fuel.price = $3.20/gal
+  expect total >= $0
+  expect total nondecreasing in shipment.weight
+  expect charge(FSC) ?? $0 nonincreasing in w
+}
+---
+tariff "t"
+property "heavier never bills less"
+  vary shipment.weight in (.. 1[lb] 40000[lb])
+  vary input.rate
+  vary w in (list 1[lb] 2[lb])
+  assume (> w 0[lb])
+  given fuel.price = $3.20/[gal]
+  expect (>= total $0)
+  expect total nondecreasing in shipment.weight
+  expect (?? (call charge FSC) $0) nonincreasing in w
+
+=== a property's name must be quoted
+tariff "t"
+property heavier {
+}
+---
+tariff "t"
+expr property
+! syntax 20..27 Each statement goes on its own line; start a new line before `heavier`
+
+=== property is a name elsewhere
+tariff "t"
+let property = 1
+let vary = property + 1
+---
+tariff "t"
+let property = 1
+let vary = (+ property 1)

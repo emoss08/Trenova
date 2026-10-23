@@ -71,6 +71,7 @@ func (r *Registry) registerFuelAndIFTAResources() {
 		Description:    "A fuel card statement staged for review before its rows become purchases",
 		Category:       "Fuel & tax",
 		ParentResource: ResourceFuelPurchase.String(),
+		ReferenceView:  []string{"fileName", "origin", "provider", "rowCount"},
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "View", Description: "View staged statements"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Open a statement import"},
