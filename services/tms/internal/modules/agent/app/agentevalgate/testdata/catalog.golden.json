@@ -23861,7 +23861,7 @@
             "type": "array"
           },
           "threadKey": {
-            "description": "Only one thread, newest first. Only records whose thread key contains this text.",
+            "description": "Only one thread, newest first. Only records whose thread key contains this text. The threadKey of a message from this list or inbox_get_inbound_message, for the rest of its conversation.",
             "type": "string"
           }
         },

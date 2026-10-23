@@ -42,6 +42,7 @@ const (
 	paramCaptureBatchID        = "captureBatchId"
 	paramTargetID              = "targetId"
 	paramOwnerID               = "ownerId"
+	paramThreadKey             = "threadKey"
 
 	termEmail   = "email"
 	termSubject = "subject"
@@ -272,6 +273,8 @@ func inboundMessagesListSpec() graphQLListSpec {
 		names: map[string]string{argStatuses: paramStatus, argSort: paramSortBy},
 		notes: map[string]string{
 			paramStatus: "InReview and Quarantined are the ones waiting on a person.",
+			paramThreadKey: "The threadKey of a message from this list or " +
+				"inbox_get_inbound_message, for the rest of its conversation.",
 		},
 		references: map[string]idReference{
 			paramMailboxID: {
