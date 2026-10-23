@@ -21,6 +21,8 @@ const bill = `{
      "amount":{"$q":"0.01","u":"$"},"range":null}
   ],
   "notes":[{"text":"Peg $1.20","range":null}],
+  "reviews":[{"text":"Liftgate billed on a dock delivery","range":{"from":12,"to":40}},
+             {"text":"Holiday pickup","range":null}],
   "freightTotal":{"$q":"1908.21","u":"$"},
   "accessorialTotal":{"$q":"190.82","u":"$"},
   "total":{"$q":"2099.03","u":"$"}
@@ -43,6 +45,42 @@ func TestBillFromReadsLinesQuantitiesAndRates(t *testing.T) {
 	assert.Len(t, out.FreightLines(), 2)
 	assert.Equal(t, "2099.03", out.Total.String())
 	assert.Equal(t, "USD", out.Currency)
+}
+
+func TestBillFromReadsTheReviewsBesideTheNotes(t *testing.T) {
+	t.Parallel()
+
+	var wire rules.TariffBill
+	require.NoError(t, sonic.Unmarshal([]byte(bill), &wire))
+	out, err := tarifftypes.BillFrom(&wire, "USD")
+	require.NoError(t, err)
+
+	assert.Equal(t, []tarifftypes.Note{{Text: "Peg $1.20"}}, out.Notes)
+	assert.Equal(t, []tarifftypes.Note{
+		{Text: "Liftgate billed on a dock delivery"},
+		{Text: "Holiday pickup"},
+	}, out.Reviews)
+}
+
+func TestBillFromLeavesReviewsEmptyWhenTheBillHasNone(t *testing.T) {
+	t.Parallel()
+
+	for _, raw := range []string{
+		`{"lines":[],"notes":[],"reviews":[],"freightTotal":{"$q":"0","u":"$"},
+		  "accessorialTotal":{"$q":"0","u":"$"},"total":{"$q":"0","u":"$"}}`,
+		`{"lines":[],"notes":[],"freightTotal":{"$q":"0","u":"$"},
+		  "accessorialTotal":{"$q":"0","u":"$"},"total":{"$q":"0","u":"$"}}`,
+	} {
+		var wire rules.TariffBill
+		require.NoError(t, sonic.Unmarshal([]byte(raw), &wire))
+		out, err := tarifftypes.BillFrom(&wire, "USD")
+		require.NoError(t, err)
+		assert.Empty(t, out.Reviews)
+
+		encoded, err := sonic.Marshal(out)
+		require.NoError(t, err)
+		assert.NotContains(t, string(encoded), "reviews")
+	}
 }
 
 func TestBillFromUsesTheConvertedAmounts(t *testing.T) {

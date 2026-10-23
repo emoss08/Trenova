@@ -292,6 +292,7 @@ type TariffConverted struct {
 type TariffBill struct {
 	Lines            []TariffLine     `json:"lines"`
 	Notes            []TariffNote     `json:"notes"`
+	Reviews          []TariffNote     `json:"reviews"`
 	FreightTotal     TariffQuantity   `json:"freightTotal"`
 	AccessorialTotal TariffQuantity   `json:"accessorialTotal"`
 	Total            TariffQuantity   `json:"total"`
