@@ -276,7 +276,9 @@ func newGraphQLListTool(
 		permissions: permissions,
 		registry:    fieldsensitivity.DefaultRegistry(),
 	}
-	tool.params = slices.DeleteFunc(params, tool.confidential)
+	tool.params = slices.DeleteFunc(params, func(param graphQLParam) bool {
+		return tool.confidential(&param)
+	})
 
 	return tool, nil
 }
@@ -284,7 +286,7 @@ func newGraphQLListTool(
 // confidential marks a parameter on a Confidential field, which no reader's
 // data access reaches (a card provider's own card id): offering it would
 // only lead to a refusal.
-func (t *graphQLListTool) confidential(param graphQLParam) bool {
+func (t *graphQLListTool) confidential(param *graphQLParam) bool {
 	if param.OnInput {
 		return false
 	}
