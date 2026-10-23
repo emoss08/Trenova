@@ -62,7 +62,7 @@ type RateMatrix struct {
 	ReviewComment          string     `json:"reviewComment"          bun:"review_comment,type:TEXT,nullzero"`
 	PublishedVersionNumber int64      `json:"publishedVersionNumber" bun:"published_version_number,type:BIGINT,notnull,default:0"`
 	PublishedAt            *int64     `json:"publishedAt"            bun:"published_at,type:BIGINT"`
-	HasDraftChanges        bool       `json:"hasDraftChanges"        bun:"has_draft_changes,type:BOOLEAN,notnull,default:true"`
+	HasDraftChanges        bool       `json:"hasDraftChanges"        bun:"has_draft_changes,type:BOOLEAN,notnull"`
 	DraftCellCount         int64      `json:"draftCellCount"         bun:"draft_cell_count,type:BIGINT,notnull,default:0"`
 	DraftEditorIDs         []pulid.ID `json:"draftEditorIds"         bun:"draft_editor_ids,type:JSONB,notnull,default:'[]'"`
 
