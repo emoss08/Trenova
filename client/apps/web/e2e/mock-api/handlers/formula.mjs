@@ -374,6 +374,7 @@ export function preview(state, _path, body) {
     error: stopped ?? needs,
     trace: result.trace ?? [],
     lookups: result.lookups ?? [],
+    choices: result.choices ?? [],
     tests: check.ok ? testsOf(source, context).tests : [],
   };
 }

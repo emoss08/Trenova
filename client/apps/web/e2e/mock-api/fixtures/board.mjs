@@ -189,6 +189,69 @@ function splitName(name) {
   return { firstName, lastName: rest.join(" ") };
 }
 
+/**
+ * How the first load was last rated: its tariff's bill and the `best` that chose its linehaul,
+ * as GraphQL's `ShipmentRatingDetail` reads them (subtotals as Decimals, refusals as text), so
+ * the shipment's billing card shows each option.
+ */
+function ratingDetail(revenue, miles, anchor) {
+  const linehaul = Math.round(revenue * 0.8);
+  const rate = (linehaul / miles).toFixed(2);
+  return {
+    formulaTemplateId: "fmt_studio_ltl",
+    formulaTemplateName: "LTL weight breaks",
+    ratedAt: Math.round(anchor - 3 * HOUR),
+    versionNumber: 1,
+    bill: {
+      currency: "USD",
+      lines: [
+        {
+          kind: "Charge",
+          label: "Linehaul",
+          code: null,
+          quantity: String(miles),
+          quantityUnit: "mi",
+          rate,
+          rateUnit: "$/mi",
+          amount: String(linehaul),
+        },
+      ],
+      notes: ["Service: Standard"],
+      freightTotal: String(linehaul),
+      accessorialTotal: "0",
+      total: String(linehaul),
+      exchange: null,
+    },
+    refusal: null,
+    choices: [
+      {
+        label: "Linehaul",
+        kind: "best",
+        chosen: "Per mile",
+        options: [
+          { label: "Per mile", status: "chosen", subtotal: String(linehaul), refusal: null },
+          { label: "Flat", status: "lost", subtotal: String(linehaul + 150), refusal: null },
+          {
+            label: "Volume",
+            status: "refused",
+            subtotal: null,
+            refusal: "Volume rates start at 45,000 lb",
+          },
+        ],
+      },
+    ],
+    inputs: { rate: { $q: rate, u: "$/mi" } },
+    skipped: [],
+    rateQuoteId: null,
+    agreementId: null,
+    agreementName: null,
+    ruleId: null,
+    ruleLabel: null,
+    source: "Tariff",
+    explanation: null,
+  };
+}
+
 function buildShipment(raw, index, anchor) {
   const [pro, o, d, st, pct, miles, driver, cust, weight, revenue, margin, tender, reefer, risk, hours] = raw;
   const dayStart = anchor - (anchor % 86400);
@@ -237,6 +300,7 @@ function buildShipment(raw, index, anchor) {
     freightChargeAmount: String(Math.round(revenue * 0.8)),
     otherChargeAmount: String(Math.round(revenue * 0.2)),
     tariffInputs: { rate: { $q: ((revenue * 0.8) / miles).toFixed(2), u: "$/mi" } },
+    ratingDetail: index === 0 ? ratingDetail(revenue, miles, anchor) : null,
     freightLines: [
       {
         label: "Linehaul",
