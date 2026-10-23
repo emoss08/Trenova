@@ -1638,6 +1638,22 @@ id or by what it maps, with the records it could be set to) and an optional `int
 words. The descriptions changed, so the embedding fixture is re-recorded; held-out ranking holds
 (keyword 0.99 and 0.95 over 147, hybrid 0.93 and 0.83 over 167), and nothing was tuned against it.
 
+The EDI row converts ten of the twelve EDI reads; the tender and transfer change queues have no
+Query root and stay. Partners, inbound files, tenders and messages read new `Desk*` list
+operations, carrier invoices sent over EDI read an `items` list paged by its root's limit and
+offset with each unlinked invoice's suggested carrier, a partner reads the Desk's partner card,
+and a file, a message, a tender and acknowledgment health read new detail roots (`ediInboundFile`,
+`ediMessage`, `ediTransfer`, `ediAckHealth`), the raw X12 only on request. The machinery gains
+`items` lists, instants bounded to the minute, fields a spec leaves out, include switches on gets,
+and a reader that sends a model's whole numbers as gqlgen's `Int` takes them. `EdiMessage`,
+`EdiTransfer`, `EdiInboundFile` and `EdiCommunicationProfile` had no kind, so the guard gated none
+of them; they declare `edi`, whose operational fields are declared Internal while contact details,
+raw X12, a tender's payload and rate stay Restricted and a transport's settings are Confidential.
+Every schema change is safe. The message list's description was cut under the 900-character
+limit and its repository tool's search terms were restored after keyword top-1 dipped below its
+floor on development cases; the embedding fixture is re-recorded, and held-out ranking holds
+(keyword 0.99 and 0.95 over 147, hybrid 0.93 and 0.83 over 167), nothing tuned against it.
+
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
 - One runtime: an agent definition supplies a profile.
