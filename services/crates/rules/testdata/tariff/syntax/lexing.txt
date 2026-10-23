@@ -447,3 +447,18 @@ text "\""
 interpolation "{"
 error "\"x\"}\"}\"}\"}\"}\"}\"}\"}\""
 ! limit 16..35 Text is interpolated more than 8 levels deep
+
+=== times of day
+@17:30 @07:30:15 @08:00..@17:00
+---
+date "@17:30"
+date "@07:30:15"
+date "@08:00"
+punct ".."
+date "@17:00"
+
+=== a time of day outside the clock
+@25:00
+---
+error "@25:00"
+! syntax 0..6 @25:00 is not a real time of day: hours run from 00 to 23, minutes and seconds from 00 to 59

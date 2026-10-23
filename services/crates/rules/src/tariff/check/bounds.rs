@@ -199,18 +199,9 @@ impl Judge<'_, '_> {
                     inclusive,
                 } = &other.kind
                 {
-                    let start = match start {
-                        Some(start) => Some(self.fold(start)),
-                        None => None,
-                    };
-                    let end = match end {
-                        Some(end) => Some(self.fold(end)),
-                        None => None,
-                    };
-                    if matches!(start, Some(None)) || matches!(end, Some(None)) {
+                    let Some((start, end)) = self.ends(start.as_deref(), end.as_deref()) else {
                         return;
-                    }
-                    let (start, end) = (start.flatten(), end.flatten());
+                    };
                     in_range(
                         bounds.folded,
                         (start.as_ref(), end.as_ref(), *inclusive),
@@ -252,6 +243,24 @@ impl Judge<'_, '_> {
             Message::with(message, [reason]),
             suggestion,
         ));
+    }
+
+    /// A range's ends, folded (`None` for an end left open), or `None` when an end has no
+    /// compile-time value.
+    fn ends(
+        &self,
+        start: Option<&Expr>,
+        end: Option<&Expr>,
+    ) -> Option<(Option<Value>, Option<Value>)> {
+        let start = match start {
+            Some(start) => Some(self.fold(start)?),
+            None => None,
+        };
+        let end = match end {
+            Some(end) => Some(self.fold(end)?),
+            None => None,
+        };
+        Some((start, end))
     }
 
     fn arms<'p>(&mut self, scrutinee: &Expr, patterns: impl Iterator<Item = &'p Pattern>) {

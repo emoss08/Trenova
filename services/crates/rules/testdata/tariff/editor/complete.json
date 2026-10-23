@@ -3168,6 +3168,39 @@
      "Time"
     ]
    }
+  },
+  {
+   "name": "a variant range's end offers the enum's variants",
+   "source": [
+    "library \"t\"",
+    "fn weekday(day: Weekday) -> Bool = match day {",
+    "  Mon..=| => true",
+    "  _ => false",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "Fri",
+     "Sun"
+    ],
+    "excludes": [
+     "Delivery"
+    ]
+   }
+  },
+  {
+   "name": "a range of freight classes offers the classes",
+   "source": [
+    "tariff \"t\"",
+    "let dense = (shipment.freightClass ?? Class50) in Class50..Cl|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Class85"
+    ],
+    "range": "Cl"
+   }
   }
  ]
 }

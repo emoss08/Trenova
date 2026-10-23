@@ -571,3 +571,18 @@ property "p" {
   assume true
   expect total nondecreasing in shipment.weight
 }
+
+=== times of day and variant ranges keep their spelling
+tariff "t"
+let a = match rating.date.weekday {
+Mon..=Fri=>@08:00
+Sat|Sun=>@10:30:00
+}
+let b = a in @08:00..@17:00
+---
+tariff "t"
+let a = match rating.date.weekday {
+  Mon..=Fri => @08:00
+  Sat | Sun => @10:30:00
+}
+let b = a in @08:00..@17:00
