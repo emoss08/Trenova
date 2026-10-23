@@ -771,6 +771,7 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  report: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   risk_decision: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   role: [
     "businessUnitId",
@@ -1193,6 +1194,8 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   RecurringDeduction: "recurring_deduction",
   RecurringEarning: "recurring_earning",
   RecurringShipment: "recurring_shipment",
+  ReportRun: "report",
+  ReportSchedule: "report",
   RiskDecision: "risk_decision",
   Role: "role",
   RoutingGuide: "routing_guide",

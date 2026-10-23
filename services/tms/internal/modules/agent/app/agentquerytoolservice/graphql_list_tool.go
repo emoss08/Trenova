@@ -551,6 +551,7 @@ func graphQLListSpecs() []graphQLListSpec {
 		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
 		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), settlementReadSpecs(),
 		factoringReadSpecs(), billingReadSpecs(), carrierReadSpecs(),
+		reportReadSpecs(),
 		inboxReadSpecs(),
 	)
 }

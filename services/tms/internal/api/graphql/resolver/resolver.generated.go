@@ -373,6 +373,7 @@ type Resolver struct {
 	query                              *queryResolver
 	rateAgreement                      *rateresolver.RateAgreementResolver
 	rateMatrix                         *rateresolver.RateMatrixResolver
+	reportSchedule                     *reportresolver.ReportScheduleResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
@@ -1638,6 +1639,7 @@ func FromServices(s *Services) *Resolver {
 		},
 		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
 		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
+		reportSchedule:               &reportresolver.ReportScheduleResolver{Deps: reportDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
@@ -2889,6 +2891,10 @@ func (r *Resolver) RateAgreement() generated.RateAgreementResolver {
 
 func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
 	return r.rateMatrix
+}
+
+func (r *Resolver) ReportSchedule() generated.ReportScheduleResolver {
+	return r.reportSchedule
 }
 
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {
