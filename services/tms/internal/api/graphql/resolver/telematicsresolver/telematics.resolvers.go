@@ -287,11 +287,11 @@ func (r *QueryResolver) WorkerHosState(ctx context.Context, workerID string) (*g
 	}
 
 	state, err := r.TelematicsService.GetWorkerHOSState(ctx, base.TenantInfo(authCtx), id)
+	if errortypes.IsNotFoundError(err) || (err == nil && state == nil) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
-	}
-	if state == nil {
-		return nil, nil
 	}
 	return telematicsmapping.MapWorkerHOSState(state), nil
 }
