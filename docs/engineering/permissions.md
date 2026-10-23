@@ -393,6 +393,25 @@ a linked kind's read where the job needs the full record (billing receivables re
 disputes, carrier settlements read carriers). How to build a screen that shows another record,
 and how to change a view, is in [reference-views.md](reference-views.md).
 
+## What a role sees on a screen
+
+The page access manifest (`pkg/pageaccess`, generated from the web app and the operations its
+screens run) says what each screen needs: its route's permissions, its REST endpoints', the kinds it
+reads as root records, and the linked fields it selects. Three reads are built on it
+(`pageaccessservice`), none of which returns record data:
+
+| Query | Needs | Answers |
+|---|---|---|
+| `pageAccess(location:)` | sign-in (`authOnlyAllowlist`) | the caller's own access to a screen, from one `CheckBatch` |
+| `pageAccessPreview(input:)` | `role` read | a saved or draft role's access to a screen, with the roles it inherits |
+| `pageAccessScreens`, `roleResourceGuides(input:)` | `role` read | the screens to preview; the role editor's sentence for each resource and the screens its grant affects |
+
+A preview unites the role's grants as the engine does (`permission.GrantsOf`: implied operations,
+a parent resource's grant reaching its children, the widest ceiling) and decides each field through
+`refview.RoleAccess`, so it shows what the field guard will do. It is the role's grants alone:
+organization access policies (ABAC), data scopes and row-level security narrow what a person
+holding it reads, never widen it. A role inheriting a role of another organization is refused.
+
 ## Protected fields
 
 A few fields stay hidden from people who can read the record they sit on. Each belongs to a

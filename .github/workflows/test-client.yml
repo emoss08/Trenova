@@ -21,6 +21,7 @@ on:
       # the server embeds; a guide or catalog edited alone must still be checked.
       - "docs/product-guide/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
+      - "services/tms/pkg/pageaccess/screens_gen.json"
       - "i18n/messages.en.json"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
@@ -46,6 +47,7 @@ on:
       # the server embeds; a guide or catalog edited alone must still be checked.
       - "docs/product-guide/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
+      - "services/tms/pkg/pageaccess/screens_gen.json"
       - "i18n/messages.en.json"
       - ".github/workflows/test-client.yml"
       - ".github/actions/setup-client/**"
@@ -84,6 +86,13 @@ jobs:
       - name: Check the product guide
         working-directory: ./client
         run: pnpm --filter @trenova/web guide:check
+
+      # The screens half of the page access manifest: each route's operations
+      # and REST endpoints, read from its module graph. The Go test
+      # TestPageAccessManifestIsGenerated checks the half refgen writes.
+      - name: Check the page access screens
+        working-directory: ./client
+        run: pnpm --filter @trenova/web access:check
 
   verify:
     name: ${{ matrix.task.name }}

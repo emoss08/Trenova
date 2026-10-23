@@ -23,3 +23,11 @@ export function impliedOperations(
 
   return implied;
 }
+
+/** Whether a grant of these operations reads its resource, directly or through what they imply. */
+export function grantReads(
+  granted: readonly string[],
+  definitions: readonly OperationDefinition[],
+): boolean {
+  return granted.includes("read") || impliedOperations(granted, definitions).has("read");
+}

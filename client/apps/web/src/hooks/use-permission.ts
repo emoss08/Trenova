@@ -1,5 +1,5 @@
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { Operation, type OperationType } from "@trenova/shared/types/permission";
+import { Operation, type OperationType, Resource } from "@trenova/shared/types/permission";
 import { useCallback, useEffect } from "react";
 
 export function usePermission(resource: string, operation: OperationType) {
@@ -10,6 +10,14 @@ export function usePermission(resource: string, operation: OperationType) {
     allowed: hasPermission(resource, operation),
     isLoading: !manifest,
   };
+}
+
+/**
+ * Whether the page access panel is offered: to whoever may read roles, and on
+ * every screen of a development build.
+ */
+export function usePageAccessOffered(): boolean {
+  return usePermission(Resource.Role, Operation.Read).allowed || import.meta.env.DEV;
 }
 
 export function usePermissions(resource: string) {
