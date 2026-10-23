@@ -183,6 +183,9 @@ type ListCaptureBatchesRequest struct {
 	// seconds, inclusive; zero leaves that side open.
 	CreatedFrom int64 `json:"createdFrom"`
 	CreatedTo   int64 `json:"createdTo"`
+	// IncludeItems loads each listed stack's items in one more query for the
+	// page, so a list that shows them reads no stack twice.
+	IncludeItems bool `json:"includeItems"`
 }
 
 // ListStaleCaptureBatchesRequest finds batches stuck in a status longer than

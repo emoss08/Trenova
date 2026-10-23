@@ -20,7 +20,7 @@ const (
 	argStatuses        = "statuses"
 
 	fieldSyncErrorCategory = "errorCategory"
-	fieldMappingTargetType = "targetType"
+	fieldTargetType        = "targetType"
 	fieldMappingState      = "state"
 	fieldRequiredOnly      = "requiredOnly"
 	fieldMapping           = "mapping"
@@ -208,7 +208,7 @@ func mappingGapsListSpec() graphQLListSpec {
 		queryNote: "Words to find in the Trenova label or the chosen record's name.",
 		names: map[string]string{
 			argIntegrationType: paramAccountingSystem,
-			"targetTypes":      fieldMappingTargetType,
+			"targetTypes":      fieldTargetType,
 			"states":           fieldMappingState,
 		},
 		notes: map[string]string{

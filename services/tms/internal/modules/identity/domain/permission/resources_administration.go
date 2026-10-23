@@ -150,6 +150,23 @@ func (r *Registry) registerAdministrationResources() {
 		ReferenceView:      []string{"name"},
 		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
+		// Who mail comes from and where replies go is printed on every message
+		// sent, so it is Internal: it is how an agent chooses a profile. How
+		// the profile connects to its provider stays Restricted.
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":             SensitivityInternal,
+			"businessUnitId": SensitivityInternal,
+			"organizationId": SensitivityInternal,
+			"name":           SensitivityInternal,
+			"description":    SensitivityInternal,
+			"senderName":     SensitivityInternal,
+			"senderEmail":    SensitivityInternal,
+			"replyToEmail":   SensitivityInternal,
+			"status":         SensitivityInternal,
+			"version":        SensitivityInternal,
+			"createdAt":      SensitivityInternal,
+			"updatedAt":      SensitivityInternal,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

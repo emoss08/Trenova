@@ -7996,7 +7996,7 @@ type CaptureBatch {
   isEditable: Boolean!
   "The pages, on a single-batch read. A list leaves them out."
   pages: [CapturePage!]!
-  "The items, on a single-batch read. A list leaves them out."
+  "The items, on a single-batch read, or on a list that selects them, read for the whole page at once."
   items: [CaptureItem!]!
   version: Int!
   createdAt: Timestamp!
@@ -21237,7 +21237,7 @@ input TriageResponseTargetInput {
 }
 
 "The organization's queue settings."
-type TriageSettings {
+type TriageSettings @kind(resource: "inbound_message") {
   "Who the queue is handed to at the end of the day."
   onCallUser: User
   onCallUserId: ID
@@ -21254,7 +21254,7 @@ input TriageSettingsInput {
 }
 
 "Someone a message can be assigned to."
-type TriageAssignee {
+type TriageAssignee @kind(resource: "inbound_message") {
   user: User!
   "Waiting messages already assigned to them."
   waiting: Int!

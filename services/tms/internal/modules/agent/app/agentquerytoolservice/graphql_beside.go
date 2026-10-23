@@ -30,12 +30,13 @@ func (r *graphQLRead) rootParams(
 	tool string,
 	skip map[string]struct{},
 ) (params []graphQLParam, required []string, search [2]string, err error) {
+	pageIn := r.pagedInput()
 	for _, variable := range r.Variables {
 		if _, own := skip[variable.Name]; own {
 			continue
 		}
 		if variable.Kind == graphQLKindInput {
-			filter, filterSearchIn := filterInputParams(&variable)
+			filter, filterSearchIn := filterInputParams(&variable, variable.Name == pageIn)
 			params = append(params, filter...)
 			if filterSearchIn != "" {
 				search = [2]string{variable.Name, filterSearchIn}
@@ -101,14 +102,20 @@ func variableParams(tool, operation string, variable *graphQLVariable) ([]graphQ
 
 // filterInputParams are a filter input's fields as parameters, each sent inside
 // the variable, and the field it takes free text in, which is the tool's
-// query rather than a parameter of its own.
-func filterInputParams(variable *graphQLVariable) (params []graphQLParam, search string) {
+// query rather than a parameter of its own. An input a list pages inside
+// keeps its first and after for the page, and takes free text in its query.
+func filterInputParams(
+	variable *graphQLVariable,
+	paged bool,
+) (params []graphQLParam, search string) {
 	for idx := range graphQLInputs[variable.Type] {
 		field := graphQLInputs[variable.Type][idx]
-		if field.Kind == graphQLKindInput {
+		if field.Kind == graphQLKindInput ||
+			(paged && (field.Name == inputFirst || field.Name == inputAfter)) {
 			continue
 		}
-		if field.Name == filterSearch && field.Type == graphQLTypeString {
+		searched := field.Name == filterSearch || (paged && field.Name == inputQuery)
+		if searched && field.Type == graphQLTypeString {
 			search = field.Name
 			continue
 		}

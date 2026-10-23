@@ -281,3 +281,12 @@ reads:
   - tool: worker_list_shift_templates
     operation: ShiftTemplates
     reason: Shift patterns are read whole by shiftTemplates, which no rule binds because it does not page.
+  - tool: inbox_get_inbound_message
+  - tool: inbox_list_inbound_messages
+  - tool: inbox_list_email_profiles
+  - tool: inbox_list_capture_batches
+    instead: [DeskCaptureBatch]
+  - tool: inbox_list_triage_assignees
+    operation: TriageAssignees
+    reason: The people a message can be assigned to are read whole by triageAssignees, which returns no record kind of its own.
+    alongside: [TriageSettings]

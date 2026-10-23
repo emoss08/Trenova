@@ -1,0 +1,53 @@
+# The stacks waiting in intake, each with the documents it was split into and
+# what each was matched to, without page images or the device's settings.
+fragment DeskCaptureBatchFields on CaptureBatch {
+  id
+  version
+  status
+  source
+  sourceName
+  jobName
+  receivedPageCount
+  itemCount
+  filedItemCount
+  openItemCount
+  failureMessage
+  isEditable
+  createdAt
+  items {
+    id
+    version
+    position
+    status
+    pageCount
+    suggestedType
+    suggestedId
+    suggestedDocumentTypeId
+    suggestionConfidence
+    suggestionReason
+    detectedKind
+    filedType
+    filedId
+    failureMessage
+  }
+}
+
+query DeskCaptureBatches($input: CaptureBatchesInput!) {
+  captureBatches(input: $input) {
+    edges {
+      node {
+        ...DeskCaptureBatchFields
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+query DeskCaptureBatch($id: ID!) {
+  captureBatch(id: $id) {
+    ...DeskCaptureBatchFields
+  }
+}
