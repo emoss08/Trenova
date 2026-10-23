@@ -9,8 +9,9 @@
 //! - `"source"`: a whole file for `tariff.evaluate`, with optional `"inputs"`, `"record"`,
 //!   `"context"`, `"exchange"`, `"budget"`, `"trace"` and `"kind"`; `"expect"` is matched against
 //!   the program's result.
-//! - `"tests"`: a file for `tariff.test`, with an optional `"context"`, `"names"` and `"budget"`; `"expect"`
-//!   is matched against the response's `tests` (or the whole response when it is an object).
+//! - `"tests"`: a file for `tariff.test`, with an optional `"context"`, `"names"` and
+//!   `"budget"`; `"expect"` is matched against the response's `tests` (or the whole response
+//!   when it is an object).
 //! - `"op"` and `"input"`: any operation; `"expect"` is matched against the response.
 //!
 //! A case may also give `"facts"`: a partial record merged onto the sample record (objects

@@ -503,6 +503,20 @@ test "t"
 ! misplaced 24..28 `vary` can only be used inside a `property` block
 ! misplaced 61..67 `assume` can only be used inside a `property` block
 
+=== assume reads a charge call
+tariff "t"
+property "p" {
+  vary shipment.weight in 1 lb..2 lb
+  assume charge("Linehaul") != none
+  expect true
+}
+---
+tariff "t"
+property "p"
+  vary shipment.weight in (.. 1[lb] 2[lb])
+  assume (!= (call charge (text "Linehaul")) none)
+  expect true
+
 === a property expects no refusal
 tariff "t"
 property "p" {

@@ -969,6 +969,52 @@
     "}"
    ],
    "diagnostics": []
+  },
+  {
+   "name": "a property's expects read the bill and the choices",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $2/mi * shipment.distance",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $500",
+    "  }",
+    "}",
+    "property \"flat for long hauls\" {",
+    "  vary shipment.distance in 1 mi..3_000 mi",
+    "  expect total <= $500 and (charge(\"Flat\") ?? $0) <= $500",
+    "  expect chosen(\"Linehaul\") != none",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "assume can't read a choice",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $2/mi * shipment.distance",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $500",
+    "  }",
+    "}",
+    "property \"p\" {",
+    "  vary shipment.distance in 1 mi..3_000 mi",
+    "  assume chosen(\"Linehaul\") == \"Flat\"",
+    "  expect total <= $500",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "code": "assume-bill",
+     "at": "chosen(\"Linehaul\")",
+     "message": "`assume` runs before the tariff rates, so it can't read the bill (`chosen(\"Linehaul\")`): narrow the cases by the record, the inputs and the varied values"
+    }
+   ]
   }
  ]
 }

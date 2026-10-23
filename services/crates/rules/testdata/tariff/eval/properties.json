@@ -1,0 +1,1295 @@
+[
+  {
+    "name": "a weight-break inversion fails at adjacent pounds",
+    "tests": "tariff \"LTL\"\nlet w = shipment.weight ?? 0 lb\nlet perCwt = match w {\n  ..500 lb => $30/cwt\n  500 lb..1_000 lb => $31/cwt\n  1_000 lb..2_000 lb => $25/cwt\n  _ => $20/cwt\n}\ncharge \"Linehaul\" = perCwt * w\nproperty \"heavier never bills less\" {\n  vary shipment.weight in 1 lb..5_000 lb\n  expect total nondecreasing in shipment.weight\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "heavier never bills less",
+          "kind": "property",
+          "status": "failed",
+          "cases": 24,
+          "skipped": 0,
+          "failures": [
+            {
+              "message": {
+                "args": [
+                  "`total`",
+                  "$309.69",
+                  "999 lb",
+                  "$250.00",
+                  "1000 lb",
+                  "`shipment.weight`"
+                ],
+                "message": "{0} falls from {1} at {2} to {3} at {4}: it must not fall as {5} grows"
+              },
+              "range": {
+                "from": 281,
+                "to": 326
+              },
+              "values": [
+                {
+                  "display": "$309.69",
+                  "range": {
+                    "from": 288,
+                    "to": 293
+                  },
+                  "value": {
+                    "$q": "309.69",
+                    "u": "$"
+                  }
+                },
+                {
+                  "display": "$250.00",
+                  "range": {
+                    "from": 288,
+                    "to": 293
+                  },
+                  "value": {
+                    "$q": "250",
+                    "u": "$"
+                  }
+                }
+              ]
+            }
+          ],
+          "counterexample": {
+            "monotone": {
+              "after": {
+                "at": {
+                  "display": "1000 lb",
+                  "value": {
+                    "$q": "1000",
+                    "u": "lb"
+                  }
+                },
+                "result": {
+                  "display": "$250.00",
+                  "value": {
+                    "$q": "250",
+                    "u": "$"
+                  }
+                }
+              },
+              "before": {
+                "at": {
+                  "display": "999 lb",
+                  "value": {
+                    "$q": "999",
+                    "u": "lb"
+                  }
+                },
+                "result": {
+                  "display": "$309.69",
+                  "value": {
+                    "$q": "309.69",
+                    "u": "$"
+                  }
+                }
+              },
+              "direction": "nondecreasing",
+              "expression": "total",
+              "target": "shipment.weight"
+            },
+            "refusal": null,
+            "test": "test \"heavier never bills less: 999 lb\" {\n  given shipment.weight = 999 lb\n  expect total == $309.69\n}\n",
+            "values": [
+              {
+                "display": "999 lb",
+                "target": "shipment.weight",
+                "value": {
+                  "$q": "999",
+                  "u": "lb"
+                }
+              }
+            ]
+          },
+          "error": null,
+          "bill": {
+            "total": {
+              "$q": "309.69",
+              "u": "$"
+            }
+          }
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 5,
+        "regions": [
+          {
+            "hits": 4,
+            "kind": "arm",
+            "range": {
+              "from": 70,
+              "to": 89
+            }
+          },
+          {
+            "hits": 4,
+            "kind": "arm",
+            "range": {
+              "from": 92,
+              "to": 119
+            }
+          },
+          {
+            "hits": 6,
+            "kind": "arm",
+            "range": {
+              "from": 122,
+              "to": 151
+            }
+          },
+          {
+            "hits": 10,
+            "kind": "arm",
+            "range": {
+              "from": 154,
+              "to": 166
+            }
+          },
+          {
+            "hits": 24,
+            "kind": "charge",
+            "range": {
+              "from": 169,
+              "to": 199
+            }
+          }
+        ],
+        "total": 5
+      }
+    }
+  },
+  {
+    "name": "a break the file doesn't write is narrowed by halving",
+    "tests": "tariff \"t\"\nconst HALF = 500 lb\nlet w = shipment.weight ?? 0 lb\nlet rate = if w > HALF * 2 { $20/cwt } else { $30/cwt }\ncharge \"Linehaul\" = rate * w\nproperty \"heavier never bills less\" {\n  vary shipment.weight in 1 lb..5_000 lb\n  expect total nondecreasing in shipment.weight\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "heavier never bills less",
+          "kind": "property",
+          "status": "failed",
+          "cases": 24,
+          "skipped": 0,
+          "failures": [
+            {
+              "message": {
+                "args": [
+                  "`total`",
+                  "$300.00",
+                  "1000 lb",
+                  "$200.20",
+                  "1001 lb",
+                  "`shipment.weight`"
+                ],
+                "message": "{0} falls from {1} at {2} to {3} at {4}: it must not fall as {5} grows"
+              },
+              "range": {
+                "from": 229,
+                "to": 274
+              },
+              "values": [
+                {
+                  "display": "$300.00",
+                  "range": {
+                    "from": 236,
+                    "to": 241
+                  },
+                  "value": {
+                    "$q": "300",
+                    "u": "$"
+                  }
+                },
+                {
+                  "display": "$200.20",
+                  "range": {
+                    "from": 236,
+                    "to": 241
+                  },
+                  "value": {
+                    "$q": "200.2",
+                    "u": "$"
+                  }
+                }
+              ]
+            }
+          ],
+          "counterexample": {
+            "monotone": {
+              "after": {
+                "at": {
+                  "display": "1001 lb",
+                  "value": {
+                    "$q": "1001",
+                    "u": "lb"
+                  }
+                },
+                "result": {
+                  "display": "$200.20",
+                  "value": {
+                    "$q": "200.2",
+                    "u": "$"
+                  }
+                }
+              },
+              "before": {
+                "at": {
+                  "display": "1000 lb",
+                  "value": {
+                    "$q": "1000",
+                    "u": "lb"
+                  }
+                },
+                "result": {
+                  "display": "$300.00",
+                  "value": {
+                    "$q": "300",
+                    "u": "$"
+                  }
+                }
+              },
+              "direction": "nondecreasing",
+              "expression": "total",
+              "target": "shipment.weight"
+            },
+            "refusal": null,
+            "test": "test \"heavier never bills less: 1000 lb\" {\n  given shipment.weight = 1000 lb\n  expect total == $300.00\n}\n",
+            "values": [
+              {
+                "display": "1000 lb",
+                "target": "shipment.weight",
+                "value": {
+                  "$q": "1000",
+                  "u": "lb"
+                }
+              }
+            ]
+          },
+          "error": null,
+          "bill": {
+            "total": {
+              "$q": "300",
+              "u": "$"
+            }
+          }
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 3,
+        "regions": [
+          {
+            "hits": 17,
+            "kind": "if",
+            "range": {
+              "from": 92,
+              "to": 99
+            }
+          },
+          {
+            "hits": 7,
+            "kind": "else",
+            "range": {
+              "from": 109,
+              "to": 116
+            }
+          },
+          {
+            "hits": 24,
+            "kind": "charge",
+            "range": {
+              "from": 119,
+              "to": 147
+            }
+          }
+        ],
+        "total": 3
+      }
+    }
+  },
+  {
+    "name": "a failing case shrinks to the smallest failing value",
+    "tests": "tariff \"t\"\ncharge \"Linehaul\" = $1/lb * (shipment.weight ?? 0 lb)\nproperty \"stays under a thousand\" {\n  vary shipment.weight in 1 lb..40_000 lb\n  given shipment.hazmat = true\n  expect total < $1000\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "stays under a thousand",
+          "kind": "property",
+          "status": "failed",
+          "cases": 3,
+          "skipped": 0,
+          "failures": [
+            {
+              "message": {
+                "message": "This expectation does not hold"
+              },
+              "range": {
+                "from": 176,
+                "to": 196
+              },
+              "values": [
+                {
+                  "display": "$1000.00",
+                  "range": {
+                    "from": 183,
+                    "to": 188
+                  },
+                  "value": {
+                    "$q": "1000",
+                    "u": "$"
+                  }
+                }
+              ]
+            }
+          ],
+          "counterexample": {
+            "monotone": null,
+            "refusal": null,
+            "test": "test \"stays under a thousand: 1000 lb\" {\n  given shipment.weight = 1000 lb\n  given shipment.hazmat = true\n  expect total < $1000\n}\n",
+            "values": [
+              {
+                "display": "1000 lb",
+                "target": "shipment.weight",
+                "value": {
+                  "$q": "1000",
+                  "u": "lb"
+                }
+              }
+            ]
+          },
+          "error": null,
+          "bill": {
+            "total": {
+              "$q": "1000",
+              "u": "$"
+            }
+          }
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 1,
+        "regions": [
+          {
+            "hits": 3,
+            "kind": "charge",
+            "range": {
+              "from": 11,
+              "to": 64
+            }
+          }
+        ],
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "a passing property",
+    "tests": "tariff \"t\"\ninput rate: Money/mi = $2/mi where $1/mi..=$5/mi\ncharge \"Linehaul\" = rate * shipment.distance\nminimum $450\nproperty \"never below the minimum\" {\n  vary shipment.distance in 1 mi..3_000 mi\n  vary input.rate\n  given fuel.price = $3.20/gal\n  expect total >= $450\n}\ntest \"plain\" {\n  expect total == $450\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "never below the minimum",
+          "kind": "property",
+          "status": "passed",
+          "cases": 120,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        },
+        {
+          "name": "plain",
+          "kind": "test",
+          "status": "passed",
+          "cases": 1,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": {
+            "total": {
+              "$q": "450",
+              "u": "$"
+            }
+          }
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 1,
+        "regions": [
+          {
+            "hits": 121,
+            "kind": "charge",
+            "range": {
+              "from": 60,
+              "to": 104
+            }
+          }
+        ],
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "assume skips cases",
+    "tests": "tariff \"t\"\ncharge \"x\" = if shipment.hazmat { $0 } else { $10 }\nproperty \"p\" {\n  vary shipment.hazmat\n  vary n in 1..4\n  assume not shipment.hazmat\n  expect total > $0\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "p",
+          "kind": "property",
+          "status": "passed",
+          "cases": 3,
+          "skipped": 3,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 2,
+        "regions": [
+          {
+            "hits": 3,
+            "kind": "charge",
+            "range": {
+              "from": 11,
+              "to": 62
+            }
+          },
+          {
+            "hits": 0,
+            "kind": "if",
+            "range": {
+              "from": 45,
+              "to": 47
+            }
+          },
+          {
+            "hits": 3,
+            "kind": "else",
+            "range": {
+              "from": 57,
+              "to": 60
+            }
+          }
+        ],
+        "total": 3
+      }
+    }
+  },
+  {
+    "name": "a case that refuses fails the property with the refusal, shrunk",
+    "tests": "tariff \"t\"\nrequire (shipment.weight ?? 0 lb) < 30_000 lb else \"Too heavy for one truck\"\ncharge \"Linehaul\" = $1/lb * (shipment.weight ?? 0 lb)\nproperty \"every weight rates\" {\n  vary shipment.weight in 1 lb..40_000 lb\n  expect total > $0\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "every weight rates",
+          "kind": "property",
+          "status": "failed",
+          "cases": 19,
+          "skipped": 0,
+          "failures": [
+            {
+              "message": {
+                "args": [
+                  "Too heavy for one truck"
+                ],
+                "message": "The rating was refused: {0}"
+              },
+              "range": {
+                "from": 218,
+                "to": 235
+              },
+              "values": []
+            }
+          ],
+          "counterexample": {
+            "monotone": null,
+            "refusal": {
+              "message": "Too heavy for one truck",
+              "range": {
+                "from": 11,
+                "to": 87
+              }
+            },
+            "test": "test \"every weight rates: 30000 lb\" {\n  given shipment.weight = 30000 lb\n  expect total > $0\n}\n",
+            "values": [
+              {
+                "display": "30000 lb",
+                "target": "shipment.weight",
+                "value": {
+                  "$q": "30000",
+                  "u": "lb"
+                }
+              }
+            ]
+          },
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 2,
+        "regions": [
+          {
+            "hits": 1,
+            "kind": "refusal",
+            "range": {
+              "from": 11,
+              "to": 87
+            }
+          },
+          {
+            "hits": 18,
+            "kind": "charge",
+            "range": {
+              "from": 88,
+              "to": 141
+            }
+          }
+        ],
+        "total": 2
+      }
+    }
+  },
+  {
+    "name": "a case that needs cells makes the property need them",
+    "tests": "tariff \"Grid\"\nlet rate = tables.Grid[lane.destination.zip3, shipment.weight ?? 0 lb] ?? fail \"No rate\"\ncharge \"Linehaul\" = rate * (shipment.weight ?? 0 lb)\nproperty \"rates everywhere\" {\n  vary lane.destination.zip3 in [\"A\", \"B\"]\n  vary shipment.weight in [100 lb, 200 lb]\n  expect total > $0\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "rates everywhere",
+          "kind": "property",
+          "status": "needs",
+          "cases": 4,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [
+        {
+          "keys": [
+            "B"
+          ],
+          "table": "Grid"
+        }
+      ],
+      "coverage": null
+    },
+    "context": {
+      "tables": [
+        {
+          "code": "Grid",
+          "valueType": "Money/cwt",
+          "axes": [
+            {
+              "match": "Exact",
+              "kind": "Zip3"
+            },
+            {
+              "match": "Range",
+              "kind": "WeightBreak"
+            }
+          ],
+          "cells": [
+            {
+              "at": [
+                {
+                  "key": "A"
+                },
+                {
+                  "min": "0"
+                }
+              ],
+              "value": "10"
+            }
+          ],
+          "loaded": [
+            [
+              "A"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "a case past its step budget ends the property in error",
+    "tests": "tariff \"t\"\nvar count = 0\nfor i in 0..(shipment.pieces ?? 0) {\n  count += 1\n}\ncharge \"x\" = $1 * count\nproperty \"p\" {\n  vary shipment.pieces in [1, 500]\n  expect total > $0\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "p",
+          "kind": "property",
+          "status": "error",
+          "cases": 2,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": {
+            "monotone": null,
+            "refusal": null,
+            "test": "test \"p: 500\" {\n  given shipment.pieces = 500\n  expect total > $0\n}\n",
+            "values": [
+              {
+                "display": "500",
+                "target": "shipment.pieces",
+                "value": {
+                  "$n": "500"
+                }
+              }
+            ]
+          },
+          "error": {
+            "code": "budget",
+            "message": {
+              "args": [
+                400
+              ],
+              "message": "The tariff used up its step budget ({0, plural, one {# step} other {# steps}}) before it finished"
+            }
+          },
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 2,
+        "regions": [
+          {
+            "hits": 132,
+            "kind": "loop",
+            "range": {
+              "from": 60,
+              "to": 76
+            }
+          },
+          {
+            "hits": 1,
+            "kind": "charge",
+            "range": {
+              "from": 77,
+              "to": 100
+            }
+          }
+        ],
+        "total": 2
+      }
+    },
+    "budget": {
+      "steps": 400
+    }
+  },
+  {
+    "name": "the file's step budget bounds every property",
+    "tests": "tariff \"t\"\ncharge \"x\" = $1\nproperty \"many cases\" {\n  vary a in 1..17\n  vary b in 1..17\n  expect total > $0\n}\ntest \"after\" {\n  expect total == $1\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "many cases",
+          "kind": "property",
+          "status": "error",
+          "cases": 128,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": {
+            "code": "budget",
+            "message": {
+              "args": [
+                640
+              ],
+              "message": "The tests used up the file's step budget ({0, plural, one {# step} other {# steps}}) before they finished"
+            }
+          },
+          "bill": null
+        },
+        {
+          "name": "after",
+          "kind": "test",
+          "status": "error",
+          "cases": 1,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": {
+            "code": "budget",
+            "message": {
+              "args": [
+                640
+              ],
+              "message": "The tests used up the file's step budget ({0, plural, one {# step} other {# steps}}) before they finished"
+            }
+          },
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 1,
+        "regions": [
+          {
+            "hits": 128,
+            "kind": "charge",
+            "range": {
+              "from": 11,
+              "to": 26
+            }
+          }
+        ],
+        "total": 1
+      }
+    },
+    "budget": {
+      "steps": 20
+    }
+  },
+  {
+    "name": "an evaluation error ends the property with its case",
+    "tests": "tariff \"t\"\ncharge \"x\" = $100 / ((shipment.weight ?? 0 lb) / 1 lb)\nproperty \"p\" {\n  vary shipment.weight in 0 lb..10 lb\n  expect total > $0\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "p",
+          "kind": "property",
+          "status": "error",
+          "cases": 1,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": {
+            "monotone": null,
+            "refusal": null,
+            "test": "test \"p: 0 lb\" {\n  given shipment.weight = 0 lb\n  expect total > $0\n}\n",
+            "values": [
+              {
+                "display": "0 lb",
+                "target": "shipment.weight",
+                "value": {
+                  "$q": "0",
+                  "u": "lb"
+                }
+              }
+            ]
+          },
+          "error": {
+            "code": "divideByZero",
+            "message": {
+              "message": "Division by zero"
+            }
+          },
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 1,
+        "regions": [
+          {
+            "hits": 1,
+            "kind": "charge",
+            "range": {
+              "from": 11,
+              "to": 65
+            }
+          }
+        ],
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "a library property varies names",
+    "tests": "library \"l\"\nfn half(x: Int) -> Number = x / 2\nfn capped(x: Int) -> Int = if x > 7 { 7 } else { x }\nproperty \"halves are smaller\" {\n  vary n in 1..100\n  expect half(n) < n\n  expect half(n) nondecreasing in n\n}\nproperty \"capped grows\" {\n  vary n in 1..20\n  let m = capped(n)\n  expect m == n\n}\nproperty \"capped never falls\" {\n  vary n in 1..20\n  expect capped(n) nonincreasing in n\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "halves are smaller",
+          "kind": "property",
+          "status": "passed",
+          "cases": 24,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        },
+        {
+          "name": "capped grows",
+          "kind": "property",
+          "status": "failed",
+          "cases": 8,
+          "skipped": 0,
+          "failures": [
+            {
+              "message": {
+                "message": "This expectation does not hold"
+              },
+              "range": {
+                "from": 275,
+                "to": 288
+              },
+              "values": [
+                {
+                  "display": "7",
+                  "range": {
+                    "from": 282,
+                    "to": 283
+                  },
+                  "value": {
+                    "$n": "7"
+                  }
+                },
+                {
+                  "display": "8",
+                  "range": {
+                    "from": 287,
+                    "to": 288
+                  },
+                  "value": {
+                    "$n": "8"
+                  }
+                }
+              ]
+            }
+          ],
+          "counterexample": {
+            "monotone": null,
+            "refusal": null,
+            "test": "test \"capped grows: 8\" {\n  let n = 8\n  let m = capped(n)\n  expect m == n\n}\n",
+            "values": [
+              {
+                "display": "8",
+                "target": "n",
+                "value": {
+                  "$n": "8"
+                }
+              }
+            ]
+          },
+          "error": null,
+          "bill": null
+        },
+        {
+          "name": "capped never falls",
+          "kind": "property",
+          "status": "failed",
+          "cases": 19,
+          "skipped": 0,
+          "failures": [
+            {
+              "message": {
+                "args": [
+                  "`capped(n)`",
+                  "1",
+                  "1",
+                  "2",
+                  "2",
+                  "`n`"
+                ],
+                "message": "{0} rises from {1} at {2} to {3} at {4}: it must not rise as {5} grows"
+              },
+              "range": {
+                "from": 343,
+                "to": 378
+              },
+              "values": [
+                {
+                  "display": "1",
+                  "range": {
+                    "from": 350,
+                    "to": 359
+                  },
+                  "value": {
+                    "$n": "1"
+                  }
+                },
+                {
+                  "display": "2",
+                  "range": {
+                    "from": 350,
+                    "to": 359
+                  },
+                  "value": {
+                    "$n": "2"
+                  }
+                }
+              ]
+            }
+          ],
+          "counterexample": {
+            "monotone": {
+              "after": {
+                "at": {
+                  "display": "2",
+                  "value": {
+                    "$n": "2"
+                  }
+                },
+                "result": {
+                  "display": "2",
+                  "value": {
+                    "$n": "2"
+                  }
+                }
+              },
+              "before": {
+                "at": {
+                  "display": "1",
+                  "value": {
+                    "$n": "1"
+                  }
+                },
+                "result": {
+                  "display": "1",
+                  "value": {
+                    "$n": "1"
+                  }
+                }
+              },
+              "direction": "nonincreasing",
+              "expression": "capped(n)",
+              "target": "n"
+            },
+            "refusal": null,
+            "test": "test \"capped never falls: 1\" {\n  let n = 1\n  expect capped(n) == 1\n}\n",
+            "values": [
+              {
+                "display": "1",
+                "target": "n",
+                "value": {
+                  "$n": "1"
+                }
+              }
+            ]
+          },
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 4,
+        "regions": [
+          {
+            "hits": 48,
+            "kind": "function",
+            "range": {
+              "from": 40,
+              "to": 45
+            }
+          },
+          {
+            "hits": 27,
+            "kind": "function",
+            "range": {
+              "from": 73,
+              "to": 98
+            }
+          },
+          {
+            "hits": 13,
+            "kind": "if",
+            "range": {
+              "from": 84,
+              "to": 85
+            }
+          },
+          {
+            "hits": 14,
+            "kind": "else",
+            "range": {
+              "from": 95,
+              "to": 96
+            }
+          }
+        ],
+        "total": 4
+      }
+    }
+  },
+  {
+    "name": "names runs only the properties named and leaves coverage out",
+    "tests": "tariff \"t\"\ncharge \"x\" = $1\nproperty \"p\" {\n  vary shipment.hazmat\n  expect total == $1\n}\ntest \"t\" {\n  expect total == $1\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "p",
+          "kind": "property",
+          "status": "passed",
+          "cases": 2,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": null
+    },
+    "names": [
+      "p"
+    ]
+  },
+  {
+    "name": "a listed item is written back as the author wrote it",
+    "tests": "tariff \"t\"\nlet drops = shipment.stops.count(s => s.kind == Delivery)\ncharge \"Drops\" = $10 * drops\nproperty \"one drop is enough\" {\n  vary shipment.stops in [[pickup(), delivery()], [pickup(), delivery(), delivery()], [pickup(), delivery(), delivery(), delivery()]]\n  vary shipment.hazmat\n  expect total <= $10\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "one drop is enough",
+          "kind": "property",
+          "status": "failed",
+          "cases": 3,
+          "skipped": 0,
+          "failures": [
+            {
+              "message": {
+                "message": "This expectation does not hold"
+              },
+              "range": {
+                "from": 289,
+                "to": 308
+              },
+              "values": [
+                {
+                  "display": "$20.00",
+                  "range": {
+                    "from": 296,
+                    "to": 301
+                  },
+                  "value": {
+                    "$q": "20",
+                    "u": "$"
+                  }
+                }
+              ]
+            }
+          ],
+          "counterexample": {
+            "monotone": null,
+            "refusal": null,
+            "test": "test \"one drop is enough: [pickup(), delivery(), delivery()], false\" {\n  given shipment.stops = [pickup(), delivery(), delivery()]\n  given shipment.hazmat = false\n  expect total <= $10\n}\n",
+            "values": [
+              {
+                "display": "[pickup(), delivery(), delivery()]",
+                "target": "shipment.stops",
+                "value": [
+                  {
+                    "appointment": false,
+                    "arrival": null,
+                    "departure": null,
+                    "dwell": null,
+                    "kind": "Pickup",
+                    "location": {
+                      "city": "",
+                      "country": "",
+                      "state": "",
+                      "timezone": "UTC",
+                      "zip": "",
+                      "zip3": ""
+                    },
+                    "pieces": null,
+                    "sequence": null,
+                    "status": "New",
+                    "weight": null,
+                    "window": {
+                      "end": null,
+                      "start": null
+                    }
+                  },
+                  {
+                    "appointment": false,
+                    "arrival": null,
+                    "departure": null,
+                    "dwell": null,
+                    "kind": "Delivery",
+                    "location": {
+                      "city": "",
+                      "country": "",
+                      "state": "",
+                      "timezone": "UTC",
+                      "zip": "",
+                      "zip3": ""
+                    },
+                    "pieces": null,
+                    "sequence": null,
+                    "status": "New",
+                    "weight": null,
+                    "window": {
+                      "end": null,
+                      "start": null
+                    }
+                  },
+                  {
+                    "appointment": false,
+                    "arrival": null,
+                    "departure": null,
+                    "dwell": null,
+                    "kind": "Delivery",
+                    "location": {
+                      "city": "",
+                      "country": "",
+                      "state": "",
+                      "timezone": "UTC",
+                      "zip": "",
+                      "zip3": ""
+                    },
+                    "pieces": null,
+                    "sequence": null,
+                    "status": "New",
+                    "weight": null,
+                    "window": {
+                      "end": null,
+                      "start": null
+                    }
+                  }
+                ]
+              },
+              {
+                "display": "false",
+                "target": "shipment.hazmat",
+                "value": false
+              }
+            ]
+          },
+          "error": null,
+          "bill": {
+            "total": {
+              "$q": "20",
+              "u": "$"
+            }
+          }
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 1,
+        "regions": [
+          {
+            "hits": 3,
+            "kind": "charge",
+            "range": {
+              "from": 69,
+              "to": 97
+            }
+          }
+        ],
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "an input varies over its constraint and enums over their variants",
+    "tests": "tariff \"t\"\nenum Service { Standard, Expedited }\ninput service: Service = Standard\ninput rate: Money/mi = $1/mi where $0.50/mi..=$1.50/mi\ncharge \"x\" = rate * 100 mi + (if service == Expedited { $50 } else { $0 })\nproperty \"expedited costs more\" {\n  vary input.service\n  vary input.rate\n  expect total >= $50\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "expedited costs more",
+          "kind": "property",
+          "status": "passed",
+          "cases": 48,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 3,
+        "regions": [
+          {
+            "hits": 48,
+            "kind": "charge",
+            "range": {
+              "from": 137,
+              "to": 211
+            }
+          },
+          {
+            "hits": 24,
+            "kind": "if",
+            "range": {
+              "from": 193,
+              "to": 196
+            }
+          },
+          {
+            "hits": 24,
+            "kind": "else",
+            "range": {
+              "from": 206,
+              "to": 208
+            }
+          }
+        ],
+        "total": 3
+      }
+    }
+  },
+  {
+    "name": "nonincreasing holds",
+    "tests": "tariff \"t\"\nlet w = shipment.weight ?? 0 lb\ncharge \"x\" = $100 - $1/lb * w.min(100 lb)\nproperty \"discount grows\" {\n  vary shipment.weight in 0 lb..=200 lb\n  expect total nonincreasing in shipment.weight\n  expect charge(\"x\") ?? $0 nonincreasing in shipment.weight\n}",
+    "expect": {
+      "tests": [
+        {
+          "name": "discount grows",
+          "kind": "property",
+          "status": "passed",
+          "cases": 24,
+          "skipped": 0,
+          "failures": [],
+          "counterexample": null,
+          "error": null,
+          "bill": null
+        }
+      ],
+      "needs": [],
+      "coverage": {
+        "reached": 1,
+        "regions": [
+          {
+            "hits": 24,
+            "kind": "charge",
+            "range": {
+              "from": 43,
+              "to": 84
+            }
+          }
+        ],
+        "total": 1
+      }
+    }
+  },
+  {
+    "name": "a property reads a choice's outcome",
+    "tests": "tariff \"t\"\nbest \"Linehaul\" {\n  option \"Per mile\" {\n    charge \"Per mile\" = $2/mi * shipment.distance\n  }\n  option \"Flat\" {\n    charge \"Flat\" = $500\n  }\n}\nproperty \"never above the flat rate\" {\n  vary shipment.distance in 1 mi..3_000 mi\n  expect total <= $500\n  expect chosen(\"Linehaul\") != none\n}\n",
+    "expect": {
+      "tests": [
+        {
+          "kind": "property",
+          "status": "passed",
+          "cases": 24,
+          "failures": []
+        }
+      ],
+      "coverage": {
+        "reached": 4,
+        "total": 4
+      }
+    }
+  }
+]
