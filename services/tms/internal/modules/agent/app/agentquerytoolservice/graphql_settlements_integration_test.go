@@ -535,8 +535,26 @@ func TestConvertedLists_SettlementsWithholdOnlyTheirPayFiguresAtInternal(t *test
 					assert.NotContains(t, row, field)
 				}
 			}
+
+			_, err = list.Query(ours.ctx, internalCall(mine.Actor, map[string]any{"query": "a"}))
+			if _, refused := settlementSearchesRefusedAtInternal[c.tool]; refused {
+				require.ErrorContains(t, err, "cannot search by query",
+					"its search matches a field withheld at Internal")
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
+}
+
+// settlementSearchesRefusedAtInternal are the settlement lists whose
+// search matches a field withheld at Internal: an expense's description, an
+// advance's notes, and an escrow account's figures, which its record's
+// search falls back to as filterable fields.
+var settlementSearchesRefusedAtInternal = map[string]struct{}{
+	"settlement_list_driver_expenses": {},
+	"settlement_list_advances":        {},
+	"settlement_list_escrow_accounts": {},
 }
 
 // A settlement get reads one record of the tenant's with only the

@@ -250,7 +250,7 @@ func (n *Noa) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
-			{Name: "sentTo", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{Name: "sent_to", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 		},
 	}
 }

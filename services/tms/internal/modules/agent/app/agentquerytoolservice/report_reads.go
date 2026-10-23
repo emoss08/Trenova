@@ -14,7 +14,6 @@ const (
 	fieldRunQueuedAt      = "queuedAt"
 	fieldRunStartedAt     = "startedAt"
 	fieldAlertConditions  = "conditions"
-	fieldAlertTableName   = "tableName"
 	fieldAlertPriority    = "priority"
 	fieldAlertRecordID    = "recordId"
 	fieldAlertUpdatedAt   = "updatedAt"
@@ -126,7 +125,6 @@ func tableChangeAlertsListSpec() graphQLListSpec {
 			paramStatus:      "Active or Paused.",
 			"conditionMatch": "all when every condition must hold, any when one is enough.",
 		},
-		searches: []string{listFieldName, fieldAlertTableName},
 		unoffered: []string{
 			"customTitle", "customMessage", "topic", fieldAlertPriority, fieldAlertRecordID,
 			fieldAlertUpdatedAt,

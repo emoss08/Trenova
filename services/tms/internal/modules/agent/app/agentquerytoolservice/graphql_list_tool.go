@@ -117,9 +117,11 @@ type graphQLListSpec struct {
 	// it read (program.code), as its repository tool did; queryNote then
 	// describes that query.
 	matches []string
-	// searches are the record fields the server's free-text query matches
-	// (an alert's name and table), so a query is refused, as a filter on
-	// them is, when the caller may not be shown one of them.
+	// searches are record fields a free-text query matches beyond the ones
+	// the record's search configuration names: a bespoke filter's search
+	// (an accounting sync record's numbers), which no configuration
+	// describes. A query is refused, as a filter on them is, when the caller
+	// may not be shown one of the fields it matches.
 	searches []string
 	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
@@ -172,6 +174,9 @@ type graphQLListTool struct {
 	// search is the filter input variable and field a list paged by its
 	// root's own first and after takes its free text in.
 	search [2]string
+	// searched are the fields the query matches: the record's search
+	// configuration's, which the repository searches with, and the spec's.
+	searched []string
 	// pageIn is the input a list paged inside its own input (first and
 	// after on InboundMessagesInput) takes its page in.
 	pageIn string
@@ -296,6 +301,14 @@ func newGraphQLListTool(
 	tool.params = slices.DeleteFunc(params, func(param graphQLParam) bool {
 		return tool.confidential(&param)
 	})
+	if input != "" {
+		tool.searched = read.configuredSearch()
+	}
+	for _, name := range spec.searches {
+		if !slices.Contains(tool.searched, name) {
+			tool.searched = append(tool.searched, name)
+		}
+	}
 
 	return tool, nil
 }
@@ -1317,14 +1330,14 @@ func searchedFields(tool string, fields []graphQLField, searches []string) error
 	return nil
 }
 
-// refuseSearch refuses free text when the spec's searched fields include one
+// refuseSearch refuses free text when the fields it matches include one
 // the caller may not be shown: a match on a hidden name would leak it as a
 // filter on it would.
 func (t *graphQLListTool) refuseSearch(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 ) error {
-	if err := t.refuseFields(ctx, params, t.spec.searches); err != nil {
+	if err := t.refuseFields(ctx, params, t.searched); err != nil {
 		return fmt.Errorf(
 			"%s cannot search by query: it matches values hidden at your access; narrow by "+
 				"another parameter instead", t.spec.name)

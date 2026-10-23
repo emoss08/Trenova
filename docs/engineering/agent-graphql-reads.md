@@ -335,7 +335,7 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   lacks, is refused as a filter or sort before the read, with the same message today's
   `refuseWithheldFields` gives. A view `report_compose_table_view` composes and previews through the list
   is held to the same check, since its filters reach the same resolver. A free-text `query` is refused the same way when
-  one of the fields the spec says it matches (`searches`) is withheld.
+  one of the fields it matches is withheld (see "The ceiling now applies to every read").
 
 **Operations on a table-shaped input** (`WorkerPTOEntriesInput`, `TrainingCoursesInput`, and any
 input that holds `first`, `after`, `query`, `fieldFilters` and `sort`). The table's fields are
@@ -882,13 +882,40 @@ all. The report module converted three of its nine reads; the other six stay wit
 in the inventory.
 
 A list whose free-text `query` matches a field the reader may not be shown leaks that field one
-match at a time, as a filter on it would. A spec names the fields its query matches in `searches`,
-and the tool refuses a query when any of them is withheld. The change alert list is the first to
-declare it. Nine converted lists search a column above Internal and do not yet declare it
-(`worker_list_time_off`, `ledger_list_manual_journals`, `ledger_list_journal_reversals`,
-`fuel_list_cards`, `settlement_list_driver_expenses`, `settlement_list_advances`,
-`factoring_list_noas`, `receivable_list_customer_payments`, `inbox_list_email_profiles`); each
-module should name its searched fields.
+match at a time, as a filter on it would, so the tool refuses such a query before the read, with
+advice to narrow by another parameter. What a query matches is read, not declared, wherever it
+can be: a table input's query matches the record's search configuration, which the repository's
+query builder searches with (`querybuilder.ApplyCursorFilters`), so the tool reads the same
+configuration (`configuredSearch`): its searchable columns, named by the record field each is
+stored in, or, where it names none, every filterable field that is not an enum, as the builder
+falls back to. A bespoke filter's search (`filter.search`, `input.query`) names the fields it
+matches in the spec's `searches`. `TestConvertedLists_GuardEveryFieldTheirQueryMatches` holds
+every converted list to it: a table input's query has a configuration to read; a configuration
+that searches through a stored vector names every column the vector the migrations build matches,
+so the guard judges what the database matches; a bespoke search declares `searches` or says in
+`searchedElsewhere` why it reveals nothing withheld; and at Internal each list refuses a query
+exactly when a field it matches is above Internal.
+
+| Tool | Its query matches | Refused |
+|---|---|---|
+| `worker_list_time_off` | the leave's `reason` (with its status, type and dates) | below Restricted |
+| `ledger_list_manual_journals` | the request's `reason` (with its number and description) | below Restricted |
+| `ledger_list_journal_reversals` | the `reasonText` (with the reason code) | below Restricted |
+| `settlement_list_driver_expenses` | the driver's `description` | below Restricted |
+| `settlement_list_advances` | the advance's `notes` (with its reference) | below Restricted |
+| `settlement_list_escrow_accounts` | every filterable field, the balance, target and interest rate among them, since its configuration names no column | below Restricted |
+| `receivable_list_customer_payments` | the payment's `memo` (with its reference number) | below Restricted |
+| `inbox_list_email_profiles` | the profile's SMTP `host` (with its name, sender address and description) | below Restricted |
+| `report_list_table_change_alerts` | the alert's `name` and `tableName` | below Restricted |
+| `fuel_list_cards` | the card provider's own `externalCardId` (with the label and last four) | always: the id is Confidential |
+
+`factoring_list_noas` matches who a notice was sent to, which is Internal, so it is not refused;
+its configuration named the column `sentTo`, which Postgres read as `sentto`, so its query failed,
+and now names `sent_to`. `inbox_list_email_profiles`'s configuration now names the columns its
+vector matches (`host` and `description`, not `from_name`). The two accounting lists declare
+`searches` (a sync record's number and the accounting system's document number; a mapping's
+Trenova label), all Internal, and `inbox_list_capture_batches` is in `searchedElsewhere`: it matches
+only linked records' Internal values.
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted

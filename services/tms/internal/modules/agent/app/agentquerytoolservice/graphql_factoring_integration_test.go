@@ -401,6 +401,16 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 		})
 	}
 
+	t.Run("a notice's query matches who it was sent to", func(t *testing.T) {
+		converted, err := agentquerytoolservice.ConvertedListTool(
+			"factoring_list_noas", reader, engine)
+		require.NoError(t, err)
+		matched, _ := walkByKey(t, ours.ctx, converted, actor,
+			map[string]any{"query": "ap@A1"}, "id")
+		assert.ElementsMatch(t, ours.noas[:1], matched,
+			"the search names the sent_to column, so the query reads")
+	})
+
 	t.Run("factoring_list_agreements", func(t *testing.T) {
 		converted, err := agentquerytoolservice.ConvertedListTool(
 			"factoring_list_agreements", reader, engine)

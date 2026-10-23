@@ -1491,6 +1491,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: inbox | `inbox_list_inbound_messages` (without words), `inbox_get_inbound_message`, `inbox_list_email_profiles`, `inbox_list_capture_batches`, `inbox_list_triage_assignees` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
 | Typed reads through GraphQL: daily briefing | `insight_get_daily_briefing`; the briefing screen is cut to the sections the reader may read | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 | Typed reads through GraphQL: table change alerts | `report_list_table_change_alerts`; an alert's status, event types and condition match become Internal by the owner's decision | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
+| Search guard | a list refuses a free-text query over a field the reader may not be shown, read from the record's search configuration; ten lists refuse it (nine newly), `fuel_list_cards` always | 639 → 639 | unchanged, 0 pending | unchanged: no description changed, fixture not re-recorded | unchanged |
 
 The carrier row's descriptions are in the embedding fixture re-recorded with the home page and rate matrix row; hybrid held-out ranking on that fixture is recall@5 0.93, top-1 0.83 over 167 cases, and keyword ranking is unchanged (0.99, 0.95 over 147).
 
@@ -1502,13 +1503,26 @@ on the list and in the AI audit trail's recorded alert arguments (a unit test ho
 it); the name, table, watched columns and condition count, which the repository row returned
 ungated, are newly withheld at Internal, and the description says so. A free-text query matches the
 name and table, so a list now names the fields its query matches (`searches`) and refuses a query
-over a withheld one, as it refuses a filter; nine other converted lists search a column above
-Internal without declaring it, listed in agent-graphql-reads.md. The alert's status is a database
+over a withheld one, as it refuses a filter; the search guard row below closes the same probe in
+the other lists. The alert's status is a database
 enum, now marked so in its search configuration, which also fixes a status filter on the
 connection read. A Postgres test reads the list for two tenants and a colleague under row-level
 security at Public, Internal and Restricted. The fixture is re-recorded after merging the briefing;
 held-out ranking holds (keyword 0.99 and 0.95 over 147, hybrid 0.93 and 0.83 over 167, before and
 after), and nothing was tuned against it.
+
+The search guard row closes the probe the table change alerts row found: a free-text query that
+matches a field above the reader's access names it one match at a time. A table input's query
+matches the record's search configuration, which the guard now reads as the repository's query
+builder does, rather than trusting each spec to list it, so a new list cannot leave a searched
+column out; a test holds each configuration that searches a stored vector to the columns the
+migrations build into it, which found the email profile's configuration naming `from_name` where
+the vector matches the SMTP host and description. Nine more lists now refuse a query below Restricted
+(at every access for fuel cards, whose search matches the provider's Confidential card id), and
+the escrow account list, whose configuration names no column, refuses because the builder falls
+back to every filterable field, its money among them. The notice list's configuration named
+`sentTo`, which Postgres read as `sentto`, so its query failed; it now names `sent_to`. No
+description changed, so the fixture and held-out ranking are unchanged.
 
 The reports row converts the run and schedule lists. Each reads a new `Desk*` operation;
 `ReportRun` gains `rowsStored` and `ReportSchedule` gains `mine`, both declare
