@@ -119,6 +119,36 @@ describe("BillView", () => {
     expect(screen.queryByRole("button", { name: /Rounding/ })).toBeNull();
   });
 
+  it("lists the reviews the tariff asks for apart from its notes", () => {
+    const reviewed = tariffBillSchema.parse({
+      ...bill,
+      reviews: [
+        { text: "Holiday pickup", range: { from: 800, to: 840 } },
+        { text: "Liftgate billed on a dock delivery", range: null },
+      ],
+    });
+    const onSelectRange = vi.fn();
+    render(<BillView bill={reviewed} onSelectRange={onSelectRange} />);
+
+    const reviews = screen.getByRole("list", { name: "Reviews" });
+    expect(
+      within(reviews)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Holiday pickup", "Liftgate billed on a dock delivery"]);
+    const notes = screen.getByRole("list", { name: "Notes" });
+    expect(notes).not.toHaveTextContent("Holiday pickup");
+
+    fireEvent.click(within(reviews).getByRole("button", { name: "Holiday pickup" }));
+    expect(onSelectRange).toHaveBeenCalledWith({ from: 800, to: 840 });
+  });
+
+  it("shows no reviews list when the tariff asks for none", () => {
+    render(<BillView bill={bill} />);
+    expect(screen.queryByRole("list", { name: "Reviews" })).toBeNull();
+    expect(bill.reviews).toEqual([]);
+  });
+
   it("says when a rating billed nothing", () => {
     render(<BillView bill={{ ...bill, lines: [], notes: [] }} />);
     expect(screen.getByText("This rating billed no charges.")).toBeInTheDocument();

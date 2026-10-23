@@ -80,6 +80,8 @@ type BillingQueueItem struct {
 	// While any is listed the item cannot be approved.
 	DetentionHolds []*DetentionHold `json:"detentionHolds,omitempty" bun:"-"`
 
+	RatingReviewHold *RatingReviewHold `json:"ratingReviewHold,omitempty" bun:"-"`
+
 	// PONumber is the customer's purchase order, from the item's order. It is
 	// read with the item rather than stored on it.
 	PONumber string `json:"poNumber,omitempty" bun:"po_number,scanonly"`

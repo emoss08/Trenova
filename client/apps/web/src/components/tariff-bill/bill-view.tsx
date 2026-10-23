@@ -1,6 +1,6 @@
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import { AnnotationIcon } from "@trenova/shared/components/icons";
+import { AnnotationIcon, Flag01Icon } from "@trenova/shared/components/icons";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatTariffMoney, formatTariffValue } from "@trenova/shared/lib/tariff-value";
@@ -9,8 +9,10 @@ import type {
   TariffBill,
   TariffBillLine,
   TariffLineKind,
+  TariffNote,
   TariffRange,
 } from "@trenova/shared/types/tariff";
+import type React from "react";
 
 export type BillViewProps = {
   bill: TariffBill;
@@ -113,9 +115,61 @@ function LineRow({ line, converted, currency, onSelectRange }: LineRowProps) {
 }
 
 /**
+ * The bill's notes or reviews as a list, each one revealing its statement when the bill is shown
+ * beside its source.
+ */
+function BillRemarks({
+  label,
+  remarks,
+  icon,
+  className,
+  onSelectRange,
+}: {
+  label: string;
+  remarks: TariffNote[];
+  icon: React.ReactNode;
+  className: string;
+  onSelectRange?: (range: TariffRange) => void;
+}) {
+  if (remarks.length === 0) {
+    return null;
+  }
+
+  return (
+    <ul aria-label={label} className="flex flex-col gap-1">
+      {remarks.map((remark, index) => {
+        const range = remark.range;
+        const text = (
+          <>
+            {icon}
+            <span>{remark.text}</span>
+          </>
+        );
+        return (
+          // oxlint-disable-next-line react/no-array-index-key -- remarks have no identity but their order
+          <li key={index} className={cn("text-xs", className)}>
+            {onSelectRange && range ? (
+              <button
+                type="button"
+                className="hover:text-foreground ui-focus-ring flex items-start gap-1.5 rounded-sm text-left"
+                onClick={() => onSelectRange(range)}
+              >
+                {text}
+              </button>
+            ) : (
+              <span className="flex items-start gap-1.5">{text}</span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
  * A tariff's bill as the customer will be billed: each charge with its code and its quantity
  * times rate, the adjustments the total clauses made (labelled in the reader's language), the
- * notes, the freight, accessorial and grand totals, and the totals in the billing currency when
+ * reviews it asks a person for, the notes, the freight, accessorial and grand totals, and the totals in the billing currency when
  * the bill was converted. Charge labels are the customer's text and are shown as written.
  */
 export function BillView({
@@ -151,35 +205,20 @@ export function BillView({
         </ul>
       )}
 
-      {bill.notes.length > 0 && (
-        <ul aria-label={t("Notes")} className="flex flex-col gap-1">
-          {bill.notes.map((note, index) => {
-            const range = note.range;
-            const text = (
-              <>
-                <AnnotationIcon className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
-                <span>{note.text}</span>
-              </>
-            );
-            return (
-              // oxlint-disable-next-line react/no-array-index-key -- notes have no identity but their order
-              <li key={index} className="text-foreground-muted text-xs">
-                {onSelectRange && range ? (
-                  <button
-                    type="button"
-                    className="hover:text-foreground ui-focus-ring flex items-start gap-1.5 rounded-sm text-left"
-                    onClick={() => onSelectRange(range)}
-                  >
-                    {text}
-                  </button>
-                ) : (
-                  <span className="flex items-start gap-1.5">{text}</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <BillRemarks
+        label={t("Reviews")}
+        remarks={bill.reviews}
+        icon={<Flag01Icon className="text-warning mt-0.5 size-3.5 shrink-0" />}
+        className="text-foreground"
+        onSelectRange={onSelectRange}
+      />
+      <BillRemarks
+        label={t("Notes")}
+        remarks={bill.notes}
+        icon={<AnnotationIcon className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />}
+        className="text-foreground-muted"
+        onSelectRange={onSelectRange}
+      />
 
       <DescriptionList layout="split" className="border-t pt-1">
         {!totalOnly && (

@@ -1,4 +1,5 @@
 import { ChargePayerControl } from "@/components/billing/charge-payer-control";
+import { RatingReviewHold } from "@/components/billing/rating-review-hold";
 import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CustomerAutocompleteField,
@@ -14,7 +15,7 @@ import { useShipmentAutoRate } from "@/hooks/use-shipment-auto-rate";
 import { useShipmentTotalsPreview } from "@/hooks/use-shipment-totals-preview";
 import { customer as customerQueries } from "@/lib/queries/customer";
 import { shipment as shipmentQueries } from "@/lib/queries/shipment";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CapabilityFields,
   type FieldDescriptor,
@@ -528,6 +529,13 @@ function RatingBillCard() {
           <AlertDescription>{ratingDetail.refusal}</AlertDescription>
         </Alert>
       ) : null}
+      {bill && shipmentId ? (
+        <ShipmentRatingReview
+          shipmentId={shipmentId}
+          reasons={bill.reviews.map((review) => review.text)}
+          ratingDetail={ratingDetail}
+        />
+      ) : null}
       {bill ? <BillView bill={bill} currency={bill.currency || undefined} /> : null}
       {choices.length > 0 && (
         <ChoicesView
@@ -545,6 +553,45 @@ function RatingBillCard() {
           )}
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * The reviews the tariff asked for on this rating, and the approval that releases the shipment to
+ * be billed. Approving bumps the shipment's version, so the form takes the saved rating and
+ * version back rather than refetching over unsaved edits.
+ */
+function ShipmentRatingReview({
+  shipmentId,
+  reasons,
+  ratingDetail,
+}: {
+  shipmentId: string;
+  reasons: string[];
+  ratingDetail: NonNullable<Shipment["ratingDetail"]>;
+}) {
+  const { setValue } = useFormContext<Shipment>();
+  const queryClient = useQueryClient();
+  const approval = ratingDetail.reviewApproval;
+  const awaiting = ratingDetail.awaitingReview ?? (reasons.length > 0 && !approval);
+
+  return (
+    <div className="mb-3">
+      <RatingReviewHold
+        shipmentId={shipmentId}
+        reasons={reasons}
+        awaiting={awaiting}
+        approvedAt={approval?.approvedAt}
+        approvedByName={approval?.approvedBy?.name}
+        onApproved={(saved) => {
+          setValue("ratingDetail", saved.ratingDetail, { shouldDirty: false });
+          setValue("version", saved.version, { shouldDirty: false });
+          void queryClient.invalidateQueries({ queryKey: ["shipment"] });
+          void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
+          void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
+        }}
+      />
     </div>
   );
 }

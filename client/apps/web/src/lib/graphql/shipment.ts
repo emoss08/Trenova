@@ -1,5 +1,6 @@
 import {
   AcknowledgeShipmentCommentDocument,
+  ApproveShipmentRatingReviewDocument,
   AutoRateShipmentDocument,
   CalculateShipmentDistanceDocument,
   CalculateShipmentLoadingOptimizationDocument,
@@ -345,6 +346,18 @@ export async function uncancelShipmentGraphQL(id: Shipment["id"]): Promise<Shipm
     variables: { id },
   });
   return nestChargeAllocations(data.uncancelShipment as Shipment);
+}
+
+/** Approves the reviews the tariff asked for, which releases the shipment to be billed. */
+export async function approveShipmentRatingReviewGraphQL(
+  shipmentId: Shipment["id"],
+): Promise<Shipment> {
+  const data = await requestShipmentGraphQL({
+    document: ApproveShipmentRatingReviewDocument,
+    operationName: "ApproveShipmentRatingReview",
+    variables: { shipmentId },
+  });
+  return nestChargeAllocations(data.approveShipmentRatingReview as Shipment);
 }
 
 export async function duplicateShipmentGraphQL(request: DuplicateShipmentRequest) {

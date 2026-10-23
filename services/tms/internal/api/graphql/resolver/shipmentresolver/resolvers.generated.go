@@ -15,15 +15,16 @@ import (
 
 type Deps struct {
 	*base.Core
-	AnalyticsService        kernelports.AnalyticsService
-	ShipmentService         shipmentports.ShipmentService
-	ShipmentCommentService  shipmentports.ShipmentCommentService
-	ShipmentEventService    shipmenteventports.ShipmentEventService
-	TrackingEventService    trackingeventports.TrackingEventService
-	ShipmentImportAssistant shipmentports.ShipmentImportAssistantService
-	InvoiceService          invoiceports.InvoiceService
-	DriverSettlementRepo    driversettlementports.DriverSettlementRepository
-	CarrierSettlementRepo   carriersettlementports.CarrierSettlementRepository
+	AnalyticsService            kernelports.AnalyticsService
+	ShipmentService             shipmentports.ShipmentService
+	ShipmentCommentService      shipmentports.ShipmentCommentService
+	ShipmentRatingReviewService shipmentports.RatingReviewService
+	ShipmentEventService        shipmenteventports.ShipmentEventService
+	TrackingEventService        trackingeventports.TrackingEventService
+	ShipmentImportAssistant     shipmentports.ShipmentImportAssistantService
+	InvoiceService              invoiceports.InvoiceService
+	DriverSettlementRepo        driversettlementports.DriverSettlementRepository
+	CarrierSettlementRepo       carriersettlementports.CarrierSettlementRepository
 }
 
 type CarrierAssignmentAccessorialResolver struct{ *Deps }
@@ -43,5 +44,7 @@ type ShipmentMoveJurisdictionMileResolver struct{ *Deps }
 type ShipmentMoveResolver struct{ *Deps }
 
 type ShipmentRatingDetailResolver struct{ *Deps }
+
+type ShipmentRatingReviewApprovalResolver struct{ *Deps }
 
 type ShipmentResolver struct{ *Deps }

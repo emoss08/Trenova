@@ -62,6 +62,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentquickfilterservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentratingreviewservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentsuggestionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwatchlistservice"
@@ -102,6 +103,8 @@ func SharedOptions() fx.Option {
 			servicefailurereasoncodeservice.New,
 			shipmentcommentservice.New,
 			shipmentholdservice.New,
+			shipmentratingreviewservice.New,
+			func(s *shipmentratingreviewservice.Service) shipmentports.RatingReviewService { return s },
 			routingguideservice.NewValidator,
 			routingguideservice.New,
 			detentionpolicyservice.New,
@@ -132,6 +135,7 @@ func SharedOptions() fx.Option {
 			shipmentholdrepository.New,
 			shipmentmoverepository.New,
 			shipmentrepository.New,
+			shipmentrepository.NewRatingReviewRepository,
 			shipmentrepository.NewSearchCardReader,
 			shipmentboardrepository.New,
 			shipmentboardrepository.NewBoardRepository,

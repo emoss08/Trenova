@@ -61,6 +61,7 @@ export type StoredTariffBillLine = {
 export type StoredTariffBill = {
   lines: StoredTariffBillLine[];
   notes: { text: string; range: null }[];
+  reviews: { text: string; range: null }[];
   freightTotal: TariffWireQuantity;
   accessorialTotal: TariffWireQuantity;
   total: TariffWireQuantity;
@@ -143,6 +144,7 @@ const readBillSchema = z.object({
     }),
   ),
   notes: z.array(z.object({ text: z.string(), range: z.null() })),
+  reviews: z.array(z.object({ text: z.string(), range: z.null() })).default([]),
   freightTotal: quantitySchema,
   accessorialTotal: quantitySchema,
   total: quantitySchema,
@@ -152,8 +154,8 @@ const readBillSchema = z.object({
 
 /**
  * Reads a stored bill into the wire form the bill views draw: as REST stores it
- * (`tarifftypes.Bill`, notes as `{ text }`, each line flagged `freight`) or as GraphQL reads it
- * (`TariffBill`, notes as text, a line freight when it has no code).
+ * (`tarifftypes.Bill`, notes and reviews as `{ text }`, each line flagged `freight`) or as GraphQL
+ * reads it (`TariffBill`, notes and reviews as text, a line freight when it has no code).
  */
 const rawStoredBillSchema = z
   .object({
@@ -164,6 +166,12 @@ const rawStoredBillSchema = z
       .nullish()
       .transform((value) =>
         (value ?? []).map((note) => (typeof note === "string" ? note : note.text)),
+      ),
+    reviews: z
+      .array(z.union([z.string(), z.object({ text: z.string() })]))
+      .nullish()
+      .transform((value) =>
+        (value ?? []).map((review) => (typeof review === "string" ? review : review.text)),
       ),
     freightTotal: storedDecimalSchema,
     accessorialTotal: storedDecimalSchema,
@@ -177,6 +185,7 @@ const rawStoredBillSchema = z
     currency: bill.currency,
     lines: bill.lines.map(storedLine),
     notes: bill.notes.map((text) => ({ text, range: null })),
+    reviews: bill.reviews.map((text) => ({ text, range: null })),
     freightTotal: { $q: bill.freightTotal, u: "$" },
     accessorialTotal: { $q: bill.accessorialTotal, u: "$" },
     total: { $q: bill.total, u: "$" },

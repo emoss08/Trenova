@@ -266,10 +266,18 @@ export const tariffConvertedSchema = z.object({
 });
 export type TariffConverted = z.output<typeof tariffConvertedSchema>;
 
-/** A tariff's result: its lines in order, its notes and its totals. Lines add up to `total`. */
+/**
+ * A tariff's result: its lines in order, its notes, the reviews it asks for and its totals. Lines
+ * add up to `total`.
+ */
 export const tariffBillSchema = z.object({
   lines: z.array(tariffBillLineSchema),
   notes: z
+    .array(tariffNoteSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  /** What the tariff asks a person to check before the shipment bills; a rating with any is held. */
+  reviews: z
     .array(tariffNoteSchema)
     .nullish()
     .transform((value) => value ?? []),

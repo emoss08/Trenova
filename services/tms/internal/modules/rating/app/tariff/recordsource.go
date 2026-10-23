@@ -2,6 +2,7 @@ package tariff
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
@@ -14,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,6 +37,8 @@ type RecordSourceParams struct {
 	Settings      *Settings
 	Shipments     shipmentports.ShipmentRepository
 	Hydrator      ratequoteports.ShipmentRatingHydrator
+	Holidays      workerports.OrgHolidayRepository
+	Codes         *Codes
 }
 
 type RecordSource struct {
@@ -43,6 +48,8 @@ type RecordSource struct {
 	settings      *Settings
 	shipments     shipmentports.ShipmentRepository
 	hydrator      ratequoteports.ShipmentRatingHydrator
+	holidays      workerports.OrgHolidayRepository
+	codes         *Codes
 }
 
 //nolint:gocritic // fx param structs are passed by value
@@ -54,6 +61,8 @@ func NewRecordSource(p RecordSourceParams) *RecordSource {
 		settings:      p.Settings,
 		shipments:     p.Shipments,
 		hydrator:      p.Hydrator,
+		holidays:      p.Holidays,
+		codes:         p.Codes,
 	}
 }
 
@@ -111,11 +120,22 @@ func (s *RecordSource) Build(ctx context.Context, req *RecordRequest) (rules.Raw
 		return nil, err
 	}
 
+	holidays, err := s.Holidays(ctx, req.TenantInfo, at.Year())
+	if err != nil {
+		return nil, err
+	}
+	codes, err := s.chargeCodes(ctx, req.TenantInfo, req.Shipment)
+	if err != nil {
+		return nil, err
+	}
+
 	input := &record.Input{
 		Shipment:     req.Shipment,
 		Origin:       origin,
 		Destination:  destination,
 		DistanceUnit: settings.DistanceUnit,
+		Holidays:     holidays,
+		ChargeCodes:  codes,
 		Rating: record.Rating{
 			At:        at,
 			Mode:      req.Mode,
@@ -131,6 +151,73 @@ func (s *RecordSource) Build(ctx context.Context, req *RecordRequest) (rules.Raw
 		}
 	}
 	return record.Build(input)
+}
+
+func (s *RecordSource) Holidays(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	year int,
+) ([]record.Holiday, error) {
+	return ratetablecache.Memoize(
+		ctx,
+		tenant.OrgID,
+		tenant.BuID,
+		"tariff.holidays:"+strconv.Itoa(year),
+		func(ctx context.Context) ([]record.Holiday, error) {
+			window := record.HolidayWindowFor(year)
+			rows, err := s.holidays.List(ctx, &workerports.ListOrgHolidaysRequest{
+				TenantInfo: tenant,
+				From:       window.From,
+				To:         window.To,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return record.HolidaysFor(rows, year), nil
+		},
+	)
+}
+
+func (s *RecordSource) chargeCodes(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	entity *shipment.Shipment,
+) (map[pulid.ID]string, error) {
+	if !needsChargeCodes(entity) {
+		return map[pulid.ID]string{}, nil
+	}
+	return ratetablecache.Memoize(
+		ctx,
+		tenant.OrgID,
+		tenant.BuID,
+		"tariff.chargeCodes",
+		func(ctx context.Context) (map[pulid.ID]string, error) {
+			catalog, err := s.codes.Catalog(ctx, tenant)
+			if err != nil {
+				return nil, err
+			}
+			codes := make(map[pulid.ID]string, len(catalog))
+			for _, charge := range catalog {
+				if charge != nil {
+					codes[charge.ID] = charge.Code
+				}
+			}
+			return codes, nil
+		},
+	)
+}
+
+func needsChargeCodes(entity *shipment.Shipment) bool {
+	for _, charge := range entity.AdditionalCharges {
+		if charge == nil || charge.IsSystemGenerated || charge.IsTariff {
+			continue
+		}
+		if charge.AccessorialCharge == nil ||
+			charge.AccessorialCharge.ID != charge.AccessorialChargeID {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *RecordSource) LaneZones(

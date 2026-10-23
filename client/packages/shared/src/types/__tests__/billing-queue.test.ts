@@ -269,3 +269,33 @@ describe("billingQueueItemSchema.shipmentId", () => {
     expect(billingQueueItemSchema.parse(actionFieldsItem).shipmentId).toBe("shp_1");
   });
 });
+
+describe("billingQueueItemSchema.ratingReviewHold", () => {
+  it("reads the reviews holding the item as the REST item carries them", () => {
+    const parsed = billingQueueItemSchema.parse({
+      ...actionFieldsItem,
+      status: "InReview",
+      ratingReviewHold: {
+        shipmentId: "shp_1",
+        reasons: ["Holiday pickup", "Liftgate billed on a dock delivery"],
+        ratedAt: 1_800_000_000,
+        formulaTemplateName: "Dock rates",
+      },
+    });
+
+    expect(parsed.ratingReviewHold).toEqual({
+      shipmentId: "shp_1",
+      reasons: ["Holiday pickup", "Liftgate billed on a dock delivery"],
+      ratedAt: 1_800_000_000,
+      formulaTemplateName: "Dock rates",
+    });
+  });
+
+  it("reads an item the tariff holds nothing on, the field absent or null", () => {
+    expect(billingQueueItemSchema.parse(actionFieldsItem).ratingReviewHold).toBeNull();
+    expect(
+      billingQueueItemSchema.parse({ ...actionFieldsItem, ratingReviewHold: null })
+        .ratingReviewHold,
+    ).toBeNull();
+  });
+});

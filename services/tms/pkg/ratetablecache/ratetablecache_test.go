@@ -170,3 +170,69 @@ func TestInvalidateForcesARebuild(t *testing.T) {
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, src.builds.Load())
 }
+
+func TestMemoizeLoadsOncePerTenantAndNameInARequest(t *testing.T) {
+	t.Parallel()
+
+	ctx := ratetablecache.With(t.Context())
+	orgA, orgB, bu := pulid.MustNew("org_"), pulid.MustNew("org_"), pulid.MustNew("bu_")
+	var loads atomic.Int32
+	load := func(value int) func(context.Context) ([]int, error) {
+		return func(context.Context) ([]int, error) {
+			loads.Add(1)
+			return []int{value}, nil
+		}
+	}
+
+	first, err := ratetablecache.Memoize(ctx, orgA, bu, "holidays:2026", load(1))
+	require.NoError(t, err)
+	again, err := ratetablecache.Memoize(ctx, orgA, bu, "holidays:2026", load(2))
+	require.NoError(t, err)
+	other, err := ratetablecache.Memoize(ctx, orgB, bu, "holidays:2026", load(3))
+	require.NoError(t, err)
+	year, err := ratetablecache.Memoize(ctx, orgA, bu, "holidays:2027", load(4))
+	require.NoError(t, err)
+
+	assert.Equal(t, []int{1}, first)
+	assert.Equal(t, []int{1}, again)
+	assert.Equal(t, []int{3}, other)
+	assert.Equal(t, []int{4}, year)
+	assert.Equal(t, int32(3), loads.Load())
+}
+
+func TestMemoizeLoadsEveryTimeOutsideARequest(t *testing.T) {
+	t.Parallel()
+
+	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	var loads atomic.Int32
+	load := func(context.Context) (string, error) {
+		loads.Add(1)
+		return "value", nil
+	}
+
+	for range 2 {
+		value, err := ratetablecache.Memoize(t.Context(), org, bu, "name", load)
+		require.NoError(t, err)
+		assert.Equal(t, "value", value)
+	}
+	assert.Equal(t, int32(2), loads.Load())
+}
+
+func TestMemoizeKeepsNoFailedLoad(t *testing.T) {
+	t.Parallel()
+
+	ctx := ratetablecache.With(t.Context())
+	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	failure := errors.New("database down")
+
+	_, err := ratetablecache.Memoize(ctx, org, bu, "name", func(context.Context) (int, error) {
+		return 0, failure
+	})
+	require.ErrorIs(t, err, failure)
+
+	value, err := ratetablecache.Memoize(ctx, org, bu, "name", func(context.Context) (int, error) {
+		return 7, nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 7, value)
+}

@@ -26820,6 +26820,11 @@ type TariffBill {
   currency: String!
   lines: [TariffBillLine!]!
   notes: [String!]!
+  """
+  What the tariff asks a person to check before the shipment bills. A shipment whose
+  bill has reviews is rated but held out of billing until a person approves the rating.
+  """
+  reviews: [String!]!
   freightTotal: Decimal!
   accessorialTotal: Decimal!
   total: Decimal!
@@ -26894,6 +26899,21 @@ type ShipmentRatingDetail {
   "The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound."
   source: String!
   explanation: String!
+  "True while the bill's reviews wait on a person's approval, which holds the shipment out of billing."
+  awaitingReview: Boolean!
+  "Who approved the reviews this rating carries, and when. Null until a person approves them."
+  reviewApproval: ShipmentRatingReviewApproval
+}
+
+"""
+A person's approval of the reviews a tariff asked for. A re-rate that comes back with the
+same reviews keeps it; different reviews hold the shipment again.
+"""
+type ShipmentRatingReviewApproval {
+  reviews: [String!]!
+  approvedById: ID!
+  approvedAt: Timestamp!
+  approvedBy: User
 }
 
 """
@@ -28568,6 +28588,11 @@ extend type Mutation {
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   uncancelShipment(id: ID!): Shipment!
+  """
+  Approves the reviews the tariff asked for on the shipment's rating, which releases the
+  shipment to be billed. A person's decision: an agent cannot make it.
+  """
+  approveShipmentRatingReview(shipmentId: ID!): Shipment!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   "Queues the shipment for billing, one item per payer."

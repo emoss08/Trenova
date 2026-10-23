@@ -46,6 +46,9 @@ func BillFrom(bill *rules.TariffBill, currency string) (*Bill, error) {
 	for i := range bill.Notes {
 		out.Notes = append(out.Notes, Note{Text: bill.Notes[i].Text})
 	}
+	for i := range bill.Reviews {
+		out.Reviews = append(out.Reviews, Note{Text: bill.Reviews[i].Text})
+	}
 	if converted != nil {
 		out.Currency = converted.Currency
 		out.Total = converted.Total.Value

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -1231,4 +1232,36 @@ func (r *ShipmentRatingDetailResolver) Trace(ctx context.Context, obj *gqlmodel.
 	}
 
 	return obj.Trace, nil
+}
+
+func (r *MutationResolver) ApproveShipmentRatingReview(ctx context.Context, shipmentID string) (*gqlmodel.Shipment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	entity, err := r.ShipmentRatingReviewService.Approve(ctx, &shipmentports.ApproveRatingReviewRequest{
+		ShipmentID: id,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.ShipmentToModel(ctx, entity)
+}
+
+func (r *ShipmentRatingReviewApprovalResolver) ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error) {
+	userID, err := base.OptionalID(&obj.ApprovedByID)
+	if err != nil {
+		return nil, err
+	}
+	return base.LoadUser(ctx, userID)
 }

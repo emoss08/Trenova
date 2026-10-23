@@ -345,6 +345,7 @@ type billingQueueDetail struct {
 	ChargesTruncated          bool                     `json:"chargesTruncated,omitempty"`
 	ChargeProblem             string                   `json:"chargeProblem,omitempty"`
 	DetentionHolds            []billingQueueHold       `json:"detentionHolds"`
+	RatingReview              []string                 `json:"ratingReview,omitempty"`
 	Issues                    []billingQueueIssue      `json:"issues"`
 	Readiness                 *billingQueueReadiness   `json:"readiness,omitempty"`
 	CanApprove                bool                     `json:"canApprove"`
@@ -422,6 +423,9 @@ func (r queueDetailReader) detail(
 		DetentionHolds:            holdsOf(item.DetentionHolds, showAmount),
 		Issues:                    issuesOf(item, showAmount),
 	}
+	if hold := item.RatingReviewHold; hold != nil {
+		detail.RatingReview = hold.Reasons
+	}
 	if item.Shipment != nil {
 		detail.ShipmentStatus = string(item.Shipment.Status)
 		detail.BOL = item.Shipment.BOL
@@ -466,6 +470,9 @@ func approvable(item *billingqueue.BillingQueueItem) (canApprove bool, blockedBy
 		return false, "an item in " + string(item.Status) + " cannot be approved"
 	case len(item.DetentionHolds) > 0:
 		return false, "a detention charge on its shipment is still waiting on approval"
+	case item.RatingReviewHold != nil:
+		return false, "the tariff held its shipment's rating for review; a person approves " +
+			"the rating before it can be approved"
 	case len(item.OpenIssues()) > 0:
 		return false, "a flagged check on it has not been settled; a biller settles it in " +
 			"the item's review before it can be approved"

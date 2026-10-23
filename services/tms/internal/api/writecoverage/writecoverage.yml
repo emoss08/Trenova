@@ -2819,6 +2819,9 @@ writes:
   "mutation acknowledgeShipmentComment":
     exempt: attestation
     reason: "Acknowledging a comment says that the person it was addressed to has read it; only that person can say so."
+  "mutation approveShipmentRatingReview":
+    exempt: attestation
+    reason: "Approving the reviews a tariff asked for is the sign-off that releases a held rating to billing; a named person must make it, and the service refuses an agent."
   "mutation autoRateShipment":
     tools: [shipment_rerate]
   "mutation bulkTransferShipmentsToBilling":

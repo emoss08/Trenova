@@ -43,6 +43,14 @@ func (s *Service) guardItemDetentionHolds(
 	return s.guardDetentionHolds(ctx, tenantInfo, []pulid.ID{item.ShipmentID})
 }
 
+func guardItemRatingReview(item *billingqueue.BillingQueueItem, entity *shipment.Shipment) error {
+	if item == nil || item.BillType == billingqueue.BillTypeCreditMemo || entity == nil {
+		return nil
+	}
+
+	return shipment.RatingReviewHoldError([]*shipment.Shipment{entity})
+}
+
 // syncDetentionBilling marks billed the detention charges a new invoice
 // carries. It runs in the transaction that created the invoice.
 func (s *Service) syncDetentionBilling(

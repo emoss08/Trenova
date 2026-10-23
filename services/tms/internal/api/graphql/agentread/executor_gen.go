@@ -317,6 +317,7 @@ type ResolverParams struct {
 	ShipmentCommentService       shipmentports.ShipmentCommentService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentRatingReviewService  shipmentports.RatingReviewService
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
 	TelematicsService            *telematicsservice.Service
@@ -1297,16 +1298,17 @@ func NewSchema(p ResolverParams) Schema {
 		ServiceTypeService: p.ServiceTypeService,
 	}
 	shipmentDeps := &shipmentresolver.Deps{
-		Core:                    core,
-		AnalyticsService:        p.AnalyticsService,
-		ShipmentService:         p.ShipmentService,
-		ShipmentCommentService:  p.ShipmentCommentService,
-		ShipmentEventService:    p.ShipmentEventService,
-		TrackingEventService:    p.TrackingEventService,
-		ShipmentImportAssistant: p.ShipmentImportAssistant,
-		InvoiceService:          p.InvoiceService,
-		DriverSettlementRepo:    p.DriverSettlementRepo,
-		CarrierSettlementRepo:   p.CarrierSettlementRepo,
+		Core:                        core,
+		AnalyticsService:            p.AnalyticsService,
+		ShipmentService:             p.ShipmentService,
+		ShipmentCommentService:      p.ShipmentCommentService,
+		ShipmentRatingReviewService: p.ShipmentRatingReviewService,
+		ShipmentEventService:        p.ShipmentEventService,
+		TrackingEventService:        p.TrackingEventService,
+		ShipmentImportAssistant:     p.ShipmentImportAssistant,
+		InvoiceService:              p.InvoiceService,
+		DriverSettlementRepo:        p.DriverSettlementRepo,
+		CarrierSettlementRepo:       p.CarrierSettlementRepo,
 	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                core,
@@ -1676,6 +1678,7 @@ func NewSchema(p ResolverParams) Schema {
 		"ShipmentMove":                 func() any { return &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps} },
 		"ShipmentMoveJurisdictionMile": func() any { return &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps} },
 		"ShipmentRatingDetail":         func() any { return &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps} },
+		"ShipmentRatingReviewApproval": func() any { return &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps} },
 		"Tender":                       func() any { return &tenderresolver.TenderResolver{Deps: tenderDeps} },
 		"TenderOffer":                  func() any { return &tenderresolver.TenderOfferResolver{Deps: tenderDeps} },
 		"Tractor":                      func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },

@@ -517,6 +517,7 @@ modules:
       - shipmentinvalidation
       - shipmentmoveservice
       - shipmentquickfilterservice
+      - shipmentratingreviewservice
       - shipmentservice
       - shipmentsuggestionservice
       - shipmenttracking

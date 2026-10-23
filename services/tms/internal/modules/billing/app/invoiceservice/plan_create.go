@@ -103,6 +103,9 @@ func (s *Service) planOrderInvoices(
 	if err = s.guardDetentionHolds(ctx, req.TenantInfo, legIDs(legs)); err != nil {
 		return nil, err
 	}
+	if err = shipment.RatingReviewHoldError(legs); err != nil {
+		return nil, err
+	}
 
 	buckets, err := bucketLegsByPayer(ctx, ord, legs)
 	if err != nil {
@@ -360,6 +363,9 @@ func (s *Service) planShipmentDrafts(
 		)
 	}
 	if err = s.guardDetentionHolds(ctx, req.TenantInfo, []pulid.ID{shp.ID}); err != nil {
+		return nil, err
+	}
+	if err = shipment.RatingReviewHoldError([]*shipment.Shipment{shp}); err != nil {
 		return nil, err
 	}
 

@@ -539,6 +539,7 @@ type ResolverRoot interface {
 	ShipmentMove() ShipmentMoveResolver
 	ShipmentMoveJurisdictionMile() ShipmentMoveJurisdictionMileResolver
 	ShipmentRatingDetail() ShipmentRatingDetailResolver
+	ShipmentRatingReviewApproval() ShipmentRatingReviewApprovalResolver
 	TCASubscription() TCASubscriptionResolver
 	TableConfiguration() TableConfigurationResolver
 	Tender() TenderResolver
@@ -2401,6 +2402,7 @@ type MutationResolver interface {
 	UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error)
 	UncancelShipment(ctx context.Context, id string) (*gqlmodel.Shipment, error)
+	ApproveShipmentRatingReview(ctx context.Context, shipmentID string) (*gqlmodel.Shipment, error)
 	DuplicateShipment(ctx context.Context, input gqlmodel.ShipmentDuplicateInput) (*gqlmodel.ShipmentDuplicateResponse, error)
 	TransferShipmentOwnership(ctx context.Context, id string, input gqlmodel.ShipmentTransferOwnershipInput) (*gqlmodel.Shipment, error)
 	TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error)
@@ -3478,6 +3480,10 @@ type ShipmentRatingDetailResolver interface {
 	Trace(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (map[string]any, error)
 }
 
+type ShipmentRatingReviewApprovalResolver interface {
+	ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error)
+}
+
 type TCASubscriptionResolver interface {
 	Conditions(ctx context.Context, obj *tablechangealert.TCASubscription) ([]map[string]any, error)
 	Status(ctx context.Context, obj *tablechangealert.TCASubscription) (string, error)
@@ -4263,6 +4269,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"ShipmentMove":                       func() any { return r.ShipmentMove() },
 			"ShipmentMoveJurisdictionMile":       func() any { return r.ShipmentMoveJurisdictionMile() },
 			"ShipmentRatingDetail":               func() any { return r.ShipmentRatingDetail() },
+			"ShipmentRatingReviewApproval":       func() any { return r.ShipmentRatingReviewApproval() },
 			"TCASubscription":                    func() any { return r.TCASubscription() },
 			"TableConfiguration":                 func() any { return r.TableConfiguration() },
 			"Tender":                             func() any { return r.Tender() },

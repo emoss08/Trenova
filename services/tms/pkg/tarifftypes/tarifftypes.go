@@ -184,6 +184,7 @@ type Bill struct {
 	Currency         string          `json:"currency"`
 	Lines            []Line          `json:"lines"`
 	Notes            []Note          `json:"notes,omitempty"`
+	Reviews          []Note          `json:"reviews,omitempty"`
 	FreightTotal     decimal.Decimal `json:"freightTotal"`
 	AccessorialTotal decimal.Decimal `json:"accessorialTotal"`
 	Total            decimal.Decimal `json:"total"`
