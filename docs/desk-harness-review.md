@@ -1475,7 +1475,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
-| Typed reads through GraphQL: rates | `rate_list_agreements`, `rate_get_agreement`, `rate_list_fuel_index_prices`, `rate_list_fuel_surcharge_programs` | 632 → 632 | unchanged, 0 pending | 0.93 → pending re-record | 0.82 → pending re-record |
+| Typed reads through GraphQL: rates | `rate_list_agreements`, `rate_get_agreement`, `rate_list_fuel_index_prices`, `rate_list_fuel_surcharge_programs` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1635,8 +1635,9 @@ fifty. `rateMatrix(id)` gains its dimensions and a paged `cells(offset:, limit:)
 Two shapes are new: a `String` argument that takes a day as text, and a whole list whose root takes
 no argument but whose repository tool matched a query in what it read (`matches`). Nothing an agent
 at Internal saw before is withheld now, and no field the repository tools hid is shown. The
-agreement descriptions changed, so the embedding fixture is re-recorded; held-out keyword ranking is unchanged
-(0.99 and 0.95 over 147); the hybrid figures wait on the re-recorded fixture.
+agreement descriptions changed, so the embedding fixture is re-recorded; held-out ranking: keyword unchanged (0.99 and
+0.95 over 147), hybrid recall@5 0.93 → 0.93 and top-1 0.82 → 0.83 (165 cases before, 167 on this
+master).
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
