@@ -73,7 +73,6 @@ func coreToolProviders() []any {
 		provideListReportsTool,
 		provideRunReportTool,
 		provideGetReportRunTool,
-		provideListReportRunsTool,
 		provideCompareReportRunsTool,
 		provideDescribeReportTool,
 		provideListReportDatasetsTool,
@@ -151,10 +150,6 @@ func provideAnalyzeDataTool(
 
 func provideGetReportRunTool(reports *reporting.Service) agentports.AgentQueryTool {
 	return newGetReportRunTool(reports)
-}
-
-func provideListReportRunsTool(reports *reporting.Service) agentports.AgentQueryTool {
-	return newListReportRunsTool(reports)
 }
 
 func provideCompareReportRunsTool(reports *reporting.Service) agentports.AgentQueryTool {

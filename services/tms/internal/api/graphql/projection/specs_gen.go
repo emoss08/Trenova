@@ -23389,6 +23389,10 @@ func init() {
 				FieldMapKey: "truncated",
 			},
 			{
+				Name:        "rowsStored",
+				FieldMapKey: "rowsKey",
+			},
+			{
 				Name:        "error",
 				FieldMapKey: "error",
 			},
@@ -23481,6 +23485,10 @@ func init() {
 			},
 			{
 				Name:        "runAsId",
+				FieldMapKey: "runAsId",
+			},
+			{
+				Name:        "mine",
 				FieldMapKey: "runAsId",
 			},
 			{

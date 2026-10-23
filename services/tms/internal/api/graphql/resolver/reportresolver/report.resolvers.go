@@ -631,13 +631,17 @@ func (r *QueryResolver) DrillThroughReport(ctx context.Context, input gqlmodel.R
 	return reportPreviewToModel(result), nil
 }
 
-func (r *QueryResolver) ReportSchedules(ctx context.Context, definitionID *string) ([]*gqlmodel.ReportSchedule, error) {
+func (r *QueryResolver) ReportSchedules(ctx context.Context, definitionID *string, enabledOnly *bool, limit *int) ([]*gqlmodel.ReportSchedule, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceReport, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &reportingservice.ListSchedulesRequest{Request: reportingRequest(authCtx)}
+	req := &reportingservice.ListSchedulesRequest{
+		Request:     reportingRequest(authCtx),
+		EnabledOnly: base.BoolValue(enabledOnly),
+		Limit:       base.RecordListLimit(limit, definitionID != nil),
+	}
 	if definitionID != nil {
 		parsedID, parseErr := pulid.MustParse(*definitionID)
 		if parseErr != nil {
@@ -809,4 +813,15 @@ func (r *MutationResolver) ScheduleTableView(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 	return tableExportResultToModel(result), nil
+}
+
+func (r *ReportScheduleResolver) Mine(ctx context.Context, obj *gqlmodel.ReportSchedule) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return false, err
+	}
+	return obj.RunAsID == base.TenantInfo(authCtx).UserID.String(), nil
 }

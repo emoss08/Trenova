@@ -9,25 +9,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
-	paramFuelIndexID       = "fuelIndexId"
-	paramReportScheduleDef = "definitionId"
-	fieldTractorID         = "tractorId"
-	fieldJurisdictionID    = "jurisdictionId"
-	maxReportSchedules     = 50
+	paramFuelIndexID    = "fuelIndexId"
+	fieldTractorID      = "tractorId"
+	fieldJurisdictionID = "jurisdictionId"
 )
 
 func fuelRateReadProviders() []any {
 	return []any{
 		newListRateImportsTool,
-		provideListReportSchedulesTool,
 	}
 }
 
@@ -136,111 +131,4 @@ func (t *listRateImportsTool) Query(
 	}
 
 	return map[string]any{"imports": rows, "total": result.Total}, nil
-}
-
-type reportScheduleReader interface {
-	ListSchedules(
-		ctx context.Context,
-		req *reporting.ListSchedulesRequest,
-	) ([]*report.ReportSchedule, error)
-}
-
-type reportScheduleRow struct {
-	ID             string       `json:"id"`
-	DefinitionID   string       `json:"definitionId"`
-	CronExpression string       `json:"cronExpression"`
-	Timezone       string       `json:"timezone"`
-	Formats        []string     `json:"formats"`
-	Recipients     []string     `json:"emailRecipients"`
-	Enabled        bool         `json:"enabled"`
-	Yours          bool         `json:"yours"`
-	NextRunAt      optionalDate `json:"nextRunAt"`
-	Failures       int          `json:"consecutiveFailures,omitempty"`
-}
-
-type listReportSchedulesTool struct {
-	schedules reportScheduleReader
-}
-
-func provideListReportSchedulesTool(schedules *reporting.Service) agentports.AgentQueryTool {
-	return &listReportSchedulesTool{schedules: schedules}
-}
-
-func (t *listReportSchedulesTool) Name() string { return "report_list_schedules" }
-
-func (t *listReportSchedulesTool) SearchTerms() []string {
-	return []string{"scheduled", "emailed", "recurring", "subscription"}
-}
-
-func (t *listReportSchedulesTool) Description() string {
-	return "List reports on a schedule: when each runs, in what formats, who it is emailed " +
-		"to, whether it is on and when it runs next. Only the person who set a schedule up " +
-		"can change it with report_update_schedule or remove it with " +
-		"report_delete_schedule; yours says which are theirs."
-}
-
-func (t *listReportSchedulesTool) ParamSchema() map[string]any {
-	return objectSchema(map[string]any{
-		paramReportScheduleDef: agenttoolschema.RecordIDText(permission.ResourceReport,
-			"Only the schedules of this saved report, from report_list."),
-		"enabledOnly": boolParam("Only schedules that are switched on."),
-		paramLimit:    limitSchema(maxReportSchedules, maxReportSchedules),
-	})
-}
-
-func (t *listReportSchedulesTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceReport})
-}
-
-func (t *listReportSchedulesTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	definitionID := pulid.Nil
-	if raw := strings.TrimSpace(optionalString(params.Params, paramReportScheduleDef)); raw != "" {
-		parsed, err := pulid.Parse(raw)
-		if err != nil {
-			return nil, fmt.Errorf("%q is not a report id; find it with report_list", raw)
-		}
-		definitionID = parsed
-	}
-
-	tenant := tenantOf(params)
-	schedules, err := t.schedules.ListSchedules(ctx, &reporting.ListSchedulesRequest{
-		Request:      reporting.Request{TenantInfo: tenant},
-		DefinitionID: definitionID,
-		EnabledOnly:  optionalBool(params.Params, "enabledOnly"),
-		Limit: min(
-			max(optionalInt(params.Params, paramLimit, maxReportSchedules), 1),
-			maxReportSchedules,
-		),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	rows := make([]reportScheduleRow, 0, len(schedules))
-	for _, schedule := range schedules {
-		row := reportScheduleRow{
-			ID:             schedule.ID.String(),
-			DefinitionID:   schedule.DefinitionID.String(),
-			CronExpression: schedule.CronExpression,
-			Timezone:       schedule.Timezone,
-			Formats:        schedule.Formats,
-			Enabled:        schedule.Enabled,
-			Yours:          schedule.RunAsID == tenant.UserID,
-			NextRunAt:      expectedDate(schedule.NextRunAt, "not scheduled"),
-			Failures:       schedule.ConsecutiveFailures,
-		}
-		if schedule.Delivery != nil {
-			row.Recipients = schedule.Delivery.EmailRecipients
-		}
-		rows = append(rows, row)
-	}
-
-	return map[string]any{"schedules": rows}, nil
 }
