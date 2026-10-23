@@ -199,10 +199,33 @@ type alongside struct {
 }
 
 // unpaged reports whether a list tool's root field returns the whole list
-// at once ([WorkerChecklist!]!), keyed by its own arguments (workerId)
-// rather than paged through a table input.
+// at once ([WorkerChecklist!]!), or its records under items with a limit and
+// an offset (EdiCarrierInvoiceList), keyed by its own arguments rather than
+// paged through a table input.
 func (b *binding) unpaged() bool {
-	return b.Verb == verbList && b.RootField.Type.Elem != nil
+	return b.Verb == verbList && (b.RootField.Type.Elem != nil || b.items())
+}
+
+// items reports whether a list tool's root field returns its records under
+// items rather than as a list or a connection.
+func (b *binding) items() bool {
+	return b.Verb == verbList && b.RootField.Type.Elem == nil &&
+		itemsList(boundSchema, b.RootField)
+}
+
+// itemsList reports whether a root field returns an object that holds its
+// records as a list under items.
+func itemsList(schema *ast.Schema, field *ast.FieldDefinition) bool {
+	if schema == nil {
+		return false
+	}
+	def := schema.Types[field.Type.Name()]
+	if def == nil || def.Kind != ast.Object {
+		return false
+	}
+	items := def.Fields.ForName(itemsField)
+
+	return items != nil && items.Type.Elem != nil
 }
 
 // tabled reports whether a paged list reads through a table input, whose
@@ -786,7 +809,7 @@ func ruleOperation(
 // connection read must select its pageInfo, or a tool reading through it
 // could never offer the next page.
 func pages(op *operation, rr rootRead) bool {
-	if rr.verb != verbList || rr.field.Type.Elem != nil {
+	if rr.verb != verbList || rr.field.Type.Elem != nil || itemsList(boundSchema, rr.field) {
 		return true
 	}
 	for _, selection := range op.Query.Operations[0].SelectionSet {

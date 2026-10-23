@@ -4137,6 +4137,34 @@ type EIASeriesOption struct {
 	FuelType fuelsurcharge.FuelType `json:"fuelType"`
 }
 
+// How partners are acknowledging what this organization sent them.
+type EDIAckHealth struct {
+	// When the figures were read.
+	AsOf int `json:"asOf"`
+	// Start of the window the counts by status cover.
+	Since int `json:"since"`
+	// How long an acknowledgment may be pending before it is overdue, in seconds.
+	OverdueAfterSeconds int `json:"overdueAfterSeconds"`
+	// True when the call asked about 997s or 999s, so the counts cover every set they answer.
+	AnswersEverySet bool                 `json:"answersEverySet"`
+	AckStatusCounts []*EDIAckStatusCount `json:"ackStatusCounts"`
+	// Each partner's counts by acknowledgment status, in the window.
+	Partners []*EDIPartnerAckCounts `json:"partners"`
+	// How many messages are overdue, whenever they were sent.
+	OverdueCount int `json:"overdueCount"`
+	// The overdue messages by partner, oldest first.
+	OverdueByPartner []*EDIOverduePartnerAcks `json:"overdueByPartner"`
+	// How many overdue messages are counted but not listed.
+	OverdueNotListed int `json:"overdueNotListed"`
+	// Messages dead-lettered recently, newest first.
+	RecentDeadLettered []*edi.EDIMessage `json:"recentDeadLettered"`
+}
+
+type EDIAckStatusCount struct {
+	Status edi.MessageAcknowledgmentStatus `json:"status"`
+	Count  int                             `json:"count"`
+}
+
 type EDICarrierInvoiceList struct {
 	Items      []*edi.CarrierInvoice `json:"items"`
 	TotalCount int                   `json:"totalCount"`
@@ -4157,6 +4185,18 @@ type EDIInboundFileConnection struct {
 	Edges      []*EDIInboundFileEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+// One inbound EDI file as its detail reads it, with the transaction sets parsed from it.
+type EDIInboundFileDetail struct {
+	File *edi.EDIInboundFile `json:"file"`
+	// The communication profile the file was picked up through.
+	CommunicationProfileName *string `json:"communicationProfileName,omitempty"`
+	MessageCount             int     `json:"messageCount"`
+	// The transaction sets parsed from the file, the first 50.
+	Messages []*edi.EDIMessage `json:"messages"`
+	// The raw file as it was received, its first 16 KB; null once purged under the retention policy.
+	Raw *EDIRawText `json:"raw,omitempty"`
 }
 
 type EDIInboundFileEdge struct {
@@ -4186,9 +4226,49 @@ type EDIMessageConnection struct {
 	TotalCount *int              `json:"totalCount,omitempty"`
 }
 
+// One EDI message as its detail reads it: the document it decoded to and every finding.
+type EDIMessageDetail struct {
+	Message *edi.EDIMessage `json:"message"`
+	// What the document says, decoded from its X12.
+	Decoded         any `json:"decoded,omitempty"`
+	DiagnosticCount int `json:"diagnosticCount"`
+	// The validation findings, the first 50.
+	Diagnostics []*EDIMessageDiagnostic `json:"diagnostics"`
+	// The raw X12 as it was sent or received, its first 16 KB; null once purged under the retention policy.
+	Raw *EDIRawText `json:"raw,omitempty"`
+}
+
+// One validation finding on an EDI message, naming the segment and element it is about.
+type EDIMessageDiagnostic struct {
+	Severity        string  `json:"severity"`
+	Code            string  `json:"code"`
+	SegmentID       *string `json:"segmentId,omitempty"`
+	ElementPosition *int    `json:"elementPosition,omitempty"`
+	Path            *string `json:"path,omitempty"`
+	Message         string  `json:"message"`
+	SuggestedFix    *string `json:"suggestedFix,omitempty"`
+}
+
 type EDIMessageEdge struct {
 	Node   *edi.EDIMessage `json:"node"`
 	Cursor string          `json:"cursor"`
+}
+
+type EDIOverduePartnerAcks struct {
+	PartnerID         string `json:"partnerId"`
+	PartnerName       string `json:"partnerName"`
+	PartnerCode       string `json:"partnerCode"`
+	OverdueCount      int    `json:"overdueCount"`
+	OldestGeneratedAt int    `json:"oldestGeneratedAt"`
+	// The partner's oldest overdue messages, a few at most.
+	Messages []*edi.EDIMessage `json:"messages"`
+}
+
+type EDIPartnerAckCounts struct {
+	PartnerID       string               `json:"partnerId"`
+	PartnerName     string               `json:"partnerName"`
+	PartnerCode     string               `json:"partnerCode"`
+	AckStatusCounts []*EDIAckStatusCount `json:"ackStatusCounts"`
 }
 
 type EDIPartnerActivity struct {
@@ -4270,6 +4350,7 @@ type EDIPartnerMappingSummary struct {
 
 type EDIPartnerReadinessItem struct {
 	Key      string `json:"key"`
+	Label    string `json:"label"`
 	Complete bool   `json:"complete"`
 }
 
@@ -4317,6 +4398,14 @@ type EDIPartnerTransport struct {
 	Certificates  []*EDITransportCertificate `json:"certificates"`
 }
 
+// The raw X12 of a message or file, cut to its first 16 KB.
+type EDIRawText struct {
+	Text string `json:"text"`
+	// Whether the X12 is longer than the text shown.
+	Truncated bool `json:"truncated"`
+	SizeBytes int  `json:"sizeBytes"`
+}
+
 type EDISummary struct {
 	DeliveryStatusCounts        []*EDISummaryStatusCount   `json:"deliveryStatusCounts"`
 	AckStatusCounts             []*EDISummaryStatusCount   `json:"ackStatusCounts"`
@@ -4353,6 +4442,40 @@ type EDITemplateEdge struct {
 	Cursor string           `json:"cursor"`
 }
 
+type EDITenderCharge struct {
+	Charge string  `json:"charge"`
+	Method *string `json:"method,omitempty"`
+	Amount string  `json:"amount"`
+}
+
+type EDITenderCharges struct {
+	Freight    *string            `json:"freight,omitempty"`
+	Other      *string            `json:"other,omitempty"`
+	Total      *string            `json:"total,omitempty"`
+	Additional []*EDITenderCharge `json:"additional"`
+}
+
+type EDITenderCommodity struct {
+	Commodity string `json:"commodity"`
+	Weight    int    `json:"weight"`
+	Pieces    int    `json:"pieces"`
+}
+
+type EDITenderStop struct {
+	Sequence int    `json:"sequence"`
+	Type     string `json:"type"`
+	// The stop's location: its name, label or code.
+	Location     *string `json:"location,omitempty"`
+	Address      *string `json:"address,omitempty"`
+	City         *string `json:"city,omitempty"`
+	State        *string `json:"state,omitempty"`
+	PostalCode   *string `json:"postalCode,omitempty"`
+	WindowOpens  *int    `json:"windowOpens,omitempty"`
+	WindowCloses *int    `json:"windowCloses,omitempty"`
+	Pieces       *int    `json:"pieces,omitempty"`
+	Weight       *int    `json:"weight,omitempty"`
+}
+
 type EDITestCaseConnection struct {
 	Edges      []*EDITestCaseEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
@@ -4370,9 +4493,25 @@ type EDITransferConnection struct {
 	TotalCount *int               `json:"totalCount,omitempty"`
 }
 
+// One load tender as its card reads it, with what accepting it still waits on.
+type EDITransferDetail struct {
+	Transfer *edi.EDITransfer `json:"transfer"`
+	// The partner's codes not yet mapped, read only for an inbound tender that can still be decided; accepting it waits on them.
+	UnresolvedMappings []*EDITransferMappingNeed `json:"unresolvedMappings"`
+	// Whether the tender can be accepted now: inbound, still open, and every code mapped.
+	CanAccept bool `json:"canAccept"`
+}
+
 type EDITransferEdge struct {
 	Node   *edi.EDITransfer `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// A partner's code a tender carries that this organization has not mapped to its own record.
+type EDITransferMappingNeed struct {
+	EntityType edi.MappingEntityType `json:"entityType"`
+	// The partner's code or label for it.
+	Source string `json:"source"`
 }
 
 type EDITransportCertificate struct {

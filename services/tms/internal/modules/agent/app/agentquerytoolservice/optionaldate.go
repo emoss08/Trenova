@@ -44,6 +44,7 @@ const (
 	absentNotVoided    = "not voided"
 	absentNotResolved  = "not resolved"
 	absentNotProcessed = "not processed"
+	absentNotSent      = "not sent"
 	absentOpenEnded    = "open-ended"
 	absentNotReady     = "not ready"
 	absentNotReleased  = "not released"

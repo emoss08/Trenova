@@ -2374,6 +2374,18 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
+			{
+				Name:       "suggestedCarrier",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "Carrier",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*edi.CarrierInvoice)
+					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").SuggestedCarrier(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
+			},
 		}},
 		{Object: "EdiCarrierInvoiceList", Fields: []*gqlexec.Field{
 			{
@@ -2821,6 +2833,7 @@ type resolverEdiCarrierInvoice interface {
 	ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
 	VarianceAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
 	ReconciliationStatus(ctx context.Context, obj *edi.CarrierInvoice) (string, error)
+	SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error)
 }
 
 type resolverMutation interface {

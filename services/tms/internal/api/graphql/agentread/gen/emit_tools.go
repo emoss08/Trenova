@@ -71,6 +71,7 @@ type toolRead struct {
 	EntityAlias string
 	EntityType  string
 	Unpaged     bool
+	Items       bool
 	Variables   []variable
 	Fields      []field
 	Alongside   []besideRead
@@ -115,6 +116,9 @@ var graphQLReads = map[string]graphQLRead{
 {{- end }}
 {{- if .Unpaged }}
 		Unpaged:   true,
+{{- end }}
+{{- if .Items }}
+		Items:     true,
 {{- end }}
 		Variables: []graphQLVariable{
 {{- range .Variables }}
@@ -214,6 +218,7 @@ func writeTools(
 			EntityAlias: alias,
 			EntityType:  gt.Name,
 			Unpaged:     b.unpaged(),
+			Items:       b.items(),
 			Variables:   variables(schema, b),
 			Fields:      nodeFields(schema, b),
 			Alongside:   besideReads(schema, b.Alongside, false),
@@ -313,11 +318,14 @@ func variables(schema *ast.Schema, b *binding) []variable {
 		}
 	}
 
+	included := includeSwitches(b.Operation.Query)
 	out := make([]variable, 0, len(op.VariableDefinitions))
 	for _, v := range op.VariableDefinitions {
 		described := describeField(schema, v.Variable, v.Type, "")
 		if def, ok := arguments[v.Variable]; ok {
 			described.Description = strings.TrimSpace(def.Description)
+		} else if said, switched := included[v.Variable]; switched {
+			described.Description = said
 		}
 		out = append(out, variable{
 			Name:        v.Variable,
@@ -329,6 +337,34 @@ func variables(schema *ast.Schema, b *binding) []variable {
 			Description: described.Description,
 		})
 	}
+
+	return out
+}
+
+// includeSwitches describe each variable an operation reads only to include
+// a field (@include(if: $includeRaw) on raw), by that field's own schema
+// description, so the switch a tool offers says what turning it on returns.
+func includeSwitches(doc *ast.QueryDocument) map[string]string {
+	fragments := make(map[string]*ast.FragmentDefinition, len(doc.Fragments))
+	for _, fragment := range doc.Fragments {
+		fragments[fragment.Name] = fragment
+	}
+	out := make(map[string]string)
+	var walk func(set ast.SelectionSet)
+	walk = func(set ast.SelectionSet) {
+		for _, f := range collect(set, fragments) {
+			if directive := f.Directives.ForName("include"); directive != nil &&
+				f.Definition != nil && strings.TrimSpace(f.Definition.Description) != "" {
+				if arg := directive.Arguments.ForName("if"); arg != nil && arg.Value != nil &&
+					arg.Value.Kind == ast.Variable {
+					out[arg.Value.Raw] = "true also returns " + f.Name + ": " +
+						strings.TrimSpace(f.Definition.Description)
+				}
+			}
+			walk(f.SelectionSet)
+		}
+	}
+	walk(doc.Operations[0].SelectionSet)
 
 	return out
 }
@@ -398,6 +434,8 @@ func selectedFields(b *binding) map[string]map[string]struct{} {
 	}
 	set := root.SelectionSet
 	switch {
+	case b.items():
+		set = childSet(collect(set, fragments), itemsField)
 	case b.unpaged():
 	case b.Verb == verbList && b.RootField.Type.Name() != b.Node &&
 		strings.HasSuffix(b.RootField.Type.Name(), connection):

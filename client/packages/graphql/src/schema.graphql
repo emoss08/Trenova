@@ -13691,6 +13691,38 @@ type EIASeriesOption {
   seriesId: String!
 }
 
+"""How partners are acknowledging what this organization sent them."""
+type EdiAckHealth @kind(resource: "edi") {
+  ackStatusCounts: [EdiAckStatusCount!]!
+  """
+  True when the call asked about 997s or 999s, so the counts cover every set they answer.
+  """
+  answersEverySet: Boolean!
+  """When the figures were read."""
+  asOf: Timestamp!
+  """
+  How long an acknowledgment may be pending before it is overdue, in seconds.
+  """
+  overdueAfterSeconds: Int!
+  """The overdue messages by partner, oldest first."""
+  overdueByPartner: [EdiOverduePartnerAcks!]!
+  """How many messages are overdue, whenever they were sent."""
+  overdueCount: Int!
+  """How many overdue messages are counted but not listed."""
+  overdueNotListed: Int!
+  """Each partner's counts by acknowledgment status, in the window."""
+  partners: [EdiPartnerAckCounts!]!
+  """Messages dead-lettered recently, newest first."""
+  recentDeadLettered: [EdiMessage!]!
+  """Start of the window the counts by status cover."""
+  since: Timestamp!
+}
+
+type EdiAckStatusCount {
+  count: Int!
+  status: EdiMessageAckStatus!
+}
+
 type EdiAcknowledgmentConfig {
   expected: Boolean!
   slaInMinutes: Int!
@@ -13699,7 +13731,7 @@ type EdiAcknowledgmentConfig {
 }
 
 """An inbound EDI 210 carrier freight invoice awaiting reconciliation."""
-type EdiCarrierInvoice {
+type EdiCarrierInvoice @kind(resource: "carrier_invoice_match") {
   billToName: String!
   bol: String!
   businessUnitId: ID!
@@ -13721,6 +13753,10 @@ type EdiCarrierInvoice {
   reconciliationStatus: String!
   shipmentId: ID
   shipmentReference: String!
+  """
+  The carrier the invoice's SCAC or DOT number points to, for an invoice no carrier is linked to yet; null once one is linked or when nothing matches.
+  """
+  suggestedCarrier: Carrier
   totalAmount: Decimal
   updatedAt: Timestamp!
   varianceAmount: Decimal
@@ -13732,7 +13768,7 @@ type EdiCarrierInvoiceList {
   totalCount: Int!
 }
 
-type EdiCommunicationProfile {
+type EdiCommunicationProfile @kind(resource: "edi") {
   businessUnitId: ID!
   """
   Transport settings for the connection method (AS2, SFTP, VAN, HTTP...). Secret
@@ -13814,7 +13850,7 @@ enum EdiDocumentStatus {
   Inactive
 }
 
-type EdiInboundFile {
+type EdiInboundFile @kind(resource: "edi") {
   businessUnitId: ID!
   checksum: String!
   communicationProfileId: ID!
@@ -13832,6 +13868,8 @@ type EdiInboundFile {
   organizationId: ID!
   partner: EdiPartner
   processedAt: Timestamp
+  """When the raw file was purged under the retention policy."""
+  rawPurgedAt: Timestamp
   receivedAt: Timestamp!
   remotePath: String!
   sizeBytes: Int!
@@ -13845,6 +13883,22 @@ type EdiInboundFileConnection {
   edges: [EdiInboundFileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+}
+
+"""
+One inbound EDI file as its detail reads it, with the transaction sets parsed from it.
+"""
+type EdiInboundFileDetail @kind(resource: "edi") {
+  """The communication profile the file was picked up through."""
+  communicationProfileName: String
+  file: EdiInboundFile!
+  messageCount: Int!
+  """The transaction sets parsed from the file, the first 50."""
+  messages: [EdiMessage!]!
+  """
+  The raw file as it was received, its first 16 KB; null once purged under the retention policy.
+  """
+  raw: EdiRawText
 }
 
 type EdiInboundFileEdge {
@@ -13918,7 +13972,7 @@ type EdiMappingProfileItem {
   version: Int!
 }
 
-type EdiMessage {
+type EdiMessage @kind(resource: "edi") {
   ackLastError: String
   ackMessageId: ID
   ackReceivedAt: Timestamp
@@ -13939,9 +13993,13 @@ type EdiMessage {
   id: ID!
   inboundFileId: ID
   interchangeControlNumber: String!
+  """The invoice the message bills, for a 210."""
+  invoiceId: ID
   organizationId: ID!
   partner: EdiPartner
   partnerDocumentProfileId: ID
+  """When the raw X12 was purged under the retention policy."""
+  rawPurgedAt: Timestamp
   segmentCount: Int!
   shipmentId: ID
   status: EdiMessageStatus!
@@ -13978,6 +14036,35 @@ enum EdiMessageDeliveryStatus {
   Sent
 }
 
+"""
+One EDI message as its detail reads it: the document it decoded to and every finding.
+"""
+type EdiMessageDetail @kind(resource: "edi") {
+  """What the document says, decoded from its X12."""
+  decoded: Any
+  diagnosticCount: Int!
+  """The validation findings, the first 50."""
+  diagnostics: [EdiMessageDiagnostic!]!
+  message: EdiMessage!
+  """
+  The raw X12 as it was sent or received, its first 16 KB; null once purged under the retention policy.
+  """
+  raw: EdiRawText
+}
+
+"""
+One validation finding on an EDI message, naming the segment and element it is about.
+"""
+type EdiMessageDiagnostic {
+  code: String!
+  elementPosition: Int
+  message: String!
+  path: String
+  segmentId: String
+  severity: String!
+  suggestedFix: String
+}
+
 type EdiMessageEdge {
   cursor: String!
   node: EdiMessage!
@@ -13986,6 +14073,16 @@ type EdiMessageEdge {
 enum EdiMessageStatus {
   Failed
   Generated
+}
+
+type EdiOverduePartnerAcks {
+  """The partner's oldest overdue messages, a few at most."""
+  messages: [EdiMessage!]!
+  oldestGeneratedAt: Timestamp!
+  overdueCount: Int!
+  partnerCode: String!
+  partnerId: ID!
+  partnerName: String!
 }
 
 type EdiPartner @kind(resource: "edi") {
@@ -14014,6 +14111,13 @@ type EdiPartner @kind(resource: "edi") {
   timezone: String
   updatedAt: Timestamp!
   version: Int!
+}
+
+type EdiPartnerAckCounts {
+  ackStatusCounts: [EdiAckStatusCount!]!
+  partnerCode: String!
+  partnerId: ID!
+  partnerName: String!
 }
 
 type EdiPartnerActivity {
@@ -14121,6 +14225,7 @@ type EdiPartnerMappingSummary {
 type EdiPartnerReadinessItem {
   complete: Boolean!
   key: String!
+  label: String!
 }
 
 type EdiPartnerReadinessState {
@@ -14167,6 +14272,14 @@ type EdiPartnerTransport {
   lastPollError: String
   lastPollSuccessAt: Timestamp
   profile: EdiCommunicationProfile!
+}
+
+"""The raw X12 of a message or file, cut to its first 16 KB."""
+type EdiRawText {
+  sizeBytes: Int!
+  text: String!
+  """Whether the X12 is longer than the text shown."""
+  truncated: Boolean!
 }
 
 enum EdiStandard {
@@ -14268,6 +14381,40 @@ type EdiTemplateVersion {
   x12Version: String!
 }
 
+type EdiTenderCharge {
+  amount: Decimal!
+  charge: String!
+  method: String
+}
+
+type EdiTenderCharges {
+  additional: [EdiTenderCharge!]!
+  freight: Decimal
+  other: Decimal
+  total: Decimal
+}
+
+type EdiTenderCommodity {
+  commodity: String!
+  pieces: Int!
+  weight: Int!
+}
+
+type EdiTenderStop {
+  address: String
+  city: String
+  """The stop's location: its name, label or code."""
+  location: String
+  pieces: Int
+  postalCode: String
+  sequence: Int!
+  state: String
+  type: String!
+  weight: Int
+  windowCloses: Timestamp
+  windowOpens: Timestamp
+}
+
 type EdiTestCase {
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -14294,35 +14441,79 @@ type EdiTestCaseEdge {
   node: EdiTestCase!
 }
 
-type EdiTransfer {
+type EdiTransfer @kind(resource: "edi") {
+  """The tender's bill of lading number."""
+  bol: String
+  """Whether the tender can still be accepted or declined."""
+  canDecide: Boolean!
+  """What the tender offers to pay."""
+  charges: EdiTenderCharges
+  commodities: [EdiTenderCommodity!]!
+  """
+  The other side of the tender: the partner who sent it in, or the one it was sent to.
+  """
+  counterparty: EdiPartner
   createdAt: Timestamp!
+  """The customer the tender names, as the sender labels it."""
+  customerLabel: String
+  """
+  Inbound when this organization received the tender, Outbound when it sent it.
+  """
+  direction: EdiTransferDirection!
   failureReason: String
   id: ID!
   inboundMessageId: ID
   mappingSnapshot: Any!
+  pieces: Int
   processedAt: Timestamp
   rejectionReason: String
+  """The service type the tender asks for, as the sender labels it."""
+  serviceTypeLabel: String
+  """The shipment type the tender names, as the sender labels it."""
+  shipmentTypeLabel: String
   sourceBusinessUnitId: ID!
   sourceOrganizationId: ID!
   sourcePartner: EdiPartner
   sourcePartnerId: ID!
   sourceShipmentId: ID
   status: EdiTransferStatus!
+  """How many stops the tender's moves carry."""
+  stopCount: Int!
+  """Each stop of the tender's moves, in order."""
+  stops: [EdiTenderStop!]!
   submittedAt: Timestamp!
   targetBusinessUnitId: ID!
   targetOrganizationId: ID!
   targetPartner: EdiPartner
   targetPartnerId: ID!
   targetShipmentId: ID
+  temperatureMax: Int
+  temperatureMin: Int
   tenderPayload: Any!
   updatedAt: Timestamp!
   version: Int!
+  weight: Int
 }
 
 type EdiTransferConnection {
   edges: [EdiTransferEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+}
+
+"""
+One load tender as its card reads it, with what accepting it still waits on.
+"""
+type EdiTransferDetail @kind(resource: "edi") {
+  """
+  Whether the tender can be accepted now: inbound, still open, and every code mapped.
+  """
+  canAccept: Boolean!
+  transfer: EdiTransfer!
+  """
+  The partner's codes not yet mapped, read only for an inbound tender that can still be decided; accepting it waits on them.
+  """
+  unresolvedMappings: [EdiTransferMappingNeed!]!
 }
 
 enum EdiTransferDirection {
@@ -14333,6 +14524,15 @@ enum EdiTransferDirection {
 type EdiTransferEdge {
   cursor: String!
   node: EdiTransfer!
+}
+
+"""
+A partner's code a tender carries that this organization has not mapped to its own record.
+"""
+type EdiTransferMappingNeed {
+  entityType: EdiMappingEntityType!
+  """The partner's code or label for it."""
+  source: String!
 }
 
 enum EdiTransferStatus {
@@ -24548,12 +24748,40 @@ type Query {
   driverSettlement(id: ID!): DriverSettlement
   driverSettlements(input: DataTableConnectionInput!): DriverSettlementConnection!
   """
+  How partners are acknowledging what was sent: counts by acknowledgment status overall and per partner, the messages whose acknowledgment is overdue, and recent dead letters.
+  """
+  ediAckHealth(
+    """
+    How long an acknowledgment may be pending before it is overdue, in seconds: 14400 (four hours) unless given, between 60 and 2592000.
+    """
+    overdueAfterSeconds: Int
+    """Only this partner's messages."""
+    partnerId: ID
+    """
+    How many hours back the counts by status reach: 24 unless given, at most 720. Overdue messages are counted whenever they were sent.
+    """
+    sinceHours: Int
+    """
+    Only messages of this transaction set that were sent: 204, 210, 214 or 990. 997 or 999 asks about the acknowledgments themselves, so the counts cover every set they answer.
+    """
+    transactionSet: String
+  ): EdiAckHealth! @authorizes(resource: "edi")
+  """
   Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched).
   """
-  ediCarrierInvoices(limit: Int, offset: Int, reconciliationStatus: String): EdiCarrierInvoiceList!
+  ediCarrierInvoices(
+    limit: Int
+    offset: Int
+    """
+    Only invoices in this reconciliation status: Unmatched, MappingRequired, Matched or Variance.
+    """
+    reconciliationStatus: String
+  ): EdiCarrierInvoiceList! @authorizes(resource: "carrier_invoice_match")
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
+  ediInboundFile(id: ID!): EdiInboundFileDetail! @authorizes(resource: "edi")
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
+  ediMessage(id: ID!): EdiMessageDetail! @authorizes(resource: "edi")
   ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
   ediPartnerCard(id: ID!): EdiPartnerCard! @authorizes(resource: "edi")
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
@@ -24562,7 +24790,16 @@ type Query {
   ediSummary(sinceHours: Int): EdiSummary!
   ediTemplates(direction: EdiDocumentDirection, input: DataTableConnectionInput!, status: EdiTemplateStatus, transactionSet: String): EdiTemplateConnection!
   ediTestCases(input: DataTableConnectionInput!, partnerDocumentProfileId: ID): EdiTestCaseConnection!
-  ediTransfers(direction: EdiTransferDirection!, input: DataTableConnectionInput!): EdiTransferConnection!
+  ediTransfer(id: ID!): EdiTransferDetail! @authorizes(resource: "edi")
+  ediTransfers(
+    """
+    Inbound for the tenders partners sent in, Outbound for the ones this organization sent.
+    """
+    direction: EdiTransferDirection!
+    """Only the tenders one inbound file carried."""
+    inboundFileId: ID
+    input: DataTableConnectionInput!
+  ): EdiTransferConnection!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
   """The assignment governing the worker's pay right now, if any."""
   effectiveWorkerPayAssignment(workerId: ID!): WorkerPayAssignment

@@ -161,6 +161,10 @@ type EDIPartnerAckCounts struct {
 }
 
 type EDIAckHealth struct {
+	AsOf int64
+	// AnswersEverySet is set when the call asked about the acknowledgments
+	// themselves (997 or 999), so the counts cover every set they answer.
+	AnswersEverySet    bool
 	Since              int64
 	OverdueAckAge      int64
 	PendingSince       int64
@@ -178,8 +182,14 @@ func (s *Service) GetEDIAckHealth(
 ) (*EDIAckHealth, error) {
 	now := timeutils.NowUnix()
 	health := &EDIAckHealth{
-		Since:         req.Since,
-		OverdueAckAge: overdueAckAge(req.OverdueAckAge),
+		AsOf:            now,
+		AnswersEverySet: req.TransactionSet.IsAcknowledgment(),
+		Since:           req.Since,
+		OverdueAckAge:   overdueAckAge(req.OverdueAckAge),
+	}
+	set := req.TransactionSet
+	if health.AnswersEverySet {
+		set = ""
 	}
 	if health.Since <= 0 {
 		health.Since = now - defaultAckHealthWindowSeconds
@@ -198,7 +208,7 @@ func (s *Service) GetEDIAckHealth(
 		TenantInfo:     req.TenantInfo,
 		Since:          health.Since,
 		PartnerID:      req.PartnerID,
-		TransactionSet: req.TransactionSet,
+		TransactionSet: set,
 	}
 	counts, err := s.messageRepo.GetAckStatusCounts(ctx, countsReq)
 	if err != nil {
@@ -218,7 +228,7 @@ func (s *Service) GetEDIAckHealth(
 			TenantInfo:     req.TenantInfo,
 			PendingSince:   health.PendingSince,
 			PartnerID:      req.PartnerID,
-			TransactionSet: req.TransactionSet,
+			TransactionSet: set,
 		},
 	)
 	if err != nil {
@@ -229,7 +239,7 @@ func (s *Service) GetEDIAckHealth(
 		TenantInfo:     req.TenantInfo,
 		PendingSince:   health.PendingSince,
 		PartnerID:      req.PartnerID,
-		TransactionSet: req.TransactionSet,
+		TransactionSet: set,
 		Limit:          min(overdueLimit, MaxAckHealthOverdueLimit),
 	})
 	if err != nil {
@@ -242,7 +252,7 @@ func (s *Service) GetEDIAckHealth(
 		&ediports.ListRecentEDIMessageFailuresRequest{
 			TenantInfo:     req.TenantInfo,
 			PartnerID:      req.PartnerID,
-			TransactionSet: req.TransactionSet,
+			TransactionSet: set,
 			Limit:          feedLimit,
 		},
 	)

@@ -111,12 +111,15 @@ func newGraphQLUnpagedListTool(
 			read.Operation)
 	}
 	if spec.rank != nil || spec.defaultsAt != nil || spec.queryNote != "" ||
-		len(spec.instead) > 0 || spec.combine != nil || len(spec.names) > 0 {
+		len(spec.instead) > 0 || spec.combine != nil {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
 
 	params, required, err := read.argumentParams(spec.name)
 	if err != nil {
+		return nil, err
+	}
+	if params, required, err = renamed(spec.name, params, spec.names, required); err != nil {
 		return nil, err
 	}
 	if params, err = referenced(spec.name, params, spec.references); err != nil {
@@ -190,6 +193,10 @@ func (r *graphQLRead) argumentParams(tool string) (params []graphQLParam, requir
 		}
 		for _, param := range derived {
 			param.OnInput = true
+			if said := variable.Description; said != "" && !variable.List &&
+				variable.Type == graphQLTypeString {
+				param.Schema = withDescription(param.Schema, said)
+			}
 			params = append(params, param)
 		}
 		if variable.NonNull {
@@ -364,7 +371,7 @@ func (t *graphQLUnpagedListTool) Query(
 		return nil, err
 	}
 
-	rows, _ := result.Data[t.read.RootField].([]any)
+	rows, prefix := t.rows(result.Data)
 	more := t.paged && window.more(len(rows), unpagedMost)
 	if t.paged && len(rows) > window.limit {
 		rows = rows[:window.limit]
@@ -375,7 +382,7 @@ func (t *graphQLUnpagedListTool) Query(
 			items = append(items, compact(node))
 		}
 	}
-	withheld := relativePaths(result.Withheld, t.read.RootField+".")
+	withheld := relativePaths(result.Withheld, prefix)
 	if t.spec.shape != nil {
 		hidden := make(map[string]struct{}, len(withheld))
 		for _, path := range withheld {
@@ -428,6 +435,19 @@ func (t *graphQLUnpagedListTool) Query(
 	}
 
 	return outcome, nil
+}
+
+// rows are the records the root returned, as a list or under items, and the
+// prefix their withheld paths carry.
+func (t *graphQLUnpagedListTool) rows(data map[string]any) (rows []any, prefix string) {
+	if !t.read.Items {
+		rows, _ = data[t.read.RootField].([]any)
+		return rows, t.read.RootField + "."
+	}
+	holder, _ := data[t.read.RootField].(map[string]any)
+	rows, _ = holder[outcomeItems].([]any)
+
+	return rows, t.read.RootField + "." + outcomeItems + "."
 }
 
 // checkArguments refuses a call that leaves out a required argument or names

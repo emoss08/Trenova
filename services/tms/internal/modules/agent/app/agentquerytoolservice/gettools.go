@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -217,7 +218,7 @@ func graphQLGetSpecs() []getSpec {
 		orderGetSpec(),
 		serviceFailureGetSpec(),
 		detentionOccurrenceGetSpec(),
-	}, accountingGetSpecs()...)
+	}, slices.Concat(accountingGetSpecs(), ediGetSpecs())...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.
