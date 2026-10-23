@@ -1635,7 +1635,8 @@ Restricted default would have withheld them, and its app keys stay Restricted. T
 changes carry the reads the tools made that no root did: `accountingMappingDetail` (one mapping by
 id or by what it maps, with the records it could be set to) and an optional `integrationType` on
 `accountingSyncObjectStates`. No operation selects what the accounting system said in its own
-words. The descriptions changed, so the embedding fixture is re-recorded; held-out ranking is unchanged (keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82 over 165), and nothing was tuned against it.
+words. The descriptions changed, so the embedding fixture is re-recorded; held-out ranking holds
+(keyword 0.99 and 0.95 over 147, hybrid 0.93 and 0.83 over 167), and nothing was tuned against it.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
