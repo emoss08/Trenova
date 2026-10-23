@@ -1,6 +1,7 @@
 import { TariffEditor } from "@/components/formula-editor/tariff-editor";
 import { isTestItem } from "@/lib/tariff-outline";
 import { formatTariffDocument } from "@/components/formula-editor/tariff-format";
+import { AddChargeCode } from "@/components/tariff-studio/add-charge-code";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
 import {
   reportFormat,
@@ -221,14 +222,17 @@ export function SourceSection() {
           onApplyFix={applyFix}
           rowActions={(diagnostic) =>
             diagnostic.severity === "error" ? (
-              <NovaButton
-                size="xs"
-                onClick={() =>
-                  askNova(t("How do I fix this: {0}", translateMessage(diagnostic.message, t)))
-                }
-              >
-                {t("Ask Nova")}
-              </NovaButton>
+              <>
+                <AddChargeCode diagnostic={diagnostic} source={source} />
+                <NovaButton
+                  size="xs"
+                  onClick={() =>
+                    askNova(t("How do I fix this: {0}", translateMessage(diagnostic.message, t)))
+                  }
+                >
+                  {t("Ask Nova")}
+                </NovaButton>
+              </>
             ) : null
           }
         />

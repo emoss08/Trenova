@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, waitFor } from "@testing-library/react";
+import { fireEvent, render, waitFor } from "@testing-library/react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
@@ -161,5 +161,29 @@ describe("create and edit panels sharing one form", () => {
     );
 
     await waitFor(() => expect(form.getValues()).toEqual(PRISTINE));
+  });
+
+  it("tells its caller once a record is created, with what the create returned", async () => {
+    const onCreated = vi.fn();
+    function Panel() {
+      const form = useForm<ChargeForm>({ defaultValues: { ...PRISTINE, code: "FSC" } });
+      return (
+        <FormCreatePanel<ChargeForm, typeof ROW, ChargeForm, { id: string }>
+          open
+          onOpenChange={() => undefined}
+          form={form}
+          queryKey="accessorial-charge-list"
+          title="Accessorial charge"
+          formComponent={null}
+          mutationFn={async () => ({ id: "acc_9" })}
+          onCreated={onCreated}
+        />
+      );
+    }
+    render(<Panel />, { wrapper: wrapper(queryClient) });
+
+    fireEvent.submit(document.getElementById("panel-create-form")!);
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalledWith({ id: "acc_9" }));
   });
 });

@@ -13,15 +13,22 @@ export function AccessorialChargePanel({
   onOpenChange,
   mode,
   row,
-}: DataTablePanelProps<AccessorialChargeRow>) {
+  initial,
+  onCreated,
+}: DataTablePanelProps<AccessorialChargeRow> & {
+  /** What a new charge starts with, such as the code a tariff bills that the catalog lacks. */
+  initial?: { code: string; description: string };
+  /** Runs once the charge is created. */
+  onCreated?: () => void;
+}) {
   const t = useT();
 
   const form = useForm({
     resolver: zodResolver(accessorialChargeSchema),
     defaultValues: {
       status: "Active",
-      code: "",
-      description: "",
+      code: initial?.code ?? "",
+      description: initial?.description ?? "",
       method: "Flat",
       amount: undefined,
     },
@@ -53,6 +60,7 @@ export function AccessorialChargePanel({
       queryKey="accessorial-charge-list"
       title={t("Accessorial charge")}
       formComponent={<AccessorialChargeForm />}
+      onCreated={onCreated}
     />
   );
 }
