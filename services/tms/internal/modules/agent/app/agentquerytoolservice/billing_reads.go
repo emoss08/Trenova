@@ -10,6 +10,9 @@ const (
 	toolCustomerPaymentList  = "receivable_list_customer_payments"
 	toolOrderList            = "order_list"
 
+	entityInvoice = "invoice"
+	statusPosted  = "Posted"
+
 	pluralInvoices         = "invoices"
 	pluralInvoiceDisputes  = "invoice disputes"
 	pluralCustomerPayments = "customer payments"
@@ -112,7 +115,7 @@ func billingReadSpecs() []graphQLListSpec {
 			queryNote:    paymentsQueryNote,
 			resource:     permission.ResourceCustomerPayment,
 			references:   map[string]idReference{paramCustomerID: customerReference},
-			defaults:     map[string]any{fieldInvoiceStatus: []any{"Posted"}},
+			defaults:     map[string]any{fieldInvoiceStatus: []any{statusPosted}},
 			notes:        map[string]string{fieldInvoiceStatus: notePaymentStatus},
 		},
 		{
@@ -134,8 +137,8 @@ func billingReadSpecs() []graphQLListSpec {
 func invoiceGetSpec() getSpec {
 	return getSpec{
 		name:        toolInvoiceGet,
-		entity:      "invoice",
-		searchTerms: []string{"invoices"},
+		entity:      entityInvoice,
+		searchTerms: []string{pluralInvoices},
 		resource:    permission.ResourceInvoice,
 		summary:     invoiceGetSummary,
 		paramName:   paramReceivableInvoices,
