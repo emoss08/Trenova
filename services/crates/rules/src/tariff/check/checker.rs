@@ -210,6 +210,8 @@ pub struct Checker<'a> {
     /// Whether the body is a test that expects a refusal, whose `let`s run code for the refusal
     /// it may raise and so are not reported unused.
     pub expects_refusal: bool,
+    /// What the property being checked has varied and given, when the body is a property's.
+    pub property: Option<Box<super::property::PropertyScope>>,
 }
 
 /// The charges a tariff writes, for checking `charge(…)` in tests.

@@ -509,38 +509,7 @@ impl Declarer<'_> {
         );
         let module = self.id();
         let types = &out.types;
-        let values = &state.values;
-        let lookup = |expr: &Expr| -> Option<Result<Value, FoldError>> {
-            let name = match &expr.kind {
-                ExprKind::Name(name) => name.text.clone(),
-                ExprKind::Field { target, name, .. } => {
-                    let ExprKind::Name(alias) = &target.kind else {
-                        return None;
-                    };
-                    let Some(Global::Module { module, .. }) = globals.values.get(&alias.text)
-                    else {
-                        return None;
-                    };
-                    return values
-                        .get(&(module.0, name.text.clone()))
-                        .cloned()
-                        .map(|v| v.map_err(|_| FoldError::Upstream));
-                }
-                _ => return None,
-            };
-            match globals.values.get(&name)? {
-                Global::Const {
-                    module: owner,
-                    name: declared,
-                    ..
-                } => values
-                    .get(&(owner.0, declared.clone()))
-                    .cloned()
-                    .map(|v| v.map_err(|_| FoldError::Upstream))
-                    .or(Some(Err(FoldError::Upstream))),
-                _ => None,
-            }
-        };
+        let lookup = |expr: &Expr| constant_of(globals, &state.values, expr);
         let type_of = |id: crate::tariff::syntax::ast::NodeId| {
             types
                 .get(usize::try_from(id.0).unwrap_or(usize::MAX))
@@ -862,6 +831,7 @@ impl Declarer<'_> {
             expected_yet: false,
             early: BTreeSet::new(),
             expects_refusal: false,
+            property: None,
         };
         let result = run(&mut checker);
         let calls = std::mem::take(&mut checker.calls);
@@ -874,7 +844,7 @@ impl Declarer<'_> {
 }
 
 /// The finding for a value that does not fold.
-fn fold_diagnostic(error: FoldError) -> Option<Diagnostic> {
+pub(super) fn fold_diagnostic(error: FoldError) -> Option<Diagnostic> {
     match error {
         FoldError::NotConstant(span) => Some(Diagnostic::error(
             "not-constant",
@@ -894,6 +864,43 @@ fn fold_diagnostic(error: FoldError) -> Option<Diagnostic> {
             Message::new(message!("This divides by zero")),
         )),
         FoldError::Upstream => None,
+    }
+}
+
+/// The folded value of the constant an expression names (`LIMIT`, `alias.LIMIT`), for a
+/// [`Folder`]: `None` when it names no constant, `Err` when that constant has no value.
+pub fn constant_of(
+    globals: &Globals,
+    values: &BTreeMap<(u32, String), Result<Value, FoldError>>,
+    expr: &Expr,
+) -> Option<Result<Value, FoldError>> {
+    let name = match &expr.kind {
+        ExprKind::Name(name) => name.text.clone(),
+        ExprKind::Field { target, name, .. } => {
+            let ExprKind::Name(alias) = &target.kind else {
+                return None;
+            };
+            let Some(Global::Module { module, .. }) = globals.values.get(&alias.text) else {
+                return None;
+            };
+            return values
+                .get(&(module.0, name.text.clone()))
+                .cloned()
+                .map(|v| v.map_err(|_| FoldError::Upstream));
+        }
+        _ => return None,
+    };
+    match globals.values.get(&name)? {
+        Global::Const {
+            module: owner,
+            name: declared,
+            ..
+        } => values
+            .get(&(owner.0, declared.clone()))
+            .cloned()
+            .map(|v| v.map_err(|_| FoldError::Upstream))
+            .or(Some(Err(FoldError::Upstream))),
+        _ => None,
     }
 }
 

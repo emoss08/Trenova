@@ -69,6 +69,7 @@ pub mod ops;
 pub mod patterns;
 mod problems;
 mod program;
+mod property;
 mod scope;
 mod stmt;
 mod tables;

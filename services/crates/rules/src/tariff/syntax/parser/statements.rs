@@ -214,7 +214,8 @@ impl Parser<'_> {
         }
         let text = self.slice(token.span);
         if matches!(token.kind, TokenKind::Keyword) {
-            return matches!(text, "not" | "true" | "false" | "none" | "if" | "match");
+            return matches!(text, "not" | "true" | "false" | "none" | "if" | "match")
+                || (text == "charge" && self.slice(self.peek_nth(ahead + 1).span) == "(");
         }
         !matches!(
             text,
