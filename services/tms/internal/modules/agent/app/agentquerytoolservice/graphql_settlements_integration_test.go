@@ -3,6 +3,8 @@
 package agentquerytoolservice_test
 
 import (
+	"slices"
+
 	"context"
 	"errors"
 	"sync"
@@ -548,13 +550,11 @@ func TestConvertedLists_SettlementsWithholdOnlyTheirPayFiguresAtInternal(t *test
 }
 
 // settlementSearchesRefusedAtInternal are the settlement lists whose
-// search matches a field withheld at Internal: an expense's description, an
-// advance's notes, and an escrow account's figures, which its record's
-// search falls back to as filterable fields.
+// search matches a field withheld at Internal: an expense's description and
+// an advance's notes.
 var settlementSearchesRefusedAtInternal = map[string]struct{}{
 	"settlement_list_driver_expenses": {},
 	"settlement_list_advances":        {},
-	"settlement_list_escrow_accounts": {},
 }
 
 // A settlement get reads one record of the tenant's with only the
@@ -785,4 +785,47 @@ func internalCall(
 		DataAccessCeiling: permission.SensitivityInternal,
 		RunID:             pulid.MustNew("ar_"),
 	}
+}
+
+// An escrow account's query matches what identifies an account without its
+// money, its status and currency, through the real database: a reader whose
+// access reaches Restricted finds the account, and so does one at Internal,
+// since nothing the query matches is withheld there.
+func TestConvertedLists_EscrowAccountsSearchWithoutTheirMoney(t *testing.T) {
+	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	t.Cleanup(cleanup)
+
+	conn := dbtest.NewRLSConnection(t, admin, dsn)
+	cases, services := convertedListCases(conn, admin)
+	idx := slices.IndexFunc(cases, func(c referenceCase) bool {
+		return c.tool == "settlement_list_escrow_accounts"
+	})
+	require.GreaterOrEqual(t, idx, 0)
+	mine := agentreadtest.SeedTenant(t, admin, "A")
+	ours := writeReferenceRows(t, &cases[idx], mine, "A")
+
+	restrictedEngine := &tcaRestrictedRole{}
+	reached, err := agentquerytoolservice.ConvertedListTool(cases[idx].tool,
+		agentreadtest.NewReader(t, agentreadtest.Options{
+			Engine: restrictedEngine, Resolvers: services,
+		}), restrictedEngine)
+	require.NoError(t, err)
+	data, err := reached.Query(ours.ctx, &agentports.QueryToolParams{
+		OrganizationID: mine.Actor.OrganizationID, BusinessUnitID: mine.Actor.BusinessUnitID,
+		Actor: mine.Actor, Timezone: "America/Chicago",
+		Params:            map[string]any{"query": "Closed"},
+		DataAccessCeiling: permission.SensitivityRestricted, RunID: pulid.MustNew("ar_"),
+	})
+	require.NoError(t, err, "a Restricted reader's search reads")
+	closed := rowsByID(asMap(t, data))
+	require.Len(t, closed, 1, "the one closed account matches its status")
+
+	engine := &mocks.DenyResourcesPermissionEngine{}
+	internal, err := agentquerytoolservice.ConvertedListTool(cases[idx].tool,
+		agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services}),
+		engine)
+	require.NoError(t, err)
+	data, err = internal.Query(ours.ctx, internalCall(mine.Actor, map[string]any{"query": "usd"}))
+	require.NoError(t, err, "nothing the query matches is withheld at Internal")
+	assert.Len(t, rowsByID(asMap(t, data)), len(ours.rows), "every account is in dollars")
 }
