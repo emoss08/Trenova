@@ -285,7 +285,13 @@ fn test_names(site: &Site<'_, '_>, items: &mut Items) {
             ))));
         }
         if let Some(item) = items.add(Rank::Global, Kind::Function, CHOSEN) {
-            item.insert = format!("{CHOSEN}($0)");
+            let label = super::choices::choices(site.session.file())
+                .first()
+                .map_or("label", |choose| choose.label.text.as_str())
+                .replace('\\', "\\\\")
+                .replace('$', "\\$")
+                .replace('}', "\\}");
+            item.insert = format!("{CHOSEN}(\"${{1:{label}}}\")");
             item.snippet = true;
             item.detail = Some(format!("{CHOSEN}(choice: Text) -> Text?"));
             item.doc = Some(Doc::Message(Message::new(CHOSEN_DOC)));

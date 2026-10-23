@@ -193,43 +193,29 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *formulatemplate.FormulaTemplate,
+	payload *formulatemplate.FormulaTemplate,
 	userID pulid.ID,
 ) (*formulatemplate.FormulaTemplate, error) {
 	log := s.l.With(
 		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
+		zap.String("id", payload.ID.String()),
 	)
-
-	if err := s.prepareContent(ctx, entity); err != nil {
-		return nil, err
-	}
 
 	original, err := s.getTemplateByID(
 		ctx,
-		entity.ID,
-		entity.GetOrganizationID(),
-		entity.GetBusinessUnitID(),
+		payload.ID,
+		payload.GetOrganizationID(),
+		payload.GetBusinessUnitID(),
 	)
 	if err != nil {
 		log.Error("failed to get original formula template", zap.Error(err))
 		return nil, err
 	}
 
-	if entity.Status != original.Status {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Status cannot be changed from %s to %s here; "+
-					"submit, approve, reject, or archive the template instead",
-				original.Status,
-				entity.Status,
-			),
-		)
+	entity := withContent(original, payload)
+	if err = s.prepareContent(ctx, entity); err != nil {
+		return nil, err
 	}
-
-	carryApprovalFields(entity, original)
 
 	material := entity.HasMaterialChange(original)
 

@@ -3,7 +3,6 @@ import {
   fetchArAgingSummary,
   fetchArAgingTrend,
   fetchArCashFlowForecast,
-  fetchArCollectionPerformance,
   fetchArCollectionsWorklist,
   fetchArCustomerLedger,
   fetchArCustomerProfile,
@@ -54,10 +53,6 @@ export const ar = createQueryKeys("ar", {
   cashFlowForecast: (options?: { pastWeeks?: number; futureWeeks?: number }) => ({
     queryKey: ["cashFlowForecast", options],
     queryFn: async ({ signal }) => fetchArCashFlowForecast(options, { signal }),
-  }),
-  collectionPerformance: (periodDays?: number) => ({
-    queryKey: ["collectionPerformance", periodDays ?? 0],
-    queryFn: async ({ signal }) => fetchArCollectionPerformance(periodDays, { signal }),
   }),
   topOverdueCustomers: (limit?: number) => ({
     queryKey: ["topOverdueCustomers", limit ?? 0],

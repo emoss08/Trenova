@@ -89,7 +89,24 @@
       "kind": "method",
       "detail": "roundUp(to: Money) -> Money",
       "snippet": true,
-      "insert": "roundUp($0)"
+      "insert": "roundUp(${1:Money})"
+     }
+    }
+   }
+  },
+  {
+   "name": "a quantity method's placeholder is the quantity's own type",
+   "source": [
+    "tariff \"t\"",
+    "let w = 5 lb",
+    "charge \"x\" = $1 * w.|"
+   ],
+   "expect": {
+    "items": {
+     "roundUp": {
+      "kind": "method",
+      "snippet": true,
+      "insert": "roundUp(${1:Weight})"
      }
     }
    }
@@ -2127,6 +2144,8 @@
     "tariff \"t\"",
     "fn fee(a: Money) -> Money = a",
     "fn zero() -> Money = $0",
+    "fn trip(empty: Distance, rate: Money/mi, extra: Money = $5) -> Money = rate * empty + extra",
+    "fn stop(fee: Money = $95) -> Money = fee",
     "let x = |",
     "charge \"x\" = $1"
    ],
@@ -2134,13 +2153,21 @@
     "items": {
      "fee": {
       "kind": "function",
-      "insert": "fee($0)",
+      "insert": "fee(${1:Money})",
       "snippet": true,
       "detail": "fee(a: Money) -> Money"
      },
      "zero": {
       "insert": "zero()",
       "snippet": false
+     },
+     "trip": {
+      "insert": "trip(empty: ${1:Distance}, rate: ${2:Money/mi})",
+      "snippet": true
+     },
+     "stop": {
+      "insert": "stop($0)",
+      "snippet": true
      }
     }
    }
@@ -2966,7 +2993,29 @@
      "chosen": {
       "kind": "function",
       "detail": "chosen(choice: Text) -> Text?",
-      "insert": "chosen($0)",
+      "insert": "chosen(\"${1:label}\")",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: chosen offers the file's first choice label",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $900",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "items": {
+     "chosen": {
+      "insert": "chosen(\"${1:Linehaul}\")",
       "snippet": true
      }
     }

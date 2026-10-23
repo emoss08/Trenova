@@ -164,6 +164,16 @@ var Shard = &gqlexec.Shard{
 		}},
 		{Object: "ARBalanceOverview", Fields: []*gqlexec.Field{
 			{
+				Name:     "hasInvoiced",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*customerledgerports.ARBalanceOverview)
+					return obj.HasInvoiced, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:     "totalOpenMinor",
 				NonNull:  true,
 				ChildErr: errNoChild0,
@@ -236,7 +246,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "avgDaysPastDue",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.AvgDaysPastDue, nil
@@ -319,7 +329,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isForecast",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCashFlowPoint)
 					return obj.IsForecast, nil
@@ -342,7 +352,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cei",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.CEI, nil
@@ -352,7 +362,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "writeOffRatio",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.WriteOffRatio, nil
@@ -362,7 +372,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "disputeRate",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.DisputeRate, nil
@@ -372,7 +382,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "shortPayRate",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.ShortPayRate, nil
@@ -454,7 +464,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "avgDaysToPay",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCollectionTotals)
 					return obj.AvgDaysToPay, nil
@@ -586,7 +596,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "isDisputed",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.IsDisputed, nil
@@ -596,7 +606,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hasShortPay",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCollectionsWorklistItem)
 					return obj.HasShortPay, nil
@@ -691,7 +701,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dsoDays",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.DSODays, nil
@@ -701,7 +711,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "creditUtilization",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.CreditUtilization, nil
@@ -711,7 +721,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "delinquencyScore",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.DelinquencyScore, nil
@@ -783,7 +793,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hasCreditLimit",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.HasCreditLimit, nil
@@ -843,7 +853,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "avgDaysToPay",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.AvgDaysToPay, nil
@@ -1012,7 +1022,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dsoDays",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARDSOTrendPoint)
 					return obj.DSODays, nil
@@ -1065,7 +1075,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "currentDsoDays",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.CurrentDSODays, nil
@@ -1075,7 +1085,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "dsoDeltaDays",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.DSODeltaDays, nil
@@ -1083,29 +1093,9 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
 			{
-				Name:     "cei",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customerledgerports.ARDashboardKPIs)
-					return obj.CEI, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-			{
-				Name:     "avgDaysToPay",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customerledgerports.ARDashboardKPIs)
-					return obj.AvgDaysToPay, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-			{
 				Name:     "overduePercent",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.OverduePercent, nil
@@ -1113,34 +1103,15 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
 			{
-				Name:     "writeOffRatio",
-				NonNull:  true,
-				ChildErr: errNoChild2,
+				Name:      "collection",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ARCollectionPerformance",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.ARDashboardKPIs)
-					return obj.WriteOffRatio, nil
+					return obj.Collection, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-			{
-				Name:     "disputeRate",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customerledgerports.ARDashboardKPIs)
-					return obj.DisputeRate, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-			{
-				Name:     "shortPayRate",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*customerledgerports.ARDashboardKPIs)
-					return obj.ShortPayRate, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+				Marshal: gqlexec.Marshal(marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionPerformance),
 			},
 		}},
 		{Object: "ARLedgerEntry", Fields: []*gqlexec.Field{
@@ -1410,7 +1381,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hasShortPay",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*customerledgerports.AROpenItem)
 					return obj.HasShortPay, nil
@@ -1660,7 +1631,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "narrated",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*accountingbriefports.AccountingBriefing)
 					return obj.Narrated, nil
@@ -1892,20 +1863,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCashFlowPointᚄ),
 			},
 			{
-				Name:       "arCollectionPerformance",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				HasChild:   true,
-				ChildType:  "ARCollectionPerformance",
-				Args:       field_Query_arCollectionPerformance_args,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCollectionPerformance(ctx, fc.Args["periodDays"].(*int))
-				},
-				Marshal: gqlexec.Marshal(marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionPerformance),
-			},
-			{
 				Name:       "arTopOverdueCustomers",
 				NonNull:    true,
 				IsResolver: true,
@@ -1976,7 +1933,6 @@ type resolverQuery interface {
 	ArDsoTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARDSOTrendPoint, error)
 	ArAgingTrend(ctx context.Context, weeks *int) ([]*customerledgerports.ARAgingTrendPoint, error)
 	ArCashFlowForecast(ctx context.Context, pastWeeks *int, futureWeeks *int) ([]*customerledgerports.ARCashFlowPoint, error)
-	ArCollectionPerformance(ctx context.Context, periodDays *int) (*customerledgerports.ARCollectionPerformance, error)
 	ArTopOverdueCustomers(ctx context.Context, limit *int) ([]*customerledgerports.ARTopOverdueCustomer, error)
 	ArCollectionsWorklist(ctx context.Context, limit *int) ([]*customerledgerports.ARCollectionsWorklistItem, error)
 	ArCustomerProfile(ctx context.Context, customerID string) (*customerledgerports.ARCustomerProfile, error)
@@ -1986,8 +1942,8 @@ type resolverQuery interface {
 var (
 	errNoChild0 = errors.New("field of type Int does not have child fields")
 	errNoChild1 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild2 = errors.New("field of type Float does not have child fields")
-	errNoChild3 = errors.New("field of type Boolean does not have child fields")
+	errNoChild2 = errors.New("field of type Boolean does not have child fields")
+	errNoChild3 = errors.New("field of type Float does not have child fields")
 	errNoChild4 = errors.New("field of type ID does not have child fields")
 	errNoChild5 = errors.New("field of type String does not have child fields")
 	errNoChild6 = errors.New("field of type AccountingBriefingLink does not have child fields")
@@ -2113,19 +2069,6 @@ func field_Query_arCashFlowForecast_args(ctx context.Context, ec *gqlexec.Exec, 
 		return nil, err
 	}
 	args["futureWeeks"] = arg1
-	return args, nil
-}
-
-func field_Query_arCollectionPerformance_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "periodDays",
-		func(ctx context.Context, v any) (*int, error) {
-			return unmarshalOInt2ᚖint(ctx, ec, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["periodDays"] = arg0
 	return args, nil
 }
 

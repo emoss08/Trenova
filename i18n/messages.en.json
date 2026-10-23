@@ -250337,15 +250337,6 @@
       "go/other"
     ]
   },
-  "Status cannot be changed from {0} to {1} here; submit, approve, reject, or archive the library instead": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Status cannot be longer than 100 characters": {
     "sites": 1,
     "scope": [
