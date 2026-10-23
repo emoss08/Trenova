@@ -450,13 +450,13 @@ func provideRunFormulaTestsTool(
 func (t *runFormulaTestsTool) Name() string { return "formula_run_tests" }
 
 func (t *runFormulaTestsTool) Description() string {
-	return "Run the test and property blocks of a Tariff source with Trenova's engine: each " +
-		"one's name, line, whether it passed, and what each failed expectation actually came " +
-		"to; for a property, how many cases ran and its counterexample, with a test block " +
-		"that reproduces it; and how many of the file's regions the tests reach, with each " +
-		"one none reaches. A source that does not check runs no tests; its errors come back " +
-		"instead. Run the tests before you propose source, and write a test for every case " +
-		"you claim it prices."
+	return "Run the test and property blocks of a Tariff source with Trenova's engine, and " +
+		"see which pass and how much of the file they reach. Each result gives its name, " +
+		"line, whether it passed and what each failed expectation actually came to; a " +
+		"property adds how many cases ran and its counterexample, with a test block that " +
+		"reproduces it; coverage lists each region no test reaches. A source that does not " +
+		"check runs no tests; its errors come back instead. Run the tests before you propose " +
+		"source, and write a test for every case you claim it prices."
 }
 
 func (t *runFormulaTestsTool) ParamSchema() map[string]any {
