@@ -705,7 +705,11 @@ work read.
   principal that is no person and sees no conversation's runs. The runtime,
   workers and system reads pass nothing, which is `UnattendedRunRead`, and see
   every run as before. A run the reader may not see is "not found", the same
-  error as a missing id.
+  error as a missing id. `agentruneventrepository` applies the same reader to
+  a run's events (an `EXISTS` on the owning run through the same predicate),
+  so `agentRunEvents` and the tool's step list hold no hidden run's events;
+  the watchtower's shared failed-run snapshot reads as no person, because a
+  run's summary can repeat a private conversation.
 - `agent_get_run` applies the same ownership rule, answering "not found" rather
   than "forbidden", and can add the run's proposals (at most 20, when the reader
   may read proposals) and its last 50 recorded events, each reduced to its kind,

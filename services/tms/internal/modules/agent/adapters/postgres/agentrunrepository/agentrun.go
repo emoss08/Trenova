@@ -40,7 +40,7 @@ func New(p Params) agentports.AgentRunRepository {
 	}
 }
 
-func readableBy(db bun.IDB, reader agentports.RunReader) func(*bun.SelectQuery) *bun.SelectQuery {
+func ReadableBy(db bun.IDB, reader agentports.RunReader) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		if !reader.ForPerson() {
 			return q
@@ -81,7 +81,7 @@ func (r *repository) filterQuery(
 	)
 
 	return q.Apply(agentcol.AgentRunApplyTenant(req.Filter.TenantInfo)).
-		Apply(readableBy(db, req.Reader)).
+		Apply(ReadableBy(db, req.Reader)).
 		Limit(int64(req.Filter.Pagination.SafeLimit())).
 		Offset(int64(req.Filter.Pagination.SafeOffset())).
 		Order(cols.CreatedAt.OrderDesc())
@@ -129,7 +129,7 @@ func (r *repository) applyTotalCountFilters(
 	)
 
 	return q.Apply(agentcol.AgentRunApplyTenant(req.Filter.TenantInfo)).
-		Apply(readableBy(db, req.Reader))
+		Apply(ReadableBy(db, req.Reader))
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -138,7 +138,7 @@ func (r *repository) applyCursorPageFilters(
 	req *agentports.ListAgentRunConnectionRequest,
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
-		q.Apply(readableBy(db, req.Reader)),
+		q.Apply(ReadableBy(db, req.Reader)),
 		agentcol.AgentRunTable.Alias,
 		req.Filter,
 		req.Cursor,
@@ -233,7 +233,7 @@ func (r *repository) ListByIDs(
 				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.In(req.IDs))
 			}).
-			Apply(readableBy(db, req.Reader)).
+			Apply(ReadableBy(db, req.Reader)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list agent runs by ids", zap.Error(err))
@@ -270,7 +270,7 @@ func (r *repository) ListTranscriptsByIDs(
 				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.IDs))
 			}).
-			Apply(readableBy(db, req.Reader)).
+			Apply(ReadableBy(db, req.Reader)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list agent run transcripts by ids", zap.Error(err))
@@ -300,7 +300,7 @@ func (r *repository) GetByID(
 				return agentcol.AgentRunScopeTenant(sq, *req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
-			Apply(readableBy(db, req.Reader)).
+			Apply(ReadableBy(db, req.Reader)).
 			Scan(ctx)
 		if err != nil {
 			log.Error("failed to get agent run", zap.Error(err))

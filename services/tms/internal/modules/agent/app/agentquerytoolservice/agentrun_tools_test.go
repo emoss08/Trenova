@@ -479,6 +479,8 @@ func TestGetAgentRun_AddsBoundedProposalsAndTheLastFiftySteps(t *testing.T) {
 	assert.Equal(t, 70, request.After, "the last fifty of 120 steps start after 70")
 	assert.Equal(t, string(agentports.RunStepOwnerAgentRun), request.OwnerKind)
 	assert.Equal(t, run.ID, request.OwnerID)
+	assert.Equal(t, agentports.PersonRunRead(params.Actor.UserID), request.Reader,
+		"a run's steps are read for the same person as the run")
 
 	require.Len(t, detail.Events, 3)
 	assert.Equal(t, "shipment_get", detail.Events[0].Tool)

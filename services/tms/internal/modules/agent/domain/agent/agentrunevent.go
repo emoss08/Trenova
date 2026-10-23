@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,6 +17,8 @@ import (
 var (
 	_ bun.BeforeAppendModelHook          = (*AgentRunEvent)(nil)
 	_ validationframework.TenantedEntity = (*AgentRunEvent)(nil)
+	_ pagination.CursorEntity            = (*AgentRunEvent)(nil)
+	_ pagination.CursorValueCarrier      = (*AgentRunEvent)(nil)
 )
 
 // AgentRunEvent is one thing that happened, in the order it happened.
@@ -38,6 +41,8 @@ var (
 // StepKey where a tool is involved.
 type AgentRunEvent struct {
 	bun.BaseModel `bun:"table:agent_run_events,alias:are" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`

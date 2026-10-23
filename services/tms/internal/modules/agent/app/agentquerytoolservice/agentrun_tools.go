@@ -498,7 +498,7 @@ func (t *getAgentRunTool) Query(
 		}
 	}
 	if optionalBool(params.Params, paramIncludeEvents) {
-		if err = t.addEvents(ctx, tenant, detail, run.ID); err != nil {
+		if err = t.addEvents(ctx, tenant, runReaderOf(params), detail, run.ID); err != nil {
 			return nil, err
 		}
 	}
@@ -590,6 +590,7 @@ func (t *getAgentRunTool) addProposals(
 func (t *getAgentRunTool) addEvents(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
+	reader agentports.RunReader,
 	detail *agentRunDetail,
 	runID pulid.ID,
 ) error {
@@ -605,6 +606,7 @@ func (t *getAgentRunTool) addEvents(
 		OwnerID:    runID,
 		After:      max(next-1-agentRunEventLimit, 0),
 		Limit:      agentRunEventLimit,
+		Reader:     reader,
 	})
 	if err != nil {
 		return fmt.Errorf("read the run's steps: %w", err)
