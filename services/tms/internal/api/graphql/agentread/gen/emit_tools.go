@@ -324,7 +324,7 @@ func variables(schema *ast.Schema, b *binding) []variable {
 		described := describeField(schema, v.Variable, v.Type, "")
 		if def, ok := arguments[v.Variable]; ok {
 			described.Description = strings.TrimSpace(def.Description)
-		} else if said, ok := included[v.Variable]; ok {
+		} else if said, switched := included[v.Variable]; switched {
 			described.Description = said
 		}
 		out = append(out, variable{

@@ -285,11 +285,19 @@ func ediAckHealthToModel(health *ediservice.EDIAckHealth) *gqlmodel.EDIAckHealth
 		OverdueAfterSeconds: int(health.OverdueAckAge),
 		AnswersEverySet:     health.AnswersEverySet,
 		AckStatusCounts:     ackStatusCountsToModel(health.AckStatusCounts),
-		Partners:            make([]*gqlmodel.EDIPartnerAckCounts, 0, len(health.AckCountsByPartner)),
-		OverdueCount:        health.OverdueAckCount,
-		OverdueByPartner:    make([]*gqlmodel.EDIOverduePartnerAcks, 0, len(health.OverdueByPartner)),
-		OverdueNotListed:    health.OverdueOmitted,
-		RecentDeadLettered:  nonNilSlice(health.RecentDeadLettered),
+		Partners: make(
+			[]*gqlmodel.EDIPartnerAckCounts,
+			0,
+			len(health.AckCountsByPartner),
+		),
+		OverdueCount: health.OverdueAckCount,
+		OverdueByPartner: make(
+			[]*gqlmodel.EDIOverduePartnerAcks,
+			0,
+			len(health.OverdueByPartner),
+		),
+		OverdueNotListed:   health.OverdueOmitted,
+		RecentDeadLettered: nonNilSlice(health.RecentDeadLettered),
 	}
 	for _, group := range health.AckCountsByPartner {
 		if group == nil {

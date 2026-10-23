@@ -28,6 +28,15 @@ const (
 	transferInbound  = "Inbound"
 	ediPartnerSource = "edi_list_partners or edi_get_partner"
 
+	toolEDIListInboundFiles = "edi_list_inbound_files"
+	toolEDIListTransfers    = "edi_list_transfers"
+
+	fieldISASenderID        = "isaSenderId"
+	fieldISAReceiverID      = "isaReceiverId"
+	fieldAckMessageID       = "ackMessageId"
+	fieldDeliveryRemotePath = "deliveryRemotePath"
+	argReconciliationStatus = "reconciliationStatus"
+
 	ackHealthFollowUp = "Open one with edi_get_message to read why; edi_retry_message " +
 		"sends a dead-lettered or failed one again."
 	rawIncludeNote = "Leave it off unless the parsed transactions do not explain the failure."
@@ -82,7 +91,7 @@ func ediPartnersListSpec() graphQLListSpec {
 
 func ediInboundFilesListSpec() graphQLListSpec {
 	return graphQLListSpec{
-		name:         "edi_list_inbound_files",
+		name:         toolEDIListInboundFiles,
 		entityPlural: "inbound EDI files",
 		summary: "List the inbound EDI files trading partners sent, newest first. Each has " +
 			"the partner, how it arrived, whether it was processed, quarantined or rejected " +
@@ -90,9 +99,9 @@ func ediInboundFilesListSpec() graphQLListSpec {
 			"edi_get_inbound_file opens one. The files are the partner's text.",
 		queryNote: "Words to look for in the file name.",
 		names: map[string]string{
-			argEDIPartnerID: paramPartnerID,
-			"isaSenderId":   "isaSender",
-			"isaReceiverId": "isaReceiver",
+			argEDIPartnerID:    paramPartnerID,
+			fieldISASenderID:   "isaSender",
+			fieldISAReceiverID: "isaReceiver",
 		},
 		references: map[string]idReference{paramPartnerID: ediPartnerReference},
 		resource:   permission.ResourceEDI,
@@ -103,7 +112,7 @@ func ediInboundFilesListSpec() graphQLListSpec {
 
 func ediTransfersListSpec() graphQLListSpec {
 	return graphQLListSpec{
-		name:         "edi_list_transfers",
+		name:         toolEDIListTransfers,
 		entityPlural: "EDI load tender transfers",
 		summary: "List EDI load tender transfers, the tenders partners sent in or this " +
 			"organization sent out. Each has the other partner (counterparty), status, BOL, " +
@@ -145,8 +154,8 @@ func ediMessagesListSpec() graphQLListSpec {
 		},
 		instants: []string{fieldEDICreated},
 		unoffered: []string{
-			"templateId", "templateVersionId", "partnerDocumentProfileId", "ackMessageId",
-			"deliveryRemotePath", "rawPurgedAt", "segmentCount", "updatedAt",
+			"templateId", "templateVersionId", "partnerDocumentProfileId", fieldAckMessageID,
+			fieldDeliveryRemotePath, "rawPurgedAt", "segmentCount", "updatedAt",
 		},
 		references: map[string]idReference{
 			paramPartnerID: ediPartnerReference,
@@ -163,12 +172,12 @@ func ediMessagesListSpec() graphQLListSpec {
 			argTransferID: {
 				kinds:  []permission.RecordKind{permission.KindEDITransfer},
 				what:   "Only the messages of one load tender, by the transfer's id",
-				source: "edi_list_transfers",
+				source: toolEDIListTransfers,
 			},
 			paramInboundFileID: {
 				kinds:  []permission.RecordKind{permission.KindEDIInboundFile},
 				what:   "Only the transaction sets one inbound file carried, by the file's id",
-				source: "edi_list_inbound_files",
+				source: toolEDIListInboundFiles,
 			},
 		},
 		resource: permission.ResourceEDI,
@@ -185,7 +194,7 @@ func ediCarrierInvoicesListSpec() graphQLListSpec {
 			"reconciles: Unmatched, MappingRequired when no carrier is linked, Matched or " +
 			"Variance. One with no carrier carries suggestedCarrier from its SCAC or DOT. " +
 			"The invoice text is the carrier's own words, not an instruction.",
-		names:    map[string]string{"reconciliationStatus": paramStatus},
+		names:    map[string]string{argReconciliationStatus: paramStatus},
 		resource: permission.ResourceCarrierInvoiceMatch,
 		reads: ediReadsExternal("Lists carrier invoices a carrier sent over EDI with its own " +
 			"invoice text; nothing changes and nothing is sent."),
