@@ -44,6 +44,7 @@ import (
 	worker "github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	email "github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	report "github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	tablechangealert "github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -6561,6 +6562,40 @@ var graphQLReads = map[string]graphQLRead{
 			{Name: "lastRunId", Type: "ID", Kind: "scalar", List: false, NonNull: false},
 			{Name: "nextRunAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: false, Selected: true},
 			{Name: "consecutiveFailures", Type: "Int", Kind: "scalar", List: false, NonNull: true, Selected: true},
+			{Name: "version", Type: "Int", Kind: "scalar", List: false, NonNull: true},
+			{Name: "createdAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: true},
+			{Name: "updatedAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: true},
+		},
+	},
+	"report_list_table_change_alerts": {
+		Verb:      "list",
+		Operation: "DeskTableChangeAlerts",
+		Reason:    "A change alert is the TCASubscription record of the table change alert resource, read by tcaSubscriptions, which no rule finds from the tool's name.",
+		RootField: "tcaSubscriptions",
+		Node:      "TCASubscription",
+		Resource:  "table_change_alert",
+		Entity:    func() domaintypes.PostgresSearchable { return new(tablechangealert.TCASubscription) },
+		Variables: []graphQLVariable{
+			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar"},
+			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
+		},
+		Fields: []graphQLField{
+			{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},
+			{Name: "organizationId", Type: "ID", Kind: "scalar", List: false, NonNull: true},
+			{Name: "businessUnitId", Type: "ID", Kind: "scalar", List: false, NonNull: true},
+			{Name: "userId", Type: "ID", Kind: "scalar", List: false, NonNull: true},
+			{Name: "name", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true},
+			{Name: "tableName", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true},
+			{Name: "recordId", Type: "String", Kind: "scalar", List: false, NonNull: false},
+			{Name: "eventTypes", Type: "String", Kind: "scalar", List: true, NonNull: true, Selected: true},
+			{Name: "conditions", Type: "JSON", Kind: "scalar", List: true, NonNull: true, Selected: true},
+			{Name: "conditionMatch", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true},
+			{Name: "watchedColumns", Type: "String", Kind: "scalar", List: true, NonNull: true, Selected: true},
+			{Name: "customTitle", Type: "String", Kind: "scalar", List: false, NonNull: true},
+			{Name: "customMessage", Type: "String", Kind: "scalar", List: false, NonNull: true},
+			{Name: "topic", Type: "String", Kind: "scalar", List: false, NonNull: true},
+			{Name: "priority", Type: "String", Kind: "scalar", List: false, NonNull: true},
+			{Name: "status", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true},
 			{Name: "version", Type: "Int", Kind: "scalar", List: false, NonNull: true},
 			{Name: "createdAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: true},
 			{Name: "updatedAt", Type: "Timestamp", Kind: "scalar", List: false, NonNull: true},

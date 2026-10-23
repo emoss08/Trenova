@@ -13,6 +13,11 @@ const (
 	fieldRunReason        = "reason"
 	fieldRunQueuedAt      = "queuedAt"
 	fieldRunStartedAt     = "startedAt"
+	fieldAlertConditions  = "conditions"
+	fieldAlertTableName   = "tableName"
+	fieldAlertPriority    = "priority"
+	fieldAlertRecordID    = "recordId"
+	fieldAlertUpdatedAt   = "updatedAt"
 
 	reportDefinitionSource = "report_list"
 )
@@ -27,7 +32,9 @@ var savedReportReference = idReference{
 // reportReadSpecs are the report lists, each read through the operation the
 // Desk reads it with.
 func reportReadSpecs() []graphQLListSpec {
-	return []graphQLListSpec{reportRunsListSpec(), reportSchedulesListSpec()}
+	return []graphQLListSpec{
+		reportRunsListSpec(), reportSchedulesListSpec(), tableChangeAlertsListSpec(),
+	}
 }
 
 // reportRunsListSpec reads the runs the person made of their reports.
@@ -100,4 +107,44 @@ func runComparable(row map[string]any, withheld map[string]struct{}, _ clock) {
 	default:
 		row[fieldRunComparable] = true
 	}
+}
+
+// tableChangeAlertsListSpec reads the change alerts the person set up; the
+// repository keeps the read to the reader's own alerts.
+func tableChangeAlertsListSpec() graphQLListSpec {
+	return graphQLListSpec{
+		name:         "report_list_table_change_alerts",
+		entityPlural: "table change alerts",
+		summary: "List the change alerts the person you are working for has set up: for " +
+			"which changes each fires and whether it is Active or Paused. Only their own " +
+			"alerts are returned. Use it to find one to change, pause, resume or delete. An " +
+			"alert's name, the table it watches and its conditions show only when your data " +
+			"access reaches them, and query searches the name and table, so it is refused " +
+			"below that; narrow by status instead.",
+		queryNote: "Words to find in the alert's name or the table it watches.",
+		notes: map[string]string{
+			paramStatus:      "Active or Paused.",
+			"conditionMatch": "all when every condition must hold, any when one is enough.",
+		},
+		searches: []string{listFieldName, fieldAlertTableName},
+		unoffered: []string{
+			"customTitle", "customMessage", "topic", fieldAlertPriority, fieldAlertRecordID,
+			fieldAlertUpdatedAt,
+		},
+		resource: permission.ResourceTableChangeAlert,
+		shape:    alertConditionCount,
+	}
+}
+
+// alertConditionCount says how many conditions an alert checks rather than
+// carrying each one, and only when the conditions themselves were shown: a
+// count of withheld conditions would say something about them. An alert
+// with none reaches here without the field, which the read leaves out empty.
+func alertConditionCount(row map[string]any, withheld map[string]struct{}, _ clock) {
+	if _, hidden := withheld[fieldAlertConditions]; hidden {
+		return
+	}
+	conditions, _ := row[fieldAlertConditions].([]any)
+	row["conditionCount"] = len(conditions)
+	delete(row, fieldAlertConditions)
 }

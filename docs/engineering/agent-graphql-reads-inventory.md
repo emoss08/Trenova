@@ -163,7 +163,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 | `report_list` | op | reportDefinitions (+ cannedReports) | ReportDefinitionsTable (+ CannedReports) | cursor | DataTable fieldFilters only | Tool merges ListCanned + ListDefinitions; category as fieldFilter. Stays on the repository path (report PR): it merges built-in and saved reports in one search, and GraphQL serves them from two roots, one unpaged. |
 | `report_list_dashboards` | op | reportDashboards | ReportDashboards | unpaged | none | Same ListDashboards; query/paging client-side. Stays on the repository path (report PR): `reportDashboards` checks report read where the tool checks dashboard read, so the generator refuses the binding until the two agree, which is the owner's call. |
 | `report_list_datasets` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata with no record kind; category/query filtered client-side. Stays on the repository path (report PR): the catalog is in process, and `reportCatalog` returns it whole with no filter, so each call would fetch the whole catalog to keep a few datasets. |
-| `report_list_table_change_alerts` | op | tcaSubscriptions | TCASubscriptionTable | cursor | DataTable fieldFilters only | Same TCA subscription repository. Stays on the repository path (report PR): `table_change_alert` defaults to Restricted with no field sensitivities, so through the guard an alert shows only its id at Internal. Declaring its fields Internal would also newly show an alert's name, table, conditions and custom text at Internal where that kind's sensitivities govern (the AI audit trail's recorded arguments of an alert tool, read by people at their own ceiling, and write previews). Which fields are Internal is the owner's call; once declared, the tool binds `tcaSubscriptions` through a Desk operation like the run list. |
 
 ## settlement
 
@@ -196,8 +195,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 23 |
-| op, converted (rows removed) | 96 |
+| op, not yet converted | 22 |
+| op, converted (rows removed) | 97 |
 | field-no-op, not yet converted | 0 |
 | field-no-op, converted (rows removed) | 6 |
 | partial, not yet converted | 10 |

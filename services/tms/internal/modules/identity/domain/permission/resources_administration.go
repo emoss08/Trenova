@@ -497,6 +497,11 @@ func (r *Registry) registerAdministrationResources() {
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"conditionMatch": SensitivityInternal,
+			"eventTypes":     SensitivityInternal,
+			"status":         SensitivityInternal,
+		},
 	})
 
 	_ = r.Register(&ResourceDefinition{

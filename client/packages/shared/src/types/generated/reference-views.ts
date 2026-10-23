@@ -861,6 +861,14 @@ export const REFERENCE_VIEWS = {
   shipment_stop: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   shipment_type: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   stored_mileage: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
+  table_change_alert: [
+    "businessUnitId",
+    "createdAt",
+    "id",
+    "organizationId",
+    "updatedAt",
+    "version",
+  ],
   table_configuration: [
     "businessUnitId",
     "createdAt",
@@ -1218,6 +1226,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   ShipmentStop: "shipment_stop",
   ShipmentType: "shipment_type",
   StoredMileage: "stored_mileage",
+  TCASubscription: "table_change_alert",
   TableConfiguration: "table_configuration",
   Tender: "tender",
   Timesheet: "timesheet",

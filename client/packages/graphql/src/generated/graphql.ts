@@ -18366,6 +18366,14 @@ export type StoredMileageTableQueryVariables = Exact<{
 
 export type StoredMileageTableQuery = { storedMileages: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'StoredMileageTableRowFieldsFragment': StoredMileageTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type DeskTableChangeAlertsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskTableChangeAlertsQuery = { tcaSubscriptions: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, tableName: string, eventTypes: Array<string>, watchedColumns: Array<string>, conditions: Array<unknown>, conditionMatch: string, status: string } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type TcaSubscriptionTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, userId: string, name: string, tableName: string, recordId: string | null, eventTypes: Array<string>, conditions: Array<unknown>, conditionMatch: string, watchedColumns: Array<string>, customTitle: string, customMessage: string, topic: string, priority: string, status: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'TcaSubscriptionTableRowFieldsFragment' };
 
 export type TcaSubscriptionTableQueryVariables = Exact<{
@@ -20095,6 +20103,7 @@ export { ShipmentRatingDetailFieldsFragmentDoc, ShipmentLocationFieldsFragmentDo
 export { UpdateSidebarPreferencesDocument } from "./documents/sidebar-preferences/mutations";
 export { SidebarPreferencesDocument, SidebarCustomizationOptionsDocument } from "./documents/sidebar-preferences/preferences";
 export { StoredMileageStopKeyFieldsFragmentDoc, StoredMileageTableRowFieldsFragmentDoc, StoredMileageTableDocument } from "./documents/stored-mileage/table";
+export { DeskTableChangeAlertsDocument } from "./documents/table-change-alert/desk";
 export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument } from "./documents/table-change-alert/table";
 export { TableConfigurationFieldsFragmentDoc, TableConfigurationTableDocument, DefaultTableConfigurationDocument, TableConfigurationDetailDocument, CreateTableConfigurationDocument, UpdateTableConfigurationDocument, DeleteTableConfigurationDocument, SetDefaultTableConfigurationDocument, SetOrgDefaultTableConfigurationDocument } from "./documents/table-configuration/operations";
 export { MyTableLayoutDocument, SaveMyTableLayoutDocument, ResetMyTableLayoutDocument } from "./documents/table-layout/operations";

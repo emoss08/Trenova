@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f1db18beb786d648e2cadfa078d530057aa3ac95a8098dea0e3b9365fa942169",
+  "version": "sha256:759e58506c04112a1dc1a5c74bd0d8e58595996de7ca2d6efbfc087697e8f267",
   "screens": [
     {
       "path": "/",
@@ -6291,7 +6291,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "table_change_alert"
+      ],
       "references": [],
       "declared": []
     },
@@ -43009,7 +43011,9 @@
     {
       "name": "TCASubscriptionTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "table_change_alert"
+      ],
       "linked": [],
       "declared": []
     },

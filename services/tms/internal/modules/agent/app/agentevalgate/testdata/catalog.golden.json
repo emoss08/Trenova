@@ -37568,8 +37568,7 @@
               "orders",
               "recurring shipments",
               "formula templates",
-              "equipment manufacturers",
-              "table change alerts"
+              "equipment manufacturers"
             ],
             "type": "string",
             "x-enumOf": "tableView.entity"
@@ -39002,62 +39001,33 @@
     },
     {
       "name": "report_list_table_change_alerts",
-      "description": "List the change alerts the person you are working for has set up: what each watches, for which changes, and whether it is Active or Paused. Only their own alerts are returned. Use it to find one to change, pause, resume or delete. Filters: status (Active|Paused); text: name, tableName.",
+      "description": "List the change alerts the person you are working for has set up: for which changes each fires and whether it is Active or Paused. Only their own alerts are returned. Use it to find one to change, pause, resume or delete. An alert's name, the table it watches and its conditions show only when your data access reaches them, and query searches the name and table, so it is refused below that; narrow by status instead. Filters: conditionMatch, createdAtFrom/To, status.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "name",
-                    "tableName"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "report_list_table_change_alerts.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "report_list_table_change_alerts.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "conditionMatch": {
+            "description": "Only records whose condition match contains this text. all when every condition must hold, any when one is enough.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -39066,22 +39036,32 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "name": {
+            "description": "Only records whose name contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Words to find in the alert's name or the table it watches.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "name"
+              "conditionMatch",
+              "createdAt",
+              "customMessage",
+              "customTitle",
+              "name",
+              "priority",
+              "recordId",
+              "status",
+              "tableName",
+              "topic",
+              "updatedAt",
+              "userId"
             ],
             "type": "string",
-            "x-enumOf": "report_list_table_change_alerts.sortBy"
+            "x-enumOf": "report_list_table_change_alerts.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -39091,6 +39071,14 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is exactly this. Active or Paused.",
+            "type": "string"
+          },
+          "tableName": {
+            "description": "Only records whose table name contains this text.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -39583,8 +39571,7 @@
               "orders",
               "recurring shipments",
               "formula templates",
-              "equipment manufacturers",
-              "table change alerts"
+              "equipment manufacturers"
             ],
             "type": "string",
             "x-enumOf": "tableView.entity"

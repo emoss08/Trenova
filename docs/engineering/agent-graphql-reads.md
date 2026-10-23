@@ -334,7 +334,8 @@ becomes a parameter. Its type comes from the field's GraphQL type:
 - **Withheld fields.** A field above the caller's ceiling, or in a `@protected` group the caller
   lacks, is refused as a filter or sort before the read, with the same message today's
   `refuseWithheldFields` gives. A view `report_compose_table_view` composes and previews through the list
-  is held to the same check, since its filters reach the same resolver.
+  is held to the same check, since its filters reach the same resolver. A free-text `query` is refused the same way when
+  one of the fields the spec says it matches (`searches`) is withheld.
 
 **Operations on a table-shaped input** (`WorkerPTOEntriesInput`, `TrainingCoursesInput`, and any
 input that holds `first`, `after`, `query`, `fieldFilters` and `sort`). The table's fields are
@@ -852,6 +853,7 @@ Each module's PR:
 | Carriers | `carrier_list_invoice_matches` | none | reads `DeskCarrierInvoiceMatches`, an `items` list paged by its root's limit and offset, checked by `carrier_invoice_match` read as its root is; the repository tool checked `carrier_settlement` read, which still reaches it as the parent. `carrier_invoice_match` declared only the EDI invoice's fields, so under its Restricted default every match field but its reference view would be withheld at Internal; the match's links, how it was matched, its resolution and its carrier are now declared Internal, and the invoice, expected and variance totals stay Restricted, as the repository row gated them. The spec sets `amounts` and computes `source` (EDI, Document or Manual) in its `shape`; a match whose invoice a carrier sent over EDI marks the run with that EDI invoice (`marks`) |
 | Reports | `report_list_runs` | none | reads `DeskReportRuns`, added for the Desk. `ReportRun` declares `@kind(resource: "report")` and gains `rowsStored`, whether the run's rows were stored for a comparison, which the repository row worked out from the run itself. `reportRuns` keeps the reader to their own runs (`ListRunsConnection` sets `RequestedBy` from the reader), as the repository tool did. `report` defaults to Internal, so nothing is withheld at Internal; the spec's `shape` marks each run `comparable` with the reason it is not, and leaves a run whose status or storage was withheld unjudged. The repository tool's 25-run cap becomes the cursor page |
 | Reports | `report_list_schedules` | none | reads `DeskReportSchedules`, added for the Desk. `ReportSchedule` declares `@kind(resource: "report")` and gains `mine` (the reader set it up), which the repository row called `yours`; `reportSchedules` gains `enabledOnly` and `limit` (safe additions), the limit bounded by `base.RecordListLimit`: every schedule of a named report, one page of 20 across the organization when no report is named, where the root read every schedule. The list is the organization's on both paths, as the repository tool read it; `mine` widens nothing, it only says which are the reader's |
+| Reports | `report_list_table_change_alerts` | `name`, `tableName`, `watchedColumns`, `conditionCount` | reads `DeskTableChangeAlerts`, added for the Desk. `TCASubscription` had no kind; it now declares `@kind(resource: "table_change_alert")`. By the owner's decision `table_change_alert` declares its `status`, `eventTypes` and `conditionMatch` Internal, and an alert's name, table, conditions, watched columns and custom title and message keep its Restricted default; the repository row returned them all ungated. The declaration also reaches the AI audit trail's recorded arguments of the alert tools and write previews, where exactly those three fields are newly shown at Internal (`TestReaderArguments_KeepsAnAlertsDetailsRestricted`). The repository keeps the read to the reader's own alerts on both paths. The spec's `shape` counts the conditions only where they are shown. `query` matches the name and table, so it is refused where they are withheld (`searches`), as a filter on them is. The status is a database enum, now marked in the search configuration, so it is matched whole |
 | Inbox | `inbox_list_inbound_messages` | none | reads `DeskInboundMessages`, written for it, for a call without words; a call with `query` still ranks by meaning on the retrieval index, narrowed only by `status`, `classification` and `mailboxId`, and any other parameter beside `query` is refused. `InboundMessagesInput` pages inside itself (`first`, `after`), the first list to (`pagedInput`). `status` is now a list of the inbox's statuses, so the repository tool's `waiting` shorthand is gone and the note names InReview and Quarantined. Every field is Internal under `inbound_message`; the mailbox's name and address are its reference view, Internal, so the address shows at Internal as the repository row showed it. Rows gain the matched customer, the attachment count, the thread and its count, the owner and the due time |
 | Inbox | `inbox_get_inbound_message` | none | reads `DeskInboundMessage`. The body is cut at 6,000 characters by the spec's `shape`, which says so (`bodyTruncated`), and the sender is written once (`from`), as before. The reply draft, the load draft, the steps the message asks for (`actions`, which replace the repository view's created shipment, logged exception and stops decision) and the conflicts are the screen's own fields; the mailbox shows as on the list |
 | Inbox | `inbox_list_email_profiles` | none at Internal | reads `DeskEmailProfiles`, written for it: what a profile is called and who mail comes from and goes back to, never how it connects to its provider. `email_profile` defaulted to Restricted with no field sensitivities, so every field but `id` and the name would be withheld at Internal; who mail comes from and where replies go (name, description, sender, reply-to, status, dates) is now declared Internal, and the provider and its credentials stay Restricted. Only an agent read applies these sensitivities to an email profile: no screen carries one inside another record. Active profiles are read unless the call names a status |
@@ -868,15 +870,19 @@ every converted read does, where the repository tools judged it by the person's 
 invoices. A role that reaches Restricted on a factoring kind and only Internal on invoices is
 shown the factoring money it was granted.
 
-The report reads were not gated, so at a person's role ceiling below Internal a run or a schedule
-now withholds every field but `id`, where the repository rows returned them all. The report
-module converted two of its nine reads. `report_list_table_change_alerts` stays on the repository
-path: `table_change_alert` defaults to Restricted with no field sensitivities, so through the guard
-an alert would show only its id at Internal, and declaring its fields Internal would also show an
-alert's name, table, conditions and custom message wherever that kind's sensitivities govern
-(write previews, and the AI audit trail's recorded arguments, read by people at their own
-ceiling), which is newly shown at Internal. That is the owner's call; the inventory says so. The
-other six stay with their reasons in the inventory.
+The report reads were not gated, so at a person's role ceiling below Internal a run, a schedule
+or a change alert now withholds every field but `id`, where the repository rows returned them
+all. The report module converted three of its nine reads; the other six stay with their reasons
+in the inventory.
+
+A list whose free-text `query` matches a field the reader may not be shown leaks that field one
+match at a time, as a filter on it would. A spec names the fields its query matches in `searches`,
+and the tool refuses a query when any of them is withheld. The change alert list is the first to
+declare it. Nine converted lists search a column above Internal and do not yet declare it
+(`worker_list_time_off`, `ledger_list_manual_journals`, `ledger_list_journal_reversals`,
+`fuel_list_cards`, `settlement_list_driver_expenses`, `settlement_list_advances`,
+`factoring_list_noas`, `receivable_list_customer_payments`, `inbox_list_email_profiles`); each
+module should name its searched fields.
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted
