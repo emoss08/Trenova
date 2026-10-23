@@ -131,7 +131,7 @@ func disputeMovesMoney(params map[string]any) bool {
 
 func payDisputeIDProperty() map[string]any {
 	return agenttoolschema.RecordID(permission.ResourceSettlementDispute, "The pay dispute",
-		"settlement_get_driver's openDisputes, settlement_get_dispute or the page you are on")
+		"settlement_get_driver's disputes, settlement_get_dispute or the page you are on")
 }
 
 func disputeRecord(dispute *driversettlement.Dispute) toolpreview.Record {

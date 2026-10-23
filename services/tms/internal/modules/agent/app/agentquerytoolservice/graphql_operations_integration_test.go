@@ -438,7 +438,7 @@ func operationsEnv(t *testing.T) (*convertedListEnv, *operationsWorld, *postgres
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	_, services := convertedListCases(conn)
+	_, services := convertedListCases(conn, admin)
 	operationsServices(conn, &services)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	customers := loaders.NewCustomerByIDLoaderFactory(loaders.CustomerByIDLoaderFactoryParams{

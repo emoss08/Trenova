@@ -50,8 +50,10 @@ var convertedGets = map[string]string{
 }
 
 // getsReadElsewhere are the converted gets their module's own test reads:
-// the operations, ledger, rate, accounting and EDI tests.
+// the operations, ledger, rate, accounting, EDI and settlement tests.
 var getsReadElsewhere = []string{
+	"settlement_get_driver", "settlement_get_carrier", "settlement_get_dispute",
+	"settlement_get_driver_earnings",
 	"order_get", "exception_get_service_failure", "detention_get_occurrence",
 	"ledger_get_journal_entry", "ledger_get_manual_journal", "rate_get_agreement",
 	"accounting_get_connection", "accounting_get_sync_record", "accounting_get_mapping",
@@ -85,7 +87,7 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
-	lists, services := convertedListCases(conn)
+	lists, services := convertedListCases(conn, admin)
 	events := carrierintelrepository.NewEventRepository(carrierintelrepository.Params{
 		DB: conn, Logger: logger,
 	})

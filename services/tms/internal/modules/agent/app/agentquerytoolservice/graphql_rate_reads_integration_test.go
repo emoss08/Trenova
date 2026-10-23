@@ -185,7 +185,7 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
-	_, resolvers := convertedListCases(conn)
+	_, resolvers := convertedListCases(conn, admin)
 	agreements := rateagreementservice.New(rateagreementservice.Params{
 		Logger: logger,
 		Repo:   rateagreementrepository.New(rateagreementrepository.Params{DB: conn, Logger: logger}),

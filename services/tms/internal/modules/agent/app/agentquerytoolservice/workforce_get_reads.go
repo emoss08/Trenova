@@ -103,7 +103,7 @@ func dotRandomDrawGetSpec() getSpec {
 func workerHOSGetSpec() getSpec {
 	return getSpec{
 		name:   toolWorkerGetHOS,
-		entity: "driver",
+		entity: entityDriver,
 		searchTerms: []string{
 			"hours of service", "hos", "hours left", "drive time", "duty status",
 		},

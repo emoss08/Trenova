@@ -433,7 +433,7 @@ var linkedFrom = map[string][]string{
 	"tractor":                     {"fuel_card", "fuel_purchase", "shipment"},
 	"trailer":                     {"shipment"},
 	"user":                        {"accounting_integration", "accounting_sync", "ai_provider", "auth_event", "capture_batch", "capture_device", "carrier", "carrier_settlement", "detention", "dot_random_pool", "driver_settlement", "external_identity", "fleet_code", "ifta_return", "inbound_message", "invoice", "invoice_dispute", "journal_entry", "manual_journal", "mfa_authenticator", "performance_review", "risk_decision", "service_failure", "shipment", "table_configuration", "worker", "worker_disciplinary_action", "worker_dot_test", "worker_employment_event", "worker_pto"},
-	"worker":                      {"dot_random_pool", "driver_settlement", "escrow_account", "fuel_card", "fuel_purchase", "pay_advance", "performance_review", "qualification", "recurring_deduction", "recurring_earning", "shipment", "timesheet", "tractor", "trailer", "worker_dot_test", "worker_injury", "worker_leave", "worker_pto"},
+	"worker":                      {"dot_random_pool", "driver_pay_profile", "driver_settlement", "escrow_account", "fuel_card", "fuel_purchase", "pay_advance", "performance_review", "qualification", "recurring_deduction", "recurring_earning", "shipment", "timesheet", "tractor", "trailer", "worker_dot_test", "worker_injury", "worker_leave", "worker_pto"},
 	"worker_credential_type":      {"worker", "worker_checklist_template"},
 	"worker_pto":                  {"worker"},
 	"worker_safety_event":         {"worker_disciplinary_action"},

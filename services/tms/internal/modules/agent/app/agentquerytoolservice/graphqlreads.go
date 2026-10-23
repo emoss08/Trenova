@@ -196,6 +196,9 @@ type graphQLParam struct {
 	// argument the screen sends, it is not judged by a record field's
 	// sensitivity.
 	OnInput bool
+	// Minor marks an amount filter on a field held in minor units, which the
+	// call sends as a decimal (amountMin on amountMinor).
+	Minor bool
 	// Arg is the root variable an argument parameter is sent as (a drift
 	// list's integrationType), and ArgField the field of that variable's
 	// filter input it sets (statuses), when it is one.
@@ -820,10 +823,19 @@ func compileFilter(
 			return compare(dbtype.OpGreaterThanOrEqual, at), true, nil
 		}
 		return compare(dbtype.OpLessThanOrEqual, at), true, nil
-	case paramAtLeast:
-		return compare(dbtype.OpGreaterThanOrEqual, args[param.Name]), true, nil
-	case paramAtMost:
-		return compare(dbtype.OpLessThanOrEqual, args[param.Name]), true, nil
+	case paramAtLeast, paramAtMost:
+		value := args[param.Name]
+		if param.Minor {
+			minor, minorErr := minorUnits(value, param.Name)
+			if minorErr != nil {
+				return nil, false, minorErr
+			}
+			value = minor
+		}
+		if param.Kind == paramAtLeast {
+			return compare(dbtype.OpGreaterThanOrEqual, value), true, nil
+		}
+		return compare(dbtype.OpLessThanOrEqual, value), true, nil
 	case paramPresent:
 		has, ok := args[param.Name].(bool)
 		if !ok {
