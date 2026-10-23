@@ -527,6 +527,7 @@ type ResolverRoot interface {
 	RateAgreement() RateAgreementResolver
 	RateMatrix() RateMatrixResolver
 	RateMatrixVersion() RateMatrixVersionResolver
+	ReportSchedule() ReportScheduleResolver
 	ReviewRating() ReviewRatingResolver
 	RiskDecision() RiskDecisionResolver
 	Role() RoleResolver
@@ -3224,7 +3225,7 @@ type QueryResolver interface {
 	ReportRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) (*gqlmodel.ReportRunConnection, error)
 	PreviewReport(ctx context.Context, definition gqlmodel.ReportIRInput, params map[string]any, supersede *bool) (*gqlmodel.ReportPreview, error)
 	DrillThroughReport(ctx context.Context, input gqlmodel.ReportDrillInput) (*gqlmodel.ReportPreview, error)
-	ReportSchedules(ctx context.Context, definitionID *string) ([]*gqlmodel.ReportSchedule, error)
+	ReportSchedules(ctx context.Context, definitionID *string, enabledOnly *bool, limit *int) ([]*gqlmodel.ReportSchedule, error)
 	ReportViews(ctx context.Context, definitionID *string) ([]*gqlmodel.ReportView, error)
 	ReportView(ctx context.Context, id string) (*gqlmodel.ReportView, error)
 	ReportDashboards(ctx context.Context) ([]*gqlmodel.ReportDashboard, error)
@@ -3414,6 +3415,10 @@ type RateMatrixResolver interface {
 type RateMatrixVersionResolver interface {
 	Dimensions(ctx context.Context, obj *ratematrix.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error)
 	Cells(ctx context.Context, obj *ratematrix.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
+}
+
+type ReportScheduleResolver interface {
+	Mine(ctx context.Context, obj *gqlmodel.ReportSchedule) (bool, error)
 }
 
 type ReviewRatingResolver interface {
@@ -4272,6 +4277,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"RateAgreement":                      func() any { return r.RateAgreement() },
 			"RateMatrix":                         func() any { return r.RateMatrix() },
 			"RateMatrixVersion":                  func() any { return r.RateMatrixVersion() },
+			"ReportSchedule":                     func() any { return r.ReportSchedule() },
 			"ReviewRating":                       func() any { return r.ReviewRating() },
 			"RiskDecision":                       func() any { return r.RiskDecision() },
 			"Role":                               func() any { return r.Role() },

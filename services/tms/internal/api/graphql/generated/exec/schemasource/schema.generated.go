@@ -7465,7 +7465,7 @@ type BriefingItem {
 type BriefingSection {
   key: BriefingSectionKey!
   title: String!
-  "The computed wording, which is always true and always present."
+  "The computed wording, which is always true. Empty on a section cut to the lines the reader may read, whose wording counted the others."
   summary: String!
   "The model's sentence, where it was written and survived the number guard."
   body: String
@@ -7475,10 +7475,20 @@ type BriefingSection {
   path: String
 }
 
+"A section the reader was not shown in full, because they may not read the records it counts."
+type BriefingWithheldSection {
+  key: BriefingSectionKey!
+  title: String!
+  "True when the section is shown with only the lines the reader may read; false when it is left out."
+  partial: Boolean!
+}
+
 """
 One role's morning for one organization. The figures are computed first and
 the wording written second; a briefing nobody narrated is a complete
-briefing that simply reads plainer.
+briefing that simply reads plainer. Sections the reader may not read are
+left out and named in withheldSections; while any are, the headline and the
+model's wording are left out too, since they may cite them.
 """
 type Briefing {
   id: ID!
@@ -7488,10 +7498,13 @@ type Briefing {
   "The organization's local day, as YYYY-MM-DD."
   briefingDate: String!
   status: BriefingStatus!
+  "Empty while any section is withheld."
   headline: String!
   sections: [BriefingSection!]!
-  "True when a model's wording was accepted for any part of the page."
+  "True when a model's wording was accepted for any part of the page the reader is shown."
   narrated: Boolean!
+  "The sections left out or cut short for this reader; empty when they see the whole page."
+  withheldSections: [BriefingWithheldSection!]!
   emailedAt: Timestamp
   readAt: Timestamp
   version: Int!
@@ -7996,7 +8009,7 @@ type CaptureBatch {
   isEditable: Boolean!
   "The pages, on a single-batch read. A list leaves them out."
   pages: [CapturePage!]!
-  "The items, on a single-batch read. A list leaves them out."
+  "The items, on a single-batch read, or on a list that selects them, read for the whole page at once."
   items: [CaptureItem!]!
   version: Int!
   createdAt: Timestamp!
@@ -9333,9 +9346,13 @@ input CarrierIntelEventFilterInput {
   statuses: [CarrierIntelEventStatus!]
   severities: [CarrierIntelSeverity!]
   categories: [CarrierIntelSection!]
+  "Only this carrier's events."
   carrierId: ID
+  "Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number."
   subjectType: CarrierIntelSubjectType
+  "Only events about this subject, by its id or DOT number as the event names it."
   subjectId: String
+  "Only events nobody has resolved or dismissed yet: Open and Acknowledged."
   openOnly: Boolean
 }
 
@@ -21254,7 +21271,7 @@ input TriageResponseTargetInput {
 }
 
 "The organization's queue settings."
-type TriageSettings {
+type TriageSettings @kind(resource: "inbound_message") {
   "Who the queue is handed to at the end of the day."
   onCallUser: User
   onCallUserId: ID
@@ -21271,7 +21288,7 @@ input TriageSettingsInput {
 }
 
 "Someone a message can be assigned to."
-type TriageAssignee {
+type TriageAssignee @kind(resource: "inbound_message") {
   user: User!
   "Waiting messages already assigned to them."
   waiting: Int!
@@ -24509,7 +24526,12 @@ type RateMatrix {
   The draft's cells, a page at a time: offset skips that many, and limit takes
   at most 100.
   """
-  cells(offset: Int = 0, limit: Int = 100): [RateMatrixCell!]!
+  cells(
+    "Skip this many cells, in the matrix's order, for the page after them."
+    offset: Int = 0
+    "At most this many cells."
+    limit: Int = 100
+  ): [RateMatrixCell!]!
   "The newest published version, which tariffs read by default; 0 before the first."
   publishedVersionNumber: Int!
   publishedAt: Timestamp
@@ -24933,7 +24955,7 @@ type ReportRunError {
   detail: String
 }
 
-type ReportRun {
+type ReportRun @kind(resource: "report") {
   id: ID!
   definitionId: ID
   revisionId: ID
@@ -24948,6 +24970,8 @@ type ReportRun {
   byteSize: Int!
   durationMs: Int!
   truncated: Boolean!
+  "Whether the run's rows were stored, so it can be compared with another run."
+  rowsStored: Boolean!
   error: ReportRunError
   artifactExpiresAt: Timestamp
   cacheHit: Boolean!
@@ -24983,7 +25007,7 @@ type ReportScheduleAlert {
   suppressWhileFiring: Boolean!
 }
 
-type ReportSchedule {
+type ReportSchedule @kind(resource: "report") {
   id: ID!
   definitionId: ID!
   cronExpression: String!
@@ -24997,6 +25021,8 @@ type ReportSchedule {
   alertFiring: Boolean!
   enabled: Boolean!
   runAsId: ID!
+  "Whether the person reading set the schedule up, and so may change or remove it."
+  mine: Boolean!
   lastRunId: ID
   nextRunAt: Timestamp
   consecutiveFailures: Int!
@@ -25416,7 +25442,13 @@ extend type Query {
     supersede: Boolean
   ): ReportPreview!
   drillThroughReport(input: ReportDrillInput!): ReportPreview!
-  reportSchedules(definitionId: ID): [ReportSchedule!]!
+  reportSchedules(
+    definitionId: ID
+    "Only schedules that are switched on."
+    enabledOnly: Boolean
+    "At most this many schedules, from 1 to 100. Every schedule of a named report when left out; 20 across the organization."
+    limit: Int
+  ): [ReportSchedule!]!
   reportViews(definitionId: ID): [ReportView!]!
   reportView(id: ID!): ReportView!
   reportDashboards: [ReportDashboard!]!

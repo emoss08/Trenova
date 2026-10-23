@@ -25,7 +25,11 @@ type graphQLRead struct {
 	RootField string
 	Node      string
 	Resource  string
-	Entity    func() domaintypes.PostgresSearchable
+	// SelfScoped marks a read whose resolver acts only on the caller's own
+	// record and checks no resource; the tool's policy, scoped to the
+	// caller, is its check.
+	SelfScoped bool
+	Entity     func() domaintypes.PostgresSearchable
 	// Unpaged marks a list whose root field returns every record at once,
 	// keyed by its own arguments (a worker's checklists by workerId).
 	Unpaged bool
@@ -328,8 +332,12 @@ func inputFieldParams(field *graphQLField) []graphQLParam {
 			}}}
 	}
 	if field.Kind == graphQLKindEnum && !field.List {
+		what := "Only records whose " + words + " is this."
+		if field.Name == inputSort {
+			what = "How the list is ordered."
+		}
 		return []graphQLParam{{Name: field.Name, Field: field.Name, Kind: paramEquals,
-			Schema: agenttoolschema.Enum(describe("Only records whose "+words+" is this."),
+			Schema: agenttoolschema.Enum(describe(what),
 				agenttoolschema.Derived(graphQLEnumSource+field.Type, field.Enum))}}
 	}
 

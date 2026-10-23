@@ -7095,6 +7095,12 @@
 .dk-ib.dk-on {
   color: var(--dsk-fg);
 }
+.dk-headline-note {
+  margin: -22px 0 26px;
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+  text-align: center;
+}
 .dk-headline-sk {
   display: inline-block;
   width: min(420px, 80vw);

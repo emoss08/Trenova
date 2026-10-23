@@ -163,6 +163,8 @@ type ListBatchesInput struct {
 	Search      string `json:"search"`
 	CreatedFrom int64  `json:"createdFrom"`
 	CreatedTo   int64  `json:"createdTo"`
+	// IncludeItems reads each stack's items with the page.
+	IncludeItems bool `json:"includeItems"`
 }
 
 // ListBatches is the intake queue. A person whose data scope is their own
@@ -182,15 +184,16 @@ func (s *Service) ListBatches(
 	}
 
 	req := &captureports.ListCaptureBatchesRequest{
-		Filter:      in.Filter,
-		Cursor:      in.Cursor,
-		Statuses:    in.Statuses,
-		Source:      in.Source,
-		TargetType:  in.TargetType,
-		TargetID:    in.TargetID,
-		Search:      stringutils.TruncateRunes(strings.TrimSpace(in.Search), maxBatchSearchLength),
-		CreatedFrom: in.CreatedFrom,
-		CreatedTo:   in.CreatedTo,
+		Filter:       in.Filter,
+		Cursor:       in.Cursor,
+		Statuses:     in.Statuses,
+		Source:       in.Source,
+		TargetType:   in.TargetType,
+		TargetID:     in.TargetID,
+		Search:       stringutils.TruncateRunes(strings.TrimSpace(in.Search), maxBatchSearchLength),
+		CreatedFrom:  in.CreatedFrom,
+		CreatedTo:    in.CreatedTo,
+		IncludeItems: in.IncludeItems,
 	}
 	if in.Mine || !seesEveryone(result) {
 		req.UserID = in.TenantInfo.UserID

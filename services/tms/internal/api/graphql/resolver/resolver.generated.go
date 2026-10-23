@@ -375,6 +375,7 @@ type Resolver struct {
 	rateAgreement                      *rateresolver.RateAgreementResolver
 	rateMatrix                         *rateresolver.RateMatrixResolver
 	rateMatrixVersion                  *rateresolver.RateMatrixVersionResolver
+	reportSchedule                     *reportresolver.ReportScheduleResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
@@ -1644,6 +1645,7 @@ func FromServices(s *Services) *Resolver {
 		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
 		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
 		rateMatrixVersion:            &rateresolver.RateMatrixVersionResolver{Deps: rateDeps},
+		reportSchedule:               &reportresolver.ReportScheduleResolver{Deps: reportDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
@@ -2904,6 +2906,10 @@ func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
 
 func (r *Resolver) RateMatrixVersion() generated.RateMatrixVersionResolver {
 	return r.rateMatrixVersion
+}
+
+func (r *Resolver) ReportSchedule() generated.ReportScheduleResolver {
+	return r.reportSchedule
 }
 
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {

@@ -1485,6 +1485,29 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: settlements and pay | `settlement_list_driver`, `settlement_list_pay_events`, `settlement_list_carrier`, `settlement_list_driver_expenses`, `settlement_list_pay_profiles`, `settlement_list_escrow_accounts`, `settlement_list_advances`, `settlement_list_recurring_deductions`, `settlement_list_recurring_earnings`, `settlement_list_pay_assignments`, `settlement_list_pay_codes`, `settlement_get_driver`, `settlement_get_driver_earnings`, `settlement_get_dispute`, `settlement_get_carrier` | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: factoring | the nine `factoring` reads; `factoring_get_agreement` renamed `factoring_list_agreements` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 | Typed reads through GraphQL: billing and receivables | `invoice_list`, `invoice_get` (up to 50 ids, one read each), `invoice_get_adjustment`, `invoice_list_disputes`, `receivable_list_customer_payments`; 15 more stay on the repository path with their reasons | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.82 → 0.83; keyword 0.95 → 0.95 |
+| Typed reads through GraphQL: carriers | `carrier_list_intelligence_events`, `carrier_list_capacity_postings`, `carrier_list_invoice_matches`, the last carrier rows of the inventory | 632 → 632 | unchanged, 0 pending | not measured (fixture stale, re-recorded separately) | not measured |
+| Typed reads through GraphQL: home page and rate matrix | `home_get_layout`, `rate_get_matrix` | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
+| Typed reads through GraphQL: reports | `report_list_runs`, `report_list_schedules`; `report_list_table_change_alerts` and six more stay on the repository path with their reasons | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
+| Typed reads through GraphQL: inbox | `inbox_list_inbound_messages` (without words), `inbox_get_inbound_message`, `inbox_list_email_profiles`, `inbox_list_capture_batches`, `inbox_list_triage_assignees` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.83 → 0.83; keyword 0.95 → 0.95 |
+| Typed reads through GraphQL: daily briefing | `insight_get_daily_briefing`; the briefing screen is cut to the sections the reader may read | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
+
+The carrier row's descriptions are in the embedding fixture re-recorded with the home page and rate matrix row; hybrid held-out ranking on that fixture is recall@5 0.93, top-1 0.83 over 167 cases, and keyword ranking is unchanged (0.99, 0.95 over 147).
+
+The reports row converts the run and schedule lists. Each reads a new `Desk*` operation;
+`ReportRun` gains `rowsStored` and `ReportSchedule` gains `mine`, both declare
+`@kind(resource: "report")`, and `reportSchedules` gains `enabledOnly` and a `limit` bounded as
+every list keyed by an optional record is (one page of 20 across the organization, where it read
+every schedule). The run list says which runs can be compared by the `report.RunStatus` wire
+values, and a Postgres test proves a stored success is comparable, that a colleague's runs are
+never listed and that `mine` only marks the reader's own schedules in the organization's list,
+as the repository tools read them. `report` defaults to Internal, so nothing is newly withheld
+at Internal; below it every field but the id is. The change alert list stays: converting it
+needs `table_change_alert`'s fields declared Internal, which would newly show alert details at
+Internal in the AI audit trail and write previews, so that is left to the owner. The fixture is
+re-recorded after merging the carrier, home page and rate matrix reads, so its hybrid figures cover them and the
+formula-templates guide page too; held-out ranking holds (keyword 0.99 and 0.95 over 147, hybrid
+0.93 and 0.83 over 167, as master's home page and rate matrix row measured), and nothing
+was tuned against it.
 
 The formula and fuel rows' after figures read the 167 held-out cases Tariff (#888) left, whose fixture
 master carries stale; the before figures are the last measured on master (165 cases). Keyword
@@ -1724,6 +1747,20 @@ ungated, are now Restricted. A Postgres test reads every factoring list and get 
 security for two tenants. The descriptions changed, so the embedding fixture is re-recorded;
 held-out ranking holds (keyword 0.99 and 0.95 over 147, hybrid 0.93
 and 0.83 over 167, before and after), and nothing was tuned against it.
+
+The inbox row converts the five inbox reads. Messages, one message, sending profiles and intake
+stacks read new `Desk*` operations; the assignees read the Triage screen's own operations, the
+queue's settings beside them on every call. The inbox list keeps its search by meaning on the
+retrieval index for a call with words, and reads `DeskInboundMessages` otherwise. The machinery
+gains a page carried inside a bespoke input, per-list page bounds and `combine` on an unpaged
+list, and `captureBatches` reads a page's items in one query instead of each stack again. The
+triage types had no kind and now declare `inbound_message`, and `email_profile`, Restricted by
+default, declares who mail comes from Internal, as the repository tool showed it, while how a
+profile connects stays Restricted. Nothing the repository tools showed at Internal is withheld,
+and no field above Internal is shown. A Postgres test reads every inbox list and the get under
+row-level security for two tenants, at Internal and for a Public role. The descriptions changed,
+so the embedding fixture is re-recorded; held-out ranking holds (keyword 0.99 and 0.95 over 147,
+hybrid 0.93 and 0.83 over 167, before and after), and nothing was tuned against it.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -17,8 +18,13 @@ func TestGraphQLReadsAreBoundToRegisteredResources(t *testing.T) {
 
 	registry := permission.NewRegistry()
 	for tool, read := range graphQLReads {
-		assert.Truef(t, registry.HasResource(read.Resource),
-			"%s reads %s, which the permission registry does not know", tool, read.Resource)
+		if read.SelfScoped {
+			assert.Emptyf(t, read.Resource, "%s reads the caller's own record, checked by no "+
+				"resource", tool)
+		} else {
+			assert.Truef(t, registry.HasResource(read.Resource),
+				"%s reads %s, which the permission registry does not know", tool, read.Resource)
+		}
 		assert.NotEmptyf(t, agentports.NamespaceOf(tool), "%s is outside a tool namespace", tool)
 	}
 }
@@ -55,7 +61,8 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 
 // derivedParams are every parameter a bound read derives, in the shape its
 // root field reads: an unpaged list's arguments, a paged list's record
-// fields and root arguments, a get's arguments but its id.
+// fields but the ones its spec leaves unoffered and its root arguments, a
+// get's arguments but its id.
 func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam {
 	t.Helper()
 
@@ -72,8 +79,16 @@ func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam 
 	}
 	args, _, _, err := read.rootParams(tool, skip)
 	require.NoError(t, err)
+	var unoffered []string
+	for _, spec := range graphQLListSpecs() {
+		if spec.name == tool {
+			unoffered = spec.unoffered
+		}
+	}
+	fields, err := offered(tool, read.typedParams(), unoffered)
+	require.NoError(t, err)
 
-	return withRootArgs(read.typedParams(), args)
+	return withRootArgs(fields, args)
 }
 
 // Every field a converted tool's hand-kept catalog entry lets a model filter
@@ -164,6 +179,12 @@ func TestGraphQLReadsCheckTheToolsOwnResource(t *testing.T) {
 		}
 		read, bound := graphQLReads[tool.Name()]
 		if !bound {
+			continue
+		}
+		if read.SelfScoped {
+			assert.Equalf(t, agent.ToolScopeSelf, tool.Policy().Scope, "%s reads %s, whose "+
+				"resolver acts only on the caller's own record, so the tool must be scoped to "+
+				"the caller", tool.Name(), read.Operation)
 			continue
 		}
 		assert.Equalf(t, read.Resource, tool.Policy().Resource.String(),

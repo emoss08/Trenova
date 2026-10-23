@@ -98,6 +98,10 @@ type graphQLListSpec struct {
 	// instead are the reads a list makes in place of its own when a call
 	// names their own parameters (the sync state of documents named by id).
 	instead []alongsideSpec
+	// page is how many rows a call reads unless it asks, and the most it may
+	// ask for, where the list's rows are larger than a table row (a capture
+	// stack with every document it was split into). Zero is the lists' own.
+	page [2]int
 	// names are the names the tool takes derived parameters by, keyed by
 	// the derived name (integrationType is system).
 	names map[string]string
@@ -124,6 +128,7 @@ type graphQLListSpec struct {
 	// amounts shows each amount the record holds in minor units as the
 	// decimal a person reads, and filters it by that decimal (graphql_money.go).
 	amounts bool
+	marks   func(row map[string]any) (agent.RecordRef, bool)
 }
 
 // idReference is where a list's id parameter points: the resource, what the
@@ -163,6 +168,9 @@ type graphQLListTool struct {
 	// search is the filter input variable and field a list paged by its
 	// root's own first and after takes its free text in.
 	search [2]string
+	// pageIn is the input a list paged inside its own input (first and
+	// after on InboundMessagesInput) takes its page in.
+	pageIn string
 	params []graphQLParam
 	// required are the arguments a call that lists records must name, and
 	// demanded those the schema marks required: an argument a read made
@@ -208,6 +216,7 @@ func newGraphQLListTool(
 		skip[input] = struct{}{}
 	case read.pagesByCursor():
 		skip[inputFirst], skip[inputAfter] = struct{}{}, struct{}{}
+	case read.pagedInput() != "":
 	default:
 		return nil, fmt.Errorf("%s: %s takes no table input and no page of its own",
 			spec.name, read.Operation)
@@ -264,6 +273,7 @@ func newGraphQLListTool(
 		read:     read,
 		input:    input,
 		search:   search,
+		pageIn:   read.pagedInput(),
 		params:   params,
 		required: required,
 		demanded: undefaulted(requiredUnlessInstead(required, instead), spec.defaults),
@@ -293,6 +303,30 @@ func (t *graphQLListTool) confidential(param *graphQLParam) bool {
 	resource, name := t.fieldOwner(param.Field)
 
 	return !fieldsensitivity.Visible(t.registry, resource, name, permission.SensitivityRestricted)
+}
+
+// pagedInput is the input variable a list's operation pages inside, when its
+// root takes no page of its own and no table input: a bespoke input that
+// holds first and after (InboundMessagesInput, CaptureBatchesInput).
+func (r *graphQLRead) pagedInput() string {
+	if _, _, tabled := r.tableInput(); tabled || r.pagesByCursor() {
+		return ""
+	}
+	for _, variable := range r.Variables {
+		if variable.Kind != graphQLKindInput {
+			continue
+		}
+		var first, after bool
+		for _, field := range graphQLInputs[variable.Type] {
+			first = first || (field.Name == inputFirst && field.Type == graphQLTypeInt)
+			after = after || (field.Name == inputAfter && field.Type == graphQLTypeString)
+		}
+		if first && after {
+			return variable.Name
+		}
+	}
+
+	return ""
 }
 
 // pagesByCursor reports whether a list's root takes its own first and after,
@@ -516,7 +550,9 @@ func graphQLListSpecs() []graphQLListSpec {
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
 		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
 		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), settlementReadSpecs(),
-		factoringReadSpecs(), billingReadSpecs(),
+		factoringReadSpecs(), billingReadSpecs(), carrierReadSpecs(),
+		reportReadSpecs(),
+		inboxReadSpecs(),
 	)
 }
 
@@ -696,11 +732,20 @@ func (t *graphQLListTool) ParamSchema() map[string]any {
 			listSortDirections,
 		)
 	}
-	for name, property := range cursorPageSchema(graphQLListLimit, graphQLListMost) {
+	for name, property := range cursorPageSchema(t.pageBounds()) {
 		properties[name] = property
 	}
 
 	return argumentSchema(properties, t.demanded)
+}
+
+// pageBounds are the rows a call reads unless it asks, and the most it may.
+func (t *graphQLListTool) pageBounds() (limit, most int) {
+	if t.spec.page[0] > 0 {
+		return t.spec.page[0], t.spec.page[1]
+	}
+
+	return graphQLListLimit, graphQLListMost
 }
 
 func (t *graphQLListTool) queryDescription() string {
@@ -832,6 +877,20 @@ func outsideRecords(
 	return out
 }
 
+func markedRows(spec *graphQLListSpec, items []map[string]any) []agent.RecordRef {
+	out := outsideRecords(spec.resource, spec.outside, items...)
+	if spec.marks == nil {
+		return out
+	}
+	for _, item := range items {
+		if ref, marked := spec.marks(item); marked {
+			out = append(out, ref)
+		}
+	}
+
+	return out
+}
+
 func (t *graphQLListTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
@@ -866,7 +925,8 @@ func (t *graphQLListTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	window, err := readCursorWindow(t.Name(), params.Params, graphQLListLimit, graphQLListMost)
+	fewest, most := t.pageBounds()
+	window, err := readCursorWindow(t.Name(), params.Params, fewest, most)
 	if err != nil {
 		return nil, err
 	}
@@ -909,7 +969,7 @@ func (t *graphQLListTool) Query(
 		HasMore:          page.hasMore,
 		Total:            page.total,
 		WithheldByAccess: page.withheld,
-		outside:          outsideRecords(t.spec.resource, t.spec.outside, page.items...),
+		outside:          markedRows(&t.spec, page.items),
 	}
 	if page.hasMore {
 		outcome.NextCursor = window.next(page.endCursor)
@@ -935,7 +995,7 @@ func (t *graphQLListTool) Query(
 
 // withBeside is a page's outcome with the records read alongside it, each
 // under its key.
-func withBeside(outcome *graphQLListOutcome, beside map[string]any) (map[string]any, error) {
+func withBeside(outcome *graphQLListOutcome, beside map[string]any) (any, error) {
 	out := make(map[string]any, len(beside)+10)
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {
@@ -946,6 +1006,9 @@ func withBeside(outcome *graphQLListOutcome, beside map[string]any) (map[string]
 	}
 	for key, value := range beside {
 		out[key] = value
+	}
+	if len(outcome.outside) > 0 {
+		return &markedRecord{record: out, outside: outcome.outside}, nil
 	}
 
 	return out, nil
@@ -1073,11 +1136,21 @@ func (t *graphQLListTool) variables(req *pageRequest) map[string]any {
 }
 
 // rootPage sets the page of a list paged by its root's own first and after,
-// and its free text inside the filter input that takes it.
+// or inside the input that holds them, and its free text inside the filter
+// input that takes it.
 func (t *graphQLListTool) rootPage(variables map[string]any, req *pageRequest) {
-	variables[inputFirst] = req.limit
+	page := variables
+	if t.pageIn != "" {
+		in, _ := variables[t.pageIn].(map[string]any)
+		if in == nil {
+			in = make(map[string]any, 3)
+		}
+		variables[t.pageIn] = in
+		page = in
+	}
+	page[inputFirst] = req.limit
 	if req.after != "" {
-		variables[inputAfter] = req.after
+		page[inputAfter] = req.after
 	}
 	if req.query != "" {
 		filter, _ := variables[t.search[0]].(map[string]any)

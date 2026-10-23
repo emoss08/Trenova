@@ -2,16 +2,13 @@ package agentquerytoolservice
 
 import (
 	"context"
-	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -415,225 +412,6 @@ func TestListWatchtowerItems_PolicyNamesEverySourceARowMayCarry(t *testing.T) {
 	}, policy.Sources)
 }
 
-type fakeBriefings struct {
-	page     *briefing.Briefing
-	requests []briefingports.GetBriefingRequest
-}
-
-func (f *fakeBriefings) Today(
-	_ context.Context,
-	req briefingports.GetBriefingRequest,
-	_ *permissionports.RequestActor,
-) (*briefing.Briefing, error) {
-	f.requests = append(f.requests, req)
-
-	return f.page, nil
-}
-
-func morningPage() *briefing.Briefing {
-	return &briefing.Briefing{
-		ID:           pulid.MustNew("brf_"),
-		RoleKey:      briefing.RoleGeneral,
-		BriefingDate: "2026-09-24",
-		Status:       briefing.StatusReady,
-		Headline:     "Twelve items open and $4,210 received yesterday.",
-		Narrated:     true,
-		Sections: []briefing.Section{
-			{
-				Key:     briefing.SectionAttention,
-				Title:   "Needs attention",
-				Summary: "12 items open, 2 critical.",
-				Body:    "Twelve things want you, two of them urgently.",
-				Items: []briefing.Item{
-					{Label: "Service failure", Value: "4", Path: "/desk/watchtower?kinds=ServiceFailure"},
-					{Label: "EDI quarantined", Value: "8", Path: "/desk/watchtower?kinds=EDIInboundQuarantined"},
-				},
-			},
-			{
-				Key:     briefing.SectionCoverage,
-				Title:   "Coverage",
-				Summary: "3 moves uncovered.",
-				Body:    "Three moves still need a driver.",
-				Items:   []briefing.Item{{Label: "Uncovered", Value: "3"}},
-			},
-			{
-				Key:     briefing.SectionCash,
-				Title:   "Cash received yesterday",
-				Summary: "2 payments posted yesterday.",
-				Body:    "Two payments came in, $4,210 in all.",
-				Items:   []briefing.Item{{Label: "Received in USD", Value: "4210.00"}},
-			},
-		},
-	}
-}
-
-func readable(resources ...permission.Resource) map[string]*permissionports.ResourcePermissionDetail {
-	out := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
-	for _, resource := range resources {
-		out[resource.String()] = &permissionports.ResourcePermissionDetail{
-			Resource:   resource.String(),
-			Operations: []permission.Operation{permission.OpRead},
-		}
-	}
-
-	return out
-}
-
-func queryBriefing(
-	t *testing.T,
-	tool agentports.AgentQueryTool,
-	params *agentports.QueryToolParams,
-) dailyBriefingView {
-	t.Helper()
-
-	result, err := tool.Query(t.Context(), params)
-	require.NoError(t, err)
-	view, ok := result.(dailyBriefingView)
-	require.True(t, ok)
-
-	return view
-}
-
-func sectionKeys(view dailyBriefingView) []string {
-	keys := make([]string, 0, len(view.Sections))
-	for _, section := range view.Sections {
-		keys = append(keys, section.Key)
-	}
-
-	return keys
-}
-
-func TestGetDailyBriefing_DropsSectionsTheReaderCannotRead(t *testing.T) {
-	t.Parallel()
-
-	briefings := &fakeBriefings{page: morningPage()}
-	tool := newGetDailyBriefingTool(briefings, &fakePermissions{readable: readable(
-		permission.ResourceBriefing,
-		permission.ResourceWatchtower,
-		permission.ResourceServiceFailure,
-		permission.ResourceShipmentMove,
-	)})
-	params := personParams(permissionports.PrincipalTypeUser)
-
-	view := queryBriefing(t, tool, params)
-
-	assert.True(t, view.Found)
-	assert.Equal(t, []string{"Attention", "Coverage"}, sectionKeys(view))
-	assert.Contains(t, view.Withheld, "Cash received yesterday")
-	assert.Contains(t, view.Withheld, "Needs attention: the kinds you may not read")
-	assert.Empty(t, view.Headline, "the headline may cite a figure from a withheld section")
-	assert.False(t, view.Narrated)
-	assert.Equal(t, briefingWithheldNote, view.Note)
-
-	attention := view.Sections[0]
-	require.Len(t, attention.Items, 1)
-	assert.Equal(t, "Service failure", attention.Items[0].Label)
-	assert.Empty(t, attention.Text, "its sentence counts the kinds the reader may not read")
-	assert.Equal(t, "3 moves uncovered.", view.Sections[1].Text,
-		"a page with something withheld reads in its computed wording")
-}
-
-func TestGetDailyBriefing_AReaderOfEverySectionGetsTheNarratedPage(t *testing.T) {
-	t.Parallel()
-
-	briefings := &fakeBriefings{page: morningPage()}
-	tool := newGetDailyBriefingTool(briefings, &fakePermissions{allowed: true})
-	params := personParams(permissionports.PrincipalTypeUser)
-	params.Params = map[string]any{paramRole: "Billing", paramDate: "2026-09-23"}
-
-	view := queryBriefing(t, tool, params)
-
-	assert.Equal(t, []string{"Attention", "Coverage", "Cash"}, sectionKeys(view))
-	assert.Empty(t, view.Withheld)
-	assert.Equal(t, "Twelve items open and $4,210 received yesterday.", view.Headline)
-	assert.True(t, view.Narrated)
-	assert.Equal(t, "Three moves still need a driver.", view.Sections[1].Text)
-	require.Len(t, briefings.requests, 1)
-	assert.Equal(t, briefing.RoleBilling, briefings.requests[0].RoleKey)
-	assert.Equal(t, "2026-09-23", briefings.requests[0].BriefingDate)
-}
-
-func TestGetDailyBriefing_AnAgentReadsOnlyWhatTheAllowListGrants(t *testing.T) {
-	t.Parallel()
-
-	page := morningPage()
-	page.Sections[0].Items[1] = briefing.Item{
-		Label: "Agent quality regressed",
-		Value: "1",
-		Path:  "/desk/watchtower?kinds=AgentQualityRegression",
-	}
-	briefings := &fakeBriefings{page: page}
-	tool := newGetDailyBriefingTool(briefings, &fakePermissions{})
-	params := testParams(map[string]any{})
-	params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
-
-	view := queryBriefing(t, tool, params)
-
-	require.False(t, permission.IsAgentAllowed(permission.ResourceAgentEvalSuite, permission.OpRead))
-	assert.Equal(t, []string{"Attention", "Coverage", "Cash"}, sectionKeys(view))
-	require.Len(t, view.Sections[0].Items, 1,
-		"no agent reads the quality suites, so their line is dropped")
-	assert.Equal(t, []string{"Needs attention: the kinds you may not read"}, view.Withheld)
-	assert.Equal(t, briefing.RoleGeneral, briefings.requests[0].RoleKey,
-		"a call that names no role reads everyone's page")
-}
-
-func TestGetDailyBriefing_ASectionNobodyMappedIsWithheld(t *testing.T) {
-	t.Parallel()
-
-	page := morningPage()
-	page.Sections = append(page.Sections, briefing.Section{
-		Key:     briefing.SectionKey("Payroll"),
-		Title:   "Payroll",
-		Summary: "Payroll runs Friday.",
-	})
-	tool := newGetDailyBriefingTool(&fakeBriefings{page: page}, &fakePermissions{allowed: true})
-
-	view := queryBriefing(t, tool, personParams(permissionports.PrincipalTypeUser))
-
-	assert.NotContains(t, sectionKeys(view), "Payroll")
-	assert.Equal(t, []string{"Payroll"}, view.Withheld)
-}
-
-func TestGetDailyBriefing_SaysSoWhenNothingIsWrittenYet(t *testing.T) {
-	t.Parallel()
-
-	tool := newGetDailyBriefingTool(&fakeBriefings{}, &fakePermissions{allowed: true})
-
-	view := queryBriefing(t, tool, personParams(permissionports.PrincipalTypeUser))
-
-	assert.False(t, view.Found)
-	assert.Equal(t, "General", view.Role)
-	assert.Equal(t, briefingMissingNote, view.Note)
-	assert.NotNil(t, view.Sections)
-}
-
-func TestGetDailyBriefing_RefusesAnUnknownRoleOrDay(t *testing.T) {
-	t.Parallel()
-
-	briefings := &fakeBriefings{page: morningPage()}
-	tool := newGetDailyBriefingTool(briefings, &fakePermissions{allowed: true})
-
-	_, err := tool.Query(t.Context(), testParams(map[string]any{paramRole: "Janitor"}))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "Dispatch")
-
-	_, err = tool.Query(t.Context(), testParams(map[string]any{paramDate: "yesterday"}))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "YYYY-MM-DD")
-	assert.Empty(t, briefings.requests)
-}
-
-func TestGetDailyBriefing_PolicyIsAPlainRead(t *testing.T) {
-	t.Parallel()
-
-	policy := newGetDailyBriefingTool(nil, nil).Policy()
-
-	assert.Equal(t, permission.ResourceBriefing, policy.Resource)
-	assert.Equal(t, agent.ExternalReadNever, policy.ReadsExternal)
-	assert.True(t, slices.Contains(briefingRoleValues(), "General"))
-}
-
 func TestListWatchtowerItems_FiltersByOwnerAndDueAndShowsTheWorkflow(t *testing.T) {
 	t.Parallel()
 
@@ -678,4 +456,16 @@ func TestListWatchtowerItems_AssignedToMeIsIgnoredForAnAgent(t *testing.T) {
 	require.Len(t, fixture.feed.requests, 1)
 	assert.False(t, fixture.feed.requests[0].AssignedToMe)
 	assert.Contains(t, feed.Notes, watchtowerAgentMineNote)
+}
+
+func readable(resources ...permission.Resource) map[string]*permissionports.ResourcePermissionDetail {
+	out := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
+	for _, resource := range resources {
+		out[resource.String()] = &permissionports.ResourcePermissionDetail{
+			Resource:   resource.String(),
+			Operations: []permission.Operation{permission.OpRead},
+		}
+	}
+
+	return out
 }

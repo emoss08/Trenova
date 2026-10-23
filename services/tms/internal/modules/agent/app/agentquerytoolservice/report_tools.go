@@ -42,10 +42,6 @@ type reportRunner interface {
 		req *reporting.ListDefinitionsRequest,
 	) ([]*report.ReportDefinition, error)
 	Preview(ctx context.Context, req *reporting.PreviewRequest) (*reporting.PreviewResult, error)
-	ListRuns(
-		ctx context.Context,
-		req *reporting.ListRunsRequest,
-	) ([]*report.ReportRun, error)
 	ReadRunRows(
 		ctx context.Context,
 		req *reporting.GetRunRequest,

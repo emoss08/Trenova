@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -168,8 +169,12 @@ type binding struct {
 	// a get's result.
 	Node     string
 	Resource permission.Resource
-	Reason   string
-	Entity   string
+	// SelfScoped marks a read whose resolver acts only on the caller's own
+	// record (selfscoped.Resolvers) and so checks no resource; the tool's own
+	// policy, scoped to the caller, is the only check.
+	SelfScoped bool
+	Reason     string
+	Entity     string
 	// Alongside are the reads a tool makes beside its own, each checked by
 	// its own resolver for its own resource.
 	Alongside []*alongside
@@ -294,6 +299,10 @@ func rootReads(schema *ast.Schema) []rootRead {
 	return out
 }
 
+// readShape is the verb a root field reads by and the record it reads: a list
+// of records, a page of them (items with no id of its own, as DeskMemoryPage),
+// a connection, or one record taken by its arguments. A record read by its id
+// that carries items (a capture batch's) is still one record.
 func readShape(
 	schema *ast.Schema,
 	field *ast.FieldDefinition,
@@ -326,11 +335,7 @@ func readShape(
 		}
 		return verbList, node.Type.Name(), true
 	}
-	if len(field.Arguments) > 0 {
-		return verbGet, def.Name, true
-	}
-
-	return "", "", false
+	return verbGet, def.Name, true
 }
 
 // boundSchema and boundChecks are what a named binding is proven against;
@@ -630,7 +635,7 @@ func tableShaped(schema *ast.Schema, name string) bool {
 // enum and id variables as parameters of its own (workerId, a required
 // integrationType), and a list builds any input object: its table input
 // from the table's fields, and a filter input from the filter's own. A get
-// cannot build an input object.
+// builds only an input whose every field is optional.
 func unsupplied(b *binding) string {
 	want := supplied[b.Verb]
 	var missing []string
@@ -655,6 +660,9 @@ func unsupplied(b *binding) string {
 			buildable(variable.Type.Name()) {
 			continue
 		}
+		if b.RootField != nil && b.Verb == verbGet && optional(variable.Type.Name()) {
+			continue
+		}
 		missing = append(missing, "$"+variable.Variable+": "+variable.Type.String())
 	}
 	if len(missing) == 0 {
@@ -663,6 +671,24 @@ func unsupplied(b *binding) string {
 
 	return fmt.Sprintf("%s reads %s, which requires %s; a %s tool's parameters cannot supply it",
 		b.Tool, b.Operation.Name, strings.Join(missing, ", "), b.Verb)
+}
+
+// optional reports whether a get can build an input from its parameters:
+// every field of it is a scalar, an enum or an id the call may leave out
+// (TodaysBriefingInput's role and day), so the call sends what it names and
+// an empty input otherwise.
+func optional(name string) bool {
+	def := boundSchema.Types[name]
+	if def == nil || def.Kind != ast.InputObject {
+		return false
+	}
+	for _, field := range def.Fields {
+		if (field.Type.NonNull && field.DefaultValue == nil) || inputObject(field.Type.Name()) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // buildable reports whether a paged list can build a filter input from its
@@ -753,20 +779,22 @@ func namedBinding(r read, chosen *operation) (b *binding, problem string) {
 			r.Tool, want, r.Operation, chosen.Roots[0])
 	}
 	resource, checked := checkedResource(boundChecks, field.Name)
-	if !checked {
+	self := !checked && selfscoped.Root("Query", field.Name)
+	if !checked && !self {
 		return nil, fmt.Sprintf("%s: the resolver of %s checks no read permission, so the "+
 			"tool's own could not be held to it", r.Tool, field.Name)
 	}
 
 	return &binding{
-		Tool:      r.Tool,
-		Verb:      verb,
-		Operation: chosen,
-		RootField: field,
-		Node:      node,
-		Resource:  permission.Resource(resource),
-		Reason:    r.Reason,
-		Entity:    r.Entity,
+		Tool:       r.Tool,
+		Verb:       verb,
+		Operation:  chosen,
+		RootField:  field,
+		Node:       node,
+		Resource:   permission.Resource(resource),
+		SelfScoped: self,
+		Reason:     r.Reason,
+		Entity:     r.Entity,
 	}, ""
 }
 

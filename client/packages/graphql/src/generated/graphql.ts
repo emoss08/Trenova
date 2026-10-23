@@ -2172,6 +2172,15 @@ export type CarrierAssignmentStatus =
   | 'Confirmed'
   | 'Pending';
 
+export type CarrierCapacityRateMethod =
+  | 'Flat'
+  | 'PerMile';
+
+export type CarrierCapacitySource =
+  | 'EDI'
+  | 'Email'
+  | 'Manual';
+
 export type CarrierComplianceStatus =
   | 'Disqualified'
   | 'Expired'
@@ -2267,12 +2276,16 @@ export type CarrierIntelEnrollmentReason =
   | 'SelfMonitor';
 
 export type CarrierIntelEventFilterInput = {
+  /** Only this carrier's events. */
   carrierId?: string | number | null | undefined;
   categories?: Array<CarrierIntelSection> | null | undefined;
+  /** Only events nobody has resolved or dismissed yet: Open and Acknowledged. */
   openOnly?: boolean | null | undefined;
   severities?: Array<CarrierIntelSeverity> | null | undefined;
   statuses?: Array<CarrierIntelEventStatus> | null | undefined;
+  /** Only events about this subject, by its id or DOT number as the event names it. */
   subjectId?: string | null | undefined;
+  /** Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number. */
   subjectType?: CarrierIntelSubjectType | null | undefined;
 };
 
@@ -11416,7 +11429,7 @@ export type RetryBillingTransferRunMutationVariables = Exact<{
 
 export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null } };
 
-export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
+export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, withheldSections: Array<{ key: BriefingSectionKey, title: string, partial: boolean }>, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
 
 export type TodaysBriefingQueryVariables = Exact<{
   input: TodaysBriefingInput;
@@ -11691,6 +11704,22 @@ export type DeleteCaptureProfileMutationVariables = Exact<{
 
 export type DeleteCaptureProfileMutation = { deleteCaptureProfile: boolean };
 
+export type DeskCaptureBatchFieldsFragment = { id: string, version: number, status: CaptureBatchStatus, source: CaptureSource, sourceName: string, jobName: string, receivedPageCount: number, itemCount: number, filedItemCount: number, openItemCount: number, failureMessage: string, isEditable: boolean, createdAt: number, items: Array<{ id: string, version: number, position: number, status: CaptureItemStatus, pageCount: number, suggestedType: string, suggestedId: string | null, suggestedDocumentTypeId: string | null, suggestionConfidence: number | null, suggestionReason: string, detectedKind: string, filedType: string, filedId: string | null, failureMessage: string }> } & { ' $fragmentName'?: 'DeskCaptureBatchFieldsFragment' };
+
+export type DeskCaptureBatchesQueryVariables = Exact<{
+  input: CaptureBatchesInput;
+}>;
+
+
+export type DeskCaptureBatchesQuery = { captureBatches: { edges: Array<{ node: { ' $fragmentRefs'?: { 'DeskCaptureBatchFieldsFragment': DeskCaptureBatchFieldsFragment } } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
+export type DeskCaptureBatchQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskCaptureBatchQuery = { captureBatch: { ' $fragmentRefs'?: { 'DeskCaptureBatchFieldsFragment': DeskCaptureBatchFieldsFragment } } };
+
 export type DeskCarrierCardQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -11719,6 +11748,25 @@ export type DeskCarrierSettlementsQueryVariables = Exact<{
 
 
 export type DeskCarrierSettlementsQuery = { carrierSettlements: { totalCount?: number | null, edges: Array<{ node: { id: string, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, netPayableMinor: number, shipmentCount: number, currencyCode: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type DeskCarrierCapacityPostingsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  openOnly?: boolean | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskCarrierCapacityPostingsQuery = { carrierCapacityPostings: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string, originLocationId: string | null, originStateId: string | null, originRadiusMiles: number | null, destinationStateId: string | null, equipmentTypeId: string | null, availableFrom: number, availableTo: number, truckCount: number, rateMethod: CarrierCapacityRateMethod, rate: string | null, source: CarrierCapacitySource, version: number, carrier: { id: string, name: string } | null, originLocation: { id: string, name: string, city: string } | null, originState: { id: string, abbreviation: string } | null, destinationState: { id: string, abbreviation: string } | null, equipmentType: { id: string, code: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type DeskCarrierInvoiceMatchesQueryVariables = Exact<{
+  status?: CarrierInvoiceMatchStatus | null | undefined;
+  carrierId?: string | number | null | undefined;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type DeskCarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierSettlementId: string | null, status: CarrierInvoiceMatchStatus, matchedVia: CarrierInvoiceMatchVia, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedAt: number | null, createdAt: number, carrier: { id: string, name: string } | null }> } };
 
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
@@ -12014,6 +12062,15 @@ export type OverrideCarrierEquipmentVerificationMutationVariables = Exact<{
 
 
 export type OverrideCarrierEquipmentVerificationMutation = { overrideCarrierEquipmentVerification: { ' $fragmentRefs'?: { 'CarrierEquipmentVerificationFieldsFragment': CarrierEquipmentVerificationFieldsFragment } } };
+
+export type DeskCarrierIntelEventsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: CarrierIntelEventFilterInput | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskCarrierIntelEventsQuery = { carrierIntelEvents: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string | null, subjectName: string | null, dotNumber: string, subjectType: CarrierIntelSubjectType, category: CarrierIntelSection, severity: CarrierIntelSeverity, action: CarrierIntelRuleAction | null, status: CarrierIntelEventStatus, summary: string, detectedAt: number, acknowledgedAt: number | null, resolvedAt: number | null, resolution: CarrierIntelEventResolution | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskCarrierSettlementCardQueryVariables = Exact<{
   id: string | number;
@@ -13777,6 +13834,13 @@ export type EdiTestCaseTableQueryVariables = Exact<{
 
 export type EdiTestCaseTableQuery = { ediTestCases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTestCaseRowFieldsFragment': EdiTestCaseRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type DeskEmailProfilesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type DeskEmailProfilesQuery = { emailProfiles: { edges: Array<{ node: { id: string, name: string, description: string, senderName: string, senderEmail: string, replyToEmail: string, status: EmailProfileStatus } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
+
 export type EmailProfileTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, senderName: string, senderEmail: string, replyToEmail: string, provider: EmailProvider, status: EmailProfileStatus, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EmailProfileTableRowFieldsFragment' };
 
 export type EmailProfileTableQueryVariables = Exact<{
@@ -15341,6 +15405,20 @@ export type DeleteIftaTaxRateMutationVariables = Exact<{
 
 
 export type DeleteIftaTaxRateMutation = { deleteIftaTaxRate: boolean };
+
+export type DeskInboundMessagesQueryVariables = Exact<{
+  input: InboundMessagesInput;
+}>;
+
+
+export type DeskInboundMessagesQuery = { inboundMessages: { edges: Array<{ node: { id: string, receivedAt: number, fromName: string, fromAddress: string, subject: string, mailboxId: string, preview: string, status: InboundMessageStatus, needsReview: boolean, classification: InboundClassification | null, confidence: number, matchedShipmentId: string | null, matchedCustomerId: string | null, matchReason: string, attachmentCount: number, threadKey: string, threadCount: number, ownerId: string | null, dueAt: number | null, mailbox: { name: string, address: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type DeskInboundMessageQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskInboundMessageQuery = { inboundMessage: { id: string, status: InboundMessageStatus, needsReview: boolean, classification: InboundClassification | null, confidence: number, fromName: string, fromAddress: string, toAddresses: Array<string>, subject: string, receivedAt: number, mailboxId: string, matchedShipmentId: string | null, matchedCustomerId: string | null, matchedCarrierId: string | null, matchReason: string, reviewNote: string, failureText: string, textBody: string, threadKey: string, ownerId: string | null, dueAt: number | null, mailbox: { name: string, address: string } | null, attachments: Array<{ id: string, fileName: string, contentType: string, kind: InboundAttachmentKind, documentId: string | null, failureText: string, pageCount: number, filedShipmentId: string | null, filedAs: string | null }>, snooze: { until: number | null, event: InboundSnoozeEvent | null, documentTypeId: string | null, watchShipment: { id: string } | null } | null, awaitingReply: { until: number } | null, loadDraft: { source: string, fields: Array<{ key: TriageLoadFieldKey, value: string }> } | null, actions: Array<{ id: string, kind: TriageActionKind, done: boolean, stopsDecision: TriageStopsDecision | null, exceptionKind: TriageExceptionKind | null, createdShipment: { id: string } | null }>, replyDraft: { toAddress: string, subject: string, body: string, draftedByNova: boolean } | null, conflicts: Array<{ id: string, kind: TriageConflictKind, attachmentId: string | null, existingDocumentId: string | null, existingAmount: string | null, newAmount: string | null, resolution: TriageConflictResolution | null, existingShipment: { id: string } | null }> } };
 
 export type TriageUserFieldsFragment = { id: string, name: string, username: string, thumbnailUrl: string } & { ' $fragmentName'?: 'TriageUserFieldsFragment' };
 
@@ -17284,6 +17362,23 @@ export type ReportDefinitionOptionsQueryVariables = Exact<{
 
 
 export type ReportDefinitionOptionsQuery = { reportDefinitions: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportDefinitionOptionFieldsFragment': ReportDefinitionOptionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskReportRunsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskReportRunsQuery = { reportRuns: { totalCount?: number, edges: Array<{ node: { id: string, definitionId: string | null, cannedKey: string | null, status: string, format: string, rowCount: number, truncated: boolean, rowsStored: boolean, createdAt: number, completedAt: number | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DeskReportSchedulesQueryVariables = Exact<{
+  definitionId?: string | number | null | undefined;
+  enabledOnly?: boolean | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DeskReportSchedulesQuery = { reportSchedules: Array<{ id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, enabled: boolean, mine: boolean, nextRunAt: number | null, consecutiveFailures: number }> };
 
 export type ReportPreviewFieldsFragment = { rows: unknown, totals: unknown, truncated: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
 
@@ -19875,8 +19970,10 @@ export { BillingTransferCandidatesDocument, BillingTransferCandidateIdsDocument,
 export { BriefingFieldsFragmentDoc, TodaysBriefingDocument, MarkBriefingReadDocument, RegenerateBriefingDocument } from "./documents/briefing/briefing";
 export { BulkEditJobFieldsFragmentDoc, BulkEditFieldsDocument, PreviewBulkEditDocument, MyBulkEditDocument, StartBulkEditDocument, UndoMyBulkEditDocument } from "./documents/bulk-edit/operations";
 export { CaptureSourceInfoFieldsFragmentDoc, CaptureDeviceFieldsFragmentDoc, CaptureDeviceFleetFieldsFragmentDoc, CaptureProfileFieldsFragmentDoc, CaptureRequestFieldsFragmentDoc, CaptureRecordRefFieldsFragmentDoc, CaptureBatchRowFieldsFragmentDoc, CapturePageFieldsFragmentDoc, CaptureItemFieldsFragmentDoc, CaptureBatchDetailFieldsFragmentDoc, MyCaptureAccessDocument, CaptureAgentReleaseDocument, CaptureBatchesDocument, CaptureBatchCountDocument, CaptureBatchDocument, MyCaptureDevicesDocument, CaptureDevicesDocument, AvailableCaptureProfilesDocument, CaptureProfilesDocument, CaptureRequestsForTargetDocument, CaptureDevicePairingDocument, EditCaptureItemsDocument, FileCaptureItemDocument, FileCaptureItemsDocument, DiscardCaptureItemDocument, DiscardCaptureBatchDocument, CreateCaptureRequestDocument, CancelCaptureRequestDocument, CreateCaptureCoverSheetsDocument, ApproveCaptureDevicePairingDocument, DenyCaptureDevicePairingDocument, RevokeMyCaptureDeviceDocument, RevokeCaptureDeviceDocument, CreateCaptureProfileDocument, UpdateCaptureProfileDocument, DeleteCaptureProfileDocument } from "./documents/capture/capture";
+export { DeskCaptureBatchFieldsFragmentDoc, DeskCaptureBatchesDocument, DeskCaptureBatchDocument } from "./documents/capture/desk";
 export { DeskCarrierCardDocument, DeskCarrierEligibilityDocument, DeskCarrierIntelDocument, DeskCarrierSettlementsDocument } from "./documents/carrier-desk/desk";
-export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFieldsFragmentDoc, CarrierIntelAddressFieldsFragmentDoc, CarrierIntelAuthorityGrantFieldsFragmentDoc, CarrierIntelProfileFieldsFragmentDoc, CarrierIntelSnapshotFieldsFragmentDoc, CarrierIntelEventFieldsFragmentDoc, CarrierMonitoringEnrollmentFieldsFragmentDoc, CarrierIntelOverrideFieldsFragmentDoc, CarrierEquipmentVerificationFieldsFragmentDoc, CarrierIntelControlFieldsFragmentDoc, CarrierIntelProviderInfoFieldsFragmentDoc, CarrierIntelFieldUpdateFieldsFragmentDoc, CarrierIntelInsuranceChangeFieldsFragmentDoc, CarrierIntelSettingsDocument, CarrierIntelCostEstimateDocument, CarrierIntelUsageDocument, CarrierIntelMonitoringStatusDocument, CarrierIntelEventTableDocument, CarrierIntelEventInboxDocument, CarrierIntelEventDocument, CarrierIntelEventCarrierSummaryDocument, CarrierMonitoringEnrollmentTableDocument, CarrierIntelReviewQueueDocument, CarrierIntelligenceDocument, CarrierIntelSnapshotHistoryDocument, CarrierIntelSyncPlanDocument, CarrierIntelOverridesDocument, CarrierIntelRawPayloadDocument, CarrierIntelLookupDocument, CarrierSourcingSearchDocument, CarrierSourcingAutocompleteDocument, CarrierEquipmentVerificationsDocument, MyCarrierIntelligenceDocument, CustomerBrokerIntelligenceDocument, UpdateCarrierIntelControlDocument, SwitchCarrierIntelProviderDocument, ResumeCarrierIntelMonitoringDocument, VetCarrierDocument, VetCustomerBrokerDocument, SetCarrierMonitoringDocument, AcknowledgeCarrierIntelEventsDocument, ResolveCarrierIntelEventDocument, MarkCarrierIntelReviewedDocument, GrantCarrierIntelOverrideDocument, RevokeCarrierIntelOverrideDocument, ApplyCarrierIntelSuggestionsDocument, ImportSourcedCarrierDocument, VerifyCarrierEquipmentDocument, OverrideCarrierEquipmentVerificationDocument } from "./documents/carrier-intelligence/operations";
+export { DeskCarrierCapacityPostingsDocument, DeskCarrierInvoiceMatchesDocument } from "./documents/carrier-desk/reads";
+export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFieldsFragmentDoc, CarrierIntelAddressFieldsFragmentDoc, CarrierIntelAuthorityGrantFieldsFragmentDoc, CarrierIntelProfileFieldsFragmentDoc, CarrierIntelSnapshotFieldsFragmentDoc, CarrierIntelEventFieldsFragmentDoc, CarrierMonitoringEnrollmentFieldsFragmentDoc, CarrierIntelOverrideFieldsFragmentDoc, CarrierEquipmentVerificationFieldsFragmentDoc, CarrierIntelControlFieldsFragmentDoc, CarrierIntelProviderInfoFieldsFragmentDoc, CarrierIntelFieldUpdateFieldsFragmentDoc, CarrierIntelInsuranceChangeFieldsFragmentDoc, CarrierIntelSettingsDocument, CarrierIntelCostEstimateDocument, CarrierIntelUsageDocument, CarrierIntelMonitoringStatusDocument, CarrierIntelEventTableDocument, CarrierIntelEventInboxDocument, CarrierIntelEventDocument, CarrierIntelEventCarrierSummaryDocument, CarrierMonitoringEnrollmentTableDocument, CarrierIntelReviewQueueDocument, CarrierIntelligenceDocument, CarrierIntelSnapshotHistoryDocument, CarrierIntelSyncPlanDocument, CarrierIntelOverridesDocument, CarrierIntelRawPayloadDocument, CarrierIntelLookupDocument, CarrierSourcingSearchDocument, CarrierSourcingAutocompleteDocument, CarrierEquipmentVerificationsDocument, MyCarrierIntelligenceDocument, CustomerBrokerIntelligenceDocument, UpdateCarrierIntelControlDocument, SwitchCarrierIntelProviderDocument, ResumeCarrierIntelMonitoringDocument, VetCarrierDocument, VetCustomerBrokerDocument, SetCarrierMonitoringDocument, AcknowledgeCarrierIntelEventsDocument, ResolveCarrierIntelEventDocument, MarkCarrierIntelReviewedDocument, GrantCarrierIntelOverrideDocument, RevokeCarrierIntelOverrideDocument, ApplyCarrierIntelSuggestionsDocument, ImportSourcedCarrierDocument, VerifyCarrierEquipmentDocument, OverrideCarrierEquipmentVerificationDocument, DeskCarrierIntelEventsDocument } from "./documents/carrier-intelligence/operations";
 export { DeskCarrierSettlementCardDocument } from "./documents/carrier-settlement/desk";
 export { CarrierSettlementTableDocument, CarrierSettlementDetailDocument, CarrierSettlementBatchTableDocument, CarrierSettlementBatchDetailDocument, CarrierCostEventTableDocument, CarrierSettlementControlDocument, CurrentCarrierSettlementPeriodDocument, CarrierSettlementWorkspaceSummaryDocument, CarrierLedgerEntriesDocument, CarrierInvoiceMatchesDocument, EdiCarrierInvoicesDocument, SuggestCarrierForEdiInvoiceDocument, ExportCarrierSettlementBatchCsvDocument, GenerateCarrierSettlementBatchDocument, SubmitCarrierSettlementDocument, ApproveCarrierSettlementDocument, RejectCarrierSettlementDocument, PostCarrierSettlementDocument, MarkCarrierSettlementPaidDocument, VoidCarrierSettlementDocument, RecalculateCarrierSettlementDocument, AddCarrierSettlementAdjustmentDocument, RemoveCarrierSettlementAdjustmentDocument, UpdateCarrierSettlementControlDocument, LinkEdiCarrierInvoiceToCarrierDocument, CreateCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchWithVarianceDocument, RejectCarrierInvoiceMatchDocument } from "./documents/carrier-settlement/operations";
 export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDoc, CarrierTableRowFieldsFragmentDoc, CarrierTableDocument } from "./documents/carrier/table";
@@ -19910,6 +20007,7 @@ export { DeskEdiPartnerMessageFieldsFragmentDoc, DeskEdiPartnerCardDocument, Des
 export { EdiPartnerReadinessDocument } from "./documents/edi/readiness";
 export { EdiSummaryDocument } from "./documents/edi/summary";
 export { EdiPartnerRowFieldsFragmentDoc, EdiCommunicationProfileRowFieldsFragmentDoc, EdiTransferRowFieldsFragmentDoc, EdiMessageRowFieldsFragmentDoc, EdiInboundFileRowFieldsFragmentDoc, EdiMappingProfileRowFieldsFragmentDoc, EdiTestCaseRowFieldsFragmentDoc, EdiPartnerTableDocument, EdiCommunicationProfileTableDocument, EdiTransferTableDocument, EdiMessageTableDocument, EdiInboundFileTableDocument, EdiMappingProfileTableDocument, EdiTestCaseTableDocument } from "./documents/edi/table";
+export { DeskEmailProfilesDocument } from "./documents/email-profile/desk";
 export { EmailProfileTableRowFieldsFragmentDoc, EmailProfileTableDocument } from "./documents/email-profile/table";
 export { EquipmentManufacturerTableRowFieldsFragmentDoc, EquipmentManufacturerTableDocument } from "./documents/equipment-manufacturer/table";
 export { EquipmentTypeConfigurationRowFieldsFragmentDoc, DataTablePageInfoFieldsFragmentDoc, EquipmentTypeTableFieldsFragmentDoc, EquipmentManufacturerTableFieldsFragmentDoc, FleetCodeTableFieldsFragmentDoc, UsStateTableFieldsFragmentDoc, WorkerTableReferenceFieldsFragmentDoc, TractorTableRowFieldsFragmentDoc, TrailerTableRowFieldsFragmentDoc, TractorTableDocument, TrailerTableDocument, EquipmentTypeTableDocument, EquipmentTypeDocument, CreateEquipmentTypeDocument, UpdateEquipmentTypeDocument, PatchEquipmentTypeDocument, BulkUpdateEquipmentTypeStatusDocument } from "./documents/equipment/table";
@@ -19956,6 +20054,7 @@ export { IftaJurisdictionFieldsFragmentDoc, IftaJurisdictionsDocument } from "./
 export { DeskIftaReturnsDocument } from "./documents/ifta-return/desk";
 export { IftaPeriodFieldsFragmentDoc, IftaReturnLineFieldsFragmentDoc, IftaReturnFieldsFragmentDoc, IftaReturnSummaryFieldsFragmentDoc, IftaReturnForPeriodDocument, IftaReturnDocument, IftaReturnTableDocument, IftaCurrentPeriodDocument, IftaPeriodDocument, GenerateIftaReturnDocument, RecomputeIftaReturnDocument, FinalizeIftaReturnDocument, ReopenIftaReturnDocument, MarkIftaReturnFiledDocument, AmendIftaReturnDocument, DeleteIftaReturnDocument, BackfillJurisdictionMilesDocument } from "./documents/ifta-return/operations";
 export { IftaTaxRateFieldsFragmentDoc, IftaTaxRateTableDocument, UpsertIftaTaxRatesDocument, DeleteIftaTaxRateDocument } from "./documents/ifta-tax-rate/operations";
+export { DeskInboundMessagesDocument, DeskInboundMessageDocument } from "./documents/inbox/desk";
 export { InboundMailboxFieldsFragmentDoc, InboundMailboxCredentialsFieldsFragmentDoc, InboundShipmentRefFieldsFragmentDoc, TriageUserFieldsFragmentDoc, InboundMessageListFieldsFragmentDoc, InboundAttachmentFieldsFragmentDoc, InboundMessageDetailFieldsFragmentDoc, InboundMessagesDocument, InboundMessageDocument, InboundMessageCountsDocument, InboundMailboxesDocument, ReviewInboundMessageDocument, LinkInboundMessageDocument, CreateInboundMailboxDocument, UpdateInboundMailboxDocument, RotateInboundMailboxTokenDocument, SetInboundMailboxSigningSecretDocument, SetInboundMailboxApiKeyDocument } from "./documents/inbox/inbox";
 export { InboundSnoozeFieldsFragmentDoc, TriageActionFieldsFragmentDoc, InboundAttachmentDetailFieldsFragmentDoc, TriageFactFieldsFragmentDoc, TriageConflictFieldsFragmentDoc, InboundActivityFieldsFragmentDoc, InboundReplyAttachmentFieldsFragmentDoc, InboundReplyFieldsFragmentDoc, TriageLoadDraftFieldsFragmentDoc, InboundReplyAttachableFieldsFragmentDoc, TriageSampleFieldsFragmentDoc, TriageRuleFieldsFragmentDoc, TriageRulePreviewFieldsFragmentDoc, TriageDeckItemFieldsFragmentDoc, TriageRiverPointFieldsFragmentDoc, TriageViewFieldsFragmentDoc, TriageReplyTemplateFieldsFragmentDoc, TriageShipmentPeekFieldsFragmentDoc, TriageBulkResultFieldsFragmentDoc, InboundThreadDocument, TriageBriefingDocument, MyTriageViewsDocument, TriageResponseTargetsDocument, TriageSettingsDocument, TriageAssigneesDocument, TriageRulesDocument, TriageRulePreviewDocument, TriageRuleMatchesDocument, TriageSenderDomainsDocument, InboundSenderProfileDocument, TriageReplyTemplatesDocument, InboundReplyAttachablesDocument, RenderTriageReplyTemplateDocument, TriageStopTimesDocument, TriageShipmentPeekDocument, TriageCustomerPeekDocument, ReviewInboundMessagesDocument, ReopenInboundMessagesDocument, AssignInboundMessagesDocument, SnoozeInboundMessagesDocument, WakeInboundMessageDocument, WaitForInboundReplyDocument, StopWaitingForInboundReplyDocument, UnlinkInboundMessageDocument, SendInboundMailboxTestDocument, HandOffTriageDocument, ReadUnreadInboundMessagesDocument, CreateMyTriageViewDocument, RenameMyTriageViewDocument, DeleteMyTriageViewDocument, UpdateTriageResponseTargetsDocument, UpdateTriageSettingsDocument, CreateTriageRuleDocument, UpdateTriageRuleDocument, SetTriageRuleEnabledDocument, DeleteTriageRuleDocument, CorrectInboundClassificationDocument, FlagInboundFactDocument, ResolveInboundConflictDocument, ReopenInboundConflictDocument, DraftInboundReplyDocument, SaveInboundReplyDraftDocument, DiscardInboundReplyDraftDocument, SendInboundReplyDocument, DraftInboundManyDocument, CreateTriageReplyTemplateDocument, UpdateTriageReplyTemplateDocument, DeleteTriageReplyTemplateDocument, DraftInboundLoadDocument, DiscardInboundLoadDocument, CreateInboundLoadDocument, FileInboundAttachmentDocument, FileInboundManyDocument, UnfileInboundAttachmentDocument, LogInboundExceptionDocument, BlockInboundSenderDocument, UnblockInboundSenderDocument, DecideInboundStopsDocument } from "./documents/inbox/triage";
 export { InvoiceApprovalQueueItemFieldsFragmentDoc, InvoiceAdjustmentApprovalsDocument, InvoiceAdjustmentApprovalDetailDocument, InvoiceAdjustmentOperationsSummaryDocument, ApproveInvoiceAdjustmentDocument, RejectInvoiceAdjustmentDocument } from "./documents/invoice-adjustment/approvals";
@@ -20000,6 +20099,7 @@ export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";
 export { ReportDefinitionFieldsFragmentDoc, ReportDefinitionOptionFieldsFragmentDoc, ReportDefinitionsTableDocument, ReportDefinitionByIdDocument, ReportDefinitionRevisionsDocument, CreateReportDefinitionDocument, UpdateReportDefinitionDocument, DeleteReportDefinitionDocument, ForkCannedReportDocument, ResetCannedForkDocument, ReportDefinitionOptionsDocument } from "./documents/reports/definitions";
+export { DeskReportRunsDocument, DeskReportSchedulesDocument } from "./documents/reports/desk";
 export { ReportPreviewFieldsFragmentDoc, PreviewReportDocument, DrillThroughReportDocument } from "./documents/reports/preview";
 export { ReportRunFieldsFragmentDoc, ReportRunsTableDocument, ReportRunByIdDocument, RunReportDocument, CancelReportRunDocument } from "./documents/reports/runs";
 export { ReportScheduleFieldsFragmentDoc, ReportSchedulesDocument, CreateReportScheduleDocument, UpdateReportScheduleDocument, DeleteReportScheduleDocument } from "./documents/reports/schedules";

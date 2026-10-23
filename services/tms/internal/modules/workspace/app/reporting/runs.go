@@ -216,33 +216,6 @@ func (s *Service) GetRun(ctx context.Context, req *GetRunRequest) (*report.Repor
 	})
 }
 
-type ListRunsRequest struct {
-	Request
-
-	DefinitionID pulid.ID
-	Statuses     []report.RunStatus
-	Limit        int
-	Offset       int
-}
-
-func (s *Service) ListRuns(
-	ctx context.Context,
-	req *ListRunsRequest,
-) ([]*report.ReportRun, error) {
-	if req.TenantInfo.UserID.IsNil() {
-		return nil, errRunsNeedAPerson
-	}
-
-	return s.runRepo.List(ctx, &reportports.ListReportRunsRequest{
-		TenantInfo:   req.TenantInfo,
-		DefinitionID: req.DefinitionID,
-		RequestedBy:  req.TenantInfo.UserID,
-		Statuses:     req.Statuses,
-		Limit:        req.Limit,
-		Offset:       req.Offset,
-	})
-}
-
 func (s *Service) ListRunsConnection(
 	ctx context.Context,
 	req *reportports.ListReportRunConnectionRequest,

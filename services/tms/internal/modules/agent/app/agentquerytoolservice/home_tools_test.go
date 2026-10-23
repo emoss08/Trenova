@@ -4,8 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,58 +40,50 @@ func (f *fakeHomeLayoutReader) GetCatalog(
 
 The Homepage Widget Builder could only read the report dashboards under
 Reports, which were not what the person meant, and had nothing to say about
-the page they were looking at.
+the page they were looking at. The page is read through homeLayout, as the
+person's own, with each widget named as the page names it.
 */
 func TestGetMyHomeLayout_ReadsThePersonsOwnHomePage(t *testing.T) {
 	t.Parallel()
 
 	kpi, ok := homelayout.WidgetDefinitionFor(homelayout.WidgetKPI)
 	require.True(t, ok)
-	reader := &fakeHomeLayoutReader{effective: &homelayoutservice.EffectiveLayout{
-		Layout: &homelayout.Layout{Widgets: []homelayout.Widget{
-			{ID: "widget_1", Key: homelayout.WidgetKPI, W: 3, H: 2,
-				Config: homelayout.WidgetConfig{Metric: "onTimePercent"}},
-		}},
-		Source:       homelayoutservice.SourceRolePreset,
-		PresetName:   "Dispatch",
-		CanCustomize: true,
-		Version:      4,
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"HomeLayout": {Data: map[string]any{"homeLayout": map[string]any{
+			"source": "rolePreset", "presetName": "Dispatch", "canCustomize": true,
+			"version": 4,
+			"widgets": []any{map[string]any{
+				"id": "widget_1", "key": homelayout.WidgetKPI, "w": 3, "h": 2,
+				"config": map[string]any{"metric": "onTimePercent"},
+			}},
+		}}},
 	}}
-	tool := &getMyHomeLayoutTool{layouts: reader}
-	params := testParams(map[string]any{})
+	spec := homeLayoutGetSpec()
+	tool, err := newGraphQLGetTool(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+	assert.Equal(t, agent.ToolScopeSelf, tool.Policy().Scope, "it reads only the caller's page")
+	assert.Empty(t, tool.ParamSchema()[toolschema.KeyRequired], "the page takes no id")
 
-	result, err := tool.Query(t.Context(), params)
+	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
-	view := result.(homeLayoutView)
-	assert.Equal(
-		t,
-		params.Actor.UserID,
-		reader.asked.Principal.UserID,
-		"the page resolves for the reader",
-	)
-	assert.Equal(t, "rolePreset", view.Source)
-	assert.Equal(t, int64(4), view.Version)
-	require.Len(t, view.Widgets, 1)
-	assert.Equal(t, kpi.Label, view.Widgets[0].Label)
-	require.NotNil(t, view.Widgets[0].Config)
-	assert.Equal(t, "onTimePercent", view.Widgets[0].Config.Metric)
-	assert.Contains(t, view.Note, "home_add_widget")
+	page := encodedDocument(t, result)
+	widgets, _ := page["widgets"].([]any)
+	require.Len(t, widgets, 1)
+	widget, _ := widgets[0].(map[string]any)
+	assert.Equal(t, kpi.Label, widget["label"])
+	assert.Equal(t, map[string]any{"metric": "onTimePercent"}, widget["config"])
+	assert.Contains(t, page["note"], "home_add_widget")
+	assert.Empty(t, reader.sent("HomeLayout").Variables)
 }
 
 func TestGetMyHomeLayout_SaysWhenThePageCannotBeChanged(t *testing.T) {
 	t.Parallel()
 
-	tool := &getMyHomeLayoutTool{layouts: &fakeHomeLayoutReader{
-		effective: &homelayoutservice.EffectiveLayout{Locked: true},
-	}}
+	record := map[string]any{"locked": true, "canCustomize": false}
+	labelHomeLayout(record, nil, clock{})
 
-	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
-	require.NoError(t, err)
-
-	view := result.(homeLayoutView)
-	assert.Empty(t, view.Widgets)
-	assert.Contains(t, view.Note, "administrator")
+	assert.Contains(t, record["note"], "administrator")
 }
 
 func TestListHomeWidgets_NamesWhatEachNeeds(t *testing.T) {

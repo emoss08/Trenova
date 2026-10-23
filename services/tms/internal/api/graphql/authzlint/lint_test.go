@@ -37,10 +37,7 @@ var authOnlyAllowlist = map[string]string{
 	"QueryResolver.MyBulkEdit":                  "returns only a bulk edit the calling user started",
 	"QueryResolver.MyBulkEdits":                 "returns only bulk edits the calling user started",
 
-	"QueryResolver.HomeLayout":          "returns only the calling user's own home layout",
-	"QueryResolver.HomeWidgetCatalog":   "static catalog of widgets; carries no resource data",
-	"MutationResolver.UpdateHomeLayout": "acts only on the calling user's own home layout",
-	"MutationResolver.ResetHomeLayout":  "acts only on the calling user's own home layout",
+	"QueryResolver.HomeWidgetCatalog": "static catalog of widgets; carries no resource data",
 
 	"MutationResolver.CreateTableConfiguration": "anyone may keep a private view; the service " +
 		"refuses to publish one to the organization without table_configuration:create",

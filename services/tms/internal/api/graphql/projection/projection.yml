@@ -36,6 +36,8 @@ aliases:
     suggestedAgent: eventKind
   WatchtowerItemEvent:
     actor: actorId
+  Briefing:
+    withheldSections: sections
   Invoice:
     voidedBy: voidedById
   InvoiceDispute:
@@ -182,6 +184,10 @@ aliases:
     user: userId
   MFAAuthenticator:
     user: userId
+  ReportRun:
+    rowsStored: rowsKey
+  ReportSchedule:
+    mine: runAsId
 
 virtuals:
   EdiTransfer:

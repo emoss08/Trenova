@@ -1970,6 +1970,10 @@ models:
   FactoringRemittanceLineAction:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittanceLineAction
+  ReportSchedule:
+    fields:
+      mine:
+        resolver: true
   FactoringRemittance:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Remittance
@@ -3078,6 +3082,9 @@ models:
   BriefingItem:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.Item
+  BriefingWithheldSection:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.WithheldSection
   WatchtowerItem:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Item

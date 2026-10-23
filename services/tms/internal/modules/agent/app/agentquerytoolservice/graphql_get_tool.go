@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -220,6 +221,9 @@ func (t *graphQLGetTool) one(
 	if several && t.spec.shapeEach != nil {
 		t.spec.shapeEach(record)
 	}
+	if t.spec.pages != nil {
+		t.spec.pages.mark(record, variables)
+	}
 	if t.spec.amounts {
 		presentAmounts(record)
 		presentMinor(record, t.spec.minorUnits)
@@ -395,7 +399,8 @@ func (t *graphQLGetTool) variables(
 }
 
 // arguments are the operation's variables other than the id, as the call
-// names them.
+// names them. A required input the call names nothing of is sent empty, as
+// the generator proved every field of it optional.
 func (t *graphQLGetTool) arguments(params *agentports.QueryToolParams) (map[string]any, error) {
 	if err := requireArguments(t.required, params.Params); err != nil {
 		return nil, err
@@ -404,7 +409,18 @@ func (t *graphQLGetTool) arguments(params *agentports.QueryToolParams) (map[stri
 		return nil, err
 	}
 
-	return compileArgs(t.params, params.Params, clockFor(params))
+	args, err := compileArgs(t.params, params.Params, clockFor(params))
+	if err != nil {
+		return nil, err
+	}
+	for _, variable := range t.read.Variables {
+		if _, set := args[variable.Name]; !set && variable.NonNull &&
+			variable.Kind == graphQLKindInput {
+			args[variable.Name] = map[string]any{}
+		}
+	}
+
+	return args, nil
 }
 
 // getKey is the variable a get's operation takes the record's id in: $id,
@@ -425,4 +441,17 @@ func (r *graphQLRead) getKey() string {
 	}
 
 	return key
+}
+
+// mark says whether the held list continues past the page the variables
+// read, and where the next page starts.
+func (p *getPages) mark(record, variables map[string]any) {
+	offset, _ := typeutils.IntOf(variables[p.offset])
+	items, _ := record[p.items].([]any)
+	total, counted := typeutils.IntOf(record[p.total])
+	more := counted && offset+len(items) < total
+	record[p.items+"HasMore"] = more
+	if more {
+		record["next"+strings.ToUpper(p.offset[:1])+p.offset[1:]] = offset + len(items)
+	}
 }

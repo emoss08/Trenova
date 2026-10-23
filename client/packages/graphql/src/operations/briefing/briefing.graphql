@@ -6,6 +6,11 @@ fragment BriefingFields on Briefing {
   headline
   narrated
   readAt
+  withheldSections {
+    key
+    title
+    partial
+  }
   sections {
     key
     title

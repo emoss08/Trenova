@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/customerrepository"
@@ -94,6 +95,9 @@ func (r *factoringRepos) resolvers(conn *postgres.Connection) agentread.Resolver
 			factoringservice.ReadinessParams{
 				States: r.states, Agreements: r.agreements, Noas: r.noas,
 				Submissions: r.submissions, Invoices: r.invoices, Customers: r.customers,
+				Documents: documentrepository.New(documentrepository.Params{
+					DB: conn, Logger: logger,
+				}),
 				Logger: logger,
 			}),
 		FactoringSubmissionService: factoringservice.NewSubmissionService(
@@ -463,6 +467,25 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 		assert.Equal(t, "Error", line["matchStatus"])
 		assert.Contains(t, record["withheldByAccess"], "lines.cells",
 			"what the factor printed carries its amounts, so it stays Restricted")
+	})
+
+	t.Run("factoring_get_readiness", func(t *testing.T) {
+		get, err := agentquerytoolservice.ConvertedGetTool(
+			"factoring_get_readiness", reader, engine)
+		require.NoError(t, err)
+		record := callTool(t, ours.ctx, get, actor, map[string]any{
+			"invoiceId": ours.invoices[0],
+		})
+		assert.Equal(t, ours.invoices[0], record["invoiceId"])
+		assert.NotEmpty(t, record["verdict"])
+
+		_, err = get.Query(ours.ctx, &agentports.QueryToolParams{
+			OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
+			Actor: actor, Timezone: "America/Chicago",
+			Params: map[string]any{"invoiceId": other.invoices[0]},
+			RunID:  pulid.MustNew("ar_"),
+		})
+		require.Error(t, err, "another tenant's invoice is not found")
 	})
 
 	t.Run("factoring_get_reserve_balance", func(t *testing.T) {

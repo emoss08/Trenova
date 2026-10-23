@@ -685,11 +685,13 @@ work read.
   exceptions and runs. A row whose run cannot be found is marked, not trusted.
   It never marks anything seen; `unseenOnly` follows a person's own cursor and
   is ignored for an agent principal, which has none.
-- `insight_get_daily_briefing` reads the computed page (`ReadsExternal: never`) and drops
-  every section whose source resource the reader may not read, and every
-  watchtower line of a kind they may not read. When anything is dropped, the
-  headline goes too and the remaining sections read in their computed wording,
-  because the model's prose may cite a figure from what was dropped.
+- `insight_get_daily_briefing` reads the computed page (`ReadsExternal: never`)
+  through `TodaysBriefing`. `BriefingService` drops every section whose source
+  resource the reader may not read, and every watchtower line of a kind they
+  may not read, for the screen and the tool alike, and names them in
+  `withheldSections`. When anything is dropped, the headline goes too and the
+  remaining sections read in their computed wording, because the model's prose
+  may cite a figure from what was dropped.
 - `agent_list_runs` filters on status, trigger, subject, agent and date; `mine`
   keeps to the calling agent and is on by default when an agent principal runs
   unattended. A run on an assistant conversation is listed only to the person

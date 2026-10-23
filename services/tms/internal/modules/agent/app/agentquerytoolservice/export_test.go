@@ -48,9 +48,16 @@ var (
 	NewListInvoicesTool           = newListInvoicesTool
 )
 
+// convertedListSpecs are every list read through GraphQL by a spec: those
+// registered by the spec alone, and the inbox, whose search by words stays on
+// the retrieval index beside its GraphQL read.
+func convertedListSpecs() []graphQLListSpec {
+	return append(graphQLListSpecs(), inboundMessagesListSpec())
+}
+
 // ConvertedListNames are the list tools read through GraphQL by a spec.
 func ConvertedListNames() []string {
-	specs := graphQLListSpecs()
+	specs := convertedListSpecs()
 	names := make([]string, 0, len(specs))
 	for idx := range specs {
 		names = append(names, specs[idx].name)
@@ -61,7 +68,7 @@ func ConvertedListNames() []string {
 
 // ConvertedListResource is the resource a converted list reads.
 func ConvertedListResource(name string) permission.Resource {
-	specs := graphQLListSpecs()
+	specs := convertedListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return specs[idx].resource
@@ -77,7 +84,7 @@ func ConvertedListTool(
 	reader agentports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
 ) (agentports.AgentQueryTool, error) {
-	specs := graphQLListSpecs()
+	specs := convertedListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return newGraphQLReadTool(&specs[idx], reader, permissions)
@@ -96,6 +103,13 @@ func ConvertedGetNames() []string {
 	}
 
 	return names
+}
+
+// ConvertedGetSelfScoped reports whether a converted get reads the caller's
+// own record through a resolver that checks no resource, so only dispatch's
+// authorize of the tool's own policy can refuse it.
+func ConvertedGetSelfScoped(name string) bool {
+	return graphQLReads[name].SelfScoped
 }
 
 // ConvertedGetResource is the resource a converted get reads.

@@ -205,9 +205,17 @@ func (r *batchRepository) ListCursor(
 				Cursor:     req.Cursor,
 				TotalCount: totalCount,
 				Query: func(entities *[]*capture.CaptureBatch) *bun.SelectQuery {
-					return dba.NewSelect().
+					query := dba.NewSelect().
 						Model(entities).
 						Relation(capturecol.CaptureBatchRelations.CaptureDevice)
+					if req.IncludeItems {
+						query = query.Relation(capturecol.CaptureBatchRelations.Items,
+							func(sq *bun.SelectQuery) *bun.SelectQuery {
+								return sq.Order(capturecol.CaptureItemColumns.Position.OrderAsc())
+							})
+					}
+
+					return query
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, err := querybuilder.ApplyCursorFilters(

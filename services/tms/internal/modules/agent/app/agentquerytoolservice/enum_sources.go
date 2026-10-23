@@ -4,7 +4,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
@@ -37,19 +36,10 @@ var (
 		watchtower.SeverityWarning.String(),
 		watchtower.SeverityInfo.String(),
 	})
-	briefingRoles       = agenttoolschema.Source("briefing.role", briefingRoleValues())
-	guidePageActions    = agenttoolschema.Source("guide.pageAction", []string{createAction})
-	insightCategories   = agenttoolschema.Source("insight.category", insightCategoryNames())
-	insightSeverities   = agenttoolschema.Source("insight.severity", insightSeverityNames())
-	insightStatuses     = agenttoolschema.Source("insight.status", insightStatusNames())
-	inboundListStatuses = agenttoolschema.Source(
-		"inboundMessage.listStatus",
-		inboundStatusNames(),
-	)
-	inboundClassifications = agenttoolschema.Source(
-		"inboundMessage.classification",
-		inboundmessage.AllClassifications(),
-	)
+	guidePageActions     = agenttoolschema.Source("guide.pageAction", []string{createAction})
+	insightCategories    = agenttoolschema.Source("insight.category", insightCategoryNames())
+	insightSeverities    = agenttoolschema.Source("insight.severity", insightSeverityNames())
+	insightStatuses      = agenttoolschema.Source("insight.status", insightStatusNames())
 	importRequiredFields = agenttoolschema.Source(
 		"importDraft.requiredField",
 		pagedraft.AllRequiredFields(),

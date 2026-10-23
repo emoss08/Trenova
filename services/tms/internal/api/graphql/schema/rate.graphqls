@@ -217,7 +217,12 @@ type RateMatrix {
   The draft's cells, a page at a time: offset skips that many, and limit takes
   at most 100.
   """
-  cells(offset: Int = 0, limit: Int = 100): [RateMatrixCell!]!
+  cells(
+    "Skip this many cells, in the matrix's order, for the page after them."
+    offset: Int = 0
+    "At most this many cells."
+    limit: Int = 100
+  ): [RateMatrixCell!]!
   "The newest published version, which tariffs read by default; 0 before the first."
   publishedVersionNumber: Int!
   publishedAt: Timestamp

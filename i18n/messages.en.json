@@ -41197,7 +41197,7 @@
     ]
   },
   "Billing queue": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -41207,6 +41207,7 @@
       "apps/web/lib",
       "go/other",
       "routes/billing-queue",
+      "routes/desk",
       "routes/invoice"
     ]
   },
@@ -49005,12 +49006,14 @@
     ]
   },
   "Cash received yesterday": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Cash-flow forecast": {
@@ -68745,7 +68748,7 @@
     ]
   },
   "Credentials": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -69336,7 +69339,7 @@
     ]
   },
   "Critical": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -156198,7 +156201,7 @@
     ]
   },
   "Needs attention": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -156211,6 +156214,7 @@
       "routes/carrier",
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/edi",
       "routes/fleet-safety",
       "routes/ifta-tax-rate",
@@ -270345,12 +270349,14 @@
     ]
   },
   "The next day": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "The next document you print to the Trenova printer on the computer you choose is filed here.": {
@@ -283406,6 +283412,33 @@
       "routes/agent-control"
     ]
   },
+  "This morning's briefing leaves out {0} and shows only the part of {1} you can open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This morning's briefing leaves out {0}, whose records you can't open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This morning's briefing shows only the part of {0} you can open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This move already has a driver assignment. Unassign the driver before brokering the move to an external carrier.": {
     "sites": 1,
     "scope": [
@@ -288045,7 +288078,7 @@
     ]
   },
   "Today": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -304140,7 +304173,7 @@
     ]
   },
   "Waiting on you": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"

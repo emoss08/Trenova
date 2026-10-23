@@ -50,7 +50,8 @@ var convertedGets = map[string]string{
 }
 
 // getsReadElsewhere are the converted gets their module's own test reads:
-// the operations, ledger, rate, accounting, EDI and settlement tests.
+// the operations, ledger, rate, accounting, EDI, settlement, billing,
+// factoring, home page, inbox and briefing tests.
 var getsReadElsewhere = []string{
 	"settlement_get_driver", "settlement_get_carrier", "settlement_get_dispute",
 	"settlement_get_driver_earnings",
@@ -58,7 +59,10 @@ var getsReadElsewhere = []string{
 	"ledger_get_journal_entry", "ledger_get_manual_journal", "rate_get_agreement",
 	"accounting_get_connection", "accounting_get_sync_record", "accounting_get_mapping",
 	"edi_get_partner", "edi_get_inbound_file", "edi_get_message", "edi_get_transfer",
-	"edi_get_ack_health",
+	"edi_get_ack_health", "rate_get_matrix", "home_get_layout",
+	"invoice_get", "invoice_get_adjustment",
+	"factoring_get_readiness", "factoring_get_submission", "factoring_get_remittance",
+	"factoring_get_reserve_balance", "inbox_get_inbound_message", "insight_get_daily_briefing",
 }
 
 // getCase is one converted get read against real repositories: how to

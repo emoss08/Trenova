@@ -2146,13 +2146,17 @@ type CarrierIntelEventEdge struct {
 }
 
 type CarrierIntelEventFilterInput struct {
-	Statuses    []carrierintel.EventStatus `json:"statuses,omitempty"`
-	Severities  []carrierintel.Severity    `json:"severities,omitempty"`
-	Categories  []carrierintel.Section     `json:"categories,omitempty"`
-	CarrierID   *string                    `json:"carrierId,omitempty"`
-	SubjectType *carrierintel.SubjectType  `json:"subjectType,omitempty"`
-	SubjectID   *string                    `json:"subjectId,omitempty"`
-	OpenOnly    *bool                      `json:"openOnly,omitempty"`
+	Statuses   []carrierintel.EventStatus `json:"statuses,omitempty"`
+	Severities []carrierintel.Severity    `json:"severities,omitempty"`
+	Categories []carrierintel.Section     `json:"categories,omitempty"`
+	// Only this carrier's events.
+	CarrierID *string `json:"carrierId,omitempty"`
+	// Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number.
+	SubjectType *carrierintel.SubjectType `json:"subjectType,omitempty"`
+	// Only events about this subject, by its id or DOT number as the event names it.
+	SubjectID *string `json:"subjectId,omitempty"`
+	// Only events nobody has resolved or dismissed yet: Open and Acknowledged.
+	OpenOnly *bool `json:"openOnly,omitempty"`
 }
 
 type CarrierIntelFetchResult struct {
@@ -7766,20 +7770,22 @@ type ReportPreviewColumn struct {
 }
 
 type ReportRun struct {
-	ID                string          `json:"id"`
-	DefinitionID      *string         `json:"definitionId,omitempty"`
-	RevisionID        *string         `json:"revisionId,omitempty"`
-	CannedKey         *string         `json:"cannedKey,omitempty"`
-	CannedVersion     *string         `json:"cannedVersion,omitempty"`
-	RequestedByID     string          `json:"requestedById"`
-	Trigger           string          `json:"trigger"`
-	Params            map[string]any  `json:"params,omitempty"`
-	Format            string          `json:"format"`
-	Status            string          `json:"status"`
-	RowCount          int             `json:"rowCount"`
-	ByteSize          int             `json:"byteSize"`
-	DurationMs        int             `json:"durationMs"`
-	Truncated         bool            `json:"truncated"`
+	ID            string         `json:"id"`
+	DefinitionID  *string        `json:"definitionId,omitempty"`
+	RevisionID    *string        `json:"revisionId,omitempty"`
+	CannedKey     *string        `json:"cannedKey,omitempty"`
+	CannedVersion *string        `json:"cannedVersion,omitempty"`
+	RequestedByID string         `json:"requestedById"`
+	Trigger       string         `json:"trigger"`
+	Params        map[string]any `json:"params,omitempty"`
+	Format        string         `json:"format"`
+	Status        string         `json:"status"`
+	RowCount      int            `json:"rowCount"`
+	ByteSize      int            `json:"byteSize"`
+	DurationMs    int            `json:"durationMs"`
+	Truncated     bool           `json:"truncated"`
+	// Whether the run's rows were stored, so it can be compared with another run.
+	RowsStored        bool            `json:"rowsStored"`
 	Error             *ReportRunError `json:"error,omitempty"`
 	ArtifactExpiresAt *int            `json:"artifactExpiresAt,omitempty"`
 	CacheHit          bool            `json:"cacheHit"`
@@ -7813,25 +7819,27 @@ type ReportRunsFilterInput struct {
 }
 
 type ReportSchedule struct {
-	ID                  string               `json:"id"`
-	DefinitionID        string               `json:"definitionId"`
-	CronExpression      string               `json:"cronExpression"`
-	Timezone            string               `json:"timezone"`
-	Formats             []string             `json:"formats"`
-	EmailRecipients     []string             `json:"emailRecipients"`
-	EmailAttach         bool                 `json:"emailAttach"`
-	EmailInline         bool                 `json:"emailInline"`
-	NotifyUserIds       []string             `json:"notifyUserIds"`
-	Alert               *ReportScheduleAlert `json:"alert,omitempty"`
-	AlertFiring         bool                 `json:"alertFiring"`
-	Enabled             bool                 `json:"enabled"`
-	RunAsID             string               `json:"runAsId"`
-	LastRunID           *string              `json:"lastRunId,omitempty"`
-	NextRunAt           *int                 `json:"nextRunAt,omitempty"`
-	ConsecutiveFailures int                  `json:"consecutiveFailures"`
-	Version             int                  `json:"version"`
-	CreatedAt           int                  `json:"createdAt"`
-	UpdatedAt           int                  `json:"updatedAt"`
+	ID              string               `json:"id"`
+	DefinitionID    string               `json:"definitionId"`
+	CronExpression  string               `json:"cronExpression"`
+	Timezone        string               `json:"timezone"`
+	Formats         []string             `json:"formats"`
+	EmailRecipients []string             `json:"emailRecipients"`
+	EmailAttach     bool                 `json:"emailAttach"`
+	EmailInline     bool                 `json:"emailInline"`
+	NotifyUserIds   []string             `json:"notifyUserIds"`
+	Alert           *ReportScheduleAlert `json:"alert,omitempty"`
+	AlertFiring     bool                 `json:"alertFiring"`
+	Enabled         bool                 `json:"enabled"`
+	RunAsID         string               `json:"runAsId"`
+	// Whether the person reading set the schedule up, and so may change or remove it.
+	Mine                bool    `json:"mine"`
+	LastRunID           *string `json:"lastRunId,omitempty"`
+	NextRunAt           *int    `json:"nextRunAt,omitempty"`
+	ConsecutiveFailures int     `json:"consecutiveFailures"`
+	Version             int     `json:"version"`
+	CreatedAt           int     `json:"createdAt"`
+	UpdatedAt           int     `json:"updatedAt"`
 }
 
 type ReportScheduleAlert struct {

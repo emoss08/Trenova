@@ -20,6 +20,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "Briefing", Implementors: []string{"Briefing"}},
 		{Name: "BriefingItem", Implementors: []string{"BriefingItem"}},
 		{Name: "BriefingSection", Implementors: []string{"BriefingSection"}},
+		{Name: "BriefingWithheldSection", Implementors: []string{"BriefingWithheldSection"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "Briefing", Fields: []*gqlexec.Field{
@@ -113,6 +114,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Narrated, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "withheldSections",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BriefingWithheldSection",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.Briefing)
+					return obj.WithheldSections, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBriefingWithheldSection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐWithheldSectionᚄ),
 			},
 			{
 				Name:     "emailedAt",
@@ -265,6 +277,38 @@ var Shard = &gqlexec.Shard{
 					return obj.Path, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+		}},
+		{Object: "BriefingWithheldSection", Fields: []*gqlexec.Field{
+			{
+				Name:     "key",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.WithheldSection)
+					return obj.Key, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBriefingSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSectionKey),
+			},
+			{
+				Name:     "title",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.WithheldSection)
+					return obj.Title, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "partial",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.WithheldSection)
+					return obj.Partial, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -628,6 +672,18 @@ func marshalNBriefingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodule
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNBriefingWithheldSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐWithheldSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.WithheldSection) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "BriefingWithheldSection", &v)
+}
+
+func marshalNBriefingWithheldSection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐWithheldSectionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []briefing.WithheldSection) graphql.Marshaler {
+	return gqlexec.List[briefing.WithheldSection]{
+		Elem:        marshalNBriefingWithheldSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐWithheldSection,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {

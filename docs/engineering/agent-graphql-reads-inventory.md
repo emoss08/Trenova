@@ -48,9 +48,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `carrier_list_capacity_postings` | field-no-op | carrierCapacityPostings | propose DeskCarrierCapacityPostings | cursor | DataTable + typed carrierId, openOnly | Root field reads the same CarrierCapacityPostingRepository; no persisted op selects it. |
-| `carrier_list_intelligence_events` | op | carrierIntelEvents | CarrierIntelEventTable (alt CarrierIntelEventInbox) | cursor | DataTable + bespoke CarrierIntelEventFilterInput (statuses, severities, categories, carrierId, openOnly) | Same CarrierIntelService.ListEvents. fromDate/toDate (DetectedFrom/To) not typed: send as fieldFilters on detectedAt. Picked Table (no Desk op); Inbox is the triage view. |
-| `carrier_list_invoice_matches` | op | carrierInvoiceMatches | CarrierInvoiceMatches | limit/offset | typed args status, carrierId | Same CarrierSettlementService.ListInvoiceMatches. |
 
 
 ## dispatch
@@ -88,25 +85,18 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `home_get_layout` | op | homeLayout | HomeLayout | n/a | none (self-scoped) | Same HomeLayoutService.GetEffective. |
 | `home_list_widgets` | op | homeWidgetCatalog | HomeWidgetCatalog | unpaged | none | Same GetCatalog; category filtered client-side. |
 
 ## inbox
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `inbox_get_inbound_message` | partial | inboundMessage | InboundMessage | n/a | id | Same InboundMessageService.GetByID; the pending reply drafts the tool attaches (InboundReplyRepository.DraftsByMessageIDs) are not on InboundMessage. |
-| `inbox_list_capture_batches` | op | captureBatches (+ captureBatch) | CaptureBatches (+ CaptureBatch for captureBatchId) | cursor | bespoke CaptureBatchesInput | Same CaptureService.ListBatches/GetBatch. |
-| `inbox_list_email_profiles` | op | emailProfiles | EmailProfileTable | cursor | DataTable fieldFilters only | Tool uses SelectProfileOptions (same profiles, lighter); query -> input.query. |
-| `inbox_list_inbound_messages` | partial | inboundMessages | InboundMessages | cursor | bespoke InboundMessagesInput | Same InboundMessageService.List for the filters (classification, mailboxId, status). When query is given the tool uses semantic RetrievalSearcher.SearchInboundMessages; GraphQL query is lexical. |
-| `inbox_list_triage_assignees` | op | triageAssignees (+ triageSettings) | TriageAssignees (+ TriageSettings) | unpaged | none | Same Assignees/Settings. |
 
 ## insight
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
 | `insight_get` | partial | watchtowerItem | WatchtowerItemDetail | n/a | id | No insight Query root; insights reach GraphQL only as watchtower items of kind Insight. InsightService.GetDetail (evidence, detector detail) is not exposed. |
-| `insight_get_daily_briefing` | op | todaysBriefing | TodaysBriefing | n/a | bespoke TodaysBriefingInput (roleKey, briefingDate) | Same BriefingService.Today; role -> roleKey, date -> briefingDate. |
 | `insight_list` | partial | watchtowerItems (kinds:[Insight]) | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | No insight list root; InsightService.List (category/status browse) differs. severity maps to severities; category and insight status do not. |
 | `insight_list_weather_alerts` | partial | watchtowerItems (kinds:[WeatherAlert]) | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | No weather root; WeatherAlertService.GetActiveAlerts is a feed read. severity maps; query does not. |
 
@@ -147,7 +137,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `rate_get_matrix` | partial | rateMatrix | DeskRateMatrixCard | n/a | id, cellOffset | rateMatrix(id), its dimensions and its cells(offset, limit) are in the schema and DeskRateMatrixCard reads them; the tool converts once a get sends its operation's other variables (cellOffset). |
 | `rate_list_confirmations` | none | - | - | - | - | Rate confirmations by move are REST-only. |
 | `rate_list_imports` | none | - | - | - | - | Rate import batches are REST-only. |
 
@@ -167,15 +156,13 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `report_get` | op | reportDefinition (+ cannedReports) | ReportDefinitionById (+ CannedReports for reportKey) | n/a | id | Same ReportingService.GetDefinition; canned reports by key from cannedReports. |
-| `report_get_dataset` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata: one entity of ReportCatalog.entities; no per-dataset arg, the client picks the entity. |
-| `report_get_run` | op | reportRun | ReportRunById | n/a | id | Same GetRun. Row reads (ReadRunRows) and the analysis path of the tool are not GraphQL. |
-| `report_list` | op | reportDefinitions (+ cannedReports) | ReportDefinitionsTable (+ CannedReports) | cursor | DataTable fieldFilters only | Tool merges ListCanned + ListDefinitions; category as fieldFilter. |
-| `report_list_dashboards` | op | reportDashboards | ReportDashboards | unpaged | none | Same ListDashboards; query/paging client-side. |
-| `report_list_datasets` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata with no record kind; category/query filtered client-side. |
-| `report_list_runs` | op | reportRuns | ReportRunsTable | cursor | DataTable + bespoke ReportRunsFilterInput (definitionId, statuses) | Same ReportingService runs list. |
-| `report_list_schedules` | op | reportSchedules | ReportSchedules | unpaged list | typed definitionId | Same ListSchedules; enabledOnly filtered client-side. |
-| `report_list_table_change_alerts` | op | tcaSubscriptions | TCASubscriptionTable | cursor | DataTable fieldFilters only | Same TCA subscription repository. |
+| `report_get` | op | reportDefinition (+ cannedReports) | ReportDefinitionById (+ CannedReports for reportKey) | n/a | id | Same ReportingService.GetDefinition; canned reports by key from cannedReports. Stays on the repository path (report PR): one tool reads a built-in report by `reportKey` or a saved one by id, with each parameter's shape; GraphQL serves the two from different roots (`cannedReports` has no key argument), and a get binds one root. |
+| `report_get_dataset` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata: one entity of ReportCatalog.entities; no per-dataset arg, the client picks the entity. Stays on the repository path (report PR): the catalog is in process, and `reportCatalog` takes no dataset argument, so each call would fetch and discard the whole catalog. |
+| `report_get_run` | op | reportRun | ReportRunById | n/a | id | Same GetRun. Row reads (ReadRunRows) and the analysis path of the tool are not GraphQL. Stays on the repository path (report PR): the tool returns a sample of the run's rows from the stored artifact (`ReadRunRows`), which no GraphQL root reads. |
+| `report_list` | op | reportDefinitions (+ cannedReports) | ReportDefinitionsTable (+ CannedReports) | cursor | DataTable fieldFilters only | Tool merges ListCanned + ListDefinitions; category as fieldFilter. Stays on the repository path (report PR): it merges built-in and saved reports in one search, and GraphQL serves them from two roots, one unpaged. |
+| `report_list_dashboards` | op | reportDashboards | ReportDashboards | unpaged | none | Same ListDashboards; query/paging client-side. Stays on the repository path (report PR): `reportDashboards` checks report read where the tool checks dashboard read, so the generator refuses the binding until the two agree, which is the owner's call. |
+| `report_list_datasets` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata with no record kind; category/query filtered client-side. Stays on the repository path (report PR): the catalog is in process, and `reportCatalog` returns it whole with no filter, so each call would fetch the whole catalog to keep a few datasets. |
+| `report_list_table_change_alerts` | op | tcaSubscriptions | TCASubscriptionTable | cursor | DataTable fieldFilters only | Same TCA subscription repository. Stays on the repository path (report PR): `table_change_alert` defaults to Restricted with no field sensitivities, so through the guard an alert shows only its id at Internal. Declaring its fields Internal would also newly show an alert's name, table, conditions and custom text at Internal where that kind's sensitivities govern (the AI audit trail's recorded arguments of an alert tool, read by people at their own ceiling, and write previews). Which fields are Internal is the owner's call; once declared, the tool binds `tcaSubscriptions` through a Desk operation like the run list. |
 
 ## settlement
 
@@ -208,12 +195,12 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 31 |
-| op, converted (rows removed) | 88 |
-| field-no-op, not yet converted | 1 |
-| field-no-op, converted (rows removed) | 5 |
-| partial, not yet converted | 13 |
-| partial, converted (rows removed) | 17 |
+| op, not yet converted | 23 |
+| op, converted (rows removed) | 96 |
+| field-no-op, not yet converted | 0 |
+| field-no-op, converted (rows removed) | 6 |
+| partial, not yet converted | 10 |
+| partial, converted (rows removed) | 20 |
 | none | 21 |
 | **total** | **176** |
 
@@ -227,7 +214,7 @@ for read.
 
 - **By the rule:** 49 tools.
 - **By a named operation** (the one this inventory picked): 46 tools.
-- **Not yet:** 21 tools, each with the generator's reason below. Most need `entity` named in
+- **Not yet:** 20 tools, each with the generator's reason below. Most need `entity` named in
   `reads.yml`, because their type binds to a generated model (`gqlmodel`) rather than to the
   record the resolver filters. A few have a shape no list or get tool reads (no arguments at all,
   a catalog, two root fields), and are decided in their module's PR.
@@ -236,7 +223,6 @@ for read.
 |---|---|---|
 | `dispatch_get_board` | `DispatchBoard` | DispatchBoard binds to no Go type; name the entity in reads.yml |
 | `factoring_get_submission` | `FactoringSubmissionDetail` | factoring_get_submission is a get tool, but FactoringSubmissionDetail reads factoringSubmission, which is not one |
-| `home_get_layout` | `HomeLayout` | home_get_layout is a get tool, but HomeLayout reads homeLayout, which is not one |
 | `home_list_widgets` | `HomeWidgetCatalog` | home_list_widgets is a list tool, but HomeWidgetCatalog reads homeWidgetCatalog, which is not one |
 | `receivable_list_credit_memo_applications` | `DeskInvoiceCard` | receivable_list_credit_memo_applications is a list tool, but DeskInvoiceCard reads invoice, which is not one |
 | `report_get` | `ReportDefinitionById` | ReportDefinition binds to no Go type; name the entity in reads.yml |
