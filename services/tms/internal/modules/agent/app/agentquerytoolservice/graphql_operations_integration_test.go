@@ -529,6 +529,7 @@ func TestConvertedGets_OperationsReadOneRecordOfTheTenantUnderRowLevelSecurity(t
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				return world.writeOccurrence(ctx, tenant, world.shipment(tenant, "D"+label), marked)
 			},
+			withheldAtInternal: []string{"occurrence.driverPayAmount", "occurrence.netMargin"},
 		},
 	}
 	occurrenceID := func(record map[string]any) any {

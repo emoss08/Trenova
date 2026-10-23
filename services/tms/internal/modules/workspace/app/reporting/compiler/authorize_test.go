@@ -264,7 +264,7 @@ func TestAuthorize_ARateQuotesMarginAndCostNeedTheMarginsGroup(t *testing.T) {
 			Columns:   []report.ColumnSpec{dim("c_total", "totalAmount"), dim("c_m", field)},
 		}
 		_, err := withheld.ValidateAndAuthorize(t.Context(), newRequest(def))
-		requireAuthorizationError(t, err, "protected_margins")
+		requireAuthorizationError(t, err, "in the Margins protected field group")
 
 		_, err = granted.ValidateAndAuthorize(t.Context(), newRequest(def))
 		require.NoErrorf(t, err, "%s is shown to a reader with the margins group", field)

@@ -49,6 +49,16 @@ var convertedGets = map[string]string{
 	"formula_list_libraries":  "formula_get_library",
 }
 
+// getsReadElsewhere are the converted gets their module's own test reads:
+// the operations, ledger, rate, accounting and EDI tests.
+var getsReadElsewhere = []string{
+	"order_get", "exception_get_service_failure", "detention_get_occurrence",
+	"ledger_get_journal_entry", "ledger_get_manual_journal", "rate_get_agreement",
+	"accounting_get_connection", "accounting_get_sync_record", "accounting_get_mapping",
+	"edi_get_partner", "edi_get_inbound_file", "edi_get_message", "edi_get_transfer",
+	"edi_get_ack_health",
+}
+
 // getCase is one converted get read against real repositories: how to
 // write its record, and what its card withholds at the default data access.
 type getCase struct {
@@ -231,8 +241,9 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 		},
 	}}
 	require.Len(t, gets, len(convertedGets)+5)
-	require.ElementsMatch(t, agentquerytoolservice.ConvertedGetNames(), keysOf(gets),
-		"every converted get is read on Postgres")
+	require.ElementsMatch(t, agentquerytoolservice.ConvertedGetNames(),
+		append(keysOf(gets), getsReadElsewhere...),
+		"every converted get is read here or by its module's own test")
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
@@ -337,6 +348,24 @@ func keysOf[V any](m map[string]V) []string {
 	return out
 }
 
+// assertWithheldAtInternal holds a record read at the default agent data
+// access to withholding exactly the fields its case names, and nothing when
+// it names none.
+func assertWithheldAtInternal(t *testing.T, record map[string]any, want []string) {
+	t.Helper()
+
+	if len(want) == 0 {
+		assert.NotContains(t, record, "withheldByAccess")
+		return
+	}
+	withheld, _ := record["withheldByAccess"].([]any)
+	names := make([]string, 0, len(withheld))
+	for _, field := range withheld {
+		names = append(names, field.(string))
+	}
+	assert.ElementsMatch(t, want, names)
+}
+
 // recordID is the id of the record a card reads at its root.
 func recordID(record map[string]any) any { return record["id"] }
 
@@ -365,11 +394,11 @@ func checkConvertedGet(
 		for _, id := range ours.rows {
 			record := callTool(t, ours.ctx, get, actor, map[string]any{param: id})
 			assert.Equal(t, id, idOf(record))
-			assert.NotContains(t, record, "withheldByAccess")
+			assertWithheldAtInternal(t, record, c.withheldAtInternal)
 		}
 	})
 
-	t.Run("nothing is withheld at the default agent data access", func(t *testing.T) {
+	t.Run("only what is gated past Internal is withheld at the default agent data access", func(t *testing.T) {
 		data, err := get.Query(ours.ctx, &agentports.QueryToolParams{
 			OrganizationID:    actor.OrganizationID,
 			BusinessUnitID:    actor.BusinessUnitID,
@@ -380,7 +409,7 @@ func checkConvertedGet(
 			RunID:             pulid.MustNew("ar_"),
 		})
 		require.NoError(t, err)
-		assert.NotContains(t, asMap(t, data), "withheldByAccess")
+		assertWithheldAtInternal(t, asMap(t, data), c.withheldAtInternal)
 	})
 
 	t.Run("another tenant's record is not found", func(t *testing.T) {

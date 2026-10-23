@@ -133,6 +133,10 @@ type referenceCase struct {
 	// readsWith attaches what a read of the case needs beside the tenant,
 	// such as the loader a card's counts resolve through.
 	readsWith func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context
+	// withheldAtInternal are the fields a get withholds even at the default
+	// agent data access (a detention occurrence's margin, which needs the
+	// Margins field group); a case that names none withholds nothing.
+	withheldAtInternal []string
 }
 
 // customerCacheMiss is a customer cache that holds nothing, so every get
