@@ -338,6 +338,8 @@ pub struct InputInfo {
     pub required: bool,
     /// The default, as a wire value, when it has one that folds.
     pub default: Option<serde_json::Value>,
+    /// The `where` constraint, folded; `None` when the input has none or it does not fold.
+    pub constraint: Option<crate::tariff::constraint::Constraint>,
     /// Where the input's name is declared.
     pub span: Span,
 }
