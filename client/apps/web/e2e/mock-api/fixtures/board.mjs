@@ -227,6 +227,7 @@ function ratingDetail(revenue, miles, anchor) {
       {
         label: "Linehaul",
         kind: "best",
+        currency: "USD",
         chosen: "Per mile",
         options: [
           { label: "Per mile", status: "chosen", subtotal: String(linehaul), refusal: null },

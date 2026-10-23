@@ -164,6 +164,7 @@ describe("ShipmentBillingDetails on a tariff", () => {
         {
           label: "Linehaul",
           kind: "best",
+          currency: "USD",
           chosen: "Flat",
           options: [
             { label: "Per mile", status: "lost", subtotal: "1908.2", refusal: null },

@@ -684,6 +684,14 @@ export type TariffChoiceOption = z.output<typeof tariffChoiceOptionSchema>;
 export const tariffChoiceSchema = z.object({
   label: z.string(),
   kind: z.enum(["best", "worst"]),
+  /**
+   * The ISO currency the subtotals are in, when the host knows it (a stored rating's, which may
+   * differ from a converted bill's); the module's own choices are in the rating currency.
+   */
+  currency: z
+    .string()
+    .nullish()
+    .transform((value) => value || null),
   range: tariffRangeSchema.nullish().transform((value) => value ?? null),
   chosen: z
     .string()

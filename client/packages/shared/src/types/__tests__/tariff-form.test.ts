@@ -134,11 +134,13 @@ describe("readStoredTariffBill", () => {
 });
 
 describe("readStoredTariffChoices", () => {
-  // GraphQL `ShipmentRatingDetail.choices`: a subtotal is a Decimal, a refusal the server's text.
+  // GraphQL `ShipmentRatingDetail.choices`: the currency the subtotals are in, a subtotal a
+  // Decimal, a refusal the server's text; the second choice leaves its currency out.
   const stored = [
     {
       label: "Linehaul",
       kind: "best",
+      currency: "CAD",
       chosen: "Flat",
       options: [
         { label: "Per mile", status: "lost", subtotal: "1175.00", refusal: null },
@@ -159,6 +161,7 @@ describe("readStoredTariffChoices", () => {
       {
         label: "Linehaul",
         kind: "best",
+        currency: "CAD",
         range: null,
         chosen: "Flat",
         options: [
@@ -185,7 +188,7 @@ describe("readStoredTariffChoices", () => {
           },
         ],
       },
-      { label: "Floor", kind: "worst", range: null, chosen: null, options: [] },
+      { label: "Floor", kind: "worst", currency: null, range: null, chosen: null, options: [] },
     ]);
   });
 

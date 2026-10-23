@@ -219,8 +219,10 @@ Templates, under `/api/v1/formula-templates`:
   (archiving one in use needs `confirmInUse`), `POST /import` (export version `2.0`).
 - `GET /:id/usage`, `/versions` (and `/versions/<n>`, `/versions/scheduled`), `POST /:id/versions`,
   `/rollback`, `/fork`, `GET /:id/compare`, `/lineage`.
-- `GET /:id/readiness` (keys `details`, `source`, `warnings`, `tests`, `status`, `reviewer`,
-  `submissionAge`; a template with no tests only warns), `/reviews`, `/review-diff` (source and
+- `GET /:id/readiness` (keys `details`, `source`, `warnings`, `tests`, `coverage`, `status`,
+  `reviewer`, `submissionAge`; a template with no tests only warns; `coverage` warns, never
+  blocks, and the response's `coverage` lists each unreached region with its line, column and
+  first line of source, as the server's does), `/reviews`, `/review-diff` (source and
   pinned imports against the approved version), `/reviewers`, `POST /:id/impact`, `/backtest`.
 - `POST /:id/submit` (refused with 422 and field errors keyed by check when readiness fails),
   `/approve` (not by the submitter, every check passing), `/reject` and `/request-changes` (a

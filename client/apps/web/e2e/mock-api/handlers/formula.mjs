@@ -604,6 +604,16 @@ export function readinessOf(state, record, { kind, context, label }) {
     });
   checks.push(tests);
 
+  const coverage = coverageOf(record.source, run.coverage ?? null);
+  if (coverage) {
+    checks.push({
+      key: "coverage",
+      label: "Tests reach every region",
+      status: coverage.reached === coverage.total ? "pass" : "warn",
+      detail: `Tests reach ${coverage.reached} of ${coverage.total} regions`,
+    });
+  }
+
   const status = { key: "status", label: "Review state", status: "pass" };
   if (record.status === "Draft" || record.status === "Inactive")
     status.detail = "Ready to submit for review";
@@ -655,6 +665,50 @@ export function readinessOf(state, record, { kind, context, label }) {
     testPassed: passed,
     testFailing: failing,
     pendingSchedules: [],
+    coverage,
+  };
+}
+
+/** How many coverage regions a source's tests run at most lists before it counts the rest. */
+const COVERAGE_LISTED = 20;
+
+/**
+ * The server's readiness coverage: reached and total, and each outermost region no case reached
+ * with where it starts (1-based line and column, UTF-16) and the line it starts on.
+ */
+function coverageOf(source, coverage) {
+  if (!coverage) return null;
+  const unreached = coverage.regions.filter((region) => region.hits === 0);
+  const outermost = unreached.filter(
+    (region) =>
+      !unreached.some(
+        (other) =>
+          other !== region &&
+          other.range.from <= region.range.from &&
+          region.range.to <= other.range.to,
+      ),
+  );
+  const at = (offset) => {
+    const before = source.slice(0, offset);
+    const line = before.split("\n").length;
+    const column = offset - (before.lastIndexOf("\n") + 1) + 1;
+    const end = source.indexOf("\n", offset);
+    const start = before.lastIndexOf("\n") + 1;
+    return { line, column, excerpt: source.slice(start, end === -1 ? undefined : end).trim() };
+  };
+  return {
+    reached: coverage.reached,
+    total: coverage.total,
+    unreached: outermost.slice(0, COVERAGE_LISTED).map((region) => {
+      const place = at(region.range.from);
+      return {
+        kind: region.kind,
+        range: region.range,
+        at: { line: place.line, column: place.column },
+        excerpt: place.excerpt,
+      };
+    }),
+    more: Math.max(0, outermost.length - COVERAGE_LISTED),
   };
 }
 

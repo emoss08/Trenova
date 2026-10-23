@@ -568,6 +568,7 @@ describe("choices", () => {
       {
         label: "Linehaul",
         kind: "best",
+        currency: null,
         range: expect.objectContaining({ from: ltlAt('best "Linehaul"') }),
         chosen: "Per mile",
         options: [

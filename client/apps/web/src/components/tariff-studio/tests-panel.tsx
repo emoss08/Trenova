@@ -1,7 +1,7 @@
 import { BillView } from "@/components/tariff-bill/bill-view";
 import { refusalText } from "@/components/tariff-bill/refusal-text";
 import { TARIFF_REGION_LABELS, unreachedRegions } from "@/lib/tariff-coverage";
-import { lineOf } from "@/lib/tariff-source-lines";
+import { lineAt, lineOf } from "@/lib/tariff-source-lines";
 import {
   AlertCircleIcon,
   Beaker02Icon,
@@ -357,7 +357,7 @@ export function CoverageSummary({
                   {TARIFF_REGION_LABELS[region.kind]}
                 </span>
                 <code className="text-foreground-subtle min-w-0 truncate font-mono text-2xs">
-                  {firstLine(source, region.range)}
+                  {lineAt(source, region.range.from)}
                 </code>
               </RangeButton>
             </li>
@@ -366,14 +366,6 @@ export function CoverageSummary({
       )}
     </section>
   );
-}
-
-/** The source line a range starts on, trimmed, for a row that names a region. */
-export function firstLine(source: string, range: TariffRange): string {
-  const from = Math.min(range.from, source.length);
-  const start = source.lastIndexOf("\n", from - 1) + 1;
-  const newline = source.indexOf("\n", from);
-  return source.slice(start, newline === -1 ? source.length : newline).trim();
 }
 
 export type TestsPanelProps = {

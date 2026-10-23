@@ -28,7 +28,10 @@ const STATUS_ICONS = { chosen: CheckIcon, lost: MinusIcon, refused: XCloseIcon }
 export type ChoicesViewProps = {
   /** Every `best` and `worst` the rating evaluated, in evaluation order. */
   choices: readonly TariffChoice[];
-  /** The rating currency's ISO code, when known; subtotals then show its symbol. */
+  /**
+   * The rating currency's ISO code, when known; subtotals then show its symbol. A choice that
+   * names its own currency (a stored rating's) is shown in that one.
+   */
   currency?: string | null;
   /** Reveals an option's or a choice's source; without it the view is read-only text. */
   onSelectRange?: (range: TariffRange) => void;
@@ -133,7 +136,7 @@ export function ChoicesView({ choices, currency, onSelectRange, className }: Cho
               <OptionRow
                 key={option.label}
                 option={option}
-                currency={currency}
+                currency={choice.currency ?? currency}
                 onSelectRange={onSelectRange}
               />
             ))}

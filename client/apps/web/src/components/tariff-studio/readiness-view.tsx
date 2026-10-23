@@ -1,11 +1,15 @@
 import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ReadinessCheck, ReadinessResponse } from "@trenova/shared/types/formula-template";
+import type {
+  ReadinessCheck,
+  ReadinessCoverage,
+  ReadinessResponse,
+} from "@trenova/shared/types/formula-template";
 import { AlertTriangleIcon, CheckCircleIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { TARIFF_REGION_LABELS } from "@/lib/tariff-coverage";
-import { lineOf } from "@/lib/tariff-source-lines";
-import type { TariffRange } from "@trenova/shared/types/tariff";
+import { lineAt, lineOf } from "@/lib/tariff-source-lines";
+import type { TariffRange, TariffRegionKind } from "@trenova/shared/types/tariff";
 
 export type ReadinessStep = "submit" | "approve";
 
@@ -46,31 +50,82 @@ function CheckRow({ check, link }: { check: ReadinessCheck; link?: ReadinessSour
         {regions.length > 0 && (
           <ul aria-label={t("Regions no test reaches")} className="flex flex-col">
             {regions.map((region) => {
-              const label = TARIFF_REGION_LABELS[region.kind];
-              const line = link ? t("Ln {0}", lineOf(link.source, region.range.from)) : null;
+              const label = regionLabel(region.kind);
+              const lineNumber =
+                region.line ?? (link ? lineOf(link.source, region.range.from) : null);
+              const line = lineNumber !== null ? t("Ln {0}", lineNumber) : null;
+              const excerpt =
+                region.excerpt ?? (link ? lineAt(link.source, region.range.from) : null);
+              const body = (
+                <>
+                  <span className="shrink-0">{label}</span>
+                  {excerpt && (
+                    <code className="text-foreground-subtle min-w-0 truncate font-mono text-2xs">
+                      {excerpt}
+                    </code>
+                  )}
+                  <span className="text-foreground-subtle ml-auto shrink-0 font-mono text-2xs tabular-nums">
+                    {line}
+                  </span>
+                </>
+              );
               return (
                 <li key={`${region.kind}:${region.range.from}`}>
                   {link ? (
                     <button
                       type="button"
                       onClick={() => link.onReveal(region.range)}
-                      className="ui-focus-ring hover:bg-surface-hover text-foreground-muted flex w-full items-center gap-2 rounded-sm px-1 py-0.5 text-left"
+                      className="ui-focus-ring hover:bg-surface-hover text-foreground-muted flex w-full min-w-0 items-center gap-2 rounded-sm px-1 py-0.5 text-left"
                     >
-                      <span>{label}</span>
-                      <span className="text-foreground-subtle ml-auto font-mono text-2xs tabular-nums">
-                        {line}
-                      </span>
+                      {body}
                     </button>
                   ) : (
-                    <span className="text-foreground-muted px-1">{label}</span>
+                    <span className="text-foreground-muted flex min-w-0 items-center gap-2 px-1">
+                      {body}
+                    </span>
                   )}
                 </li>
               );
             })}
+            {(check.more ?? 0) > 0 && (
+              <li className="text-foreground-subtle px-1">{t("and {0} more", check.more ?? 0)}</li>
+            )}
           </ul>
         )}
       </div>
     </li>
+  );
+}
+
+/** A coverage region's kind as a person reads it; a kind this client does not know, as sent. */
+function regionLabel(kind: string): string {
+  return Object.hasOwn(TARIFF_REGION_LABELS, kind)
+    ? TARIFF_REGION_LABELS[kind as TariffRegionKind]
+    : kind;
+}
+
+/**
+ * The server's `coverage` check with the regions its readiness response reports, each placed on
+ * its line with its first line of source, so the row lists what no test reaches.
+ */
+export function withCoverageRegions(
+  checks: readonly ReadinessCheck[],
+  coverage: ReadinessCoverage | null | undefined,
+): ReadinessCheck[] {
+  if (!coverage || coverage.unreached.length === 0) return [...checks];
+  return checks.map((check) =>
+    check.key === "coverage" && !check.regions?.length
+      ? {
+          ...check,
+          regions: coverage.unreached.map((region) => ({
+            range: region.range,
+            kind: region.kind,
+            line: region.at?.line ?? null,
+            excerpt: region.excerpt ?? null,
+          })),
+          more: coverage.more ?? null,
+        }
+      : check,
   );
 }
 
@@ -146,7 +201,7 @@ export function ReadinessView({
   }
 
   const failing = data.checks.filter((check) => check.status === "fail");
-  const checks = withLiveChecks(data.checks, liveChecks);
+  const checks = withLiveChecks(withCoverageRegions(data.checks, data.coverage), liveChecks);
   const relevant = step === "submit" ? checks.filter((check) => check.key !== "reviewer") : checks;
 
   return (

@@ -208,20 +208,22 @@ const storedChoiceOptionSchema = z.object({
 
 /**
  * A choice as the server stores it on a rating (`tarifftypes.Choice`, GraphQL `TariffChoice`):
- * each option's subtotal a decimal in the rating currency and its refusal already in the
- * reader's words. Read into the module's wire form, so one view draws a preview's choices and a
+ * the currency its subtotals are in, each option's subtotal a decimal and its refusal already in
+ * the reader's words. Read into the module's wire form, so one view draws a preview's choices and a
  * shipment's alike.
  */
 const rawStoredChoiceSchema = z
   .object({
     label: z.string(),
     kind: z.string().transform((value) => value.toLowerCase()),
+    currency: z.string().nullish(),
     chosen: z.string().nullish(),
     options: z.array(storedChoiceOptionSchema).default([]),
   })
   .transform((choice): TariffChoice => ({
     label: choice.label,
     kind: choice.kind === "worst" ? "worst" : "best",
+    currency: choice.currency || null,
     range: null,
     chosen: choice.chosen || null,
     options: choice.options.map((option) => ({

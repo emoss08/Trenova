@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
 import { READINESS_KEYS, tariffReadiness, type TariffReadinessInput } from "../readiness";
+import { withCoverageRegions, withLiveChecks } from "../readiness-view";
 
 const base: TariffReadinessInput = {
   mode: "edit",
@@ -103,5 +104,67 @@ describe("tariffReadiness coverage row", () => {
     expect(row({ ...base, tests: ran, coverage: null })).toBeUndefined();
     expect(row({ ...base, tests: { ...ran, stale: true }, coverage })).toBeUndefined();
     expect(row({ ...base, tests: { status: "empty" }, coverage })).toBeUndefined();
+  });
+});
+
+describe("withCoverageRegions", () => {
+  // The server's readiness (`GET /formula-templates/:id/readiness`): a `coverage` check, and the
+  // response's `coverage` with each unreached region placed on its line.
+  const coverage = {
+    reached: 10,
+    total: 13,
+    unreached: [
+      {
+        kind: "if",
+        range: { from: 1001, to: 1050 },
+        at: { line: 35, column: 1 },
+        excerpt: "if shipment.hazmat {",
+      },
+      { kind: "someday", range: { from: 1100, to: 1120 }, at: null, excerpt: null },
+    ],
+    more: 4,
+  };
+  const checks = [
+    { key: "tests", label: "Tests pass", status: "pass" as const },
+    {
+      key: "coverage",
+      label: "Tests reach every region",
+      status: "warn" as const,
+      detail: "Tests reach 10 of 13 regions",
+    },
+  ];
+
+  it("puts the response's unreached regions on the coverage check", () => {
+    expect(withCoverageRegions(checks, coverage)).toEqual([
+      checks[0],
+      {
+        ...checks[1],
+        regions: [
+          {
+            range: { from: 1001, to: 1050 },
+            kind: "if",
+            line: 35,
+            excerpt: "if shipment.hazmat {",
+          },
+          { range: { from: 1100, to: 1120 }, kind: "someday", line: null, excerpt: null },
+        ],
+        more: 4,
+      },
+    ]);
+  });
+
+  it("leaves the checks alone without coverage", () => {
+    expect(withCoverageRegions(checks, null)).toEqual(checks);
+  });
+});
+
+describe("withLiveChecks", () => {
+  it("adds the Studio's row only where the server sends none of that key", () => {
+    const server = [{ key: "coverage", label: "Server", status: "pass" as const }];
+    const live = [
+      { key: "coverage", label: "Live", status: "warn" as const },
+      { key: "other", label: "Other", status: "warn" as const },
+    ];
+    expect(withLiveChecks(server, live).map((check) => check.label)).toEqual(["Server", "Other"]);
   });
 });

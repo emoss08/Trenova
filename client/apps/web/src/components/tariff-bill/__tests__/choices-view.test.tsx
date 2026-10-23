@@ -93,6 +93,12 @@ describe("ChoicesView", () => {
     expect(reveal).toHaveBeenCalledWith({ from: 203, to: 250 });
   });
 
+  it("shows a stored choice's subtotals in the currency it names, over the bill's", () => {
+    const [choice] = choices;
+    render(<ChoicesView choices={[{ ...choice!, currency: "CAD" }]} currency="USD" />);
+    expect(screen.getByText("CA$900.00")).toBeInTheDocument();
+  });
+
   it("draws nothing for a rating without choices", () => {
     const { container } = render(<ChoicesView choices={[]} />);
     expect(container).toBeEmptyDOMElement();

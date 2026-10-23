@@ -15,7 +15,6 @@ import {
   tariffLookupSchema,
   tariffRangeSchema,
   tariffRefusalSchema,
-  tariffRegionKindSchema,
   tariffTestFailureSchema,
   tariffTestResultSchema,
   tariffTestStatusSchema,
@@ -415,13 +414,50 @@ export const reviewDiffResponseSchema = z.object({
 });
 export type ReviewDiffResponse = z.output<typeof reviewDiffResponseSchema>;
 
+/**
+ * A region of the source a readiness check names: its range, what kind of region it is (a
+ * coverage region's kind: `if`, `arm`, `option`, …), and, when the server placed it, its 1-based
+ * line and the source line it starts on.
+ */
+export const readinessRegionSchema = z.object({
+  range: tariffRangeSchema,
+  kind: z.string(),
+  line: z.number().int().positive().nullish(),
+  excerpt: z.string().nullish(),
+});
+export type ReadinessRegion = z.output<typeof readinessRegionSchema>;
+
+/**
+ * The server's coverage of the saved source: how many regions its tests reach, and the regions
+ * none reaches (each with where it starts and its first line), `more` past the ones it lists.
+ */
+export const readinessCoverageSchema = z.object({
+  reached: z.number().int().nonnegative(),
+  total: z.number().int().nonnegative(),
+  unreached: z
+    .array(
+      z.object({
+        kind: z.string(),
+        range: tariffRangeSchema,
+        at: z.object({ line: z.number().int(), column: z.number().int() }).nullish(),
+        excerpt: z.string().nullish(),
+      }),
+    )
+    .nullish()
+    .transform((value) => value ?? []),
+  more: z.number().int().nonnegative().nullish(),
+});
+export type ReadinessCoverage = z.output<typeof readinessCoverageSchema>;
+
 export const readinessCheckSchema = z.object({
   key: z.string(),
   label: z.string(),
   status: z.enum(["pass", "warn", "fail"]),
   detail: z.string().optional(),
   /** The source regions a check is about (the regions no test reaches), each to reveal. */
-  regions: z.array(z.object({ range: tariffRangeSchema, kind: tariffRegionKindSchema })).nullish(),
+  regions: z.array(readinessRegionSchema).nullish(),
+  /** How many more regions there are than the check lists. */
+  more: z.number().int().nonnegative().nullish(),
 });
 export type ReadinessCheck = z.output<typeof readinessCheckSchema>;
 
@@ -484,6 +520,8 @@ export const readinessResponseSchema = z.object({
     .nullish()
     .transform((v) => v ?? []),
   pendingSchedules: scheduledWindowsSchema,
+  /** The saved source's coverage; null when it does not check or its tests did not all run. */
+  coverage: readinessCoverageSchema.nullish().transform((value) => value ?? null),
 });
 export type ReadinessResponse = z.output<typeof readinessResponseSchema>;
 
