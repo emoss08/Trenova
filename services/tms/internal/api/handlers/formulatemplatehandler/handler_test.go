@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -131,6 +132,12 @@ func TestPreview_AnswersDiagnosticsBillAndTests(t *testing.T) {
 	f := newFixture(t, fixtureOptions{granted: authorGrants()})
 	f.rater.result = &tariffports.RateResult{
 		Bill: &tarifftypes.Bill{Total: decimal.NewFromInt(285), Lines: []tarifftypes.Line{}},
+		WireBill: &rules.TariffBill{
+			Lines:            []rules.TariffLine{},
+			FreightTotal:     rules.TariffQuantity{Value: decimal.NewFromInt(285), Unit: "$"},
+			AccessorialTotal: rules.TariffQuantity{Value: decimal.Zero, Unit: "$"},
+			Total:            rules.TariffQuantity{Value: decimal.NewFromInt(285), Unit: "$"},
+		},
 	}
 
 	ginCtx := f.serve(http.MethodPost, "/api/v1/formula-templates/test", map[string]any{
@@ -144,6 +151,10 @@ func TestPreview_AnswersDiagnosticsBillAndTests(t *testing.T) {
 	assert.Equal(t, true, resp["valid"])
 	assert.Empty(t, resp["diagnostics"])
 	require.NotNil(t, resp["bill"])
+	bill, ok := resp["bill"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, map[string]any{"$q": "285", "u": "$"}, bill["total"],
+		"the client reads the engine's bill: totals are quantities with their unit")
 	tests, ok := resp["tests"].([]any)
 	require.True(t, ok)
 	require.Len(t, tests, 1)

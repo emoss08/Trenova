@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
@@ -277,7 +278,13 @@ func TestPreview_RatesTheSampleRecordAndRunsTheTests(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
 	deps.rater.result = &tariffports.RateResult{
-		Bill:  &tarifftypes.Bill{Total: decimal.NewFromInt(285)},
+		Bill: &tarifftypes.Bill{Total: decimal.NewFromInt(285)},
+		WireBill: &rules.TariffBill{
+			Lines:            []rules.TariffLine{},
+			FreightTotal:     rules.TariffQuantity{Value: decimal.NewFromInt(285), Unit: "$"},
+			AccessorialTotal: rules.TariffQuantity{Value: decimal.Zero, Unit: "$"},
+			Total:            rules.TariffQuantity{Value: decimal.NewFromInt(285), Unit: "$"},
+		},
 		Trace: rules.RawJSON(`[{"kind":"charge"}]`),
 	}
 	inputs := tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString("2.85"), "$/mi")}
@@ -290,7 +297,16 @@ func TestPreview_RatesTheSampleRecordAndRunsTheTests(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, result.Valid)
 	require.NotNil(t, result.Bill)
-	assert.Equal(t, "285", result.Bill.Total.String())
+	assert.Equal(t, "285", result.Bill.Total.Value.String())
+	assert.Equal(t, "$", result.Bill.Total.Unit)
+	require.NotNil(t, result.RatedBill)
+	assert.Equal(t, "285", result.RatedBill.Total.String())
+	wire, err := sonic.Marshal(result.Bill)
+	require.NoError(t, err)
+	var sent map[string]any
+	require.NoError(t, sonic.Unmarshal(wire, &sent))
+	assert.Equal(t, map[string]any{"$q": "285", "u": "$"}, sent["total"],
+		"the preview sends the engine's bill, totals as quantities with their unit")
 	assert.JSONEq(t, `[{"kind":"charge"}]`, string(result.Trace))
 	require.Len(t, result.Tests, 1)
 	assert.Equal(t, rules.TariffTestPassed, result.Tests[0].Status)

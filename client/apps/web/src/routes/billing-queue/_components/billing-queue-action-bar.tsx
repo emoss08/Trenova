@@ -40,8 +40,8 @@ export function BillingQueueActionBar({
   const invalidate = useInvalidateBillingQueue();
 
   const { data: billingReadiness } = useQuery({
-    ...shipment.billingReadiness(item.shipmentId),
-    enabled: item.status === "InReview",
+    ...shipment.billingReadiness(item.shipmentId ?? ""),
+    enabled: item.status === "InReview" && !!item.shipmentId,
   });
 
   const heldCount = item.detentionHolds.length;

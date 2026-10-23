@@ -76,10 +76,13 @@ export default function BillingQueueDetailPane({
     item.billToCustomerId && shipment?.customerId && item.billToCustomerId !== shipment.customerId
       ? customerName
       : null;
-  const proNumber = shipment?.proNumber ?? item.shipmentId.slice(0, 12);
+  const proNumber = shipment?.proNumber ?? billingQueueItemLabel(item);
+  const shipmentId = item.shipmentId;
   const totalCharge = Number(shipment?.totalChargeAmount ?? 0);
   const allocated = item.allocatedTotalAmount != null ? Number(item.allocatedTotalAmount) : null;
-  const isPartial = allocated != null && Math.abs(allocated - totalCharge) >= 0.005;
+  const isPartial =
+    shipment != null && allocated != null && Math.abs(allocated - totalCharge) >= 0.005;
+  const amount = shipment ? (isPartial && allocated != null ? allocated : totalCharge) : allocated;
   const originLocation = shipment ? getOriginLocation(shipment) : null;
   const destLocation = shipment ? getDestinationLocation(shipment) : null;
   const routeWithheld = shipment != null && shipment.moves === null;
@@ -89,12 +92,16 @@ export default function BillingQueueDetailPane({
       <div className="shrink-0 space-y-3 border-b px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Link
-              to={`/shipment-management/shipments?item=${item.shipmentId}`}
-              className="text-lg font-semibold hover:underline"
-            >
-              {proNumber}
-            </Link>
+            {shipmentId ? (
+              <Link
+                to={`/shipment-management/shipments?item=${shipmentId}`}
+                className="text-lg font-semibold hover:underline"
+              >
+                {proNumber}
+              </Link>
+            ) : (
+              <span className="text-lg font-semibold">{proNumber}</span>
+            )}
             <PlainBillingQueueStatusBadge status={item.status} />
           </div>
           <div className="flex items-center gap-2">
@@ -104,16 +111,16 @@ export default function BillingQueueDetailPane({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className={KPI_VALUE_LG_CLASS}>
-            {formatCurrency(isPartial && allocated != null ? allocated : totalCharge)}
-          </span>
-          {isPartial ? (
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {t("of {0} shipment total", formatCurrency(totalCharge))}
-            </span>
-          ) : null}
-        </div>
+        {shipment || amount ? (
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className={KPI_VALUE_LG_CLASS}>{formatCurrency(amount ?? 0)}</span>
+            {isPartial ? (
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {t("of {0} shipment total", formatCurrency(totalCharge))}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
           {item.number ? <MetadataCell label={t("Queue #")} value={item.number} /> : null}
@@ -174,8 +181,12 @@ export default function BillingQueueDetailPane({
       <Tabs defaultValue="charges" className="flex min-h-0 flex-1 flex-col">
         <TabsList variant="underline" className="border-border w-full border-b">
           <TabsTrigger value="charges">{t("Charges")}</TabsTrigger>
-          <TabsTrigger value="documents">{t("Documents")}</TabsTrigger>
-          <TabsTrigger value="comments">{t("Comments")}</TabsTrigger>
+          {shipmentId ? (
+            <>
+              <TabsTrigger value="documents">{t("Documents")}</TabsTrigger>
+              <TabsTrigger value="comments">{t("Comments")}</TabsTrigger>
+            </>
+          ) : null}
           <TabsTrigger value="activity">{t("Activity")}</TabsTrigger>
         </TabsList>
         <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
@@ -183,23 +194,27 @@ export default function BillingQueueDetailPane({
             <BillingQueueChargesTab item={item} />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="documents" className="mt-0 min-h-0 flex-1">
-          <BillingQueueDocumentsTab
-            shipmentId={item.shipmentId}
-            selectedDocumentId={selectedDocumentId ?? null}
-            onDocumentSelect={onDocumentSelect}
-            isEditable={item.status === "InReview"}
-          />
-        </TabsContent>
-        <TabsContent value="comments" className="mt-0 min-h-0 flex-1">
-          <Suspense fallback={<CommentsTabSkeleton />}>
-            <ShipmentCommentsTab shipmentId={item.shipmentId} />
-          </Suspense>
-        </TabsContent>
+        {shipmentId ? (
+          <>
+            <TabsContent value="documents" className="mt-0 min-h-0 flex-1">
+              <BillingQueueDocumentsTab
+                shipmentId={shipmentId}
+                selectedDocumentId={selectedDocumentId ?? null}
+                onDocumentSelect={onDocumentSelect}
+                isEditable={item.status === "InReview"}
+              />
+            </TabsContent>
+            <TabsContent value="comments" className="mt-0 min-h-0 flex-1">
+              <Suspense fallback={<CommentsTabSkeleton />}>
+                <ShipmentCommentsTab shipmentId={shipmentId} />
+              </Suspense>
+            </TabsContent>
+          </>
+        ) : null}
         <TabsContent value="activity" className="mt-0 min-h-0 flex-1">
           <ScrollArea className="h-full">
             <div className="px-4">
-              <AuditTab resourceId={item.shipmentId} />
+              <AuditTab resourceId={shipmentId ?? item.id} />
             </div>
           </ScrollArea>
         </TabsContent>
