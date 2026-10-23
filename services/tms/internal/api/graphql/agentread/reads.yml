@@ -20,6 +20,17 @@ reads:
     operation: DeskCustomerUpdatePreferences
     reason: The tool reads one field set of the customer, its status update preference and recipients, which DeskCustomerCard does not select.
   - tool: location_get
+  - tool: invoice_list
+  - tool: invoice_get
+    operation: DeskInvoiceDetail
+    reason: The tool returns each line by id, which an adjustment names; the card (DeskInvoiceCard) leaves the lines to the invoice's page.
+  - tool: invoice_get_adjustment
+    operation: DeskInvoiceAdjustmentCard
+    reason: An adjustment is read by invoiceAdjustment, whose type claims no record kind of its own, so no rule finds it from the tool's name.
+  - tool: invoice_list_disputes
+    operation: DeskInvoiceDisputes
+    reason: The dispute cases on the invoices named are read whole by invoiceDisputes, keyed by the invoices.
+  - tool: receivable_list_customer_payments
   - tool: document_list_types
   - tool: ledger_list_fiscal_periods
   - tool: ledger_list_journal_entries

@@ -18952,6 +18952,26 @@ func init() {
 				FieldMapKey: "pdfDocumentId",
 			},
 			{
+				Name:        "lastSendError",
+				FieldMapKey: "lastSendError",
+			},
+			{
+				Name:        "memo",
+				FieldMapKey: "memo",
+			},
+			{
+				Name:        "remittanceInstructions",
+				FieldMapKey: "remittanceInstructions",
+			},
+			{
+				Name:        "supersedesInvoiceId",
+				FieldMapKey: "supersedesInvoiceId",
+			},
+			{
+				Name:        "supersededByInvoiceId",
+				FieldMapKey: "supersededByInvoiceId",
+			},
+			{
 				Name:        "isAdjustmentArtifact",
 				FieldMapKey: "isAdjustmentArtifact",
 			},
@@ -19266,6 +19286,10 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &InvoiceAdjustmentLineSpec,
 				},
+			},
+			{
+				Name:    "supportingDocumentIds",
+				Special: "supportingDocumentIds",
 			},
 		},
 	}

@@ -344,7 +344,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_invoiceDisputes_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceDisputes(ctx, fc.Args["invoiceId"].(string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceDisputes(ctx, fc.Args["invoiceId"].(*string), fc.Args["invoiceIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceDispute2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoiceDisputeᚄ),
 			},
@@ -382,7 +382,7 @@ type resolverMutation interface {
 }
 
 type resolverQuery interface {
-	InvoiceDisputes(ctx context.Context, invoiceID string) ([]*invoice.InvoiceDispute, error)
+	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoice.InvoiceDispute, error)
 }
 
 var (
@@ -436,15 +436,23 @@ func field_Mutation_withdrawInvoiceDispute_args(ctx context.Context, ec *gqlexec
 }
 
 func field_Query_invoiceDisputes_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "invoiceId",
-		func(ctx context.Context, v any) (string, error) {
-			return unmarshalNID2string(ctx, ec, v)
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
 	}
 	args["invoiceId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "invoiceIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["invoiceIds"] = arg1
 	return args, nil
 }
 
@@ -622,6 +630,13 @@ func unmarshalNResolveInvoiceDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 func unmarshalNWithdrawInvoiceDisputeInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWithdrawInvoiceDisputeInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.WithdrawInvoiceDisputeInput, error) {
 	res, err := unmarshalInputWithdrawInvoiceDisputeInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
 func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {

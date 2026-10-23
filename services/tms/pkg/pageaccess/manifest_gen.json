@@ -1,5 +1,5 @@
 {
-  "version": "sha256:0789f91c77cae01dbf0aa9c5140faae86f300f3b757f76fe4f524d43f182e2c7",
+  "version": "sha256:f1db18beb786d648e2cadfa078d530057aa3ac95a8098dea0e3b9365fa942169",
   "screens": [
     {
       "path": "/",
@@ -11533,7 +11533,9 @@
         "RejectInvoiceAdjustment"
       ],
       "endpoints": [],
-      "reads": [],
+      "reads": [
+        "invoice"
+      ],
       "references": [],
       "declared": []
     },
@@ -39889,7 +39891,9 @@
     {
       "name": "InvoiceAdjustmentApprovalDetail",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "invoice"
+      ],
       "linked": [],
       "declared": []
     },

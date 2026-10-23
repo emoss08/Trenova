@@ -34343,6 +34343,15 @@
       "go/other"
     ]
   },
+  "At most 100 invoices can be read at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "At most 200 tools can be previewed at once": {
     "sites": 1,
     "scope": [
@@ -127494,7 +127503,7 @@
     ]
   },
   "Invalid invoice": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -154263,6 +154272,15 @@
       "go/other"
     ]
   },
+  "Name at least one invoice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Name at least one record this message is about": {
     "sites": 1,
     "scope": [
@@ -154723,6 +154741,15 @@
     "areas": [
       "go/other",
       "packages/shared/types"
+    ]
+  },
+  "Name the invoice by invoiceId or the invoices by invoiceIds, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Name the invoice for a new draft, or the draft to change": {

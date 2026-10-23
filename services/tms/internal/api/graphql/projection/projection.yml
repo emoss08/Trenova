@@ -562,6 +562,8 @@ virtuals:
     - shortName
   AIAnalyticsCauseCount:
     - blame
+  InvoiceAdjustment:
+    - supportingDocumentIds
 
 specials:
   ManualJournal:

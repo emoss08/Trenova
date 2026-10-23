@@ -389,6 +389,18 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLineᚄ),
 			},
+			{
+				Name:       "supportingDocumentIds",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*invoiceadjustment.InvoiceAdjustment)
+					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").SupportingDocumentIds(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNID2ᚕstringᚄ),
+			},
 		}},
 		{Object: "InvoiceAdjustmentApprovalQueueConnection", Fields: []*gqlexec.Field{
 			{
@@ -1246,6 +1258,7 @@ type resolverInvoiceAdjustment interface {
 	RebillTotalAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	NetDeltaAmount(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
 	RerateVariancePercent(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) (string, error)
+	SupportingDocumentIds(ctx context.Context, obj *invoiceadjustment.InvoiceAdjustment) ([]string, error)
 }
 
 type resolverInvoiceAdjustmentApprovalQueueItem interface {
@@ -1509,6 +1522,23 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	return gqlexec.List[string]{
+		Elem:        marshalNID2string,
+		NonNull:     true,
+		NonNullElem: true,
+		Scalar:      true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNInt2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {

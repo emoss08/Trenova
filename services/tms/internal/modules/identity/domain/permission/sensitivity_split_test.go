@@ -88,6 +88,44 @@ func assertSplit(t *testing.T, registry *Registry, cases map[Resource]sensitivit
 	}
 }
 
+// An invoice's, an adjustment's and a dispute's state is Internal, so an
+// agent at the default data access can say where a receivable stands; the
+// money and the words written about it stay Restricted.
+func TestReceivablesKeepTheMoneyAndTheNotesRestricted(t *testing.T) {
+	t.Parallel()
+
+	assertSplit(t, NewRegistry(), map[Resource]sensitivitySplit{
+		ResourceInvoice: {
+			internal: []string{
+				"scope", "shipmentCount", "voidedAt", "ediSendStatus", "chargeCode",
+				"accessorialChargeId", "executionError", "supportingDocumentIds", "kind",
+				"approvalStatus", "lines",
+			},
+			restricted: []string{
+				"totalAmount", "appliedAmount", "openBalance", "memo", "voidReason",
+				"lastEdiError", "reason", "policyReason", "creditAmount", "creditQuantity",
+				"rebillQuantity",
+			},
+		},
+		ResourceInvoiceDispute: {
+			internal: []string{
+				"invoiceId", "customerId", "status", "reasonCode", "openedAt", "resolvedAt",
+				"resolution", "resolutionAdjustmentId",
+			},
+			restricted: []string{
+				"disputedAmount", "disputedAmountMinor", "notes", "resolutionNotes",
+			},
+		},
+		ResourceCustomerPayment: {
+			internal: []string{"applications", "invoiceId", "paymentMethod", "referenceNumber"},
+			restricted: []string{
+				"amountMinor", "appliedAmountMinor", "unappliedAmountMinor", "shortPayAmountMinor",
+				"memo",
+			},
+		},
+	})
+}
+
 // What a factor funded, holds and charges stays Restricted, as an invoice's
 // amounts are, while where each factoring record stands is Internal, so an
 // agent at the default data access works the factoring queue without being

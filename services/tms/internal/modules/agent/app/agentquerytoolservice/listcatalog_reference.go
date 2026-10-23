@@ -484,11 +484,6 @@ func newListInvoicesTool(
 				Values: []string{"Invoice", "CreditMemo", "DebitMemo"},
 				Note:   "CreditMemo and DebitMemo are memos; apply a posted CreditMemo with receivable_apply_credit_memo",
 			},
-			{
-				Name: "id",
-				Kind: filterText,
-				Note: "in with several ids reads them together",
-			},
 			{Name: "number", Kind: filterText, Sortable: true},
 			{Name: "billToName", Kind: filterText, Note: "who the invoice is billed to"},
 			{Name: "shipmentProNumber", Kind: filterText},

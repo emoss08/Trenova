@@ -25301,7 +25301,7 @@
     },
     {
       "name": "invoice_get",
-      "description": "Retrieve invoices by id: one in full, or up to 50 in one call as a table, for example to check a batch of drafts before posting them. One invoice comes with its line items, totals, payment and dispute state; a table row carries the status, totals, payment state and lines. Each line's id is what an invoice adjustment names. Use invoice_list first when you have a number or are looking for what is unpaid. An id that is not an invoice of this organization is named in the note. Amounts and the memo are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "description": "Retrieve invoices by id: one, or up to 50 in one call, for example to check a batch of drafts before posting them. Each comes with its status, totals, what is still owed, its payment, dispute and send state, and its line items; each line's id is what an invoice adjustment names. Use invoice_list first when you have a number or are looking for what is unpaid. An id that is not an invoice of this organization is named in the note. Amounts, the memo and the void reason are left out, and named in withheldByAccess, when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -25348,12 +25348,12 @@
     },
     {
       "name": "invoice_get_adjustment",
-      "description": "Retrieve one invoice adjustment by id: its kind, status, approval, reason, the invoices it made and each line it credits or rebills against the invoice's lines.",
+      "description": "Retrieve one invoice adjustment by id: its kind, status and approval, the invoices it made and each line it credits or rebills. It names its supporting documents. Use invoice_list_adjustments first to find one. Its reasons, amounts and quantities are withheld when your data access does not reach them.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "adjustmentId": {
-            "description": "The adjustment's id, from invoice_list_adjustments.",
+            "description": "The invoice adjustment's id, from invoice_list_adjustments.",
             "type": "string",
             "x-recordKinds": [
               "invoice_adjustment"
@@ -25428,80 +25428,298 @@
     },
     {
       "name": "invoice_list",
-      "description": "List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with receivable_apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Totals are withheld when your data access does not reach them. Filters: billToAddressLine1, billToAddressLine2, billToCity, billToCode, billToCountry, billToName, billToPostalCode, billToState, billType, createdAtFrom/To, currencyCode, customerId, disputeStatus, dueDateFrom/To, ediSendStatus, hasFactoringCompany, hasOrder, hasPdfDocument, hasShipment, hasSupersededByInvoice, hasSupersedesInvoice, invoiceDateFrom/To, isAdjustmentArtifact, number, orderId, orderNumber, paymentTerm, postedAtFrom/To, scope, sendStatus, sentAtFrom/To, serviceDateFrom/To, settlementStatus, shipmentBol, shipmentCountMin/Max, shipmentId, shipmentProNumber, status, updatedAtFrom/To, voidedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "appliedAmountMax": {
+            "description": "Only records whose applied amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "appliedAmountMin": {
+            "description": "Only records whose applied amount is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "balanceDueMinorMax": {
+            "description": "Open balance in minor units, kept by the database for filtering and sorting. Only records whose balance due minor is at most this.",
+            "type": "integer"
+          },
+          "balanceDueMinorMin": {
+            "description": "Open balance in minor units, kept by the database for filtering and sorting. Only records whose balance due minor is at least this.",
+            "type": "integer"
+          },
+          "billToAddressLine1": {
+            "description": "Only records whose bill to address line1 contains this text.",
+            "type": "string"
+          },
+          "billToAddressLine2": {
+            "description": "Only records whose bill to address line2 contains this text.",
+            "type": "string"
+          },
+          "billToCity": {
+            "description": "Only records whose bill to city contains this text.",
+            "type": "string"
+          },
+          "billToCode": {
+            "description": "Only records whose bill to code contains this text.",
+            "type": "string"
+          },
+          "billToCountry": {
+            "description": "Only records whose bill to country contains this text.",
+            "type": "string"
+          },
+          "billToName": {
+            "description": "Only records whose bill to name contains this text. Who the invoice is billed to.",
+            "type": "string"
+          },
+          "billToPostalCode": {
+            "description": "Only records whose bill to postal code contains this text.",
+            "type": "string"
+          },
+          "billToState": {
+            "description": "Only records whose bill to state contains this text.",
+            "type": "string"
+          },
+          "billType": {
+            "description": "Only records whose bill type is one of these. CreditMemo and DebitMemo are memos; apply a posted CreditMemo with receivable_apply_credit_memo.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "settlementStatus",
-                    "disputeStatus",
-                    "billType",
-                    "id",
-                    "number",
-                    "billToName",
-                    "shipmentProNumber",
-                    "dueDate",
-                    "invoiceDate",
-                    "totalAmount",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "invoice_list.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "invoice_list.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Invoice",
+                "CreditMemo",
+                "DebitMemo"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.BillType"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer, from customer_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "detail": {
+            "description": "How much charge detail this invoice shows, fixed when it was billed rather\nthan read back from the customer. Only records whose detail is one of these.",
+            "items": {
+              "enum": [
+                "Detailed",
+                "Summary"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceDetail"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "disputeStatus": {
+            "description": "Only records whose dispute status is one of these.",
+            "items": {
+              "enum": [
+                "None",
+                "Disputed"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceDisputeStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "dueDateFrom": {
+            "description": "Only records whose due date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "dueDateTo": {
+            "description": "Only records whose due date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01. Overdue is a due date before today with settlementStatus not Paid.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "ediSendStatus": {
+            "description": "Only records whose edi send status is one of these.",
+            "items": {
+              "enum": [
+                "NotSent",
+                "NotConfigured",
+                "Queued",
+                "Generated",
+                "Sending",
+                "Sent",
+                "Failed",
+                "DeadLettered"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceEDISendStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "ediSentAtFrom": {
+            "description": "Only records whose edi sent at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "ediSentAtTo": {
+            "description": "Only records whose edi sent at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "exchangeRateDateFrom": {
+            "description": "The day the exchange rate was quoted for. Only records whose exchange rate date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "exchangeRateDateTo": {
+            "description": "The day the exchange rate was quoted for. Only records whose exchange rate date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "exchangeRateMax": {
+            "description": "Units of the organization's functional currency per one unit of the invoice\ncurrency, fixed when the invoice posted. Null when both are the same. Only records whose exchange rate is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "exchangeRateMin": {
+            "description": "Units of the organization's functional currency per one unit of the invoice\ncurrency, fixed when the invoice posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "factoringOverride": {
+            "description": "Only records whose factoring override is one of these.",
+            "items": {
+              "enum": [
+                "Default",
+                "Exclude"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceFactoringOverride"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "factoringOverrideReason": {
+            "description": "Why the invoice stays out of factoring; null unless it is excluded. Only records whose factoring override reason contains this text.",
+            "type": "string"
+          },
+          "hasFactoringAgreement": {
+            "description": "The agreement in force when the invoice posted. true for only records that have a factoring agreement, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasFactoringCompany": {
+            "description": "The factoring company the invoice was assigned to when it posted; null when it is not factored. true for only records that have a factoring company, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasLastEdiMessage": {
+            "description": "true for only records that have a last edi message, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasOrder": {
+            "description": "true for only records that have a order, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasPdfDocument": {
+            "description": "The invoice's rendered PDF, once one has been generated; an invoice is emailed only with one. true for only records that have a pdf document, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasReferenceInvoice": {
+            "description": "The invoice a memo corrects, when it corrects one. true for only records that have a reference invoice, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasShipment": {
+            "description": "true for only records that have a shipment, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasShipperCustomer": {
+            "description": "The customer who ordered the freight, when it is not the customer billed.\nNull on an ordinary invoice and on consolidated ones, whose lines carry it. true for only records that have a shipper customer, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSupersededByInvoice": {
+            "description": "The invoice that replaced this one in a correction chain. true for only records that have a superseded by invoice, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSupersedesInvoice": {
+            "description": "The invoice this one replaces in a correction chain. true for only records that have a supersedes invoice, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasVoidedBy": {
+            "description": "true for only records that have a voided by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasVoidedByAdjustment": {
+            "description": "The full-reversal adjustment that voided a posted invoice. true for only records that have a voided by adjustment, false for only those that have none.",
+            "type": "boolean"
+          },
+          "invoiceDateFrom": {
+            "description": "Only records whose invoice date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "invoiceDateTo": {
+            "description": "Only records whose invoice date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "isAdjustmentArtifact": {
+            "description": "true for only the records whose isAdjustmentArtifact is true, false for only those whose isAdjustmentArtifact is false.",
+            "type": "boolean"
+          },
+          "isSplitBill": {
+            "description": "Whether this invoice bills only part of what its shipments charged. true for only the records whose isSplitBill is true, false for only those whose isSplitBill is false.",
+            "type": "boolean"
+          },
+          "lastEdiError": {
+            "description": "Only records whose last edi error contains this text.",
+            "type": "string"
+          },
+          "lastSendError": {
+            "description": "Why the last email delivery failed; empty when it did not. Only records whose last send error contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -25510,26 +25728,315 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "memo": {
+            "description": "The note printed on the invoice for the customer. Only records whose memo contains this text.",
+            "type": "string"
+          },
+          "memoKind": {
+            "description": "Only records whose memo kind is one of these.",
+            "items": {
+              "enum": [
+                "Manual",
+                "LateCharge"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceMemoKind"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "memoReason": {
+            "description": "Only records whose memo reason contains this text.",
+            "type": "string"
+          },
+          "number": {
+            "description": "Only records whose number contains this text.",
+            "type": "string"
+          },
+          "offCycleReason": {
+            "description": "Why this invoice was cut for a customer whose freight was supposed to\naccumulate onto a periodic statement. Null on every ordinary invoice. Only records whose off cycle reason contains this text.",
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order billed, from order_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "order"
+          },
+          "orderNumber": {
+            "description": "Only records whose order number contains this text.",
+            "type": "string"
+          },
+          "otherAmountMax": {
+            "description": "Only records whose other amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "otherAmountMin": {
+            "description": "Only records whose other amount is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "paymentTerm": {
+            "description": "Only records whose payment term is one of these.",
+            "items": {
+              "enum": [
+                "Net10",
+                "Net15",
+                "Net30",
+                "Net45",
+                "Net60",
+                "Net90",
+                "DueOnReceipt"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoicePaymentTerm"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "periodEndFrom": {
+            "description": "End of the period billed. Consolidated invoices only. Only records whose period end is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "periodEndTo": {
+            "description": "End of the period billed. Consolidated invoices only. Only records whose period end is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "periodStartFrom": {
+            "description": "Start of the period billed. Consolidated invoices only. Only records whose period start is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "periodStartTo": {
+            "description": "Start of the period billed. Consolidated invoices only. Only records whose period start is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "postedAtFrom": {
+            "description": "Only records whose posted at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "postedAtTo": {
+            "description": "Only records whose posted at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "remittanceInstructions": {
+            "description": "How the customer is told to pay, as printed on the invoice. Only records whose remittance instructions contains this text.",
+            "type": "string"
+          },
+          "scope": {
+            "description": "Only records whose scope is one of these.",
+            "items": {
+              "enum": [
+                "Shipment",
+                "Order",
+                "Consolidated",
+                "Adjustment",
+                "Memo"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceScope"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "sectionBy": {
+            "description": "How the lines on this invoice are organised for the reader. Only records whose section by is one of these.",
+            "items": {
+              "enum": [
+                "Shipment",
+                "PONumber",
+                "Origin",
+                "Destination"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceSectionKey"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "sendStatus": {
+            "description": "Only records whose send status is one of these.",
+            "items": {
+              "enum": [
+                "NotSent",
+                "Sending",
+                "Sent",
+                "PartiallySent",
+                "Failed"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceSendStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "sentAtFrom": {
+            "description": "Only records whose sent at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sentAtTo": {
+            "description": "Only records whose sent at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "serviceDateFrom": {
+            "description": "Only records whose service date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "serviceDateTo": {
+            "description": "Only records whose service date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "settlementStatus": {
+            "description": "Only records whose settlement status is one of these. This is the one to use for \"unpaid\" or \"outstanding\".",
+            "items": {
+              "enum": [
+                "Unpaid",
+                "PartiallyPaid",
+                "Paid"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceSettlementStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "shipmentBol": {
+            "description": "Only records whose shipment bol contains this text.",
+            "type": "string"
+          },
+          "shipmentCountMax": {
+            "description": "Distinct shipments this invoice bills. Only records whose shipment count is at most this.",
+            "type": "integer"
+          },
+          "shipmentCountMin": {
+            "description": "Distinct shipments this invoice bills. Only records whose shipment count is at least this.",
+            "type": "integer"
+          },
+          "shipmentId": {
+            "description": "The shipment billed, from shipment_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "shipment"
+          },
+          "shipmentProNumber": {
+            "description": "Only records whose shipment pro number contains this text.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "number",
+              "appliedAmount",
+              "balanceDueMinor",
+              "billToAddressLine1",
+              "billToAddressLine2",
+              "billToCity",
+              "billToCode",
+              "billToCountry",
+              "billToName",
+              "billToPostalCode",
+              "billToState",
+              "billType",
+              "billingQueueItemId",
+              "createdAt",
+              "currencyCode",
+              "customerId",
+              "detail",
+              "disputeStatus",
               "dueDate",
+              "ediSendStatus",
+              "ediSentAt",
+              "exchangeRate",
+              "exchangeRateDate",
+              "factoringAgreementId",
+              "factoringCompanyId",
+              "factoringOverride",
+              "factoringOverrideReason",
               "invoiceDate",
+              "isAdjustmentArtifact",
+              "isSplitBill",
+              "lastEdiError",
+              "lastEdiMessageId",
+              "lastSendError",
+              "memo",
+              "memoKind",
+              "memoReason",
+              "number",
+              "offCycleReason",
+              "orderId",
+              "orderNumber",
+              "otherAmount",
+              "paymentTerm",
+              "pdfDocumentId",
+              "periodEnd",
+              "periodStart",
+              "postedAt",
+              "referenceInvoiceId",
+              "remittanceInstructions",
+              "scope",
+              "sectionBy",
+              "sendStatus",
+              "sentAt",
+              "serviceDate",
+              "settlementStatus",
+              "shipmentBol",
+              "shipmentCount",
+              "shipmentId",
+              "shipmentProNumber",
+              "shipperCustomerId",
+              "status",
+              "subtotalAmount",
+              "supersededByInvoiceId",
+              "supersedesInvoiceId",
               "totalAmount",
-              "createdAt"
+              "updatedAt",
+              "voidDisposition",
+              "voidReason",
+              "voidedAt",
+              "voidedByAdjustmentId",
+              "voidedById"
             ],
             "type": "string",
-            "x-enumOf": "invoice_list.sortBy"
+            "x-enumOf": "invoice_list.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -25539,13 +26046,93 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Where the invoice is in its own lifecycle, not whether it is paid.",
+            "items": {
+              "enum": [
+                "Draft",
+                "Posted",
+                "Voided"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "subtotalAmountMax": {
+            "description": "Only records whose subtotal amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "subtotalAmountMin": {
+            "description": "Only records whose subtotal amount is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "totalAmountMax": {
+            "description": "Only records whose total amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "totalAmountMin": {
+            "description": "Only records whose total amount is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "voidDisposition": {
+            "description": "Only records whose void disposition is one of these.",
+            "items": {
+              "enum": [
+                "Rebill",
+                "DoNotRebill"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.InvoiceVoidDisposition"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "voidReason": {
+            "description": "Only records whose void reason contains this text.",
+            "type": "string"
+          },
+          "voidedAtFrom": {
+            "description": "Only records whose voided at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "voidedAtTo": {
+            "description": "Only records whose voided at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
       },
       "searchTerms": [
         "last invoice",
-        "latest invoice"
+        "latest invoice",
+        "overdue invoices"
       ],
       "policy": {
         "kind": "query",
@@ -25614,17 +26201,17 @@
     },
     {
       "name": "invoice_list_disputes",
-      "description": "List the dispute cases on invoices, open and closed, newest first: the reason, the amount in dispute, the notes and how each was resolved. Find disputed invoices with invoice_list filtered to disputeStatus Disputed.",
+      "description": "List the dispute cases on the invoices you name, open and closed, each invoice's newest first. Each says the reason and how it was resolved, with the amount in dispute and the notes where your data access reaches them. Find disputed invoices with invoice_list filtered to disputeStatus Disputed.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "invoiceIds": {
-            "description": "The invoices, from invoice_list or invoice_get.",
+            "description": "The invoices, from invoice_list. Never guess one.",
             "items": {
               "type": "string",
               "x-recordOf": "invoice"
             },
-            "maxItems": 50,
+            "maxItems": 100,
             "minItems": 1,
             "type": "array"
           }
@@ -35165,34 +35752,257 @@
     },
     {
       "name": "receivable_list_customer_payments",
-      "description": "List recorded customer payments, newest first, with the amount, how much of it is applied to invoices, the method, the reference and the memo. Search by reference or memo text, narrow to one customer, or include reversed payments. Use it to find the payment a bank receipt represents when receivable_get_bank_receipt suggested nothing, and to see whether a customer's payment is already recorded before posting another.",
+      "description": "List recorded customer payments, newest first, with the amount, how much of it is applied to which invoices, the method and the reference. Search by reference or memo text, narrow to one customer, or include reversed payments. Amounts are in cents (amountMinor 12500 is 125.00); they and the memo are withheld when your data access does not reach them. Use it to find the payment a bank receipt represents when receivable_get_bank_receipt suggested nothing, and to see whether a customer's payment is already recorded before posting another. Filters: accountingDateFrom/To, createdAtFrom/To, currencyCode, customerId, hasPostedBatch, hasReversalBatch, hasReversedBy, hasUpdatedBy, paymentDateFrom/To, paymentMethod, referenceNumber, reversedAtFrom/To, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "accountingDateFrom": {
+            "description": "Only records whose accounting date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "accountingDateTo": {
+            "description": "Only records whose accounting date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "amountMinorMax": {
+            "description": "Only records whose amount minor is at most this.",
+            "type": "integer"
+          },
+          "amountMinorMin": {
+            "description": "Only records whose amount minor is at least this.",
+            "type": "integer"
+          },
+          "appliedAmountMinorMax": {
+            "description": "Only records whose applied amount minor is at most this.",
+            "type": "integer"
+          },
+          "appliedAmountMinorMin": {
+            "description": "Only records whose applied amount minor is at least this.",
+            "type": "integer"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
           "customerId": {
-            "description": "Optional: only this customer's payments, by id from customer_list or a candidate's customerId in receivable_get_bank_receipt.",
+            "description": "The customer, from customer_list. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           },
+          "exchangeRateDateFrom": {
+            "description": "The day the exchange rate was quoted for. Only records whose exchange rate date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "exchangeRateDateTo": {
+            "description": "The day the exchange rate was quoted for. Only records whose exchange rate date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "exchangeRateMax": {
+            "description": "Units of the organization's functional currency per one unit of the payment\ncurrency, fixed when the payment posted. Null when both are the same. Only records whose exchange rate is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "exchangeRateMin": {
+            "description": "Units of the organization's functional currency per one unit of the payment\ncurrency, fixed when the payment posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "hasPostedBatch": {
+            "description": "true for only records that have a posted batch, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasReversalBatch": {
+            "description": "true for only records that have a reversal batch, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasReversedBy": {
+            "description": "true for only records that have a reversed by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasUpdatedBy": {
+            "description": "true for only records that have a updated by, false for only those that have none.",
+            "type": "boolean"
+          },
           "limit": {
-            "description": "How many rows to return: 20 unless you ask, at most 50.",
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
             "maximum": 50,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
           },
+          "memo": {
+            "description": "Only records whose memo contains this text.",
+            "type": "string"
+          },
+          "paymentDateFrom": {
+            "description": "Only records whose payment date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "paymentDateTo": {
+            "description": "Only records whose payment date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "paymentMethod": {
+            "description": "Only records whose payment method is one of these.",
+            "items": {
+              "enum": [
+                "ACH",
+                "Check",
+                "Wire",
+                "Card",
+                "Cash",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CustomerPaymentMethod"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
           "query": {
             "description": "Words to look for in the reference number or the memo.",
             "type": "string"
           },
-          "status": {
-            "description": "Which payments to list. Defaults to Posted.",
+          "referenceNumber": {
+            "description": "Only records whose reference number contains this text.",
+            "type": "string"
+          },
+          "reversalReason": {
+            "description": "Only records whose reversal reason contains this text.",
+            "type": "string"
+          },
+          "reversedAtFrom": {
+            "description": "Only records whose reversed at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "reversedAtTo": {
+            "description": "Only records whose reversed at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "Posted",
-              "Reversed"
+              "accountingDate",
+              "amountMinor",
+              "appliedAmountMinor",
+              "createdAt",
+              "createdById",
+              "currencyCode",
+              "customerId",
+              "exchangeRate",
+              "exchangeRateDate",
+              "memo",
+              "paymentDate",
+              "paymentMethod",
+              "postedBatchId",
+              "referenceNumber",
+              "reversalBatchId",
+              "reversalReason",
+              "reversedAt",
+              "reversedById",
+              "status",
+              "unappliedAmountMinor",
+              "updatedAt",
+              "updatedById"
             ],
             "type": "string",
-            "x-enumOf": "customerPayment.listStatus"
+            "x-enumOf": "receivable_list_customer_payments.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Posted payments are read unless the call names a status.",
+            "items": {
+              "enum": [
+                "Posted",
+                "Reversed"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.CustomerPaymentStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "unappliedAmountMinorMax": {
+            "description": "Only records whose unapplied amount minor is at most this.",
+            "type": "integer"
+          },
+          "unappliedAmountMinorMin": {
+            "description": "Only records whose unapplied amount minor is at least this.",
+            "type": "integer"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
