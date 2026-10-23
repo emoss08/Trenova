@@ -106,44 +106,6 @@ func (r *runRepository) GetByID(
 	})
 }
 
-func (r *runRepository) List(
-	ctx context.Context,
-	req *reportports.ListReportRunsRequest,
-) ([]*report.ReportRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
-		cols := reportcol.ReportRunColumns
-
-		entities := make([]*report.ReportRun, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo))
-
-		if !req.DefinitionID.IsNil() {
-			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
-		}
-		if !req.RequestedBy.IsNil() {
-			q = q.Where(cols.RequestedByID.Eq(), req.RequestedBy)
-		}
-		if len(req.Statuses) > 0 {
-			q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-		}
-		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
-		}
-		if req.Offset > 0 {
-			q = q.Offset(int64(req.Offset))
-		}
-
-		if err := q.Order(cols.CreatedAt.OrderDesc()).Scan(ctx); err != nil {
-			r.l.Error("failed to list report runs", zap.Error(err))
-			return nil, err
-		}
-
-		return entities, nil
-	})
-}
-
 func (r *runRepository) CountActive(
 	ctx context.Context,
 	req *reportports.CountActiveReportRunsRequest,

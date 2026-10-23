@@ -127,15 +127,6 @@ type GetReportRunRequest struct {
 	RequestedBy pulid.ID
 }
 
-type ListReportRunsRequest struct {
-	TenantInfo   pagination.TenantInfo
-	DefinitionID pulid.ID
-	RequestedBy  pulid.ID
-	Statuses     []report.RunStatus
-	Limit        int
-	Offset       int
-}
-
 type CountActiveReportRunsRequest struct {
 	TenantInfo pagination.TenantInfo
 }
@@ -164,7 +155,6 @@ type ReportRunRepository interface {
 	Create(ctx context.Context, entity *report.ReportRun) (*report.ReportRun, error)
 	Update(ctx context.Context, entity *report.ReportRun) (*report.ReportRun, error)
 	GetByID(ctx context.Context, req *GetReportRunRequest) (*report.ReportRun, error)
-	List(ctx context.Context, req *ListReportRunsRequest) ([]*report.ReportRun, error)
 	CountActive(
 		ctx context.Context,
 		req *CountActiveReportRunsRequest,
