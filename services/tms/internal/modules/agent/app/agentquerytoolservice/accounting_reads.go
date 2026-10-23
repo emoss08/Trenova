@@ -165,14 +165,15 @@ func syncRecordsListSpec() graphQLListSpec {
 			paramAccountingSystem: "Required to list records; with documentIds, only " +
 				"that system's records answer, and without it every system that syncs " +
 				"does.",
-			accountingStatusField: "Blocked and DeadLettered need a person; AwaitingApproval waits " +
-				"to be released.",
+			accountingStatusField: "Blocked and DeadLettered need a person; " +
+				"AwaitingApproval waits to be released.",
 			paramDocumentIDs: "The filters list records instead and are left out " +
 				"with it.",
 		},
 		references: map[string]idReference{paramDocumentIDs: {
-			kinds:  syncDocumentKinds,
-			what:   "Trenova document ids, or the record on screen, to say whether each reached the accounting system",
+			kinds: syncDocumentKinds,
+			what: "Trenova document ids, or the record on screen, to say whether each " +
+				"reached the accounting system",
 			source: syncDocumentIDSources,
 			most:   syncStateMaxDocuments,
 		}},
@@ -287,11 +288,13 @@ func accountingGetSpecs() []getSpec {
 				"line type, term or payment method. With query, options holds up to ten " +
 				"usable accounting records of the right kind whose names match, so you can " +
 				"choose one for accounting_set_mapping.",
-			searchTerms: []string{"account", "post", "posts", "revenue", "mapped", "item", "vendor"},
-			resource:    permission.ResourceAccountingIntegration,
-			kinds:       []permission.RecordKind{permission.KindAccountingMapping},
-			paramName:   paramMappingID,
-			idSource:    "from accounting_list_mapping_gaps",
+			searchTerms: []string{
+				"account", "post", "posts", "revenue", "mapped", "item", "vendor",
+			},
+			resource:  permission.ResourceAccountingIntegration,
+			kinds:     []permission.RecordKind{permission.KindAccountingMapping},
+			paramName: paramMappingID,
+			idSource:  "from accounting_list_mapping_gaps",
 			names: map[string]string{
 				argIntegrationType: paramAccountingSystem,
 				"optionsQuery":     paramQuery,
