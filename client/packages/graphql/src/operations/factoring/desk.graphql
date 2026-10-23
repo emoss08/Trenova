@@ -1,0 +1,259 @@
+fragment DeskFactoringInvoiceStateFields on FactoringInvoiceState {
+  invoiceId
+  customerId
+  factoringCompanyId
+  verdict
+  failedChecks
+  openBalanceMinor
+  readySince
+  evaluatedAt
+  checks {
+    code
+    passed
+    message
+    fix
+    documentTypeId
+    documentTypeName
+    shipmentId
+    shipmentPro
+  }
+}
+
+query DeskFactoringReadiness($invoiceId: ID!) {
+  factoringReadiness(invoiceId: $invoiceId) {
+    ...DeskFactoringInvoiceStateFields
+  }
+}
+
+query DeskFactoringInvoiceStates(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = false
+) {
+  factoringInvoiceStates(input: { table: $input }) {
+    edges {
+      node {
+        ...DeskFactoringInvoiceStateFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskFactoringAgreements($factoringCompanyId: ID!) {
+  factoringAgreements(factoringCompanyId: $factoringCompanyId) {
+    id
+    factoringCompanyId
+    status
+    effectiveFrom
+    effectiveTo
+    advanceRateBp
+    reserveRateBp
+    minimumFeeMinor
+    chargebackWindowDays
+    recourse
+    accountingTreatment
+    fundingDays
+    submissionTime
+    feeTiers {
+      daysFrom
+      daysTo
+      rateBp
+      flatMinor
+    }
+    documentTypes {
+      id
+      name
+    }
+  }
+}
+
+query DeskFactoringNoas($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  factoringNoas(input: { table: $input }) {
+    edges {
+      node {
+        id
+        customerId
+        factoringCompanyId
+        status
+        sentAt
+        sentTo
+        acknowledgedAt
+        expiresAt
+        releasedAt
+        releaseReason
+        version
+        customer {
+          id
+          code
+          name
+        }
+        factoringCompany {
+          id
+          code
+          name
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+fragment DeskFactoringSubmissionFields on FactoringSubmission {
+  id
+  number
+  factoringCompanyId
+  status
+  currencyCode
+  invoiceCount
+  faceMinor
+  expectedAdvanceMinor
+  expectedFeeMinor
+  expectedReserveMinor
+  transportMethod
+  transportTarget
+  attempts
+  lastError
+  sentAt
+  failedAt
+  cancelReason
+  createdAt
+  version
+  factoringCompany {
+    id
+    code
+    name
+  }
+}
+
+query DeskFactoringSubmissions(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = false
+) {
+  factoringSubmissions(input: { table: $input }) {
+    edges {
+      node {
+        ...DeskFactoringSubmissionFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskFactoringSubmission($id: ID!) {
+  factoringSubmission(id: $id) {
+    ...DeskFactoringSubmissionFields
+    items {
+      id
+      invoiceId
+      invoiceNumber
+      customerId
+      faceMinor
+      expectedAdvanceMinor
+      expectedFeeMinor
+      expectedReserveMinor
+      expectedDays
+      status
+      packetDocumentId
+      fundedOn
+      advanceMinor
+      feeMinor
+      reserveMinor
+      rejectionReason
+      settledOn
+      chargedBackOn
+      chargebackReason
+    }
+  }
+}
+
+fragment DeskFactoringRemittanceFields on FactoringRemittance {
+  id
+  factoringCompanyId
+  fileName
+  source
+  sourceFormat
+  status
+  defaultKind
+  remittedOn
+  currencyCode
+  lineCount
+  matchedCount
+  exceptionCount
+  appliedCount
+  totalCashMinor
+  error
+  stagedAt
+  appliedAt
+  discardReason
+  unmappedHeaders
+  version
+  factoringCompany {
+    id
+    code
+    name
+  }
+}
+
+query DeskFactoringRemittances(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = false
+) {
+  factoringRemittances(input: { table: $input }) {
+    edges {
+      node {
+        ...DeskFactoringRemittanceFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskFactoringRemittance($id: ID!, $matchStatuses: [FactoringRemittanceMatchStatus!]) {
+  factoringRemittance(id: $id) {
+    ...DeskFactoringRemittanceFields
+    lines(matchStatuses: $matchStatuses) {
+      id
+      rowNumber
+      cells
+      kind
+      invoiceNumber
+      factorReference
+      debtorName
+      faceMinor
+      advanceMinor
+      feeMinor
+      reserveMinor
+      cashMinor
+      occurredOn
+      matchStatus
+      matchedBy
+      submissionItemId
+      matchedInvoiceNumber
+      matchedSubmissionId
+      score
+      reason
+      suggestions {
+        itemId
+        submissionId
+        invoiceNumber
+        score
+        reason
+      }
+      error
+      ignoredReason
+      reserveEntryId
+    }
+  }
+}

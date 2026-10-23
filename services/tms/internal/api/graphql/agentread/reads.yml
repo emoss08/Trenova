@@ -193,6 +193,24 @@ reads:
     operation: DeskAccountingSyncRecords
     reason: The sync ledger is read by accountingSyncRecords, whose typed filter matches the tool's; accountingSyncRecordTable reads the same records for the data table.
     instead: [DeskAccountingSyncObjectStates]
+  - tool: factoring_get_readiness
+    operation: DeskFactoringReadiness
+    reason: An invoice's readiness is evaluated now by factoringReadiness, keyed by the invoice rather than by a record of its own.
+  - tool: factoring_get_remittance
+  - tool: factoring_get_reserve_balance
+    operation: FactoringReserveBalance
+    reason: What a factor holds is read by factoringReserveBalance, keyed by the factor rather than by a record's id.
+  - tool: factoring_get_submission
+  - tool: factoring_list_agreements
+    operation: DeskFactoringAgreements
+    reason: A factor's agreements are read whole by factoringAgreements, keyed by the factor.
+  - tool: factoring_list_noas
+  - tool: factoring_list_readiness
+    operation: DeskFactoringInvoiceStates
+    reason: Readiness is the FactoringInvoiceState record, read by factoringInvoiceStates, which no kind claims.
+    alongside: [FactoringSummary]
+  - tool: factoring_list_remittances
+  - tool: factoring_list_submissions
   - tool: edi_list_partners
     operation: DeskEdiPartners
     reason: A trading partner is a record kind of the EDI resource, read by ediPartners, which no rule finds from the resource.

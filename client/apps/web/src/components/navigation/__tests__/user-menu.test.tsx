@@ -35,25 +35,11 @@ async function openMenu() {
 }
 
 describe("UserMenu", () => {
-  it("offers page access, asks for its code when pointed at and opens it", async () => {
-    await openMenu();
-    const entry = await screen.findByRole("menuitem", { name: "Page access" });
-
-    await userEvent.hover(entry);
-    expect(useAppDialogsStore.getState()).toMatchObject({
-      active: null,
-      prepared: ["page-access"],
-    });
-
-    await userEvent.click(entry);
-    expect(useAppDialogsStore.getState().active).toBe("page-access");
-  });
-
-  it("leaves page access out for someone it is not offered to", async () => {
-    state.offered = false;
+  it("leaves page access to its keybind, even for someone it is offered to", async () => {
     await openMenu();
 
     expect(await screen.findByRole("menuitem", { name: "Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("menuitem", { name: "Page access" })).not.toBeInTheDocument();
+    expect(useAppDialogsStore.getState()).toMatchObject({ active: null, prepared: [] });
   });
 });

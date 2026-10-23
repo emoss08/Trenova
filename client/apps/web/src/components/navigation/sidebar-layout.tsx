@@ -32,8 +32,8 @@ import { findModuleForPath } from "./sidebar-model";
 import { useSettingsShortcut } from "./use-settings-shortcut";
 import { RailShell } from "./rail-shell";
 
-// The page access panel is read once it is asked for (its user menu entry
-// pointed at, or its keybind); the shell holds nothing of it but this import.
+// The page access panel is read once its keybind asks for it; the shell holds
+// nothing of it but this import.
 const PageAccessSheet = lazyComponent(
   () => import("../page-access/page-access-sheet"),
   (module) => module.PageAccessSheet,

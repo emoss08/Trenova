@@ -34,7 +34,6 @@ func ToolProviders() []any {
 		accountingToolProviders(),
 		settlementToolProviders(),
 		receivableToolProviders(),
-		factoringToolProviders(),
 		ratingToolProviders(),
 		ediToolProviders(),
 		oversightToolProviders(),

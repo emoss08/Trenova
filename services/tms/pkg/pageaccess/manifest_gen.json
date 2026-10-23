@@ -1,5 +1,5 @@
 {
-  "version": "sha256:51b56e2268cc3ee7a01c88718852a53ffc41d98c5eb64e5bf6fa9d667a25fc2e",
+  "version": "sha256:0789f91c77cae01dbf0aa9c5140faae86f300f3b757f76fe4f524d43f182e2c7",
   "screens": [
     {
       "path": "/",
@@ -6901,6 +6901,7 @@
         "factoring_company",
         "factoring_noa",
         "factoring_remittance",
+        "factoring_reserve",
         "factoring_submission",
         "invoice",
         "rate_agreement"
@@ -7205,6 +7206,7 @@
         "factoring_company",
         "factoring_noa",
         "factoring_remittance",
+        "factoring_reserve",
         "factoring_submission",
         "invoice"
       ],
@@ -10503,6 +10505,7 @@
         "factoring_company",
         "factoring_noa",
         "factoring_remittance",
+        "factoring_reserve",
         "factoring_submission",
         "invoice"
       ],
@@ -10629,6 +10632,7 @@
         "factoring_company",
         "factoring_noa",
         "factoring_remittance",
+        "factoring_reserve",
         "factoring_submission",
         "invoice"
       ],
@@ -10909,6 +10913,7 @@
         "factoring_company",
         "factoring_noa",
         "factoring_remittance",
+        "factoring_reserve",
         "factoring_submission",
         "invoice"
       ],
@@ -11497,6 +11502,7 @@
         "factoring_company",
         "factoring_noa",
         "factoring_remittance",
+        "factoring_reserve",
         "factoring_submission",
         "invoice"
       ],
@@ -34091,6 +34097,7 @@
         "factoring_company",
         "factoring_noa",
         "factoring_remittance",
+        "factoring_reserve",
         "factoring_submission",
         "invoice"
       ],
@@ -39304,7 +39311,9 @@
     {
       "name": "FactoringReserveBalance",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "factoring_reserve"
+      ],
       "linked": [],
       "declared": []
     },
@@ -39386,7 +39395,9 @@
     {
       "name": "FactoringSummary",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "invoice"
+      ],
       "linked": [],
       "declared": []
     },
@@ -42230,12 +42241,17 @@
       "reads": [],
       "linked": [
         {
-          "kind": "invoice",
+          "kind": "customer",
           "fields": [
-            "billToName",
-            "currencyCode",
-            "number",
-            "status"
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "factoring_company",
+          "fields": [
+            "code",
+            "name"
           ]
         }
       ],

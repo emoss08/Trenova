@@ -536,7 +536,7 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"factoring_list_readiness",
 			"factoring_get_readiness",
-			"factoring_get_agreement",
+			"factoring_list_agreements",
 			"factoring_list_noas",
 			"factoring_create_noa",
 			"factoring_send_noa",

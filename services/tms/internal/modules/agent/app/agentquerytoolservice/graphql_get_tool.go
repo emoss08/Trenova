@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -44,6 +45,7 @@ type graphQLGetTool struct {
 	// read by the record it belongs to requires (a driver's hours by
 	// $workerId).
 	key    string
+	keyRef *idReference
 	beside besideReads
 	reader agentports.GraphQLReader
 }
@@ -86,7 +88,13 @@ func newGraphQLGetTool(
 	if params, required, err = renamed(spec.name, params, spec.names, required); err != nil {
 		return nil, err
 	}
-	if params, err = referenced(spec.name, params, spec.references); err != nil {
+	references := spec.references
+	if ref, keyed := references[spec.paramName]; keyed && tool.byID {
+		tool.keyRef = &ref
+		references = maps.Clone(references)
+		delete(references, spec.paramName)
+	}
+	if params, err = referenced(spec.name, params, references); err != nil {
 		return nil, err
 	}
 	if tool.params, err = annotate(spec.name, params, spec.notes); err != nil {
@@ -107,7 +115,7 @@ func newGraphQLGetTool(
 // ParamSchema is the id the get's spec names, as every get tool's is, and
 // any other argument its operation takes.
 func (t *graphQLGetTool) ParamSchema() map[string]any {
-	if len(t.params) == 0 && t.byID && t.idRequired {
+	if len(t.params) == 0 && t.byID && t.idRequired && t.keyRef == nil {
 		return t.getTool.ParamSchema()
 	}
 	properties := make(map[string]any, len(t.params)+1)
@@ -115,6 +123,9 @@ func (t *graphQLGetTool) ParamSchema() map[string]any {
 	if t.byID {
 		own, _ := t.getTool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
 		properties[t.spec.paramName] = own[t.spec.paramName]
+		if t.keyRef != nil {
+			properties[t.spec.paramName] = t.keyRef.schema(false)
+		}
 		if t.idRequired {
 			required = append([]string{t.spec.paramName}, required...)
 		}

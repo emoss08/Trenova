@@ -1813,6 +1813,21 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOFactoringCompany2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋfactoringcompanyᚐFactoringCompany),
 			},
+			{
+				Name:       "lines",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "FactoringRemittanceLine",
+				Args:       field_FactoringRemittance_lines_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*factoring.Remittance)
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverFactoringRemittance](ec, "FactoringRemittance").Lines(ctx, obj, fc.Args["matchStatuses"].([]factoring.RemittanceMatchStatus))
+				},
+				Marshal: gqlexec.Marshal(marshalNFactoringRemittanceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineᚄ),
+			},
 		}},
 		{Object: "FactoringRemittanceColumn", Fields: []*gqlexec.Field{
 			{
@@ -4876,6 +4891,7 @@ type resolverFactoringRemittance interface {
 	AppliedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
 	CreatedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
 	FactoringCompany(ctx context.Context, obj *factoring.Remittance) (*factoringcompany.FactoringCompany, error)
+	Lines(ctx context.Context, obj *factoring.Remittance, matchStatuses []factoring.RemittanceMatchStatus) ([]*factoring.RemittanceLine, error)
 }
 
 type resolverFactoringRemittanceLine interface {
@@ -5015,6 +5031,19 @@ var (
 	errNoChild26 = errors.New("field of type FactoringSftpAuthMethod does not have child fields")
 	errNoChild27 = errors.New("field of type InvoiceFactoringOverride does not have child fields")
 )
+
+func field_FactoringRemittance_lines_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "matchStatuses",
+		func(ctx context.Context, v any) ([]factoring.RemittanceMatchStatus, error) {
+			return unmarshalOFactoringRemittanceMatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceMatchStatusᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["matchStatuses"] = arg0
+	return args, nil
+}
 
 func field_Mutation_createFactoringAgreement_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
@@ -7863,6 +7892,14 @@ func marshalNFactoringRemittanceEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 
 func marshalNFactoringRemittanceField2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFactoringRemittanceField(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.FactoringRemittanceField) graphql.Marshaler {
 	return v
+}
+
+func marshalNFactoringRemittanceLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*factoring.RemittanceLine) graphql.Marshaler {
+	return gqlexec.List[*factoring.RemittanceLine]{
+		Elem:        marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNFactoringRemittanceLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋfactoringᚐRemittanceLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *factoring.RemittanceLine) graphql.Marshaler {

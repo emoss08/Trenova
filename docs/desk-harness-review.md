@@ -1483,6 +1483,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: fuel and IFTA | `fuel_list_cards`, `fuel_list_purchases`, `fuel_list_purchase_imports`, `fuel_list_ifta_returns`, `fuel_list_ifta_mileage_entries`, `fuel_list_ifta_jurisdictions` | unchanged | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: customer update preferences | `customer_get_update_preferences` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: settlements and pay | `settlement_list_driver`, `settlement_list_pay_events`, `settlement_list_carrier`, `settlement_list_driver_expenses`, `settlement_list_pay_profiles`, `settlement_list_escrow_accounts`, `settlement_list_advances`, `settlement_list_recurring_deductions`, `settlement_list_recurring_earnings`, `settlement_list_pay_assignments`, `settlement_list_pay_codes`, `settlement_get_driver`, `settlement_get_driver_earnings`, `settlement_get_dispute`, `settlement_get_carrier` | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
+| Typed reads through GraphQL: factoring | the nine `factoring` reads; `factoring_get_agreement` renamed `factoring_list_agreements` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
 
 The formula and fuel rows' after figures read the 167 held-out cases Tariff (#888) left, whose fixture
 master carries stale; the before figures are the last measured on master (165 cases). Keyword
@@ -1704,6 +1705,24 @@ repository tool computed from them: whether arrivals and departures are wanted, 
 customer set to None, and the fallback recipients. `customer_get` now names `DeskCustomerCard`,
 since two Desk operations read the root. The tool's description and schema are unchanged, so the
 catalog snapshot and the embedding fixture are too, and held-out ranking is unchanged.
+
+The factoring row converts the nine factoring reads. The queue, notices, schedules and
+remittances read new `Desk*` operations that wrap the table input in each root's own input
+(`factoringNoas(input: {table: $input})`) and narrow by the records' own field filters; the
+queue reads its totals beside every page, the first read alongside keyed by nothing, since
+`factoringSummary` takes no argument. A schedule binds by the rule once a root that takes an id is
+a get even when its record carries `items`, and a remittance reads only the lines a call names
+through `lines(matchStatuses:)`, one safe addition. `factoring_get_agreement` lists a factor's
+agreements, so it is renamed `factoring_list_agreements`, with a migration for stored
+definitions. The readiness state, the queue's totals and a factor's balance had no kind, so the
+guard would have shown their money at any ceiling; they now declare `@kind`, and the five
+factoring kinds, which defaulted to Restricted, declare where a record stands Internal and its
+money Restricted, as the repository tools withheld it by the invoice's amounts. An agreement's
+rates and fees and an unreadable remittance line's cells, which the repository tools returned
+ungated, are now Restricted. A Postgres test reads every factoring list and get under row-level
+security for two tenants. The descriptions changed, so the embedding fixture is re-recorded;
+held-out ranking holds (keyword 0.99 and 0.95 over 147, hybrid 0.93
+and 0.83 over 167, before and after), and nothing was tuned against it.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 

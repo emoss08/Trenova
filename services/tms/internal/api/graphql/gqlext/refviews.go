@@ -30,7 +30,8 @@ func ReferenceFragmentName(typeName string) string {
 }
 
 // referenceTypes is every kind type with a declared reference view, sorted,
-// with the fields of its view that the type has.
+// with the fields of its view that the type has. A type that has none of
+// them, such as a summary of a kind's records, has no reference view.
 func referenceTypes(
 	schema *ast.Schema,
 	registry *permission.Registry,
@@ -43,6 +44,13 @@ func referenceTypes(
 	for name, kind := range kinds {
 		def, ok := registry.Get(kind.String())
 		if !ok || len(def.ReferenceView) == 0 || !linkable(schema.Types[name], def.ReferenceView) {
+			continue
+		}
+		if typ := schema.Types[name]; typ == nil || !slices.ContainsFunc(typ.Fields,
+			func(field *ast.FieldDefinition) bool {
+				return field.Name == recordIDField ||
+					slices.Contains(def.ReferenceView, field.Name)
+			}) {
 			continue
 		}
 		names = append(names, name)

@@ -526,13 +526,14 @@ func (t *graphQLUnpagedListTool) checkArguments(args map[string]any) error {
 
 // alongsideVariables are what a read alongside sends: a keyed read the
 // values the list's own call sent for its keys, and whether the call named
-// them all; a connection read its table input.
+// them all (a read keyed by nothing is made on every call); a connection
+// read its table input.
 func alongsideVariables(
 	bound *graphQLAlongside,
 	spec *alongsideSpec,
 	sent map[string]any,
 ) (variables map[string]any, keyed bool) {
-	if len(bound.Keys) > 0 {
+	if bound.Input == "" {
 		variables = make(map[string]any, len(bound.Keys)+len(spec.inputs))
 		for name, value := range spec.inputs {
 			variables[name] = value
@@ -563,7 +564,7 @@ func alongsideRows(
 	spec *alongsideSpec,
 	data map[string]any,
 ) (rows []map[string]any, prefix, note string) {
-	if len(bound.Keys) > 0 {
+	if bound.Input == "" {
 		list, _ := data[bound.RootField].([]any)
 		rows = make([]map[string]any, 0, len(list))
 		for _, row := range list {

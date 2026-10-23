@@ -15917,7 +15917,7 @@ enum FactoringInvoiceEffect {
 }
 
 """Whether an invoice is ready to factor, and why not."""
-type FactoringInvoiceState {
+type FactoringInvoiceState @kind(resource: "invoice") {
   checks: [FactoringCheck!]!
   customer: Customer
   customerId: ID!
@@ -16098,6 +16098,8 @@ type FactoringRemittance {
   """The message it came in on, when it was emailed."""
   inboundMessageId: ID
   lineCount: Int!
+  """Its lines in the file's order, or only those in these match statuses."""
+  lines(matchStatuses: [FactoringRemittanceMatchStatus!]): [FactoringRemittanceLine!]!
   mapping: [FactoringRemittanceColumn!]!
   matchedCount: Int!
   organizationId: ID!
@@ -16325,7 +16327,7 @@ input FactoringRemittanceVersionInput {
 }
 
 """What a factor holds and has paid, from its reserve entries."""
-type FactoringReserveBalance {
+type FactoringReserveBalance @kind(resource: "factoring_reserve") {
   """Cash advanced at funding."""
   advancedMinor: Int!
   """Cash paid back for chargebacks, net of reversals."""
@@ -16610,7 +16612,7 @@ enum FactoringSubmissionStatus {
   Sent
 }
 
-type FactoringSummary {
+type FactoringSummary @kind(resource: "invoice") {
   """
   Funded recourse invoices whose chargeback window closes within a week, by what the organization would repay.
   """

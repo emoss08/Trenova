@@ -28,8 +28,6 @@ const (
 	fieldShipmentID      = "shipmentId"
 	fieldPayCodeID       = "payCodeId"
 	fieldEscrowAccountID = "escrowAccountId"
-	fieldEffectiveFrom   = "effectiveFrom"
-	fieldEffectiveTo     = "effectiveTo"
 	fieldInForce         = "inForce"
 	fieldDescription     = "description"
 	paramHasExceptions   = "hasExceptions"

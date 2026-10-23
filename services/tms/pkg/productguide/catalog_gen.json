@@ -1,5 +1,5 @@
 {
-  "version": "sha256:986183e89c7c25acbb4c22b69951aa3664a88bee6d2e4a5b83bc8a0002be0347",
+  "version": "sha256:ab358a1ee1888afce57122c24388516b7766f29999dbfe5b169f53d459d5b2ad",
   "modules": [
     {
       "id": "home",
@@ -6090,7 +6090,7 @@
             "access panel"
           ],
           "steps": [
-            "On any page, open your account menu and select **Page access**, or press Ctrl+Alt+P. The **Page access** panel opens for the screen you are on.",
+            "On any page, press Ctrl+Alt+P. The **Page access** panel opens for the screen you are on.",
             "**What this screen needs** lists each permission the screen's route and endpoints check, marked **Held** or **Missing** for you.",
             "**Records on this screen** lists each kind of record the screen shows, whether you **Can read** it, and the linked fields that come back withheld: **Needs read** when they need read on that kind, **Above ceiling** when they rank above your sensitivity ceiling."
           ]
@@ -6104,7 +6104,7 @@
             "see what a role sees"
           ],
           "steps": [
-            "Open the **Page access** panel on the screen (**Page access** in your account menu, or Ctrl+Alt+P).",
+            "Open the **Page access** panel on the screen with Ctrl+Alt+P.",
             "Under **View as**, pick a role. The panel shows what a person holding only that role, and the roles it inherits, would need and see on this screen.",
             "Clear the role to go back to **You, with your own roles**."
           ]
@@ -6149,7 +6149,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.\n\nA role's agents matter for agents limited to specific roles in [AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use those agents and decide what they propose. Agents open to everyone who can use the assistant are included for every role automatically and need not be added; one that is granted anyway shows **Open to everyone**, and the grant applies once it is limited to specific roles. System agents cannot be granted to a role. Changing a role's agents needs update access to roles.\n\nThe **Page access** menu item and Ctrl+Alt+P are offered to people with read access to roles, and **View as** and **Preview a screen** need it too. Neither reads any record: they work out access from the role's grants alone. Organization access policies, data scopes and row-level security can narrow what a person holding the role reads, never widen it, so the real screen may show less.",
+      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.\n\nA role's agents matter for agents limited to specific roles in [AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use those agents and decide what they propose. Agents open to everyone who can use the assistant are included for every role automatically and need not be added; one that is granted anyway shows **Open to everyone**, and the grant applies once it is limited to specific roles. System agents cannot be granted to a role. Changing a role's agents needs update access to roles.\n\nThe **Page access** panel (Ctrl+Alt+P) is offered to people with read access to roles, and **View as** and **Preview a screen** need it too. Neither reads any record: they work out access from the role's grants alone. Organization access policies, data scopes and row-level security can narrow what a person holding the role reads, never widen it, so the real screen may show less.",
       "related": [
         "/admin/users",
         "/admin/home-layouts",

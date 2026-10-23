@@ -16536,58 +16536,13 @@
       }
     },
     {
-      "name": "factoring_get_agreement",
-      "description": "Get a factor's agreements, newest first, marking the one in force. Each gives the advance and reserve rates, fee tiers by days outstanding, minimum fee, recourse and chargeback window, accounting treatment, funding days, the daily submission time, and the documents the factor needs with every invoice. A factor with no agreement in force has no invoices ready to factor.",
-      "parameters": {
-        "additionalProperties": false,
-        "properties": {
-          "factoringCompanyId": {
-            "description": "The factor, from invoice_get, factoring_list_noas or factoring_list_readiness.",
-            "type": "string",
-            "x-recordOf": "factoring_company"
-          }
-        },
-        "required": [
-          "factoringCompanyId"
-        ],
-        "type": "object"
-      },
-      "searchTerms": [
-        "factoring agreement",
-        "advance rate",
-        "factoring fee",
-        "recourse"
-      ],
-      "policy": {
-        "kind": "query",
-        "resource": "factoring_agreement",
-        "operation": "read",
-        "scope": "tenant",
-        "defaultTier": "AutoExecute",
-        "maxTier": "AutoExecute",
-        "promotableTo": "AutoExecute",
-        "egress": [
-          "none"
-        ],
-        "classifiesEachCall": false,
-        "personalRunsUnasked": false,
-        "heldWhenTainted": false,
-        "effect": "lookup",
-        "reversible": true,
-        "idempotent": true,
-        "readsExternal": "never",
-        "carriesTaint": false,
-        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
-      }
-    },
-    {
       "name": "factoring_get_readiness",
       "description": "Check now whether a posted invoice is ready to sell to its factor, and why not. Every check comes back with what clears it: SetUpAgreement, SendNoa, RecordNoaAcknowledgement, ResolveDispute, RequestDocument (with the document type and shipment) or ReviewShipment. An Excluded verdict means the invoice is not something to factor: a draft, voided, paid, a credit memo, kept out by factoring_set_override, or for a customer that is not factored.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "invoiceId": {
-            "description": "The invoice, from invoice_list, invoice_get or factoring_list_readiness.",
+            "description": "The invoice, from invoice_list, invoice_get or factoring_list_readiness. Never guess one.",
             "type": "string",
             "x-recordOf": "invoice"
           }
@@ -16628,14 +16583,13 @@
     },
     {
       "name": "factoring_get_remittance",
-      "description": "Read one factor remittance with its lines and how each was matched. Each line has its row, kind, invoice number, amounts and date as the factor printed them, its match status, the schedule item it is matched to, and up to three ranked suggestions with why. Use its version and a line id with factoring_resolve_remittance_line, and its version with factoring_apply_remittance or factoring_discard_remittance.",
+      "description": "Read one factor remittance with its lines and how each was matched. Each line has its row, kind, invoice number, amounts and date as the factor printed them, its match status, the schedule item it is matched to, and up to three ranked suggestions with why; an unreadable line has its cells. Use its version and a line id with factoring_resolve_remittance_line, and its version with factoring_apply_remittance or factoring_discard_remittance. Amounts are in minor units and can be withheld at your access.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "matchStatuses": {
-            "description": "Only lines in these match statuses; leave out for every line.",
+            "description": "Only records whose match statuses is one of these. Leave it out for every line.",
             "items": {
-              "description": "A line's match status.",
               "enum": [
                 "Matched",
                 "Suggested",
@@ -16645,13 +16599,13 @@
                 "Applied"
               ],
               "type": "string",
-              "x-enumOf": "factoring.remittanceMatchStatus"
+              "x-enumOf": "graphql.FactoringRemittanceMatchStatus"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
           },
           "remittanceId": {
-            "description": "The remittance, from factoring_list_remittances.",
+            "description": "The factor remittance's id, from factoring_list_remittances.",
             "type": "string",
             "x-recordOf": "factoring_remittance"
           }
@@ -16690,12 +16644,12 @@
     },
     {
       "name": "factoring_get_reserve_balance",
-      "description": "Read what a factor holds and has paid, from the factoring entries booked to the ledger. It shows the reserve it still holds, what is owed it under secured borrowing, the advances it paid, the reserves it released, what was paid back for chargebacks net of reversals, the fees booked, and the day of the last movement. Use it before factoring_release_reserve to see what the factor should remit.",
+      "description": "Read what a factor holds and has paid, from the factoring entries booked to the ledger. It shows the reserve it still holds, what is owed it under secured borrowing, the advances it paid, the reserves it released, what was paid back for chargebacks net of reversals, the fees booked, and the day of the last movement. Use it before factoring_release_reserve to see what the factor should remit. Amounts are in minor units and can be withheld at your access.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "factoringCompanyId": {
-            "description": "The factor, from factoring_list_submissions or factoring_get_agreement.",
+            "description": "The factor, from factoring_list_submissions or factoring_list_agreements. Never guess one.",
             "type": "string",
             "x-recordOf": "factoring_company"
           }
@@ -16735,12 +16689,12 @@
     },
     {
       "name": "factoring_get_submission",
-      "description": "Read one schedule of accounts with every invoice on it and why it failed, if it did. Each invoice has its item id, amount, expected advance, fee and reserve, whether its packet was built, and once the factor decided it, what it funded (the advance, fee and reserve it holds) or why it rejected it, and whether its reserve was released or it was charged back; the schedule has its status, where it went, attempts and last error. Use its version and an invoice's item id with factoring_record_funding, factoring_release_reserve, factoring_record_chargeback or factoring_reverse_chargeback, and with factoring_retry_submission or factoring_cancel_submission for a failed one.",
+      "description": "Read one schedule of accounts with every invoice on it and why it failed, if it did. Each invoice (items) has its item id, amount, expected advance, fee and reserve, its packet once built, and once the factor decided it, what it funded (the advance, fee and reserve it holds) or why it rejected it, and whether its reserve was released or it was charged back; the schedule has its status, where it went, attempts and last error. Use its version and an invoice's item id with factoring_record_funding, factoring_release_reserve, factoring_record_chargeback or factoring_reverse_chargeback, and with factoring_retry_submission or factoring_cancel_submission for a failed one. Amounts are in minor units and can be withheld at your access.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "submissionId": {
-            "description": "The schedule, from factoring_list_submissions.",
+            "description": "The factoring schedule's id, from factoring_list_submissions.",
             "type": "string",
             "x-recordOf": "factoring_submission"
           }
@@ -16778,24 +16732,121 @@
       }
     },
     {
-      "name": "factoring_list_noas",
-      "description": "List notices of assignment, the letters telling customers to pay a factor. Each says who it is for, whether it was sent, acknowledged with a signed copy, or released, and when it expires. Effective is true only for an acknowledged, unexpired notice; an invoice is not ready to factor without one. Pass id and version to factoring_send_noa, factoring_record_noa_acknowledgement or factoring_release_noa.",
+      "name": "factoring_list_agreements",
+      "description": "List a factor's agreements, newest first, marking the one in force (inForce). Each gives the advance and reserve rates in basis points, fee tiers by days outstanding, minimum fee, recourse and chargeback window, accounting treatment, funding days, the daily submission time, and the documents the factor needs with every invoice. A factor with no agreement in force has no invoices ready to factor. The rates and fees can be withheld at your access.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "factoringCompanyId": {
+            "description": "The factor, from invoice_get, factoring_list_readiness or factoring_list_noas. Never guess one.",
+            "type": "string",
+            "x-recordOf": "factoring_company"
+          }
+        },
+        "required": [
+          "factoringCompanyId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "factoring agreement",
+        "advance rate",
+        "factoring fee",
+        "recourse"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "factoring_agreement",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "factoring_list_noas",
+      "description": "List notices of assignment, the letters telling customers to pay a factor. Each says who it is for, whether it was sent, acknowledged with a signed copy, or released, and when it expires. effective is true only for an acknowledged, unexpired notice; an invoice is not ready to factor without one. Pass id and version to factoring_send_noa, factoring_record_noa_acknowledgement or factoring_release_noa. Filters: acknowledgedAtFrom/To, createdAtFrom/To, customerId, expiresAtFrom/To, factoringCompanyId, hasSignedDocument, releaseReason, releasedAtFrom/To, sentAtFrom/To, sentTo, status, updatedAtFrom/To.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledgedAtFrom": {
+            "description": "Only records whose acknowledged at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "acknowledgedAtTo": {
+            "description": "Only records whose acknowledged at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "customerId": {
-            "description": "Only this customer's notices, from customer_list or invoice_get.",
+            "description": "The customer, from customer_list or invoice_get. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           },
+          "expiresAtFrom": {
+            "description": "Only records whose expires at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "expiresAtTo": {
+            "description": "Only records whose expires at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "factoringCompanyId": {
-            "description": "Only notices for this factor, from invoice_get or factoring_list_readiness.",
+            "description": "The factor, from invoice_get, factoring_list_readiness or factoring_list_noas. Never guess one.",
             "type": "string",
             "x-recordOf": "factoring_company"
+          },
+          "hasSignedDocument": {
+            "description": "The customer's signed copy, a document on this notice. true for only records that have a signed document, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -16804,10 +16855,86 @@
             "type": "integer",
             "x-clamp": true
           },
+          "note": {
+            "description": "Only records whose notes contains this text.",
+            "type": "string"
+          },
+          "query": {
+            "description": "Words to find in the address the notice was sent to.",
+            "type": "string"
+          },
+          "releaseReason": {
+            "description": "Only records whose release reason contains this text.",
+            "type": "string"
+          },
+          "releasedAtFrom": {
+            "description": "Only records whose released at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "releasedAtTo": {
+            "description": "Only records whose released at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sentAtFrom": {
+            "description": "Only records whose sent at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sentAtTo": {
+            "description": "Only records whose sent at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sentTo": {
+            "description": "Only records whose sent to contains this text.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "acknowledgedAt",
+              "createdAt",
+              "customerId",
+              "expiresAt",
+              "factoringCompanyId",
+              "notes",
+              "releaseReason",
+              "releasedAt",
+              "sentAt",
+              "sentTo",
+              "signedDocumentId",
+              "status",
+              "updatedAt"
+            ],
+            "type": "string",
+            "x-enumOf": "factoring_list_noas.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
           "status": {
-            "description": "Only notices in these statuses.",
+            "description": "Only records whose status is one of these.",
             "items": {
-              "description": "A notice status.",
               "enum": [
                 "Draft",
                 "Sent",
@@ -16815,10 +16942,26 @@
                 "Released"
               ],
               "type": "string",
-              "x-enumOf": "factoring.noaStatus"
+              "x-enumOf": "graphql.FactoringNoaStatus"
             },
-            "maxItems": 4,
+            "minItems": 1,
             "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -16852,23 +16995,51 @@
     },
     {
       "name": "factoring_list_readiness",
-      "description": "List factored customers' invoices by readiness, newest first, with the totals. The totals are ready, not ready, submitted, and ready for more than a day without being submitted. Ready is the default; ask for NotReady to see what is holding invoices back, each with its failed checks, or Submitted for what is on a schedule. Pass Ready invoices to factoring_create_submission, one factor per call, and an invoice to factoring_get_readiness for every check.",
+      "description": "List factored customers' invoices by readiness, newest first, with the queue's totals. summary totals what is ready, not ready, submitted, ready for more than a day without being submitted, funded, reserve held and chargebacks due. Ready is the default; ask for NotReady to see what is holding invoices back, each with its failed checks, or Submitted for what is on a schedule. Pass Ready invoices to factoring_create_submission, one factor per call, and an invoice to factoring_get_readiness for every check. Amounts are in minor units and can be withheld at your access. Filters: customerId, evaluatedAtFrom/To, factoringCompanyId, failedChecksMin/Max, hasFactoringCompany, readySinceFrom/To, verdict.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
           "customerId": {
-            "description": "Only this customer's invoices, from customer_list or invoice_get.",
+            "description": "The customer, from customer_list or invoice_get. Never guess one.",
             "type": "string",
             "x-recordOf": "customer"
           },
+          "evaluatedAtFrom": {
+            "description": "Only records whose evaluated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "evaluatedAtTo": {
+            "description": "Only records whose evaluated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "factoringCompanyId": {
-            "description": "Only invoices assigned to this factor, from invoice_get or factoring_list_noas.",
+            "description": "The factor, from invoice_get, factoring_list_readiness or factoring_list_noas. Never guess one.",
             "type": "string",
             "x-recordOf": "factoring_company"
+          },
+          "failedChecksMax": {
+            "description": "Only records whose failed checks is at most this.",
+            "type": "integer"
+          },
+          "failedChecksMin": {
+            "description": "Only records whose failed checks is at least this.",
+            "type": "integer"
+          },
+          "hasFactoringCompany": {
+            "description": "true for only records that have a factoring company, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -16877,16 +17048,72 @@
             "type": "integer",
             "x-clamp": true
           },
-          "verdict": {
-            "description": "Which invoices: Ready (the default), NotReady, or Submitted (on a schedule with the factor).",
+          "openBalanceMinorMax": {
+            "description": "Only records whose open balance minor is at most this.",
+            "type": "integer"
+          },
+          "openBalanceMinorMin": {
+            "description": "Only records whose open balance minor is at least this.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Matched only against the verdict; narrow by customerId or factoringCompanyId instead.",
+            "type": "string"
+          },
+          "readySinceFrom": {
+            "description": "When the invoice became ready; null while it is not. Only records whose ready since is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "readySinceTo": {
+            "description": "When the invoice became ready; null while it is not. Only records whose ready since is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "Ready",
-              "NotReady",
-              "Submitted",
-              "Funded"
+              "customerId",
+              "evaluatedAt",
+              "factoringCompanyId",
+              "failedChecks",
+              "openBalanceMinor",
+              "readySince",
+              "verdict"
             ],
             "type": "string",
-            "x-enumOf": "factoring.verdict"
+            "x-enumOf": "factoring_list_readiness.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "verdict": {
+            "description": "Only records whose verdict is one of these. Ready unless you name others; NotReady rows carry their failed checks.",
+            "items": {
+              "enum": [
+                "Ready",
+                "NotReady",
+                "Submitted",
+                "Excluded",
+                "Funded"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FactoringVerdict"
+            },
+            "minItems": 1,
+            "type": "array"
           }
         },
         "type": "object"
@@ -16920,18 +17147,130 @@
     },
     {
       "name": "factoring_list_remittances",
-      "description": "List factor remittances, newest first, with how far each has been read and booked. Each has its factor, file, status (Pending, NeedsMapping, Parsed, Failed, PartiallyApplied, Applied or Discarded), line, matched, exception and applied counts, and why it failed if it did. Pass one's id to factoring_get_remittance for its lines.",
+      "description": "List factor remittances, newest first, with how far each has been read and booked. Each has its factor, file, status (Pending, NeedsMapping, Parsed, Failed, PartiallyApplied, Applied or Discarded), line, matched, exception and applied counts, and why it failed if it did. Pass one's id to factoring_get_remittance for its lines. Amounts are in minor units and can be withheld at your access. Filters: appliedAtFrom/To, appliedCountMin/Max, createdAtFrom/To, currencyCode, defaultKind, discardReason, discardedAtFrom/To, error, exceptionCountMin/Max, factoringCompanyId, fileName, hasAppliedBy, hasCreatedBy, hasDocument, hasInboundMessage, lineCountMin/Max, matchedCountMin/Max, remittedOnFrom/To, source, sourceFormat, stagedAtFrom/To, status, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
+          "appliedAtFrom": {
+            "description": "Only records whose applied at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "appliedAtTo": {
+            "description": "Only records whose applied at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "appliedCountMax": {
+            "description": "Only records whose applied count is at most this.",
+            "type": "integer"
+          },
+          "appliedCountMin": {
+            "description": "Only records whose applied count is at least this.",
+            "type": "integer"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
+          "defaultKind": {
+            "description": "What a line records when the file has no column saying so. Only records whose default kind is one of these.",
+            "items": {
+              "enum": [
+                "Funding",
+                "Rejection",
+                "ReserveRelease",
+                "Chargeback",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FactoringRemittanceLineKind"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "discardReason": {
+            "description": "Only records whose discard reason contains this text.",
+            "type": "string"
+          },
+          "discardedAtFrom": {
+            "description": "Only records whose discarded at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "discardedAtTo": {
+            "description": "Only records whose discarded at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "error": {
+            "description": "Only records whose error contains this text.",
+            "type": "string"
+          },
+          "exceptionCountMax": {
+            "description": "Lines suggested, unmatched or unreadable. Only records whose exception count is at most this.",
+            "type": "integer"
+          },
+          "exceptionCountMin": {
+            "description": "Lines suggested, unmatched or unreadable. Only records whose exception count is at least this.",
+            "type": "integer"
+          },
           "factoringCompanyId": {
-            "description": "Only remittances from this factor, from factoring_get_remittance or factoring_list_readiness.",
+            "description": "The factor, from invoice_get, factoring_list_readiness or factoring_list_noas. Never guess one.",
             "type": "string",
             "x-recordOf": "factoring_company"
+          },
+          "fileName": {
+            "description": "Only records whose file name contains this text.",
+            "type": "string"
+          },
+          "hasAppliedBy": {
+            "description": "true for only records that have a applied by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasCreatedBy": {
+            "description": "true for only records that have a created by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasDocument": {
+            "description": "true for only records that have a document, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasInboundMessage": {
+            "description": "The message it came in on, when it was emailed. true for only records that have a inbound message, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -16940,10 +17279,128 @@
             "type": "integer",
             "x-clamp": true
           },
-          "statuses": {
-            "description": "Only remittances in these statuses.",
+          "lineCountMax": {
+            "description": "Only records whose line count is at most this.",
+            "type": "integer"
+          },
+          "lineCountMin": {
+            "description": "Only records whose line count is at least this.",
+            "type": "integer"
+          },
+          "matchedCountMax": {
+            "description": "Only records whose matched count is at most this.",
+            "type": "integer"
+          },
+          "matchedCountMin": {
+            "description": "Only records whose matched count is at least this.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Words to find in the remittance's file name.",
+            "type": "string"
+          },
+          "remittedOnFrom": {
+            "description": "Only records whose remitted on is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "remittedOnTo": {
+            "description": "Only records whose remitted on is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "appliedAt",
+              "appliedById",
+              "appliedCount",
+              "createdAt",
+              "createdById",
+              "currencyCode",
+              "defaultKind",
+              "discardReason",
+              "discardedAt",
+              "documentId",
+              "error",
+              "exceptionCount",
+              "factoringCompanyId",
+              "fileName",
+              "inboundMessageId",
+              "lineCount",
+              "matchedCount",
+              "remittedOn",
+              "source",
+              "sourceFormat",
+              "stagedAt",
+              "status",
+              "totalCashMinor",
+              "updatedAt"
+            ],
+            "type": "string",
+            "x-enumOf": "factoring_list_remittances.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "source": {
+            "description": "Only records whose source is one of these.",
             "items": {
-              "description": "A remittance status.",
+              "enum": [
+                "Upload",
+                "Email"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FactoringRemittanceSource"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "sourceFormat": {
+            "description": "Only records whose source format is one of these.",
+            "items": {
+              "enum": [
+                "Csv",
+                "Xlsx",
+                "Pdf"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FactoringRemittanceFormat"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "stagedAtFrom": {
+            "description": "Only records whose staged at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "stagedAtTo": {
+            "description": "Only records whose staged at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
               "enum": [
                 "Pending",
                 "NeedsMapping",
@@ -16954,10 +17411,34 @@
                 "Discarded"
               ],
               "type": "string",
-              "x-enumOf": "factoring.remittanceStatus"
+              "x-enumOf": "graphql.FactoringRemittanceStatus"
             },
-            "maxItems": 7,
+            "minItems": 1,
             "type": "array"
+          },
+          "totalCashMinorMax": {
+            "description": "Cash on the lines that are not ignored or unreadable. Only records whose total cash minor is at most this.",
+            "type": "integer"
+          },
+          "totalCashMinorMin": {
+            "description": "Cash on the lines that are not ignored or unreadable. Only records whose total cash minor is at least this.",
+            "type": "integer"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -16991,18 +17472,150 @@
     },
     {
       "name": "factoring_list_submissions",
-      "description": "List the schedules of accounts sent to factors, newest first, with their status and totals. Each has its number, factor, status (Sending, Sent, Failed, Cancelled, PartiallyFunded, Funded or Rejected), invoice count, expected funding, where it went, and for a failed one the last error. Pass a schedule's id to factoring_get_submission for its invoices; a failed one's id and version go to factoring_retry_submission or factoring_cancel_submission, and a sent one's to factoring_record_funding.",
+      "description": "List the schedules of accounts sent to factors, newest first. Each has its number, factor, status, invoice count, expected funding, where it went and a failed one's last error. Pass a schedule's id to factoring_get_submission for its invoices; a failed one's id and version go to factoring_retry_submission or factoring_cancel_submission, and a sent one's to factoring_record_funding. Amounts are in minor units and can be withheld at your access. Filters: attemptsMin/Max, cancelledAtFrom/To, createdAtFrom/To, currencyCode, factoringCompanyId, failedAtFrom/To, fundedAtFrom/To, hasScheduleCsvDocument, hasSchedulePdfDocument, hasSubmittedBy, invoiceCountMin/Max, lastError, number, sendAttemptGroupMin/Max, sentAtFrom/To, status, transportMethod, transportReference, transportTarget, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
-            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
+          "attemptsMax": {
+            "description": "Only records whose attempts is at most this.",
+            "type": "integer"
+          },
+          "attemptsMin": {
+            "description": "Only records whose attempts is at least this.",
+            "type": "integer"
+          },
+          "cancelledAtFrom": {
+            "description": "Only records whose cancelled at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "cancelledAtTo": {
+            "description": "Only records whose cancelled at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
+          "expectedAdvanceMinorMax": {
+            "description": "Only records whose expected advance minor is at most this.",
+            "type": "integer"
+          },
+          "expectedAdvanceMinorMin": {
+            "description": "Only records whose expected advance minor is at least this.",
+            "type": "integer"
+          },
+          "expectedFeeMinorMax": {
+            "description": "Only records whose expected fee minor is at most this.",
+            "type": "integer"
+          },
+          "expectedFeeMinorMin": {
+            "description": "Only records whose expected fee minor is at least this.",
+            "type": "integer"
+          },
+          "expectedReserveMinorMax": {
+            "description": "Only records whose expected reserve minor is at most this.",
+            "type": "integer"
+          },
+          "expectedReserveMinorMin": {
+            "description": "Only records whose expected reserve minor is at least this.",
+            "type": "integer"
+          },
+          "faceMinorMax": {
+            "description": "Only records whose face minor is at most this.",
+            "type": "integer"
+          },
+          "faceMinorMin": {
+            "description": "Only records whose face minor is at least this.",
+            "type": "integer"
+          },
           "factoringCompanyId": {
-            "description": "Only schedules sent to this factor, from factoring_list_readiness or invoice_get.",
+            "description": "The factor, from invoice_get, factoring_list_readiness or factoring_list_noas. Never guess one.",
             "type": "string",
             "x-recordOf": "factoring_company"
+          },
+          "failedAtFrom": {
+            "description": "Only records whose failed at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "failedAtTo": {
+            "description": "Only records whose failed at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "fundedAtFrom": {
+            "description": "When the factor's funding was first recorded. Only records whose funded at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "fundedAtTo": {
+            "description": "When the factor's funding was first recorded. Only records whose funded at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "hasScheduleCsvDocument": {
+            "description": "true for only records that have a schedule csv document, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSchedulePdfDocument": {
+            "description": "true for only records that have a schedule pdf document, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasSubmittedBy": {
+            "description": "true for only records that have a submitted by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "invoiceCountMax": {
+            "description": "Only records whose invoice count is at most this.",
+            "type": "integer"
+          },
+          "invoiceCountMin": {
+            "description": "Only records whose invoice count is at least this.",
+            "type": "integer"
+          },
+          "lastError": {
+            "description": "Only records whose last error contains this text.",
+            "type": "string"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -17011,10 +17624,82 @@
             "type": "integer",
             "x-clamp": true
           },
+          "number": {
+            "description": "Only records whose number contains this text.",
+            "type": "string"
+          },
+          "query": {
+            "description": "Words to find in the schedule's number.",
+            "type": "string"
+          },
+          "sendAttemptGroupMax": {
+            "description": "Counts each send started by a person; a retry starts the next. Only records whose send attempt group is at most this.",
+            "type": "integer"
+          },
+          "sendAttemptGroupMin": {
+            "description": "Counts each send started by a person; a retry starts the next. Only records whose send attempt group is at least this.",
+            "type": "integer"
+          },
+          "sentAtFrom": {
+            "description": "Only records whose sent at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sentAtTo": {
+            "description": "Only records whose sent at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "agreementId",
+              "attempts",
+              "cancelledAt",
+              "createdAt",
+              "currencyCode",
+              "expectedAdvanceMinor",
+              "expectedFeeMinor",
+              "expectedReserveMinor",
+              "faceMinor",
+              "factoringCompanyId",
+              "failedAt",
+              "fundedAt",
+              "invoiceCount",
+              "lastError",
+              "number",
+              "scheduleCsvDocumentId",
+              "schedulePdfDocumentId",
+              "sendAttemptGroup",
+              "sentAt",
+              "status",
+              "submittedById",
+              "transportMethod",
+              "transportReference",
+              "transportTarget",
+              "updatedAt"
+            ],
+            "type": "string",
+            "x-enumOf": "factoring_list_submissions.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
           "status": {
-            "description": "Only schedules in these statuses.",
+            "description": "Only records whose status is one of these.",
             "items": {
-              "description": "A schedule status.",
               "enum": [
                 "Sending",
                 "Sent",
@@ -17025,10 +17710,47 @@
                 "Rejected"
               ],
               "type": "string",
-              "x-enumOf": "factoring.submissionStatus"
+              "x-enumOf": "graphql.FactoringSubmissionStatus"
             },
-            "maxItems": 7,
+            "minItems": 1,
             "type": "array"
+          },
+          "transportMethod": {
+            "description": "Only records whose transport method is one of these.",
+            "items": {
+              "enum": [
+                "Email",
+                "Sftp"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.FactoringTransportMethod"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "transportReference": {
+            "description": "The sent message ids, or the remote directory. Only records whose transport reference contains this text.",
+            "type": "string"
+          },
+          "transportTarget": {
+            "description": "Where the schedule was sent: the recipients, or user@host:directory. Only records whose transport target contains this text.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"

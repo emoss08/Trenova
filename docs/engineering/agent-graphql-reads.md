@@ -310,8 +310,8 @@ becomes a parameter. Its type comes from the field's GraphQL type:
   honest way to get an id no tool lists (`masterdata_list_fleet_codes` takes no `managerId`,
   because no tool lists users). A reference to a field the record lacks fails construction.
 - **Names follow the conventions.** A parameter takes the name
-  [agent-tool-conventions.md](agent-tool-conventions.md) gives free text (`notes` becomes `note`),
-  and its filter still names the field.
+  [agent-tool-conventions.md](agent-tool-conventions.md) gives free text (`notes` becomes `note`,
+  `cancelReason` becomes `reason`), and its filter still names the field.
 - **A record's own parts are filtered through.** Where the filter configuration allows a path one
   record down (`profile.endorsement`) and the operation selects that part, the part's field
   becomes a parameter named for the path (`profileEndorsement`), typed by the part's own GraphQL
@@ -420,7 +420,11 @@ A read alongside takes one of two shapes:
   `accountingSyncAttempts(recordId: $id)`). It takes no table input and is never cut short. A read
   alongside marked `scoped` is made only when the call names one of the list's records: the
   credential types come beside one worker's credentials, as the repository tool read them, and
-  not beside what falls due across the organization.
+  not beside what falls due across the organization. A read that declares no variable at all is
+  about the whole organization and is made on every call: the factoring queue reads its totals
+  (`FactoringSummary`, the root `factoringSummary` takes no argument) beside every page, as the
+  repository tool did. The generator accepts a root that takes no argument and returns one object
+  (not a connection) as such a record.
 - **A connection beside an unpaged list**, read through its table input with no other required
   variable, selecting `pageInfo`: at most 100 records, with a `note` when there are more. A paged
   list reads no connection alongside, as its next call pages its own records.
@@ -483,6 +487,13 @@ above):
   rename as toolcontract does;
 - a wrapped `table: DataTableConnectionInput!` contributes its typed fields by the rule above.
 
+A root whose own input wraps the table (`factoringNoas(input: FactoringNoaListInput!)`, whose
+`table` sits beside `customerId` and `statuses`) is read through an operation that spreads the
+table input into it, as the screen's table operations do: `DeskFactoringNoas($input:
+DataTableConnectionInput!)` sends `factoringNoas(input: {table: $input})`. The tool then builds
+the table input and filters by the record's own fields, which already cover what the wrapper's
+fields narrow by, so it needs no machinery of its own.
+
 **A list of ids** an unpaged list's argument takes (`vehiclePositions(tractorIds: [ID!])`) is a
 `paramReferences` parameter: typed by the spec's `references` as a list of that resource's ids,
 each checked before the read, and sent as the list.
@@ -516,15 +527,24 @@ never reads the field, and a reader whose ceiling withholds it is told so in `wi
 **Numbers.** A model's numbers arrive as `float64`, which gqlgen's `Int` refuses where the HTTP
 transport hands it a JSON number, so the reader sends every whole number as an integer.
 
-**Get operations.** The get operation's own arguments become parameters: the id as `<record>Id`,
-marked with its resource, and every other scalar, enum or id variable as it is for a list's root
-arguments, named by the spec's `names`, typed by its `references` and noted by its `notes`. A get
-need not take an id: `accounting_get_connection` reads `accountingSyncStatus(integrationType:)`,
+**Get operations.** A root that takes an `id` and returns one record is a get even when the
+record carries a list under `items` (a schedule of accounts and its invoices); only a root with
+no `id` reads such a type as an `items` page. The get operation's own arguments become
+parameters: the id as `<record>Id`, marked with its resource, and every other scalar, enum or id
+variable as it is for a list's root arguments, named by the spec's `names`, typed by its
+`references` and noted by its `notes`. A get read by the id of the record it belongs to (an
+invoice's factoring readiness by `invoiceId`, a factor's reserve balance by `factoringCompanyId`)
+names that parameter in `paramName`, and a `references` entry under the same name types it as the
+other record's id rather than the get's own. A get need not take an id: `accounting_get_connection` reads `accountingSyncStatus(integrationType:)`,
 and `accounting_get_mapping` names a mapping by its id or by its target type with a record or a
 key. A get's `shape` applies to its record what the screen's resolver does not (what a sync
 record's status means). A get keyed by the id of another kind's record (`settlement_get_driver_earnings` reads `workerEarningsSummary(workerId:)`) names that kind in `keyResource`, so its parameter is typed as a worker id from `worker_list`. A human key the person may say instead (a PRO number) is a second,
 optional parameter. The generator resolves it through the list operation's exact filter on that
 field, so `shipment_get` with `proNumber` reads `shipments` filtered by `proNumber`, then the card.
+A variable the operation sends to a field of the record rather than to its root is a parameter
+the same way: `factoring_get_remittance` takes `matchStatuses`, which `DeskFactoringRemittance`
+sends to the remittance's `lines(matchStatuses:)`, so one read returns the record and only the
+lines the call asked for.
 
 **What stays hand-written** is model-facing prose: the summary, the "use this rather than …"
 sentence and the search terms. Descriptions are edited against traces, which a generator cannot
@@ -794,6 +814,21 @@ Each module's PR:
 | Settlements | `settlement_get_driver_earnings` | none | reads `WorkerEarningsSummary`, a get keyed by the worker. `WorkerEarningsSummary` had no kind, so the guard did not gate it on the settlement workspace either; it now declares `@kind(resource: "driver_settlement")`, the accrued count is Internal and the accrued gross, outstanding advances and escrow balance are Restricted, as the repository tool gated them. `outstandingAdvances` holds minor units under an unmarked name, so the spec names it in `minorUnits` |
 | Settlements | `settlement_get_dispute` | none | reads `SettlementDisputeDetail`. `settlement_dispute` declared no field sensitivities; its status, category, links, who submitted and resolved it and when are now Internal, and the driver's description and the resolution note stay Restricted, as the repository tool gated them. Marked only where the description is shown |
 | Settlements | `settlement_get_carrier` | none | reads `CarrierSettlementDetail`, named because the Desk's card sums the cost lines by kind and the tool returns each line by id. `lineNumber`, `costEventId` and `glAccountId` are now declared Internal on `carrier_settlement`; the payment method, which the repository tool gated as Restricted only when set, is Restricted |
+
+| Factoring | `factoring_list_readiness` | none | reads `DeskFactoringInvoiceStates` (written for it, the queue's input spread from the table input) with the queue's totals alongside (`FactoringSummary`, read on every call). `FactoringInvoiceState` and `FactoringSummary` had no kind, so the guard did not gate them; both now declare `@kind(resource: "invoice")`, the resource their roots check, and `invoice` declares what a readiness state carries (verdict, failed checks, the checks' code, message and fix, the dates, the factor) Internal. The open balance and every total stay Restricted, as the repository tool withheld them by the invoice's amounts. Ready is the default verdict, as before; `verdict` is now a list and can name Excluded or Funded too |
+| Factoring | `factoring_get_readiness` | none | reads `DeskFactoringReadiness`, which evaluates the invoice now through `factoringReadiness(invoiceId:)`, as the repository tool did; `InvoiceFactoring` reads the stored state instead and was not used |
+| Factoring | `factoring_list_agreements` | `advanceRateBp`, `reserveRateBp`, `minimumFeeMinor`, `feeTiers.rateBp`, `feeTiers.flatMinor` | renamed from `factoring_get_agreement` (migration `20261231010425`): it lists a factor's agreements, read whole by `factoringAgreements(factoringCompanyId:)` through `DeskFactoringAgreements`. `factoring_agreement` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; the terms that are not money (status, dates, recourse, treatment, funding days, chargeback window, submission time, accounts) are now Internal and the rates and fees stay Restricted, where the repository tool returned them ungated. The description says they can be withheld |
+| Factoring | `factoring_list_noas` | none | reads `DeskFactoringNoas`. `factoring_noa` declared no field sensitivities; every field the notice list showed is now Internal and the notes stay Restricted (not selected) |
+| Factoring | `factoring_list_submissions` | none | reads `DeskFactoringSubmissions`. `factoring_submission` declared no field sensitivities; where a schedule stands is Internal and its face and expected funding stay Restricted, as the repository tool withheld them by the invoice's amounts |
+| Factoring | `factoring_get_submission` | none | reads `DeskFactoringSubmission`, bound by the rule once a get may read a record that carries `items`. Each item's amounts and funding follow `factoring_submission`'s Restricted money |
+| Factoring | `factoring_list_remittances` | none | reads `DeskFactoringRemittances`. `factoring_remittance` declared no field sensitivities; where a remittance stands is Internal and its total cash stays Restricted |
+| Factoring | `factoring_get_remittance` | `lines.cells` | reads `DeskFactoringRemittance` with the lines it asks for: `FactoringRemittance` gains `lines(matchStatuses:)` (one safe addition, its resolver reading the remittance's lines once). A line's amounts stay Restricted, and so do the cells the factor printed, which carry the same amounts; the repository tool returned an unreadable line's cells ungated |
+| Factoring | `factoring_get_reserve_balance` | none | reads `FactoringReserveBalance`. `FactoringReserveBalance` had no kind, so the guard did not gate it; it now declares `@kind(resource: "factoring_reserve")`, whose balances stay Restricted and whose entry count and last movement are Internal |
+
+At a person's role ceiling a factoring record's money now follows that record's own kind, as
+every converted read does, where the repository tools judged it by the person's ceiling on
+invoices. A role that reaches Restricted on a factoring kind and only Internal on invoices is
+shown the factoring money it was granted.
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted
