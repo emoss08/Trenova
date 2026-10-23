@@ -10,7 +10,8 @@ import type {
   TariffSeverity,
 } from "@trenova/shared/types/tariff";
 import { useState, type ReactNode } from "react";
-import { lineOf } from "./tests-panel";
+import { lineOf } from "@/lib/tariff-source-lines";
+import { TickedText } from "./ticked-text";
 
 /** How many rows show before the list folds behind "Show all". */
 const VISIBLE_ROWS = 5;
@@ -81,7 +82,9 @@ export function ProblemsList({
                 onClick={() => range && onReveal(range)}
                 className="ui-focus-ring hover:text-foreground min-w-0 flex-1 rounded-sm text-left disabled:cursor-default"
               >
-                {diagnostic.module ? t("In {0}: {1}", diagnostic.module, message) : message}
+                <TickedText
+                  text={diagnostic.module ? t("In {0}: {1}", diagnostic.module, message) : message}
+                />
               </button>
               {range && !diagnostic.module && (
                 <span className="text-foreground-subtle shrink-0 font-mono text-2xs tabular-nums">

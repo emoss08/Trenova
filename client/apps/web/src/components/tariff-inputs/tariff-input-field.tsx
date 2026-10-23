@@ -52,6 +52,11 @@ export type TariffScalarFieldProps = {
   empty?: TariffEmptyValue;
   /** For a bool: what it shows while unset (the inherited value). */
   inheritedBool?: boolean;
+  /**
+   * The only values a text or enum input accepts (its `where` list), offered as a select in
+   * place of free text or every variant.
+   */
+  oneOf?: readonly string[] | null;
 };
 
 /** The decimal places a field keeps for each kind of number; amounts stay exact past cents. */
@@ -313,8 +318,22 @@ function TariffTextField({
   placeholder,
   ariaLabel,
   disabled,
+  oneOf,
 }: TariffScalarFieldProps) {
   const { control } = useFormContext<FieldValues>();
+  if (oneOf && oneOf.length > 0) {
+    return (
+      <SelectField
+        control={control}
+        name={path as Path<FieldValues>}
+        label={label}
+        description={description ?? undefined}
+        placeholder={placeholder ?? ""}
+        options={oneOf.map((value) => ({ label: value, value }))}
+        isReadOnly={disabled}
+      />
+    );
+  }
   return (
     <InputField
       control={control}
@@ -357,8 +376,13 @@ function TariffEnumField({
   layout,
   placeholder,
   disabled,
+  oneOf,
 }: TariffScalarFieldProps & { type: Extract<TariffType, { kind: "enum" }> }) {
   const { control } = useFormContext<FieldValues>();
+  const variants =
+    oneOf && oneOf.length > 0
+      ? type.variants.filter((variant) => oneOf.includes(variant))
+      : type.variants;
   return (
     <SelectField
       control={control}
@@ -367,7 +391,7 @@ function TariffEnumField({
       description={description ?? undefined}
       layout={layout}
       placeholder={placeholder ?? ""}
-      options={type.variants.map((variant) => ({ label: variant, value: variant }))}
+      options={variants.map((variant) => ({ label: variant, value: variant }))}
       isReadOnly={disabled}
     />
   );

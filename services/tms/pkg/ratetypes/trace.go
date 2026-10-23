@@ -196,15 +196,16 @@ type Trace struct {
 	// the runner up.
 	TieBreak string `json:"tieBreak,omitempty"`
 
-	TemplateID      string             `json:"templateId,omitempty"`
-	TemplateName    string             `json:"templateName,omitempty"`
-	TemplateVersion int64              `json:"templateVersion,omitempty"`
-	TariffInputs    tarifftypes.Inputs `json:"tariffInputs,omitempty"`
-	Bill            *tarifftypes.Bill  `json:"bill,omitempty"`
-	Refusal         string             `json:"refusal,omitempty"`
-	Skipped         []Skip             `json:"skipped,omitempty"`
-	Statements      rules.RawJSON      `json:"statements,omitempty"`
-	Lookups         rules.RawJSON      `json:"lookups,omitempty"`
+	TemplateID      string               `json:"templateId,omitempty"`
+	TemplateName    string               `json:"templateName,omitempty"`
+	TemplateVersion int64                `json:"templateVersion,omitempty"`
+	TariffInputs    tarifftypes.Inputs   `json:"tariffInputs,omitempty"`
+	Bill            *tarifftypes.Bill    `json:"bill,omitempty"`
+	Refusal         string               `json:"refusal,omitempty"`
+	Choices         []tarifftypes.Choice `json:"choices,omitempty"`
+	Skipped         []Skip               `json:"skipped,omitempty"`
+	Statements      rules.RawJSON        `json:"statements,omitempty"`
+	Lookups         rules.RawJSON        `json:"lookups,omitempty"`
 
 	Components []Component   `json:"components,omitempty"`
 	FX         *FXConversion `json:"fx,omitempty"`

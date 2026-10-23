@@ -22,6 +22,7 @@
 //! Each area's `ops` module holds the `tariff.*` operations it answers.
 
 pub mod check;
+pub mod constraint;
 pub mod context;
 pub mod diagnostic;
 pub mod docs;

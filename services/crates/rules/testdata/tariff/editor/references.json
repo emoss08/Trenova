@@ -1,0 +1,962 @@
+{
+ "cases": [
+  {
+   "name": "a let: its declaration and every read, interpolations included",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = shipment.distance",
+    "charge \"Linehaul\" = $1/mi * miles",
+    "note \"{miles} loaded\""
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "miles"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "miles"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "miles"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "the ranges are UTF-16 code units of the root file",
+   "source": [
+    "tariff \"Prix ✓\"",
+    "let a = 1",
+    "let b = |a + 1",
+    "charge \"Rate ✓\" = $1 * b"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "from": 20,
+       "to": 21,
+       "text": "a"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "from": 34,
+       "to": 35,
+       "text": "a"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a var: assignments are writes",
+   "source": [
+    "tariff \"t\"",
+    "var to|tal = $0",
+    "for stop in shipment.stops {",
+    "  total += $5",
+    "}",
+    "total = total - $1",
+    "charge \"Stops\" = total"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "write",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "write",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "an input from a use: a given and a vary set it, a monotone target reads it",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" = ra|te * shipment.distance",
+    "test \"t\" {",
+    "  given input.rate = $3/mi",
+    "  expect total > $0",
+    "}",
+    "property \"p\" {",
+    "  vary input.rate",
+    "  expect total nondecreasing in input.rate",
+    "}"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "write",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "write",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "from an assignment target",
+   "source": [
+    "tariff \"t\"",
+    "var total = $0",
+    "tot|al += $5",
+    "charge \"A\" = total"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "write",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "total"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "from a given's input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "charge \"A\" = rate",
+    "test \"t\" {",
+    "  given input.ra|te = $2",
+    "  expect total == $2",
+    "}"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "kind": "write",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a function and its calls",
+   "source": [
+    "tariff \"t\"",
+    "fn f|ee(a: Money) -> Money = a",
+    "charge \"A\" = fee($1)",
+    "charge \"B\" = fee($2) + fee($3)"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "fee"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "fee"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "fee"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "fee"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a constant",
+   "source": [
+    "tariff \"t\"",
+    "const BASE = $25",
+    "charge \"A\" = BAS|E * 2",
+    "minimum BASE"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "BASE"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "BASE"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "BASE"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a record type: its declaration and the annotations naming it",
+   "source": [
+    "tariff \"t\"",
+    "type Br|eak = { from: Weight, rate: Money/cwt }",
+    "input breaks: List<Break> = []",
+    "fn first(all: List<Break>) -> Break? = all[0]",
+    "charge \"A\" = (first(breaks)?.rate ?? $0/cwt) * 1 cwt"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "Break"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "Break"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "Break"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "Break"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a field of a declared record type",
+   "source": [
+    "tariff \"t\"",
+    "type Fee = { amount: Money, floor: Money }",
+    "input fee: Fee = { amount: $5, floor: $1 }",
+    "charge \"A\" = fee.amo|unt.max(fee.floor)"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "amount"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "amount"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "amount"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "an enum's variant: its declaration, bare and qualified uses, and patterns",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Expedited }",
+    "input service: Service = Standard",
+    "let fee = match service {",
+    "  Expe|dited => $50",
+    "  Standard => $0",
+    "}",
+    "charge \"A\" = if service == Service.Expedited { fee } else { $0 }"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "Expedited"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "Expedited"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "Expedited"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a parameter: the body's reads and the call sites that name it",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(amo|unt: Money) -> Money = amount * 2",
+    "charge \"A\" = fee(amount: $1)"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "amount"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "amount"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "amount"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a lambda parameter",
+   "source": [
+    "tariff \"t\"",
+    "let drops = shipment.stops.count(s| => s.kind == Delivery)",
+    "charge \"A\" = $1 * drops"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "s"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "s"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a for binding",
+   "source": [
+    "tariff \"t\"",
+    "for st|op in shipment.stops {",
+    "  charge \"Stop {stop.sequence}\" = $1 * stop.sequence",
+    "}"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "stop"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "stop"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "stop"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "an if let name",
+   "source": [
+    "tariff \"t\"",
+    "if let w = shipment.weight {",
+    "  charge \"A\" = $1/lb * |w",
+    "}"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "w"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a require let name",
+   "source": [
+    "tariff \"t\"",
+    "require let w|eight = shipment.weight else \"No weight\"",
+    "charge \"A\" = $1/lb * weight",
+    "note \"{weight}\""
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "weight"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "weight"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "weight"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a pattern binding",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.pieces {",
+    "  none => $0",
+    "  n => $1 * |n",
+    "}",
+    "charge \"A\" = fee"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "n"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "n"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a vary name: its vary, the reads after it and a monotone target",
+   "source": [
+    "tariff \"t\"",
+    "fn scaled(w: Weight) -> Money = $1/lb * w",
+    "property \"heavier costs more\" {",
+    "  vary |w in 1 lb..100 lb",
+    "  assume w > 2 lb",
+    "  expect scaled(w) >= $0",
+    "  expect scaled(w) nondecreasing in w",
+    "}"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "w"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a vary name from a read",
+   "source": [
+    "library \"l\"",
+    "fn scaled(w: Weight) -> Money = $1/lb * w",
+    "property \"p\" {",
+    "  vary weight in [1 lb, 2 lb]",
+    "  expect scaled(wei|ght) >= $0",
+    "}"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "weight"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "weight"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "an imported name: its declaration is in the library",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ hazmat }",
+    "charge \"Hazmat\" = haz|mat(shipment.distance)",
+    "charge \"Again\" = hazmat(1 mi)"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "hazmat"
+      },
+      "kind": "declaration",
+      "module": "org.accessorials"
+     },
+     {
+      "range": {
+       "text": "hazmat"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "hazmat"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "hazmat"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "an imported enum's variant: its declaration is in the library",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ Zone }",
+    "input zone: Zone = Zone.No|rth",
+    "charge \"A\" = if zone == Zone.North { $1 } else { $2 }"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "North"
+      },
+      "kind": "declaration",
+      "module": "org.accessorials"
+     },
+     {
+      "range": {
+       "text": "North"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "North"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a module alias",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "charge \"A\" = fu|el.perMile($3/gal, peg: $1/gal, mpg: 6) * 1 mi"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "fuel"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "fuel"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "includeDeclaration false leaves the declaration out",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = shipment.distance",
+    "charge \"A\" = $1/mi * miles"
+   ],
+   "input": {
+    "includeDeclaration": false
+   },
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "miles"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "an imported name without its declaration",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ hazmat }",
+    "charge \"Hazmat\" = haz|mat(shipment.distance)"
+   ],
+   "input": {
+    "includeDeclaration": false
+   },
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "hazmat"
+      },
+      "kind": "read",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "hazmat"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "a let inside an option",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    let per|Mile = $2/mi * shipment.distance",
+    "    charge \"Linehaul\" = perMile",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $500",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "references": [
+     {
+      "range": {
+       "text": "perMile"
+      },
+      "kind": "declaration",
+      "module": null
+     },
+     {
+      "range": {
+       "text": "perMile"
+      },
+      "kind": "read",
+      "module": null
+     }
+    ]
+   }
+  },
+  {
+   "name": "nothing on a keyword",
+   "source": [
+    "tariff \"t\"",
+    "l|et miles = shipment.distance",
+    "charge \"A\" = $1/mi * miles"
+   ],
+   "expect": {
+    "references": []
+   }
+  },
+  {
+   "name": "nothing on a contextual keyword",
+   "source": [
+    "tariff \"t\"",
+    "be|st \"Linehaul\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "}"
+   ],
+   "expect": {
+    "references": []
+   }
+  },
+  {
+   "name": "nothing on a schema root",
+   "source": [
+    "tariff \"t\"",
+    "let miles = ship|ment.distance",
+    "charge \"A\" = $1/mi * miles"
+   ],
+   "expect": {
+    "references": []
+   }
+  },
+  {
+   "name": "nothing on a field of the record",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.dist|ance",
+    "charge \"A\" = $1/mi * miles"
+   ],
+   "expect": {
+    "references": []
+   }
+  },
+  {
+   "name": "nothing on a unit",
+   "source": [
+    "tariff \"t\"",
+    "let w = 5 l|b",
+    "charge \"A\" = $1/lb * w"
+   ],
+   "expect": {
+    "references": []
+   }
+  },
+  {
+   "name": "nothing on a text",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Line|haul\" = $1"
+   ],
+   "expect": {
+    "references": []
+   }
+  },
+  {
+   "name": "nothing on no name",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1 |  + 2",
+    "charge \"A\" = $1 * a"
+   ],
+   "expect": {
+    "references": []
+   }
+  }
+ ]
+}

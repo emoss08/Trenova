@@ -36,3 +36,61 @@ func TestImportsEqual(t *testing.T) {
 	assert.False(t, tarifftypes.ImportsEqual(a, []tarifftypes.Import{{Path: "org.x", LibraryID: id, VersionNumber: 2}}))
 	assert.False(t, tarifftypes.ImportsEqual(a, nil))
 }
+
+func TestDeclsEqual_TreatsAConstraintAsPartOfTheDeclaration(t *testing.T) {
+	t.Parallel()
+
+	bounded := func(maxInclusive bool, max string) []tarifftypes.InputDecl {
+		return []tarifftypes.InputDecl{{
+			Name: "rate",
+			Type: "Money/mi",
+			Constraint: &rules.TariffConstraint{Range: &rules.TariffRangeConstraint{
+				Min:          rules.RawJSON(`{"$q":"0.5","u":"$/mi"}`),
+				Max:          rules.RawJSON(max),
+				MaxInclusive: maxInclusive,
+			}},
+		}}
+	}
+	open := []tarifftypes.InputDecl{{Name: "rate", Type: "Money/mi"}}
+
+	assert.True(t, tarifftypes.DeclsEqual(
+		bounded(true, `{"$q":"15","u":"$/mi"}`),
+		bounded(true, `{"u":"$/mi","$q":"15.00"}`),
+	))
+	assert.False(t, tarifftypes.DeclsEqual(open, bounded(true, `{"$q":"15","u":"$/mi"}`)),
+		"adding a constraint is a change")
+	assert.False(t, tarifftypes.DeclsEqual(
+		bounded(true, `{"$q":"15","u":"$/mi"}`),
+		bounded(false, `{"$q":"15","u":"$/mi"}`),
+	), "an excluded maximum is a change")
+	assert.True(t, tarifftypes.DeclsEqual(bounded(false, ``), bounded(false, `null`)),
+		"an open end reads the same absent or null")
+	assert.False(t, tarifftypes.DeclsEqual(bounded(false, ``), bounded(false, `{"$q":"9","u":"$/mi"}`)))
+
+	listed := func(values ...string) []tarifftypes.InputDecl {
+		oneOf := make([]rules.RawJSON, 0, len(values))
+		for _, value := range values {
+			oneOf = append(oneOf, rules.RawJSON(value))
+		}
+		return []tarifftypes.InputDecl{{
+			Name:       "service",
+			Type:       "Text",
+			Constraint: &rules.TariffConstraint{OneOf: oneOf},
+		}}
+	}
+	assert.True(t, tarifftypes.DeclsEqual(listed(`"A"`, `"B"`), listed(`"A"`, `"B"`)))
+	assert.False(t, tarifftypes.DeclsEqual(listed(`"A"`, `"B"`), listed(`"A"`)))
+	assert.False(t, tarifftypes.DeclsEqual(listed(`"A"`, `"B"`), listed(`"A"`, `"C"`)))
+}
+
+func TestInputDeclsFromKeepsTheConstraint(t *testing.T) {
+	t.Parallel()
+
+	constraint := &rules.TariffConstraint{OneOf: []rules.RawJSON{rules.RawJSON(`"A"`)}}
+	decls := tarifftypes.InputDeclsFrom([]rules.TariffInput{{
+		Name:       "service",
+		Type:       "Text",
+		Constraint: constraint,
+	}})
+	assert.Same(t, constraint, decls[0].Constraint)
+}

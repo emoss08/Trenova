@@ -8,24 +8,27 @@
 //! exact factor to SI), charge codes, rate tables, modules, keywords, and literals (`1_200 lb` is
 //! `544.31 kg`, `@2026-10-22` falls on a `Thu`).
 
+use super::choices::{CHOSEN, Label, choice_named, chosen_at, label_at};
 use super::cursor::{Body, Scopes, token_at};
 use super::describe::{
-    flat, keyword_doc, method_signature, si, symbol_signature, type_text, unit_doc,
+    constraint_doc, flat, keyword_doc, method_signature, si, symbol_signature, type_text, unit_doc,
 };
 use super::names::{Parameter, parameters};
+use super::occurrences::{Subject, local_at, local_subject};
 use super::session::Session;
 use super::values::{Values, hover_json};
+use super::vary::{varied_at, vary_type};
 use crate::message;
 use crate::message::{Arg, Message};
 use crate::span::{Range, Span};
-use crate::tariff::check::describe::{snippet, unit_text};
+use crate::tariff::check::describe::{quote, snippet, unit_text};
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods;
 use crate::tariff::check::{SymbolId, SymbolKind, TABLE_METHODS};
 use crate::tariff::docs::Doc;
 use crate::tariff::eval::time::Date;
 use crate::tariff::schema::TableShape;
-use crate::tariff::syntax::ast::{Expr, ExprKind, ItemKind, PatternKind, StmtKind};
+use crate::tariff::syntax::ast::{Choose, Expect, Expr, ExprKind, ItemKind, PatternKind, StmtKind};
 use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::syntax::token::TokenKind;
 use crate::tariff::types::Type;
@@ -48,6 +51,8 @@ pub struct Hover {
     pub doc: Option<Doc>,
     /// The value it had in the last preview: `{"value", "display", "times"}`.
     pub value: Option<Json>,
+    /// For an input with a `where` clause, the values it accepts: `from $0.50/mi to $15/mi`.
+    pub constraint: Option<Message>,
 }
 
 impl Hover {
@@ -59,6 +64,7 @@ impl Hover {
             unit: None,
             doc: None,
             value: None,
+            constraint: None,
         }
     }
 
@@ -101,6 +107,7 @@ pub fn hover(session: &Session<'_>, offset: u32, values: &Values) -> Option<Hove
         TokenKind::Name | TokenKind::TypeName | TokenKind::Code | TokenKind::Keyword => {
             site.name(token.span)
         }
+        TokenKind::Text => site.label(),
         _ => None,
     }
 }
@@ -170,6 +177,12 @@ impl Hovered<'_, '_> {
         if let Some((at, id)) = self.session.symbol_at(self.offset) {
             return Some(self.symbol(at, id));
         }
+        if let Some(local) = local_at(self.session, self.scopes, span) {
+            return Some(match local_subject(self.session, local) {
+                Subject::Symbol(id) => self.symbol(span, id),
+                _ => self.local(span, &local.name, local.span),
+            });
+        }
         self.member(span)
             .or_else(|| self.variant(span))
             .or_else(|| self.argument(span))
@@ -200,6 +213,9 @@ impl Hovered<'_, '_> {
             SymbolKind::Param => self.param_doc_of(id),
             _ => symbol.doc.clone(),
         };
+        if symbol.kind == SymbolKind::Input {
+            hover.constraint = self.constraint_of(symbol);
+        }
         if symbol.module == Some(ModuleId::ROOT)
             && matches!(
                 symbol.kind,
@@ -209,6 +225,79 @@ impl Hovered<'_, '_> {
             hover.value = self.value_of(id);
         }
         hover
+    }
+
+    /// What an input's `where` clause accepts, in words, from the checker's folded constraint.
+    fn constraint_of(&self, symbol: &crate::tariff::check::Symbol) -> Option<Message> {
+        if symbol.module != Some(ModuleId::ROOT) {
+            return None;
+        }
+        let span = symbol.span?;
+        let input = self
+            .session
+            .analysis
+            .inputs
+            .iter()
+            .find(|input| input.span == span)?;
+        Some(constraint_doc(input.constraint.as_ref()?, &input.ty))
+    }
+
+    /// A local the checker has no symbol for: a property's `vary` name with the type of the
+    /// values it takes, or a name in a part of the file the checker did not reach.
+    fn local(&self, span: Span, name: &str, declared: Span) -> Hover {
+        let mut hover = Hover::new(span);
+        let Some(varied) = varied_at(self.session.file(), declared) else {
+            hover.signature = Some(name.to_owned());
+            return hover;
+        };
+        let ty = varied
+            .values
+            .and_then(|values| vary_type(self.session, values));
+        hover = hover.typed(ty.as_ref());
+        hover.signature = Some(match &hover.ty {
+            Some(ty) => format!("vary {name}: {ty}"),
+            None => format!("vary {name}"),
+        });
+        hover.doc = keyword_doc("vary").map(|doc| Doc::Message(Message::new(doc)));
+        hover
+    }
+
+    /// A choice's or option's label, or the label a test's `chosen("…")` names.
+    fn label(&self) -> Option<Hover> {
+        let session = self.session;
+        let file = session.file();
+        if let Some(found) = label_at(file, self.offset) {
+            return Some(match found {
+                Label::Choice(choose) => choice_hover(choose.label.span, choose),
+                Label::OptionOf(choose, option) => {
+                    let mut hover = Hover::new(option.label.span);
+                    hover.signature = Some(format!("option \"{}\"", option.label.text));
+                    hover.doc = Some(Doc::Message(Message::with(
+                        message!("One of the methods {0} chooses between."),
+                        [quote(&format!(
+                            "{} \"{}\"",
+                            choose.kind.keyword(),
+                            choose.label.text
+                        ))],
+                    )));
+                    hover
+                }
+            });
+        }
+        let (span, label) = chosen_at(session, self.scopes, self.offset)?;
+        if let Some(choose) = choice_named(file, &label) {
+            let mut hover = choice_hover(span, choose);
+            hover.ty = Some(String::from("Text?"));
+            return Some(hover);
+        }
+        let mut hover = Hover::new(span);
+        hover.signature = Some(format!("{CHOSEN}(\"{label}\")"));
+        hover.ty = Some(String::from("Text?"));
+        hover.doc = Some(Doc::Message(Message::with(
+            message!("No `best` or `worst` in this file is labelled {0}."),
+            [quote(&format!("\"{label}\""))],
+        )));
+        Some(hover)
     }
 
     /// A parameter's doc: the sentences of its function's doc that name it.
@@ -466,17 +555,24 @@ impl Hovered<'_, '_> {
         Some(hover)
     }
 
-    /// A part of a `given` path: the record field it sets.
+    /// A part of a `given` or `vary` path, or of a monotone `expect`'s target: the record field
+    /// it names, or the input after `input.`.
     fn given(&self, span: Span) -> Option<Hover> {
         let located = super::cursor::locate(self.session.source(), self.session.file(), span.start);
+        self.session.tick(located.visited);
         let stmt = located.stmt()?;
-        let StmtKind::Given { target, .. } = &stmt.kind else {
+        let (StmtKind::Given { target, .. }
+        | StmtKind::Vary { target, .. }
+        | StmtKind::Expect(Expect::Monotone { target, .. })) = &stmt.kind
+        else {
             return None;
         };
         let position = target.iter().position(|part| part.span == span)?;
         let (head, rest) = target.split_first()?;
         if head.text == "input" {
-            return None;
+            let name = rest.first().filter(|name| name.span == span)?;
+            let id = self.session.global(ModuleId::ROOT, &name.text)?;
+            return Some(self.symbol(span, id));
         }
         let mut ty = self.session.schema.root(&head.text)?.clone();
         let mut doc = None;
@@ -523,6 +619,34 @@ impl Hovered<'_, '_> {
         )));
         Some(hover)
     }
+}
+
+/// A choice: its keyword and label, and the options it chooses between.
+fn choice_hover(span: Span, choose: &Choose) -> Hover {
+    let mut hover = Hover::new(span);
+    hover.signature = Some(format!(
+        "{} \"{}\"",
+        choose.kind.keyword(),
+        choose.label.text
+    ));
+    let options: Vec<String> = choose
+        .options
+        .iter()
+        .map(|option| format!("\"{}\"", option.label.text))
+        .collect();
+    let template = match choose.kind {
+        crate::tariff::syntax::ast::ChooseKind::Best => {
+            message!("Bills the option with the lowest subtotal of {0}.")
+        }
+        crate::tariff::syntax::ast::ChooseKind::Worst => {
+            message!("Bills the option with the highest subtotal of {0}.")
+        }
+    };
+    hover.doc = Some(Doc::Message(Message::with(
+        template,
+        [Arg::from(options.join(", "))],
+    )));
+    hover
 }
 
 fn enum_signature(ty: &Type, enumeration: &crate::tariff::types::EnumType) -> String {

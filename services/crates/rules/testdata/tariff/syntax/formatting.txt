@@ -538,3 +538,36 @@ note "{ a + b } and { f( 1 ) }"
 ---
 tariff "t"
 note "{ a + b } and { f( 1 ) }"
+
+=== the new constructs keep their shape
+tariff "t"
+input rate: Money/mi = $2.35/mi   where   $0.50/mi..=$15/mi
+best   "Linehaul"   {
+option "Per mile" {
+charge "Linehaul" = $1
+}
+  // the flat option
+option "Flat" { charge "Flat" = $2 }
+}
+property "p" {
+vary   shipment.weight   in 1 lb..2 lb
+assume  true
+expect total   nondecreasing   in   shipment.weight
+}
+---
+tariff "t"
+input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi
+best "Linehaul" {
+  option "Per mile" {
+    charge "Linehaul" = $1
+  }
+  // the flat option
+  option "Flat" {
+    charge "Flat" = $2
+  }
+}
+property "p" {
+  vary shipment.weight in 1 lb..2 lb
+  assume true
+  expect total nondecreasing in shipment.weight
+}

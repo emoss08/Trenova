@@ -13,6 +13,7 @@ import { requestEditorSave, tariffEditorCommands } from "./tariff-commands";
 import { showHoverAtCursor } from "./tariff-hover";
 import { jumpToDiagnostic, showLineDiagnostics } from "./tariff-lint";
 import { goToDefinitionAtCursor, startRename } from "./tariff-navigate";
+import { findReferences } from "./tariff-references";
 
 /** How long, in ms, `jj` and `jk` wait for their second key: AstroNvim's `timeoutlen`. */
 const ESCAPE_KEYS_TIMEOUT = 500;
@@ -50,6 +51,8 @@ const TARIFF_VIM_NORMAL_KEYS: ReadonlyArray<readonly [keys: string, run: Command
   ["<Space>lf", format],
   ["<Space>lr", startRename],
   ["grn", startRename],
+  ["<Space>lR", findReferences],
+  ["grr", findReferences],
   ["<Space>/", toggleLineComment],
   ["<Space>w", requestEditorSave],
 ];

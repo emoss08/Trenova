@@ -195,6 +195,7 @@ function NumberFieldImpl<T extends FieldValues>({
             error={fieldState.error?.message}
             className={className}
             layout={layout}
+            htmlFor={inputId}
           >
             <div className={cn(endAddon !== undefined && "flex items-start gap-1.5")}>
               <div className="relative min-w-0 flex-1 overflow-hidden">

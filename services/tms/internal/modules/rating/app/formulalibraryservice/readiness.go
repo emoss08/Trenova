@@ -2,8 +2,9 @@ package formulalibraryservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -25,6 +26,7 @@ const (
 	ReadinessCheckDetails  = "details"
 	ReadinessCheckSource   = "source"
 	ReadinessCheckTests    = "tests"
+	ReadinessCheckCoverage = "coverage"
 	ReadinessCheckStatus   = "status"
 	ReadinessCheckReviewer = "reviewer"
 	ReadinessCheckAge      = "submissionAge"
@@ -40,12 +42,13 @@ type ReadinessCheck struct {
 }
 
 type ReadinessResponse struct {
-	CanSubmit   bool             `json:"canSubmit"`
-	CanApprove  bool             `json:"canApprove"`
-	Checks      []ReadinessCheck `json:"checks"`
-	TestTotal   int              `json:"testTotal"`
-	TestPassed  int              `json:"testPassed"`
-	TestFailing []string         `json:"testFailing,omitempty"`
+	CanSubmit   bool                    `json:"canSubmit"`
+	CanApprove  bool                    `json:"canApprove"`
+	Checks      []ReadinessCheck        `json:"checks"`
+	TestTotal   int                     `json:"testTotal"`
+	TestPassed  int                     `json:"testPassed"`
+	TestFailing []string                `json:"testFailing,omitempty"`
+	Coverage    *tariff.CoverageSummary `json:"coverage"`
 }
 
 type submissionGate struct {
@@ -89,10 +92,11 @@ func (s *Service) gate(
 	if err != nil {
 		return nil, err
 	}
+	locale := i18n.FromContext(ctx)
 	return &submissionGate{
-		details: detailsCheck(library),
-		source:  sourceCheck(ctx, content),
-		tests:   testsCheck(content),
+		details: detailsCheck(locale, library),
+		source:  sourceCheck(locale, content),
+		tests:   testsCheck(locale, content),
 		content: content,
 	}, nil
 }
@@ -119,8 +123,10 @@ func (s *Service) Readiness(
 		return nil, err
 	}
 
-	status, reviewer := reviewChecks(library, req.TenantInfo.UserID)
-	age := ageCheck(library, timeutils.NowUnix())
+	locale := i18n.FromContext(ctx)
+	status, reviewer := reviewChecks(locale, library, req.TenantInfo.UserID)
+	age := ageCheck(locale, library, timeutils.NowUnix())
+	coverage := tariff.SummarizeCoverage(library.Source, gate.content.tests.Coverage)
 	blocking := gate.blocking()
 
 	return &ReadinessResponse{
@@ -131,114 +137,166 @@ func (s *Service) Readiness(
 			library.Status == formulatemplate.StatusInReview &&
 			reviewer.Status != ReadinessFail &&
 			age.Status != ReadinessFail,
-		Checks:      append(gate.checks(), status, reviewer, age),
+		Checks: append(
+			gate.checks(),
+			coverageCheck(locale, gate.content, coverage),
+			status,
+			reviewer,
+			age,
+		),
 		TestTotal:   len(gate.content.tests.Tests),
 		TestPassed:  gate.content.passed(),
 		TestFailing: gate.content.failing(),
+		Coverage:    coverage,
 	}, nil
 }
 
-func detailsCheck(library *formulalibrary.FormulaLibrary) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckDetails, Label: "Description"}
+func detailsCheck(locale i18n.Locale, library *formulalibrary.FormulaLibrary) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:   ReadinessCheckDetails,
+		Label: i18n.Translate(locale, "Description"),
+	}
 	if strings.TrimSpace(library.Description) == "" {
 		check.Status = ReadinessFail
-		check.Detail = "Description is missing"
+		check.Detail = i18n.Translate(locale, "Description is missing")
 		return check
 	}
 	check.Status = ReadinessPass
-	check.Detail = "Described"
+	check.Detail = i18n.Translate(locale, "Described")
 	return check
 }
 
-func sourceCheck(ctx context.Context, content *contentCheck) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckSource, Label: "Source checks clean"}
+func sourceCheck(locale i18n.Locale, content *contentCheck) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:   ReadinessCheckSource,
+		Label: i18n.Translate(locale, "Source checks clean"),
+	}
 	if content.checks() {
 		check.Status = ReadinessPass
-		check.Detail = "No errors"
+		check.Detail = i18n.Translate(locale, "No errors")
 		return check
 	}
 	check.Status = ReadinessFail
-	check.Detail = "The source does not check"
+	check.Detail = i18n.Translate(locale, "The source does not check")
 	if first := content.checked.Check.FirstError(); first != nil {
-		check.Detail = first.Message.Localize(i18n.FromContext(ctx))
+		check.Detail = first.Message.Localize(locale)
 	}
-	check.refusal = "Fix the source's errors before submitting: " + check.Detail
+	check.refusal = i18n.Translate(
+		locale,
+		"Fix the source's errors before submitting: {0}",
+		check.Detail,
+	)
 	return check
 }
 
-func testsCheck(content *contentCheck) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckTests, Label: "Tests pass"}
+func testsCheck(locale i18n.Locale, content *contentCheck) ReadinessCheck {
+	check := ReadinessCheck{Key: ReadinessCheckTests, Label: i18n.Translate(locale, "Tests pass")}
 	total := len(content.tests.Tests)
 	passed := content.passed()
 	switch {
 	case !content.checks():
 		check.Status = ReadinessFail
-		check.Detail = "The tests run once the source checks"
+		check.Detail = i18n.Translate(locale, "The tests run once the source checks")
 	case total == 0:
 		check.Status = ReadinessFail
-		check.Detail = "Add at least one test"
-		check.refusal = "Add at least one test block before submitting"
+		check.Detail = i18n.Translate(locale, "Add at least one test")
+		check.refusal = i18n.Translate(locale, "Add at least one test block before submitting")
 	case content.tests.Error != nil || passed < total:
 		check.Status = ReadinessFail
-		check.Detail = fmt.Sprintf("%d of %d pass", passed, total)
-		check.refusal = fmt.Sprintf(
-			"Only %d of %d tests pass (%s); fix the library or its tests before submitting",
-			passed, total, strings.Join(content.failing(), ", "),
+		check.Detail = i18n.Translate(locale, "{0} of {1} pass", passed, total)
+		check.refusal = i18n.Translate(
+			locale,
+			"Only {0} of {1} tests pass ({2}); fix the library or its tests before submitting",
+			passed,
+			total,
+			strings.Join(tariff.FailingTests(locale, content.tests), "; "),
 		)
 	default:
 		check.Status = ReadinessPass
-		check.Detail = fmt.Sprintf("%d of %d pass", passed, total)
+		check.Detail = i18n.Translate(locale, "{0} of {1} pass", passed, total)
 	}
 	return check
 }
 
+func coverageCheck(
+	locale i18n.Locale,
+	content *contentCheck,
+	coverage *tariff.CoverageSummary,
+) ReadinessCheck {
+	verdict := tariff.CoverageCheck(locale, content.checks(), coverage)
+	return ReadinessCheck{
+		Key:    ReadinessCheckCoverage,
+		Label:  verdict.Label,
+		Status: verdict.Status,
+		Detail: verdict.Detail,
+	}
+}
+
 func reviewChecks(
+	locale i18n.Locale,
 	library *formulalibrary.FormulaLibrary,
 	userID pulid.ID,
 ) (status, reviewer ReadinessCheck) {
 	status = ReadinessCheck{
 		Key:    ReadinessCheckStatus,
-		Label:  "Review state",
+		Label:  i18n.Translate(locale, "Review state"),
 		Status: ReadinessPass,
 	}
 	switch library.Status {
 	case formulatemplate.StatusInReview:
-		status.Detail = "In review; awaiting a decision"
+		status.Detail = i18n.Translate(locale, "In review; awaiting a decision")
 	case formulatemplate.StatusActive:
-		status.Detail = "Active; editing the source returns it to draft, and approved templates keep the version they pinned"
+		status.Detail = i18n.Translate(
+			locale,
+			"Active; editing the source returns it to draft, and approved templates keep the version they pinned",
+		)
 	case formulatemplate.StatusDraft, formulatemplate.StatusInactive:
-		status.Detail = "Ready to submit for review"
+		status.Detail = i18n.Translate(locale, "Ready to submit for review")
 	}
 
 	reviewer = ReadinessCheck{
 		Key:    ReadinessCheckReviewer,
-		Label:  "Independent reviewer",
+		Label:  i18n.Translate(locale, "Independent reviewer"),
 		Status: ReadinessPass,
 	}
 	switch {
 	case library.Status != formulatemplate.StatusInReview:
-		reviewer.Detail = "Applies once the library is in review"
+		reviewer.Detail = i18n.Translate(locale, "Applies once the library is in review")
 	case library.SubmittedByID != nil && *library.SubmittedByID == userID:
 		reviewer.Status = ReadinessFail
-		reviewer.Detail = "You submitted this library; someone else must approve it"
+		reviewer.Detail = i18n.Translate(
+			locale,
+			"You submitted this library; someone else must approve it",
+		)
 	default:
-		reviewer.Detail = "You did not submit this library"
+		reviewer.Detail = i18n.Translate(locale, "You did not submit this library")
 	}
 	return status, reviewer
 }
 
-func ageCheck(library *formulalibrary.FormulaLibrary, now int64) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckAge, Label: "Submission age", Status: ReadinessPass}
+func ageCheck(
+	locale i18n.Locale,
+	library *formulalibrary.FormulaLibrary,
+	now int64,
+) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:    ReadinessCheckAge,
+		Label:  i18n.Translate(locale, "Submission age"),
+		Status: ReadinessPass,
+	}
 	if library.Status != formulatemplate.StatusInReview || library.SubmittedAt == nil {
-		check.Detail = "Applies once the library is in review"
+		check.Detail = i18n.Translate(locale, "Applies once the library is in review")
 		return check
 	}
 	if formulatemplate.SubmissionIsStale(library.SubmittedAt, now) {
 		check.Status = ReadinessFail
-		check.Detail = "Older than the 14-day limit, so it must be resubmitted"
+		check.Detail = i18n.Translate(
+			locale,
+			"Older than the 14-day limit, so it must be resubmitted",
+		)
 		return check
 	}
-	check.Detail = "Submitted recently"
+	check.Detail = i18n.Translate(locale, "Submitted recently")
 	return check
 }
 

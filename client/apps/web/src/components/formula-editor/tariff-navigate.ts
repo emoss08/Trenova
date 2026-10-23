@@ -9,6 +9,7 @@ import { translateMessage } from "@trenova/shared/i18n/message";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { tariffDefinition, tariffPrepareRename, tariffRename } from "@trenova/shared/rules/tariff";
 import { unlessUnanswered } from "./tariff-doc";
+import { showEditorNotice } from "./tariff-notice";
 import { tariffServiceFacet, type TariffLanguageService } from "./tariff-service";
 
 /** Moves the cursor onto a range, scrolls it into view and focuses the editor. */
@@ -54,11 +55,16 @@ export function goToDefinition(
   return true;
 }
 
-/** Goes to the declaration of the name under the cursor (F12, and `gd` in Vim). */
+/**
+ * Goes to the declaration of the name under the cursor (F12, `gd` in Vim, and the editor's menu),
+ * or says there is none.
+ */
 export const goToDefinitionAtCursor: Command = (view) => {
   const service = view.state.facet(tariffServiceFacet);
   if (!service) return false;
-  return goToDefinition(service, view, view.state.selection.main.head);
+  if (goToDefinition(service, view, view.state.selection.main.head)) return true;
+  showEditorNotice(view, translate("There is no declaration to go to here"));
+  return true;
 };
 
 type RenameState = { offset: number; name: string; refusal: string | null } | null;
@@ -154,13 +160,16 @@ function renamePanel(view: EditorView, state: NonNullable<RenameState>): Panel {
 }
 
 /**
- * Opens rename for the name under the cursor, after the module says it can be renamed; a name
- * that cannot (a schema root, a standard library name, a keyword) opens the panel with why.
+ * Opens rename for the name under the cursor (or at `offset`), after the module says it can be
+ * renamed; a name that cannot (a schema root, a standard library name, a keyword) opens the panel
+ * with why.
  */
-export function startRename(view: EditorView): boolean {
+export function startRename(
+  view: EditorView,
+  offset: number = view.state.selection.main.head,
+): boolean {
   const service = view.state.facet(tariffServiceFacet);
   if (!service) return false;
-  const offset = view.state.selection.main.head;
   const prepared = unlessUnanswered(
     () =>
       tariffPrepareRename(service.rules(), {

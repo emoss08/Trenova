@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -151,4 +152,58 @@ func testIntPtr(value int) *int {
 //go:fix inline
 func testStringPtr(value string) *string {
 	return new(value)
+}
+
+func TestRatingDetailToModel_MapsEveryChoice(t *testing.T) {
+	t.Parallel()
+
+	chosen := "Flat"
+	perMile := decimal.RequireFromString("1175")
+	flat := decimal.RequireFromString("900.50")
+	detail := &shipmentdomain.RatingDetail{
+		Choices: []tarifftypes.Choice{{
+			Label:    "Linehaul",
+			Kind:     tarifftypes.ChoiceBest,
+			Currency: "USD",
+			Chosen:   &chosen,
+			Options: []tarifftypes.ChoiceOption{
+				{Label: "Per mile", Status: tarifftypes.OptionLost, Subtotal: &perMile},
+				{Label: "Flat", Status: tarifftypes.OptionChosen, Subtotal: &flat},
+				{
+					Label:   "Volume",
+					Status:  tarifftypes.OptionRefused,
+					Refusal: "Volume rates start at 6,000 lb",
+				},
+			},
+		}},
+	}
+
+	model, err := ratingDetailToModel(detail)
+	require.NoError(t, err)
+	require.Len(t, model.Choices, 1)
+	choice := model.Choices[0]
+	assert.Equal(t, "Linehaul", choice.Label)
+	assert.Equal(t, "best", choice.Kind)
+	assert.Equal(t, "USD", choice.Currency)
+	require.NotNil(t, choice.Chosen)
+	assert.Equal(t, "Flat", *choice.Chosen)
+	require.Len(t, choice.Options, 3)
+	assert.Equal(t, "lost", choice.Options[0].Status)
+	require.NotNil(t, choice.Options[0].Subtotal)
+	assert.Equal(t, "1175", *choice.Options[0].Subtotal)
+	assert.Equal(t, "900.5", *choice.Options[1].Subtotal)
+	assert.Nil(t, choice.Options[1].Refusal)
+	assert.Equal(t, "refused", choice.Options[2].Status)
+	assert.Nil(t, choice.Options[2].Subtotal)
+	require.NotNil(t, choice.Options[2].Refusal)
+	assert.Equal(t, "Volume rates start at 6,000 lb", *choice.Options[2].Refusal)
+}
+
+func TestRatingDetailToModel_AnswersNoChoicesAsAnEmptyList(t *testing.T) {
+	t.Parallel()
+
+	model, err := ratingDetailToModel(&shipmentdomain.RatingDetail{})
+	require.NoError(t, err)
+	require.NotNil(t, model.Choices)
+	assert.Empty(t, model.Choices)
 }

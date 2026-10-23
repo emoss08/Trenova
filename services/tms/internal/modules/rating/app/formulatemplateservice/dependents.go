@@ -2,7 +2,6 @@ package formulatemplateservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
@@ -15,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -160,7 +158,7 @@ func valueFailure(
 	return nil
 }
 
-func dependentsRefusal(gate *dependentsGate) error {
+func dependentsRefusal(locale i18n.Locale, gate *dependentsGate) error {
 	if !gate.blocking() {
 		return nil
 	}
@@ -171,29 +169,34 @@ func dependentsRefusal(gate *dependentsGate) error {
 		failure := &gate.Failures[i]
 		total += failure.Count
 		if len(examples) < maxReportedDependents {
-			examples = append(examples, describeDependent(failure))
+			examples = append(examples, describeDependent(locale, failure))
 		}
 	}
 
 	return errortypes.NewValidationError(
 		fieldInputs,
 		errortypes.ErrInvalid,
-		"This version's inputs no longer accept what {0} already set: {1}. Keep the inputs those contracts use, or change the contracts first",
-		stringutils.CountNoun(total, "contract or shipment", "contracts and shipments"),
+		"This version's inputs no longer accept what {0, plural, one {# contract or shipment} other {# contracts and shipments}} already set: {1}. Keep the inputs those contracts use, or change the contracts first",
+		total,
 		strings.Join(examples, "; "),
 	)
 }
 
-func describeDependent(failure *DependentFailure) string {
+func describeDependent(locale i18n.Locale, failure *DependentFailure) string {
 	name := failure.ExampleName
 	if name == "" {
 		name = failure.Kind
 	}
 	if failure.Count > 1 {
-		name = fmt.Sprintf("%s and %d more", name, failure.Count-1)
+		name = i18n.Translate(
+			locale,
+			"{0} and {1, plural, one {# more} other {# more}}",
+			name,
+			failure.Count-1,
+		)
 	}
 	if failure.Path != "" {
-		return fmt.Sprintf("%s (%s: %s)", name, failure.Path, failure.Message)
+		return i18n.Translate(locale, "{0} ({1}: {2})", name, failure.Path, failure.Message)
 	}
-	return fmt.Sprintf("%s (%s)", name, failure.Message)
+	return i18n.Translate(locale, "{0} ({1})", name, failure.Message)
 }
