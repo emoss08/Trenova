@@ -135,6 +135,7 @@ function knownLabels(navigation, pages, headers, recordLinks) {
   for (const [text, entry] of Object.entries(messages)) {
     if (entry.scope?.includes("ts")) {
       labels.add(text);
+      labels.add(text.replace(/\{\d+\}/g, "…"));
     }
   }
   for (const module of navigation.modules) {
@@ -155,9 +156,10 @@ function knownLabels(navigation, pages, headers, recordLinks) {
 }
 
 /**
- * Whether a bold label is text the app shows. Tables name their own create
- * button "New {thing}" from the table's name, so that form is accepted when
- * the thing is itself a label the app uses.
+ * Whether a bold label is text the app shows. A string with placeholders is
+ * written with "…" for each. Tables name their own create button
+ * "New {thing}" from the table's name, so that form is accepted when the
+ * thing is itself a label the app uses.
  */
 function isKnownLabel(label, labels, lowerLabels) {
   if (labels.has(label)) {

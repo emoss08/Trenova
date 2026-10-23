@@ -18,6 +18,10 @@ use serde_json::{Value as Json, json};
 
 const CORPUS: &[(&str, &str)] = &[
     (
+        "bounds",
+        include_str!("../../../testdata/tariff/check/bounds.json"),
+    ),
+    (
         "types",
         include_str!("../../../testdata/tariff/check/types.json"),
     ),

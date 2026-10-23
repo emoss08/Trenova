@@ -187,8 +187,8 @@
     }
   },
   {
-    "name": "a test's given inside the constraint runs, and one outside is an error at the given",
-    "tests": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi\ncharge \"Linehaul\" = rate * 10 mi\ntest \"a rate inside\" {\n  given input.rate = $15/mi\n  expect total == $150\n}\ntest \"a rate outside\" {\n  given input.rate = $1/mi * 20\n  expect total == $200\n}",
+    "name": "a test's given inside the constraint runs, and one computed at run time outside it is an error at the given",
+    "tests": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi\ncharge \"Linehaul\" = rate * 10 mi\nfn twenty() -> Money/mi = $1/mi * 20\ntest \"a rate inside\" {\n  given input.rate = $15/mi\n  expect total == $150\n}\ntest \"a rate outside\" {\n  given input.rate = twenty()\n  expect total == $200\n}",
     "expect": [
       {
         "name": "a rate inside",
@@ -211,8 +211,8 @@
             ]
           },
           "range": {
-            "from": 202,
-            "to": 231
+            "from": 239,
+            "to": 266
           }
         }
       }

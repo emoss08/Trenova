@@ -606,7 +606,12 @@ an existing contract.
 | "… adds money per hundredweight to a weight" | multiply the rate by the quantity it is priced per, or convert with `.in(…)` |
 | "… multiplies money per mile by a weight" | use the quantity the rate is per (`shipment.distance` for `Money/mi`) |
 | "A charge's amount must be money" | the expression is still a rate or a quantity: multiply by the quantity |
-| "… isn't in the accessorial charge catalog" | add the code under accessorial charges, or fix its spelling |
+| "… isn't in the accessorial charge catalog" | take the suggested code (by spelling, or the one whose description matches the charge's label), bill the line as freight (remove `as CODE`), or **Add … to accessorial charges** under the editor |
+| "This is never true: `service` is only ever one of …" | the value isn't one the input's `where` list allows: usually a typo, and the suggested value is the fix |
+| "This is never true / always true: `rate` is always within …" | the input's bounds already decide the comparison: drop it, or fix the bound or the value |
+| "This arm is never matched: …" | the bounds rule the arm out: remove it, or widen the `where` |
+| "…, so no contract can set it and this test proves nothing" | give the test a value inside the input's `where` bounds |
+| "The choice … has no option labelled …" | the suggested option label, or one of the labels listed |
 | "This match on … doesn't cover …" | add the missing ranges, or a `_` arm |
 | "This arm overlaps an arm above it" | make the ranges meet without overlapping (`..500 lb`, `500 lb..`) |
 | "Comparisons can't be chained" | `1 < n and n < 3` |

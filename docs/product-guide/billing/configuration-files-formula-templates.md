@@ -38,6 +38,18 @@ Keywords: tariff editor, formula error, autocomplete, hover, rename, go to defin
 4. Press F12 (or Ctrl-click) on a name to jump to where it is declared, including into a library it comes from, and F2 to rename a binding everywhere it is used.
 5. The format button under the editor (or Shift+Alt+F) lays the file out in Tariff's one style. A file with syntax errors is left as it is until it parses.
 
+### Fix a charge code your catalog doesn't have
+Keywords: unknown charge code, accessorial code, FSC, add accessorial charge, charge code missing
+1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.
+2. A `charge … as CODE` whose code isn't in your accessorial charges is listed under the editor once, with every line that uses it. When a code in your catalog is spelled nearly the same, or its description matches the charge's label, the fix beside the problem changes every use to it.
+3. To bill the line without a code, choose the fix that bills it as a freight line.
+4. To add the code instead, select **Add … to accessorial charges** beside the problem (shown when you may create accessorial charges). The new charge opens with the code and the charge's label filled in; finish it and save, and the problem clears.
+
+### Catch values a contract can never set
+Keywords: never true, always true, where bounds, typo, dead code, unreachable
+1. When a template compares an input with a value its `where` bounds rule out, as in `service == "Guarenteed"` when `service` may only be `"Standard"` or `"Guaranteed"`, the editor warns that the comparison is never true and offers the nearest allowed value as the fix.
+2. It also warns about comparisons the bounds already decide (`rate > $20/mi` when `rate` stops at $15/mi), `match` arms the bounds rule out, and tests that set an input to a value no contract could set.
+
 ### Find every use of a name
 Keywords: find references, where is this used, highlight uses, references
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.

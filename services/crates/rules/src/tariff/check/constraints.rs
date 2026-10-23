@@ -167,7 +167,7 @@ pub fn default(
 }
 
 /// A folded value as the evaluator holds it, read through the wire codec against its type.
-fn run_value(value: &Value, ty: &Type) -> Option<RunValue> {
+pub fn run_value(value: &Value, ty: &Type) -> Option<RunValue> {
     crate::tariff::wire::decode(&wire(value), ty, "").ok()
 }
 

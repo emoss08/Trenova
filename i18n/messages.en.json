@@ -14603,7 +14603,6 @@
     "areas": [
       "apps/web/components",
       "apps/web/lib",
-      "routes/accessorial-charge",
       "routes/billing-queue",
       "routes/desk",
       "routes/detention-policy",
@@ -19416,6 +19415,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Add {0} to accessorial charges": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Add “{0}” to your locations in {1}, so a stop can be booked there. Its code is assigned when it is saved.": {
@@ -24376,7 +24384,6 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other",
-      "routes/accessorial-charge",
       "routes/accounting-inbound",
       "routes/bank-receipt",
       "routes/bank-receipt-batch",
@@ -39820,6 +39827,17 @@
       "apps/web/lib"
     ]
   },
+  "Bill as a freight line instead: remove `as {0}`": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Bill early": {
     "sites": 1,
     "scope": [
@@ -44141,7 +44159,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge",
+      "apps/web/components",
       "routes/shipment"
     ]
   },
@@ -49308,6 +49326,17 @@
       "go/other"
     ]
   },
+  "Change every use to {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "Change feed": {
     "sites": 2,
     "scope": [
@@ -49655,7 +49684,7 @@
     ]
   },
   "Change to {0}": {
-    "sites": 18,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -69458,7 +69487,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "apps/web/components"
     ]
   },
   "Current profile": {
@@ -78530,7 +78559,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "apps/web/components"
     ]
   },
   "Detailed information about this audit event": {
@@ -149677,6 +149706,7 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "go/other",
       "routes/accessorial-charge",
@@ -204923,8 +204953,8 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
-      "routes/accessorial-charge",
       "routes/rate-agreement"
     ]
   },
@@ -248569,7 +248599,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "apps/web/components"
     ]
   },
   "Standard is required": {
@@ -261738,6 +261768,28 @@
       "routes/desk"
     ]
   },
+  "The choice {0} has no option labelled {1}. Did you mean {2}?": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "The choice {0} has no option labelled {1}: its options are {2}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "The choice's label, as written after `best` or `worst`.": {
     "sites": 2,
     "scope": [
@@ -265703,7 +265755,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "apps/web/components"
     ]
   },
   "The flat rate formula template is not available": {
@@ -269819,7 +269871,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "apps/web/components"
     ]
   },
   "The performance review waiting for the driver's sign-off.": {
@@ -271018,7 +271070,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "apps/web/components"
     ]
   },
   "The rate table cells the tests read could not be loaded": {
@@ -278175,6 +278227,17 @@
       "apps/web/components"
     ]
   },
+  "This arm is never matched: {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This arm overlaps an arm above it: {0} matches both": {
     "sites": 2,
     "scope": [
@@ -280708,6 +280771,17 @@
       "routes/admin"
     ]
   },
+  "This is always true: {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "This is how a broker or shipper vetting you sees your record. Findings use your organization's own rules.": {
     "sites": 1,
     "scope": [
@@ -280724,6 +280798,17 @@
     ],
     "areas": [
       "routes/settings"
+    ]
+  },
+  "This is never true: {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "This is not a literal": {
@@ -293494,7 +293579,7 @@
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "apps/web/components"
     ]
   },
   "Unit of {0}": {
@@ -340143,6 +340228,28 @@
       "rules/tariff"
     ]
   },
+  "{0} is also used here": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0} is always within {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0} is archived and cannot be sent": {
     "sites": 1,
     "scope": [
@@ -340960,6 +341067,17 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} is only ever one of {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
     ]
   },
   "{0} is outside its constraint: {1}": {
@@ -341822,7 +341940,7 @@
     ]
   },
   "{0} isn't in the accessorial charge catalog": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -348522,6 +348640,17 @@
       "apps/web/components"
     ]
   },
+  "{0}, so no contract can set it and this test proves nothing": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
   "{0}, stop {1}": {
     "sites": 2,
     "scope": [
@@ -348600,6 +348729,17 @@
     ]
   },
   "{0}. Did you mean {1}?": {
+    "sites": 6,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/rules",
+      "rules/tariff"
+    ]
+  },
+  "{0}. {1} is \"{2}\"; did you mean {1}?": {
     "sites": 2,
     "scope": [
       "go",
