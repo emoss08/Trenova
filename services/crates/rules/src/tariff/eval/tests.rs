@@ -11,7 +11,8 @@
 //!    `shipment.delivery` follow the stops unless a `given` set them;
 //! 3. runs the file;
 //! 4. runs the rest of its body in order, with `charge(CODE)` / `charge("Label")` (the matching
-//!    lines' sum, or `none`), `total` and `lines` in scope. `expect cond` must hold;
+//!    lines' sum, or `none`), `chosen("Label")` (the option that choice last kept, or `none`),
+//!    `total` and `lines` in scope. `expect cond` must hold;
 //!    `expect fails` passes when the rating was refused (with that text, when one is given).
 //!
 //! A test in a library runs its body in order with no rating: `expect`s over function calls.
@@ -250,6 +251,7 @@ impl<'r, 'a> Runner<'r, '_, 'a> {
             checker.view = Some(TestView {
                 lines: bill.lines.clone(),
                 total: bill.total,
+                chosen: interp.choices.last().clone(),
             });
         }
         let outcome = self.expectations(&mut checker, test, &rating);

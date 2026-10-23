@@ -18,7 +18,7 @@
 //!    caused it.
 
 use super::StaticTypes;
-use super::bill::{Clauses, Finished};
+use super::bill::{Choices, Clauses, Finished};
 use super::budget::{Limits, Meter};
 use super::error::{Code, EvalError, Refusal, RefusalText, Stop};
 use super::interp::link::Linked;
@@ -89,6 +89,8 @@ pub struct Run {
     pub outcome: Outcome,
     /// What it did.
     pub trace: Trace,
+    /// The `best` and `worst` choices it evaluated.
+    pub choices: Choices,
 }
 
 /// Runs a loaded program.
@@ -120,6 +122,7 @@ pub fn run_program(request: Request<'_>) -> Run {
     Run {
         outcome,
         trace: interp.trace,
+        choices: interp.choices,
     }
 }
 

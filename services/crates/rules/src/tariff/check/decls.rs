@@ -872,6 +872,7 @@ impl Declarer<'_> {
             expected_yet: false,
             early: BTreeSet::new(),
             expects_refusal: false,
+            choice: super::choose::ChoiceState::default(),
         };
         let result = run(&mut checker);
         let calls = std::mem::take(&mut checker.calls);

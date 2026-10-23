@@ -13,17 +13,19 @@
 //! outside. Library constants are evaluated once per run, on first use.
 //!
 //! - [`link`]: the program's modules, declarations and imports by name.
-//! - `expr`, `stmt`, `call`, `pattern`: expressions, statements, calls and `match` patterns.
+//! - `expr`, `stmt`, `call`, `pattern`: expressions, statements, calls and `match` patterns;
+//!   `choose`: `best` and `worst`.
 
 pub mod link;
 
 mod call;
+mod choose;
 mod expr;
 mod pattern;
 mod stmt;
 
 use super::StaticTypes;
-use super::bill::{Bill, Clauses, Line};
+use super::bill::{Bill, Choices, Clauses, Line};
 use super::budget::Meter;
 use super::error::{EvalError, Refusal, RefusalText, Stop};
 use super::tables::{Need, Tables};
@@ -125,13 +127,16 @@ impl Env {
     }
 }
 
-/// What a test's `expect`s read after the rating: `total` and `lines`, and `charge(…)`.
+/// What a test's `expect`s read after the rating: `total` and `lines`, `charge(…)` and
+/// `chosen(…)`.
 #[derive(Debug, Clone)]
 pub struct TestView {
     /// The finished bill's lines.
     pub lines: Vec<Line>,
     /// The finished bill's total.
     pub total: Decimal,
+    /// The label each choice kept the last time it ran, by the choice's label, for `chosen(…)`.
+    pub chosen: BTreeMap<String, Option<String>>,
 }
 
 /// The interpreter's state for one run of one program.
@@ -150,6 +155,8 @@ pub struct Interp<'p, 'a> {
     pub bill: Bill,
     /// The total clauses written.
     pub clauses: Clauses,
+    /// The `best` and `worst` choices evaluated.
+    pub choices: Choices,
     /// Table cells needed and not carried.
     pub needs: Vec<Need>,
     /// What `expect`s read, in a test after the rating.
@@ -208,6 +215,7 @@ impl<'p, 'a> Interp<'p, 'a> {
             trace: Trace::new(setup.trace),
             bill: Bill::default(),
             clauses: Clauses::default(),
+            choices: Choices::default(),
             needs: Vec::new(),
             view: None,
             constructors: false,

@@ -77,6 +77,10 @@ const CORPUS: &[(&str, &str)] = &[
         "constraints",
         include_str!("../../../testdata/tariff/check/constraints.json"),
     ),
+    (
+        "choices",
+        include_str!("../../../testdata/tariff/check/choices.json"),
+    ),
 ];
 
 fn text(value: &Json) -> String {

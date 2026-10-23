@@ -593,6 +593,199 @@
    }
   },
   {
+   "name": "an input's constraint is reported folded, and a contract value outside it is refused by path",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"Dry van TL\"",
+      "",
+      "/// Paid per loaded mile.",
+      "input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi",
+      "input freeStops: List<Int> = [] where 0..=10",
+      "input minimumCharge: Money? = none where $0..",
+      "",
+      "best \"Linehaul\" {",
+      "  option \"Per mile\" {",
+      "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+      "  }",
+      "  option \"Flat\" {",
+      "    charge \"Flat rate\" = $900",
+      "  }",
+      "}",
+      "charge \"Stops\" = $5 * freeStops.len",
+      "minimum minimumCharge ?? $0"
+     ],
+     "values": {
+      "rule": {
+       "rate": {
+        "$q": "235",
+        "u": "$/mi"
+       }
+      },
+      "agreement": {
+       "freeStops": [
+        {
+         "$n": "2"
+        },
+        {
+         "$n": "12"
+        }
+       ]
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "severity": "error",
+       "code": "input-value",
+       "path": "rule.rate",
+       "message": {
+        "message": "{0} must be from {1} to {2}; {3} is outside it",
+        "args": [
+         "`rate`",
+         "$0.50/mi",
+         "$15.00/mi",
+         "$235.00/mi"
+        ]
+       },
+       "fixes": [],
+       "related": []
+      },
+      {
+       "severity": "error",
+       "code": "input-value",
+       "path": "agreement.freeStops[1]",
+       "message": {
+        "message": "{0} must be from {1} to {2}; {3} is outside it",
+        "args": [
+         "`freeStops[1]`",
+         "0",
+         "10",
+         "12"
+        ]
+       },
+       "fixes": [],
+       "related": []
+      }
+     ],
+     "inputs": [
+      {
+       "name": "rate",
+       "constraint": {
+        "range": {
+         "min": {
+          "$q": "0.5",
+          "u": "$/mi"
+         },
+         "max": {
+          "$q": "15",
+          "u": "$/mi"
+         },
+         "maxInclusive": true
+        }
+       }
+      },
+      {
+       "name": "freeStops",
+       "constraint": {
+        "range": {
+         "min": {
+          "$n": "0"
+         },
+         "max": {
+          "$n": "10"
+         },
+         "maxInclusive": true
+        }
+       }
+      },
+      {
+       "name": "minimumCharge",
+       "constraint": {
+        "range": {
+         "min": {
+          "$q": "0",
+          "u": "$"
+         },
+         "max": null,
+         "maxInclusive": false
+        }
+       }
+      }
+     ],
+     "charges": [
+      {
+       "label": "Linehaul",
+       "code": null
+      },
+      {
+       "label": "Flat rate",
+       "code": null
+      },
+      {
+       "label": "Stops",
+       "code": null
+      }
+     ],
+     "outline": {
+      "items": [
+       {
+        "kind": "header"
+       },
+       {
+        "kind": "input"
+       },
+       {
+        "kind": "input"
+       },
+       {
+        "kind": "input"
+       },
+       {
+        "kind": "choice",
+        "name": "Linehaul",
+        "depth": 0
+       },
+       {
+        "kind": "option",
+        "name": "Per mile",
+        "depth": 1
+       },
+       {
+        "kind": "charge",
+        "name": "Linehaul",
+        "depth": 2
+       },
+       {
+        "kind": "option",
+        "name": "Flat",
+        "depth": 1
+       },
+       {
+        "kind": "charge",
+        "name": "Flat rate",
+        "depth": 2
+       },
+       {
+        "kind": "charge",
+        "name": "Stops",
+        "depth": 0
+       },
+       {
+        "kind": "total",
+        "name": "minimum"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
    "name": "a list constraint and inputs without one",
    "request": {
     "op": "tariff.check",

@@ -51,12 +51,14 @@
 //! | `missing-return`, `return-type`, `recursion`, `recursive-type`, `const-type`, `condition-result`, `annotation-needed`, `branch-mismatch`, `missing-field`, `duplicate`, `given-order`, `given-target`, `not-indexable`, `not-iterable`, `not-summable`, `unordered`, `never-none`, `interpolation`, `pattern`, `quotient`, `unit-type`, `type-arguments`, `range`, `overflow`, `divide-by-zero` | the other rules |
 //! | `unused`, `unused-value`, `unreachable`, `unreachable-arm`, `no-charge`, `not-billed`, `needless-fallback`, `needless-optional-chain`, `needless-let` | warnings |
 //! | `constraint` | an input's `where` constraint: not a range or a list, on a record input, a range of an unordered type or with no end, an empty range or list, a default outside it |
+//! | `choice`, `duplicate`, `unknown-choice` | `best` and `worst`: an empty label, fewer than two options, a label used twice; `chosen(…)` naming no choice |
 //! | `input-value` | a contract input value that does not fit (`tariff.check` with `values`; a `path`, no range) |
 
 mod arms;
 mod calls;
 pub mod catalog;
 mod checker;
+mod choose;
 mod constraints;
 pub mod consts;
 mod decls;
