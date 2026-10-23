@@ -298,6 +298,17 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
     }
   }
   refusal
+  choices {
+    label
+    kind
+    chosen
+    options {
+      label
+      status
+      subtotal
+      refusal
+    }
+  }
   inputs
   skipped {
     code

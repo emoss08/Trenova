@@ -10,7 +10,7 @@ import type {
   TariffSeverity,
 } from "@trenova/shared/types/tariff";
 import { useState, type ReactNode } from "react";
-import { lineOf } from "./tests-panel";
+import { lineOf } from "@/lib/tariff-source-lines";
 
 /** How many rows show before the list folds behind "Show all". */
 const VISIBLE_ROWS = 5;

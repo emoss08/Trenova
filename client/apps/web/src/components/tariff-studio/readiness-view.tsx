@@ -3,6 +3,9 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReadinessCheck, ReadinessResponse } from "@trenova/shared/types/formula-template";
 import { AlertTriangleIcon, CheckCircleIcon, XCircleIcon } from "@trenova/shared/components/icons";
+import { TARIFF_REGION_LABELS } from "@/lib/tariff-coverage";
+import { lineOf } from "@/lib/tariff-source-lines";
+import type { TariffRange } from "@trenova/shared/types/tariff";
 
 export type ReadinessStep = "submit" | "approve";
 
@@ -15,24 +18,72 @@ const STATUS_STYLES: Record<
   fail: { icon: XCircleIcon, className: "text-destructive" },
 };
 
-function CheckRow({ check }: { check: ReadinessCheck }) {
+/** Where a readiness row's regions are in the source, to name their lines and reveal them. */
+export type ReadinessSourceLink = {
+  source: string;
+  onReveal: (range: TariffRange) => void;
+};
+
+function CheckRow({ check, link }: { check: ReadinessCheck; link?: ReadinessSourceLink }) {
+  const t = useT();
   const { icon: Icon, className } = STATUS_STYLES[check.status];
+  const regions = check.regions ?? [];
   return (
     <li className="flex items-start gap-2 px-3 py-1.5 text-xs">
       <Icon className={cn("mt-0.5 size-3.5 shrink-0", className)} aria-hidden />
-      <div className="min-w-0">
-        <span className="font-medium">{check.label}</span>
-        {check.detail && (
-          <span
-            className={cn("text-muted-foreground", check.status === "fail" && "text-destructive")}
-          >
-            {" "}
-            · {check.detail}
-          </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div>
+          <span className="font-medium">{check.label}</span>
+          {check.detail && (
+            <span
+              className={cn("text-muted-foreground", check.status === "fail" && "text-destructive")}
+            >
+              {" "}
+              · {check.detail}
+            </span>
+          )}
+        </div>
+        {regions.length > 0 && (
+          <ul aria-label={t("Regions no test reaches")} className="flex flex-col">
+            {regions.map((region) => {
+              const label = TARIFF_REGION_LABELS[region.kind];
+              const line = link ? t("Ln {0}", lineOf(link.source, region.range.from)) : null;
+              return (
+                <li key={`${region.kind}:${region.range.from}`}>
+                  {link ? (
+                    <button
+                      type="button"
+                      onClick={() => link.onReveal(region.range)}
+                      className="ui-focus-ring hover:bg-surface-hover text-foreground-muted flex w-full items-center gap-2 rounded-sm px-1 py-0.5 text-left"
+                    >
+                      <span>{label}</span>
+                      <span className="text-foreground-subtle ml-auto font-mono text-2xs tabular-nums">
+                        {line}
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="text-foreground-muted px-1">{label}</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </li>
   );
+}
+
+/**
+ * The server's checks with the Studio's own for whatever the server does not judge (the regions
+ * the tests reach, which the browser's run knows), each key once, the server's first.
+ */
+export function withLiveChecks(
+  checks: readonly ReadinessCheck[],
+  live: readonly ReadinessCheck[] | undefined,
+): ReadinessCheck[] {
+  const keys = new Set(checks.map((check) => check.key));
+  return [...checks, ...(live ?? []).filter((check) => !keys.has(check.key))];
 }
 
 function readinessHeading(step: ReadinessStep, ready: boolean, t: TranslateFn): string {
@@ -54,11 +105,17 @@ export function ReadinessView({
   isLoading,
   isError,
   step,
+  liveChecks,
+  link,
 }: {
   data: ReadinessResponse | undefined;
   isLoading: boolean;
   isError: boolean;
   step: ReadinessStep;
+  /** The Studio's checks of the saved source, shown where the server sends none of that key. */
+  liveChecks?: readonly ReadinessCheck[];
+  /** Makes a check's regions name their lines and go to them. */
+  link?: ReadinessSourceLink;
 }) {
   const t = useT();
   const ready = data ? isReadyFor(step, data) : null;
@@ -89,8 +146,8 @@ export function ReadinessView({
   }
 
   const failing = data.checks.filter((check) => check.status === "fail");
-  const relevant =
-    step === "submit" ? data.checks.filter((check) => check.key !== "reviewer") : data.checks;
+  const checks = withLiveChecks(data.checks, liveChecks);
+  const relevant = step === "submit" ? checks.filter((check) => check.key !== "reviewer") : checks;
 
   return (
     <div className="overflow-hidden rounded-md border">
@@ -111,7 +168,7 @@ export function ReadinessView({
       </div>
       <ul className="divide-y">
         {relevant.map((check) => (
-          <CheckRow key={check.key} check={check} />
+          <CheckRow key={check.key} check={check} link={link} />
         ))}
       </ul>
     </div>

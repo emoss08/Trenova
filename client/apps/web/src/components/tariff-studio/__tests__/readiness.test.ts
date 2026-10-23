@@ -56,3 +56,52 @@ describe("tariffReadiness tests row", () => {
     );
   });
 });
+
+describe("tariffReadiness coverage row", () => {
+  const ran: TariffReadinessInput["tests"] = {
+    status: "ran",
+    run: { tests: [], needs: [], error: null },
+    passed: 2,
+    failed: 0,
+    stale: false,
+    cells: "ready",
+    retryCells: () => {},
+  };
+  const coverage = {
+    reached: 2,
+    total: 4,
+    regions: [
+      { range: { from: 10, to: 40 }, kind: "if" as const, hits: 3 },
+      { range: { from: 46, to: 90 }, kind: "else" as const, hits: 0 },
+      { range: { from: 50, to: 80 }, kind: "charge" as const, hits: 0 },
+      { range: { from: 95, to: 120 }, kind: "charge" as const, hits: 1 },
+    ],
+  };
+  const row = (input: TariffReadinessInput) =>
+    tariffReadiness(input, translate).find((check) => check.key === READINESS_KEYS.coverage);
+
+  it("warns, never blocks, with each outermost region no test reaches", () => {
+    expect(row({ ...base, tests: ran, coverage })).toEqual({
+      key: READINESS_KEYS.coverage,
+      label: "Tests reach every region",
+      status: "warn",
+      detail: "Tests reach 2 of 4 regions",
+      regions: [{ range: { from: 46, to: 90 }, kind: "else" }],
+    });
+  });
+
+  it("passes when every region is reached", () => {
+    const all = {
+      ...coverage,
+      reached: 4,
+      regions: coverage.regions.map((region) => ({ ...region, hits: 1 })),
+    };
+    expect(row({ ...base, tests: ran, coverage: all })).toMatchObject({ status: "pass" });
+  });
+
+  it("says nothing without coverage, or while a run is on its way", () => {
+    expect(row({ ...base, tests: ran, coverage: null })).toBeUndefined();
+    expect(row({ ...base, tests: { ...ran, stale: true }, coverage })).toBeUndefined();
+    expect(row({ ...base, tests: { status: "empty" }, coverage })).toBeUndefined();
+  });
+});
