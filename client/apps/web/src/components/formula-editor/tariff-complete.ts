@@ -43,13 +43,51 @@ const COMPLETION_TYPE: Record<TariffCompletionKind, string> = {
 };
 
 /**
+ * The module writes snippets as LSP does (`$1`, `${1:name}`, `$0` for the final cursor, `\$`,
+ * `\}` and `\\` for those characters); CodeMirror reads only braced fields, so a bare `$0`
+ * would land as text with the cursor after the call. Every field becomes `${n}` or
+ * `${n:name}`, and an escaped character becomes itself.
+ */
+export function codeMirrorSnippet(lsp: string): string {
+  let out = "";
+  let index = 0;
+  while (index < lsp.length) {
+    const char = lsp.charAt(index);
+    const next = lsp.charAt(index + 1);
+    if (char === "\\" && next !== "" && "$}\\".includes(next)) {
+      out += next;
+      index += 2;
+      continue;
+    }
+    if (char === "$") {
+      const bare = /^\$(\d+)/.exec(lsp.slice(index));
+      if (bare) {
+        out += `\${${bare[1]}}`;
+        index += bare[0].length;
+        continue;
+      }
+      const braced = /^\$\{(\d+)(?::((?:\\.|[^\\}])*))?\}/.exec(lsp.slice(index));
+      if (braced) {
+        const name = (braced[2] ?? "").replace(/\\([$}\\])/g, "$1");
+        out += name ? `\${${braced[1]}:${name}}` : `\${${braced[1]}}`;
+        index += braced[0].length;
+        continue;
+      }
+    }
+    out += char;
+    index += 1;
+  }
+  return out;
+}
+
+/**
  * What a pick writes: the item's text, or its snippet with tab stops. An item with its own
  * range (`.` rewritten to `?.` on an optional) replaces that range instead of the list's.
  */
 function applyItem(item: TariffCompletion): Completion["apply"] {
   const range = item.range;
   if (item.snippet) {
-    const fill = snippet(item.insert);
+    const fill = snippet(codeMirrorSnippet(item.insert));
     return range ? (view, completion) => fill(view, completion, range.from, range.to) : fill;
   }
   if (!range) return item.insert;
