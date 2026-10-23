@@ -50,7 +50,8 @@ type alongsideSpec struct {
 	// what names the records, for the note a cut-short read leaves.
 	what string
 	// inputs are the table input's fields every connection read sends
-	// (active templates, started by hand).
+	// (active templates, started by hand), or the variables a keyed read
+	// sends beside its keys (the open swaps only, at most twenty).
 	inputs map[string]any
 	// scoped reads it only when the call names one of the list's references
 	// (the credential types beside one worker's credentials, not beside what
@@ -531,7 +532,10 @@ func alongsideVariables(
 	sent map[string]any,
 ) (variables map[string]any, keyed bool) {
 	if len(bound.Keys) > 0 {
-		variables = make(map[string]any, len(bound.Keys))
+		variables = make(map[string]any, len(bound.Keys)+len(spec.inputs))
+		for name, value := range spec.inputs {
+			variables[name] = value
+		}
 		for _, key := range bound.Keys {
 			value, present := sent[key]
 			if !present || value == nil {

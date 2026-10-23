@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"go.uber.org/fx"
@@ -68,7 +67,6 @@ func coreToolProviders() []any {
 	return []any{
 		newGetShipmentTool,
 		provideShipmentListTool,
-		provideGetWorkerTool,
 		newRecallMemoryTool,
 		newComposeTableViewTool,
 		newExplainRateTool,
@@ -82,7 +80,6 @@ func coreToolProviders() []any {
 		newListCarrierIntelEventsTool,
 		newGetCustomerUpdatePreferencesTool,
 		newGetAgentRunTool,
-		provideGetWorkerCredentialTool,
 		provideListReportsTool,
 		provideRunReportTool,
 		provideGetReportRunTool,
@@ -93,7 +90,6 @@ func coreToolProviders() []any {
 		provideDescribeReportDatasetTool,
 		providePreviewReportTool,
 		provideGetShipmentTrackingTool,
-		provideGetWorkerHOSTool,
 		provideGetDispatchBoardTool,
 		provideListWeatherAlertsTool,
 		provideListEmailProfilesTool,
@@ -206,10 +202,6 @@ func provideGetShipmentTrackingTool(
 	return newGetShipmentTrackingTool(shipments, console, telematics, stopEtas)
 }
 
-func provideGetWorkerHOSTool(telematics *telematicsservice.Service) agentports.AgentQueryTool {
-	return newGetWorkerHOSTool(telematics)
-}
-
 func provideGetDispatchBoardTool(
 	board agentports.DispatchConsoleService,
 ) agentports.AgentQueryTool {
@@ -306,20 +298,6 @@ func provideListCustomerPaymentsTool(
 	payments customerpaymentports.CustomerPaymentService,
 ) agentports.AgentQueryTool {
 	return newListCustomerPaymentsTool(payments)
-}
-
-func provideGetWorkerCredentialTool(
-	repo workerports.WorkerCredentialRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetWorkerCredentialTool(repo, permissions)
-}
-
-func provideGetWorkerTool(
-	repo workerports.WorkerRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetWorkerTool(repo, permissions)
 }
 
 func provideGetInboundMessageTool(

@@ -38,8 +38,12 @@ type graphQLGetTool struct {
 	// and needs it.
 	byID       bool
 	idRequired bool
-	beside     besideReads
-	reader     agentports.GraphQLReader
+	// key is the variable the id is sent in: $id, or the one id a record
+	// read by the record it belongs to requires (a driver's hours by
+	// $workerId).
+	key    string
+	beside besideReads
+	reader agentports.GraphQLReader
 }
 
 func newGraphQLGetTool(
@@ -63,8 +67,9 @@ func newGraphQLGetTool(
 		read:    read,
 		reader:  reader,
 	}
+	tool.key = read.getKey()
 	for _, variable := range read.Variables {
-		if variable.Name == graphQLIDVariable {
+		if variable.Name == tool.key {
 			tool.byID, tool.idRequired = true, variable.NonNull
 		}
 	}
@@ -72,7 +77,7 @@ func newGraphQLGetTool(
 		return nil, fmt.Errorf("%s reads by id; its spec names no id parameter", spec.name)
 	}
 	params, required, _, err := read.rootParams(spec.name,
-		map[string]struct{}{graphQLIDVariable: {}})
+		map[string]struct{}{tool.key: {}})
 	if err != nil {
 		return nil, err
 	}
@@ -146,14 +151,21 @@ func (t *graphQLGetTool) Query(
 	}
 
 	node, ok := result.Data[t.read.RootField].(map[string]any)
+	if !ok && t.spec.absent != nil {
+		return t.spec.absent(pulid.ID(named)), nil
+	}
 	if !ok {
 		return nil, fmt.Errorf("%s %s: %w", t.spec.entity, named, errGraphQLRecordMissing)
 	}
 	record := compact(node)
-	if t.spec.shape != nil {
-		t.spec.shape(record)
-	}
 	withheld := relativePaths(result.Withheld, t.read.RootField+".")
+	if t.spec.shape != nil {
+		hidden := make(map[string]struct{}, len(withheld))
+		for _, path := range withheld {
+			hidden[path] = struct{}{}
+		}
+		t.spec.shape(record, hidden, clockFor(params))
+	}
 	beside, besideWithheld, notes, err := t.beside.read(ctx, params, variables, false)
 	if err != nil {
 		return nil, err
@@ -200,9 +212,29 @@ func (t *graphQLGetTool) variables(
 		return nil, "", err
 	}
 	if !id.IsNil() {
-		variables[graphQLIDVariable] = id.String()
+		variables[t.key] = id.String()
 		named = id.String()
 	}
 
 	return variables, named, nil
+}
+
+// getKey is the variable a get's operation takes the record's id in: $id,
+// or the one id it requires, for a record read by the id of the one it
+// belongs to (a driver's hours by $workerId), as the generator proved.
+func (r *graphQLRead) getKey() string {
+	key := ""
+	for _, variable := range r.Variables {
+		if variable.Name == graphQLIDVariable {
+			return graphQLIDVariable
+		}
+		if variable.NonNull && !variable.List && variable.Type == graphQLTypeID {
+			key = variable.Name
+		}
+	}
+	if key == "" {
+		return graphQLIDVariable
+	}
+
+	return key
 }

@@ -11220,7 +11220,7 @@ type CustomerTrackingProfile {
 One selection round. The seed and method are the evidence of how the draw was
 made: the same seed over the same roster reproduces the same names.
 """
-type DOTRandomDraw {
+type DOTRandomDraw @kind(resource: "dot_random_pool") {
   alcoholSelected: Int!
   alcoholTarget: Int!
   businessUnitId: ID!
@@ -11248,7 +11248,7 @@ type DOTRandomDraw {
   version: Int!
 }
 
-type DOTRandomDrawEntry {
+type DOTRandomDrawEntry @kind(resource: "dot_random_pool") {
   businessUnitId: ID!
   completedAt: Timestamp
   createdAt: Timestamp!
@@ -24769,7 +24769,11 @@ type Query {
   documentType(id: ID!): DocumentType
   documentTypes(input: DataTableConnectionInput!): DocumentTypeConnection!
   dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
-  dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
+  """Random selection rounds, newest first: one pool's, or every pool's."""
+  dotRandomDraws(
+    """The pool whose rounds are read. Leave it out for every pool's."""
+    poolId: ID
+  ): [DOTRandomDraw!]!
   dotRandomPool(id: ID!): DOTRandomPool!
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
   dqfRetentionCandidates: [DQFRetentionCandidate!]!
@@ -25325,7 +25329,12 @@ type Query {
   shiftSwapRequest(id: ID!): ShiftSwapRequest!
   shiftSwapRequests(limit: Int, openOnly: Boolean, since: Timestamp, workerId: ID): [ShiftSwapRequest!]!
   shiftTemplate(id: ID!): ShiftTemplate!
-  shiftTemplates(activeOnly: Boolean, limit: Int): [ShiftTemplate!]!
+  shiftTemplates(
+    """Only the patterns in use, leaving out the retired ones."""
+    activeOnly: Boolean
+    """At most this many patterns, from 1 to 200; 200 when left out."""
+    limit: Int
+  ): [ShiftTemplate!]!
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
   shipmentAnalytics(input: ShipmentAnalyticsInput!): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -25644,7 +25653,13 @@ type Query {
   ): [WorkerSafetyEvent!]!
   workerSafetyScorecard(workerId: ID!): SafetyScorecard!
   workerSafetyViolations(safetyEventId: ID, workerId: ID): [WorkerSafetyViolation!]!
-  workerShiftAssignments(activeOnly: Boolean, workerId: ID!): [WorkerShiftAssignment!]!
+  workerShiftAssignments(
+    """
+    Only the pattern the worker is on today, leaving out past and future ones.
+    """
+    activeOnly: Boolean
+    workerId: ID!
+  ): [WorkerShiftAssignment!]!
   """
   A worker's total compensation. The signed-in driver reads their own through
   myTotalCompensation instead.
@@ -28229,7 +28244,7 @@ type SettlementWorkspaceSummary {
 }
 
 """One driver asking another to take a day."""
-type ShiftSwapRequest {
+type ShiftSwapRequest @kind(resource: "shift_swap") {
   businessUnitId: ID!
   """The day offered back, when the swap is a trade rather than a hand-off."""
   counterpartyShiftDate: Timestamp
@@ -33400,7 +33415,7 @@ type Worker {
 }
 
 """What a worker would rather work on one weekday, 0 for Sunday."""
-type WorkerAvailabilityPreference {
+type WorkerAvailabilityPreference @kind(resource: "worker_schedule") {
   businessUnitId: ID!
   createdAt: Timestamp!
   dayOfWeek: Int!
@@ -34806,7 +34821,7 @@ type WorkerSafetyViolation @kind(resource: "worker_safety_event") {
 }
 
 """Which pattern a worker is on, for which period."""
-type WorkerShiftAssignment {
+type WorkerShiftAssignment @kind(resource: "worker_schedule") {
   assignedById: ID
   businessUnitId: ID!
   createdAt: Timestamp!

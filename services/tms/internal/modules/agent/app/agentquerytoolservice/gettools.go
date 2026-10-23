@@ -47,9 +47,15 @@ type getSpec struct {
 	// alongside are the reads it makes beside the record, keyed by the
 	// call (a sync record's tries by its id).
 	alongside []alongsideSpec
-	// shape applies to the record what the screen's resolver does not
-	// (what a sync record's status means).
-	shape func(record map[string]any)
+	// shape applies to a record read through GraphQL what the card's
+	// resolver does not, given the fields withheld from it and the call
+	// (what a sync record's status means; a NonCompliant worker cannot be
+	// assigned; a driver's clocks in minutes).
+	shape func(record map[string]any, withheld map[string]struct{}, clk clock)
+	// absent is what a get whose root returns nothing answers, where nothing
+	// is itself the finding (no ELD has reported a driver's hours) rather
+	// than a missing record.
+	absent func(id pulid.ID) map[string]any
 }
 
 type getTool struct {
@@ -221,6 +227,10 @@ func graphQLGetSpecs() []getSpec {
 		journalEntryGetSpec(),
 		manualJournalGetSpec(),
 		rateAgreementGetSpec(),
+		workerGetSpec(),
+		workerCredentialGetSpec(),
+		dotRandomDrawGetSpec(),
+		workerHOSGetSpec(),
 	}, slices.Concat(accountingGetSpecs(), ediGetSpecs())...)
 }
 

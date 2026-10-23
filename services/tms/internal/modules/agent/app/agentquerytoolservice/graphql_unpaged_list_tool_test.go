@@ -53,7 +53,7 @@ func (r *keyedReader) sent(operation string) *agentports.GraphQLReadRequest {
 func keyedSpec(t *testing.T, name string) *graphQLListSpec {
 	t.Helper()
 
-	for _, spec := range workerRecordReadSpecs() {
+	for _, spec := range graphQLListSpecs() {
 		if spec.name == name {
 			return &spec
 		}
@@ -359,13 +359,13 @@ func TestUnpagedList_ReadsNoRecognitionsWithoutAWorker(t *testing.T) {
 	assert.Equal(t, map[string]any{"openOnly": true, "limit": graphQLListLimit}, sent.Variables)
 }
 
-func TestUnpagedList_AKeyedReadAlongsideTakesNoTableInput(t *testing.T) {
+func TestUnpagedList_AKeyedReadAlongsideTakesOnlyTheVariablesItLeavesToTheSpec(t *testing.T) {
 	t.Parallel()
 
 	spec := keyedSpec(t, toolListWorkerSafetyEvents)
 	spec.alongside[0].inputs = map[string]any{inputStatus: activeStatus}
 	_, err := newGraphQLUnpagedListTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
-	require.ErrorContains(t, err, "takes no table input")
+	require.ErrorContains(t, err, "takes no status of the spec's")
 }
 
 func TestUnpagedList_ReadsTheFleetsOpenEventsByDefaultAndOneWorkersWhole(t *testing.T) {

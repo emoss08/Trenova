@@ -74,6 +74,9 @@ type graphQLAlongside struct {
 	// Variables are a read made instead's variables, described by the root
 	// field arguments they are sent as.
 	Variables []graphQLVariable
+	// Set are the optional variables of a keyed read that the list's call
+	// does not declare, which the spec sets as the screen does.
+	Set []string
 }
 
 type graphQLField struct {

@@ -487,6 +487,7 @@ func graphQLListSpecs() []graphQLListSpec {
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
 		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
+		workforceProgrammeReadSpecs(),
 	)
 }
 

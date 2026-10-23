@@ -260,13 +260,6 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `worker_get` | op | worker | DeskWorkerCard | n/a | id | Same WorkerRepository.GetByID. |
-| `worker_get_credential` | field-no-op | workerCredential | propose DeskWorkerCredential | n/a | id | Same WorkerCredentialRepository via service Get; no op uses workerCredential(id) (DeskWorkerCredentials reads the summary). |
-| `worker_get_dot_random_draw` | op | dotRandomDraw | DotRandomDraw | n/a | id | Same GetDraw; entries are selected by DotRandomDraw. |
-| `worker_get_hos` | op | workerHosState | DeskWorkerHos (alt WorkerHosState) | n/a | workerId | Same TelematicsService.GetWorkerHOSState (telematics read). |
-| `worker_get_schedule` | op | workerShiftAssignments (+ workerAvailabilityPreferences, shiftSwapRequests) | WorkerShiftAssignments (+ WorkerAvailabilityPreferences, ShiftSwapRequests) | unpaged lists | workerId | Same SchedulingService ListAssignments/ListPreferences/ListSwaps; tool's team-scope guard is server-side. |
-| `worker_list_dot_random_draws` | op | dotRandomDraws (+ dotRandomPools) | DotRandomDraws (+ DotRandomPools) | unpaged / cursor | poolId / DOTRandomPoolsInput | Same ListDraws/ListPools. |
-| `worker_list_shift_templates` | op | shiftTemplates | ShiftTemplates | limit only | activeOnly, limit | Same ListTemplates. |
 
 ## Counts per class
 
@@ -314,3 +307,8 @@ for read.
 | `shipment_list` | `DeskRecordShipments` | Shipment binds to no Go type; name the entity in reads.yml |
 | `worker_get_hos` | `DeskWorkerHos` | worker_get_hos names DeskWorkerHos, which reads 2 root fields; a tool reads one |
 | `worker_get_schedule` | `WorkerShiftAssignments` | worker_get_schedule is a get tool, but WorkerShiftAssignments reads workerShiftAssignments, which is not one |
+
+The workforce PR bound both: `worker_get_hos` reads `WorkerHosState`, the telematics page's
+single-root read of the clocks (the tool never returned violations), sent by the worker's id; and
+a get tool may now read a keyed whole list (`worker_get_schedule` reads `WorkerShiftAssignments`
+with the availability and open swaps alongside). See "Gets" in agent-graphql-reads.md.

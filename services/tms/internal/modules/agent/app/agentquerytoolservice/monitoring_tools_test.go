@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -98,20 +97,6 @@ func (f *fakeTelematics) ListWorkerHOSStates(
 	_ int,
 ) ([]*telematics.WorkerHOSState, error) {
 	return f.hos, nil
-}
-
-func (f *fakeTelematics) GetWorkerHOSState(
-	_ context.Context,
-	_ pagination.TenantInfo,
-	workerID pulid.ID,
-) (*telematics.WorkerHOSState, error) {
-	for _, state := range f.hos {
-		if state.WorkerID == workerID {
-			return state, nil
-		}
-	}
-
-	return nil, nil
 }
 
 func trackedShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
@@ -287,58 +272,6 @@ func TestGetShipmentTracking_FindsAShipmentByExactProNumber(t *testing.T) {
 	assert.Contains(t, err.Error(), "shipmentId or proNumber")
 }
 
-func TestGetWorkerHOS_ReadsTheClocksAndMarksAStaleReading(t *testing.T) {
-	t.Parallel()
-
-	workerID := pulid.MustNew("wrk_")
-	feed := &fakeTelematics{hos: []*telematics.WorkerHOSState{{
-		WorkerID:         workerID,
-		DutyStatus:       telematics.DutyStatusDriving,
-		DriveRemainingMs: 90 * 60_000,
-		ShiftRemainingMs: 5 * 3_600_000,
-		RecordedAt:       1,
-		Worker:           &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
-	}}}
-	tool := newGetWorkerHOSTool(feed)
-
-	result, err := tool.Query(
-		t.Context(),
-		testParams(map[string]any{"workerId": workerID.String()}),
-	)
-	require.NoError(t, err)
-
-	row, ok := result.(workerHOSRow)
-	require.True(t, ok)
-	assert.Equal(t, "Maria Ortiz", row.Name)
-	require.NotNil(t, row.DriveRemainingMinutes)
-	assert.EqualValues(t, 90, *row.DriveRemainingMinutes)
-	assert.True(t, row.Stale)
-	assert.Contains(t, row.Note, "do not stop")
-	assert.NotEmpty(t, row.Note)
-
-	unmapped, err := tool.Query(
-		t.Context(),
-		testParams(map[string]any{"workerId": pulid.MustNew("wrk_").String()}),
-	)
-	require.NoError(t, err)
-
-	none, ok := unmapped.(workerHOSRow)
-	require.True(t, ok)
-	assert.Equal(t, "Unknown", none.DutyStatus)
-	assert.True(t, none.Stale)
-	assert.Contains(t, none.Note, "No ELD has reported hours of service")
-	/*
-		gpt-6-luna read "plan on nothing" and zeros on every clock as "no hours
-		left" and proposed no assignment for a driver the person named. Unknown
-		clocks are left out, and the note says unreported hours are a concern
-		to name beside the proposal, not a reason to withhold it.
-	*/
-	assert.Nil(t, none.DriveRemainingMinutes, "an unknown clock is absent, not zero")
-	assert.Nil(t, none.CycleRemainingMinutes)
-	assert.Contains(t, none.Note, "do not stop")
-	assert.NotContains(t, none.Note, "plan on nothing")
-}
-
 type fakeBoard struct {
 	board *dispatchconsoleservice.Board
 	req   *dispatchconsoleservice.GetBoardRequest
@@ -500,7 +433,6 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 			&fakeTelematics{},
 			&fakeStopEtaReader{},
 		),
-		newGetWorkerHOSTool(&fakeTelematics{}),
 		newGetDispatchBoardTool(&fakeBoard{}),
 		newListWeatherAlertsTool(&fakeWeather{}),
 	}

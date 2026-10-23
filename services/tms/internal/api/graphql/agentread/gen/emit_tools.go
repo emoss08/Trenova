@@ -58,6 +58,7 @@ type besideRead struct {
 	Object    bool
 	Own       []string
 	Variables []variable
+	Set       []string
 }
 
 type toolRead struct {
@@ -174,6 +175,7 @@ var graphQLInputs = map[string][]graphQLField{
 {{- if .Keys }}, Keys: []string{ {{- range $i, $v := .Keys }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
 {{- if .Object }}, Object: true{{ end }}
 {{- if .Own }}, Own: []string{ {{- range $i, $v := .Own }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
+{{- if .Set }}, Set: []string{ {{- range $i, $v := .Set }}{{ if $i }}, {{ end }}{{ quote $v }}{{ end -}} }{{ end }}
 {{- if .Variables }}, Variables: []graphQLVariable{
 {{- range .Variables }}
 	{{ template "variable" . }}
@@ -203,6 +205,9 @@ func writeTools(
 	aliases := make(map[string]string)
 	for _, b := range bindings {
 		gt, typed := types[b.Node]
+		if !b.tabled() {
+			gt, typed = goType{}, false
+		}
 		alias := ""
 		if typed {
 			alias = aliasFor(aliases, gt.Path)
@@ -285,6 +290,7 @@ func besideReads(schema *ast.Schema, reads []*alongside, described bool) []besid
 			Keys:      beside.Keys,
 			Object:    beside.Object,
 			Own:       beside.Own,
+			Set:       beside.Set,
 		}
 		if described {
 			read.Variables = variables(schema, &binding{

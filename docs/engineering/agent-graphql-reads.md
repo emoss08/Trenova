@@ -236,7 +236,10 @@ The rule, for each listed tool:
    rather than taking it on trust:
    - the operation is persisted and reads one root field;
    - the field's shape matches the tool's verb: a connection, a list or an `items` container for
-     a list tool, one record for a get;
+     a list tool, one record for a get. A get tool may also read the whole list one record holds,
+     keyed by that record's required id (`worker_get_schedule` reads
+     `workerShiftAssignments(workerId:)`): it binds as an unpaged list keyed by the id its call
+     names, and reads beside it as any such list does;
    - the field's resolver checks the tool's own resource for read. The generator reads the check
      from the resolver's code, and `TestGraphQLReadsCheckTheToolsOwnResource` holds every bound
      tool's policy resource to it, so a read meets the same check `authorize` made.
@@ -244,12 +247,16 @@ The rule, for each listed tool:
    A named binding with no reason fails generation. So does one that names the operation the rule
    would pick anyway. So does any binding, by rule or by name, whose operation requires a
    variable the tool cannot send: a list sends its `DataTableConnectionInput` and
-   `includeTotalCount`, a get sends `id`, any tool takes a scalar, enum or id variable as a
-   parameter of its own (a required `$integrationType` is a required parameter), and a paged list
+   `includeTotalCount`, a get sends `id` (or, for a record read by the id of the one it belongs to,
+   the operation's only required id: a driver's hours by `$workerId`), any tool takes a scalar,
+   enum or id variable as a parameter of its own (a required `$integrationType` is a required parameter), and a paged list
    builds a filter input whose required fields are scalars, enums or ids. A get never takes an
    input object. A list tool never binds to a connection read that selects no `pageInfo`,
    because it could not page. Where the node's type binds to a generated model (`gqlmodel`), the
-   line also names the `entity` whose filter configuration the resolver compiles with.
+   line also names the `entity` whose filter configuration the resolver compiles with. Only a
+   paged list compiles field filters, so only a paged list's binding carries an entity; a get and
+   an unpaged list read by their arguments alone, and may read a generated model
+   (`WorkerHosState`).
 
    The rule binds about two in five of the tools with an operation (49 of 119 in the trial
    recorded in the inventory). Tool names follow the product's words, not always their record
@@ -443,6 +450,18 @@ as the accounting writes do.
 parameters sent inside it (`statuses`, named `status`), and the input's `search` is the tool's
 `query`. Its record type's fields are not filters, so it needs no Go entity and offers no sort;
 the near-miss probes drop one filter input field at a time.
+A read alongside may instead be an unpaged list keyed by the list's own arguments (a worker's
+recognitions beside their safety events). The generator proves that each of its variables is one
+the list's operation declares, of the same type, and the tool sends it the value the call sent,
+and makes the read only when the call names every one of them: with no worker named, the safety
+events list reads every worker's events and no recognitions. It takes no table input and is never
+cut short. An optional variable of its own that the list's operation does not declare is the
+spec's to set as the screen does (`inputs`): a worker's schedule reads their swaps with
+`openOnly: true` and `limit: 20`, as the repository tool did. The generator records those
+variables, and a spec that sets any other is refused at construction; a required one the list
+does not declare fails generation. A read alongside marked `scoped` is made only when the call names one of the list's
+records: the credential types come beside one worker's credentials, as the repository tool read
+them, and not beside what falls due across the organization.
 
 **Operations on another bespoke input** (`FuelPurchasesInput`, `WatchtowerItemsInput`,
 `FactoringNoaListInput`, the side `filter:` inputs, …). Each input field is a parameter under its
@@ -727,6 +746,13 @@ Each module's PR:
 | Rates | `rate_get_agreement` | none | reads `DeskRateAgreementCard` on the new `rateAgreement(id)` root. Its lanes are the new `lanes(first: 50)` field, the live lanes (current and starting later) the Desk's card pages, with `laneCount`, where the repository tool loaded every rule in force and cut the result at 50. The agreement's and each lane's tariff `inputs`, an accessorial's amount, cap and condition, the review comment and the version's change message stay Restricted, as the repository view gated them; the container fields (`lanes`, `laneCount`, `accessorials`, `fuelBinding`, `currentVersion`) and `fuelSurchargeProgramId` are declared Internal so their Restricted leaves are judged one by one. Inputs come as Tariff wire values, where the repository view wrote them as display text |
 | Rates | `rate_list_fuel_index_prices` | none | reads `DeskFuelIndexPrices`. `FuelIndexPrice` had no kind, so nothing was gated; it now declares `@kind(resource: "fuel_surcharge_program")` (Internal by default), as do `FuelIndexLatestPrice` and `FuelProgramCurrentRate` that carry it |
 | Rates | `rate_list_fuel_surcharge_programs` | none | reads `DeskFuelProgramCurrentRates`; `FuelProgramCurrentRate` declares `@kind(resource: "fuel_surcharge_program")` and gains `id`, the program's. The repository tool's per-row note (no price on file, a price outside the table) is the spec's `shape`, and is left off a row whose price or rate was withheld |
+| Workforce | `worker_get` | `leaveType`, `profile.nextTrainingDue`, `profile.safetyRating` | reads `DeskWorkerCard`, which now also selects what the repository row carried (postal code, emergency contact, leave type, termination, last MVR check, next training due, safety rating, compliance status, ELD and short-haul exemptions). `worker` declares none of the three newly withheld fields, so they take its Restricted default, where the repository row returned them ungated; they were not declared Internal, which would widen what a person whose role reaches only Internal sees. The contact, address, hire and termination dates and disqualification reason stay Restricted, as the repository row gated them. `profile.licenseNumber` is Confidential and now named in `withheldByAccess` rather than left out silently. `worker` now declares `profile` Internal: the field that holds the profile took the Restricted default, so the guard withheld the whole profile at Internal (`worker_list` included) even though each of its fields carries its own sensitivity, which still applies. The spec's `shape` folds a NonCompliant credential into `canBeAssigned`, as `worker_list` does |
+| Workforce | `worker_get_credential` | `notes`, `archiveReason` | reads the new `DeskWorkerCredential`; `worker_credential` keeps both Restricted, where the repository row returned them ungated. The operation never selects `number`. `worker_credential` now declares its `worker` and `credentialType` links Internal: they took the Restricted default, so at Internal the guard withheld the holder and the type outright (`worker_list_credentials` included); each linked record is still gated by its own kind, so the holder shows the worker reference view to a reader who cannot read workers |
+| Workforce | `worker_get_dot_random_draw` | none | reads `DotRandomDraw`. `DOTRandomDraw` and `DOTRandomDrawEntry` had no kind (neither is named for `dot_random_pool`), so the guard did not gate them and a reader below Internal got every field; both now declare `@kind(resource: "dot_random_pool")`, whose fields default to Internal, on every read of the type, the random testing page's included. Each selection's `worker` shows the worker reference view (the name the repository row carried) to a reader who cannot read workers |
+| Workforce | `worker_get_hos` | none | reads `WorkerHosState`, the telematics page's single-root read; `DeskWorkerHos` reads the violations beside it, which the tool never returned. `WorkerHosState` has no kind and stays ungated, as the repository tool and the page read it: declaring `worker` would put every clock under the worker's Restricted default |
+| Workforce | `worker_get_schedule` | none | reads `WorkerShiftAssignments` with `WorkerAvailabilityPreferences` and `ShiftSwapRequests` alongside, keyed by the worker; swaps are read only for a reader who may read `shift_swap`, open only, at most 20, as before. The resolvers' team scope governs. `WorkerShiftAssignment` and `WorkerAvailabilityPreference` now declare `@kind(resource: "worker_schedule")` and `ShiftSwapRequest` `@kind(resource: "shift_swap")`, all Internal by default; each assignment's `shiftTemplate` shows the shift template reference view (code, name, colour, start, length) to a reader who cannot read shift templates, and a swap's workers the worker reference view |
+| Workforce | `worker_list_dot_random_draws` | none | reads `DotRandomDraws` (one pool's or every pool's, the server's page of 50) with the active pools alongside (`DotRandomPools`); every field is Internal |
+| Workforce | `worker_list_shift_templates` | none | reads `ShiftTemplates`, the active patterns unless the call asks for the retired ones, 25 unless it asks for more, at most 100; every field is Internal. The spec's `shape` spells out the days, start and length |
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted
@@ -833,8 +859,13 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   `withheldByAccess`. A get for several ids (`invoice_get`) runs one read per id, at most 10
   concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
   parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
-  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, and a card
-  whose root returns nothing is a missing record, not an empty one. A get's node needs no Go entity: it
+  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, or as the
+  one id the operation requires (`$workerId` for `worker_get_hos`), and a card whose root returns
+  nothing is a missing record, not an empty one, unless the spec's `absent` says what nothing
+  means (no ELD has reported the driver's hours, which is the finding). A spec's `shape` applies
+  to the record what the card's resolver does not, as a list's does to each row: `worker_get`
+  folds a NonCompliant credential into `canBeAssigned`, `worker_get_hos` gives the clocks in
+  minutes and marks a reading over twelve hours old as stale. A get's node needs no Go entity: it
   filters by nothing but its id, so a card type (`JournalEntryCard`) binds as a record does. A
   card the get reads declares `@kind` of the record it draws, so the parts it carries that have no
   kind of their own (a journal's lines) are gated by that record's sensitivities rather than by
