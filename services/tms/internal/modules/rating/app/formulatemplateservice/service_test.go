@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -489,7 +492,13 @@ func TestImport_ChecksEachSourceAndCreatesDrafts(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result.Created, 1)
 	assert.Equal(t, formulatemplate.StatusDraft, result.Created[0].Status)
-	assert.Equal(t, perMileSource, result.Created[0].Source)
+	assert.Equal(t, "Per Mile (imported)", result.Created[0].Name)
+	assert.Equal(
+		t,
+		strings.Replace(perMileSource, `tariff "Per Mile"`, `tariff "Per Mile (imported)"`, 1),
+		result.Created[0].Source,
+		"the file's name is written into the header",
+	)
 	assert.Len(t, result.Created[0].Inputs, 2)
 
 	_, err = deps.svc.Import(t.Context(), &ImportTemplatesRequest{
@@ -505,4 +514,213 @@ func TestImport_ChecksEachSourceAndCreatesDrafts(t *testing.T) {
 		Template:      &ImportTemplatePayload{Name: "Old", Source: perMileSource},
 	})
 	assert.Contains(t, validationFields(t, err), "exportVersion")
+}
+
+func TestCreate_TakesTheNameFromTheSourceHeader(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	deps.repo.On("Create", mock.Anything, mock.Anything).Return(returnsTemplate, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).Return(returnsVersion, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	template := newTestTemplate()
+	template.Name = "Something the header does not say"
+	created, err := deps.svc.Create(t.Context(), template, newTenantInfo().UserID)
+	require.NoError(t, err)
+
+	assert.Equal(t, "Per Mile", created.Name)
+}
+
+func TestCreate_RefusesAHeaderNameLongerThanANameMayBe(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	template := newTestTemplate()
+	template.Source = strings.Replace(
+		perMileSource,
+		`tariff "Per Mile"`,
+		`tariff "`+strings.Repeat("a", 101)+`"`,
+		1,
+	)
+	_, err := deps.svc.Create(t.Context(), template, newTenantInfo().UserID)
+
+	assert.Contains(t, validationFields(t, err), "name")
+	deps.repo.AssertNotCalled(t, "Create")
+}
+
+func TestUpdate_RenamingTheHeaderOfAnActiveTemplateKeepsItActive(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	original := newTestTemplate()
+	payload := &formulatemplate.FormulaTemplate{
+		ID:             original.ID,
+		OrganizationID: original.OrganizationID,
+		BusinessUnitID: original.BusinessUnitID,
+		Name:           original.Name,
+		Description:    original.Description,
+		Source: strings.Replace(
+			original.Source,
+			`tariff "Per Mile"`,
+			`tariff "Per Mile, regional"`,
+			1,
+		),
+		Version: original.Version,
+	}
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(returnsTemplate, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	updated, err := deps.svc.Update(t.Context(), payload, newTenantInfo().UserID)
+	require.NoError(t, err)
+
+	assert.Equal(t, "Per Mile, regional", updated.Name)
+	assert.Equal(t, formulatemplate.StatusActive, updated.Status, "a rename bills nothing new")
+	assert.EqualValues(t, 1, updated.CurrentVersionNumber)
+	deps.versionRepo.AssertNotCalled(t, "Create")
+}
+
+func TestUpdate_RenamingAndChangingWhatItBillsReturnsItToDraft(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	original := newTestTemplate()
+	payload := &formulatemplate.FormulaTemplate{
+		ID:             original.ID,
+		OrganizationID: original.OrganizationID,
+		BusinessUnitID: original.BusinessUnitID,
+		Description:    original.Description,
+		Source: strings.Replace(
+			original.Source,
+			`tariff "Per Mile"`,
+			"tariff \"Per Mile, regional\"\n\n// billed per loaded mile",
+			1,
+		),
+		Version: original.Version,
+	}
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(returnsTemplate, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).Return(returnsVersion, nil)
+	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	updated, err := deps.svc.Update(t.Context(), payload, newTenantInfo().UserID)
+	require.NoError(t, err)
+
+	assert.Equal(t, "Per Mile, regional", updated.Name)
+	assert.Equal(t, formulatemplate.StatusDraft, updated.Status)
+	assert.EqualValues(t, 2, updated.CurrentVersionNumber)
+}
+
+func TestDuplicate_NamesEachCopyInItsHeader(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	source := newTestTemplate()
+	deps.repo.On("GetByIDs", mock.Anything, mock.Anything).
+		Return([]*formulatemplate.FormulaTemplate{source}, nil)
+	deps.repo.On("TakenNames", mock.Anything, &formulatemplateports.ListTakenNamesRequest{
+		TenantInfo: newTenantInfoFor(source),
+		Bases:      []string{"Per Mile (Copy)"},
+	}).Return(map[string]struct{}{"Per Mile (Copy)": {}}, nil)
+	deps.repo.On("BulkCreate", mock.Anything, mock.Anything).
+		Return(returnsTemplates, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).Return(returnsVersion, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	copies, err := deps.svc.Duplicate(t.Context(), duplicateRequest(source))
+	require.NoError(t, err)
+
+	require.Len(t, copies, 1)
+	assert.Equal(t, "Per Mile (Copy) 2", copies[0].Name)
+	assert.Equal(
+		t,
+		strings.Replace(perMileSource, `tariff "Per Mile"`, `tariff "Per Mile (Copy) 2"`, 1),
+		copies[0].Source,
+	)
+	assert.Equal(t, formulatemplate.StatusDraft, copies[0].Status)
+	assert.Equal(t, &source.ID, copies[0].SourceTemplateID)
+}
+
+func TestDuplicate_RefusesACopyWhoseNameWouldPassTheLimit(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	source := newTestTemplate()
+	source.Name = strings.Repeat("a", 96)
+	source.Source = strings.Replace(perMileSource, `tariff "Per Mile"`, `tariff "`+source.Name+`"`, 1)
+	deps.repo.On("GetByIDs", mock.Anything, mock.Anything).
+		Return([]*formulatemplate.FormulaTemplate{source}, nil)
+	deps.repo.On("TakenNames", mock.Anything, mock.Anything).Return(map[string]struct{}{}, nil)
+
+	_, err := deps.svc.Duplicate(t.Context(), duplicateRequest(source))
+
+	assert.Contains(t, validationFields(t, err), "templateIds[0].name")
+	deps.repo.AssertNotCalled(t, "BulkCreate")
+}
+
+func returnsTemplates(
+	_ context.Context,
+	entities []*formulatemplate.FormulaTemplate,
+) []*formulatemplate.FormulaTemplate {
+	return entities
+}
+
+func duplicateRequest(
+	source *formulatemplate.FormulaTemplate,
+) *formulatemplateports.BulkDuplicateFormulaTemplateRequest {
+	return &formulatemplateports.BulkDuplicateFormulaTemplateRequest{
+		TenantInfo:  newTenantInfoFor(source),
+		TemplateIDs: []pulid.ID{source.ID},
+	}
+}
+
+func newTenantInfoFor(template *formulatemplate.FormulaTemplate) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID: template.OrganizationID,
+		BuID:  template.BusinessUnitID,
+	}
+}
+
+func TestFork_NamesTheForkInItsHeader(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	source := newTestTemplate()
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(source, nil)
+	deps.versionRepo.On("GetLatestVersion", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("no version"))
+	deps.repo.On("Create", mock.Anything, mock.Anything).Return(returnsTemplate, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).Return(returnsVersion, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	forked, err := deps.svc.Fork(t.Context(), &formulatemplateports.ForkTemplateRequest{
+		TenantInfo:       newTenantInfoFor(source),
+		SourceTemplateID: source.ID,
+		NewName:          "Per Mile, West",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "Per Mile, West", forked.Name)
+	assert.Equal(
+		t,
+		strings.Replace(perMileSource, `tariff "Per Mile"`, `tariff "Per Mile, West"`, 1),
+		forked.Source,
+	)
+	assert.Equal(t, &source.ID, forked.SourceTemplateID)
+}
+
+func TestNextAvailableName(t *testing.T) {
+	t.Parallel()
+
+	taken := map[string]struct{}{
+		"Per Mile (Copy)":   {},
+		"Per Mile (Copy) 2": {},
+	}
+
+	assert.Equal(t, "Flat (Copy)", nextAvailableName(taken, "Flat (Copy)"))
+	assert.Equal(t, "Per Mile (Copy) 3", nextAvailableName(taken, "Per Mile (Copy)"))
 }

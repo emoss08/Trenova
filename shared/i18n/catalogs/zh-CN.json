@@ -4655,6 +4655,7 @@
   "Formula template {0} has never been approved, so it cannot rate shipments yet": "公式模板 {0} 从未获得批准，因此尚不能为运单计价",
   "Formula template {0} is approved to bill from {1}, so it cannot rate shipments before then": "公式模板 {0} 已批准自 {1} 起计费，因此在此之前无法为运单计费",
   "Formula template {0} is archived and no longer rates shipments": "公式模板 {0} 已归档，不再为运单计价",
+  "Formula templates not found": "找不到公式模板",
   "Formulas": "公式",
   "Foundry takes a resource name, not a region": "Foundry 使用资源名称，而不是区域",
   "Fragile": "易碎",

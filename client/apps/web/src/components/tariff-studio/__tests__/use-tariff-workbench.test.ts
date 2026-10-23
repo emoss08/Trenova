@@ -1,6 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook } from "@testing-library/react";
 import { rulesSync } from "@trenova/shared/rules/runtime";
+import { history, undo } from "@codemirror/commands";
+import { EditorState } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 import { describe, expect, it, vi } from "vitest";
 import { createElement, type ReactNode } from "react";
 import { useTariffEditorBinding, useTariffWorkbench } from "../use-tariff-workbench";
@@ -33,6 +36,15 @@ describe("useTariffEditorBinding before the editor has loaded", () => {
     );
     result.current.appendToSource('test "t" {\n  expect 1 == 1\n}\n');
     expect(source).toBe('library "org.x"\n\ntest "t" {\n  expect 1 == 1\n}\n');
+  });
+
+  it("writes an edit made outside the editor to the form", () => {
+    let source = 'tariff "Old"\ncharge "A" = $1\n';
+    const { result } = renderHook(() =>
+      useTariffEditorBinding({ read: () => source, write: (next) => (source = next) }),
+    );
+    result.current.applyEdit({ range: { from: 7, to: 12 }, insert: '"New name"' });
+    expect(source).toBe('tariff "New name"\ncharge "A" = $1\n');
   });
 
   it("keeps the same functions from render to render", () => {
@@ -168,5 +180,29 @@ property "heavier never bills less" {
       { wrapper },
     );
     expect(result.current.coverage).toBeNull();
+  });
+});
+
+describe("useTariffEditorBinding with the editor", () => {
+  it("applies an edit made outside the editor as one undoable change, leaving focus where it is", () => {
+    const write = vi.fn();
+    const view = new EditorView({
+      state: EditorState.create({ doc: 'tariff "Old"\n', extensions: [history()] }),
+      parent: document.body,
+    });
+    const { result } = renderHook(() =>
+      useTariffEditorBinding({ read: () => view.state.doc.toString(), write }),
+    );
+    result.current.setEditorView(view);
+
+    result.current.applyEdit({ range: { from: 7, to: 12 }, insert: '"N"' });
+    result.current.applyEdit({ range: { from: 7, to: 10 }, insert: '"Ne"' });
+
+    expect(view.state.doc.toString()).toBe('tariff "Ne"\n');
+    expect(view.hasFocus).toBe(false);
+    expect(write).not.toHaveBeenCalled();
+    undo(view);
+    expect(view.state.doc.toString()).toBe('tariff "Old"\n');
+    view.destroy();
   });
 });

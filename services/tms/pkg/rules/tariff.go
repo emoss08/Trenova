@@ -22,6 +22,7 @@ const (
 	OpTariffEvaluate     = "tariff.evaluate"
 	OpTariffTest         = "tariff.test"
 	OpTariffFormat       = "tariff.format"
+	OpTariffSetName      = "tariff.setName"
 	OpTariffCatalog      = "tariff.catalog"
 	OpTariffScaffoldTest = "tariff.scaffoldTest"
 )
@@ -562,6 +563,16 @@ type TariffFormatted struct {
 	Diagnostics []TariffDiagnostic `json:"diagnostics,omitempty"`
 }
 
+type TariffSetNameRequest struct {
+	Source string `json:"source"`
+	Name   string `json:"name"`
+}
+
+type TariffNamed struct {
+	Source string       `json:"source"`
+	Change TariffChange `json:"change"`
+}
+
 type TariffScaffoldRequest struct {
 	Source  string             `json:"source"`
 	Context *TariffContext     `json:"context"`
@@ -621,6 +632,15 @@ func (r *Runtime) FormatTariff(ctx context.Context, source string) (*TariffForma
 	return &result, nil
 }
 
+func (r *Runtime) SetTariffName(ctx context.Context, source, name string) (*TariffNamed, error) {
+	var result TariffNamed
+	request := &TariffSetNameRequest{Source: source, Name: name}
+	if err := r.Call(ctx, OpTariffSetName, request, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (r *Runtime) TariffCatalog(ctx context.Context) (RawJSON, error) {
 	return r.CallRaw(ctx, OpTariffCatalog, []byte("{}"))
 }
@@ -650,6 +670,10 @@ func TestTariff(ctx context.Context, req *TariffTestRequest) (*TariffTestRun, er
 
 func FormatTariff(ctx context.Context, source string) (*TariffFormatted, error) {
 	return Default().FormatTariff(ctx, source)
+}
+
+func SetTariffName(ctx context.Context, source, name string) (*TariffNamed, error) {
+	return Default().SetTariffName(ctx, source, name)
 }
 
 func TariffCatalog(ctx context.Context) (RawJSON, error) {

@@ -645,7 +645,6 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListRecurringShipmentsTool(nil)),
 		specOf(newListFormulaTemplatesTool(nil)),
 		specOf(newListEquipmentManufacturersTool(nil)),
-		specOf(newListTableChangeAlertsTool(nil)),
 	}
 }
 

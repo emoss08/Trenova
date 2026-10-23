@@ -3,15 +3,17 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormulaTemplateFormValues } from "@trenova/shared/types/formula-template";
 import { Controller, useFormContext, useFormState } from "react-hook-form";
-import { sectionDomId } from "../studio-context";
+import { sectionDomId, useStudioActions } from "../studio-context";
 
 /**
  * The template's name and what it is for, written in place: a large
  * borderless name and a description that grows as it is written. Everything
- * the template bills is in its source.
+ * the template bills is in its source, and so is the name: it is the
+ * `tariff "…"` header, which this field writes as it is typed.
  */
 export function DetailsHero() {
   const t = useT();
+  const { setName } = useStudioActions();
   const { control } = useFormContext<FormulaTemplateFormValues>();
   const { errors } = useFormState({ control, name: ["name", "description"] });
 
@@ -28,7 +30,11 @@ export function DetailsHero() {
               name={field.name}
               value={field.value ?? ""}
               onBlur={field.onBlur}
-              onChange={(event) => field.onChange(event.target.value.replace(/\n/g, " "))}
+              onChange={(event) => {
+                const name = event.target.value.replace(/\n/g, " ");
+                field.onChange(name);
+                setName(name);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter") event.preventDefault();
               }}

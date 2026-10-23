@@ -8,6 +8,7 @@ import {
 } from "@/components/tariff-studio/use-tariff-workbench";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useTariffCheckContext } from "@/hooks/use-tariff-check-context";
+import { hasMaterialChange } from "@/lib/formula-template-material";
 import { formulaTemplate } from "@/lib/queries/formula-template";
 import type { EditorView } from "@codemirror/view";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +16,7 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
+import { tariffSetName } from "@trenova/shared/rules/tariff";
 import type {
   FormulaDraftContent,
   FormulaTemplate,
@@ -36,6 +38,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -141,6 +144,11 @@ type StudioActionsValue = StudioProps & {
   applyFix: (fix: Pick<TariffFix, "changes">) => void;
   /** Appends a `test` block to the source, through the editor so it can be undone. */
   appendToSource: (text: string) => void;
+  /**
+   * Names the template: writes `name` into the source's `tariff "…"` header through the editor,
+   * so it can be undone. The header is the name; the form's `name` follows it.
+   */
+  setName: (name: string) => void;
   openDefinition: (target: TariffDefinitionTarget) => void;
   closeDefinition: () => void;
   /** The editor as it is, saved or not, in the shape Nova's calls read. */
@@ -223,7 +231,23 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
   });
   const usageTotal = usage?.usages.reduce((sum, item) => sum + item.count, 0) ?? 0;
 
-  const material = mode === "edit" && isDirty && template !== null && template.source !== text;
+  // The name is the header's. Kept in the form so readiness, Nova's draft and the name field's
+  // errors read it; an edit to the header from either side lands here.
+  const headerName = check.header?.name ?? "";
+  useEffect(() => {
+    if ((form.getValues("name") ?? "") === headerName) return;
+    form.setValue("name", headerName);
+    form.clearErrors("name");
+  }, [form, headerName]);
+
+  const material = useMemo(
+    () =>
+      mode === "edit" &&
+      isDirty &&
+      template !== null &&
+      hasMaterialChange(rules, template, { name: headerName, source: text }),
+    [mode, isDirty, template, rules, headerName, text],
+  );
 
   const readiness = useMemo(
     () =>
@@ -285,10 +309,15 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
     }
   }, []);
 
-  const { setEditorView, reveal, applyFix, appendToSource } = useTariffEditorBinding({
+  const { setEditorView, reveal, applyFix, appendToSource, applyEdit } = useTariffEditorBinding({
     read: () => form.getValues("source") ?? "",
     write: (next) => form.setValue("source", next, { shouldDirty: true, shouldValidate: true }),
   });
+
+  const setName = useCallback(
+    (name: string) => applyEdit(tariffSetName(rules, form.getValues("source") ?? "", name).change),
+    [rules, form, applyEdit],
+  );
 
   const openDefinition = useCallback((target: TariffDefinitionTarget) => setDefinition(target), []);
   const closeDefinition = useCallback(() => setDefinition(null), []);
@@ -327,6 +356,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       setHighlight,
       applyFix,
       appendToSource,
+      setName,
       openDefinition,
       closeDefinition,
       draftContent,
@@ -350,6 +380,7 @@ export function StudioProvider({ children, ...props }: StudioProps & { children:
       reveal,
       applyFix,
       appendToSource,
+      setName,
       openDefinition,
       closeDefinition,
       draftContent,

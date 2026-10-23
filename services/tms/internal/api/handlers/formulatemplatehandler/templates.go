@@ -191,7 +191,7 @@ func (h *Handler) getUsage(c *gin.Context) {
 // @Tags Formula Templates
 // @Accept json
 // @Produce json
-// @Param request body formulatemplate.FormulaTemplate true "Formula template payload; inputs, imports and testCount are derived from the source"
+// @Param request body formulatemplate.FormulaTemplate true "Formula template payload; the name, inputs, imports and testCount are derived from the source"
 // @Success 201 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -225,7 +225,7 @@ func (h *Handler) create(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Param request body formulatemplate.FormulaTemplate true "Formula template payload; only name, description, source and version are written, status moves through review"
+// @Param request body formulatemplate.FormulaTemplate true "Formula template payload; only description, source and version are written (the name is the source's header), status moves through review"
 // @Success 200 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail

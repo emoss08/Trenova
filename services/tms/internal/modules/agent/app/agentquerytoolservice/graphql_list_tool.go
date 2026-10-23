@@ -116,7 +116,11 @@ type graphQLListSpec struct {
 	// takes no search argument matches a free-text query against in the rows
 	// it read (program.code), as its repository tool did; queryNote then
 	// describes that query.
-	matches  []string
+	matches []string
+	// searches are the record fields the server's free-text query matches
+	// (an alert's name and table), so a query is refused, as a filter on
+	// them is, when the caller may not be shown one of them.
+	searches []string
 	resource permission.Resource
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
@@ -220,6 +224,9 @@ func newGraphQLListTool(
 	default:
 		return nil, fmt.Errorf("%s: %s takes no table input and no page of its own",
 			spec.name, read.Operation)
+	}
+	if err := searchedFields(spec.name, read.Fields, spec.searches); err != nil {
+		return nil, err
 	}
 	params, err := offered(spec.name, read.typedParams(), spec.unoffered)
 	if err != nil {
@@ -1286,8 +1293,44 @@ func (t *graphQLListTool) refuseWithheld(
 	if sortBy := optionalString(params.Params, paramSortBy); sortBy != "" {
 		fields = append(fields, sortBy)
 	}
+	if err := t.refuseFields(ctx, params, fields); err != nil {
+		return err
+	}
+	if query := strings.TrimSpace(optionalString(params.Params, paramQuery)); query != "" {
+		return t.refuseSearch(ctx, params)
+	}
 
-	return t.refuseFields(ctx, params, fields)
+	return nil
+}
+
+// searchedFields refuses a searched field the record does not have, which
+// would leave a query unguarded.
+func searchedFields(tool string, fields []graphQLField, searches []string) error {
+	for _, name := range searches {
+		if !slices.ContainsFunc(fields, func(field graphQLField) bool {
+			return field.Name == name
+		}) {
+			return fmt.Errorf("%s searches %q, which its record does not have", tool, name)
+		}
+	}
+
+	return nil
+}
+
+// refuseSearch refuses free text when the spec's searched fields include one
+// the caller may not be shown: a match on a hidden name would leak it as a
+// filter on it would.
+func (t *graphQLListTool) refuseSearch(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+) error {
+	if err := t.refuseFields(ctx, params, t.spec.searches); err != nil {
+		return fmt.Errorf(
+			"%s cannot search by query: it matches values hidden at your access; narrow by "+
+				"another parameter instead", t.spec.name)
+	}
+
+	return nil
 }
 
 // refuseFields refuses the first of fields the caller may not be shown.

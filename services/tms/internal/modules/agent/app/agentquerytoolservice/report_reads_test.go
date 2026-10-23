@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -116,4 +117,75 @@ func TestReportSchedules_SendTheCallsArguments(t *testing.T) {
 	items, _ := outcome[outcomeItems].([]map[string]any)
 	require.Len(t, items, 1)
 	assert.Equal(t, true, items[0]["mine"])
+}
+
+// An alert says how many conditions it checks rather than carrying each,
+// and says nothing about them when they were withheld.
+func TestTableChangeAlerts_CountOnlyTheConditionsTheyShow(t *testing.T) {
+	t.Parallel()
+
+	shown := map[string]any{"id": "tcas_1", fieldAlertConditions: []any{
+		map[string]any{"field": "status"}, map[string]any{"field": "total"},
+	}}
+	alertConditionCount(shown, nil, clock{})
+	assert.Equal(t, 2, shown["conditionCount"])
+	assert.NotContains(t, shown, fieldAlertConditions)
+
+	none := map[string]any{"id": "tcas_2"}
+	alertConditionCount(none, nil, clock{})
+	assert.Equal(t, 0, none["conditionCount"], "a read leaves an empty list out")
+
+	hidden := map[string]any{"id": "tcas_3"}
+	alertConditionCount(hidden, map[string]struct{}{fieldAlertConditions: {}}, clock{})
+	assert.NotContains(t, hidden, "conditionCount")
+}
+
+// The free text matches an alert's name and table, which stay Restricted,
+// so a query is refused at Internal before anything is read, and sent as the
+// table input's query when the reader's access reaches them.
+func TestTableChangeAlerts_RefuseAQueryOverHiddenNames(t *testing.T) {
+	t.Parallel()
+
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskTableChangeAlerts": {Data: connectionPage("tcaSubscriptions",
+			map[string]any{"id": "tcas_1", "status": "Active"},
+		)},
+	}}
+	tool := reportTool(t, "report_list_table_change_alerts", reader)
+
+	internal := keyedCall(map[string]any{paramQuery: "invoice"})
+	internal.DataAccessCeiling = permission.SensitivityInternal
+	_, err := tool.Query(t.Context(), internal)
+	require.ErrorContains(t, err, "cannot search by query")
+	assert.Nil(t, reader.sent("DeskTableChangeAlerts"), "nothing is read")
+
+	named := keyedCall(map[string]any{listFieldName: "invoice"})
+	named.DataAccessCeiling = permission.SensitivityInternal
+	_, err = tool.Query(t.Context(), named)
+	require.ErrorContains(t, err, "hidden at your access")
+
+	spec := tableChangeAlertsListSpec()
+	reached, err := newGraphQLReadTool(&spec, reader, &restrictedRole{})
+	require.NoError(t, err)
+	restricted := keyedCall(map[string]any{paramQuery: "invoice", paramStatus: "Paused"})
+	restricted.DataAccessCeiling = permission.SensitivityRestricted
+	_, err = reached.Query(t.Context(), restricted)
+	require.NoError(t, err)
+	sent := reader.sent("DeskTableChangeAlerts")
+	require.NotNil(t, sent)
+	input, _ := sent.Variables["input"].(map[string]any)
+	assert.Equal(t, "invoice", input[paramQuery])
+	assert.Equal(t, []map[string]any{{"field": paramStatus, "operator": "eq",
+		"value": "Paused"}}, input["fieldFilters"], "the status is an enum, matched whole")
+}
+
+// A searched field the record lacks would leave a query unguarded, so the
+// tool is not built.
+func TestGraphQLListTool_RefusesASearchedFieldTheRecordLacks(t *testing.T) {
+	t.Parallel()
+
+	spec := tableChangeAlertsListSpec()
+	spec.searches = []string{"nickname"}
+	_, err := newGraphQLReadTool(&spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	require.ErrorContains(t, err, `searches "nickname"`)
 }

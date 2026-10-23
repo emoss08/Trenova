@@ -22,12 +22,12 @@ export const lightTheme = EditorView.theme(
       fontFamily: "inherit",
     },
     ".cm-tariff-completion-info code": {
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontWeight: "600",
     },
     ".cm-content": {
       caretColor: "var(--primary)",
-      fontFamily: "'Geist Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       lineHeight: "1.6",
       padding: "12px 0",
@@ -47,7 +47,7 @@ export const lightTheme = EditorView.theme(
       color: "var(--muted-foreground)",
       border: "none",
       borderRight: "1px solid var(--border)",
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "12px",
     },
     ".cm-theme[aria-invalid='true'] & .cm-gutters": {
@@ -87,7 +87,7 @@ export const lightTheme = EditorView.theme(
       padding: "4px",
     },
     ".cm-tooltip.cm-tooltip-autocomplete > ul": {
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       maxHeight: "300px",
     },
@@ -153,12 +153,12 @@ export const darkTheme = EditorView.theme(
       fontFamily: "inherit",
     },
     ".cm-tariff-completion-info code": {
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontWeight: "600",
     },
     ".cm-content": {
       caretColor: "var(--brand)",
-      fontFamily: "'Geist Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       lineHeight: "1.6",
       padding: "12px 0",
@@ -178,7 +178,7 @@ export const darkTheme = EditorView.theme(
       color: "var(--muted-foreground)",
       border: "none",
       borderRight: "1px solid var(--border)",
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "12px",
     },
     ".cm-theme[aria-invalid='true'] & .cm-gutters": {
@@ -218,7 +218,7 @@ export const darkTheme = EditorView.theme(
       padding: "4px",
     },
     ".cm-tooltip.cm-tooltip-autocomplete > ul": {
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       maxHeight: "300px",
     },
@@ -268,6 +268,11 @@ export const darkTheme = EditorView.theme(
  * inline values. Every colour is a token, so it follows the theme.
  */
 export const languageServiceTheme = EditorView.theme({
+  // Ligatures follow the person's choice in Settings (`--code-ligatures`, app.css), in the text
+  // and in everything the editor draws over it.
+  "&": {
+    fontVariantLigatures: "var(--code-ligatures)",
+  },
   // Selected code reads as selected text does everywhere in Trenova: solid amber, with the
   // app's dark ink from its own ::selection. The selector matches CodeMirror's base theme, whose
   // dark teal otherwise wins while the editor has focus. Out of focus the browser drops the
@@ -383,12 +388,12 @@ export const languageServiceTheme = EditorView.theme({
     gap: "8px",
   },
   ".cm-tariff-hover-title": {
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontWeight: "600",
     fontSize: "12px",
   },
   ".cm-tariff-hover-type": {
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
     color: "var(--syntax-type)",
   },
@@ -397,7 +402,7 @@ export const languageServiceTheme = EditorView.theme({
     lineHeight: "1.45",
   },
   ".cm-tariff-hover-body code, .cm-tariff-signature-body code, .cm-tariff-completion-info code": {
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
     color: "var(--foreground)",
   },
@@ -405,7 +410,7 @@ export const languageServiceTheme = EditorView.theme({
     marginTop: "2px",
     paddingTop: "6px",
     borderTop: "1px solid var(--border)",
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
     fontVariantNumeric: "tabular-nums",
   },
@@ -421,7 +426,7 @@ export const languageServiceTheme = EditorView.theme({
     color: "var(--foreground)",
   },
   ".cm-tariff-signature-code": {
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "12px",
     color: "var(--foreground-muted)",
   },
@@ -436,7 +441,7 @@ export const languageServiceTheme = EditorView.theme({
     marginLeft: "4px",
     padding: "0 5px",
     borderRadius: "var(--radius-label)",
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
     fontVariantNumeric: "tabular-nums",
     verticalAlign: "baseline",
@@ -472,7 +477,7 @@ export const languageServiceTheme = EditorView.theme({
     borderRadius: "var(--radius-control)",
     border: "1px solid var(--border-strong)",
     backgroundColor: "var(--field)",
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "12px",
     color: "var(--foreground)",
   },
@@ -484,7 +489,7 @@ export const languageServiceTheme = EditorView.theme({
     display: "flex",
     gap: "6px",
     alignItems: "baseline",
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
     fontVariantNumeric: "tabular-nums",
     color: "var(--foreground)",
@@ -531,7 +536,7 @@ export const languageServiceTheme = EditorView.theme({
     cursor: "pointer",
   },
   ".cm-tariff-action code": {
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
   },
   ".cm-tariff-action:hover, .cm-tariff-action[aria-current='true']": {
@@ -605,11 +610,17 @@ export const languageServiceTheme = EditorView.theme({
     backgroundColor: "transparent",
     outline: "1px solid var(--selection)",
   },
+  // The editor's minimum height is the content's and the gutter's, as CodeMirror advises: set on
+  // .cm-editor it leaves the gutter short of the floor and the bottom panels (Vim's mode line)
+  // under the last line rather than at the editor's foot. TariffEditor sets the variable.
+  ".cm-content, .cm-gutter": {
+    minHeight: "var(--tariff-editor-min-height, 0)",
+  },
   ".cm-panels .cm-vim-panel": {
     minHeight: "24px",
     alignItems: "center",
     padding: "0 12px",
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
     color: "var(--foreground-muted)",
     backgroundColor: "var(--sunken)",

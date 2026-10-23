@@ -30947,7 +30947,7 @@ input SubmitMyExpenseInput {
   shipmentId: ID
 }
 
-type TCASubscription {
+type TCASubscription @kind(resource: "table_change_alert") {
   businessUnitId: ID!
   conditionMatch: String!
   conditions: [JSON!]!

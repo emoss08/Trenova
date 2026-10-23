@@ -59014,11 +59014,12 @@
     ]
   },
   "Compare": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/formula-template"
     ]
   },
@@ -59159,6 +59160,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Compare with the saved version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Compared": {
@@ -78241,7 +78251,7 @@
     ]
   },
   "Description": {
-    "sites": 179,
+    "sites": 180,
     "scope": [
       "go",
       "ts"
@@ -84940,6 +84950,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Draws pairs like => and != as one sign in the formula editor and wherever code is shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
     ]
   },
   "Drift Finding": {
@@ -111966,6 +111985,15 @@
       "routes/formula-template"
     ]
   },
+  "Formula templates not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Formula writing": {
     "sites": 1,
     "scope": [
@@ -133419,7 +133447,7 @@
     ]
   },
   "Keep editing": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -133529,6 +133557,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Keep my edits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Keep notes under 2000 characters": {
@@ -139039,6 +139076,24 @@
       "routes/worker"
     ]
   },
+  "Ligatures in code": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
+  "Ligatures · code editor": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/settings"
+    ]
+  },
   "Light": {
     "sites": 4,
     "scope": [
@@ -141190,6 +141245,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Load the saved version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Load theirs": {
@@ -154790,7 +154854,7 @@
     ]
   },
   "Name": {
-    "sites": 167,
+    "sites": 168,
     "scope": [
       "go",
       "ts"
@@ -229513,12 +229577,22 @@
     ]
   },
   "Saved version": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/formula-template"
+    ]
+  },
+  "Saved version, v{0}": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-template"
+      "apps/web/components"
     ]
   },
   "Saved view": {
@@ -248035,7 +248109,7 @@
     ]
   },
   "Source": {
-    "sites": 47,
+    "sites": 48,
     "scope": [
       "go",
       "ts"
@@ -286022,6 +286096,24 @@
       "apps/web/components"
     ]
   },
+  "This was saved again after you started editing. Compare it with your edits before you save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This was saved again after you started editing. Keep your edits to save them over it, or load the saved version and lose your edits.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This week": {
     "sites": 4,
     "scope": [
@@ -318561,12 +318653,22 @@
     ]
   },
   "Your edits": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "Your edits match the saved version.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "Your expense for {0} was approved and will be reimbursed on your next settlement.": {

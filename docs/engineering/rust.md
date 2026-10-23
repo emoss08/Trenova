@@ -198,7 +198,9 @@ WebAssembly crate, and the pattern for any later one.
 - **The build** is `services/crates/rules/scripts/build-wasm.sh`, run by `task rust:wasm-rules`:
   - `cargo build --locked -p trenova-rules --profile wasm --target wasm32-unknown-unknown`, with
     `--remap-path-prefix` for the services checkout (`/trenova/services`), the cargo target
-    directory (`/trenova/target`) and `CARGO_HOME` (`/cargo`), and `-C strip=symbols`;
+    directory (`/trenova/target`), `CARGO_HOME` (`/cargo`) and the toolchain's `rust-src`
+    (`/rustc/<commit-hash>`, which rustc records for the standard library only when `rust-src`
+    is not installed), and `-C strip=symbols`;
   - then `wasm-opt -Os` from binaryen **version_133**, downloaded once into
     `services/target/binaryen/` and verified against the SHA-256 pinned in the script for each
     platform (Linux x86_64 and aarch64, macOS arm64 and x86_64; elsewhere set

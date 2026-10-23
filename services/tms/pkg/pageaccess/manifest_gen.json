@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f0cd3b675c60ffe5853c6f94bd85bd63b7736ac897701c97f10b1cc3ce40c9fc",
+  "version": "sha256:cdfad5b1c3de0a0797d91c24e0c5a02cea53631f9d2901b0c7efc98c3efa055d",
   "screens": [
     {
       "path": "/",
@@ -6291,7 +6291,9 @@
           ]
         }
       ],
-      "reads": [],
+      "reads": [
+        "table_change_alert"
+      ],
       "references": [],
       "declared": []
     },
@@ -11627,6 +11629,7 @@
         }
       ],
       "operations": [
+        "ApproveShipmentRatingReview",
         "AssignBillingQueueBiller",
         "AuditLogTable",
         "BillingTransferCandidates",
@@ -25706,6 +25709,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -26452,6 +26456,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -27453,6 +27458,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -28792,6 +28798,7 @@
         "ActiveWorkerChecklistTemplates",
         "AdjustWorkerPtoBalance",
         "AmendWorkerEmploymentEvent",
+        "ApproveShipmentRatingReview",
         "ApproveWorkerPto",
         "ArAgingSummary",
         "ArAgingTrend",
@@ -31551,6 +31558,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -35309,6 +35317,142 @@
       "type": "mutation",
       "reads": [],
       "linked": [],
+      "declared": []
+    },
+    {
+      "name": "ApproveShipmentRatingReview",
+      "type": "mutation",
+      "reads": [],
+      "linked": [
+        {
+          "kind": "accessorial_charge",
+          "fields": [
+            "businessUnitId",
+            "code",
+            "createdAt",
+            "description",
+            "method",
+            "organizationId",
+            "rateUnit",
+            "status",
+            "updatedAt",
+            "version"
+          ]
+        },
+        {
+          "kind": "carrier",
+          "fields": [
+            "code",
+            "name",
+            "scac"
+          ]
+        },
+        {
+          "kind": "commodity",
+          "fields": [
+            "businessUnitId",
+            "createdAt",
+            "description",
+            "fragile",
+            "freightClass",
+            "hazardousMaterialId",
+            "linearFeetPerUnit",
+            "loadingInstructions",
+            "maxQuantityPerShipment",
+            "maxTemperature",
+            "minTemperature",
+            "name",
+            "organizationId",
+            "stackable",
+            "status",
+            "updatedAt",
+            "version",
+            "weightPerUnit"
+          ]
+        },
+        {
+          "kind": "customer",
+          "fields": [
+            "addressLine1",
+            "addressLine2",
+            "allowConsolidation",
+            "businessUnitId",
+            "city",
+            "code",
+            "consolidationPriority",
+            "createdAt",
+            "ediPartner",
+            "exclusiveConsolidation",
+            "externalId",
+            "isGeocoded",
+            "latitude",
+            "longitude",
+            "name",
+            "organizationId",
+            "placeId",
+            "postalCode",
+            "stateId",
+            "status",
+            "updatedAt",
+            "version"
+          ]
+        },
+        {
+          "kind": "edi",
+          "fields": [
+            "code",
+            "name"
+          ]
+        },
+        {
+          "kind": "location",
+          "fields": [
+            "addressLine1",
+            "addressLine2",
+            "city",
+            "code",
+            "latitude",
+            "locationCategoryId",
+            "longitude",
+            "name",
+            "postalCode",
+            "state",
+            "stateId",
+            "status"
+          ]
+        },
+        {
+          "kind": "tractor",
+          "fields": [
+            "code"
+          ]
+        },
+        {
+          "kind": "trailer",
+          "fields": [
+            "code",
+            "equipmentTypeId"
+          ]
+        },
+        {
+          "kind": "user",
+          "fields": [
+            "name",
+            "profilePicUrl",
+            "thumbnailUrl",
+            "username"
+          ]
+        },
+        {
+          "kind": "worker",
+          "fields": [
+            "firstName",
+            "lastName",
+            "profilePicUrl",
+            "wholeName"
+          ]
+        }
+      ],
       "declared": []
     },
     {
@@ -43121,7 +43265,9 @@
     {
       "name": "TCASubscriptionTable",
       "type": "query",
-      "reads": [],
+      "reads": [
+        "table_change_alert"
+      ],
       "linked": [],
       "declared": []
     },

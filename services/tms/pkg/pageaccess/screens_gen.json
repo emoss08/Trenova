@@ -6734,6 +6734,7 @@
         }
       ],
       "operations": [
+        "ApproveShipmentRatingReview",
         "AssignBillingQueueBiller",
         "AuditLogTable",
         "BillingTransferCandidates",
@@ -13549,6 +13550,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -13906,6 +13908,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -14470,6 +14473,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",
@@ -15304,6 +15308,7 @@
         "ActiveWorkerChecklistTemplates",
         "AdjustWorkerPtoBalance",
         "AmendWorkerEmploymentEvent",
+        "ApproveShipmentRatingReview",
         "ApproveWorkerPto",
         "ArAgingSummary",
         "ArAgingTrend",
@@ -17052,6 +17057,7 @@
       ],
       "operations": [
         "AccountingBriefing",
+        "ApproveShipmentRatingReview",
         "ArAgingSummary",
         "ArAgingTrend",
         "ArCashFlowForecast",

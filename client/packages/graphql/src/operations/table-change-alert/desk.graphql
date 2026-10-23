@@ -1,0 +1,20 @@
+query DeskTableChangeAlerts($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  tcaSubscriptions(input: $input) {
+    edges {
+      node {
+        id
+        name
+        tableName
+        eventTypes
+        watchedColumns
+        conditions
+        conditionMatch
+        status
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

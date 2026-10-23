@@ -1,7 +1,12 @@
 import { StudioSkeleton } from "@/components/tariff-studio/studio-skeletons";
+import {
+  NewerVersionProvider,
+  useNewerVersionCompare,
+} from "@/components/tariff-studio/newer-version";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { formulaLibraryRoutes } from "@/lib/formula-library-routes";
+import { useSeatedForm, type SeatedRecord } from "@/hooks/use-seated-form";
 import { FormulaLibraryNotFoundError } from "@/lib/graphql/formula-library";
 import { formulaLibrary, invalidateFormulaLibrary } from "@/lib/queries/formula-library";
 import { formulaTemplate } from "@/lib/queries/formula-template";
@@ -27,7 +32,7 @@ import {
   type FormulaLibrary,
   type FormulaLibraryFormValues,
 } from "@trenova/shared/types/formula-library";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { LibraryStudio } from "../_components/studio/library-studio";
@@ -42,13 +47,35 @@ export const prefetch: RoutePrefetch = ({ params }) => [
   ...(params.id ? [formulaLibrary.get(params.id)] : []),
 ];
 
+const SAVED_FIELDS = ["name", "description", "source"] as const;
+
+type LibrarySave = {
+  values: FormulaLibraryFormValues;
+  sent: FormulaLibraryFormValues;
+};
+
+function seatedLibrary(
+  library: Pick<FormulaLibrary, "name" | "description" | "source" | "status" | "version">,
+): SeatedRecord<FormulaLibraryFormValues> {
+  return { values: libraryFormValues(library), version: library.version ?? 0 };
+}
+
+/**
+ * Each library gets its own seat: a jump to another one starts from nothing rather than
+ * comparing its version with the last library's.
+ */
 export function FormulaLibraryEditPage() {
+  const { id } = useParams<{ id: string }>();
+  return <FormulaLibraryEditor key={id} />;
+}
+
+function FormulaLibraryEditor() {
   const t = useT();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [seatedVersion, setSeatedVersion] = useState<number | null>(null);
   const [pendingSave, setPendingSave] = useState<FormulaLibraryFormValues | null>(null);
+  const compare = useNewerVersionCompare();
 
   const {
     data: library,
@@ -66,42 +93,41 @@ export function FormulaLibraryEditPage() {
     defaultValues: EMPTY_LIBRARY,
   });
 
-  useEffect(() => {
-    if (library && library.version !== seatedVersion) {
-      form.reset(libraryFormValues(library));
-      // oxlint-disable-next-line react/set-state-in-effect -- form.reset must run before seatedVersion lets the studio mount, so both stay in the effect
-      setSeatedVersion(library.version);
-    }
-  }, [library, seatedVersion, form]);
-
-  const reseat = (saved: FormulaLibrary) => {
-    form.reset(libraryFormValues(saved));
-    setSeatedVersion(saved.version ?? null);
-  };
+  const seat = useSeatedForm({
+    form,
+    record: library ? seatedLibrary(library) : null,
+    fields: SAVED_FIELDS,
+  });
 
   const { mutate } = useApiMutation({
-    mutationFn: (values: FormulaLibraryFormValues) =>
+    mutationFn: ({ values }: LibrarySave) =>
       apiService.formulaLibraryService.update(id ?? "", {
         name: values.name.trim(),
         description: values.description ?? "",
         source: values.source,
-        version: library?.version,
+        version: seat.version ?? undefined,
       }),
-    onSuccess: async (updated) => {
-      reseat(updated);
+    onSuccess: async (updated, { sent }) => {
+      seat.seatSaved(seatedLibrary(updated), sent);
       await invalidateFormulaLibrary(queryClient);
     },
     form,
     resourceName: "Formula Library",
   });
 
+  const send = (values: FormulaLibraryFormValues) => mutate({ values, sent: form.getValues() });
+
   const onSave = form.handleSubmit((values) => {
-    if (seatedVersion === null) return;
+    if (!seat.isSeated) return;
+    if (seat.held) {
+      compare.open(form.getValues());
+      return;
+    }
     if (saveDemotesLibrary(library ?? null, values)) {
       setPendingSave(values);
       return;
     }
-    mutate(values);
+    send(values);
   });
 
   if (isError) {
@@ -124,19 +150,26 @@ export function FormulaLibraryEditPage() {
     );
   }
 
-  if (isLoading || seatedVersion === null || !library) {
+  if (isLoading || !seat.isSeated || !library) {
     return <StudioSkeleton inputs={false} label={t("Loading the library")} />;
   }
 
   return (
     <FormProvider {...form}>
-      <LibraryStudio
-        mode="edit"
-        library={library}
-        isSubmitting={form.formState.isSubmitting}
-        onSave={() => void onSave()}
-        onLibraryChanged={reseat}
-      />
+      <NewerVersionProvider
+        seat={seat}
+        compare={compare}
+        values={() => form.getValues()}
+        savedVersionNumber={library.currentVersionNumber ?? null}
+      >
+        <LibraryStudio
+          mode="edit"
+          library={library}
+          isSubmitting={form.formState.isSubmitting}
+          onSave={() => void onSave()}
+          onLibraryChanged={(changed) => seat.seat(seatedLibrary(changed))}
+        />
+      </NewerVersionProvider>
       <AlertDialog
         open={pendingSave !== null}
         onOpenChange={(open) => {
@@ -167,7 +200,7 @@ export function FormulaLibraryEditPage() {
             <AlertDialogAction
               size="default"
               onClick={() => {
-                if (pendingSave) mutate(pendingSave);
+                if (pendingSave) send(pendingSave);
                 setPendingSave(null);
               }}
             >
