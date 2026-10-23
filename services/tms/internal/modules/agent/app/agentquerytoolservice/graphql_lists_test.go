@@ -66,6 +66,9 @@ func TestConvertedGets_RefuseExactlyWhatAuthorizeRefuses(t *testing.T) {
 		"an unattended agent": agentreadtest.Agent(person),
 	}
 	for _, name := range agentquerytoolservice.ConvertedGetNames() {
+		if agentquerytoolservice.ConvertedGetSelfScoped(name) {
+			continue
+		}
 		resource := agentquerytoolservice.ConvertedGetResource(name)
 		engine := &mocks.DenyResourcesPermissionEngine{Denied: []string{resource.String()}}
 		reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine})

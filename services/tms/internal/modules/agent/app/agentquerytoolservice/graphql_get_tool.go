@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -219,6 +220,9 @@ func (t *graphQLGetTool) one(
 	}
 	if several && t.spec.shapeEach != nil {
 		t.spec.shapeEach(record)
+	}
+	if t.spec.pages != nil {
+		t.spec.pages.mark(record, variables)
 	}
 	if t.spec.amounts {
 		presentAmounts(record)
@@ -425,4 +429,17 @@ func (r *graphQLRead) getKey() string {
 	}
 
 	return key
+}
+
+// mark says whether the held list continues past the page the variables
+// read, and where the next page starts.
+func (p *getPages) mark(record, variables map[string]any) {
+	offset, _ := typeutils.IntOf(variables[p.offset])
+	items, _ := record[p.items].([]any)
+	total, counted := typeutils.IntOf(record[p.total])
+	more := counted && offset+len(items) < total
+	record[p.items+"HasMore"] = more
+	if more {
+		record["next"+strings.ToUpper(p.offset[:1])+p.offset[1:]] = offset + len(items)
+	}
 }

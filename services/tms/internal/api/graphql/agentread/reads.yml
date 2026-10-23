@@ -281,3 +281,7 @@ reads:
   - tool: worker_list_shift_templates
     operation: ShiftTemplates
     reason: Shift patterns are read whole by shiftTemplates, which no rule binds because it does not page.
+  - tool: home_get_layout
+    operation: HomeLayout
+    reason: The tool is named for the home page, which no kind claims; homeLayout reads the caller's own layout.
+  - tool: rate_get_matrix

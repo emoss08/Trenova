@@ -52,126 +52,53 @@ func homeRequest(params *agentports.QueryToolParams) *homelayoutservice.Request 
 	}
 }
 
-type getMyHomeLayoutTool struct {
-	layouts homeLayoutReader
-}
+const (
+	homeLayoutNoteLocked = "The person's administrator manages this home page, so it cannot " +
+		"be changed from here. Say so rather than proposing a change."
+	homeLayoutNoteEdit = "Pass version to home_add_widget, home_remove_widget or " +
+		"home_arrange_layout. Widget ids are the id field."
+)
 
-func newGetMyHomeLayoutTool(layouts *homelayoutservice.Service) agentports.AgentQueryTool {
-	return &getMyHomeLayoutTool{layouts: layouts}
-}
-
-func (t *getMyHomeLayoutTool) Name() string { return "home_get_layout" }
-
-func (t *getMyHomeLayoutTool) Description() string {
-	return "Read what is on the person's own home page: each widget, its size and settings, " +
-		"and whether they may change it. Use it for \"my dashboard\", \"my home page\" or " +
-		"\"what am I looking at\", and before home_add_widget, home_remove_widget or " +
-		"home_arrange_layout, which need its version. Report dashboards under Reports are " +
-		"separate; report_list_dashboards reads those."
-}
-
-func (t *getMyHomeLayoutTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type":                 "object",
-		"properties":           map[string]any{},
-		"additionalProperties": false,
+// homeLayoutGetSpec reads the person's own home page as the page resolves it.
+func homeLayoutGetSpec() getSpec {
+	return getSpec{
+		name:   "home_get_layout",
+		entity: "home page",
+		summary: "Read what is on the person's own home page: each widget, its size and " +
+			"settings, and whether they may change it. Use it for \"my dashboard\", \"my home " +
+			"page\" or \"what am I looking at\", and before home_add_widget, home_remove_widget " +
+			"or home_arrange_layout, which need its version. Report dashboards under Reports " +
+			"are separate; report_list_dashboards reads those.",
+		searchTerms: homelayout.SpokenNames(),
+		resource:    permission.ResourceHomeLayoutPreset,
+		scope:       agent.ToolScopeSelf,
+		rationale:   "Reads the caller's own home page; nothing changes and nothing is sent.",
+		shape:       labelHomeLayout,
 	}
 }
 
-func (t *getMyHomeLayoutTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource:  permission.ResourceHomeLayoutPreset,
-		scope:     agent.ToolScopeSelf,
-		rationale: "Reads the caller's own home page; nothing changes and nothing is sent.",
-	})
-}
-
-func (t *getMyHomeLayoutTool) SearchTerms() []string { return homelayout.SpokenNames() }
-
-type homeWidgetRow struct {
-	ID     string                   `json:"id"`
-	Key    string                   `json:"key"`
-	Label  string                   `json:"label"`
-	Title  string                   `json:"title,omitempty"`
-	Width  int                      `json:"width"`
-	Height int                      `json:"height"`
-	Config *homelayout.WidgetConfig `json:"config,omitempty"`
-}
-
-type homeLayoutView struct {
-	// Source is where the layout comes from: user (their own), rolePreset,
-	// orgDefault or builtIn.
-	Source       string          `json:"source"`
-	PresetName   string          `json:"presetName,omitempty"`
-	Locked       bool            `json:"locked"`
-	CanCustomize bool            `json:"canCustomize"`
-	Version      int64           `json:"version"`
-	Density      string          `json:"density"`
-	Widgets      []homeWidgetRow `json:"widgets"`
-	Note         string          `json:"note"`
-}
-
-func (t *getMyHomeLayoutTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	effective, err := t.layouts.GetEffective(ctx, homeRequest(params))
-	if err != nil {
-		return nil, err
-	}
-
-	view := homeLayoutView{
-		Source:       string(effective.Source),
-		PresetName:   effective.PresetName,
-		Locked:       effective.Locked,
-		CanCustomize: effective.CanCustomize,
-		Version:      effective.Version,
-		Density:      effective.Density,
-		Widgets:      homeWidgetRows(effective.Layout),
-	}
-	switch {
-	case effective.Locked || !effective.CanCustomize:
-		view.Note = "The person's administrator manages this home page, so it cannot be " +
-			"changed from here. Say so rather than proposing a change."
-	default:
-		view.Note = "Pass version to home_add_widget, home_remove_widget or " +
-			"home_arrange_layout. Widget ids are the id field."
-	}
-
-	return view, nil
-}
-
-func homeWidgetRows(layout *homelayout.Layout) []homeWidgetRow {
-	if layout == nil {
-		return []homeWidgetRow{}
-	}
-
-	rows := make([]homeWidgetRow, 0, len(layout.Widgets))
-	for idx := range layout.Widgets {
-		widget := &layout.Widgets[idx]
-		row := homeWidgetRow{
-			ID:     widget.ID,
-			Key:    widget.Key,
-			Label:  widget.Key,
-			Title:  widget.Title,
-			Width:  widget.W,
-			Height: widget.H,
-		}
-		if definition, ok := homelayout.WidgetDefinitionFor(widget.Key); ok {
-			row.Label = definition.Label
-			if definition.ConfigKind != homelayout.ConfigKindNone {
-				config := widget.Config
-				row.Config = &config
+// labelHomeLayout names each widget as the page does and says whether the
+// person may change the page, which the layout's own fields leave the model
+// to work out.
+func labelHomeLayout(record map[string]any, _ map[string]struct{}, _ clock) {
+	widgets, _ := record["widgets"].([]any)
+	for _, raw := range widgets {
+		widget, _ := raw.(map[string]any)
+		key, _ := widget["key"].(string)
+		widget["label"] = key
+		if definition, ok := homelayout.WidgetDefinitionFor(key); ok {
+			widget["label"] = definition.Label
+			if definition.ConfigKind == homelayout.ConfigKindNone {
+				delete(widget, "config")
 			}
 		}
-		rows = append(rows, row)
 	}
-
-	return rows
+	locked, _ := record["locked"].(bool)
+	customizable, _ := record["canCustomize"].(bool)
+	record[outcomeNote] = homeLayoutNoteEdit
+	if locked || !customizable {
+		record[outcomeNote] = homeLayoutNoteLocked
+	}
 }
 
 type listHomeWidgetsTool struct {

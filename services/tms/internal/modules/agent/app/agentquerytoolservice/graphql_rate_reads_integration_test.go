@@ -11,14 +11,18 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/fuelsurchargerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateagreementrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -26,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -179,6 +184,48 @@ func fuelProgramIDs(page map[string]any) []string {
 }
 
 //nolint:funlen // the four converted rate reads against one database
+const seededMatrixCells = 150
+
+// seedRateMatrix writes a matrix of two axes and more cells than one read
+// returns, straight through the admin connection.
+func seedRateMatrix(t *testing.T, admin *bun.DB, tenant *agentreadtest.Tenant, label string) string {
+	t.Helper()
+
+	ctx := t.Context()
+	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
+	matrix := &ratematrix.RateMatrix{
+		ID: pulid.MustNew("rmx_"), OrganizationID: org, BusinessUnitID: bu,
+		Code: "LTL-" + label, Name: "LTL " + label, Status: domaintypes.StatusActive,
+		ValueType: ratematrix.ValueTypeMoney,
+	}
+	_, err := admin.NewInsert().Model(matrix).Exec(ctx)
+	require.NoError(t, err)
+	for position, kind := range []ratematrix.DimensionKind{
+		ratematrix.DimensionKindZone, ratematrix.DimensionKindWeightBreak,
+	} {
+		_, err = admin.NewInsert().Model(&ratematrix.RateMatrixDimension{
+			ID: pulid.MustNew("rmd_"), OrganizationID: org, BusinessUnitID: bu,
+			RateMatrixID: matrix.ID, Position: int16(position), Kind: kind,
+			MatchMode: ratematrix.MatchModeExact,
+		}).Exec(ctx)
+		require.NoError(t, err)
+	}
+	cells := make([]*ratematrix.RateMatrixCell, 0, seededMatrixCells)
+	for idx := range seededMatrixCells {
+		cells = append(cells, &ratematrix.RateMatrixCell{
+			ID: pulid.MustNew("rmc_"), OrganizationID: org, BusinessUnitID: bu,
+			RateMatrixID: matrix.ID, D0Key: fmt.Sprintf("Z%03d", idx),
+			D1Min: decimal.NewNullDecimal(decimal.Zero),
+			D1Max: decimal.NewNullDecimal(decimal.NewFromInt(500)),
+			Value: decimal.RequireFromString("2.15"),
+		})
+	}
+	_, err = admin.NewInsert().Model(&cells).Exec(ctx)
+	require.NoError(t, err)
+
+	return matrix.ID.String()
+}
+
 func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(t *testing.T) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
@@ -204,6 +251,10 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 	resolvers.FuelIndexPriceRepo = prices
 	resolvers.FuelSurchargeProgramRepo = programs
 	resolvers.FuelSurchargeService = fuel
+	resolvers.RateMatrixService = ratematrixservice.New(ratematrixservice.Params{
+		Logger: logger,
+		Repo:   ratematrixrepository.New(ratematrixrepository.Params{DB: conn, Logger: logger}),
+	})
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
@@ -293,6 +344,61 @@ func TestConvertedLists_RateReadsReadWhatTheirServicesReadUnderRowLevelSecurity(
 		hiddenGet, err := agentquerytoolservice.ConvertedGetTool("rate_get_agreement", public, &publicRole{})
 		require.NoError(t, err)
 		hidden := callTool(t, mine.ctx, hiddenGet, actor, map[string]any{"rateAgreementId": mine.agreements[0]})
+		withheld, _ := hidden["withheldByAccess"].([]any)
+		require.NotEmpty(t, withheld)
+		for _, field := range withheld {
+			assert.NotContains(t, hidden, field)
+		}
+	})
+
+	t.Run("rate_get_matrix", func(t *testing.T) {
+		ours := seedRateMatrix(t, admin, mineTenant, "A")
+		other := seedRateMatrix(t, admin, theirsTenant, "B")
+		get, err := agentquerytoolservice.ConvertedGetTool("rate_get_matrix", reader, engine)
+		require.NoError(t, err)
+
+		first := callTool(t, mine.ctx, get, actor, map[string]any{"rateMatrixId": ours})
+		assert.Equal(t, ours, first["id"])
+		assert.EqualValues(t, seededMatrixCells, first["cellCount"])
+		cells, _ := first["cells"].([]any)
+		require.Len(t, cells, 100)
+		assert.Equal(t, true, first["cellsHasMore"])
+		assert.EqualValues(t, 100, first["nextCellOffset"])
+		cell, _ := cells[0].(map[string]any)
+		assert.Len(t, cell["keys"], 2, "a cell's keys run along the matrix's two axes")
+		assert.Equal(t, []any{"", "0 to 500"}, cell["ranges"])
+
+		rest := callTool(t, mine.ctx, get, actor, map[string]any{
+			"rateMatrixId": ours, "cellOffset": first["nextCellOffset"],
+		})
+		cells, _ = rest["cells"].([]any)
+		assert.Len(t, cells, seededMatrixCells-100)
+		assert.Equal(t, false, rest["cellsHasMore"])
+		assert.NotContains(t, rest, "nextCellOffset")
+
+		_, err = get.Query(mine.ctx, &agentports.QueryToolParams{
+			OrganizationID: actor.OrganizationID,
+			BusinessUnitID: actor.BusinessUnitID,
+			Actor:          actor,
+			Timezone:       "America/Chicago",
+			Params:         map[string]any{"rateMatrixId": other},
+			RunID:          pulid.MustNew("ar_"),
+		})
+		require.Error(t, err, "another tenant's matrix is not found")
+
+		internal, err := get.Query(mine.ctx, &agentports.QueryToolParams{
+			OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
+			Actor: actor, Timezone: "America/Chicago", DataAccessCeiling: permission.SensitivityInternal,
+			Params: map[string]any{"rateMatrixId": ours}, RunID: pulid.MustNew("ar_"),
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []any{"cells.value", "cells.minCharge"},
+			asMap(t, internal)["withheldByAccess"],
+			"a cell's value and minimum stay Restricted, as the repository tool gated them")
+
+		hiddenGet, err := agentquerytoolservice.ConvertedGetTool("rate_get_matrix", public, &publicRole{})
+		require.NoError(t, err)
+		hidden := callTool(t, mine.ctx, hiddenGet, actor, map[string]any{"rateMatrixId": ours})
 		withheld, _ := hidden["withheldByAccess"].([]any)
 		require.NotEmpty(t, withheld)
 		for _, field := range withheld {

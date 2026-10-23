@@ -33837,12 +33837,12 @@
     },
     {
       "name": "rate_get_matrix",
-      "description": "Retrieve one rate matrix by id: a table a tariff looks values up in. It gives the value type, the axes (zone, zip, weight break, freight class and so on) and up to 200 cells with their keys, ranges and values. Take the id from the page you are on.",
+      "description": "Retrieve one rate matrix by id: a table a tariff looks values up in. It gives the value type, the axes (zone, zip, weight break, freight class and so on) and up to 100 cells with their keys, ranges and values. Take the id from the page you are on.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "cellOffset": {
-            "description": "How many cells to skip. When a result says cellsHasMore, call again with its nextCellOffset.",
+            "description": "Skip this many cells, in the matrix's order, for the page after them. When a result says cellsHasMore, call again with its nextCellOffset.",
             "type": "integer"
           },
           "rateMatrixId": {
