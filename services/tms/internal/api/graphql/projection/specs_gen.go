@@ -5689,6 +5689,10 @@ func init() {
 				FieldMapKey: "narrated",
 			},
 			{
+				Name:        "withheldSections",
+				FieldMapKey: "sections",
+			},
+			{
 				Name:        "emailedAt",
 				FieldMapKey: "emailedAt",
 			},

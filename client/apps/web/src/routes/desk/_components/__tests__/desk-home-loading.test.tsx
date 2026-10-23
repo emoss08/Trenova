@@ -169,6 +169,77 @@ describe("Desk home headline while its figures load", () => {
   });
 });
 
+describe("Desk home briefing cut to the reader's access", () => {
+  it("says nothing about access when the reader sees the whole briefing", async () => {
+    state.briefing = {
+      settled: true,
+      value: { headline: "Three loads sit under a storm warning.", withheldSections: [] },
+    };
+    renderHome();
+
+    expect(await screen.findByText("Three loads sit under a storm warning.")).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="desk-briefing-withheld"]')).toBeNull();
+  });
+
+  it("names the sections left out and falls back to the computed headline", async () => {
+    state.briefing = {
+      settled: true,
+      value: {
+        headline: "",
+        withheldSections: [
+          { key: "Billing", title: "Billing queue", partial: false },
+          { key: "Cash", title: "Cash received yesterday", partial: false },
+        ],
+      },
+    };
+    renderHome();
+
+    expect(await screen.findByText("2 decisions are waiting on you.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "This morning's briefing leaves out Billing queue and Cash received yesterday, whose records you can't open.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("says which sections it shows only in part", async () => {
+    state.briefing = {
+      settled: true,
+      value: {
+        headline: "",
+        withheldSections: [{ key: "Attention", title: "Needs attention", partial: true }],
+      },
+    };
+    renderHome();
+
+    expect(
+      await screen.findByText(
+        "This morning's briefing shows only the part of Needs attention you can open.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("names both what it leaves out and what it shows in part", async () => {
+    state.briefing = {
+      settled: true,
+      value: {
+        headline: "",
+        withheldSections: [
+          { key: "Exceptions", title: "Critical", partial: true },
+          { key: "Cash", title: "Cash received yesterday", partial: false },
+        ],
+      },
+    };
+    renderHome();
+
+    expect(
+      await screen.findByText(
+        "This morning's briefing leaves out Cash received yesterday and shows only the part of Critical you can open.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("Desk home composer", () => {
   it("starts a conversation with the chosen agent and the question typed", async () => {
     const onStart = vi.fn();

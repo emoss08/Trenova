@@ -3076,6 +3076,9 @@ models:
   BriefingItem:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.Item
+  BriefingWithheldSection:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.WithheldSection
   WatchtowerItem:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Item
