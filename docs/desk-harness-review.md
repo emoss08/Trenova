@@ -1475,7 +1475,11 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
-| Typed reads through GraphQL: fuel and IFTA | `fuel_list_cards`, `fuel_list_purchases`, `fuel_list_purchase_imports`, `fuel_list_ifta_returns`, `fuel_list_ifta_mileage_entries`, `fuel_list_ifta_jurisdictions` | unchanged | unchanged, 0 pending | pending | pending |
+| Typed reads through GraphQL: fuel and IFTA | `fuel_list_cards`, `fuel_list_purchases`, `fuel_list_purchase_imports`, `fuel_list_ifta_returns`, `fuel_list_ifta_mileage_entries`, `fuel_list_ifta_jurisdictions` | unchanged | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
+
+The fuel row's after figures read the 167 held-out cases Tariff (#888) left, whose fixture
+master carries stale; the before figures are the last measured on master (165 cases). Keyword
+ranking is unchanged on the 147 held-out cases (recall@5 0.99, top-1 0.95).
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
