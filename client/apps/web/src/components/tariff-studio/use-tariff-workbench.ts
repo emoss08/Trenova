@@ -1,4 +1,5 @@
 import { applyTariffFix } from "@/components/formula-editor/tariff-lint";
+import { isTestItem } from "@/lib/tariff-outline";
 import { revealRange } from "@/components/formula-editor/tariff-navigate";
 import { checkTariffSource } from "@/components/formula-editor/tariff-service";
 import type { EditorView } from "@codemirror/view";
@@ -7,6 +8,7 @@ import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type {
   TariffCheckResult,
   TariffContext,
+  TariffCoverage,
   TariffFileKind,
   TariffFix,
   TariffRange,
@@ -20,9 +22,14 @@ export type TariffWorkbench = {
   check: TariffCheckResult;
   errors: number;
   warnings: number;
-  /** How many `test` blocks the outline lists. */
+  /** How many `test` and `property` blocks the outline lists: properties are tests. */
   testCount: number;
   tests: TariffTestsState;
+  /**
+   * The regions the last run reached, for the editor's gutter; null while there is none (the
+   * file has errors or no tests, a test waits for table cells, or nothing has run yet).
+   */
+  coverage: TariffCoverage | null;
   /** Each test's verdict from the last run, by name. */
   testStatus: ReadonlyMap<string, TariffTestStatus>;
 };
@@ -30,8 +37,8 @@ export type TariffWorkbench = {
 /**
  * What a Studio knows about the file in its editor, for a tariff or a library alike: the
  * module's check against the organisation's context (no findings while the file is empty), the
- * counts every status line shows, and the file's tests, run in the browser once the source has
- * settled, loading the rate table cells they read.
+ * counts every status line shows, and the file's tests and properties, run in the browser once
+ * the source has settled, loading the rate table cells they read, with the coverage they reach.
  */
 export function useTariffWorkbench({
   rules,
@@ -55,7 +62,7 @@ export function useTariffWorkbench({
   }, [rules, source, kind, context]);
   const errors = check.diagnostics.filter((finding) => finding.severity === "error").length;
   const warnings = check.diagnostics.filter((finding) => finding.severity === "warning").length;
-  const testCount = check.outline?.items.filter((item) => item.kind === "test").length ?? 0;
+  const testCount = check.outline?.items.filter(isTestItem).length ?? 0;
   const tests = useTariffTests({ rules, source, context, tablesStamp, errors, testCount });
   const testStatus = useMemo(
     () =>
@@ -64,7 +71,8 @@ export function useTariffWorkbench({
       ),
     [tests],
   );
-  return { check, errors, warnings, testCount, tests, testStatus };
+  const coverage = tests.status === "ran" ? (tests.run.coverage ?? null) : null;
+  return { check, errors, warnings, testCount, tests, testStatus, coverage };
 }
 
 export type TariffEditorBinding = {

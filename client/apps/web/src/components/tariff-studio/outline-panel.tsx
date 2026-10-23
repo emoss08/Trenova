@@ -1,3 +1,4 @@
+import { isTestItem } from "@/lib/tariff-outline";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -14,9 +15,9 @@ const GROUPS: readonly { key: Group; kinds: readonly TariffOutlineKind[] }[] = [
   { key: "inputs", kinds: ["input"] },
   { key: "declarations", kinds: ["const", "type", "enum"] },
   { key: "functions", kinds: ["function"] },
-  { key: "charges", kinds: ["charge"] },
+  { key: "charges", kinds: ["charge", "choice", "option"] },
   { key: "totals", kinds: ["total"] },
-  { key: "tests", kinds: ["test"] },
+  { key: "tests", kinds: ["test", "property"] },
 ];
 
 const GROUP_LABELS: Record<Group, string> = defineLabels({
@@ -26,6 +27,21 @@ const GROUP_LABELS: Record<Group, string> = defineLabels({
   charges: "Charges",
   totals: "Totals",
   tests: "Tests",
+});
+
+/** Entries named by a label the author wrote (a charge, a choice, a test), not by a name. */
+const LABELLED: ReadonlySet<TariffOutlineKind> = new Set([
+  "charge",
+  "choice",
+  "option",
+  "test",
+  "property",
+]);
+
+/** What an entry is, beside it, where its group does not already say. */
+const KIND_TAGS: Partial<Record<TariffOutlineKind, string>> = defineLabels({
+  choice: "Choice",
+  property: "Property",
 });
 
 const TEST_LABELS: Record<TariffTestStatus, string> = defineLabels({
@@ -52,8 +68,9 @@ export type OutlinePanelProps = {
 
 /**
  * The file at a glance, from the checker's outline: its inputs, declarations, functions, every
- * charge (with its code, indented under the `if` or `for` it is in), the total clauses and the
- * tests. A row selects what it names in the editor.
+ * charge (with its code, indented under the `if`, `for` or `best` option it is in), each choice
+ * with its options, the total clauses, and the tests and properties with their verdicts. A row
+ * selects what it names in the editor.
  */
 export function OutlinePanel({ outline, onReveal, testStatus, className }: OutlinePanelProps) {
   const t = useT();
@@ -75,7 +92,8 @@ export function OutlinePanel({ outline, onReveal, testStatus, className }: Outli
             <h3 className="text-foreground-subtle px-1 text-xs font-medium">{group.label}</h3>
             <ul className="flex flex-col">
               {group.items.map((item) => {
-                const status = item.kind === "test" ? testStatus?.get(item.name) : undefined;
+                const status = isTestItem(item) ? testStatus?.get(item.name) : undefined;
+                const label = LABELLED.has(item.kind);
                 return (
                   <li key={`${item.kind}:${item.range.from}`}>
                     <button
@@ -93,11 +111,17 @@ export function OutlinePanel({ outline, onReveal, testStatus, className }: Outli
                       <span
                         className={cn(
                           "min-w-0 truncate",
-                          item.kind !== "charge" && item.kind !== "test" && "font-mono",
+                          !label && "font-mono",
+                          item.kind === "option" && "text-foreground-muted",
                         )}
                       >
                         {item.name}
                       </span>
+                      {KIND_TAGS[item.kind] && (
+                        <span className="text-foreground-subtle ml-auto shrink-0 text-2xs">
+                          {KIND_TAGS[item.kind]}
+                        </span>
+                      )}
                       {item.code && (
                         <span className="text-syntax-meta ml-auto shrink-0 font-mono text-2xs">
                           {item.code}

@@ -1238,7 +1238,6 @@
   "A test constructor takes named arguments only": "测试构造函数只接受具名参数",
   "A test is named by its text: edit the text between the quotes": "测试以其文本命名：请编辑引号内的文本",
   "A test name cannot be longer than 100 characters": "测试名称不能超过 100 个字符",
-  "A test sets a few facts with given and checks the bill with expect. Tests run on every change and must pass before review.": "测试用 given 设定若干条件，再用 expect 检查账单。每次修改都会运行测试，必须通过才能提交审查。",
   "A test's own statements refused: {0}": "测试自身的语句拒绝执行：{0}",
   "A test: set fields of the sample record with `given`, check the bill with `expect`.": "测试：用 `given` 设置示例记录的字段，用 `expect` 检查账单。",
   "A text tile needs something to say": "文本卡片需要有内容",

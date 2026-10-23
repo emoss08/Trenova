@@ -16,7 +16,11 @@ import {
 } from "./helpers";
 import { locationSchema } from "./location";
 import { tariffInputValuesSchema } from "./tariff";
-import { storedTariffBillSchema, tariffFormInputValuesSchema } from "./tariff-form";
+import {
+  storedTariffBillSchema,
+  storedTariffChoicesSchema,
+  tariffFormInputValuesSchema,
+} from "./tariff-form";
 import { userReferenceSchema } from "./user";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -671,6 +675,8 @@ export const ratingDetailSchema = z.object({
   bill: storedTariffBillSchema.nullish(),
   /** Why the tariff refused to rate, in its author's words; the shipment then has no bill. */
   refusal: z.string().nullish(),
+  /** Every `best` and `worst` the rating evaluated: which option won and what each came to. */
+  choices: storedTariffChoicesSchema.optional(),
   /** The input values the tariff ran with, resolved shipment over rule over agreement over default. */
   inputs: tariffFormInputValuesSchema.nullish(),
   /** Charges a contract, fuel program or detention policy would have added, left to the tariff. */

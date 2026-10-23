@@ -1238,7 +1238,6 @@
   "A test constructor takes named arguments only": "測試建構函式只接受具名引數",
   "A test is named by its text: edit the text between the quotes": "測試以其文字命名：請編輯引號內的文字",
   "A test name cannot be longer than 100 characters": "測試名稱不能超過 100 個字元",
-  "A test sets a few facts with given and checks the bill with expect. Tests run on every change and must pass before review.": "測試以 given 設定幾項條件，再以 expect 檢查帳單。每次修改都會執行測試，且必須通過才能送審。",
   "A test's own statements refused: {0}": "測試本身的陳述式拒絕執行：{0}",
   "A test: set fields of the sample record with `given`, check the bill with `expect`.": "測試：用 `given` 設定範例記錄的欄位，用 `expect` 檢查帳單。",
   "A text tile needs something to say": "文字磚需要填寫內容",

@@ -116,6 +116,7 @@ export function LibraryStudioProvider({
           errors: workbench.errors,
           warnings: workbench.warnings,
           tests: workbench.tests,
+          coverage: workbench.coverage,
           dirty: isDirty,
           testsRequired: true,
         },

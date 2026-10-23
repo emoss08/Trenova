@@ -48,6 +48,10 @@ export function describeTraceEvent(
         ? t("tables.{0}[{1}] found no cell", lookup.table, keys)
         : t("tables.{0}[{1}] = {2}", lookup.table, keys, formatShownValue(lookup, t));
     }
+    case "choice":
+      return event.chosen === null
+        ? t("{0}: every option refused", event.label)
+        : t("{0}: chose {1}", event.label, event.chosen);
     case "truncated":
       return t("The trace stops here; the rest of the rating is not recorded.");
   }
@@ -55,6 +59,7 @@ export function describeTraceEvent(
 
 const TONE: Partial<Record<TariffTraceEvent["kind"], string>> = {
   charge: "text-foreground",
+  choice: "text-foreground font-medium",
   refusal: "text-danger-foreground",
   dropped: "text-foreground-subtle",
   truncated: "text-foreground-subtle italic",

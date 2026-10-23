@@ -1,8 +1,9 @@
 // tariff-hover.ts is the hover card from `tariff.hover`: what the thing under the pointer is (its
-// declaration as Tariff code, its type and unit, its doc) and, given the last preview's trace,
-// what a binding came to.
+// declaration as Tariff code, its type and unit, its doc, an input's bounds) and, given the last
+// preview's trace, what a binding came to.
 
 import { hoverTooltip, type Tooltip } from "@codemirror/view";
+import { translateMessage } from "@trenova/shared/i18n/message";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { formatShownValue } from "@trenova/shared/lib/tariff-value";
 import type { RulesRuntime } from "@trenova/shared/rules/runtime";
@@ -39,6 +40,17 @@ export function renderTariffHover(
   const body = document.createElement("div");
   body.className = "cm-tariff-hover-body";
   if (appendTariffDoc(body, contents.doc)) dom.appendChild(body);
+  if (contents.constraint) {
+    const row = document.createElement("div");
+    row.className = "cm-tariff-hover-constraint";
+    const label = document.createElement("span");
+    label.className = "cm-tariff-hover-label";
+    label.textContent = translate("Bounds");
+    const bound = document.createElement("span");
+    bound.textContent = translateMessage(contents.constraint);
+    row.append(label, bound);
+    dom.appendChild(row);
+  }
   if (contents.value) {
     const row = document.createElement("div");
     row.className = "cm-tariff-hover-value";

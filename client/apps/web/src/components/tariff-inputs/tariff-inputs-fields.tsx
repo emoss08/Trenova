@@ -3,6 +3,7 @@ import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { PlusIcon, RefreshCcw01Icon, Trash01Icon } from "@trenova/shared/components/icons";
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { describeTariffConstraint, isListType } from "@trenova/shared/lib/tariff-constraint";
 import { inheritedTariffValue, tariffInputText } from "@trenova/shared/lib/tariff-inputs";
 import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
 import { emptyTariffValue } from "@trenova/shared/rules/tariff-wire";
@@ -120,7 +121,9 @@ function inheritanceCopy(
  * A tariff's inputs as form fields under `name`: labels from the doc comments, unit-aware
  * money, rate and quantity fields, enums, optionals, records as a group of fields and lists of
  * records (weight breaks) as an editable table, each value written in its wire form so the form
- * saves exactly what the tariff reads. An input left unset inherits (the agreement's value under
+ * saves exactly what the tariff reads. An input's `where` bounds show as its help text ("From
+ * $0.50/mi to $15.00/mi"), and a text or enum input bounded by a list is a select of that list;
+ * the form's resolver refuses a value outside them as it is typed (`tariffInputIssues`). An input left unset inherits (the agreement's value under
  * a rule, then the declared default), which each field's placeholder says.
  */
 export function TariffInputsFields({
@@ -160,6 +163,22 @@ export function TariffInputsFields({
   );
 }
 
+/**
+ * The values a text or enum input's `where` list allows, which the field offers as a select;
+ * null for any other input or constraint.
+ */
+export function constraintChoices(declaration: TariffInputDeclaration): string[] | null {
+  const constraint = declaration.constraint;
+  if (!constraint || !("oneOf" in constraint)) return null;
+  const type =
+    declaration.descriptor.kind === "optional"
+      ? declaration.descriptor.inner
+      : declaration.descriptor;
+  if (type.kind !== "text" && type.kind !== "enum") return null;
+  const values = constraint.oneOf.filter((value): value is string => typeof value === "string");
+  return values.length === constraint.oneOf.length ? values : null;
+}
+
 type TariffInputFieldProps = {
   declaration: TariffInputDeclaration;
   path: string;
@@ -186,6 +205,15 @@ function TariffInputField({
   const copy = inheritanceCopy(declaration, inherited, inheritedFrom, currency, requireUnset, t);
   const fallback = inheritedTariffValue(declaration, inherited);
   const isSet = value !== undefined;
+  const choices = constraintChoices(declaration);
+  const bounds =
+    declaration.constraint && !choices
+      ? describeTariffConstraint(declaration.constraint, t, {
+          currency,
+          each: isListType(declaration.descriptor),
+        })
+      : null;
+  const help = [description, bounds].filter(Boolean).join(" · ") || null;
 
   const reset =
     isSet && copy.reset && !disabled ? (
@@ -207,7 +235,7 @@ function TariffInputField({
         declaration={declaration}
         path={path}
         label={label}
-        description={description}
+        description={help}
         value={value}
         fallback={fallback}
         placeholder={copy.placeholder}
@@ -226,12 +254,13 @@ function TariffInputField({
         type={declaration.descriptor}
         typeText={declaration.type}
         label={label}
-        description={description}
+        description={help}
         placeholder={copy.placeholder}
         currency={currency}
         disabled={disabled}
         empty={undefined}
         inheritedBool={typeof fallback === "boolean" ? fallback : undefined}
+        oneOf={choices}
       />
       {reset}
     </div>

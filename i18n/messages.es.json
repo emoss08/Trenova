@@ -1238,7 +1238,6 @@
   "A test constructor takes named arguments only": "Un constructor de prueba solo admite argumentos con nombre",
   "A test is named by its text: edit the text between the quotes": "Una prueba se identifica por su texto: edite el texto entre comillas",
   "A test name cannot be longer than 100 characters": "El nombre de una prueba no puede superar los 100 caracteres",
-  "A test sets a few facts with given and checks the bill with expect. Tests run on every change and must pass before review.": "Una prueba establece algunos datos con given y comprueba la factura con expect. Las pruebas se ejecutan en cada cambio y deben superarse antes de la revisión.",
   "A test's own statements refused: {0}": "Las propias instrucciones de una prueba rechazaron la ejecución: {0}",
   "A test: set fields of the sample record with `given`, check the bill with `expect`.": "Una prueba: establezca campos del registro de muestra con `given` y compruebe la factura con `expect`.",
   "A text tile needs something to say": "Un mosaico de texto necesita algo que decir",

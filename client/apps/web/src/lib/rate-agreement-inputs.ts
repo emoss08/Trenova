@@ -46,6 +46,7 @@ export function refineRateAgreementInputs(inputs: TemplateInputsById) {
       addTariffInputIssues(ctx, ["rules", index, "inputs"], declarations, rule.inputs, translate, {
         inherited: agreementValues,
         requireUnset: true,
+        currency: rule.currency || agreement.currency,
       });
     });
 
@@ -54,6 +55,7 @@ export function refineRateAgreementInputs(inputs: TemplateInputsById) {
     if (!shared.complete) return;
     addTariffInputIssues(ctx, ["inputs"], shared.declarations, agreement.inputs, translate, {
       scope: "agreement",
+      currency: agreement.currency,
     });
   };
 }

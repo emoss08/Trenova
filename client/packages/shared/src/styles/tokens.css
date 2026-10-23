@@ -441,6 +441,16 @@
   --syntax-type: oklch(0.52 0.091 var(--hue-teal));
   --syntax-meta: oklch(0.535 0.188 var(--hue-rose));
 
+  /* Editor ----------------------------------------------------------------
+     What the Tariff editor marks over code: every use of the name at the
+     cursor (a read in a brand tint, a write or declaration in an amber one, so
+     where a value changes stands out), and the gutter bar beside a line no test
+     reaches. The tints sit under code, so the audit holds the ink and every
+     syntax role to AA on them; the bar is held to 3:1 on the field. */
+  --editor-reference: oklch(0.952 0.022 var(--hue-brand));
+  --editor-reference-write: oklch(0.952 0.045 var(--hue-amber));
+  --editor-coverage-gap: oklch(0.6 0.12 var(--hue-amber));
+
   /* Series ---------------------------------------------------------------
      Comparison charts give every model and every provider a hue of its own,
      held by a stable key rather than by sort order, so the same model is the
@@ -682,6 +692,10 @@
   --syntax-function: oklch(0.72 0.15 var(--hue-indigo));
   --syntax-type: oklch(0.744 0.132 var(--hue-teal));
   --syntax-meta: oklch(0.693 0.189 var(--hue-rose));
+
+  --editor-reference: oklch(0.3 0.06 var(--hue-brand));
+  --editor-reference-write: oklch(0.3 0.055 var(--hue-amber));
+  --editor-coverage-gap: oklch(0.72 0.14 var(--hue-amber));
 
   --accent-indigo: oklch(0.71 0.156 var(--hue-indigo));
   --accent-indigo-subtle: oklch(0.258 0.058 var(--hue-indigo));
@@ -1115,6 +1129,9 @@
   --color-syntax-function: var(--syntax-function);
   --color-syntax-type: var(--syntax-type);
   --color-syntax-meta: var(--syntax-meta);
+  --color-editor-reference: var(--editor-reference);
+  --color-editor-reference-write: var(--editor-reference-write);
+  --color-editor-coverage-gap: var(--editor-coverage-gap);
 
   --color-agent-indigo: var(--agent-indigo);
   --color-agent-teal: var(--agent-teal);
