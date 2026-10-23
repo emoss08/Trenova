@@ -180,6 +180,10 @@ aliases:
     user: userId
   MFAAuthenticator:
     user: userId
+  ReportRun:
+    rowsStored: rowsKey
+  ReportSchedule:
+    mine: runAsId
 
 virtuals:
   EdiTransfer:

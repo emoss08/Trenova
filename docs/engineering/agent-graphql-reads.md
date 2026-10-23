@@ -829,11 +829,23 @@ Each module's PR:
 | Factoring | `factoring_list_remittances` | none | reads `DeskFactoringRemittances`. `factoring_remittance` declared no field sensitivities; where a remittance stands is Internal and its total cash stays Restricted |
 | Factoring | `factoring_get_remittance` | `lines.cells` | reads `DeskFactoringRemittance` with the lines it asks for: `FactoringRemittance` gains `lines(matchStatuses:)` (one safe addition, its resolver reading the remittance's lines once). A line's amounts stay Restricted, and so do the cells the factor printed, which carry the same amounts; the repository tool returned an unreadable line's cells ungated |
 | Factoring | `factoring_get_reserve_balance` | none | reads `FactoringReserveBalance`. `FactoringReserveBalance` had no kind, so the guard did not gate it; it now declares `@kind(resource: "factoring_reserve")`, whose balances stay Restricted and whose entry count and last movement are Internal |
+| Reports | `report_list_runs` | none | reads `DeskReportRuns`, added for the Desk. `ReportRun` declares `@kind(resource: "report")` and gains `rowsStored`, whether the run's rows were stored for a comparison, which the repository row worked out from the run itself. `reportRuns` keeps the reader to their own runs (`ListRunsConnection` sets `RequestedBy` from the reader), as the repository tool did. `report` defaults to Internal, so nothing is withheld at Internal; the spec's `shape` marks each run `comparable` with the reason it is not, and leaves a run whose status or storage was withheld unjudged. The repository tool's 25-run cap becomes the cursor page |
+| Reports | `report_list_schedules` | none | reads `DeskReportSchedules`, added for the Desk. `ReportSchedule` declares `@kind(resource: "report")` and gains `mine` (the reader set it up), which the repository row called `yours`; `reportSchedules` gains `enabledOnly` and `limit` (safe additions), the limit bounded by `base.RecordListLimit`: every schedule of a named report, one page of 20 across the organization when no report is named, where the root read every schedule. The list is the organization's on both paths, as the repository tool read it; `mine` widens nothing, it only says which are the reader's |
 
 At a person's role ceiling a factoring record's money now follows that record's own kind, as
 every converted read does, where the repository tools judged it by the person's ceiling on
 invoices. A role that reaches Restricted on a factoring kind and only Internal on invoices is
 shown the factoring money it was granted.
+
+The report reads were not gated, so at a person's role ceiling below Internal a run or a schedule
+now withholds every field but `id`, where the repository rows returned them all. The report
+module converted two of its nine reads. `report_list_table_change_alerts` stays on the repository
+path: `table_change_alert` defaults to Restricted with no field sensitivities, so through the guard
+an alert would show only its id at Internal, and declaring its fields Internal would also show an
+alert's name, table, conditions and custom message wherever that kind's sensitivities govern
+(write previews, and the AI audit trail's recorded arguments, read by people at their own
+ceiling), which is newly shown at Internal. That is the owner's call; the inventory says so. The
+other six stay with their reasons in the inventory.
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted

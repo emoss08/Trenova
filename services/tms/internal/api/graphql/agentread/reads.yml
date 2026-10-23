@@ -281,3 +281,10 @@ reads:
   - tool: worker_list_shift_templates
     operation: ShiftTemplates
     reason: Shift patterns are read whole by shiftTemplates, which no rule binds because it does not page.
+  - tool: report_list_runs
+    operation: DeskReportRuns
+    reason: A report run is a record of the report resource, read by reportRuns, which no kind claims by name.
+    entity: github.com/emoss08/trenova/internal/modules/workspace/domain/report.ReportRun
+  - tool: report_list_schedules
+    operation: DeskReportSchedules
+    reason: Report schedules are read whole by reportSchedules, one saved report's or every one the organization has.

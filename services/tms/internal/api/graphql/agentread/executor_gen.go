@@ -44,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recurringshipmentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/reportexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/schedulingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailurereasoncodeexec"
@@ -108,6 +109,7 @@ import (
 	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	rateresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
 	recurringshipmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
+	reportresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/reportresolver"
 	schedulingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/schedulingresolver"
 	servicefailurereasoncoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
 	servicefailureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
@@ -211,6 +213,8 @@ import (
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	tableexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"go.uber.org/fx"
 	zap "go.uber.org/zap"
 )
@@ -307,6 +311,7 @@ type ResolverParams struct {
 	RecurringDeductionRepo       driverpayports.RecurringDeductionRepository
 	RecurringEarningRepo         driverpayports.RecurringEarningRepository
 	RecurringShipmentService     *recurringshipmentservice.Service
+	ReportingService             *reportingservice.Service
 	RoutingGuideService          *routingguideservice.Service
 	SchedulingService            *schedulingservice.Service
 	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
@@ -319,6 +324,7 @@ type ResolverParams struct {
 	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
+	TableExportService           *tableexportservice.Service
 	TelematicsService            *telematicsservice.Service
 	TenderService                *tenderservice.Service
 	TrackingEventService         trackingeventports.TrackingEventService
@@ -378,6 +384,7 @@ var shards = []*gqlexec.Shard{
 	preludeexec.Shard,
 	rateexec.Shard,
 	recurringshipmentexec.Shard,
+	reportexec.Shard,
 	schedulingexec.Shard,
 	servicefailureexec.Shard,
 	servicefailurereasoncodeexec.Shard,
@@ -851,6 +858,16 @@ var operations = []Operation{
 		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskCustomerPayments($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { customerPayments(input: $input) { edges { node { amountMinor applications { appliedAmountMinor id invoiceId shortPayAmountMinor } appliedAmountMinor currencyCode customerId id memo paymentDate paymentMethod referenceNumber reversedAt status unappliedAmountMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "DeskReportRuns",
+		Hash:     "sha256:4696ca6231c4a7570f356d5a6c4d4a6cde13d2810a16e2a62be675391c6d7aff",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskReportRuns($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { reportRuns(input: $input) { edges { node { cannedKey completedAt createdAt definitionId format id rowCount rowsStored status truncated } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskReportSchedules",
+		Hash:     "sha256:dbe796fc8196874edf880e1c92f74a2b19ffa222fac5f948b8efc178982f1929",
+		Document: "query DeskReportSchedules($definitionId: ID, $enabledOnly: Boolean, $limit: Int) { reportSchedules( definitionId: $definitionId enabledOnly: $enabledOnly limit: $limit ) { consecutiveFailures cronExpression definitionId emailRecipients enabled formats id mine nextRunAt timezone } }",
+	},
+	{
 		Name:     "CarrierSettlementDetail",
 		Hash:     "sha256:30368f798f729dfd25fe937fa96ec488d450acc1bf52324c08d66b714fa5bf24",
 		Document: "query CarrierSettlementDetail($id: ID!) @requiresRead(kind: \"carrier\") { carrierSettlement(id: $id) { adjustmentsMinor approvedAt approvedById batchId carrier { code id name paymentMethod paymentTermDays remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitState { abbreviation id } remitToName scac } carrierId createdAt currencyCode exchangeRate exchangeRateDate grossCostMinor id lines { amountMinor costEventId description eventType glAccountId id lineNumber moveId proNumber shipmentId } netPayableMinor notes paidAt paidById paidExchangeRate paidExchangeRateDate paidJournalBatchId payDate paymentMethod paymentReference periodEnd periodStart postedAt postedById postedJournalBatchId settlementNumber shipmentCount status submittedAt submittedById updatedAt version voidJournalBatchId voidReason voidedAt voidedById } }",
@@ -1280,6 +1297,11 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                     core,
 		RecurringShipmentService: p.RecurringShipmentService,
 	}
+	reportDeps := &reportresolver.Deps{
+		Core:               core,
+		TableExportService: p.TableExportService,
+		ReportingService:   p.ReportingService,
+	}
 	schedulingDeps := &schedulingresolver.Deps{
 		Core:              core,
 		SchedulingService: p.SchedulingService,
@@ -1404,6 +1426,7 @@ func NewSchema(p ResolverParams) Schema {
 		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 		orderMutation:                 &orderMutation{Deps: orderDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
+		reportMutation:                &reportMutation{Deps: reportDeps},
 		schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
 		shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
 		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
@@ -1461,6 +1484,7 @@ func NewSchema(p ResolverParams) Schema {
 		performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
 		rateQuery:                     &rateQuery{Deps: rateDeps},
 		recurringshipmentQuery:        &recurringshipmentQuery{Deps: recurringshipmentDeps},
+		reportQuery:                   &reportQuery{Deps: reportDeps},
 		schedulingQuery:               &schedulingQuery{Deps: schedulingDeps},
 		servicefailureQuery:           &servicefailureQuery{Deps: servicefailureDeps},
 		servicefailurereasoncodeQuery: &servicefailurereasoncodeQuery{Deps: servicefailurereasoncodeDeps},
@@ -1663,6 +1687,7 @@ func NewSchema(p ResolverParams) Schema {
 		"PortalTraining":               func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
 		"RateAgreement":                func() any { return &rateresolver.RateAgreementResolver{Deps: rateDeps} },
 		"RateMatrix":                   func() any { return &rateresolver.RateMatrixResolver{Deps: rateDeps} },
+		"ReportSchedule":               func() any { return &reportresolver.ReportScheduleResolver{Deps: reportDeps} },
 		"ReviewRating":                 func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
 		"SafetyScorecard":              func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
 		"ServiceFailure":               func() any { return &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps} },
@@ -1749,6 +1774,7 @@ type mutationResolver struct {
 	*journalentryMutation
 	*orderMutation
 	*performancereviewMutation
+	*reportMutation
 	*schedulingMutation
 	*shipmentMutation
 	*telematicsMutation
@@ -1807,6 +1833,7 @@ type queryResolver struct {
 	*performancereviewQuery
 	*rateQuery
 	*recurringshipmentQuery
+	*reportQuery
 	*schedulingQuery
 	*servicefailureQuery
 	*servicefailurereasoncodeQuery
@@ -1857,6 +1884,7 @@ type (
 	journalentryMutation            = journalentryresolver.MutationResolver
 	orderMutation                   = orderresolver.MutationResolver
 	performancereviewMutation       = performancereviewresolver.MutationResolver
+	reportMutation                  = reportresolver.MutationResolver
 	schedulingMutation              = schedulingresolver.MutationResolver
 	shipmentMutation                = shipmentresolver.MutationResolver
 	telematicsMutation              = telematicsresolver.MutationResolver
@@ -1912,6 +1940,7 @@ type (
 	performancereviewQuery          = performancereviewresolver.QueryResolver
 	rateQuery                       = rateresolver.QueryResolver
 	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
+	reportQuery                     = reportresolver.QueryResolver
 	schedulingQuery                 = schedulingresolver.QueryResolver
 	servicefailureQuery             = servicefailureresolver.QueryResolver
 	servicefailurereasoncodeQuery   = servicefailurereasoncoderesolver.QueryResolver

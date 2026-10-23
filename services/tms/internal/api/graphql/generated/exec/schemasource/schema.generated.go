@@ -24836,7 +24836,7 @@ type ReportRunError {
   detail: String
 }
 
-type ReportRun {
+type ReportRun @kind(resource: "report") {
   id: ID!
   definitionId: ID
   revisionId: ID
@@ -24851,6 +24851,8 @@ type ReportRun {
   byteSize: Int!
   durationMs: Int!
   truncated: Boolean!
+  "Whether the run's rows were stored, so it can be compared with another run."
+  rowsStored: Boolean!
   error: ReportRunError
   artifactExpiresAt: Timestamp
   cacheHit: Boolean!
@@ -24886,7 +24888,7 @@ type ReportScheduleAlert {
   suppressWhileFiring: Boolean!
 }
 
-type ReportSchedule {
+type ReportSchedule @kind(resource: "report") {
   id: ID!
   definitionId: ID!
   cronExpression: String!
@@ -24900,6 +24902,8 @@ type ReportSchedule {
   alertFiring: Boolean!
   enabled: Boolean!
   runAsId: ID!
+  "Whether the person reading set the schedule up, and so may change or remove it."
+  mine: Boolean!
   lastRunId: ID
   nextRunAt: Timestamp
   consecutiveFailures: Int!
@@ -25319,7 +25323,13 @@ extend type Query {
     supersede: Boolean
   ): ReportPreview!
   drillThroughReport(input: ReportDrillInput!): ReportPreview!
-  reportSchedules(definitionId: ID): [ReportSchedule!]!
+  reportSchedules(
+    definitionId: ID
+    "Only schedules that are switched on."
+    enabledOnly: Boolean
+    "At most this many schedules, from 1 to 100. Every schedule of a named report when left out; 20 across the organization."
+    limit: Int
+  ): [ReportSchedule!]!
   reportViews(definitionId: ID): [ReportView!]!
   reportView(id: ID!): ReportView!
   reportDashboards: [ReportDashboard!]!
