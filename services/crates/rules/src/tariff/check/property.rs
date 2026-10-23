@@ -259,7 +259,8 @@ impl Checker<'_> {
 
     /// `vary target in values`.
     pub(super) fn vary(&mut self, target: &[Name], values: Option<&Expr>) {
-        let (Some(head), Some(last), true) = (target.first(), target.last(), self.property.is_some())
+        let (Some(head), Some(last), true) =
+            (target.first(), target.last(), self.property.is_some())
         else {
             self.skip_values(values);
             return;
@@ -345,9 +346,10 @@ impl Checker<'_> {
             Some(super::checker::Global::Input { .. })
         ) {
             Some(Message::new(message!("an input")))
-        } else if self.kind == FileKind::Tariff && matches!(name.text.as_str(), "total" | "lines")
-        {
-            Some(Message::new(message!("what a property reads from the bill")))
+        } else if self.kind == FileKind::Tariff && matches!(name.text.as_str(), "total" | "lines") {
+            Some(Message::new(message!(
+                "what a property reads from the bill"
+            )))
         } else {
             None
         };
@@ -1017,7 +1019,9 @@ impl Checker<'_> {
                 [quote(&shown)],
             ),
             None => Message::with(
-                message!("{0} isn't varied in this property: vary it over a range first, as in {1}"),
+                message!(
+                    "{0} isn't varied in this property: vary it over a range first, as in {1}"
+                ),
                 [quote(&shown), quote(&format!("vary {shown} in lo..hi"))],
             ),
         };

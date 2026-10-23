@@ -26,7 +26,7 @@ pub mod cases;
 pub mod report;
 mod search;
 
-pub use report::{Counterexample, Monotone};
+pub use report::{Counterexample, Monotone, Varied};
 
 use super::bill::Finished;
 use super::error::{EvalError, Refusal};
@@ -37,9 +37,7 @@ use super::tests::{CaseSetup, Ended, Failure, Kind, Runner, Status, TestResult, 
 use super::value::Value;
 use crate::message::{Arg, Message};
 use crate::tariff::schema::Schema;
-use crate::tariff::syntax::ast::{
-    Direction, Expect, Expr, ExprKind, FileKind, Property, StmtKind,
-};
+use crate::tariff::syntax::ast::{Direction, Expect, Expr, ExprKind, FileKind, Property, StmtKind};
 use axes::{Axis, Sources, Target};
 use report::Writing;
 use std::rc::Rc;
@@ -85,7 +83,11 @@ struct Order<'a> {
 }
 
 /// Runs one property.
-pub fn run<'a>(runner: &mut Runner<'_, '_, 'a>, property: &'a Property, library: bool) -> TestResult {
+pub fn run<'a>(
+    runner: &mut Runner<'_, '_, 'a>,
+    property: &'a Property,
+    library: bool,
+) -> TestResult {
     let mut result = TestResult {
         name: property.name.text.clone(),
         span: property.name.span,
@@ -130,7 +132,10 @@ pub fn run<'a>(runner: &mut Runner<'_, '_, 'a>, property: &'a Property, library:
 }
 
 /// Every axis of a property, its values worked out once.
-fn build<'a>(runner: &mut Runner<'_, '_, 'a>, property: &'a Property) -> Result<Vec<Axis<'a>>, EvalError> {
+fn build<'a>(
+    runner: &mut Runner<'_, '_, 'a>,
+    property: &'a Property,
+) -> Result<Vec<Axis<'a>>, EvalError> {
     let landmarks = landmarks_for(runner, property);
     let schema = Schema::new(runner.request.settings);
     let sources = Sources {
@@ -209,6 +214,8 @@ enum Found {
     Passed(Vec<Record>),
     /// A case could not be evaluated.
     Error(Vec<Value>, EvalError),
+    /// The run's step meter ran out before every case ran.
+    Spent(EvalError),
     /// Some case needs table cells.
     Needs,
     /// A case failed.
@@ -246,6 +253,10 @@ impl<'a> Driver<'_, '_, '_, 'a> {
         }
         match found {
             Found::Passed(_) | Found::Needs => {}
+            Found::Spent(error) => {
+                result.status = Status::Error;
+                result.error = Some(error);
+            }
             Found::Error(values, error) => {
                 result.status = Status::Error;
                 result.error = Some(error);
@@ -262,6 +273,9 @@ impl<'a> Driver<'_, '_, '_, 'a> {
         let combinations = cases::combinations(&marked, cases::seed(&self.property.name.text));
         let mut records: Vec<Record> = Vec::new();
         for combination in combinations {
+            if let Some(error) = self.runner.ledger.exhausted() {
+                return Found::Spent(error);
+            }
             let values = self.values_of(&combination);
             let probe = self.case(&values);
             if !matches!(probe.end, End::Skipped) {
@@ -463,11 +477,8 @@ impl<'a> Driver<'_, '_, '_, 'a> {
             before: unordered.before.clone(),
             after: unordered.after.clone(),
         };
-        result.counterexample = Some(self.counterexample(
-            &unordered.values,
-            Some((order.value, monotone)),
-            None,
-        ));
+        result.counterexample =
+            Some(self.counterexample(&unordered.values, Some((order.value, monotone)), None));
     }
 
     /// The counterexample of a case.
@@ -497,7 +508,11 @@ impl<'a> Driver<'_, '_, '_, 'a> {
                 .axes
                 .iter()
                 .zip(values)
-                .map(|(axis, value)| (axis.label.clone(), value.clone()))
+                .map(|(axis, value)| Varied {
+                    target: axis.label.clone(),
+                    display: writing.display(axis, value),
+                    value: value.clone(),
+                })
                 .collect(),
             monotone: monotone.map(|(_, monotone)| monotone),
             refusal,
@@ -520,4 +535,100 @@ fn span_range(span: crate::span::Span) -> std::ops::Range<usize> {
     let start = usize::try_from(span.start).unwrap_or(usize::MAX);
     let end = usize::try_from(span.end).unwrap_or(usize::MAX);
     start..end.max(start)
+}
+
+#[cfg(test)]
+mod tests {
+    //! The points corpus (`testdata/tariff/property/points.json`): for each case, the values
+    //! every axis of one property takes, as interpolation writes them. It pins the landmarks,
+    //! their neighbours, the steps and the fill.
+
+    use super::build;
+    use crate::tariff::context::Context;
+    use crate::tariff::eval::budget::Limits;
+    use crate::tariff::eval::interp::link::Linked;
+    use crate::tariff::eval::ops::gate;
+    use crate::tariff::eval::tables::Tables;
+    use crate::tariff::eval::tests::{Ledger, Runner, TestRequest};
+    use crate::tariff::syntax::ast::ItemKind;
+    use crate::tariff::syntax::program::load;
+    use serde_json::{Value as Json, json};
+
+    fn points(case: &Json) -> Result<Json, String> {
+        let source = case["source"].as_str().unwrap_or_default();
+        let context: Context = serde_json::from_str(
+            &case
+                .get("context")
+                .cloned()
+                .unwrap_or_else(|| json!({}))
+                .to_string(),
+        )
+        .map_err(|error| error.to_string())?;
+        let program = load(source, None, &context);
+        let analysis = gate(&program, &context).map_err(|error| error.message.english())?;
+        let tables = Tables::build(&context.tables);
+        let request = TestRequest {
+            program: &program,
+            types: &analysis,
+            settings: &context.settings,
+            tables: &tables,
+            limits: Limits::DEFAULT,
+            names: None,
+        };
+        let linked = Linked::new(&program);
+        let mut ledger = Ledger::new(Limits::DEFAULT, None);
+        let mut runner = Runner::new(&request, &linked, &mut ledger);
+        let wanted = case["property"].as_str().unwrap_or_default();
+        let property = program
+            .root()
+            .and_then(|root| {
+                root.file.items.iter().find_map(|item| match &item.kind {
+                    ItemKind::Property(property) if property.name.text == wanted => Some(property),
+                    _ => None,
+                })
+            })
+            .ok_or_else(|| format!("no property {wanted}"))?;
+        let axes = build(&mut runner, property).map_err(|error| error.message.english())?;
+        Ok(Json::Array(
+            axes.iter()
+                .map(|axis| {
+                    Json::Array(
+                        axis.points
+                            .iter()
+                            .map(|point| Json::String(point.display()))
+                            .collect(),
+                    )
+                })
+                .collect(),
+        ))
+    }
+
+    #[test]
+    fn the_points_corpus_holds() {
+        let corpus: Vec<Json> = serde_json::from_str(include_str!(
+            "../../../../testdata/tariff/property/points.json"
+        ))
+        .unwrap_or_default();
+        assert!(!corpus.is_empty());
+        let mut failures = Vec::new();
+        for case in &corpus {
+            match points(case) {
+                Ok(found) if found == case["axes"] => {}
+                Ok(found) => failures.push(format!("{}:\n  got {found}", case["name"])),
+                Err(error) => failures.push(format!("{}: {error}", case["name"])),
+            }
+        }
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+
+    #[test]
+    fn the_same_file_runs_the_same_cases() {
+        let input = json!({"op": "tariff.test", "input": {"source": "tariff \"t\"\nlet w = shipment.weight ?? 0 lb\ncharge \"x\" = (if w > 900 lb { $1/lb } else { $2/lb }) * w\nproperty \"p\" {\n  vary shipment.weight in 1 lb..40_000 lb\n  vary shipment.distance in 1 mi..3_000 mi\n  vary shipment.hazmat\n  expect total nondecreasing in shipment.weight\n}\n"}}).to_string();
+        let first = crate::ops::dispatch(input.as_bytes());
+        let second = crate::ops::dispatch(input.as_bytes());
+        assert_eq!(first, second);
+        let parsed: Json = serde_json::from_slice(&first).unwrap_or_default();
+        assert_eq!(parsed["ok"]["tests"][0]["cases"], json!(256));
+        assert_eq!(parsed["ok"]["tests"][0]["status"], json!("failed"));
+    }
 }

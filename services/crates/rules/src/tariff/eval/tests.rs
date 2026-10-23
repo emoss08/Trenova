@@ -213,11 +213,7 @@ pub fn run_suite(request: &TestRequest<'_>) -> Suite {
         .is_none()
         .then(|| Rc::new(Regions::of(&root.file)));
     let mut ledger = Ledger::new(request.limits, regions);
-    let selected = |name: &Name| {
-        request
-            .names
-            .is_none_or(|names| names.contains(&name.text))
-    };
+    let selected = |name: &Name| request.names.is_none_or(|names| names.contains(&name.text));
     let mut results = Vec::new();
     for item in &root.file.items {
         let mut runner = Runner::new(request, &linked, &mut ledger);
@@ -253,11 +249,15 @@ pub struct Ledger {
 }
 
 impl Ledger {
-    fn new(limits: Limits, regions: Option<Rc<Regions>>) -> Self {
+    /// A fresh ledger for a run under `limits`, counting `regions` when given.
+    #[must_use]
+    pub fn new(limits: Limits, regions: Option<Rc<Regions>>) -> Self {
         Self {
             spent: 0,
             limit: limits.steps.saturating_mul(FILE_STEPS),
-            hits: regions.as_ref().map(|regions| Hits::new(Rc::clone(regions))),
+            hits: regions
+                .as_ref()
+                .map(|regions| Hits::new(Rc::clone(regions))),
             regions,
             landmarks: None,
             counting: true,
@@ -390,10 +390,7 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
                 self.needs.push(need);
             }
         }
-        self.ledger.spent = self
-            .ledger
-            .spent
-            .saturating_add(interp.meter.steps_used());
+        self.ledger.spent = self.ledger.spent.saturating_add(interp.meter.steps_used());
         if let (Some(hits), Some(total)) = (interp.coverage.take(), self.ledger.hits.as_mut()) {
             total.merge(&hits);
         }
@@ -762,7 +759,8 @@ fn apply_givens<'a>(
     let mut inputs = BTreeMap::new();
     let (mut pickup, mut delivery) = (false, false);
     let mut set = |interp: &mut Interp<'_, 'a>, path: &[Name], value: Value, span: Option<Span>| {
-        pickup |= matches!(path, [root, field] if root.text == "shipment" && field.text == "pickup");
+        pickup |=
+            matches!(path, [root, field] if root.text == "shipment" && field.text == "pickup");
         delivery |=
             matches!(path, [root, field] if root.text == "shipment" && field.text == "delivery");
         interp.record = set_path(&interp.record, path, value).map_err(|error| match span {

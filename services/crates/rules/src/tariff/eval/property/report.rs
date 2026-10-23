@@ -28,13 +28,25 @@ use std::fmt::Write as _;
 pub struct Counterexample {
     /// Each varied target with its value in the case (for a monotone failure, the `before`
     /// case).
-    pub values: Vec<(String, Value)>,
+    pub values: Vec<Varied>,
     /// The out-of-order pair, for a monotone failure.
     pub monotone: Option<Monotone>,
     /// The case's refusal, when it refused to rate.
     pub refusal: Option<Refusal>,
     /// A `test` block that reproduces the case.
     pub test: String,
+}
+
+/// One varied target's value in a counterexample.
+#[derive(Debug, Clone)]
+pub struct Varied {
+    /// The target as written: `shipment.weight`, `input.rate`, `w`.
+    pub target: String,
+    /// The value as the Studio shows it: a listed item as the author wrote it, else as
+    /// interpolation writes it.
+    pub display: String,
+    /// The value.
+    pub value: Value,
 }
 
 /// Two neighbouring values of a monotone failure whose results are out of order.
@@ -59,12 +71,15 @@ impl Counterexample {
         let values: Vec<Json> = self
             .values
             .iter()
-            .map(|(target, value)| {
-                let mut out = shown(value);
-                if let Json::Object(object) = &mut out {
-                    object.insert(String::from("target"), Json::String(target.clone()));
-                }
-                out
+            .map(|varied| {
+                let mut out = Map::new();
+                out.insert(String::from("target"), Json::String(varied.target.clone()));
+                out.insert(
+                    String::from("display"),
+                    Json::String(varied.display.clone()),
+                );
+                out.insert(String::from("value"), encode(&varied.value));
+                Json::Object(out)
             })
             .collect();
         let mut out = Map::new();
@@ -159,7 +174,10 @@ impl Writing<'_> {
                     let Some((entry, value)) = varied.next() else {
                         continue;
                     };
-                    let literal = source_literal(self.schema, value, &entry.ty);
+                    let literal = entry.written_at(value).map_or_else(
+                        || source_literal(self.schema, value, &entry.ty),
+                        |span| self.text(span).to_owned(),
+                    );
                     match &entry.target {
                         Target::Name(name) => lets.push(format!("let {name} = {literal}")),
                         Target::Path(_) | Target::Input(_) => {
@@ -182,7 +200,11 @@ impl Writing<'_> {
                 source_literal(self.schema, value, &ty)
             ));
         }
-        let shown: Vec<String> = values.iter().map(Value::display).collect();
+        let shown: Vec<String> = axes
+            .iter()
+            .zip(values)
+            .map(|(entry, value)| self.display(entry, value))
+            .collect();
         let name = format!("{}: {}", property.name.text, shown.join(", "));
         let mut test = format!("test {} {{\n", text_literal(&name));
         for line in givens.iter().chain(&lets).chain(&rest) {
@@ -201,9 +223,15 @@ impl Writing<'_> {
         let Some(start) = formatted.find("\ntest ").map(|at| at + 1) else {
             return test;
         };
-        formatted
-            .get(start..)
-            .map_or(test, ToOwned::to_owned)
+        formatted.get(start..).map_or(test, ToOwned::to_owned)
+    }
+
+    /// A varied value as the Studio shows it: a listed item as written, else as interpolation
+    /// writes it.
+    #[must_use]
+    pub fn display(&self, axis: &Axis<'_>, value: &Value) -> String {
+        axis.written_at(value)
+            .map_or_else(|| value.display(), |span| self.text(span).to_owned())
     }
 
     fn text(&self, span: Span) -> &str {

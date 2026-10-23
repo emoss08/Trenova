@@ -49,6 +49,7 @@
 //! | `charge-amount`, `charge-option`, `misplaced`, `total-order`, `round-step` | charges, notes, total clauses and statements in the wrong place |
 //! | `match-exhaustive`, `match-overlap`, `empty-range`, `pattern-binding` | `match` |
 //! | `missing-return`, `return-type`, `recursion`, `recursive-type`, `const-type`, `condition-result`, `annotation-needed`, `branch-mismatch`, `missing-field`, `duplicate`, `given-order`, `given-target`, `not-indexable`, `not-iterable`, `not-summable`, `unordered`, `never-none`, `interpolation`, `pattern`, `quotient`, `unit-type`, `type-arguments`, `range`, `overflow`, `divide-by-zero` | the other rules |
+//! | `vary-target`, `vary-values`, `vary-range`, `vary-read`, `vary-missing`, `assume-bill`, `monotone-target` | properties (`check/property.rs`); a property also uses `given-order`, `duplicate`, `range`, `empty-range`, `unordered`, `not-constant` and `shadow` |
 //! | `unused`, `unused-value`, `unreachable`, `unreachable-arm`, `no-charge`, `not-billed`, `needless-fallback`, `needless-optional-chain`, `needless-let` | warnings |
 //! | `constraint` | an input's `where` constraint: not a range or a list, on a record input, a range of an unordered type or with no end, an empty range or list, a default outside it |
 //! | `choice`, `duplicate`, `unknown-choice` | `best` and `worst`: an empty label, fewer than two options, a label used twice; `chosen(…)` naming no choice |

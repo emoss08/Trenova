@@ -36,7 +36,11 @@ impl Driver<'_, '_, '_, '_> {
     }
 
     /// The simplest failing case: each axis in turn moved as low as it still fails.
-    pub(super) fn shrink(&mut self, mut values: Vec<Value>, mut probe: Probe) -> (Vec<Value>, Probe) {
+    pub(super) fn shrink(
+        &mut self,
+        mut values: Vec<Value>,
+        mut probe: Probe,
+    ) -> (Vec<Value>, Probe) {
         for index in 0..self.axes.len() {
             let found = if self.axes.get(index).is_some_and(|axis| axis.line.is_some()) {
                 self.shrink_range(&values, index)
@@ -128,9 +132,10 @@ impl Driver<'_, '_, '_, '_> {
             .get(axis)
             .map(|axis| axis.points.clone())
             .unwrap_or_default();
-        let (Some(mut low_at), Some(mut high_at)) =
-            (points.get(pair.low).cloned(), points.get(pair.high).cloned())
-        else {
+        let (Some(mut low_at), Some(mut high_at)) = (
+            points.get(pair.low).cloned(),
+            points.get(pair.high).cloned(),
+        ) else {
             return Found::Passed(Vec::new());
         };
         let (mut low, mut high) = (pair.low_result, pair.high_result);

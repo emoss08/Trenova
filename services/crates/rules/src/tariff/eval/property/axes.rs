@@ -25,6 +25,7 @@ use super::super::tables::Tables;
 use super::super::time::{Date, DateTime};
 use super::super::value::Value;
 use crate::message::Message;
+use crate::span::Span;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{Expr, ExprKind, Input, ItemKind, Name, Stmt, StmtKind, UnaryOp};
 use crate::tariff::syntax::program::ModuleId;
@@ -68,6 +69,8 @@ pub struct Axis<'a> {
     pub points: Vec<Value>,
     /// Whether each value is an end, a landmark or a listed item rather than a filler.
     pub marked: Vec<bool>,
+    /// Where each listed item is written, for writing it back as the author did.
+    pub written: Vec<Option<Span>>,
     /// A range's number line, for searching between its values.
     pub line: Option<Line>,
 }
@@ -128,7 +131,10 @@ impl Model {
     fn value(&self, position: Decimal) -> Option<Value> {
         match self {
             Self::Quantity(unit) => Some(Value::quantity(position.normalize(), unit.clone())),
-            Self::Int => position.fract().is_zero().then_some(Value::Int(position.trunc())),
+            Self::Int => position
+                .fract()
+                .is_zero()
+                .then_some(Value::Int(position.trunc())),
             Self::Number => Some(Value::Number(position.normalize())),
             Self::Date => Date::from_civil(1970, 1, 1)?
                 .add_days(position.to_i64()?)
@@ -307,6 +313,7 @@ pub fn axis<'a>(
         (Some(values), _) | (None, Some(values)) => Some(values),
         (None, None) => None,
     };
+    let mut spans = Vec::new();
     let (points, marked, line, written) = match values.map(|values| &values.kind) {
         Some(ExprKind::Range {
             start: Some(start),
@@ -322,6 +329,7 @@ pub fn axis<'a>(
             let mut points = Vec::with_capacity(items.len().min(MAX_POINTS));
             for item in items.iter().take(MAX_POINTS) {
                 points.push(eval(item)?);
+                spans.push(Some(item.span));
             }
             let marked = vec![true; points.len()];
             (points, marked, None, items.first())
@@ -345,14 +353,28 @@ pub fn axis<'a>(
         })
         .or_else(|| written.and_then(|expr| sources.types.type_of(ModuleId::ROOT, expr.id)))
         .unwrap_or(Type::Error);
+    spans.resize(points.len(), None);
     Ok(Axis {
         target,
         label,
         ty,
         points,
         marked,
+        written: spans,
         line,
     })
+}
+
+impl Axis<'_> {
+    /// Where the listed item equal to `value` is written, when it is one.
+    #[must_use]
+    pub fn written_at(&self, value: &Value) -> Option<Span> {
+        let index = self
+            .points
+            .iter()
+            .position(|point| point.equals(value).unwrap_or(false))?;
+        self.written.get(index).copied().flatten()
+    }
 }
 
 fn not_varied() -> EvalError {
@@ -437,9 +459,13 @@ fn range(
         if at < start || at > last {
             continue;
         }
-        for near in [at.checked_sub(line.step), Some(at), at.checked_add(line.step)]
-            .into_iter()
-            .flatten()
+        for near in [
+            at.checked_sub(line.step),
+            Some(at),
+            at.checked_add(line.step),
+        ]
+        .into_iter()
+        .flatten()
         {
             if near >= start && near <= last {
                 points.insert(near, true);
@@ -547,10 +573,7 @@ mod tests {
             start: Decimal::from_str("0.50").unwrap_or_default(),
             step: Decimal::new(1, 2),
         };
-        assert_eq!(
-            line.between(Decimal::new(50, 2), Decimal::new(51, 2)),
-            None
-        );
+        assert_eq!(line.between(Decimal::new(50, 2), Decimal::new(51, 2)), None);
         assert_eq!(
             line.between(Decimal::new(50, 2), Decimal::new(60, 2)),
             Some(Decimal::new(55, 2))
