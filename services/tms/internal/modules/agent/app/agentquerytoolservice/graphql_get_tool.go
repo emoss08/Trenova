@@ -84,7 +84,15 @@ func (t *graphQLGetTool) Query(
 		return nil, fmt.Errorf("%s %s: %w", t.spec.entity, id, errGraphQLRecordMissing)
 	}
 	record := compact(node)
-	if withheld := relativePaths(result.Withheld, t.read.RootField+"."); len(withheld) > 0 {
+	withheld := relativePaths(result.Withheld, t.read.RootField+".")
+	if t.spec.shape != nil {
+		hidden := make(map[string]struct{}, len(withheld))
+		for _, path := range withheld {
+			hidden[path] = struct{}{}
+		}
+		t.spec.shape(record, hidden)
+	}
+	if len(withheld) > 0 {
 		record[outcomeWithheld] = withheld
 		record[outcomeWithheldNote] = withheldNote
 	}

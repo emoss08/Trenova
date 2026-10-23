@@ -76,7 +76,14 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 			return rows[0].ID, nil
 		},
 	}
-	require.Len(t, gets, len(convertedGets)+1)
+	customers := gets["customer_get"]
+	gets["customer_get_update_preferences"] = &referenceCase{
+		tool: "customer_get_update_preferences",
+		write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
+			return customers.write(ctx, tenant, "U"+label, marked)
+		},
+	}
+	require.Len(t, gets, len(convertedGets)+2)
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})

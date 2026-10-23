@@ -92,7 +92,6 @@ func coreToolProviders() []any {
 		newListBillingTransferCandidatesTool,
 		provideGetDetentionOccurrenceTool,
 		newListCarrierIntelEventsTool,
-		newGetCustomerUpdatePreferencesTool,
 		newGetAgentRunTool,
 		newGetServiceFailureTool,
 		provideGetWorkerCredentialTool,

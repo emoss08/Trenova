@@ -14,6 +14,11 @@ reads:
     operation: DeskCarrierCard
     reason: The carrier's own card; DeskCarrierIntel reads the same root for the intelligence panel.
   - tool: customer_get
+    operation: DeskCustomerCard
+    reason: The customer's own card; DeskCustomerUpdatePreferences reads the same root for the status update desk.
+  - tool: customer_get_update_preferences
+    operation: DeskCustomerUpdatePreferences
+    reason: The tool reads one field set of the customer, its status update preference and recipients, which DeskCustomerCard does not select.
   - tool: location_get
   - tool: document_list_types
   - tool: equipment_list_manufacturers

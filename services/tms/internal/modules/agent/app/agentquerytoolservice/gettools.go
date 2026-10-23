@@ -38,6 +38,10 @@ type getSpec struct {
 	source      agent.TaintSource
 	rationale   string
 	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	// shape applies to a record read through GraphQL what the card's
+	// operation does not, given the fields withheld from it: a domain rule the
+	// next call needs worded (a customer that takes no routine notices).
+	shape func(record map[string]any, withheld map[string]struct{})
 }
 
 type getTool struct {
@@ -198,6 +202,7 @@ func locationGetSpec() getSpec {
 func graphQLGetSpecs() []getSpec {
 	return []getSpec{
 		customerGetSpec(),
+		customerUpdatePreferencesGetSpec(),
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),

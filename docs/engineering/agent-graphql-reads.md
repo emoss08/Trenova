@@ -576,7 +576,8 @@ Each module's PR:
 | Parties | `customer_list` | none | every field the table selects is Internal |
 | Parties | `location_list` | none | every field the table selects is Internal |
 | Parties | `carrier_list` | none | every field the table selects is Internal |
-| Parties | `customer_get` | none | reads `DeskCustomerCard`: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `customer_get` | none | reads `DeskCustomerCard`, named in `reads.yml` because `DeskCustomerUpdatePreferences` reads the same root: the customer, its state and its billing profile with the documents each invoice needs. Every field it selects is Internal |
+| Parties | `customer_get_update_preferences` | none | reads `DeskCustomerUpdatePreferences`, a new operation on `customer(id)` selecting the preference, the recipients and the notice profile's recipients; every field is Internal. The spec's `shape` (new on gets) words what the repository tool computed: `wantsArrivals`, `wantsDepartures`, the warning for a customer set to None, and `fallbackRecipients` when the customer names none, and says none of it where the preference was withheld |
 | Parties | `location_get` | none | reads `DeskLocationCard`; every field it selects is Internal |
 | Parties | `carrier_get` | none | reads `DeskCarrierCard`, named in `reads.yml` because `DeskCarrierIntel` reads the same root; every field it selects is Internal |
 | Parties | `carrier_get_intelligence_event` | none at Internal | reads `CarrierIntelEvent`. `CarrierIntelEvent` had no kind (it is not named for `carrier_intelligence`), so the guard did not gate it and a reader below Internal got every field; it now declares `@kind(resource: "carrier_intelligence")`, so its fields follow `carrier_intelligence`'s Internal default on every read of the type, the carrier intelligence screens' included, as the repository tool gated them. Who acknowledged or resolved it shows the user reference view |
@@ -691,7 +692,10 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
   parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
   `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, and a card
-  whose root returns nothing is a missing record, not an empty one.
+  whose root returns nothing is a missing record, not an empty one. A get's `shape`, like a list's, applies
+  to the record a domain rule the card does not word, given what was withheld:
+  `customer_get_update_preferences` adds whether arrivals and departures are wanted, the warning for a
+  customer who takes no routine notices, and the notice profile's recipients as the fallback.
 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by

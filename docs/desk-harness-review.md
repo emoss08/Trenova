@@ -1475,6 +1475,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: credentials | `worker_list_credentials` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: party gets | `customer_get`, `location_get`, `carrier_get`, `carrier_get_intelligence_event` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: equipment | `equipment_get_tractor`, `equipment_get_trailer`, `equipment_list_positions` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
+| Typed reads through GraphQL: customer update preferences | `customer_get_update_preferences` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 
 The shipment row is measured on the held-out set the split PR recorded (161 cases), so both
 figures read the same cases; the module's merges moved three cases between splits, which the
@@ -1621,6 +1622,14 @@ every qualification record. A Postgres test reads each list for one worker and f
 organization, against the repository tool's service read, and checks that an agent at Internal is
 never shown a leave reason, a finding or a drug and alcohol answer. Held-out ranking is unchanged
 (keyword 0.99 and 0.95 over 145, hybrid 0.93 and 0.82 over 165).
+
+The customer update preferences row converts the one field-no-op read in the customer module. It
+reads a new `DeskCustomerUpdatePreferences` operation on `customer(id)`, the preference, the
+recipients and the notice profile's recipients, and a get spec's new `shape` hook words what the
+repository tool computed from them: whether arrivals and departures are wanted, the warning for a
+customer set to None, and the fallback recipients. `customer_get` now names `DeskCustomerCard`,
+since two Desk operations read the root. The tool's description and schema are unchanged, so the
+catalog snapshot and the embedding fixture are too, and held-out ranking is unchanged.
 
 **Phase 4: a single front door and job profiles (3–4 weeks).**
 
