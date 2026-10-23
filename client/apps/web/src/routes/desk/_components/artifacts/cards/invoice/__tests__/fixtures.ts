@@ -171,6 +171,7 @@ export function postedInvoice(overrides: Partial<DeskInvoice> = {}): DeskInvoice
     voidDisposition: null,
     memoReason: "",
     memoKind: null,
+    ratingNotes: [],
     ediSendStatus: "Sent",
     ediSentAt: DAY.sep2 + 9 * HOUR,
     pdfDocumentId: "doc_inv_412",
@@ -185,8 +186,10 @@ export function postedInvoice(overrides: Partial<DeskInvoice> = {}): DeskInvoice
     chargeSummary: [
       chargeGroup({
         type: "Freight",
-        description: "Freight charge",
+        description: "Linehaul",
+        quantity: "760",
         rate: "3.75",
+        rateUnit: "$/mi",
         formulaTemplateId: "ft_permile",
         formulaTemplateName: LONG_TEMPLATE,
         amount: "2850",
@@ -297,7 +300,7 @@ export function consolidatedDraft(overrides: Partial<DeskInvoice> = {}): DeskInv
     chargeSummary: [
       chargeGroup({
         type: "Freight",
-        description: "Freight charge",
+        description: "Linehaul",
         formulaTemplateId: "ft_permile",
         formulaTemplateName: "Per mile – dry van",
         lineCount: 8,
@@ -307,13 +310,14 @@ export function consolidatedDraft(overrides: Partial<DeskInvoice> = {}): DeskInv
       }),
       chargeGroup({
         type: "Freight",
-        description: "Freight charge",
+        description: "Linehaul",
         formulaTemplateId: "ft_cwt",
         formulaTemplateName: "Per CWT (Hundredweight)",
         rate: "3.05",
+        rateUnit: "$/cwt",
         lineCount: 4,
         shipmentCount: 4,
-        quantity: "4",
+        quantity: "1652.46",
         amount: "5040",
       }),
       chargeGroup({

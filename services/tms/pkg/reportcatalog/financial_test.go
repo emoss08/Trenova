@@ -107,21 +107,6 @@ func TestEnumFieldsResolveTheirValues(t *testing.T) {
 			}
 		}
 	}
-
-	// rounding_mode is backed by ratetypes.RoundingMode, which lives outside the
-	// domain directory. Without that package indexed for enum resolution the
-	// field degrades to a free-text string behind a warning nobody reads.
-	agreement, ok := Default.Entity("rate_agreement")
-	if !ok {
-		t.Fatal("rate_agreement entity not found")
-	}
-	rounding, found := agreement.Field("roundingMode")
-	if !found {
-		t.Fatal("rate_agreement.roundingMode not found")
-	}
-	if rounding.Type != FieldEnum {
-		t.Errorf("rate_agreement.roundingMode type = %s, want enum", rounding.Type)
-	}
 }
 
 func containsString(values []string, want string) bool {

@@ -50,7 +50,6 @@ func TestSubmit_NotifiesReviewers(t *testing.T) {
 
 	tenant := newTenantInfo()
 	template := newTestTemplate()
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -87,10 +86,10 @@ func TestApprove_NotifiesSubmitter(t *testing.T) {
 	submittedAt := timeutils.NowUnix() - 3600
 
 	template := newTestTemplate()
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
+	allowApprovalReads(deps)
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
@@ -139,7 +138,7 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 	_, err := deps.svc.Reject(t.Context(), &ApprovalActionRequest{
 		TenantInfo: newTenantInfo(),
 		EntityID:   template.ID,
-		Comment:    "expression is wrong",
+		Comment:    "the fuel step is wrong",
 	})
 
 	require.NoError(t, err)
@@ -150,7 +149,7 @@ func TestReject_NotifiesSubmitterWithComment(t *testing.T) {
 	assert.Equal(t, notificationdomain.PriorityHigh, notified.Priority)
 	require.NotNil(t, notified.TargetUserID)
 	assert.Equal(t, submitterID, *notified.TargetUserID)
-	assert.Contains(t, notified.Message, "expression is wrong")
+	assert.Contains(t, notified.Message, "the fuel step is wrong")
 	assert.Contains(t, notified.Message, "archived")
 }
 

@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -45,18 +44,12 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 		TemperatureMax:           source.TemperatureMax,
 		FreightChargeAmount:      source.FreightChargeAmount,
 		OtherChargeAmount:        source.OtherChargeAmount,
-		BaseRate:                 source.BaseRate,
 		TotalChargeAmount:        source.TotalChargeAmount,
-		RatingUnit:               source.RatingUnit,
 		Moves:                    make([]edi.LoadTenderMove, 0, len(source.Moves)),
 		Commodities:              make([]edi.LoadTenderCommodity, 0, len(source.Commodities)),
 		AdditionalCharges:        make([]edi.LoadTenderCharge, 0, len(source.AdditionalCharges)),
 		RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{},
 	}
-	if source.RatingDetail != nil {
-		payload.RatingDetail = jsonutils.MustToJSON(source.RatingDetail)
-	}
-
 	addRequiredID(
 		payload.RequiredMappingEntityIDs,
 		edi.MappingEntityTypeCustomer,
@@ -233,7 +226,7 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 	for _, line := range lines {
 		charge := edi.FreightInvoiceCharge{
 			Sequence:    int64(line.LineNumber),
-			Code:        string(line.Type),
+			Code:        specialChargeCode(line),
 			Description: line.Description,
 			Amount:      line.Amount,
 		}
@@ -1006,4 +999,13 @@ func joinCodeName(code, name string) string {
 		return code + " - " + name
 	}
 	return stringutils.FirstNonEmpty(code, name)
+}
+
+const x12FreightChargeCode = "400"
+
+func specialChargeCode(line *invoice.InvoiceLine) string {
+	if line.Type == invoice.InvoiceLineTypeFreight {
+		return x12FreightChargeCode
+	}
+	return strings.TrimSpace(line.ChargeCode)
 }

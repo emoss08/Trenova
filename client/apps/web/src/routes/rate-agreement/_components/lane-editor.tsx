@@ -1,13 +1,11 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  FormulaTemplateAutocompleteField,
-  RateMatrixAutocompleteField,
-} from "@/components/autocomplete-fields";
+import { FormulaTemplateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { rateDirectionChoices } from "@/lib/choices";
 import { LaneHistoryPopover } from "./lane-history-popover";
+import { LaneTariffInputs } from "./lane-tariff-inputs";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -44,15 +42,14 @@ const NEW_LANE: RateAgreementRule = {
   destinationScopeValue: "",
   destinationCity: "",
   direction: "Directional",
-  freightClassSource: "Commodity",
-  allowDeficitRating: true,
   daysOfWeek: 0,
   hazmatOnly: false,
   tempControlOnly: false,
+  formulaTemplateId: "",
+  inputs: {},
   priority: 0,
   effectiveFrom: 0,
-  breaks: [],
-} as RateAgreementRule;
+};
 
 /**
  * The lane grid, which is where the whole contract actually lives.
@@ -172,10 +169,6 @@ function LaneRow({
 }: LaneRowProps) {
   const t = useT();
 
-  // A lane prices through exactly one of the two, so whichever is chosen hides
-  // the other — clearing the selection brings the alternative back.
-  const usesMatrix = Boolean(rule?.rateMatrixId);
-  const usesFormula = Boolean(rule?.formulaTemplateId);
   // The key is shown with names in place of record ids — "CS:TX|DALLAS", never
   // "CS:us_01M0…|DALLAS". A person debugging "why did the other rate apply"
   // needs the key's shape, not its identifiers.
@@ -257,86 +250,17 @@ function LaneRow({
         </div>
       </div>
 
-      <FormGroup cols={3}>
-        {!usesMatrix && (
-          <FormControl>
-            <FormulaTemplateAutocompleteField
-              control={control}
-              rules={{ required: !usesMatrix }}
-              name={`rules.${index}.formulaTemplateId` as never}
-              label={t("Rating method")}
-              placeholder={t("Select rating method")}
-              description={t(
-                "The formula template this lane prices through — the lane's rate binds in as the template's base rate",
-              )}
-            />
-          </FormControl>
-        )}
-        {!usesMatrix && (
-          <FormControl>
-            <NumberField
-              control={control}
-              name={`rules.${index}.rate` as never}
-              label={t("Rate")}
-              placeholder="2.55"
-              sideText="$"
-              decimalScale={4}
-              thousandSeparator
-              description={t(
-                "Feeds the rating method as its base rate — leave empty when the lane is banded by weight",
-              )}
-            />
-          </FormControl>
-        )}
-        {!usesFormula && (
-          <FormControl cols={usesMatrix ? 3 : undefined}>
-            <RateMatrixAutocompleteField
-              control={control}
-              rules={{ required: !usesFormula }}
-              name={`rules.${index}.rateMatrixId` as never}
-              label={t("Rate matrix")}
-              placeholder={t("Matrix")}
-              description={t(
-                "Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean",
-              )}
-            />
-          </FormControl>
-        )}
-      </FormGroup>
-
       <FormGroup cols={4}>
-        <FormControl>
-          <NumberField
+        <FormControl cols={3}>
+          <FormulaTemplateAutocompleteField
             control={control}
-            name={`rules.${index}.minCharge` as never}
-            label={t("Minimum charge")}
-            placeholder="850.00"
-            sideText="$"
-            decimalScale={2}
-            thousandSeparator
-            description={t("The floor this lane never prices below")}
-          />
-        </FormControl>
-        <FormControl>
-          <NumberField
-            control={control}
-            name={`rules.${index}.maxCharge` as never}
-            label={t("Maximum charge")}
-            placeholder="0.00"
-            sideText="$"
-            decimalScale={2}
-            thousandSeparator
-            description={t("A ceiling, when the contract sets one")}
-          />
-        </FormControl>
-        <FormControl>
-          <NumberField
-            control={control}
-            name={`rules.${index}.minBillableDistance` as never}
-            label={t("Minimum billable miles")}
-            placeholder="250"
-            sideText="mi"
-            description={t("Short hauls bill at this distance however far they actually ran")}
+            rules={{ required: true }}
+            name={`rules.${index}.formulaTemplateId` as never}
+            label={t("Tariff")}
+            placeholder={t("Select the tariff that prices this lane")}
+            description={t(
+              "The formula template whose charges this lane bills. Its inputs, below, are the lane's terms.",
+            )}
           />
         </FormControl>
         <FormControl>
@@ -349,6 +273,8 @@ function LaneRow({
           />
         </FormControl>
       </FormGroup>
+
+      <LaneTariffInputs index={index} templateId={rule?.formulaTemplateId} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { RateAgreementVersion } from "@trenova/shared/types/rate";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
 
 /**
  * Labels for the header terms a version can record, in the words the form uses.
@@ -24,10 +25,6 @@ const HEADER_FIELD_LABELS: Record<string, string> = defineLabels({
   renewalNoticeDays: "Renewal notice days",
   billToCustomerId: "Bill-to customer",
   currency: "Currency",
-  defaultMinCharge: "Default minimum charge",
-  defaultMaxCharge: "Default maximum charge",
-  roundingMode: "Rounding",
-  roundingPrecision: "Rounding precision",
   marginFloorPercent: "Margin floor",
   maxPayPercentOfSell: "Max pay percent of sell",
 });
@@ -38,10 +35,9 @@ const ACCESSORIAL_FIELD_LABELS: Record<string, string> = defineLabels({
   amount: "Amount",
   waived: "Waiver",
   autoApply: "Auto-apply",
-  applyCondition: "Condition",
+  condition: "Condition",
   freeUnits: "Free units",
   maxAmount: "Cap",
-  formulaTemplateId: "Rating method",
   serviceTypeIds: "Applicability",
   shipmentTypeIds: "Applicability",
   appliesFrom: "Window",
@@ -49,6 +45,8 @@ const ACCESSORIAL_FIELD_LABELS: Record<string, string> = defineLabels({
 });
 
 const ACCESSORIAL_PREFIX = "accessorialTerms.";
+/** The agreement's contract-wide tariff input values, which the server diffs by input name. */
+const INPUTS_PREFIX = "inputs.";
 
 type FieldChange = { from?: unknown; to?: unknown };
 
@@ -92,6 +90,10 @@ export function describeVersion(version: RateAgreementVersion): string {
     let phrase: string;
     if (path.startsWith(ACCESSORIAL_PREFIX)) {
       phrase = accessorialPhrase(path, change as FieldChange, names);
+    } else if (path.startsWith(INPUTS_PREFIX)) {
+      phrase = humanizeTariffName(path.slice(INPUTS_PREFIX.length).split(".")[0] ?? "");
+    } else if (path === "inputs") {
+      phrase = translate("Contract terms");
     } else if (path === "fuelTerms" || path.startsWith("fuelTerms.")) {
       phrase = translate("Fuel terms");
     } else {

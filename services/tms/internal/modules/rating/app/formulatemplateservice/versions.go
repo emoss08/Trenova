@@ -19,10 +19,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// clearScheduledVersions drops any pending effective dates on a template whose
-// approved content is no longer what it was. A schedule set against the old
-// approval would otherwise fire, unreviewed, the moment the template is
-// approved again.
 func (s *Service) clearScheduledVersions(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
@@ -62,7 +58,7 @@ func (s *Service) CreateVersion(
 		return nil, err
 	}
 
-	if err = s.validateTemplate(ctx, template); err != nil {
+	if err = s.prepareContent(ctx, template); err != nil {
 		return nil, err
 	}
 
@@ -182,9 +178,7 @@ func (s *Service) Rollback(
 	resolved := currentTemplate.ApplyVersionFull(targetVersion)
 	resolved.CurrentVersionNumber = currentTemplate.CurrentVersionNumber + 1
 
-	// Old content can name a rate table that has since been removed; a
-	// rollback must fail on that here, not at the next approval.
-	if err = s.validateTemplate(ctx, resolved); err != nil {
+	if err = s.prepareContent(ctx, resolved); err != nil {
 		return nil, err
 	}
 
@@ -287,7 +281,7 @@ func (s *Service) Fork(
 	seed.SourceVersionNumber = &sourceVersionNum
 	forkedTemplate := seed.Build()
 
-	if err = s.validateTemplate(ctx, forkedTemplate); err != nil {
+	if err = s.prepareContent(ctx, forkedTemplate); err != nil {
 		return nil, err
 	}
 
@@ -509,11 +503,6 @@ func (s *Service) createApprovedSnapshot(
 	return err
 }
 
-// resolveTemplateSnapshot picks the content a fork starts from. A version the
-// caller asked for by number must exist: forking "v3" and quietly receiving
-// the latest content instead would be a copy of the wrong thing with the
-// right label on it. Only when no version was named does the latest snapshot,
-// and failing that the row itself, stand in.
 func (s *Service) resolveTemplateSnapshot(
 	ctx context.Context,
 	log *zap.Logger,

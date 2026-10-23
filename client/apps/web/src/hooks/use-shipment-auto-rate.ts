@@ -28,7 +28,7 @@ function laneSignature(values: Shipment): string {
  * The moment a shipment being typed holds enough to be priced — a customer, a
  * service and shipment type, and both ends of the lane — the contracts are
  * asked what they charge, and what they answer is written into the shipment's
- * own rating method, base rate and accessorial rows. From then on those are
+ * own rating method, tariff input values and accessorial rows. From then on those are
  * ordinary fields: the rater can change any of them, and nothing asks the
  * contract again unless they press Auto-rate.
  *
@@ -67,23 +67,31 @@ export function useShipmentAutoRate({ enabled }: { enabled: boolean }) {
         setValue("formulaTemplateId", rate.formulaTemplateId, { shouldDirty: true });
       }
 
-      // A rule that binds no rate of its own prices through whatever the
-      // shipment already carries, so there is nothing to seat.
-      if (rate.baseRate) {
-        setValue("baseRate", Number(rate.baseRate), { shouldDirty: true });
-      }
+      // Adopting the contract writes its resolved input values onto the
+      // shipment, so every later re-rate reapplies the whole contract rather
+      // than one number lifted out of it.
+      setValue("tariffInputs", rate.inputs, { shouldDirty: true });
+
+      setValue("freightLines", rate.freightLines, { shouldDirty: false });
 
       const current = getValues("additionalCharges") ?? [];
-      const contractRows: AdditionalCharge[] = rate.accessorials.map((accessorial) => ({
-        accessorialChargeId: accessorial.accessorialChargeId,
+      const contractRows: AdditionalCharge[] = rate.charges.map((charge) => ({
+        accessorialChargeId: charge.accessorialChargeId,
         accessorialCharge: {
-          description: accessorial.description,
+          code: charge.code,
+          description: charge.description,
         } as AccessorialCharge,
         isSystemGenerated: true,
-        method: accessorial.method,
-        amount: Number(accessorial.amount) || 0,
-        unit: accessorial.unit || 1,
-      })) as AdditionalCharge[];
+        isTariff: charge.owner === "Tariff",
+        label: charge.label || null,
+        quantity: charge.quantity ?? null,
+        rate: charge.rate ?? null,
+        rateUnit: charge.rateUnit ?? null,
+        method: "Flat",
+        amount: charge.amount ?? 0,
+        unit: 1,
+        allocations: [],
+      }));
 
       // Rows the rater added themselves are kept. Only the contract's own are
       // replaced, and on a new shipment there are none to replace yet.

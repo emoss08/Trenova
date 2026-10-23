@@ -19,10 +19,10 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
 }));
 
 // Contract fixture mirroring ratequote.RateQuote and ratetypes.Trace in
-// services/tms. A guardrail carries kind/applied/bound/raw/result and no label;
-// one rating can clamp twice on the same kind (a weight-break minimum and the
-// rule minimum both record MinimumCharge); trace amounts are in the contract
-// currency while an override restates the quote in the billing currency.
+// services/tms, whose trace now carries the winning tariff's bill in wire form:
+// a charge with the author's label (here not in English, and shown as written),
+// a minimum adjustment with no label, amounts in the contract currency while an
+// override restates the quote in the billing currency.
 function overriddenQuote() {
   return {
     id: "rqt_1",
@@ -77,29 +77,29 @@ function overriddenQuote() {
           effectiveFrom: 1_740_000_000,
         },
       ],
-      components: [
-        {
-          sequence: 0,
-          kind: "Linehaul",
-          label: "Linehaul",
-          amount: "1100",
-          runningTotal: "1100",
-          source: "AgreementRule",
-        },
-        {
-          sequence: 1,
-          kind: "MinimumCharge",
-          label: "Minimum charge",
-          basis: "raised from 1100",
-          amount: "400",
-          runningTotal: "1500",
-          source: "AgreementRule",
-        },
-      ],
-      guardrails: [
-        { kind: "MinimumCharge", applied: true, bound: "1250", raw: "1100", result: "1250" },
-        { kind: "MinimumCharge", applied: true, bound: "1500", raw: "1250", result: "1500" },
-      ],
+      templateId: "ft_dry_van",
+      templateName: "Dry van TL",
+      tariffInputs: { rate: { $q: "2.2", u: "$/mi" }, minimumCharge: { $q: "1500", u: "$" } },
+      bill: {
+        currency: "CAD",
+        lines: [
+          {
+            kind: "Charge",
+            label: "Línea principal",
+            freight: true,
+            amount: "1100",
+            quantity: "500",
+            quantityUnit: "mi",
+            rate: "2.2",
+            rateUnit: "$/mi",
+          },
+          { kind: "Minimum", freight: true, amount: "400" },
+        ],
+        notes: [{ text: "Minimum applies under 1,500" }],
+        freightTotal: "1500",
+        accessorialTotal: "0",
+        total: "1500",
+      },
       totals: { linehaul: "1500", fuel: "0", accessorial: "0", total: "1500" },
     },
     createdAt: 1_757_000_100,
@@ -146,31 +146,36 @@ describe("WhyThisRate", () => {
     expect(toastError).not.toHaveBeenCalled();
   });
 
-  it("names each guardrail by its kind and shows the raw and clamped amounts in the contract currency", async () => {
+  it("shows the tariff's bill in the contract currency, with the charge label as written", async () => {
     vi.mocked(api.get).mockResolvedValue(overriddenQuote());
 
     await openPopover();
 
-    expect(
-      await screen.findByText("Minimum charge applied — CA$1,100.00 became CA$1,250.00."),
-    ).toBeTruthy();
-    expect(
-      screen.getByText("Minimum charge applied — CA$1,250.00 became CA$1,500.00."),
-    ).toBeTruthy();
+    expect(await screen.findByText("Línea principal")).toBeTruthy();
+    expect(screen.getByText("500 mi × CA$2.20/mi")).toBeTruthy();
+    expect(screen.getByText("Minimum charge adjustment")).toBeTruthy();
+    expect(screen.getByText("Minimum applies under 1,500")).toBeTruthy();
+    expect(screen.getAllByText("CA$1,500.00").length).toBeGreaterThan(0);
   });
 
-  it("does not key two guardrails of the same kind identically", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("lists the input values the tariff read, in the contract currency", async () => {
     vi.mocked(api.get).mockResolvedValue(overriddenQuote());
 
     await openPopover();
-    await screen.findByText(/CA\$1,250\.00 became CA\$1,500\.00/);
 
-    const duplicateKey = consoleError.mock.calls.some((call) =>
-      call.some((arg) => typeof arg === "string" && arg.includes("same key")),
-    );
-    consoleError.mockRestore();
-    expect(duplicateKey).toBe(false);
+    expect(await screen.findByText("Terms it read")).toBeTruthy();
+    expect(screen.getByText("Rate")).toBeTruthy();
+    expect(screen.getByText("CA$2.20/mi")).toBeTruthy();
+    expect(screen.getByText("Minimum charge")).toBeTruthy();
+  });
+
+  it("keeps the tariff's own labels untranslated in another locale", async () => {
+    await act(() => setLocale("es"));
+    vi.mocked(api.get).mockResolvedValue(overriddenQuote());
+
+    await openPopover();
+
+    expect(await screen.findByText("Línea principal")).toBeTruthy();
   });
 
   it("states the override in the billing currency with a single space before the reason", async () => {

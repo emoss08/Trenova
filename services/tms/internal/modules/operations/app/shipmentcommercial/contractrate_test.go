@@ -2,10 +2,8 @@ package shipmentcommercial
 
 import (
 	"context"
-	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -13,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -84,7 +82,9 @@ func TestRecalculate_KeepsTheContractProvenanceOnAnAutoRatedShipment(t *testing.
 		RateQuoteID:   "rq_01",
 	}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
@@ -112,7 +112,9 @@ func TestRecalculate_DropsTheContractProvenanceOnceEdited(t *testing.T) {
 	entity.AutoRated = false
 	entity.RatingDetail = &shipment.RatingDetail{AgreementName: "Acme TL 2026"}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
@@ -156,18 +158,26 @@ func TestRecalculate_LockedShipmentKeepsItsCharges(t *testing.T) {
 	assert.True(t, decimal.NewFromInt(1234).Equal(entity.FreightChargeAmount.Decimal))
 }
 
-// Adopting a contract is what auto-rating is: the agreement hands over a rating
-// method and a base rate, and they become the shipment's own fields.
-func TestAdoptContractRate_SeatsTheRatingMethodAndBaseRate(t *testing.T) {
+func perMileInputs(t *testing.T, rate string) tarifftypes.Inputs {
+	t.Helper()
+
+	inputs, err := tarifftypes.InputsFromLiterals(map[string]string{"rate": rate})
+	require.NoError(t, err)
+	return inputs
+}
+
+func TestAdoptContractRate_SeatsTheTariffAndItsInputs(t *testing.T) {
 	t.Parallel()
 
 	entity := validShipment()
-	entity.BaseRate = decimal.NewNullDecimal(decimal.NewFromInt(1))
+	entity.TariffInputs = perMileInputs(t, "$1/mi")
 
 	templateID := pulid.MustNew("fmt_")
 	agreementID := pulid.MustNew("ragr_")
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
@@ -175,26 +185,25 @@ func TestAdoptContractRate_SeatsTheRatingMethodAndBaseRate(t *testing.T) {
 		Outcome:           ratequote.OutcomeRated,
 		AgreementID:       &agreementID,
 		FormulaTemplateID: &templateID,
-		BaseRate:          decimal.NewNullDecimal(decimal.NewFromFloat(2.15)),
+		TariffInputs:      perMileInputs(t, "$2.15/mi"),
 	})
 
 	assert.Equal(t, templateID, entity.FormulaTemplateID)
-	assert.True(t, decimal.NewFromFloat(2.15).Equal(entity.BaseRate.Decimal))
+	assert.True(t, perMileInputs(t, "$2.15/mi").Equal(entity.TariffInputs))
 	assert.True(t, entity.AutoRated)
 	require.NotNil(t, entity.AutoRatedAt)
 	assert.Equal(t, shipmentcommercialtest.RatedAt, *entity.AutoRatedAt)
 }
 
-// A rule that binds no rate of its own prices through whatever the shipment
-// already carries, so there is nothing to seat and overwriting would erase a
-// figure the contract deliberately deferred to.
-func TestAdoptContractRate_KeepsTheBaseRateWhenTheRuleBindsNone(t *testing.T) {
+func TestAdoptContractRate_TakesTheContractsInputsEvenWhenItSetsNone(t *testing.T) {
 	t.Parallel()
 
 	entity := validShipment()
-	entity.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(3.5))
+	entity.TariffInputs = perMileInputs(t, "$3.50/mi")
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
@@ -202,7 +211,8 @@ func TestAdoptContractRate_KeepsTheBaseRateWhenTheRuleBindsNone(t *testing.T) {
 		Outcome: ratequote.OutcomeRated,
 	})
 
-	assert.True(t, decimal.NewFromFloat(3.5).Equal(entity.BaseRate.Decimal))
+	assert.Empty(t, entity.TariffInputs,
+		"the shipment prices exactly as the contract does, defaults included")
 }
 
 // A fresh application of the contract makes any previous departure untrue.
@@ -215,7 +225,9 @@ func TestAdoptContractRate_ClearsAPreviousDeparture(t *testing.T) {
 	entity.RateOverrideReason = "Spot rate agreed with the customer"
 	entity.RateOverrideByID = &userID
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
@@ -235,7 +247,9 @@ func TestAdoptContractRate_IgnoresAnUnpricedOutcome(t *testing.T) {
 
 	entity := validShipment()
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 0)})
+	calculator := New(
+		Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 0)},
+	)
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &ratequoteports.RatedShipment{
@@ -246,9 +260,6 @@ func TestAdoptContractRate_IgnoresAnUnpricedOutcome(t *testing.T) {
 	assert.False(t, entity.AutoRated)
 }
 
-// The rating method and the base rate are compared, not the resulting money:
-// the money follows from them and from the mileage, and a rounding difference
-// in the total is not somebody having renegotiated the rate.
 func TestContractRateMatches(t *testing.T) {
 	t.Parallel()
 
@@ -258,22 +269,22 @@ func TestContractRateMatches(t *testing.T) {
 	rated := &ratequoteports.RatedShipment{
 		Outcome:           ratequote.OutcomeRated,
 		FormulaTemplateID: &templateID,
-		BaseRate:          decimal.NewNullDecimal(decimal.NewFromFloat(2.15)),
+		TariffInputs:      perMileInputs(t, "$2.15/mi"),
 	}
 
 	matching := validShipment()
 	matching.FormulaTemplateID = templateID
-	matching.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(2.15))
+	matching.TariffInputs = perMileInputs(t, "$2.150/mi")
 	assert.True(t, ContractRateMatches(matching, rated))
 
 	repriced := validShipment()
 	repriced.FormulaTemplateID = templateID
-	repriced.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(1.95))
+	repriced.TariffInputs = perMileInputs(t, "$1.95/mi")
 	assert.False(t, ContractRateMatches(repriced, rated))
 
 	remethoded := validShipment()
 	remethoded.FormulaTemplateID = otherTemplateID
-	remethoded.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(2.15))
+	remethoded.TariffInputs = perMileInputs(t, "$2.15/mi")
 	assert.False(t, ContractRateMatches(remethoded, rated))
 
 	assert.False(t, ContractRateMatches(matching, &ratequoteports.RatedShipment{
@@ -405,9 +416,9 @@ func TestRateAndAdoptContract_KeepsTheContractAccessorialsOnADeparture(t *testin
 
 	agreement := agreementWithAccessorial(t, decimal.NewFromInt(75))
 	entity := validShipment()
-	entity.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(1.95))
+	entity.TariffInputs = perMileInputs(t, "$1.95/mi")
 
-	calculator := departingCalculator(t, agreement, decimal.NewFromFloat(2.15))
+	calculator := departingCalculator(t, agreement, perMileInputs(t, "$2.15/mi"))
 
 	rating, err := calculator.RateAndAdoptContract(
 		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
@@ -448,13 +459,12 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 		Maybe()
 
 	calculator := New(Params{
-		Logger:        zap.NewNop(),
-		RateEngine:    engine,
-		AgreementRepo: agreementRepoFor(t, agreement),
+		Logger:     zap.NewNop(),
+		RateEngine: engine,
 	})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
-	entity := validShipment()
+	entity := ratedShipment(agreement.ID)
 
 	rating, err := calculator.RateAndAdoptContract(
 		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
@@ -470,7 +480,7 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 func departingCalculator(
 	t *testing.T,
 	agreement *rateagreement.RateAgreement,
-	contractBaseRate decimal.Decimal,
+	contractInputs tarifftypes.Inputs,
 ) *Calculator {
 	t.Helper()
 
@@ -481,11 +491,12 @@ func departingCalculator(
 	engine.EXPECT().
 		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
 		Return(&ratequoteports.RatedShipment{
-			Amount:      linehaul,
-			Currency:    "USD",
-			Outcome:     ratequote.OutcomeRated,
-			AgreementID: &agreementID,
-			BaseRate:    decimal.NewNullDecimal(contractBaseRate),
+			Amount:       linehaul,
+			Currency:     "USD",
+			Outcome:      ratequote.OutcomeRated,
+			AgreementID:  &agreementID,
+			TariffInputs: contractInputs,
+			Agreement:    agreement,
 			Quote: &ratequote.RateQuote{
 				Outcome:         ratequote.OutcomeRated,
 				RateAgreementID: &agreementID,
@@ -497,35 +508,10 @@ func departingCalculator(
 		Maybe()
 
 	calculator := New(Params{
-		Logger:        zap.NewNop(),
-		RateEngine:    engine,
-		AgreementRepo: agreementRepoFor(t, agreement),
+		Logger:     zap.NewNop(),
+		RateEngine: engine,
 	})
 	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	return calculator
-}
-
-func agreementRepoFor(
-	t *testing.T,
-	agreement *rateagreement.RateAgreement,
-) *rateagreementportsmock.MockRateAgreementRepository {
-	t.Helper()
-
-	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
-	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*rateagreementports.GetRateAgreementByIDRequest")).
-		RunAndReturn(func(
-			_ context.Context,
-			req *rateagreementports.GetRateAgreementByIDRequest,
-		) (*rateagreement.RateAgreement, error) {
-			if req.RateAgreementID != agreement.ID {
-				return nil, errors.New("unexpected agreement id")
-			}
-
-			return agreement, nil
-		}).
-		Maybe()
-
-	return repo
 }

@@ -46,9 +46,7 @@ func setupVersions(t *testing.T) *versionFixture {
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Windows",
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "totalDistance * 2",
-		SchemaID:       "shipment",
+		Source:         "tariff \"Windows\"\n\ncharge \"Flat\" = $10\n",
 		Status:         formulatemplate.StatusActive,
 	}.Build())
 	require.NoError(t, err)

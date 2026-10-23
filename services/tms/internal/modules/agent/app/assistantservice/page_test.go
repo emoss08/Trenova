@@ -239,6 +239,38 @@ func TestOpenPageThread_AFormulaNotYetSavedHasItsOwnConversation(t *testing.T) {
 	assert.False(t, saved.Tainted())
 }
 
+func TestOpenPageThread_ALibraryHasItsOwnConversationWithTheFormulaAssistant(t *testing.T) {
+	t.Parallel()
+
+	fixture := newPageFixture("formula_library:read")
+
+	libraryID := pulid.MustNew("fl_")
+	thread, err := fixture.open(t, conversation.ThreadOriginFormula, agent.SubjectFormulaLibrary,
+		libraryID)
+	require.NoError(t, err)
+	assert.Equal(t, agent.SubjectFormulaLibrary, thread.SubjectType)
+	assert.Equal(t, libraryID, thread.SubjectID)
+	assert.Equal(t, "Formula library", thread.Title)
+	assert.Equal(t, agentdefinition.SystemKeyFormulaAssistant,
+		fixture.provisioner.asked[0].SystemKey)
+
+	libraryPage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
+		Surface:        pagedraft.SurfaceFormulaLibrary,
+		FormulaLibrary: &pagedraft.FormulaLibrary{Source: "library \"org.accessorials\"\n"},
+	}}
+	templatePage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
+		Surface: pagedraft.SurfaceFormula,
+		Formula: &pagedraft.Formula{Source: "tariff \"Per Mile\"\n"},
+	}}
+	require.NoError(t, fixture.svc.assertPageTurn(t.Context(), thread, libraryPage, fixture.actor))
+	require.Error(t, fixture.svc.assertPageTurn(t.Context(), thread, templatePage, fixture.actor),
+		"a library's conversation takes only the library editor's draft")
+
+	_, err = fixture.open(t, conversation.ThreadOriginFormula, agent.SubjectFormulaLibrary,
+		pulid.MustNew("ft_"))
+	require.Error(t, err, "a template id is not a library")
+}
+
 func TestOpenPageThread_RefusesWithoutTheAssistantOrTheRecord(t *testing.T) {
 	t.Parallel()
 
@@ -354,10 +386,20 @@ func TestAssertPageTurn(t *testing.T) {
 
 	formulaPage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
 		Surface: pagedraft.SurfaceFormula,
-		Formula: &pagedraft.Formula{SchemaID: "shipment"},
+		Formula: &pagedraft.Formula{Source: "tariff \"Per Mile\"\n"},
+	}}
+	libraryPage := &agent.PageContext{Path: "/", Draft: &pagedraft.Draft{
+		Surface:        pagedraft.SurfaceFormulaLibrary,
+		FormulaLibrary: &pagedraft.FormulaLibrary{Source: "library \"org.accessorials\"\n"},
 	}}
 	err := fixture.svc.assertPageTurn(ctx, importThread, formulaPage, fixture.actor)
 	require.Error(t, err, "an import conversation does not take a formula draft")
+
+	newFormula := pageThread(conversation.ThreadOriginFormula, "")
+	require.NoError(t, fixture.svc.assertPageTurn(ctx, newFormula, formulaPage, fixture.actor))
+	require.NoError(t, fixture.svc.assertPageTurn(ctx, newFormula, libraryPage, fixture.actor),
+		"an unsaved formula or library takes either editor's draft")
+	require.Error(t, fixture.svc.assertPageTurn(ctx, newFormula, importDraft(), fixture.actor))
 
 	desk := pageThread(conversation.ThreadOriginDesk, "")
 	require.NoError(t, fixture.svc.assertPageTurn(ctx, desk, nil, fixture.actor))

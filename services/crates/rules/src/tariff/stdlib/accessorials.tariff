@@ -1,0 +1,38 @@
+library "std.accessorials"
+
+/// Common accessorial charges: detention and extra stops.
+
+/// Detention: the time `dwell` runs past `free`, rounded up to the next `increment`, at `rate`.
+/// `$0` within the free time.
+fn detention(dwell: Duration, free: Duration = 2 h, rate: Money/h, increment: Duration = 15 min) -> Money {
+  if dwell <= free {
+    return $0
+  }
+  let billable = (dwell - free).roundUp(to: increment)
+  return rate * billable
+}
+
+/// Extra stops: `fee` for every stop beyond the first `included`.
+fn extraStops(stops: List<Stop>, included: Int, fee: Money) -> Money {
+  let extra = stops.len - included
+  if extra <= 0 {
+    return $0
+  }
+  return fee * extra
+}
+
+test "detention bills time past free time in whole increments" {
+  expect detention(3.5 h, rate: $65/h) == $97.50
+  expect detention(130 min, rate: $65/h) == $16.25
+  expect detention(2 h, rate: $65/h) == $0
+  expect detention(1 h, rate: $65/h) == $0
+  expect detention(3 h, free: 1 h, rate: $60/h, increment: 1 h) == $120
+  expect detention(181 min, rate: $60/h, increment: 1 h) == $120
+}
+
+test "extra stops bill each stop beyond those included" {
+  expect extraStops([pickup(), delivery(), delivery()], included: 2, fee: $75) == $75
+  expect extraStops([pickup(), delivery(), delivery(), delivery()], included: 2, fee: $75) == $150
+  expect extraStops([pickup(), delivery()], included: 2, fee: $75) == $0
+  expect extraStops([pickup()], included: 2, fee: $75) == $0
+}

@@ -315,7 +315,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_vehiclePositions_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").VehiclePositions(ctx, fc.Args["maxAgeSeconds"].(*int))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").VehiclePositions(ctx, fc.Args["maxAgeSeconds"].(*int), fc.Args["tractorIds"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNVehiclePosition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐVehiclePositionᚄ),
 			},
@@ -1766,7 +1766,7 @@ type resolverQuery interface {
 	TelematicsFormMappings(ctx context.Context) ([]*gqlmodel.TelematicsFormMapping, error)
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
 	ShipmentDriverFeasibility(ctx context.Context, shipmentID string) ([]*gqlmodel.DriverFeasibility, error)
-	VehiclePositions(ctx context.Context, maxAgeSeconds *int) ([]*gqlmodel.VehiclePosition, error)
+	VehiclePositions(ctx context.Context, maxAgeSeconds *int, tractorIds []string) ([]*gqlmodel.VehiclePosition, error)
 	VehiclePosition(ctx context.Context, tractorID string) (*gqlmodel.VehiclePosition, error)
 	WorkerHosStates(ctx context.Context, workerIds []string, limit *int) ([]*gqlmodel.WorkerHosState, error)
 	WorkerHosState(ctx context.Context, workerID string) (*gqlmodel.WorkerHosState, error)
@@ -1855,7 +1855,7 @@ func field_Query_shipmentDriverFeasibility_args(ctx context.Context, ec *gqlexec
 }
 
 func field_Query_vehiclePositions_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "maxAgeSeconds",
 		func(ctx context.Context, v any) (*int, error) {
 			return unmarshalOInt2ᚖint(ctx, ec, v)
@@ -1864,6 +1864,14 @@ func field_Query_vehiclePositions_args(ctx context.Context, ec *gqlexec.Exec, ra
 		return nil, err
 	}
 	args["maxAgeSeconds"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "tractorIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalOID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["tractorIds"] = arg1
 	return args, nil
 }
 

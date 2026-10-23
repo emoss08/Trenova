@@ -31,6 +31,11 @@ type AdditionalCharge struct {
 	FuelSurchargeProgramID *pulid.ID                `json:"fuelSurchargeProgramId" bun:"fuel_surcharge_program_id,type:VARCHAR(100),nullzero"`
 	FuelSurchargeDetail    *FuelSurchargeDetail     `json:"fuelSurchargeDetail"    bun:"fuel_surcharge_detail,type:JSONB,nullzero"`
 	IsDetention            bool                     `json:"isDetention"            bun:"is_detention,type:BOOLEAN,notnull"`
+	IsTariff               bool                     `json:"isTariff"               bun:"is_tariff,type:BOOLEAN,notnull,default:false"`
+	Label                  string                   `json:"label"                  bun:"label,type:VARCHAR(255),nullzero"`
+	Quantity               decimal.NullDecimal      `json:"quantity"               bun:"quantity,type:NUMERIC(19,6),nullzero"`
+	Rate                   decimal.NullDecimal      `json:"rate"                   bun:"rate,type:NUMERIC(19,6),nullzero"`
+	RateUnit               string                   `json:"rateUnit"               bun:"rate_unit,type:VARCHAR(32),nullzero"`
 	// RateAgreementAccessorialID marks a charge the contract's own accessorial
 	// schedule produced, and is what its reconciliation pass matches on.
 	RateAgreementAccessorialID *pulid.ID `json:"rateAgreementAccessorialId" bun:"rate_agreement_accessorial_id,type:VARCHAR(100),nullzero"`
@@ -193,6 +198,7 @@ func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 		if charge.ID.IsNil() || source == nil {
 			charge.IsSystemGenerated = false
 			charge.IsDetention = false
+			charge.IsTariff = false
 			charge.RateAgreementAccessorialID = nil
 			charge.FuelSurchargeProgramID = nil
 			continue
@@ -200,6 +206,7 @@ func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
 
 		charge.IsSystemGenerated = source.IsSystemGenerated
 		charge.IsDetention = source.IsDetention
+		charge.IsTariff = source.IsTariff
 		charge.RateAgreementAccessorialID = source.RateAgreementAccessorialID
 		charge.FuelSurchargeProgramID = source.FuelSurchargeProgramID
 	}
@@ -213,6 +220,7 @@ const (
 	SystemOwnerNone      = SystemOwner("")
 	SystemOwnerFuel      = SystemOwner("FuelSurcharge")
 	SystemOwnerDetention = SystemOwner("Detention")
+	SystemOwnerTariff    = SystemOwner("Tariff")
 	SystemOwnerAgreement = SystemOwner("RateAgreement")
 )
 
@@ -225,6 +233,8 @@ func (a *AdditionalCharge) Owner() SystemOwner {
 		return SystemOwnerFuel
 	case a.IsDetention:
 		return SystemOwnerDetention
+	case a.IsTariff:
+		return SystemOwnerTariff
 	case a.RateAgreementAccessorialID != nil:
 		return SystemOwnerAgreement
 	default:

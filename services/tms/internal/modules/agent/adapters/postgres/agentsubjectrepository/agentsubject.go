@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/formulalibrarycol"
 	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
@@ -38,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -168,6 +170,11 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },
 		tenant: formulatemplatecol.FormulaTemplateApplyTenant,
 		id:     formulatemplatecol.FormulaTemplateColumns.ID,
+	},
+	agent.SubjectFormulaLibrary: {
+		model:  func() any { return (*formulalibrary.FormulaLibrary)(nil) },
+		tenant: formulalibrarycol.FormulaLibraryApplyTenant,
+		id:     formulalibrarycol.FormulaLibraryColumns.ID,
 	},
 	agent.SubjectInvoice: {
 		model:  func() any { return (*invoice.Invoice)(nil) },

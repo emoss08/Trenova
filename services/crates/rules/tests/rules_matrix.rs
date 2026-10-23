@@ -9,7 +9,7 @@ use trenova_rules::matrix::band::contains;
 #[test]
 fn corpus() {
     let ran = rules_support::run_corpus(include_str!("../testdata/matrix.json"));
-    assert!(ran > 25, "only {ran} cases ran");
+    assert!(ran > 12, "only {ran} cases ran");
 }
 
 fn decimal() -> impl Strategy<Value = Decimal> {
@@ -46,19 +46,16 @@ proptest! {
 
     #[test]
     fn no_matrix_request_panics(input in "\\PC{0,300}") {
-        for op in ["matrix.select", "matrix.coverage"] {
-            let request = format!("{{\"op\":\"{op}\",\"input\":{input}}}");
-            prop_assert!(!trenova_rules::ops::dispatch(request.as_bytes()).is_empty());
-        }
+        let request = format!("{{\"op\":\"matrix.coverage\",\"input\":{input}}}");
+        prop_assert!(!trenova_rules::ops::dispatch(request.as_bytes()).is_empty());
     }
 
     #[test]
-    fn coverage_and_selection_never_panic(
+    fn coverage_never_panics(
         bands in prop::collection::vec(
             (prop::option::of(-50i64..50), prop::option::of(-50i64..50), 0u8..3),
             0..12,
         ),
-        quantity in -60i64..60,
         position in -1i64..5,
     ) {
         let cells: Vec<serde_json::Value> = bands
@@ -69,11 +66,6 @@ proptest! {
             {"position": 0, "kind": "Zone", "matchMode": "Exact"},
             {"position": position, "kind": "WeightBreak", "matchMode": "Range"}
         ]);
-        let select = serde_json::json!({"op": "matrix.select", "input": {
-            "dimensions": dimensions, "cells": cells,
-            "values": [{"keys": ["Z0", "Z1"]}, {"quantity": quantity}]
-        }});
-        prop_assert!(!trenova_rules::ops::dispatch(select.to_string().as_bytes()).is_empty());
         let coverage = serde_json::json!({"op": "matrix.coverage", "input": {"dimensions": dimensions, "cells": cells}});
         prop_assert!(!trenova_rules::ops::dispatch(coverage.to_string().as_bytes()).is_empty());
     }

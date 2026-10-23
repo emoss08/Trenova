@@ -1,0 +1,249 @@
+=== wildcard and none
+tariff "t"
+let a = match x {
+  none => 0
+  _ => 1
+}
+---
+tariff "t"
+let a = (match x [none => 0] [_ => 1])
+
+=== literal patterns
+tariff "t"
+let a = match x {
+  1 => "one"
+  2.5 => "half"
+  500 lb => "w"
+  $10 => "m"
+  18% => "p"
+  "EXP" => "t"
+  @2026-10-22 => "d"
+  true => "b"
+  _ => "?"
+}
+---
+tariff "t"
+let a = (match x [1 => (text "one")] [2.5 => (text "half")] [500[lb] => (text "w")] [$10 => (text "m")] [18% => (text "p")] [(text "EXP") => (text "t")] [@2026-10-22 => (text "d")] [true => (text "b")] [_ => (text "?")])
+
+=== negative literal patterns
+tariff "t"
+let a = match t {
+  -5 °C => 1
+  -$5 => 2
+  _ => 3
+}
+---
+tariff "t"
+let a = (match t [(neg 5[°C]) => 1] [(neg $5) => 2] [_ => 3])
+
+=== range patterns
+tariff "t"
+let a = match w {
+  ..500 lb => 1
+  500 lb..2_000 lb => 2
+  2_000 lb..=5_000 lb => 3
+  5_000 lb.. => 4
+}
+---
+tariff "t"
+let a = (match w [(.. _ 500[lb]) => 1] [(.. 500[lb] 2000[lb]) => 2] [(..= 2000[lb] 5000[lb]) => 3] [(.. 5000[lb] _) => 4])
+
+=== variant patterns
+tariff "t"
+let a = match stop.kind {
+  Pickup => 1
+  StopKind.Delivery => 2
+  SplitPickup | SplitDelivery => 3
+}
+---
+tariff "t"
+let a = (match (. stop kind) [Pickup => 1] [StopKind::Delivery => 2] [(| SplitPickup SplitDelivery) => 3])
+
+=== capitals variants
+tariff "t"
+let a = match region {
+  NE | SW => 1
+  _ => 2
+}
+---
+tariff "t"
+let a = (match region [(| NE SW) => 1] [_ => 2])
+
+=== binding pattern with a guard
+tariff "t"
+let a = match n {
+  x if x > 3 => x
+  _ => 0
+}
+---
+tariff "t"
+let a = (match n [(bind x) if (> x 3) => x] [_ => 0])
+
+=== a guard that ends in a name right before the arrow
+tariff "t"
+let a = match flag {
+  x if x => 1
+  _ => 0
+}
+---
+tariff "t"
+let a = (match flag [(bind x) if x => 1] [_ => 0])
+
+=== a guard that ends in a field, a call or parentheses before the arrow
+tariff "t"
+let a = match stop {
+  s if s.appointment => 1
+  s if ready(s) => 2
+  s if (late) => 3
+  s if s.items.any(i => i.hazmat) => 4
+  _ => 0
+}
+---
+tariff "t"
+let a = (match stop [(bind s) if (. s appointment) => 1] [(bind s) if (call ready s) => 2] [(bind s) if (paren late) => 3] [(bind s) if (call (. (. s items) any) (lambda (i) (. i hazmat))) => 4] [_ => 0])
+
+=== a lambda written as a guard's value is still misplaced inside it
+tariff "t"
+let a = match n {
+  x if [y => 1] => 1
+  _ => 0
+}
+---
+tariff "t"
+let a = (match n [(bind x) if (list (lambda (y) 1)) => 1] [_ => 0])
+! misplaced 37..43 A lambda like `x => …` can only be passed to a list method, like `stops.count(s => s.appointment)`
+
+=== record patterns
+tariff "t"
+let a = match stop {
+  { kind: Delivery, appointment: true } => 1
+  { kind: Pickup } => 2
+  _ => 3
+}
+---
+tariff "t"
+let a = (match stop [(record kind:Delivery appointment:true) => 1] [(record kind:Pickup) => 2] [_ => 3])
+
+=== nested record patterns
+tariff "t"
+let a = match s {
+  { window: { start: none } } => 1
+  _ => 2
+}
+---
+tariff "t"
+let a = (match s [(record window:(record start:none)) => 1] [_ => 2])
+
+=== or of literals and ranges
+tariff "t"
+let a = match x {
+  1 | 2 | 5..9 => "small"
+  _ => "large"
+}
+---
+tariff "t"
+let a = (match x [(| 1 2 (.. 5 9)) => (text "small")] [_ => (text "large")])
+
+=== text pattern with interpolation
+tariff "t"
+let a = match x {
+  "{y}" => 1
+  _ => 2
+}
+---
+tariff "t"
+let a = (match x [(text y) => 1] [_ => 2])
+! syntax 31..36 Text in a pattern can't interpolate values
+
+=== range pattern with no ends
+tariff "t"
+let a = match x {
+  .. => 1
+}
+---
+tariff "t"
+let a = (match x [(.. _ _) => 1])
+! syntax 31..33 A range needs a start, an end or both
+
+=== missing pattern
+tariff "t"
+let a = match x {
+  => 1
+}
+---
+tariff "t"
+let a = (match x [? => 1])
+! syntax 28..28 Expected a pattern: a value, a range, a variant, `none` or `_`
+
+=== empty record pattern
+tariff "t"
+let a = match x {
+  { } => 1
+}
+---
+tariff "t"
+let a = (match x [(record) => 1])
+! syntax 31..34 A record pattern needs at least one field
+
+=== arm without an arrow
+tariff "t"
+let a = match x {
+  A 1
+  B => 2
+}
+---
+tariff "t"
+let a = (match x [A => ?] [B => 2])
+! syntax 33..34 Expected `=>` and what this arm gives
+
+=== a block in a match expression
+tariff "t"
+let a = match x {
+  A => { note "x" }
+  _ => 2
+}
+---
+tariff "t"
+let a = (match x [A => ?] [_ => 2])
+! syntax 36..48 A block of statements can't be used as a value here; a record is written `'{' name: value '}'`
+
+=== keyword field names in record patterns
+tariff "t"
+let a = match x {
+  { in: 1 } => 1
+  _ => 2
+}
+---
+tariff "t"
+let a = (match x [(record in:1) => 1] [_ => 2])
+
+=== match statement arms on one line each
+tariff "t"
+match x {
+  A => note "a"
+  B | C => {}
+}
+---
+tariff "t"
+match x
+  arm A =>
+    note (text "a")
+  arm (| B C) =>
+
+=== two arms on one line
+tariff "t"
+let a = match x {
+  A => 1 B => 2
+}
+---
+tariff "t"
+let a = (match x [A => 1])
+! syntax 38..39 Each statement goes on its own line; start a new line before `B`
+
+=== match without braces
+tariff "t"
+let a = match x
+---
+tariff "t"
+let a = (match x)
+! syntax 26..26 Expected the `match` arms in braces after the value

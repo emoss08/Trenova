@@ -14,7 +14,6 @@ const rows: BacktestResult[] = [
     candidateAmount: 150,
     delta: 50,
     deltaPct: 50,
-    guardrailApplied: true,
   },
   {
     shipmentId: "shp_2",
@@ -26,18 +25,20 @@ const rows: BacktestResult[] = [
     deltaPct: 0,
     currentError: "no rating detail",
     candidateError: 'bad "lookup"',
-    guardrailApplied: false,
+    candidateRefusal: "No rate for TX to OK",
   },
 ];
 
 describe("backtestCsv", () => {
-  it("writes one row per shipment with where the current amount came from, amounts, delta, clamp, and errors", () => {
+  it("writes one row per shipment with where the current amount came from, amounts, delta, errors and refusals", () => {
     const lines = backtestCsv(rows).split("\r\n");
     expect(lines[0]).toBe(
-      "Shipment ID,Pro #,Current source,Current,Candidate,Delta,Delta %,Guardrail clamped,Current error,Candidate error",
+      "Shipment ID,Pro #,Current source,Current,Candidate,Delta,Delta %,Current error,Candidate error,Candidate refused",
     );
-    expect(lines[1]).toBe("shp_1,PRO-1,Billed,100,150,50,50,Yes,,");
-    expect(lines[2]).toBe('shp_2,,Recomputed,0,0,0,0,No,no rating detail,"bad ""lookup"""');
+    expect(lines[1]).toBe("shp_1,PRO-1,Billed,100,150,50,50,,,");
+    expect(lines[2]).toBe(
+      'shp_2,,Recomputed,0,0,0,0,no rating detail,"bad ""lookup""",No rate for TX to OK',
+    );
   });
 });
 

@@ -17,9 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,6 +55,8 @@ type Params struct {
 	RateEngine        ratequoteports.RateEngine       `optional:"true"`
 	AgreementRepo     rateagreementports.RateAgreementRepository
 	BillingCtrlRepo   tenantports.BillingControlRepository
+	AccessorialRepo   accessorialchargeports.AccessorialChargeRepository
+	FuelResolver      fuelsurchargeports.FuelSurchargeResolver
 }
 
 type Service struct {
@@ -77,6 +81,8 @@ type Service struct {
 	billingCtrlRepo   tenantports.BillingControlRepository
 	intelGate         carrierintelports.CarrierIntelGate
 	lifecycle         carrierintelports.CarrierLifecycleObserver
+	accessorialRepo   accessorialchargeports.AccessorialChargeRepository
+	fuelResolver      fuelsurchargeports.FuelSurchargeResolver
 }
 
 func New(p Params) *Service {
@@ -100,6 +106,8 @@ func New(p Params) *Service {
 		rateEngine:        p.RateEngine,
 		agreementRepo:     p.AgreementRepo,
 		billingCtrlRepo:   p.BillingCtrlRepo,
+		accessorialRepo:   p.AccessorialRepo,
+		fuelResolver:      p.FuelResolver,
 	}
 }
 

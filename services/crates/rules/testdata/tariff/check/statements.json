@@ -1,0 +1,542 @@
+{
+ "cases": [
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "`5 lb` is a weight, but `a` is declared as money"
+    }
+   ],
+   "name": "an annotated let is checked against its type",
+   "source": [
+    "tariff \"t\"",
+    "let a: Money = 5 lb",
+    "charge \"x\" = a"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "an annotation widens Int to Number",
+   "source": [
+    "tariff \"t\"",
+    "let a: Number = 5",
+    "charge \"x\" = $1 * a"
+   ],
+   "types": {
+    "a": "Number"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Mony",
+     "code": "unknown-type",
+     "fixes": [
+      {
+       "label": "Change to `Money`",
+       "result": [
+        "tariff \"t\"",
+        "let a: Money = $5",
+        "charge \"x\" = a"
+       ]
+      }
+     ],
+     "message": "`Mony` isn't a type. Did you mean `Money`?"
+    }
+   ],
+   "name": "an annotation with an unknown type",
+   "source": [
+    "tariff \"t\"",
+    "let a: Mony = $5",
+    "charge \"x\" = a"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "type-mismatch",
+     "message": "`shipment.distance` is a distance, but a condition must be true or false"
+    }
+   ],
+   "name": "if conditions are Bool",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.distance {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5",
+     "code": "type-mismatch",
+     "message": "`5` is a whole number, but a condition must be true or false"
+    }
+   ],
+   "name": "else if conditions are Bool",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  charge \"x\" = $1",
+    "} else if 5 {",
+    "  charge \"y\" = $2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "if as an expression joins its branches",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = if shipment.hazmat { $10 } else { $0 }"
+   ],
+   "types": {
+    "if shipment.hazmat { $10 } else { $0 }": "Money"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "branch-mismatch",
+     "message": "This branch gives a weight, but the branches before it give money"
+    }
+   ],
+   "name": "if expression branches of different types",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = if shipment.hazmat { $10 } else { 5 lb }"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "if expression branches widen Int to Number",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1 * (if shipment.hazmat { 1 } else { 1.5 })"
+   ],
+   "types": {
+    "if shipment.hazmat { 1 } else { 1.5 }": "Number"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "if expression with none in a branch is optional",
+   "source": [
+    "tariff \"t\"",
+    "let fee = if shipment.hazmat { $10 } else { none }",
+    "charge \"x\" = fee ?? $0"
+   ],
+   "types": {
+    "if shipment.hazmat { $10 } else { none }": "Money?"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "if let in an expression",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1/lb * (if let w = shipment.weight { w } else { 0 lb })"
+   ],
+   "types": {
+    "if let w = shipment.weight { w } else { 0 lb }": "Weight"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "for over a list binds items",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  charge \"x\" = $1 * stop.sequence",
+    "}"
+   ],
+   "types": {
+    "stop": "Stop"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "for over an Int range binds Ints",
+   "source": [
+    "tariff \"t\"",
+    "for i in 0..shipment.stops.len {",
+    "  charge \"x\" = $1 * i",
+    "}"
+   ],
+   "types": {
+    "i": "Int"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "0..",
+     "code": "range",
+     "message": "A `for` walks a range with both ends, as in `0..n`"
+    }
+   ],
+   "name": "for over an open range is refused",
+   "source": [
+    "tariff \"t\"",
+    "for i in 0.. {",
+    "  charge \"x\" = $1 * i",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$0",
+     "code": "type-mismatch",
+     "message": "`$0` is money, but a whole number is needed here"
+    },
+    {
+     "at": "$5",
+     "code": "type-mismatch",
+     "message": "`$5` is money, but a whole number is needed here"
+    }
+   ],
+   "name": "for over a range of money is refused",
+   "source": [
+    "tariff \"t\"",
+    "for i in $0..$5 {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "not-iterable",
+     "message": "`shipment.distance` is a distance; `for` walks a list or a range of whole numbers"
+    }
+   ],
+   "name": "for over a number is refused",
+   "source": [
+    "tariff \"t\"",
+    "for i in shipment.distance {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "s",
+     "code": "optional",
+     "fixes": [
+      {
+       "label": "Fall back to `s ?? []`",
+       "result": [
+        "library \"t\"",
+        "fn stops(s: List<Stop>?) -> Int {",
+        "  var n = 0",
+        "  for stop in (s ?? []) {",
+        "    n += 1",
+        "  }",
+        "  return n",
+        "}"
+       ]
+      },
+      {
+       "label": "Bind it with `if let sValue = s`",
+       "result": [
+        "library \"t\"",
+        "fn stops(s: List<Stop>?) -> Int {",
+        "  var n = 0",
+        "  if let sValue = s {",
+        "    for stop in sValue {",
+        "    n += 1",
+        "  }",
+        "  }",
+        "  return n",
+        "}"
+       ]
+      },
+      {
+       "label": "Require it with `require let sValue = s`",
+       "result": [
+        "library \"t\"",
+        "fn stops(s: List<Stop>?) -> Int {",
+        "  var n = 0",
+        "  require let sValue = s else \"This rate needs s\"",
+        "  for stop in sValue {",
+        "    n += 1",
+        "  }",
+        "  return n",
+        "}"
+       ]
+      }
+     ],
+     "message": "`s` may be empty, so it can't be used as a list (`List<Stop>`) here. Give it a fallback, bind it with `if let`, or refuse to rate without it",
+     "nth": 6
+    }
+   ],
+   "name": "for over an optional list",
+   "source": [
+    "library \"t\"",
+    "fn stops(s: List<Stop>?) -> Int {",
+    "  var n = 0",
+    "  for stop in s {",
+    "    n += 1",
+    "  }",
+    "  return n",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "where filters with a Bool",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops where stop.appointment {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "stop.sequence",
+     "code": "type-mismatch",
+     "message": "`stop.sequence` is a whole number, but a condition must be true or false"
+    }
+   ],
+   "name": "where must be Bool",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops where stop.sequence {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "where does not narrow the body",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops where stop.dwell != none {",
+    "  charge \"x\" = $1/h * (stop.dwell ?? 0 h)",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "break and continue inside for",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  if stop.appointment {",
+    "    continue",
+    "  }",
+    "  if stop.sequence > 3 {",
+    "    break",
+    "  }",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "break",
+     "code": "misplaced",
+     "message": "`break` can only be used inside a `for` loop"
+    }
+   ],
+   "name": "break outside a loop",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "break"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "continue",
+     "code": "misplaced",
+     "message": "`continue` can only be used inside a `for` loop"
+    }
+   ],
+   "name": "continue outside a loop",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "if shipment.hazmat {",
+    "  continue",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "require with a condition",
+   "source": [
+    "tariff \"t\"",
+    "require shipment.distance > 0 mi else \"No distance\"",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "type-mismatch",
+     "message": "`shipment.distance` is a distance, but a condition must be true or false"
+    }
+   ],
+   "name": "require with a non-Bool condition",
+   "source": [
+    "tariff \"t\"",
+    "require shipment.distance else \"No distance\"",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "require messages interpolate",
+   "source": [
+    "tariff \"t\"",
+    "require shipment.hazmat else \"Not hazmat: {shipment.proNumber}\"",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.stops",
+     "code": "interpolation",
+     "fixes": [
+      {
+       "label": "Write its length, `shipment.stops.len`",
+       "result": [
+        "tariff \"t\"",
+        "if shipment.hazmat {",
+        "  fail \"Hazmat on {shipment.stops.len}\"",
+        "}",
+        "charge \"x\" = $1"
+       ]
+      }
+     ],
+     "message": "`shipment.stops` is a list (`List<Stop>`), which can't be written into text"
+    }
+   ],
+   "name": "fail messages interpolate their values",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  fail \"Hazmat on {shipment.stops}\"",
+    "}",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "charge \"x\" = $1",
+     "code": "unreachable",
+     "message": "This never runs: the statement before it always leaves",
+     "related": [
+      {
+       "at": "fail \"No\"",
+       "line": 3,
+       "message": "It leaves here"
+      }
+     ]
+    }
+   ],
+   "name": "code after fail never runs",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  fail \"No\"",
+    "  charge \"x\" = $1",
+    "}",
+    "charge \"y\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.distance * 2",
+     "code": "unused-value",
+     "message": "`shipment.distance * 2` is worked out and never used: bind it with `let`, bill it with `charge`, or remove it"
+    }
+   ],
+   "name": "an unused expression is a warning",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "shipment.distance * 2"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "an unused ?? fail is kept as a refusal",
+   "source": [
+    "tariff \"t\"",
+    "fuel.price ?? fail \"No fuel price\"",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a note in a tariff",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "note \"Rated on {rating.date}\""
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "note \"x\"",
+     "code": "misplaced",
+     "message": "A note can't be written here: a function computes values; only a tariff bills them"
+    }
+   ],
+   "name": "a note in a function is refused",
+   "source": [
+    "library \"t\"",
+    "fn f() -> Money {",
+    "  note \"x\"",
+    "  return $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a match statement with blocks",
+   "source": [
+    "tariff \"t\"",
+    "match shipment.status {",
+    "  New => { charge \"x\" = $1 }",
+    "  _ => { charge \"y\" = $2 }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "fn",
+     "code": "misplaced",
+     "message": "`fn` can only be used at the top level of a file, not inside a block"
+    }
+   ],
+   "name": "a misplaced declaration in a block is left to the parser",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  fn f() -> Int = 1",
+    "}",
+    "charge \"x\" = $1"
+   ]
+  }
+ ]
+}

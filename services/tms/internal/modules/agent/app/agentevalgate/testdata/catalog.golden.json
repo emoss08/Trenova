@@ -2623,6 +2623,7 @@
               "factoring_noa",
               "factoring_remittance",
               "factoring_submission",
+              "formula_library",
               "formula_template",
               "fuel_card",
               "fuel_purchase",
@@ -2785,6 +2786,7 @@
               "dashboard",
               "accounting_connection",
               "formula_template",
+              "formula_library",
               "accounting_sync_record",
               "accounting_inbound_change",
               "accounting_drift_finding",
@@ -2815,6 +2817,7 @@
               "Dashboard",
               "AccountingConnection",
               "FormulaTemplate",
+              "FormulaLibrary",
               "AccountingSyncRecord",
               "AccountingInboundChange",
               "AccountingDriftFinding",
@@ -12160,7 +12163,7 @@
     },
     {
       "name": "equipment_get_tractor",
-      "description": "Retrieve one tractor by id, with its equipment details, fleet and assigned workers. Use equipment_list_tractors first when you have a unit code.",
+      "description": "Retrieve one tractor by id, with its equipment details, fleet, lease and assigned drivers. Use equipment_list_tractors first when you have a unit code.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12199,7 +12202,7 @@
     },
     {
       "name": "equipment_get_trailer",
-      "description": "Retrieve one trailer by id, with its equipment details and fleet. Use equipment_list_trailers first when you have a unit code.",
+      "description": "Retrieve one trailer by id, with its equipment details, fleet and lease. Use equipment_list_trailers first when you have a unit code.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12358,20 +12361,22 @@
     },
     {
       "name": "equipment_list_positions",
-      "description": "Where every tractor is right now, from the telematics feed: its last known position, the nearest place name, speed, engine state and how old the reading is. Use it for \"where is truck 104\" or \"which trucks are near Dallas\". A reading older than an hour is where the truck was, not where it is. Drivers have no position of their own; a driver is where the tractor they are logged into is.",
+      "description": "Where every tractor is right now, from the telematics feed: its last known position, nearest place, speed and engine state. Each reading names the driver and how many minutes old it is. Use it for \"where is truck 104\" or \"which trucks are near Dallas\". A reading older than an hour is where the truck was, not where it is. Drivers have no position of their own; a driver is where the tractor they are logged into is.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "maxAgeMinutes": {
-            "description": "Ignore readings older than this. Default 240, at most 1440.",
+          "maxAgeSeconds": {
+            "description": "Only readings at most this many seconds old. An hour when left out. Four hours (14400) when left out.",
             "type": "integer"
           },
           "tractorIds": {
-            "description": "Optional: only these tractors, by id from equipment_list_tractors.",
+            "description": "The tractors, from equipment_list_tractors. Never guess one.",
             "items": {
               "type": "string",
               "x-recordOf": "tractor"
             },
+            "maxItems": 100,
+            "minItems": 1,
             "type": "array"
           }
         },
@@ -16499,34 +16504,132 @@
       }
     },
     {
-      "name": "formula_describe_schema",
-      "description": "Describe what a rating formula may use: every shipment variable (one line each), the functions by signature, and the rate tables it can look up. Read it before writing or explaining a formula, so every name you use is one the engine knows. Give query (\"reefer\", \"stops\", \"round\") for the matching variables and functions in full, with examples. A name not listed is not a shipment field: make it a template variable or ask, never guess.",
+      "name": "formula_check",
+      "description": "Check a Tariff source against this organisation's tables, codes and libraries. It returns every error and warning with its line and column and the fixes the checker offers, the inputs it declares, the libraries it imports and the charges it bills. Check before you show or explain source; fix every error.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "description": "template for a formula template (tariff \"…\"), library for an org library (library \"org.…\"); template when left out.",
+            "enum": [
+              "template",
+              "library"
+            ],
+            "type": "string",
+            "x-enumOf": "formula.kind"
+          },
+          "source": {
+            "description": "The whole Tariff source file, exactly as it should read.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "check",
+        "validate",
+        "compile",
+        "errors",
+        "diagnostics",
+        "formula",
+        "tariff"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_template",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Checks source the model holds; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "formula_describe_language",
+      "description": "Describe what a Tariff formula may use here: record fields, types and units, functions, rate tables, accessorial codes and libraries. It covers every record field (shipment, lane, customer, fuel, rating) with its type, the methods, the std modules' functions and this organisation's importable org libraries. Read it before writing or explaining a formula so every name you use exists. Give query (\"reefer\", \"stops\", \"ltl\", \"accessorials\") for the matching entries in full, and a library's source.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "query": {
-            "description": "Words for what the formula needs, such as \"reefer\" or \"weight\": only the variables and functions that match, described in full.",
-            "type": "string"
-          },
-          "schemaId": {
-            "description": "The formula schema, as the page draft names it; shipment when it names none.",
+            "description": "Words for what the formula needs, such as \"reefer\", \"weight\" or a library's name: only the entries that match, in full.",
             "type": "string"
           }
         },
         "type": "object"
       },
       "searchTerms": [
-        "formula",
-        "variables",
+        "formula language",
+        "tariff language",
+        "record fields",
         "functions",
-        "expression",
+        "units",
         "rate table",
-        "lookup",
-        "rating"
+        "syntax"
       ],
       "policy": {
         "kind": "query",
         "resource": "formula_template",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "formula_get_library",
+      "description": "Retrieve one formula library by id, whole: its Tariff source, the libraries it imports, its status and version. Read it before explaining a function a template imports or changing the library.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "formulaLibraryId": {
+            "description": "The formula library's id, from formula_list_libraries.",
+            "type": "string",
+            "x-recordOf": "formula_library"
+          }
+        },
+        "required": [
+          "formulaLibraryId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "formula library",
+        "library source",
+        "shared functions",
+        "org module",
+        "use org"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_library",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -16548,7 +16651,7 @@
     },
     {
       "name": "formula_get_template",
-      "description": "Retrieve one formula template by id, whole: its formula, variables and their defaults, breakdown lines, minimum, maximum, rounding, status and version. Read it before explaining or changing a formula. Use formula_list_templates first when you have a name rather than an id.",
+      "description": "Retrieve one formula template by id, whole: its Tariff source, the inputs it declares, the libraries it imports, its status and version. Read it before explaining or changing a formula. Use formula_list_templates first when you have a name rather than an id.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -16566,9 +16669,8 @@
       "searchTerms": [
         "formula template details",
         "read a formula",
-        "formula variables",
-        "minimum charge",
-        "rounding"
+        "tariff source",
+        "formula inputs"
       ],
       "policy": {
         "kind": "query",
@@ -16593,8 +16695,200 @@
       }
     },
     {
+      "name": "formula_library_propose",
+      "description": "Change the formula library in the person's editor: its whole Tariff source (library \"org.<name>\", its functions, types and tests), and for a new library its name and description. The source is checked and its tests run first; the page applies it only when it checks clean and every test passes, and it needs at least one test. The person can undo it, and nothing is saved until they save. A change reaches templates only after the library is approved again.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Only when you draft a new formula library and the page draft has no description yet: one or two sentences for the reviewer who approves it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "explanation": {
+            "description": "What the source does, in plain words, and what changed.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only when you draft a new formula library and the page draft has no name yet: a short name, such as accessorials, which templates import as org.accessorials.",
+            "maxLength": 64,
+            "type": "string"
+          },
+          "source": {
+            "description": "The whole Tariff source file, exactly as it should read. Declare every rate, fee, minimum and break as an input with a doc comment, never a figure written into a charge, so one formula library prices every customer; include a test block for each case you describe.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "explanation"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "write library",
+        "shared function",
+        "add function",
+        "org library",
+        "draft library",
+        "tariff module"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_library",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes the person's own editor, which they can undo; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "formula_list_libraries",
+      "description": "List the organisation's formula libraries: Tariff modules of shared functions a template imports with use org.<name>. A row carries the library's path, description, status, version and test count: read one whole, with its source, with formula_get_library. Filters: status (Active|Inactive|Draft|InReview): templates import the latest Active version; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "maximum": 3650,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "name",
+                    "status",
+                    "createdAt"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "formula_list_libraries.field"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "formula_list_libraries.operator"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "name",
+              "createdAt"
+            ],
+            "type": "string",
+            "x-enumOf": "formula_list_libraries.sortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "list libraries",
+        "shared libraries",
+        "formula libraries"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_library",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "formula_list_templates",
-      "description": "List formula templates — the rating methods a shipment is priced with. Use it to turn a rating method a person named into the id a shipment needs, or to find a formula to read. A row carries only a template's name, description, type and status: to show, explain or price one template, read it whole with formula_get_template using the row's id. Filters: type (FreightCharge|AccessorialCharge); status (Active|Inactive|Draft|InReview): only Active ones price shipments; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List formula templates, the Tariff rating methods a shipment, rule or agreement is priced with. Use it to turn a rating method a person named into its id. A row carries only a template's name, description, status, version and test count: read one whole, with its source and inputs, with formula_get_template. Filters: status (Active|Inactive|Draft|InReview): only Active ones price shipments; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -16611,7 +16905,6 @@
                 "field": {
                   "enum": [
                     "name",
-                    "type",
                     "status",
                     "createdAt"
                   ],
@@ -16721,182 +17014,89 @@
       }
     },
     {
-      "name": "formula_propose",
-      "description": "Change the formula in the person's editor: the expression, its variables, the charge policy, breakdown lines, and for a new template its name and description. The page applies the change the moment you call this; the person sees it in their editor, can undo it, and nothing is saved until they save. Call it for every change the person asks for — add, remove, fix, rename, set a default, change the minimum — with the whole formula as it should be after the change. Keep everything they did not ask to change exactly as the page draft shows it. Never describe a change without making it.",
+      "name": "formula_preview",
+      "description": "Rate a formula template's Tariff source for a saved shipment or the sample record. With the input values given, it returns the bill line by line, or the refusal or error and where in the source it came from. Use it to learn what a formula charges a real load; say an amount only when a tool gave it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "breakdown": {
-            "description": "Only when the person asks for itemized lines on the invoice: each line prices one part of the charge with its own expression, and the lines add up to the formula's result. Leave it out otherwise.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "expression": {
-                  "description": "The line's amount, built from the same names as the formula.",
-                  "type": "string"
-                },
-                "label": {
-                  "description": "What the invoice line says, such as \"Fuel surcharge\".",
-                  "maxLength": 100,
-                  "type": "string"
-                },
-                "name": {
-                  "description": "A camelCase identifier, unique among the lines, such as fuelSurcharge.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "name",
-                "label",
-                "expression"
-              ],
-              "type": "object"
-            },
-            "maxItems": 20,
-            "type": "array"
-          },
-          "description": {
-            "description": "Only when you draft a new template from scratch and the page draft has no description yet: one or two sentences on what it prices and when it applies, for the reviewer who approves it.",
-            "maxLength": 500,
-            "type": "string"
-          },
-          "explanation": {
-            "description": "What the formula charges, in plain words, term by term.",
-            "type": "string"
-          },
-          "expression": {
-            "description": "The expression, built only from formula_describe_schema's names and this formula's variables. Write every rate, fee, minimum, percentage and weight or mileage break as a variable, never as a number in the expression: one template prices every customer, and a figure written into it can only be changed by editing the formula. baseRate * totalDistance, not 2.85 * totalDistance; totalWeight < breakOne, not totalWeight < 500. Only a unit conversion such as / 100 for hundredweight stays a number. It returns the charge for the whole load, never a rate: a figure per mile, hour or stop is multiplied by totalDistance, the hours or the stops in the expression. Write it from the terms the person states, even when they say the terms are their contracts': open an agreement or program only when they ask you to take the terms from one. A quantity no shipment field holds, such as hours at a stop, is a variable with a default: declare it and propose rather than asking how it will arrive. So is a condition no field marks directly, such as team service: compare the nearest field to a variable (serviceType.code == teamServiceCode) or make it a yes/no variable, and say in the explanation what to set it to. Lay it out as the editor does: for more than two terms, one let per charge on its own line, named for what it is and ending with a semicolon (let fuelSurcharge = …;), then the sum of the names on the last line; never one long line or one chain of ternaries.",
-            "type": "string"
-          },
-          "name": {
-            "description": "Only when you draft a new template from scratch and the page draft has no name yet: a short name for the rating method, such as \"Linehaul per mile with fuel\". Leave it out when changing an existing formula.",
-            "maxLength": 100,
-            "type": "string"
-          },
-          "policy": {
-            "additionalProperties": false,
-            "description": "The charge policy the template applies after the expression. Always pass the page draft's policy here, changed only where the person asked (a minimum, a maximum, the rounding), so the amounts you quote match what the studio bills. Never write a minimum, a maximum or rounding into the expression.",
-            "properties": {
-              "maxCharge": {
-                "description": "The most the template bills for a load, whatever the expression comes to; null removes the maximum.",
-                "type": [
-                  "number",
-                  "null"
-                ]
-              },
-              "minCharge": {
-                "description": "The least the template bills for a load, whatever the expression comes to; null removes the minimum.",
-                "type": [
-                  "number",
-                  "null"
-                ]
-              },
-              "roundingMode": {
-                "description": "How the charge is rounded after the bounds; HalfUp unless the person chose otherwise.",
-                "enum": [
-                  "HalfUp",
-                  "HalfEven",
-                  "Up",
-                  "Down",
-                  "None"
-                ],
-                "type": "string",
-                "x-enumOf": "formula.roundingMode"
-              },
-              "roundingPrecision": {
-                "description": "The decimal places the charge is rounded to, 0 to 4; 2 is the cent.",
-                "maximum": 4,
-                "minimum": 0,
-                "type": "integer"
-              }
-            },
+          "inputs": {
+            "description": "Values for the template's inputs, by name, as wire values: a number {\"$n\":\"2.5\"}, money {\"$q\":\"175\",\"u\":\"$\"}, a rate {\"$q\":\"2.85\",\"u\":\"$/mi\"}, a percent {\"$q\":\"18\",\"u\":\"%\"}, a date {\"$date\":\"2026-01-31\"}, text and true/false as themselves. Inputs with a default may be left out.",
+            "maxProperties": 100,
             "type": "object"
           },
-          "scenarios": {
-            "description": "Loads to price, each named and described in a sentence, with the variable values that make it that load.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "description": {
-                  "description": "One sentence.",
-                  "type": "string"
-                },
-                "name": {
-                  "description": "A short name.",
-                  "type": "string"
-                },
-                "variables": {
-                  "description": "Values for this load, by variable name or schema field path (serviceType.code), so a load can say which service or equipment it is.",
-                  "type": "object"
-                }
-              },
-              "required": [
-                "name",
-                "variables"
-              ],
-              "type": "object"
-            },
-            "maxItems": 5,
-            "type": "array"
-          },
-          "schemaId": {
-            "description": "The formula schema, as the page draft names it; shipment when it names none.",
-            "type": "string"
-          },
-          "templateType": {
-            "description": "Only when you draft a new template from scratch: FreightCharge for the linehaul price of a load, AccessorialCharge for an extra service or fee billed on top of it.",
-            "enum": [
-              "FreightCharge",
-              "AccessorialCharge"
-            ],
+          "shipmentId": {
+            "description": "Optional: rate this saved shipment instead of the sample record, from shipment_list.",
             "type": "string",
-            "x-enumOf": "formula.templateType"
+            "x-recordOf": "shipment"
           },
-          "variables": {
-            "description": "The formula's own variables: every rate, fee, minimum, percentage and break the expression uses, and any input no shipment variable holds, such as hours at a stop. Something billed per stop, per hour or per event is written for one occurrence from such an input, cap included; say so in the explanation rather than asking how the data arrives. Give the figure the person named as its default.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "defaultValue": {
-                  "description": "The value it takes unless a load sets one.",
-                  "type": [
-                    "number",
-                    "string",
-                    "boolean",
-                    "null"
-                  ]
-                },
-                "description": {
-                  "description": "What it is for, for a billing clerk.",
-                  "type": "string"
-                },
-                "name": {
-                  "description": "An identifier.",
-                  "type": "string"
-                },
-                "type": {
-                  "description": "What the variable holds.",
-                  "enum": [
-                    "Number",
-                    "String",
-                    "Boolean"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "formula.variableType"
-                }
-              },
-              "required": [
-                "name",
-                "type"
-              ],
-              "type": "object"
-            },
-            "maxItems": 50,
-            "type": "array"
+          "source": {
+            "description": "The whole Tariff source file, exactly as it should read.",
+            "type": "string"
           }
         },
         "required": [
-          "expression",
+          "source"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "price",
+        "rate",
+        "preview",
+        "bill",
+        "charge",
+        "shipment",
+        "formula"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_template",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Rates source with the engine, for the sample record or a shipment the caller may read; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "formula_propose",
+      "description": "Change the formula template in the person's editor: its whole Tariff source, and for a new template its name and description. The source is checked and its tests run first; the page applies it only when it checks clean and every test passes, and it needs at least one test. The person sees it in their editor, can undo it, and nothing is saved until they save. Call it for every change the person asks for, with the whole source as it should be after the change, keeping everything they did not ask to change exactly as the page draft shows it. Never describe a change without making it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "Only when you draft a new formula template and the page draft has no description yet: one or two sentences for the reviewer who approves it.",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "explanation": {
+            "description": "What the source does, in plain words, and what changed.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Only when you draft a new formula template and the page draft has no name yet: a short name, such as \"Linehaul per mile with fuel\".",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "source": {
+            "description": "The whole Tariff source file, exactly as it should read. Declare every rate, fee, minimum and break as an input with a doc comment, never a figure written into a charge, so one formula template prices every customer; include a test block for each case you describe.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
           "explanation"
         ],
         "type": "object"
@@ -16908,7 +17108,7 @@
         "draft",
         "rating method",
         "charge",
-        "expression"
+        "tariff"
       ],
       "policy": {
         "kind": "query",
@@ -16933,109 +17133,37 @@
       }
     },
     {
-      "name": "formula_test_expression",
-      "description": "Price a formula expression with Trenova's formula engine, for sample loads or against a saved shipment. Use it to check a formula runs and to learn what it charges; say an amount only when this or formula_propose gave it.",
+      "name": "formula_run_tests",
+      "description": "Run the test blocks of a Tariff source with Trenova's engine: each test's name, line, whether it passed, and what each failed expectation actually came to. A source that does not check runs no tests; its errors come back instead. Run the tests before you propose source, and write a test for every case you claim it prices.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "expression": {
-            "description": "The expression to price, such as the one in the page draft.",
-            "type": "string"
-          },
-          "policy": {
-            "additionalProperties": false,
-            "description": "The page draft's charge policy, so the amounts match what is billed.",
-            "properties": {
-              "maxCharge": {
-                "description": "The most the template bills for a load, whatever the expression comes to; null removes the maximum.",
-                "type": [
-                  "number",
-                  "null"
-                ]
-              },
-              "minCharge": {
-                "description": "The least the template bills for a load, whatever the expression comes to; null removes the minimum.",
-                "type": [
-                  "number",
-                  "null"
-                ]
-              },
-              "roundingMode": {
-                "description": "How the charge is rounded after the bounds; HalfUp unless the person chose otherwise.",
-                "enum": [
-                  "HalfUp",
-                  "HalfEven",
-                  "Up",
-                  "Down",
-                  "None"
-                ],
-                "type": "string",
-                "x-enumOf": "formula.roundingMode"
-              },
-              "roundingPrecision": {
-                "description": "The decimal places the charge is rounded to, 0 to 4; 2 is the cent.",
-                "maximum": 4,
-                "minimum": 0,
-                "type": "integer"
-              }
-            },
-            "type": "object"
-          },
-          "scenarios": {
-            "description": "Loads to price, each named and described in a sentence, with the variable values that make it that load.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "description": {
-                  "description": "One sentence.",
-                  "type": "string"
-                },
-                "name": {
-                  "description": "A short name.",
-                  "type": "string"
-                },
-                "variables": {
-                  "description": "Values for this load, by variable name or schema field path (serviceType.code), so a load can say which service or equipment it is.",
-                  "type": "object"
-                }
-              },
-              "required": [
-                "name",
-                "variables"
-              ],
-              "type": "object"
-            },
-            "maxItems": 5,
-            "type": "array"
-          },
-          "schemaId": {
-            "description": "The formula schema, as the page draft names it; shipment when it names none.",
-            "type": "string"
-          },
-          "shipmentId": {
-            "description": "Optional: price a saved shipment instead of sample loads, from shipment_list.",
+          "kind": {
+            "description": "template for a formula template (tariff \"…\"), library for an org library (library \"org.…\"); template when left out.",
+            "enum": [
+              "template",
+              "library"
+            ],
             "type": "string",
-            "x-recordOf": "shipment"
+            "x-enumOf": "formula.kind"
           },
-          "variables": {
-            "description": "Values for the formula's own variables, by name, used by every load unless a load sets its own.",
-            "type": "object"
+          "source": {
+            "description": "The whole Tariff source file, exactly as it should read.",
+            "type": "string"
           }
         },
         "required": [
-          "expression"
+          "source"
         ],
         "type": "object"
       },
       "searchTerms": [
         "test",
-        "price",
-        "evaluate",
-        "try",
+        "run tests",
+        "expect",
+        "verify",
         "formula",
-        "expression",
-        "scenario",
-        "charge"
+        "tariff"
       ],
       "policy": {
         "kind": "query",
@@ -17056,7 +17184,7 @@
         "idempotent": true,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "Prices an expression with the formula engine, for sample values or a shipment the caller may read; nothing is saved and nothing is sent."
+        "rationale": "Runs the tests in source the model holds; nothing is saved and nothing is sent."
       }
     },
     {
@@ -21280,29 +21408,27 @@
     },
     {
       "name": "intake_set_required_field",
-      "description": "Set the customer, service type, shipment type or rating method on the import page, by record id. Find the record first with customer_list, masterdata_list_service_types, masterdata_list_shipment_types or formula_list_templates, and set it once the person agrees; the page shows the record's own name.",
+      "description": "Set the customer, service type or shipment type on the import page, by record id. Find the record first with customer_list, masterdata_list_service_types or masterdata_list_shipment_types, and set it once the person agrees; the page shows the record's own name. The tendered rate is the shipment's price as written, so the import needs no rating method.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "field": {
-            "description": "Which of the four the record is for.",
+            "description": "Which of the three the record is for.",
             "enum": [
               "customerId",
               "serviceTypeId",
-              "shipmentTypeId",
-              "formulaTemplateId"
+              "shipmentTypeId"
             ],
             "type": "string",
             "x-enumOf": "importDraft.requiredField"
           },
           "recordId": {
-            "description": "The record's id, from customer_list, masterdata_list_service_types, masterdata_list_shipment_types or formula_list_templates to match the field.",
+            "description": "The record's id, from customer_list, masterdata_list_service_types or masterdata_list_shipment_types to match the field.",
             "type": "string",
             "x-recordKinds": [
               "customer",
               "service_type",
-              "shipment_type",
-              "formula_template"
+              "shipment_type"
             ]
           }
         },
@@ -28435,7 +28561,7 @@
             "type": "string"
           },
           "lanes": {
-            "description": "The lanes, each priced through a formula template or a rate matrix.",
+            "description": "The lanes, each priced by a tariff with its own inputs.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -28474,7 +28600,7 @@
                   "x-enumOf": "rateAgreement.direction"
                 },
                 "formulaTemplateId": {
-                  "description": "The formula template that prices the lane, from formula_list_templates, with the lane's rate as its base rate. Give this or rateMatrixId.",
+                  "description": "The tariff that prices the lane, from formula_list_templates. A new lane needs one.",
                   "type": "string",
                   "x-recordOf": "formula_template"
                 },
@@ -28482,17 +28608,17 @@
                   "description": "Only hazardous freight rates on this lane.",
                   "type": "boolean"
                 },
+                "inputs": {
+                  "additionalProperties": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "description": "The lane's values for the inputs its tariff declares, which formula_get_template lists. They override the agreement's inputs. Each value is a Tariff value: money ($450), a rate ($2.35/mi), a percent (12%), a quantity (500 mi), a number (3), none, or a JSON wire value for a list or record input. An empty value removes the input.",
+                  "type": "object"
+                },
                 "label": {
                   "description": "A short name for the lane, such as Dallas to Atlanta.",
                   "maxLength": 150,
-                  "type": "string"
-                },
-                "maxCharge": {
-                  "description": "The most the lane charges, as a decimal.",
-                  "type": "string"
-                },
-                "minCharge": {
-                  "description": "The least the lane charges, as a decimal.",
                   "type": "string"
                 },
                 "originCity": {
@@ -28525,15 +28651,6 @@
                   "maximum": 1000,
                   "minimum": 0,
                   "type": "integer"
-                },
-                "rate": {
-                  "description": "The lane's rate as a decimal such as 2.35, in what its formula template charges by.",
-                  "type": "string"
-                },
-                "rateMatrixId": {
-                  "description": "The rate matrix that prices the lane, as a lane of rate_get_agreement names it. Give this or formulaTemplateId.",
-                  "type": "string",
-                  "x-recordOf": "rate_matrix"
                 },
                 "tempControlOnly": {
                   "description": "Only temperature-controlled freight rates on this lane.",
@@ -28593,7 +28710,7 @@
     },
     {
       "name": "rate_apply_increase",
-      "description": "Propose a general rate increase or decrease on agreements' lane rates, by a percent or a flat amount, from a day. It moves every lane rate on the named agreements, one customer's or carrier's, or every active agreement of a party type. The old rates stay in history. A person always decides.",
+      "description": "Propose a general rate increase or decrease on agreements' lanes, by a percent, from a day. It scales every money input of every lane on the named agreements, one customer's or carrier's, or every active agreement of a party type, and leaves percents, counts and distances alone. The old rates stay in history. A person always decides.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -28625,10 +28742,6 @@
             "format": "date",
             "type": "string"
           },
-          "flatChange": {
-            "description": "The change per rating unit, such as 0.10. Give this or percentChange.",
-            "type": "string"
-          },
           "partyType": {
             "description": "Every active agreement of this party type, when no agreements, customer or carrier is named.",
             "enum": [
@@ -28639,12 +28752,13 @@
             "x-enumOf": "rateAgreement.partyType"
           },
           "percentChange": {
-            "description": "The change in percent, such as 3.5 or -2. Give this or flatChange.",
+            "description": "The change in percent, such as 3.5 or -2.",
             "type": "string"
           }
         },
         "required": [
-          "effectiveFrom"
+          "effectiveFrom",
+          "percentChange"
         ],
         "type": "object"
       },
@@ -28913,14 +29027,6 @@
             "type": "string",
             "x-recordOf": "customer"
           },
-          "defaultMaxCharge": {
-            "description": "The most any lane charges, as a decimal.",
-            "type": "string"
-          },
-          "defaultMinCharge": {
-            "description": "The least any lane charges, as a decimal.",
-            "type": "string"
-          },
           "description": {
             "description": "What the agreement covers.",
             "maxLength": 2000,
@@ -28942,8 +29048,16 @@
             "format": "date",
             "type": "string"
           },
+          "inputs": {
+            "additionalProperties": {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            "description": "Values every lane's tariff prices with unless the lane sets its own, such as minimumCharge. Each value is a Tariff value: money ($450), a rate ($2.35/mi), a percent (12%), a quantity (500 mi), a number (3), none, or a JSON wire value for a list or record input. An empty value removes the input.",
+            "type": "object"
+          },
           "lanes": {
-            "description": "The lanes, each priced through a formula template or a rate matrix.",
+            "description": "The lanes, each priced by a tariff with its own inputs.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -28982,7 +29096,7 @@
                   "x-enumOf": "rateAgreement.direction"
                 },
                 "formulaTemplateId": {
-                  "description": "The formula template that prices the lane, from formula_list_templates, with the lane's rate as its base rate. Give this or rateMatrixId.",
+                  "description": "The tariff that prices the lane, from formula_list_templates. A new lane needs one.",
                   "type": "string",
                   "x-recordOf": "formula_template"
                 },
@@ -28990,17 +29104,17 @@
                   "description": "Only hazardous freight rates on this lane.",
                   "type": "boolean"
                 },
+                "inputs": {
+                  "additionalProperties": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "description": "The lane's values for the inputs its tariff declares, which formula_get_template lists. They override the agreement's inputs. Each value is a Tariff value: money ($450), a rate ($2.35/mi), a percent (12%), a quantity (500 mi), a number (3), none, or a JSON wire value for a list or record input. An empty value removes the input.",
+                  "type": "object"
+                },
                 "label": {
                   "description": "A short name for the lane, such as Dallas to Atlanta.",
                   "maxLength": 150,
-                  "type": "string"
-                },
-                "maxCharge": {
-                  "description": "The most the lane charges, as a decimal.",
-                  "type": "string"
-                },
-                "minCharge": {
-                  "description": "The least the lane charges, as a decimal.",
                   "type": "string"
                 },
                 "originCity": {
@@ -29033,15 +29147,6 @@
                   "maximum": 1000,
                   "minimum": 0,
                   "type": "integer"
-                },
-                "rate": {
-                  "description": "The lane's rate as a decimal such as 2.35, in what its formula template charges by.",
-                  "type": "string"
-                },
-                "rateMatrixId": {
-                  "description": "The rate matrix that prices the lane, as a lane of rate_get_agreement names it. Give this or formulaTemplateId.",
-                  "type": "string",
-                  "x-recordOf": "rate_matrix"
                 },
                 "tempControlOnly": {
                   "description": "Only temperature-controlled freight rates on this lane.",
@@ -29305,7 +29410,7 @@
     },
     {
       "name": "rate_get_agreement",
-      "description": "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, rates, minimums and weight breaks. It also gives the current version, the accessorial schedule and the fuel surcharge binding. rate_explain says how it priced one shipment. Take the id from rate_list_agreements.",
+      "description": "Retrieve one rate agreement, a contract or tariff, by id with its lane rules, their tariffs and inputs. It also gives the agreement's own inputs, the current version, the accessorial schedule and the fuel surcharge binding. rate_explain says how it priced one shipment. Take the id from rate_list_agreements.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29322,8 +29427,10 @@
       },
       "searchTerms": [
         "contract terms",
+        "lane rules",
         "lane rates",
-        "minimums"
+        "minimums",
+        "rule inputs"
       ],
       "policy": {
         "kind": "query",
@@ -29349,7 +29456,7 @@
     },
     {
       "name": "rate_get_matrix",
-      "description": "Retrieve one rate matrix by id: the grid of rates a lane rule prices from. It gives the axes (zone, zip, weight break, freight class and so on) and up to 200 cells with their keys, ranges and values. Take the id from a rule's rateMatrixId in rate_get_agreement.",
+      "description": "Retrieve one rate matrix by id: a table a tariff looks values up in. It gives the value type, the axes (zone, zip, weight break, freight class and so on) and up to 200 cells with their keys, ranges and values. Take the id from the page you are on.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29358,7 +29465,7 @@
             "type": "integer"
           },
           "rateMatrixId": {
-            "description": "The rate matrix's id, from a rule's rateMatrixId in rate_get_agreement or the page you are on.",
+            "description": "The rate matrix's id, from the page you are on.",
             "type": "string",
             "x-recordOf": "rate_matrix"
           }
@@ -29677,10 +29784,6 @@
           },
           "pieces": {
             "description": "Piece count, when known.",
-            "type": "integer"
-          },
-          "ratingUnit": {
-            "description": "Rating units; defaults to 1.",
             "type": "integer"
           },
           "serviceTypeId": {
@@ -30233,14 +30336,6 @@
             "maxLength": 3,
             "type": "string"
           },
-          "defaultMaxCharge": {
-            "description": "The most any lane charges, as a decimal.",
-            "type": "string"
-          },
-          "defaultMinCharge": {
-            "description": "The least any lane charges, as a decimal.",
-            "type": "string"
-          },
           "description": {
             "description": "What the agreement covers.",
             "maxLength": 2000,
@@ -30261,6 +30356,14 @@
             ],
             "format": "date",
             "type": "string"
+          },
+          "inputs": {
+            "additionalProperties": {
+              "maxLength": 4000,
+              "type": "string"
+            },
+            "description": "Values every lane's tariff prices with unless the lane sets its own, such as minimumCharge. Each value is a Tariff value: money ($450), a rate ($2.35/mi), a percent (12%), a quantity (500 mi), a number (3), none, or a JSON wire value for a list or record input. An empty value removes the input.",
+            "type": "object"
           },
           "lanes": {
             "description": "Every lane of the revised agreement, replacing its lanes: a lane with ruleId keeps that lane and changes only what it gives, a lane without one is new, and a lane left out is dropped. Leave it out to keep the lanes.",
@@ -30302,7 +30405,7 @@
                   "x-enumOf": "rateAgreement.direction"
                 },
                 "formulaTemplateId": {
-                  "description": "The formula template that prices the lane, from formula_list_templates, with the lane's rate as its base rate. Give this or rateMatrixId.",
+                  "description": "The tariff that prices the lane, from formula_list_templates. A new lane needs one.",
                   "type": "string",
                   "x-recordOf": "formula_template"
                 },
@@ -30310,17 +30413,17 @@
                   "description": "Only hazardous freight rates on this lane.",
                   "type": "boolean"
                 },
+                "inputs": {
+                  "additionalProperties": {
+                    "maxLength": 4000,
+                    "type": "string"
+                  },
+                  "description": "The lane's values for the inputs its tariff declares, which formula_get_template lists. They override the agreement's inputs. Each value is a Tariff value: money ($450), a rate ($2.35/mi), a percent (12%), a quantity (500 mi), a number (3), none, or a JSON wire value for a list or record input. An empty value removes the input.",
+                  "type": "object"
+                },
                 "label": {
                   "description": "A short name for the lane, such as Dallas to Atlanta.",
                   "maxLength": 150,
-                  "type": "string"
-                },
-                "maxCharge": {
-                  "description": "The most the lane charges, as a decimal.",
-                  "type": "string"
-                },
-                "minCharge": {
-                  "description": "The least the lane charges, as a decimal.",
                   "type": "string"
                 },
                 "originCity": {
@@ -30353,15 +30456,6 @@
                   "maximum": 1000,
                   "minimum": 0,
                   "type": "integer"
-                },
-                "rate": {
-                  "description": "The lane's rate as a decimal such as 2.35, in what its formula template charges by.",
-                  "type": "string"
-                },
-                "rateMatrixId": {
-                  "description": "The rate matrix that prices the lane, as a lane of rate_get_agreement names it. Give this or formulaTemplateId.",
-                  "type": "string",
-                  "x-recordOf": "rate_matrix"
                 },
                 "ruleId": {
                   "description": "A lane already on the agreement, from rate_get_agreement, to keep and change; leave it out for a new lane.",
@@ -38375,10 +38469,6 @@
                 },
                 "type": "array"
               },
-              "baseRate": {
-                "description": "The rate the rating method prices with, as the person gave it: 2450 for a $2,450 flat load, 2.10 for $2.10 a mile.",
-                "type": "string"
-              },
               "billToCustomerId": {
                 "description": "Who is billed, when not the customer, from customer_list.",
                 "type": "string",
@@ -38430,9 +38520,13 @@
                 "type": "string"
               },
               "formulaTemplateId": {
-                "description": "The rating method that prices the freight, from formula_list_templates. Leave it out when the customer's rate agreement covers the lane, and the contract's is used.",
+                "description": "The tariff that prices the freight, from formula_list_templates. Leave it out when the customer's rate agreement covers the lane, and the contract's is used, or when freightChargeAmount gives the price.",
                 "type": "string",
                 "x-recordOf": "formula_template"
+              },
+              "freightChargeAmount": {
+                "description": "The freight charge the person or the customer's rate confirmation gives, such as 2450. The shipment is then rated by hand at it and no tariff runs; leave formulaTemplateId out.",
+                "type": "string"
               },
               "freightTerms": {
                 "description": "Who pays the freight. Defaults to Prepaid.",
@@ -38554,12 +38648,6 @@
                 "minimum": 0,
                 "type": "integer"
               },
-              "ratingUnit": {
-                "description": "How many units the rating method prices. Defaults to 1.",
-                "maximum": 1000000,
-                "minimum": 1,
-                "type": "integer"
-              },
               "serviceTypeId": {
                 "description": "From masterdata_list_service_types.",
                 "type": "string",
@@ -38569,6 +38657,14 @@
                 "description": "From masterdata_list_shipment_types.",
                 "type": "string",
                 "x-recordOf": "shipment_type"
+              },
+              "tariffInputs": {
+                "additionalProperties": {
+                  "maxLength": 4000,
+                  "type": "string"
+                },
+                "description": "Values for the inputs the tariff declares, which formula_get_template lists, as the person gave them: $2,450 for a flat load, $2.10/mi for a rate a mile, 12% for a percent. Leave an input out to take the tariff's default.",
+                "type": "object"
               },
               "temperatureMax": {
                 "description": "Fahrenheit, for reefer freight.",

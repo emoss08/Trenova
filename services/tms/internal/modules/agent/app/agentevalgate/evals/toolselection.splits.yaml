@@ -134,8 +134,8 @@ strata:
       - apply the uploaded rate sheet to its agreement
       - copy last year's Acme contract into a new draft for the renewal
       - draft a rate agreement for Acme from their rate sheet
-      - record this week's price on our custom fuel index
-      - which manual prices are on the custom fuel index
+      - propose a rating formula with a hazmat surcharge
+      - run the tests in this formula
       - which rate sheet imports are waiting for review
       - write me a per mile rate with a floor of 350
   - stratum:
@@ -145,8 +145,10 @@ strata:
       - delete the draft IFTA return made for the wrong quarter
       - delete the fuel purchase that was entered twice
       - discard the fuel statement that was uploaded twice
+      - record this week's price on our custom fuel index
       - the card is assigned now, post the fuel rows the import was holding
       - which IFTA mileage entries were recorded for tractor 112
+      - which manual prices are on the custom fuel index
       - which power units are sidelined right now
   - stratum:
       desk: Insight analyst

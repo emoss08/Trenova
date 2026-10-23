@@ -7,6 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	tariffrules "github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
@@ -445,15 +448,21 @@ func realisticShipment() shipmentFixture {
 	templateID := pulid.MustNew("ft_")
 	customerID := pulid.MustNew("cus_")
 	entity := &shipment.Shipment{
-		ID:                  pulid.MustNew("shp_"),
-		OrganizationID:      orgID,
-		BusinessUnitID:      buID,
-		CustomerID:          customerID,
-		FormulaTemplateID:   templateID,
-		Status:              shipment.StatusInTransit,
-		ProNumber:           "S-1001",
-		BOL:                 "BOL-77812",
-		BaseRate:            decimal.NewNullDecimal(decimal.RequireFromString("1850.0000")),
+		ID:                pulid.MustNew("shp_"),
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		CustomerID:        customerID,
+		FormulaTemplateID: templateID,
+		Status:            shipment.StatusInTransit,
+		ProNumber:         "S-1001",
+		BOL:               "BOL-77812",
+		TariffInputs: tarifftypes.Inputs{
+			"rate": tariffrules.QuantityValue(decimal.RequireFromString("5.2"), "$/mi"),
+		},
+		FreightLines: []shipment.FreightLine{
+			{Label: "Linehaul", Amount: decimal.RequireFromString("1750")},
+			{Label: "Stop charges", Amount: decimal.RequireFromString("100")},
+		},
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.RequireFromString("1850.0000")),
 		OtherChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("225.5000")),
 		TotalChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("2075.5000")),
@@ -461,16 +470,10 @@ func realisticShipment() shipmentFixture {
 		RatingDetail: &shipment.RatingDetail{
 			FormulaTemplateID:   templateID.String(),
 			FormulaTemplateName: "Midwest dry van",
-			Expression:          "max(minCharge, distance * ratePerMile) + stops * stopCharge",
-			ResolvedVariables: map[string]any{
-				"distance": 355.2, "ratePerMile": 5.2, "stops": 2, "stopCharge": 50,
-			},
-			Result:        1850,
-			Source:        "Agreement",
-			AgreementName: "Acme 2026 contract",
-			Breakdown: []shipment.RatingBreakdownItem{
-				{Name: "linehaul", Label: "Linehaul", Amount: 1750},
-				{Name: "stops", Label: "Stop charges", Amount: 100},
+			Source:              "Agreement",
+			AgreementName:       "Acme 2026 contract",
+			Inputs: tarifftypes.Inputs{
+				"rate": tariffrules.QuantityValue(decimal.RequireFromString("5.2"), "$/mi"),
 			},
 		},
 		Customer: &customer.Customer{
@@ -486,7 +489,7 @@ func realisticShipment() shipmentFixture {
 			ID:          templateID,
 			Name:        "Midwest dry van",
 			Description: "Distance-based dry van rating for the Midwest lanes",
-			Expression:  "max(minCharge, distance * ratePerMile) + stops * stopCharge",
+			Source:      "tariff \"Midwest dry van\"\n",
 		},
 		Moves: []*shipment.ShipmentMove{move},
 		Commodities: []*shipment.ShipmentCommodity{{
@@ -630,7 +633,8 @@ func TestGetShipment_SummaryIsTheDefault(t *testing.T) {
 	assert.Equal(t, fixture.entity.FormulaTemplateID.String(), rating["formulaTemplateId"])
 	assert.Equal(t, "Midwest dry van", rating["formulaTemplate"])
 	assert.Equal(t, "Agreement", rating["ratingMethod"])
-	assert.Equal(t, "1850", rating["baseRate"])
+	assert.Equal(t, map[string]any{"rate": "$5.2/mi"}, rating["inputs"])
+	assert.Equal(t, []any{"Linehaul: 1750.00", "Stop charges: 100.00"}, rating["freightLines"])
 	assert.Equal(t, "225.50", rating["otherChargeAmount"])
 	assert.Equal(t, "2075.50", rating["totalChargeAmount"])
 	assert.Equal(t, true, rating["rateLocked"])
@@ -707,8 +711,8 @@ func TestGetShipment_FullKeepsTheStoredRecord(t *testing.T) {
 
 	assert.Equal(t, fixture.entity.ID.String(), document["id"])
 	assert.Equal(t, fixture.entity.FormulaTemplateID.String(), document["formulaTemplateId"])
-	assert.Contains(t, objectAt(t, document, "ratingDetail"), "resolvedVariables")
-	assert.Contains(t, objectAt(t, document, "formulaTemplate"), "expression")
+	assert.Contains(t, objectAt(t, document, "ratingDetail"), "inputs")
+	assert.Contains(t, objectAt(t, document, "formulaTemplate"), "source")
 	assignment := objectAt(t, document, "moves", 0, "assignment")
 	assert.Equal(t, "T-104", objectAt(t, assignment, "tractor")["code"])
 	assert.Equal(t, "Dana", objectAt(t, assignment, "primaryWorker")["firstName"])

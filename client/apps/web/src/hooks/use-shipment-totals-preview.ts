@@ -35,11 +35,10 @@ export function useShipmentTotalsPreview() {
   const serviceTypeId = useWatch({ control, name: "serviceTypeId" });
   const shipmentTypeId = useWatch({ control, name: "shipmentTypeId" });
   const formulaTemplateId = useWatch({ control, name: "formulaTemplateId" });
-  const baseRate = useWatch({ control, name: "baseRate" });
+  const tariffInputs = useWatch({ control, name: "tariffInputs" });
   const additionalCharges = useWatch({ control, name: "additionalCharges" });
   const commodities = useWatch({ control, name: "commodities" });
   const moves = useWatch({ control, name: "moves" });
-  const ratingUnit = useWatch({ control, name: "ratingUnit" });
   const weight = useWatch({ control, name: "weight" });
   const pieces = useWatch({ control, name: "pieces" });
   const fuelSurchargeLocked = useWatch({ control, name: "fuelSurchargeLocked" });
@@ -55,11 +54,10 @@ export function useShipmentTotalsPreview() {
     serviceTypeId,
     shipmentTypeId,
     formulaTemplateId,
-    baseRate,
+    tariffInputs,
     additionalCharges: completeCharges,
     commodities,
     moves,
-    ratingUnit,
     weight,
     pieces,
     fuelSurchargeLocked,

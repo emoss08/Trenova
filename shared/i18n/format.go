@@ -31,7 +31,8 @@ func selectPlural(locale Locale, n float64) pluralForm {
 }
 
 func format(locale Locale, message string, args []any) string {
-	if len(args) == 0 || !strings.ContainsRune(message, '{') {
+	quoted := strings.ContainsRune(message, '\'')
+	if !quoted && (len(args) == 0 || !strings.ContainsRune(message, '{')) {
 		return message
 	}
 
@@ -39,6 +40,10 @@ func format(locale Locale, message string, args []any) string {
 	out.Grow(len(message) + 16*len(args))
 
 	for i := 0; i < len(message); {
+		if message[i] == '\'' {
+			i = writeQuoted(&out, message, i)
+			continue
+		}
 		if message[i] != '{' {
 			out.WriteByte(message[i])
 			i++
@@ -64,10 +69,56 @@ func format(locale Locale, message string, args []any) string {
 	return out.String()
 }
 
+func writeQuoted(out *strings.Builder, s string, i int) int {
+	if i+1 >= len(s) {
+		out.WriteByte('\'')
+		return i + 1
+	}
+	switch s[i+1] {
+	case '\'':
+		out.WriteByte('\'')
+		return i + 2
+	case '{', '}':
+		closing := strings.IndexByte(s[i+1:], '\'')
+		if closing < 0 {
+			out.WriteString(s[i+1:])
+			return len(s)
+		}
+		out.WriteString(s[i+1 : i+1+closing])
+		return i + 2 + closing
+	default:
+		out.WriteByte('\'')
+		return i + 1
+	}
+}
+
+func unquote(s string) string {
+	if !strings.ContainsRune(s, '\'') {
+		return s
+	}
+	var out strings.Builder
+	out.Grow(len(s))
+	for i := 0; i < len(s); {
+		if s[i] == '\'' {
+			i = writeQuoted(&out, s, i)
+			continue
+		}
+		out.WriteByte(s[i])
+		i++
+	}
+	return out.String()
+}
+
 func matchBrace(s string, open int) (int, bool) {
 	depth := 0
 	for i := open; i < len(s); i++ {
 		switch s[i] {
+		case '\'':
+			if i+1 < len(s) && (s[i+1] == '{' || s[i+1] == '}') {
+				if closing := strings.IndexByte(s[i+1:], '\''); closing >= 0 {
+					i += 1 + closing
+				}
+			}
 		case '{':
 			depth++
 		case '}':
@@ -108,7 +159,7 @@ func renderPlaceholder(locale Locale, body string, args []any) (string, bool) {
 		return stringifyIn(locale, value), true
 	}
 
-	return strings.ReplaceAll(chosen, "#", formatCount(locale, number)), true
+	return strings.ReplaceAll(unquote(chosen), "#", formatCount(locale, number)), true
 }
 
 func pluralBranch(forms string, want pluralForm) (string, bool) {

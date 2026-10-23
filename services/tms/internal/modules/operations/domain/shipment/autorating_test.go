@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +20,11 @@ func autoRatedPair(t *testing.T) (*Shipment, *Shipment) {
 	build := func() *Shipment {
 		return &Shipment{
 			FormulaTemplateID: templateID,
-			BaseRate:          decimal.NewNullDecimal(decimal.NewFromFloat(2.15)),
-			RateAgreementID:   &agreementID,
-			AutoRated:         true,
+			TariffInputs: tarifftypes.Inputs{
+				"rate": rules.QuantityValue(decimal.RequireFromString("2.15"), "$/mi"),
+			},
+			RateAgreementID: &agreementID,
+			AutoRated:       true,
 		}
 	}
 
@@ -38,11 +42,13 @@ func TestRatedFieldsEdited_RatingMethod(t *testing.T) {
 	assert.True(t, RatedFieldsEdited(original, updated))
 }
 
-func TestRatedFieldsEdited_BaseRate(t *testing.T) {
+func TestRatedFieldsEdited_TariffInputs(t *testing.T) {
 	t.Parallel()
 
 	original, updated := autoRatedPair(t)
-	updated.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(1.95))
+	updated.TariffInputs = tarifftypes.Inputs{
+		"rate": rules.QuantityValue(decimal.RequireFromString("1.95"), "$/mi"),
+	}
 
 	assert.True(t, RatedFieldsEdited(original, updated))
 }
@@ -54,7 +60,9 @@ func TestRatedFieldsEdited_IgnoresDecimalScale(t *testing.T) {
 	t.Parallel()
 
 	original, updated := autoRatedPair(t)
-	updated.BaseRate = decimal.NewNullDecimal(decimal.RequireFromString("2.150000"))
+	updated.TariffInputs = tarifftypes.Inputs{
+		"rate": rules.RawJSON(`{"$q":"2.150000","u":"$/mi"}`),
+	}
 
 	assert.False(t, RatedFieldsEdited(original, updated))
 }

@@ -51,7 +51,7 @@ export function BacktestSheet({ open, onOpenChange, form, template }: BacktestSh
           </SheetTitle>
           <SheetDescription>
             {t(
-              "Re-rate recent shipments with a candidate expression and compare against what they charge today.",
+              "Re-rate recent shipments with a candidate tariff and compare against what they bill today.",
             )}
           </SheetDescription>
         </SheetHeader>

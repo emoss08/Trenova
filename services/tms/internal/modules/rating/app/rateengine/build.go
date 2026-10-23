@@ -8,10 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
-	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -65,7 +65,7 @@ func (s *Service) buildContext(
 		CommodityIDs:    commodityIDs(entity),
 		FreightClasses:  entity.FreightClasses(),
 		HasHazmat:       entity.HasHazardousMaterial(),
-		BillingCurrency: billingCurrency(entity),
+		BillingCurrency: tariff.BillingCurrency(entity),
 		SellTotal:       req.SellTotal,
 		Entity:          entity,
 
@@ -211,17 +211,6 @@ func commodityIDs(entity *shipment.Shipment) []pulid.ID {
 
 func requiresTempControl(entity *shipment.Shipment) bool {
 	return entity.TemperatureMin != nil || entity.TemperatureMax != nil
-}
-
-// billingCurrency is what the organization bills this customer in, which a
-// contract written in another currency is converted to at the end.
-func billingCurrency(entity *shipment.Shipment) string {
-	if entity.Customer != nil && entity.Customer.BillingProfile != nil &&
-		entity.Customer.BillingProfile.BillingCurrency != "" {
-		return entity.Customer.BillingProfile.BillingCurrency
-	}
-
-	return money.DefaultCurrencyCode
 }
 
 // LocationOf exposes the place a stop describes, for callers that need to build

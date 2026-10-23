@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
-	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -122,47 +120,30 @@ func (t *getTool) Query(
 	return t.access.redactor(ctx, params).withhold(entity)
 }
 
-func newGetTractorTool(
-	repo tractorports.TractorRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
+// tractorGetSpec reads one tractor through the Desk's tractor card.
+func tractorGetSpec() getSpec {
+	return getSpec{
 		name:     "equipment_get_tractor",
 		entity:   "tractor",
 		resource: permission.ResourceTractor,
-		summary: "Retrieve one tractor by id, with its equipment details, fleet and " +
-			"assigned workers. Use equipment_list_tractors first when you have a unit code.",
+		summary: "Retrieve one tractor by id, with its equipment details, fleet, lease and " +
+			"assigned drivers. Use equipment_list_tractors first when you have a unit code.",
 		paramName: "tractorId",
 		idSource:  "from equipment_list_tractors",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, tractorports.GetTractorByIDRequest{
-				ID:                      id,
-				TenantInfo:              tenant,
-				TractorRelationIncludes: tractorports.FullTractorRelationIncludes(),
-			})
-		},
-	}, permissions)
+	}
 }
 
-func newGetTrailerTool(
-	repo trailerports.TrailerRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
+// trailerGetSpec reads one trailer through the Desk's trailer card.
+func trailerGetSpec() getSpec {
+	return getSpec{
 		name:     "equipment_get_trailer",
 		entity:   "trailer",
 		resource: permission.ResourceTrailer,
-		summary: "Retrieve one trailer by id, with its equipment details and fleet. " +
+		summary: "Retrieve one trailer by id, with its equipment details, fleet and lease. " +
 			"Use equipment_list_trailers first when you have a unit code.",
 		paramName: "trailerId",
 		idSource:  "from equipment_list_trailers",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, trailerports.GetTrailerByIDRequest{
-				ID:         id,
-				TenantInfo: tenant,
-			})
-		},
-	}, permissions)
+	}
 }
 
 const (
@@ -220,6 +201,8 @@ func graphQLGetSpecs() []getSpec {
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
+		tractorGetSpec(),
+		trailerGetSpec(),
 	}
 }
 
@@ -244,8 +227,8 @@ func getCatalogSpecs() []getSpec {
 	return []getSpec{
 		customerGetSpec(),
 		carrierGetSpec(),
-		specOfGet(newGetTractorTool(nil, nil)),
-		specOfGet(newGetTrailerTool(nil, nil)),
+		tractorGetSpec(),
+		trailerGetSpec(),
 		locationGetSpec(),
 		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
 		specOfGet(newGetServiceFailureTool(nil, nil)),

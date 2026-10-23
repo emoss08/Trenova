@@ -19,6 +19,7 @@ import {
   UserPlus01Icon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
+import { billingQueueItemLabel } from "@/lib/billing-queue-label";
 
 export function BillingQueueItemCard({
   item,
@@ -41,7 +42,7 @@ export function BillingQueueItemCard({
 }) {
   const t = useT();
 
-  const proNumber = item.shipment?.proNumber || item.shipmentId.slice(0, 12);
+  const proNumber = item.shipment?.proNumber || billingQueueItemLabel(item);
   const customerName = item.shipment?.customer?.name;
   const payerName = item.billToCustomer?.name ?? customerName;
   const onBehalfOf =
@@ -121,15 +122,19 @@ export function BillingQueueItemCard({
           <PauseIcon className="size-3.5" />
           {t("Hold")}
         </ContextMenuItem>
-        <ContextMenuSeparator />
-        <ContextMenuItem
-          onClick={() =>
-            window.open(`/shipment-management/shipments?item=${item.shipmentId}`, "_blank")
-          }
-        >
-          <LinkExternal01Icon className="size-3.5" />
-          {t("View shipment")}
-        </ContextMenuItem>
+        {item.shipmentId ? (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              onClick={() =>
+                window.open(`/shipment-management/shipments?item=${item.shipmentId}`, "_blank")
+              }
+            >
+              <LinkExternal01Icon className="size-3.5" />
+              {t("View shipment")}
+            </ContextMenuItem>
+          </>
+        ) : null}
         <ContextMenuSeparator />
         <ContextMenuItem onClick={onCancel} disabled={isTerminal} className="text-destructive">
           <XCloseIcon className="size-3.5" />

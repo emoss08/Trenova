@@ -1,665 +1,251 @@
 package formulatemplate
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
-	"github.com/emoss08/trenova/pkg/ratetypes"
-	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 )
 
+const perMileSource = `tariff "Per Mile"
+
+input rate: Money/mi
+input minimumCharge: Money = $0
+
+charge "Per Mile" (quantity: shipment.distance, rate: rate)
+minimum minimumCharge
+`
+
+func validTemplate() *FormulaTemplate {
+	return &FormulaTemplate{
+		ID:             pulid.MustNew("ft_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		Name:           "Per Mile",
+		Source:         perMileSource,
+		Status:         StatusDraft,
+	}
+}
+
+func fieldsOf(multiErr *errortypes.MultiError) []string {
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, err := range multiErr.Errors {
+		fields = append(fields, err.Field)
+	}
+	return fields
+}
+
 func TestFormulaTemplate_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		entity  FormulaTemplate
-		wantErr bool
-	}{
-		{
-			name: "valid entity passes",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Test Template",
-				Expression:     "rate * weight",
-				Type:           TemplateTypeFreightCharge,
-				Status:         StatusActive,
-			},
-			wantErr: false,
-		},
-		{
-			name: "name empty fails",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "",
-				Expression:     "rate * weight",
-				Type:           TemplateTypeFreightCharge,
-				Status:         StatusActive,
-			},
-			wantErr: true,
-		},
-		{
-			name: "name too long fails",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           strings.Repeat("a", 101),
-				Expression:     "rate * weight",
-				Type:           TemplateTypeFreightCharge,
-				Status:         StatusActive,
-			},
-			wantErr: true,
-		},
-		{
-			name: "expression empty fails",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Test Template",
-				Expression:     "",
-				Type:           TemplateTypeFreightCharge,
-				Status:         StatusActive,
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid type fails",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Test Template",
-				Expression:     "rate * weight",
-				Type:           TemplateType("Invalid"),
-				Status:         StatusActive,
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid status fails",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Test Template",
-				Expression:     "rate * weight",
-				Type:           TemplateTypeFreightCharge,
-				Status:         Status("Invalid"),
-			},
-			wantErr: true,
-		},
-		{
-			name: "accessorial charge type passes",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Accessorial Template",
-				Expression:     "flat_rate + surcharge",
-				Type:           TemplateTypeAccessorialCharge,
-				Status:         StatusDraft,
-			},
-			wantErr: false,
-		},
-		{
-			name: "inactive status passes",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Test Template",
-				Expression:     "rate * weight",
-				Type:           TemplateTypeFreightCharge,
-				Status:         StatusInactive,
-			},
-			wantErr: false,
-		},
-		{
-			name: "name at max length passes",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           strings.Repeat("a", 100),
-				Expression:     "rate * weight",
-				Type:           TemplateTypeFreightCharge,
-				Status:         StatusActive,
-			},
-			wantErr: false,
-		},
-		{
-			name: "empty type fails",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Test",
-				Expression:     "x",
-				Type:           "",
-				Status:         StatusActive,
-			},
-			wantErr: true,
-		},
-		{
-			name: "empty status fails",
-			entity: FormulaTemplate{
-				ID:             pulid.MustNew("ft_"),
-				OrganizationID: pulid.MustNew("org_"),
-				BusinessUnitID: pulid.MustNew("bu_"),
-				Name:           "Test",
-				Expression:     "x",
-				Type:           TemplateTypeFreightCharge,
-				Status:         "",
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			multiErr := errortypes.NewMultiError()
-			tt.entity.Validate(multiErr)
-
-			if tt.wantErr {
-				assert.True(t, multiErr.HasErrors())
-			} else {
-				assert.False(t, multiErr.HasErrors())
-			}
-		})
-	}
-}
-
-func TestFormulaTemplate_GetTableName(t *testing.T) {
-	t.Parallel()
-
-	ft := &FormulaTemplate{}
-	assert.Equal(t, "formula_templates", ft.GetTableName())
-}
-
-func TestFormulaTemplate_GetID(t *testing.T) {
-	t.Parallel()
-
-	id := pulid.MustNew("ft_")
-	ft := &FormulaTemplate{ID: id}
-	assert.Equal(t, id, ft.GetID())
-}
-
-func TestFormulaTemplate_GetOrganizationID(t *testing.T) {
-	t.Parallel()
-
-	orgID := pulid.MustNew("org_")
-	ft := &FormulaTemplate{OrganizationID: orgID}
-	assert.Equal(t, orgID, ft.GetOrganizationID())
-}
-
-func TestFormulaTemplate_GetBusinessUnitID(t *testing.T) {
-	t.Parallel()
-
-	buID := pulid.MustNew("bu_")
-	ft := &FormulaTemplate{BusinessUnitID: buID}
-	assert.Equal(t, buID, ft.GetBusinessUnitID())
-}
-
-func TestFormulaTemplate_GetPostgresSearchConfig(t *testing.T) {
-	t.Parallel()
-
-	ft := &FormulaTemplate{}
-	config := ft.GetPostgresSearchConfig()
-
-	assert.Equal(t, "ft", config.TableAlias)
-	assert.True(t, config.UseSearchVector)
-	assert.Len(t, config.SearchableFields, 4)
-	assert.Equal(t, "name", config.SearchableFields[0].Name)
-	assert.Equal(t, "description", config.SearchableFields[1].Name)
-	assert.Equal(t, "type", config.SearchableFields[2].Name)
-	assert.Equal(t, "status", config.SearchableFields[3].Name)
-}
-
-func TestFormulaTemplate_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		ft := &FormulaTemplate{}
-		require.True(t, ft.ID.IsNil())
-
-		err := ft.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, ft.ID.IsNil())
-		assert.NotZero(t, ft.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("ft_")
-		ft := &FormulaTemplate{ID: existingID}
-
-		err := ft.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, ft.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		ft := &FormulaTemplate{}
-
-		err := ft.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, ft.UpdatedAt)
-	})
-
-	t.Run("select does not modify fields", func(t *testing.T) {
-		t.Parallel()
-
-		ft := &FormulaTemplate{}
-
-		err := ft.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, ft.ID.IsNil())
-		assert.Zero(t, ft.CreatedAt)
-		assert.Zero(t, ft.UpdatedAt)
-	})
-}
-
-func TestFormulaTemplateVersion_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		ftv := &FormulaTemplateVersion{}
-		require.True(t, ftv.ID.IsNil())
-
-		err := ftv.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, ftv.ID.IsNil())
-		assert.NotZero(t, ftv.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("ftv_")
-		ftv := &FormulaTemplateVersion{ID: existingID}
-
-		err := ftv.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, ftv.ID)
-	})
-
-	t.Run("update does not modify fields", func(t *testing.T) {
-		t.Parallel()
-
-		ftv := &FormulaTemplateVersion{}
-
-		err := ftv.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, ftv.ID.IsNil())
-		assert.Zero(t, ftv.CreatedAt)
-	})
-
-	t.Run("select does not modify fields", func(t *testing.T) {
-		t.Parallel()
-
-		ftv := &FormulaTemplateVersion{}
-
-		err := ftv.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, ftv.ID.IsNil())
-		assert.Zero(t, ftv.CreatedAt)
-	})
-}
-
-func TestFormulaTemplateVersion_GetTableName(t *testing.T) {
-	t.Parallel()
-
-	ftv := &FormulaTemplateVersion{}
-	assert.Equal(t, "formula_template_versions", ftv.GetTableName())
-}
-
-func TestFormulaTemplateVersion_GetID(t *testing.T) {
-	t.Parallel()
-
-	id := pulid.MustNew("ftv_")
-	ftv := &FormulaTemplateVersion{ID: id}
-	assert.Equal(t, id, ftv.GetID())
-}
-
-func TestFormulaTemplateVersion_GetOrganizationID(t *testing.T) {
-	t.Parallel()
-
-	orgID := pulid.MustNew("org_")
-	ftv := &FormulaTemplateVersion{OrganizationID: orgID}
-	assert.Equal(t, orgID, ftv.GetOrganizationID())
-}
-
-func TestFormulaTemplateVersion_GetBusinessUnitID(t *testing.T) {
-	t.Parallel()
-
-	buID := pulid.MustNew("bu_")
-	ftv := &FormulaTemplateVersion{BusinessUnitID: buID}
-	assert.Equal(t, buID, ftv.GetBusinessUnitID())
-}
-
-func TestFormulaTemplateVersion_GetPostgresSearchConfig(t *testing.T) {
-	t.Parallel()
-
-	ftv := &FormulaTemplateVersion{}
-	config := ftv.GetPostgresSearchConfig()
-
-	assert.Equal(t, "ftv", config.TableAlias)
-	assert.True(t, config.UseSearchVector)
-	assert.Len(t, config.SearchableFields, 4)
-	assert.NotNil(t, config.Relationships)
-	assert.Len(t, config.Relationships, 1)
-	assert.Equal(t, "Template", config.Relationships[0].Field)
-}
-
-func TestNewVersionFromTemplate(t *testing.T) {
-	t.Parallel()
-
-	ft := &FormulaTemplate{
-		ID:             pulid.MustNew("ft_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		Name:           "Test Template",
-		Description:    "A test description",
-		Type:           TemplateTypeFreightCharge,
-		Expression:     "rate * weight",
-		Status:         StatusActive,
-		SchemaID:       "shipment",
-	}
-
-	createdByID := pulid.MustNew("usr_")
-	changeMessage := "Initial version"
-	changeSummary := map[string]jsonutils.FieldChange{
-		"expression": {From: "rate", To: "rate * weight"},
-	}
-
-	ftv := NewVersionFromTemplate(ft, 1, createdByID, changeMessage, changeSummary)
-
-	assert.Equal(t, ft.ID, ftv.TemplateID)
-	assert.Equal(t, ft.OrganizationID, ftv.OrganizationID)
-	assert.Equal(t, ft.BusinessUnitID, ftv.BusinessUnitID)
-	assert.Equal(t, int64(1), ftv.VersionNumber)
-	assert.Equal(t, ft.Name, ftv.Name)
-	assert.Equal(t, ft.Description, ftv.Description)
-	assert.Equal(t, ft.Type, ftv.Type)
-	assert.Equal(t, ft.Expression, ftv.Expression)
-	assert.Equal(t, ft.Status, ftv.Status)
-	assert.Equal(t, ft.SchemaID, ftv.SchemaID)
-	assert.Equal(t, createdByID, ftv.CreatedByID)
-	assert.Equal(t, changeMessage, ftv.ChangeMessage)
-	assert.Equal(t, changeSummary, ftv.ChangeSummary)
-}
-
-func TestNewVersionFromTemplate_WithMetadata(t *testing.T) {
-	t.Parallel()
-
-	ft := &FormulaTemplate{
-		ID:             pulid.MustNew("ft_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		Name:           "Template with metadata",
-		Expression:     "x + y",
-		Type:           TemplateTypeAccessorialCharge,
-		Status:         StatusDraft,
-		SchemaID:       "shipment",
-		Metadata:       map[string]any{"key": "value"},
-	}
-
-	ftv := NewVersionFromTemplate(ft, 5, pulid.MustNew("usr_"), "update", nil)
-
-	assert.Equal(t, int64(5), ftv.VersionNumber)
-	assert.Equal(t, ft.Metadata, ftv.Metadata)
-	assert.Nil(t, ftv.ChangeSummary)
-}
-
-func TestVersionTag_IsValid(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		tag  VersionTag
-		want bool
-	}{
-		{name: "stable is valid", tag: VersionTagStable, want: true},
-		{name: "production is valid", tag: VersionTagProduction, want: true},
-		{name: "draft is valid", tag: VersionTagDraft, want: true},
-		{name: "testing is valid", tag: VersionTagTesting, want: true},
-		{name: "deprecated is valid", tag: VersionTagDeprecated, want: true},
-		{name: "empty is invalid", tag: VersionTag(""), want: false},
-		{name: "unknown is invalid", tag: VersionTag("Unknown"), want: false},
-		{name: "lowercase stable is invalid", tag: VersionTag("stable"), want: false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, tt.tag.IsValid())
-		})
-	}
-}
-
-func TestVersionTag_String(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		tag  VersionTag
-		want string
-	}{
-		{name: "stable", tag: VersionTagStable, want: "Stable"},
-		{name: "production", tag: VersionTagProduction, want: "Production"},
-		{name: "draft", tag: VersionTagDraft, want: "Draft"},
-		{name: "testing", tag: VersionTagTesting, want: "Testing"},
-		{name: "deprecated", tag: VersionTagDeprecated, want: "Deprecated"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, tt.tag.String())
-		})
-	}
-}
-
-func TestStatus_String(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
 		name   string
-		status Status
-		want   string
+		mutate func(*FormulaTemplate)
+		fields []string
 	}{
-		{name: "active", status: StatusActive, want: "Active"},
-		{name: "inactive", status: StatusInactive, want: "Inactive"},
-		{name: "draft", status: StatusDraft, want: "Draft"},
+		{name: "a named template with source passes", mutate: func(*FormulaTemplate) {}},
+		{
+			name:   "a blank name is refused",
+			mutate: func(ft *FormulaTemplate) { ft.Name = "" },
+			fields: []string{"name"},
+		},
+		{
+			name:   "a name past 100 characters is refused",
+			mutate: func(ft *FormulaTemplate) { ft.Name = strings.Repeat("a", 101) },
+			fields: []string{"name"},
+		},
+		{
+			name:   "an empty source is refused",
+			mutate: func(ft *FormulaTemplate) { ft.Source = "" },
+			fields: []string{"source"},
+		},
+		{
+			name: "a source past 64 KiB is refused",
+			mutate: func(ft *FormulaTemplate) {
+				ft.Source = perMileSource + strings.Repeat("/", tarifftypes.MaxSourceLength)
+			},
+			fields: []string{"source"},
+		},
+		{
+			name:   "an unknown status is refused",
+			mutate: func(ft *FormulaTemplate) { ft.Status = Status("Published") },
+			fields: []string{"status"},
+		},
+		{
+			name: "a description past 2,000 characters is refused",
+			mutate: func(ft *FormulaTemplate) {
+				ft.Description = strings.Repeat("é", MaxDescriptionLength+1)
+			},
+			fields: []string{"description"},
+		},
+		{
+			name: "metadata past 16 KiB is refused",
+			mutate: func(ft *FormulaTemplate) {
+				ft.Metadata = map[string]any{"notes": strings.Repeat("x", MaxMetadataBytes)}
+			},
+			fields: []string{"metadata"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, tt.want, tt.status.String())
+
+			entity := validTemplate()
+			tt.mutate(entity)
+			multiErr := errortypes.NewMultiError()
+			entity.Validate(multiErr)
+
+			assert.ElementsMatch(t, tt.fields, fieldsOf(multiErr))
 		})
 	}
+}
+
+func TestFormulaTemplate_HasMaterialChange(t *testing.T) {
+	t.Parallel()
+
+	libraryID := pulid.MustNew("fl_")
+	base := validTemplate()
+	base.Imports = []tarifftypes.Import{
+		{Path: "org.accessorials", LibraryID: libraryID, VersionNumber: 2},
+	}
+
+	t.Run("nothing but the name changed", func(t *testing.T) {
+		t.Parallel()
+		other := *base
+		other.Name = "Renamed"
+		other.Description = "New words"
+		assert.False(t, other.HasMaterialChange(base))
+	})
+
+	t.Run("the source changed", func(t *testing.T) {
+		t.Parallel()
+		other := *base
+		other.Source = strings.Replace(base.Source, "$0", "$50", 1)
+		assert.True(t, other.HasMaterialChange(base))
+	})
+
+	t.Run("an import resolved to a newer library version", func(t *testing.T) {
+		t.Parallel()
+		other := *base
+		other.Imports = []tarifftypes.Import{
+			{Path: "org.accessorials", LibraryID: libraryID, VersionNumber: 3},
+		}
+		assert.True(t, other.HasMaterialChange(base))
+	})
+
+	t.Run("compared with nothing", func(t *testing.T) {
+		t.Parallel()
+		assert.True(t, base.HasMaterialChange(nil))
+	})
+}
+
+func TestFormulaTemplate_ApplyVersionCarriesTheVersionsContent(t *testing.T) {
+	t.Parallel()
+
+	template := validTemplate()
+	template.CurrentVersionNumber = 5
+	version := &FormulaTemplateVersion{
+		VersionNumber: 3,
+		Name:          "Old name",
+		Description:   "Old words",
+		Source:        "tariff \"Old\"\n\ncharge \"Flat\" = $10\n",
+		Inputs: []tarifftypes.InputDecl{
+			{Name: "rate", Type: "Money", Descriptor: rules.RawJSON(`{"kind":"money"}`), Required: true},
+		},
+		Imports:   []tarifftypes.Import{{Path: "org.accessorials", VersionNumber: 1}},
+		TestCount: 4,
+	}
+
+	applied := template.ApplyVersion(version)
+	assert.Equal(t, version.Source, applied.Source)
+	assert.Equal(t, version.Inputs, applied.Inputs)
+	assert.Equal(t, version.Imports, applied.Imports)
+	assert.EqualValues(t, 4, applied.TestCount)
+	assert.EqualValues(t, 3, applied.CurrentVersionNumber)
+	assert.Equal(t, template.Name, applied.Name, "ApplyVersion keeps the row's identity")
+	assert.Equal(t, perMileSource, template.Source, "the receiver is not modified")
+
+	full := template.ApplyVersionFull(version)
+	assert.Equal(t, "Old name", full.Name)
+	assert.Equal(t, "Old words", full.Description)
+}
+
+func TestNewVersionFromTemplate_SnapshotsTheContent(t *testing.T) {
+	t.Parallel()
+
+	template := validTemplate()
+	template.Inputs = []tarifftypes.InputDecl{{Name: "rate", Required: true}}
+	template.Imports = []tarifftypes.Import{{Path: "org.accessorials", VersionNumber: 1}}
+	template.TestCount = 2
+	template.Metadata = map[string]any{"owner": "pricing"}
+	userID := pulid.MustNew("usr_")
+
+	version := NewVersionFromTemplate(template, 7, userID, "Tightened", nil)
+
+	assert.Equal(t, template.ID, version.TemplateID)
+	assert.EqualValues(t, 7, version.VersionNumber)
+	assert.Equal(t, template.Source, version.Source)
+	assert.Equal(t, template.Inputs, version.Inputs)
+	assert.Equal(t, template.Imports, version.Imports)
+	assert.EqualValues(t, 2, version.TestCount)
+	assert.Equal(t, template.Status, version.Status)
+	assert.Equal(t, "Tightened", version.ChangeMessage)
+	assert.Equal(t, userID, version.CreatedByID)
+	assert.Equal(t, template.Metadata, version.Metadata)
+}
+
+func TestBeforeAppendModel_StoresEmptyCollectionsNotNull(t *testing.T) {
+	t.Parallel()
+
+	template := &FormulaTemplate{Name: "Flat", Source: "tariff \"Flat\"\n"}
+	require.NoError(t, template.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+	assert.True(t, template.ID.IsNotNil())
+	assert.NotNil(t, template.Inputs)
+	assert.NotNil(t, template.Imports)
+	assert.NotZero(t, template.CreatedAt)
+
+	version := &FormulaTemplateVersion{}
+	require.NoError(t, version.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil)))
+	assert.True(t, version.ID.IsNotNil())
+	assert.NotNil(t, version.Inputs)
+	assert.NotNil(t, version.Imports)
+}
+
+func TestFormulaTemplateVersion_ValidateRequiresSource(t *testing.T) {
+	t.Parallel()
+
+	version := &FormulaTemplateVersion{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		TemplateID:     pulid.MustNew("ft_"),
+		VersionNumber:  1,
+		Name:           "Per Mile",
+		Status:         StatusDraft,
+		CreatedByID:    pulid.MustNew("usr_"),
+	}
+	multiErr := errortypes.NewMultiError()
+	version.Validate(multiErr)
+	assert.Equal(t, []string{"source"}, fieldsOf(multiErr))
 }
 
 func TestStatusFromString(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		input   string
-		want    Status
-		wantErr bool
-	}{
-		{name: "Active", input: "Active", want: StatusActive, wantErr: false},
-		{name: "Inactive", input: "Inactive", want: StatusInactive, wantErr: false},
-		{name: "Draft", input: "Draft", want: StatusDraft, wantErr: false},
-		{name: "invalid", input: "Unknown", want: "", wantErr: true},
-		{name: "empty", input: "", want: "", wantErr: true},
-		{name: "lowercase active", input: "active", want: "", wantErr: true},
+	for _, status := range []Status{StatusActive, StatusInactive, StatusDraft, StatusInReview} {
+		parsed, err := StatusFromString(status.String())
+		require.NoError(t, err)
+		assert.Equal(t, status, parsed)
+		assert.True(t, parsed.IsValid())
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := StatusFromString(tt.input)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestTemplateType_String(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		tt   TemplateType
-		want string
-	}{
-		{name: "freight charge", tt: TemplateTypeFreightCharge, want: "FreightCharge"},
-		{name: "accessorial charge", tt: TemplateTypeAccessorialCharge, want: "AccessorialCharge"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tt.want, tt.tt.String())
-		})
-	}
-}
-
-func TestTemplateTypeFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		input   string
-		want    TemplateType
-		wantErr bool
-	}{
-		{
-			name:    "FreightCharge",
-			input:   "FreightCharge",
-			want:    TemplateTypeFreightCharge,
-			wantErr: false,
-		},
-		{
-			name:    "AccessorialCharge",
-			input:   "AccessorialCharge",
-			want:    TemplateTypeAccessorialCharge,
-			wantErr: false,
-		},
-		{name: "invalid", input: "Unknown", want: "", wantErr: true},
-		{name: "empty", input: "", want: "", wantErr: true},
-		{name: "lowercase freight", input: "freightcharge", want: "", wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got, err := TemplateTypeFromString(tt.input)
-			if tt.wantErr {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestVersionDiff(t *testing.T) {
-	t.Parallel()
-
-	diff := VersionDiff{
-		FromVersion: 1,
-		ToVersion:   3,
-		Changes: map[string]jsonutils.FieldChange{
-			"expression": {From: "a + b", To: "a * b"},
-			"name":       {From: "Old", To: "New"},
-		},
-		ChangeCount: 2,
-	}
-
-	assert.Equal(t, int64(1), diff.FromVersion)
-	assert.Equal(t, int64(3), diff.ToVersion)
-	assert.Equal(t, 2, diff.ChangeCount)
-	assert.Len(t, diff.Changes, 2)
-}
-
-func TestForkLineage(t *testing.T) {
-	t.Parallel()
-
-	parentID := pulid.MustNew("ft_")
-	sourceID := pulid.MustNew("ft_")
-	sourceVersion := int64(2)
-
-	lineage := ForkLineage{
-		TemplateID:       parentID,
-		TemplateName:     "Parent Template",
-		SourceTemplateID: &sourceID,
-		SourceVersion:    &sourceVersion,
-		ForkedTemplates: []ForkLineage{
-			{
-				TemplateID:   pulid.MustNew("ft_"),
-				TemplateName: "Child Template",
-			},
-		},
-	}
-
-	assert.Equal(t, parentID, lineage.TemplateID)
-	assert.Equal(t, "Parent Template", lineage.TemplateName)
-	assert.Equal(t, &sourceID, lineage.SourceTemplateID)
-	assert.Equal(t, &sourceVersion, lineage.SourceVersion)
-	assert.Len(t, lineage.ForkedTemplates, 1)
-	assert.Equal(t, "Child Template", lineage.ForkedTemplates[0].TemplateName)
-}
-
-func TestForkLineage_NoSource(t *testing.T) {
-	t.Parallel()
-
-	lineage := ForkLineage{
-		TemplateID:   pulid.MustNew("ft_"),
-		TemplateName: "Root Template",
-	}
-
-	assert.Nil(t, lineage.SourceTemplateID)
-	assert.Nil(t, lineage.SourceVersion)
-	assert.Nil(t, lineage.ForkedTemplates)
+	_, err := StatusFromString("Published")
+	assert.Error(t, err)
 }
 
 func TestCanTransition_ArchivedTemplatesReenterReview(t *testing.T) {
@@ -667,191 +253,13 @@ func TestCanTransition_ArchivedTemplatesReenterReview(t *testing.T) {
 
 	assert.True(t, CanTransition(StatusInactive, StatusInReview))
 	assert.False(t, CanTransition(StatusInactive, StatusActive))
+	assert.True(t, CanTransition(StatusDraft, StatusInReview))
 	assert.False(t, CanTransition(StatusDraft, StatusActive))
-	assert.True(t, CanTransition(StatusInReview, StatusActive))
 }
 
-func TestFormulaTemplate_ChargePolicyDefaults(t *testing.T) {
+func TestVersionTag_IsValid(t *testing.T) {
 	t.Parallel()
 
-	blank := &FormulaTemplate{}
-	policy := blank.ChargePolicy()
-	assert.Equal(t, ratetypes.RoundingModeHalfUp, policy.RoundingMode)
-	assert.Equal(t, formulatypes.DefaultRoundingPrecision, policy.RoundingPrecision)
-
-	whole := &FormulaTemplate{RoundingMode: ratetypes.RoundingModeUp, RoundingPrecision: 0}
-	assert.Equal(t, int32(0), whole.ChargePolicy().RoundingPrecision,
-		"zero precision beside a chosen mode is a real choice")
-
-	blank.NormalizeRounding()
-	assert.Equal(t, ratetypes.RoundingModeHalfUp, blank.RoundingMode)
-	assert.Equal(t, int32(2), blank.RoundingPrecision)
-}
-
-func TestFormulaTemplate_RoundingIsMaterialAndSnapshotted(t *testing.T) {
-	t.Parallel()
-
-	base := &FormulaTemplate{Expression: "x", SchemaID: "shipment", Type: TemplateTypeFreightCharge}
-	changed := *base
-	changed.RoundingMode = ratetypes.RoundingModeUp
-	changed.RoundingPrecision = 2
-	assert.True(t, changed.HasMaterialChange(base))
-
-	sameAsDefault := *base
-	sameAsDefault.RoundingMode = ratetypes.RoundingModeHalfUp
-	sameAsDefault.RoundingPrecision = 2
-	assert.False(t, sameAsDefault.HasMaterialChange(base),
-		"spelling out the default policy is not a change")
-
-	version := NewVersionFromTemplate(&changed, 2, pulid.MustNew("usr_"), "", nil)
-	assert.Equal(t, ratetypes.RoundingModeUp, version.RoundingMode)
-	assert.Equal(t, int32(2), version.RoundingPrecision)
-
-	restored := base.ApplyVersion(version)
-	assert.Equal(t, ratetypes.RoundingModeUp, restored.RoundingMode)
-	assert.Equal(t, int32(2), restored.RoundingPrecision)
-}
-
-func TestFormulaTemplate_ValidateRoundingPolicy(t *testing.T) {
-	t.Parallel()
-
-	tooPrecise := &FormulaTemplate{
-		Name:              "t",
-		Expression:        "x",
-		Type:              TemplateTypeFreightCharge,
-		Status:            StatusDraft,
-		RoundingMode:      ratetypes.RoundingModeHalfUp,
-		RoundingPrecision: 5,
-	}
-	multiErr := errortypes.NewMultiError()
-	tooPrecise.Validate(multiErr)
-	assert.True(t, multiErr.HasErrors())
-
-	badMode := &FormulaTemplate{
-		Name:         "t",
-		Expression:   "x",
-		Type:         TemplateTypeFreightCharge,
-		Status:       StatusDraft,
-		RoundingMode: ratetypes.RoundingMode("Sideways"),
-	}
-	multiErr = errortypes.NewMultiError()
-	badMode.Validate(multiErr)
-	assert.True(t, multiErr.HasErrors())
-
-	unset := &FormulaTemplate{
-		Name:       "t",
-		Expression: "x",
-		Type:       TemplateTypeFreightCharge,
-		Status:     StatusDraft,
-	}
-	multiErr = errortypes.NewMultiError()
-	unset.Validate(multiErr)
-	assert.False(t, multiErr.HasErrors(), "an unset policy is normalized, not rejected")
-}
-
-func TestFormulaTemplate_ValidateCaps(t *testing.T) {
-	t.Parallel()
-
-	tooLong := &FormulaTemplate{
-		Name:       "t",
-		Expression: strings.Repeat("1+", MaxExpressionLength/2) + "1",
-		Type:       TemplateTypeFreightCharge,
-		Status:     StatusDraft,
-	}
-	multiErr := errortypes.NewMultiError()
-	tooLong.Validate(multiErr)
-	assert.True(t, multiErr.HasErrors(), "expression over the cap must be rejected")
-
-	tooMany := &FormulaTemplate{
-		Name:       "t",
-		Expression: "x",
-		Type:       TemplateTypeFreightCharge,
-		Status:     StatusDraft,
-	}
-	for i := range MaxVariableDefinitions + 1 {
-		tooMany.VariableDefinitions = append(
-			tooMany.VariableDefinitions,
-			&formulatypes.VariableDefinition{
-				Name: fmt.Sprintf("v%d", i),
-				Type: formulatypes.VariableValueTypeNumber,
-			},
-		)
-	}
-	multiErr = errortypes.NewMultiError()
-	tooMany.Validate(multiErr)
-	assert.True(t, multiErr.HasErrors(), "too many variables must be rejected")
-}
-
-func TestFormulaTemplate_Validate_BoundsDescriptionAndMetadata(t *testing.T) {
-	t.Parallel()
-
-	template := &FormulaTemplate{
-		Name:        "Bounded",
-		Expression:  "1",
-		Type:        TemplateTypeFreightCharge,
-		Status:      StatusDraft,
-		Description: strings.Repeat("d", MaxDescriptionLength+1),
-		Metadata:    map[string]any{"notes": strings.Repeat("m", MaxMetadataBytes)},
-	}
-
-	multiErr := errortypes.NewMultiError()
-	template.Validate(multiErr)
-
-	fields := make([]string, 0, len(multiErr.Errors))
-	for _, fieldErr := range multiErr.Errors {
-		fields = append(fields, fieldErr.Field)
-	}
-	assert.ElementsMatch(t, []string{"description", "metadata"}, fields)
-
-	template.Description = "A per-mile linehaul"
-	template.Metadata = map[string]any{"owner": "pricing"}
-	multiErr = errortypes.NewMultiError()
-	template.Validate(multiErr)
-	assert.False(t, multiErr.HasErrors())
-}
-
-func TestFormulaTemplate_LanguageVersionTravelsWithItsContent(t *testing.T) {
-	t.Parallel()
-
-	template := Seed{
-		Name:       "Per mile",
-		Type:       TemplateTypeFreightCharge,
-		Expression: "totalDistance * 2",
-	}.Build()
-	assert.Equal(t, formulatypes.CurrentLanguageVersion, template.LanguageVersion)
-
-	snapshot := NewVersionFromTemplate(template, 1, pulid.MustNew("usr_"), "", nil)
-	assert.Equal(t, formulatypes.CurrentLanguageVersion, snapshot.LanguageVersion)
-
-	legacy := *snapshot
-	legacy.LanguageVersion = 0
-	assert.Equal(
-		t,
-		formulatypes.CurrentLanguageVersion,
-		template.ApplyVersion(&legacy).LanguageVersion,
-		"a snapshot without a version is in the language every snapshot was written in",
-	)
-
-	forked := SeedFromVersion(snapshot).Build()
-	assert.Equal(t, snapshot.LanguageVersion, forked.LanguageVersion)
-
-	changed := *template
-	changed.LanguageVersion = formulatypes.LanguageVersion(2)
-	assert.True(t, changed.HasMaterialChange(template), "a language change changes what bills")
-}
-
-func TestFormulaTemplate_RefusesALanguageVersionTheServerCannotRead(t *testing.T) {
-	t.Parallel()
-
-	template := Seed{
-		Name:       "Per mile",
-		Type:       TemplateTypeFreightCharge,
-		Expression: "totalDistance * 2",
-	}.Build()
-	template.LanguageVersion = formulatypes.LanguageVersion(2)
-
-	multiErr := errortypes.NewMultiError()
-	template.Validate(multiErr)
-	require.True(t, multiErr.HasErrors())
-	assert.Contains(t, multiErr.Error(), "languageVersion")
+	assert.True(t, VersionTagStable.IsValid())
+	assert.False(t, VersionTag("Golden").IsValid())
 }

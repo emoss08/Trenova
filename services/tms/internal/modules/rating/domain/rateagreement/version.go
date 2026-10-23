@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -59,11 +59,8 @@ type RateAgreementVersion struct {
 	RenewalNoticeDays      int16     `json:"renewalNoticeDays"      bun:"renewal_notice_days,type:SMALLINT,notnull,default:30"`
 	BillToCustomerID       *pulid.ID `json:"billToCustomerId"       bun:"bill_to_customer_id,type:VARCHAR(100),nullzero"`
 
-	Currency          string                 `json:"currency"          bun:"currency,type:VARCHAR(3),notnull"`
-	DefaultMinCharge  decimal.NullDecimal    `json:"defaultMinCharge"  bun:"default_min_charge,type:NUMERIC(19,4),nullzero"`
-	DefaultMaxCharge  decimal.NullDecimal    `json:"defaultMaxCharge"  bun:"default_max_charge,type:NUMERIC(19,4),nullzero"`
-	RoundingMode      ratetypes.RoundingMode `json:"roundingMode"      bun:"rounding_mode,type:rate_rounding_mode_enum,notnull"`
-	RoundingPrecision int16                  `json:"roundingPrecision" bun:"rounding_precision,type:SMALLINT,notnull"`
+	Currency string             `json:"currency" bun:"currency,type:VARCHAR(3),notnull"`
+	Inputs   tarifftypes.Inputs `json:"inputs"   bun:"inputs,type:JSONB,notnull,default:'{}'"`
 
 	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  bun:"margin_floor_percent,type:NUMERIC(9,4),nullzero"`
 	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" bun:"max_pay_percent_of_sell,type:NUMERIC(9,4),nullzero"`
@@ -108,19 +105,18 @@ func (ragv *RateAgreementVersion) IsEffectiveAt(timestamp int64) bool {
 // pair because the version row uses those names for its own lifetime, and an
 // accessorial's window is a term that must survive the diff.
 type AccessorialTermSnapshot struct {
-	Method            accessorialcharge.Method   `json:"method"`
-	RateUnit          accessorialcharge.RateUnit `json:"rateUnit,omitempty"`
-	Amount            decimal.Decimal            `json:"amount"`
-	Waived            bool                       `json:"waived"`
-	AutoApply         bool                       `json:"autoApply"`
-	ApplyCondition    string                     `json:"applyCondition,omitempty"`
-	FreeUnits         *int16                     `json:"freeUnits,omitempty"`
-	MaxAmount         decimal.NullDecimal        `json:"maxAmount"`
-	FormulaTemplateID *pulid.ID                  `json:"formulaTemplateId,omitempty"`
-	ServiceTypeIDs    []pulid.ID                 `json:"serviceTypeIds,omitempty"`
-	ShipmentTypeIDs   []pulid.ID                 `json:"shipmentTypeIds,omitempty"`
-	AppliesFrom       *int64                     `json:"appliesFrom,omitempty"`
-	AppliesTo         *int64                     `json:"appliesTo,omitempty"`
+	Method          accessorialcharge.Method   `json:"method"`
+	RateUnit        accessorialcharge.RateUnit `json:"rateUnit,omitempty"`
+	Amount          decimal.Decimal            `json:"amount"`
+	Waived          bool                       `json:"waived"`
+	AutoApply       bool                       `json:"autoApply"`
+	Condition       string                     `json:"condition,omitempty"`
+	FreeUnits       *int16                     `json:"freeUnits,omitempty"`
+	MaxAmount       decimal.NullDecimal        `json:"maxAmount"`
+	ServiceTypeIDs  []pulid.ID                 `json:"serviceTypeIds,omitempty"`
+	ShipmentTypeIDs []pulid.ID                 `json:"shipmentTypeIds,omitempty"`
+	AppliesFrom     *int64                     `json:"appliesFrom,omitempty"`
+	AppliesTo       *int64                     `json:"appliesTo,omitempty"`
 }
 
 // FuelTermSnapshot is the fuel binding's negotiated terms as a version records
@@ -149,19 +145,18 @@ func sortedIDs(ids []pulid.ID) []pulid.ID {
 
 func newAccessorialTermSnapshot(acc *RateAgreementAccessorial) AccessorialTermSnapshot {
 	return AccessorialTermSnapshot{
-		Method:            acc.Method,
-		RateUnit:          acc.RateUnit,
-		Amount:            acc.Amount,
-		Waived:            acc.Waived,
-		AutoApply:         acc.AutoApply,
-		ApplyCondition:    acc.ApplyCondition,
-		FreeUnits:         acc.FreeUnits,
-		MaxAmount:         acc.MaxAmount,
-		FormulaTemplateID: acc.FormulaTemplateID,
-		ServiceTypeIDs:    sortedIDs(acc.ServiceTypeIDs),
-		ShipmentTypeIDs:   sortedIDs(acc.ShipmentTypeIDs),
-		AppliesFrom:       acc.EffectiveFrom,
-		AppliesTo:         acc.EffectiveTo,
+		Method:          acc.Method,
+		RateUnit:        acc.RateUnit,
+		Amount:          acc.Amount,
+		Waived:          acc.Waived,
+		AutoApply:       acc.AutoApply,
+		Condition:       acc.Condition,
+		FreeUnits:       acc.FreeUnits,
+		MaxAmount:       acc.MaxAmount,
+		ServiceTypeIDs:  sortedIDs(acc.ServiceTypeIDs),
+		ShipmentTypeIDs: sortedIDs(acc.ShipmentTypeIDs),
+		AppliesFrom:     acc.EffectiveFrom,
+		AppliesTo:       acc.EffectiveTo,
 	}
 }
 
@@ -226,10 +221,7 @@ func NewVersionFromAgreement(
 		RenewalNoticeDays:      agreement.RenewalNoticeDays,
 		BillToCustomerID:       agreement.BillToCustomerID,
 		Currency:               agreement.Currency,
-		DefaultMinCharge:       agreement.DefaultMinCharge,
-		DefaultMaxCharge:       agreement.DefaultMaxCharge,
-		RoundingMode:           agreement.RoundingMode,
-		RoundingPrecision:      agreement.RoundingPrecision,
+		Inputs:                 agreement.Inputs.Clone(),
 		MarginFloorPercent:     agreement.MarginFloorPercent,
 		MaxPayPercentOfSell:    agreement.MaxPayPercentOfSell,
 		AccessorialTerms:       accessorialTermsFromAgreement(agreement),
@@ -276,6 +268,7 @@ func (ragv *RateAgreementVersion) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (ragv *RateAgreementVersion) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	ragv.Inputs = ragv.Inputs.OrEmpty()
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if ragv.ID.IsNil() {
 			ragv.ID = pulid.MustNew("ragv_")

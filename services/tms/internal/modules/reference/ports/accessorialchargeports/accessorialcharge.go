@@ -40,6 +40,10 @@ type AccessorialChargeRepository interface {
 		ctx context.Context,
 		req GetAccessorialChargeByIDRequest,
 	) (*accessorialcharge.AccessorialCharge, error)
+	ListCatalog(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*accessorialcharge.AccessorialCharge, error)
 	Create(
 		ctx context.Context,
 		entity *accessorialcharge.AccessorialCharge,

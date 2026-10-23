@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a9071ae435a617c3ed85c2e80522756441b804ad71dbc8325af44a9d9dd8dfde",
+  "version": "sha256:b89388001b2345762d1e541aa64a61ceadc53eb18be5e81c7ce27feff414eee4",
   "modules": [
     {
       "id": "home",
@@ -3494,7 +3494,7 @@
         "Billing controls"
       ],
       "description": "Configure and manage your billing control settings",
-      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nUnless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another shipment. Choose a rating method on the shipment, or set a fallback formula template here.\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
+      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nUnless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another shipment. Choose a rating method on the shipment, or set a fallback formula template here. Minimums, maximums and rounding are not set here or on an agreement: each tariff writes them in its own source.\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
       "requires": [
         {
           "resource": "billing_control",
@@ -3569,7 +3569,7 @@
           "steps": [
             "Open [Billing controls](/admin/billing-controls).",
             "In **Rating policy**, choose the **Unrated shipment disposition**: **Fall back to formula template**, **Zero the rate and flag for review** or **Block the save**.",
-            "For the fallback, optionally pick a **Fallback formula template**.",
+            "For the fallback, optionally pick a **Fallback formula template**. It runs with the defaults its tariff declares, since no contract supplies its inputs; a tariff with an input that has no default refuses to rate such a shipment and says which input is missing.",
             "Turn on **Require rate override reason** and **Enforce margin floor** as needed.",
             "Select **Save changes**."
           ]
@@ -7441,6 +7441,138 @@
       "inNavigation": true
     },
     {
+      "path": "/billing/configuration-files/formula-libraries",
+      "name": "Formula libraries",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Configuration files",
+        "Formula libraries"
+      ],
+      "description": "Functions, constants and types written once in Tariff and imported by your formula templates",
+      "summary": "A formula library holds Tariff functions, constants, types and enums that several formula templates share: how your extra stops are billed, your hazmat fee, your delivery zones, your fuel surcharge table. A template imports a library by its path, `org.` and the library's name (`use org.accessorials.{ extraStops }`), so the rule is written once and every template that imports it bills it the same way. A library carries its own tests, which pin what each function returns.\n\nLibraries are versioned and reviewed like templates. When a template version is approved it pins the approved version of each library it imports, so editing, approving or archiving a library never changes what an already approved template bills; a template picks up a new library version only when a new version of the template is approved.\n\nThe table shows each library's **Module** path and description, **Status**, **Version**, **Approved**, **Tests**, the other libraries it **Imports** and **Updated**.",
+      "requires": [
+        {
+          "resource": "formula_library",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "tariff libraries",
+        "shared functions",
+        "shared rating functions",
+        "org libraries",
+        "formula modules"
+      ],
+      "tasks": [
+        {
+          "title": "Create a formula library",
+          "keywords": [
+            "new library",
+            "shared functions",
+            "write library"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries).",
+            "Select **New formula library**. The library studio opens.",
+            "Type the library's name after `org.`: one word starting with a lowercase letter, such as `accessorials` or `zoneRates`. Templates import it by this name. Add a description under it.",
+            "Write the source, or select **Use the starter** for a small working library to rewrite. The source starts with `library \"org.<name>\"`; the editor warns when the header names something else.",
+            "Add a `test` block for every function; a library needs at least one test before it can be reviewed.",
+            "Select **Create library**. The library is saved as a draft."
+          ]
+        },
+        {
+          "title": "Write and test a library",
+          "keywords": [
+            "library editor",
+            "library tests",
+            "failing test"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library. The editor checks the source as you type, with the same suggestions, hover, go to definition (F12), rename (F2) and formatting as the Formula Studio.",
+            "The outline on the left lists the library's functions, constants and tests; a test's dot is green when it passes and red when it fails. **Tests** in the side panel shows each test with the values behind a failing expectation; select one to jump to it, or **Add a test** to start one.",
+            "**Reference** lists what the library can use: Tariff's standard library, your other libraries, your rate tables and charge codes.",
+            "Select **Ask Nova** above the source, or the **Nova** tab, to have Nova add functions, write tests or fix what the editor underlines. Each change lands in the editor with the lines it changed and whether it checks and its tests pass; **Undo** puts the editor back. Nova only puts a change in the editor when it checks and every test passes; otherwise it says what stops it. Nothing is saved until you save."
+          ]
+        },
+        {
+          "title": "See which templates import a library",
+          "keywords": [
+            "library usage",
+            "who uses this library",
+            "pinned version"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.",
+            "Open **Imported by** in the side panel. Each template version that imports the library is listed with its status and the library version it pinned; select a template to open it."
+          ]
+        },
+        {
+          "title": "Send a library through review",
+          "keywords": [
+            "approve library",
+            "submit library",
+            "activate library"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select the library.",
+            "Save any changes, then select **Submit for review**.",
+            "Check the readiness list and what changed since the approved version, choose a reviewer, add a note and select **Submit**.",
+            "A reviewer selects **Approve** to make it the version new template versions pin, or **Request changes** to send it back with a comment. **Reject and archive** is under **More actions**."
+          ]
+        },
+        {
+          "title": "Edit an approved library",
+          "keywords": [
+            "change library",
+            "update shared function"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select the library.",
+            "Make your changes and select **Save changes**. A change to the source or the name saves a new version and returns the library to **Draft**; confirm with **Save as draft**.",
+            "Templates keep billing with the version they pinned. Once the new version is approved, a template uses it when a new version of the template is approved."
+          ]
+        },
+        {
+          "title": "See versions or roll back",
+          "keywords": [
+            "library history",
+            "compare library versions",
+            "restore library version"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select the library.",
+            "Open **History** in the side panel for every version and the review conversation.",
+            "Select the compare button on a version to see its source against another, or the restore button to bring an earlier version back as a new draft version (save or discard your changes first)."
+          ]
+        },
+        {
+          "title": "Duplicate or archive a library",
+          "keywords": [
+            "copy library",
+            "archive library"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries).",
+            "Right-click a library for **Duplicate** or **Archive**, or tick several and use the bar that appears. In a library, both are under **More actions**.",
+            "Archiving a library templates still import asks you to confirm and lists them. They keep the version they pinned, but no new template version can import an archived library."
+          ]
+        }
+      ],
+      "notes": "Viewing the page needs read access to formula libraries, and creating one needs create access. **Duplicate**, **Archive**, **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. The person who submitted a library cannot approve it.\n\nSubmitting needs a description, a source with no errors and at least one test, all passing. Renaming a library that templates import changes the path they import it by: their approved versions keep working, but a new version of each must import the new name.",
+      "related": [
+        "/billing/configuration-files/formula-templates",
+        "/billing/configuration-files/accessorial-charges"
+      ],
+      "covers": [
+        "/billing/configuration-files/formula-libraries/new",
+        "/billing/configuration-files/formula-libraries/:id/edit"
+      ],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
       "path": "/billing/configuration-files/formula-templates",
       "name": "Formula templates",
       "module": "billing",
@@ -7450,7 +7582,7 @@
         "Formula templates"
       ],
       "description": "Manage and configure formula templates for your organization",
-      "summary": "Formula templates are the rating methods that turn shipment facts (distance, weight, stops, hazmat and so on) into a charge, for example a per-mile rate or a per-hundredweight rate. Each template is a formula (its **Expression**), plus a charge policy (minimum, maximum and rounding) and an optional charge breakdown. Rate agreement lanes and rate matrices name a template as their **Rating method**.\n\nPricing staff build and test templates in the Formula Studio, which opens when you create a template or select one in the list. The bar across the top shows the template's name, where it is in review (**Draft**, **In review**, **Active**) and its version. On the left, the **Rate trace** follows one load through the template: the values it reads, what the **Formula** comes to, what the **Charge policy** does to it, the **Breakdown**, and what is **Billed**, with the scenarios and what review still needs below it. On the right, **Preview**, **Scenarios**, **Reference** and **Nova** sit in tabs. Templates go through review before they can rate shipments.\n\nThe table shows each template's **Name**, **Status**, **Type**, **Version**, **In use**, **Scenarios**, **Approved** and **Updated**.",
+      "summary": "Formula templates are the rating methods that turn a shipment into a bill: a per-mile linehaul with a fuel surcharge, a per-hundredweight LTL rate, a fee for every stop past the second. Each template is one file written in Tariff, Trenova's rating language. The file declares the inputs a contract sets (a rate, a fuel percent, a minimum), the charges it bills (each with its label and, for an accessorial, its charge code), the total rules (a minimum, a maximum, rounding) and its own tests. A template can import functions from your organization's [formula libraries](/billing/configuration-files/formula-libraries) and from Tariff's standard library. Rate agreement lanes and rate matrices name a template as their **Rating method**, and each sets the template's inputs.\n\nPricing staff write and test templates in the Formula Studio, which opens when you create a template or select one in the list. The bar across the top shows the template's name, where it is in review (**Draft**, **In review**, **Active**) and its version. On the left, the outline lists the template's inputs, charges, total rules and tests (each test with a green or red dot); select one to jump to it. In the middle are the name and description, the **Source**, the **Inputs** it declares and its **Tests**. On the right, **Preview**, **Tests**, **Reference** and **Nova** sit in tabs. Templates go through review before they can rate shipments.\n\nThe table shows each template's **Name**, **Status**, **Libraries** it imports, **Version**, **In use**, **Tests**, **Approved** and **Updated**.",
       "requires": [
         {
           "resource": "formula_template",
@@ -7464,6 +7596,8 @@
         "pricing formulas",
         "charge formulas",
         "formula studio",
+        "tariff",
+        "tariffs",
         "per mile formula",
         "rate calculation"
       ],
@@ -7473,70 +7607,86 @@
           "keywords": [
             "new formula",
             "new rating method",
-            "write formula"
+            "write tariff"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Select **New formula template**, then **New formula template** in the menu. The Formula Studio opens.",
-            "Type the name over **Untitled rating method**, add a description under it, and choose **Freight** or **Accessorial** beside **Charges**.",
-            "Under **Expression**, describe the method and select **Draft it** to have Nova write it, or pick one from **Standard library** or **Your templates**, or write the expression yourself.",
-            "Add any **Inputs** the formula needs, set the **Charge policy** (**Minimum charge**, **Maximum charge**, **Rounding**, **Decimal places**) and check the amount in **Preview**.",
-            "Optionally add **Scenarios**; they are saved with the template.",
+            "Type the name over **Untitled rating method** and add a description under it.",
+            "Under **Source**, describe the method and select **Draft it** to have Nova write it, or pick one from **Standard library** or **Your templates**, or write the tariff yourself.",
+            "Check what it bills in **Preview** and that its **Tests** pass.",
             "Select **Create template**. The template is saved as a draft."
+          ]
+        },
+        {
+          "title": "Write and read the source",
+          "keywords": [
+            "tariff editor",
+            "formula error",
+            "autocomplete",
+            "hover",
+            "rename",
+            "go to definition",
+            "format"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong (a name it does not know, a weight added to a distance, a field that can be empty used without a fallback, a charge code your organization does not have) and lists each problem under the editor with a fix beside it where there is one. Select a row to jump to it.",
+            "Press Ctrl+Space for suggestions: the shipment's fields, units after a number, your rate tables and charge codes, and the functions of the libraries you import.",
+            "Hover a name to see its type, its documentation and what it came to on the preview load. Type inside a function's parentheses to see its parameters. Inferred types and parameter names are drawn in the text in grey.",
+            "Press F12 (or Ctrl-click) on a name to jump to where it is declared, including into a library it comes from, and F2 to rename a binding everywhere it is used.",
+            "The format button under the editor (or Shift+Alt+F) lays the file out in Tariff's one style. A file with syntax errors is left as it is until it parses."
+          ]
+        },
+        {
+          "title": "Preview what a template bills",
+          "keywords": [
+            "preview charge",
+            "test on a shipment",
+            "bill",
+            "trace"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. **Preview** bills the **Sample load** with the inputs' sample values, which you can change under **Inputs**; select **Real shipment** to bill a saved shipment instead.",
+            "The bill lists each charge with its code, quantity, rate and amount, the minimum or rounding adjustments, and the freight, accessorial and grand totals. If the tariff refuses to rate the load, the preview says why in the tariff's own words.",
+            "Open **Trace** to follow how the bill was reached, step by step; select a step to light its line in the source."
+          ]
+        },
+        {
+          "title": "Test a template",
+          "keywords": [
+            "test tariff",
+            "expected charge",
+            "save as test",
+            "suggest tests",
+            "backtest"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. Its tests are the `test` blocks in the source; they run as you edit, and **Tests** shows each one passing or failing, with the values behind a failing expectation. Select a failing test to jump to the expectation that failed, or **Why does this fail?** to have Nova say whether the tariff or the test looks wrong.",
+            "In **Preview**, select **Save as test** to add a test that pins what the load is billed. On a real shipment the test carries that shipment's facts.",
+            "Select **Add a test** under **Tests** to start one by hand, or **Suggest tests** to have Nova write tests from real loads on the template's edges. Each suggestion has already run against the template: select **Add** beside one, or add every one that passes at once.",
+            "To compare the template against real freight, open **More actions** and choose **Backtest**."
           ]
         },
         {
           "title": "Get help from Nova",
           "keywords": [
-            "AI formula",
-            "generate formula",
-            "explain formula",
-            "ask about a formula",
-            "fix formula"
+            "AI tariff",
+            "generate tariff",
+            "explain tariff",
+            "fix tariff"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, or start a new one.",
-            "Select **Ask Nova** beside **Expression**, or the **Nova** tab, and describe how the template should price a shipment, what to change, or ask about the formula in the editor.",
-            "Select **Explain** to have each line of the formula explained, priced on the preview load. Select **Fix with Nova** beside a problem to have Nova fix it. The Nova button under **Inputs** fills in descriptions the inputs are missing.",
-            "Ask for any change in words — add a fee, set a minimum, change an input's default, itemize the invoice — and Nova makes it in the editor the moment it answers. The card under the reply shows what it added and removed, the inputs it declared, the charge policy it moved, and what the formula engine bills the sample load and recent shipments; select **Undo** to put the editor back. A change the engine cannot run stays in the thread with **Apply to editor** instead. Nothing is saved until you save the template."
-          ]
-        },
-        {
-          "title": "Read what the editor says about a formula",
-          "keywords": [
-            "formula error",
-            "unknown variable",
-            "declare input",
-            "inline values",
-            "hover"
-          ],
-          "steps": [
-            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong — a name it does not know, a function given the wrong number of arguments, a flag multiplied like a number, a field that can be empty — and lists each problem under the editor with its line and a fix beside it: declare the name as an input, change it to the field it meant, or give an empty field a fallback. Select a row to jump to it; a long list folds to its first rows and can be narrowed to errors or warnings.",
-            "Hover a name to see what it is, whether it can be empty, and what it was worth on the preview load; type inside a function's parentheses to see its signature. Each line shows what it came to on the preview load at its end; the eye button under the editor hides these values.",
-            "Press Ctrl+Space for suggestions.",
-            "The format button under the editor (or Shift+Alt+F) lays the formula out one statement per line with a space around every operator, breaking a long sum one term per line; what Nova writes lands already formatted. A formula that does not parse is left as it is until it does."
-          ]
-        },
-        {
-          "title": "Test a template with scenarios",
-          "keywords": [
-            "test formula",
-            "expected charge",
-            "backtest",
-            "pin scenario",
-            "edge cases"
-          ],
-          "steps": [
-            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
-            "In **Preview**, select **Pin as scenario** to save the load and its amount, or in **Scenarios** select **Add** and name it. **Suggest edge cases** asks Nova for loads to test, priced by the engine.",
-            "Scenarios re-run as you edit. On a failing scenario, select **Why?** to see what changed since it was recorded, then accept the new amount or select **Fix with Nova**.",
-            "To compare the formula against real freight, open **More actions** and choose **Backtest**."
+            "Select **Ask Nova** beside **Source**, or the **Nova** tab, and describe what to change or ask about the tariff in the editor.",
+            "Select **Explain** above the source to have each statement explained on the preview load; hover an explanation to light its line. Select **Ask Nova** beside a problem to have Nova fix it.",
+            "Ask for any change in words (add a weekend fee, set a minimum, add tests) and Nova makes it in the editor the moment it answers. The card under the reply shows the lines it added and removed, whether the result checks and its tests pass, and what it bills the sample load and recent shipments; select **Undo** to put the editor back. Nova only puts a change in the editor when it checks and every test passes; otherwise it says what stops it. Nothing is saved until you save the template.",
+            "Under **Inputs**, the Describe button (it counts the inputs with no label) has Nova write the label, the doc comment, of each of them. One undo takes them all back."
           ]
         },
         {
           "title": "Send a template through review",
           "keywords": [
-            "approve formula",
+            "approve tariff",
             "activate template",
             "submit template",
             "reviewer note"
@@ -7545,19 +7695,19 @@
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.",
             "Save any changes, then select **Submit for review**.",
             "Check the readiness list, choose a reviewer, edit the note Nova drafts (or select **Rewrite**), and select **Submit**.",
-            "A reviewer selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**."
+            "A reviewer sees what changed since the approved version, the libraries it pins and what the change does to recent freight, then selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**."
           ]
         },
         {
           "title": "Edit an active template",
           "keywords": [
-            "change formula",
+            "change tariff",
             "update rating method"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template. Hover the count of places it is in use to see them.",
             "Make your changes and select **Save changes**.",
-            "If the change alters what the template computes, confirm with **Save and return to Draft**; the approved version keeps rating shipments until the new one is approved. Name and description edits do not need this."
+            "If the change alters the source, confirm with **Save and return to Draft**; the approved version keeps rating shipments until the new one is approved. Description edits do not need this."
           ]
         },
         {
@@ -7571,13 +7721,13 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.",
             "Open **More actions** and choose **Version history**.",
-            "Use **Compare previous** to see what changed, **Schedule activation** to set when a version takes effect, or **Rollback** to restore an earlier version."
+            "Use **Compare previous** to see how the source and the pinned libraries changed, **Schedule activation** to set when a version takes effect, or **Rollback** to restore an earlier version."
           ]
         },
         {
           "title": "Copy, fork, export or import templates",
           "keywords": [
-            "duplicate formula",
+            "duplicate tariff",
             "fork",
             "export JSON",
             "import templates",
@@ -7586,13 +7736,14 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Right-click a template for **Fork template**, **View lineage**, **Duplicate**, **Export** or **Archive**, or tick several and use **Duplicate**, **Export** or **Archive** in the bar that appears.",
-            "To bring templates in, select **New formula template** and choose **Import templates** (from an exported JSON file) or **Install standard templates** (the standard rating library)."
+            "To bring templates in, select **New formula template** and choose **Import templates** (from a file exported from Trenova) or **Install standard templates** (Trenova's standard rating methods, each with its own tests)."
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.\n\nNova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the formula engine.\n\nOnly an active template rates shipments. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a valid expression and at least one passing scenario. A scenario keeps gating approval until it is deleted.",
+      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.\n\nNova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the same rating engine that bills shipments.\n\nOnly an active template rates shipments. A template version pins the version of every library it imports, so changing a library never changes what an approved template bills. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a source with no errors and every test passing.",
       "related": [
         "/billing/rate-agreements",
+        "/billing/configuration-files/formula-libraries",
         "/billing/configuration-files/rate-matrices",
         "/billing/configuration-files/accessorial-charges",
         "/billing/queue"
@@ -7614,7 +7765,7 @@
         "Rate matrices"
       ],
       "description": "Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell",
-      "summary": "Rate matrices holds published tariffs entered as the grid they were published as: rates laid out by origin and destination zone, weight break, freight class and similar axes, instead of one lane per cell. A lane on a rate agreement can point at a matrix, and the matrix's own rating method (a formula template) says what each number in the grid means, for example a per-mile rate or a flat charge.\n\nPricing staff maintain matrices here. The table shows each matrix's **Status**, **Code**, **Name**, **Rates are**, **Currency**, **Description** and **Created** date. A matrix opens with the tabs **Overview**, **Axes** and **Rates**.",
+      "summary": "Rate matrices holds published tariffs entered as the grid they were published as: rates laid out by origin and destination zone, weight break, freight class and similar axes, instead of one lane per cell. A formula template reads a matrix by its code (`tables.ZONES[…]`), and the matrix's **Value type** says what each number in the grid is: money, money per a unit (a mile or kilometre, a pound, hundredweight, kilogram or ton, a foot, inch or metre, a cubic foot, cubic metre, gallon or litre, a minute, hour or day, a pallet, piece or stop), a percent, a plain number, or a whole number. Its money is always in the rating currency of the contract that reads it.\n\nPricing staff maintain matrices here. The table shows each matrix's **Status**, **Code**, **Name**, **Values are**, **Description** and **Created** date. A matrix opens with the tabs **Overview**, **Axes** and **Rates**.",
       "requires": [
         {
           "resource": "rate_matrix",
@@ -7643,8 +7794,8 @@
           "steps": [
             "Open [Rate matrices](/billing/configuration-files/rate-matrices).",
             "Select **New rate matrix**.",
-            "On **Overview**, fill in **Status**, **Code**, **Name** and optionally **Description**. Under **Pricing**, pick the **Rating method** and set **Currency**, **Rounding mode** and **Rounding precision**.",
-            "On **Axes**, select **Add axis** for each dimension of the grid (up to four). For each, choose the **Dimension** (for example **Zone**, **Weight break**, **Freight class** or **Distance**), the **Match mode** (**Exact key** or **Band**), and give it a **Label**. A banded axis also takes an **Outside every band** policy.",
+            "On **Overview**, fill in **Status**, **Code**, **Name** and optionally **Description**. Under **Values**, pick the **Value type** the grid's numbers are.",
+            "On **Axes**, select **Add axis** for each dimension of the grid (one to four). For each, choose the **Dimension** (for example **Zone**, **Weight break**, **Freight class** or **Distance**), the **Match mode** (**Exact key** or **Band**), and give it a **Label**. A banded axis also takes an **Outside every band** policy.",
             "Select **Save**. The **Rates** tab is available once the matrix has been saved."
           ]
         },
@@ -7658,7 +7809,7 @@
           "steps": [
             "Open [Rate matrices](/billing/configuration-files/rate-matrices) and select the matrix's row.",
             "Open the **Rates** tab. The first axis runs down the rows and the second across the columns; with more axes, pick the sheet to edit from the selectors above the grid.",
-            "Type the new values into the cells, then select **Save rates**. Rates save on their own, separately from the rest of the form."
+            "Type the new values into the cells (each cell shows the value type's unit, such as `$/cwt`), then select **Save rates**. Rates save on their own, separately from the rest of the form. A whole-number matrix refuses a fraction: the cell is marked and **Save rates** stays off until it is fixed."
           ]
         },
         {
@@ -7684,7 +7835,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to rate matrices; **New rate matrix** only appears for people who can create them.\n\nChanging an axis after rates exist changes what every existing cell means, so re-enter the grid after any change on **Axes**. A matrix with no axes or no rates prices nothing, and an inactive matrix stops pricing; in each case every lane pointing at it stops with it. A lane is attached to a matrix on its rate agreement's **Lanes** tab in [Rate agreements](/billing/rate-agreements). A rate increase applied from Rate agreements does not change matrix rates.",
+      "notes": "Viewing the page needs read access to rate matrices; **New rate matrix** only appears for people who can create them.\n\nChanging an axis after rates exist changes what every existing cell means, so re-enter the grid after any change on **Axes**. A matrix with no rates has nothing for a tariff to read, and an inactive matrix is not a table any tariff can read; a tariff that finds no cell refuses to rate with its own reason rather than billing nothing. Rounding is the tariff's, written in its source on [Formula templates](/billing/configuration-files/formula-templates). A rate increase applied from [Rate agreements](/billing/rate-agreements) does not change matrix rates.",
       "related": [
         "/billing/rate-agreements",
         "/billing/configuration-files/rate-zones",
@@ -8281,13 +8432,13 @@
             "edit charge",
             "re-rate",
             "change formula template",
-            "base rate"
+            "tariff inputs",
+            "terms"
           ],
           "steps": [
-            "Open [Billing queue](/billing/queue), select the item and open the **Charges** tab.",
-            "Select **Add charge** to add an accessorial: choose the **Accessorial charge**, **Method**, **Unit** and **Amount**, then **Save**.",
-            "To re-rate the freight, select **Change template**, choose a **Formula template** and select **Re-rate**.",
-            "To change the rate the formula starts from, use **Adjust base rate**."
+            "Open [Billing queue](/billing/queue), select the item and open the **Charges** tab. Each freight line of the shipment's bill is listed with its quantity and rate, and each charge the tariff billed itself under its own label.",
+            "Select **Add charge** to add an accessorial: choose the **Accessorial charge**, **Method**, **Unit** and **Amount**, then **Save**. Charges the tariff billed cannot be edited or deleted here; they come back from the tariff on every re-rate.",
+            "To re-rate the freight, select **Re-rate** beside the rating, or **Adjust terms** beside **Terms**: choose the **Tariff**, change any of its input values, and select **Re-rate**. The freight lines and the tariff's charges are replaced by the new bill."
           ]
         },
         {
@@ -8354,7 +8505,7 @@
         "Rate agreements"
       ],
       "description": "The contracts that decide what a shipment costs, and the lanes each one prices",
-      "summary": "Rate agreements holds the contracts that decide what a shipment costs: what a customer is billed, or what a carrier is paid. Each agreement has a header (who it is with, its term and pricing defaults) and the lanes it prices, plus its own accessorial prices and fuel terms. Pricing and billing staff write agreements here, send them through review, and apply rate increases or rate sheets across many lanes at once.\n\nThe table shows each agreement's **Status**, **Code**, **Name**, **Side** (customer or carrier), **Type**, **In force from**, **Until**, **Priority** and **Currency**. Opening an agreement shows the tabs **Overview**, **Lanes**, **Accessorials**, **Fuel**, **Simulation** and **Versions**.",
+      "summary": "Rate agreements holds the contracts that decide what a shipment costs: what a customer is billed, or what a carrier is paid. A contract is a tariff and its inputs: each lane names the formula template (tariff) that bills it and sets that tariff's inputs (a per-mile rate, a minimum, a table of weight breaks), and the agreement can set inputs every lane's tariff shares. Each agreement has a header (who it is with, its term, its currency and contract-wide terms) and the lanes it prices, plus its own accessorial prices and fuel terms. Pricing and billing staff write agreements here, send them through review, and apply rate increases or rate sheets across many lanes at once.\n\nThe table shows each agreement's **Status**, **Code**, **Name**, **Side** (customer or carrier), **Type**, **In force from**, **Until**, **Priority** and **Currency**. Opening an agreement shows the tabs **Overview**, **Lanes**, **Accessorials**, **Fuel**, **Simulation** and **Versions**.",
       "requires": [
         {
           "resource": "rate_agreement",
@@ -8385,10 +8536,11 @@
           "steps": [
             "Open [Rate agreements](/billing/rate-agreements).",
             "Select **New rate agreement**, then **New rate agreement** again in the menu.",
-            "On **Overview**, choose the **Party type** (**Customer** or **Carrier**) and pick the **Customer** or **Carrier**, then fill in **Code**, **Name**, **Agreement type** and **Effective From**. Optionally set **Effective To**, **Auto renew**, the pricing defaults and, for a customer, **Bill To**; for a carrier, the **Margin floor** and **Maximum pay** guardrails.",
-            "On **Lanes**, select **Add lane** for each lane. Give it a **Label** and **Direction**, set the origin and destination scope (anywhere, country, state, zone, radius, city, postal prefix, postal code or a single location), then either a **Rating method** with a **Rate**, or a **Rate matrix**. Optionally set **Minimum charge**, **Maximum charge**, **Minimum billable miles** and **Priority**.",
-            "On **Accessorials**, select **Add accessorial** for any contract-specific accessorial prices, and on **Fuel**, select **Add fuel terms** to tie the agreement to a **Fuel program**.",
-            "Select **Save**. A new agreement always starts as a draft."
+            "On **Overview**, choose the **Party type** (**Customer** or **Carrier**) and pick the **Customer** or **Carrier**, then fill in **Code**, **Name**, **Agreement type** and **Effective From**. Optionally set **Effective To**, **Auto renew**, the **Currency** and, for a customer, **Bill To**; for a carrier, the **Margin floor** and **Maximum pay** guardrails.",
+            "On **Lanes**, select **Add lane** for each lane. Give it a **Label** and **Direction**, set the origin and destination scope (anywhere, country, state, zone, radius, city, postal prefix, postal code or a single location), then pick its **Tariff** and fill in the inputs the tariff declares: each field is labelled from the tariff, shows its unit, and says what it inherits when left empty. Weight breaks are a table: select **Add row** for each break. Optionally set **Priority**.",
+            "Back on **Overview**, under **Pricing defaults**, set any terms every lane's tariff reads (such as a minimum) once for the whole agreement; a lane that sets its own value keeps it.",
+            "On **Accessorials**, select **Add accessorial** for any contract-specific accessorial prices. For one added automatically, select **Add condition** to write when it applies, as a Tariff condition; and on **Fuel**, select **Add fuel terms** to tie the agreement to a **Fuel program**.",
+            "Select **Save**. A new agreement always starts as a draft. Saving checks every lane's inputs against its tariff, so a missing or mistyped term is flagged at its field."
           ]
         },
         {
@@ -8432,8 +8584,8 @@
           "steps": [
             "Open [Rate agreements](/billing/rate-agreements).",
             "Select **New rate agreement** and choose **Apply Rate Increase**, or tick agreements in the table and select **Rate Increase** in the bar that appears.",
-            "Choose the scope (**One customer**, **One carrier**, **Across the board**, or the agreements you picked), set **Takes effect** and the change as a percent or a flat amount. A negative change is a decrease.",
-            "Select **Preview changes**, check each lane's **Before** and **After**, then select **Apply Increase**."
+            "Choose the scope (**One customer**, **One carrier**, **Across the board**, or the agreements you picked), set **Takes effect** and the **Change (%)**. A negative change is a decrease, down to just above -100%. Every money input a lane sets moves by that share of itself (rates, minimums and the rates and minimums inside weight breaks); counts, percents and weights stay as they are, and a lane that sets no money input of its own is left alone.",
+            "Select **Preview changes**, check **What moves** on each lane (every input with its value before and after), then select **Apply Increase**."
           ]
         },
         {
@@ -8446,7 +8598,7 @@
           ],
           "steps": [
             "Open [Rate agreements](/billing/rate-agreements), select **New rate agreement** and choose **Import rate sheet**.",
-            "Pick the **Agreement** and when **Rates take effect**, then drop a CSV or XLSX file (use **Download template** for the expected layout).",
+            "Pick the **Agreement** and when **Rates take effect**, then drop a CSV or XLSX file (use **Download template** for the expected layout). Each row's method picks a standard tariff (flat, per mile or per hundredweight), and its rate and minimum columns become that tariff's **Rate** and **Minimum charge** inputs.",
             "Review what happens to each lane, then select **Apply these rates**, or **Discard**."
           ]
         },
@@ -8462,7 +8614,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to rate agreements. Submitting, approving, rejecting, archiving and duplicating each need their own rate agreement permission, and the matching buttons only appear for people who have it.\n\nThe **Status** field cannot be edited; an agreement changes status only through the review actions. Approving activates the agreement and its lanes start pricing shipments; suspending stops pricing immediately; archiving is permanent.\n\nA rate increase or rate sheet does not edit lanes in place: each affected lane is closed out and succeeded at the new rate from the effective date, and the old rates stay in history (see a lane's **History**). Lanes priced from a rate matrix are not moved by a rate increase; change the matrix on [Rate matrices](/billing/configuration-files/rate-matrices) instead.",
+      "notes": "Viewing the page needs read access to rate agreements. Submitting, approving, rejecting, archiving and duplicating each need their own rate agreement permission, and the matching buttons only appear for people who have it.\n\nThe **Status** field cannot be edited; an agreement changes status only through the review actions. Approving activates the agreement and its lanes start pricing shipments; suspending stops pricing immediately; archiving is permanent.\n\nA rate increase or rate sheet does not edit lanes in place: each affected lane is closed out and succeeded on its new terms from the effective date, and the old terms stay in history (see a lane's **History**, which marks the inputs each version changed). Rates a tariff reads from a rate matrix are not moved by a rate increase; change the matrix on [Rate matrices](/billing/configuration-files/rate-matrices) instead.\n\nA lane's minimum, maximum, rounding, discounts and weight breaks are part of its tariff now: they are inputs the tariff declares or lines and clauses in its source on [Formula templates](/billing/configuration-files/formula-templates), not fields of the lane.",
       "related": [
         "/billing/configuration-files/rate-zones",
         "/billing/configuration-files/rate-matrices",
@@ -18059,7 +18211,7 @@
             "Open [Shipments](/shipment-management/shipments) and select **New shipment**.",
             "Under **General information**, enter the **BOL** and other reference details.",
             "Under **Service & classification**, choose the **Service type** and **Shipment type**, and the **Tractor type** and **Trailer type** if needed.",
-            "Under **Billing & rating**, choose the **Customer**, check **Bill To**, and set the **Rating method** and **Base rate**.",
+            "Under **Billing & rating**, choose the **Customer** and check **Bill To**. When a rate agreement covers the lane, its tariff and input values fill in on their own; otherwise set the **Rating method** and fill in the inputs its tariff declares (each labelled, with its unit and its default as the placeholder).",
             "Under **Move details**, select **Add first move** and add at least one pickup and one delivery stop.",
             "Select **Save** (or **Save & close**)."
           ]
@@ -18199,7 +18351,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited. Scanning needs Trenova Capture paired from [My scanners](/capture/devices) and scanning turned on for the organization.\n\nTo create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import).",
+      "notes": "Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited. Scanning needs Trenova Capture paired from [My scanners](/capture/devices) and scanning turned on for the organization.\n\nA rated shipment shows its **Bill** under **Billing & rating**: every charge its tariff billed, with its quantity and rate, any notes, and any minimum, maximum or rounding adjustment. **Re-apply rate** asks the contract again and replaces the tariff, its input values and the contract's own charges.\n\nTo create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import). A tendered rate is a manual rate: the shipment bills that one freight amount and runs no tariff.",
       "related": [
         "/shipment-management/orders",
         "/shipment-management/service-failures",
@@ -18685,6 +18837,12 @@
       "entity": "factoring_submission",
       "label": "Factoring schedule",
       "path": "/billing/factoring/submissions/{id}",
+      "params": {}
+    },
+    {
+      "entity": "formula_library",
+      "label": "Formula library",
+      "path": "/billing/configuration-files/formula-libraries/{id}/edit",
       "params": {}
     },
     {

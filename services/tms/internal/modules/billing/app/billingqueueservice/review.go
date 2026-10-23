@@ -349,10 +349,9 @@ func (s *service) chargeReview(
 
 		if share.AdditionalChargeID.IsNil() {
 			line.Key = fmt.Sprintf("freight-%d", idx)
-			if shp.RatingDetail != nil && shp.RatingDetail.Result > 0 {
-				line.Label = "Linehaul"
+			if detail := shp.RatingDetail; detail != nil && detail.Bill != nil {
 				line.Source = billingqueue.ChargeSourceRating
-				line.Expected = scale(decimal.NewFromFloat(shp.RatingDetail.Result).Round(2))
+				line.Expected = scale(detail.Bill.FreightTotal.Round(2))
 			}
 			line.Basis = freightBasis(shp)
 			review.Lines = append(review.Lines, line)
@@ -441,7 +440,7 @@ func agreementPrices(
 	}
 
 	ids := make([]pulid.ID, 0, len(shp.AdditionalCharges))
-	priced := make([]*shipment.AdditionalCharge, 0, len(shp.AdditionalCharges))
+	accessorials := make([]*rateagreement.RateAgreementAccessorial, 0, len(shp.AdditionalCharges))
 	for _, charge := range shp.AdditionalCharges {
 		if charge == nil {
 			continue
@@ -451,24 +450,29 @@ func agreementPrices(
 			continue
 		}
 		ids = append(ids, charge.ID)
-		priced = append(priced, &shipment.AdditionalCharge{
-			Method: acc.Method,
-			Amount: acc.PricedAmount(),
-			Unit:   max(acc.BillableUnits(charge.Unit), 0),
-		})
+		accessorials = append(accessorials, acc)
 	}
-	if len(priced) == 0 {
+	if len(accessorials) == 0 {
 		return map[pulid.ID]decimal.Decimal{}, nil
 	}
 
-	totals, err := shipment.AdditionalChargeTotals(ctx, priced, shp.FreightChargeAmount.Decimal)
+	priced, err := shipment.PriceAgreementAccessorials(
+		ctx,
+		shp.AccessorialMeasures(),
+		accessorials,
+		shp.FreightChargeAmount.Decimal,
+	)
 	if err != nil {
 		return nil, err
+	}
+	byAccessorial := make(map[*rateagreement.RateAgreementAccessorial]decimal.Decimal, len(priced))
+	for _, entry := range priced {
+		byAccessorial[entry.Accessorial] = entry.Charge.Amount
 	}
 
 	prices := make(map[pulid.ID]decimal.Decimal, len(ids))
 	for i, id := range ids {
-		prices[id] = totals.Each[i].Round(2)
+		prices[id] = byAccessorial[accessorials[i]].Round(2)
 	}
 
 	return prices, nil

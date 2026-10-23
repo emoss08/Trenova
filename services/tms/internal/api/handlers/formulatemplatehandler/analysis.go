@@ -12,7 +12,7 @@ import (
 )
 
 type backtestRequest struct {
-	Expression    string `json:"expression"`
+	Source        string `json:"source"`
 	VersionNumber *int64 `json:"versionNumber"`
 	Limit         int    `json:"limit"`
 }
@@ -50,8 +50,6 @@ func (h *Handler) approvalImpact(c *gin.Context) {
 		return
 	}
 
-	// Both sides of the comparison are real shipments with real charges, so
-	// reading them needs the same permission the shipment itself does.
 	if !h.allowShipmentRead(c, authCtx) {
 		return
 	}
@@ -171,8 +169,6 @@ func (h *Handler) backtest(c *gin.Context) {
 		return
 	}
 
-	// Both sides of the comparison are real shipments with real charges, so
-	// reading them needs the same permission the shipment itself does.
 	if !h.allowShipmentRead(c, authCtx) {
 		return
 	}
@@ -182,7 +178,7 @@ func (h *Handler) backtest(c *gin.Context) {
 		&formulatemplateservice.BacktestRequest{
 			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 			TemplateID:    templateID,
-			Expression:    req.Expression,
+			Source:        req.Source,
 			VersionNumber: req.VersionNumber,
 			Limit:         req.Limit,
 		},

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -19,22 +18,33 @@ import (
 )
 
 const (
-	defaultFormulaSchema = "shipment"
-	defaultFormulaType   = "FreightCharge"
-	formulaPagePath      = "/formula-templates"
-	formulaPageTitle     = "Formula studio"
+	formulaPagePath  = "/billing/configuration-files/formula-templates"
+	libraryPagePath  = "/billing/configuration-files/formula-libraries"
+	formulaPageTitle = "Formula studio"
+	libraryPageTitle = "Formula library"
 )
 
 type FormulaPage struct {
 	Template string `yaml:"template" json:"template,omitempty"`
-	Type     string `yaml:"type"     json:"type,omitempty"`
+	Library  string `yaml:"library"  json:"library,omitempty"`
+}
+
+func (p *FormulaPage) editsLibrary() bool {
+	return strings.TrimSpace(p.Library) != ""
 }
 
 type formulaState struct {
-	draft pagedraft.Formula
+	library bool
+	id      string
+	name    string
+	about   string
+	source  string
 }
 
-var errTemplateNotFound = errors.New("no formula template has that name")
+var (
+	errTemplateNotFound = errors.New("no formula template has that name")
+	errLibraryNotFound  = errors.New("no formula library has that name")
+)
 
 func (s *Session) OpenFormula(
 	ctx context.Context,
@@ -43,26 +53,26 @@ func (s *Session) OpenFormula(
 ) (*Conversation, error) {
 	ctx = s.Context(ctx)
 
-	state := &formulaState{draft: pagedraft.Formula{
-		SchemaID:     defaultFormulaSchema,
-		TemplateType: defaultFormulaType,
-		Variables:    []pagedraft.FormulaVariable{},
-	}}
-	if page.Type != "" {
-		state.draft.TemplateType = page.Type
-	}
-
+	state := &formulaState{library: page.editsLibrary()}
 	req := &agentports.OpenPageThreadRequest{
 		TenantInfo:  s.Tenant,
 		Origin:      conversation.ThreadOriginFormula,
 		SubjectType: agent.SubjectFormulaTemplate,
 	}
-	if strings.TrimSpace(page.Template) != "" {
-		templateID, err := s.loadFormula(ctx, page.Template, &state.draft)
+	switch {
+	case state.library:
+		req.SubjectType = agent.SubjectFormulaLibrary
+		id, err := s.loadSource(ctx, librarySource, page.Library, state)
+		if err != nil {
+			return nil, fmt.Errorf("open formula library %q: %w", page.Library, err)
+		}
+		req.SubjectID = id
+	case strings.TrimSpace(page.Template) != "":
+		id, err := s.loadSource(ctx, templateSource, page.Template, state)
 		if err != nil {
 			return nil, fmt.Errorf("open formula template %q: %w", page.Template, err)
 		}
-		req.SubjectID = templateID
+		req.SubjectID = id
 	}
 
 	opened, err := s.bench.Pages.OpenPageThread(ctx, req, &s.Actor)
@@ -79,103 +89,83 @@ func (s *Session) OpenFormula(
 	}, nil
 }
 
-func (s *Session) loadFormula(
-	ctx context.Context,
-	name string,
-	draft *pagedraft.Formula,
-) (pulid.ID, error) {
-	type row struct {
-		id          string
-		name        string
-		description string
-		kind        string
-		schema      string
-		expression  string
-		variables   []byte
-		breakdown   []byte
-		minCharge   sql.NullString
-		maxCharge   sql.NullString
-		rounding    string
-		precision   int
-	}
+type sourceQuery struct {
+	query    string
+	notFound error
+}
 
-	found, err := dbtx.Read(ctx, s.bench.DB, func(ctx context.Context) (*row, error) {
-		r := &row{}
-		scanErr := s.bench.DB.DBForContext(ctx).QueryRowContext(ctx,
-			`SELECT id, name, COALESCE(description, ''), type, schema_id, expression,
-			        COALESCE(variable_definitions, '[]'::jsonb),
-			        COALESCE(breakdown_definitions, '[]'::jsonb),
-			        min_charge::text, max_charge::text, rounding_mode::text, rounding_precision
-			 FROM formula_templates WHERE name ILIKE ? ORDER BY updated_at DESC LIMIT 1`,
-			name,
-		).Scan(&r.id, &r.name, &r.description, &r.kind, &r.schema, &r.expression,
-			&r.variables, &r.breakdown, &r.minCharge, &r.maxCharge, &r.rounding, &r.precision)
+var (
+	templateSource = sourceQuery{
+		query: `SELECT id, name, COALESCE(description, ''), source
+			FROM formula_templates WHERE name ILIKE ? ORDER BY updated_at DESC LIMIT 1`,
+		notFound: errTemplateNotFound,
+	}
+	librarySource = sourceQuery{
+		query: `SELECT id, name, COALESCE(description, ''), source
+			FROM formula_libraries WHERE lower(name) = lower(?) LIMIT 1`,
+		notFound: errLibraryNotFound,
+	}
+)
+
+func (s *Session) loadSource(
+	ctx context.Context,
+	from sourceQuery,
+	name string,
+	state *formulaState,
+) (pulid.ID, error) {
+	name = strings.TrimPrefix(strings.TrimSpace(name), "org.")
+	found, err := dbtx.Read(ctx, s.bench.DB, func(ctx context.Context) (*formulaState, error) {
+		row := &formulaState{library: state.library}
+		scanErr := s.bench.DB.DBForContext(ctx).QueryRowContext(ctx, from.query, name).
+			Scan(&row.id, &row.name, &row.about, &row.source)
 		if errors.Is(scanErr, sql.ErrNoRows) {
-			return nil, errTemplateNotFound
+			return nil, from.notFound
 		}
 
-		return r, scanErr
+		return row, scanErr
 	})
 	if err != nil {
 		return pulid.Nil, err
 	}
 
-	templateID, err := pulid.MustParse(found.id)
+	id, err := pulid.MustParse(found.id)
 	if err != nil {
 		return pulid.Nil, err
 	}
+	*state = *found
 
-	variables := []pagedraft.FormulaVariable{}
-	if len(found.variables) > 0 {
-		if err = sonic.Unmarshal(found.variables, &variables); err != nil {
-			return pulid.Nil, fmt.Errorf("read its variables: %w", err)
-		}
-	}
-	var breakdown []pagedraft.BreakdownLine
-	if len(found.breakdown) > 0 {
-		if err = sonic.Unmarshal(found.breakdown, &breakdown); err != nil {
-			return pulid.Nil, fmt.Errorf("read its breakdown lines: %w", err)
-		}
-	}
-
-	draft.TemplateID = templateID.String()
-	draft.SchemaID = found.schema
-	draft.TemplateType = found.kind
-	draft.Name = found.name
-	draft.Description = found.description
-	draft.Expression = found.expression
-	draft.Variables = variables
-	draft.Breakdown = breakdown
-	draft.Policy = &pagedraft.FormulaPolicy{
-		MinCharge:         nullString(found.minCharge),
-		MaxCharge:         nullString(found.maxCharge),
-		RoundingMode:      found.rounding,
-		RoundingPrecision: &found.precision,
-	}
-
-	return templateID, nil
-}
-
-func nullString(value sql.NullString) *string {
-	if !value.Valid {
-		return nil
-	}
-
-	return &value.String
+	return id, nil
 }
 
 func (f *formulaState) page() *agent.PageContext {
-	draft := f.draft
-	draft.Variables = append([]pagedraft.FormulaVariable(nil), f.draft.Variables...)
-	draft.Breakdown = append([]pagedraft.BreakdownLine(nil), f.draft.Breakdown...)
-	if f.draft.Policy != nil {
-		draft.Policy = f.draft.Policy.Resolved()
+	if f.library {
+		return &agent.PageContext{
+			Path:  libraryPagePath,
+			Title: libraryPageTitle,
+			Draft: &pagedraft.Draft{
+				Surface: pagedraft.SurfaceFormulaLibrary,
+				FormulaLibrary: &pagedraft.FormulaLibrary{
+					LibraryID:   f.id,
+					Name:        f.name,
+					Description: f.about,
+					Source:      f.source,
+				},
+			},
+		}
 	}
 
 	return &agent.PageContext{
 		Path:  formulaPagePath,
 		Title: formulaPageTitle,
-		Draft: &pagedraft.Draft{Surface: pagedraft.SurfaceFormula, Formula: &draft},
+		Draft: &pagedraft.Draft{
+			Surface: pagedraft.SurfaceFormula,
+			Formula: &pagedraft.Formula{
+				TemplateID:  f.id,
+				Name:        f.name,
+				Description: f.about,
+				Source:      f.source,
+			},
+		},
 	}
 }
 
@@ -187,28 +177,22 @@ func (f *formulaState) apply(artifacts []agentports.AssistantArtifact) {
 		}
 
 		var edit pagedraft.Edit
-		if err := jsonutils.Convert(artifact.Payload, &edit); err != nil || edit.Formula == nil {
+		if err := jsonutils.Convert(artifact.Payload, &edit); err != nil {
 			continue
 		}
-		if edit.Formula.SchemaID != "" {
-			f.draft.SchemaID = edit.Formula.SchemaID
+		proposal := edit.Formula
+		if f.library {
+			proposal = edit.Library
 		}
-		f.draft.Expression = edit.Formula.Expression
-		f.draft.Variables = append([]pagedraft.FormulaVariable(nil), edit.Formula.Variables...)
-		if edit.Formula.Name != "" {
-			f.draft.Name = edit.Formula.Name
+		if proposal == nil {
+			continue
 		}
-		if edit.Formula.Description != "" {
-			f.draft.Description = edit.Formula.Description
+		f.source = proposal.Source
+		if proposal.Name != "" {
+			f.name = proposal.Name
 		}
-		if edit.Formula.TemplateType != "" {
-			f.draft.TemplateType = edit.Formula.TemplateType
-		}
-		if edit.Formula.Breakdown != nil {
-			f.draft.Breakdown = append([]pagedraft.BreakdownLine(nil), edit.Formula.Breakdown...)
-		}
-		if edit.Formula.Policy != nil {
-			f.draft.Policy = edit.Formula.Policy.Resolved()
+		if proposal.Description != "" {
+			f.about = proposal.Description
 		}
 	}
 }
@@ -218,7 +202,7 @@ func (f *formulaState) expression() string {
 		return ""
 	}
 
-	return f.draft.Expression
+	return f.source
 }
 
 func (f *formulaState) describe() string {
@@ -226,13 +210,5 @@ func (f *formulaState) describe() string {
 		return ""
 	}
 
-	names := make([]string, 0, len(f.draft.Variables))
-	for _, variable := range f.draft.Variables {
-		names = append(names, variable.Name)
-	}
-	if len(names) == 0 {
-		return f.draft.Expression
-	}
-
-	return f.draft.Expression + "  [variables: " + strings.Join(names, ", ") + "]"
+	return f.source
 }

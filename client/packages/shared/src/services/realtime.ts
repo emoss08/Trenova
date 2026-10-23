@@ -74,6 +74,8 @@ interface ScopeState {
   joinPath: string | null;
   /** This tab's own state in the scope, sent with every join. */
   state: RealtimePresenceState | null;
+  /** The leave waiting out its grace after the last join was released. */
+  leaving: ReturnType<typeof setTimeout> | null;
 }
 
 const STREAM_PATH = "/realtime/stream/";
@@ -86,6 +88,12 @@ const MIN_RECONNECT_MS = 250;
 /** A server that is recycling or draining streams asks everyone back; spread them out. */
 const ROTATE_SPREAD_MS = 1_000;
 const SHUTDOWN_SPREAD_MS = 5_000;
+/**
+ * How long a released scope stays joined. A component that unmounts and mounts
+ * again (StrictMode, a toolbar re-keyed by its layout) keeps its membership
+ * instead of announcing a leave and an enter to everyone else.
+ */
+const LEAVE_GRACE_MS = 1_000;
 
 function jitter(maxMs: number): number {
   return Math.round(maxMs / 2 + Math.random() * (maxMs / 2));
@@ -124,6 +132,14 @@ function joinBody(
   return { connectionId, messageId: presence.messageId, activity: presence.activity };
 }
 
+function samePresence(
+  a: RealtimePresenceState | null,
+  b: RealtimePresenceState | null,
+): boolean {
+  if (a === null || b === null) return a === b;
+  return a.messageId === b.messageId && a.activity === b.activity;
+}
+
 /**
  * The browser's one live connection to the server: a server-sent event stream
  * carrying record invalidations, presence and typing for the signed-in user's
@@ -153,6 +169,8 @@ export class RealtimeClient {
   private readonly stateListeners = new Set<Listener<RealtimeConnectionState>>();
   private readonly eventListeners = new Map<string, Set<Listener<unknown>>>();
   private readonly scopes = new Map<string, ScopeState>();
+  /** The tail of each scope's join and leave requests, which are sent one after another. */
+  private readonly requests = new Map<string, Promise<void>>();
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -239,16 +257,30 @@ export class RealtimeClient {
   /**
    * Joins a presence scope through the endpoint that authorizes it. Joins are
    * counted, so two components on one scope share one membership, and they are
-   * replayed on every reconnect because a new stream is a new connection.
+   * replayed on every reconnect because a new stream is a new connection. The
+   * last release leaves after a grace, and a join in that grace keeps the
+   * membership it would have ended.
    */
   public joinScope(scope: string, joinPath: string, presence?: RealtimePresenceState): () => void {
     const state = this.scopeState(scope);
-    state.joins += 1;
-    state.joinPath = joinPath;
+    const held = state.leaving !== null;
+    if (state.leaving !== null) {
+      clearTimeout(state.leaving);
+      state.leaving = null;
+    }
+    const previous = state.state;
     if (presence !== undefined) {
       state.state = presence;
+    } else if (state.joins === 0) {
+      state.state = null;
     }
-    if (state.joins === 1 && this.connectionId) {
+    state.joins += 1;
+    state.joinPath = joinPath;
+    if (
+      state.joins === 1 &&
+      this.connectionId &&
+      (!held || !samePresence(previous, state.state))
+    ) {
       void this.sendJoin(scope, joinPath, this.connectionId);
     }
 
@@ -258,20 +290,35 @@ export class RealtimeClient {
       released = true;
       state.joins -= 1;
       if (state.joins > 0) return;
-
-      const connectionId = this.connectionId;
-      const path = state.joinPath;
-      state.joinPath = null;
-      state.state = null;
-      state.members.clear();
-      this.notifyScope(scope);
-      this.pruneScope(scope);
-      if (connectionId && path) {
-        void api
-          .delete(`${path}?connectionId=${encodeURIComponent(connectionId)}`)
-          .catch(() => undefined);
-      }
+      state.leaving = setTimeout(
+        () => this.leaveScope(scope, state, this.connectionId),
+        LEAVE_GRACE_MS,
+      );
     };
+  }
+
+  /** Ends a released membership, telling the server only when connectionId still holds it. */
+  private leaveScope(scope: string, state: ScopeState, connectionId: string | null): void {
+    if (state.leaving !== null) {
+      clearTimeout(state.leaving);
+      state.leaving = null;
+    }
+    const path = state.joinPath;
+    state.joinPath = null;
+    state.state = null;
+    state.members.clear();
+    this.notifyScope(scope);
+    this.pruneScope(scope);
+    if (connectionId && path) {
+      void this.enqueue(scope, () =>
+        api
+          .delete(`${path}?connectionId=${encodeURIComponent(connectionId)}`)
+          .then(
+            () => undefined,
+            () => undefined,
+          ),
+      );
+    }
   }
 
   /**
@@ -281,15 +328,7 @@ export class RealtimeClient {
    */
   public setScopeState(scope: string, presence: RealtimePresenceState): void {
     const state = this.scopes.get(scope);
-    if (!state) return;
-    const current = state.state;
-    if (
-      current !== null &&
-      current.messageId === presence.messageId &&
-      current.activity === presence.activity
-    ) {
-      return;
-    }
+    if (!state || samePresence(state.state, presence)) return;
     state.state = presence;
     if (state.joins > 0 && state.joinPath && this.connectionId) {
       void this.sendJoin(scope, state.joinPath, this.connectionId);
@@ -460,6 +499,12 @@ export class RealtimeClient {
     this.setState("connected");
 
     for (const [scope, state] of this.scopes) {
+      // A membership in its grace died with the old connection; holding it
+      // would let a later join skip the request this connection needs.
+      if (state.leaving !== null) {
+        this.leaveScope(scope, state, null);
+        continue;
+      }
       if (state.joins > 0 && state.joinPath) {
         void this.sendJoin(scope, state.joinPath, ready.connectionId);
       }
@@ -511,21 +556,45 @@ export class RealtimeClient {
     this.notifyScope(event.scope);
   }
 
-  private async sendJoin(scope: string, path: string, connectionId: string): Promise<void> {
-    try {
-      const snapshot = await api.post<PresenceSnapshot>(
-        path,
-        joinBody(connectionId, this.scopes.get(scope)?.state ?? null),
-      );
-      const state = this.scopes.get(scope);
-      if (!state || state.joins === 0 || this.connectionId !== connectionId) {
+  /**
+   * A join waits for the scope's earlier requests. The server applies requests
+   * in the order they arrive, so a leave still in flight could otherwise land
+   * after this join and withdraw it, and the server would then stop sending
+   * this tab the scope's presence at all.
+   */
+  private sendJoin(scope: string, path: string, connectionId: string): Promise<void> {
+    return this.enqueue(scope, async () => {
+      const current = this.scopes.get(scope);
+      if (!current || current.joins === 0 || this.connectionId !== connectionId) {
         return;
       }
-      this.replaceMembers(scope, snapshot.members ?? []);
-    } catch {
-      // A join that fails leaves the scope empty until the next reconnect;
-      // presence is a courtesy, never a gate on the page working.
-    }
+      try {
+        const snapshot = await api.post<PresenceSnapshot>(
+          path,
+          joinBody(connectionId, current.state),
+        );
+        const state = this.scopes.get(scope);
+        if (!state || state.joins === 0 || this.connectionId !== connectionId) {
+          return;
+        }
+        this.replaceMembers(scope, snapshot.members ?? []);
+      } catch {
+        // A join that fails leaves the scope empty until the next reconnect;
+        // presence is a courtesy, never a gate on the page working.
+      }
+    });
+  }
+
+  /** Runs request after every request already queued for scope. Requests never reject. */
+  private enqueue(scope: string, request: () => Promise<void>): Promise<void> {
+    const next = (this.requests.get(scope) ?? Promise.resolve()).then(request);
+    this.requests.set(scope, next);
+    void next.then(() => {
+      if (this.requests.get(scope) === next) {
+        this.requests.delete(scope);
+      }
+    });
+    return next;
   }
 
   private replaceMembers(scope: string, members: RealtimePresenceMember[]): void {
@@ -547,7 +616,14 @@ export class RealtimeClient {
   private scopeState(scope: string): ScopeState {
     let state = this.scopes.get(scope);
     if (!state) {
-      state = { members: new Map(), listeners: new Set(), joins: 0, joinPath: null, state: null };
+      state = {
+        members: new Map(),
+        listeners: new Set(),
+        joins: 0,
+        joinPath: null,
+        state: null,
+        leaving: null,
+      };
       this.scopes.set(scope, state);
     }
     return state;
@@ -556,7 +632,7 @@ export class RealtimeClient {
   private pruneScope(scope: string): void {
     if (scope === REALTIME_USERS_SCOPE) return;
     const state = this.scopes.get(scope);
-    if (state && state.joins === 0 && state.listeners.size === 0) {
+    if (state && state.joins === 0 && state.leaving === null && state.listeners.size === 0) {
       this.scopes.delete(scope);
     }
   }

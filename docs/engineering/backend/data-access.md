@@ -93,7 +93,18 @@ phase for the old shape.
 
 ## Seeding
 
-Seeds are registered in `internal/infrastructure/database/seeder/seeds/register.go`; typed
-`SeedID` constants are generated into `pkg/seedhelpers/seed_ids_gen.go`. `task db-create-seed
-name=MySeed [env=dev]` creates one, `task generate-seeds` regenerates the IDs and `task db-seed`
-runs them.
+Seeds live in `internal/infrastructure/database/seeds/{base,development}` and are registered in
+the generated `seeds/register_gen.go`; typed `SeedID` constants are generated into
+`pkg/seedhelpers/seed_ids_gen.go`. `task db-create-seed name=MySeed [env=dev]` creates one,
+`task generate-seeds` regenerates the IDs and `task db-seed` runs them.
+
+Volume data for load and UI testing is not a seed: `task db-seed-volume [shipments=N months=M
+seed=S]` (`trenova db seed-volume`, package `internal/infrastructure/database/volumeseed`) adds a
+large, consistent data set to the development organization on top of the development seeds.
+It numbers records through `pkg/seqgen` like the application, batches every insert, and
+back-dates rows with `pulid.MustNewAt` and one `unnest` update per table, because model hooks
+stamp the current time on insert. When an entity gains a required relation or a derived row the
+application always writes (as every shipment gets an auto-order), generate it there too; write
+an optional relation only in the states where the application would have written it (a
+billing queue item only once a shipment is ready to invoice, a draft invoice only once the
+item is approved, an email only for a customer with an email profile).

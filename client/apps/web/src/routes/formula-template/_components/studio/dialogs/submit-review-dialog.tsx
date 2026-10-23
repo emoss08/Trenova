@@ -23,7 +23,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { ReadinessPanel } from "../../readiness-panel";
-import { NovaButton } from "../ai/nova-button";
+import { NovaButton } from "@/components/tariff-studio/nova-button";
 import { ImpactSummary } from "./impact-summary";
 
 const MAX_NOTE = 4000;

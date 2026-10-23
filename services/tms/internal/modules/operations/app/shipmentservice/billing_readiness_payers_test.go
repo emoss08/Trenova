@@ -21,7 +21,7 @@ func splitReadinessFixture(t *testing.T) (*shipment.Shipment, *shipment.ShareRes
 	entity.ID = pulid.MustNew("shp_")
 	entity.Status = shipment.StatusCompleted
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(1000))
-	entity.RatingDetail = &shipment.RatingDetail{Result: 1000}
+	entity.RatingDetail = &shipment.RatingDetail{Bill: billOf(1000)}
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{}
 	amd := pulid.MustNew("cus_")
 	entity.ChargeAllocations = []*shipment.ChargeAllocation{

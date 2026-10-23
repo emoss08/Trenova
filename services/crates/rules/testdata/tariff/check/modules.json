@@ -1,0 +1,208 @@
+{
+ "cases": [
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.ltl",
+      "source": "library \"org.ltl\"\n/// One weight break.\ntype Break = { from: Weight, rate: Money/cwt, minimum: Money? }\nenum Tier { Low, High }\nconst FLOOR: Money = $50\nfn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)\nfn cheapest(breaks: List<Break>, actual: Weight) -> Money = breaks.map(b => b.rate * actual).min() ?? FLOOR\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "imported functions, types, enums and constants",
+   "source": [
+    "tariff \"t\"",
+    "use org.ltl.{ Break, Tier, FLOOR, billed, cheapest }",
+    "input breaks: List<Break> = [{ from: 0 lb, rate: $20/cwt, minimum: none }]",
+    "input tier: Tier = Low",
+    "let w = shipment.weight ?? 0 lb",
+    "charge \"Linehaul\" = cheapest(breaks, billed(w)).max(FLOOR)",
+    "note \"{tier}\""
+   ],
+   "types": {
+    "billed(w)": "Weight"
+   }
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.ltl",
+      "source": "library \"org.ltl\"\n/// One weight break.\ntype Break = { from: Weight, rate: Money/cwt, minimum: Money? }\nenum Tier { Low, High }\nconst FLOOR: Money = $50\nfn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)\nfn cheapest(breaks: List<Break>, actual: Weight) -> Money = breaks.map(b => b.rate * actual).min() ?? FLOOR\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "an imported module read by alias",
+   "source": [
+    "tariff \"t\"",
+    "use org.ltl",
+    "charge \"x\" = $1/lb * ltl.billed(1 lb) + ltl.FLOOR"
+   ],
+   "types": {
+    "ltl.FLOOR": "Money",
+    "ltl.billed(1 lb)": "Weight"
+   }
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.bad",
+      "source": "library \"org.bad\"\nfn fee() -> Money = 5 lb\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "type-mismatch",
+     "message": "`5 lb` is a weight, but `fee` returns money",
+     "module": "org.bad"
+    }
+   ],
+   "name": "a mistake inside a library is reported in that library",
+   "source": [
+    "tariff \"t\"",
+    "use org.bad.{ fee }",
+    "charge \"x\" = fee()"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.ltl",
+      "source": "library \"org.ltl\"\n/// One weight break.\ntype Break = { from: Weight, rate: Money/cwt, minimum: Money? }\nenum Tier { Low, High }\nconst FLOOR: Money = $50\nfn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)\nfn cheapest(breaks: List<Break>, actual: Weight) -> Money = breaks.map(b => b.rate * actual).min() ?? FLOOR\n"
+     },
+     {
+      "path": "org.wrap",
+      "source": "library \"org.wrap\"\nuse org.ltl.{ billed }\nfn fee() -> Money = $5\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "billed",
+     "code": "unused",
+     "message": "`billed` is imported and never used",
+     "module": "org.wrap"
+    }
+   ],
+   "name": "a library's own unused import is reported there",
+   "source": [
+    "tariff \"t\"",
+    "use org.wrap.{ fee }",
+    "charge \"x\" = fee()"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.ltl",
+      "source": "library \"org.ltl\"\n/// One weight break.\ntype Break = { from: Weight, rate: Money/cwt, minimum: Money? }\nenum Tier { Low, High }\nconst FLOOR: Money = $50\nfn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)\nfn cheapest(breaks: List<Break>, actual: Weight) -> Money = breaks.map(b => b.rate * actual).min() ?? FLOOR\n"
+     },
+     {
+      "path": "org.wrap",
+      "source": "library \"org.wrap\"\nuse org.ltl.{ billed }\nfn fee(w: Weight) -> Money = $1/lb * billed(w)\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "libraries import libraries",
+   "source": [
+    "tariff \"t\"",
+    "use org.wrap.{ fee }",
+    "charge \"x\" = fee(1 lb)"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.ltl",
+      "source": "library \"org.ltl\"\n/// One weight break.\ntype Break = { from: Weight, rate: Money/cwt, minimum: Money? }\nenum Tier { Low, High }\nconst FLOOR: Money = $50\nfn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)\nfn cheapest(breaks: List<Break>, actual: Weight) -> Money = breaks.map(b => b.rate * actual).min() ?? FLOOR\n"
+     },
+     {
+      "path": "org.other",
+      "source": "library \"org.other\"\ntype Break = { from: Weight, rate: Money/cwt, minimum: Money? }\nfn make() -> Break = { from: 0 lb, rate: $1/cwt, minimum: none }\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "make()",
+     "code": "type-mismatch",
+     "message": "`make()` is a record of type `org.other.Break`, but the list holds a record of type `org.ltl.Break`"
+    }
+   ],
+   "name": "an imported type keeps its module's name",
+   "source": [
+    "tariff \"t\"",
+    "use org.ltl.{ cheapest }",
+    "use org.other.{ make }",
+    "charge \"x\" = cheapest([make()], 1 lb)"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.ltl",
+      "source": "library \"org.ltl\"\n/// One weight break.\ntype Break = { from: Weight, rate: Money/cwt, minimum: Money? }\nenum Tier { Low, High }\nconst FLOOR: Money = $50\nfn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)\nfn cheapest(breaks: List<Break>, actual: Weight) -> Money = breaks.map(b => b.rate * actual).min() ?? FLOOR\n"
+     }
+    ]
+   },
+   "diagnostics": [],
+   "name": "an imported enum's variants resolve bare",
+   "source": [
+    "tariff \"t\"",
+    "use org.ltl.{ Tier }",
+    "let t: Tier = High",
+    "charge \"x\" = if t == Low { $1 } else { $2 }"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "org.nothing",
+     "code": "unknown-module",
+     "message": "There is no module `org.nothing`"
+    }
+   ],
+   "name": "a module path that does not exist is left to the loader",
+   "source": [
+    "tariff \"t\"",
+    "use org.nothing.{ fee }",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "context": {
+    "libraries": [
+     {
+      "path": "org.loop",
+      "source": "library \"org.loop\"\nfn a(n: Int) -> Int = b(n)\nfn b(n: Int) -> Int = a(n)\n"
+     }
+    ]
+   },
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "recursion",
+     "message": "`a` calls itself through `a → b → a`: a function can't call itself, directly or through others, so every rating ends",
+     "module": "org.loop",
+     "nth": 2
+    }
+   ],
+   "name": "a recursive call through two library functions",
+   "source": [
+    "tariff \"t\"",
+    "use org.loop.{ a }",
+    "charge \"x\" = $1 * a(1)"
+   ]
+  }
+ ]
+}
