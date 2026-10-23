@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -17,8 +18,13 @@ func TestGraphQLReadsAreBoundToRegisteredResources(t *testing.T) {
 
 	registry := permission.NewRegistry()
 	for tool, read := range graphQLReads {
-		assert.Truef(t, registry.HasResource(read.Resource),
-			"%s reads %s, which the permission registry does not know", tool, read.Resource)
+		if read.SelfScoped {
+			assert.Emptyf(t, read.Resource, "%s reads the caller's own record, checked by no "+
+				"resource", tool)
+		} else {
+			assert.Truef(t, registry.HasResource(read.Resource),
+				"%s reads %s, which the permission registry does not know", tool, read.Resource)
+		}
 		assert.NotEmptyf(t, agentports.NamespaceOf(tool), "%s is outside a tool namespace", tool)
 	}
 }
@@ -173,6 +179,12 @@ func TestGraphQLReadsCheckTheToolsOwnResource(t *testing.T) {
 		}
 		read, bound := graphQLReads[tool.Name()]
 		if !bound {
+			continue
+		}
+		if read.SelfScoped {
+			assert.Equalf(t, agent.ToolScopeSelf, tool.Policy().Scope, "%s reads %s, whose "+
+				"resolver acts only on the caller's own record, so the tool must be scoped to "+
+				"the caller", tool.Name(), read.Operation)
 			continue
 		}
 		assert.Equalf(t, read.Resource, tool.Policy().Resource.String(),
