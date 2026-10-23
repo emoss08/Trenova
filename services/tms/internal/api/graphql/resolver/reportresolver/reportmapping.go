@@ -405,6 +405,7 @@ func reportRunToModel(entity *report.ReportRun) *gqlmodel.ReportRun {
 		ByteSize:          int(entity.ByteSize),
 		DurationMs:        int(entity.DurationMs),
 		Truncated:         entity.Truncated,
+		RowsStored:        entity.RowsKey != "",
 		ArtifactExpiresAt: nilIfZero(entity.ArtifactExpiresAt),
 		CacheHit:          entity.CacheHit,
 		QueuedAt:          nilIfZero(entity.QueuedAt),

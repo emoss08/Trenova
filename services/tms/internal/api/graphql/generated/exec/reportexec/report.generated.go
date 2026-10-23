@@ -491,7 +491,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_reportSchedules_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportSchedules(ctx, fc.Args["definitionId"].(*string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportSchedules(ctx, fc.Args["definitionId"].(*string), fc.Args["enabledOnly"].(*bool), fc.Args["limit"].(*int))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportSchedule2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportScheduleᚄ),
 			},
@@ -1863,6 +1863,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:     "rowsStored",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRun)
+					return obj.RowsStored, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:      "error",
 				HasChild:  true,
 				ChildType: "ReportRunError",
@@ -2157,6 +2167,18 @@ var Shard = &gqlexec.Shard{
 					return obj.RunAsID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:       "mine",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportSchedule)
+					return gqlexec.Resolver[resolverReportSchedule](ec, "ReportSchedule").Mine(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
 				Name:     "lastRunId",
@@ -2489,6 +2511,7 @@ var Shard = &gqlexec.Shard{
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
+		{Root: "ReportSchedule", Check: func(r any) bool { _, ok := r.(resolverReportSchedule); return ok }},
 	},
 }
 
@@ -2523,11 +2546,15 @@ type resolverQuery interface {
 	ReportRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) (*gqlmodel.ReportRunConnection, error)
 	PreviewReport(ctx context.Context, definition gqlmodel.ReportIRInput, params map[string]any, supersede *bool) (*gqlmodel.ReportPreview, error)
 	DrillThroughReport(ctx context.Context, input gqlmodel.ReportDrillInput) (*gqlmodel.ReportPreview, error)
-	ReportSchedules(ctx context.Context, definitionID *string) ([]*gqlmodel.ReportSchedule, error)
+	ReportSchedules(ctx context.Context, definitionID *string, enabledOnly *bool, limit *int) ([]*gqlmodel.ReportSchedule, error)
 	ReportViews(ctx context.Context, definitionID *string) ([]*gqlmodel.ReportView, error)
 	ReportView(ctx context.Context, id string) (*gqlmodel.ReportView, error)
 	ReportDashboards(ctx context.Context) ([]*gqlmodel.ReportDashboard, error)
 	ReportDashboard(ctx context.Context, id string) (*gqlmodel.ReportDashboard, error)
+}
+
+type resolverReportSchedule interface {
+	Mine(ctx context.Context, obj *gqlmodel.ReportSchedule) (bool, error)
 }
 
 var (
@@ -2901,7 +2928,7 @@ func field_Query_drillThroughReport_args(ctx context.Context, ec *gqlexec.Exec, 
 }
 
 func field_Query_reportSchedules_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "definitionId",
 		func(ctx context.Context, v any) (*string, error) {
 			return unmarshalOID2ᚖstring(ctx, ec, v)
@@ -2910,6 +2937,22 @@ func field_Query_reportSchedules_args(ctx context.Context, ec *gqlexec.Exec, raw
 		return nil, err
 	}
 	args["definitionId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "enabledOnly",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["enabledOnly"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg2
 	return args, nil
 }
 

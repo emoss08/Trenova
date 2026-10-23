@@ -1,0 +1,37 @@
+query DeskReportRuns($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  reportRuns(input: $input) {
+    edges {
+      node {
+        id
+        definitionId
+        cannedKey
+        status
+        format
+        rowCount
+        truncated
+        rowsStored
+        createdAt
+        completedAt
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskReportSchedules($definitionId: ID, $enabledOnly: Boolean, $limit: Int) {
+  reportSchedules(definitionId: $definitionId, enabledOnly: $enabledOnly, limit: $limit) {
+    id
+    definitionId
+    cronExpression
+    timezone
+    formats
+    emailRecipients
+    enabled
+    mine
+    nextRunAt
+    consecutiveFailures
+  }
+}

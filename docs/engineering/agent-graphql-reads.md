@@ -843,11 +843,23 @@ Each module's PR:
 | Carriers | `carrier_list_intelligence_events` | none | reads `DeskCarrierIntelEvents`, written for it and named in `reads.yml` because the tool is named for the carrier it watches: the repository row's fields. Status, severity and category are `CarrierIntelEventFilterInput`'s typed filters, whose fields now carry descriptions, so the record fields of the same names are left unoffered, as are the event's ids, rule, values and resolution note. `fromDate`/`toDate` became `detectedFrom`/`detectedTo`. Every field it selects is Internal under `carrier_intelligence` |
 | Carriers | `carrier_list_capacity_postings` | none | `field-no-op`: reads `DeskCarrierCapacityPostings`, written for it. Every `carrier_capacity_posting` field is Internal; the carrier, origin location, states and equipment type are linked records and show their reference views. `openOnly` replaces telling the model to filter `availableTo` from today. The repository list spec stays in `listCatalogSpecs` for `FilterCatalog()` |
 | Carriers | `carrier_list_invoice_matches` | none | reads `DeskCarrierInvoiceMatches`, an `items` list paged by its root's limit and offset, checked by `carrier_invoice_match` read as its root is; the repository tool checked `carrier_settlement` read, which still reaches it as the parent. `carrier_invoice_match` declared only the EDI invoice's fields, so under its Restricted default every match field but its reference view would be withheld at Internal; the match's links, how it was matched, its resolution and its carrier are now declared Internal, and the invoice, expected and variance totals stay Restricted, as the repository row gated them. The spec sets `amounts` and computes `source` (EDI, Document or Manual) in its `shape`; a match whose invoice a carrier sent over EDI marks the run with that EDI invoice (`marks`) |
+| Reports | `report_list_runs` | none | reads `DeskReportRuns`, added for the Desk. `ReportRun` declares `@kind(resource: "report")` and gains `rowsStored`, whether the run's rows were stored for a comparison, which the repository row worked out from the run itself. `reportRuns` keeps the reader to their own runs (`ListRunsConnection` sets `RequestedBy` from the reader), as the repository tool did. `report` defaults to Internal, so nothing is withheld at Internal; the spec's `shape` marks each run `comparable` with the reason it is not, and leaves a run whose status or storage was withheld unjudged. The repository tool's 25-run cap becomes the cursor page |
+| Reports | `report_list_schedules` | none | reads `DeskReportSchedules`, added for the Desk. `ReportSchedule` declares `@kind(resource: "report")` and gains `mine` (the reader set it up), which the repository row called `yours`; `reportSchedules` gains `enabledOnly` and `limit` (safe additions), the limit bounded by `base.RecordListLimit`: every schedule of a named report, one page of 20 across the organization when no report is named, where the root read every schedule. The list is the organization's on both paths, as the repository tool read it; `mine` widens nothing, it only says which are the reader's |
 
 At a person's role ceiling a factoring record's money now follows that record's own kind, as
 every converted read does, where the repository tools judged it by the person's ceiling on
 invoices. A role that reaches Restricted on a factoring kind and only Internal on invoices is
 shown the factoring money it was granted.
+
+The report reads were not gated, so at a person's role ceiling below Internal a run or a schedule
+now withholds every field but `id`, where the repository rows returned them all. The report
+module converted two of its nine reads. `report_list_table_change_alerts` stays on the repository
+path: `table_change_alert` defaults to Restricted with no field sensitivities, so through the guard
+an alert would show only its id at Internal, and declaring its fields Internal would also show an
+alert's name, table, conditions and custom message wherever that kind's sensitivities govern
+(write previews, and the AI audit trail's recorded arguments, read by people at their own
+ceiling), which is newly shown at Internal. That is the owner's call; the inventory says so. The
+other six stay with their reasons in the inventory.
 
 The ledger's repository tools applied the ceiling to their totals, reasons and notes only, and
 returned every other column at any tier; at a person's role ceiling below Internal each converted

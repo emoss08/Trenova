@@ -38552,21 +38552,129 @@
     },
     {
       "name": "report_list_runs",
-      "description": "List recent runs the person you are acting for made of a report, newest first, so you can name the two worth comparing; another person's runs are never listed. Use this before report_compare_runs, which needs run ids and has no other way to learn them. Each row says whether the run finished and whether its rows were stored — a run whose rows were not stored cannot be compared, and there is no way to recover them short of running the report again.",
+      "description": "List recent runs the person you are acting for made of a report, newest first, so you can name the two worth comparing; another person's runs are never listed. Use this before report_compare_runs, which needs run ids and has no other way to learn them. Each row says whether it can be compared (comparable) and why not — a run whose rows were not stored cannot be, and there is no way to recover them short of running the report again. Filters: cannedKey, completedAtFrom/To, createdAtFrom/To, definitionId, format, hasDefinition, rowCountMin/Max, status, trigger, truncated.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "cannedKey": {
+            "description": "Only records whose canned key contains this text. A built-in report's reportKey, from report_list.",
+            "type": "string"
+          },
+          "completedAtFrom": {
+            "description": "Only records whose completed at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "completedAtTo": {
+            "description": "Only records whose completed at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "definitionId": {
-            "description": "The saved report to list runs of, from report_list. Omit to list the person's recent runs across every report.",
+            "description": "The saved report, from report_list. Never guess one.",
             "type": "string",
             "x-recordOf": "report"
           },
+          "format": {
+            "description": "Only records whose format contains this text.",
+            "type": "string"
+          },
+          "hasDefinition": {
+            "description": "true for only records that have a definition, false for only those that have none.",
+            "type": "boolean"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 25.",
-            "maximum": 25,
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "maximum": 50,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
+          },
+          "query": {
+            "description": "Words to find in a run's status, format or built-in report key.",
+            "type": "string"
+          },
+          "rowCountMax": {
+            "description": "Only records whose row count is at most this.",
+            "type": "integer"
+          },
+          "rowCountMin": {
+            "description": "Only records whose row count is at least this.",
+            "type": "integer"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "artifactExpiresAt",
+              "byteSize",
+              "cacheHit",
+              "cannedKey",
+              "cannedVersion",
+              "completedAt",
+              "createdAt",
+              "definitionId",
+              "durationMs",
+              "error",
+              "format",
+              "params",
+              "queuedAt",
+              "requestedById",
+              "revisionId",
+              "rowCount",
+              "startedAt",
+              "status",
+              "trigger",
+              "truncated"
+            ],
+            "type": "string",
+            "x-enumOf": "report_list_runs.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status contains this text. queued, running, succeeded, failed, canceled or expired; only a succeeded run can be compared.",
+            "type": "string"
+          },
+          "trigger": {
+            "description": "Only records whose trigger contains this text.",
+            "type": "string"
+          },
+          "truncated": {
+            "description": "true for only the records whose truncated is true, false for only those whose truncated is false.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -38595,12 +38703,12 @@
     },
     {
       "name": "report_list_schedules",
-      "description": "List reports on a schedule: when each runs, in what formats, who it is emailed to, whether it is on and when it runs next. Only the person who set a schedule up can change it with report_update_schedule or remove it with report_delete_schedule; yours says which are theirs.",
+      "description": "List reports on a schedule: when each runs, in what formats, who it is emailed to, whether it is on and when it runs next. Only the person who set a schedule up can change it with report_update_schedule or remove it with report_delete_schedule; mine says which are theirs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "definitionId": {
-            "description": "Only the schedules of this saved report, from report_list.",
+            "description": "The saved report, from report_list. Never guess one.",
             "type": "string",
             "x-recordOf": "report"
           },
@@ -38609,8 +38717,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 50 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true

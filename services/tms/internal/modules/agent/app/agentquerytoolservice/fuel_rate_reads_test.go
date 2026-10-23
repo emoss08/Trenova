@@ -7,8 +7,6 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,37 +70,4 @@ func TestListRateImports_NarrowsToOneAgreement(t *testing.T) {
 	rows := result.(map[string]any)["imports"].([]rateImportRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, 5, rows[0].Changed)
-}
-
-type fakeReportSchedules struct {
-	schedules []*report.ReportSchedule
-	captured  *reporting.ListSchedulesRequest
-}
-
-func (f *fakeReportSchedules) ListSchedules(
-	_ context.Context,
-	req *reporting.ListSchedulesRequest,
-) ([]*report.ReportSchedule, error) {
-	f.captured = req
-
-	return f.schedules, nil
-}
-
-func TestListReportSchedules_SaysWhichAreTheCallers(t *testing.T) {
-	t.Parallel()
-
-	params := testParams(map[string]any{})
-	schedules := &fakeReportSchedules{schedules: []*report.ReportSchedule{
-		{ID: pulid.MustNew("rsch_"), RunAsID: params.Actor.UserID, Enabled: true},
-		{ID: pulid.MustNew("rsch_"), RunAsID: pulid.MustNew("usr_")},
-	}}
-	tool := &listReportSchedulesTool{schedules: schedules}
-
-	result, err := tool.Query(t.Context(), params)
-	require.NoError(t, err)
-	rows := result.(map[string]any)["schedules"].([]reportScheduleRow)
-	require.Len(t, rows, 2)
-	assert.True(t, rows[0].Yours)
-	assert.False(t, rows[1].Yours)
-	assert.Equal(t, maxReportSchedules, schedules.captured.Limit)
 }

@@ -25337,7 +25337,15 @@ type Query {
   reportDefinitions(input: DataTableConnectionInput!): ReportDefinitionConnection!
   reportRun(id: ID!): ReportRun!
   reportRuns(filter: ReportRunsFilterInput, input: DataTableConnectionInput!): ReportRunConnection!
-  reportSchedules(definitionId: ID): [ReportSchedule!]!
+  reportSchedules(
+    definitionId: ID
+    """Only schedules that are switched on."""
+    enabledOnly: Boolean
+    """
+    At most this many schedules, from 1 to 100. Every schedule of a named report when left out; 20 across the organization.
+    """
+    limit: Int
+  ): [ReportSchedule!]!
   reportView(id: ID!): ReportView!
   reportViews(definitionId: ID): [ReportView!]!
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
@@ -26931,7 +26939,7 @@ type ReportPreviewColumn {
   type: String!
 }
 
-type ReportRun {
+type ReportRun @kind(resource: "report") {
   artifactExpiresAt: Timestamp
   byteSize: Int!
   cacheHit: Boolean!
@@ -26949,6 +26957,10 @@ type ReportRun {
   requestedById: ID!
   revisionId: ID
   rowCount: Int!
+  """
+  Whether the run's rows were stored, so it can be compared with another run.
+  """
+  rowsStored: Boolean!
   startedAt: Timestamp
   status: String!
   trigger: String!
@@ -26978,7 +26990,7 @@ input ReportRunsFilterInput {
   statuses: [String!]
 }
 
-type ReportSchedule {
+type ReportSchedule @kind(resource: "report") {
   alert: ReportScheduleAlert
   alertFiring: Boolean!
   consecutiveFailures: Int!
@@ -26992,6 +27004,10 @@ type ReportSchedule {
   formats: [String!]!
   id: ID!
   lastRunId: ID
+  """
+  Whether the person reading set the schedule up, and so may change or remove it.
+  """
+  mine: Boolean!
   nextRunAt: Timestamp
   notifyUserIds: [ID!]!
   runAsId: ID!

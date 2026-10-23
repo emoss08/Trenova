@@ -1968,6 +1968,10 @@ models:
   FactoringRemittanceLineAction:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittanceLineAction
+  ReportSchedule:
+    fields:
+      mine:
+        resolver: true
   FactoringRemittance:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Remittance

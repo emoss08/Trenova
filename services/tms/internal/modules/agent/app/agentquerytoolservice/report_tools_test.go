@@ -38,19 +38,18 @@ type fakeReporting struct {
 	preview    *reporting.PreviewResult
 	previewErr error
 
-	// runs is what ListRuns answers, and rows maps a run id to the stored rows
-	// a comparison reads back. A run absent from rows is a run whose rows were
-	// never stored, which is a state the tool has to report rather than crash
-	// on.
+	// runs are the runs GetRun finds by id, and rows maps a run id to the
+	// stored rows a comparison reads back. A run absent from rows is a run
+	// whose rows were never stored, which is a state the tool has to report
+	// rather than crash on.
 	runs    []*report.ReportRun
 	rows    map[pulid.ID]*reportrows.Envelope
 	rowsErr map[pulid.ID]error
 
-	submitted  *reporting.RunReportRequest
-	fetched    *reporting.GetRunRequest
-	listed     *reporting.ListDefinitionsRequest
-	listedRuns *reporting.ListRunsRequest
-	previewed  *reporting.PreviewRequest
+	submitted *reporting.RunReportRequest
+	fetched   *reporting.GetRunRequest
+	listed    *reporting.ListDefinitionsRequest
+	previewed *reporting.PreviewRequest
 }
 
 func (f *fakeReporting) ListCanned() []*canned.Entry { return f.entries }
@@ -97,15 +96,6 @@ func (f *fakeReporting) GetRun(
 	}
 
 	return f.run, nil
-}
-
-func (f *fakeReporting) ListRuns(
-	_ context.Context,
-	req *reporting.ListRunsRequest,
-) ([]*report.ReportRun, error) {
-	f.listedRuns = req
-
-	return f.runs, nil
 }
 
 func (f *fakeReporting) ReadRunRows(
@@ -285,7 +275,6 @@ func reportingTools(
 		newListReportDatasetsTool(catalogResolver(permissions)),
 		newDescribeReportDatasetTool(catalogResolver(permissions)),
 		newPreviewReportTool(service),
-		newListReportRunsTool(service),
 		newCompareReportRunsTool(service),
 	} {
 		tools[tool.Name()] = tool

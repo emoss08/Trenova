@@ -162,15 +162,13 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `report_get` | op | reportDefinition (+ cannedReports) | ReportDefinitionById (+ CannedReports for reportKey) | n/a | id | Same ReportingService.GetDefinition; canned reports by key from cannedReports. |
-| `report_get_dataset` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata: one entity of ReportCatalog.entities; no per-dataset arg, the client picks the entity. |
-| `report_get_run` | op | reportRun | ReportRunById | n/a | id | Same GetRun. Row reads (ReadRunRows) and the analysis path of the tool are not GraphQL. |
-| `report_list` | op | reportDefinitions (+ cannedReports) | ReportDefinitionsTable (+ CannedReports) | cursor | DataTable fieldFilters only | Tool merges ListCanned + ListDefinitions; category as fieldFilter. |
-| `report_list_dashboards` | op | reportDashboards | ReportDashboards | unpaged | none | Same ListDashboards; query/paging client-side. |
-| `report_list_datasets` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata with no record kind; category/query filtered client-side. |
-| `report_list_runs` | op | reportRuns | ReportRunsTable | cursor | DataTable + bespoke ReportRunsFilterInput (definitionId, statuses) | Same ReportingService runs list. |
-| `report_list_schedules` | op | reportSchedules | ReportSchedules | unpaged list | typed definitionId | Same ListSchedules; enabledOnly filtered client-side. |
-| `report_list_table_change_alerts` | op | tcaSubscriptions | TCASubscriptionTable | cursor | DataTable fieldFilters only | Same TCA subscription repository. |
+| `report_get` | op | reportDefinition (+ cannedReports) | ReportDefinitionById (+ CannedReports for reportKey) | n/a | id | Same ReportingService.GetDefinition; canned reports by key from cannedReports. Stays on the repository path (report PR): one tool reads a built-in report by `reportKey` or a saved one by id, with each parameter's shape; GraphQL serves the two from different roots (`cannedReports` has no key argument), and a get binds one root. |
+| `report_get_dataset` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata: one entity of ReportCatalog.entities; no per-dataset arg, the client picks the entity. Stays on the repository path (report PR): the catalog is in process, and `reportCatalog` takes no dataset argument, so each call would fetch and discard the whole catalog. |
+| `report_get_run` | op | reportRun | ReportRunById | n/a | id | Same GetRun. Row reads (ReadRunRows) and the analysis path of the tool are not GraphQL. Stays on the repository path (report PR): the tool returns a sample of the run's rows from the stored artifact (`ReadRunRows`), which no GraphQL root reads. |
+| `report_list` | op | reportDefinitions (+ cannedReports) | ReportDefinitionsTable (+ CannedReports) | cursor | DataTable fieldFilters only | Tool merges ListCanned + ListDefinitions; category as fieldFilter. Stays on the repository path (report PR): it merges built-in and saved reports in one search, and GraphQL serves them from two roots, one unpaged. |
+| `report_list_dashboards` | op | reportDashboards | ReportDashboards | unpaged | none | Same ListDashboards; query/paging client-side. Stays on the repository path (report PR): `reportDashboards` checks report read where the tool checks dashboard read, so the generator refuses the binding until the two agree, which is the owner's call. |
+| `report_list_datasets` | op | reportCatalog | ReportCatalog | unpaged | none | Catalog metadata with no record kind; category/query filtered client-side. Stays on the repository path (report PR): the catalog is in process, and `reportCatalog` returns it whole with no filter, so each call would fetch the whole catalog to keep a few datasets. |
+| `report_list_table_change_alerts` | op | tcaSubscriptions | TCASubscriptionTable | cursor | DataTable fieldFilters only | Same TCA subscription repository. Stays on the repository path (report PR): `table_change_alert` defaults to Restricted with no field sensitivities, so through the guard an alert shows only its id at Internal. Declaring its fields Internal would also newly show an alert's name, table, conditions and custom text at Internal where that kind's sensitivities govern (the AI audit trail's recorded arguments of an alert tool, read by people at their own ceiling, and write previews). Which fields are Internal is the owner's call; once declared, the tool binds `tcaSubscriptions` through a Desk operation like the run list. |
 
 ## settlement
 
@@ -203,8 +201,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 28 |
-| op, converted (rows removed) | 91 |
+| op, not yet converted | 26 |
+| op, converted (rows removed) | 93 |
 | field-no-op, not yet converted | 0 |
 | field-no-op, converted (rows removed) | 6 |
 | partial, not yet converted | 12 |

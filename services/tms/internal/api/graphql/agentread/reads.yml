@@ -290,3 +290,10 @@ reads:
     operation: HomeLayout
     reason: The tool is named for the home page, which no kind claims; homeLayout reads the caller's own layout.
   - tool: rate_get_matrix
+  - tool: report_list_runs
+    operation: DeskReportRuns
+    reason: A report run is a record of the report resource, read by reportRuns, which no kind claims by name.
+    entity: github.com/emoss08/trenova/internal/modules/workspace/domain/report.ReportRun
+  - tool: report_list_schedules
+    operation: DeskReportSchedules
+    reason: Report schedules are read by reportSchedules, one saved report's whole or a page of every one the organization has.
