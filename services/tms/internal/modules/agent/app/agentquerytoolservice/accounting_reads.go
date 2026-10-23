@@ -38,6 +38,7 @@ const (
 	accountingStatusField     = "status"
 	accountingMeaningField    = "whatThisMeans"
 	accountingProviderField   = "providerName"
+	accountingMappingField    = "mapping"
 
 	sendingNotStarted = "NotStarted"
 	sendingPaused     = "Paused"
@@ -201,7 +202,7 @@ func mappingGapsListSpec() graphQLListSpec {
 			"setup can finish. Each gap carries its id and the candidates Trenova " +
 			"considered; pass them to accounting_get_mapping or accounting_set_mapping.",
 		searchTerms: []string{
-			"mapping", "unmapped", "setup", "match", "gaps", "still needs mapping",
+			accountingMappingField, "unmapped", "setup", "match", "gaps", "still needs mapping",
 		},
 		queryNote: "Words to find in the Trenova label or the chosen record's name.",
 		names: map[string]string{
@@ -263,7 +264,7 @@ func accountingGetSpecs() []getSpec {
 				"resolution, and the accounting system's document number and link once " +
 				"synced. Use it to explain why a document did not reach the books before " +
 				"retrying or skipping it. It never returns what was sent or any credential.",
-			searchTerms: []string{"attempts", "tries", "sync error"},
+			searchTerms: []string{keyAccountingAttempts, "tries", "sync error"},
 			resource:    permission.ResourceAccountingSync,
 			kinds:       []permission.RecordKind{permission.KindAccountingSyncRecord},
 			paramName:   paramSyncRecordID,
@@ -314,7 +315,7 @@ func accountingGetSpecs() []getSpec {
 				source: "customer_list, carrier_list or masterdata_list_accessorial_charges",
 			}},
 			shape: func(record map[string]any) {
-				if mapping, ok := record["mapping"].(map[string]any); ok {
+				if mapping, ok := record[accountingMappingField].(map[string]any); ok {
 					mappingActions(mapping, nil, clock{})
 				}
 			},

@@ -27,6 +27,7 @@ const (
 	fieldSubmissionTime   = "submissionTime"
 	fieldRemittanceCells  = "cells"
 	keyFactoringSummary   = "summary"
+	entityInvoices        = "invoices"
 	keyFactoringPath      = "path"
 	factoringScheduleTerm = "factoring schedule"
 	factorRemittanceTerm  = "factor remittance"
@@ -64,7 +65,7 @@ func factoringReadSpecs() []graphQLListSpec {
 func readinessListSpec() graphQLListSpec {
 	return graphQLListSpec{
 		name:         toolListFactoringReadiness,
-		entityPlural: "invoices",
+		entityPlural: entityInvoices,
 		summary: "List factored customers' invoices by readiness, newest first, with the " +
 			"queue's totals. summary totals what is ready, not ready, submitted, ready for " +
 			"more than a day without being submitted, funded, reserve held and chargebacks " +
