@@ -1624,6 +1624,24 @@
       "routes/reconciliation-summary"
     ]
   },
+  "70% of linehaul with stop pay and a hazmat premium for owner-operators": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "75% of total revenue with stop pay for leased owner-operators": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "7d": {
     "sites": 1,
     "scope": [
@@ -37889,6 +37907,15 @@
       "routes/fuel-management"
     ]
   },
+  "Banded per-loaded-mile pay with stop pay and detention for company drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Bands start here — usually your peg (base) price.": {
     "sites": 1,
     "scope": [
@@ -43755,6 +43782,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Calendar fiscal year opened for volume seed history": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Calendar rules for accessorials: weekends, business hours and time spent within them. Every function reads a date-time on its own clock, in the offset it carries.": {
@@ -109100,6 +109136,15 @@
       "apps/web/lib"
     ]
   },
+  "Flat pay per load with stop pay and short free time for local drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Flat per shipment": {
     "sites": 1,
     "scope": [
@@ -109107,6 +109152,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Flat per-total-mile with a $900 guaranteed weekly minimum for regional drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Flat rate": {
@@ -112243,7 +112297,7 @@
     ]
   },
   "Fuel surcharge": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -115816,7 +115870,7 @@
     ]
   },
   "Guaranteed minimum pay top-up": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -129708,6 +129762,15 @@
       "rules/tariff"
     ]
   },
+  "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "It is decided in the conversation it was proposed in.": {
     "sites": 1,
     "scope": [
@@ -137965,7 +138028,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -145335,12 +145398,14 @@
     ]
   },
   "Margins": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/reports"
     ]
   },
   "Margins are tight — review before assigning.": {
@@ -154489,6 +154554,15 @@
       "routes/osha"
     ]
   },
+  "Needs the {0} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Needs work": {
     "sites": 1,
     "scope": [
@@ -154534,6 +154608,15 @@
       "packages/shared/lib"
     ]
   },
+  "Needs {0} read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "NeedsReview": {
     "sites": 2,
     "scope": [
@@ -154562,7 +154645,7 @@
     ]
   },
   "Negative balance carried forward from prior settlement": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -156116,7 +156199,7 @@
     ]
   },
   "New report": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -165691,6 +165774,15 @@
     "areas": [
       "apps/web/lib",
       "routes/factoring-company"
+    ]
+  },
+  "Non-taxable reimbursement of a driver-paid trip expense": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Non-urgent emails arrive together at 8:00 AM. Urgent ones still come right away.": {
@@ -191007,7 +191099,7 @@
     ]
   },
   "Personal": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -191019,6 +191111,7 @@
       "packages/shared/lib",
       "packages/shared/types",
       "routes/dispatch-console",
+      "routes/reports",
       "routes/shipment",
       "routes/worker"
     ]
@@ -210593,6 +210686,24 @@
       "go/other"
     ]
   },
+  "Reference only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Reference only — the rest needs {0} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "Reference the clause this policy encodes, so a dispute can cite it.": {
     "sites": 1,
     "scope": [
@@ -213562,6 +213673,15 @@
     ]
   },
   "Remove tile": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
+  "Remove unavailable fields": {
     "sites": 1,
     "scope": [
       "ts"
@@ -254337,6 +254457,15 @@
       "routes/order"
     ]
   },
+  "Team per-loaded-mile rate split evenly between both drivers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Team player": {
     "sites": 1,
     "scope": [
@@ -268634,6 +268763,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The preview and runs are refused until they are removed or your access changes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "The preview could not be drawn": {
@@ -290955,7 +291093,7 @@
     ]
   },
   "Unavailable": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -290964,7 +291102,17 @@
       "packages/shared/lib",
       "routes/admin",
       "routes/desk",
-      "routes/factoring"
+      "routes/factoring",
+      "routes/reports"
+    ]
+  },
+  "Unavailable at your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "Uncancel": {
@@ -313061,6 +313209,15 @@
       "go/other"
     ]
   },
+  "You cannot open this report's data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "You cannot read this agent": {
     "sites": 1,
     "scope": [
@@ -328161,6 +328318,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# field in this report is unavailable to you} other {# fields in this report are unavailable to you}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0, plural, one {# field scored} other {# fields scored}}": {
     "sites": 3,
     "scope": [
@@ -337760,6 +337926,15 @@
       "go/other"
     ]
   },
+  "{0} is above your role's sensitivity level": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0} is already mapped to {1}": {
     "sites": 1,
     "scope": [
@@ -338156,6 +338331,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} is no longer in the catalog": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} is no longer ready to move up a tier on this agent": {
@@ -340445,6 +340629,15 @@
       "rules/tariff"
     ]
   },
+  "{0} needs the {1} field group": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
+    ]
+  },
   "{0} needs two whole numbers, but {1} is {2} and {3} is {4}. Round first with {5}": {
     "sites": 2,
     "scope": [
@@ -340485,6 +340678,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} needs {1} read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/reports"
     ]
   },
   "{0} negative margin": {
@@ -341566,7 +341768,8 @@
       "routes/agent-control",
       "routes/customer-ledger",
       "routes/desk",
-      "routes/holiday"
+      "routes/holiday",
+      "routes/reports"
     ]
   },
   "{0} on {1}, opens in a new tab": {

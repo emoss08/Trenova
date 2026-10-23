@@ -7123,6 +7123,9 @@ type ReportBandInput struct {
 	Edges []float64 `json:"edges,omitempty"`
 }
 
+// The report catalog as the caller may use it: every kind they can read, and
+// every kind they cannot read that they can still reach through a join, with
+// only its reference-view fields available.
 type ReportCatalog struct {
 	Version  string                 `json:"version"`
 	Entities []*ReportCatalogEntity `json:"entities"`
@@ -7134,18 +7137,31 @@ type ReportCatalogEdge struct {
 	Target      string `json:"target"`
 	Cardinality string `json:"cardinality"`
 	Traversable bool   `json:"traversable"`
+	// Whether the caller may follow the edge in a report and, when not, what they lack.
+	Access ReportFieldAccess `json:"access"`
+	// Whether the edge is in its source kind's reference view.
+	InReferenceView bool `json:"inReferenceView"`
+	// The kind whose read the caller lacks to follow the edge, when access is
+	// NeedsKindRead.
+	NeedsReadOf *ReportCatalogKind `json:"needsReadOf,omitempty"`
 }
 
 type ReportCatalogEntity struct {
-	Key               string                `json:"key"`
-	Resource          string                `json:"resource"`
-	Label             string                `json:"label"`
-	PluralLabel       string                `json:"pluralLabel"`
-	Description       *string               `json:"description,omitempty"`
-	Category          string                `json:"category"`
-	OwnScopeSupported bool                  `json:"ownScopeSupported"`
-	Fields            []*ReportCatalogField `json:"fields"`
-	Edges             []*ReportCatalogEdge  `json:"edges"`
+	Key               string  `json:"key"`
+	Resource          string  `json:"resource"`
+	Label             string  `json:"label"`
+	PluralLabel       string  `json:"pluralLabel"`
+	Description       *string `json:"description,omitempty"`
+	Category          string  `json:"category"`
+	OwnScopeSupported bool    `json:"ownScopeSupported"`
+	// Whether the caller may read the kind. A report starts only from a kind the
+	// caller reads; one they cannot read is reached through a join, and only its
+	// reference-view fields are available.
+	Readable bool `json:"readable"`
+	// Whether a run may export the kind's own fields.
+	Exportable bool                  `json:"exportable"`
+	Fields     []*ReportCatalogField `json:"fields"`
+	Edges      []*ReportCatalogEdge  `json:"edges"`
 }
 
 type ReportCatalogEnumValue struct {
@@ -7164,8 +7180,21 @@ type ReportCatalogField struct {
 	Aggregations []string                  `json:"aggregations"`
 	Filterable   bool                      `json:"filterable"`
 	Groupable    bool                      `json:"groupable"`
-	Accessible   bool                      `json:"accessible"`
-	Sensitivity  string                    `json:"sensitivity"`
+	// Whether the caller may use the field in a report and, when not, what they lack.
+	Access ReportFieldAccess `json:"access"`
+	// Whether the field is in its kind's reference view, so a report can show it
+	// through a join from a record the caller reads without the kind's own read.
+	InReferenceView bool `json:"inReferenceView"`
+	// The protected field group the field belongs to, and whether the caller holds it.
+	Protection  *ReportFieldProtection `json:"protection,omitempty"`
+	Sensitivity string                 `json:"sensitivity"`
+}
+
+// A kind of record, as the report catalog names it.
+type ReportCatalogKind struct {
+	Resource string `json:"resource"`
+	// The kind's plural label, such as Customers.
+	Label string `json:"label"`
 }
 
 type ReportChartGoalInput struct {
@@ -7365,6 +7394,12 @@ type ReportDrillInput struct {
 type ReportDrillValueInput struct {
 	ColumnID string `json:"columnId"`
 	Value    any    `json:"value,omitempty"`
+}
+
+type ReportFieldProtection struct {
+	Group permission.FieldGroup `json:"group"`
+	// Whether the caller's role grants the group.
+	Held bool `json:"held"`
 }
 
 type ReportFieldRefInput struct {
@@ -13674,6 +13709,73 @@ func (e *RateQuotePurpose) UnmarshalJSON(b []byte) error {
 }
 
 func (e RateQuotePurpose) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether a caller may use a catalog field or edge in a report, decided by the
+// rule the report compiler applies, so a field marked Available compiles and
+// any other is refused.
+type ReportFieldAccess string
+
+const (
+	// The caller may use it.
+	ReportFieldAccessAvailable ReportFieldAccess = "Available"
+	// It is outside its kind's reference view, and the caller cannot read the
+	// kind. Through a join, only the kind's reference-view fields can be used.
+	ReportFieldAccessNeedsKindRead ReportFieldAccess = "NeedsKindRead"
+	// It is ranked above the caller's sensitivity ceiling.
+	ReportFieldAccessWithheldByCeiling ReportFieldAccess = "WithheldByCeiling"
+	// It is in a protected field group the caller's role does not grant.
+	ReportFieldAccessNeedsFieldGroup ReportFieldAccess = "NeedsFieldGroup"
+)
+
+var AllReportFieldAccess = []ReportFieldAccess{
+	ReportFieldAccessAvailable,
+	ReportFieldAccessNeedsKindRead,
+	ReportFieldAccessWithheldByCeiling,
+	ReportFieldAccessNeedsFieldGroup,
+}
+
+func (e ReportFieldAccess) IsValid() bool {
+	switch e {
+	case ReportFieldAccessAvailable, ReportFieldAccessNeedsKindRead, ReportFieldAccessWithheldByCeiling, ReportFieldAccessNeedsFieldGroup:
+		return true
+	}
+	return false
+}
+
+func (e ReportFieldAccess) String() string {
+	return string(e)
+}
+
+func (e *ReportFieldAccess) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReportFieldAccess(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReportFieldAccess", str)
+	}
+	return nil
+}
+
+func (e ReportFieldAccess) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReportFieldAccess) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReportFieldAccess) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

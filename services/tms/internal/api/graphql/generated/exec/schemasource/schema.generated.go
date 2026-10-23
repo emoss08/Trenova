@@ -24220,8 +24220,41 @@ type ReportCatalogField {
   aggregations: [String!]!
   filterable: Boolean!
   groupable: Boolean!
-  accessible: Boolean!
+  "Whether the caller may use the field in a report and, when not, what they lack."
+  access: ReportFieldAccess!
+  """
+  Whether the field is in its kind's reference view, so a report can show it
+  through a join from a record the caller reads without the kind's own read.
+  """
+  inReferenceView: Boolean!
+  "The protected field group the field belongs to, and whether the caller holds it."
+  protection: ReportFieldProtection
   sensitivity: String!
+}
+
+"""
+Whether a caller may use a catalog field or edge in a report, decided by the
+rule the report compiler applies, so a field marked Available compiles and
+any other is refused.
+"""
+enum ReportFieldAccess {
+  "The caller may use it."
+  Available
+  """
+  It is outside its kind's reference view, and the caller cannot read the
+  kind. Through a join, only the kind's reference-view fields can be used.
+  """
+  NeedsKindRead
+  "It is ranked above the caller's sensitivity ceiling."
+  WithheldByCeiling
+  "It is in a protected field group the caller's role does not grant."
+  NeedsFieldGroup
+}
+
+type ReportFieldProtection {
+  group: ProtectedFieldGroup!
+  "Whether the caller's role grants the group."
+  held: Boolean!
 }
 
 type ReportCatalogEdge {
@@ -24230,6 +24263,22 @@ type ReportCatalogEdge {
   target: String!
   cardinality: String!
   traversable: Boolean!
+  "Whether the caller may follow the edge in a report and, when not, what they lack."
+  access: ReportFieldAccess!
+  "Whether the edge is in its source kind's reference view."
+  inReferenceView: Boolean!
+  """
+  The kind whose read the caller lacks to follow the edge, when access is
+  NeedsKindRead.
+  """
+  needsReadOf: ReportCatalogKind
+}
+
+"A kind of record, as the report catalog names it."
+type ReportCatalogKind {
+  resource: String!
+  "The kind's plural label, such as Customers."
+  label: String!
 }
 
 type ReportCatalogEntity {
@@ -24240,10 +24289,23 @@ type ReportCatalogEntity {
   description: String
   category: String!
   ownScopeSupported: Boolean!
+  """
+  Whether the caller may read the kind. A report starts only from a kind the
+  caller reads; one they cannot read is reached through a join, and only its
+  reference-view fields are available.
+  """
+  readable: Boolean!
+  "Whether a run may export the kind's own fields."
+  exportable: Boolean!
   fields: [ReportCatalogField!]!
   edges: [ReportCatalogEdge!]!
 }
 
+"""
+The report catalog as the caller may use it: every kind they can read, and
+every kind they cannot read that they can still reach through a join, with
+only its reference-view fields available.
+"""
 type ReportCatalog {
   version: String!
   entities: [ReportCatalogEntity!]!

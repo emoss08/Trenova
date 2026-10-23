@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/types/search"
 	"github.com/stretchr/testify/mock"
@@ -66,6 +67,14 @@ func (e *viewEngine) GetResourcePermissions(
 		Resource:       resource,
 		MaxSensitivity: e.ceiling,
 	}, nil
+}
+
+func (e *viewEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, e, userID, orgID, resources)
 }
 
 func fill(t *testing.T, value any) {

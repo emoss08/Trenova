@@ -89,12 +89,31 @@ Internal.
 - **Reports and exports.** The report catalog generator classifies every field and edge
   `reference` or `kind_read` from its resource's reference view (`reportcatalog.Classify`);
   entities that are part of another record are marked `withinRecord` and are always `kind_read`.
-  The compiler (`reporting/compiler/authorize.go`) requires read, and export for a run, on the
-  root entity and on any joined entity a `kind_read` field or edge is used from; a joined entity
-  used only through reference fields needs no read of its own, and each of those fields is decided
-  by `refview` through `permissionports.ReferenceViews`, so the role's ceiling applies inside the
-  view. Table exports and dashboard exports compile through the same check. Protected fields are
-  declared in the catalog (`protected: Personal|Margins`) and refused without the group.
+  One package decides what a caller may use of that catalog:
+  `reporting/reportaccess`. `Access.Field` and `Access.Edge` are the rule: on a kind the caller
+  reads, a field is held to their ceiling; on a kind they cannot read, only a `reference` field
+  is usable, decided by `refview` through `permissionports.ReferenceViews` (ceiling included);
+  an edge is a field of its source, and a pick edge needs read on each kind it picks rows from;
+  a protected field (`protected: Personal|Margins`) needs its group either way. Every report
+  surface asks it, from one `GetResourcePermissionsBatch` read of the caller's permissions per
+  request:
+  - the compiler (`compiler/authorize.go`), which also requires read, and export for a run, on
+    the root and on any entity whose own rows the query reads or whose `kind_read` fields it
+    uses; its refusals (`Resolver.Reason`) name the missing kind read, tier or group;
+  - the `reportCatalog` query (`reporting.Service.Catalog`), which returns every kind the caller
+    reads plus every kind they can reach only through a join, with `readable`, `exportable`
+    and, per field and edge, `access` (`Available`, `NeedsKindRead`, `WithheldByCeiling`,
+    `NeedsFieldGroup`), `inReferenceView`, `protection { group held }` and `needsReadOf`;
+  - drill-through, and the agent's `report_list_datasets` and `report_get_dataset`, which
+    describe a reference-only dataset, mark edges `referenceOnly` and say what a closed field
+    or edge `needs`.
+
+  The builder starts a report only from a readable kind, lists only the reference view of a kind
+  reached through a join ("Reference only — the rest needs {Kind} read"), shows protected fields
+  with a lock and their group, disables what is unavailable with its reason, and gives a saved
+  report that names unavailable fields an alert that lists them and removes them
+  (`lib/report-catalog-access.ts`, `unavailable-fields-alert.tsx`). Table exports and dashboard
+  exports compile through the same check.
 - **Row-level security.** The `read_scope` policies on shipments, orders, invoices and workers
   narrow only by an `own` or `team` grant. A kind the reader cannot read at all is not narrowed in
   the database, so a linked record of those four kinds is returned and shows its reference view,
@@ -264,6 +283,9 @@ Each failure says what to add.
 | `TestPageAccessManifestIsGenerated` (pagemanifest) | `manifest_gen.json` differs from what refgen writes from the screens, the operations, the schema, the registry and the routes |
 | `TestViewWordsAreGenerated` (pagemanifest) | a view or a link between kinds changed and `viewwords_gen.go` was not regenerated |
 | `TestEveryFieldAndEdgeIsClassifiedByItsReferenceView` (reportcatalog) | a report catalog field or edge is unclassified, or its class disagrees with the registry's view |
+| `TestCatalogAnnotationsAgreeWithTheCompiler` (reporting compiler) | for one of four roles, a catalog field the builder marks available is refused by the compiler, or one it marks unavailable compiles |
+| `TestReportSurfacesDecideAccessOnlyThroughReportaccess` (reportaccess) | the compiler, the reporting service, the report resolvers or the agent's report tools call an access primitive (`CanAccess`, `Decide`, `Person`, `InReferenceView`, `Classify`, `Visible`) instead of asking reportaccess |
+| `TestTheCompilerAndTheCatalogShareTheDecision` (reportaccess) | the compiler or the catalog stops deciding through `Access.Field` and `Access.Edge` |
 | `TestEveryProtectedFieldIsGatedInTheReportCatalog` (gqlext) | a schema `@protected` field is not marked `protected` in the report catalog, or the reverse |
 | `TestEveryMarginFieldIsProtectedByTheMarginsGroup` (gqlext) | a GraphQL field named for a margin or profit is not `@protected(group: Margins)`, is not on a type reached only through such fields, and is not listed in `unprotectedMarginNames` with why |
 | `TestEveryMarginEnumValueSaysWhereItIsRefused` (gqlext) | an enum value named for a margin is not listed in `marginEnumValues` with where it is refused |

@@ -18,6 +18,10 @@ type PersonAccess struct {
 	engine permissionports.PermissionEngine
 	actor  *permissionports.RequestActor
 	check  func(ctx context.Context, kind permission.Resource) (bool, error)
+	detail func(
+		ctx context.Context,
+		kind permission.Resource,
+	) (*permissionports.ResourcePermissionDetail, error)
 
 	mu       sync.Mutex
 	reads    map[permission.Resource]bool
@@ -86,9 +90,7 @@ func (a *PersonAccess) Ceiling(
 		return ceiling, true
 	}
 
-	ceiling = fieldsensitivity.PersonCeiling(
-		ctx, a.engine, a.actor.UserID, a.actor.OrganizationID, kind,
-	)
+	ceiling = a.personCeiling(ctx, kind)
 	if ceiling == "" {
 		ceiling = permission.SensitivityInternal
 	}
@@ -98,6 +100,34 @@ func (a *PersonAccess) Ceiling(
 	a.mu.Unlock()
 
 	return ceiling, true
+}
+
+// WithDetail answers the person's ceilings from the surface's own read of
+// their permission detail rather than asking the engine for each kind.
+func (a *PersonAccess) WithDetail(
+	detail func(
+		ctx context.Context,
+		kind permission.Resource,
+	) (*permissionports.ResourcePermissionDetail, error),
+) *PersonAccess {
+	a.detail = detail
+	return a
+}
+
+func (a *PersonAccess) personCeiling(
+	ctx context.Context,
+	kind permission.Resource,
+) permission.FieldSensitivity {
+	if a.detail == nil {
+		return fieldsensitivity.PersonCeiling(
+			ctx, a.engine, a.actor.UserID, a.actor.OrganizationID, kind,
+		)
+	}
+	detail, err := a.detail(ctx, kind)
+	if err != nil {
+		return permission.SensitivityInternal
+	}
+	return fieldsensitivity.CeilingOf(detail)
 }
 
 // AgentAccess is an agent read's access: the agent's ceiling on every record

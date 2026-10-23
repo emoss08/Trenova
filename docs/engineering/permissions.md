@@ -385,7 +385,9 @@ are not gated this way.
 Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
 one package, `refview`, which the GraphQL field guard asks for people and agents alike, and the
 REST response guard (`internal/api/responseguard`) asks for every REST response. Global search,
-shipment analytics and reports ask it through `permissionports.ReferenceViews`; an insight names
+shipment analytics and reports ask it through `permissionports.ReferenceViews` (reports through
+`reporting/reportaccess`, which the compiler, the builder's catalog and the agent's dataset tools
+share, so the builder offers exactly what the compiler accepts); an insight names
 records beside figures about them, so its reader needs read on every kind its detector declares. They are
 fixed in the code; an organization decides who sees whole linked records through bundles and job
 templates, and the role's sensitivity ceiling still applies inside a view. Built-in bundles grant

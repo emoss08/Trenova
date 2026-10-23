@@ -64,7 +64,10 @@ func TestAuthorize_AFieldOutsideTheViewNeedsTheKindsRead(t *testing.T) {
 		dim("c_customer", "name", "customer"),
 		dim("c_dot", "dotNumber", "customer"),
 	)))
-	requireAuthorizationError(t, err, "you do not have read access to Customers")
+	requireAuthorizationError(t, err,
+		`you do not have read access to Customers, which "DOT Number" on Customer needs; `+
+			"without it a report can use only its reference fields")
+	assert.NotContains(t, err.Error(), `"Name"`, "the reference field is not refused")
 }
 
 func TestAuthorize_AFilterOutsideTheViewNeedsTheKindsRead(t *testing.T) {
@@ -218,7 +221,7 @@ func TestAuthorize_AProtectedFieldNeedsItsGroup(t *testing.T) {
 		permission.FieldGroupSet(0).With(permission.FieldGroupMargins))
 	_, err := withheld.Compile(t.Context(), newRequest(def))
 	requireAuthorizationError(t, err,
-		`field "License Number" on Worker Profile is a protected field and needs protected_personal access`)
+		`field "License Number" on Worker Profile is in the Personal protected field group, which your role does not grant`)
 
 	granted := newTestCompilerWithGroups(allowAllEngine(),
 		permission.FieldGroupSet(0).With(permission.FieldGroupPersonal))
@@ -244,7 +247,7 @@ func TestAuthorize_AProtectedMarginIsWithheldOnAgreementsAndVersions(t *testing.
 			Entity:    entity,
 			Columns:   []report.ColumnSpec{dim("c_floor", "marginFloorPercent")},
 		}))
-		requireAuthorizationError(t, err, "protected_margins")
+		requireAuthorizationError(t, err, "in the Margins protected field group")
 	}
 }
 

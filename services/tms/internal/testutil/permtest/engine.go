@@ -12,10 +12,9 @@ import (
 var _ permissionports.PermissionEngine = (*Engine)(nil)
 
 type Grant struct {
-	Operations       []permission.Operation
-	DataScope        permission.DataScope
-	MaxSensitivity   permission.FieldSensitivity
-	AccessibleFields []string
+	Operations     []permission.Operation
+	DataScope      permission.DataScope
+	MaxSensitivity permission.FieldSensitivity
 }
 
 // Engine is a deterministic PermissionEngine for tests: every resource
@@ -49,11 +48,10 @@ func (e *Engine) GetResourcePermissions(
 		grant = override
 	}
 	return &permissionports.ResourcePermissionDetail{
-		Resource:         resource,
-		Operations:       grant.Operations,
-		DataScope:        grant.DataScope,
-		MaxSensitivity:   grant.MaxSensitivity,
-		AccessibleFields: grant.AccessibleFields,
+		Resource:       resource,
+		Operations:     grant.Operations,
+		DataScope:      grant.DataScope,
+		MaxSensitivity: grant.MaxSensitivity,
 	}, nil
 }
 
@@ -136,4 +134,42 @@ func FullCoverage(req *permissionports.RoleCoverageRequest) []permissionports.Ro
 	}
 
 	return out
+}
+
+func (e *Engine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return Batch(ctx, e, userID, orgID, resources)
+}
+
+// DetailReader is the one engine read Batch answers a batch from.
+type DetailReader interface {
+	GetResourcePermissions(
+		ctx context.Context,
+		userID, orgID pulid.ID,
+		resource string,
+	) (*permissionports.ResourcePermissionDetail, error)
+}
+
+// Batch answers GetResourcePermissionsBatch for a test engine from its own
+// GetResourcePermissions, one resource at a time.
+func Batch(
+	ctx context.Context,
+	engine DetailReader,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	details := make(map[string]*permissionports.ResourcePermissionDetail, len(resources))
+	for _, resource := range resources {
+		detail, err := engine.GetResourcePermissions(ctx, userID, orgID, resource)
+		if err != nil {
+			return nil, err
+		}
+		if detail != nil {
+			details[resource] = detail
+		}
+	}
+	return details, nil
 }
