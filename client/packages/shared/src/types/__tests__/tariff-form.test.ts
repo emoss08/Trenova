@@ -78,6 +78,8 @@ const expected = {
       amount: { $q: "1908.2", u: "$" },
       quantity: { $q: "812", u: "mi" },
       rate: { $q: "2.35", u: "$/mi" },
+      limit: null,
+      on: null,
       range: null,
     },
     {
@@ -88,6 +90,8 @@ const expected = {
       amount: { $q: "190.82", u: "$" },
       quantity: null,
       rate: null,
+      limit: null,
+      on: null,
       range: null,
     },
     {
@@ -98,6 +102,8 @@ const expected = {
       amount: { $q: "0.01", u: "$" },
       quantity: null,
       rate: null,
+      limit: null,
+      on: null,
       range: null,
     },
   ],

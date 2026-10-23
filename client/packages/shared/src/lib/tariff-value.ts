@@ -79,6 +79,15 @@ function show(value: TariffValue, t: TranslateFn, options: TariffValueFormatOpti
       }).format(wall);
       return t("{0} UTC{1}", text, value.offset);
     }
+    case "time": {
+      // A time of day has no date and no zone: the clock it spells, in the reader's 12- or
+      // 24-hour style, with its seconds only when it has some, as interpolation writes it.
+      const wall = Date.UTC(1970, 0, 1, value.hour, value.minute, value.second);
+      return dateTimeFormatter({
+        timeStyle: value.second === 0 ? "short" : "medium",
+        timeZone: "UTC",
+      }).format(wall);
+    }
     case "list":
       return t("{0, plural, one {# item} other {# items}}", value.items.length);
     case "record":

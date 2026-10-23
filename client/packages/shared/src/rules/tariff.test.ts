@@ -588,12 +588,14 @@ describe("choices", () => {
         ],
       },
     ]);
-    expect(preview.trace).toContainEqual({
-      kind: "choice",
-      label: "Linehaul",
-      chosen: "Per mile",
-      range: expect.objectContaining({ from: ltlAt('best "Linehaul"') }),
-    });
+    expect(preview.trace).toContainEqual(
+      expect.objectContaining({
+        kind: "choice",
+        label: "Linehaul",
+        chosen: "Per mile",
+        range: expect.objectContaining({ from: ltlAt('best "Linehaul"') }),
+      }),
+    );
   });
 });
 

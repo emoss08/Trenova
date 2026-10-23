@@ -9,11 +9,13 @@
 
 import {
   TARIFF_DECIMAL_PATTERN,
+  TARIFF_TIME_PATTERN,
   type TariffType,
   type TariffWireDate,
   type TariffWireNumber,
   type TariffWireQuantity,
   type TariffWireRecord,
+  type TariffWireTime,
   type TariffWireValue,
 } from "@trenova/shared/types/tariff";
 import { TARIFF_UNITS, type TariffSimpleUnit } from "./tariff-units.generated";
@@ -136,6 +138,28 @@ export function tariffDate(text: string): TariffWireDate {
   return { $date: text };
 }
 
+/**
+ * A time of day in the module's canonical text, always with seconds (`17:30` is `17:30:00`), or
+ * null when the text is not a time of day from 00:00:00 to 23:59:59.
+ */
+export function normalizeTariffTime(text: string): string | null {
+  const match = TARIFF_TIME_PATTERN.exec(text.trim());
+  if (!match) return null;
+  const [, hour = "00", minute = "00", second = "00"] = match;
+  return `${hour}:${minute}:${second}`;
+}
+
+/**
+ * A time of day: `{"$time": "17:30:00"}`, written with seconds as the module writes it.
+ *
+ * @throws TariffWireError when the text is not a time of day.
+ */
+export function tariffTime(text: string): TariffWireTime {
+  const time = normalizeTariffTime(text);
+  if (time === null) throw new TariffWireError("", `${text} is not a time of day`);
+  return { $time: time };
+}
+
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_TIME_PATTERN = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?(Z|[+-]\d{2}:\d{2})$/;
 
@@ -156,6 +180,7 @@ export type TariffValue =
       second: number;
       offset: string;
     }
+  | { kind: "time"; value: string; hour: number; minute: number; second: number }
   | { kind: "list"; items: TariffValue[] }
   | { kind: "record"; fields: { name: string; value: TariffValue }[] };
 
@@ -190,6 +215,11 @@ export function isTariffQuantity(value: unknown): value is TariffWireQuantity {
 /** Whether a value is a tagged wire date or date-time. */
 export function isTariffDate(value: unknown): value is TariffWireDate {
   return isObject(value) && Object.keys(value).length === 1 && typeof value.$date === "string";
+}
+
+/** Whether a value is a tagged wire time of day. */
+export function isTariffTime(value: unknown): value is TariffWireTime {
+  return isObject(value) && Object.keys(value).length === 1 && typeof value.$time === "string";
 }
 
 /**
@@ -232,6 +262,12 @@ export function decodeTariffValue(wire: unknown, path = ""): TariffValue {
     if (!isTariffDate(wire)) throw new TariffWireError(path, "a date is {$date: text}");
     return decodeDate(wire.$date, path);
   }
+  if ("$time" in wire) {
+    const time = isTariffTime(wire) ? normalizeTariffTime(wire.$time) : null;
+    if (time === null) throw new TariffWireError(path, "a time is {$time: HH:MM:SS}");
+    const [hour = 0, minute = 0, second = 0] = time.split(":").map(Number);
+    return { kind: "time", value: time, hour, minute, second };
+  }
   const fields = Object.entries(wire).map(([name, value]) => {
     if (name.startsWith("$")) throw new TariffWireError(path, `${name} is not a record field`);
     return { name, value: decodeTariffValue(value, path ? `${path}.${name}` : name) };
@@ -270,6 +306,8 @@ export function encodeTariffValue(value: TariffValue): TariffWireValue {
     case "date":
     case "dateTime":
       return tariffDate(value.value);
+    case "time":
+      return { $time: value.value };
     case "list":
       return value.items.map(encodeTariffValue);
     case "record": {
@@ -294,6 +332,7 @@ export type TariffValueProblem = {
     | "not-percent"
     | "not-date"
     | "not-date-time"
+    | "not-time"
     | "not-variant"
     | "not-list"
     | "not-record"
@@ -361,6 +400,10 @@ export function tariffValueProblems(
       return isTariffDate(wire) && DATE_TIME_PATTERN.test(wire.$date)
         ? []
         : [{ path, problem: "not-date-time" }];
+    case "time":
+      return isTariffTime(wire) && normalizeTariffTime(wire.$time) !== null
+        ? []
+        : [{ path, problem: "not-time" }];
     case "enum":
       return typeof wire === "string" && type.variants.includes(wire)
         ? []
@@ -370,7 +413,13 @@ export function tariffValueProblems(
         ? wire.flatMap((item, index) => tariffValueProblems(type.item, item, `${path}[${index}]`))
         : [{ path, problem: "not-list" }];
     case "record": {
-      if (!isObject(wire) || isTariffNumber(wire) || isTariffQuantity(wire) || isTariffDate(wire)) {
+      if (
+        !isObject(wire) ||
+        isTariffNumber(wire) ||
+        isTariffQuantity(wire) ||
+        isTariffDate(wire) ||
+        isTariffTime(wire)
+      ) {
         return [{ path, problem: "not-record" }];
       }
       const record = wire as TariffWireRecord;
@@ -410,6 +459,7 @@ export function emptyTariffValue(type: TariffType): TariffWireValue {
       return tariffQuantity("0", type.unit);
     case "date":
     case "dateTime":
+    case "time":
       return null;
     case "enum":
       return type.variants[0] ?? null;
