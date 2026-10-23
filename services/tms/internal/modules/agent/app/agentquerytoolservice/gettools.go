@@ -65,6 +65,11 @@ type getSpec struct {
 	// units under a name the schema does not mark with Minor.
 	amounts    bool
 	minorUnits []string
+	// batch makes the get's parameter a list of at most this many ids,
+	// each read on its own, and shapeEach applies to each record of a batch
+	// what one read alone does not (fewer of an invoice's lines).
+	batch     int
+	shapeEach func(record map[string]any)
 	// outside are the fields whose text someone outside the organization
 	// wrote (a driver's own description); a record that shows one is marked
 	// as read from outside, as reads Marked declares.
@@ -249,6 +254,8 @@ func graphQLGetSpecs() []getSpec {
 		workerHOSGetSpec(),
 		formulaTemplateGetSpec(),
 		formulaLibraryGetSpec(),
+		invoiceGetSpec(),
+		invoiceAdjustmentGetSpec(),
 	}, slices.Concat(accountingGetSpecs(), ediGetSpecs(), settlementGetSpecs(), factoringGetSpecs())...)
 }
 
@@ -275,6 +282,8 @@ func getCatalogSpecs() []getSpec {
 		carrierGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
+		invoiceGetSpec(),
+		invoiceAdjustmentGetSpec(),
 		locationGetSpec(),
 		detentionOccurrenceGetSpec(),
 		serviceFailureGetSpec(),

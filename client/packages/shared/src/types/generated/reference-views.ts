@@ -1164,6 +1164,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   InboundMessage: "inbound_message",
   InboundShipmentRef: "shipment",
   Invoice: "invoice",
+  InvoiceAdjustment: "invoice",
   InvoiceDispute: "invoice_dispute",
   JobPosition: "job_position",
   JournalEntry: "journal_entry",

@@ -42,7 +42,7 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `billing_get_queue_item` | none | - | - | - | - | Billing queue has only Mutations in GraphQL (update/assign/post/release); item read and readiness are REST-only. |
 | `billing_list_queue_items` | none | - | - | - | - | No billingQueue Query root field; the queue list is REST-only. |
-| `billing_list_transfer_candidates` | partial | shipments (billingTransferEligible: true) | BillingTransferCandidates | cursor | bespoke ShipmentsInput (DataTable + typed) | Tool calls ShipmentService.ListBillingTransferCandidates, which returns a per-row transfer decision (PlanBillingTransfers). shipments(billingTransferEligible) returns the same rows without the decision; markCompletedReadyToInvoice has no equivalent; status/customerId/deliveredFrom/To -> status + fieldFilters. |
+| `billing_list_transfer_candidates` | partial | shipments (billingTransferEligible: true) | BillingTransferCandidates | cursor | bespoke ShipmentsInput (DataTable + typed) | Tool calls ShipmentService.ListBillingTransferCandidates, which returns a per-row transfer decision (PlanBillingTransfers). shipments(billingTransferEligible) returns the same rows without the decision; markCompletedReadyToInvoice has no equivalent; status/customerId/deliveredFrom/To -> status + fieldFilters. Left on the repository path by the billing PR: the per-row transfer decision needs a field on the shipment (or a root of its own) that the billing transfer screen reads too, a change to that screen rather than to this read. |
 
 ## carrier
 
@@ -120,12 +120,8 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `invoice_get` | op | invoice | DeskInvoiceCard | n/a | id | Same InvoiceService.GetByID; invoiceIds (many) -> one call per id or invoices with an id fieldFilter. |
-| `invoice_get_adjustment` | op | invoiceAdjustment | InvoiceAdjustmentApprovalDetail | n/a | id | Same InvoiceAdjustmentService.GetDetail. |
 | `invoice_get_run` | none | - | - | - | - | Invoice runs are REST-only (no invoiceRun root). |
-| `invoice_list` | op | invoices | InvoiceTable (alt InvoiceRegister, ShipmentInvoices) | cursor | DataTable fieldFilters only | repo.List vs InvoiceService.ListConnection. Table picked per rule. |
-| `invoice_list_adjustments` | partial | invoiceAdjustmentApprovals | InvoiceAdjustmentApprovals | cursor | bespoke InvoiceAdjustmentApprovalsInput | Same ListApprovals for the approval queue; the per-invoice lineage (GetLineage by invoiceId) has no Query. |
-| `invoice_list_disputes` | field-no-op | invoiceDisputes | propose DeskInvoiceDisputes | unpaged list | invoiceId arg (one) | Same InvoiceDisputeRepository.ListByInvoiceIDs; no persisted op; takes one invoiceId, tool takes many. |
+| `invoice_list_adjustments` | partial | invoiceAdjustmentApprovals | InvoiceAdjustmentApprovals | cursor | bespoke InvoiceAdjustmentApprovalsInput | Same ListApprovals for the approval queue; the per-invoice lineage (GetLineage by invoiceId) has no Query. Left on the repository path by the billing PR: with invoiceId it reads the invoice's correction lineage, which no root field reads; that needs a lineage root the invoice page also moves to. |
 | `invoice_list_open_statements` | none | - | - | - | - | Open statements come from invoice runs (InvoiceRunService.ListOpenStatements); REST-only. |
 | `invoice_list_runs` | none | - | - | - | - | Invoice runs are REST-only. |
 | `invoice_list_share_candidates` | none | - | - | - | - | Computed share-recipient candidates (ListShareCandidates); no Query. |
@@ -159,14 +155,13 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `receivable_get_aging` | op | arAgingSummary | ArAgingSummary | unpaged (object) | asOfDate | Same GetAgingSummary; tool filters customerId/overdueOnly and pages rows in memory. |
+| `receivable_get_aging` | op | arAgingSummary | ArAgingSummary | unpaged (object) | asOfDate | Same GetAgingSummary; tool filters customerId/overdueOnly and pages rows in memory. Left on the repository path by the billing PR: a get keyed by a date, not an id, which the generator's get shape (it sends only `$id`) cannot bind; the customer and overdue filters and the paging are the tool's own. |
 | `receivable_get_bank_receipt` | none | - | - | - | - | Bank receipts and their suggested matches are REST-only. |
-| `receivable_get_statement` | op | arCustomerStatement | ArCustomerStatement | n/a | customerId, startDate, asOfDate | Same GetCustomerStatement. |
+| `receivable_get_statement` | op | arCustomerStatement | ArCustomerStatement | n/a | customerId, startDate, asOfDate | Same GetCustomerStatement. Left on the repository path by the billing PR: a get keyed by a customer and dates, not an id, which the generator's get shape (it sends only `$id`) cannot bind. |
 | `receivable_list_bank_receipt_exceptions` | none | - | - | - | - | Bank receipt exceptions and work items are REST-only. |
-| `receivable_list_collection_worklist` | partial | arCollectionsWorklist | ArCollectionsWorklist | limit only | limit | Same GetCollectionsWorklist, but the resolver passes no AsOfDate; tool's asOf is missing. severity is filtered in memory. |
-| `receivable_list_credit_memo_applications` | op | invoice (creditApplications) | DeskInvoiceCard | n/a | id | No list root; Invoice.creditApplications is selected by DeskInvoiceCard (and InvoiceArContext). One call per invoiceId. |
-| `receivable_list_customer_payments` | op | customerPayments | CustomerPaymentTable | cursor | DataTable fieldFilters only | Tool CustomerPaymentService.List vs resolver repo.ListConnection. customerId/status as fieldFilters. |
-| `receivable_list_open_items` | op | arOpenItems | ArOpenItems | unpaged list | customerId, asOfDate | Same ListOpenItems; disputedOnly/minDaysPastDue/paging done in memory by the tool. |
+| `receivable_list_collection_worklist` | partial | arCollectionsWorklist | ArCollectionsWorklist | limit only | limit | Same GetCollectionsWorklist, but the resolver passes no AsOfDate; tool's asOf is missing. severity is filtered in memory. Left on the repository path by the billing PR. |
+| `receivable_list_credit_memo_applications` | op | invoice (creditApplications) | DeskInvoiceCard | n/a | id | No list root; Invoice.creditApplications is selected by DeskInvoiceCard (and InvoiceArContext). One call per invoiceId. Left on the repository path by the billing PR: a list over many invoices needs a root that reads applications by invoice ids. |
+| `receivable_list_open_items` | op | arOpenItems | ArOpenItems | unpaged list | customerId, asOfDate | Same ListOpenItems; disputedOnly/minDaysPastDue/paging done in memory by the tool. Left on the repository path by the billing PR: disputedOnly, minDaysPastDue and the paging are the tool's own, so the root needs those arguments and limit/offset first. |
 
 ## report
 
@@ -213,10 +208,10 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 35 |
-| op, converted (rows removed) | 84 |
-| field-no-op, not yet converted | 2 |
-| field-no-op, converted (rows removed) | 4 |
+| op, not yet converted | 31 |
+| op, converted (rows removed) | 88 |
+| field-no-op, not yet converted | 1 |
+| field-no-op, converted (rows removed) | 5 |
 | partial, not yet converted | 13 |
 | partial, converted (rows removed) | 17 |
 | none | 21 |

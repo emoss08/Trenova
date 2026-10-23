@@ -21844,6 +21844,16 @@ type Invoice {
   sentAt: Timestamp
   "The invoice's rendered PDF, once one has been generated; an invoice is emailed only with one."
   pdfDocumentId: ID
+  "Why the last email delivery failed; empty when it did not."
+  lastSendError: String!
+  "The note printed on the invoice for the customer."
+  memo: String!
+  "How the customer is told to pay, as printed on the invoice."
+  remittanceInstructions: String!
+  "The invoice this one replaces in a correction chain."
+  supersedesInvoiceId: ID
+  "The invoice that replaced this one in a correction chain."
+  supersededByInvoiceId: ID
   isAdjustmentArtifact: Boolean!
   voidedAt: Timestamp
   voidedById: ID
@@ -22116,8 +22126,12 @@ enum InvoiceAdjustmentRebillStrategy {
   Manual
 }
 
-"A credit, rebill, reversal, or write-off raised against a posted invoice."
-type InvoiceAdjustment {
+"""
+A credit, rebill, reversal, or write-off raised against a posted invoice. Its
+fields follow the invoice's sensitivities: what it credits is the invoice's
+money.
+"""
+type InvoiceAdjustment @kind(resource: "invoice") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -22156,6 +22170,8 @@ type InvoiceAdjustment {
   updatedAt: Timestamp!
   "The corrected invoice lines, in line order."
   lines: [InvoiceAdjustmentLine!]!
+  "The documents the submitter attached as support for the adjustment."
+  supportingDocumentIds: [ID!]!
 }
 
 "How much of one original invoice line an adjustment credits and rebills."
@@ -22379,7 +22395,16 @@ extend type Invoice {
 }
 
 extend type Query {
-  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
+  """
+  The dispute cases on one invoice, or on several, each invoice's newest first.
+  Name the invoice by invoiceId or the invoices by invoiceIds (at most 100),
+  not both.
+  """
+  invoiceDisputes(
+    invoiceId: ID
+    "The invoices whose dispute cases are read, at most 100."
+    invoiceIds: [ID!]
+  ): [InvoiceDispute!]!
 }
 
 extend type Mutation {

@@ -57,6 +57,7 @@ type GraphQLReadError struct {
 const (
 	GraphQLCodeForbidden      = string(errortypes.ErrForbidden)
 	GraphQLCodeUnauthorized   = string(errortypes.ErrUnauthorized)
+	GraphQLCodeNotFound       = string(errortypes.ErrNotFound)
 	GraphQLCodeBudgetExceeded = "OPERATION_COST_BUDGET_EXCEEDED"
 )
 

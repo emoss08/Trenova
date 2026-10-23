@@ -390,11 +390,13 @@ func checkConvertedGet(
 	other := writeReferenceRows(t, c, env.theirs, "B")
 	ours.ctx = env.within(ours.ctx, env.mine)
 	actor := env.mine.Actor
-	param := get.ParamSchema()["required"].([]string)[0]
+	call := func(id string) map[string]any {
+		return agentquerytoolservice.ConvertedGetCall(get, pulid.ID(id))
+	}
 
 	t.Run("our record, as the card reads it", func(t *testing.T) {
 		for _, id := range ours.rows {
-			record := callTool(t, ours.ctx, get, actor, map[string]any{param: id})
+			record := callTool(t, ours.ctx, get, actor, call(id))
 			assert.Equal(t, id, idOf(record))
 			assertWithheldAtInternal(t, record, c.withheldAtInternal)
 		}
@@ -406,7 +408,7 @@ func checkConvertedGet(
 			BusinessUnitID:    actor.BusinessUnitID,
 			Actor:             actor,
 			Timezone:          "America/Chicago",
-			Params:            map[string]any{param: ours.rows[0]},
+			Params:            call(ours.rows[0]),
 			DataAccessCeiling: permission.SensitivityInternal,
 			RunID:             pulid.MustNew("ar_"),
 		})
@@ -420,7 +422,7 @@ func checkConvertedGet(
 			BusinessUnitID: actor.BusinessUnitID,
 			Actor:          actor,
 			Timezone:       "America/Chicago",
-			Params:         map[string]any{param: other.rows[0]},
+			Params:         call(other.rows[0]),
 			RunID:          pulid.MustNew("ar_"),
 		})
 		require.Error(t, err)
@@ -429,7 +431,7 @@ func checkConvertedGet(
 	t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
 		hidden, err := agentquerytoolservice.ConvertedGetTool(name, env.public, &publicRole{})
 		require.NoError(t, err)
-		record := callTool(t, ours.ctx, hidden, actor, map[string]any{param: ours.rows[0]})
+		record := callTool(t, ours.ctx, hidden, actor, call(ours.rows[0]))
 		withheld, _ := record["withheldByAccess"].([]any)
 		require.NotEmpty(t, withheld)
 		for _, field := range withheld {

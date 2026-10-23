@@ -1484,6 +1484,7 @@ held-out`) when one is made for a PR.
 | Typed reads through GraphQL: customer update preferences | `customer_get_update_preferences` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.82 |
 | Typed reads through GraphQL: settlements and pay | `settlement_list_driver`, `settlement_list_pay_events`, `settlement_list_carrier`, `settlement_list_driver_expenses`, `settlement_list_pay_profiles`, `settlement_list_escrow_accounts`, `settlement_list_advances`, `settlement_list_recurring_deductions`, `settlement_list_recurring_earnings`, `settlement_list_pay_assignments`, `settlement_list_pay_codes`, `settlement_get_driver`, `settlement_get_driver_earnings`, `settlement_get_dispute`, `settlement_get_carrier` | 639 → 639 | unchanged, 0 pending | 0.93 → 0.93 | 0.82 → 0.83 |
 | Typed reads through GraphQL: factoring | the nine `factoring` reads; `factoring_get_agreement` renamed `factoring_list_agreements` | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 | 0.83 → 0.83 |
+| Typed reads through GraphQL: billing and receivables | `invoice_list`, `invoice_get` (up to 50 ids, one read each), `invoice_get_adjustment`, `invoice_list_disputes`, `receivable_list_customer_payments`; 15 more stay on the repository path with their reasons | 632 → 632 | unchanged, 0 pending | 0.93 → 0.93 (167 cases); keyword 0.99 → 0.99 (147) | 0.82 → 0.83; keyword 0.95 → 0.95 |
 
 The formula and fuel rows' after figures read the 167 held-out cases Tariff (#888) left, whose fixture
 master carries stale; the before figures are the last measured on master (165 cases). Keyword

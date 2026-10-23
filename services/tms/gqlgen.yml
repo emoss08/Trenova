@@ -2066,6 +2066,8 @@ models:
         resolver: true
       rerateVariancePercent:
         resolver: true
+      supportingDocumentIds:
+        resolver: true
   InvoiceAdjustmentLine:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentLine

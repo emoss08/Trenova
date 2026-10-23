@@ -157,6 +157,16 @@ type Invoice {
   sentAt: Timestamp
   "The invoice's rendered PDF, once one has been generated; an invoice is emailed only with one."
   pdfDocumentId: ID
+  "Why the last email delivery failed; empty when it did not."
+  lastSendError: String!
+  "The note printed on the invoice for the customer."
+  memo: String!
+  "How the customer is told to pay, as printed on the invoice."
+  remittanceInstructions: String!
+  "The invoice this one replaces in a correction chain."
+  supersedesInvoiceId: ID
+  "The invoice that replaced this one in a correction chain."
+  supersededByInvoiceId: ID
   isAdjustmentArtifact: Boolean!
   voidedAt: Timestamp
   voidedById: ID

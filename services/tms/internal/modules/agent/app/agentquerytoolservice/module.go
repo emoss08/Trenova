@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -69,9 +68,7 @@ func coreToolProviders() []any {
 		newComposeTableViewTool,
 		newExplainRateTool,
 		newListDashboardsTool,
-		newListInvoicesTool,
 		newListCarrierCapacityPostingsTool,
-		newGetInvoiceTool,
 		newListBillingQueueItemsTool,
 		newGetBillingQueueItemTool,
 		newListBillingTransferCandidatesTool,
@@ -102,7 +99,6 @@ func coreToolProviders() []any {
 		provideGetInsightTool,
 		provideListBankReceiptExceptionsTool,
 		provideGetBankReceiptTool,
-		provideListCustomerPaymentsTool,
 		provideGetInboundMessageTool,
 		provideListInboundMessagesTool,
 		provideListTriageAssigneesTool,
@@ -289,12 +285,6 @@ func provideGetBankReceiptTool(
 	items bankreceiptworkitemports.BankReceiptWorkItemRepository,
 ) agentports.AgentQueryTool {
 	return newGetBankReceiptTool(receipts, items)
-}
-
-func provideListCustomerPaymentsTool(
-	payments customerpaymentports.CustomerPaymentService,
-) agentports.AgentQueryTool {
-	return newListCustomerPaymentsTool(payments)
 }
 
 func provideGetInboundMessageTool(

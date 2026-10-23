@@ -4,7 +4,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -79,12 +78,8 @@ var (
 		"rating.side",
 		[]string{"Customer", "Carrier"},
 	)
-	reportRunFormats            = agenttoolschema.Source("report.format", report.AllFormats())
-	customerPaymentListStatuses = agenttoolschema.Source(
-		"customerPayment.listStatus",
-		[]customerpayment.Status{customerpayment.StatusPosted, customerpayment.StatusReversed},
-	)
-	memoryKinds = agenttoolschema.Source("agent.memoryKind", []agent.MemoryKind{
+	reportRunFormats = agenttoolschema.Source("report.format", report.AllFormats())
+	memoryKinds      = agenttoolschema.Source("agent.memoryKind", []agent.MemoryKind{
 		agent.MemoryKindInstruction,
 		agent.MemoryKindFact,
 		agent.MemoryKindCorrection,

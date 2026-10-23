@@ -814,6 +814,11 @@ Each module's PR:
 | Settlements | `settlement_get_driver_earnings` | none | reads `WorkerEarningsSummary`, a get keyed by the worker. `WorkerEarningsSummary` had no kind, so the guard did not gate it on the settlement workspace either; it now declares `@kind(resource: "driver_settlement")`, the accrued count is Internal and the accrued gross, outstanding advances and escrow balance are Restricted, as the repository tool gated them. `outstandingAdvances` holds minor units under an unmarked name, so the spec names it in `minorUnits` |
 | Settlements | `settlement_get_dispute` | none | reads `SettlementDisputeDetail`. `settlement_dispute` declared no field sensitivities; its status, category, links, who submitted and resolved it and when are now Internal, and the driver's description and the resolution note stay Restricted, as the repository tool gated them. Marked only where the description is shown |
 | Settlements | `settlement_get_carrier` | none | reads `CarrierSettlementDetail`, named because the Desk's card sums the cost lines by kind and the tool returns each line by id. `lineNumber`, `costEventId` and `glAccountId` are now declared Internal on `carrier_settlement`; the payment method, which the repository tool gated as Restricted only when set, is Restricted |
+| Billing and receivables | `invoice_list` | none | reads `DeskInvoices`, written for it: the register row the repository tool returned (number, statuses, bill-to, PRO, total, dates). The total stays Restricted and withheld at Internal, as the repository tool's `fetchGated` withheld it. The catalog's `id` filter is gone; `invoice_get` reads several invoices by id. Under an "own" read scope both paths read the invoices of the person's shipments (`TestConvertedLists_InvoiceListIsNarrowedToOwnShipmentsOnBothPaths`) |
+| Billing and receivables | `invoice_get` | none | reads `DeskInvoiceDetail`, named in `reads.yml` because the Desk's card leaves the lines to the invoice's page and an adjustment names a line by its id. Up to 50 ids, one read each, at most 10 at once. `Invoice` gains `memo`, `remittanceInstructions`, `lastSendError`, `supersedesInvoiceId` and `supersededByInvoiceId`, which the repository tool read. `scope`, `shipmentCount`, `voidedAt`, `ediSendStatus`, `lines` (the list itself: undeclared, the guard withheld every line) and a line's `chargeCode` and `accessorialChargeId`, which it returned ungated, are now declared Internal; the amounts, the memo, the remittance instructions, the void reason and the send and EDI errors stay Restricted, as it gated them |
+| Billing and receivables | `invoice_get_adjustment` | `reason`, `policyReason`, `rejectionReason`, `creditQuantity`, `rebillQuantity` | reads `DeskInvoiceAdjustmentCard`, written for it. `InvoiceAdjustment` had no kind (it is not named for a resource), so the guard did not gate it; it now declares `@kind(resource: "invoice")`, as the repository tool gated its amounts by the invoice's sensitivities, and the invoice's declarations for an adjustment's reasons (Restricted) now apply to it on every read of the type. The Go type is not added to `responseguard.namedKinds`: `invoice` is database-scoped, so the REST adjustment routes would then return invoices outside the invoice's handler. `executionError` and the new `supportingDocumentIds` are declared Internal. The description says the reasons can be withheld |
+| Billing and receivables | `invoice_list_disputes` | `notes`, `resolutionNotes` | reads `DeskInvoiceDisputes`, a new operation. `invoiceDisputes` takes `invoiceIds` (at most 100) beside `invoiceId`, which becomes optional; the tool sends the list as a `paramReferences` parameter. `invoice_dispute` declared no field sensitivities, so under its Restricted default every field but `id` would be withheld at Internal; the case's invoice, customer, status, reason, dates and resolution are now Internal, and the disputed amount (gated by the repository tool too) and the two notes stay Restricted |
+| Billing and receivables | `receivable_list_customer_payments` | `amountMinor`, `appliedAmountMinor`, `unappliedAmountMinor`, `memo`, `applications.appliedAmountMinor`, `applications.shortPayAmountMinor` | reads `DeskCustomerPayments`, written for it. The repository tool returned every column ungated; `customer_payment` already declares the amounts and the memo Restricted, so they are withheld at Internal now, and the description says so; `applications`, the list itself, was undeclared and is declared Internal, so the invoices a payment settled still show. Amounts are in minor units, as the screen reads them, and the summary says how to read them. Posted payments are read unless the call names a status, as before |
 
 | Factoring | `factoring_list_readiness` | none | reads `DeskFactoringInvoiceStates` (written for it, the queue's input spread from the table input) with the queue's totals alongside (`FactoringSummary`, read on every call). `FactoringInvoiceState` and `FactoringSummary` had no kind, so the guard did not gate them; both now declare `@kind(resource: "invoice")`, the resource their roots check, and `invoice` declares what a readiness state carries (verdict, failed checks, the checks' code, message and fix, the dates, the factor) Internal. The open balance and every total stay Restricted, as the repository tool withheld them by the invoice's amounts. Ready is the default verdict, as before; `verdict` is now a list and can name Excluded or Funded too |
 | Factoring | `factoring_get_readiness` | none | reads `DeskFactoringReadiness`, which evaluates the invoice now through `factoringReadiness(invoiceId:)`, as the repository tool did; `InvoiceFactoring` reads the stored state instead and was not used |
@@ -846,6 +851,13 @@ The EDI lists and gets were gated only where they named a field (a contact, the 
 tender's rate), so at a person's role ceiling below Internal each now withholds every field but
 `id`, where the lists used to return them all. Nothing is newly withheld at Internal, so no EDI
 description changed for it.
+
+The billing and receivables module converted five of its 20 tools. The others stay on the
+repository path, each with its reason in the inventory: the REST-only records (the billing
+queue, invoice runs and open statements, bank receipts), the computed share candidates, and seven
+reads whose root lacks what the tool takes (the adjustment lineage, the aging and the statement,
+which are keyed by a customer or a date rather than an id, the open items' filters and paging,
+the worklist's `asOf`, credit applications by invoice ids, and the transfer decision).
 
 ## Permissions, data scopes and refusals
 
@@ -948,23 +960,29 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   typed parameter dropped, through the same operation; each probe is charged to the budget. Then
   it says what to loosen.
 - **Gets.** A get returns the operation's record, shaped the same way, with
-  `withheldByAccess`. A get for several ids (`invoice_get`) runs one read per id, at most 10
-  concurrently, under one span each. A converted get keeps its `getSpec` (name, summary, id
-  parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it as a
-  `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, or as the
-  one id the operation requires (`$workerId` for `worker_get_hos`), and a card whose root returns
-  nothing is a missing record, not an empty one, unless the spec's `absent` says what nothing
-  means (no ELD has reported the driver's hours, which is the finding). A spec's `shape` applies
-  to the record what the card's resolver does not, as a list's does to each row: `worker_get`
-  folds a NonCompliant credential into `canBeAssigned`, `worker_get_hos` gives the clocks in
-  minutes and marks a reading over twelve hours old as stale, and
+  `withheldByAccess`. A get for several ids (`invoice_get`) names a `batch` in its spec: its
+  parameter is a list of at most that many ids, and it runs one read per id, at most 10
+  concurrently (`graphQLGetsAtOnce`), under one span each. One id reads as a single get does;
+  several come back as `items` in the order named, with `withheldByAccess` named once for all of
+  them and the ids that are no record of the organization (an empty root or a `NOT_FOUND`) named
+  in `note`. A refused or failed read fails the call. A converted get keeps its `getSpec` (name,
+  summary, id parameter, policy) with no `fetch`; `graphQLGetSpecs` lists every one, registers it
+  as a `graphQLGetTool` and is what the tests range over. The tool sends the id as `$id`, or as
+  the one id the operation requires (`$workerId` for `worker_get_hos`), and a card whose root
+  returns nothing is a missing record, not an empty one, unless the spec's `absent` says what
+  nothing means (no ELD has reported the driver's hours, which is the finding). A spec's `shape`
+  applies to the record what the card's resolver does not, as a list's does to each row:
+  `worker_get` folds a NonCompliant credential into `canBeAssigned`, `worker_get_hos` gives the
+  clocks in minutes and marks a reading over twelve hours old as stale,
   `customer_get_update_preferences` adds whether arrivals and departures are wanted, the warning
   for a customer who takes no routine notices, and the notice profile's recipients as the
-  fallback. A get's node needs no Go entity: it
-  filters by nothing but its id, so a card type (`JournalEntryCard`) binds as a record does. A
-  card the get reads declares `@kind` of the record it draws, so the parts it carries that have no
-  kind of their own (a journal's lines) are gated by that record's sensitivities rather than by
-  none.
+  fallback, and `invoice_get` counts an invoice's lines (`lineCount`) and keeps 100 of them. A
+  batch spec's `shapeEach` applies what a record read beside others needs beyond that
+  (`invoice_get` keeps 25 lines of each of several, as the repository tool did). A get's node
+  needs no Go entity: it filters by nothing but its id, so a card type (`JournalEntryCard`) binds
+  as a record does. A card the get reads declares `@kind` of the record it draws, so the parts it
+  carries that have no kind of their own (a journal's lines) are gated by that record's
+  sensitivities rather than by none.
 
 Size: a `*Table` operation selects what a table row shows, which can be large; shipments are
 about 3 KB a row. The rule therefore prefers `Desk*` operations, which were written to be read by

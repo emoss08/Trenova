@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
@@ -30,6 +31,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicedisputeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalentryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalreversalexec"
@@ -71,6 +74,7 @@ import (
 	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
 	carriersettlementresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
 	commodityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/commodityresolver"
+	customerpaymentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerpaymentresolver"
 	customerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
 	detentionresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	dispatchconsoleresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
@@ -92,6 +96,8 @@ import (
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
 	iftaresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/iftaresolver"
+	invoiceadjustmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceadjustmentresolver"
+	invoicedisputeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/invoicedisputeresolver"
 	invoiceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceresolver"
 	journalentryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalentryresolver"
 	journalreversalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalreversalresolver"
@@ -132,7 +138,9 @@ import (
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
@@ -230,6 +238,8 @@ type ResolverParams struct {
 	CarrierSettlementService     *carriersettlementservice.Service
 	CommodityService             *commodityservice.Service
 	Config                       *config.Config `optional:"true"`
+	CustomerPaymentRepo          customerpaymentports.CustomerPaymentRepository
+	CustomerPaymentService       customerpaymentports.CustomerPaymentService
 	CustomerService              *customerservice.Service
 	DashControlService           *dashcontrolservice.Service
 	DetentionPolicyService       *detentionpolicyservice.Service
@@ -269,6 +279,9 @@ type ResolverParams struct {
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
 	IFTAService                  *iftaservice.Service
+	InvoiceAdjustmentService     invoiceadjustmentports.InvoiceAdjustmentService
+	InvoiceDisputeRepo           invoiceports.InvoiceDisputeRepository
+	InvoiceDisputeService        invoiceports.InvoiceDisputeService
 	InvoiceService               invoiceports.InvoiceService
 	JournalCards                 *journalcardservice.Service
 	JournalEntryService          *journalentryservice.Service
@@ -331,6 +344,7 @@ var shards = []*gqlexec.Shard{
 	carriersettlementexec.Shard,
 	commodityexec.Shard,
 	customerexec.Shard,
+	customerpaymentexec.Shard,
 	detentionexec.Shard,
 	dispatchconsoleexec.Shard,
 	documenttypeexec.Shard,
@@ -352,6 +366,8 @@ var shards = []*gqlexec.Shard{
 	holdreasonexec.Shard,
 	iftaexec.Shard,
 	invoiceexec.Shard,
+	invoiceadjustmentexec.Shard,
+	invoicedisputeexec.Shard,
 	journalentryexec.Shard,
 	journalreversalexec.Shard,
 	locationexec.Shard,
@@ -700,6 +716,26 @@ var operations = []Operation{
 		Document: "query DeskFuelPurchases($includeTotalCount: Boolean = false, $input: FuelPurchasesInput!) { fuelPurchases(input: $input) { edges { node { cardLastFour currencyCode fuelCardId fuelType gallons id importBatchId jurisdiction { code id } jurisdictionId purchasedAt quantity quantityUnit source taxPaid totalAmount tractor { code id } tractorId transactionReference vendor vendorCity worker { id wholeName } workerId } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
+		Name:     "DeskInvoiceDetail",
+		Hash:     "sha256:069d2dc8e358639942c0e5b64e52245e504037875c935a0de73a48c1709ba2c9",
+		Document: "query DeskInvoiceDetail($id: ID!) { invoice(id: $id) { appliedAmount billToCity billToCode billToName billToState billType currencyCode customerId disputeStatus dueDate ediSendStatus id invoiceDate isAdjustmentArtifact lastEdiError lastSendError lines { accessorialChargeId amount chargeCode description id lineNumber quantity shipmentProNumber type unitPrice } memo number openBalance orderId orderNumber otherAmount paymentTerm pdfDocumentId postedAt remittanceInstructions scope sendStatus sentAt serviceDate settlementStatus shipmentBol shipmentCount shipmentId shipmentProNumber status subtotalAmount supersededByInvoiceId supersedesInvoiceId totalAmount voidReason voidedAt } }",
+	},
+	{
+		Name:     "DeskInvoiceAdjustmentCard",
+		Hash:     "sha256:253123be7b2061be0e4cce9fa11fb3fa66c6aba1faef22e7199ad99c85918860",
+		Document: "query DeskInvoiceAdjustmentCard($id: ID!) { invoiceAdjustment(id: $id) { approvalRequired approvalStatus creditMemoInvoiceId creditTotalAmount executionError id kind lines { creditAmount creditQuantity description id lineNumber originalLineId rebillAmount rebillQuantity remainingEligibleAmount } originalInvoiceId policyReason reason rebillStrategy rebillTotalAmount rejectionReason replacementInvoiceId status submittedAt supportingDocumentIds } }",
+	},
+	{
+		Name:     "DeskInvoices",
+		Hash:     "sha256:10f3b783666ac38f07c91a82b1d378a6d6ad0a839d18e3bc936cf10a6064bdf2",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskInvoices($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { invoices(input: $input) { edges { node { billToName billType currencyCode customerId disputeStatus dueDate id invoiceDate number settlementStatus shipmentProNumber status totalAmount } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskInvoiceDisputes",
+		Hash:     "sha256:33201d434cd44727380c5e0f76fca31c8b86740337f7579d3c75934f9c43351f",
+		Document: "query DeskInvoiceDisputes($invoiceIds: [ID!]!) { invoiceDisputes(invoiceIds: $invoiceIds) { customerId disputedAmount id invoiceId notes openedAt reasonCode resolution resolutionAdjustmentId resolutionNotes resolvedAt status } }",
+	},
+	{
 		Name:     "DeskJournalEntryCard",
 		Hash:     "sha256:19b6ca90530f874add30a452d7613c9f3f904b1e4d3bbf03a9304dec06136629",
 		Document: "fragment DeskJournalCardEntryFields on JournalEntry { accountingDate approvedAt createdAt description entryNumber entryType id isApproved isAutoGenerated isPosted isReversal postedAt requiresApproval reversalDate reversalReason status totalCredit totalDebit } fragment DeskJournalCardLineFields on JournalCardLine { accountCode accountName category creditAmount customerId customerName debitAmount description glAccountId lineNumber locationId locationName } fragment DeskJournalCardPeriodFields on FiscalPeriod { closedAt endDate id name periodNumber startDate status } fragment DeskJournalCardPersonFields on User { id name } fragment DeskJournalCardPostingFields on JournalCardPosting { accountingDate period { ...DeskJournalCardPeriodFields } refusal } query DeskJournalEntryCard($id: ID!) @requiresRead(kind: \"fiscal_period\") { journalEntryCard(id: $id) { approvedBy { ...DeskJournalCardPersonFields } createdBy { ...DeskJournalCardPersonFields } entry { approvalNotes entryDate fiscalPeriodId referenceId referenceNumber referenceType rejectedAt rejectionReason reversalOfId reversedById ...DeskJournalCardEntryFields } lines { isReconciled ...DeskJournalCardLineFields } period { ...DeskJournalCardPeriodFields } postedBy { ...DeskJournalCardPersonFields } posting { ...DeskJournalCardPostingFields } rejectedBy { ...DeskJournalCardPersonFields } reversal { approvedAt cancelReason createdAt id postedAt reasonCode reasonText rejectionReason requestedAccountingDate status } reversalOf { ...DeskJournalCardEntryFields } reversalRequestedBy { ...DeskJournalCardPersonFields } reversedBy { ...DeskJournalCardEntryFields } source { batchNumber id sourceDocumentNumber sourceEventType sourceObjectId sourceObjectType status } } }",
@@ -808,6 +844,11 @@ var operations = []Operation{
 		Name:     "DeskFuelProgramCurrentRates",
 		Hash:     "sha256:8c88804d9dbd1566dd95b6d46c51491da80e317f0c948a4f385013ae6a3bebfa",
 		Document: "query DeskFuelProgramCurrentRates { fuelProgramCurrentRates { flatAmount id percent price { id price priceDate } program { code fuelIndex { id name } fuelIndexId id method name } ratePerMile usedFallback } }",
+	},
+	{
+		Name:     "DeskCustomerPayments",
+		Hash:     "sha256:efaa48e219e4d4d95847a3c95237a4a672a2bb80fba0bae8cd944fe131dfac59",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskCustomerPayments($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { customerPayments(input: $input) { edges { node { amountMinor applications { appliedAmountMinor id invoiceId shortPayAmountMinor } appliedAmountMinor currencyCode customerId id memo paymentDate paymentMethod referenceNumber reversedAt status unappliedAmountMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "CarrierSettlementDetail",
@@ -1064,6 +1105,13 @@ func NewSchema(p ResolverParams) Schema {
 		Core:            core,
 		CustomerService: p.CustomerService,
 	}
+	customerpaymentDeps := &customerpaymentresolver.Deps{
+		Core:                   core,
+		CustomerPaymentService: p.CustomerPaymentService,
+		CustomerPaymentRepo:    p.CustomerPaymentRepo,
+		CustomerService:        p.CustomerService,
+		InvoiceService:         p.InvoiceService,
+	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   core,
 		DetentionService:       p.DetentionService,
@@ -1178,6 +1226,15 @@ func NewSchema(p ResolverParams) Schema {
 		Core:            core,
 		CustomerService: p.CustomerService,
 		InvoiceService:  p.InvoiceService,
+	}
+	invoiceadjustmentDeps := &invoiceadjustmentresolver.Deps{
+		Core:                     core,
+		InvoiceAdjustmentService: p.InvoiceAdjustmentService,
+	}
+	invoicedisputeDeps := &invoicedisputeresolver.Deps{
+		Core:                  core,
+		InvoiceDisputeRepo:    p.InvoiceDisputeRepo,
+		InvoiceDisputeService: p.InvoiceDisputeService,
 	}
 	journalentryDeps := &journalentryresolver.Deps{
 		Core:                core,
@@ -1320,13 +1377,15 @@ func NewSchema(p ResolverParams) Schema {
 		factoringCustomerBillingProfile: &factoringCustomerBillingProfile{Deps: factoringDeps},
 	}
 	invoice := &invoiceResolver{
-		factoringInvoice: &factoringInvoice{Deps: factoringDeps},
-		invoiceInvoice:   &invoiceInvoice{Deps: invoiceDeps},
+		factoringInvoice:      &factoringInvoice{Deps: factoringDeps},
+		invoiceInvoice:        &invoiceInvoice{Deps: invoiceDeps},
+		invoicedisputeInvoice: &invoicedisputeInvoice{Deps: invoicedisputeDeps},
 	}
 	mutation := &mutationResolver{
 		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
 		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
+		customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
 		detentionMutation:             &detentionMutation{Deps: detentionDeps},
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
 		driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
@@ -1340,6 +1399,8 @@ func NewSchema(p ResolverParams) Schema {
 		fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
 		iftaMutation:                  &iftaMutation{Deps: iftaDeps},
 		invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
+		invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
+		invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
 		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
 		orderMutation:                 &orderMutation{Deps: orderDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
@@ -1367,6 +1428,7 @@ func NewSchema(p ResolverParams) Schema {
 		carriersettlementQuery:        &carriersettlementQuery{Deps: carriersettlementDeps},
 		commodityQuery:                &commodityQuery{Deps: commodityDeps},
 		customerQuery:                 &customerQuery{Deps: customerDeps},
+		customerpaymentQuery:          &customerpaymentQuery{Deps: customerpaymentDeps},
 		detentionQuery:                &detentionQuery{Deps: detentionDeps},
 		dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
 		documenttypeQuery:             &documenttypeQuery{Deps: documenttypeDeps},
@@ -1388,6 +1450,8 @@ func NewSchema(p ResolverParams) Schema {
 		holdreasonQuery:               &holdreasonQuery{Deps: holdreasonDeps},
 		iftaQuery:                     &iftaQuery{Deps: iftaDeps},
 		invoiceQuery:                  &invoiceQuery{Deps: invoiceDeps},
+		invoiceadjustmentQuery:        &invoiceadjustmentQuery{Deps: invoiceadjustmentDeps},
+		invoicedisputeQuery:           &invoicedisputeQuery{Deps: invoicedisputeDeps},
 		journalentryQuery:             &journalentryQuery{Deps: journalentryDeps},
 		journalreversalQuery:          &journalreversalQuery{Deps: journalreversalDeps},
 		locationQuery:                 &locationQuery{Deps: locationDeps},
@@ -1489,9 +1553,13 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"ChargeAllocation":       func() any { return &shipmentresolver.ChargeAllocationResolver{Deps: shipmentDeps} },
-		"Commodity":              func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":               func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"ChargeAllocation": func() any { return &shipmentresolver.ChargeAllocationResolver{Deps: shipmentDeps} },
+		"Commodity":        func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":         func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"CustomerPayment":  func() any { return &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps} },
+		"CustomerPaymentApplication": func() any {
+			return &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps}
+		},
 		"DOTRandomDraw":          func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
 		"DOTRandomDrawEntry":     func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
 		"DOTRandomPool":          func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
@@ -1559,27 +1627,35 @@ func NewSchema(p ResolverParams) Schema {
 		"IFTAReturnLine":               func() any { return &iftaresolver.IFTAReturnLineResolver{Deps: iftaDeps} },
 		"IFTAReturnProblem":            func() any { return &iftaresolver.IFTAReturnProblemResolver{Deps: iftaDeps} },
 		"IFTATaxRate":                  func() any { return &iftaresolver.IFTATaxRateResolver{Deps: iftaDeps} },
-		"InvoiceChargeGroup":           func() any { return &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps} },
-		"InvoiceLine":                  func() any { return &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps} },
-		"JournalCardLine":              func() any { return &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps} },
-		"JournalCardPosting":           func() any { return &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps} },
-		"JournalEntry":                 func() any { return &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps} },
-		"JournalEntryLine":             func() any { return &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps} },
-		"JournalReviewSummary":         func() any { return &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps} },
-		"JournalSourceInfo":            func() any { return &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps} },
-		"LeaveControl":                 func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":             func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":             func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"MyPTOBalance":                 func() any { return &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps} },
-		"OSHAAnnualSummary":            func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"Order":                        func() any { return &orderresolver.OrderResolver{Deps: orderDeps} },
-		"PTOChartDataPoint":            func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PayCode":                      func() any { return &driversettlementresolver.PayCodeResolver{Deps: driversettlementDeps} },
-		"PayMileageBand":               func() any { return &driversettlementresolver.PayMileageBandResolver{Deps: driversettlementDeps} },
-		"PayProfile":                   func() any { return &driversettlementresolver.PayProfileResolver{Deps: driversettlementDeps} },
-		"PayProfileComponent":          func() any { return &driversettlementresolver.PayProfileComponentResolver{Deps: driversettlementDeps} },
-		"PayRateOverride":              func() any { return &driversettlementresolver.PayRateOverrideResolver{Deps: driversettlementDeps} },
-		"PerformanceReview":            func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"InvoiceAdjustment":            func() any { return &invoiceadjustmentresolver.InvoiceAdjustmentResolver{Deps: invoiceadjustmentDeps} },
+		"InvoiceAdjustmentApprovalQueueItem": func() any {
+			return &invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver{Deps: invoiceadjustmentDeps}
+		},
+		"InvoiceAdjustmentLine": func() any {
+			return &invoiceadjustmentresolver.InvoiceAdjustmentLineResolver{Deps: invoiceadjustmentDeps}
+		},
+		"InvoiceChargeGroup":   func() any { return &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps} },
+		"InvoiceDispute":       func() any { return &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps} },
+		"InvoiceLine":          func() any { return &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps} },
+		"JournalCardLine":      func() any { return &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps} },
+		"JournalCardPosting":   func() any { return &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps} },
+		"JournalEntry":         func() any { return &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps} },
+		"JournalEntryLine":     func() any { return &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps} },
+		"JournalReviewSummary": func() any { return &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps} },
+		"JournalSourceInfo":    func() any { return &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps} },
+		"LeaveControl":         func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
+		"LeaveEntitlement":     func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
+		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"MyPTOBalance":         func() any { return &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps} },
+		"OSHAAnnualSummary":    func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
+		"Order":                func() any { return &orderresolver.OrderResolver{Deps: orderDeps} },
+		"PTOChartDataPoint":    func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PayCode":              func() any { return &driversettlementresolver.PayCodeResolver{Deps: driversettlementDeps} },
+		"PayMileageBand":       func() any { return &driversettlementresolver.PayMileageBandResolver{Deps: driversettlementDeps} },
+		"PayProfile":           func() any { return &driversettlementresolver.PayProfileResolver{Deps: driversettlementDeps} },
+		"PayProfileComponent":  func() any { return &driversettlementresolver.PayProfileComponentResolver{Deps: driversettlementDeps} },
+		"PayRateOverride":      func() any { return &driversettlementresolver.PayRateOverrideResolver{Deps: driversettlementDeps} },
+		"PerformanceReview":    func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
@@ -1647,12 +1723,14 @@ type customerBillingProfileResolver struct {
 type invoiceResolver struct {
 	*factoringInvoice
 	*invoiceInvoice
+	*invoicedisputeInvoice
 }
 
 type mutationResolver struct {
 	*accountingsyncMutation
 	*carrierintelligenceMutation
 	*carriersettlementMutation
+	*customerpaymentMutation
 	*detentionMutation
 	*dispatchconsoleMutation
 	*driverportalMutation
@@ -1666,6 +1744,8 @@ type mutationResolver struct {
 	*fuelsurchargeMutation
 	*iftaMutation
 	*invoiceMutation
+	*invoiceadjustmentMutation
+	*invoicedisputeMutation
 	*journalentryMutation
 	*orderMutation
 	*performancereviewMutation
@@ -1694,6 +1774,7 @@ type queryResolver struct {
 	*carriersettlementQuery
 	*commodityQuery
 	*customerQuery
+	*customerpaymentQuery
 	*detentionQuery
 	*dispatchconsoleQuery
 	*documenttypeQuery
@@ -1715,6 +1796,8 @@ type queryResolver struct {
 	*holdreasonQuery
 	*iftaQuery
 	*invoiceQuery
+	*invoiceadjustmentQuery
+	*invoicedisputeQuery
 	*journalentryQuery
 	*journalreversalQuery
 	*locationQuery
@@ -1751,9 +1834,11 @@ type (
 	factoringCustomerBillingProfile = factoringresolver.CustomerBillingProfileResolver
 	factoringInvoice                = factoringresolver.InvoiceResolver
 	invoiceInvoice                  = invoiceresolver.InvoiceResolver
+	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
 	accountingsyncMutation          = accountingsyncresolver.MutationResolver
 	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
 	carriersettlementMutation       = carriersettlementresolver.MutationResolver
+	customerpaymentMutation         = customerpaymentresolver.MutationResolver
 	detentionMutation               = detentionresolver.MutationResolver
 	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
 	driverportalMutation            = driverportalresolver.MutationResolver
@@ -1767,6 +1852,8 @@ type (
 	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
 	iftaMutation                    = iftaresolver.MutationResolver
 	invoiceMutation                 = invoiceresolver.MutationResolver
+	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
+	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
 	journalentryMutation            = journalentryresolver.MutationResolver
 	orderMutation                   = orderresolver.MutationResolver
 	performancereviewMutation       = performancereviewresolver.MutationResolver
@@ -1792,6 +1879,7 @@ type (
 	carriersettlementQuery          = carriersettlementresolver.QueryResolver
 	commodityQuery                  = commodityresolver.QueryResolver
 	customerQuery                   = customerresolver.QueryResolver
+	customerpaymentQuery            = customerpaymentresolver.QueryResolver
 	detentionQuery                  = detentionresolver.QueryResolver
 	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
 	documenttypeQuery               = documenttyperesolver.QueryResolver
@@ -1813,6 +1901,8 @@ type (
 	holdreasonQuery                 = holdreasonresolver.QueryResolver
 	iftaQuery                       = iftaresolver.QueryResolver
 	invoiceQuery                    = invoiceresolver.QueryResolver
+	invoiceadjustmentQuery          = invoiceadjustmentresolver.QueryResolver
+	invoicedisputeQuery             = invoicedisputeresolver.QueryResolver
 	journalentryQuery               = journalentryresolver.QueryResolver
 	journalreversalQuery            = journalreversalresolver.QueryResolver
 	locationQuery                   = locationresolver.QueryResolver
