@@ -120,6 +120,10 @@ type Tender {
 
 extend type Query {
   tender(id: ID!): Tender
-  tendersByShipment(shipmentId: ID!): [Tender!]!
+  tendersByShipment(
+    shipmentId: ID!
+    "Only the tenders of this move of the shipment."
+    shipmentMoveId: ID
+  ): [Tender!]!
   liveTenderByMove(moveId: ID!): Tender
 }

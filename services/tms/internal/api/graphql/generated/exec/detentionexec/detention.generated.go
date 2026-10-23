@@ -534,6 +534,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
+				Name:     "billableMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DetentionDeskEntry)
+					return obj.BillableMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
 				Name:     "urgency",
 				NonNull:  true,
 				ChildErr: errNoChild7,
@@ -2855,8 +2865,10 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				HasChild:   true,
 				ChildType:  "DetentionDeskEntry",
+				Args:       field_Query_detentionDesk_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionDesk(ctx)
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").DetentionDesk(ctx, fc.Args["includeAwaitingApproval"].(*bool), fc.Args["urgency"].(*gqlmodel.DetentionDeskUrgency), fc.Args["shipmentId"].(*string), fc.Args["proNumber"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNDetentionDeskEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskEntryᚄ),
 			},
@@ -2996,7 +3008,7 @@ type resolverMutation interface {
 type resolverQuery interface {
 	DetentionPolicies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DetentionPolicyConnection, error)
 	DetentionPolicy(ctx context.Context, id string) (*gqlmodel.DetentionPolicy, error)
-	DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error)
+	DetentionDesk(ctx context.Context, includeAwaitingApproval *bool, urgency *gqlmodel.DetentionDeskUrgency, shipmentID *string, proNumber *string) ([]*gqlmodel.DetentionDeskEntry, error)
 	DetentionOccurrence(ctx context.Context, id string) (*gqlmodel.DetentionOccurrenceDetail, error)
 	ShipmentDetention(ctx context.Context, shipmentID string) ([]*gqlmodel.DetentionOccurrence, error)
 	DetentionDisputePacket(ctx context.Context, occurrenceID string) (*gqlmodel.DetentionDisputePacket, error)
@@ -3173,6 +3185,43 @@ func field_Query_detentionPolicy_args(ctx context.Context, ec *gqlexec.Exec, raw
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_detentionDesk_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 4)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeAwaitingApproval",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeAwaitingApproval"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "urgency",
+		func(ctx context.Context, v any) (*gqlmodel.DetentionDeskUrgency, error) {
+			return unmarshalODetentionDeskUrgency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskUrgency(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["urgency"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "proNumber",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["proNumber"] = arg3
 	return args, nil
 }
 
@@ -4158,6 +4207,15 @@ func unmarshalODetentionClockStartBasis2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	tmp, err := graphql.UnmarshalString(v)
 	res := detention.ClockStartBasis(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalODetentionDeskUrgency2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDetentionDeskUrgency(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.DetentionDeskUrgency, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(gqlmodel.DetentionDeskUrgency)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalODetentionLateArrivalRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋdetentionᚐLateArrivalRule(ctx context.Context, ec *gqlexec.Exec, v any) (*detention.LateArrivalRule, error) {

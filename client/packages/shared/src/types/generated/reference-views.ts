@@ -237,6 +237,7 @@ export const REFERENCE_VIEWS = {
     "version",
   ],
   dash_control: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
+  detention: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   detention_policy: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   distance_override: [
     "businessUnitId",
@@ -1053,6 +1054,10 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   CustomerPayment: "customer_payment",
   DOTRandomPool: "dot_random_pool",
   DashControl: "dash_control",
+  DetentionDeskEntry: "detention",
+  DetentionDisputePacket: "detention",
+  DetentionOccurrence: "detention",
+  DetentionOccurrenceDetail: "detention",
   DetentionPolicy: "detention_policy",
   DistanceOverride: "distance_override",
   DistanceProfile: "distance_profile",
