@@ -95,6 +95,9 @@ func (r *Registry) registerCarrierResources() {
 			"settlementNumber":     SensitivityInternal,
 			"status":               SensitivityInternal,
 			"eventType":            SensitivityInternal,
+			"lineNumber":           SensitivityInternal,
+			"costEventId":          SensitivityInternal,
+			"glAccountId":          SensitivityInternal,
 			"idempotencyKey":       SensitivityInternal,
 			"eventDate":            SensitivityInternal,
 			"periodStart":          SensitivityInternal,
@@ -129,6 +132,8 @@ func (r *Registry) registerCarrierResources() {
 			"version":              SensitivityInternal,
 			"createdAt":            SensitivityInternal,
 			"updatedAt":            SensitivityInternal,
+			"carrier":              SensitivityInternal,
+			"lines":                SensitivityInternal,
 		},
 	})
 

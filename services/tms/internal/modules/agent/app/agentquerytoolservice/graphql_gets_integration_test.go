@@ -40,7 +40,7 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	lists, services := convertedListCases(conn)
+	lists, services := convertedListCases(conn, admin)
 	events := carrierintelrepository.NewEventRepository(carrierintelrepository.Params{
 		DB: conn, Logger: zap.NewNop(),
 	})

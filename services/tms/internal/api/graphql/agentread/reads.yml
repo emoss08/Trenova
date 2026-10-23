@@ -69,3 +69,44 @@ reads:
     operation: DeskWorkerCredentialList
     reason: Credentials are read by workerCredentials, one worker's or those falling due across the organization.
     alongside: [DeskWorkerCredentialTypes]
+  - tool: settlement_list_driver
+    operation: DriverSettlementTable
+    reason: Driver settlements are read by driverSettlements; mySettlements is the driver portal's own.
+  - tool: settlement_list_pay_events
+    operation: DriverPayEventTable
+    reason: A driver's pay events are the DriverPayEvent record, read by driverPayEvents.
+  - tool: settlement_list_carrier
+    operation: CarrierSettlementTable
+    reason: The organization's carrier settlements, each naming its carrier; DeskCarrierSettlements reads one carrier's for its card and names none.
+  - tool: settlement_get_carrier
+    operation: CarrierSettlementDetail
+    reason: The tool returns each cost line by id, as the line tools take them; the Desk's card sums the lines by kind.
+  - tool: settlement_get_dispute
+  - tool: settlement_list_driver_expenses
+  - tool: settlement_list_advances
+    operation: PayAdvanceTable
+    reason: Advances are the PayAdvance record, read by payAdvances.
+  - tool: settlement_list_escrow_accounts
+    operation: EscrowAccountTable
+    reason: Escrow accounts are the EscrowAccount record, read by escrowAccounts.
+  - tool: settlement_list_recurring_deductions
+    operation: RecurringDeductionTable
+    reason: Recurring deductions are the RecurringDeduction record, read by recurringDeductions.
+  - tool: settlement_list_recurring_earnings
+    operation: RecurringEarningTable
+    reason: Recurring earnings are the RecurringEarning record, read by recurringEarnings.
+  - tool: settlement_list_pay_profiles
+    operation: PayProfileTable
+    reason: Pay profiles are the PayProfile record, read by payProfiles.
+  - tool: settlement_get_driver
+    operation: DeskDriverSettlementStatement
+    reason: The tool returns each line by id, as the adjustment tools take them, and the disputes raised on it; the Desk's card sums the lines by how each was paid.
+  - tool: settlement_get_driver_earnings
+    operation: WorkerEarningsSummary
+    reason: A driver's unsettled pay is read by workerEarningsSummary, keyed by the worker.
+  - tool: settlement_list_pay_codes
+    operation: DeskPayCodeOptions
+    reason: The active pay codes are read whole by payCodeOptions, as settlement lines and adjustments choose from them.
+  - tool: settlement_list_pay_assignments
+    operation: WorkerPayAssignments
+    reason: A driver's pay profile assignments are read whole by workerPayAssignments, keyed by the worker.

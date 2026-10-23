@@ -533,7 +533,7 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
-	_, resolvers := convertedListCases(conn)
+	_, resolvers := convertedListCases(conn, admin)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
 	checklists := workerchecklistrepository.New(workerchecklistrepository.Params{DB: conn, Logger: logger})
 	training := workertrainingrepository.New(workertrainingrepository.Params{DB: conn, Logger: logger})

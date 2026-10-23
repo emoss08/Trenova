@@ -18,6 +18,7 @@ type FleetCodeEdge { node: FleetCode! }
 type Query {
   fleetCodes(input: DataTableConnectionInput!, includeTotalCount: Boolean!, region: String!): FleetCodeConnection!
   fleetCode(id: ID!): FleetCode
+  managerFleetCode(managerId: ID!, region: String): FleetCode
 }
 `
 
@@ -53,6 +54,16 @@ func TestUnsupplied_RefusesARequiredVariableTheToolCannotSend(t *testing.T) {
 		"a get sends the id": {
 			verb: verbGet,
 			text: `query FleetCode($id: ID!) { fleetCode(id: $id) { id } }`,
+		},
+		"a get keyed by another record sends that record's id": {
+			verb: verbGet,
+			text: `query ManagerFleetCode($managerId: ID!) { managerFleetCode(managerId: $managerId) { id } }`,
+		},
+		"a get cannot send a second key": {
+			verb: verbGet,
+			text: `query ManagerFleetCode($managerId: ID!, $region: String!) {
+				managerFleetCode(managerId: $managerId, region: $region) { id } }`,
+			refused: true,
 		},
 		"a get cannot send a list's input": {
 			verb: verbGet,

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -93,6 +94,10 @@ type graphQLListSpec struct {
 	// reads is what the tool's records carry from outside the organization,
 	// declared as every read tool declares it (readSpec).
 	reads readSpec
+	// outside are the fields whose text someone outside the organization
+	// wrote (a driver's own description); a record that shows one is marked
+	// as read from outside, as reads Marked declares.
+	outside []string
 }
 
 // idReference is where a list's id parameter points: the resource, what the
@@ -225,7 +230,7 @@ func annotate(
 func graphQLListSpecs() []graphQLListSpec {
 	return slices.Concat(
 		referenceReadSpecs(), partyReadSpecs(), equipmentReadSpecs(), workerReadSpecs(),
-		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(),
+		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), settlementReadSpecs(),
 	)
 }
 
@@ -430,6 +435,37 @@ type graphQLListOutcome struct {
 	Total            *int             `json:"total,omitempty"`
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
+
+	outside []agent.RecordRef
+}
+
+func (o *graphQLListOutcome) TaintedRecords() []agent.RecordRef { return o.outside }
+
+// outsideRecords are the records among items that show text written outside
+// the organization in one of the fields named, each under its kind.
+func outsideRecords(
+	resource permission.Resource,
+	fields []string,
+	items ...map[string]any,
+) []agent.RecordRef {
+	if len(fields) == 0 {
+		return nil
+	}
+	var out []agent.RecordRef
+	for _, item := range items {
+		id, _ := item[recordIDField].(string)
+		if id == "" {
+			continue
+		}
+		for _, field := range fields {
+			if text, _ := item[field].(string); strings.TrimSpace(text) != "" {
+				out = append(out, agent.RecordRef{EntityType: resource.String(), ID: id})
+				break
+			}
+		}
+	}
+
+	return out
 }
 
 func (t *graphQLListTool) Query(
@@ -485,6 +521,7 @@ func (t *graphQLListTool) Query(
 		HasMore:          page.hasMore,
 		Total:            page.total,
 		WithheldByAccess: page.withheld,
+		outside:          outsideRecords(t.spec.resource, t.spec.outside, page.items...),
 	}
 	if page.hasMore {
 		outcome.NextCursor = window.next(page.endCursor)
@@ -499,7 +536,7 @@ func (t *graphQLListTool) Query(
 		}
 	}
 
-	return outcome, nil
+	return &outcome, nil
 }
 
 type pageRequest struct {
@@ -621,7 +658,8 @@ func (t *graphQLListTool) relativeWithheld(paths []string) []string {
 }
 
 // compact drops what tells a model nothing: nulls, empty lists and type
-// names, in the record and in each record it carries.
+// names, in the record and in each record it carries, and shows each amount
+// in minor units as its decimal (presentMoney).
 func compact(node map[string]any) map[string]any {
 	out := make(map[string]any, len(node))
 	for key, value := range node {
@@ -643,6 +681,7 @@ func compact(node map[string]any) map[string]any {
 		}
 		out[key] = value
 	}
+	presentMoney(node, out)
 
 	return out
 }
@@ -655,12 +694,13 @@ func selectedColumns(fields []graphQLField, items []map[string]any) []string {
 	}
 	out := make([]string, 0, len(fields))
 	for _, field := range fields {
-		if !field.Selected {
+		name := presentedName(field.Name)
+		if !field.Selected || slices.Contains(out, name) {
 			continue
 		}
 		for _, item := range items {
-			if _, ok := item[field.Name]; ok {
-				out = append(out, field.Name)
+			if _, ok := item[name]; ok {
+				out = append(out, name)
 				break
 			}
 		}
@@ -801,8 +841,9 @@ func (t *graphQLListTool) nearMiss(
 }
 
 func (t *graphQLListTool) keptOut(condition any) string {
-	return fmt.Sprintf("No %s matched every condition. Without the condition on %v "+
-		"some do, so that one alone keeps them out.", t.spec.entityPlural, condition)
+	return fmt.Sprintf("No %s matched every condition. Without the condition on %s "+
+		"some do, so that one alone keeps them out.", t.spec.entityPlural,
+		presentedName(fmt.Sprint(condition)))
 }
 
 // runView reads a composed table view through the same operation, so the

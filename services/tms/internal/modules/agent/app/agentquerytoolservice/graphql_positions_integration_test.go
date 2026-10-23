@@ -30,7 +30,7 @@ func TestConvertedLists_PositionsReadTheTenantsRecentReadings(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	cases, services := convertedListCases(conn)
+	cases, services := convertedListCases(conn, admin)
 	repo := telematicsrepository.New(telematicsrepository.Params{DB: conn, Logger: zap.NewNop()})
 	services.TelematicsService = telematicsservice.New(telematicsservice.Params{
 		Repo: repo, Logger: zap.NewNop(),

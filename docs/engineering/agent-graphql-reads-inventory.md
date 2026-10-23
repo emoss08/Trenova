@@ -261,22 +261,7 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `settlement_get_carrier` | op | carrierSettlement | DeskCarrierSettlementCard | n/a | id | Same CarrierSettlementService.Get. |
-| `settlement_get_dispute` | op | settlementDispute | SettlementDisputeDetail | n/a | id | Same GetDispute. |
-| `settlement_get_driver` | op | driverSettlement (+ settlementDisputes) | DeskDriverSettlementCard (+ SettlementDisputeTable by workerId) | n/a | id | Same DriverSettlementService.Get; the open disputes for the worker via settlementDisputes fieldFilters. |
-| `settlement_get_driver_earnings` | op | workerEarningsSummary | WorkerEarningsSummary | n/a | workerId | Same GetWorkerEarningsSummary. |
-| `settlement_list_advances` | op | payAdvances | PayAdvanceTable | cursor | DataTable fieldFilters only | Same PayAdvanceRepository; status/workerId as fieldFilters. |
-| `settlement_list_carrier` | op | carrierSettlements | DeskCarrierSettlements (alt CarrierSettlementTable) | cursor | DataTable fieldFilters only | Tool service.List vs resolver repo.ListConnection; carrierId/status as fieldFilters. Desk op picked per rule. |
-| `settlement_list_driver` | op | driverSettlements | DriverSettlementTable | cursor | DataTable fieldFilters only | workerId/status/hasExceptions (has_exceptions column)/open as fieldFilters. |
-| `settlement_list_driver_expenses` | op | driverExpenses | DriverExpenseTable | cursor | DataTable fieldFilters only | Same ListExpensesConnection; tool already sends fieldFilters (workerId, pendingOnly -> status). |
-| `settlement_list_escrow_accounts` | op | escrowAccounts | EscrowAccountTable | cursor | DataTable fieldFilters only | Same EscrowAccountRepository. |
-| `settlement_list_pay_assignments` | op | workerPayAssignments | WorkerPayAssignments | unpaged list | workerId | Same DriverPayService.ListWorkerAssignments. |
-| `settlement_list_pay_codes` | field-no-op | payCodeOptions | propose DeskPayCodeOptions (alt PayCodeTable) | unpaged list | typed direction | payCodeOptions calls the same ListActivePayCodes but no op uses it; PayCodeTable (payCodes) reads all codes through ListPayCodesConnection. |
-| `settlement_list_pay_events` | op | driverPayEvents | DriverPayEventTable | cursor | DataTable fieldFilters only | workerId/shipmentId/status as fieldFilters. |
-| `settlement_list_pay_profiles` | op | payProfiles | PayProfileTable | cursor | DataTable fieldFilters only | classification as fieldFilter. |
-| `settlement_list_payroll_exports` | op | payrollExports | PayrollExports | limit only | limit | Same TimesheetService.ListExports. |
-| `settlement_list_recurring_deductions` | op | recurringDeductions | RecurringDeductionTable | cursor | DataTable fieldFilters only | status/workerId as fieldFilters. |
-| `settlement_list_recurring_earnings` | op | recurringEarnings | RecurringEarningTable | cursor | DataTable fieldFilters only | status/workerId as fieldFilters. |
+| `settlement_list_payroll_exports` | op | payrollExports | PayrollExports | limit only | limit | Stays on the repository path: payrollExports checks timesheet export, where the tool reads with timesheet read, so converting would refuse a reader who may read timesheets but not export them. Which permission a payroll run list takes is the owner's call; the generator refuses the binding until the two agree. |
 
 ## shipment
 
@@ -311,9 +296,10 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | class | tools |
 |---|---|
-| op, not yet converted | 91 |
-| op, converted (rows removed) | 28 |
-| field-no-op | 6 |
+| op, not yet converted | 76 |
+| op, converted (rows removed) | 43 |
+| field-no-op, not yet converted | 5 |
+| field-no-op, converted (rows removed) | 1 |
 | partial, not yet converted | 23 |
 | partial, converted (rows removed) | 7 |
 | none | 21 |
@@ -354,7 +340,7 @@ for read.
 | `report_list_datasets` | `ReportCatalog` | report_list_datasets is a list tool, but ReportCatalog reads reportCatalog, which is not one |
 | `report_list_runs` | `ReportRunsTable` | ReportRun binds to no Go type; name the entity in reads.yml |
 | `report_list_schedules` | `ReportSchedules` | ReportSchedule binds to no Go type; name the entity in reads.yml |
-| `settlement_list_payroll_exports` | `PayrollExports` | the resolver of payrollExports checks no read permission, so the tool's own could not be held to it |
+| `settlement_list_payroll_exports` | `PayrollExports` | the resolver of payrollExports checks no read permission, so the tool's own could not be held to it (it checks timesheet export; see the settlement section) |
 | `shipment_list` | `DeskRecordShipments` | Shipment binds to no Go type; name the entity in reads.yml |
 | `worker_get_hos` | `DeskWorkerHos` | worker_get_hos names DeskWorkerHos, which reads 2 root fields; a tool reads one |
 | `worker_get_schedule` | `WorkerShiftAssignments` | worker_get_schedule is a get tool, but WorkerShiftAssignments reads workerShiftAssignments, which is not one |

@@ -149,6 +149,12 @@ fragment DocumentTypeReference on DocumentType {
   documentCategory
 }
 
+fragment DriverPayEventReference on DriverPayEvent {
+  id
+  workerId
+  status
+}
+
 fragment DriverSettlementReference on DriverSettlement {
   id
   workerId
@@ -584,6 +590,10 @@ fragment WorkerDisciplinaryActionReference on WorkerDisciplinaryAction {
   id
   status
   issuedAt
+}
+
+fragment WorkerEarningsSummaryReference on WorkerEarningsSummary {
+  workerId
 }
 
 fragment WorkerInjuryReference on WorkerInjury {

@@ -90,6 +90,7 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -146,10 +147,16 @@ func boolFilter(field string, value bool) (typed, old map[string]any) {
 }
 
 // convertedListCases builds every list converted by a spec over one RLS
-// connection, and the resolver services the read executor reaches.
+// connection, and the resolver services the read executor reaches. A case
+// whose rows need records no repository here writes (a pay event's
+// shipment) writes them through admin, which row-level security does not
+// hold.
 //
 //nolint:funlen // one entry per converted list
-func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.ResolverParams) {
+func convertedListCases(
+	conn *postgres.Connection,
+	admin *bun.DB,
+) ([]referenceCase, agentread.ResolverParams) {
 	logger := zap.NewNop()
 	equipmentTypes := equipmenttyperepository.New(equipmenttyperepository.Params{DB: conn, Logger: logger})
 	fleetCodes := fleetcoderepository.New(fleetcoderepository.Params{DB: conn, Logger: logger})
@@ -469,6 +476,7 @@ func convertedListCases(conn *postgres.Connection) ([]referenceCase, agentread.R
 			},
 		},
 	}
+	cases = append(cases, settlementListCases(conn, admin, &services)...)
 
 	return cases, services
 }
@@ -649,7 +657,7 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	cases, services := convertedListCases(conn)
+	cases, services := convertedListCases(conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
 	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
@@ -731,7 +739,7 @@ func TestConvertedLists_ATractorsDriversShowTheirReferenceView(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	cases, services := convertedListCases(conn)
+	cases, services := convertedListCases(conn, admin)
 	idx := slices.IndexFunc(cases, func(c referenceCase) bool {
 		return c.tool == "equipment_list_tractors"
 	})
@@ -810,7 +818,7 @@ func TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
-	_, services := convertedListCases(conn)
+	_, services := convertedListCases(conn, admin)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: zap.NewNop()})
 	tenant := agentreadtest.SeedTenant(t, admin, "A")
 	tenantCtx := dbscope.WithTenant(t.Context(), tenant.Scope())

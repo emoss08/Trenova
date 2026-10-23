@@ -466,6 +466,7 @@ func tableShaped(schema *ast.Schema, name string) bool {
 // (workerId), so only an input object it cannot build is refused.
 func unsupplied(b *binding) string {
 	want := supplied[b.Verb]
+	key := getKey(b)
 	var missing []string
 	for _, variable := range b.Operation.Query.Operations[0].VariableDefinitions {
 		if !variable.Type.NonNull || variable.DefaultValue != nil {
@@ -475,6 +476,9 @@ func unsupplied(b *binding) string {
 			continue
 		}
 		if typ, ok := want[variable.Variable]; ok && typ == variable.Type.Name() {
+			continue
+		}
+		if variable.Variable == key {
 			continue
 		}
 		if typ, ok := want[""]; ok && (typ == variable.Type.Name() ||
@@ -489,6 +493,28 @@ func unsupplied(b *binding) string {
 
 	return fmt.Sprintf("%s reads %s, which requires %s; a %s tool's parameters cannot supply it",
 		b.Tool, b.Operation.Name, strings.Join(missing, ", "), b.Verb)
+}
+
+// getKey is the variable a get keyed by another record sends its id in: the
+// only variable its operation requires, when that is an id named other than
+// id (a driver's earnings by $workerId). A get by its own id has none.
+func getKey(b *binding) string {
+	if b.Verb != verbGet {
+		return ""
+	}
+	key := ""
+	for _, variable := range b.Operation.Query.Operations[0].VariableDefinitions {
+		if !variable.Type.NonNull || variable.DefaultValue != nil {
+			continue
+		}
+		if key != "" || variable.Type.Name() != idType || variable.Type.Elem != nil ||
+			variable.Variable == idArgument {
+			return ""
+		}
+		key = variable.Variable
+	}
+
+	return key
 }
 
 func chooseBinding(

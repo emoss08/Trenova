@@ -14140,7 +14140,7 @@ rate overrides on the assignment when individual drivers earn different rates.
 The classification drives W-2 vs 1099 treatment and which GL expense account
 settlements post to.
 """
-type PayProfile {
+type PayProfile @kind(resource: "driver_pay_profile") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -14189,7 +14189,7 @@ resolved through their assignment effective on the shipment's delivery date.
 Assigning a new profile automatically ends the previous open assignment, so the
 history is a contiguous, auditable record of how the driver was paid over time.
 """
-type WorkerPayAssignment {
+type WorkerPayAssignment @kind(resource: "driver_pay_profile") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -14668,7 +14668,7 @@ Events are recomputed while Accrued (e.g. if charges change), locked once
 Settled, and Voided if the shipment cancels. This is what powers real-time
 "earned so far this period" visibility.
 """
-type DriverPayEvent {
+type DriverPayEvent @kind(resource: "driver_settlement") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -14795,7 +14795,7 @@ type BulkSettlementActionPayload {
 Live pay position for one driver: unsettled earnings accrued to date,
 outstanding advances, and escrow balance.
 """
-type WorkerEarningsSummary {
+type WorkerEarningsSummary @kind(resource: "driver_settlement") {
   workerId: ID!
   accruedEventCount: Int!
   accruedGrossMinor: Int!

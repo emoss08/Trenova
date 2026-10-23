@@ -155,6 +155,9 @@ type graphQLParam struct {
 	// field filter. Like any argument the screen sends, it is not judged by
 	// a record field's sensitivity.
 	OnInput bool
+	// Minor marks an amount filter on a field held in minor units, which the
+	// call sends as a decimal (amountMin on amountMinor).
+	Minor bool
 }
 
 // tableInputFields are what a table-shaped input holds for the table itself;
@@ -510,6 +513,9 @@ func scalarParams(
 		}
 		return params
 	case graphQLTypeInt, graphQLTypeFloat, graphQLTypeDecimal:
+		if base, minor := moneyName(field.Name); minor && field.Type == graphQLTypeInt {
+			return amountParams(field, base, describe)
+		}
 		number := map[string]any{toolschema.KeyType: toolschema.TypeInteger}
 		unit := ""
 		if field.Type != graphQLTypeInt {
@@ -549,6 +555,31 @@ func scalarParams(
 	}
 
 	return nil
+}
+
+// amountParams are the range a field held in minor units becomes, named and
+// sent as the decimal a result shows (amountMin, amountMax on amountMinor).
+func amountParams(
+	field *graphQLField,
+	base string,
+	describe func(string) string,
+) []graphQLParam {
+	words := stringutils.HumanizeSnakeCase(stringutils.ConvertCamelToSnake(base))
+	amount := map[string]any{toolschema.KeyType: toolschema.TypeString}
+	unit := " Write it as a decimal in the record's currency, such as 1250.00."
+
+	return []graphQLParam{
+		{
+			Name: base + suffixMin, Field: field.Name, Kind: paramAtLeast, Minor: true,
+			Schema: withDescription(amount,
+				describe("Only records whose "+words+" is at least this."+unit)),
+		},
+		{
+			Name: base + suffixMax, Field: field.Name, Kind: paramAtMost, Minor: true,
+			Schema: withDescription(amount,
+				describe("Only records whose "+words+" is at most this."+unit)),
+		},
+	}
 }
 
 // presenceParam is the has<Thing> parameter a nullable reference becomes, so
@@ -647,10 +678,19 @@ func compileFilter(
 			return nil, false, dayErr
 		}
 		return compare(dbtype.OpLessThanOrEqual, endOfDay(clk, day)), true, nil
-	case paramAtLeast:
-		return compare(dbtype.OpGreaterThanOrEqual, args[param.Name]), true, nil
-	case paramAtMost:
-		return compare(dbtype.OpLessThanOrEqual, args[param.Name]), true, nil
+	case paramAtLeast, paramAtMost:
+		value := args[param.Name]
+		if param.Minor {
+			minor, minorErr := minorUnits(value, param.Name)
+			if minorErr != nil {
+				return nil, false, minorErr
+			}
+			value = minor
+		}
+		if param.Kind == paramAtLeast {
+			return compare(dbtype.OpGreaterThanOrEqual, value), true, nil
+		}
+		return compare(dbtype.OpLessThanOrEqual, value), true, nil
 	case paramPresent:
 		has, ok := args[param.Name].(bool)
 		if !ok {

@@ -108,7 +108,8 @@ func newGraphQLUnpagedListTool(
 		return nil, fmt.Errorf("%s reads %s, which is not an unpaged list", spec.name,
 			read.Operation)
 	}
-	if spec.rank != nil || spec.defaultsAt != nil || spec.queryNote != "" {
+	if spec.rank != nil || spec.defaultsAt != nil || spec.queryNote != "" ||
+		len(spec.outside) > 0 {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
 
@@ -593,11 +594,15 @@ func alongsideRows(
 }
 
 // relativePaths names withheld fields from the record, as a model reads
-// them: workerChecklists.items.note is items.note.
+// them: workerChecklists.items.note is items.note, and an amount in minor
+// units is named as the result shows it (lines.amountMinor is lines.amount).
 func relativePaths(paths []string, prefix string) []string {
 	out := make([]string, 0, len(paths))
 	for _, path := range paths {
-		out = append(out, strings.TrimPrefix(path, prefix))
+		named := presentedPath(strings.TrimPrefix(path, prefix))
+		if !slices.Contains(out, named) {
+			out = append(out, named)
+		}
 	}
 
 	return out

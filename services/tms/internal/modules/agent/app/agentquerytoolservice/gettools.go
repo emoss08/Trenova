@@ -38,6 +38,16 @@ type getSpec struct {
 	source      agent.TaintSource
 	rationale   string
 	fetch       func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
+	// keyResource is the resource of the record a get is keyed by when that
+	// is not its own (a driver's earnings, read by the worker's id).
+	keyResource permission.Resource
+	// minorUnits are fields that hold an amount in minor units under a name
+	// the schema does not mark with Minor, shown as decimals.
+	minorUnits []string
+	// outside are the fields whose text someone outside the organization
+	// wrote (a driver's own description); a record that shows one is marked
+	// as read from outside, as reads Marked declares.
+	outside []string
 }
 
 type getTool struct {
@@ -74,7 +84,9 @@ func (t *getTool) Policy() agentports.ToolPolicy {
 // is still held to a prefix rather than checked for shape alone.
 func (t *getTool) ParamSchema() map[string]any {
 	property := agenttoolschema.IDText(t.spec.idDescription())
-	if len(t.spec.kinds) > 0 {
+	if t.spec.keyResource != "" {
+		property = agenttoolschema.RecordIDText(t.spec.keyResource, t.spec.idDescription())
+	} else if len(t.spec.kinds) > 0 {
 		property = agenttoolschema.KindID(t.spec.idDescription(), t.spec.kinds...)
 	} else if _, typed := t.spec.resource.IDPrefix(); typed {
 		property = agenttoolschema.RecordIDText(t.spec.resource, t.spec.idDescription())
@@ -196,14 +208,14 @@ func locationGetSpec() getSpec {
 // graphQLGetSpecs are every get tool that reads through GraphQL by a spec
 // alone.
 func graphQLGetSpecs() []getSpec {
-	return []getSpec{
+	return append([]getSpec{
 		customerGetSpec(),
 		carrierGetSpec(),
 		locationGetSpec(),
 		carrierIntelEventGetSpec(),
 		tractorGetSpec(),
 		trailerGetSpec(),
-	}
+	}, settlementGetSpecs()...)
 }
 
 // graphQLGetProviders registers each spec as its own get tool.

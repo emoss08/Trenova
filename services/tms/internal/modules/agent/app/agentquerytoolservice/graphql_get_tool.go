@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
@@ -68,7 +70,7 @@ func (t *graphQLGetTool) Query(
 	result, err := t.reader.Read(ctx, &agentports.GraphQLReadRequest{
 		Actor:             params.Actor,
 		Operation:         t.read.Operation,
-		Variables:         map[string]any{graphQLIDVariable: id.String()},
+		Variables:         map[string]any{t.read.keyVariable(): id.String()},
 		DataAccessCeiling: params.DataAccessCeiling,
 		RequestID:         params.RunID.String(),
 	})
@@ -84,10 +86,47 @@ func (t *graphQLGetTool) Query(
 		return nil, fmt.Errorf("%s %s: %w", t.spec.entity, id, errGraphQLRecordMissing)
 	}
 	record := compact(node)
+	presentMinor(record, t.spec.minorUnits)
 	if withheld := relativePaths(result.Withheld, t.read.RootField+"."); len(withheld) > 0 {
 		record[outcomeWithheld] = withheld
 		record[outcomeWithheldNote] = withheldNote
 	}
+	if outside := outsideRecords(t.spec.resource, t.spec.outside, record); len(outside) > 0 {
+		return &markedRecord{record: record, outside: outside}, nil
+	}
 
 	return record, nil
 }
+
+// keyVariable is the variable a get's operation takes its key in: the only
+// id it requires when that is not named id (a driver's earnings by
+// $workerId), as agentread/gen binds it; otherwise id.
+func (r *graphQLRead) keyVariable() string {
+	key := ""
+	for _, variable := range r.Variables {
+		if !variable.NonNull {
+			continue
+		}
+		if key != "" || variable.Type != graphQLTypeID || variable.List {
+			return graphQLIDVariable
+		}
+		key = variable.Name
+	}
+	if key == "" {
+		return graphQLIDVariable
+	}
+
+	return key
+}
+
+// markedRecord is a get's record that shows text written outside the
+// organization, encoded as the record and naming itself so the run marks
+// what it read.
+type markedRecord struct {
+	record  map[string]any
+	outside []agent.RecordRef
+}
+
+func (r *markedRecord) MarshalJSON() ([]byte, error) { return sonic.Marshal(r.record) }
+
+func (r *markedRecord) TaintedRecords() []agent.RecordRef { return r.outside }
