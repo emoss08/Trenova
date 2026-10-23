@@ -17,6 +17,13 @@ type FormulaInputDeclaration {
   required: Boolean!
   "The default as a wire value, or null when the input has none."
   default: Any
+  """
+  The values the input accepts, from its where clause, or null when it has none:
+  {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
+  minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
+  list input it bounds each item.
+  """
+  constraint: Any
 }
 
 "An organization library a formula version imports, pinned to the version it was checked against."

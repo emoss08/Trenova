@@ -53,7 +53,7 @@ export function AgingSummaryHeader({
         />
         <KpiStripItem
           label={t("CEI")}
-          value={kpis ? `${kpis.cei.toFixed(0)}%` : "—"}
+          value={kpis ? `${kpis.collection.cei.toFixed(0)}%` : "—"}
           sub={t("trailing 90 days")}
         />
       </KpiStrip>

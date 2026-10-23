@@ -72,6 +72,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *fiscalperiodports.ListFiscalPeriodConnectionRequest,
+) (*pagination.CursorListResult[*fiscalperiod.FiscalPeriod], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req fiscalperiodports.GetFiscalPeriodByIDRequest,

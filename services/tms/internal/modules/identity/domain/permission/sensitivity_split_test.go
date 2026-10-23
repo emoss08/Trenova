@@ -125,3 +125,65 @@ func TestReceivablesKeepTheMoneyAndTheNotesRestricted(t *testing.T) {
 		},
 	})
 }
+
+// What a factor funded, holds and charges stays Restricted, as an invoice's
+// amounts are, while where each factoring record stands is Internal, so an
+// agent at the default data access works the factoring queue without being
+// shown the money.
+func TestFactoringRecordsKeepTheMoneyRestricted(t *testing.T) {
+	t.Parallel()
+
+	assertSplit(t, NewRegistry(), map[Resource]sensitivitySplit{
+		ResourceFactoringAgreement: {
+			internal: []string{
+				"status", "effectiveFrom", "effectiveTo", "recourse", "accountingTreatment",
+				"fundingDays", "submissionTime", "chargebackWindowDays", "daysFrom", "daysTo",
+			},
+			restricted: []string{
+				"advanceRateBp", "reserveRateBp", "minimumFeeMinor", "rateBp", "flatMinor",
+				"notes",
+			},
+		},
+		ResourceFactoringNoa: {
+			internal: []string{
+				"status", "sentAt", "sentTo", "acknowledgedAt", "expiresAt", "releasedAt",
+				"releaseReason",
+			},
+			restricted: []string{"notes"},
+		},
+		ResourceFactoringSubmission: {
+			internal: []string{
+				"number", "status", "invoiceCount", "transportTarget", "lastError", "sentAt",
+				"invoiceNumber", "fundedOn", "rejectionReason", "chargebackReason",
+			},
+			restricted: []string{
+				"faceMinor", "expectedAdvanceMinor", "expectedFeeMinor", "expectedReserveMinor",
+				"advanceMinor", "feeMinor", "reserveMinor",
+			},
+		},
+		ResourceFactoringRemittance: {
+			internal: []string{
+				"status", "fileName", "lineCount", "matchedCount", "exceptionCount",
+				"matchStatus", "invoiceNumber", "debtorName", "score", "suggestions",
+			},
+			restricted: []string{
+				"totalCashMinor", "faceMinor", "advanceMinor", "feeMinor", "reserveMinor",
+				"cashMinor", "cells",
+			},
+		},
+		ResourceFactoringReserve: {
+			internal: []string{"factoringCompanyId", "entryCount", "lastOccurredOn"},
+			restricted: []string{
+				"reserveMinor", "liabilityMinor", "advancedMinor", "releasedMinor",
+				"chargedBackMinor", "feeMinor",
+			},
+		},
+		ResourceInvoice: {
+			internal: []string{
+				"verdict", "failedChecks", "readySince", "evaluatedAt", "checks", "message",
+				"fix",
+			},
+			restricted: []string{"openBalanceMinor", "totalAmountMinor"},
+		},
+	})
+}

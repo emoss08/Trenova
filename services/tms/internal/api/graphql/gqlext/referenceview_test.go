@@ -206,6 +206,22 @@ func TestReferenceFragmentsAreGenerated(t *testing.T) {
 			"%s is out of date: run `go run ./internal/api/graphql/gqlext/refgen` from services/tms, "+
 				"then `pnpm --filter @trenova/graphql codegen`", path)
 	}
+	assert.NotContains(t, fragments, "{\n}",
+		"a kind type with none of its view's fields, such as a summary, has no fragment")
+}
+
+// A summary that carries records of its kind but holds neither an id nor a
+// field of the kind's view is never linked by itself, so it has no fragment;
+// an empty one is not GraphQL.
+func TestReferenceFragmentsLeaveOutASummaryWithNothingToShow(t *testing.T) {
+	t.Parallel()
+
+	fragments, err := RenderReferenceFragments(loadSchema(t), fieldsensitivity.DefaultRegistry())
+	require.NoError(t, err)
+
+	assert.NotContains(t, fragments, "on FuelIndexLatestPrice")
+	assert.Contains(t, fragments, "on FuelSurchargeProgram")
+	assert.NotContains(t, fragments, "{\n}")
 }
 
 var (

@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -22,6 +22,7 @@ type Params struct {
 	Repo         dispatchcontrolports.DispatchControlRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
+	Fields       permissionports.FieldAccess `optional:"true"`
 }
 
 type Service struct {
@@ -29,6 +30,7 @@ type Service struct {
 	repo         dispatchcontrolports.DispatchControlRepository
 	validator    *Validator
 	auditService auditports.AuditService
+	fields       permissionports.FieldAccess
 }
 
 func New(p Params) *Service {
@@ -37,6 +39,7 @@ func New(p Params) *Service {
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
+		fields:       p.Fields,
 	}
 }
 
@@ -50,17 +53,14 @@ func (s *Service) Get(
 func (s *Service) Update(
 	ctx context.Context,
 	entity *dispatchcontrol.DispatchControl,
-	userID pulid.ID,
+	actor *permissionports.RequestActor,
 ) (*dispatchcontrol.DispatchControl, error) {
+	userID := actor.UserID
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("orgID", entity.OrganizationID.String()),
 		zap.String("userID", userID.String()),
 	)
-
-	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
 
 	original, err := s.repo.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: pagination.TenantInfo{
@@ -72,6 +72,11 @@ func (s *Service) Update(
 	if err != nil {
 		log.Error("failed to get original dispatch control", zap.Error(err))
 		return nil, err
+	}
+	entity.KeepFields(original, permissionports.VisibleFieldGroups(ctx, s.fields, actor))
+
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, entity)

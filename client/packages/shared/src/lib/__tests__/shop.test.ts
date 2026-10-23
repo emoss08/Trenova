@@ -7,6 +7,7 @@ import {
   offerWindowLabel,
   optionIsPriced,
   shopOptionNote,
+  shopStrategies,
   shopStrategyExplanation,
   shopStrategyLabel,
   THIN_MARGIN_PERCENT,
@@ -211,5 +212,24 @@ describe("hasSellPrice", () => {
 
   it("is false before a shopping run has happened", () => {
     expect(hasSellPrice(undefined)).toBe(false);
+  });
+});
+
+describe("a shop for someone without the margins field group", () => {
+  it("does not offer ranking by margin, which the server refuses", () => {
+    expect(shopStrategies(false)).toEqual(["LeastCost", "GuideRank", "FastestAccept"]);
+    expect(shopStrategies(true)).toContain("BestMargin");
+  });
+
+  it("reads a withheld margin as unknown rather than as a tone", () => {
+    expect(marginTone(null, true)).toBe("unknown");
+  });
+
+  it("shows no margin share for a withheld verdict", () => {
+    expect(decidingValue(option({ margin: null }), "BestMargin")).toBe("—");
+  });
+
+  it("does not claim the load has no sell price when the total was withheld", () => {
+    expect(shopOptionNote(option({ margin: null }), false, false)).toBe("");
   });
 });

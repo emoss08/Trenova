@@ -95,3 +95,24 @@ func TestVisibleFieldGroupsWithoutAccessShowsEverything(t *testing.T) {
 	assert.Equal(t, permission.AllFieldGroups(),
 		permissionports.VisibleFieldGroups(t.Context(), nil, sessionActor()))
 }
+
+func TestAgentVisibleGroupsHoldsAnAgentToItsDataAccess(t *testing.T) {
+	t.Parallel()
+
+	held := permission.AllFieldGroups()
+	at := func(level permission.FieldSensitivity) func(
+		context.Context, permission.Resource,
+	) permission.FieldSensitivity {
+		return func(context.Context, permission.Resource) permission.FieldSensitivity {
+			return level
+		}
+	}
+
+	assert.Zero(t, AgentVisibleGroups(t.Context(), held, at(permission.SensitivityInternal)),
+		"an agent whose data access stops at Internal carries no protected figure")
+	assert.Equal(t, held,
+		AgentVisibleGroups(t.Context(), held, at(permission.SensitivityRestricted)))
+	assert.Zero(t, AgentVisibleGroups(t.Context(), 0, at(permission.SensitivityConfidential)),
+		"an agent never carries a group its actor does not hold")
+	assert.Zero(t, AgentVisibleGroups(t.Context(), held, nil))
+}

@@ -1,0 +1,265 @@
+[
+  {
+    "name": "a value inside the constraint rates",
+    "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi\ncharge \"Linehaul\" = rate * 10 mi",
+    "inputs": {
+      "rate": {
+        "$q": "15.00",
+        "u": "$/mi"
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "150",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "a value outside the constraint stops the rating at the input, naming the bounds",
+    "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi\ncharge \"Linehaul\" = rate * 10 mi",
+    "inputs": {
+      "rate": {
+        "$q": "20",
+        "u": "$/mi"
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be from {1} to {2}; {3} is outside it",
+          "args": [
+            "`rate`",
+            "$0.50/mi",
+            "$15.00/mi",
+            "$20.00/mi"
+          ]
+        },
+        "range": {
+          "from": 17,
+          "to": 21
+        }
+      }
+    }
+  },
+  {
+    "name": "a value just below the minimum is outside",
+    "source": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi\ncharge \"Linehaul\" = rate * 10 mi",
+    "inputs": {
+      "rate": {
+        "$q": "0.499",
+        "u": "$/mi"
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be from {1} to {2}; {3} is outside it",
+          "args": [
+            "`rate`",
+            "$0.50/mi",
+            "$15.00/mi",
+            "$0.499/mi"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a list input's item outside the constraint is named by its index",
+    "source": "tariff \"t\"\ninput stops: List<Int> = [] where 0..=10\ninput cap: Money? = none where $0..$1_000\ninput heavy: Weight = 1 lb where 0 lb..200 lb\ncharge \"x\" = $1 * stops.len + (cap ?? $1) + $1/lb * heavy",
+    "inputs": {
+      "stops": [
+        {
+          "$n": "0"
+        },
+        {
+          "$n": "10"
+        },
+        {
+          "$n": "11"
+        }
+      ]
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be from {1} to {2}; {3} is outside it",
+          "args": [
+            "`stops[2]`",
+            "0",
+            "10",
+            "11"
+          ]
+        },
+        "range": {
+          "from": 17,
+          "to": 22
+        }
+      }
+    }
+  },
+  {
+    "name": "none passes an optional input's constraint, and units convert",
+    "source": "tariff \"t\"\ninput stops: List<Int> = [] where 0..=10\ninput cap: Money? = none where $0..$1_000\ninput heavy: Weight = 1 lb where 0 lb..200 lb\ncharge \"x\" = $1 * stops.len + (cap ?? $1) + $1/lb * heavy",
+    "inputs": {
+      "stops": [
+        {
+          "$n": "1"
+        },
+        {
+          "$n": "2"
+        }
+      ],
+      "cap": null,
+      "heavy": {
+        "$q": "1.5",
+        "u": "cwt"
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "153",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "an excluded maximum refuses its own value",
+    "source": "tariff \"t\"\ninput stops: List<Int> = [] where 0..=10\ninput cap: Money? = none where $0..$1_000\ninput heavy: Weight = 1 lb where 0 lb..200 lb\ncharge \"x\" = $1 * stops.len + (cap ?? $1) + $1/lb * heavy",
+    "inputs": {
+      "cap": {
+        "$q": "1000.00",
+        "u": "$"
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be at least {1} and below {2}; {3} is outside it",
+          "args": [
+            "`cap`",
+            "$0.00",
+            "$1000.00",
+            "$1000.00"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a value in another unit outside the range",
+    "source": "tariff \"t\"\ninput stops: List<Int> = [] where 0..=10\ninput cap: Money? = none where $0..$1_000\ninput heavy: Weight = 1 lb where 0 lb..200 lb\ncharge \"x\" = $1 * stops.len + (cap ?? $1) + $1/lb * heavy",
+    "inputs": {
+      "heavy": {
+        "$q": "2",
+        "u": "cwt"
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be at least {1} and below {2}; {3} is outside it",
+          "args": [
+            "`heavy`",
+            "0 lb",
+            "200 lb",
+            "2 cwt"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a test's given inside the constraint runs, and one outside is an error at the given",
+    "tests": "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi\ncharge \"Linehaul\" = rate * 10 mi\ntest \"a rate inside\" {\n  given input.rate = $15/mi\n  expect total == $150\n}\ntest \"a rate outside\" {\n  given input.rate = $1/mi * 20\n  expect total == $200\n}",
+    "expect": [
+      {
+        "name": "a rate inside",
+        "status": "passed",
+        "error": null
+      },
+      {
+        "name": "a rate outside",
+        "status": "error",
+        "bill": null,
+        "error": {
+          "code": "input",
+          "message": {
+            "message": "{0} must be from {1} to {2}; {3} is outside it",
+            "args": [
+              "`rate`",
+              "$0.50/mi",
+              "$15.00/mi",
+              "$20.00/mi"
+            ]
+          },
+          "range": {
+            "from": 202,
+            "to": 231
+          }
+        }
+      }
+    ]
+  },
+  {
+    "name": "a list constraint at rating time",
+    "source": "tariff \"t\"\nenum Service { Standard, Guaranteed, Expedited }\ninput service: Service = Standard where [Standard, Guaranteed]\ncharge \"x\" = $1\nnote \"{service}\"",
+    "inputs": {
+      "service": "Expedited"
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be one of {1}; {2} isn't",
+          "args": [
+            "`service`",
+            "[Standard, Guaranteed]",
+            "Expedited"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a date range at rating time",
+    "source": "tariff \"t\"\ninput starts: Date = @2026-06-01 where @2026-01-01..\ncharge \"x\" = $1\nnote \"{starts}\"",
+    "inputs": {
+      "starts": {
+        "$date": "2025-12-31"
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be at least {1}; {2} is below it",
+          "args": [
+            "`starts`",
+            "2026-01-01",
+            "2025-12-31"
+          ]
+        }
+      }
+    }
+  }
+]

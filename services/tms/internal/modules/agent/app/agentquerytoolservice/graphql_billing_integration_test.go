@@ -31,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -75,18 +74,10 @@ func (b *billingSeed) fixture(tenant *agentreadtest.Tenant) *testutil.ShipmentIn
 		return fixture
 	}
 	fixture := testutil.SeedShipmentIntegrationFixture(b.t, b.t.Context(), b.admin,
-		&seedtest.TestData{State: &usstate.UsState{ID: tenant.StateID}}, tenantInfo(tenant))
+		&seedtest.TestData{State: &usstate.UsState{ID: tenant.StateID}}, tenantInfoOf(tenant))
 	b.fixtures[tenant.Actor.OrganizationID] = fixture
 
 	return fixture
-}
-
-func tenantInfo(tenant *agentreadtest.Tenant) pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID:  tenant.Actor.OrganizationID,
-		BuID:   tenant.Actor.BusinessUnitID,
-		UserID: tenant.Actor.UserID,
-	}
 }
 
 // invoice writes a posted invoice of two lines for its own shipment, owned
@@ -101,7 +92,7 @@ func (b *billingSeed) invoice(
 	b.t.Helper()
 
 	fixture := b.fixture(tenant)
-	info := tenantInfo(tenant)
+	info := tenantInfoOf(tenant)
 	graph := testutil.CreateShipmentGraph(b.t, b.t.Context(), b.admin, fixture, info,
 		testutil.ShipmentGraphParams{
 			BOL: "BOL" + label, ProNumber: "PRO" + label, ShipmentID: pulid.MustNew("shp_"),
@@ -156,7 +147,7 @@ func (b *billingSeed) adjustment(
 	if err != nil {
 		return pulid.Nil, err
 	}
-	info := tenantInfo(tenant)
+	info := tenantInfoOf(tenant)
 	group := &invoiceadjustment.InvoiceAdjustmentCorrectionGroup{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, RootInvoiceID: original.ID,
 	}
@@ -190,7 +181,7 @@ func (b *billingSeed) dispute(
 ) pulid.ID {
 	b.t.Helper()
 
-	info := tenantInfo(tenant)
+	info := tenantInfoOf(tenant)
 	row := &invoice.InvoiceDispute{
 		OrganizationID: info.OrgID, BusinessUnitID: info.BuID, InvoiceID: disputed.ID,
 		CustomerID: disputed.CustomerID, Status: status,
@@ -208,7 +199,7 @@ func (b *billingSeed) dispute(
 func (b *billingSeed) payment(tenant *agentreadtest.Tenant, label string, reversed bool) pulid.ID {
 	b.t.Helper()
 
-	info := tenantInfo(tenant)
+	info := tenantInfoOf(tenant)
 	status := customerpayment.StatusPosted
 	if reversed {
 		status = customerpayment.StatusReversed
@@ -238,7 +229,7 @@ func billingServices(
 
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
-	_, services := convertedListCases(conn)
+	_, services := convertedListCases(conn, admin)
 	services.InvoiceService = invoiceservice.New(invoiceservice.Params{
 		Logger: logger, Repo: invoices,
 	})
@@ -269,7 +260,7 @@ func TestConvertedLists_BillingReadsReadWhatTheRepositoryToolsReadUnderRowLevelS
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	seed, services, invoices := billingServices(t, conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	readers := &listReaders{
+	readers := &convertedListEnv{
 		reader: agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services}),
 		public: agentreadtest.NewReader(t, agentreadtest.Options{
 			Engine: &publicRole{}, Resolvers: services,
@@ -477,7 +468,7 @@ func TestConvertedGets_InvoicesAndAdjustmentsReadOneRecordUnderRowLevelSecurity(
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	seed, services, _ := billingServices(t, conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	readers := &listReaders{
+	readers := &convertedListEnv{
 		reader: agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services}),
 		public: agentreadtest.NewReader(t, agentreadtest.Options{
 			Engine: &publicRole{}, Resolvers: services,
@@ -489,19 +480,21 @@ func TestConvertedGets_InvoicesAndAdjustmentsReadOneRecordUnderRowLevelSecurity(
 
 	t.Run("invoice_get", func(t *testing.T) {
 		checkConvertedGet(t, "invoice_get", &referenceCase{
-			tool: "invoice_get",
+			tool:               "invoice_get",
+			withheldAtInternal: invoiceWithheldAtInternal,
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, _ bool) (pulid.ID, error) {
 				row, err := seed.invoice(ctx, tenant, label, invoice.SettlementStatusUnpaid, pulid.Nil)
 				return created(row, err)
 			},
-		}, readers, invoiceWithheldAtInternal)
+		}, readers, recordID)
 	})
 	t.Run("invoice_get_adjustment", func(t *testing.T) {
 		checkConvertedGet(t, "invoice_get_adjustment", &referenceCase{
-			tool: "invoice_get_adjustment",
+			tool:               "invoice_get_adjustment",
+			withheldAtInternal: adjustmentWithheldAtInternal,
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, _ bool) (pulid.ID, error) {
 				return seed.adjustment(ctx, tenant, "J"+label)
 			},
-		}, readers, adjustmentWithheldAtInternal)
+		}, readers, recordID)
 	})
 }

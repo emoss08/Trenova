@@ -298,6 +298,18 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
     }
   }
   refusal
+  choices {
+    label
+    kind
+    currency
+    chosen
+    options {
+      label
+      status
+      subtotal
+      refusal
+    }
+  }
   inputs
   skipped {
     code
@@ -880,12 +892,7 @@ query ShipmentComments(
   }
 }
 
-query ShipmentCommentReplies(
-  $shipmentId: ID!
-  $commentId: ID!
-  $first: Int!
-  $after: String
-) {
+query ShipmentCommentReplies($shipmentId: ID!, $commentId: ID!, $first: Int!, $after: String) {
   shipmentCommentReplies(
     shipmentId: $shipmentId
     commentId: $commentId

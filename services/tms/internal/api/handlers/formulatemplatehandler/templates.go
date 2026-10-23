@@ -225,7 +225,7 @@ func (h *Handler) create(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Param request body formulatemplate.FormulaTemplate true "Formula template payload"
+// @Param request body formulatemplate.FormulaTemplate true "Formula template payload; only name, description, source and version are written, status moves through review"
 // @Success 200 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -380,12 +380,10 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	status := existing.Status
 	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	existing.Status = status
 
 	updatedEntity, err := h.service.Update(c.Request.Context(), existing, authCtx.UserID)
 	if err != nil {

@@ -327,3 +327,70 @@ func TestPropose_BoundsWhatTheModelWrites(t *testing.T) {
 	assert.Len(t, multiErr.Errors, 3)
 	assert.Empty(t, f.libraries.tested, "nothing runs for a request out of bounds")
 }
+
+func TestPreview_ReportsEachChoiceAndTheInputsBounds(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	chosen := "Flat"
+	bounds := &rules.TariffConstraint{Range: &rules.TariffRangeConstraint{
+		Min:          rules.QuantityValue(decimal.RequireFromString("0.5"), "$/mi"),
+		Max:          rules.QuantityValue(decimal.NewFromInt(15), "$/mi"),
+		MaxInclusive: true,
+	}}
+	f.templates.preview = &formulatemplateports.PreviewResult{
+		Valid: true,
+		Inputs: []tarifftypes.InputDecl{
+			{Name: "rate", Type: "Money/mi", Required: true, Constraint: bounds},
+		},
+		RatedBill: &tarifftypes.Bill{Currency: "USD", Total: decimal.NewFromInt(900)},
+		Choices: []rules.TariffChoice{{
+			Label:  "Linehaul",
+			Kind:   rules.TariffChoiceBest,
+			Chosen: &chosen,
+			Options: []rules.TariffChoiceOption{
+				{
+					Label:    "Per mile",
+					Status:   rules.TariffOptionLost,
+					Subtotal: rules.MoneyValue(decimal.NewFromInt(1175)),
+				},
+				{
+					Label:    "Flat",
+					Status:   rules.TariffOptionChosen,
+					Subtotal: rules.MoneyValue(decimal.NewFromInt(900)),
+				},
+			},
+		}},
+		Tests: passing("a short haul").Tests,
+	}
+
+	preview, err := f.svc.Preview(t.Context(), &PreviewRequest{
+		TenantInfo: f.tenant,
+		Source:     perMileSource,
+	})
+	require.NoError(t, err)
+	require.Len(t, preview.Inputs, 1)
+	assert.Same(t, bounds, preview.Inputs[0].Constraint)
+	require.Len(t, preview.Choices, 1)
+	assert.Equal(t, "USD", preview.Choices[0].Currency)
+	require.NotNil(t, preview.Choices[0].Chosen)
+	assert.Equal(t, "Flat", *preview.Choices[0].Chosen)
+	assert.Equal(t, "1175", preview.Choices[0].Options[0].Subtotal.String())
+}
+
+func TestCheck_ReportsAnInputsConstraint(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	bounds := &rules.TariffConstraint{OneOf: []rules.RawJSON{rules.TextValue("Standard")}}
+	f.templates.result.Check.Inputs[0].Constraint = bounds
+
+	checked, err := f.svc.Check(t.Context(), &CheckRequest{
+		TenantInfo: f.tenant,
+		Kind:       KindTemplate,
+		Source:     perMileSource,
+	})
+	require.NoError(t, err)
+	require.Len(t, checked.Inputs, 1)
+	assert.Same(t, bounds, checked.Inputs[0].Constraint)
+}

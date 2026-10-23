@@ -12,7 +12,11 @@ use crate::tariff::syntax::ast::AssignOp;
 use crate::tariff::syntax::ast::Binding;
 use crate::tariff::syntax::ast::Block;
 use crate::tariff::syntax::ast::Charge;
+use crate::tariff::syntax::ast::ChoiceOption;
+use crate::tariff::syntax::ast::Choose;
+use crate::tariff::syntax::ast::ChooseKind;
 use crate::tariff::syntax::ast::Condition;
+use crate::tariff::syntax::ast::Direction;
 use crate::tariff::syntax::ast::Expect;
 use crate::tariff::syntax::ast::ForStmt;
 use crate::tariff::syntax::ast::IfStmt;
@@ -35,6 +39,8 @@ pub(crate) enum BlockKind {
     Function,
     /// A test body, where `given` and `expect` are allowed.
     Test,
+    /// A property body, where `vary`, `assume`, `given` and `expect` are allowed.
+    Property,
     /// Any other block: an `if`, `for` or `match` body.
     Nested,
 }
@@ -112,6 +118,9 @@ impl Parser<'_> {
                 return kind;
             }
         }
+        if let Some(kind) = self.contextual_statement(block) {
+            return kind;
+        }
         if matches!(self.kind(), TokenKind::Name)
             && (self.peek_is(1, "=") || self.peek_is(1, "+=") || self.peek_is(1, "-="))
         {
@@ -136,6 +145,248 @@ impl Parser<'_> {
             self.expr();
         }
         StmtKind::Expr(expr)
+    }
+
+    /// A statement that starts with a contextual word: `best`, `worst`, `option`, `vary` or
+    /// `assume`. Each is read as one only where what follows can't continue a name: a quoted
+    /// label after `best`, `worst` and `option`, a target after `vary`, a value after `assume`.
+    fn contextual_statement(&mut self, block: BlockKind) -> Option<StmtKind> {
+        if self.kind() != TokenKind::Name {
+            return None;
+        }
+        if self.at_labelled("best") {
+            return Some(StmtKind::Choose(self.choose(ChooseKind::Best)));
+        }
+        if self.at_labelled("worst") {
+            return Some(StmtKind::Choose(self.choose(ChooseKind::Worst)));
+        }
+        if self.at_labelled("option") {
+            let span = self.peek().span;
+            self.report(Diagnostic::error(
+                "misplaced",
+                span,
+                Message::new(message!(
+                    "An `option` can only be written inside `best` or `worst`"
+                )),
+            ));
+            let option = self.choice_option();
+            return Some(StmtKind::Choose(Choose {
+                kind: ChooseKind::Best,
+                label: Name {
+                    text: String::new(),
+                    span: Span::new(option.span.start, option.span.start),
+                },
+                span: option.span,
+                options: vec![option],
+            }));
+        }
+        if self.at_word("vary") && self.starts_target(1) {
+            return Some(self.vary(block));
+        }
+        if self.at_word("assume") && (self.starts_value(1) || self.spaced_paren(1)) {
+            let keyword = self.bump().span;
+            self.mark_at(self.pos - 1, TokenKind::Keyword);
+            self.property_rule(block, keyword, "assume");
+            return Some(StmtKind::Assume(self.expr()));
+        }
+        None
+    }
+
+    /// Whether the token `ahead` places on, on the same line, starts a `given` or `vary`
+    /// target: a name, or `input`.
+    fn starts_target(&self, ahead: usize) -> bool {
+        let token = self.peek_nth(ahead);
+        !self.newline_before_nth(ahead)
+            && (token.kind == TokenKind::Name
+                || (token.kind == TokenKind::Keyword && self.slice(token.span) == "input"))
+            && !matches!(
+                self.slice(self.peek_nth(ahead + 1).span),
+                "=" | "+=" | "-=" | "("
+            )
+    }
+
+    /// Whether the token `ahead` places on is a `(` on the same line with a space before it:
+    /// `assume (x ?? 0 lb) > 10 lb` is a statement, while `assume(x)` stays a call.
+    fn spaced_paren(&self, ahead: usize) -> bool {
+        let token = self.peek_nth(ahead);
+        !self.newline_before_nth(ahead)
+            && self.slice(token.span) == "("
+            && self.peek_nth(ahead - 1).span.end < token.span.start
+    }
+
+    /// Whether the token `ahead` places on, on the same line, can start a value rather than
+    /// continue the word before it.
+    fn starts_value(&self, ahead: usize) -> bool {
+        let token = self.peek_nth(ahead);
+        if self.newline_before_nth(ahead) || token.kind == TokenKind::Eof {
+            return false;
+        }
+        let text = self.slice(token.span);
+        if matches!(token.kind, TokenKind::Keyword) {
+            return matches!(text, "not" | "true" | "false" | "none" | "if" | "match")
+                || (text == "charge" && self.slice(self.peek_nth(ahead + 1).span) == "(");
+        }
+        !matches!(
+            text,
+            "=" | "+="
+                | "-="
+                | "."
+                | "?."
+                | "("
+                | "["
+                | "??"
+                | "+"
+                | "*"
+                | "/"
+                | "%"
+                | "=="
+                | "!="
+                | "<"
+                | "<="
+                | ">"
+                | ">="
+                | ".."
+                | "..="
+                | ","
+                | ")"
+                | "]"
+                | "}"
+                | "=>"
+        )
+    }
+
+    /// `best "Label" { option "A" { … } … }`.
+    fn choose(&mut self, kind: ChooseKind) -> Choose {
+        self.mark(TokenKind::Keyword);
+        let start = self.bump().span.start;
+        let label = self.literal_name(Message::with(
+            message!("Expected the choice's label in quotes after `{0}`"),
+            [Arg::from(kind.keyword())],
+        ));
+        let mut options = Vec::new();
+        let Some(open) = self.eat("{") else {
+            self.expected(Message::with(
+                message!("Expected the options in braces after the label: `{0} \"Linehaul\"`, then an `option \"Per mile\"` block for each method"),
+                [Arg::from(kind.keyword())],
+            ));
+            return Choose {
+                kind,
+                label,
+                options,
+                span: Span::new(start, self.previous_span().end),
+            };
+        };
+        if self.enter() {
+            while !self.at("}") && !self.at_eof() && !self.stopped && !self.at_column_zero_item() {
+                let before = self.pos;
+                if self.at_labelled("option") {
+                    options.push(self.choice_option());
+                } else {
+                    let span = self.peek().span;
+                    self.error(
+                        span,
+                        Message::new(message!(
+                            "A choice holds only `option \"Label\"` blocks, one for each method"
+                        )),
+                    );
+                    self.recover();
+                }
+                self.end_statement();
+                if self.pos == before {
+                    self.bump();
+                }
+            }
+            self.leave();
+        }
+        let end = if let Some(close) = self.eat("}") {
+            close.end
+        } else {
+            self.error(
+                open,
+                Message::with(
+                    message!("This `{0}` is missing its closing brace"),
+                    [Arg::from(kind.keyword())],
+                ),
+            );
+            self.previous_span().end
+        };
+        Choose {
+            kind,
+            label,
+            options,
+            span: Span::new(start, end),
+        }
+    }
+
+    /// `option "Label" { … }`.
+    fn choice_option(&mut self) -> ChoiceOption {
+        self.mark(TokenKind::Keyword);
+        let start = self.bump().span.start;
+        let label = self.literal_name(Message::new(message!(
+            "Expected the option's label in quotes after `option`"
+        )));
+        let body = self.body(Message::new(message!(
+            "Expected what the option bills, in braces"
+        )));
+        ChoiceOption {
+            label,
+            span: Span::new(start, body.span.end.max(start)),
+            body,
+        }
+    }
+
+    /// `vary target in values`.
+    fn vary(&mut self, block: BlockKind) -> StmtKind {
+        self.mark(TokenKind::Keyword);
+        let keyword = self.bump().span;
+        self.property_rule(block, keyword, "vary");
+        let target = self.target_path(Message::new(message!(
+            "Expected what to vary after `vary`, like `vary shipment.weight in 1 lb..40_000 lb`"
+        )));
+        let values = if self.at_word("in") && !self.newline_before() {
+            self.bump();
+            Some(self.expr())
+        } else {
+            None
+        };
+        StmtKind::Vary { target, values }
+    }
+
+    /// A `given` or `vary` target: a record path, `input.name`, or a name.
+    fn target_path(&mut self, message: Message) -> Vec<Name> {
+        let mut target = Vec::new();
+        if self.at_word("input") && !self.newline_before() {
+            self.mark(TokenKind::Keyword);
+            let token = self.bump();
+            target.push(self.name_of(&token));
+        } else {
+            target.push(self.value_name(message));
+        }
+        while self.at(".") && !self.newline_before() {
+            self.bump();
+            if let Some(name) = self.same_line_name() {
+                target.push(name);
+            } else {
+                self.expected(Message::new(message!("Expected a field's name after `.`")));
+                target.push(self.missing_name());
+                break;
+            }
+        }
+        target
+    }
+
+    /// Reports `vary`, `assume` and a monotone `expect` outside a property.
+    fn property_rule(&mut self, block: BlockKind, keyword: Span, word: &str) {
+        if block != BlockKind::Property {
+            self.report(Diagnostic::error(
+                "misplaced",
+                keyword,
+                Message::with(
+                    message!("`{0}` can only be used inside a `property` block"),
+                    [Arg::from(word.to_owned())],
+                ),
+            ));
+        }
     }
 
     fn misplaced_item(&mut self, block: BlockKind, word: &str) -> StmtKind {
@@ -495,6 +746,9 @@ impl Parser<'_> {
     /// Whether the cursor starts a statement that is not an expression: the body of a `match`
     /// statement's arm may be one, read as a block holding it.
     fn at_statement_keyword(&self) -> bool {
+        if self.at_labelled("best") || self.at_labelled("worst") {
+            return true;
+        }
         self.kind() == TokenKind::Keyword
             && match self.text() {
                 "charge" => !self.peek_is(1, "("),
@@ -603,26 +857,9 @@ impl Parser<'_> {
     fn given(&mut self, block: BlockKind) -> StmtKind {
         let keyword = self.bump().span;
         self.position_rule(block, keyword, "given");
-        let mut target = Vec::new();
-        if self.at_word("input") && !self.newline_before() {
-            self.mark(TokenKind::Keyword);
-            let token = self.bump();
-            target.push(self.name_of(&token));
-        } else {
-            target.push(self.value_name(Message::new(message!(
-                "Expected what to set after `given`, like `given shipment.weight = 1_240 lb`"
-            ))));
-        }
-        while self.at(".") && !self.newline_before() {
-            self.bump();
-            if let Some(name) = self.same_line_name() {
-                target.push(name);
-            } else {
-                self.expected(Message::new(message!("Expected a field's name after `.`")));
-                target.push(self.missing_name());
-                break;
-            }
-        }
+        let target = self.target_path(Message::new(message!(
+            "Expected what to set after `given`, like `given shipment.weight = 1_240 lb`"
+        )));
         let value = if self.eat("=").is_some() {
             self.expr()
         } else {
@@ -636,20 +873,60 @@ impl Parser<'_> {
         let keyword = self.bump().span;
         self.position_rule(block, keyword, "expect");
         if self.at_word("fails") {
-            self.bump();
+            let fails = self.bump().span;
+            if block == BlockKind::Property {
+                self.report(Diagnostic::error(
+                    "misplaced",
+                    fails,
+                    Message::new(message!(
+                        "A property can't expect a refusal: it states what holds when the tariff rates. Narrow it with `assume` or its ranges instead"
+                    )),
+                ));
+            }
             let message = (self.kind() == TokenKind::Text && !self.newline_before())
                 .then(|| self.text_literal());
             return StmtKind::Expect(Expect::Fails(message));
         }
-        StmtKind::Expect(Expect::Holds(self.expr()))
+        let value = self.expr();
+        let direction = if self.at_word("nondecreasing") && !self.newline_before() {
+            Some(Direction::Nondecreasing)
+        } else if self.at_word("nonincreasing") && !self.newline_before() {
+            Some(Direction::Nonincreasing)
+        } else {
+            None
+        };
+        let Some(direction) = direction else {
+            return StmtKind::Expect(Expect::Holds(value));
+        };
+        self.mark(TokenKind::Keyword);
+        let direction_span = self.bump().span;
+        self.property_rule(block, direction_span, direction.word());
+        if self.eat_word("in").is_none() {
+            self.expected(Message::with(
+                message!(
+                    "Expected `in` and the varied value after `{0}`, like `{0} in shipment.weight`"
+                ),
+                [Arg::from(direction.word())],
+            ));
+        }
+        let target = self.target_path(Message::with(
+            message!("Expected the varied value after `{0} in`"),
+            [Arg::from(direction.word())],
+        ));
+        StmtKind::Expect(Expect::Monotone {
+            value,
+            direction,
+            direction_span,
+            target,
+        })
     }
 
     fn position_rule(&mut self, block: BlockKind, keyword: Span, word: &str) {
-        if block != BlockKind::Test {
+        if !matches!(block, BlockKind::Test | BlockKind::Property) {
             let message = if word == "given" {
-                message!("`given` can only be used inside a `test` block")
+                message!("`given` can only be used inside a `test` or `property` block")
             } else {
-                message!("`expect` can only be used inside a `test` block")
+                message!("`expect` can only be used inside a `test` or `property` block")
             };
             self.report(Diagnostic::error(
                 "misplaced",

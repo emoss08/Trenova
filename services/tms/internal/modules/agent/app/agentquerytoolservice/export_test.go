@@ -2,12 +2,14 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -40,6 +42,9 @@ var (
 	NewListTractorsTool           = newListTractorsTool
 	NewListTrailersTool           = newListTrailersTool
 	NewListWorkersTool            = newListWorkersTool
+	NewListOrdersTool             = newListOrdersTool
+	NewListRecurringShipmentsTool = newListRecurringShipmentsTool
+	NewListFormulaTemplatesTool   = newListFormulaTemplatesTool
 	NewListInvoicesTool           = newListInvoicesTool
 )
 
@@ -111,12 +116,33 @@ func ConvertedGetCall(tool agentports.AgentQueryTool, id pulid.ID) map[string]an
 	if !ok {
 		return nil
 	}
-
-	if get.spec.batch > 0 {
-		return map[string]any{get.spec.paramName: []any{id.String()}}
+	call := requiredCall(get.params, get.required)
+	switch {
+	case get.byID && get.spec.batch > 0:
+		call[get.spec.paramName] = []any{id.String()}
+	case get.byID:
+		call[get.spec.paramName] = id.String()
 	}
 
-	return map[string]any{get.spec.paramName: id.String()}
+	return call
+}
+
+// requiredCall names a value for each required argument: an enum's first
+// value, or an id.
+func requiredCall(params []graphQLParam, required []string) map[string]any {
+	call := make(map[string]any, len(required)+1)
+	for _, param := range params {
+		if !slices.Contains(required, param.Name) {
+			continue
+		}
+		if values, enumerated := param.Schema[toolschema.KeyEnum].([]string); enumerated {
+			call[param.Name] = values[0]
+			continue
+		}
+		call[param.Name] = requiredID(param)
+	}
+
+	return call
 }
 
 // ConvertedGetTool is the registered converted get of that name.
@@ -138,6 +164,11 @@ func ConvertedGetTool(
 // MinimalCall is the smallest call a converted list takes: a page of five,
 // or, for a list keyed by a record, that record's id.
 func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
+	if list, isList := tool.(*graphQLListTool); isList {
+		call := requiredCall(list.params, list.required)
+		call["limit"] = 5
+		return call
+	}
 	keyed, ok := tool.(*graphQLUnpagedListTool)
 	if !ok {
 		return map[string]any{"limit": 5}
@@ -147,12 +178,22 @@ func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
 		call[name] = pulid.MustNew("wrk_").String()
 		for _, param := range keyed.params {
 			if param.Name == name && param.Kind == paramReferences {
-				call[name] = []any{pulid.MustNew("inv_").String()}
+				call[name] = []any{pulid.MustNew("wrk_").String()}
 			}
 		}
 	}
 
 	return call
+}
+
+// requiredID is an id for a required argument, or a list of one for an
+// argument that takes several.
+func requiredID(param graphQLParam) any {
+	if param.Kind == paramReferences {
+		return []any{pulid.MustNew("x_").String()}
+	}
+
+	return pulid.MustNew("x_").String()
 }
 
 // ExpectedMention is how a converted list's description must name one of its

@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
@@ -707,6 +708,13 @@ type AccountingMappingConnection struct {
 	Edges      []*AccountingMappingEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+// One mapping, and the accounting system records it could be set to.
+type AccountingMappingDetail struct {
+	Mapping *accountingsync.AccountingMapping `json:"mapping"`
+	// Usable records of the kind the mapping maps to whose names match optionsQuery, best first, at most ten. Empty without optionsQuery.
+	Options []*accountingsync.AccountingReferenceObject `json:"options"`
 }
 
 type AccountingMappingEdge struct {
@@ -1888,9 +1896,11 @@ type CapacityMatch struct {
 	PickupAt        *int     `json:"pickupAt,omitempty"`
 	Revenue         string   `json:"revenue"`
 	DeadheadMiles   *float64 `json:"deadheadMiles,omitempty"`
-	Quote           *string  `json:"quote,omitempty"`
-	MarginPercent   *float64 `json:"marginPercent,omitempty"`
-	FitPercent      *float64 `json:"fitPercent,omitempty"`
+	// What the carrier would cost. Null to a reader without the margins field group, since beside the revenue it gives the margin.
+	Quote *string `json:"quote,omitempty"`
+	// Null to a reader without the margins field group.
+	MarginPercent *float64 `json:"marginPercent,omitempty"`
+	FitPercent    *float64 `json:"fitPercent,omitempty"`
 }
 
 // The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier.
@@ -2455,22 +2465,23 @@ type CostCategoryUpdateInput struct {
 }
 
 type CostingControl struct {
-	ID                   string          `json:"id"`
-	BusinessUnitID       string          `json:"businessUnitId"`
-	OrganizationID       string          `json:"organizationId"`
-	FuelIndexID          *string         `json:"fuelIndexId,omitempty"`
-	FuelIndex            *FuelIndex      `json:"fuelIndex,omitempty"`
-	UseLiveFuelPrice     bool            `json:"useLiveFuelPrice"`
-	MilesPerGallon       string          `json:"milesPerGallon"`
-	IncludeDeadheadMiles bool            `json:"includeDeadheadMiles"`
-	GlActualsEnabled     bool            `json:"glActualsEnabled"`
-	GlRollingMonths      int             `json:"glRollingMonths"`
-	PlannedMonthlyMiles  *int            `json:"plannedMonthlyMiles,omitempty"`
-	TargetMarginPercent  *string         `json:"targetMarginPercent,omitempty"`
-	Version              int             `json:"version"`
-	CreatedAt            int             `json:"createdAt"`
-	UpdatedAt            int             `json:"updatedAt"`
-	Categories           []*CostCategory `json:"categories"`
+	ID                   string     `json:"id"`
+	BusinessUnitID       string     `json:"businessUnitId"`
+	OrganizationID       string     `json:"organizationId"`
+	FuelIndexID          *string    `json:"fuelIndexId,omitempty"`
+	FuelIndex            *FuelIndex `json:"fuelIndex,omitempty"`
+	UseLiveFuelPrice     bool       `json:"useLiveFuelPrice"`
+	MilesPerGallon       string     `json:"milesPerGallon"`
+	IncludeDeadheadMiles bool       `json:"includeDeadheadMiles"`
+	GlActualsEnabled     bool       `json:"glActualsEnabled"`
+	GlRollingMonths      int        `json:"glRollingMonths"`
+	PlannedMonthlyMiles  *int       `json:"plannedMonthlyMiles,omitempty"`
+	// The margin the organization aims for. Null to a reader without the margins field group.
+	TargetMarginPercent *string         `json:"targetMarginPercent,omitempty"`
+	Version             int             `json:"version"`
+	CreatedAt           int             `json:"createdAt"`
+	UpdatedAt           int             `json:"updatedAt"`
+	Categories          []*CostCategory `json:"categories"`
 }
 
 type CostingControlInput struct {
@@ -2716,16 +2727,18 @@ type CustomerConnection struct {
 }
 
 type CustomerDetentionStat struct {
-	CustomerID      string `json:"customerId"`
-	CustomerName    string `json:"customerName"`
-	StopCount       int    `json:"stopCount"`
-	BreachCount     int    `json:"breachCount"`
-	BilledAmount    string `json:"billedAmount"`
-	DriverPayAmount string `json:"driverPayAmount"`
-	NetMargin       string `json:"netMargin"`
-	WaivedAmount    string `json:"waivedAmount"`
-	DisputeCount    int    `json:"disputeCount"`
-	SuppressedCount int    `json:"suppressedCount"`
+	CustomerID   string `json:"customerId"`
+	CustomerName string `json:"customerName"`
+	StopCount    int    `json:"stopCount"`
+	BreachCount  int    `json:"breachCount"`
+	BilledAmount string `json:"billedAmount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin       *string `json:"netMargin,omitempty"`
+	WaivedAmount    string  `json:"waivedAmount"`
+	DisputeCount    int     `json:"disputeCount"`
+	SuppressedCount int     `json:"suppressedCount"`
 }
 
 type CustomerEdge struct {
@@ -3052,9 +3065,11 @@ type DetentionBacktestBucket struct {
 	ProposedAmount string `json:"proposedAmount"`
 	BaselineAmount string `json:"baselineAmount"`
 	// proposedAmount minus baselineAmount.
-	Delta           string `json:"delta"`
-	DriverPayAmount string `json:"driverPayAmount"`
-	NetMargin       string `json:"netMargin"`
+	Delta string `json:"delta"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin *string `json:"netMargin,omitempty"`
 }
 
 type DetentionBacktestInput struct {
@@ -3067,17 +3082,20 @@ type DetentionBacktestInput struct {
 }
 
 type DetentionBacktestResult struct {
-	StopsEvaluated      int                        `json:"stopsEvaluated"`
-	StopsMatched        int                        `json:"stopsMatched"`
-	StopsBillable       int                        `json:"stopsBillable"`
-	StopsForfeited      int                        `json:"stopsForfeited"`
-	StopsSuppressed     int                        `json:"stopsSuppressed"`
-	ProposedRevenue     string                     `json:"proposedRevenue"`
-	BaselineRevenue     string                     `json:"baselineRevenue"`
-	RevenueDelta        string                     `json:"revenueDelta"`
-	ProposedDriverPay   string                     `json:"proposedDriverPay"`
-	ProposedNetMargin   string                     `json:"proposedNetMargin"`
-	NegativeMarginStops int                        `json:"negativeMarginStops"`
+	StopsEvaluated  int    `json:"stopsEvaluated"`
+	StopsMatched    int    `json:"stopsMatched"`
+	StopsBillable   int    `json:"stopsBillable"`
+	StopsForfeited  int    `json:"stopsForfeited"`
+	StopsSuppressed int    `json:"stopsSuppressed"`
+	ProposedRevenue string `json:"proposedRevenue"`
+	BaselineRevenue string `json:"baselineRevenue"`
+	RevenueDelta    string `json:"revenueDelta"`
+	// Null to a reader without the margins field group.
+	ProposedDriverPay *string `json:"proposedDriverPay,omitempty"`
+	// Null to a reader without the margins field group.
+	ProposedNetMargin *string `json:"proposedNetMargin,omitempty"`
+	// Null to a reader without the margins field group.
+	NegativeMarginStops *int                       `json:"negativeMarginStops,omitempty"`
 	ByCustomer          []*DetentionBacktestBucket `json:"byCustomer"`
 	ByFacility          []*DetentionBacktestBucket `json:"byFacility"`
 	From                int                        `json:"from"`
@@ -3106,7 +3124,9 @@ type DetentionDeskEntry struct {
 	MinutesUntilNoticeDue *int                 `json:"minutesUntilNoticeDue,omitempty"`
 	NoticeWindowOpen      bool                 `json:"noticeWindowOpen"`
 	AmountAtRisk          string               `json:"amountAtRisk"`
-	Urgency               DetentionDeskUrgency `json:"urgency"`
+	// The minutes it bills: a running clock's as of now, a stopped charge's as recorded.
+	BillableMinutes int                  `json:"billableMinutes"`
+	Urgency         DetentionDeskUrgency `json:"urgency"`
 }
 
 type DetentionDisputeInput struct {
@@ -3177,34 +3197,36 @@ type DetentionOccurrence struct {
 	CustomerID     string `json:"customerId"`
 	LocationID     string `json:"locationId"`
 	// The stop's location, null to someone who may not read locations or when it has been removed.
-	Location           *location.Location           `json:"location,omitempty"`
-	DetentionPolicyID  *string                      `json:"detentionPolicyId,omitempty"`
-	PolicySnapshot     map[string]any               `json:"policySnapshot,omitempty"`
-	CalculationTrace   map[string]any               `json:"calculationTrace,omitempty"`
-	StopType           string                       `json:"stopType"`
-	ScheduleType       string                       `json:"scheduleType"`
-	AppointmentStart   *int                         `json:"appointmentStart,omitempty"`
-	AppointmentEnd     *int                         `json:"appointmentEnd,omitempty"`
-	ArrivedAt          *int                         `json:"arrivedAt,omitempty"`
-	DepartedAt         *int                         `json:"departedAt,omitempty"`
-	ClockStartAt       int                          `json:"clockStartAt"`
-	ClockStopAt        *int                         `json:"clockStopAt,omitempty"`
-	FreeTimeExpiresAt  int                          `json:"freeTimeExpiresAt"`
-	NoticeDueAt        *int                         `json:"noticeDueAt,omitempty"`
-	NoticeDeadlineAt   *int                         `json:"noticeDeadlineAt,omitempty"`
-	IsOpen             bool                         `json:"isOpen"`
-	ArrivedLate        bool                         `json:"arrivedLate"`
-	LateByMinutes      int                          `json:"lateByMinutes"`
-	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
-	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
-	BillableMinutes    int                          `json:"billableMinutes"`
-	RoundedMinutes     int                          `json:"roundedMinutes"`
-	BillableUnits      string                       `json:"billableUnits"`
-	GrossAmount        string                       `json:"grossAmount"`
-	BillableAmount     string                       `json:"billableAmount"`
-	DriverPayMinutes   int                          `json:"driverPayMinutes"`
-	DriverPayAmount    string                       `json:"driverPayAmount"`
-	NetMargin          string                       `json:"netMargin"`
+	Location           *location.Location `json:"location,omitempty"`
+	DetentionPolicyID  *string            `json:"detentionPolicyId,omitempty"`
+	PolicySnapshot     map[string]any     `json:"policySnapshot,omitempty"`
+	CalculationTrace   map[string]any     `json:"calculationTrace,omitempty"`
+	StopType           string             `json:"stopType"`
+	ScheduleType       string             `json:"scheduleType"`
+	AppointmentStart   *int               `json:"appointmentStart,omitempty"`
+	AppointmentEnd     *int               `json:"appointmentEnd,omitempty"`
+	ArrivedAt          *int               `json:"arrivedAt,omitempty"`
+	DepartedAt         *int               `json:"departedAt,omitempty"`
+	ClockStartAt       int                `json:"clockStartAt"`
+	ClockStopAt        *int               `json:"clockStopAt,omitempty"`
+	FreeTimeExpiresAt  int                `json:"freeTimeExpiresAt"`
+	NoticeDueAt        *int               `json:"noticeDueAt,omitempty"`
+	NoticeDeadlineAt   *int               `json:"noticeDeadlineAt,omitempty"`
+	IsOpen             bool               `json:"isOpen"`
+	ArrivedLate        bool               `json:"arrivedLate"`
+	LateByMinutes      int                `json:"lateByMinutes"`
+	FreeMinutesGranted int                `json:"freeMinutesGranted"`
+	RawDwellMinutes    int                `json:"rawDwellMinutes"`
+	BillableMinutes    int                `json:"billableMinutes"`
+	RoundedMinutes     int                `json:"roundedMinutes"`
+	BillableUnits      string             `json:"billableUnits"`
+	GrossAmount        string             `json:"grossAmount"`
+	BillableAmount     string             `json:"billableAmount"`
+	DriverPayMinutes   int                `json:"driverPayMinutes"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin          *string                      `json:"netMargin,omitempty"`
 	CapApplied         detention.CapKind            `json:"capApplied"`
 	ConvertedToLayover bool                         `json:"convertedToLayover"`
 	Currency           string                       `json:"currency"`
@@ -3375,15 +3397,17 @@ type DetentionPolicyTier struct {
 }
 
 type DetentionPreviewResult struct {
-	PolicySnapshot     map[string]any               `json:"policySnapshot"`
-	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
-	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
-	BillableMinutes    int                          `json:"billableMinutes"`
-	RoundedMinutes     int                          `json:"roundedMinutes"`
-	BillableAmount     string                       `json:"billableAmount"`
-	GrossAmount        string                       `json:"grossAmount"`
-	DriverPayAmount    string                       `json:"driverPayAmount"`
-	NetMargin          string                       `json:"netMargin"`
+	PolicySnapshot     map[string]any `json:"policySnapshot"`
+	RawDwellMinutes    int            `json:"rawDwellMinutes"`
+	FreeMinutesGranted int            `json:"freeMinutesGranted"`
+	BillableMinutes    int            `json:"billableMinutes"`
+	RoundedMinutes     int            `json:"roundedMinutes"`
+	BillableAmount     string         `json:"billableAmount"`
+	GrossAmount        string         `json:"grossAmount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin          *string                      `json:"netMargin,omitempty"`
 	ArrivedLate        bool                         `json:"arrivedLate"`
 	CapApplied         detention.CapKind            `json:"capApplied"`
 	Status             detention.OccurrenceStatus   `json:"status"`
@@ -4114,6 +4138,34 @@ type EIASeriesOption struct {
 	FuelType fuelsurcharge.FuelType `json:"fuelType"`
 }
 
+// How partners are acknowledging what this organization sent them.
+type EDIAckHealth struct {
+	// When the figures were read.
+	AsOf int `json:"asOf"`
+	// Start of the window the counts by status cover.
+	Since int `json:"since"`
+	// How long an acknowledgment may be pending before it is overdue, in seconds.
+	OverdueAfterSeconds int `json:"overdueAfterSeconds"`
+	// True when the call asked about 997s or 999s, so the counts cover every set they answer.
+	AnswersEverySet bool                 `json:"answersEverySet"`
+	AckStatusCounts []*EDIAckStatusCount `json:"ackStatusCounts"`
+	// Each partner's counts by acknowledgment status, in the window.
+	Partners []*EDIPartnerAckCounts `json:"partners"`
+	// How many messages are overdue, whenever they were sent.
+	OverdueCount int `json:"overdueCount"`
+	// The overdue messages by partner, oldest first.
+	OverdueByPartner []*EDIOverduePartnerAcks `json:"overdueByPartner"`
+	// How many overdue messages are counted but not listed.
+	OverdueNotListed int `json:"overdueNotListed"`
+	// Messages dead-lettered recently, newest first.
+	RecentDeadLettered []*edi.EDIMessage `json:"recentDeadLettered"`
+}
+
+type EDIAckStatusCount struct {
+	Status edi.MessageAcknowledgmentStatus `json:"status"`
+	Count  int                             `json:"count"`
+}
+
 type EDICarrierInvoiceList struct {
 	Items      []*edi.CarrierInvoice `json:"items"`
 	TotalCount int                   `json:"totalCount"`
@@ -4134,6 +4186,18 @@ type EDIInboundFileConnection struct {
 	Edges      []*EDIInboundFileEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+// One inbound EDI file as its detail reads it, with the transaction sets parsed from it.
+type EDIInboundFileDetail struct {
+	File *edi.EDIInboundFile `json:"file"`
+	// The communication profile the file was picked up through.
+	CommunicationProfileName *string `json:"communicationProfileName,omitempty"`
+	MessageCount             int     `json:"messageCount"`
+	// The transaction sets parsed from the file, the first 50.
+	Messages []*edi.EDIMessage `json:"messages"`
+	// The raw file as it was received, its first 16 KB; null once purged under the retention policy.
+	Raw *EDIRawText `json:"raw,omitempty"`
 }
 
 type EDIInboundFileEdge struct {
@@ -4163,9 +4227,49 @@ type EDIMessageConnection struct {
 	TotalCount *int              `json:"totalCount,omitempty"`
 }
 
+// One EDI message as its detail reads it: the document it decoded to and every finding.
+type EDIMessageDetail struct {
+	Message *edi.EDIMessage `json:"message"`
+	// What the document says, decoded from its X12.
+	Decoded         any `json:"decoded,omitempty"`
+	DiagnosticCount int `json:"diagnosticCount"`
+	// The validation findings, the first 50.
+	Diagnostics []*EDIMessageDiagnostic `json:"diagnostics"`
+	// The raw X12 as it was sent or received, its first 16 KB; null once purged under the retention policy.
+	Raw *EDIRawText `json:"raw,omitempty"`
+}
+
+// One validation finding on an EDI message, naming the segment and element it is about.
+type EDIMessageDiagnostic struct {
+	Severity        string  `json:"severity"`
+	Code            string  `json:"code"`
+	SegmentID       *string `json:"segmentId,omitempty"`
+	ElementPosition *int    `json:"elementPosition,omitempty"`
+	Path            *string `json:"path,omitempty"`
+	Message         string  `json:"message"`
+	SuggestedFix    *string `json:"suggestedFix,omitempty"`
+}
+
 type EDIMessageEdge struct {
 	Node   *edi.EDIMessage `json:"node"`
 	Cursor string          `json:"cursor"`
+}
+
+type EDIOverduePartnerAcks struct {
+	PartnerID         string `json:"partnerId"`
+	PartnerName       string `json:"partnerName"`
+	PartnerCode       string `json:"partnerCode"`
+	OverdueCount      int    `json:"overdueCount"`
+	OldestGeneratedAt int    `json:"oldestGeneratedAt"`
+	// The partner's oldest overdue messages, a few at most.
+	Messages []*edi.EDIMessage `json:"messages"`
+}
+
+type EDIPartnerAckCounts struct {
+	PartnerID       string               `json:"partnerId"`
+	PartnerName     string               `json:"partnerName"`
+	PartnerCode     string               `json:"partnerCode"`
+	AckStatusCounts []*EDIAckStatusCount `json:"ackStatusCounts"`
 }
 
 type EDIPartnerActivity struct {
@@ -4247,6 +4351,7 @@ type EDIPartnerMappingSummary struct {
 
 type EDIPartnerReadinessItem struct {
 	Key      string `json:"key"`
+	Label    string `json:"label"`
 	Complete bool   `json:"complete"`
 }
 
@@ -4294,6 +4399,14 @@ type EDIPartnerTransport struct {
 	Certificates  []*EDITransportCertificate `json:"certificates"`
 }
 
+// The raw X12 of a message or file, cut to its first 16 KB.
+type EDIRawText struct {
+	Text string `json:"text"`
+	// Whether the X12 is longer than the text shown.
+	Truncated bool `json:"truncated"`
+	SizeBytes int  `json:"sizeBytes"`
+}
+
 type EDISummary struct {
 	DeliveryStatusCounts        []*EDISummaryStatusCount   `json:"deliveryStatusCounts"`
 	AckStatusCounts             []*EDISummaryStatusCount   `json:"ackStatusCounts"`
@@ -4330,6 +4443,40 @@ type EDITemplateEdge struct {
 	Cursor string           `json:"cursor"`
 }
 
+type EDITenderCharge struct {
+	Charge string  `json:"charge"`
+	Method *string `json:"method,omitempty"`
+	Amount string  `json:"amount"`
+}
+
+type EDITenderCharges struct {
+	Freight    *string            `json:"freight,omitempty"`
+	Other      *string            `json:"other,omitempty"`
+	Total      *string            `json:"total,omitempty"`
+	Additional []*EDITenderCharge `json:"additional"`
+}
+
+type EDITenderCommodity struct {
+	Commodity string `json:"commodity"`
+	Weight    int    `json:"weight"`
+	Pieces    int    `json:"pieces"`
+}
+
+type EDITenderStop struct {
+	Sequence int    `json:"sequence"`
+	Type     string `json:"type"`
+	// The stop's location: its name, label or code.
+	Location     *string `json:"location,omitempty"`
+	Address      *string `json:"address,omitempty"`
+	City         *string `json:"city,omitempty"`
+	State        *string `json:"state,omitempty"`
+	PostalCode   *string `json:"postalCode,omitempty"`
+	WindowOpens  *int    `json:"windowOpens,omitempty"`
+	WindowCloses *int    `json:"windowCloses,omitempty"`
+	Pieces       *int    `json:"pieces,omitempty"`
+	Weight       *int    `json:"weight,omitempty"`
+}
+
 type EDITestCaseConnection struct {
 	Edges      []*EDITestCaseEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
@@ -4347,9 +4494,25 @@ type EDITransferConnection struct {
 	TotalCount *int               `json:"totalCount,omitempty"`
 }
 
+// One load tender as its card reads it, with what accepting it still waits on.
+type EDITransferDetail struct {
+	Transfer *edi.EDITransfer `json:"transfer"`
+	// The partner's codes not yet mapped, read only for an inbound tender that can still be decided; accepting it waits on them.
+	UnresolvedMappings []*EDITransferMappingNeed `json:"unresolvedMappings"`
+	// Whether the tender can be accepted now: inbound, still open, and every code mapped.
+	CanAccept bool `json:"canAccept"`
+}
+
 type EDITransferEdge struct {
 	Node   *edi.EDITransfer `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// A partner's code a tender carries that this organization has not mapped to its own record.
+type EDITransferMappingNeed struct {
+	EntityType edi.MappingEntityType `json:"entityType"`
+	// The partner's code or label for it.
+	Source string `json:"source"`
 }
 
 type EDITransportCertificate struct {
@@ -4601,11 +4764,13 @@ type FacilityDetentionStat struct {
 	MedianDwellMinutes float64 `json:"medianDwellMinutes"`
 	P90DwellMinutes    float64 `json:"p90DwellMinutes"`
 	BilledAmount       string  `json:"billedAmount"`
-	DriverPayAmount    string  `json:"driverPayAmount"`
-	NetMargin          string  `json:"netMargin"`
-	WaivedAmount       string  `json:"waivedAmount"`
-	DisputeCount       int     `json:"disputeCount"`
-	SuppressedCount    int     `json:"suppressedCount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin       *string `json:"netMargin,omitempty"`
+	WaivedAmount    string  `json:"waivedAmount"`
+	DisputeCount    int     `json:"disputeCount"`
+	SuppressedCount int     `json:"suppressedCount"`
 }
 
 type FactoringAgreementInput struct {
@@ -4854,6 +5019,17 @@ type FilterGroupInput struct {
 	Filters []*FieldFilterInput `json:"filters"`
 }
 
+type FiscalPeriodConnection struct {
+	Edges      []*FiscalPeriodEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type FiscalPeriodEdge struct {
+	Node   *fiscalperiod.FiscalPeriod `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
 type FiscalYearConnection struct {
 	Edges      []*FiscalYearEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
@@ -4876,12 +5052,15 @@ type FleetCodeEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+// What the fleet's loads cost over a window. The margin figures, and the revenue
+// that would let a reader work the margin out from the cost, are null to a reader
+// without the margins field group.
 type FleetCostSummary struct {
 	AvgCpm             string  `json:"avgCpm"`
 	AvgMarginPercent   *string `json:"avgMarginPercent,omitempty"`
 	ShipmentCount      int     `json:"shipmentCount"`
-	UnprofitableCount  int     `json:"unprofitableCount"`
-	TotalRevenue       string  `json:"totalRevenue"`
+	UnprofitableCount  *int    `json:"unprofitableCount,omitempty"`
+	TotalRevenue       *string `json:"totalRevenue,omitempty"`
 	TotalEstimatedCost string  `json:"totalEstimatedCost"`
 	TotalMiles         float64 `json:"totalMiles"`
 	EmptyMiles         float64 `json:"emptyMiles"`
@@ -4920,6 +5099,11 @@ type FormulaInputDeclaration struct {
 	Required   bool `json:"required"`
 	// The default as a wire value, or null when the input has none.
 	Default any `json:"default,omitempty"`
+	// The values the input accepts, from its where clause, or null when it has none:
+	// {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
+	// minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
+	// list input it bounds each item.
+	Constraint any `json:"constraint,omitempty"`
 }
 
 type FormulaLibraryConnection struct {
@@ -5082,7 +5266,10 @@ type FuelIndexPriceInput struct {
 	Price       string `json:"price"`
 }
 
+// A fuel surcharge program's surcharge this week, from the index price in effect.
 type FuelProgramCurrentRate struct {
+	// The program's id: a program has one current rate.
+	ID           string                 `json:"id"`
 	Program      *FuelSurchargeProgram  `json:"program"`
 	Price        *FuelIndexPrice        `json:"price,omitempty"`
 	RatePerMile  *string                `json:"ratePerMile,omitempty"`
@@ -6315,6 +6502,84 @@ type PTOPolicyRuleInput struct {
 	OnTermination       *worker.PTOTerminationAction `json:"onTermination,omitempty"`
 }
 
+// What a screen needs and what a person or a role would see on it, from the
+// page access manifest. It never carries record data.
+type PageAccess struct {
+	// The route the location is, such as /shipments/:id.
+	Path string `json:"path"`
+	// The screen's English name from the navigation, or empty.
+	Name       string                   `json:"name"`
+	Operations []string                 `json:"operations"`
+	Requires   []*PageAccessRequirement `json:"requires"`
+	Endpoints  []*PageAccessEndpoint    `json:"endpoints"`
+	Kinds      []*PageAccessKind        `json:"kinds"`
+	// How many selected fields of linked records come back null.
+	Withheld int `json:"withheld"`
+	// The route, or a kind the screen reads as root records, is refused.
+	Blocked bool `json:"blocked"`
+}
+
+type PageAccessDraftPermissionInput struct {
+	Resource   string   `json:"resource"`
+	Operations []string `json:"operations"`
+}
+
+// A REST endpoint a screen calls, and what its route checks before its handler.
+type PageAccessEndpoint struct {
+	Method   string                   `json:"method"`
+	Path     string                   `json:"path"`
+	Requires []*PageAccessRequirement `json:"requires"`
+}
+
+// One field a screen selects on a linked record. A name written Type.field is a
+// field of a record that is part of the kind, which has no view of its own.
+type PageAccessField struct {
+	Name     string             `json:"name"`
+	InView   bool               `json:"inView"`
+	Decision PageAccessDecision `json:"decision"`
+}
+
+// One kind a screen depends on, and what the reader sees of it there.
+type PageAccessKind struct {
+	Resource     string             `json:"resource"`
+	ResourceName string             `json:"resourceName"`
+	Use          PageAccessUse      `json:"use"`
+	CanRead      bool               `json:"canRead"`
+	Fields       []*PageAccessField `json:"fields"`
+	Withheld     int                `json:"withheld"`
+}
+
+type PageAccessPreviewInput struct {
+	// A path in the app, such as /shipments/shp_123.
+	Location string `json:"location"`
+	// A saved role to preview. Exactly one of roleId and draft is set.
+	RoleID *string `json:"roleId,omitempty"`
+	// The role being edited.
+	Draft *PageAccessRoleDraftInput `json:"draft,omitempty"`
+}
+
+// A permission a screen's route or one of its REST endpoints checks.
+type PageAccessRequirement struct {
+	Resource      string `json:"resource"`
+	ResourceName  string `json:"resourceName"`
+	Operation     string `json:"operation"`
+	OperationName string `json:"operationName"`
+	Allowed       bool   `json:"allowed"`
+}
+
+// A role as the role editor holds it before it is saved.
+type PageAccessRoleDraftInput struct {
+	MaxSensitivity string                            `json:"maxSensitivity"`
+	ParentRoleIds  []string                          `json:"parentRoleIds,omitempty"`
+	Permissions    []*PageAccessDraftPermissionInput `json:"permissions"`
+}
+
+// A screen of the page access manifest.
+type PageAccessScreen struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
+}
+
 type PageInfo struct {
 	HasNextPage bool    `json:"hasNextPage"`
 	EndCursor   *string `json:"endCursor,omitempty"`
@@ -6608,9 +6873,39 @@ type RateAgreement struct {
 	ApprovedAt           *int           `json:"approvedAt,omitempty"`
 	ReviewComment        string         `json:"reviewComment"`
 	CurrentVersionNumber int            `json:"currentVersionNumber"`
-	Version              int            `json:"version"`
-	CreatedAt            int            `json:"createdAt"`
-	UpdatedAt            int            `json:"updatedAt"`
+	// The customer invoices for this agreement's freight go to, when not the party itself.
+	BillToCustomerID *string `json:"billToCustomerId,omitempty"`
+	// The live lanes: active rules in force now or starting later, most specific
+	// first. first takes at most 100.
+	Lanes []*RateAgreementLane `json:"lanes"`
+	// How many live lanes the agreement holds.
+	LaneCount int `json:"laneCount"`
+	// The accessorial schedule. Read by rateAgreement only.
+	Accessorials []*RateAgreementAccessorial `json:"accessorials,omitempty"`
+	// The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only.
+	FuelBinding *RateAgreementFuelBinding `json:"fuelBinding,omitempty"`
+	// The version of the header terms in force now. Read by rateAgreement only.
+	CurrentVersion *RateAgreementVersion `json:"currentVersion,omitempty"`
+	Version        int                   `json:"version"`
+	CreatedAt      int                   `json:"createdAt"`
+	UpdatedAt      int                   `json:"updatedAt"`
+}
+
+// An accessorial an agreement prices, and on what terms.
+type RateAgreementAccessorial struct {
+	ID                  string  `json:"id"`
+	AccessorialChargeID string  `json:"accessorialChargeId"`
+	Method              string  `json:"method"`
+	RateUnit            string  `json:"rateUnit"`
+	Waived              bool    `json:"waived"`
+	AutoApply           bool    `json:"autoApply"`
+	FreeUnits           *int    `json:"freeUnits,omitempty"`
+	EffectiveFrom       *int    `json:"effectiveFrom,omitempty"`
+	EffectiveTo         *int    `json:"effectiveTo,omitempty"`
+	Amount              string  `json:"amount"`
+	MaxAmount           *string `json:"maxAmount,omitempty"`
+	// The Tariff condition a shipment meets for the charge to apply; empty applies always.
+	Condition string `json:"condition"`
 }
 
 type RateAgreementConnection struct {
@@ -6622,6 +6917,46 @@ type RateAgreementConnection struct {
 type RateAgreementEdge struct {
 	Node   *RateAgreement `json:"node"`
 	Cursor string         `json:"cursor"`
+}
+
+// How an agreement prices fuel: the program it binds, or a waiver.
+type RateAgreementFuelBinding struct {
+	ID                     string `json:"id"`
+	FuelSurchargeProgramID string `json:"fuelSurchargeProgramId"`
+	Waived                 bool   `json:"waived"`
+}
+
+// One priced lane of a rate agreement: where it applies, when, and the tariff
+// and inputs it prices with.
+type RateAgreementLane struct {
+	ID                    string `json:"id"`
+	Label                 string `json:"label"`
+	OriginScopeType       string `json:"originScopeType"`
+	OriginScopeValue      string `json:"originScopeValue"`
+	OriginCity            string `json:"originCity"`
+	DestinationScopeType  string `json:"destinationScopeType"`
+	DestinationScopeValue string `json:"destinationScopeValue"`
+	DestinationCity       string `json:"destinationCity"`
+	Direction             string `json:"direction"`
+	Priority              int    `json:"priority"`
+	EffectiveFrom         int    `json:"effectiveFrom"`
+	EffectiveTo           *int   `json:"effectiveTo,omitempty"`
+	HazmatOnly            bool   `json:"hazmatOnly"`
+	TempControlOnly       bool   `json:"tempControlOnly"`
+	// The tariff that prices the lane.
+	FormulaTemplateID string `json:"formulaTemplateId"`
+	Currency          string `json:"currency"`
+	// The values the lane's tariff prices with, by input name. Each value is a Tariff wire value.
+	Inputs map[string]any `json:"inputs"`
+}
+
+// The header terms of an agreement as they stood for a window.
+type RateAgreementVersion struct {
+	ID            string `json:"id"`
+	VersionNumber int    `json:"versionNumber"`
+	EffectiveFrom int    `json:"effectiveFrom"`
+	EffectiveTo   *int   `json:"effectiveTo,omitempty"`
+	ChangeMessage string `json:"changeMessage"`
 }
 
 // A rate table a tariff looks values up in: one to four axes, such as origin zone
@@ -6636,15 +6971,54 @@ type RateMatrix struct {
 	Status         string `json:"status"`
 	// What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
 	ValueType string `json:"valueType"`
-	Version   int    `json:"version"`
-	CreatedAt int    `json:"createdAt"`
-	UpdatedAt int    `json:"updatedAt"`
+	// The matrix's axes, by position. Read by rateMatrix only.
+	Dimensions []*RateMatrixDimension `json:"dimensions,omitempty"`
+	// How many cells the grid holds.
+	CellCount int `json:"cellCount"`
+	// The grid's cells, a page at a time: offset skips that many, and limit takes
+	// at most 100.
+	Cells     []*RateMatrixCell `json:"cells"`
+	Version   int               `json:"version"`
+	CreatedAt int               `json:"createdAt"`
+	UpdatedAt int               `json:"updatedAt"`
+}
+
+// One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+// the first axis), and the value it holds.
+type RateMatrixCell struct {
+	ID              string  `json:"id"`
+	D0Key           string  `json:"d0Key"`
+	D1Key           string  `json:"d1Key"`
+	D2Key           string  `json:"d2Key"`
+	D3Key           string  `json:"d3Key"`
+	D0Min           *string `json:"d0Min,omitempty"`
+	D0Max           *string `json:"d0Max,omitempty"`
+	D1Min           *string `json:"d1Min,omitempty"`
+	D1Max           *string `json:"d1Max,omitempty"`
+	D2Min           *string `json:"d2Min,omitempty"`
+	D2Max           *string `json:"d2Max,omitempty"`
+	D3Min           *string `json:"d3Min,omitempty"`
+	D3Max           *string `json:"d3Max,omitempty"`
+	DeficitEligible bool    `json:"deficitEligible"`
+	Value           string  `json:"value"`
+	MinCharge       *string `json:"minCharge,omitempty"`
 }
 
 type RateMatrixConnection struct {
 	Edges      []*RateMatrixEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+// One axis of a rate matrix: what it keys on and how a value matches it.
+type RateMatrixDimension struct {
+	ID               string `json:"id"`
+	Position         int    `json:"position"`
+	Kind             string `json:"kind"`
+	MatchMode        string `json:"matchMode"`
+	Label            string `json:"label"`
+	KeyNormalization string `json:"keyNormalization"`
+	RangeOverflow    string `json:"rangeOverflow"`
 }
 
 type RateMatrixEdge struct {
@@ -7026,6 +7400,9 @@ type ReportBandInput struct {
 	Edges []float64 `json:"edges,omitempty"`
 }
 
+// The report catalog as the caller may use it: every kind they can read, and
+// every kind they cannot read that they can still reach through a join, with
+// only its reference-view fields available.
 type ReportCatalog struct {
 	Version  string                 `json:"version"`
 	Entities []*ReportCatalogEntity `json:"entities"`
@@ -7037,18 +7414,31 @@ type ReportCatalogEdge struct {
 	Target      string `json:"target"`
 	Cardinality string `json:"cardinality"`
 	Traversable bool   `json:"traversable"`
+	// Whether the caller may follow the edge in a report and, when not, what they lack.
+	Access ReportFieldAccess `json:"access"`
+	// Whether the edge is in its source kind's reference view.
+	InReferenceView bool `json:"inReferenceView"`
+	// The kind whose read the caller lacks to follow the edge, when access is
+	// NeedsKindRead.
+	NeedsReadOf *ReportCatalogKind `json:"needsReadOf,omitempty"`
 }
 
 type ReportCatalogEntity struct {
-	Key               string                `json:"key"`
-	Resource          string                `json:"resource"`
-	Label             string                `json:"label"`
-	PluralLabel       string                `json:"pluralLabel"`
-	Description       *string               `json:"description,omitempty"`
-	Category          string                `json:"category"`
-	OwnScopeSupported bool                  `json:"ownScopeSupported"`
-	Fields            []*ReportCatalogField `json:"fields"`
-	Edges             []*ReportCatalogEdge  `json:"edges"`
+	Key               string  `json:"key"`
+	Resource          string  `json:"resource"`
+	Label             string  `json:"label"`
+	PluralLabel       string  `json:"pluralLabel"`
+	Description       *string `json:"description,omitempty"`
+	Category          string  `json:"category"`
+	OwnScopeSupported bool    `json:"ownScopeSupported"`
+	// Whether the caller may read the kind. A report starts only from a kind the
+	// caller reads; one they cannot read is reached through a join, and only its
+	// reference-view fields are available.
+	Readable bool `json:"readable"`
+	// Whether a run may export the kind's own fields.
+	Exportable bool                  `json:"exportable"`
+	Fields     []*ReportCatalogField `json:"fields"`
+	Edges      []*ReportCatalogEdge  `json:"edges"`
 }
 
 type ReportCatalogEnumValue struct {
@@ -7067,8 +7457,21 @@ type ReportCatalogField struct {
 	Aggregations []string                  `json:"aggregations"`
 	Filterable   bool                      `json:"filterable"`
 	Groupable    bool                      `json:"groupable"`
-	Accessible   bool                      `json:"accessible"`
-	Sensitivity  string                    `json:"sensitivity"`
+	// Whether the caller may use the field in a report and, when not, what they lack.
+	Access ReportFieldAccess `json:"access"`
+	// Whether the field is in its kind's reference view, so a report can show it
+	// through a join from a record the caller reads without the kind's own read.
+	InReferenceView bool `json:"inReferenceView"`
+	// The protected field group the field belongs to, and whether the caller holds it.
+	Protection  *ReportFieldProtection `json:"protection,omitempty"`
+	Sensitivity string                 `json:"sensitivity"`
+}
+
+// A kind of record, as the report catalog names it.
+type ReportCatalogKind struct {
+	Resource string `json:"resource"`
+	// The kind's plural label, such as Customers.
+	Label string `json:"label"`
 }
 
 type ReportChartGoalInput struct {
@@ -7268,6 +7671,12 @@ type ReportDrillInput struct {
 type ReportDrillValueInput struct {
 	ColumnID string `json:"columnId"`
 	Value    any    `json:"value,omitempty"`
+}
+
+type ReportFieldProtection struct {
+	Group permission.FieldGroup `json:"group"`
+	// Whether the caller's role grants the group.
+	Held bool `json:"held"`
 }
 
 type ReportFieldRefInput struct {
@@ -7536,9 +7945,10 @@ type ResolvedCategoryRate struct {
 }
 
 type ResolvedCostProfile struct {
-	TotalCpm             string                  `json:"totalCpm"`
-	VariableCpm          string                  `json:"variableCpm"`
-	FixedCpm             string                  `json:"fixedCpm"`
+	TotalCpm    string `json:"totalCpm"`
+	VariableCpm string `json:"variableCpm"`
+	FixedCpm    string `json:"fixedCpm"`
+	// Null to a reader without the margins field group.
 	TargetMarginPercent  *string                 `json:"targetMarginPercent,omitempty"`
 	IncludeDeadheadMiles bool                    `json:"includeDeadheadMiles"`
 	AsOfDate             string                  `json:"asOfDate"`
@@ -7637,6 +8047,32 @@ type RoleConnection struct {
 type RoleEdge struct {
 	Node   *permission.Role `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// What granting and withholding a resource's read means, in sentences built from
+// the permission registry, the resource's reference view and the kinds that link
+// to it, translated for the request.
+type RoleResourceGuide struct {
+	Resource string `json:"resource"`
+	Name     string `json:"name"`
+	Granted  string `json:"granted"`
+	Withheld string `json:"withheld"`
+	// The view's fields above the role's sensitivity ceiling, or null when none are.
+	Ceiling *string               `json:"ceiling,omitempty"`
+	Screens []*RoleResourceScreen `json:"screens"`
+}
+
+type RoleResourceGuideInput struct {
+	// At most 64 resources, such as one category of the role editor.
+	Resources      []string `json:"resources"`
+	MaxSensitivity string   `json:"maxSensitivity"`
+}
+
+// A screen a resource's grant changes, and how it depends on the resource.
+type RoleResourceScreen struct {
+	Path string        `json:"path"`
+	Name string        `json:"name"`
+	Use  PageAccessUse `json:"use"`
 }
 
 // The composed board. It is derived on every read and never stored: a stored week
@@ -8063,11 +8499,12 @@ type Shipment struct {
 	EnteredByID      *string               `json:"enteredById,omitempty"`
 	CanceledByID     *string               `json:"canceledById,omitempty"`
 	// The tariff that rates the shipment. Null when it is rated by hand.
-	FormulaTemplateID     *string                        `json:"formulaTemplateId,omitempty"`
-	ConsolidationGroupID  *string                        `json:"consolidationGroupId,omitempty"`
-	OrderID               *string                        `json:"orderId,omitempty"`
-	OrderNumber           *string                        `json:"orderNumber,omitempty"`
-	OrderStatus           *order.Status                  `json:"orderStatus,omitempty"`
+	FormulaTemplateID    *string       `json:"formulaTemplateId,omitempty"`
+	ConsolidationGroupID *string       `json:"consolidationGroupId,omitempty"`
+	OrderID              *string       `json:"orderId,omitempty"`
+	OrderNumber          *string       `json:"orderNumber,omitempty"`
+	OrderStatus          *order.Status `json:"orderStatus,omitempty"`
+	// The shipment's estimated cost and margin. Null to a reader without the margins field group.
 	ProfitabilityEstimate *ShipmentProfitabilityEstimate `json:"profitabilityEstimate,omitempty"`
 	Status                ShipmentStatus                 `json:"status"`
 	TenderStatus          *ShipmentTenderStatus          `json:"tenderStatus,omitempty"`
@@ -9499,11 +9936,12 @@ type ShipmentProfitability struct {
 type ShipmentProfitabilityAnalytics struct {
 	AvgCpm float64 `json:"avgCpm"`
 	// Null when the reader does not hold the margins field group.
-	AvgMarginPct      *float64 `json:"avgMarginPct,omitempty"`
-	HasMargin         bool     `json:"hasMargin"`
-	UnprofitableCount int      `json:"unprofitableCount"`
-	ShipmentCount     int      `json:"shipmentCount"`
-	TotalMiles        float64  `json:"totalMiles"`
+	AvgMarginPct *float64 `json:"avgMarginPct,omitempty"`
+	HasMargin    bool     `json:"hasMargin"`
+	// How many loads lost money. Null when the reader does not hold the margins field group.
+	UnprofitableCount *int    `json:"unprofitableCount,omitempty"`
+	ShipmentCount     int     `json:"shipmentCount"`
+	TotalMiles        float64 `json:"totalMiles"`
 }
 
 type ShipmentProfitabilityEstimate struct {
@@ -9550,6 +9988,8 @@ type ShipmentRatingDetail struct {
 	Bill *TariffBill `json:"bill,omitempty"`
 	// The tariff's reason for refusing to rate the shipment.
 	Refusal string `json:"refusal"`
+	// Every best and worst the tariff evaluated, in the order they ran.
+	Choices []*TariffChoice `json:"choices"`
 	// The inputs the tariff priced with, by name. Each value is a Tariff wire value.
 	Inputs  map[string]any        `json:"inputs"`
 	Skipped []*ShipmentRatingSkip `json:"skipped"`
@@ -10148,6 +10588,30 @@ type TariffBillLine struct {
 	Rate         *string `json:"rate,omitempty"`
 	RateUnit     string  `json:"rateUnit"`
 	Amount       string  `json:"amount"`
+}
+
+// A best or worst block the tariff evaluated: the methods it weighed and the one it
+// kept. A choice inside a loop appears once for each time it ran.
+type TariffChoice struct {
+	Label string `json:"label"`
+	// best keeps the lowest subtotal, worst the highest.
+	Kind string `json:"kind"`
+	// The currency the subtotals are in: the tariff's own, before any conversion the bill shows.
+	Currency string `json:"currency"`
+	// The label of the option kept. Null when every option refused.
+	Chosen  *string               `json:"chosen,omitempty"`
+	Options []*TariffChoiceOption `json:"options"`
+}
+
+// One method a choice weighed: what it would have billed, or why it did not apply.
+type TariffChoiceOption struct {
+	Label string `json:"label"`
+	// chosen when the choice kept this option, lost when another won, refused when it did not apply.
+	Status string `json:"status"`
+	// The exact sum of the charge lines the option billed, before rounding. Null when it refused.
+	Subtotal *string `json:"subtotal,omitempty"`
+	// Why the option did not apply, in the reader's language when the engine wrote it. Null unless it refused.
+	Refusal *string `json:"refusal,omitempty"`
 }
 
 // One person on a manager's team.
@@ -12248,6 +12712,8 @@ const (
 	DetentionDeskUrgencyAccruing       DetentionDeskUrgency = "Accruing"
 	DetentionDeskUrgencyFreeTimeEnding DetentionDeskUrgency = "FreeTimeEnding"
 	DetentionDeskUrgencyNormal         DetentionDeskUrgency = "Normal"
+	// A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived.
+	DetentionDeskUrgencyAwaitingApproval DetentionDeskUrgency = "AwaitingApproval"
 )
 
 var AllDetentionDeskUrgency = []DetentionDeskUrgency{
@@ -12257,11 +12723,12 @@ var AllDetentionDeskUrgency = []DetentionDeskUrgency{
 	DetentionDeskUrgencyAccruing,
 	DetentionDeskUrgencyFreeTimeEnding,
 	DetentionDeskUrgencyNormal,
+	DetentionDeskUrgencyAwaitingApproval,
 }
 
 func (e DetentionDeskUrgency) IsValid() bool {
 	switch e {
-	case DetentionDeskUrgencyLost, DetentionDeskUrgencyNoticeOverdue, DetentionDeskUrgencyNoticeDueSoon, DetentionDeskUrgencyAccruing, DetentionDeskUrgencyFreeTimeEnding, DetentionDeskUrgencyNormal:
+	case DetentionDeskUrgencyLost, DetentionDeskUrgencyNoticeOverdue, DetentionDeskUrgencyNoticeDueSoon, DetentionDeskUrgencyAccruing, DetentionDeskUrgencyFreeTimeEnding, DetentionDeskUrgencyNormal, DetentionDeskUrgencyAwaitingApproval:
 		return true
 	}
 	return false
@@ -13014,6 +13481,130 @@ func (e NotificationState) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// What the field guard does with one field of a linked record.
+type PageAccessDecision string
+
+const (
+	PageAccessDecisionVisible PageAccessDecision = "VISIBLE"
+	// Outside the kind's reference view, and the reader cannot read the kind.
+	PageAccessDecisionWithheldKind PageAccessDecision = "WITHHELD_KIND"
+	// Above the reader's sensitivity ceiling.
+	PageAccessDecisionWithheldSensitivity PageAccessDecision = "WITHHELD_SENSITIVITY"
+)
+
+var AllPageAccessDecision = []PageAccessDecision{
+	PageAccessDecisionVisible,
+	PageAccessDecisionWithheldKind,
+	PageAccessDecisionWithheldSensitivity,
+}
+
+func (e PageAccessDecision) IsValid() bool {
+	switch e {
+	case PageAccessDecisionVisible, PageAccessDecisionWithheldKind, PageAccessDecisionWithheldSensitivity:
+		return true
+	}
+	return false
+}
+
+func (e PageAccessDecision) String() string {
+	return string(e)
+}
+
+func (e *PageAccessDecision) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageAccessDecision(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageAccessDecision", str)
+	}
+	return nil
+}
+
+func (e PageAccessDecision) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageAccessDecision) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageAccessDecision) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How a screen depends on one kind of record (docs/engineering/reference-views.md).
+type PageAccessUse string
+
+const (
+	// The screen's route, or a REST endpoint it calls, checks the kind.
+	PageAccessUseRequired PageAccessUse = "REQUIRED"
+	// The screen reads records of the kind as root records, which needs the kind's read.
+	PageAccessUseRead PageAccessUse = "READ"
+	// The screen asks for fields beyond the kind's reference view with @requiresRead.
+	PageAccessUseDeclared PageAccessUse = "DECLARED"
+	// The screen shows the kind only through its reference view.
+	PageAccessUseReference PageAccessUse = "REFERENCE"
+)
+
+var AllPageAccessUse = []PageAccessUse{
+	PageAccessUseRequired,
+	PageAccessUseRead,
+	PageAccessUseDeclared,
+	PageAccessUseReference,
+}
+
+func (e PageAccessUse) IsValid() bool {
+	switch e {
+	case PageAccessUseRequired, PageAccessUseRead, PageAccessUseDeclared, PageAccessUseReference:
+		return true
+	}
+	return false
+}
+
+func (e PageAccessUse) String() string {
+	return string(e)
+}
+
+func (e *PageAccessUse) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageAccessUse(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageAccessUse", str)
+	}
+	return nil
+}
+
+func (e PageAccessUse) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageAccessUse) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageAccessUse) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Which switch keeps a waiting decision from being taken.
 type PendingDecisionHoldReason string
 
@@ -13424,6 +14015,73 @@ func (e *RateQuotePurpose) UnmarshalJSON(b []byte) error {
 }
 
 func (e RateQuotePurpose) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether a caller may use a catalog field or edge in a report, decided by the
+// rule the report compiler applies, so a field marked Available compiles and
+// any other is refused.
+type ReportFieldAccess string
+
+const (
+	// The caller may use it.
+	ReportFieldAccessAvailable ReportFieldAccess = "Available"
+	// It is outside its kind's reference view, and the caller cannot read the
+	// kind. Through a join, only the kind's reference-view fields can be used.
+	ReportFieldAccessNeedsKindRead ReportFieldAccess = "NeedsKindRead"
+	// It is ranked above the caller's sensitivity ceiling.
+	ReportFieldAccessWithheldByCeiling ReportFieldAccess = "WithheldByCeiling"
+	// It is in a protected field group the caller's role does not grant.
+	ReportFieldAccessNeedsFieldGroup ReportFieldAccess = "NeedsFieldGroup"
+)
+
+var AllReportFieldAccess = []ReportFieldAccess{
+	ReportFieldAccessAvailable,
+	ReportFieldAccessNeedsKindRead,
+	ReportFieldAccessWithheldByCeiling,
+	ReportFieldAccessNeedsFieldGroup,
+}
+
+func (e ReportFieldAccess) IsValid() bool {
+	switch e {
+	case ReportFieldAccessAvailable, ReportFieldAccessNeedsKindRead, ReportFieldAccessWithheldByCeiling, ReportFieldAccessNeedsFieldGroup:
+		return true
+	}
+	return false
+}
+
+func (e ReportFieldAccess) String() string {
+	return string(e)
+}
+
+func (e *ReportFieldAccess) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReportFieldAccess(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReportFieldAccess", str)
+	}
+	return nil
+}
+
+func (e ReportFieldAccess) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReportFieldAccess) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReportFieldAccess) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

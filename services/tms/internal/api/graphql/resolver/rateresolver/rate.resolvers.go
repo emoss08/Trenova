@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -115,4 +116,138 @@ func (r *QueryResolver) RateQuotes(ctx context.Context, input gqlmodel.DataTable
 	}
 
 	return rateQuoteConnectionToModel(result)
+}
+
+func (r *QueryResolver) RateAgreement(ctx context.Context, id string) (*gqlmodel.RateAgreement, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	agreementID, err := base.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	tenant := base.TenantInfo(authCtx)
+	entity, err := r.RateAgreementService.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
+		RateAgreementID: agreementID,
+		TenantInfo:      tenant,
+		IncludeChildren: true,
+		OmitRules:       true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	versions, err := r.RateAgreementService.ListVersions(
+		ctx,
+		&rateagreementports.ListRateAgreementVersionsRequest{
+			TenantInfo:      tenant,
+			RateAgreementID: agreementID,
+			Limit:           1,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var current *rateagreement.RateAgreementVersion
+	if len(versions.Items) > 0 {
+		current = versions.Items[0]
+	}
+
+	return rateAgreementCardToModel(entity, current)
+}
+
+func (r *QueryResolver) RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	matrixID, err := base.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := r.RateMatrixService.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
+		RateMatrixID:      matrixID,
+		TenantInfo:        base.TenantInfo(authCtx),
+		IncludeDimensions: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return rateMatrixCardToModel(entity), nil
+}
+
+func (r *RateMatrixResolver) CellCount(ctx context.Context, obj *gqlmodel.RateMatrix) (int, error) {
+	page, err := r.matrixCells(ctx, obj, 0, 1)
+	if err != nil {
+		return 0, err
+	}
+
+	return page.Total, nil
+}
+
+func (r *RateMatrixResolver) Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
+	from := 0
+	if offset != nil {
+		from = max(*offset, 0)
+	}
+	size := maxMatrixCellPage
+	if limit != nil {
+		size = min(max(*limit, 1), maxMatrixCellPage)
+	}
+
+	page, err := r.matrixCells(ctx, obj, from, size)
+	if err != nil {
+		return nil, err
+	}
+
+	cells := make([]*gqlmodel.RateMatrixCell, 0, len(page.Items))
+	for _, cell := range page.Items {
+		if cell != nil {
+			cells = append(cells, rateMatrixCellToModel(cell))
+		}
+	}
+
+	return cells, nil
+}
+
+func (r *RateAgreementResolver) Lanes(ctx context.Context, obj *gqlmodel.RateAgreement, first *int) ([]*gqlmodel.RateAgreementLane, error) {
+	limit := defaultAgreementLanes
+	if first != nil {
+		limit = min(max(*first, 1), rateagreementports.MaxLaneLimit)
+	}
+
+	page, err := r.agreementLanes(ctx, obj, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	lanes := make([]*gqlmodel.RateAgreementLane, 0, len(page.Lanes))
+	for _, lane := range page.Lanes {
+		if lane == nil {
+			continue
+		}
+		model, mapErr := rateAgreementLaneToModel(lane)
+		if mapErr != nil {
+			return nil, mapErr
+		}
+		lanes = append(lanes, model)
+	}
+
+	return lanes, nil
+}
+
+func (r *RateAgreementResolver) LaneCount(ctx context.Context, obj *gqlmodel.RateAgreement) (int, error) {
+	page, err := r.agreementLanes(ctx, obj, 1)
+	if err != nil {
+		return 0, err
+	}
+
+	return page.Count, nil
 }

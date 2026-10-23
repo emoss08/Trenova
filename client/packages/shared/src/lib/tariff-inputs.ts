@@ -5,6 +5,10 @@
 // wrong at the field before it asks.
 
 import type { TranslateFn } from "@trenova/shared/i18n/runtime";
+import {
+  tariffConstraintMessage,
+  tariffConstraintViolations,
+} from "@trenova/shared/lib/tariff-constraint";
 import { tariffValueProblems, type TariffValueProblem } from "@trenova/shared/rules/tariff-wire";
 import type {
   TariffInputDeclaration,
@@ -172,12 +176,15 @@ export type TariffInputCheckOptions = {
    * so a name outside them is one some lane's tariff lacks rather than an unknown input.
    */
   scope?: "agreement";
+  /** The rating currency's ISO code, for the money a constraint's message names. */
+  currency?: string | null;
 };
 
 /**
  * What is wrong with a form's input values against the tariff's declarations: values that do
- * not fit their type, values for inputs the tariff does not declare, and (when asked) inputs
- * no one sets that have no default. Paths are relative to the values record.
+ * not fit their type, values outside an input's `where` bounds (each item of a list input),
+ * values for inputs the tariff does not declare, and (when asked) inputs no one sets that have
+ * no default. Paths are relative to the values record.
  */
 export function tariffInputIssues(
   declarations: readonly TariffInputDeclaration[],
@@ -198,13 +205,25 @@ export function tariffInputIssues(
       }
       continue;
     }
-    for (const problem of tariffValueProblems(declaration.descriptor, value).filter(
+    const problems = tariffValueProblems(declaration.descriptor, value).filter(
       (found) => !isFoldedMoney(found, value),
-    )) {
+    );
+    for (const problem of problems) {
       issues.push({
         path: [declaration.name, ...pathSegments(problem.path)],
         message: problemMessage(problem, t),
       });
+    }
+    if (problems.length > 0 || !declaration.constraint) continue;
+    const message = tariffConstraintMessage(declaration.constraint, t, {
+      currency: options.currency,
+    });
+    for (const index of tariffConstraintViolations(
+      declaration.constraint,
+      declaration.descriptor,
+      value,
+    )) {
+      issues.push({ path: index < 0 ? [declaration.name] : [declaration.name, index], message });
     }
   }
   for (const name of Object.keys(set)) {

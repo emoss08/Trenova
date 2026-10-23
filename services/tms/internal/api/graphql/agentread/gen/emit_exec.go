@@ -117,7 +117,7 @@ func writeExecutor(dir string, plan *executorPlan, bindings []*binding) error {
 }
 
 // boundOperations are every operation a tool reads, its own and those it
-// reads alongside, each once, in the order the tools are listed.
+// reads alongside or instead, each once, in the order the tools are listed.
 func boundOperations(bindings []*binding) []*operation {
 	seen := make(map[string]struct{}, len(bindings))
 	out := make([]*operation, 0, len(bindings))
@@ -132,6 +132,9 @@ func boundOperations(bindings []*binding) []*operation {
 		add(b.Operation)
 		for _, beside := range b.Alongside {
 			add(beside.Operation)
+		}
+		for _, instead := range b.Instead {
+			add(instead.Operation)
 		}
 	}
 

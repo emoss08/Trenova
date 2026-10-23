@@ -22,7 +22,8 @@ export type ShipmentAnalyticsData = {
     /** Null when the reader does not hold the margins field group. */
     avgMarginPct: number | null;
     hasMargin: boolean;
-    unprofitableCount: number;
+    /** Null when the reader does not hold the margins field group. */
+    unprofitableCount: number | null;
     shipmentCount: number;
     totalMiles: number;
   };

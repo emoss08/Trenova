@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
 import type { Tone } from "@/components/kpi/tone";
@@ -6,6 +6,7 @@ import { ShareBreakdown, type ShareSegment } from "@/components/detention/detent
 import { RingGauge, type RingGaugeTone } from "@trenova/shared/components/ui/ring-gauge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatCurrency } from "@trenova/shared/lib/utils";
+import { WithheldPanel, WithheldValue } from "@trenova/shared/components/withheld-value";
 import NumberFlow from "@number-flow/react";
 import type { DetentionRollup } from "./use-detention-intelligence";
 
@@ -42,15 +43,95 @@ export function DetentionLedgerSkeleton() {
  * handed back at someone's discretion.
  */
 export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
+  const { driverPay, netMargin } = rollup;
+  if (driverPay === null || netMargin === null) {
+    return <WithheldMarginLedger rollup={rollup} />;
+  }
+
+  return <MarginLedger rollup={{ ...rollup, driverPay, netMargin }} />;
+}
+
+type MarginRollup = DetentionRollup & { driverPay: number; netMargin: number };
+
+function settledSummary(t: TranslateFn, rollup: DetentionRollup): string {
+  const { stopCount, breachCount } = rollup;
+  const breachRate = stopCount > 0 ? breachCount / stopCount : 0;
+
+  return rollup.truncated
+    ? t(
+        "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time · top facilities only",
+        stopCount.toLocaleString(),
+        stopCount,
+        rollup.facilityCount,
+        Math.round(breachRate * 100),
+      )
+    : t(
+        "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time",
+        stopCount.toLocaleString(),
+        stopCount,
+        rollup.facilityCount,
+        Math.round(breachRate * 100),
+      );
+}
+
+/**
+ * The ledger for a reader without the margins field group: what was billed and forgiven,
+ * with the driver's pay and the margin it leaves drawn as withheld, never as zero.
+ */
+function WithheldMarginLedger({ rollup }: { rollup: DetentionRollup }) {
+  const t = useT();
+  const { billed, waived } = rollup;
+  const exposure = billed + waived;
+
+  return (
+    <section className="flex flex-col gap-3">
+      <KpiStrip>
+        <KpiStripItem
+          size="lg"
+          className="col-span-full"
+          label={t("Net detention margin")}
+          value={<WithheldValue group="Margins" />}
+          sub={settledSummary(t, rollup)}
+        />
+        <KpiStripItem
+          label={t("Billed")}
+          value={formatCurrency(billed)}
+          sub={t("{0} put in play", formatCurrency(exposure))}
+        />
+        <KpiStripItem label={t("Driver pay")} value={<WithheldValue group="Margins" />} />
+        <KpiStripItem
+          label={t("Forgiven")}
+          tone={waived > 0 ? "warning" : undefined}
+          value={formatCurrency(waived)}
+          sub={
+            exposure > 0
+              ? t("{0}% of exposure", Math.round((waived / exposure) * 100))
+              : t("nothing waived")
+          }
+        />
+        <KpiStripItem label={t("Margin per stop")} value={<WithheldValue group="Margins" />} />
+      </KpiStrip>
+
+      <div className="border-border bg-card rounded-lg border">
+        <WithheldPanel>
+          {t(
+            "How much of each billed detention dollar survives driver pay needs access to margins.",
+          )}
+        </WithheldPanel>
+      </div>
+    </section>
+  );
+}
+
+function MarginLedger({ rollup }: { rollup: MarginRollup }) {
   const t = useT();
 
-  const { billed, driverPay, netMargin, waived, stopCount, breachCount } = rollup;
+  const { billed, driverPay, netMargin, waived, stopCount } = rollup;
 
   const kept = Math.max(netMargin, 0);
   const overrun = netMargin < 0;
   const exposure = billed + waived;
   const retention = billed > 0 ? netMargin / billed : 0;
-  const breachRate = stopCount > 0 ? breachCount / stopCount : 0;
   const marginPerStop = stopCount > 0 ? netMargin / stopCount : 0;
 
   const segments: ShareSegment[] = [
@@ -86,23 +167,7 @@ export function DetentionLedger({ rollup }: { rollup: DetentionRollup }) {
           label={t("Net detention margin")}
           tone={signTone(netMargin)}
           value={<NumberFlow value={netMargin} format={CURRENCY_FORMAT} />}
-          sub={
-            rollup.truncated
-              ? t(
-                  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time · top facilities only",
-                  stopCount.toLocaleString(),
-                  stopCount,
-                  rollup.facilityCount,
-                  Math.round(breachRate * 100),
-                )
-              : t(
-                  "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time",
-                  stopCount.toLocaleString(),
-                  stopCount,
-                  rollup.facilityCount,
-                  Math.round(breachRate * 100),
-                )
-          }
+          sub={settledSummary(t, rollup)}
         />
         <KpiStripItem
           label={t("Billed")}

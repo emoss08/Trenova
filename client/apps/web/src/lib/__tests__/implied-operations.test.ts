@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { impliedOperations } from "../implied-operations";
+import { grantReads, impliedOperations } from "../implied-operations";
 
 const definitions = [
   { operation: "read", displayName: "Read", description: "", implies: [] },
@@ -27,5 +27,14 @@ describe("impliedOperations", () => {
 
   it("implies nothing from an operation that is not granted", () => {
     expect(impliedOperations([], definitions).size).toBe(0);
+  });
+});
+
+describe("grantReads", () => {
+  it("reads a resource granted read outright or through an operation that implies it", () => {
+    expect(grantReads(["read"], definitions)).toBe(true);
+    expect(grantReads(["update"], definitions)).toBe(true);
+    expect(grantReads(["manage"], definitions)).toBe(false);
+    expect(grantReads([], definitions)).toBe(false);
   });
 });

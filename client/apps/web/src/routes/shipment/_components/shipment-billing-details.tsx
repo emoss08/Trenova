@@ -40,7 +40,8 @@ import type React from "react";
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { BillView } from "@/components/tariff-bill/bill-view";
-import { readStoredTariffBill } from "@trenova/shared/types/tariff-form";
+import { ChoicesView } from "@/components/tariff-bill/choices-view";
+import { readStoredTariffBill, readStoredTariffChoices } from "@trenova/shared/types/tariff-form";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useShipmentDefaultPayer } from "./use-shipment-default-payer";
@@ -465,7 +466,8 @@ function RateDepartureReason() {
 
 /**
  * The bill the shipment was last rated to, line by line: each freight and accessorial charge
- * with its quantity and rate, the notes and any adjustment, from the tariff version that ran.
+ * with its quantity and rate, the notes and any adjustment, and what each `best` or `worst`
+ * chose with every option's subtotal, from the tariff version that ran.
  */
 function RatingBillCard() {
   const t = useT();
@@ -475,6 +477,7 @@ function RatingBillCard() {
   const shipmentId = useWatch({ control, name: "id" });
   // A shipment read over GraphQL reaches the form unparsed, so the stored bill is read here.
   const bill = readStoredTariffBill(ratingDetail?.bill);
+  const choices = readStoredTariffChoices(ratingDetail?.choices);
 
   if (!ratingDetail || (!bill && !ratingDetail.refusal)) {
     return null;
@@ -526,6 +529,13 @@ function RatingBillCard() {
         </Alert>
       ) : null}
       {bill ? <BillView bill={bill} currency={bill.currency || undefined} /> : null}
+      {choices.length > 0 && (
+        <ChoicesView
+          choices={choices}
+          currency={bill?.currency || undefined}
+          className="mt-3 border-t pt-2"
+        />
+      )}
       {(ratingDetail.skipped ?? []).length > 0 && (
         <p className="text-2xs text-muted-foreground mt-2">
           {t(

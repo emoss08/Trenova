@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -68,6 +69,14 @@ func (m *mockPermissionEngine) GetResourcePermissions(
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*permissionports.ResourcePermissionDetail), args.Error(1)
+}
+
+func (m *mockPermissionEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, m, userID, orgID, resources)
 }
 
 func (m *mockPermissionEngine) InvalidateUser(ctx context.Context, userID, orgID pulid.ID) error {

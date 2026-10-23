@@ -14,12 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/samber/lo"
 )
 
 // telematicsReader is the slice of the telematics service the tracking tools
@@ -36,11 +33,6 @@ type telematicsReader interface {
 		workerIDs []pulid.ID,
 		limit int,
 	) ([]*telematics.WorkerHOSState, error)
-	GetWorkerHOSState(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		workerID pulid.ID,
-	) (*telematics.WorkerHOSState, error)
 }
 
 // boardMoveLister is the one console read tracking needs: who is on a move.
@@ -362,122 +354,6 @@ func tenantOf(params *agentports.QueryToolParams) pagination.TenantInfo {
 		UserID: params.Actor.UserID,
 	}
 }
-
-type workerHOSRow struct {
-	WorkerID              string `json:"workerId"`
-	Name                  string `json:"name,omitempty"`
-	DutyStatus            string `json:"dutyStatus"`
-	DriveRemainingMinutes *int64 `json:"driveRemainingMinutes,omitempty"`
-	ShiftRemainingMinutes *int64 `json:"shiftRemainingMinutes,omitempty"`
-	CycleRemainingMinutes *int64 `json:"cycleRemainingMinutes,omitempty"`
-	BreakRemainingMinutes *int64 `json:"breakRemainingMinutes,omitempty"`
-	CurrentTractorID      string `json:"currentTractorId,omitempty"`
-	RecordedAt            string `json:"recordedAt"`
-	Stale                 bool   `json:"stale"`
-	Note                  string `json:"note,omitempty"`
-}
-
-type getWorkerHOSTool struct {
-	telematics telematicsReader
-}
-
-func newGetWorkerHOSTool(reader telematicsReader) agentports.AgentQueryTool {
-	return &getWorkerHOSTool{telematics: reader}
-}
-
-func (t *getWorkerHOSTool) Name() string { return "worker_get_hos" }
-
-func (t *getWorkerHOSTool) Description() string {
-	return "A driver's hours of service as the ELD last reported them: duty status and " +
-		"the drive, shift, cycle and break time remaining, in minutes. Use it before " +
-		"promising a delivery time or proposing an assignment. A reading older than " +
-		"twelve hours is marked stale and should not be planned on."
-}
-
-func (t *getWorkerHOSTool) SearchTerms() []string {
-	return []string{"hours of service", "hos", "hours left", "drive time", "duty status"}
-}
-
-func (t *getWorkerHOSTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"workerId": agenttoolschema.OfResource(map[string]any{
-				"type":        "string",
-				"description": "The driver's id, from worker_list.",
-			}, permission.ResourceWorker),
-		},
-		"required":             []string{"workerId"},
-		"additionalProperties": false,
-	}
-}
-
-func (t *getWorkerHOSTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceWorker,
-	})
-}
-
-func (t *getWorkerHOSTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	workerID, err := requirePulid(params.Params, "workerId")
-	if err != nil {
-		return nil, err
-	}
-
-	state, err := t.telematics.GetWorkerHOSState(ctx, tenantOf(params), workerID)
-	if err != nil && !errortypes.IsNotFoundError(err) {
-		return nil, err
-	}
-	if state == nil {
-		return workerHOSRow{
-			WorkerID:   workerID.String(),
-			DutyStatus: "Unknown",
-			RecordedAt: "never",
-			Stale:      true,
-			Note: "No ELD has reported hours of service for this driver, so their drive, " +
-				"shift and cycle time are unknown: the driver may not be mapped to the " +
-				"telematics provider. Do not estimate hours or call this tool again. " +
-				unknownHoursNote,
-		}, nil
-	}
-
-	now := clockFor(params).Now
-	row := workerHOSRow{
-		WorkerID:              state.WorkerID.String(),
-		DutyStatus:            string(state.DutyStatus),
-		DriveRemainingMinutes: lo.ToPtr(state.DriveRemainingMs / 60_000),
-		ShiftRemainingMinutes: lo.ToPtr(state.ShiftRemainingMs / 60_000),
-		CycleRemainingMinutes: lo.ToPtr(state.CycleRemainingMs / 60_000),
-		BreakRemainingMinutes: lo.ToPtr(state.BreakRemainingMs / 60_000),
-		RecordedAt:            timeutils.FormatUnixDateTimeIn(state.RecordedAt, params.Timezone),
-		Stale:                 now-state.RecordedAt > 12*3600,
-	}
-	if !state.CurrentTractorID.IsNil() {
-		row.CurrentTractorID = state.CurrentTractorID.String()
-	}
-	if state.Worker != nil {
-		row.Name = strings.TrimSpace(state.Worker.FirstName + " " + state.Worker.LastName)
-	}
-	if row.Stale {
-		row.Note = "This reading is more than twelve hours old; treat the clocks as unknown. " +
-			unknownHoursNote
-	}
-
-	return row, nil
-}
-
-// unknownHoursNote keeps an unreported clock from reading as a refusal: the
-// prompt asks for what the person named to be proposed with its concerns
-// beside it, and "plan on nothing" stopped an assignment the person asked for.
-const unknownHoursNote = "Unknown hours do not stop work the person asked for: propose it " +
-	"and say beside it that the hours are unreported, for them to weigh."
 
 // pulidList reads an array of ids, refusing a malformed one by position.
 func pulidList(raw any, key string) ([]pulid.ID, error) {

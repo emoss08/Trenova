@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { FieldWrapper } from "@/components/fields/field-components";
+import { FieldWrapper, type FieldLayout } from "@/components/fields/field-components";
 import { cn } from "@trenova/shared/lib/utils";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useId, useState } from "react";
@@ -16,10 +16,11 @@ type TextChipsFieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: FieldPath<T>;
   label?: string;
-  description?: string;
+  description?: React.ReactNode;
   placeholder?: string;
   rules?: RegisterOptions<T, FieldPath<T>>;
   className?: string;
+  layout?: FieldLayout;
   /** Longest entry accepted; longer ones are refused with a message. */
   maxLength?: number;
   /** Most entries accepted; the input closes once reached. */
@@ -38,6 +39,7 @@ export function TextChipsField<T extends FieldValues>({
   placeholder,
   rules,
   className,
+  layout,
   maxLength = 300,
   maxItems,
 }: TextChipsFieldProps<T>) {
@@ -84,6 +86,7 @@ export function TextChipsField<T extends FieldValues>({
             description={description}
             error={draftError ?? fieldState.error?.message}
             className={className}
+            layout={layout}
           >
             <label
               htmlFor={inputId}

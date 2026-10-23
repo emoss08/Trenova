@@ -8,7 +8,6 @@ const (
 	toolInvoiceGetAdjustment = "invoice_get_adjustment"
 	toolInvoiceListDisputes  = "invoice_list_disputes"
 	toolCustomerPaymentList  = "receivable_list_customer_payments"
-	toolOrderList            = "order_list"
 
 	entityInvoice = "invoice"
 	statusPosted  = "Posted"
@@ -56,7 +55,6 @@ const (
 	fieldInvoiceBillType   = "billType"
 	fieldInvoiceDueDateTo  = "dueDateTo"
 	fieldInvoiceBillToName = "billToName"
-	fieldShipmentID        = "shipmentId"
 	fieldOrderID           = "orderId"
 	fieldInvoiceLines      = "lines"
 	fieldLineCount         = "lineCount"
@@ -69,12 +67,6 @@ const (
 	invoiceLinesShown     = 100
 	invoiceLinesShownEach = 25
 )
-
-var customerReference = idReference{
-	resource: permission.ResourceCustomer,
-	what:     "The customer",
-	source:   toolCustomerList,
-}
 
 // billingReadSpecs are the invoice, dispute and customer payment lists, read
 // through the Desk's own operations.
@@ -143,7 +135,8 @@ func invoiceGetSpec() getSpec {
 		paramName:   paramReceivableInvoices,
 		idSource:    "from invoice_list, receivable_list_open_items or the page you are on",
 		batch:       invoiceGetBatch,
-		shape:       boundInvoiceLines,
+		shape:       countInvoiceLines,
+		shapeEach:   keepInvoiceLinesEach,
 	}
 }
 
@@ -160,16 +153,27 @@ func invoiceAdjustmentGetSpec() getSpec {
 	}
 }
 
-// boundInvoiceLines keeps the first lines of an invoice, fewer when it is
-// read beside others, and says how many it has and whether some were left
-// out, as the repository tool did.
-func boundInvoiceLines(record map[string]any, several bool) {
+// countInvoiceLines says how many lines an invoice has and keeps the first
+// of them, as the repository tool did. Lines access withholds are not
+// counted.
+func countInvoiceLines(record map[string]any, withheld map[string]struct{}, _ clock) {
+	if _, hidden := withheld[fieldInvoiceLines]; hidden {
+		return
+	}
 	lines, _ := record[fieldInvoiceLines].([]any)
 	record[fieldLineCount] = len(lines)
-	most := invoiceLinesShown
-	if several {
-		most = invoiceLinesShownEach
-	}
+	keepInvoiceLines(record, invoiceLinesShown)
+}
+
+// keepInvoiceLinesEach keeps fewer lines of an invoice read beside others.
+func keepInvoiceLinesEach(record map[string]any) {
+	keepInvoiceLines(record, invoiceLinesShownEach)
+}
+
+// keepInvoiceLines keeps an invoice's first lines and says whether some were
+// left out.
+func keepInvoiceLines(record map[string]any, most int) {
+	lines, _ := record[fieldInvoiceLines].([]any)
 	if len(lines) > most {
 		record[fieldInvoiceLines] = lines[:most]
 		record[fieldLinesTruncated] = true

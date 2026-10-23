@@ -169,10 +169,6 @@ func (s *Service) announceCounter(
 	a *counterAnnouncement,
 ) {
 	carrierName := carrierNameOf(a.offer)
-	margin := ""
-	if a.verdict.MarginPercent.Valid {
-		margin = a.verdict.MarginPercent.Decimal.Round(2).String()
-	}
 
 	s.recordEvent(ctx, shipmenteventservice.BuildTenderCountered(
 		shipmenteventservice.TenantRefFor(tenantInfo),
@@ -181,7 +177,6 @@ func (s *Service) announceCounter(
 			CarrierName:   carrierName,
 			OfferedRate:   a.offer.Rate.StringFixed(2),
 			CounterRate:   a.rate.StringFixed(2),
-			MarginPercent: margin,
 			NeedsApproval: a.verdict.NeedsApproval,
 			AutoAccepted:  a.verdict.AutoAccept,
 			Source:        a.source,

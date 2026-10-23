@@ -44,16 +44,12 @@ type ARDSOTrendPoint struct {
 }
 
 type ARDashboardKPIs struct {
-	AsOfDate       int64              `json:"asOfDate"`
-	Overview       *ARBalanceOverview `json:"overview"`
-	CurrentDSODays float64            `json:"currentDsoDays"`
-	DSODeltaDays   float64            `json:"dsoDeltaDays"`
-	CEI            float64            `json:"cei"`
-	AvgDaysToPay   float64            `json:"avgDaysToPay"`
-	OverduePercent float64            `json:"overduePercent"`
-	WriteOffRatio  float64            `json:"writeOffRatio"`
-	DisputeRate    float64            `json:"disputeRate"`
-	ShortPayRate   float64            `json:"shortPayRate"`
+	AsOfDate       int64                    `json:"asOfDate"`
+	Overview       *ARBalanceOverview       `json:"overview"`
+	CurrentDSODays float64                  `json:"currentDsoDays"`
+	DSODeltaDays   float64                  `json:"dsoDeltaDays"`
+	OverduePercent float64                  `json:"overduePercent"`
+	Collection     *ARCollectionPerformance `json:"collection"`
 }
 
 type ARCollectionPerformance struct {

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -30,8 +31,7 @@ type Compiler struct {
 	catalog            *reportcatalog.Catalog
 	permissionEngine   permissionports.PermissionEngine
 	permissionRegistry *permission.Registry
-	referenceViews     permissionports.ReferenceViews
-	fieldAccess        permissionports.FieldAccess
+	access             *reportaccess.Resolver
 	limits             limits
 	l                  *zap.Logger
 }
@@ -39,12 +39,19 @@ type Compiler struct {
 func New(p Params) *Compiler {
 	reporting := p.Config.GetReportingConfig()
 
+	registry := permission.NewRegistry()
+
 	return &Compiler{
 		catalog:            &reportcatalog.Default,
 		permissionEngine:   p.PermissionEngine,
-		permissionRegistry: permission.NewRegistry(),
-		referenceViews:     p.ReferenceViews,
-		fieldAccess:        p.FieldAccess,
+		permissionRegistry: registry,
+		access: reportaccess.New(reportaccess.Params{
+			Catalog:  &reportcatalog.Default,
+			Engine:   p.PermissionEngine,
+			Registry: registry,
+			Views:    p.ReferenceViews,
+			Fields:   p.FieldAccess,
+		}),
 		limits: limits{
 			maxToOneJoins:       reporting.GetMaxToOneJoins(),
 			maxToManySubqueries: reporting.GetMaxToManySubqueries(),
@@ -68,6 +75,11 @@ func NewWithCatalog(
 		catalog:            catalog,
 		permissionEngine:   engine,
 		permissionRegistry: registry,
+		access: reportaccess.New(reportaccess.Params{
+			Catalog:  catalog,
+			Engine:   engine,
+			Registry: registry,
+		}),
 		limits: limits{
 			maxToOneJoins:       reporting.GetMaxToOneJoins(),
 			maxToManySubqueries: reporting.GetMaxToManySubqueries(),
@@ -87,8 +99,13 @@ func (c *Compiler) WithAccess(
 	views permissionports.ReferenceViews,
 	fields permissionports.FieldAccess,
 ) *Compiler {
-	c.referenceViews = views
-	c.fieldAccess = fields
+	c.access = reportaccess.New(reportaccess.Params{
+		Catalog:  c.catalog,
+		Engine:   c.permissionEngine,
+		Registry: c.permissionRegistry,
+		Views:    views,
+		Fields:   fields,
+	})
 	return c
 }
 

@@ -1,4 +1,19 @@
 aliases:
+  EdiTransfer:
+    direction: targetOrganizationId
+    canDecide: status
+    bol: tenderPayload
+    customerLabel: tenderPayload
+    serviceTypeLabel: tenderPayload
+    shipmentTypeLabel: tenderPayload
+    pieces: tenderPayload
+    weight: tenderPayload
+    temperatureMin: tenderPayload
+    temperatureMax: tenderPayload
+    stopCount: tenderPayload
+    stops: tenderPayload
+    commodities: tenderPayload
+    charges: tenderPayload
   FormulaLibrary:
     path: name
   FormulaLibraryVersion:
@@ -167,6 +182,16 @@ aliases:
     user: userId
 
 virtuals:
+  EdiTransfer:
+    - counterparty
+  EdiTenderCommodity:
+    - commodity
+  EdiTenderCharge:
+    - charge
+    - method
+    - amount
+  EdiCarrierInvoice:
+    - suggestedCarrier
   JournalSourceInfo:
     - batchNumber
   FactoringRemittanceLine:
@@ -412,6 +437,13 @@ virtuals:
     - permissionScope
   FormulaTemplate:
     - usageCount
+  RateMatrix:
+    - cellCount
+    - cells
+  RateAgreement:
+    - lanes
+    - laneCount
+    - currentVersion
   VehiclePosition:
     - tractorCode
     - primaryWorkerId
@@ -534,6 +566,9 @@ virtuals:
     - supportingDocumentIds
 
 specials:
+  ManualJournal:
+    balance:
+      - isBalanced
   Tractor:
     lastKnownLocation:
       - lastKnownLocation
@@ -561,6 +596,7 @@ gates:
 modelOverrides:
   EdiPartnerCustomer: github.com/emoss08/trenova/internal/modules/parties/domain/customer.Customer
   EdiCarrierInvoiceList: github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
+  EdiTenderCharge: github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDITransfer
   CarrierInvoiceMatchList: github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment.InvoiceAdjustmentBatch
   ShipmentLifecycleEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentOwnershipEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
@@ -571,6 +607,7 @@ modelOverrides:
   ShipmentTenderEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentHoldEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
   ShipmentCommentEvent: github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent.Event
+  RateAgreementLane: github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement.RateAgreementRule
 
 always:
   AgentProposal:

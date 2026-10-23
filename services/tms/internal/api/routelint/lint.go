@@ -40,6 +40,16 @@ type Route struct {
 	Function string
 	Method   string
 	Path     string
+	// Sources is where the route is registered (the file and the lines its
+	// registration call spans) and where each middleware it is passed by name
+	// is built: together they hold the checks it runs before its handler.
+	Sources []RouteSource
+}
+
+type RouteSource struct {
+	File string
+	From int
+	To   int
 }
 
 func (r Route) Key() string {
@@ -223,6 +233,7 @@ func routesInPackage(pkgDir string, reg registration) ([]Route, error) {
 		registration: reg,
 		registrars:   registrars,
 		visited:      make(map[string]struct{}),
+		fset:         fset,
 	}
 	walker.walk(entry, APIV1BasePath)
 
@@ -240,6 +251,7 @@ func routesInPackage(pkgDir string, reg registration) ([]Route, error) {
 }
 
 type packageWalker struct {
+	fset         *token.FileSet
 	registration registration
 	registrars   map[string]*ast.FuncDecl
 	visited      map[string]struct{}
@@ -255,15 +267,25 @@ func (w *packageWalker) walk(fn *ast.FuncDecl, basePath string) {
 	w.visited[key] = struct{}{}
 
 	groups := map[string]string{routerGroupParamName(fn): basePath}
+	locals := make(map[string]RouteSource)
 
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
 		switch typed := n.(type) {
 		case *ast.AssignStmt:
 			w.recordGroupAssignment(typed, groups)
+			w.recordLocal(typed, locals)
 		case *ast.CallExpr:
 			if route, ok := routeFromCall(typed, groups); ok {
 				route.Package = w.registration.pkg
 				route.Function = w.registration.function
+				route.Sources = append(route.Sources, w.source(typed))
+				for _, arg := range typed.Args {
+					if ident, isIdent := arg.(*ast.Ident); isIdent {
+						if local, isLocal := locals[ident.Name]; isLocal {
+							route.Sources = append(route.Sources, local)
+						}
+					}
+				}
 				w.routes = append(w.routes, route)
 
 				return true
@@ -273,6 +295,29 @@ func (w *packageWalker) walk(fn *ast.FuncDecl, basePath string) {
 
 		return true
 	})
+}
+
+func (w *packageWalker) source(node ast.Node) RouteSource {
+	from, to := w.fset.Position(node.Pos()), w.fset.Position(node.End())
+	return RouteSource{File: from.Filename, From: from.Line, To: to.Line}
+}
+
+// recordLocal remembers where a middleware held in a local variable
+// (`requireRead := h.pm.RequirePermission(…)`) is built, so a route that
+// passes it carries the checks it runs.
+func (w *packageWalker) recordLocal(stmt *ast.AssignStmt, locals map[string]RouteSource) {
+	if len(stmt.Lhs) != len(stmt.Rhs) {
+		return
+	}
+	for i, lhs := range stmt.Lhs {
+		ident, ok := lhs.(*ast.Ident)
+		if !ok {
+			continue
+		}
+		if _, isCall := stmt.Rhs[i].(*ast.CallExpr); isCall {
+			locals[ident.Name] = w.source(stmt.Rhs[i])
+		}
+	}
 }
 
 func (w *packageWalker) recordGroupAssignment(stmt *ast.AssignStmt, groups map[string]string) {

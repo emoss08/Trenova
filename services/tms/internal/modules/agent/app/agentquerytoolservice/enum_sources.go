@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
@@ -29,14 +28,7 @@ var (
 	)
 	listShipmentStatuses  = agenttoolschema.Source("shipment.status", shipmentStatuses)
 	weatherSeverityLevels = agenttoolschema.Source("weather.severity", weatherSeverities)
-	accessorialAppliesTo  = agenttoolschema.Source(
-		"accessorialCharge.appliesTo",
-		[]string{"Pickup", "Delivery"},
-	)
-	detentionUrgencies = agenttoolschema.Source("detention.urgency", []string{
-		"Lost", "NoticeOverdue", "NoticeDueSoon", detentionservice.UrgencyAwaitingApproval,
-	})
-	watchtowerKindSource = agenttoolschema.Source(
+	watchtowerKindSource  = agenttoolschema.Source(
 		"watchtower.sourceKind",
 		watchtowerKindValues(),
 	)

@@ -32,35 +32,35 @@ type BacktestRequest struct {
 
 // BacktestBucket is one grouped slice of the backtest result.
 type BacktestBucket struct {
-	Key             string          `json:"key"`
-	Label           string          `json:"label"`
-	StopCount       int             `json:"stopCount"`
-	BillableCount   int             `json:"billableCount"`
-	ProposedAmount  decimal.Decimal `json:"proposedAmount"`
-	BaselineAmount  decimal.Decimal `json:"baselineAmount"`
-	Delta           decimal.Decimal `json:"delta"`
-	DriverPayAmount decimal.Decimal `json:"driverPayAmount"`
-	NetMargin       decimal.Decimal `json:"netMargin"`
+	Key             string              `json:"key"`
+	Label           string              `json:"label"`
+	StopCount       int                 `json:"stopCount"`
+	BillableCount   int                 `json:"billableCount"`
+	ProposedAmount  decimal.Decimal     `json:"proposedAmount"`
+	BaselineAmount  decimal.Decimal     `json:"baselineAmount"`
+	Delta           decimal.Decimal     `json:"delta"`
+	DriverPayAmount decimal.NullDecimal `json:"driverPayAmount"`
+	NetMargin       decimal.NullDecimal `json:"netMargin"`
 }
 
 // BacktestResult is the projected impact of a policy change.
 type BacktestResult struct {
-	StopsEvaluated      int              `json:"stopsEvaluated"`
-	StopsMatched        int              `json:"stopsMatched"`
-	StopsBillable       int              `json:"stopsBillable"`
-	StopsForfeited      int              `json:"stopsForfeited"`
-	StopsSuppressed     int              `json:"stopsSuppressed"`
-	ProposedRevenue     decimal.Decimal  `json:"proposedRevenue"`
-	BaselineRevenue     decimal.Decimal  `json:"baselineRevenue"`
-	RevenueDelta        decimal.Decimal  `json:"revenueDelta"`
-	ProposedDriverPay   decimal.Decimal  `json:"proposedDriverPay"`
-	ProposedNetMargin   decimal.Decimal  `json:"proposedNetMargin"`
-	NegativeMarginStops int              `json:"negativeMarginStops"`
-	ByCustomer          []BacktestBucket `json:"byCustomer"`
-	ByFacility          []BacktestBucket `json:"byFacility"`
-	From                int64            `json:"from"`
-	To                  int64            `json:"to"`
-	Truncated           bool             `json:"truncated"`
+	StopsEvaluated      int                 `json:"stopsEvaluated"`
+	StopsMatched        int                 `json:"stopsMatched"`
+	StopsBillable       int                 `json:"stopsBillable"`
+	StopsForfeited      int                 `json:"stopsForfeited"`
+	StopsSuppressed     int                 `json:"stopsSuppressed"`
+	ProposedRevenue     decimal.Decimal     `json:"proposedRevenue"`
+	BaselineRevenue     decimal.Decimal     `json:"baselineRevenue"`
+	RevenueDelta        decimal.Decimal     `json:"revenueDelta"`
+	ProposedDriverPay   decimal.NullDecimal `json:"proposedDriverPay"`
+	ProposedNetMargin   decimal.NullDecimal `json:"proposedNetMargin"`
+	NegativeMarginStops *int                `json:"negativeMarginStops"`
+	ByCustomer          []BacktestBucket    `json:"byCustomer"`
+	ByFacility          []BacktestBucket    `json:"byFacility"`
+	From                int64               `json:"from"`
+	To                  int64               `json:"to"`
+	Truncated           bool                `json:"truncated"`
 }
 
 const defaultBacktestLimit = 2000
@@ -109,13 +109,14 @@ func (s *Service) Backtest(
 	}
 
 	result := &BacktestResult{
-		ProposedRevenue:   decimal.Zero,
-		BaselineRevenue:   decimal.Zero,
-		RevenueDelta:      decimal.Zero,
-		ProposedDriverPay: decimal.Zero,
-		ProposedNetMargin: decimal.Zero,
-		From:              req.From,
-		To:                req.To,
+		ProposedRevenue:     decimal.Zero,
+		BaselineRevenue:     decimal.Zero,
+		RevenueDelta:        decimal.Zero,
+		ProposedDriverPay:   decimal.NewNullDecimal(decimal.Zero),
+		ProposedNetMargin:   decimal.NewNullDecimal(decimal.Zero),
+		NegativeMarginStops: new(int),
+		From:                req.From,
+		To:                  req.To,
 	}
 
 	if len(facts) > limit {
@@ -212,15 +213,15 @@ func (s *Service) Backtest(
 			result.StopsBillable++
 		}
 		if computed.NetMargin.IsNegative() {
-			result.NegativeMarginStops++
+			*result.NegativeMarginStops++
 		}
 
 		prior := baseline[fact.StopID.String()]
 
 		result.ProposedRevenue = result.ProposedRevenue.Add(computed.BillableAmount)
 		result.BaselineRevenue = result.BaselineRevenue.Add(prior)
-		result.ProposedDriverPay = result.ProposedDriverPay.Add(computed.DriverPayAmount)
-		result.ProposedNetMargin = result.ProposedNetMargin.Add(computed.NetMargin)
+		result.ProposedDriverPay = addNull(result.ProposedDriverPay, computed.DriverPayAmount)
+		result.ProposedNetMargin = addNull(result.ProposedNetMargin, computed.NetMargin)
 
 		accumulate(byCustomer, fact.CustomerID.String(), computed, prior)
 		accumulate(byFacility, fact.LocationID.String(), computed, prior)
@@ -335,8 +336,8 @@ func accumulate(
 			ProposedAmount:  decimal.Zero,
 			BaselineAmount:  decimal.Zero,
 			Delta:           decimal.Zero,
-			DriverPayAmount: decimal.Zero,
-			NetMargin:       decimal.Zero,
+			DriverPayAmount: decimal.NewNullDecimal(decimal.Zero),
+			NetMargin:       decimal.NewNullDecimal(decimal.Zero),
 		}
 		buckets[key] = bucket
 	}
@@ -349,8 +350,12 @@ func accumulate(
 	bucket.ProposedAmount = bucket.ProposedAmount.Add(computed.BillableAmount)
 	bucket.BaselineAmount = bucket.BaselineAmount.Add(baseline)
 	bucket.Delta = bucket.ProposedAmount.Sub(bucket.BaselineAmount)
-	bucket.DriverPayAmount = bucket.DriverPayAmount.Add(computed.DriverPayAmount)
-	bucket.NetMargin = bucket.NetMargin.Add(computed.NetMargin)
+	bucket.DriverPayAmount = addNull(bucket.DriverPayAmount, computed.DriverPayAmount)
+	bucket.NetMargin = addNull(bucket.NetMargin, computed.NetMargin)
+}
+
+func addNull(total decimal.NullDecimal, amount decimal.Decimal) decimal.NullDecimal {
+	return decimal.NewNullDecimal(total.Decimal.Add(amount))
 }
 
 // rankBuckets orders by the magnitude of the change, so the biggest movers in

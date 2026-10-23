@@ -224,3 +224,27 @@ func (r *QueryResolver) JournalEntryCard(ctx context.Context, id string) (*journ
 		),
 	})
 }
+
+func (r *QueryResolver) JournalEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceJournalEntry, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.JournalEntryService.ListConnection(
+		ctx,
+		&journalentryports.ListJournalEntryConnectionRequest{
+			Filter: tableInput.Filter,
+			Cursor: tableInput.Cursor,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return journalEntryConnectionToModel(result)
+}

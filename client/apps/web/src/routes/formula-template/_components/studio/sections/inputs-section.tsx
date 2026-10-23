@@ -14,8 +14,8 @@ import { SectionHead } from "./section-head";
 
 /**
  * The tariff's contract interface, read from its `input` declarations: each input with its
- * label (the doc comment), its type and its default, as the rate agreement rule form will ask
- * for it. The values set here are the preview's sample inputs; they belong to the preview, not
+ * label (the doc comment), its name and type (a link to its declaration) and its default, as the
+ * rate agreement rule form will ask for it. The values set here are the preview's sample inputs; they belong to the preview, not
  * to the template, and an input left alone takes its default.
  */
 export function InputsSection() {
@@ -73,7 +73,7 @@ export function InputsSection() {
         )}
       </SectionHead>
 
-      <div className="bg-card flex flex-col gap-3 rounded-lg border p-3">
+      <div className="bg-card rounded-lg border p-3">
         {declarations.length === 0 ? (
           <p className="text-foreground-muted text-sm">
             {t(
@@ -81,29 +81,13 @@ export function InputsSection() {
             )}
           </p>
         ) : (
-          <>
-            <ul className="flex flex-wrap gap-1.5" aria-label={t("Declared inputs")}>
-              {declarations.map((declaration) => (
-                <li key={declaration.name}>
-                  <button
-                    type="button"
-                    disabled={!declaration.range}
-                    onClick={() => declaration.range && reveal(declaration.range)}
-                    className="ui-focus-ring hover:bg-surface-hover rounded-badge flex items-center gap-1.5 border px-2 py-0.5 font-mono text-xs"
-                  >
-                    {declaration.name}
-                    <span className="text-syntax-type">{declaration.type}</span>
-                    {declaration.required && (
-                      <span className="text-danger-foreground font-sans">{t("required")}</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <FormProvider {...previewInputs}>
-              <TariffInputsFields declarations={declarations} name="inputs" />
-            </FormProvider>
-          </>
+          <FormProvider {...previewInputs}>
+            <TariffInputsFields
+              declarations={declarations}
+              name="inputs"
+              onReveal={(declaration) => declaration.range && reveal(declaration.range)}
+            />
+          </FormProvider>
         )}
       </div>
     </section>

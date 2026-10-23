@@ -37,6 +37,10 @@ Because the structure is read from the router and navigation, moving a page,
 renaming it or changing what guards it updates the catalog on the next
 generate. The words are the only hand-written part.
 
+The page access manifest (`scripts/page-access/`, see "The page access manifest"
+in [reference-views.md](reference-views.md)) reads the same route tree through
+`sources.mjs`, so a route the guide sees is a screen the manifest describes.
+
 Routes and admin links an edition overlay registers (`edition.routes.*`, see
 [editions.md](editions.md)) are spread into the router at runtime, which the static
 read skips, so the public catalog never lists them and a public guide must not link

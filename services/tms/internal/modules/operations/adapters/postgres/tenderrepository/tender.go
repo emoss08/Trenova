@@ -303,8 +303,12 @@ func (r *repository) ListByShipment(
 			Model(&entities).
 			Apply(r.offersRelation).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
+				sq = tendercol.TenderScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
+				if req.ShipmentMoveID.IsNotNil() {
+					sq = sq.Where(cols.ShipmentMoveID.Eq(), req.ShipmentMoveID)
+				}
+				return sq
 			}).
 			Order(cols.CreatedAt.OrderDesc()).
 			Scan(ctx)

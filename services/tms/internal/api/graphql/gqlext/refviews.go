@@ -30,7 +30,8 @@ func ReferenceFragmentName(typeName string) string {
 }
 
 // referenceTypes is every kind type with a declared reference view, sorted,
-// with the fields of its view that the type has.
+// with the fields of its view that the type has. A type that has none of
+// them, such as a summary of a kind's records, has no reference view.
 func referenceTypes(
 	schema *ast.Schema,
 	registry *permission.Registry,
@@ -42,7 +43,14 @@ func referenceTypes(
 	names = make([]string, 0, len(kinds))
 	for name, kind := range kinds {
 		def, ok := registry.Get(kind.String())
-		if !ok || len(def.ReferenceView) == 0 {
+		if !ok || len(def.ReferenceView) == 0 || !linkable(schema.Types[name], def.ReferenceView) {
+			continue
+		}
+		if typ := schema.Types[name]; typ == nil || !slices.ContainsFunc(typ.Fields,
+			func(field *ast.FieldDefinition) bool {
+				return field.Name == recordIDField ||
+					slices.Contains(def.ReferenceView, field.Name)
+			}) {
 			continue
 		}
 		names = append(names, name)
@@ -50,6 +58,23 @@ func referenceTypes(
 	slices.Sort(names)
 
 	return names, kinds, nil
+}
+
+// linkable reports whether a kind type is a record another can link to: it
+// carries its id or a field of its kind's reference view. A detail or a
+// summary of a kind (a message's detail, acknowledgment health) carries
+// neither, and no screen links to one.
+func linkable(def *ast.Definition, view []string) bool {
+	if def == nil {
+		return false
+	}
+	for _, field := range def.Fields {
+		if field.Name == recordIDField || slices.Contains(view, field.Name) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // RenderReferenceFragments writes one fragment per kind type selecting its

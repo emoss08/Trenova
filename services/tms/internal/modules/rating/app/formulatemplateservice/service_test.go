@@ -139,6 +139,47 @@ func TestUpdate_ASourceChangeRevertsApprovalAndSnapshotsAVersion(t *testing.T) {
 	assert.Equal(t, perMileRetypedSource, snapshot.Source)
 }
 
+func TestUpdate_AContentSaveKeepsTheServerHeldFields(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+
+	approver := pulid.MustNew("usr_")
+	approvedAt := timeutils.NowUnix() - 3600
+	forkedFrom := pulid.MustNew("ft_")
+	forkedAt := int64(3)
+	original := newTestTemplate()
+	original.ApprovedByID = &approver
+	original.ApprovedAt = &approvedAt
+	original.SourceTemplateID = &forkedFrom
+	original.SourceVersionNumber = &forkedAt
+	original.Metadata = map[string]any{"importedSource": forkedFrom.String()}
+	payload := &formulatemplate.FormulaTemplate{
+		ID:             original.ID,
+		OrganizationID: original.OrganizationID,
+		BusinessUnitID: original.BusinessUnitID,
+		Name:           original.Name,
+		Description:    "Linehaul per loaded mile, minimum per load",
+		Source:         original.Source,
+		Version:        original.Version,
+	}
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(returnsTemplate, nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	updated, err := deps.svc.Update(t.Context(), payload, newTenantInfo().UserID)
+	require.NoError(t, err)
+
+	assert.Equal(t, payload.Description, updated.Description)
+	assert.Equal(t, formulatemplate.StatusActive, updated.Status, "a save never moves the status")
+	assert.Equal(t, &approver, updated.ApprovedByID)
+	assert.Equal(t, &forkedFrom, updated.SourceTemplateID, "the fork lineage survives a save")
+	assert.Equal(t, &forkedAt, updated.SourceVersionNumber)
+	assert.Equal(t, original.Metadata, updated.Metadata)
+	assert.EqualValues(t, 1, updated.CurrentVersionNumber, "a description edit is not a new version")
+	deps.versionRepo.AssertNotCalled(t, "Create")
+}
+
 func TestSubmit_RefusesATemplateWhoseTestsFail(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)

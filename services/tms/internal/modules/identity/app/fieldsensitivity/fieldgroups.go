@@ -23,6 +23,34 @@ func VisibleGroups(ctx context.Context, check GroupCheck) permission.FieldGroupS
 	return visible
 }
 
+// AgentGroupTier is the tier an agent's data access must reach on a group's
+// resource before an agent read carries a figure of that group. A protected
+// field of a record is Confidential and never reaches an agent; a computed
+// figure (a margin percent on a capacity match, a tool's margin) has no tier
+// of its own and is shown at this one, so an agent is held to the person's
+// group and to its own data access, as a person is held to their group.
+const AgentGroupTier = permission.SensitivityRestricted
+
+// AgentVisibleGroups narrows the groups an actor holds to those an agent read
+// may carry: each only where the agent's ceiling on the group's resource
+// reaches AgentGroupTier.
+func AgentVisibleGroups(
+	ctx context.Context,
+	held permission.FieldGroupSet,
+	ceiling func(ctx context.Context, resource permission.Resource) permission.FieldSensitivity,
+) permission.FieldGroupSet {
+	var visible permission.FieldGroupSet
+	if ceiling == nil {
+		return visible
+	}
+	for _, group := range permission.FieldGroups() {
+		if held.Has(group) && ceiling(ctx, group.Resource()).CanAccess(AgentGroupTier) {
+			visible = visible.With(group)
+		}
+	}
+	return visible
+}
+
 type FieldAccess struct {
 	engine permissionChecker
 }

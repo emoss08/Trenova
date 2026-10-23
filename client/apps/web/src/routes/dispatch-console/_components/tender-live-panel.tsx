@@ -34,6 +34,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { TenderBounceDialog } from "./tender-bounce-dialog";
 import { formatCounterMargin, formatOfferCountdown, formatOfferRate } from "./tender-vocabulary";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import type { RecordOfferResponseParams } from "./use-dispatch-actions";
 
 const COUNTDOWN_TICK_MS = 30_000;
@@ -329,6 +331,7 @@ function CounterDecisionDialog({
 
 function CounterSummary({ offer }: { offer: LiveTenderOffer }) {
   const t = useT();
+  const marginsVisible = useProtectedFieldAccess("Margins");
 
   if (!offer.counterRate) return null;
   const margin = formatCounterMargin(offer.counterMarginPercent);
@@ -341,8 +344,15 @@ function CounterSummary({ offer }: { offer: LiveTenderOffer }) {
             ? t("Counter of {0} refused", formatOfferRate(offer.counterRate, offer.rateMethod))
             : t("Countered at {0}", formatOfferRate(offer.counterRate, offer.rateMethod))}
         </span>
-        {margin && (
-          <span className="text-muted-foreground tabular-nums">{t("· margin {0}", margin)}</span>
+        {!marginsVisible ? (
+          <span className="text-muted-foreground inline-flex items-center gap-1">
+            {t("· margin")}
+            <WithheldValue group="Margins" className="text-2xs" />
+          </span>
+        ) : (
+          margin && (
+            <span className="text-muted-foreground tabular-nums">{t("· margin {0}", margin)}</span>
+          )
         )}
         {offer.status === "Countered" && offer.counterNeedsApproval && (
           <Badge variant="warning" className="h-4 rounded-badge px-1.5 text-3xs">

@@ -1,0 +1,71 @@
+fragment PageAccessRequirementFields on PageAccessRequirement {
+  resource
+  resourceName
+  operation
+  operationName
+  allowed
+}
+
+fragment PageAccessFields on PageAccess {
+  path
+  name
+  operations
+  withheld
+  blocked
+  requires {
+    ...PageAccessRequirementFields
+  }
+  endpoints {
+    method
+    path
+    requires {
+      ...PageAccessRequirementFields
+    }
+  }
+  kinds {
+    resource
+    resourceName
+    use
+    canRead
+    withheld
+    fields {
+      name
+      inView
+      decision
+    }
+  }
+}
+
+query PageAccess($location: String!) {
+  pageAccess(location: $location) {
+    ...PageAccessFields
+  }
+}
+
+query PageAccessPreview($input: PageAccessPreviewInput!) {
+  pageAccessPreview(input: $input) {
+    ...PageAccessFields
+  }
+}
+
+query PageAccessScreens {
+  pageAccessScreens {
+    path
+    name
+  }
+}
+
+query RoleResourceGuides($input: RoleResourceGuideInput!) {
+  roleResourceGuides(input: $input) {
+    resource
+    name
+    granted
+    withheld
+    ceiling
+    screens {
+      path
+      name
+      use
+    }
+  }
+}

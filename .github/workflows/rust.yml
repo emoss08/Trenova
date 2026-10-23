@@ -26,6 +26,9 @@ on:
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # The crate checks every Tariff example in these two docs.
+      - "docs/engineering/formula-language.md"
+      - "docs/engineering/tariff-cheat-sheet.md"
       - ".github/workflows/rust.yml"
   pull_request:
     branches:
@@ -45,6 +48,9 @@ on:
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # The crate checks every Tariff example in these two docs.
+      - "docs/engineering/formula-language.md"
+      - "docs/engineering/tariff-cheat-sheet.md"
       - ".github/workflows/rust.yml"
   workflow_dispatch:
 

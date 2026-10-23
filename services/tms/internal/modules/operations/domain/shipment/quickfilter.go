@@ -149,6 +149,24 @@ func (s *QuickFilterSpec) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+// AuthorizeQuickFilters refuses a filter that selects loads by their margin to
+// a reader who may not see margins: the set it returns says which loads run
+// thin.
+func AuthorizeQuickFilters(specs []QuickFilterSpec, margins bool) error {
+	if margins {
+		return nil
+	}
+	for i := range specs {
+		if specs[i].Filter.NeedsMargin() {
+			return errortypes.NewAuthorizationError(
+				"Filtering loads by margin needs access to margins",
+			)
+		}
+	}
+
+	return nil
+}
+
 func ValidateQuickFilters(specs []QuickFilterSpec, multiErr *errortypes.MultiError) {
 	if len(specs) > MaxQuickFilters {
 		multiErr.Add(quickFilterPrefix, errortypes.ErrInvalid, "Too many quick filters")

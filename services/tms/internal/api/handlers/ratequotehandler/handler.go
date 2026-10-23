@@ -412,6 +412,13 @@ func (h *Handler) shop(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	if err = ratequoteports.AuthorizeShopStrategy(
+		body.Strategy,
+		fieldguard.Visible(c, h.engine),
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
 
 	result, err := h.service.Shop(c.Request.Context(), &ratequoteservice.ShopRequest{
 		TenantInfo: tenantOf(authCtx),

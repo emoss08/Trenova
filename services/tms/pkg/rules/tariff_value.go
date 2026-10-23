@@ -125,6 +125,10 @@ func encodeTariff(value any) RawJSON {
 
 type RawJSON []byte
 
+func (r RawJSON) IsNone() bool {
+	return len(r) == 0 || string(r) == "null"
+}
+
 func (r RawJSON) MarshalJSON() ([]byte, error) {
 	if len(r) == 0 {
 		return []byte("null"), nil

@@ -143,3 +143,19 @@ func remittanceVersionFromModel(
 		Version:    int64(in.Version),
 	}, nil
 }
+
+// linesIn are a remittance's lines in the file's order, or those in the
+// match statuses named.
+func linesIn(
+	lines []*factoring.RemittanceLine,
+	statuses []factoring.RemittanceMatchStatus,
+) []*factoring.RemittanceLine {
+	out := make([]*factoring.RemittanceLine, 0, len(lines))
+	for _, line := range lines {
+		if line != nil && (len(statuses) == 0 || slices.Contains(statuses, line.MatchStatus)) {
+			out = append(out, line)
+		}
+	}
+
+	return out
+}

@@ -571,6 +571,7 @@ type stubReceivables struct {
 	openItemsAsOf int64
 	drafts        customerledgerports.ARDraftInvoices
 	collected     customerledgerports.ARCollectionTotals
+	cei           float64
 	err           error
 	reads         int
 }
@@ -581,17 +582,6 @@ func (s *stubReceivables) GetDraftInvoices(
 ) (*customerledgerports.ARDraftInvoices, error) {
 	drafts := s.drafts
 	return &drafts, nil
-}
-
-func (s *stubReceivables) GetCollectionPerformance(
-	_ context.Context,
-	req customerledgerports.GetARCollectionMetricsRequest,
-) (*customerledgerports.ARCollectionPerformance, error) {
-	if req.PeriodDays != accountingbrief.CollectionWindowDays {
-		return nil, errors.New("the brief reads the dashboard's collection window")
-	}
-	totals := s.collected
-	return &customerledgerports.ARCollectionPerformance{Totals: &totals}, nil
 }
 
 func (s *stubReceivables) ListOpenItems(
@@ -618,6 +608,8 @@ func (s *stubReceivables) GetDashboardKPIs(
 	kpis := s.kpis
 	overview := s.overview
 	kpis.Overview = &overview
+	totals := s.collected
+	kpis.Collection = &customerledgerports.ARCollectionPerformance{CEI: s.cei, Totals: &totals}
 	return &kpis, nil
 }
 
@@ -657,8 +649,8 @@ func newReceivables(now int64) *stubReceivables {
 		kpis: customerledgerports.ARDashboardKPIs{
 			CurrentDSODays: 42.31,
 			DSODeltaDays:   3.06,
-			CEI:            80.6,
 		},
+		cei: 80.6,
 		stats: customerledgerports.ARPaymentStats{
 			PostedTodayMinor:      book.CollectedTodayMinor,
 			PostedTodayCount:      book.PaymentsToday,

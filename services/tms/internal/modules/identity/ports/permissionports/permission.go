@@ -95,11 +95,10 @@ type OrgSummary struct {
 }
 
 type ResourcePermissionDetail struct {
-	Resource         string                      `json:"resource"`
-	Operations       []permission.Operation      `json:"operations"`
-	DataScope        permission.DataScope        `json:"dataScope"`
-	MaxSensitivity   permission.FieldSensitivity `json:"maxSensitivity"`
-	AccessibleFields []string                    `json:"accessibleFields"`
+	Resource       string                      `json:"resource"`
+	Operations     []permission.Operation      `json:"operations"`
+	DataScope      permission.DataScope        `json:"dataScope"`
+	MaxSensitivity permission.FieldSensitivity `json:"maxSensitivity"`
 }
 
 type EffectivePermissions struct {
@@ -170,6 +169,14 @@ type PermissionEngine interface {
 		userID, orgID pulid.ID,
 		resource string,
 	) (*ResourcePermissionDetail, error)
+	// GetResourcePermissionsBatch is GetResourcePermissions for many
+	// resources from one read of the person's permissions, keyed by resource.
+	// A resource the registry does not know has no entry.
+	GetResourcePermissionsBatch(
+		ctx context.Context,
+		userID, orgID pulid.ID,
+		resources []string,
+	) (map[string]*ResourcePermissionDetail, error)
 	InvalidateUser(ctx context.Context, userID, orgID pulid.ID) error
 	GetEffectivePermissions(
 		ctx context.Context,

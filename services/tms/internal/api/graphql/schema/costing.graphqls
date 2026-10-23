@@ -42,7 +42,8 @@ type CostingControl {
   glActualsEnabled: Boolean!
   glRollingMonths: Int!
   plannedMonthlyMiles: Int
-  targetMarginPercent: Decimal
+  "The margin the organization aims for. Null to a reader without the margins field group."
+  targetMarginPercent: Decimal @protected(group: Margins)
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -97,7 +98,8 @@ type ResolvedCostProfile {
   totalCpm: Decimal!
   variableCpm: Decimal!
   fixedCpm: Decimal!
-  targetMarginPercent: Decimal
+  "Null to a reader without the margins field group."
+  targetMarginPercent: Decimal @protected(group: Margins)
   includeDeadheadMiles: Boolean!
   asOfDate: String!
   fuel: FuelCostResolution
@@ -144,12 +146,17 @@ type ShipmentProfitabilityEstimate {
   missingDistance: Boolean!
 }
 
+"""
+What the fleet's loads cost over a window. The margin figures, and the revenue
+that would let a reader work the margin out from the cost, are null to a reader
+without the margins field group.
+"""
 type FleetCostSummary {
   avgCpm: Decimal!
-  avgMarginPercent: Decimal
+  avgMarginPercent: Decimal @protected(group: Margins)
   shipmentCount: Int!
-  unprofitableCount: Int!
-  totalRevenue: Decimal!
+  unprofitableCount: Int @protected(group: Margins)
+  totalRevenue: Decimal @protected(group: Margins)
   totalEstimatedCost: Decimal!
   totalMiles: Float!
   emptyMiles: Float!
@@ -179,7 +186,11 @@ input CostCategoryUpdateInput {
 extend type Query {
   costingControl: CostingControl!
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
-  shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
+  """
+  A shipment's revenue against its estimated cost. Null to a reader without the
+  margins field group: every figure in it is the margin or works it out.
+  """
+  shipmentProfitability(shipmentId: ID!): ShipmentProfitability @protected(group: Margins)
   fleetCostSummary(startDate: Timestamp, endDate: Timestamp): FleetCostSummary!
 }
 
