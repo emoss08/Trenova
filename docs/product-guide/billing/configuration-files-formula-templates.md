@@ -126,6 +126,12 @@ Keywords: approve tariff, activate template, submit template, reviewer note
 3. Check the readiness list, choose a reviewer, edit the note Nova drafts (or select **Rewrite**), and select **Submit**.
 4. A reviewer sees what changed since the approved version, the libraries it pins and what the change does to recent freight, then selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**.
 
+### Adopt a newer rate matrix version
+Keywords: new tariff rates, matrix published, newer table version, pinned rate table
+1. Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.
+2. Under **Rate tables**, each table the source reads shows the published version tests and the preview read, the version the template pins, and **Newer version** when a later version of the matrix has been published. **Open matrix** opens it on [Rate matrices](/billing/configuration-files/rate-matrices).
+3. Save the template and send it through review. Approving the new template version pins the newest published version of every table; until then, contracts keep pricing with the version they pinned.
+
 ### Edit an active template
 Keywords: change tariff, update rating method
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select the template. Hover the count of places it is in use to see them.
@@ -136,7 +142,7 @@ Keywords: change tariff, update rating method
 Keywords: version history, rollback, compare versions, schedule activation
 1. Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.
 2. Open **More actions** and choose **Version history**.
-3. Use **Compare previous** to see how the source and the pinned libraries changed, **Schedule activation** to set when a version takes effect, or **Rollback** to restore an earlier version.
+3. Each version lists the rate table versions it pins. Use **Compare previous** to see how the source and the pinned libraries changed, **Schedule activation** to set when a version takes effect, or **Rollback** to restore an earlier version.
 
 ### Copy, fork, export or import templates
 Keywords: duplicate tariff, fork, export JSON, import templates, standard templates
@@ -151,4 +157,4 @@ Nova needs permission to start assistant conversations and access to the Formula
 
 Properties are tests: they run on every change, show as dots in the outline and must pass before review. Coverage counts the template's own file; a library's parts are covered by the library's tests.
 
-Only an active template rates shipments. A template version pins the version of every library it imports, so changing a library never changes what an approved template bills. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a source with no errors and every test passing.
+Only an active template rates shipments. A template version pins the version of every library it imports and of every rate matrix it reads, so changing a library or publishing a matrix version never changes what an approved template bills. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a source with no errors and every test passing.
