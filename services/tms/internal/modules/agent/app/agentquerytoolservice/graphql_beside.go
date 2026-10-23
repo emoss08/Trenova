@@ -35,7 +35,7 @@ func (r *graphQLRead) rootParams(
 			continue
 		}
 		if variable.Kind == graphQLKindInput {
-			filter, filterSearchIn := filterInputParams(variable)
+			filter, filterSearchIn := filterInputParams(&variable)
 			params = append(params, filter...)
 			if filterSearchIn != "" {
 				search = [2]string{variable.Name, filterSearchIn}
@@ -86,7 +86,7 @@ func variableParams(tool, operation string, variable *graphQLVariable) ([]graphQ
 // filterInputParams are a filter input's fields as parameters, each sent inside
 // the variable, and the field it takes free text in, which is the tool's
 // query rather than a parameter of its own.
-func filterInputParams(variable graphQLVariable) (params []graphQLParam, search string) {
+func filterInputParams(variable *graphQLVariable) (params []graphQLParam, search string) {
 	for idx := range graphQLInputs[variable.Type] {
 		field := graphQLInputs[variable.Type][idx]
 		if field.Kind == graphQLKindInput {
@@ -285,7 +285,6 @@ func (b *besideReads) read(
 				if spec.withheld != "" {
 					notes = append(notes, spec.withheld)
 				}
-				err = nil
 				continue
 			}
 			return nil, nil, nil, err

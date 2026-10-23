@@ -119,7 +119,7 @@ type idReference struct {
 }
 
 // schema is the parameter an id or a list of ids becomes.
-func (ref idReference) schema(list bool) map[string]any {
+func (ref *idReference) schema(list bool) map[string]any {
 	description := agenttoolschema.IDDescription(ref.what, ref.source)
 	if ref.most == 0 {
 		ref.most = unpagedMost
@@ -307,7 +307,8 @@ func insteadReads(spec *graphQLListSpec, read *graphQLRead) ([]insteadRead, erro
 // own parameters by, derived or given.
 func insteadNames(instead []insteadRead) map[string]struct{} {
 	out := make(map[string]struct{})
-	for _, read := range instead {
+	for idx := range instead {
+		read := &instead[idx]
 		for _, param := range read.params {
 			out[param.Name] = struct{}{}
 		}
@@ -353,7 +354,8 @@ func requiredUnlessInstead(required []string, instead []insteadRead) []string {
 	out := make([]string, 0, len(required))
 	for _, name := range required {
 		every := true
-		for _, read := range instead {
+		for idx := range instead {
+			read := &instead[idx]
 			every = every && slices.ContainsFunc(read.shared, func(p graphQLParam) bool {
 				return p.Name == name && slices.ContainsFunc(read.bound.Variables,
 					func(v graphQLVariable) bool { return v.Name == p.Arg && v.NonNull })
@@ -601,8 +603,8 @@ func (t *graphQLListTool) ParamSchema() map[string]any {
 	for _, param := range t.params {
 		properties[param.Name] = param.Schema
 	}
-	for _, instead := range t.instead {
-		for _, param := range instead.params {
+	for idx := range t.instead {
+		for _, param := range t.instead[idx].params {
 			properties[param.Name] = param.Schema
 		}
 	}
@@ -813,12 +815,12 @@ func (t *graphQLListTool) Query(
 		return outcome, nil
 	}
 
-	return withBeside(outcome, beside)
+	return withBeside(&outcome, beside)
 }
 
 // withBeside is a page's outcome with the records read alongside it, each
 // under its key.
-func withBeside(outcome graphQLListOutcome, beside map[string]any) (map[string]any, error) {
+func withBeside(outcome *graphQLListOutcome, beside map[string]any) (map[string]any, error) {
 	out := make(map[string]any, len(beside)+10)
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {
@@ -919,21 +921,7 @@ func (t *graphQLListTool) variables(req *pageRequest) map[string]any {
 		variables[name] = value
 	}
 	if t.input == "" {
-		variables[inputFirst] = req.limit
-		if req.after != "" {
-			variables[inputAfter] = req.after
-		}
-		if req.query != "" {
-			filter, _ := variables[t.search[0]].(map[string]any)
-			if filter == nil {
-				filter = make(map[string]any, 1)
-			}
-			filter[t.search[1]] = req.query
-			variables[t.search[0]] = filter
-		}
-		if t.read.declares(includeTotalCount) {
-			variables[includeTotalCount] = req.total
-		}
+		t.rootPage(variables, req)
 		return variables
 	}
 
@@ -961,6 +949,26 @@ func (t *graphQLListTool) variables(req *pageRequest) map[string]any {
 	variables[includeTotalCount] = req.total
 
 	return variables
+}
+
+// rootPage sets the page of a list paged by its root's own first and after,
+// and its free text inside the filter input that takes it.
+func (t *graphQLListTool) rootPage(variables map[string]any, req *pageRequest) {
+	variables[inputFirst] = req.limit
+	if req.after != "" {
+		variables[inputAfter] = req.after
+	}
+	if req.query != "" {
+		filter, _ := variables[t.search[0]].(map[string]any)
+		if filter == nil {
+			filter = make(map[string]any, 1)
+		}
+		filter[t.search[1]] = req.query
+		variables[t.search[0]] = filter
+	}
+	if t.read.declares(includeTotalCount) {
+		variables[includeTotalCount] = req.total
+	}
 }
 
 // declares reports whether the read's operation takes a variable.

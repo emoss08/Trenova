@@ -14,6 +14,14 @@ const (
 	paramDocumentIDs      = "documentIds"
 
 	argIntegrationType = "integrationType"
+	argObjectIDs       = "objectIds"
+	argMappingKey      = "key"
+	argMappingRecordID = "recordId"
+
+	fieldSyncErrorCategory = "errorCategory"
+	fieldMappingTargetType = "targetType"
+	fieldMappingState      = "state"
+	fieldRequiredOnly      = "requiredOnly"
 
 	syncStateMaxDocuments = 50
 	syncDocumentIDSources = "invoice_list, invoice_get, receivable_list_customer_payments, " +
@@ -71,131 +79,151 @@ var accountingSystemName = map[string]string{argIntegrationType: paramAccounting
 // accounting system through the operation the Desk reads it with.
 func accountingReadSpecs() []graphQLListSpec {
 	return []graphQLListSpec{
-		{
-			name:         "accounting_list_drift_findings",
-			entityPlural: "drift findings",
-			summary: "List drift: documents Trenova sent to the accounting system that differ " +
-				"there now, newest first. Each row has both values in minor units, who " +
-				"changed it there, withinTolerance, and an open finding's fixes " +
-				"(directions). Pass an Open row's id to accounting_resolve_drift_finding or " +
-				"accounting_dismiss_drift_finding.",
-			searchTerms: []string{
-				"drift",
-				"changed after it was sent",
-				"edited in the accounting system",
-				"reconciliation differences",
-			},
-			queryNote: "Words to find in the document number, the party name or who " +
-				"changed it.",
-			names:    accountingSystemName,
-			resource: permission.ResourceAccountingSync,
-			alongside: []alongsideSpec{{
-				key:       keyAccountingOverview,
-				operation: "DeskAccountingDriftOverview",
-				what:      "drift overview",
-				withheld:  overviewWithheldReason,
-			}},
-			combine: withinTolerance,
+		driftListSpec(), inboundListSpec(), syncRecordsListSpec(), mappingGapsListSpec(),
+	}
+}
+
+// driftListSpec reads the differences with the accounting system, with the
+// tolerance they are judged by.
+func driftListSpec() graphQLListSpec {
+	return graphQLListSpec{
+		name:         "accounting_list_drift_findings",
+		entityPlural: "drift findings",
+		summary: "List drift: documents Trenova sent to the accounting system that differ " +
+			"there now, newest first. Each row has both values in minor units, who " +
+			"changed it there, withinTolerance, and an open finding's fixes " +
+			"(directions). Pass an Open row's id to accounting_resolve_drift_finding or " +
+			"accounting_dismiss_drift_finding.",
+		searchTerms: []string{
+			"drift",
+			"changed after it was sent",
+			"edited in the accounting system",
+			"reconciliation differences",
 		},
-		{
-			name:         "accounting_list_inbound_changes",
-			entityPlural: "inbound changes",
-			summary: "List inbound changes: payments the accounting system recorded against " +
-				"invoices or bills Trenova sent, newest first. Each says what it pays and " +
-				"whether Trenova applied it, and if not why (reason), with " +
-				"canApply and canIgnore. Pass a Proposed row's id to " +
-				"accounting_apply_inbound_change or accounting_ignore_inbound_change.",
-			searchTerms: []string{"inbound changes", "payments the accounting system recorded"},
-			queryNote: "Words to find in the payment's number or the customer or vendor " +
-				"name.",
-			names:    accountingSystemName,
-			resource: permission.ResourceAccountingSync,
-			shape:    inboundActions,
+		queryNote: "Words to find in the document number, the party name or who " +
+			"changed it.",
+		names:    accountingSystemName,
+		resource: permission.ResourceAccountingSync,
+		alongside: []alongsideSpec{{
+			key:       keyAccountingOverview,
+			operation: "DeskAccountingDriftOverview",
+			what:      "drift overview",
+			withheld:  overviewWithheldReason,
+		}},
+		combine: withinTolerance,
+	}
+}
+
+// inboundListSpec reads the payments the accounting system recorded.
+func inboundListSpec() graphQLListSpec {
+	return graphQLListSpec{
+		name:         "accounting_list_inbound_changes",
+		entityPlural: "inbound changes",
+		summary: "List inbound changes: payments the accounting system recorded against " +
+			"invoices or bills Trenova sent, newest first. Each says what it pays and " +
+			"whether Trenova applied it, and if not why (reason), with " +
+			"canApply and canIgnore. Pass a Proposed row's id to " +
+			"accounting_apply_inbound_change or accounting_ignore_inbound_change.",
+		searchTerms: []string{"inbound changes", "payments the accounting system recorded"},
+		queryNote: "Words to find in the payment's number or the customer or vendor " +
+			"name.",
+		names:    accountingSystemName,
+		resource: permission.ResourceAccountingSync,
+		shape:    inboundActions,
+	}
+}
+
+// syncRecordsListSpec reads the sync ledger, or where named documents stand.
+func syncRecordsListSpec() graphQLListSpec {
+	return graphQLListSpec{
+		name:         "accounting_list_sync_records",
+		entityPlural: "sync records",
+		summary: "List the documents Trenova sends to the accounting system and where " +
+			"each stands, or say whether particular Trenova documents or parties reached " +
+			"it. List one system's records, newest first, by status (Blocked and " +
+			"DeadLettered did not reach the books), document type or error category. " +
+			"Or pass documentIds of invoices, memos, payments, customers, settlements, " +
+			"carriers or drivers: states holds each one's current record and what that " +
+			"means, across every syncing system unless you name one; a settlement shows " +
+			"its bill or bill payment, whichever needs attention, else the latest, and a " +
+			"document with no state was never sent. A record has its status, error " +
+			"category, resolution, tries and the accounting system's number once synced; " +
+			"pass its id to accounting_get_sync_record for the tries or " +
+			"accounting_retry_sync_record once the cause is fixed.",
+		searchTerms: []string{
+			"failed", "blocked", "ledger", "not synced", "synced", "did it sync",
 		},
-		{
-			name:         "accounting_list_sync_records",
-			entityPlural: "sync records",
-			summary: "List the documents Trenova sends to the accounting system and where " +
-				"each stands, or say whether particular Trenova documents or parties reached " +
-				"it. List one system's records, newest first, by status (Blocked and " +
-				"DeadLettered did not reach the books), document type or error category. " +
-				"Or pass documentIds of invoices, memos, payments, customers, settlements, " +
-				"carriers or drivers: states holds each one's current record and what that " +
-				"means, across every syncing system unless you name one; a settlement shows " +
-				"its bill or bill payment, whichever needs attention, else the latest, and a " +
-				"document with no state was never sent. A record has its status, error " +
-				"category, resolution, tries and the accounting system's number once synced; " +
-				"pass its id to accounting_get_sync_record for the tries or " +
-				"accounting_retry_sync_record once the cause is fixed.",
-			searchTerms: []string{
-				"failed", "blocked", "ledger", "not synced", "synced", "did it sync",
-			},
-			queryNote: "Words to find in Trenova or accounting system document numbers.",
-			names: map[string]string{
-				argIntegrationType: paramAccountingSystem,
-				"statuses":         "status",
-				"objectTypes":      "documentType",
-				"errorCategories":  "errorCategory",
-				"objectIds":        paramDocumentIDs,
-			},
-			notes: map[string]string{
-				paramAccountingSystem: "Required to list records; with documentIds, only " +
-					"that system's records answer, and without it every system that syncs " +
-					"does.",
-				"status": "Blocked and DeadLettered need a person; AwaitingApproval waits " +
-					"to be released.",
-				paramDocumentIDs: "The filters list records instead and are left out " +
-					"with it.",
-			},
-			references: map[string]idReference{paramDocumentIDs: {
-				kinds:  syncDocumentKinds,
-				what:   "Trenova document ids, or the record on screen, to say whether each reached the accounting system",
-				source: syncDocumentIDSources,
-				most:   syncStateMaxDocuments,
-			}},
-			resource: permission.ResourceAccountingSync,
-			shape:    syncRecordActions,
-			instead: []alongsideSpec{{
-				key:       keyAccountingStates,
-				operation: "DeskAccountingSyncObjectStates",
-				what:      "where each document stands",
-				shape:     syncStateMeaning,
-				note:      untrackedNote,
-			}},
+		queryNote: "Words to find in Trenova or accounting system document numbers.",
+		names: map[string]string{
+			argIntegrationType: paramAccountingSystem,
+			"statuses":         accountingStatusField,
+			"objectTypes":      "documentType",
+			"errorCategories":  fieldSyncErrorCategory,
+			argObjectIDs:       paramDocumentIDs,
 		},
-		{
-			name:         "accounting_list_mapping_gaps",
-			entityPlural: "mapping gaps",
-			summary: "List what still has to be matched to the accounting system before " +
-				"anything can sync. It covers account roles, line types, accessorial charges, " +
-				"customers, carriers, terms and payment methods that are unmatched or only " +
-				"proposed; summary says how many required mappings are confirmed and whether " +
-				"setup can finish. Each gap carries its id and the candidates Trenova " +
-				"considered; pass them to accounting_get_mapping or accounting_set_mapping.",
-			searchTerms: []string{"mapping", "unmapped", "setup", "match", "gaps", "still needs mapping"},
-			queryNote:   "Words to find in the Trenova label or the chosen record's name.",
-			names: map[string]string{
-				argIntegrationType: paramAccountingSystem,
-				"targetTypes":      "targetType",
-				"states":           "state",
-			},
-			notes: map[string]string{
-				"state":        "Unmatched and Proposed unless you name others.",
-				"requiredOnly": "Only the mappings setup cannot finish without.",
-			},
-			defaults: map[string]any{"state": []any{
-				string(accountingsync.MappingStateUnmatched),
-				string(accountingsync.MappingStateProposed),
-			}},
-			resource: permission.ResourceAccountingIntegration,
-			shape:    mappingActions,
-			alongside: []alongsideSpec{{
-				key:       keyAccountingSummary,
-				operation: "DeskAccountingMappingSummary",
-				what:      "mapping summary",
-				shape:     mappingSetupPath,
-			}},
+		notes: map[string]string{
+			paramAccountingSystem: "Required to list records; with documentIds, only " +
+				"that system's records answer, and without it every system that syncs " +
+				"does.",
+			accountingStatusField: "Blocked and DeadLettered need a person; AwaitingApproval waits " +
+				"to be released.",
+			paramDocumentIDs: "The filters list records instead and are left out " +
+				"with it.",
 		},
+		references: map[string]idReference{paramDocumentIDs: {
+			kinds:  syncDocumentKinds,
+			what:   "Trenova document ids, or the record on screen, to say whether each reached the accounting system",
+			source: syncDocumentIDSources,
+			most:   syncStateMaxDocuments,
+		}},
+		resource: permission.ResourceAccountingSync,
+		shape:    syncRecordActions,
+		instead: []alongsideSpec{{
+			key:       keyAccountingStates,
+			operation: "DeskAccountingSyncObjectStates",
+			what:      "where each document stands",
+			shape:     syncStateMeaning,
+			note:      untrackedNote,
+		}},
+	}
+}
+
+// mappingGapsListSpec reads what still has to be matched before anything syncs.
+func mappingGapsListSpec() graphQLListSpec {
+	return graphQLListSpec{
+		name:         "accounting_list_mapping_gaps",
+		entityPlural: "mapping gaps",
+		summary: "List what still has to be matched to the accounting system before " +
+			"anything can sync. It covers account roles, line types, accessorial charges, " +
+			"customers, carriers, terms and payment methods that are unmatched or only " +
+			"proposed; summary says how many required mappings are confirmed and whether " +
+			"setup can finish. Each gap carries its id and the candidates Trenova " +
+			"considered; pass them to accounting_get_mapping or accounting_set_mapping.",
+		searchTerms: []string{
+			"mapping", "unmapped", "setup", "match", "gaps", "still needs mapping",
+		},
+		queryNote: "Words to find in the Trenova label or the chosen record's name.",
+		names: map[string]string{
+			argIntegrationType: paramAccountingSystem,
+			"targetTypes":      fieldMappingTargetType,
+			"states":           fieldMappingState,
+		},
+		notes: map[string]string{
+			fieldMappingState: "Unmatched and Proposed unless you name others.",
+			fieldRequiredOnly: "Only the mappings setup cannot finish without.",
+		},
+		defaults: map[string]any{fieldMappingState: []any{
+			string(accountingsync.MappingStateUnmatched),
+			string(accountingsync.MappingStateProposed),
+		}},
+		resource: permission.ResourceAccountingIntegration,
+		shape:    mappingActions,
+		alongside: []alongsideSpec{{
+			key:       keyAccountingSummary,
+			operation: "DeskAccountingMappingSummary",
+			what:      "mapping summary",
+			shape:     mappingSetupPath,
+		}},
 	}
 }
 
@@ -269,11 +297,11 @@ func accountingGetSpecs() []getSpec {
 				"optionsQuery":     paramQuery,
 			},
 			notes: map[string]string{
-				"key": "Its trenovaKey from accounting_list_mapping_gaps, for the other " +
+				argMappingKey: "Its trenovaKey from accounting_list_mapping_gaps, for the other " +
 					"target types. Examples: \"ARAccount\", \"RevenueAccount\", " +
 					"\"Freight\", \"Net30\", \"ACH\".",
 			},
-			references: map[string]idReference{"recordId": {
+			references: map[string]idReference{argMappingRecordID: {
 				kinds: []permission.RecordKind{
 					permission.RecordKind(permission.ResourceCustomer),
 					permission.RecordKind(permission.ResourceCarrier),
@@ -380,7 +408,7 @@ func syncMeaning(record map[string]any, provider string) string {
 func mappingActions(row map[string]any, _ map[string]struct{}, _ clock) {
 	kind := accountingsync.ReferenceKind(stringOf(row["providerKind"]))
 	row["canCreateInAccountingSystem"] = kind.Creatable() &&
-		stringOf(row["state"]) != string(accountingsync.MappingStateConfirmed)
+		stringOf(row[fieldMappingState]) != string(accountingsync.MappingStateConfirmed)
 }
 
 // mappingSetupPath names the page where a person finishes setup.
@@ -408,10 +436,10 @@ func connectionMeaning(record map[string]any) {
 	status := accountingsync.ConnectionStatus(stringOf(conn[accountingStatusField]))
 	conn["sending"] = connectionSending(conn, status)
 	record[accountingMeaningField] = connectionStatusMeaning(provider, status, available)
-	switch accountingsync.ErrorCategory(stringOf(conn["lastErrorCategory"])) {
-	case "":
+	category := accountingsync.ErrorCategory(stringOf(conn["lastErrorCategory"]))
+	if category == "" {
 		delete(conn, "lastErrorMessage")
-	case accountingsync.ErrorCategoryUnknown:
+	} else if category == accountingsync.ErrorCategoryUnknown {
 		conn["lastErrorMessage"] = "The provider rejected the last call. Its own message " +
 			"is on the connection page."
 	}

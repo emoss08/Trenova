@@ -313,7 +313,7 @@ func compileInputs(params []graphQLParam, args map[string]any, clk clock) (map[s
 		if !param.OnInput || param.Arg != "" || !present || raw == nil {
 			continue
 		}
-		value, err := inputValue(param, args, raw, clk)
+		value, err := inputValue(&param, args, raw, clk)
 		if err != nil {
 			return nil, err
 		}
@@ -332,7 +332,7 @@ func compileArgs(params []graphQLParam, args map[string]any, clk clock) (map[str
 		if param.Arg == "" || !present || raw == nil {
 			continue
 		}
-		value, err := inputValue(param, args, raw, clk)
+		value, err := inputValue(&param, args, raw, clk)
 		if err != nil {
 			return nil, err
 		}
@@ -353,7 +353,7 @@ func compileArgs(params []graphQLParam, args map[string]any, clk clock) (map[str
 
 // inputValue is the value an on-input or argument parameter sends: a day in
 // the organization's zone for a range end, the call's own value otherwise.
-func inputValue(param graphQLParam, args map[string]any, raw any, clk clock) (any, error) {
+func inputValue(param *graphQLParam, args map[string]any, raw any, clk clock) (any, error) {
 	switch param.Kind {
 	case paramDayFrom:
 		day, err := readDay(args, param.Name, clk)

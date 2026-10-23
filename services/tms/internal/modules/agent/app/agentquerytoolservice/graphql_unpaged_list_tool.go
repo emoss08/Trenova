@@ -213,8 +213,10 @@ func argumentParam(field *graphQLField) []graphQLParam {
 			Schema: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The " + words + " records whose records are read.",
-				toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
-				toolschema.KeyMinItems:    1,
+				toolschema.KeyItems: map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+				},
+				toolschema.KeyMinItems: 1,
 			},
 		}}
 	}
