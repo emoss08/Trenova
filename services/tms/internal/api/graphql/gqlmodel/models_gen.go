@@ -3116,7 +3116,9 @@ type DetentionDeskEntry struct {
 	MinutesUntilNoticeDue *int                 `json:"minutesUntilNoticeDue,omitempty"`
 	NoticeWindowOpen      bool                 `json:"noticeWindowOpen"`
 	AmountAtRisk          string               `json:"amountAtRisk"`
-	Urgency               DetentionDeskUrgency `json:"urgency"`
+	// The minutes it bills: a running clock's as of now, a stopped charge's as recorded.
+	BillableMinutes int                  `json:"billableMinutes"`
+	Urgency         DetentionDeskUrgency `json:"urgency"`
 }
 
 type DetentionDisputeInput struct {
@@ -12409,6 +12411,8 @@ const (
 	DetentionDeskUrgencyAccruing       DetentionDeskUrgency = "Accruing"
 	DetentionDeskUrgencyFreeTimeEnding DetentionDeskUrgency = "FreeTimeEnding"
 	DetentionDeskUrgencyNormal         DetentionDeskUrgency = "Normal"
+	// A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived.
+	DetentionDeskUrgencyAwaitingApproval DetentionDeskUrgency = "AwaitingApproval"
 )
 
 var AllDetentionDeskUrgency = []DetentionDeskUrgency{
@@ -12418,11 +12422,12 @@ var AllDetentionDeskUrgency = []DetentionDeskUrgency{
 	DetentionDeskUrgencyAccruing,
 	DetentionDeskUrgencyFreeTimeEnding,
 	DetentionDeskUrgencyNormal,
+	DetentionDeskUrgencyAwaitingApproval,
 }
 
 func (e DetentionDeskUrgency) IsValid() bool {
 	switch e {
-	case DetentionDeskUrgencyLost, DetentionDeskUrgencyNoticeOverdue, DetentionDeskUrgencyNoticeDueSoon, DetentionDeskUrgencyAccruing, DetentionDeskUrgencyFreeTimeEnding, DetentionDeskUrgencyNormal:
+	case DetentionDeskUrgencyLost, DetentionDeskUrgencyNoticeOverdue, DetentionDeskUrgencyNoticeDueSoon, DetentionDeskUrgencyAccruing, DetentionDeskUrgencyFreeTimeEnding, DetentionDeskUrgencyNormal, DetentionDeskUrgencyAwaitingApproval:
 		return true
 	}
 	return false

@@ -598,6 +598,7 @@ func detentionDeskEntryToModel(
 		MinutesUntilFreeEnds: int(entry.MinutesUntilFreeEnds),
 		NoticeWindowOpen:     entry.NoticeWindowOpen,
 		AmountAtRisk:         entry.AmountAtRisk.String(),
+		BillableMinutes:      int(entry.BillableMinutes),
 		Urgency:              gqlmodel.DetentionDeskUrgency(entry.Urgency),
 	}
 
@@ -882,4 +883,26 @@ func loadSignoff(ctx context.Context, id *string) (*tenant.User, error) {
 		return nil, err
 	}
 	return base.LoadUser(ctx, userID)
+}
+
+func detentionDeskFilter(
+	includeAwaitingApproval *bool,
+	urgency *gqlmodel.DetentionDeskUrgency,
+	shipmentID *string,
+	proNumber *string,
+) (*detentionservice.DeskFilter, error) {
+	shipmentFilter, err := base.ParseOptionalIDField("shipmentId", shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	filter := &detentionservice.DeskFilter{
+		IncludeAwaitingApproval: base.BoolValue(includeAwaitingApproval),
+		ShipmentID:              shipmentFilter,
+		ProNumber:               base.DerefString(proNumber),
+	}
+	if urgency != nil {
+		filter.Urgency = string(*urgency)
+	}
+
+	return filter, nil
 }

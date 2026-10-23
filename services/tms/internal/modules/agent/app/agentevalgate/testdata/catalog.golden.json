@@ -7430,25 +7430,32 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "includeAwaitingApproval": {
+            "description": "Also list the stopped charges waiting on approval, whose shipments cannot be invoiced until someone approves or waives them. Defaults to true, so the charges holding an invoice are listed beside the running clocks.",
+            "type": "boolean"
+          },
           "proNumber": {
-            "description": "Optional: only the shipment with this pro number, such as SEED-DET-001.",
+            "description": "A shipment's PRO number, or part of it, ignoring case. Only records whose pro number contains this text.",
             "type": "string"
           },
           "shipmentId": {
-            "description": "Optional: only this shipment's occurrences, from shipment_list or shipment_get.",
+            "description": "The shipment, from shipment_list. Never guess one.",
             "type": "string",
             "x-recordOf": "shipment"
           },
           "urgency": {
-            "description": "Optional: only occurrences at this urgency.",
+            "description": "How soon someone has to act, as the board ranks it. Only records whose urgency is this.",
             "enum": [
               "Lost",
               "NoticeOverdue",
               "NoticeDueSoon",
+              "Accruing",
+              "FreeTimeEnding",
+              "Normal",
               "AwaitingApproval"
             ],
             "type": "string",
-            "x-enumOf": "detention.urgency"
+            "x-enumOf": "graphql.DetentionDeskUrgency"
           }
         },
         "type": "object"
@@ -8179,12 +8186,12 @@
         "additionalProperties": false,
         "properties": {
           "shipmentId": {
-            "description": "The shipment, from shipment_list, shipment_get or the page you are on.",
+            "description": "The shipment, from shipment_list. Never guess one.",
             "type": "string",
             "x-recordOf": "shipment"
           },
           "shipmentMoveId": {
-            "description": "Only this move's tenders, by id from shipment_get (its moves) or dispatch_get_board.",
+            "description": "The move to narrow to, from shipment_get (its moves) or dispatch_get_board. Never guess one.",
             "type": "string",
             "x-recordOf": "shipment_move"
           }
@@ -14002,21 +14009,162 @@
     },
     {
       "name": "exception_list_service_failure_reason_codes",
-      "description": "The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment. Call this before exception_resolve_service_failure, which needs a reason code id, and pick the code whose category matches what actually happened; do not resolve with a code that merely sounds close.",
+      "description": "The reason codes a service failure can carry, such as Weather, Shipper delay or Equipment. Call this before exception_resolve_service_failure, which needs a reason code id, and pick the code whose category matches what actually happened; do not resolve with a code that merely sounds close. Filters: active, appliesTo, category, code, createdAtFrom/To, defaultExceptionCode, defaultNote, defaultReasonCode, defaultStatusCode, description, label, sortOrderMin/Max, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "active": {
+            "description": "true for only the records whose active is true, false for only those whose active is false. Defaults to true: only an active code can resolve a failure.",
+            "type": "boolean"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
           "appliesTo": {
-            "description": "Optional: only codes usable on this kind of stop.",
-            "enum": [
-              "Pickup",
-              "Delivery"
+            "description": "Only records whose applies to is one of these.",
+            "items": {
+              "enum": [
+                "Pickup",
+                "Delivery",
+                "Both",
+                "All"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.ServiceFailureReasonCodeAppliesTo"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "category": {
+            "description": "Only records whose category is one of these.",
+            "items": {
+              "enum": [
+                "Carrier",
+                "Customer",
+                "Facility",
+                "Weather",
+                "Equipment",
+                "Documentation",
+                "Driver",
+                "Shipper",
+                "Consignee",
+                "Appointment",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.ServiceFailureReasonCategory"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "code": {
+            "description": "Only records whose code contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
             ],
-            "type": "string",
-            "x-enumOf": "accessorialCharge.appliesTo"
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "defaultExceptionCode": {
+            "description": "Only records whose default exception code contains this text.",
+            "type": "string"
+          },
+          "defaultNote": {
+            "description": "Only records whose default note contains this text.",
+            "type": "string"
+          },
+          "defaultReasonCode": {
+            "description": "Only records whose default reason code contains this text.",
+            "type": "string"
+          },
+          "defaultStatusCode": {
+            "description": "Only records whose default status code contains this text.",
+            "type": "string"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "label": {
+            "description": "Only records whose label contains this text.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
           },
           "query": {
-            "description": "Optional text matched against the code and label.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "active",
+              "appliesTo",
+              "category",
+              "code",
+              "createdAt",
+              "defaultExceptionCode",
+              "defaultNote",
+              "defaultReasonCode",
+              "defaultStatusCode",
+              "description",
+              "externalMap",
+              "label",
+              "sortOrder",
+              "updatedAt"
+            ],
+            "type": "string",
+            "x-enumOf": "exception_list_service_failure_reason_codes.graphqlSortBy"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "x-enumOf": "list.sortDirection"
+          },
+          "sortOrderMax": {
+            "description": "Only records whose sort order is at most this.",
+            "type": "integer"
+          },
+          "sortOrderMin": {
+            "description": "Only records whose sort order is at least this.",
+            "type": "integer"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -14046,75 +14194,85 @@
     },
     {
       "name": "exception_list_service_failures",
-      "description": "List the service failures that happened: late and missed pickups and deliveries, with how late, which stop, and whether anyone reviewed or resolved them. Each was detected by the service check or recorded by a person. Filter on status Open for what still needs attention, on detectedAt for a period such as last week, or give a shipmentId. Resolving one takes its id and version, which are in the row. Filters: status (Open|Reviewed|Resolved|Voided); type (LatePickup|LateDelivery|MissedPickup|MissedDelivery|AppointmentMissed|Other); source (Detected|Manual|EDI|Integration); stopType (Pickup|Delivery|SplitDelivery|SplitPickup); shipmentId (text): an exact shipment id, from shipment_list; number: lateMinutes; date: detectedAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List the service failures that happened: late and missed pickups and deliveries, with how late, which stop, and whether anyone reviewed or resolved them. Each was detected by the service check or recorded by a person. Filter on status Open for what still needs attention, on detectedAt for a period such as last week, or give a shipmentId. Resolving one takes its id and version, which are in the row. Filters: actualArrivalFrom/To, createdAtFrom/To, detectedAtFrom/To, gracePeriodMinutesMin/Max, hasReasonCode, internalNotes, lateMinutesMin/Max, note, number, reasonCodeId, resolvedAtFrom/To, reviewedAtFrom/To, scheduledCutoffFrom/To, shipmentId, source, status, stopType, type, updatedAtFrom/To, voidReason, voidedAtFrom/To, x12ExceptionCode, x12ReasonCodeOverride, x12StatusCodeOverride.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "type",
-                    "source",
-                    "stopType",
-                    "lateMinutes",
-                    "detectedAt",
-                    "shipmentId"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "exception_list_service_failures.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow",
-                    "contains",
-                    "startswith",
-                    "endswith"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "exception_list_service_failures.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "actualArrivalFrom": {
+            "description": "Only records whose actual arrival is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "actualArrivalTo": {
+            "description": "Only records whose actual arrival is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "detectedAtFrom": {
+            "description": "Only records whose detected at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "detectedAtTo": {
+            "description": "Only records whose detected at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "gracePeriodMinutesMax": {
+            "description": "Only records whose grace period minutes is at most this.",
+            "type": "integer"
+          },
+          "gracePeriodMinutesMin": {
+            "description": "Only records whose grace period minutes is at least this.",
+            "type": "integer"
+          },
+          "hasReasonCode": {
+            "description": "true for only records that have a reason code, false for only those that have none.",
+            "type": "boolean"
+          },
+          "internalNotes": {
+            "description": "Notes kept off the customer-facing record and the EDI 214. Only records whose internal notes contains this text.",
+            "type": "string"
+          },
+          "lateMinutesMax": {
+            "description": "Only records whose late minutes is at most this.",
+            "type": "integer"
+          },
+          "lateMinutesMin": {
+            "description": "Only records whose late minutes is at least this.",
+            "type": "integer"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -14123,24 +14281,107 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "note": {
+            "description": "Only records whose notes contains this text.",
+            "type": "string"
+          },
+          "number": {
+            "description": "Only records whose number contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
             "type": "string"
+          },
+          "reasonCodeId": {
+            "description": "The reason code, from exception_list_service_failure_reason_codes. Never guess one.",
+            "type": "string",
+            "x-recordOf": "service_failure_reason_code"
+          },
+          "resolvedAtFrom": {
+            "description": "Only records whose resolved at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "resolvedAtTo": {
+            "description": "Only records whose resolved at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "reviewedAtFrom": {
+            "description": "Only records whose reviewed at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "reviewedAtTo": {
+            "description": "Only records whose reviewed at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "scheduledCutoffFrom": {
+            "description": "Only records whose scheduled cutoff is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "scheduledCutoffTo": {
+            "description": "Only records whose scheduled cutoff is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "The shipment, from shipment_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "shipment"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
-              "status",
+              "actualArrival",
+              "createdAt",
+              "detectedAt",
+              "gracePeriodMinutes",
+              "internalNotes",
               "lateMinutes",
-              "detectedAt"
+              "notes",
+              "number",
+              "reasonCodeId",
+              "resolvedAt",
+              "reviewedAt",
+              "scheduledCutoff",
+              "shipmentId",
+              "shipmentMoveId",
+              "source",
+              "status",
+              "stopId",
+              "stopType",
+              "type",
+              "updatedAt",
+              "voidReason",
+              "voidedAt",
+              "x12ExceptionCode",
+              "x12ReasonCodeOverride",
+              "x12StatusCodeOverride"
             ],
             "type": "string",
-            "x-enumOf": "exception_list_service_failures.sortBy"
+            "x-enumOf": "exception_list_service_failures.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -14150,6 +14391,116 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "source": {
+            "description": "Only records whose source is one of these.",
+            "items": {
+              "enum": [
+                "Detected",
+                "Manual",
+                "EDI",
+                "Integration"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.ServiceFailureSource"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "status": {
+            "description": "Only records whose status is one of these.",
+            "items": {
+              "enum": [
+                "Open",
+                "Reviewed",
+                "Resolved",
+                "Voided"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.ServiceFailureStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "stopType": {
+            "description": "Only records whose stop type is one of these.",
+            "items": {
+              "enum": [
+                "Pickup",
+                "Delivery",
+                "SplitDelivery",
+                "SplitPickup"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.StopType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "type": {
+            "description": "Only records whose type is one of these.",
+            "items": {
+              "enum": [
+                "LatePickup",
+                "LateDelivery",
+                "MissedPickup",
+                "MissedDelivery",
+                "AppointmentMissed",
+                "Other"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.ServiceFailureType"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "voidReason": {
+            "description": "Only records whose void reason contains this text.",
+            "type": "string"
+          },
+          "voidedAtFrom": {
+            "description": "Only records whose voided at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "voidedAtTo": {
+            "description": "Only records whose voided at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "x12ExceptionCode": {
+            "description": "Only records whose x12 exception code contains this text.",
+            "type": "string"
+          },
+          "x12ReasonCodeOverride": {
+            "description": "Only records whose x12 reason code override contains this text.",
+            "type": "string"
+          },
+          "x12StatusCodeOverride": {
+            "description": "Three-character X12 codes that replace the ones derived from the failure type\nwhen the 214 is built; blank means derive. Only records whose x12 status code override contains this text.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -28064,74 +28415,58 @@
     },
     {
       "name": "order_list",
-      "description": "List customer orders, the commercial record that groups one or more shipments and their charges under a customer's order number, PO or BOL. order_get opens one with its shipments and charges. Filters: status (Draft|Confirmed|InProgress|Completed|Billed|Closed|Canceled): Billed means invoiced; Closed means nothing more will be added; text: orderNumber, poNumber, bol; number: totalAmount; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List customer orders, the commercial record that groups one or more shipments and their charges under a customer's order number, PO or BOL. order_get opens one with its shipments and charges. Filters: baseAmountMin/Max, bol, createdAtFrom/To, currencyCode, customerId, hasEnteredBy, hasOwner, orderNumber, poNumber, quotedAmountMin/Max, status, totalAmountMin/Max, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "orderNumber",
-                    "poNumber",
-                    "bol",
-                    "totalAmount",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "order_list.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "order_list.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
-              ],
-              "type": "object"
-            },
-            "maxItems": 6,
-            "type": "array"
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "baseAmountMax": {
+            "description": "Only records whose base amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "baseAmountMin": {
+            "description": "Only records whose base amount is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "bol": {
+            "description": "Only records whose bol contains this text.",
+            "type": "string"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "currencyCode": {
+            "description": "Only records whose currency code contains this text.",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer, from customer_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "hasEnteredBy": {
+            "description": "true for only records that have a entered by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasOwner": {
+            "description": "true for only records that have a owner, false for only those that have none.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -28140,24 +28475,45 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
-            "type": "integer"
+          "orderNumber": {
+            "description": "Only records whose order number contains this text.",
+            "type": "string"
+          },
+          "poNumber": {
+            "description": "Only records whose po number contains this text.",
+            "type": "string"
           },
           "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "quotedAmountMax": {
+            "description": "Only records whose quoted amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "quotedAmountMin": {
+            "description": "Only records whose quoted amount is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "baseAmount",
+              "bol",
+              "createdAt",
+              "currencyCode",
+              "customerId",
+              "enteredById",
               "orderNumber",
+              "ownerId",
+              "poNumber",
+              "quotedAmount",
+              "status",
               "totalAmount",
-              "createdAt"
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "order_list.sortBy"
+            "x-enumOf": "order_list.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -28167,6 +28523,48 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Billed means invoiced; Closed means nothing more will be added.",
+            "items": {
+              "enum": [
+                "Draft",
+                "Confirmed",
+                "InProgress",
+                "Completed",
+                "Billed",
+                "Closed",
+                "Canceled"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.OrderStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "totalAmountMax": {
+            "description": "Only records whose total amount is at most this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "totalAmountMin": {
+            "description": "Only records whose total amount is at least this. Write it as a decimal, such as 1250.00.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
@@ -39342,73 +39740,162 @@
     },
     {
       "name": "shipment_list_recurring",
-      "description": "List recurring shipments: the series that copy one saved shipment on a schedule for a customer's standing lane, with when each next generates. Use the id with shipment_update_recurring, shipment_set_recurring_status or shipment_generate_recurring. Filters: status (Active|Paused|Expired): Paused generates nothing until resumed; Expired has ended; text: name; boolean: autoGenerate; date: nextOccurrenceAt, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List recurring shipments: the series that copy one saved shipment on a schedule for a customer's standing lane, with when each next generates. Use the id with shipment_update_recurring, shipment_set_recurring_status or shipment_generate_recurring. Filters: autoGenerate, consecutiveFailuresMin/Max, createdAtFrom/To, cronExpression, customerId, description, destinationLocationId, endDateFrom/To, exceptionPolicy, generationCountMin/Max, hasCustomer, hasDestinationLocation, hasEnteredBy, hasLastGeneratedShipment, hasOriginLocation, lastGeneratedShipmentId, lastOccurrenceAtFrom/To, lastRunAtFrom/To, leadTimeDaysMin/Max, maxOccurrencesMin/Max, name, nextOccurrenceAtFrom/To, nextOccurrenceSourceAtFrom/To, originLocationId, skipWeekends, sourceShipmentId, startDateFrom/To, status, timezone, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
-          "filters": {
-            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "autoGenerate": {
+            "description": "true for only the records whose autoGenerate is true, false for only those whose autoGenerate is false.",
+            "type": "boolean"
+          },
+          "consecutiveFailuresMax": {
+            "description": "Only records whose consecutive failures is at most this.",
+            "type": "integer"
+          },
+          "consecutiveFailuresMin": {
+            "description": "Only records whose consecutive failures is at least this.",
+            "type": "integer"
+          },
+          "createdAtFrom": {
+            "description": "Only records whose created at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "createdAtTo": {
+            "description": "Only records whose created at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "cronExpression": {
+            "description": "Only records whose cron expression contains this text.",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "The customer, from customer_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "customer"
+          },
+          "description": {
+            "description": "Only records whose description contains this text.",
+            "type": "string"
+          },
+          "destinationLocationId": {
+            "description": "The lane's destination, from location_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "location"
+          },
+          "endDateFrom": {
+            "description": "Only records whose end date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "endDateTo": {
+            "description": "Only records whose end date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "exceptionPolicy": {
+            "description": "Only records whose exception policy is one of these.",
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "days": {
-                  "maximum": 3650,
-                  "minimum": 1,
-                  "type": "integer"
-                },
-                "field": {
-                  "enum": [
-                    "status",
-                    "name",
-                    "autoGenerate",
-                    "nextOccurrenceAt",
-                    "createdAt"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "shipment_list_recurring.field"
-                },
-                "operator": {
-                  "enum": [
-                    "eq",
-                    "ne",
-                    "in",
-                    "notin",
-                    "isnull",
-                    "isnotnull",
-                    "contains",
-                    "startswith",
-                    "endswith",
-                    "gt",
-                    "gte",
-                    "lt",
-                    "lte",
-                    "lastndays",
-                    "nextndays",
-                    "today",
-                    "yesterday",
-                    "tomorrow"
-                  ],
-                  "type": "string",
-                  "x-enumOf": "shipment_list_recurring.operator"
-                },
-                "value": {
-                  "type": "string"
-                },
-                "values": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "required": [
-                "field",
-                "operator"
+              "enum": [
+                "Skip",
+                "PreviousBusinessDay",
+                "NextBusinessDay"
               ],
-              "type": "object"
+              "type": "string",
+              "x-enumOf": "graphql.RecurringShipmentExceptionPolicy"
             },
-            "maxItems": 6,
+            "minItems": 1,
             "type": "array"
+          },
+          "generationCountMax": {
+            "description": "Only records whose generation count is at most this.",
+            "type": "integer"
+          },
+          "generationCountMin": {
+            "description": "Only records whose generation count is at least this.",
+            "type": "integer"
+          },
+          "hasCustomer": {
+            "description": "true for only records that have a customer, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasDestinationLocation": {
+            "description": "true for only records that have a destination location, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasEnteredBy": {
+            "description": "true for only records that have a entered by, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasLastGeneratedShipment": {
+            "description": "true for only records that have a last generated shipment, false for only those that have none.",
+            "type": "boolean"
+          },
+          "hasOriginLocation": {
+            "description": "true for only records that have a origin location, false for only those that have none.",
+            "type": "boolean"
+          },
+          "lastGeneratedShipmentId": {
+            "description": "The shipment the series last made, from shipment_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "shipment"
+          },
+          "lastOccurrenceAtFrom": {
+            "description": "Only records whose last occurrence at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastOccurrenceAtTo": {
+            "description": "Only records whose last occurrence at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastRunAtFrom": {
+            "description": "Only records whose last run at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastRunAtTo": {
+            "description": "Only records whose last run at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "leadTimeDaysMax": {
+            "description": "Only records whose lead time days is at most this.",
+            "type": "integer"
+          },
+          "leadTimeDaysMin": {
+            "description": "Only records whose lead time days is at least this.",
+            "type": "integer"
           },
           "limit": {
             "description": "How many rows to return: 25 unless you ask, at most 50.",
@@ -39417,24 +39904,95 @@
             "type": "integer",
             "x-clamp": true
           },
-          "offset": {
-            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
-            "minimum": 0,
+          "maxOccurrencesMax": {
+            "description": "Only records whose max occurrences is at most this.",
             "type": "integer"
           },
-          "query": {
-            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+          "maxOccurrencesMin": {
+            "description": "Only records whose max occurrences is at least this.",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Only records whose name contains this text.",
             "type": "string"
+          },
+          "nextOccurrenceAtFrom": {
+            "description": "Only records whose next occurrence at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "nextOccurrenceAtTo": {
+            "description": "Only records whose next occurrence at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "nextOccurrenceSourceAtFrom": {
+            "description": "Only records whose next occurrence source at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "nextOccurrenceSourceAtTo": {
+            "description": "Only records whose next occurrence source at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "originLocationId": {
+            "description": "The lane's origin, from location_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "location"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
+            "type": "string"
+          },
+          "skipWeekends": {
+            "description": "true for only the records whose skipWeekends is true, false for only those whose skipWeekends is false.",
+            "type": "boolean"
           },
           "sortBy": {
             "description": "Field to order by. Defaults to most recently created.",
             "enum": [
+              "autoGenerate",
+              "consecutiveFailures",
+              "createdAt",
+              "cronExpression",
+              "customerId",
+              "description",
+              "destinationLocationId",
+              "endDate",
+              "enteredById",
+              "exceptionPolicy",
+              "generationCount",
+              "lastGeneratedShipmentId",
+              "lastOccurrenceAt",
+              "lastRunAt",
+              "leadTimeDays",
+              "maxOccurrences",
               "name",
               "nextOccurrenceAt",
-              "createdAt"
+              "nextOccurrenceSourceAt",
+              "originLocationId",
+              "skipWeekends",
+              "sourceShipmentId",
+              "startDate",
+              "status",
+              "timezone",
+              "updatedAt"
             ],
             "type": "string",
-            "x-enumOf": "shipment_list_recurring.sortBy"
+            "x-enumOf": "shipment_list_recurring.graphqlSortBy"
           },
           "sortDirection": {
             "description": "asc for oldest or smallest first, desc for newest or largest.",
@@ -39444,10 +40002,69 @@
             ],
             "type": "string",
             "x-enumOf": "list.sortDirection"
+          },
+          "sourceShipmentId": {
+            "description": "The shipment the series copies, from shipment_list. Never guess one.",
+            "type": "string",
+            "x-recordOf": "shipment"
+          },
+          "startDateFrom": {
+            "description": "Only records whose start date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "startDateTo": {
+            "description": "Only records whose start date is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only records whose status is one of these. Paused generates nothing until resumed; Expired has ended.",
+            "items": {
+              "enum": [
+                "Active",
+                "Paused",
+                "Expired"
+              ],
+              "type": "string",
+              "x-enumOf": "graphql.RecurringShipmentStatus"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "timezone": {
+            "description": "Only records whose timezone contains this text.",
+            "type": "string"
+          },
+          "updatedAtFrom": {
+            "description": "Only records whose updated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "updatedAtTo": {
+            "description": "Only records whose updated at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
           }
         },
         "type": "object"
       },
+      "searchTerms": [
+        "recurring shipments",
+        "when a series generates next"
+      ],
       "policy": {
         "kind": "query",
         "resource": "recurring_shipment",

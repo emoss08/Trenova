@@ -22,8 +22,9 @@ type GetTenderOfferByIDRequest struct {
 }
 
 type ListTendersByShipmentRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	ShipmentID pulid.ID              `json:"shipmentId"`
+	TenantInfo     pagination.TenantInfo `json:"-"`
+	ShipmentID     pulid.ID              `json:"shipmentId"`
+	ShipmentMoveID pulid.ID              `json:"shipmentMoveId"`
 }
 
 type GetLiveTenderByMoveRequest struct {

@@ -39,7 +39,6 @@ var recurringShipmentStatuses = []string{
 
 func operationsQueryToolProviders() []any {
 	return []any{
-		newListRecurringShipmentsTool,
 		provideGetWorkerScheduleTool,
 		provideListShiftTemplatesTool,
 	}

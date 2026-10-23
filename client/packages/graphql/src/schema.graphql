@@ -11919,8 +11919,12 @@ type DetentionCollectability {
   summary: String!
 }
 
-type DetentionDeskEntry {
+type DetentionDeskEntry @kind(resource: "detention") {
   amountAtRisk: Decimal!
+  """
+  The minutes it bills: a running clock's as of now, a stopped charge's as recorded.
+  """
+  billableMinutes: Int!
   minutesUntilFreeEnds: Int!
   minutesUntilNoticeDue: Int
   noticeWindowOpen: Boolean!
@@ -11930,6 +11934,10 @@ type DetentionDeskEntry {
 
 enum DetentionDeskUrgency {
   Accruing
+  """
+  A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived.
+  """
+  AwaitingApproval
   FreeTimeEnding
   Lost
   Normal
@@ -11942,7 +11950,7 @@ input DetentionDisputeInput {
   occurrenceId: ID!
 }
 
-type DetentionDisputePacket {
+type DetentionDisputePacket @kind(resource: "detention") {
   chainVerified: Boolean!
   collectability: DetentionCollectability!
   evidence: [DetentionEvidence!]
@@ -12062,7 +12070,7 @@ enum DetentionNotificationStatus {
   Sent
 }
 
-type DetentionOccurrence {
+type DetentionOccurrence @kind(resource: "detention") {
   additionalChargeId: ID
   appointmentEnd: Timestamp
   appointmentStart: Timestamp
@@ -12140,7 +12148,7 @@ type DetentionOccurrence {
   waiverReason: DetentionWaiverReason
 }
 
-type DetentionOccurrenceDetail {
+type DetentionOccurrenceDetail @kind(resource: "detention") {
   collectability: DetentionCollectability!
   """Null once the clock has stopped."""
   currentlyBillable: DetentionClockPrice
@@ -24414,7 +24422,18 @@ type Query {
   deskMemoriesByIds(ids: [ID!]!): [DeskMemory!]!
   deskMemorySettings: DeskMemorySettings!
   detentionCustomerStats(input: DetentionStatsInput!): [CustomerDetentionStat!]!
-  detentionDesk: [DetentionDeskEntry!]!
+  detentionDesk(
+    """
+    Also list the stopped charges waiting on approval, whose shipments cannot be invoiced until someone approves or waives them.
+    """
+    includeAwaitingApproval: Boolean = false
+    """A shipment's PRO number, or part of it, ignoring case."""
+    proNumber: String
+    """Only this shipment's occurrences."""
+    shipmentId: ID
+    """How soon someone has to act, as the board ranks it."""
+    urgency: DetentionDeskUrgency
+  ): [DetentionDeskEntry!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
   detentionFacilityStats(input: DetentionStatsInput!): [FacilityDetentionStat!]!
   detentionOccurrence(id: ID!): DetentionOccurrenceDetail!
@@ -25002,7 +25021,11 @@ type Query {
   telematicsFormMappings: [TelematicsFormMapping!]!
   telematicsStatus: TelematicsStatus!
   tender(id: ID!): Tender
-  tendersByShipment(shipmentId: ID!): [Tender!]!
+  tendersByShipment(
+    shipmentId: ID!
+    """Only the tenders of this move of the shipment."""
+    shipmentMoveId: ID
+  ): [Tender!]!
   timeClockEntries(from: Timestamp, limit: Int, to: Timestamp, workerId: ID!): [TimeClockEntry!]!
   timesheet(id: ID!): Timesheet!
   timesheets(filter: TimesheetFilterInput): [Timesheet!]!

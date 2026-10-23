@@ -7,10 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -27,83 +23,6 @@ alert, a run that failed, a service failure, a credential about to lapse. Each
 of those pages names its record in the page context, and each needs a get tool
 so the model can read the record rather than the page title.
 */
-
-type openClockPricer interface {
-	PriceOpenClock(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		occurrence *detention.DetentionOccurrence,
-	) (*detentionservice.ClockPrice, error)
-}
-
-type pricedOccurrence struct {
-	*detention.DetentionOccurrence
-
-	CurrentlyBillable *currentlyBillable `json:"currentlyBillable,omitempty"`
-}
-
-type currentlyBillable struct {
-	BillableMinutes int32        `json:"billableMinutes"`
-	BillableAmount  string       `json:"billableAmount"`
-	AsOf            optionalDate `json:"asOf"`
-	Note            string       `json:"note"`
-}
-
-func provideGetDetentionOccurrenceTool(
-	repo detentionports.DetentionOccurrenceRepository,
-	permissions permissionports.PermissionEngine,
-	detentions *detentionservice.Service,
-) agentports.AgentQueryTool {
-	return newGetDetentionOccurrenceTool(repo, permissions, detentions)
-}
-
-func newGetDetentionOccurrenceTool(
-	repo detentionports.DetentionOccurrenceRepository,
-	permissions permissionports.PermissionEngine,
-	pricer openClockPricer,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
-		name:     "detention_get_occurrence",
-		entity:   "detention occurrence",
-		resource: permission.ResourceDetention,
-		kinds:    []permission.RecordKind{permission.KindDetentionOccurrence},
-		summary: "Retrieve one detention occurrence by id: the stop, the clock, free time, " +
-			"billable minutes, amounts, notice status, and the evidence and notices on file. " +
-			"A clock still running also carries currentlyBillable, priced as of now; quote " +
-			"that rather than the stored amounts, which date from the last recalculation. " +
-			"Use detention_list_occurrences first when you do not have an id.",
-		paramName: "occurrenceId",
-		idSource:  "from detention_list_occurrences, the page you are on, or this run's subject",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			occurrence, err := repo.GetByID(ctx, &detentionports.GetDetentionOccurrenceByIDRequest{
-				OccurrenceID:    id,
-				TenantInfo:      tenant,
-				IncludeEvidence: true,
-				IncludeNotices:  true,
-			})
-			if err != nil || pricer == nil {
-				return occurrence, err
-			}
-
-			price, err := pricer.PriceOpenClock(ctx, tenant, occurrence)
-			if err != nil || price == nil {
-				return occurrence, err
-			}
-
-			return pricedOccurrence{
-				DetentionOccurrence: occurrence,
-				CurrentlyBillable: &currentlyBillable{
-					BillableMinutes: price.BillableMinutes,
-					BillableAmount:  price.BillableAmount.StringFixed(2),
-					AsOf:            recordedDate(price.AsOf),
-					Note: "The clock is still running. These are what it would bill if " +
-						"the truck left now; the stored billableMinutes and billableAmount " +
-						"are from the last recalculation.",
-				},
-			}, nil
-		},
-	}, permissions)
-}
 
 func carrierIntelEventGetSpec() getSpec {
 	return getSpec{
@@ -123,28 +42,6 @@ func carrierIntelEventGetSpec() getSpec {
 		idSource: "from carrier_list_intelligence_events, the page you are on, this run's subject " +
 			"or a mentioned record",
 	}
-}
-
-func newGetServiceFailureTool(
-	repo servicefailureports.ServiceFailureRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetTool(&getSpec{
-		name:     "exception_get_service_failure",
-		entity:   "service failure",
-		resource: permission.ResourceServiceFailure,
-		summary: "Retrieve one service failure by id: the late or missed stop, how late, " +
-			"the reason code, the notes, and who reviewed, resolved or voided it. Use " +
-			"exception_list_service_failures first when you do not have an id.",
-		paramName: "serviceFailureId",
-		idSource:  "from exception_list_service_failures or the page you are on",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-				ID:         id,
-				TenantInfo: tenant,
-			})
-		},
-	}, permissions)
 }
 
 // getWorkerCredentialTool reads one credential under the person's field

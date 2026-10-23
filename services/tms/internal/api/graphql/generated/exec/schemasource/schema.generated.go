@@ -11557,6 +11557,8 @@ enum DetentionDeskUrgency {
   Accruing
   FreeTimeEnding
   Normal
+  "A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived."
+  AwaitingApproval
 }
 
 enum DetentionNoticeKind {
@@ -11740,7 +11742,7 @@ input DetentionPolicyInput {
   version: Int
 }
 
-type DetentionOccurrence {
+type DetentionOccurrence @kind(resource: "detention") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -11878,7 +11880,7 @@ type DetentionClockPrice {
   asOf: Timestamp!
 }
 
-type DetentionOccurrenceDetail {
+type DetentionOccurrenceDetail @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
@@ -11888,16 +11890,18 @@ type DetentionOccurrenceDetail {
   currentlyBillable: DetentionClockPrice
 }
 
-type DetentionDeskEntry {
+type DetentionDeskEntry @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   minutesUntilFreeEnds: Int!
   minutesUntilNoticeDue: Int
   noticeWindowOpen: Boolean!
   amountAtRisk: Decimal!
+  "The minutes it bills: a running clock's as of now, a stopped charge's as recorded."
+  billableMinutes: Int!
   urgency: DetentionDeskUrgency!
 }
 
-type DetentionDisputePacket {
+type DetentionDisputePacket @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   policySnapshot: JSON
   receipt: String!
@@ -12048,7 +12052,16 @@ input DetentionStatsInput {
 extend type Query {
   detentionPolicies(input: DataTableConnectionInput!): DetentionPolicyConnection!
   detentionPolicy(id: ID!): DetentionPolicy
-  detentionDesk: [DetentionDeskEntry!]!
+  detentionDesk(
+    "Also list the stopped charges waiting on approval, whose shipments cannot be invoiced until someone approves or waives them."
+    includeAwaitingApproval: Boolean = false
+    "How soon someone has to act, as the board ranks it."
+    urgency: DetentionDeskUrgency
+    "Only this shipment's occurrences."
+    shipmentId: ID
+    "A shipment's PRO number, or part of it, ignoring case."
+    proNumber: String
+  ): [DetentionDeskEntry!]!
   detentionOccurrence(id: ID!): DetentionOccurrenceDetail!
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
@@ -29411,7 +29424,11 @@ type Tender {
 
 extend type Query {
   tender(id: ID!): Tender
-  tendersByShipment(shipmentId: ID!): [Tender!]!
+  tendersByShipment(
+    shipmentId: ID!
+    "Only the tenders of this move of the shipment."
+    shipmentMoveId: ID
+  ): [Tender!]!
   liveTenderByMove(moveId: ID!): Tender
 }
 `, BuiltIn: false},

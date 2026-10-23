@@ -3297,6 +3297,8 @@ export type DetentionClockStartBasis =
 
 export type DetentionDeskUrgency =
   | 'Accruing'
+  /** A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived. */
+  | 'AwaitingApproval'
   | 'FreeTimeEnding'
   | 'Lost'
   | 'Normal'
@@ -5841,46 +5843,6 @@ export type PackingGroup =
   | 'II'
   | 'III';
 
-/** What the field guard does with one field of a linked record. */
-export type PageAccessDecision =
-  | 'VISIBLE'
-  /** Outside the kind's reference view, and the reader cannot read the kind. */
-  | 'WITHHELD_KIND'
-  /** Above the reader's sensitivity ceiling. */
-  | 'WITHHELD_SENSITIVITY';
-
-export type PageAccessDraftPermissionInput = {
-  operations: Array<string>;
-  resource: string;
-};
-
-export type PageAccessPreviewInput = {
-  /** The role being edited. */
-  draft?: PageAccessRoleDraftInput | null | undefined;
-  /** A path in the app, such as /shipments/shp_123. */
-  location: string;
-  /** A saved role to preview. Exactly one of roleId and draft is set. */
-  roleId?: string | number | null | undefined;
-};
-
-/** A role as the role editor holds it before it is saved. */
-export type PageAccessRoleDraftInput = {
-  maxSensitivity: string;
-  parentRoleIds?: Array<string | number> | null | undefined;
-  permissions: Array<PageAccessDraftPermissionInput>;
-};
-
-/** How a screen depends on one kind of record (docs/engineering/reference-views.md). */
-export type PageAccessUse =
-  /** The screen asks for fields beyond the kind's reference view with @requiresRead. */
-  | 'DECLARED'
-  /** The screen reads records of the kind as root records, which needs the kind's read. */
-  | 'READ'
-  /** The screen shows the kind only through its reference view. */
-  | 'REFERENCE'
-  /** The screen's route, or a REST endpoint it calls, checks the kind. */
-  | 'REQUIRED';
-
 export type PauseAccountingSyncInput = {
   integrationType: AccountingSystem;
   reason?: string | null | undefined;
@@ -6135,16 +6097,6 @@ export type ProposeShiftSwapInput = {
   /** The day being given up. */
   shiftDate: number;
 };
-
-/**
- * A set of fields a role must be granted to see, wherever they appear. A reader
- * without the grant receives null for every field in the set.
- */
-export type ProtectedFieldGroup =
-  /** The margin floor and pay ceiling a rate agreement sets against the sell price. */
-  | 'Margins'
-  /** A worker's date of birth, licence, TWIC and credential numbers, and drug test dates. */
-  | 'Personal';
 
 export type RandomDrawStatus =
   | 'Cancelled'
@@ -6601,24 +6553,6 @@ export type ReportDrillValueInput = {
   value?: unknown;
 };
 
-/**
- * Whether a caller may use a catalog field or edge in a report, decided by the
- * rule the report compiler applies, so a field marked Available compiles and
- * any other is refused.
- */
-export type ReportFieldAccess =
-  /** The caller may use it. */
-  | 'Available'
-  /** It is in a protected field group the caller's role does not grant. */
-  | 'NeedsFieldGroup'
-  /**
-   * It is outside its kind's reference view, and the caller cannot read the
-   * kind. Through a join, only the kind's reference-view fields can be used.
-   */
-  | 'NeedsKindRead'
-  /** It is ranked above the caller's sensitivity ceiling. */
-  | 'WithheldByCeiling';
-
 export type ReportFieldRefInput = {
   field: string;
   path?: Array<string> | null | undefined;
@@ -6854,12 +6788,6 @@ export type ReviseDeskMemoryInput = {
   roleId?: string | number | null | undefined;
   scope?: AgentMemoryScope | null | undefined;
   version: number;
-};
-
-export type RoleResourceGuideInput = {
-  maxSensitivity: string;
-  /** At most 64 resources, such as one category of the role editor. */
-  resources: Array<string>;
 };
 
 /**
@@ -12294,14 +12222,14 @@ export type DetentionFacilityStatsQueryVariables = Exact<{
 }>;
 
 
-export type DetentionFacilityStatsQuery = { detentionFacilityStats: Array<{ locationId: string, locationName: string, stopCount: number, breachCount: number, avgDwellMinutes: number, medianDwellMinutes: number, p90DwellMinutes: number, billedAmount: string, driverPayAmount: string | null, netMargin: string | null, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
+export type DetentionFacilityStatsQuery = { detentionFacilityStats: Array<{ locationId: string, locationName: string, stopCount: number, breachCount: number, avgDwellMinutes: number, medianDwellMinutes: number, p90DwellMinutes: number, billedAmount: string, driverPayAmount: string, netMargin: string, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
 
 export type DetentionCustomerStatsQueryVariables = Exact<{
   input: DetentionStatsInput;
 }>;
 
 
-export type DetentionCustomerStatsQuery = { detentionCustomerStats: Array<{ customerId: string, customerName: string, stopCount: number, breachCount: number, billedAmount: string, driverPayAmount: string | null, netMargin: string | null, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
+export type DetentionCustomerStatsQuery = { detentionCustomerStats: Array<{ customerId: string, customerName: string, stopCount: number, breachCount: number, billedAmount: string, driverPayAmount: string, netMargin: string, waivedAmount: string, disputeCount: number, suppressedCount: number }> };
 
 export type DetentionWaiverStatsQueryVariables = Exact<{
   input: DetentionStatsInput;
@@ -12316,23 +12244,33 @@ export type DetentionPolicyPreviewQueryVariables = Exact<{
 }>;
 
 
-export type DetentionPolicyPreviewQuery = { detentionPolicyPreview: { policySnapshot: unknown, rawDwellMinutes: number, freeMinutesGranted: number, billableMinutes: number, roundedMinutes: number, billableAmount: string, grossAmount: string, driverPayAmount: string | null, netMargin: string | null, arrivedLate: boolean, capApplied: DetentionCapKind, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, suppressedByGate: boolean, calculationTrace: unknown, receipt: string } };
+export type DetentionPolicyPreviewQuery = { detentionPolicyPreview: { policySnapshot: unknown, rawDwellMinutes: number, freeMinutesGranted: number, billableMinutes: number, roundedMinutes: number, billableAmount: string, grossAmount: string, driverPayAmount: string, netMargin: string, arrivedLate: boolean, capApplied: DetentionCapKind, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, suppressedByGate: boolean, calculationTrace: unknown, receipt: string } };
 
 export type DetentionBacktestMutationVariables = Exact<{
   input: DetentionBacktestInput;
 }>;
 
 
-export type DetentionBacktestMutation = { detentionBacktest: { stopsEvaluated: number, stopsMatched: number, stopsBillable: number, stopsForfeited: number, stopsSuppressed: number, proposedRevenue: string, baselineRevenue: string, revenueDelta: string, proposedDriverPay: string | null, proposedNetMargin: string | null, negativeMarginStops: number | null, from: number, to: number, truncated: boolean, byCustomer: Array<{ key: string, label: string, stopCount: number, billableCount: number, proposedAmount: string, baselineAmount: string, delta: string, driverPayAmount: string | null, netMargin: string | null }>, byFacility: Array<{ key: string, label: string, stopCount: number, billableCount: number, proposedAmount: string, baselineAmount: string, delta: string, driverPayAmount: string | null, netMargin: string | null }> } };
+export type DetentionBacktestMutation = { detentionBacktest: { stopsEvaluated: number, stopsMatched: number, stopsBillable: number, stopsForfeited: number, stopsSuppressed: number, proposedRevenue: string, baselineRevenue: string, revenueDelta: string, proposedDriverPay: string, proposedNetMargin: string, negativeMarginStops: number, from: number, to: number, truncated: boolean, byCustomer: Array<{ key: string, label: string, stopCount: number, billableCount: number, proposedAmount: string, baselineAmount: string, delta: string, driverPayAmount: string, netMargin: string }>, byFacility: Array<{ key: string, label: string, stopCount: number, billableCount: number, proposedAmount: string, baselineAmount: string, delta: string, driverPayAmount: string, netMargin: string }> } };
 
 export type DeskDetentionCardQueryVariables = Exact<{
   id: string | number;
 }>;
 
 
-export type DeskDetentionCardQuery = { detentionOccurrence: { occurrence: { id: string, shipmentId: string, stopId: string, customerId: string, locationId: string, policySnapshot: unknown, calculationTrace: unknown, stopType: string, scheduleType: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, departedAt: number | null, clockStartAt: number, clockStopAt: number | null, freeTimeExpiresAt: number, noticeDueAt: number | null, noticeDeadlineAt: number | null, isOpen: boolean, arrivedLate: boolean, lateByMinutes: number, freeMinutesGranted: number, rawDwellMinutes: number, billableMinutes: number, roundedMinutes: number, billableAmount: string, driverPayMinutes: number, driverPayAmount: string | null, netMargin: string | null, capApplied: DetentionCapKind, convertedToLayover: boolean, currency: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, noticeSentAt: number | null, suppressedByGate: boolean, requiresApproval: boolean, approvedAt: number | null, waiverReason: DetentionWaiverReason | null, waiverNote: string, waivedAt: number | null, waivedAmount: string, disputeNote: string, disputedAt: number | null, locationName: string, customerName: string, shipmentProNumber: string, createdAt: number, updatedAt: number, approvedBy: { id: string, name: string } | null, waivedBy: { id: string, name: string } | null, location: { id: string, city: string, state: { id: string, abbreviation: string } | null } | null }, evidence: Array<{ id: string, kind: DetentionEvidenceKind, source: DetentionEvidenceSource, summary: string, observedAt: number }> | null, notices: Array<{ id: string, kind: DetentionNoticeKind, channel: DetentionNoticeChannel, deliveryStatus: DetentionNoticeDeliveryStatus, recipients: Array<string> | null, sentAt: number | null, scheduledFor: number, failureReason: string, satisfiesRequirement: boolean, wasAutomatic: boolean }> | null, collectability: { score: number, band: DetentionScoreBand, chainValid: boolean, summary: string, factors: Array<{ key: string, label: string, earned: number, possible: number, detail: string, remedy: string }> }, currentlyBillable: { billableMinutes: number, billableAmount: string, asOf: number } | null } };
+export type DeskDetentionCardQuery = { detentionOccurrence: { occurrence: { id: string, shipmentId: string, stopId: string, customerId: string, locationId: string, policySnapshot: unknown, calculationTrace: unknown, stopType: string, scheduleType: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, departedAt: number | null, clockStartAt: number, clockStopAt: number | null, freeTimeExpiresAt: number, noticeDueAt: number | null, noticeDeadlineAt: number | null, isOpen: boolean, arrivedLate: boolean, lateByMinutes: number, freeMinutesGranted: number, rawDwellMinutes: number, billableMinutes: number, roundedMinutes: number, billableAmount: string, driverPayMinutes: number, driverPayAmount: string, netMargin: string, capApplied: DetentionCapKind, convertedToLayover: boolean, currency: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, noticeSentAt: number | null, suppressedByGate: boolean, requiresApproval: boolean, approvedAt: number | null, waiverReason: DetentionWaiverReason | null, waiverNote: string, waivedAt: number | null, waivedAmount: string, disputeNote: string, disputedAt: number | null, locationName: string, customerName: string, shipmentProNumber: string, createdAt: number, updatedAt: number, approvedBy: { id: string, name: string } | null, waivedBy: { id: string, name: string } | null, location: { id: string, city: string, state: { id: string, abbreviation: string } | null } | null }, evidence: Array<{ id: string, kind: DetentionEvidenceKind, source: DetentionEvidenceSource, summary: string, observedAt: number }> | null, notices: Array<{ id: string, kind: DetentionNoticeKind, channel: DetentionNoticeChannel, deliveryStatus: DetentionNoticeDeliveryStatus, recipients: Array<string> | null, sentAt: number | null, scheduledFor: number, failureReason: string, satisfiesRequirement: boolean, wasAutomatic: boolean }> | null, collectability: { score: number, band: DetentionScoreBand, chainValid: boolean, summary: string, factors: Array<{ key: string, label: string, earned: number, possible: number, detail: string, remedy: string }> }, currentlyBillable: { billableMinutes: number, billableAmount: string, asOf: number } | null } };
 
-export type DetentionOccurrenceFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string, shipmentMoveId: string, stopId: string, customerId: string, locationId: string, detentionPolicyId: string | null, policySnapshot: unknown, calculationTrace: unknown, stopType: string, scheduleType: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, departedAt: number | null, clockStartAt: number, clockStopAt: number | null, freeTimeExpiresAt: number, noticeDueAt: number | null, noticeDeadlineAt: number | null, isOpen: boolean, arrivedLate: boolean, lateByMinutes: number, freeMinutesGranted: number, rawDwellMinutes: number, billableMinutes: number, roundedMinutes: number, billableUnits: string, grossAmount: string, billableAmount: string, driverPayMinutes: number, driverPayAmount: string | null, netMargin: string | null, capApplied: DetentionCapKind, convertedToLayover: boolean, currency: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, noticeSentAt: number | null, suppressedByGate: boolean, requiresApproval: boolean, waiverReason: DetentionWaiverReason | null, waiverNote: string, waivedAt: number | null, waivedAmount: string, disputeNote: string, disputedAt: number | null, collectabilityScore: number, evidenceHead: string, additionalChargeId: string | null, locationName: string, customerName: string, shipmentProNumber: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DetentionOccurrenceFieldsFragment' };
+export type DeskDetentionOccurrencesQueryVariables = Exact<{
+  includeAwaitingApproval?: boolean | null | undefined;
+  urgency?: DetentionDeskUrgency | null | undefined;
+  shipmentId?: string | number | null | undefined;
+  proNumber?: string | null | undefined;
+}>;
+
+
+export type DeskDetentionOccurrencesQuery = { detentionDesk: Array<{ minutesUntilFreeEnds: number, minutesUntilNoticeDue: number | null, noticeWindowOpen: boolean, billableMinutes: number, amountAtRisk: string, urgency: DetentionDeskUrgency, occurrence: { id: string, shipmentId: string, shipmentProNumber: string, customerName: string, locationName: string, stopType: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, arrivedAt: number | null, freeTimeExpiresAt: number, noticeSentAt: number | null, currency: string, requiresApproval: boolean } }> };
+
+export type DetentionOccurrenceFieldsFragment = { id: string, businessUnitId: string, organizationId: string, shipmentId: string, shipmentMoveId: string, stopId: string, customerId: string, locationId: string, detentionPolicyId: string | null, policySnapshot: unknown, calculationTrace: unknown, stopType: string, scheduleType: string, appointmentStart: number | null, appointmentEnd: number | null, arrivedAt: number | null, departedAt: number | null, clockStartAt: number, clockStopAt: number | null, freeTimeExpiresAt: number, noticeDueAt: number | null, noticeDeadlineAt: number | null, isOpen: boolean, arrivedLate: boolean, lateByMinutes: number, freeMinutesGranted: number, rawDwellMinutes: number, billableMinutes: number, roundedMinutes: number, billableUnits: string, grossAmount: string, billableAmount: string, driverPayMinutes: number, driverPayAmount: string, netMargin: string, capApplied: DetentionCapKind, convertedToLayover: boolean, currency: string, status: DetentionOccurrenceStatus, notificationStatus: DetentionNotificationStatus, noticeSentAt: number | null, suppressedByGate: boolean, requiresApproval: boolean, waiverReason: DetentionWaiverReason | null, waiverNote: string, waivedAt: number | null, waivedAmount: string, disputeNote: string, disputedAt: number | null, collectabilityScore: number, evidenceHead: string, additionalChargeId: string | null, locationName: string, customerName: string, shipmentProNumber: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'DetentionOccurrenceFieldsFragment' };
 
 export type DetentionEvidenceFieldsFragment = { id: string, detentionOccurrenceId: string, sequence: number, kind: DetentionEvidenceKind, source: DetentionEvidenceSource, summary: string, observedAt: number, recordedAt: number, recordedById: string | null, documentId: string | null, payload: unknown, prevHash: string, hash: string, createdAt: number } & { ' $fragmentName'?: 'DetentionEvidenceFieldsFragment' };
 
@@ -15908,6 +15846,13 @@ export type DeskOrderCardQueryVariables = Exact<{
 
 export type DeskOrderCardQuery = { order: { id: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, createdAt: number, updatedAt: number, customer: { id: string, code: string, name: string } | null, charges: Array<{ id: string, description: string, amount: string, invoiceId: string | null, invoicedAt: number | null, allocations: Array<{ id: string }> }> } | null };
 
+export type DeskOrderQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskOrderQuery = { order: { id: string, status: OrderStatus, orderNumber: string, poNumber: string | null, bol: string | null, currencyCode: string, quotedAmount: string | null, baseAmount: string | null, totalAmount: string | null, createdAt: number, updatedAt: number, customer: { ' $fragmentRefs'?: { 'CustomerReferenceFragment': CustomerReferenceFragment } } | null, legs: Array<{ id: string, proNumber: string, status: ShipmentStatus, bol: string | null }>, charges: Array<{ id: string, description: string, amount: string, invoiceId: string | null, invoicedAt: number | null, allocations: Array<{ id: string }> }> } | null };
+
 export type OrderDetailQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -16135,36 +16080,6 @@ export type UpdateOrganizationSettingsMutationVariables = Exact<{
 
 
 export type UpdateOrganizationSettingsMutation = { updateOrganization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
-
-export type PageAccessRequirementFieldsFragment = { resource: string, resourceName: string, operation: string, operationName: string, allowed: boolean } & { ' $fragmentName'?: 'PageAccessRequirementFieldsFragment' };
-
-export type PageAccessFieldsFragment = { path: string, name: string, operations: Array<string>, withheld: number, blocked: boolean, requires: Array<{ ' $fragmentRefs'?: { 'PageAccessRequirementFieldsFragment': PageAccessRequirementFieldsFragment } }>, endpoints: Array<{ method: string, path: string, requires: Array<{ ' $fragmentRefs'?: { 'PageAccessRequirementFieldsFragment': PageAccessRequirementFieldsFragment } }> }>, kinds: Array<{ resource: string, resourceName: string, use: PageAccessUse, canRead: boolean, withheld: number, fields: Array<{ name: string, inView: boolean, decision: PageAccessDecision }> }> } & { ' $fragmentName'?: 'PageAccessFieldsFragment' };
-
-export type PageAccessQueryVariables = Exact<{
-  location: string;
-}>;
-
-
-export type PageAccessQuery = { pageAccess: { ' $fragmentRefs'?: { 'PageAccessFieldsFragment': PageAccessFieldsFragment } } | null };
-
-export type PageAccessPreviewQueryVariables = Exact<{
-  input: PageAccessPreviewInput;
-}>;
-
-
-export type PageAccessPreviewQuery = { pageAccessPreview: { ' $fragmentRefs'?: { 'PageAccessFieldsFragment': PageAccessFieldsFragment } } | null };
-
-export type PageAccessScreensQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type PageAccessScreensQuery = { pageAccessScreens: Array<{ path: string, name: string }> };
-
-export type RoleResourceGuidesQueryVariables = Exact<{
-  input: RoleResourceGuideInput;
-}>;
-
-
-export type RoleResourceGuidesQuery = { roleResourceGuides: Array<{ resource: string, name: string, granted: string, withheld: string, ceiling: string | null, screens: Array<{ path: string, name: string, use: PageAccessUse }> }> };
 
 export type DeskWorkerPerformanceReviewsQueryVariables = Exact<{
   workerId: string | number;
@@ -16467,6 +16382,14 @@ export type DeskRecordActivityQueryVariables = Exact<{
 
 export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type DeskRecurringShipmentsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount: boolean;
+}>;
+
+
+export type DeskRecurringShipmentsQuery = { recurringShipments: { totalCount?: number | null, edges: Array<{ node: { id: string, name: string, status: RecurringShipmentStatus, customerId: string | null, sourceShipmentId: string, lastGeneratedShipmentId: string | null, cronExpression: string, timezone: string, autoGenerate: boolean, nextOccurrenceAt: number | null, generationCount: number, customer: { ' $fragmentRefs'?: { 'CustomerReferenceFragment': CustomerReferenceFragment } } | null, originLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null, destinationLocation: { ' $fragmentRefs'?: { 'LocationReferenceFragment': LocationReferenceFragment } } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
 export type RecurringShipmentTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceShipmentId: string, customerId: string | null, originLocationId: string | null, destinationLocationId: string | null, name: string, description: string, status: RecurringShipmentStatus, cronExpression: string, timezone: string, startDate: number | null, endDate: number | null, maxOccurrences: number | null, leadTimeDays: number, skipWeekends: boolean, exceptionPolicy: RecurringShipmentExceptionPolicy, blackoutDates: Array<string> | null, autoGenerate: boolean, nextOccurrenceAt: number | null, lastOccurrenceAt: number | null, lastRunAt: number | null, generationCount: number, consecutiveFailures: number, version: number, createdAt: number, updatedAt: number, customer: { id: string, name: string, code: string } | null, originLocation: { id: string, name: string, code: string } | null, destinationLocation: { id: string, name: string, code: string } | null } & { ' $fragmentName'?: 'RecurringShipmentTableRowFieldsFragment' };
 
 export type RecurringShipmentTableQueryVariables = Exact<{
@@ -16621,7 +16544,7 @@ export type CannedReportsQuery = { cannedReports: Array<{ key: string, version: 
 export type ReportCatalogQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ReportCatalogQuery = { reportCatalog: { version: string, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, readable: boolean, exportable: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, nullable: boolean, aggregations: Array<string>, filterable: boolean, groupable: boolean, access: ReportFieldAccess, inReferenceView: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }>, protection: { group: ProtectedFieldGroup, held: boolean } | null }>, edges: Array<{ name: string, label: string, target: string, cardinality: string, traversable: boolean, access: ReportFieldAccess, inReferenceView: boolean, needsReadOf: { resource: string, label: string } | null }> }> } };
+export type ReportCatalogQuery = { reportCatalog: { version: string, entities: Array<{ key: string, resource: string, label: string, pluralLabel: string, description: string | null, category: string, ownScopeSupported: boolean, fields: Array<{ key: string, label: string, description: string | null, type: string, format: string | null, nullable: boolean, aggregations: Array<string>, filterable: boolean, groupable: boolean, accessible: boolean, sensitivity: string, enumValues: Array<{ value: string, label: string }> }>, edges: Array<{ name: string, label: string, target: string, cardinality: string, traversable: boolean }> }> } };
 
 export type ReportDashboardFieldsFragment = { id: string, name: string, description: string, category: string, tags: Array<string>, ownerId: string, visibility: string, layout: unknown, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportDashboardFieldsFragment' };
 
@@ -17422,7 +17345,7 @@ export type ShipmentPageAnalyticsQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, activeShipments: { count: number, changeFromYesterday: number, sparkline: Array<{ hour: string, value: number }>, breakdown: { inTransit: number, atRisk: number, loading: number, done: number } } | null, onTimePercent: { percent: number, onTimeCount: number, totalCount: number, target: number | null, deltaPp: number, sevenDayPercent: number } | null, profitability: { avgCpm: number, avgMarginPct: number | null, hasMargin: boolean, unprofitableCount: number | null, shipmentCount: number, totalMiles: number } | null, revenueToday: { total: number, deltaPct: number, rpm: number, sparkline: Array<{ hour: string, value: number }> } | null, emptyMilePercent: { percent: number, emptyMiles: number, totalMiles: number, deltaPp: number } | null, atRisk: { count: number, delta: number, etaSlip: number, weather: number, reefer: number } | null, unassigned: { count: number, delta: number, revenueWaiting: number } | null, readyToDispatch: { count: number, delta: number, unassigned: number, driverReady: number } | null, detentionWatchlist: { items: Array<{ shipmentId: string, customer: string | null, dwellLabel: string, tone: string }> } | null, customerMix: { windowDays: number, entries: Array<{ customerId: string, name: string, revenue: number, share: number, loads: number, trend: number }> } | null, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string | null, origin: string | null, destination: string | null, driver: string | null, status: string }> } | null, laneHeatmap: { windowDays: number, total: number, cells: Array<{ origin: string, destination: string, count: number }> } | null } };
+export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, activeShipments: { count: number, changeFromYesterday: number, sparkline: Array<{ hour: string, value: number }>, breakdown: { inTransit: number, atRisk: number, loading: number, done: number } } | null, onTimePercent: { percent: number, onTimeCount: number, totalCount: number, target: number | null, deltaPp: number, sevenDayPercent: number } | null, profitability: { avgCpm: number, avgMarginPct: number | null, hasMargin: boolean, unprofitableCount: number, shipmentCount: number, totalMiles: number } | null, revenueToday: { total: number, deltaPct: number, rpm: number, sparkline: Array<{ hour: string, value: number }> } | null, emptyMilePercent: { percent: number, emptyMiles: number, totalMiles: number, deltaPp: number } | null, atRisk: { count: number, delta: number, etaSlip: number, weather: number, reefer: number } | null, unassigned: { count: number, delta: number, revenueWaiting: number } | null, readyToDispatch: { count: number, delta: number, unassigned: number, driverReady: number } | null, detentionWatchlist: { items: Array<{ shipmentId: string, customer: string | null, dwellLabel: string, tone: string }> } | null, customerMix: { windowDays: number, entries: Array<{ customerId: string, name: string, revenue: number, share: number, loads: number, trend: number }> } | null, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string | null, origin: string | null, destination: string | null, driver: string | null, status: string }> } | null, laneHeatmap: { windowDays: number, total: number, cells: Array<{ origin: string, destination: string, count: number }> } | null } };
 
 export type ShipmentTomorrowsPickupsQueryVariables = Exact<{
   limit?: number | null | undefined;
@@ -17704,7 +17627,7 @@ export type ShipmentProfitabilityQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentProfitabilityQuery = { shipmentProfitability: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, revenue: string, estimatedCost: string, profit: string, marginPercent: string | null, revenuePerLoadedMile: string | null, breakEvenRpm: string | null, missingDistance: boolean, breakdown: Array<{ category: CostCategoryType, name: string, costBehavior: CostBehavior, ratePerMile: string, amount: string, effectiveSource: EffectiveRateSource }>, profile: { totalCpm: string, variableCpm: string, fixedCpm: string, targetMarginPercent: string | null, includeDeadheadMiles: boolean, asOfDate: string, fuel: { pricePerGallon: string | null, priceDate: string, fuelIndexId: string | null, milesPerGallon: string, source: EffectiveRateSource } | null, glWindow: { fromDate: number, toDate: number, fleetMiles: number, hasPostings: boolean } | null } } | null };
+export type ShipmentProfitabilityQuery = { shipmentProfitability: { shipmentId: string, loadedMiles: number, deadheadMiles: number, totalMiles: number, revenue: string, estimatedCost: string, profit: string, marginPercent: string | null, revenuePerLoadedMile: string | null, breakEvenRpm: string | null, missingDistance: boolean, breakdown: Array<{ category: CostCategoryType, name: string, costBehavior: CostBehavior, ratePerMile: string, amount: string, effectiveSource: EffectiveRateSource }>, profile: { totalCpm: string, variableCpm: string, fixedCpm: string, targetMarginPercent: string | null, includeDeadheadMiles: boolean, asOfDate: string, fuel: { pricePerGallon: string | null, priceDate: string, fuelIndexId: string | null, milesPerGallon: string, source: EffectiveRateSource } | null, glWindow: { fromDate: number, toDate: number, fleetMiles: number, hasPostings: boolean } | null } } };
 
 export type UpdateSidebarPreferencesMutationVariables = Exact<{
   input: SidebarPreferencesInput;
@@ -17942,6 +17865,14 @@ export type DeleteTelematicsFormMappingMutationVariables = Exact<{
 
 
 export type DeleteTelematicsFormMappingMutation = { deleteTelematicsFormMapping: boolean };
+
+export type DeskShipmentTendersQueryVariables = Exact<{
+  shipmentId: string | number;
+  shipmentMoveId?: string | number | null | undefined;
+}>;
+
+
+export type DeskShipmentTendersQuery = { tendersByShipment: Array<{ id: string, shipmentMoveId: string, mode: TenderMode, status: TenderStatus, acceptedOfferId: string | null, bounceCount: number, escalationRound: number, createdAt: number, offers: Array<{ id: string, carrierId: string, rank: number, rateMethod: CarrierRateMethod, rate: string, channel: TenderChannel, status: TenderOfferStatus, sentAt: number | null, expiresAt: number | null, respondedAt: number | null, responseSource: TenderResponseSource | null, counterRate: string | null, counterNeedsApproval: boolean, carrier: { ' $fragmentRefs'?: { 'CarrierReferenceFragment': CarrierReferenceFragment } } | null }> | null }> };
 
 export type TendersByShipmentQueryVariables = Exact<{
   shipmentId: string | number;
@@ -19311,6 +19242,7 @@ export { DataTableInsightFieldsDocument, DataTableFacetsDocument, DataTableAggre
 export { DetentionFacilityStatsDocument, DetentionCustomerStatsDocument, DetentionWaiverStatsDocument, DetentionPolicyPreviewDocument, DetentionBacktestDocument } from "./documents/detention/analytics";
 export { DeskDetentionCardDocument } from "./documents/detention/card";
 export { DetentionOccurrenceFieldsFragmentDoc, DetentionEvidenceFieldsFragmentDoc, DetentionNoticeFieldsFragmentDoc, DetentionCollectabilityFieldsFragmentDoc, DetentionDeskDocument, DetentionOccurrenceDetailDocument, ShipmentDetentionDocument, DetentionDisputePacketDocument, WaiveDetentionOccurrenceDocument, ApproveDetentionOccurrenceDocument, DisputeDetentionOccurrenceDocument, SendDetentionNoticeDocument } from "./documents/detention/desk";
+export { DeskDetentionOccurrencesDocument } from "./documents/detention/desk-board";
 export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentDoc, DetentionPolicyTableDocument, DetentionPolicyDocument, CreateDetentionPolicyDocument, UpdateDetentionPolicyDocument, DeleteDetentionPolicyDocument } from "./documents/detention/table";
 export { DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
@@ -19382,20 +19314,20 @@ export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./docu
 export { DeskManualJournalCardDocument } from "./documents/manual-journal/desk";
 export { ManualJournalTableRowFieldsFragmentDoc, ManualJournalTableDocument } from "./documents/manual-journal/table";
 export { NotificationFieldsFragmentDoc, NotificationListDocument, NotificationUnreadCountDocument, MyNotificationListDocument, MyNotificationUnreadCountDocument, MarkAllMyNotificationsReadDocument, MarkMyNotificationsReadDocument, MarkMyNotificationsUnreadDocument, DismissMyNotificationsDocument, RestoreMyNotificationsDocument, MarkNotificationsReadDocument, MarkNotificationsUnreadDocument, MarkAllNotificationsReadDocument, DismissNotificationsDocument, RestoreNotificationsDocument } from "./documents/notification/operations";
-export { DeskOrderCardDocument } from "./documents/order-desk/desk";
+export { DeskOrderCardDocument, DeskOrderDocument } from "./documents/order-desk/desk";
 export { OrderDetailDocument } from "./documents/order/detail";
 export { OrderMutationResultFragmentDoc, AttachOrderShipmentsDocument, DetachOrderShipmentDocument, CreateOrderDocument, UpdateOrderDocument, AddOrderChargeDocument, SetOrderChargeAllocationsDocument, UpdateOrderChargeDocument, RemoveOrderChargeDocument, CloseOrderDocument, CancelOrderDocument } from "./documents/order/mutations";
 export { OrderTableRowFieldsFragmentDoc, OrderTableDocument } from "./documents/order/table";
 export { OrgHolidayFieldsFragmentDoc, OrgHolidaysDocument, CreateOrgHolidayDocument, UpdateOrgHolidayDocument, DeleteOrgHolidayDocument } from "./documents/org-holiday/operations";
 export { JobPositionsDocument, HeadcountDocument, JobPositionHoldersDocument, MyTeamDocument, ApprovalDelegationsDocument, AssignWorkerPositionDocument, AssignUserPositionDocument, CreateJobPositionDocument, UpdateJobPositionDocument, DelegateApprovalDocument, RevokeApprovalDelegationDocument } from "./documents/org-structure/operations";
 export { OrganizationSettingsStateFieldsFragmentDoc, OrganizationSettingsFieldsFragmentDoc, OrganizationSettingsDocument, UpdateOrganizationSettingsDocument } from "./documents/organization/page";
-export { PageAccessRequirementFieldsFragmentDoc, PageAccessFieldsFragmentDoc, PageAccessDocument, PageAccessPreviewDocument, PageAccessScreensDocument, RoleResourceGuidesDocument } from "./documents/page-access/page-access";
 export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";
 export { DeskRateAgreementPricingDocument } from "./documents/rate/desk";
 export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
+export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
 export { InboundMailboxReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";
 export { CannedReportsDocument } from "./documents/reports/canned";
@@ -19432,6 +19364,7 @@ export { TcaSubscriptionTableRowFieldsFragmentDoc, TcaSubscriptionTableDocument 
 export { TableConfigurationFieldsFragmentDoc, TableConfigurationTableDocument, DefaultTableConfigurationDocument, TableConfigurationDetailDocument, CreateTableConfigurationDocument, UpdateTableConfigurationDocument, DeleteTableConfigurationDocument, SetDefaultTableConfigurationDocument, SetOrgDefaultTableConfigurationDocument } from "./documents/table-configuration/operations";
 export { MyTableLayoutDocument, SaveMyTableLayoutDocument, ResetMyTableLayoutDocument } from "./documents/table-layout/operations";
 export { VehiclePositionsDocument, WorkerHosStatesDocument, WorkerHosStateDocument, WorkerHosViolationsDocument, TelematicsStatusDocument, WorkerHosLogsDocument, WorkerHosDailyLogsDocument, ShipmentDriverFeasibilityDocument, VehicleInspectionsDocument, WorkerFormSubmissionsDocument, HosCertificationSummaryDocument, ShipmentFormSubmissionsDocument, TelematicsFormMappingsDocument, SaveTelematicsFormMappingDocument, DeleteTelematicsFormMappingDocument } from "./documents/telematics/page";
+export { DeskShipmentTendersDocument } from "./documents/tender/desk";
 export { TendersByShipmentDocument, LiveTenderByMoveDocument } from "./documents/tender/operations";
 export { TimesheetsDocument, TimesheetDocument, OpenTimeClockEntryDocument, OpenTimeClockEntriesDocument, TimeClockEntriesDocument, PayrollExportsDocument, PayrollExportRowsDocument, ClockInDocument, ClockOutDocument, RecordTimeEntryDocument, DeleteTimeEntryDocument, TransitionTimesheetDocument, GeneratePayrollExportDocument, VoidPayrollExportDocument } from "./documents/timesheet/operations";
 export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskVehiclePositionsDocument, DeskTractorInspectionsDocument } from "./documents/tractor/desk";
