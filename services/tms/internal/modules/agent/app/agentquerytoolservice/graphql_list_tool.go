@@ -124,6 +124,7 @@ type graphQLListSpec struct {
 	// amounts shows each amount the record holds in minor units as the
 	// decimal a person reads, and filters it by that decimal (graphql_money.go).
 	amounts bool
+	marks   func(row map[string]any) (agent.RecordRef, bool)
 }
 
 // idReference is where a list's id parameter points: the resource, what the
@@ -516,7 +517,8 @@ func graphQLListSpecs() []graphQLListSpec {
 		trainingReadSpecs(), timeOffReadSpecs(), workerRecordReadSpecs(), operationsReadSpecs(),
 		accountingReadSpecs(), ediReadSpecs(), ledgerReadSpecs(), rateReadSpecs(),
 		workforceProgrammeReadSpecs(), formulaReadSpecs(), fuelReadSpecs(), settlementReadSpecs(),
-		factoringReadSpecs(), billingReadSpecs(), reportReadSpecs(),
+		factoringReadSpecs(), billingReadSpecs(), carrierReadSpecs(),
+		reportReadSpecs(),
 	)
 }
 
@@ -832,6 +834,20 @@ func outsideRecords(
 	return out
 }
 
+func markedRows(spec *graphQLListSpec, items []map[string]any) []agent.RecordRef {
+	out := outsideRecords(spec.resource, spec.outside, items...)
+	if spec.marks == nil {
+		return out
+	}
+	for _, item := range items {
+		if ref, marked := spec.marks(item); marked {
+			out = append(out, ref)
+		}
+	}
+
+	return out
+}
+
 func (t *graphQLListTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
@@ -909,7 +925,7 @@ func (t *graphQLListTool) Query(
 		HasMore:          page.hasMore,
 		Total:            page.total,
 		WithheldByAccess: page.withheld,
-		outside:          outsideRecords(t.spec.resource, t.spec.outside, page.items...),
+		outside:          markedRows(&t.spec, page.items),
 	}
 	if page.hasMore {
 		outcome.NextCursor = window.next(page.endCursor)
@@ -935,7 +951,7 @@ func (t *graphQLListTool) Query(
 
 // withBeside is a page's outcome with the records read alongside it, each
 // under its key.
-func withBeside(outcome *graphQLListOutcome, beside map[string]any) (map[string]any, error) {
+func withBeside(outcome *graphQLListOutcome, beside map[string]any) (any, error) {
 	out := make(map[string]any, len(beside)+10)
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {
@@ -946,6 +962,9 @@ func withBeside(outcome *graphQLListOutcome, beside map[string]any) (map[string]
 	}
 	for key, value := range beside {
 		out[key] = value
+	}
+	if len(outcome.outside) > 0 {
+		return &markedRecord{record: out, outside: outcome.outside}, nil
 	}
 
 	return out, nil

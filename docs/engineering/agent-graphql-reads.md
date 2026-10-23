@@ -829,6 +829,9 @@ Each module's PR:
 | Factoring | `factoring_list_remittances` | none | reads `DeskFactoringRemittances`. `factoring_remittance` declared no field sensitivities; where a remittance stands is Internal and its total cash stays Restricted |
 | Factoring | `factoring_get_remittance` | `lines.cells` | reads `DeskFactoringRemittance` with the lines it asks for: `FactoringRemittance` gains `lines(matchStatuses:)` (one safe addition, its resolver reading the remittance's lines once). A line's amounts stay Restricted, and so do the cells the factor printed, which carry the same amounts; the repository tool returned an unreadable line's cells ungated |
 | Factoring | `factoring_get_reserve_balance` | none | reads `FactoringReserveBalance`. `FactoringReserveBalance` had no kind, so the guard did not gate it; it now declares `@kind(resource: "factoring_reserve")`, whose balances stay Restricted and whose entry count and last movement are Internal |
+| Carriers | `carrier_list_intelligence_events` | none | reads `DeskCarrierIntelEvents`, written for it and named in `reads.yml` because the tool is named for the carrier it watches: the repository row's fields. Status, severity and category are `CarrierIntelEventFilterInput`'s typed filters, whose fields now carry descriptions, so the record fields of the same names are left unoffered, as are the event's ids, rule, values and resolution note. `fromDate`/`toDate` became `detectedFrom`/`detectedTo`. Every field it selects is Internal under `carrier_intelligence` |
+| Carriers | `carrier_list_capacity_postings` | none | `field-no-op`: reads `DeskCarrierCapacityPostings`, written for it. Every `carrier_capacity_posting` field is Internal; the carrier, origin location, states and equipment type are linked records and show their reference views. `openOnly` replaces telling the model to filter `availableTo` from today. The repository list spec stays in `listCatalogSpecs` for `FilterCatalog()` |
+| Carriers | `carrier_list_invoice_matches` | none | reads `DeskCarrierInvoiceMatches`, an `items` list paged by its root's limit and offset, checked by `carrier_invoice_match` read as its root is; the repository tool checked `carrier_settlement` read, which still reaches it as the parent. `carrier_invoice_match` declared only the EDI invoice's fields, so under its Restricted default every match field but its reference view would be withheld at Internal; the match's links, how it was matched, its resolution and its carrier are now declared Internal, and the invoice, expected and variance totals stay Restricted, as the repository row gated them. The spec sets `amounts` and computes `source` (EDI, Document or Manual) in its `shape`; a match whose invoice a carrier sent over EDI marks the run with that EDI invoice (`marks`) |
 | Reports | `report_list_runs` | none | reads `DeskReportRuns`, added for the Desk. `ReportRun` declares `@kind(resource: "report")` and gains `rowsStored`, whether the run's rows were stored for a comparison, which the repository row worked out from the run itself. `reportRuns` keeps the reader to their own runs (`ListRunsConnection` sets `RequestedBy` from the reader), as the repository tool did. `report` defaults to Internal, so nothing is withheld at Internal; the spec's `shape` marks each run `comparable` with the reason it is not, and leaves a run whose status or storage was withheld unjudged. The repository tool's 25-run cap becomes the cursor page |
 | Reports | `report_list_schedules` | none | reads `DeskReportSchedules`, added for the Desk. `ReportSchedule` declares `@kind(resource: "report")` and gains `mine` (the reader set it up), which the repository row called `yours`; `reportSchedules` gains `enabledOnly` and `limit` (safe additions), the limit bounded by `base.RecordListLimit`: every schedule of a named report, one page of 20 across the organization when no report is named, where the root read every schedule. The list is the organization's on both paths, as the repository tool read it; `mine` widens nothing, it only says which are the reader's |
 
@@ -909,7 +912,10 @@ the fields whose text was written outside the organization (`outside`: a driver'
 of an expense or a pay dispute), and a record is marked only where one of them is shown: one the
 ceiling withheld was never read, as the repository tools marked a description only when they
 showed it. A list's outcome and a get's record each carry the marks (`graphQLListOutcome`,
-`markedRecord`); an unpaged list refuses `outside`, since its outcome carries none.
+`markedRecord`); an unpaged list's outcome carries them as a `markedRecord`, and a page read with
+records alongside keeps them (`withBeside`). Where a row's outside text belongs to another record
+than the row (a carrier invoice match's EDI invoice), the spec names that record per row in
+`marks`, and its marks join the `outside` fields' on the same outcome.
 
 ## Tracing
 
@@ -963,7 +969,8 @@ A list returns what `searchOutcome` returns today, with cursor paging:
   it the same way, and where the record already carries the decimal under that name the
   minor-unit copy is dropped (`graphql_money.go`). It runs after the spec's `shape`, which still
   reads the minor units (the accounting drift lists, which do not set it, compare them to the
-  tolerance). An amount the schema holds in minor units under another name
+  tolerance). An unpaged list may set it too, unless one of its root's arguments holds minor units,
+since its arguments are sent as the call gives them. An amount the schema holds in minor units under another name
   (`WorkerEarningsSummary.outstandingAdvances`) is named in the get spec's `minorUnits`. Such a
   spec's amount filters take the decimal too (Typed parameters). The settlement and pay reads set
   it; a module whose reads carry money sets it when it converts.

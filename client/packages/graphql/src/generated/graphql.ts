@@ -2172,6 +2172,15 @@ export type CarrierAssignmentStatus =
   | 'Confirmed'
   | 'Pending';
 
+export type CarrierCapacityRateMethod =
+  | 'Flat'
+  | 'PerMile';
+
+export type CarrierCapacitySource =
+  | 'EDI'
+  | 'Email'
+  | 'Manual';
+
 export type CarrierComplianceStatus =
   | 'Disqualified'
   | 'Expired'
@@ -2267,12 +2276,16 @@ export type CarrierIntelEnrollmentReason =
   | 'SelfMonitor';
 
 export type CarrierIntelEventFilterInput = {
+  /** Only this carrier's events. */
   carrierId?: string | number | null | undefined;
   categories?: Array<CarrierIntelSection> | null | undefined;
+  /** Only events nobody has resolved or dismissed yet: Open and Acknowledged. */
   openOnly?: boolean | null | undefined;
   severities?: Array<CarrierIntelSeverity> | null | undefined;
   statuses?: Array<CarrierIntelEventStatus> | null | undefined;
+  /** Only events about this subject, by its id or DOT number as the event names it. */
   subjectId?: string | null | undefined;
+  /** Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number. */
   subjectType?: CarrierIntelSubjectType | null | undefined;
 };
 
@@ -11720,6 +11733,25 @@ export type DeskCarrierSettlementsQueryVariables = Exact<{
 
 export type DeskCarrierSettlementsQuery = { carrierSettlements: { totalCount?: number | null, edges: Array<{ node: { id: string, settlementNumber: string, status: CarrierSettlementStatus, periodStart: number, periodEnd: number, payDate: number, netPayableMinor: number, shipmentCount: number, currencyCode: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type DeskCarrierCapacityPostingsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  openOnly?: boolean | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskCarrierCapacityPostingsQuery = { carrierCapacityPostings: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string, originLocationId: string | null, originStateId: string | null, originRadiusMiles: number | null, destinationStateId: string | null, equipmentTypeId: string | null, availableFrom: number, availableTo: number, truckCount: number, rateMethod: CarrierCapacityRateMethod, rate: string | null, source: CarrierCapacitySource, version: number, carrier: { id: string, name: string } | null, originLocation: { id: string, name: string, city: string } | null, originState: { id: string, abbreviation: string } | null, destinationState: { id: string, abbreviation: string } | null, equipmentType: { id: string, code: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type DeskCarrierInvoiceMatchesQueryVariables = Exact<{
+  status?: CarrierInvoiceMatchStatus | null | undefined;
+  carrierId?: string | number | null | undefined;
+  limit?: number | null | undefined;
+  offset?: number | null | undefined;
+}>;
+
+
+export type DeskCarrierInvoiceMatchesQuery = { carrierInvoiceMatches: { items: Array<{ id: string, ediCarrierInvoiceId: string | null, documentAiExtractionId: string | null, carrierId: string, carrierSettlementId: string | null, status: CarrierInvoiceMatchStatus, matchedVia: CarrierInvoiceMatchVia, invoiceNumber: string, invoiceTotalMinor: number, expectedTotalMinor: number, varianceMinor: number, currencyCode: string, resolutionNote: string, resolvedAt: number | null, createdAt: number, carrier: { id: string, name: string } | null }> } };
+
 export type CarrierIntelFindingFieldsFragment = { code: string, category: CarrierIntelSection, action: CarrierIntelRuleAction, severity: CarrierIntelSeverity, message: string, unverifiable: boolean, unconfirmed: boolean, overridden: boolean, overrideId: string | null, overrideExpiresAt: number | null } & { ' $fragmentName'?: 'CarrierIntelFindingFieldsFragment' };
 
 export type CarrierIntelAddressFieldsFragment = { line1: string | null, city: string | null, state: string | null, postalCode: string | null, country: string | null, undelivered: boolean | null } & { ' $fragmentName'?: 'CarrierIntelAddressFieldsFragment' };
@@ -12014,6 +12046,15 @@ export type OverrideCarrierEquipmentVerificationMutationVariables = Exact<{
 
 
 export type OverrideCarrierEquipmentVerificationMutation = { overrideCarrierEquipmentVerification: { ' $fragmentRefs'?: { 'CarrierEquipmentVerificationFieldsFragment': CarrierEquipmentVerificationFieldsFragment } } };
+
+export type DeskCarrierIntelEventsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  filter?: CarrierIntelEventFilterInput | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type DeskCarrierIntelEventsQuery = { carrierIntelEvents: { totalCount?: number | null, edges: Array<{ node: { id: string, carrierId: string | null, subjectName: string | null, dotNumber: string, subjectType: CarrierIntelSubjectType, category: CarrierIntelSection, severity: CarrierIntelSeverity, action: CarrierIntelRuleAction | null, status: CarrierIntelEventStatus, summary: string, detectedAt: number, acknowledgedAt: number | null, resolvedAt: number | null, resolution: CarrierIntelEventResolution | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskCarrierSettlementCardQueryVariables = Exact<{
   id: string | number;
@@ -19864,7 +19905,8 @@ export { BriefingFieldsFragmentDoc, TodaysBriefingDocument, MarkBriefingReadDocu
 export { BulkEditJobFieldsFragmentDoc, BulkEditFieldsDocument, PreviewBulkEditDocument, MyBulkEditDocument, StartBulkEditDocument, UndoMyBulkEditDocument } from "./documents/bulk-edit/operations";
 export { CaptureSourceInfoFieldsFragmentDoc, CaptureDeviceFieldsFragmentDoc, CaptureDeviceFleetFieldsFragmentDoc, CaptureProfileFieldsFragmentDoc, CaptureRequestFieldsFragmentDoc, CaptureRecordRefFieldsFragmentDoc, CaptureBatchRowFieldsFragmentDoc, CapturePageFieldsFragmentDoc, CaptureItemFieldsFragmentDoc, CaptureBatchDetailFieldsFragmentDoc, MyCaptureAccessDocument, CaptureAgentReleaseDocument, CaptureBatchesDocument, CaptureBatchCountDocument, CaptureBatchDocument, MyCaptureDevicesDocument, CaptureDevicesDocument, AvailableCaptureProfilesDocument, CaptureProfilesDocument, CaptureRequestsForTargetDocument, CaptureDevicePairingDocument, EditCaptureItemsDocument, FileCaptureItemDocument, FileCaptureItemsDocument, DiscardCaptureItemDocument, DiscardCaptureBatchDocument, CreateCaptureRequestDocument, CancelCaptureRequestDocument, CreateCaptureCoverSheetsDocument, ApproveCaptureDevicePairingDocument, DenyCaptureDevicePairingDocument, RevokeMyCaptureDeviceDocument, RevokeCaptureDeviceDocument, CreateCaptureProfileDocument, UpdateCaptureProfileDocument, DeleteCaptureProfileDocument } from "./documents/capture/capture";
 export { DeskCarrierCardDocument, DeskCarrierEligibilityDocument, DeskCarrierIntelDocument, DeskCarrierSettlementsDocument } from "./documents/carrier-desk/desk";
-export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFieldsFragmentDoc, CarrierIntelAddressFieldsFragmentDoc, CarrierIntelAuthorityGrantFieldsFragmentDoc, CarrierIntelProfileFieldsFragmentDoc, CarrierIntelSnapshotFieldsFragmentDoc, CarrierIntelEventFieldsFragmentDoc, CarrierMonitoringEnrollmentFieldsFragmentDoc, CarrierIntelOverrideFieldsFragmentDoc, CarrierEquipmentVerificationFieldsFragmentDoc, CarrierIntelControlFieldsFragmentDoc, CarrierIntelProviderInfoFieldsFragmentDoc, CarrierIntelFieldUpdateFieldsFragmentDoc, CarrierIntelInsuranceChangeFieldsFragmentDoc, CarrierIntelSettingsDocument, CarrierIntelCostEstimateDocument, CarrierIntelUsageDocument, CarrierIntelMonitoringStatusDocument, CarrierIntelEventTableDocument, CarrierIntelEventInboxDocument, CarrierIntelEventDocument, CarrierIntelEventCarrierSummaryDocument, CarrierMonitoringEnrollmentTableDocument, CarrierIntelReviewQueueDocument, CarrierIntelligenceDocument, CarrierIntelSnapshotHistoryDocument, CarrierIntelSyncPlanDocument, CarrierIntelOverridesDocument, CarrierIntelRawPayloadDocument, CarrierIntelLookupDocument, CarrierSourcingSearchDocument, CarrierSourcingAutocompleteDocument, CarrierEquipmentVerificationsDocument, MyCarrierIntelligenceDocument, CustomerBrokerIntelligenceDocument, UpdateCarrierIntelControlDocument, SwitchCarrierIntelProviderDocument, ResumeCarrierIntelMonitoringDocument, VetCarrierDocument, VetCustomerBrokerDocument, SetCarrierMonitoringDocument, AcknowledgeCarrierIntelEventsDocument, ResolveCarrierIntelEventDocument, MarkCarrierIntelReviewedDocument, GrantCarrierIntelOverrideDocument, RevokeCarrierIntelOverrideDocument, ApplyCarrierIntelSuggestionsDocument, ImportSourcedCarrierDocument, VerifyCarrierEquipmentDocument, OverrideCarrierEquipmentVerificationDocument } from "./documents/carrier-intelligence/operations";
+export { DeskCarrierCapacityPostingsDocument, DeskCarrierInvoiceMatchesDocument } from "./documents/carrier-desk/reads";
+export { CarrierIntelFindingFieldsFragmentDoc, CarrierIntelSnapshotSummaryFieldsFragmentDoc, CarrierIntelAddressFieldsFragmentDoc, CarrierIntelAuthorityGrantFieldsFragmentDoc, CarrierIntelProfileFieldsFragmentDoc, CarrierIntelSnapshotFieldsFragmentDoc, CarrierIntelEventFieldsFragmentDoc, CarrierMonitoringEnrollmentFieldsFragmentDoc, CarrierIntelOverrideFieldsFragmentDoc, CarrierEquipmentVerificationFieldsFragmentDoc, CarrierIntelControlFieldsFragmentDoc, CarrierIntelProviderInfoFieldsFragmentDoc, CarrierIntelFieldUpdateFieldsFragmentDoc, CarrierIntelInsuranceChangeFieldsFragmentDoc, CarrierIntelSettingsDocument, CarrierIntelCostEstimateDocument, CarrierIntelUsageDocument, CarrierIntelMonitoringStatusDocument, CarrierIntelEventTableDocument, CarrierIntelEventInboxDocument, CarrierIntelEventDocument, CarrierIntelEventCarrierSummaryDocument, CarrierMonitoringEnrollmentTableDocument, CarrierIntelReviewQueueDocument, CarrierIntelligenceDocument, CarrierIntelSnapshotHistoryDocument, CarrierIntelSyncPlanDocument, CarrierIntelOverridesDocument, CarrierIntelRawPayloadDocument, CarrierIntelLookupDocument, CarrierSourcingSearchDocument, CarrierSourcingAutocompleteDocument, CarrierEquipmentVerificationsDocument, MyCarrierIntelligenceDocument, CustomerBrokerIntelligenceDocument, UpdateCarrierIntelControlDocument, SwitchCarrierIntelProviderDocument, ResumeCarrierIntelMonitoringDocument, VetCarrierDocument, VetCustomerBrokerDocument, SetCarrierMonitoringDocument, AcknowledgeCarrierIntelEventsDocument, ResolveCarrierIntelEventDocument, MarkCarrierIntelReviewedDocument, GrantCarrierIntelOverrideDocument, RevokeCarrierIntelOverrideDocument, ApplyCarrierIntelSuggestionsDocument, ImportSourcedCarrierDocument, VerifyCarrierEquipmentDocument, OverrideCarrierEquipmentVerificationDocument, DeskCarrierIntelEventsDocument } from "./documents/carrier-intelligence/operations";
 export { DeskCarrierSettlementCardDocument } from "./documents/carrier-settlement/desk";
 export { CarrierSettlementTableDocument, CarrierSettlementDetailDocument, CarrierSettlementBatchTableDocument, CarrierSettlementBatchDetailDocument, CarrierCostEventTableDocument, CarrierSettlementControlDocument, CurrentCarrierSettlementPeriodDocument, CarrierSettlementWorkspaceSummaryDocument, CarrierLedgerEntriesDocument, CarrierInvoiceMatchesDocument, EdiCarrierInvoicesDocument, SuggestCarrierForEdiInvoiceDocument, ExportCarrierSettlementBatchCsvDocument, GenerateCarrierSettlementBatchDocument, SubmitCarrierSettlementDocument, ApproveCarrierSettlementDocument, RejectCarrierSettlementDocument, PostCarrierSettlementDocument, MarkCarrierSettlementPaidDocument, VoidCarrierSettlementDocument, RecalculateCarrierSettlementDocument, AddCarrierSettlementAdjustmentDocument, RemoveCarrierSettlementAdjustmentDocument, UpdateCarrierSettlementControlDocument, LinkEdiCarrierInvoiceToCarrierDocument, CreateCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchDocument, AcceptCarrierInvoiceMatchWithVarianceDocument, RejectCarrierInvoiceMatchDocument } from "./documents/carrier-settlement/operations";
 export { CarrierContactFieldsFragmentDoc, CarrierInsurancePolicyFieldsFragmentDoc, CarrierTableRowFieldsFragmentDoc, CarrierTableDocument } from "./documents/carrier/table";
