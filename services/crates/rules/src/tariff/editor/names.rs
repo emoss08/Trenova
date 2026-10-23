@@ -41,8 +41,7 @@ fn snippet(items: &mut Items, label: &str, insert: &str, doc: &'static str) {
 
 /// The enums the root file can name, by the name they are written with: the schema's, its
 /// own and the imported ones.
-pub fn enums(site: &Site<'_, '_>) -> Vec<(String, Arc<EnumType>)> {
-    let session = site.session;
+pub fn enums(session: &Session<'_>) -> Vec<(String, Arc<EnumType>)> {
     let mut out: Vec<(String, Arc<EnumType>)> = session
         .schema
         .enums
@@ -310,7 +309,7 @@ fn test_names(site: &Site<'_, '_>, items: &mut Items) {
 /// The enum variants: the expected enum's first and bare, the others bare when only one enum
 /// has them and qualified (`StopStatus.New`) when several do.
 fn variants(site: &Site<'_, '_>, items: &mut Items, expected: Option<&Type>) {
-    let visible = enums(site);
+    let visible = enums(site.session);
     let wanted = match expected.map(Type::unwrapped) {
         Some(Type::Enum(enumeration)) => Some(Arc::clone(enumeration)),
         _ => None,

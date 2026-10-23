@@ -784,7 +784,7 @@ pub fn fill_call(site: &Site<'_, '_>, item: &mut CompletionItem, module: ModuleI
 
 /// The variants of the enum named `name`, for `Enum.`.
 fn enum_variants(site: &Site<'_, '_>, items: &mut Items, name: &str) {
-    let Some(enumeration) = names::enums(site)
+    let Some(enumeration) = names::enums(site.session)
         .into_iter()
         .find(|(written, _)| written == name)
         .map(|(_, e)| e)
@@ -1113,7 +1113,7 @@ fn types(site: &Site<'_, '_>, items: &mut Items) {
             item.detail = Some(String::from("Schema"));
         }
     }
-    for (name, enumeration) in names::enums(site) {
+    for (name, enumeration) in names::enums(site.session) {
         if let Some(item) = items.add(Rank::Expected, Kind::Enum, &name) {
             item.detail = Some(format!("enum {name}"));
             item.doc.clone_from(&enumeration.doc);
