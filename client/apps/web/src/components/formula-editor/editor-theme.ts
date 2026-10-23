@@ -39,9 +39,6 @@ export const lightTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-    },
     ".cm-activeLine": {
       backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
@@ -173,9 +170,6 @@ export const darkTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-    },
     ".cm-activeLine": {
       backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
@@ -274,6 +268,16 @@ export const darkTheme = EditorView.theme(
  * inline values. Every colour is a token, so it follows the theme.
  */
 export const languageServiceTheme = EditorView.theme({
+  // Selected code reads as selected text does everywhere in Trenova: solid amber, with the
+  // app's dark ink from its own ::selection. The selector matches CodeMirror's base theme, whose
+  // dark teal otherwise wins while the editor has focus. Out of focus the browser drops the
+  // selection's ink, so the amber fades to a tint the syntax colours read on.
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
+    backgroundColor: "var(--selection)",
+  },
+  ".cm-selectionLayer .cm-selectionBackground": {
+    backgroundColor: "var(--highlight-fill)",
+  },
   ".cm-lintRange-error": {
     backgroundImage: "none",
     textDecoration: "underline wavy var(--danger)",

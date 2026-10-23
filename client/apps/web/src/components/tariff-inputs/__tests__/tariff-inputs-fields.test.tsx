@@ -3,7 +3,7 @@ import { setLocale } from "@trenova/shared/i18n/runtime";
 import userEvent from "@testing-library/user-event";
 import type { TariffInputDeclaration, TariffInputValues } from "@trenova/shared/types/tariff";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TariffInputsFields } from "../tariff-inputs-fields";
 
 afterEach(cleanup);
@@ -72,6 +72,16 @@ const breaks: TariffInputDeclaration = {
   range: null,
 };
 
+const residential: TariffInputDeclaration = {
+  name: "residential",
+  doc: "Whether delivery is residential.",
+  type: "Bool",
+  descriptor: { kind: "bool" },
+  required: false,
+  default: true,
+  range: { from: 120, to: 131 },
+};
+
 function Values() {
   const values = useWatch({ name: "inputs" }) as unknown;
   return <pre data-testid="values">{JSON.stringify(values ?? {})}</pre>;
@@ -81,10 +91,12 @@ function Harness({
   declarations,
   initial = {},
   inherited,
+  onReveal,
 }: {
   declarations: TariffInputDeclaration[];
   initial?: Record<string, unknown>;
   inherited?: TariffInputValues;
+  onReveal?: (declaration: TariffInputDeclaration) => void;
 }) {
   const form = useForm<{ inputs: Record<string, unknown> }>({
     defaultValues: { inputs: initial },
@@ -96,6 +108,7 @@ function Harness({
         name="inputs"
         inherited={inherited}
         inheritedFrom={inherited ? "agreement" : undefined}
+        onReveal={onReveal}
       />
       <Values />
     </FormProvider>
@@ -120,7 +133,7 @@ describe("TariffInputsFields", () => {
     const user = userEvent.setup();
     render(<Harness declarations={[rate]} />);
 
-    await user.type(screen.getByRole("textbox", { name: "" }), "2.35");
+    await user.type(screen.getByRole("textbox", { name: "Paid per loaded mile" }), "2.35");
 
     expect(values()).toEqual({ rate: { $q: "2.35", u: "$/mi" } });
   });
@@ -342,6 +355,39 @@ describe("TariffInputsFields", () => {
     expect(
       screen.getByRole("table", { name: "Weight breaks, lightest first" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows an unset yes-or-no input as its default and writes it when switched", async () => {
+    const user = userEvent.setup();
+    render(<Harness declarations={[residential]} />);
+
+    const toggle = screen.getByRole("switch", { name: "Whether delivery is residential" });
+    expect(toggle).toBeChecked();
+    expect(values()).toEqual({});
+
+    await user.click(toggle);
+
+    expect(values()).toEqual({ residential: false });
+    expect(toggle).not.toBeChecked();
+  });
+
+  it("links each input to its declaration when the form sits beside the source", async () => {
+    const user = userEvent.setup();
+    const onReveal = vi.fn();
+    render(<Harness declarations={[residential, minimumCharge]} onReveal={onReveal} />);
+
+    await user.click(screen.getByRole("button", { name: "Show residential in the source" }));
+
+    expect(onReveal).toHaveBeenCalledWith(residential);
+    expect(screen.getByRole("button", { name: "Show minimumCharge in the source" })).toBeDisabled();
+  });
+
+  it("leaves out the declaration links when no source is beside the form", () => {
+    render(<Harness declarations={[residential]} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Show residential in the source" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says when a tariff declares no inputs", () => {

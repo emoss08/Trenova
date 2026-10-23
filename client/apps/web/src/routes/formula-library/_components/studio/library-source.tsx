@@ -4,6 +4,7 @@ import { NovaButton } from "@/components/tariff-studio/nova-button";
 import { ProblemsList } from "@/components/tariff-studio/problems-list";
 import {
   reportFormat,
+  SOURCE_EDITOR_MAX_HEIGHT,
   sourceStatus,
   SourceStatusBar,
 } from "@/components/tariff-studio/source-status";
@@ -194,6 +195,7 @@ export function LibrarySource() {
               ariaLabel={t("Library source")}
               placeholder={t('library "org.name"')}
               minHeight={mode === "create" && empty ? "96px" : "320px"}
+              maxHeight={SOURCE_EDITOR_MAX_HEIGHT}
               primary
               embedded
             />

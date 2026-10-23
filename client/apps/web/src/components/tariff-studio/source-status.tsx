@@ -14,6 +14,12 @@ import type { TariffTestsState } from "./use-tariff-tests";
 
 export type SourceTone = "ok" | "bad" | "warn" | "idle";
 
+/**
+ * How tall a Studio's source editor grows before it scrolls inside itself: most of the screen,
+ * so a long file never pushes the status bar, the problems and the sections below out of reach.
+ */
+export const SOURCE_EDITOR_MAX_HEIGHT = "min(70dvh, 56rem)";
+
 /** Says why a format was refused; a file with syntax errors is never reformatted. */
 export function reportFormat(result: TariffFormatResult, t: TranslateFn) {
   if (result.formatted !== null) return;

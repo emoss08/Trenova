@@ -81,6 +81,37 @@ type FieldWrapperProps = {
 
 export type FieldLayout = "stacked" | "inline";
 
+/**
+ * The inline layout's row: the label and its description in a column beside the control, for a
+ * form read down a list of rows. A row with no label keeps the column, so something under a
+ * control (a reset, a hint) lines up with it.
+ */
+export function FieldRow({
+  label,
+  required,
+  description,
+  className,
+  children,
+}: {
+  label?: React.ReactNode;
+  required?: boolean;
+  description?: React.ReactNode;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn("grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-x-4", className)}
+    >
+      <div className="flex min-w-0 flex-col gap-1 pt-2">
+        <FieldLabel label={label} required={required} className="text-sm" />
+        {description}
+      </div>
+      <div className="flex min-w-0 flex-col gap-0.5">{children}</div>
+    </div>
+  );
+}
+
 export function FieldLabel({
   label,
   required,
@@ -138,23 +169,19 @@ export function FieldWrapper({
 
   if (layout === "inline") {
     return (
-      <div
-        className={cn(
-          "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-x-4",
-          className,
-        )}
-      >
-        <div className="flex min-w-0 flex-col gap-1 pt-2">
-          <FieldLabel label={label} required={required} className="text-sm" />
-          {(description || warning?.show) && (
+      <FieldRow
+        label={label}
+        required={required}
+        className={className}
+        description={
+          description || warning?.show ? (
             <FieldDescription description={description} warning={warning} id={descriptionId} />
-          )}
-        </div>
-        <div className="flex min-w-0 flex-col gap-0.5">
-          {control}
-          {errorElement}
-        </div>
-      </div>
+          ) : null
+        }
+      >
+        {control}
+        {errorElement}
+      </FieldRow>
     );
   }
 

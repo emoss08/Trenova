@@ -203,7 +203,9 @@ export function TariffEditor({
       data-tariff-kind={kind}
       onFocusCapture={() => setActive?.(viewRef.current)}
       className={cn(
-        "overflow-hidden",
+        // CodeMirror stacks its gutters, panels (Vim's mode line) and cards at z-index 200 to
+        // 500; isolating the editor keeps those inside it, under the app's tooltips and menus.
+        "isolate overflow-hidden",
         embedded ? "rounded-none" : "border-input ui-container-focus-ring rounded-md border",
         invalid && !embedded && "border-destructive [--ring:var(--ring-danger)]",
         className,

@@ -1,3 +1,5 @@
+import { FieldRow, type FieldLayout } from "@/components/fields/field-components";
+import { useElementWidth } from "@trenova/shared/hooks/use-element-width";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { PlusIcon, RefreshCcw01Icon, Trash01Icon } from "@trenova/shared/components/icons";
@@ -49,7 +51,15 @@ export type TariffInputsFieldsProps = {
    */
   requireUnset?: boolean;
   disabled?: boolean;
+  /**
+   * Shows each input's name and type under its label as a link to its declaration, for a form
+   * beside the source (the Studio's).
+   */
+  onReveal?: (declaration: TariffInputDeclaration) => void;
 };
+
+/** Narrower than this, a row stacks its label over its control. */
+const INLINE_MIN_WIDTH = 480;
 
 function isComplex(type: TariffType): boolean {
   const inner = type.kind === "optional" ? type.inner : type;
@@ -122,6 +132,9 @@ function inheritanceCopy(
  * records (weight breaks) as an editable table, each value written in its wire form so the form
  * saves exactly what the tariff reads. An input left unset inherits (the agreement's value under
  * a rule, then the declared default), which each field's placeholder says.
+ *
+ * Each input is a row: its label and doc beside its control where there is room, above it where
+ * there is not, so no input's label can push another's control out of line.
  */
 export function TariffInputsFields({
   declarations,
@@ -131,19 +144,23 @@ export function TariffInputsFields({
   currency,
   requireUnset = true,
   disabled,
+  onReveal,
 }: TariffInputsFieldsProps) {
   const t = useT();
+  const [measure, width] = useElementWidth<HTMLDivElement>();
+  const layout: FieldLayout = width === 0 || width >= INLINE_MIN_WIDTH ? "inline" : "stacked";
 
   if (declarations.length === 0) {
     return <p className="text-muted-foreground text-sm">{t("This tariff declares no inputs.")}</p>;
   }
 
   return (
-    <FormGroup cols={2}>
+    <div ref={measure} className="divide-border flex flex-col divide-y">
       {declarations.map((declaration) => (
-        <FormControl
+        <div
           key={declaration.name}
-          cols={isComplex(declaration.descriptor) ? "full" : undefined}
+          className="py-3 first:pt-0 last:pb-0"
+          data-tariff-input={declaration.name}
         >
           <TariffInputField
             declaration={declaration}
@@ -153,10 +170,50 @@ export function TariffInputsFields({
             currency={currency}
             requireUnset={requireUnset}
             disabled={disabled}
+            layout={layout}
+            onReveal={onReveal}
           />
-        </FormControl>
+        </div>
       ))}
-    </FormGroup>
+    </div>
+  );
+}
+
+/** The input's name and type as written, as a link to where it is declared. */
+function DeclarationLink({
+  declaration,
+  onReveal,
+}: {
+  declaration: TariffInputDeclaration;
+  onReveal: (declaration: TariffInputDeclaration) => void;
+}) {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      disabled={!declaration.range}
+      onClick={() => onReveal(declaration)}
+      aria-label={t("Show {0} in the source", declaration.name)}
+      className="ui-focus-ring text-2xs text-foreground-subtle hover:text-foreground flex max-w-full items-center gap-1.5 self-start truncate rounded-sm font-mono disabled:pointer-events-none"
+    >
+      {declaration.name}
+      <span className="text-syntax-type">{declaration.type}</span>
+    </button>
+  );
+}
+
+/** A row's description: the doc after its first sentence, then the declaration link. */
+function rowDescription(
+  declaration: TariffInputDeclaration,
+  description: string | null,
+  onReveal: TariffInputsFieldsProps["onReveal"],
+): React.ReactNode {
+  if (!onReveal) return description;
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      {description && <p className="text-2xs text-foreground/70 text-left">{description}</p>}
+      <DeclarationLink declaration={declaration} onReveal={onReveal} />
+    </div>
   );
 }
 
@@ -168,6 +225,8 @@ type TariffInputFieldProps = {
   currency?: string | null;
   requireUnset: boolean;
   disabled?: boolean;
+  layout: FieldLayout;
+  onReveal?: TariffInputsFieldsProps["onReveal"];
 };
 
 function TariffInputField({
@@ -178,11 +237,14 @@ function TariffInputField({
   currency,
   requireUnset,
   disabled,
+  layout,
+  onReveal,
 }: TariffInputFieldProps) {
   const t = useT();
   const { control, setValue } = useFormContext<FieldValues>();
   const value = useWatch({ control, name: path }) as TariffWireValue | undefined;
-  const { label, description } = tariffInputText(declaration);
+  const { label, description: doc } = tariffInputText(declaration);
+  const description = rowDescription(declaration, doc, onReveal);
   const copy = inheritanceCopy(declaration, inherited, inheritedFrom, currency, requireUnset, t);
   const fallback = inheritedTariffValue(declaration, inherited);
   const isSet = value !== undefined;
@@ -193,7 +255,7 @@ function TariffInputField({
         type="button"
         variant="ghost"
         size="xs"
-        className="text-muted-foreground mt-1 h-6 gap-1 px-1.5"
+        className="text-muted-foreground mt-1 h-6 gap-1 self-start px-1.5"
         onClick={() => setValue(path, undefined, { shouldDirty: true, shouldValidate: true })}
       >
         <RefreshCcw01Icon className="size-3" />
@@ -215,26 +277,28 @@ function TariffInputField({
         currency={currency}
         disabled={disabled}
         reset={reset}
+        layout={layout}
       />
     );
   }
 
   return (
-    <div className="flex flex-col" data-tariff-input={declaration.name}>
+    <>
       <TariffScalarField
         path={path}
         type={declaration.descriptor}
         typeText={declaration.type}
         label={label}
         description={description}
+        layout={layout}
         placeholder={copy.placeholder}
         currency={currency}
         disabled={disabled}
         empty={undefined}
         inheritedBool={typeof fallback === "boolean" ? fallback : undefined}
       />
-      {reset}
-    </div>
+      {reset && (layout === "inline" ? <FieldRow>{reset}</FieldRow> : reset)}
+    </>
   );
 }
 
@@ -242,7 +306,7 @@ type TariffComplexInputProps = {
   declaration: TariffInputDeclaration;
   path: string;
   label: string;
-  description: string | null;
+  description: React.ReactNode;
   value: TariffWireValue | undefined;
   fallback: TariffWireValue | undefined;
   placeholder: string;
@@ -250,11 +314,13 @@ type TariffComplexInputProps = {
   currency?: string | null;
   disabled?: boolean;
   reset: React.ReactNode;
+  layout: FieldLayout;
 };
 
 /**
  * A record or a list input. Unset, it shows the value it inherits and offers to set its own,
- * starting from a copy of that value; set, it is edited field by field or row by row.
+ * starting from a copy of that value; set, it is edited field by field or row by row, across the
+ * whole row under its label.
  */
 function TariffComplexInput({
   declaration,
@@ -268,6 +334,7 @@ function TariffComplexInput({
   currency,
   disabled,
   reset,
+  layout,
 }: TariffComplexInputProps) {
   const t = useT();
   const { setValue } = useFormContext<FieldValues>();
@@ -277,36 +344,54 @@ function TariffComplexInput({
       : declaration.descriptor;
   const isSet = value !== undefined && value !== null;
 
-  return (
-    <section
-      className="flex flex-col gap-2 rounded-md border p-3"
-      aria-label={label}
-      data-tariff-input={declaration.name}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-sm font-medium">{label}</span>
-          {description && <span className="text-muted-foreground text-xs">{description}</span>}
-        </div>
-        {!isSet && !disabled && (
-          <Button
-            type="button"
-            variant="outline"
-            size="xs"
-            onClick={() =>
-              setValue(path, structuredClone(fallback ?? emptyTariffValue(type)), {
-                shouldDirty: true,
-                shouldValidate: true,
-              })
-            }
-          >
-            {t("Set here")}
-          </Button>
-        )}
-      </div>
+  const status = (
+    <div className="flex min-h-7 flex-wrap items-center gap-x-3 gap-y-1">
+      {isSet ? null : (
+        <p className="text-muted-foreground text-xs">
+          {fallback === undefined || source === null
+            ? placeholder
+            : unsetComplexText(source, describeComplex(fallback, type, t, currency), t)}
+        </p>
+      )}
+      {!isSet && !disabled && (
+        <Button
+          type="button"
+          variant="outline"
+          size="xs"
+          onClick={() =>
+            setValue(path, structuredClone(fallback ?? emptyTariffValue(type)), {
+              shouldDirty: true,
+              shouldValidate: true,
+            })
+          }
+        >
+          {t("Set here")}
+        </Button>
+      )}
+      {reset}
+    </div>
+  );
 
-      {isSet ? (
-        type.kind === "list" ? (
+  return (
+    <section className="flex flex-col gap-2" aria-label={label}>
+      {layout === "inline" ? (
+        <FieldRow label={label} description={description}>
+          {status}
+        </FieldRow>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium">{label}</span>
+          {typeof description === "string" ? (
+            <span className="text-muted-foreground text-2xs">{description}</span>
+          ) : (
+            description
+          )}
+          {status}
+        </div>
+      )}
+
+      {isSet &&
+        (type.kind === "list" ? (
           <TariffListEditor
             path={path}
             type={type}
@@ -316,15 +401,7 @@ function TariffComplexInput({
           />
         ) : type.kind === "record" ? (
           <TariffRecordFields path={path} type={type} currency={currency} disabled={disabled} />
-        ) : null
-      ) : (
-        <p className="text-muted-foreground text-xs">
-          {fallback === undefined || source === null
-            ? placeholder
-            : unsetComplexText(source, describeComplex(fallback, type, t, currency), t)}
-        </p>
-      )}
-      {reset}
+        ) : null)}
     </section>
   );
 }
