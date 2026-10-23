@@ -239,10 +239,14 @@ func factoringGetSpecs() []getSpec {
 				"its version and a line id with factoring_resolve_remittance_line, and its " +
 				"version with factoring_apply_remittance or factoring_discard_remittance. " +
 				factoringMinorAmount,
-			searchTerms: []string{factorRemittanceTerm, "remittance lines", "remittance exceptions"},
-			resource:    permission.ResourceFactoringRemittance,
-			paramName:   "remittanceId",
-			idSource:    "from factoring_list_remittances",
+			searchTerms: []string{
+				factorRemittanceTerm,
+				"remittance lines",
+				"remittance exceptions",
+			},
+			resource:  permission.ResourceFactoringRemittance,
+			paramName: "remittanceId",
+			idSource:  "from factoring_list_remittances",
 			notes: map[string]string{
 				"matchStatuses": "Leave it out for every line.",
 			},
