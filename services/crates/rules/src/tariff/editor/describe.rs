@@ -193,6 +193,7 @@ pub fn symbol_signature(session: &Session<'_>, id: SymbolId) -> String {
         },
         SymbolKind::Let => typed("let "),
         SymbolKind::Var => typed("var "),
+        SymbolKind::Vary => typed("vary "),
         SymbolKind::Param
         | SymbolKind::LoopVariable
         | SymbolKind::LambdaParam

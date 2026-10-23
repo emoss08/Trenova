@@ -313,6 +313,7 @@ impl Checker<'_> {
             LocalKind::Loop => SymbolKind::LoopVariable,
             LocalKind::Lambda => SymbolKind::LambdaParam,
             LocalKind::Bound => SymbolKind::Binding,
+            LocalKind::Vary => SymbolKind::Vary,
         };
         let symbol = self.symbol(Symbol {
             name: name.text.clone(),

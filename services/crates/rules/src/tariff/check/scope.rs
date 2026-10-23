@@ -25,6 +25,8 @@ pub enum LocalKind {
     Lambda,
     /// `if let`, `require let` or a `match` pattern binding.
     Bound,
+    /// A property's `vary` name.
+    Vary,
 }
 
 /// A name declared in a body.

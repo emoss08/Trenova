@@ -364,7 +364,7 @@ impl Checker<'_> {
             ));
         }
         self.hint(name.span, &ty, HintKind::Binding);
-        if let Some(id) = self.declare(name, LocalKind::Bound, ty)
+        if let Some(id) = self.declare(name, LocalKind::Vary, ty)
             && let Some(scope) = self.property.as_mut()
         {
             scope.names.push((name.text.clone(), id));

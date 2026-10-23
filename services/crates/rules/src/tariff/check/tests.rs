@@ -434,8 +434,17 @@ fn spec_file(index: usize, block: &str) -> String {
                 lines.join("\n")
             )
         }
+        5 => format!(
+            "tariff \"t\"\ninput rate: Money/mi = $2/mi\ninput flatRate: Money = $500\ninput volumeRate: Money/lb = $0.10/lb\n{block}\n"
+        ),
         6 => format!(
+            "tariff \"t\"\nenum Service {{ Standard, Guaranteed, Expedited }}\n{block}\ncharge \"x\" = rate * shipment.distance + $1 * freeStops\nnote \"{{service}}\"\n"
+        ),
+        8 => format!(
             "tariff \"t\"\nrequire let w = shipment.weight else \"This rate needs the shipment's weight\"\ncharge \"Linehaul\" = $1/lb * w\n{block}\n"
+        ),
+        9 => format!(
+            "tariff \"t\"\ninput rate: Money/mi = $2.35/mi where $1/mi..=$5/mi\ncharge \"Linehaul\" (quantity: shipment.distance, rate: rate)\ncharge \"Weight\" = $0.01/lb * (shipment.weight ?? 0 lb)\nminimum $450\n{block}\n"
         ),
         _ => block.to_owned(),
     }
@@ -444,7 +453,7 @@ fn spec_file(index: usize, block: &str) -> String {
 #[test]
 fn the_references_examples_check_clean() {
     let blocks = spec_blocks();
-    assert_eq!(blocks.len(), 7, "the reference's tariff blocks changed");
+    assert_eq!(blocks.len(), 10, "the reference's tariff blocks changed");
     let context = spec_context();
     for (index, block) in blocks.iter().enumerate() {
         let source = spec_file(index, block);

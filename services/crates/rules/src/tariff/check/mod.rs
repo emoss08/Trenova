@@ -218,6 +218,8 @@ pub enum SymbolKind {
     LambdaParam,
     /// A name bound by `if let`, `require let` or a `match` pattern.
     Binding,
+    /// A property's `vary` name.
+    Vary,
     /// A module imported whole, by its alias.
     Module,
     /// A `test`.
@@ -241,6 +243,7 @@ impl SymbolKind {
             Self::LoopVariable => "loop",
             Self::LambdaParam => "lambda",
             Self::Binding => "binding",
+            Self::Vary => "vary",
             Self::Module => "module",
             Self::Test => "test",
         }

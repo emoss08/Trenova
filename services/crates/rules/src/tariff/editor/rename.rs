@@ -355,6 +355,7 @@ fn symbol_free(
                 | SymbolKind::LoopVariable
                 | SymbolKind::LambdaParam
                 | SymbolKind::Binding
+                | SymbolKind::Vary
         ),
         types: matches!(symbol.kind, SymbolKind::Type | SymbolKind::Enum),
     };
